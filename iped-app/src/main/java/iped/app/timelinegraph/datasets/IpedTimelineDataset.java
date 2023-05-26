@@ -19,6 +19,8 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import javax.swing.JOptionPane;
+
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.SortedSetDocValues;
@@ -52,7 +54,6 @@ import iped.app.timelinegraph.cache.persistance.CachePersistance;
 import iped.app.ui.App;
 import iped.app.ui.CaseSearcherFilter;
 import iped.app.ui.Messages;
-import iped.app.ui.MetadataPanel.ValueCount;
 import iped.data.IIPEDSource;
 import iped.data.IItemId;
 import iped.data.IMultiBookmarks;
@@ -326,7 +327,13 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
             }
             
             //method to wait available mem to continue. This can avoid a commom OOM problem if there is low mem and, at first timeline index creation is not finished.
-            ipedChartsPanel.getIpedTimelineDatasetManager().waitMemory();
+            try {
+                ipedChartsPanel.getIpedTimelineDatasetManager().waitMemory();
+            } catch (OutOfMemoryError e) {
+                JOptionPane.showMessageDialog(ipedChartsPanel, "Insufficient Memory to plot chart!", "Error", JOptionPane.ERROR_MESSAGE);
+                memoryCacheReloadSem.release();
+                return;
+            }
 
             CaseSearcherFilter csf = new CaseSearcherFilter(queryText);
             csf.getSearcher().setNoScoring(true);
@@ -335,10 +342,6 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
 
             csf.execute();
             result = csf.get();
-
-            App app = App.get();
-            IMultiBookmarks multiBookmarks = App.get().getIPEDSource().getMultiBookmarks();
-            IPEDMultiSource appcase = (IPEDMultiSource) app.getIPEDSource();
 
             if (result.getLength() > 0) {
                 TimeStampCache cache = ipedChartsPanel.getIpedTimelineDatasetManager().getCache();

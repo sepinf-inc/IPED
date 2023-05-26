@@ -113,8 +113,12 @@ public class IpedTimelineDatasetManager {
             while(!isCacheLoaded) {
                 Thread.sleep(100);
             }
+            int tries = 0;
             while (getAvailableMemory() < 40000000) {
-                Thread.sleep(100);
+                Thread.sleep(1000);
+                if (++tries > 30) {
+                    throw new OutOfMemoryError();
+                }
             }
         }
     }
