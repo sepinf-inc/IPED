@@ -1366,6 +1366,9 @@
     <mime-type type="application/x-whatsapp-user-xml">
         <sub-class-of type="application/dita+xml"/>
         <glob pattern="com.whatsapp_preferences.xml"/>
+        <glob pattern="com.whatsapp_preferences_light.xml"/>
+        <glob pattern="com.whatsapp.w4b_preferences.xml"/>
+        <glob pattern="com.whatsapp.w4b_preferences_light.xml"/>
     </mime-type>
     
     <mime-type type="application/x-whatsapp-user-plist">

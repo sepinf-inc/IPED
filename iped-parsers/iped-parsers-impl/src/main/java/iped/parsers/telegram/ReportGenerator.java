@@ -28,6 +28,7 @@ import java.util.List;
 import iped.data.IItemReader;
 import iped.parsers.util.Messages;
 import iped.search.IItemSearcher;
+import iped.utils.EmojiUtil;
 import iped.utils.SimpleHTMLEncoder;
 
 public class ReportGenerator {
@@ -137,7 +138,7 @@ public class ReportGenerator {
         printMessageFileFooter(out);
         out.flush();
 
-        return bout.toByteArray();
+        return EmojiUtil.replaceByImages(bout.toByteArray());
     }
 
     private TagHtml getThumbTag(Message m, String classnotfound) {
@@ -344,7 +345,7 @@ public class ReportGenerator {
         }
         Contact contact = message.getFrom();
         if (contact != null) {
-            out.println("<span style=\"font-family: 'Roboto-Medium'; color: #b4c74b;\">" //$NON-NLS-1$
+            out.println("<span style=\"font-family: Arial; color: #b4c74b;\">" //$NON-NLS-1$
                     + format(contact.toString()) + "</span><br/>"); //$NON-NLS-1$
         }
         if (message.getType() != null && !message.getType().isEmpty()) {
