@@ -119,6 +119,7 @@ public class IpedTimelineDatasetManager {
                 if (++tries > 30) {
                     throw new OutOfMemoryError();
                 }
+                System.gc();
             }
         }
     }
@@ -132,7 +133,6 @@ public class IpedTimelineDatasetManager {
     }
 
     public static long getAvailableMemory() {
-        System.gc();
         return Runtime.getRuntime().freeMemory() + Runtime.getRuntime().maxMemory() - Runtime.getRuntime().totalMemory();
     }
 
