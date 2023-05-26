@@ -43,6 +43,7 @@ import org.apache.commons.lang.SystemUtils;
 import iped.app.home.DefaultPanel;
 import iped.app.home.MainFrame;
 import iped.app.home.MainFrameCardsNames;
+import iped.app.home.configurables.AutoCalcSpinnerModel;
 import iped.app.home.style.StyleManager;
 import iped.app.home.utils.CasePathManager;
 import iped.app.ui.Messages;
@@ -138,7 +139,8 @@ public class ConfigPanel extends DefaultPanel {
         comboBoxLocale.setRenderer(new LanguageComboBoxCellRender());
 
         //Create JSpinner to change the number of Threads and a button to set the default thread value
-        spinnerThreads = new JSpinner(new SpinnerNumberModel(1, 0, 100, 1));
+        spinnerThreads = new JSpinner();
+        spinnerThreads.setModel(new AutoCalcSpinnerModel(spinnerThreads));
         ((JSpinner.DefaultEditor) spinnerThreads.getEditor()).getTextField().setEditable(false);
         buttonSetDefaultThread = getNewIconButton(ICON_SET_DEFAULT);
         buttonSetDefaultThread.setToolTipText(Messages.get("Home.DefaultThreadValue"));
