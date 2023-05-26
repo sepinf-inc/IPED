@@ -59,12 +59,7 @@ public class UTF8PropertiesConfigurablePanel extends ConfigurablePanel implement
                                     int ivalue = Integer.parseInt(value.toString().trim());
                                     spinner.setValue(ivalue);
                                 }else {
-                                    spinner = new JSpinner() {
-                                        @Override
-                                        protected JComponent createEditor(SpinnerModel model) {
-                                            return new DefaultEditor(this);
-                                        }
-                                    };                                    
+                                    spinner = new JSpinner();                                 
                                     AutoCalcSpinnerModel model = new AutoCalcSpinnerModel(spinner);
                                     spinner.setModel(model);
                                     if(!value.toString().equals("auto")) {

@@ -1,15 +1,15 @@
 package iped.app.home.configurables;
 
-import java.awt.Component;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyVetoException;
-import java.beans.VetoableChangeListener;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Iterator;
 
 import javax.swing.AbstractSpinnerModel;
 import javax.swing.JDialog;
+import javax.swing.JFormattedTextField;
 import javax.swing.JSpinner;
+import javax.swing.JFormattedTextField.AbstractFormatter;
+import javax.swing.JFormattedTextField.AbstractFormatterFactory;
 import javax.swing.JSpinner.DefaultEditor;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -17,10 +17,37 @@ import javax.swing.event.ChangeListener;
 public class AutoCalcSpinnerModel extends AbstractSpinnerModel {
     int value;
     JSpinner spinner;
-    ArrayList<ChangeListener> listeners = new ArrayList<ChangeListener>(); 
+    ArrayList<ChangeListener> listeners = new ArrayList<ChangeListener>();
+    private boolean isInternalChage; 
     
     public AutoCalcSpinnerModel(JSpinner spinner) {
         this.spinner = spinner;
+        DefaultEditor c = new DefaultEditor(spinner);
+        c.getTextField().setEditable(true);
+        c.getTextField().setEnabled(true);
+        c.setEnabled(true);
+        c.getTextField().setFormatterFactory(new AbstractFormatterFactory() {            
+            @Override
+            public AbstractFormatter getFormatter(JFormattedTextField tf) {
+                // TODO Auto-generated method stub
+                return new AbstractFormatter() {
+                    @Override
+                    public String valueToString(Object value) throws ParseException {
+                        return value.toString();
+                    }
+
+                    @Override
+                    public Object stringToValue(String text) throws ParseException {
+                        if(text.equals("0")) {
+                            return "auto";
+                        }
+                        return text;
+                    }
+                };
+            }
+        });
+        //spinner.setEditor();
+        spinner.setEditor(c);
     }
     
     @Override
@@ -34,17 +61,31 @@ public class AutoCalcSpinnerModel extends AbstractSpinnerModel {
 
     @Override
     public void setValue(Object value) {
+        boolean valid = true;
         if(value.toString().equals("auto")) {
             this.value = 0;
         }else {
-            this.value = (Integer)value;
+            if(value instanceof String) {
+                try {
+                    this.value = Integer.parseInt((String)value);
+                }catch (Exception e) {
+                    valid = false;
+                }
+            }else {
+                this.value = (Integer)value;
+            }
         }
-        DefaultEditor c = (DefaultEditor) spinner.getEditor();
-        c.getTextField().setValue(getValue());
-
-        for (Iterator iterator = listeners.iterator(); iterator.hasNext();) {
-            ChangeListener changeListener = (ChangeListener) iterator.next();
-            changeListener.stateChanged(new ChangeEvent(spinner));
+        if(!isInternalChage) {
+            DefaultEditor c = (DefaultEditor) spinner.getEditor();
+            isInternalChage=true;
+            c.getTextField().setValue(getValue());
+            isInternalChage=false;
+            if(valid) {
+                for (Iterator iterator = listeners.iterator(); iterator.hasNext();) {
+                    ChangeListener changeListener = (ChangeListener) iterator.next();
+                    changeListener.stateChanged(new ChangeEvent(spinner));
+                }
+            }
         }
     }
 
