@@ -38,7 +38,7 @@ public class AutoCalcSpinnerModel extends AbstractSpinnerModel {
 
                     @Override
                     public Object stringToValue(String text) throws ParseException {
-                        if(text.equals("0")) {
+                        if(text.equals("0")||text.trim().equals("")) {
                             return "auto";
                         }
                         return text;
