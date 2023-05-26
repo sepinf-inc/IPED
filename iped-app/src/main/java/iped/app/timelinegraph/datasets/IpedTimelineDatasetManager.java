@@ -36,7 +36,7 @@ public class IpedTimelineDatasetManager {
     private static final Logger logger = LogManager.getLogger(IpedTimelineDatasetManager.class);
 
     List<TimeStampCache> timeStampCaches = new ArrayList<>();
-    boolean isCacheLoaded = false;
+    volatile boolean isCacheLoaded = false;
 
     TimeStampCache selectedTimeStampCache;
 
