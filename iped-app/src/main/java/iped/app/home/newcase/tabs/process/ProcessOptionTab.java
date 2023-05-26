@@ -268,6 +268,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         JButton btCancel = new JButton(Messages.get("Home.Cancel"));
         btCancel.addActionListener( e -> {
             loadTasksTables((IConfigurationDirectory) profilesCombo.getSelectedItem());
+            setupFSConfigPanel(null);
             showProfilePanel(SELECT_PROFILE_PANEL);
         });
         createProfilePanel.add(btCancel);
