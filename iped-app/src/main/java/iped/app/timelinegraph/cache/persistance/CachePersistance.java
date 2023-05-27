@@ -117,9 +117,9 @@ public class CachePersistance {
             if (!found) {
                 baseDir = new File(tempCasesDir, uuid);
                 baseDir.mkdirs();
-                RandomAccessFile ras = new RandomAccessFile(new File(baseDir, "case.txt"), "rw");
-                ras.writeUTF(App.get().casesPathFile.getAbsolutePath().toString());
-                ras.close();
+                try (RandomAccessFile ras = new RandomAccessFile(new File(baseDir, "case.txt"), "rw")) {
+                    ras.writeUTF(App.get().casesPathFile.getAbsolutePath().toString());
+                }
             }
 
             // thread to clean caches with no correspondent original data
@@ -132,10 +132,8 @@ public class CachePersistance {
                             if (tempCasesDir.listFiles() != null) {
                                 for (File f : tempCasesDir.listFiles()) {
                                     if (!f.getName().equals(uuid)) {
-                                        try {
-                                            RandomAccessFile ras = new RandomAccessFile(new File(f, "case.txt"), "r");
+                                        try (RandomAccessFile ras = new RandomAccessFile(new File(f, "case.txt"), "r")) {
                                             String casePath = ras.readUTF();
-                                            ras.close();
                                             if (casePath != null) {
                                                 File caseDir = new File(casePath);
                                                 if (!caseDir.exists()) {
