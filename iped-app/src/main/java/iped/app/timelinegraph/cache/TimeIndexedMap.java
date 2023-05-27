@@ -40,16 +40,12 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
         this.cacheFiles.put(string, cacheFile);
         this.monthIndexCacheFiles.put(string, new File(new File(f, string), "1"));
 
-        SeekableFileInputStream lcacheSfis = new SeekableFileInputStream(cacheFile);
-        CacheDataInputStream lcacheDis = new CacheDataInputStream(lcacheSfis) {
-        };
-
-        try {
+        try (SeekableFileInputStream lcacheSfis = new SeekableFileInputStream(cacheFile);
+             CacheDataInputStream lcacheDis = new CacheDataInputStream(lcacheSfis)) {
             int committed = lcacheDis.readShort();
             if (committed != 1) {
                 throw new IOException("File not committed:" + f.getName());
             }
-        } finally {
         }
     }
 
@@ -83,23 +79,18 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
     Date lastStartDate = null;
     Date lastEndDate = null;
     
+    public SeekableFileInputStream getTmpCacheSfis(String className) throws IOException {
+        File f = cacheFiles.get(className);
+        if (f != null) {
+            return new SeekableFileInputStream(f);
+        } else {
+            return null;
+        }
+    }
 
-    public ResultIterator iterator(String className, Date startDate, Date endDate) {
-        SeekableFileInputStream tmpCacheSifs = null;
-        CacheDataInputStream tmpCacheDis = null;
+    public ResultIterator iterator(String className, SeekableFileInputStream lcacheSfis, Date startDate, Date endDate) {
         try {
-            
-            //init streams
-            File f = cacheFiles.get(className);
-            if(f==null) {
-                return null;
-            }
-            tmpCacheSifs = new SeekableFileInputStream(f);
-            tmpCacheDis = null;
-            tmpCacheDis = new CacheDataInputStream(tmpCacheSifs);
-
-            SeekableFileInputStream lcacheSfis = tmpCacheSifs;
-            CacheDataInputStream lcacheDis = tmpCacheDis;
+            CacheDataInputStream lcacheDis = new CacheDataInputStream(lcacheSfis);
 
             //skips header
             lcacheSfis.seek(2l);
@@ -204,20 +195,6 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
             return lcacheSfis.position();
         }
 
-        public boolean finish() {
-            lastHasNext = null;
-            lcache = null;
-            try {
-                lcacheDis.close();
-                lcacheSfis.close();
-            }catch(Exception e) {
-                
-            }
-            return false;
-        }
-        
-        
-
         @Override
         public boolean hasNext() {
             try {
@@ -241,7 +218,7 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
                             nextSeekPos = lcacheIndexes.ceilingKey(nextSeekPos+1);
                         }
                     } else {
-                        return finish();
+                        return false;
                     }
                 }
                 if (lastHasNext == null) {// not in cache so load from file
@@ -269,21 +246,15 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
                 if(startDate==0) {
                     startDate=lastHasNext.date;
                 }
-            } catch (EOFException e) {
-                e.printStackTrace();
-                return finish();
-            } catch (IOException e) {
-                e.printStackTrace();
-                return finish();
             } catch (Exception e) {
                 e.printStackTrace();
-                return finish();
+                return false;
             }
 
             if (lastHasNext.date<endDate) {
                 return true;
             } else {
-                return finish();
+                return false;
             }
         }
 
