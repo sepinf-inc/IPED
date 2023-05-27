@@ -223,8 +223,6 @@ public class CachePersistance {
                 }
                 dos.writeInt(-1);
             }
-            dos.flush();
-            dos.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
