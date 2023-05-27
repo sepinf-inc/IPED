@@ -461,7 +461,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                 memoryCacheReloadSem.release();// releases imediatelly as all cache was loaded
 
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             memoryCacheReloadSem.release();// garantee release of semaphore on untreated exception
             throw e;
         }
