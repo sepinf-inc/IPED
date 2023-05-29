@@ -172,6 +172,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         setupFSConfigPanel(fsPanel);
         fsPanel.setLayout(new BoxLayout( fsPanel, BoxLayout.PAGE_AXIS ));
         tabPane.add(iped.engine.localization.Messages.getString(FileSystemConfig.class.getName()), fsPanel);
+        tabPane.setPreferredSize(new Dimension(600,2000));
         
         panelForm.add(tabPane);
 
