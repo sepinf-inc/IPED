@@ -138,13 +138,10 @@ public class DIETask extends AbstractTask {
                 File dieDat = new File(Configuration.getInstance().appRoot, DIE_MODEL_PATH);
                 if (!dieDat.exists() || !dieDat.canRead()) {
                     String msg = "Invalid DIE database file: " + dieDat.getAbsolutePath(); //$NON-NLS-1$
-                    CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-                    for (File source : args.getDatasources()) {
-                        if (source.getName().endsWith(".iped")) {
-                            logger.warn(msg);
-                            taskEnabled = false;
-                            return;
-                        }
+                    if (hasIpedDatasource()) {
+                        logger.warn(msg);
+                        taskEnabled = false;
+                        return;
                     }
                     throw new IPEDException(msg);
                 }
