@@ -141,6 +141,7 @@ public class DIETask extends AbstractTask {
                     if (hasIpedDatasource()) {
                         logger.warn(msg);
                         taskEnabled = false;
+                        init.set(true);
                         return;
                     }
                     throw new IPEDException(msg);
