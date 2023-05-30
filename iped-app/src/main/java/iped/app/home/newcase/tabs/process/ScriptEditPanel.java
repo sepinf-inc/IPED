@@ -190,7 +190,7 @@ public class ScriptEditPanel extends JPanel implements DocumentListener{
         }
 
         try {
-            if(scriptTask!=null) {
+            if(scriptTask==null) {
                 String scriptName =scriptTask.getScriptFileName();
 
                 File scriptFile = new File(scriptDir, scriptTask.getScriptFileName());
@@ -339,7 +339,7 @@ public class ScriptEditPanel extends JPanel implements DocumentListener{
     }
 
     public boolean confirmChange(){
-        int result = JOptionPane.showConfirmDialog(this, "The script file is saved in shared script folder, affecting all profile configurations. Do you want to confirm?");
+        int result = JOptionPane.showConfirmDialog(this, Messages.get("ScriptEditPanel.scriptScopeWarn"));
         return result==JOptionPane.YES_OPTION;
     }
 
