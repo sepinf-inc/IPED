@@ -6,6 +6,7 @@ import java.awt.Component;
 import java.awt.Dialog.ModalityType;
 import java.awt.Dimension;
 import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -177,11 +178,18 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         panelForm.add(tabPane);
 
         
+        ItemListener[] listeners = profilesCombo.getItemListeners();
+        for (int i = 0; i < listeners.length; i++) {
+            profilesCombo.removeItemListener(listeners[i]);
+        }
         for(int i=0; i<profilesArray.length;i++) {
             if(((IConfigurationDirectory) profilesArray[i]).getName().equals("default")) {
                 profilesCombo.setSelectedItem((IConfigurationDirectory) profilesArray[i]);
                 break;
             }
+        }
+        for (int i = 0; i < listeners.length; i++) {
+            profilesCombo.addItemListener(listeners[i]);
         }
 
         loadTasksTables((IConfigurationDirectory) profilesCombo.getSelectedItem());
@@ -205,17 +213,19 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         selectProfilePanel.add(profilesCombo);
         profilesCombo.setSelectedItem(baselineProfile);
         profilesCombo.addItemListener(e->{
-            IConfigurationDirectory configDirectory = (IConfigurationDirectory) e.getItem();
-            if((e.getStateChange()==ItemEvent.SELECTED)&&(!isInsertingProfile)) {
-                loadTasksTables(configDirectory);
-                setupFSConfigPanel(null);
+            if(e.getStateChange() == ItemEvent.SELECTED) {
+                IConfigurationDirectory configDirectory = (IConfigurationDirectory) e.getItem();
+                if((e.getStateChange()==ItemEvent.SELECTED)&&(!isInsertingProfile)) {
+                    loadTasksTables(configDirectory);
+                    setupFSConfigPanel(null);
+                }
+                if(configDirectory instanceof SerializedConfigurationDirectory) {                    
+                    selectProfilePanel.add(deleteProfileBtn);                    
+                }else {
+                    selectProfilePanel.remove(deleteProfileBtn);                    
+                }
+                selectProfilePanel.updateUI();
             }
-            if(configDirectory instanceof SerializedConfigurationDirectory) {                    
-                selectProfilePanel.add(deleteProfileBtn);                    
-            }else {
-                selectProfilePanel.remove(deleteProfileBtn);                    
-            }
-            selectProfilePanel.updateUI();
         });
         deleteProfileBtn.addActionListener( e -> {
             IConfigurationDirectory configDirectory = (IConfigurationDirectory) profilesCombo.getSelectedItem();
@@ -246,7 +256,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         btInsertProfile.addActionListener(e -> {
             try {
                 isInsertingProfile=true;
-                
+
                 try {
                     fsConfigPanel.applyChanges();
                     fsConfigPanel.fireChangeListener(new ChangeEvent(this));
@@ -354,8 +364,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         taskArrayList = taskInstallerConfig.getNewTaskInstances();
         ArrayList<Boolean> enabled = new ArrayList<Boolean>();
         ArrayList<EnabledInterface> enabledConfigurables = new ArrayList<EnabledInterface>();
-        
-        
+
         for(AbstractTask currentTask : taskArrayList  ){
             List<Configurable<?>> configurableList = currentTask.getConfigurables();
             if (configurableList == null || configurableList.isEmpty()){
