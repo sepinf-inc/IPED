@@ -52,7 +52,7 @@ public class TaskTableConfigurablesCellRenderer implements TableCellRenderer {
 
             GridBagConstraints gbc = new GridBagConstraints();
             JButton taskOptionButton = new JButton("...");
-            taskOptionButton.addActionListener( e -> new TaskConfigDialog(configurationManager, task, mainFrame).setVisible(true));
+            taskOptionButton.addActionListener( e -> new TaskConfigDialog(ConfigurationManager.get(), task, mainFrame).setVisible(true));
             taskOptionButton.setVerticalAlignment(SwingConstants.CENTER);
 
             panel.add(taskOptionButton, gbc);
