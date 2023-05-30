@@ -50,6 +50,9 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
             if(c instanceof EnableTaskProperty) {
                 return c.getClass().equals(((ConfigurableWrapper)o).c.getClass()) && ((EnableTaskProperty) c).getPropertyName().equals(((EnableTaskProperty) ((ConfigurableWrapper)o).c).getPropertyName());
             }
+            if(c instanceof DefaultTaskPropertiesConfig) {
+                return c.getClass().equals(((ConfigurableWrapper)o).c.getClass()) && ((DefaultTaskPropertiesConfig) c).getTaskConfigFileName().equals(((DefaultTaskPropertiesConfig) ((ConfigurableWrapper)o).c).getTaskConfigFileName());
+            }
             return c.getClass().equals(((ConfigurableWrapper)o).c.getClass());
         }
         
@@ -102,13 +105,21 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
         }
     }
 
-    public void loadConfig(Configurable<?> configurable) throws IOException {
+    public void loadConfig(Configurable<?> configurable, boolean forceReload) throws IOException {
         Boolean loaded = loadedConfigurablesState.get(new ConfigurableWrapper(configurable)); 
-        if (loaded==null || loaded == false) {
+        if (forceReload || loaded ==null || loaded == false) {
             List<Path> resources = directory.lookUpResource(configurable);
-            configurable.processConfigs(resources);
-            loadedConfigurablesState.put(new ConfigurableWrapper(configurable) , true);
-        }
+            if(resources!=null) {
+                configurable.processConfigs(resources);
+            }
+            ConfigurableWrapper cw = new ConfigurableWrapper(configurable);
+            loadedConfigurablesState.remove(cw);
+            loadedConfigurablesState.put(cw , true);
+        }       
+    }
+
+    public void loadConfig(Configurable<?> configurable) throws IOException {
+        loadConfig(configurable,false);
     }
 
     public void loadConfigs(boolean forceReload) throws IOException {
@@ -143,6 +154,8 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
             } catch (IOException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
+            }finally {
+                ois.close();
             }
         }
     }

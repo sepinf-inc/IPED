@@ -2,6 +2,7 @@ package iped.engine.task;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -47,6 +48,7 @@ public class PythonTask extends AbstractTask implements IScriptTask {
     private boolean isEnabled = true;
     private boolean sendToNextTaskExists = true;
     private boolean throwExceptionInsteadOfLogging = false;
+    private List<Configurable<?>> configurables;
 
     public PythonTask(File scriptFile) {
         this.scriptFile = scriptFile;
@@ -200,7 +202,7 @@ public class PythonTask extends AbstractTask implements IScriptTask {
     public String getName() {
         return scriptFile.getName();
     }
-
+    
     @Override
     public List<Configurable<?>> getConfigurables() {
         try {
@@ -209,7 +211,25 @@ public class PythonTask extends AbstractTask implements IScriptTask {
             if (j != null) {
                 configs = (List<Configurable<?>>) j.invoke(getInstanceMethod("getConfigurables"));
             }
-            return configs != null ? configs : Collections.emptyList();
+            Configurable[] configsArray = configs.toArray(new Configurable[0]);
+            for (int i=0; i<configsArray.length; i++) {
+                Configurable configurable = configsArray[i];
+                Configurable currentConfig = ConfigurationManager.get().findObject((Class<? extends Configurable<?>>)configurable.getClass());
+                if(currentConfig == null) {
+                    try {
+                        configurable.reset();
+                        ConfigurationManager.get().loadConfig(configurable, true);
+                    } catch (IOException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();                    
+                    }
+                } else {
+                    configs.remove(configurable);
+                    configs.add(currentConfig);
+                }
+            }
+            configurables = configs != null ? configs : Collections.emptyList();
+            return configurables;
 
         } catch (JepException e) {
             throw new RuntimeException(e);

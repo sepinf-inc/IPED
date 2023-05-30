@@ -26,6 +26,10 @@ import javax.swing.JTextField;
 import javax.swing.ListCellRenderer;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.text.AbstractDocument;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DocumentFilter;
 
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rtextarea.RTextScrollPane;
@@ -38,7 +42,6 @@ import iped.engine.task.IScriptTask;
 import iped.engine.task.PythonTask;
 import iped.engine.task.ScriptTask;
 import iped.engine.task.ScriptTaskComplianceException;
-import iped.parsers.whatsapp.Message;
 import iped.utils.IOUtil;
 
 public class ScriptEditPanel extends JPanel implements DocumentListener{
@@ -60,6 +63,7 @@ public class ScriptEditPanel extends JPanel implements DocumentListener{
     static final String TEMPLATE_SCRIPT_NAME = "ExampleScriptTask.js";
     private static final String JAVASCRIPT_TEMPLATE_DIR = "/jstemplates";
     private static final String PYTHON_TEMPLATE_DIR = "/pythontemplates";
+    private boolean scriptChanged = false;
 
     public ScriptEditPanel(MainFrame mainFrame, IScriptTask scriptTask) {
         super();
@@ -71,17 +75,17 @@ public class ScriptEditPanel extends JPanel implements DocumentListener{
 
     @Override
     public void insertUpdate(DocumentEvent e) {
-        
+        changedUpdate(e);
     }
 
     @Override
     public void removeUpdate(DocumentEvent e) {
-        
+        changedUpdate(e);
     }
 
     @Override
     public void changedUpdate(DocumentEvent e) {
-        
+        scriptChanged = true;
     }
 
     private void setScriptTask(File destFile) throws ScriptTaskComplianceException {
@@ -197,6 +201,30 @@ public class ScriptEditPanel extends JPanel implements DocumentListener{
 
             textArea.setAutoscrolls(true);
             textArea.getDocument().addDocumentListener(this);
+            ((AbstractDocument)textArea.getDocument()).setDocumentFilter(new DocumentFilter() {
+                @Override
+                public void remove(FilterBypass fb, int offset, int length) throws BadLocationException {
+                    if(scriptChanged || confirmChange()) {
+                        super.remove(fb, offset, length);
+                    }
+                }
+
+                @Override
+                public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr)
+                        throws BadLocationException {
+                    if(scriptChanged || confirmChange()) {
+                        super.insertString(fb, offset, string, attr);
+                    }
+                }
+
+                @Override
+                public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs)
+                        throws BadLocationException {
+                    if(scriptChanged || confirmChange()) {
+                        super.replace(fb, offset, length, text, attrs);
+                    }
+                }
+            });
             txtAreaScroll = new RTextScrollPane();
             txtAreaScroll.setViewportView(textArea);
             txtAreaScroll.setAutoscrolls(true);
@@ -278,34 +306,41 @@ public class ScriptEditPanel extends JPanel implements DocumentListener{
     }
 
     public void applyChanges() throws ScriptTaskComplianceException {
-        scriptTask.checkTaskCompliance(textArea.getText());
-        
-        File scriptDir = Paths.get(System.getProperty(IConfigurationDirectory.IPED_APP_ROOT), TaskInstallerConfig.SCRIPT_BASE).toFile();
-        String extension=".js";
-        if(rbPython.isSelected()) {
-            extension=".py";
-        }
-        File destFile = new File(scriptDir, titleText.getText()+extension);
-        try {
-            Files.write(destFile.toPath(),textArea.getText().getBytes(StandardCharsets.UTF_8));
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-
-        if(insertionMode) {
-            if(rbPython.isSelected()) {
-                scriptTask = new PythonTask(destFile);
-            }else {
-                scriptTask= new ScriptTask(destFile);
+        if(scriptChanged) {            
+            scriptTask.checkTaskCompliance(textArea.getText());
+            
+            File scriptDir = Paths.get(System.getProperty(IConfigurationDirectory.IPED_APP_ROOT), TaskInstallerConfig.SCRIPT_BASE).toFile();
+            String extension=".js";
+            if(scriptTask instanceof PythonTask) {
+                extension=".py";
             }
+            File destFile = new File(scriptDir, titleText.getText()+extension);
+            try {
+                Files.write(destFile.toPath(),textArea.getText().getBytes(StandardCharsets.UTF_8));
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+
+            if(insertionMode) {
+                if(rbPython.isSelected()) {
+                    scriptTask = new PythonTask(destFile);
+                }else {
+                    scriptTask= new ScriptTask(destFile);
+                }
+            }
+            
+            scriptTaskToSave=scriptTask;
         }
-        
-        scriptTaskToSave=scriptTask;
     }
 
     public IScriptTask getScriptTask() {
         return scriptTaskToSave;
     }
-    
+
+    public boolean confirmChange(){
+        int result = JOptionPane.showConfirmDialog(this, "The script file is saved in shared script folder, affecting all profile configurations. Do you want to confirm?");
+        return result==JOptionPane.YES_OPTION;
+    }
+
 }
