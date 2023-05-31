@@ -410,7 +410,8 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
                 try {
                     if(rowIndex != 0){
                       AbstractTask task = (AbstractTask) getValueAt(rowIndex, 2);
-                      tip = iped.engine.localization.Messages.getString(task.getClass().getName()+iped.engine.localization.Messages.TOOLTIP_SUFFIX, task.getName());
+                      String title = iped.engine.localization.Messages.getString(task.getClass().getName(), task.getName());
+                      tip = iped.engine.localization.Messages.getString(task.getClass().getName()+iped.engine.localization.Messages.TOOLTIP_SUFFIX, title);
                     }
                 } catch (RuntimeException e1) {
                 }
