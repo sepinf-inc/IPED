@@ -42,7 +42,12 @@ public class TableTaskLabelCellRenderer extends DefaultTableCellRenderer {
         panel.setBackground(TableCellRendererUtil.getBackground(table, row, isSelected));
         panel.setLayout(new FlowLayout(FlowLayout.LEFT));
         JLabel nameLabel = new JLabel();
-        String localizedName = iped.engine.localization.Messages.getString(currentTask.getClass().getName(), currentTask.getName());
+        String localizedName;
+        if(currentTask instanceof IScriptTask) {
+            localizedName = iped.engine.localization.Messages.getString(currentTask.getClass().getName()+"."+currentTask.getName(), currentTask.getName());
+        }else {
+            localizedName = iped.engine.localization.Messages.getString(currentTask.getClass().getName(), currentTask.getName());
+        }
         nameLabel.setText(localizedName);
         panel.add(nameLabel, BorderLayout.WEST);
         
