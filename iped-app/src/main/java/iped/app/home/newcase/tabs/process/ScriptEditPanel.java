@@ -190,7 +190,7 @@ public class ScriptEditPanel extends JPanel implements DocumentListener{
         }
 
         try {
-            if(scriptTask==null) {
+            if(scriptTask!=null) {
                 String scriptName =scriptTask.getScriptFileName();
 
                 File scriptFile = new File(scriptDir, scriptTask.getScriptFileName());
