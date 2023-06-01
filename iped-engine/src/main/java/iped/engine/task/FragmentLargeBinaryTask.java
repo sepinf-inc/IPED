@@ -47,7 +47,9 @@ public class FragmentLargeBinaryTask extends BaseCarveTask {
 
     @Override
     public boolean isEnabled() {
-        return !caseData.isIpedReport();
+        // Always enabled, see https://github.com/sepinf-inc/IPED/issues/1281 and
+        // https://github.com/sepinf-inc/IPED/issues/1676
+        return true;
     }
 
     @Override
