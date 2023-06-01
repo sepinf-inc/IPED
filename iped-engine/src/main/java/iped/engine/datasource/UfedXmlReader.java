@@ -127,6 +127,7 @@ public class UfedXmlReader extends DataSourceReader {
     HashMap<String, String> ufdrPathToUfedId = new HashMap<>();
     private final List<String[]> deviceInfoData = new ArrayList<String[]>();
     private HashSet<String> addedImUfedIds = new HashSet<>();
+    private HashSet<String> addedTrackIds = new HashSet<>();
     
     public UfedXmlReader(ICaseData caseData, File output, boolean listOnly) {
         super(caseData, output, listOnly);
@@ -519,6 +520,7 @@ public class UfedXmlReader extends DataSourceReader {
                 if (len != null)
                     size = Long.valueOf(len.trim());
 
+
                 if (listOnly) {
                     caseData.incDiscoveredEvidences(1);
                     caseData.incDiscoveredVolume(size);
@@ -772,12 +774,19 @@ public class UfedXmlReader extends DataSourceReader {
                 item.getMetadata().add(ExtraProperties.UFED_META_PREFIX + parentNode.element, chars.toString().trim());
 
             } else if (qName.equals("file")) { //$NON-NLS-1$
+                String trackId = Util.getTrackID(item);
                 itemSeq.remove(itemSeq.size() - 1);
-                setMediaResult(item);
-                try {
-                    Manager.getInstance().addItemToQueue(item);
-                } catch (Exception e) {
-                    throw new SAXException(e);
+                if (addedTrackIds.contains(trackId)) {
+                    LOGGER.error("Item with duplicated trakcId {}", trackId);
+                    caseData.incDiscoveredEvidences(-1);
+                } else {
+                    setMediaResult(item);
+                    addedTrackIds.add(trackId);
+                    try {
+                        Manager.getInstance().addItemToQueue(item);
+                    } catch (Exception e) {
+                        throw new SAXException(e);
+                    }
                 }
 
             } else if (qName.equals("model") && ( //$NON-NLS-1$
