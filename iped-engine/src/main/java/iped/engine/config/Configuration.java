@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import iped.configuration.Configurable;
 import iped.configuration.IConfigurationDirectory;
 import iped.engine.task.AbstractTask;
+import iped.engine.task.IScriptTask;
 import iped.engine.util.Util;
 import iped.utils.UTF8Properties;
 import iped.viewers.util.DefaultPolicy;
@@ -221,8 +222,12 @@ public class Configuration {
             configManager.loadConfig(taskConfig);
 
             for (AbstractTask task : taskConfig.getNewTaskInstances()) {
-                for (Configurable<?> configurable : task.getConfigurables()) {
-                    configManager.addObject(configurable);
+                if(task instanceof IScriptTask) {
+                    //delay script configurable loading
+                }else {
+                    for (Configurable<?> configurable : task.getConfigurables()) {
+                        configManager.addObject(configurable);
+                    }
                 }
             }
 

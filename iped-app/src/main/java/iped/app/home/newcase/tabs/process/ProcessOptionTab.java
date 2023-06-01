@@ -62,6 +62,7 @@ import iped.engine.config.ProfileManager;
 import iped.engine.config.SerializedConfigurationDirectory;
 import iped.engine.config.TaskInstallerConfig;
 import iped.engine.task.AbstractTask;
+import iped.engine.task.IScriptTask;
 import iped.engine.task.ScriptTask;
 
 /*
@@ -366,7 +367,11 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         ArrayList<EnabledInterface> enabledConfigurables = new ArrayList<EnabledInterface>();
 
         for(AbstractTask currentTask : taskArrayList  ){
-            List<Configurable<?>> configurableList = currentTask.getConfigurables();
+            List<Configurable<?>> configurableList = null;
+            try {
+                configurableList = currentTask.getConfigurables();
+            }catch (Exception e) {                
+            }
             if (configurableList == null || configurableList.isEmpty()){
                 enabledConfigurables.add(null);
                 enabled.add(currentTask.isEnabled());

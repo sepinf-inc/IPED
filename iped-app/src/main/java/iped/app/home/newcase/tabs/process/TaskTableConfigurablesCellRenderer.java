@@ -1,11 +1,13 @@
 package iped.app.home.newcase.tabs.process;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.util.List;
 
 import javax.swing.JButton;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.SwingConstants;
@@ -34,13 +36,21 @@ public class TaskTableConfigurablesCellRenderer implements TableCellRenderer {
 
         AbstractTask task = (AbstractTask) cellValue;
         int count = 0; // counts the number of non EnableTaskProperty configurables
+        Exception configurableLoadException = null;
+        
+        List<Configurable<?>> configurables = null;
+        try {
+            configurables = task.getConfigurables();
+        }catch (Exception e) {
+            configurableLoadException = e;
+        }
 
-        List<Configurable<?>> configurables = task.getConfigurables();
-
-        for (Configurable<?> value : configurables) {
-            if (!(value instanceof EnableTaskProperty)
-                    && !(value instanceof HashDBLookupConfig)) {
-                count++;
+        if(configurables!=null) {
+            for (Configurable<?> value : configurables) {
+                if (!(value instanceof EnableTaskProperty)
+                        && !(value instanceof HashDBLookupConfig)) {
+                    count++;
+                }
             }
         }
 
@@ -52,7 +62,13 @@ public class TaskTableConfigurablesCellRenderer implements TableCellRenderer {
 
             GridBagConstraints gbc = new GridBagConstraints();
             JButton taskOptionButton = new JButton("...");
-            taskOptionButton.addActionListener( e -> new TaskConfigDialog(ConfigurationManager.get(), task, mainFrame).setVisible(true));
+            if(configurableLoadException!=null) {
+                final Exception finalEx = configurableLoadException;
+                taskOptionButton.setBackground(Color.RED);
+                taskOptionButton.addActionListener( e -> JOptionPane.showMessageDialog(panel, "Error loading configurables: "+finalEx.getMessage()));
+            }else {
+                taskOptionButton.addActionListener( e -> new TaskConfigDialog(ConfigurationManager.get(), task, mainFrame).setVisible(true));
+            }
             taskOptionButton.setVerticalAlignment(SwingConstants.CENTER);
 
             panel.add(taskOptionButton, gbc);
