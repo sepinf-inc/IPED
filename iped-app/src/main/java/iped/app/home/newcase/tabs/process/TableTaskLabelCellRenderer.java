@@ -51,7 +51,7 @@ public class TableTaskLabelCellRenderer extends DefaultTableCellRenderer {
         nameLabel.setText(localizedName);
         panel.add(nameLabel, BorderLayout.WEST);
         
-        if((currentTask instanceof IScriptTask)) {
+        if((currentTask instanceof IScriptTask) && (table.getDragEnabled())) {
             JButton taskStartDragButton = new JButton(dragIcon);
             taskStartDragButton.setVerticalAlignment(SwingConstants.CENTER);
 

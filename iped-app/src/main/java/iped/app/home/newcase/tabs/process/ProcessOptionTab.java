@@ -364,7 +364,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         //Creates a list with all AbstractTask class instance from the TaskInstaller.xml file
         taskArrayList = taskInstallerConfig.getNewTaskInstances();
         ArrayList<Boolean> enabled = new ArrayList<Boolean>();
-        ArrayList<EnabledInterface> enabledConfigurables = new ArrayList<EnabledInterface>();
+        ArrayList<EnabledInterface> enabledConfigurables = new ArrayList<EnabledInterface>(); 
 
         for(AbstractTask currentTask : taskArrayList  ){
             List<Configurable<?>> configurableList = null;
@@ -476,7 +476,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         
         jtableTasks.setTransferHandler(new LineOrderTransferHandler());
         jtableTasks.setDropMode(DropMode.INSERT_ROWS);
-        jtableTasks.setDragEnabled(true);
+        //jtableTasks.setDragEnabled(true);
     }
 
     private Component createNavigationButtonsPanel() {
