@@ -478,9 +478,12 @@ public class ExtractorIOS extends Extractor {
         m.setDeleted(row.isDeletedRow());
         return m;
     }
-    
+
     private void decodeReceiptInfo(Message m, byte[] receiptInfo) {
         List<Part> parts1 = new ProtoBufDecoder(receiptInfo).decode();
+        if (parts1 == null) {
+            return;
+        }
         for (Part p1 : parts1) {
             if (p1.getIdx() == 7) {
                 List<Part> parts2 = p1.getChilds();

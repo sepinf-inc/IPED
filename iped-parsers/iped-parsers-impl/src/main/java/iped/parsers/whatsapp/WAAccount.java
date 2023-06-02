@@ -41,10 +41,10 @@ public class WAAccount extends WAContact {
             XPath xpath = XPathFactory.newInstance().newXPath();
             XPathExpression expr = xpath.compile("/map/string[@name=\"registration_jid\"]");
             String value = (String) expr.evaluate(doc, XPathConstants.STRING);
-            if (value == null) {
+            if (value == null || value.isBlank()) {
                 expr = xpath.compile("/map/string[@name=\"ph\"]");
                 value = (String) expr.evaluate(doc, XPathConstants.STRING);
-                if (value == null)
+                if (value == null || value.isBlank())
                     return null;
             }
             if (!value.endsWith(idSuffix))
@@ -54,12 +54,12 @@ public class WAAccount extends WAContact {
 
             expr = xpath.compile("/map/string[@name=\"push_name\"]");
             value = (String) expr.evaluate(doc, XPathConstants.STRING);
-            if (value != null)
+            if (value != null && !value.isBlank())
                 account.setWaName(value);
 
             expr = xpath.compile("/map/string[@name=\"my_current_status\"]");
             value = (String) expr.evaluate(doc, XPathConstants.STRING);
-            if (value != null)
+            if (value != null && !value.isBlank())
                 account.setStatus(value);
 
             return account;
