@@ -64,13 +64,20 @@ public class ScriptEditPanel extends JPanel implements DocumentListener{
     private static final String JAVASCRIPT_TEMPLATE_DIR = "/jstemplates";
     private static final String PYTHON_TEMPLATE_DIR = "/pythontemplates";
     private boolean scriptChanged = false;
+    boolean isScriptEditable=false;
 
     public ScriptEditPanel(MainFrame mainFrame, IScriptTask scriptTask) {
         super();
         this.scriptTask = scriptTask;
         if(scriptTask.getScriptFileName().equals(TEMPLATE_SCRIPT_NAME)) {
-            insertionMode=true;            
+            insertionMode=true;
+            isScriptEditable=true;
         }
+    }
+
+    public ScriptEditPanel(MainFrame mainFrame, IScriptTask scriptTask, boolean isScriptEditable) {
+        this(mainFrame, scriptTask);
+        this.isScriptEditable = isScriptEditable;
     }
 
     @Override
@@ -154,6 +161,7 @@ public class ScriptEditPanel extends JPanel implements DocumentListener{
         templatePanel = new JPanel(new BorderLayout());
 
         textArea = new RSyntaxTextArea(20, 60);
+        textArea.setEditable(isScriptEditable);
 
         if(insertionMode) {
             textArea.setEnabled(false);
