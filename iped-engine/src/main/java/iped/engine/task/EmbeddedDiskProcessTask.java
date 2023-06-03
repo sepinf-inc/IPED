@@ -28,6 +28,7 @@ import iped.engine.data.Item;
 import iped.engine.datasource.SleuthkitReader;
 import iped.engine.search.ItemSearcher;
 import iped.engine.task.carver.BaseCarveTask;
+import iped.engine.task.index.IndexItem;
 import iped.engine.util.TextCache;
 import iped.exception.IPEDException;
 import iped.parsers.standard.StandardParser;
@@ -169,24 +170,40 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
         if (item instanceof IItem && IOUtil.hasFile((IItem) item)) {
             imageFile = IOUtil.getFile((IItem) item);
         } else {
-            File exportDir = new File(new File(this.output, outputFolder), item.getParentId().toString());
+            String parentTrackId = item.getExtraAttribute(IndexItem.PARENT_TRACK_ID).toString();
+            File exportDir = new File(new File(this.output, outputFolder), parentTrackId);
             exportDir.mkdirs();
             imageFile = new File(exportDir, item.getName()).getCanonicalFile();
             boolean alreadyExported = false;
 
+            File trackFile = new File(imageFile.getAbsolutePath() + "_trackID");
+            String trackId = item.getExtraAttribute(IndexItem.TRACK_ID).toString();
+
             synchronized (lock) {
                 if (!imageFile.exists()) {
+                    Files.writeString(trackFile.toPath(), trackId);
                     imageFile.createNewFile();
-                } else if (imageFile.length() != item.getLength() && firstPart) {
-                    imageFile = new File(exportDir, item.getId() + "/" + item.getName()).getCanonicalFile();
-                    imageFile.getParentFile().mkdirs();
-                    //logger.info("Deleting incomplete exported item {} -> {}", item.getPath(), imageFile.getAbsolutePath());
-                    //Files.delete(imageFile.toPath());
                 } else {
-                    alreadyExported = true;
+                    String trackFileId = Files.readString(trackFile.toPath());
+                    if (trackId.equals(trackFileId)) {
+                        if (imageFile.length() == item.getLength()) {
+                            alreadyExported = true;
+                        }
+                    } else {
+                        // exported image refers to a different item with same path, use another output
+                        imageFile = new File(exportDir, trackId + "/" + item.getName()).getCanonicalFile();
+                        imageFile.getParentFile().mkdirs();
+                        if (imageFile.exists() && imageFile.length() == item.getLength()) {
+                            alreadyExported = true;
+                        }
+                    }
                 }
             }
             if (!alreadyExported) {
+                if (imageFile.length() > 0) {
+                    logger.info("Deleting incomplete exported item {} -> {}", item.getPath(), imageFile.getAbsolutePath());
+                    imageFile.delete();
+                }
                 logger.info("Exporting item {} -> {}", item.getPath(), imageFile.getAbsolutePath());
                 TaggedInputStream tis = null;
                 try (InputStream is = item.getBufferedInputStream()) {
@@ -196,6 +213,7 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
                     if (tis == null || tis.isCauseOf(e)) {
                         logger.warn("Error reading item {} ({} bytes): {}", item.getPath(), item.getLength(), e.toString());
                     } else {
+                        // exception writing data to target file
                         throw e;
                     }
                 }
