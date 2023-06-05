@@ -579,6 +579,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
             @Override
             public void changed(CDockableLocationEvent dockableEvent) {
                 if (!isUpdated && dockableEvent.isShowingChanged()) {
+                    ipedTimelineDatasetManager.startBackgroundCacheCreation();
                     self.refreshChart();
                 }
             }
@@ -728,7 +729,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         }
         if (!dataSetUpdated.getAndSet(true)) {
             new Thread(populateEventNames).start();
-            ipedTimelineDatasetManager.startBackgroundCacheCreation();
+            //ipedTimelineDatasetManager.startBackgroundCacheCreation();
         }
 
         if (internalUpdate) {
