@@ -579,8 +579,18 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
             @Override
             public void changed(CDockableLocationEvent dockableEvent) {
                 if (!isUpdated && dockableEvent.isShowingChanged()) {
-                    ipedTimelineDatasetManager.startBackgroundCacheCreation();
-                    self.refreshChart();
+                    self.remove(splitPane);
+                    self.add(loadingLabel);
+                    self.repaint();
+                    Runnable r = new Runnable() {
+                        @Override
+                        public void run() {
+                            ipedTimelineDatasetManager.startBackgroundCacheCreation();
+                            self.refreshChart();
+                        }
+                        
+                    };
+                    new Thread(r).start();
                 }
             }
         };
