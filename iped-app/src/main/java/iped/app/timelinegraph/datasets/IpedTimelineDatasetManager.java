@@ -32,6 +32,8 @@ public class IpedTimelineDatasetManager {
     IpedChartsPanel ipedChartsPanel;
 
     List<TimeStampCache> timeStampCaches = new ArrayList<>();
+    
+    boolean startDatasetCreationCalled = false;
 
     TimeStampCache selectedTimeStampCache;
 
@@ -65,25 +67,35 @@ public class IpedTimelineDatasetManager {
     /*
      * Start the creation of cache for timeline chart
      */
-    public void startBackgroundCacheCreation() {
+    public void startBackgroundCacheCreation(int delay) {
         try {
-            Thread.sleep(1000);
+            Thread.sleep(delay);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        int poolSize = (int) Math.ceil((float) Runtime.getRuntime().availableProcessors() / 2f);
-        ExecutorService threadPool = Executors.newFixedThreadPool(poolSize);
-        boolean first = true;
-        for (TimeStampCache timeStampCache : timeStampCaches) {
-            Future<?> future = threadPool.submit(timeStampCache);
-            // first loads the Day cache alone to speed up it, then run others in parallel
-            if (first) {
-                try {
-                    future.get();
-                } catch (InterruptedException | ExecutionException e) {
-                    e.printStackTrace();
+        startBackgroundCacheCreation();
+    }
+    
+    /*
+     * Start the creation of cache for timeline chart
+     */
+    public void startBackgroundCacheCreation() {
+        if(!startDatasetCreationCalled) {
+            startDatasetCreationCalled = true;
+            int poolSize = (int) Math.ceil((float) Runtime.getRuntime().availableProcessors() / 2f);
+            ExecutorService threadPool = Executors.newFixedThreadPool(poolSize);
+            boolean first = true;
+            for (TimeStampCache timeStampCache : timeStampCaches) {
+                Future<?> future = threadPool.submit(timeStampCache);
+                // first loads the Day cache alone to speed up it, then run others in parallel
+                if (first) {
+                    try {
+                        future.get();
+                    } catch (InterruptedException | ExecutionException e) {
+                        e.printStackTrace();
+                    }
+                    first = false;
                 }
-                first = false;
             }
         }
     }
