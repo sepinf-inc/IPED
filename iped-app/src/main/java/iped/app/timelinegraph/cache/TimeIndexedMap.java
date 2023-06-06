@@ -44,12 +44,10 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
         CacheDataInputStream lcacheDis = new CacheDataInputStream(lcacheSfis) {
         };
 
-        try {
-            int committed = lcacheDis.readShort();
-            if (committed != 1) {
-                throw new IOException("File not committed:" + f.getName());
-            }
-        } finally {
+        int committed = lcacheDis.readShort();
+        if (committed != 1) {
+            String msg = "File not committed:" + f.getName();
+            throw new IOException(msg);
         }
     }
 
