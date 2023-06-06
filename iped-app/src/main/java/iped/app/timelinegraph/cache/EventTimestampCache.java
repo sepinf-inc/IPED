@@ -79,9 +79,6 @@ public class EventTimestampCache implements Runnable {
                                     }else {
                                         date = new Date(cache[ord]);
                                     }
-                                    if(date==null) {
-                                        System.out.println();
-                                    }
                                     if (date != null) {
                                         timeStampCache.add(timePeriodClass, date, eventInternalOrd, doc);
                                     }

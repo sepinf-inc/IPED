@@ -36,7 +36,7 @@ public class IpedTimelineDatasetManager {
     private static final Logger logger = LogManager.getLogger(IpedTimelineDatasetManager.class);
 
     List<TimeStampCache> timeStampCaches = new ArrayList<>();
-    boolean isCacheLoaded = false;
+    volatile boolean isCacheLoaded = false;
 
     TimeStampCache selectedTimeStampCache;
 
@@ -79,7 +79,7 @@ public class IpedTimelineDatasetManager {
         
         int poolSize = 1;
         int totalItems = ipedChartsPanel.getResultsProvider().getIPEDSource().getTotalItems();
-        if(Runtime.getRuntime().freeMemory()> totalItems * 100){
+        if (getAvailableMemory() > totalItems * 100) {
             poolSize = (int) Math.ceil((float) Runtime.getRuntime().availableProcessors() / 2f);
         }else {
             logger.info("Only {}MB of free memory for {} total items. Timeline index creation will occur sequentially. ", Runtime.getRuntime().freeMemory(), totalItems); 
@@ -109,12 +109,17 @@ public class IpedTimelineDatasetManager {
     }
 
     public void waitMemory() throws InterruptedException {
-        if(Runtime.getRuntime().freeMemory()<Runtime.getRuntime().maxMemory()/2) {
+        if (getAvailableMemory() < Runtime.getRuntime().maxMemory() / 2) {
             while(!isCacheLoaded) {
                 Thread.sleep(100);
             }
-            while(Runtime.getRuntime().freeMemory()<40000000) {
-                Thread.sleep(100);
+            int tries = 0;
+            while (getAvailableMemory() < 40000000) {
+                Thread.sleep(1000);
+                if (++tries > 30) {
+                    throw new OutOfMemoryError();
+                }
+                System.gc();
             }
         }
     }
@@ -126,4 +131,9 @@ public class IpedTimelineDatasetManager {
     public void setCacheLoaded(boolean isCacheLoaded) {
         this.isCacheLoaded = isCacheLoaded;
     }
+
+    public static long getAvailableMemory() {
+        return Runtime.getRuntime().freeMemory() + Runtime.getRuntime().maxMemory() - Runtime.getRuntime().totalMemory();
+    }
+
 }

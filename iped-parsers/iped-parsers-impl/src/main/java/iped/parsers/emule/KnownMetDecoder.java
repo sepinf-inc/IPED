@@ -39,7 +39,6 @@ public class KnownMetDecoder {
         if (DEBUG)
             System.err.println("   " + numFiles); //$NON-NLS-1$
         if (numFiles < 0) {
-            is.close();
             return null;
         }
 
@@ -58,7 +57,6 @@ public class KnownMetDecoder {
                 System.err.println(entry);
             l.add(entry);
         }
-        is.close();
         return l;
     }
 

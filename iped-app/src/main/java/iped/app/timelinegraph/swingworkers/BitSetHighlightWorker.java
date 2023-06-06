@@ -9,10 +9,12 @@ import java.util.concurrent.Semaphore;
 
 import javax.swing.JTable;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import iped.app.timelinegraph.IpedDateAxis;
 import iped.app.ui.App;
 import iped.app.ui.Messages;
-import iped.data.IItemId;
 import iped.viewers.api.CancelableWorker;
 import iped.viewers.api.IMultiSearchResultProvider;
 import iped.viewers.util.ProgressDialog;
@@ -22,6 +24,9 @@ import iped.viewers.util.ProgressDialog;
  * Opens a modal progress dialog while executing.
  */
 public class BitSetHighlightWorker extends CancelableWorker<Void, Void> {
+
+    private static final Logger logger = LogManager.getLogger(BitSetHighlightWorker.class);
+
     IMultiSearchResultProvider resultsProvider;
     IpedDateAxis domainAxis;
     BitSet bs;
@@ -93,7 +98,6 @@ public class BitSetHighlightWorker extends CancelableWorker<Void, Void> {
         @Override
         public void run() {
             try {
-                IItemId item = null;
                 for (int i = start; (i < start + sliceSize) && (i < resultsProvider.getResults().getLength()); i++) {
                     try {
                         if (progressDialog.isCanceled()) {
@@ -109,9 +113,8 @@ public class BitSetHighlightWorker extends CancelableWorker<Void, Void> {
                             processResultsItem(t, i);
                         }
                     } catch (Exception e) {
+                        logger.warn("Exception while iterating on i=" + i);
                         e.printStackTrace();
-                        System.out.println(i);
-                        System.out.println(item);
                     }
                 }
             } catch (Exception e) {
@@ -153,7 +156,7 @@ public class BitSetHighlightWorker extends CancelableWorker<Void, Void> {
         } finally {
             executor.shutdownNow();
             Date d2 = new Date();
-            System.out.println("Selecao 2 finalizada em:" + (d2.getTime() - d1.getTime()));
+            logger.info("Selection 2 finished in:" + (d2.getTime() - d1.getTime()));
             t.getSelectionModel().setValueIsAdjusting(false);
         }
     }
@@ -169,7 +172,6 @@ public class BitSetHighlightWorker extends CancelableWorker<Void, Void> {
         }
 
         try {
-            IItemId item = null;
             for (int i = 0; i < resultsProvider.getResults().getLength(); i++) {
                 if (progressDialog.isCanceled()) {
                     break;
@@ -183,7 +185,7 @@ public class BitSetHighlightWorker extends CancelableWorker<Void, Void> {
             e.printStackTrace();
         } finally {
             Date d2 = new Date();
-            System.out.println("Selecao 2 finalizada em:" + (d2.getTime() - d1.getTime()));
+            logger.info("Selection 2 finished in " + (d2.getTime() - d1.getTime()));
             t.getSelectionModel().setValueIsAdjusting(false);
         }
     }

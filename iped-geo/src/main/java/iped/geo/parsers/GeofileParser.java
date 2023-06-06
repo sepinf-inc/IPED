@@ -137,7 +137,7 @@ public class GeofileParser extends AbstractParser {
                 kmeta.set(TikaCoreProperties.MODIFIED, metadata.get(TikaCoreProperties.MODIFIED));
                 kmeta.set(HttpHeaders.CONTENT_TYPE, "text/plain");
                 kmeta.set(TikaCoreProperties.TITLE, folder.getName());
-                int id = virtualId++;
+                int id = ++virtualId;
                 kmeta.set(ExtraProperties.ITEM_VIRTUAL_ID, Integer.toString(id));
                 kmeta.set(ExtraProperties.PARENT_VIRTUAL_ID, Integer.toString(parentId));
                 if (folder.isTrack()) {

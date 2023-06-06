@@ -19,6 +19,8 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import javax.swing.JOptionPane;
+
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.SortedSetDocValues;
@@ -52,7 +54,6 @@ import iped.app.timelinegraph.cache.persistance.CachePersistance;
 import iped.app.ui.App;
 import iped.app.ui.CaseSearcherFilter;
 import iped.app.ui.Messages;
-import iped.app.ui.MetadataPanel.ValueCount;
 import iped.data.IIPEDSource;
 import iped.data.IItemId;
 import iped.data.IMultiBookmarks;
@@ -60,6 +61,7 @@ import iped.engine.data.IPEDMultiSource;
 import iped.engine.data.ItemId;
 import iped.engine.search.MultiSearchResult;
 import iped.search.IMultiSearchResult;
+import iped.utils.SeekableFileInputStream;
 import iped.viewers.api.IMultiSearchResultProvider;
 import iped.viewers.api.IQueryFilterer;
 
@@ -326,7 +328,13 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
             }
             
             //method to wait available mem to continue. This can avoid a commom OOM problem if there is low mem and, at first timeline index creation is not finished.
-            ipedChartsPanel.getIpedTimelineDatasetManager().waitMemory();
+            try {
+                ipedChartsPanel.getIpedTimelineDatasetManager().waitMemory();
+            } catch (OutOfMemoryError e) {
+                JOptionPane.showMessageDialog(ipedChartsPanel, "Insufficient Memory to plot chart!", "Error", JOptionPane.ERROR_MESSAGE);
+                memoryCacheReloadSem.release();
+                return;
+            }
 
             CaseSearcherFilter csf = new CaseSearcherFilter(queryText);
             csf.getSearcher().setNoScoring(true);
@@ -335,10 +343,6 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
 
             csf.execute();
             result = csf.get();
-
-            App app = App.get();
-            IMultiBookmarks multiBookmarks = App.get().getIPEDSource().getMultiBookmarks();
-            IPEDMultiSource appcase = (IPEDMultiSource) app.getIPEDSource();
 
             if (result.getLength() > 0) {
                 TimeStampCache cache = ipedChartsPanel.getIpedTimelineDatasetManager().getCache();
@@ -380,60 +384,60 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                     cacheWindowEndDate = new Date(ipedChartsPanel.getChartPanel().removeNextFromDatePart(endDate).getTime() - 1);
                 }
 
-                Iterator<CacheTimePeriodEntry> it = a.iterator(className, startDate, endDate);
-                CacheTimePeriodEntry ctpe = null;
-                while (it!=null && it.hasNext()) {
-                    ipedChartsPanel.getIpedTimelineDatasetManager().waitMemory();//method to wait available mem to continue.
-                    if (cancelled) {
-                        break;
-                    }
+                try (SeekableFileInputStream sfis = a.getTmpCacheSfis(className)) {
+                    Iterator<CacheTimePeriodEntry> it = a.iterator(className, sfis, startDate, endDate);
+                    while (it != null && it.hasNext()) {
+                        ipedChartsPanel.getIpedTimelineDatasetManager().waitMemory();// method to wait available mem to continue.
+                        if (cancelled) {
+                            break;
+                        }
 
-                    ctpe = it.next();
-                    
-                    boolean remove = false;
-                    if (!fullrange) {
-                        if (ctpe.getDate().before(startDate)) {
-                            if (ctpe.getDate().getTime() > cacheWindowStartDate.getTime()) {
+                        CacheTimePeriodEntry ctpe = it.next();
+
+                        boolean remove = false;
+                        if (!fullrange) {
+                            if (ctpe.getDate().before(startDate)) {
+                                if (ctpe.getDate().getTime() > cacheWindowStartDate.getTime()) {
+                                    if (!memoryWindowCache.contains(ctpe)) {
+                                        beforecache.addFirst(ctpe);
+                                        memoryWindowCache.add(ctpe);
+                                    }
+                                    remove = false;
+                                } else {
+                                    // remove from memoryCacheWindow
+                                    remove = true;
+                                }
+                            } else if (ctpe.getDate().after(endDate)) {
+                                if (ctpe.getDate().getTime() < cacheWindowEndDate.getTime()) {
+                                    if (!memoryWindowCache.contains(ctpe)) {
+                                        aftercache.add(ctpe);
+                                        memoryWindowCache.add(ctpe);
+                                    }
+                                    remove = false;
+                                } else {
+                                    // remove from memoryCacheWindow
+                                    remove = true;
+                                }
+                            } else {// inside visible window
                                 if (!memoryWindowCache.contains(ctpe)) {
-                                    beforecache.addFirst(ctpe);
+                                    visibleIntervalCache.add(ctpe);
                                     memoryWindowCache.add(ctpe);
                                 }
                                 remove = false;
-                            } else {
-                                // remove from memoryCacheWindow
-                                remove = true;
                             }
-                        } else if (ctpe.getDate().after(endDate)) {
-                            if (ctpe.getDate().getTime() < cacheWindowEndDate.getTime()) {
-                                if (!memoryWindowCache.contains(ctpe)) {
-                                    aftercache.add(ctpe);
-                                    memoryWindowCache.add(ctpe);
-                                }
-                                remove = false;
-                            } else {
-                                // remove from memoryCacheWindow
-                                remove = true;
-                            }
-                        } else {// inside visible window
+                        } else {
                             if (!memoryWindowCache.contains(ctpe)) {
                                 visibleIntervalCache.add(ctpe);
                                 memoryWindowCache.add(ctpe);
                             }
-                            remove = false;
                         }
-                    } else {
-                        if (!memoryWindowCache.contains(ctpe)) {
-                            visibleIntervalCache.add(ctpe);
-                            memoryWindowCache.add(ctpe);
+                        if (remove) {
+                            TimePeriod t = ipedChartsPanel.getDomainAxis().getDateOnConfiguredTimePeriod(ipedChartsPanel.getTimePeriodClass(), ctpe.getDate());
+                            accumulator.remove(t);
+                            memoryWindowCache.remove(ctpe);
                         }
-                    }
-                    if (remove) {
-                        TimePeriod t = ipedChartsPanel.getDomainAxis().getDateOnConfiguredTimePeriod(ipedChartsPanel.getTimePeriodClass(), ctpe.getDate());
-                        accumulator.remove(t);
-                        memoryWindowCache.remove(ctpe);
                     }
                 }
-                it = null;
 
                 populatesWithList(result, visibleIntervalCache, addValueSem);// creates first the visible interval itens to be plotted
 
@@ -458,7 +462,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                 memoryCacheReloadSem.release();// releases imediatelly as all cache was loaded
 
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             memoryCacheReloadSem.release();// garantee release of semaphore on untreated exception
             throw e;
         }
