@@ -40,13 +40,14 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
         this.cacheFiles.put(string, cacheFile);
         this.monthIndexCacheFiles.put(string, new File(new File(f, string), "1"));
 
+        int committed = 0;
         try (SeekableFileInputStream lcacheSfis = new SeekableFileInputStream(cacheFile);
              CacheDataInputStream lcacheDis = new CacheDataInputStream(lcacheSfis)) {
-            int committed = lcacheDis.readShort();
-            if (committed != 1) {
-                String msg = "File not committed:" + f.getName();
-                throw new IOException(msg);
-            }
+            committed = lcacheDis.readShort();
+        }
+        if (committed != 1) {
+            String msg = "File not committed:" + f.getName();
+            throw new IOException(msg);
         }
     }
 
