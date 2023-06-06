@@ -11,6 +11,7 @@ import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.store.AlreadyClosedException;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.UnicodeUtil;
 import org.jfree.data.time.Day;
@@ -123,6 +124,8 @@ public class EventTimestampCache implements Runnable {
             done.add(eventInternalOrd);
 
 
+        } catch (AlreadyClosedException e) {
+            //IPED closing before cache creation can throw this exception. So, we avoid logging it.
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
