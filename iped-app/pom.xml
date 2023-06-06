@@ -277,7 +277,7 @@
                                 <artifactItem>
                                     <groupId>abelcheung</groupId>
                                     <artifactId>rifiuti2</artifactId>
-                                    <version>0.7.0</version>
+                                    <version>0.6.1</version>
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
