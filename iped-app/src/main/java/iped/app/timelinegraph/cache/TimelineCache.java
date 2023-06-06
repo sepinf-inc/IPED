@@ -83,10 +83,10 @@ public class TimelineCache {
         if (cache == null) {
             cache = new CacheTimePeriodEntry[size];
             caches.put(className, cache);
-            if(hasSoftCacheFor(className)) {
-                SoftReference<CacheTimePeriodEntry>[] softCache = new SoftReference[size];
-                softCaches.put(className, softCache);
-            }
+        }
+        if(hasSoftCacheFor(className) && softCaches.get(className)==null) {
+            SoftReference<CacheTimePeriodEntry>[] softCache = new SoftReference[size];
+            softCaches.put(className, softCache);
         }
 
         return cache;
