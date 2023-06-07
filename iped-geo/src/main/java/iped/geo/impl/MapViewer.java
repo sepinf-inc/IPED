@@ -63,6 +63,10 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
 
     @Override
     public void redraw() {
+        if(unprocessedChange!=null) {
+            tableChanged(unprocessedChange);
+        }
+
         if (mapaPanel.browserCanvas.isLoaded()) {
             if (!updatingCheckbox) {
                 mapaPanel.updateMap();
@@ -71,6 +75,7 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
     }
 
     boolean internaltableChanged = false;
+    private TableModelEvent unprocessedChange;
 
     @Override
     public void checkAll(boolean value) {
@@ -88,7 +93,14 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
 
     @Override
     public void tableChanged(TableModelEvent e) {
-        if (e.getFirstRow() == -1 && e.getLastRow() == -1) {
+        if(!mapaPanel.isShowing()){
+            unprocessedChange = e;
+            return;
+        }
+        
+        unprocessedChange = null;
+        
+        if ((e.getFirstRow() == -1 && e.getLastRow() == -1)) {
             /**/
             return;
         }
