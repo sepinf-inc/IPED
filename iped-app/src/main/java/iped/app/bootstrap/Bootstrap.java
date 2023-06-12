@@ -73,7 +73,27 @@ public class Bootstrap {
         List<String> finalArgs = new ArrayList<>();
         for (String arg : args) {
             if (arg.startsWith("-Xms") || arg.startsWith("-Xmx")) {
-                heapArgs.add(arg);
+                StringBuffer argStr = new StringBuffer();
+                int i=4;
+                for(;i<arg.length();i++) {
+                    if(Character.isDigit(arg.charAt(i))){
+                        argStr.append(arg.charAt(i));
+                    }else {
+                        break;
+                    }
+                }
+                long parmSize = Integer.parseInt(argStr.toString());
+                switch (arg.charAt(i)) {
+                    case 'T':parmSize*=1024;
+                    case 'G':parmSize*=1024;
+                    case 'M':parmSize*=1024;
+                    case 'K':parmSize*=1024;                        
+                        break;
+                    default:
+                        break;
+                }
+                long memSize = Math.min(parmSize,((com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean()).getTotalPhysicalMemorySize());
+                heapArgs.add("-Xmx"+memSize/1024+"K");
             } else {
                 finalArgs.add(arg);
             }
