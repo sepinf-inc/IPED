@@ -17,7 +17,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.lucene.index.LeafReader;
 import org.jfree.data.time.TimePeriod;
 import org.roaringbitmap.RoaringBitmap;
 
@@ -39,7 +38,6 @@ public class IndexTimeStampCache implements TimeStampCache {
     TimeZone timezone;
 
     TimeIndexedMap newCache = new TimeIndexedMap();
-    
 
     public IndexTimeStampCache(IpedChartsPanel ipedChartsPanel, IMultiSearchResultProvider resultsProvider) {
         this.resultsProvider = resultsProvider;
@@ -57,6 +55,8 @@ public class IndexTimeStampCache implements TimeStampCache {
 
     @Override
     public void run() {
+        int oldPriority = Thread.currentThread().getPriority();
+        Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
         try {
 
             if (newCache.size() > 0) {
@@ -79,13 +79,11 @@ public class IndexTimeStampCache implements TimeStampCache {
                     e.printStackTrace();
                 }
             }
-
+            
             if (!cacheExists) {
                 Date d1 = new Date();
                 logger.info("Starting to build time cache of [{}]...", periodClassesToCache.toString());
                 
-                LeafReader reader = resultsProvider.getIPEDSource().getLeafReader();
-
                 ArrayList<EventTimestampCache> cacheLoaders = new ArrayList<EventTimestampCache>();
                 
                 String[] cachedEventNames = ipedChartsPanel.getOrdToEventName();
@@ -108,14 +106,13 @@ public class IndexTimeStampCache implements TimeStampCache {
                 try {
                     synchronized (monitor) {
                         monitor.wait();
-
+                        
                         if (Manager.getInstance() != null && Manager.getInstance().isProcessingFinished()) {
                         }
                         CachePersistance cp = CachePersistance.getInstance();
                         cp.saveNewCache(this);
 
                         cacheLoaders.clear();
-                        //TimelineCache.get().clear();// clear old empty timeline entries to be reloaded with created cache data
 
                         newCache = null;// liberates data used to create indexes for garbage collection
 
@@ -127,7 +124,8 @@ public class IndexTimeStampCache implements TimeStampCache {
                         }
 
                         newCache.createOrLoadUpperPeriodIndex(this);
-                        Date d2 = new Date();
+
+                        Date d2 = new Date();                        
                         logger.info("Time to build timeline index of [{}]: {}ms", periodClassesToCache.toString(), (d2.getTime() - d1.getTime()));
                     }
                 } catch (InterruptedException e) {
@@ -145,6 +143,7 @@ public class IndexTimeStampCache implements TimeStampCache {
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
+            Thread.currentThread().setPriority(oldPriority);
             timeStampCacheSemaphore.release();
         }
     }
