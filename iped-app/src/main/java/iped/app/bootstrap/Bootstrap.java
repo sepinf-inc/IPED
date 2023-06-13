@@ -76,7 +76,7 @@ public class Bootstrap {
         List<String> heapArgs = new ArrayList<>();
         List<String> finalArgs = new ArrayList<>();
         for (String arg : args) {
-            if (arg.startsWith("-Xmx")) {
+            if (arg.startsWith("-Xms") || arg.startsWith("-Xmx")) {
                 StringBuffer argStr = new StringBuffer();
                 int i=4;
                 for(;i<arg.length();i++) {
@@ -103,7 +103,7 @@ public class Bootstrap {
                     Logger LOGGER = LoggerFactory.getLogger(this.getClass());
                     LOGGER.info("   -Xmx parameter value greater than installed memory. It was adjusted to half the installed memory.");
                 }
-                heapArgs.add("-Xmx"+memSize/1024+"K");
+                heapArgs.add(arg.substring(0,4)+memSize/1024+"K");
             } else {
                 finalArgs.add(arg);
             }
