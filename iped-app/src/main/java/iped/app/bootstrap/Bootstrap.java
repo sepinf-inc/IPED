@@ -100,8 +100,7 @@ public class Bootstrap {
                 long memSize = parmSize;
                 if(halfInstalledMemory < parmSize) {
                     memSize = halfInstalledMemory;
-                    Logger LOGGER = LoggerFactory.getLogger(this.getClass());
-                    LOGGER.info("   -Xmx parameter value greater than installed memory. It was adjusted to half the installed memory.");
+                    System.out.println("-Xmx parameter value greater than installed memory. It was adjusted to half the installed memory:"+memSize/1024+"K");
                 }
                 heapArgs.add(arg.substring(0,4)+memSize/1024+"K");
             } else {
