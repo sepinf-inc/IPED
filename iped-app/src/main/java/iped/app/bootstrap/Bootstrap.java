@@ -18,12 +18,16 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.tika.utils.SystemUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ag.ion.bion.officelayer.application.IOfficeApplication;
 import iped.app.config.LogConfiguration;
 import iped.app.processing.Main;
+import iped.app.ui.AppMain;
 import iped.app.ui.splash.SplashScreenManager;
 import iped.app.ui.splash.StartUpControl;
+import iped.engine.Version;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.PluginConfig;
@@ -72,7 +76,7 @@ public class Bootstrap {
         List<String> heapArgs = new ArrayList<>();
         List<String> finalArgs = new ArrayList<>();
         for (String arg : args) {
-            if (arg.startsWith("-Xms") || arg.startsWith("-Xmx")) {
+            if (arg.startsWith("-Xmx")) {
                 StringBuffer argStr = new StringBuffer();
                 int i=4;
                 for(;i<arg.length();i++) {
@@ -92,7 +96,13 @@ public class Bootstrap {
                     default:
                         break;
                 }
-                long memSize = Math.min(parmSize,((com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean()).getTotalPhysicalMemorySize());
+                long halfInstalledMemory = ((com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean()).getTotalPhysicalMemorySize()/2;
+                long memSize = parmSize;
+                if(halfInstalledMemory < parmSize) {
+                    memSize = halfInstalledMemory;
+                    Logger LOGGER = LoggerFactory.getLogger(this.getClass());
+                    LOGGER.info("   -Xmx parameter value greater than installed memory. It was adjusted to half the installed memory.");
+                }
                 heapArgs.add("-Xmx"+memSize/1024+"K");
             } else {
                 finalArgs.add(arg);
