@@ -23,6 +23,8 @@ public class DateUtil {
 
     private static final DateUtil INSTANCE = new DateUtil();
 
+    private static Pattern pattern;
+
     private static DateFormat createDateFormat(String format, TimeZone timezone) {
         final SimpleDateFormat sdf = new SimpleDateFormat(format, new DateFormatSymbols(Locale.US));
         if (timezone != null) {
@@ -37,6 +39,8 @@ public class DateUtil {
      * based property.
      */
     private final List<DateFormat> iso8601InputFormats = loadDateFormats();
+
+    private final DateFormat monthFormat = new SimpleDateFormat("MMM dd, YYYY HH:mm:ssZ");
 
     private List<DateFormat> loadDateFormats() {
         List<DateFormat> dateFormats = new ArrayList<>();
@@ -85,6 +89,26 @@ public class DateUtil {
     }
 
     /**
+     * Tries to parse the date string; returns null if no parse was possible.
+     *
+     * This is not thread safe! Wrap in synchronized or create new {@link DateUtils}
+     * for each class.
+     *
+     * @param dateString
+     * @return
+     */
+    public Date tryToParseExt(String dateString) {
+        try {
+            dateString = dateString.replaceAll("\\.\\d*\\s", "");//removes milliseconds
+            return monthFormat.parse(dateString);
+        } catch (java.text.ParseException e) {
+
+        }
+
+        return null;
+    }
+
+    /**
      * Thread-safe method internally synchronized
      * 
      * @param val
@@ -95,8 +119,15 @@ public class DateUtil {
             synchronized (INSTANCE) {
                 return INSTANCE.tryToParse(val);
             }
-        } else
-            return null;
+        } else {
+            if(val.length()>=21 && Character.isDigit(val.charAt(4)) && val.charAt(6)==',') {
+                synchronized (INSTANCE) {
+                    return INSTANCE.tryToParseExt(val);
+                }
+            }else {
+                return null;
+            }
+        }
     }
 
     // Thread local variable
@@ -117,4 +148,13 @@ public class DateUtil {
         return threadLocal.get().parse(date);
     }
 
+    public static Pattern getDateStrPattern(){
+        if(pattern==null) {
+            String patternStr = "(?<ISO>\\d{4}[:-](0[1-9]|1[0-2])[:-](0[1-9]|[1-2][0-9]|3[0-1])(\\s|T)([0-1][0-9]|2[0-3])\\:([0-5][0-9])\\:([0-5][0-9])Z?)"
+                    + "|((Mon|Tue|Wed|Thu|Fri|Sat|Sun)\\s(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\\s(0[1-9]|[1-2][0-9]|3[0-1])\\s([0-1][0-9]|2[0-3])\\:([0-5][0-9])\\:(([0-5][0-9])Z?)\\s\\d{4})";
+            pattern = Pattern.compile(patternStr);
+        }
+        return pattern;
+    }
+    
 }

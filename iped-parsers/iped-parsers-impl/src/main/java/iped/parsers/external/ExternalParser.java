@@ -255,7 +255,7 @@ public class ExternalParser extends AbstractParser {
         boolean inputToStdIn = true;
         boolean outputFromStdOut = true;
         boolean hasPatterns = (metadataPatterns != null && !metadataPatterns.isEmpty());
-
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
         File outputFile = tmp.createTemporaryFile();
 
         // Build our command
@@ -286,6 +286,9 @@ public class ExternalParser extends AbstractParser {
         // Execute
         Process process = null;
         try {
+            if(cmd[0].contains("sccainfo")) {
+                System.out.println();
+            }
             if (cmd.length == 1) {
                 process = Runtime.getRuntime().exec(cmd[0], null, workDir);
             } else {
@@ -515,7 +518,20 @@ public class ExternalParser extends AbstractParser {
                         if (metadataPatterns.get(p) != null && !metadataPatterns.get(p).equals("")) {
                             metadata.add(metadataPatterns.get(p), m.group(1));
                         } else {
-                            metadata.add(m.group(1), m.group(2));
+                            String propertyName;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+                            String value;
+                            try {
+                                propertyName = m.group("key");
+                                propertyName=propertyName.replace(" ", "").replace("\t", "").replace("\n", "").replace("\r", "");
+                            }catch (IllegalArgumentException iae) {
+                                propertyName = m.group(1);
+                            }
+                            try {
+                                value = m.group("value");
+                            }catch (IllegalArgumentException iae) {
+                                value = m.group(2);
+                            }
+                            metadata.add(parserName+":"+propertyName, value);
                         }
                     }
                 }
