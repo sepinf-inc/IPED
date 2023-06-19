@@ -74,31 +74,35 @@ public class Bootstrap {
         for (String arg : args) {
             if (arg.startsWith("-Xms") || arg.startsWith("-Xmx")) {
                 StringBuffer argStr = new StringBuffer();
-                int i=4;
-                for(;i<arg.length();i++) {
-                    if(Character.isDigit(arg.charAt(i))){
+                int i = 4;
+                for (; i < arg.length(); i++) {
+                    if (Character.isDigit(arg.charAt(i))) {
                         argStr.append(arg.charAt(i));
-                    }else {
+                    } else {
                         break;
                     }
                 }
                 long parmSize = Integer.parseInt(argStr.toString());
                 switch (arg.charAt(i)) {
-                    case 'T':parmSize*=1024;
-                    case 'G':parmSize*=1024;
-                    case 'M':parmSize*=1024;
-                    case 'K':parmSize*=1024;                        
+                    case 'T':
+                        parmSize *= 1024;
+                    case 'G':
+                        parmSize *= 1024;
+                    case 'M':
+                        parmSize *= 1024;
+                    case 'K':
+                        parmSize *= 1024;
                         break;
                     default:
                         break;
                 }
-                long halfInstalledMemory = ((com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean()).getTotalPhysicalMemorySize()/2;
+                long halfInstalledMemory = ((com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean()).getTotalPhysicalMemorySize() / 2;
                 long memSize = parmSize;
-                if(halfInstalledMemory < parmSize) {
+                if (halfInstalledMemory < parmSize) {
                     memSize = halfInstalledMemory;
-                    System.out.println("-Xmx parameter value greater than installed memory. It was adjusted to half the installed memory:"+memSize/1024+"K");
+                    System.out.println("-Xmx parameter value greater than installed memory. It was adjusted to half the installed memory:" + memSize / 1024 + "K");
                 }
-                heapArgs.add(arg.substring(0,4)+memSize/1024+"K");
+                heapArgs.add(arg.substring(0, 4) + memSize / 1024 + "K");
             } else {
                 finalArgs.add(arg);
             }
