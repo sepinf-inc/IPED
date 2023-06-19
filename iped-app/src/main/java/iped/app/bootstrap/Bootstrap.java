@@ -71,8 +71,10 @@ public class Bootstrap {
 
         List<String> heapArgs = new ArrayList<>();
         List<String> finalArgs = new ArrayList<>();
+        boolean XmxDefined = false;
+        long physicalMemory = ((com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean()).getTotalPhysicalMemorySize();
         for (String arg : args) {
-            if (arg.startsWith("-Xms") || arg.startsWith("-Xmx")) {
+            if (arg.startsWith("-Xms") || (XmxDefined = arg.startsWith("-Xmx"))) {
                 StringBuffer argStr = new StringBuffer();
                 int i = 4;
                 for (; i < arg.length(); i++) {
@@ -96,16 +98,21 @@ public class Bootstrap {
                     default:
                         break;
                 }
-                long halfInstalledMemory = ((com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean()).getTotalPhysicalMemorySize() / 2;
                 long memSize = parmSize;
-                if (halfInstalledMemory < parmSize) {
-                    memSize = halfInstalledMemory;
-                    System.out.println("-Xmx parameter value greater than installed memory. It was adjusted to half the installed memory:" + memSize / 1024 + "K");
+                if (memSize > physicalMemory) {
+                    memSize = physicalMemory;
+                    System.out.println("-Xms/-Xmx parameter value greater than physical memory. It was adjusted to the physical memory: " + memSize / (1024 * 1024) + "M");
                 }
-                heapArgs.add(arg.substring(0, 4) + memSize / 1024 + "K");
+                heapArgs.add(arg.substring(0, 4) + memSize / (1024 * 1024) + "M");
             } else {
                 finalArgs.add(arg);
             }
+        }
+
+        if (!XmxDefined) {
+            // if -Xmx is not specified, set to half the physical memory, up to 32GB
+            long memSize = Math.min(physicalMemory / 2, 32 * 1024 * 1024 * 1024);
+            heapArgs.add("-Xmx" + (memSize / (1024 * 1024)) + "M");
         }
 
         Main iped = new Main(finalArgs.toArray(new String[0]), isToDecodeArgs());
