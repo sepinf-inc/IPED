@@ -13,9 +13,7 @@ import javax.swing.event.TableModelListener;
 
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
 import iped.data.IItemId;
-import iped.geo.js.GetResultsJSWorker;
 import iped.geo.localization.Messages;
-import iped.properties.BasicProps;
 import iped.viewers.api.GUIProvider;
 import iped.viewers.api.IMultiSearchResultProvider;
 import iped.viewers.api.ResultSetViewer;
@@ -63,7 +61,7 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
 
     @Override
     public void redraw() {
-        if(unprocessedChange!=null) {
+        if (unprocessedChange != null) {
             tableChanged(unprocessedChange);
         }
 
@@ -93,13 +91,13 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
 
     @Override
     public void tableChanged(TableModelEvent e) {
-        if(!mapaPanel.isShowing()){
+        if (!mapaPanel.isShowing()) {
             unprocessedChange = e;
             return;
         }
-        
+
         unprocessedChange = null;
-        
+
         if ((e.getFirstRow() == -1 && e.getLastRow() == -1)) {
             /**/
             return;
