@@ -7,6 +7,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.jfree.data.time.Day;
 import org.jfree.data.time.Hour;
@@ -33,7 +34,7 @@ public class IpedTimelineDatasetManager {
 
     List<TimeStampCache> timeStampCaches = new ArrayList<>();
 
-    boolean startDatasetCreationCalled = false;
+    private AtomicBoolean startDatasetCreationCalled = new AtomicBoolean(false);
 
     TimeStampCache selectedTimeStampCache;
 
@@ -68,8 +69,7 @@ public class IpedTimelineDatasetManager {
      * Start the creation of cache for timeline chart
      */
     public void startBackgroundCacheCreation() {
-        if (!startDatasetCreationCalled) {
-            startDatasetCreationCalled = true;
+        if (!startDatasetCreationCalled.getAndSet(true)) {
             int poolSize = (int) Math.ceil((float) Runtime.getRuntime().availableProcessors() / 2f);
             ExecutorService threadPool = Executors.newFixedThreadPool(poolSize);
             boolean first = true;
