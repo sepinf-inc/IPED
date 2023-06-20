@@ -78,7 +78,10 @@ public class Bootstrap {
         boolean XmxDefined = false;
         long physicalMemory = ((com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean()).getTotalPhysicalMemorySize();
         for (String arg : args) {
-            if (arg.startsWith("-Xms") || (XmxDefined = arg.startsWith("-Xmx"))) {
+            if (arg.startsWith("-Xms") || arg.startsWith("-Xmx")) {
+                if (arg.charAt(3) == 'x') {
+                    XmxDefined = true;
+                }
                 StringBuffer argStr = new StringBuffer();
                 int i = 4;
                 for (; i < arg.length(); i++) {
@@ -115,7 +118,7 @@ public class Bootstrap {
 
         if (!XmxDefined) {
             // if -Xmx is not specified, set it, up to 32GB
-            long memSize = Math.min((long) (physicalMemory * getRAMToHeapFactor()), 32 * 1024 * 1024 * 1024);
+            long memSize = Math.min((long) (physicalMemory * getRAMToHeapFactor()), 32L * 1024 * 1024 * 1024);
             heapArgs.add("-Xmx" + (memSize / (1024 * 1024)) + "M");
         }
 
