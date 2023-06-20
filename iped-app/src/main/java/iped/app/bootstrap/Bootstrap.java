@@ -169,6 +169,9 @@ public class Bootstrap {
             cmd.addAll(getCurrentJVMArgs());
             cmd.addAll(getCustomJVMArgs());
             cmd.addAll(getSystemProperties());
+            if (SystemUtils.IS_OS_WINDOWS) {
+                cmd.add("-Djavax.net.ssl.trustStoreType=WINDOWS-ROOT"); // fix for #1719
+            }
             cmd.add("-Djava.net.useSystemProxies=true"); // fix for #1446
             cmd.add(getMainClassName());
             cmd.addAll(finalArgs);
