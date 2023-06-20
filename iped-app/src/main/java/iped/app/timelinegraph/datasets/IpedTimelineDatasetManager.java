@@ -67,18 +67,6 @@ public class IpedTimelineDatasetManager {
     /*
      * Start the creation of cache for timeline chart
      */
-    public void startBackgroundCacheCreation(int delay) {
-        try {
-            Thread.sleep(delay);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        startBackgroundCacheCreation();
-    }
-    
-    /*
-     * Start the creation of cache for timeline chart
-     */
     public void startBackgroundCacheCreation() {
         if(!startDatasetCreationCalled) {
             startDatasetCreationCalled = true;
