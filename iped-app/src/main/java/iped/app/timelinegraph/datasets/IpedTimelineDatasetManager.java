@@ -32,7 +32,7 @@ public class IpedTimelineDatasetManager {
     IpedChartsPanel ipedChartsPanel;
 
     List<TimeStampCache> timeStampCaches = new ArrayList<>();
-    
+
     boolean startDatasetCreationCalled = false;
 
     TimeStampCache selectedTimeStampCache;
@@ -68,7 +68,7 @@ public class IpedTimelineDatasetManager {
      * Start the creation of cache for timeline chart
      */
     public void startBackgroundCacheCreation() {
-        if(!startDatasetCreationCalled) {
+        if (!startDatasetCreationCalled) {
             startDatasetCreationCalled = true;
             int poolSize = (int) Math.ceil((float) Runtime.getRuntime().availableProcessors() / 2f);
             ExecutorService threadPool = Executors.newFixedThreadPool(poolSize);

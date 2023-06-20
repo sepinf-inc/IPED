@@ -588,7 +588,6 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
                             ipedTimelineDatasetManager.startBackgroundCacheCreation();
                             self.refreshChart();
                         }
-                        
                     };
                     new Thread(r).start();
                 }
