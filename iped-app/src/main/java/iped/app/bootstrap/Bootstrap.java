@@ -67,6 +67,10 @@ public class Bootstrap {
         return Main.class.getCanonicalName();
     }
 
+    protected float getRAMToHeapFactor() {
+        return 0.25f;
+    }
+
     protected void run(String args[]) {
 
         List<String> heapArgs = new ArrayList<>();
@@ -110,8 +114,8 @@ public class Bootstrap {
         }
 
         if (!XmxDefined) {
-            // if -Xmx is not specified, set to half the physical memory, up to 32GB
-            long memSize = Math.min(physicalMemory / 2, 32 * 1024 * 1024 * 1024);
+            // if -Xmx is not specified, set it, up to 32GB
+            long memSize = Math.min((long) (physicalMemory * getRAMToHeapFactor()), 32 * 1024 * 1024 * 1024);
             heapArgs.add("-Xmx" + (memSize / (1024 * 1024)) + "M");
         }
 
