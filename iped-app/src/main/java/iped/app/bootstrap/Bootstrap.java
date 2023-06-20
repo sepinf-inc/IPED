@@ -92,7 +92,7 @@ public class Bootstrap {
                     }
                 }
                 long parmSize = Integer.parseInt(argStr.toString());
-                switch (arg.charAt(i)) {
+                switch (Character.toUpperCase(arg.charAt(i))) {
                     case 'T':
                         parmSize *= 1024;
                     case 'G':
