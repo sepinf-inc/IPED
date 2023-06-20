@@ -24,4 +24,9 @@ public class BootstrapUI extends Bootstrap {
         return AppMain.class.getCanonicalName();
     }
 
+    @Override
+    protected float getRAMToHeapFactor() {
+        return 0.5f;
+    }
+
 }
