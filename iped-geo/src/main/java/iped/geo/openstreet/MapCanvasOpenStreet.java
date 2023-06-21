@@ -240,7 +240,10 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
     }
 
     public String getMainHtml() throws IOException {
-        this.url = JMapOptionsPane.getSavedTilesSourceURL();
+        if(this.url == null) {
+            setUrl(JMapOptionsPane.getSavedTilesSourceURL());
+        }
+
         String html = IOUtils.toString(getClass().getResourceAsStream("main.html"), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$
         String js = IOUtils.toString(getClass().getResourceAsStream("L.KML.js"), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$
         String markerclusterjs = IOUtils.toString(getClass().getResourceAsStream("leaflet.markercluster.js"), //$NON-NLS-1$
@@ -488,6 +491,7 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
 
     @Override
     public boolean setTileServerUrl(String url) {
+        setUrl(url);
         if (url.contains("googleapis") && url.contains("key") && !url.substring(url.indexOf("key=")).equals(lastGoogleApiKey)) {
             lastGoogleApiKey = url.substring(url.indexOf("key="));
             return true;
