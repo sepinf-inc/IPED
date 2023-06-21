@@ -296,7 +296,9 @@ public class Bootstrap {
     private static void redirectStream(InputStream is, OutputStream os) {
         Thread t = new Thread() {
             public void run() {
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(is)); PrintWriter writer = new PrintWriter(os, true)) {
+                try {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+                    PrintWriter writer = new PrintWriter(os, true);
                     String line = null;
                     while ((line = reader.readLine()) != null) {
                         if (subProcessTempFolder == null && line.startsWith(SUB_PROCESS_TEMP_FOLDER)) {
