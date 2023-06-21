@@ -69,10 +69,7 @@
   
   <!-- Regex can be used to parse and extract metadata from external parser output.
   Regex subgroups named as key and value are used to save the extracted metadata name and value, respectively.
-  (See PrefetchParser example bellow, that extracts timestamps from sccainfo result).
-  
-  Regex without these named subgroups must have a key attribute with metadata name on the respective match element.
-  (See RecycleBinParser example).
+  See PrefetchParser example bellow, that extracts timestamps from sccainfo result.
    -->
   <parser>
 	 <name>PrefetchParser</name>
