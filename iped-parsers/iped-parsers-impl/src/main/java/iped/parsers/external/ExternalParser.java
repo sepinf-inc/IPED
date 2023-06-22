@@ -67,6 +67,12 @@ public class ExternalParser extends AbstractParser {
 
     private static Logger LOGGER;
 
+    public final static int IGNORE = 0;
+    public final static int APPEND = 1;
+    public final static int SPLITSUBITEM = 2;
+
+    int outputExtractionScheme = 0;// default is to ignore
+
     public static final String EXTERNAL_PARSERS_ROOT = "iped.extParsers.root";
 
     /**
@@ -211,6 +217,15 @@ public class ExternalParser extends AbstractParser {
     }
 
     /**
+     * Sets the map of regular expression patterns and Metadata keys. Any matching
+     * patterns will have the matching metadata entries set. Set this to null to
+     * disable Metadata extraction.
+     */
+    public void setOutputExtractionScheme(int scheme) {
+        this.outputExtractionScheme = scheme;
+    }
+
+    /**
      * Executes the configured external command and passes the given document stream
      * as a simple XHTML document to the given SAX content handler. Metadata is only
      * extracted if {@link #setMetadataExtractionPatterns(Map)} has been called to
@@ -286,9 +301,6 @@ public class ExternalParser extends AbstractParser {
         // Execute
         Process process = null;
         try {
-            if(cmd[0].contains("sccainfo")) {
-                System.out.println();
-            }
             if (cmd.length == 1) {
                 process = Runtime.getRuntime().exec(cmd[0], null, workDir);
             } else {
@@ -333,15 +345,17 @@ public class ExternalParser extends AbstractParser {
 
             process.waitFor();
 
-            try (InputStream is = new FileInputStream(outputFile)) {
-                if (hasPatterns) {
+            if (hasPatterns) {
+                try (InputStream is = new FileInputStream(outputFile)) {
                     extractMetadata(is, metadata);
-                } else {
+                }
+            }
+            if (outputExtractionScheme == APPEND) {
+                try (InputStream is = new FileInputStream(outputFile)) {
                     File tmpFile = inputToStdIn ? null : stream.getFile();
                     extractOutput(is, xhtml, metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY), tmpFile);
                 }
             }
-
         } catch (InterruptedException e) {
             LOGGER.warn(
                     parserName + " interrupted while processing " + metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY)
@@ -363,8 +377,8 @@ public class ExternalParser extends AbstractParser {
             public void run() {
                 try {
                     Files.copy(stream, outFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-
                 } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
         };
