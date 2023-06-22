@@ -37,7 +37,7 @@ public interface ExternalParsersConfigReaderMetKeys {
 
     String METADATA_TAG = "metadata";
 
-    String APPENDCONTENT_TAG = "appendtextcontent";
+    String APPENDCONTENT_TAG = "appendTextContent";
 
     String METADATA_MATCH_TAG = "match";
 
