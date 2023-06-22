@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -123,7 +124,13 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
                 List<IItemReader> possibleParts = searcher.search(query);
                 logger.info("Found {} possible image segments of {}", possibleParts.size(), item.getPath());
                 for (IItemReader possiblePart : possibleParts) {
-                    // export DD parts
+                    // export (and process) deleted parts after allocated ones
+                    Collections.sort(possibleParts, new Comparator<IItemReader>() {
+                        @Override
+                        public int compare(IItemReader o1, IItemReader o2) {
+                            return Boolean.compare(o1.isDeleted(), o2.isDeleted());
+                        }
+                    });
                     exportItem(possiblePart, false);
                 }
             }
