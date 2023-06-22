@@ -71,7 +71,7 @@ public class ExternalParser extends AbstractParser {
     public final static int APPEND = 1;
     public final static int SPLITSUBITEM = 2;
 
-    int outputExtractionScheme = 0;// default is to ignore
+    int outputExtractionScheme = APPEND;// default is to ignore
 
     public static final String EXTERNAL_PARSERS_ROOT = "iped.extParsers.root";
 
@@ -94,11 +94,11 @@ public class ExternalParser extends AbstractParser {
          */
         LineConsumer NULL = new LineConsumer() {
             /**
-			 * 
-			 */
-			private static final long serialVersionUID = 1L;
+             * 
+             */
+            private static final long serialVersionUID = 1L;
 
-			@Override
+            @Override
             public void consume(String line) {
                 // ignores
             }

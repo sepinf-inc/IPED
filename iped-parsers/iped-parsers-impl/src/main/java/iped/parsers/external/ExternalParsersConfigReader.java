@@ -123,7 +123,6 @@ public final class ExternalParsersConfigReader implements ExternalParsersConfigR
                     parser.setSupportedTypes(readMimeTypes(child));
                 } else if (child.getTagName().equals(METADATA_TAG)) {
                     parser.setMetadataExtractionPatterns(readMetadataPatterns(child));
-                    parser.setOutputExtractionScheme(ExternalParser.IGNORE);
                 } else if (child.getTagName().equals(APPENDCONTENT_TAG)) {
                     appendStr = getString(child);
                 } else if (child.getTagName().equals(PARSER_NAME_TAG)) {
@@ -145,7 +144,7 @@ public final class ExternalParsersConfigReader implements ExternalParsersConfigR
                 parser.setOutputExtractionScheme(Integer.parseInt(appendStr));
             }
         } else {
-            if (parser.getMetadataExtractionPatterns() != null) {
+            if (parser.getMetadataExtractionPatterns() != null && parser.getMetadataExtractionPatterns().size() > 0) {
                 parser.setOutputExtractionScheme(ExternalParser.IGNORE);// if metadata extraction is defined, default
                                                                         // behavior is to ignore text content
             }
