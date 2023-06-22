@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -52,6 +53,8 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
             MediaTypes.VMDK_DESCRIPTOR, MediaTypes.VHD, MediaTypes.VHDX, MediaTypes.RAW_IMAGE, MediaTypes.EWF_IMAGE,
             MediaTypes.E01_IMAGE, MediaTypes.EWF2_IMAGE, MediaTypes.EX01_IMAGE);
 
+    private static final String PUSHED_TO_DELETED_QUEUE = "PUSHED_TO_DELETED_DISK_QUEUE";
+
     private static Set<File> exportedDisks = Collections.synchronizedSet(new HashSet<>());
 
     private static AtomicBoolean embeddedDiskBeingExpanded = new AtomicBoolean();
@@ -59,6 +62,8 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
     private static Object lock = new Object();
 
     private boolean enabled = true;
+
+    private ArrayList<IItem> deletedDisks = new ArrayList<>();
 
     @Override
     public boolean isEnabled() {
@@ -102,7 +107,29 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
     }
 
     @Override
+    protected void sendToNextTask(IItem item) throws Exception {
+        if (item.getTempAttribute(PUSHED_TO_DELETED_QUEUE) == null) {
+            super.sendToNextTask(item);
+        }
+    }
+
+    @Override
     protected void process(IItem item) throws Exception {
+        if (!item.isQueueEnd()) {
+            process(item, true);
+        } else {
+            ArrayList<IItem> deletedList = this.deletedDisks;
+            // new list to hold possible deleted disks found in the current deleted ones
+            this.deletedDisks = new ArrayList<>();
+            for (IItem deletedItem : deletedList) {
+                process(deletedItem, false);
+                deletedItem.setTempAttribute(PUSHED_TO_DELETED_QUEUE, null);
+                sendToNextTask(deletedItem);
+            }
+        }
+    }
+
+    private void process(IItem item, boolean enqueueDeleted) throws Exception {
 
         if (!isSupported(item)) {
             return;
@@ -124,7 +151,7 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
                 List<IItemReader> possibleParts = searcher.search(query);
                 logger.info("Found {} possible image segments of {}", possibleParts.size(), item.getPath());
                 for (IItemReader possiblePart : possibleParts) {
-                    // export (and process) deleted parts after allocated ones
+                    // export (and process) deleted parts after allocated ones see #1660
                     Collections.sort(possibleParts, new Comparator<IItemReader>() {
                         @Override
                         public int compare(IItemReader o1, IItemReader o2) {
@@ -138,8 +165,23 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
         } else if (MediaTypes.EWF_IMAGE.equals(item.getMediaType())
                 || MediaTypes.EWF2_IMAGE.equals(item.getMediaType())
                 || MediaTypes.VMDK_DATA.equals(item.getMediaType())) {
-            // export e01/vmdk parts to process them later
-            exportItem(item, false);
+
+            // process allocated parts & enqueue deleted ones to process later see #1660
+            if (item.isDeleted() && enqueueDeleted) {
+                deletedDisks.add(item);
+                item.setTempAttribute(PUSHED_TO_DELETED_QUEUE, true);
+                return;
+            } else {
+                // export e01/vmdk parts to process them later
+                exportItem(item, false);
+                return;
+            }
+        }
+
+        // process allocated parts & enqueue deleted ones to process later see #1660
+        if (item.isDeleted() && enqueueDeleted) {
+            deletedDisks.add(item);
+            item.setTempAttribute(PUSHED_TO_DELETED_QUEUE, true);
             return;
         }
 
@@ -169,7 +211,6 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
         } finally {
             embeddedDiskBeingExpanded.set(false);
         }
-
     }
 
     private File exportItem(IItemReader item, boolean firstPart) throws IOException {
