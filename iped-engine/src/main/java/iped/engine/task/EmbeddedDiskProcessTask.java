@@ -162,14 +162,14 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
                         + QueryParserUtil.escape(item.getName().substring(0, dotIdx)) + "\"";
                 List<IItemReader> possibleParts = searcher.search(query);
                 logger.info("Found {} possible image segments of {}", possibleParts.size(), item.getPath());
+                // export (and process) deleted parts after allocated ones see #1660
+                Collections.sort(possibleParts, new Comparator<IItemReader>() {
+                    @Override
+                    public int compare(IItemReader o1, IItemReader o2) {
+                        return Boolean.compare(o1.isDeleted(), o2.isDeleted());
+                    }
+                });
                 for (IItemReader possiblePart : possibleParts) {
-                    // export (and process) deleted parts after allocated ones see #1660
-                    Collections.sort(possibleParts, new Comparator<IItemReader>() {
-                        @Override
-                        public int compare(IItemReader o1, IItemReader o2) {
-                            return Boolean.compare(o1.isDeleted(), o2.isDeleted());
-                        }
-                    });
                     exportItem(possiblePart, false);
                 }
             }
