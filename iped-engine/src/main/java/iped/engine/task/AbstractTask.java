@@ -35,8 +35,6 @@ public abstract class AbstractTask {
 
     private static Logger LOGGER = LoggerFactory.getLogger(AbstractTask.class);
 
-    private static final String REENQUEUED_FLAG = "ItemReEnqueuedFlag";
-
     /**
      * Worker que executará esta tarefa.
      */
@@ -153,6 +151,15 @@ public abstract class AbstractTask {
      */
     abstract protected void process(IItem evidence) throws Exception;
 
+    private static class ItemReEnqueuedException extends RuntimeException {
+
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 1L;
+
+    }
+
     /**
      * Realiza o processamento do item na tarefa e o envia para a próxima tarefa.
      *
@@ -181,14 +188,12 @@ public abstract class AbstractTask {
 
         if (this.isEnabled() && (!evidence.isToIgnore() || processIgnoredItem())) {
             long t = System.nanoTime() / 1000;
+            try {
+                processMonitorTimeout(evidence);
 
-            processMonitorTimeout(evidence);
-
-            if (evidence.getTempAttribute(REENQUEUED_FLAG) != null) {
+            } catch (ItemReEnqueuedException e) {
                 sendToNextTask = false;
-                evidence.setTempAttribute(REENQUEUED_FLAG, null);
             }
-
             Long subitensTime = subitemProcessingTime.remove(evidence.getId());
             if (subitensTime == null) {
                 subitensTime = 0L;
@@ -245,7 +250,7 @@ public abstract class AbstractTask {
 
     protected void reEnqueueItem(IItem item) throws InterruptedException {
         reEnqueueItem(item, worker.manager.getProcessingQueues().getCurrentQueuePriority());
-        item.setTempAttribute(REENQUEUED_FLAG, new Object());
+        throw new ItemReEnqueuedException();
     }
 
     private void reEnqueueItem(IItem item, int queue) throws InterruptedException {
