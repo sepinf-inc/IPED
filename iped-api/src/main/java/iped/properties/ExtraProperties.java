@@ -147,6 +147,12 @@ public class ExtraProperties {
 
     public static final String FACE_ENCODINGS = "face_encodings";
 
+    public static final String OWNER_SID = "ownerSID";
+
+    public static final String OWNER_LOGIN = "ownerLogin";
+
+    public static final String OWNER_FULL_NAME = "ownerFullName";
+
     public static final List<String> COMMUNICATION_BASIC_PROPS = Arrays.asList(MESSAGE_SUBJECT, COMMUNICATION_DATE.getName(),
             MESSAGE_BODY, COMMUNICATION_FROM, COMMUNICATION_TO, Message.MESSAGE_CC, Message.MESSAGE_BCC,
             Message.MESSAGE_RECIPIENT_ADDRESS, MESSAGE_IS_ATTACHMENT, MESSAGE_ATTACHMENT_COUNT.getName());
