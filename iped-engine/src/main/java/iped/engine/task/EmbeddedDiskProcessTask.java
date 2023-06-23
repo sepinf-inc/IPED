@@ -170,7 +170,7 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
                     }
                 });
                 for (IItemReader possiblePart : possibleParts) {
-                    exportItem(possiblePart, false);
+                    exportItem(possiblePart);
                 }
             }
 
@@ -185,7 +185,7 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
                 return;
             } else {
                 // export e01/vmdk parts to process them later
-                exportItem(item, false);
+                exportItem(item);
                 return;
             }
         }
@@ -198,7 +198,7 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
         }
 
         // export first part if not done
-        File imageFile = exportItem(item, true);
+        File imageFile = exportItem(item);
 
         if (embeddedDiskBeingExpanded.getAndSet(true)) {
             super.reEnqueueItem(item);
@@ -225,7 +225,7 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
         }
     }
 
-    private File exportItem(IItemReader item, boolean firstPart) throws IOException {
+    private File exportItem(IItemReader item) throws IOException {
         File imageFile = null;
         if (item instanceof IItem && IOUtil.hasFile((IItem) item)) {
             imageFile = IOUtil.getFile((IItem) item);
