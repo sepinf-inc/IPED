@@ -127,9 +127,16 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
             // new list to hold possible deleted disks found in the current deleted ones
             this.deletedDisks = new ArrayList<>();
             for (IItem deletedItem : deletedList) {
-                process(deletedItem, false);
                 deletedItem.setTempAttribute(PUSHED_TO_DELETED_QUEUE, null);
-                sendToNextTask(deletedItem);
+                boolean sendToNextQueue = true;
+                try {
+                    process(deletedItem, false);
+                } catch (ItemReEnqueuedException e) {
+                    sendToNextQueue = false;
+                }
+                if (sendToNextQueue) {
+                    sendToNextTask(deletedItem);
+                }
             }
         }
     }
