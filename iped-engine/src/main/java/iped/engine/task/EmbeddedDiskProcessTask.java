@@ -114,6 +114,11 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
     }
 
     @Override
+    protected boolean processQueueEnd() {
+        return true;
+    }
+
+    @Override
     protected void process(IItem item) throws Exception {
         if (!item.isQueueEnd()) {
             process(item, true);
