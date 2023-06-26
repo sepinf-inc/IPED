@@ -42,10 +42,11 @@ public class KnownMetDecoder {
             return null;
         }
 
-        int pos = 5;
-        for (int i = 0; i < numFiles; i++) {
+        int pos = 5, i = 0;
+
+        while (pos < b.length) {
             if (DEBUG)
-                System.err.println("      " + i); //$NON-NLS-1$
+                System.err.println("      " + (i++)); //$NON-NLS-1$
             KnownMetEntry entry = new KnownMetEntry();
             int len = parseEntry(entry, pos, b);
             if (len <= 0) {
