@@ -13,10 +13,10 @@ public class KnownMetDecoder {
     private static final long dataMax = System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 365 * 5; // About +5 years
 
     public static List<KnownMetEntry> parseToList(InputStream is) throws IOException {
-        return parseToList(is, MAX_SIZE);
+        return parseToList(is, MAX_SIZE, false);
     }
 
-    public static List<KnownMetEntry> parseToList(InputStream is, int maxSize) throws IOException {
+    public static List<KnownMetEntry> parseToList(InputStream is, int maxSize, boolean checkConstraints) throws IOException {
         List<KnownMetEntry> l = new ArrayList<KnownMetEntry>();
         byte[] block = new byte[1 << 20];
         byte[] b = new byte[0];
@@ -43,7 +43,7 @@ public class KnownMetDecoder {
 
         while (pos < b.length) {
             KnownMetEntry entry = new KnownMetEntry();
-            int len = parseEntry(entry, pos, b);
+            int len = parseEntry(entry, pos, b, checkConstraints);
             if (len <= 0) {
                 pos++;
                 continue;
@@ -54,10 +54,10 @@ public class KnownMetDecoder {
         return l;
     }
 
-    public static int parseEntry(KnownMetEntry entry, int offset, byte[] b) {
+    public static int parseEntry(KnownMetEntry entry, int offset, byte[] b, boolean checkConstraints) {
         int pos = offset;
         long ms = toInt(b, pos) * 1000L;
-        if (ms < dataMin || ms > dataMax)
+        if (checkConstraints && (ms < dataMin || ms > dataMax))
             return 0;
         Date date = new Date(ms);
         entry.setLastModified(date);
@@ -70,14 +70,14 @@ public class KnownMetDecoder {
         pos += 16;
 
         int numParts = toSmall(b, pos);
-        if (numParts > 4096 || numParts < 0)
+        if (checkConstraints && (numParts > 4096 || numParts < 0))
             return -2;
 
         pos += 2;
         pos += 16 * numParts;
 
         int numTags = toInt(b, pos);
-        if (numTags < 0 || numTags > 1024)
+        if (checkConstraints && (numTags < 0 || numTags > 1024))
             return -3;
 
         // For some files numTags is zero (or one), but the parser will try to read at least 
