@@ -113,7 +113,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     private char[] textBuf = new char[16 * 1024];
 
-    private IOException indexException = null;
+    private volatile IOException indexException = null;
 
     @Override
     public boolean isEnabled() {
