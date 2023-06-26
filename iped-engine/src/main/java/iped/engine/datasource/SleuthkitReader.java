@@ -930,7 +930,7 @@ public class SleuthkitReader extends DataSourceReader {
         }
 
         if (absFile.getOwnerUid().isPresent()) {
-            evidence.setExtraAttribute(ExtraProperties.OWNER_SID, absFile.getOwnerUid().get());
+            evidence.setExtraAttribute(ExtraProperties.OWNER_ID, absFile.getOwnerUid().get());
         }
         if (absFile.getOsAccountObjectId().isPresent()) {
             OsAccount user = sleuthCase.getOsAccountManager()
