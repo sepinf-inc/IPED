@@ -450,8 +450,6 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
             } while (!Thread.currentThread().isInterrupted() && fragReader.nextFragment());
 
-        }catch (IOException e) {
-            throw e;
         } finally {
             fragReader.close();
         }
