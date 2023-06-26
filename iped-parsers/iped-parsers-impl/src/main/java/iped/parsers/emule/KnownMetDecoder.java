@@ -9,8 +9,8 @@ import java.util.List;
 
 public class KnownMetDecoder {
     private static int MAX_SIZE = 1 << 27;
-    private static final long dataMin = System.currentTimeMillis() - 1000L * 60 * 60 * 24 * 365 * 20; // Aprox. -20 anos
-    private static final long dataMax = System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 365 * 5; // Aprox. +5 anos
+    private static final long dataMin = System.currentTimeMillis() - 1000L * 60 * 60 * 24 * 365 * 20; // About -20 years
+    private static final long dataMax = System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 365 * 5; // About +5 years
 
     public static List<KnownMetEntry> parseToList(InputStream is) throws IOException {
         return parseToList(is, MAX_SIZE);
