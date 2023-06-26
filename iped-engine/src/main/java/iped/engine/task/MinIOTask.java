@@ -59,16 +59,6 @@ import iped.utils.SeekableInputStreamFactory;
  * @author Nassif
  *
  */
-
-class ZipRequest {
-    public TemporaryResources tmp = null;
-    public ZipArchiveOutputStream out = null;
-    public CountingOutputStream cos = null;
-    public File zipfile = null;
-    public long zipLength = 0;
-    public long zipFiles = 0;
-}
-
 public class MinIOTask extends AbstractTask {
 
     private static Logger logger = LoggerFactory.getLogger(MinIOTask.class);
@@ -95,6 +85,15 @@ public class MinIOTask extends AbstractTask {
     private static long zipFilesMaxSize = 0;
     private static final long zipMaxSize = 8 * 1024 * 1024;
     private static final long zipMaxFiles = 10000;
+
+    private static class ZipRequest {
+        public TemporaryResources tmp = null;
+        public ZipArchiveOutputStream out = null;
+        public CountingOutputStream cos = null;
+        public File zipfile = null;
+        public long zipLength = 0;
+        public long zipFiles = 0;
+    }
 
     private Map<String, ZipRequest> zipRequests = new HashMap<>();
     private static Set<String> existBucket = new HashSet<>();
