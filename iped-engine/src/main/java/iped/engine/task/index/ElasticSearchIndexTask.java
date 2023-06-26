@@ -86,7 +86,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     public static final String PREVIEW_IN_DATASOURCE = "previewInDataSource";
     public static final String KEY_VAL_SEPARATOR = ":";
-    
+
     public static final int FACE_SIZE = 128;
 
     private static boolean isEnabled = false;
@@ -201,7 +201,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
     }
 
     private void parseCmdLineFields(String cmdFields) {
-        if(cmdFields==null)
+        if (cmdFields == null)
             return;
         String[] entries = cmdFields.split(";");
         for (String entry : entries) {
@@ -494,8 +494,9 @@ public class ElasticSearchIndexTask extends AbstractTask {
         private void retryOrError(IOException temp) {
             if (temp != null) {
                 if (retries_left > 0 | retries_left == -1) {
-                    if (retries_left > 0)
+                    if (retries_left > 0) {
                         retries_left--;
+                    }
                     Cancellable cancellable = client.bulkAsync(bulkRequest, RequestOptions.DEFAULT, this);
                 } else {
                     notifyWaitingRequests();
@@ -509,8 +510,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
         @Override
         public void onResponse(BulkResponse response) {
 
-
-            IOException temp=null;
+            IOException temp = null;
             for (BulkItemResponse bulkItemResponse : response) {
                 if (bulkItemResponse.isFailed()) {
                     BulkItemResponse.Failure failure = bulkItemResponse.getFailure();
@@ -529,7 +529,6 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
                     break;
 
-                    
                 } else {
                     LOGGER.debug("Elastic result {} {}", bulkItemResponse.getResponse().getResult(),
                             idPathMap.get(bulkItemResponse.getId()));
