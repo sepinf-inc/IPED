@@ -45,7 +45,6 @@ import iped.data.IItem;
 import iped.engine.CmdLineArgs;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.MinIOConfig;
-import iped.engine.localization.Messages;
 import iped.engine.task.index.ElasticSearchIndexTask;
 import iped.io.SeekableInputStream;
 import iped.utils.SeekableFileInputStream;
@@ -147,7 +146,7 @@ public class MinIOTask extends AbstractTask {
         if (!credentialsLoaded.getAndSet(true)) {
             loadCredentials(caseData);
             if (paramBucket != null) {
-                logger.error(Messages.getString("MinIOTask.PassBucketMessage"));
+                logger.error("Passing the bucket as a parameter may prevent removing the evidence from the case.");
             }
         }
 
