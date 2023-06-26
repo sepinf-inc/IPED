@@ -68,7 +68,6 @@ import iped.engine.graph.GraphFileWriter;
 import iped.engine.graph.GraphService;
 import iped.engine.graph.GraphServiceFactoryImpl;
 import iped.engine.graph.GraphTask;
-import iped.engine.io.ExeFileFilter;
 import iped.engine.io.ParsingReader;
 import iped.engine.localization.Messages;
 import iped.engine.lucene.ConfiguredFSDirectory;
@@ -153,6 +152,8 @@ public class Manager {
     AtomicLong partialCommitsTime = new AtomicLong();
 
     private final AtomicBoolean initSleuthkitServers = new AtomicBoolean(false);
+
+    private static final String appWinExeFileName = "IPED-SearchApp.exe";
     
     public static Manager getInstance() {
         return instance;
@@ -896,9 +897,11 @@ public class Manager {
             if (binDir.exists())
                 IOUtil.copyDirectory(binDir, output.getParentFile()); // $NON-NLS-1$
             else {
-                for (File f : new File(Configuration.getInstance().appRoot).getParentFile()
-                        .listFiles(new ExeFileFilter()))
-                    IOUtil.copyFile(f, new File(output.getParentFile(), f.getName()));
+                // Copy only IPED Windows executable (#1698)
+                File exe = new File(new File(Configuration.getInstance().appRoot).getParentFile(), appWinExeFileName);
+                if (exe.exists()) {
+                    IOUtil.copyFile(exe, new File(output.getParentFile(), exe.getName()));
+                }
             }
         }
 
