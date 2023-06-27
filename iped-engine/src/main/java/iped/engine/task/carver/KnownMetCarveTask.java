@@ -32,6 +32,7 @@ import iped.configuration.Configurable;
 import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.EnableTaskProperty;
+import iped.io.SeekableInputStream;
 import iped.parsers.emule.KnownMetDecoder;
 import iped.parsers.emule.KnownMetEntry;
 import iped.utils.IOUtil;
@@ -147,7 +148,7 @@ public class KnownMetCarveTask extends BaseCarveTask {
             while (is.read(bb) > 0) {
                 byte read = bb[0];
                 if (read == 14 || read == 15) {
-                    is.read(buf);
+                    is.readNBytes(buf, 0, buf.length);
                     int numFiles = toInt(buf, 0);
                     if (numFiles > 0 && numFiles < 65536) {
                         int pos = 4;
@@ -162,10 +163,10 @@ public class KnownMetCarveTask extends BaseCarveTask {
                                 int numTags = toInt(buf, pos);
                                 if (numTags > 2 && numTags < 100) {
                                     int len = 512 * numFiles;
-                                    BufferedInputStream inParse = null;
+                                    SeekableInputStream inParse = null;
                                     try {
-                                        inParse = evidence.getBufferedInputStream();
-                                        inParse.skip(offset);
+                                        inParse = evidence.getSeekableInputStream();
+                                        inParse.seek(offset);
                                         List<KnownMetEntry> l = KnownMetDecoder.parseToList(inParse, len);
                                         if (!l.isEmpty()) {
                                             addCarvedFile(evidence, offset, len, "Carved-" + offset + "-known.met", //$NON-NLS-1$ //$NON-NLS-2$
