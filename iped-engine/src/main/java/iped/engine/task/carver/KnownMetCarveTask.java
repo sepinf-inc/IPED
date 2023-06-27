@@ -174,6 +174,7 @@ public class KnownMetCarveTask extends BaseCarveTask {
                                             numCarvedItems.incrementAndGet();
                                         }
                                     } catch (Exception e) {
+                                        e.printStackTrace();
                                     } finally {
                                         IOUtil.closeQuietly(inParse);
                                     }
