@@ -3,6 +3,7 @@ News:
 #1610: Read WhatsApp owner account information from more sources on Android (@tc-wleite)
 #1707: Load Timeline chart data structures just when it becomes visible (@patrickdalla)
 #1719: Use Windows trusted certificate store so Map view works on organization machines (@patrickdalla)
+#1636: Emule *.part.met files carving (@hugohmk)
 #1701: Export items to local case if enableAutomaticExportFiles and enableMinIO are both enabled (@hauck-jvsh)
 #1533: Option to configure OpenSearch/MinIO retries and abort if exhausted (@hauck-jvsh, @lfcnassif)
 #1644: Don't include WhatsApp Business "externally" parsed HTMLs if phoneParsersToUse = "internal" (@tc-wleite)
