@@ -1120,72 +1120,41 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                 col = colEvents.size() - 1;
             }
 
-            int row = rowTimestamps.indexOf(t);
-            if (row == -1) {
-                rowTimestamps.add(t);
-                row = rowTimestamps.size() - 1;
+            synchronized (rowTimestamps) {
+                int row = rowTimestamps.indexOf(t);
+                if (row == -1) {
+                    rowTimestamps.add(t);
+                    row = rowTimestamps.size() - 1;
 
-                HashMap<Integer, Count> values = new HashMap<Integer, Count>();
-                values.put(col, count);
-                counts.add(values);
-                return;
-            }
+                    HashMap<Integer, Count> values = new HashMap<Integer, Count>();
+                    values.put(col, count);
+                    counts.add(values);
+                    return;
+                }
 
-            Count c;
+                Count c;
 
-            HashMap<Integer, Count> values = counts.get(row);
-            c = values.get(col);
-            if (c == null) {
-                c = count;
-                values.put(col, c);
-            } else {
-                c.value += count.value;
+                HashMap<Integer, Count> values = counts.get(row);
+                c = values.get(col);
+                if (c == null) {
+                    c = count;
+                    values.put(col, c);
+                } else {
+                    c.value += count.value;
+                }
             }
         }
 
         void remove(TimePeriod t) {
-            int row = rowTimestamps.indexOf(t);
-            if (row != -1) {
-                rowTimestamps.remove(row);
-                counts.remove(row);
-            }
-        }
-
-        synchronized void merge(Accumulator acc) {
-            if (acc.colEvents.size() > 0) {
-                int col = this.colEvents.indexOf(acc.colEvents.get(0));
-                if (col < 0) {
-                    this.colEvents.add(acc.colEvents.get(0));
-                    col = this.colEvents.size() - 1;
-                }
-                this.itemIdsMap.putAll(acc.itemIdsMap);
-
-                for (int i = 0; i < acc.rowTimestamps.size(); i++) {
-                    TimePeriod t = acc.rowTimestamps.get(i);
-                    int index = this.rowTimestamps.indexOf(t);
-                    if (index < 0) {
-                        this.rowTimestamps.add(t);
-                        this.counts.add(acc.counts.get(i));
-                    } else {
-                        HashMap<Integer, Count> values = this.counts.get(index);
-                        HashMap<Integer, Count> accValues = acc.counts.get(i);
-                        Count c = values.get(col);
-                        if (c == null) {
-                            values.put(col, accValues.get(0));
-                        } else {
-                            c.value += accValues.get(0).value;
-                        }
-                    }
-                }
-
-                if (this.min == null || acc.min.getStart().before(this.min.getStart())) {
-                    this.min = acc.min;
-                }
-                if (this.max == null || acc.max.getEnd().after(this.max.getEnd())) {
-                    this.max = acc.max;
+            synchronized (rowTimestamps) {
+                int row = rowTimestamps.indexOf(t);
+                if (row != -1) {
+                    rowTimestamps.remove(row);
+                    counts.remove(row);
                 }
             }
         }
+
     }
 
     @Override

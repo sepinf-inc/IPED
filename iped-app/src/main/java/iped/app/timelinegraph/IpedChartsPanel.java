@@ -387,7 +387,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     }
 
     public HashMap<String, AbstractIntervalXYDataset> createDataSets() {
-        result = new HashMap<String, AbstractIntervalXYDataset>();
+        HashMap<String, AbstractIntervalXYDataset> result = new HashMap<String, AbstractIntervalXYDataset>();
         try {
             Set<String> selectedBookmarks = guiProvider.getSelectedBookmarks();
             Set<String> selectedCategories = guiProvider.getSelectedCategories();
@@ -499,12 +499,13 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
                         if (isCancelled()) {
                             return;
                         }
-                        createDataSets();
+                        HashMap<String, AbstractIntervalXYDataset> lresult = createDataSets();
+                        result = lresult;
 
                         if (!isCancelled()) {
                             JFreeChart chart = null;
-                            if (result != null && result.size() > 0) {
-                                chart = createChart(result, resetDomainRange);
+                            if (lresult != null && lresult.size() > 0) {
+                                chart = createChart(lresult, resetDomainRange);
 
                                 isUpdated = true;
                             }
