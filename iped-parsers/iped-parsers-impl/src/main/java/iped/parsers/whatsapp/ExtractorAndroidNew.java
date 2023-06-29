@@ -2,24 +2,35 @@ package iped.parsers.whatsapp;
 
 import static iped.parsers.whatsapp.Message.MessageType.APP_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.AUDIO_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.BLOCKED_CONTACT;
+import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_CHAT;
 import static iped.parsers.whatsapp.Message.MessageType.CONTACT_MESSAGE;
-import static iped.parsers.whatsapp.Message.MessageType.DELETED_FROM_SENDER;
+import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_ADMIN;
+import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_SENDER;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_MESSAGE;
-import static iped.parsers.whatsapp.Message.MessageType.ENCRIPTION_KEY_CHANGED;
+import static iped.parsers.whatsapp.Message.MessageType.ENCRYPTION_KEY_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.GIF_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CREATED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_DESCRIPTION_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_ICON_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.IMAGE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.LOCATION_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.MESSAGES_ENCRYPTED;
 import static iped.parsers.whatsapp.Message.MessageType.MESSAGES_NOW_ENCRYPTED;
 import static iped.parsers.whatsapp.Message.MessageType.MISSED_VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.MISSED_VOICE_CALL;
+import static iped.parsers.whatsapp.Message.MessageType.REFUSED_VIDEO_CALL;
+import static iped.parsers.whatsapp.Message.MessageType.REFUSED_VOICE_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.SHARE_LOCATION_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.STICKER_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.SUBJECT_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.TEXT_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.UNAVAILABLE_VIDEO_CALL;
+import static iped.parsers.whatsapp.Message.MessageType.UNAVAILABLE_VOICE_CALL;
+import static iped.parsers.whatsapp.Message.MessageType.UNBLOCKED_CONTACT;
 import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_VIDEO_CALL;
+import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_VOICE_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP_FROM_LINK;
 import static iped.parsers.whatsapp.Message.MessageType.USER_LEFT_GROUP;
@@ -43,7 +54,6 @@ import java.util.List;
 
 import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.whatsapp.Message.MessageStatus;
-import iped.parsers.whatsapp.Message.MessageType;
 
 /**
  *
@@ -92,10 +102,24 @@ public class ExtractorAndroidNew extends Extractor {
         return list;
     }
 
+    private boolean isUnblocked(Connection conn, long id) throws SQLException {
+        boolean isUnblocked = false;
+        String query = getSelectBlockedQuery(conn);
+        if (query != null) {
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setLong(1, id);
+                ResultSet rs = stmt.executeQuery();
+                if (rs.next()) {
+                    isUnblocked = rs.getInt("isBlocked") == 0;
+                }
+            }
+        }
+        return isUnblocked;
+    }
 
-
-    private void extractAddOns(Connection conn, Message m) throws SQLException {
-        try (PreparedStatement stmt = conn.prepareStatement(SELECT_ADD_ONS)) {
+    private void extractAddOns(Connection conn, Message m, boolean hasReactionTable) throws SQLException {
+        String query = hasReactionTable ? SELECT_ADD_ONS_REACTIONS : SELECT_ADD_ONS;
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setLong(1, m.getId());
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
@@ -105,9 +129,11 @@ public class ExtractorAndroidNew extends Extractor {
                 addOn.setTimeStamp(new Date(rs.getLong("timestamp")));
                 addOn.setStatus(rs.getInt("status"));
                 addOn.setType(rs.getInt("type"));
+                if (hasReactionTable) {
+                    addOn.setReaction(rs.getString("reaction"));
+                }
                 m.addMessageAddOn(addOn);
             }
-
         }
     }
 
@@ -128,22 +154,26 @@ public class ExtractorAndroidNew extends Extractor {
                 m.setId(rs.getLong("id"));
                 m.setCallId(rs.getString("call_id"));
                 if (rs.getInt("video_call") == 1) {
-                    m.setMessageType(MessageType.UNKNOWN_VIDEO_CALL);
+                    m.setMessageType(UNKNOWN_VIDEO_CALL);
                     if (call_result == 5) {
                         m.setMessageType(VIDEO_CALL);
                     } else if (call_result == 4) {
                         m.setMessageType(MISSED_VIDEO_CALL);
                     } else if (call_result == 2) {
-                        m.setMessageType(MessageType.REFUSED_VIDEO_CALL);
+                        m.setMessageType(REFUSED_VIDEO_CALL);
+                    } else if (call_result == 3) {
+                        m.setMessageType(UNAVAILABLE_VIDEO_CALL);
                     }
                 } else {
-                    m.setMessageType(MessageType.UNKNOWN_VOICE_CALL);
+                    m.setMessageType(UNKNOWN_VOICE_CALL);
                     if (call_result == 5) {
                         m.setMessageType(VOICE_CALL);
                     } else if (call_result == 4) {
                         m.setMessageType(MISSED_VOICE_CALL);
                     } else if (call_result == 2) {
-                        m.setMessageType(MessageType.REFUSED_VOICE_CALL);
+                        m.setMessageType(REFUSED_VOICE_CALL);
+                    } else if (call_result == 3) {
+                        m.setMessageType(UNAVAILABLE_VOICE_CALL);
                     }
                 }
                 m.setFromMe(rs.getInt("from_me") == 1);
@@ -159,6 +189,7 @@ public class ExtractorAndroidNew extends Extractor {
     }
 
     private List<Message> extractMessages(Connection conn, Chat c) throws SQLException {
+        boolean hasReactionTable = SQLite3DBParser.containsTable("message_add_on_reaction", conn);
         List<Message> messages = new ArrayList<>();
         try (PreparedStatement stmt = conn.prepareStatement(getSelectMessagesQuery(conn))) {
             stmt.setFetchSize(1000);
@@ -211,7 +242,11 @@ public class ExtractorAndroidNew extends Extractor {
                 boolean hasAddOn = rs.getInt("hasAddOn") != 0;
 
                 if (hasAddOn) {
-                    extractAddOns(conn, m);
+                    extractAddOns(conn, m, hasReactionTable);
+                }
+
+                if (m.getMessageType() == BLOCKED_CONTACT && isUnblocked(conn, m.getId())) {
+                    m.setMessageType(UNBLOCKED_CONTACT);
                 }
 
                 m.setThumbData(thumbData);
@@ -233,6 +268,7 @@ public class ExtractorAndroidNew extends Extractor {
                             break;
                     }
                 }
+                m.setForwarded(rs.getInt("forwarded") > 0);
                 messages.add(m);
 
             }
@@ -272,7 +308,7 @@ public class ExtractorAndroidNew extends Extractor {
                         result = YOU_ADMIN;
                         break;
                     case 18:
-                        result = ENCRIPTION_KEY_CHANGED;
+                        result = ENCRYPTION_KEY_CHANGED;
                         break;
                     case 19:
                         result = MESSAGES_NOW_ENCRYPTED;
@@ -282,6 +318,15 @@ public class ExtractorAndroidNew extends Extractor {
                         break;
                     case 27:
                         result = GROUP_DESCRIPTION_CHANGED;
+                        break;
+                    case 46:
+                        result = BUSINESS_CHAT;
+                        break;
+                    case 58:
+                        result = BLOCKED_CONTACT;
+                        break;
+                    case 67:
+                        result = MESSAGES_ENCRYPTED;
                         break;
                     default:
                         break;
@@ -335,7 +380,13 @@ public class ExtractorAndroidNew extends Extractor {
                     if (edit_version == 5) {
                         result = DELETED_MESSAGE;
                     } else {
-                        result = DELETED_FROM_SENDER;
+                        result = DELETED_BY_SENDER;
+                    }
+                } else {
+                    if (status == 0) {
+                        result = DELETED_BY_SENDER;
+                    } else if (status == 4 || status == 5) {
+                        result = DELETED_MESSAGE;
                     }
                 }
                 break;
@@ -344,6 +395,12 @@ public class ExtractorAndroidNew extends Extractor {
                 break;
             case 20:
                 result = STICKER_MESSAGE;
+                break;
+            case 64:
+                if (status == 0) {
+                    result = DELETED_BY_ADMIN;
+                }
+                break;
             default:
                 break;
         }
@@ -355,6 +412,9 @@ public class ExtractorAndroidNew extends Extractor {
 
     private static final String SELECT_ADD_ONS = "SELECT message_add_on_type as type,timestamp, status,jid.raw_string as remoteResource,from_me as fromMe FROM message_add_on m left join jid on jid._id=m.sender_jid_row_id where parent_message_row_id=?";
 
+    private static final String SELECT_ADD_ONS_REACTIONS = "SELECT message_add_on_type as type,timestamp, status,jid.raw_string as remoteResource,from_me as fromMe, r.reaction as reaction" + " FROM message_add_on m"
+            + " left join jid on jid._id=m.sender_jid_row_id" + " left join message_add_on_reaction r on r.message_add_on_row_id=m._id" + " where parent_message_row_id=?";
+
     private static String getSelectMessagesQuery(Connection conn) throws SQLException {
         String captionCol = SQLite3DBParser.checkIfColumnExists(conn, "message_media", "media_caption") ? "mm.media_caption" : "null";
         return "select m._id AS id,cv._id as chatId, cv.raw_string_jid "
@@ -363,7 +423,7 @@ public class ExtractorAndroidNew extends Extractor {
                 + " mm.mime_type as mediaMime, mm.file_length as mediaSize, media_name as mediaName, "
                 + " m.message_type as messageType, latitude, longitude, mm.media_duration, "
                 + captionCol + " as mediaCaption, mm.file_hash as mediaHash, thumbnail as thumbData,"
-                + " ms.action_type as actionType, m.message_add_on_flags as hasAddOn"
+                + " ms.action_type as actionType, m.message_add_on_flags as hasAddOn," + " (m.origination_flags & 1) as forwarded"
                 + " from message m inner join chat_view cv on m.chat_row_id=cv._id"
                 + " left join message_media mm on mm.message_row_id=m._id"
                 + " left join jid on jid._id=m.sender_jid_row_id"
@@ -371,6 +431,13 @@ public class ExtractorAndroidNew extends Extractor {
                 + " left join message_system ms on m._id=ms.message_row_id"
                 + " left join message_vcard mv on m._id=mv.message_row_id"
                 + " left join message_thumbnail mt on m._id=mt.message_row_id where chatId=? and status!=-1 ;";
+    }
+
+    private static String getSelectBlockedQuery(Connection conn) throws SQLException {
+        if (!SQLite3DBParser.containsTable("message_system_block_contact", conn)) {
+            return null;
+        }
+        return "select is_blocked as isBlocked from message_system_block_contact where message_row_id=?";
     }
 
     private static final String SELECT_CALLS = "select c_l._id as id, c_l.call_id, c_l.video_call, c_l.duration, c_l.timestamp, c_l.call_result, c_l.from_me,\r\n"

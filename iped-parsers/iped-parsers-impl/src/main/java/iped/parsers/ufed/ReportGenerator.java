@@ -13,6 +13,7 @@ import iped.parsers.whatsapp.Message;
 import iped.parsers.whatsapp.Util;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
+import iped.utils.EmojiUtil;
 import iped.utils.SimpleHTMLEncoder;
 
 /**
@@ -81,7 +82,7 @@ public class ReportGenerator {
 
         firstHtml = false;
 
-        return bout.toByteArray();
+        return EmojiUtil.replaceByImages(bout.toByteArray());
     }
 
     private void printMessage(PrintWriter out, UfedMessage message, boolean group, boolean chatDeleted) {
@@ -106,7 +107,7 @@ public class ReportGenerator {
 
         if (name != null)
             out.println(
-                    "<span style=\"font-family: 'Roboto-Medium'; color: #b4c74b;\">" + format(name) + "</span><br/>"); //$NON-NLS-1$ //$NON-NLS-2$
+                    "<span style=\"font-family: Arial; color: #b4c74b;\">" + format(name) + "</span><br/>"); //$NON-NLS-1$ //$NON-NLS-2$
 
         if (message.getData() != null && !message.getData().trim().isEmpty()) {
             if (message.getData().startsWith("BEGIN:VCARD")) { //$NON-NLS-1$
