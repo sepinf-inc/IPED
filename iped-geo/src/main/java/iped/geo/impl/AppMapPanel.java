@@ -10,6 +10,7 @@ import java.awt.event.MouseListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
@@ -82,6 +83,7 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
 
     public AppMapPanel(IMultiSearchResultProvider resultsProvider, GUIProvider guiProvider) {
         this.resultsProvider = resultsProvider;
+        this.resultsTable = resultsProvider.getResultsTable();
         this.guiProvider = guiProvider;
         this.setLayout(new BorderLayout());
 
@@ -256,14 +258,19 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
             if (loadState == MapLoadState.NOTLOADED) {
                 loadState = MapLoadState.LOADING;
                 mapLoadWorker = new GetResultsJSWorker(resultsProvider, cols, gpsProgressBar, browserCanvas, this);
+
                 mapLoadWorker.addPropertyChangeListener(new PropertyChangeListener() {
                     @Override
                     public void propertyChange(PropertyChangeEvent evt) {
-                        if ("state".equals(evt.getPropertyName()) && (SwingWorker.StateValue.DONE.equals(evt.getNewValue()))) {
+                        if ("state".equals(evt.getPropertyName())
+                                && (SwingWorker.StateValue.DONE.equals(evt.getNewValue()))) {
                             loadState = MapLoadState.LOADED;
+
+                            syncSelectedItems();
                         }
                     }
                 });
+
                 mapLoadWorker.execute();
             } else if (loadState == MapLoadState.LOADING) {
                 if (lastPropertyChangeListener != null) {
@@ -292,6 +299,34 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
         }
     }
 
+    private void syncSelectedItems() {
+        int[] selected = resultsTable.getSelectedRows();
+        IMultiSearchResult results = resultsProvider.getResults();
+        HashMap<String, Boolean> selecoes = new HashMap<String, Boolean>();
+        for (int i = 0; i < selected.length; i++) {
+            int rowModel = resultsTable.convertRowIndexToModel(selected[i]);
+            IItemId item = results.getItem(rowModel);
+
+            List<Integer> subitems = kmlResult.getGPSItems().get(item);
+            if (subitems == null) {
+                String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
+                selecoes.put(gid, true);
+            } else {
+                for (Integer subitem : subitems) {
+                    String gid = "marker_" + item.getSourceId() + "_" + item.getId() + "_" //$NON-NLS-1$ //$NON-NLS-2$
+                            + subitem;
+                    selecoes.put(gid, true);
+                }
+            }
+
+        }
+        
+        mapViewer.updateMapLeadCursor();
+        
+        browserCanvas.sendSelection(selecoes);
+        browserCanvas.update();
+    }
+
     @Override
     public void accept(KMLResult kmlResult) {
         if (kmlResult.getItemsWithGPS() == 0) {
@@ -302,6 +337,7 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
         }
         this.kmlResult = kmlResult;
         browserCanvas.setKML(kmlResult.getKML());
+
         mapaDesatualizado = false;
     }
 
