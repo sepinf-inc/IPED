@@ -7,6 +7,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.jfree.data.time.Day;
 import org.jfree.data.time.Hour;
@@ -32,6 +33,8 @@ public class IpedTimelineDatasetManager {
     IpedChartsPanel ipedChartsPanel;
 
     List<TimeStampCache> timeStampCaches = new ArrayList<>();
+
+    private AtomicBoolean startDatasetCreationCalled = new AtomicBoolean(false);
 
     TimeStampCache selectedTimeStampCache;
 
@@ -66,24 +69,21 @@ public class IpedTimelineDatasetManager {
      * Start the creation of cache for timeline chart
      */
     public void startBackgroundCacheCreation() {
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        int poolSize = (int) Math.ceil((float) Runtime.getRuntime().availableProcessors() / 2f);
-        ExecutorService threadPool = Executors.newFixedThreadPool(poolSize);
-        boolean first = true;
-        for (TimeStampCache timeStampCache : timeStampCaches) {
-            Future<?> future = threadPool.submit(timeStampCache);
-            // first loads the Day cache alone to speed up it, then run others in parallel
-            if (first) {
-                try {
-                    future.get();
-                } catch (InterruptedException | ExecutionException e) {
-                    e.printStackTrace();
+        if (!startDatasetCreationCalled.getAndSet(true)) {
+            int poolSize = (int) Math.ceil((float) Runtime.getRuntime().availableProcessors() / 2f);
+            ExecutorService threadPool = Executors.newFixedThreadPool(poolSize);
+            boolean first = true;
+            for (TimeStampCache timeStampCache : timeStampCaches) {
+                Future<?> future = threadPool.submit(timeStampCache);
+                // first loads the Day cache alone to speed up it, then run others in parallel
+                if (first) {
+                    try {
+                        future.get();
+                    } catch (InterruptedException | ExecutionException e) {
+                        e.printStackTrace();
+                    }
+                    first = false;
                 }
-                first = false;
             }
         }
     }

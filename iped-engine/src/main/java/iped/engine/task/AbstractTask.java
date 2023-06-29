@@ -151,7 +151,7 @@ public abstract class AbstractTask {
      */
     abstract protected void process(IItem evidence) throws Exception;
 
-    private static class ItemReEnqueuedException extends RuntimeException {
+    protected static class ItemReEnqueuedException extends RuntimeException {
 
         /**
          * 

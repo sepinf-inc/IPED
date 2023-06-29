@@ -27,6 +27,9 @@ public class ElasticSearchTaskConfig extends AbstractTaskPropertiesConfig {
     private static final String CUSTOM_ANALYZER_KEY = "useCustomAnalyzer";
     private static final String VALIDATE_SSL = "validateSSL";
     private static final String TERM_VECTOR = "useTermVector";
+    private static final String RETRIES = "retries";
+
+    private static final int DEFAULT_RETRIES = 1;
 
     private String host;
     private int port = 9200;
@@ -43,6 +46,7 @@ public class ElasticSearchTaskConfig extends AbstractTaskPropertiesConfig {
     private boolean useCustomAnalyzer;
     private boolean validateSSL = true;
     private boolean termVector = false;
+    private int retries;
 
     public String getHost() {
         return host;
@@ -128,6 +132,9 @@ public class ElasticSearchTaskConfig extends AbstractTaskPropertiesConfig {
         if (value != null) {
             termVector = Boolean.valueOf(value.trim());
         }
+
+        retries = Integer.parseInt(properties.getProperty(RETRIES, Integer.toString(DEFAULT_RETRIES)).trim());
+
     }
 
     public boolean getValidateSSL() {
@@ -138,5 +145,8 @@ public class ElasticSearchTaskConfig extends AbstractTaskPropertiesConfig {
         return termVector;
     }
 
+    public int getRetries() {
+        return retries;
+    }
 
 }
