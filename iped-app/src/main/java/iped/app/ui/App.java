@@ -1499,6 +1499,15 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     }
 
     @Override
+    public IIPEDSearcher createNewSearch(String query, boolean applyFilters) {
+        CaseSearcherFilter csf = new CaseSearcherFilter(query);
+        if (applyFilters) {
+            csf.applyUIQueryFilters();
+        }
+        return csf.getSearcher();
+    }
+
+    @Override
     public IIPEDSearcher createNewSearch(String query, String[] sortFields) {
         IIPEDSearcher searcher = null;
         if (sortFields == null) {

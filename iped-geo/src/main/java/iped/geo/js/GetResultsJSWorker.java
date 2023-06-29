@@ -327,7 +327,7 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
 
             String query = ExtraProperties.LOCATIONS.replace(":", "\\:") + ":*";
 
-            IIPEDSearcher searcher = app.createNewSearch(query);
+            IIPEDSearcher searcher = app.createNewSearch(query, false);
             IMultiSearchResult multiResult = searcher.multiSearch();
 
             IMultiSearchResult results = multiResult;
