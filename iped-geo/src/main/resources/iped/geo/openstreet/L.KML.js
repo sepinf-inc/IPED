@@ -901,9 +901,15 @@ L.KML = L.MarkerClusterGroup.extend({
                         this.placemarks.push(m);
                         this.placemarkIndexes.push(a[i][1]);
                         if(a[i][2]){
-                            m.checked = 'true';
+                            if(m.checked != 'true'){
+                                m.checked = 'true';
+                                m.atualizaIcone();
+                            }
                         }else{
-                            m.checked = 'false';
+                            if(m.checked != 'false'){
+                                m.checked = 'false';
+                                m.atualizaIcone();
+                            }
                         }
                         this.orderedVisiblePlacemarks.push(null);
                         this.visibleMarkerCoords.push(null);
