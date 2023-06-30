@@ -1,7 +1,9 @@
 package iped.geo.impl;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 
 import javax.swing.JPanel;
 import javax.swing.JTable;
@@ -90,8 +92,19 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
         });
     }
 
+    HashMap<IItemId, Boolean> changedCheckBox = new HashMap<IItemId, Boolean>();
+
     @Override
     public void tableChanged(TableModelEvent e) {
+        if (e.getColumn() == 1) {// if the event was fired by checkbox on column 1
+            if (!desabilitaTemp) {// the change was fired by an event inside the map itself, so, do not repeat
+                                  // operation
+                IItemId item = resultsProvider.getResults().getItem(e.getFirstRow());
+                Boolean b = (Boolean) resultsTable.getModel().getValueAt(e.getFirstRow(), e.getColumn());
+                changedCheckBox.put(item, b);
+            }
+        }
+
         if (!mapaPanel.isShowing()) {
             unprocessedChange = e;
             return;
@@ -113,17 +126,16 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
          * não precisa ser refeita.
          */
         if (!desabilitaTemp) {
-            if (e.getColumn() == 1) {// se o evento foi disparado pelo check box que fica na coluna 1
+            if (changedCheckBox.size() > 0) {
                 updatingCheckbox = true;
-
-                IItemId item = resultsProvider.getResults().getItem(e.getFirstRow());
-
-                Boolean b = (Boolean) resultsTable.getModel().getValueAt(e.getFirstRow(), e.getColumn());
-
-                mapaPanel.selectCheckbox(item, b.booleanValue());
-            } else {
-                mapaPanel.setMapOutDated(true);
+                for (Iterator iterator = changedCheckBox.entrySet().iterator(); iterator.hasNext();) {
+                    Entry<IItemId, Boolean> entry = (Entry<IItemId, Boolean>) iterator.next();
+                    mapaPanel.selectCheckbox(entry.getKey(), entry.getValue());
+                }
+                changedCheckBox.clear();
             }
+
+            mapaPanel.setMapOutDated(true);
 
             /* somente chamado se o tab de mapas estiver sendo exibido */
             if (dockable != null && dockable.isShowing()) {
