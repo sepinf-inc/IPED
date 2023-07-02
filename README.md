@@ -76,3 +76,26 @@ Some of IPED several features are listed below:
 - Web API for searching remote cases, get file metadata, raw content, decoded text, thumbnails and posting bookmarks
 - Creation of bookmarks/tags for interesting data
 - HTML, CSV reports and portable cases with tagged data
+
+## Screenshots
+
+Processing:
+![image](https://github.com/sepinf-inc/IPED/assets/7276994/bf29b44a-a924-4c65-845c-6282a4b91861)
+
+Analysis:
+![image](https://github.com/sepinf-inc/IPED/assets/7276994/80b27729-e903-4d36-b739-fa0c49ae1710)
+
+Map:
+![image](https://github.com/sepinf-inc/IPED/assets/7276994/279b9280-3a72-484a-8aed-e4d015df196f)
+
+Communication links:
+![image](https://github.com/sepinf-inc/IPED/assets/7276994/8b164948-fa36-47b8-a249-f64547a36b28)
+
+Face search:
+![image](https://github.com/sepinf-inc/IPED/assets/7276994/d9b37060-afa4-4e9b-ae55-a9d8413ac43a)
+
+Time line:
+![image](https://github.com/sepinf-inc/IPED/assets/7276994/caa8b460-4307-4a27-b77b-4d2f95752c2c)
+
+Time chart:
+![image](https://github.com/sepinf-inc/IPED/assets/7276994/81df1c18-361d-49f1-b755-36520437803a)
