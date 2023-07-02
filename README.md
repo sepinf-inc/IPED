@@ -2,7 +2,7 @@
 
 IPED is an open source software that can be used to process and analyze digital evidence, often seized at crime scenes by law enforcement or in a corporate investigation by private examiners.
 
-## Introduction
+## History
 
 IPED - Digital Evidence Processor and Indexer (translated from Portuguese) is a tool implemented in java and originally and still developed by digital forensic experts from Brazilian Federal Police since 2012. Although it was always open source, only in 2019 its code was officially published.
 
@@ -32,13 +32,13 @@ It will generate an snapshot version of IPED in target/release folder.
 
 On Linux you also must build The Sleuthkit and additional dependencies. Please refer to [Linux Section](https://github.com/sepinf-inc/IPED/wiki/Linux)
 
-If you want to contribute to the project, refer to [Contributing](https://github.com/lfcnassif/IPED/wiki/Contributing)
+Contributions are very welcome! Before contributing please refer to [Contributing](https://github.com/lfcnassif/IPED/wiki/Contributing)
 
 ## Features
 
 Some of IPED several features are listed below:
 
-- Supported hashes: md5, sha-1, sha-256, sha-512 and edonkey. PhotoDNA is also available **for law enforcement** (please contact sepinf dot inc dot ditec at pf dot gov dot br)
+- Supported hashes: md5, sha-1, sha-256, sha-512 and edonkey. PhotoDNA is also available **for law enforcement** (please contact iped at pf dot gov dot br)
 - Supported hash sets: NIST NSRL, NIST CAID, ProjectVIC, Interpol ICSE, standard CSV format
 - Fast hash deduplication 
 - Signature analysis
