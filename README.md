@@ -94,8 +94,8 @@ Communication links:
 Face search:
 ![image](https://github.com/sepinf-inc/IPED/assets/7276994/d9b37060-afa4-4e9b-ae55-a9d8413ac43a)
 
-Time line:
-![image](https://github.com/sepinf-inc/IPED/assets/7276994/caa8b460-4307-4a27-b77b-4d2f95752c2c)
+Timeline:
+![image](https://github.com/sepinf-inc/IPED/assets/7276994/bd71e19b-168d-4872-8995-b7f20a2767dc)
 
 Time chart:
 ![image](https://github.com/sepinf-inc/IPED/assets/7276994/81df1c18-361d-49f1-b755-36520437803a)
