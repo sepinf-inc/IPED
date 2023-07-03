@@ -126,15 +126,6 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
          * não precisa ser refeita.
          */
         if (!desabilitaTemp) {
-            if (changedCheckBox.size() > 0) {
-                updatingCheckbox = true;
-                for (Iterator iterator = changedCheckBox.entrySet().iterator(); iterator.hasNext();) {
-                    Entry<IItemId, Boolean> entry = (Entry<IItemId, Boolean>) iterator.next();
-                    mapaPanel.selectCheckbox(entry.getKey(), entry.getValue());
-                }
-                changedCheckBox.clear();
-            }
-
             mapaPanel.setMapOutDated(true);
 
             /* somente chamado se o tab de mapas estiver sendo exibido */
@@ -153,6 +144,21 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
         }
         if (dockable == null || !dockable.isShowing()) {
             updatingCheckbox = false;
+        }
+    }
+
+    public void applyCheckedItems() {
+        if (changedCheckBox.size() > 0) {
+            updatingCheckbox = true;
+            HashMap<String, Boolean> checked = new HashMap<String, Boolean>();
+            for (Iterator iterator = changedCheckBox.entrySet().iterator(); iterator.hasNext();) {
+                Entry<IItemId, Boolean> entry = (Entry<IItemId, Boolean>) iterator.next();
+                IItemId item = entry.getKey();
+                String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
+                checked.put(gid, entry.getValue());
+            }
+            mapaPanel.browserCanvas.sendCheck(checked);
+            changedCheckBox.clear();
         }
     }
 
