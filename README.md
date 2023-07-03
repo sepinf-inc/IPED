@@ -83,7 +83,10 @@ Processing:
 ![image](https://github.com/sepinf-inc/IPED/assets/7276994/bf29b44a-a924-4c65-845c-6282a4b91861)
 
 Analysis:
-![image](https://github.com/sepinf-inc/IPED/assets/7276994/80b27729-e903-4d36-b739-fa0c49ae1710)
+![image](https://github.com/sepinf-inc/IPED/assets/7276994/5fca2b65-6763-4bc1-9284-604c8b325d54)
+
+Regex Results:
+![image](https://github.com/sepinf-inc/IPED/assets/7276994/db34adc7-d7b9-4b56-8a35-99e095380d0b)
 
 Map:
 ![image](https://github.com/sepinf-inc/IPED/assets/7276994/279b9280-3a72-484a-8aed-e4d015df196f)
@@ -94,8 +97,11 @@ Communication links:
 Face search:
 ![image](https://github.com/sepinf-inc/IPED/assets/7276994/d9b37060-afa4-4e9b-ae55-a9d8413ac43a)
 
+Audio Transcription:
+![image](https://github.com/sepinf-inc/IPED/assets/7276994/ebded2ad-f88d-43c8-9699-66e498c9939c)
+
 Timeline:
-![image](https://github.com/sepinf-inc/IPED/assets/7276994/bd71e19b-168d-4872-8995-b7f20a2767dc)
+![image](https://github.com/sepinf-inc/IPED/assets/7276994/011657e3-8ff2-4105-b3c2-116980772fc0)
 
 Time chart:
 ![image](https://github.com/sepinf-inc/IPED/assets/7276994/81df1c18-361d-49f1-b755-36520437803a)
