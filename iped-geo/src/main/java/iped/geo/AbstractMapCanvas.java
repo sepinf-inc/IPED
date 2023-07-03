@@ -31,6 +31,7 @@ abstract public class AbstractMapCanvas extends Canvas {
 
     protected ArrayList<Runnable> onLoadRunnables = new ArrayList<Runnable>();
 
+    protected HashMap<String, Boolean> checkMapToApply;
     protected HashMap<String, Boolean> selectionMapToApply;
     protected String leadSelectionToApply;
     protected Runnable saveRunnable;
@@ -96,6 +97,23 @@ abstract public class AbstractMapCanvas extends Canvas {
         marks = selectionMap.keySet().toArray(marks);
         for (int i = 0; i < marks.length; i++) {
             this.selectionMapToApply.put(marks[i], selectionMap.get(marks[i]));
+        }
+    }
+
+    public void clearCheck() {
+        this.checkMapToApply = new HashMap<String, Boolean>();
+        this.checkMapToApply.put(AbstractMapCanvas.ALLMARKERS_TAG, false);
+    }
+
+    public void sendCheck(final HashMap<String, Boolean> checkedMap) {
+        if (this.checkMapToApply == null) {
+            this.checkMapToApply = new HashMap<String, Boolean>();
+        }
+
+        String[] marks = new String[checkedMap.keySet().size()];
+        marks = checkedMap.keySet().toArray(marks);
+        for (int i = 0; i < marks.length; i++) {
+            this.checkMapToApply.put(marks[i], checkedMap.get(marks[i]));
         }
     }
 

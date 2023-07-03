@@ -327,25 +327,41 @@ L.KML = L.MarkerClusterGroup.extend({
     	}
 		window.app.selectMarkerBF(mids);
 	},
-	selecionaMarcador: function (id, b){
-		for(i=0;i<id.length;i++){
+    selecionaMarcador: function (id, b){
+        selecionaMarcador(id, b, true);
+    },
+    selecionaMarcador: function (id, b, notify){
+        for(i=0;i<id.length;i++){
             mark=this.markers[id[i]];
-			if(b=='true'){
-				mark.selected='true';
-				//mark.showDirectionLines(); 
-				this.selectedPlacemarks.push(mark);
-			}else{
-				mark.selected='false';
+            if(b=='true'){
+                mark.selected='true';
+                //mark.showDirectionLines(); 
+                this.selectedPlacemarks.push(mark);
+            }else{
+                mark.selected='false';
                 mark.hideDirectionLines();
                 let i = this.selectedPlacemarks.indexOf(mark);
                 if(i>-1){
                     this.selectedPlacemarks.splice(i,1);
                 }
-			}
-			mark.atualizaIcone();
-			mark.onClick();
-		}
-	},
+            }
+            mark.atualizaIcone();
+            if(notify){
+                mark.onClick();
+            }
+        }
+    },
+    checkMarcador: function (id, b, notify){
+        for(i=0;i<id.length;i++){
+            mark=this.markers[id[i]];
+            if(b=='true'){
+                mark.checked='true';
+            }else{
+                mark.checked='false';
+            }
+            mark.atualizaIcone();
+        }
+    },
 	marca: function (id, b){
         try{
             let marker_checkbox = document.getElementById('marker_checkbox')
@@ -687,8 +703,6 @@ L.KML = L.MarkerClusterGroup.extend({
     highlight: function(mark){
         mark.selected='true';
         this.selectedPlacemarks.push(mark);        
-        //mark.showDirectionLines();
-        mark.atualizaIcone();
     },
     
     unhighlight: function(mark){
@@ -1327,13 +1341,12 @@ L.KMLMarker = L.Marker.extend({
                     this.parent.deselectAll();
                 }
             }
-    
+
             if(this.selected=='true'){
                 this.parent.unhighlight(this);
             }else{
                 this.parent.highlight(this);
             }
-            this.atualizaIcone();
     
             if(e.originalEvent.ctrlKey){
                 if(this.checked=='true'){
@@ -1341,8 +1354,8 @@ L.KMLMarker = L.Marker.extend({
                 }else{
                     this.checked='true';
                 }
-                this.atualizaIcone();
             }
+            this.atualizaIcone();
 
             if(this.checked=='true'){
                 document.getElementById('marker_checkbox').checked=true;

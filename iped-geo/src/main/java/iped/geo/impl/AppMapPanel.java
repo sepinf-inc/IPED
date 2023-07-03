@@ -267,6 +267,8 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
                             loadState = MapLoadState.LOADED;
 
                             syncSelectedItems();
+                            mapViewer.applyCheckedItems();
+                            browserCanvas.update();
                         }
                     }
                 });
@@ -324,7 +326,6 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
         mapViewer.updateMapLeadCursor();
         
         browserCanvas.sendSelection(selecoes);
-        browserCanvas.update();
     }
 
     @Override

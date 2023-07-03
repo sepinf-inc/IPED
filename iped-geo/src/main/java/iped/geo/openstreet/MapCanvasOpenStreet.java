@@ -351,7 +351,6 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
             final HashMap<String, Boolean> selecoesAfazerCopy = selectionMapToApply;
             self.selectionMapToApply = null;
 
-
             Runnable selecionaMarcadores = new Runnable() {
                 public void run() {
                     boolean marcadorselecionado = false;
@@ -368,7 +367,7 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
                         }
                         Boolean b = selecoesAfazerCopy.get(marks[i]);
                         try {
-                            script.append("track.selecionaMarcador([\"" + marks[i] + "\"],'" + b + "');");
+                            script.append("track.selecionaMarcador([\"" + marks[i] + "\"],'" + b + "', false);");
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -388,6 +387,47 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
                 selecionaMarcadores.run();
             } else {
                 Platform.runLater(selecionaMarcadores);
+            }
+
+        }
+        if (self.checkMapToApply != null) {
+            // repinta selecoes alteradas
+            final String[] marks = new String[self.checkMapToApply.keySet().size()];
+            self.checkMapToApply.keySet().toArray(marks);
+            final HashMap<String, Boolean> selecoesAfazerCopy = checkMapToApply;
+            self.checkMapToApply = null;
+
+
+            Runnable checkMarkers = new Runnable() {
+                public void run() {
+                    boolean hasCheckedMarker = false;
+                    StringBuffer script = new StringBuffer();
+
+                    if (marks.length > 0) {
+                        hasCheckedMarker = true;
+                    }
+
+                    for (int i = 0; i < marks.length; i++) {
+                        if ((marks[0].equals(ALLMARKERS_TAG))) {
+                            continue;
+                        }
+                        Boolean b = selecoesAfazerCopy.get(marks[i]);
+                        try {
+                            script.append("track.checkMarcador([\"" + marks[i] + "\"],'" + b + "', false);");
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    if (hasCheckedMarker) {
+                        webEngine.executeScript(script.toString()); // $NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                    }
+                }
+            };
+
+            if (Platform.isFxApplicationThread()) {
+                checkMarkers.run();
+            } else {
+                Platform.runLater(checkMarkers);
             }
 
         }
