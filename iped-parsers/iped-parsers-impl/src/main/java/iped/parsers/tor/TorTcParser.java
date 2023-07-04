@@ -4,7 +4,10 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
@@ -16,6 +19,8 @@ import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
+
+import iped.parsers.util.MetadataUtil;
 
 /**
  * Parses TC BUILT and EXTENDED Circuit Status Changes responses fragments on
@@ -34,8 +39,14 @@ public class TorTcParser extends AbstractParser {
     private static final String TORTC_PREFIX = "TORTC:";
     private static final int MAX_BUFFER_SIZE = 1 << 24;
 
+    private static List<String> dateMetadatas = Arrays.asList("TIME_CREATED");
+
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
+        for (Iterator iterator = dateMetadatas.iterator(); iterator.hasNext();) {
+            String metadataName = (String) iterator.next();
+            MetadataUtil.setMetadataType(TORTC_PREFIX + metadataName, java.util.Date.class);
+        }
         return SUPPORTED_TYPES;
     }
 
@@ -54,6 +65,9 @@ public class TorTcParser extends AbstractParser {
         }
 
         if (value != null) {
+            if (dateMetadatas.contains(varName)) {
+                value += "Z"; // timestamps are represented in UTC in despite of timezone info.
+            }
             metadata.add(TORTC_PREFIX + varName, value);
         }
     }
