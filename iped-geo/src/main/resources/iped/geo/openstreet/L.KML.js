@@ -352,15 +352,17 @@ L.KML = L.MarkerClusterGroup.extend({
         }
     },
     checkMarcador: function (id, b, notify){
-        for(i=0;i<id.length;i++){
-            mark=this.markers[id[i]];
-            if(b=='true'){
-                mark.checked='true';
-            }else{
-                mark.checked='false';
+        new Promise((resolve, reject)=>{
+            for(i=0;i<id.length;i++){
+                mark=this.markers[id[i]];
+                if(b=='true'){
+                    mark.checked='true';
+                }else{
+                    mark.checked='false';
+                }
+                mark.atualizaIcone();
             }
-            mark.atualizaIcone();
-        }
+        });
     },
 	marca: function (id, b){
         try{
@@ -1330,29 +1332,31 @@ L.KMLMarker = L.Marker.extend({
 	onClick: function(e){
         try{
             window.clickedMark = this;
-            
+            var modf = '';
+
             //workaround to skip leaflet behaviour that invokes onClick twice, the one programatically invoked is skipped;
             if(!e.originalEvent.isTrusted) {
                 return;
             }
     
             if(this.parent){
-                if(!e.originalEvent.shiftKey){
+                if(!e.originalEvent.ctrlKey && !e.originalEvent.shiftKey && this.selected=='false'){
                     this.parent.deselectAll();
                 }
             }
 
-            if(this.selected=='true'){
-                this.parent.unhighlight(this);
-            }else{
-                this.parent.highlight(this);
-            }
-    
             if(e.originalEvent.ctrlKey){
+                modf=modf+'|ctrl';
                 if(this.checked=='true'){
                     this.checked='false';
                 }else{
                     this.checked='true';
+                }
+            }else{
+                if(this.selected=='true'){
+                    this.parent.unhighlight(this);
+                }else{
+                    this.parent.highlight(this);
                 }
             }
             this.atualizaIcone();
@@ -1364,8 +1368,11 @@ L.KMLMarker = L.Marker.extend({
             }
             
             var button = (typeof e.originalEvent.which != "undefined") ? e.originalEvent.which : e.originalEvent.button;
+            
             if(e.originalEvent.shiftKey){
-                window.app.markerMouseClickedBF(this.id, button, 'shift');
+                modf=modf+'|shift';
+
+                window.app.markerMouseClickedBF(this.id, button, modf);
                 if(e.originalEvent.ctrlKey){
                     window.app.checkMarkerBF(this.id, this.checked=='true');
                 }
@@ -1373,7 +1380,7 @@ L.KMLMarker = L.Marker.extend({
                 if(e.originalEvent.ctrlKey){
                     window.app.checkMarkerBF(this.id, this.checked=='true');
                 }           
-                window.app.markerMouseClickedBF(this.id, button, '');
+                window.app.markerMouseClickedBF(this.id, button, modf);
             }
             
             this.parent.curMark=this;
