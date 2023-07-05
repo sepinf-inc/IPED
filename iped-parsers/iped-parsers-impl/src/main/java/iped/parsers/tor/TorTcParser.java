@@ -39,7 +39,7 @@ public class TorTcParser extends AbstractParser {
     private static final String TORTC_PREFIX = "TORTC:";
     private static final int MAX_BUFFER_SIZE = 1 << 24;
 
-    private static List<String> dateMetadatas = Arrays.asList("TIME_CREATED");
+    private static final List<String> dateMetadatas = Arrays.asList("TIME_CREATED");
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
