@@ -352,7 +352,6 @@ L.KML = L.MarkerClusterGroup.extend({
         }
     },
     checkMarcador: function (id, b, notify){
-        new Promise((resolve, reject)=>{
             for(i=0;i<id.length;i++){
                 mark=this.markers[id[i]];
                 if(b=='true'){
@@ -362,7 +361,6 @@ L.KML = L.MarkerClusterGroup.extend({
                 }
                 mark.atualizaIcone();
             }
-        });
     },
 	marca: function (id, b){
         try{
