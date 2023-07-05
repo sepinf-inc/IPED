@@ -400,26 +400,38 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
 
             Runnable checkMarkers = new Runnable() {
                 public void run() {
-                    boolean hasCheckedMarker = false;
-                    StringBuffer script = new StringBuffer();
+                    try {
+                        boolean hasCheckedMarker = false;
+                        StringBuffer scriptCheck = new StringBuffer();
+                        StringBuffer scriptUnCheck = new StringBuffer();
+                        
+                        scriptCheck.append("track.checkMarcador([");
+                        scriptUnCheck.append("track.checkMarcador([");
 
-                    if (marks.length > 0) {
-                        hasCheckedMarker = true;
-                    }
+                        if (marks.length > 0) {
+                            hasCheckedMarker = true;
+                        }
 
-                    for (int i = 0; i < marks.length; i++) {
-                        if ((marks[0].equals(ALLMARKERS_TAG))) {
-                            continue;
+                        for (int i = 0; i < marks.length; i++) {
+                            if ((marks[0].equals(ALLMARKERS_TAG))) {
+                                continue;
+                            }
+                            Boolean b = selecoesAfazerCopy.get(marks[i]);
+                            if (b) {
+                                scriptCheck.append("\"" + marks[i] + "\",");
+                            } else {
+                                scriptUnCheck.append("\"" + marks[i] + "\",");
+                            }
                         }
-                        Boolean b = selecoesAfazerCopy.get(marks[i]);
-                        try {
-                            script.append("track.checkMarcador([\"" + marks[i] + "\"],'" + b + "', false);");
-                        } catch (Exception e) {
-                            e.printStackTrace();
+                        if (hasCheckedMarker) {
+                            scriptCheck.append("],'true', false);");
+                            scriptUnCheck.append("],'false', false);");
+                            webEngine.executeScript(scriptCheck.toString()); // $NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                            webEngine.executeScript(scriptUnCheck.toString()); // $NON-NLS-1$ //$NON-NLS-2$
+                                                                               // //$NON-NLS-3$
                         }
-                    }
-                    if (hasCheckedMarker) {
-                        webEngine.executeScript(script.toString()); // $NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
                 }
             };

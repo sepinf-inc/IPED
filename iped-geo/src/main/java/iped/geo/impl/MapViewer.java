@@ -34,6 +34,8 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
     public static volatile boolean desabilitaTemp = false; // disables unnecessary map updates
     public static volatile boolean updatingCheckbox = false;
 
+    static String geoReferencedQuery = "common\\:geo\\:locations:*";
+
     public MapViewer() {
     }
 
@@ -46,6 +48,7 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
         mapaPanel.setMapViewer(this);
         resultsTable.getModel().addTableModelListener(this);
         resultsTable.getSelectionModel().addListSelectionListener(this);
+
     }
 
     @Override
@@ -161,8 +164,11 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
             for (Iterator iterator = changedCheckBox.entrySet().iterator(); iterator.hasNext();) {
                 Entry<IItemId, Boolean> entry = (Entry<IItemId, Boolean>) iterator.next();
                 IItemId item = entry.getKey();
-                String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
-                checked.put(gid, entry.getValue());
+                int docid = mapaPanel.getLastResult().getIPEDSource().getLuceneId(item);
+                if (mapaPanel.getLastResult().hasDocId(docid)) {
+                    String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
+                    checked.put(gid, entry.getValue());
+                }
             }
             mapaPanel.browserCanvas.sendCheck(checked);
             changedCheckBox.clear();

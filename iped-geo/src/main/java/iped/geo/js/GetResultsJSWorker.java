@@ -21,6 +21,7 @@ import org.apache.lucene.document.Document;
 import org.apache.tika.metadata.Metadata;
 
 import iped.data.IItemId;
+import iped.engine.search.MultiSearchResult;
 import iped.geo.AbstractMapCanvas;
 import iped.geo.kml.KMLResult;
 import iped.geo.localization.Messages;
@@ -42,6 +43,7 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
     private double maxlongit;
     private double minlat;
     private double maxlat;
+    private MultiSearchResult lastStartedResult;
 
     public GetResultsJSWorker(IMultiSearchResultProvider app, String[] colunas, JProgressBar progress, AbstractMapCanvas browserCanvas, Consumer consumer) {
         this.app = app;
@@ -54,9 +56,10 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
     @Override
     public void done() {
         if (consumer != null) {
-            Object result = null;
+            Object[] result = new Object[2];
             try {
-                result = this.get();
+                result[0] = this.get();
+                result[1] = lastStartedResult;
             } catch (Exception e) {
                 if (e instanceof CancellationException) {
 
@@ -118,7 +121,9 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
             String query = ExtraProperties.LOCATIONS.replace(":", "\\:") + ":*";
 
             IIPEDSearcher searcher = app.createNewSearch(query);
-            IMultiSearchResult multiResult = searcher.multiSearch();
+            MultiSearchResult multiResult = (MultiSearchResult) searcher.multiSearch();
+            lastStartedResult = multiResult;
+            lastStartedResult.setIPEDSource(app.getIPEDSource());
 
             Map<IItemId, List<Integer>> gpsItems = new HashMap<>();
             for (IItemId item : multiResult.getIterator()) {

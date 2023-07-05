@@ -30,6 +30,7 @@ import org.apache.lucene.document.Document;
 import iped.data.IItemId;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.data.ItemId;
+import iped.engine.search.MultiSearchResult;
 import iped.engine.task.index.IndexItem;
 import iped.geo.AbstractMapCanvas;
 import iped.geo.js.GetResultsJSWorker;
@@ -46,7 +47,7 @@ import iped.viewers.api.IMultiSearchResultProvider;
  * Classe que controla a integração da classe App com a classe MapaCanvas
  */
 
-public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
+public class AppMapPanel extends JPanel implements Consumer<Object[]> {
 
     /**
      * 
@@ -80,6 +81,7 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
 
     MapLoadState loadState = MapLoadState.NOTLOADED;
     private GetResultsJSWorker mapLoadWorker;
+    private MultiSearchResult lastResult;
 
     public AppMapPanel(IMultiSearchResultProvider resultsProvider, GUIProvider guiProvider) {
         this.resultsProvider = resultsProvider;
@@ -329,7 +331,9 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
     }
 
     @Override
-    public void accept(KMLResult kmlResult) {
+    public void accept(Object[] result) {
+        KMLResult kmlResult = (KMLResult) result[0];
+        lastResult = (MultiSearchResult) result[1];
         if (kmlResult.getItemsWithGPS() == 0) {
             gpsProgressBar.setValue(0);
             gpsProgressBar.setString(Messages.getString("KMLResult.NoGPSItem"));
@@ -533,6 +537,10 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public MultiSearchResult getLastResult() {
+        return lastResult;
     }
 
 }
