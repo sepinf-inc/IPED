@@ -164,8 +164,7 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
             for (Iterator iterator = changedCheckBox.entrySet().iterator(); iterator.hasNext();) {
                 Entry<IItemId, Boolean> entry = (Entry<IItemId, Boolean>) iterator.next();
                 IItemId item = entry.getKey();
-                int docid = mapaPanel.getLastResult().getIPEDSource().getLuceneId(item);
-                if (mapaPanel.getLastResult().hasDocId(docid)) {
+                if (mapaPanel.hasItem(item)) {
                     String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
                     checked.put(gid, entry.getValue());
                 }

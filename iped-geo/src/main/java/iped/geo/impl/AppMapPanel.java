@@ -26,11 +26,11 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 
 import org.apache.lucene.document.Document;
+import org.roaringbitmap.RoaringBitmap;
 
 import iped.data.IItemId;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.data.ItemId;
-import iped.engine.search.MultiSearchResult;
 import iped.engine.task.index.IndexItem;
 import iped.geo.AbstractMapCanvas;
 import iped.geo.js.GetResultsJSWorker;
@@ -81,7 +81,7 @@ public class AppMapPanel extends JPanel implements Consumer<Object[]> {
 
     MapLoadState loadState = MapLoadState.NOTLOADED;
     private GetResultsJSWorker mapLoadWorker;
-    private MultiSearchResult lastResult;
+    private RoaringBitmap[] geoReferencedBitmap;
 
     public AppMapPanel(IMultiSearchResultProvider resultsProvider, GUIProvider guiProvider) {
         this.resultsProvider = resultsProvider;
@@ -322,18 +322,21 @@ public class AppMapPanel extends JPanel implements Consumer<Object[]> {
                     selecoes.put(gid, true);
                 }
             }
-
         }
-        
+
         mapViewer.updateMapLeadCursor();
-        
+
         browserCanvas.sendSelection(selecoes);
     }
 
     @Override
     public void accept(Object[] result) {
         KMLResult kmlResult = (KMLResult) result[0];
-        lastResult = (MultiSearchResult) result[1];
+
+        if (result[1] != null) {
+            geoReferencedBitmap = (RoaringBitmap[]) result[1];
+        }
+
         if (kmlResult.getItemsWithGPS() == 0) {
             gpsProgressBar.setValue(0);
             gpsProgressBar.setString(Messages.getString("KMLResult.NoGPSItem"));
@@ -539,8 +542,8 @@ public class AppMapPanel extends JPanel implements Consumer<Object[]> {
         return null;
     }
 
-    public MultiSearchResult getLastResult() {
-        return lastResult;
+    public boolean hasItem(IItemId item) {
+        return geoReferencedBitmap[item.getSourceId()].contains(item.getId());
     }
 
 }
