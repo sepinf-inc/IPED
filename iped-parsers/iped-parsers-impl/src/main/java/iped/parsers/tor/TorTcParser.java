@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -38,15 +37,16 @@ public class TorTcParser extends AbstractParser {
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(TOR_TC_MIME);
     private static final String TORTC_PREFIX = "TORTC:";
     private static final int MAX_BUFFER_SIZE = 1 << 24;
-
     private static final List<String> dateMetadatas = Arrays.asList("TIME_CREATED");
+
+    static {
+        for (String metadataName : dateMetadatas) {
+            MetadataUtil.setMetadataType(TORTC_PREFIX + metadataName, java.util.Date.class);
+        }
+    }
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
-        for (Iterator iterator = dateMetadatas.iterator(); iterator.hasNext();) {
-            String metadataName = (String) iterator.next();
-            MetadataUtil.setMetadataType(TORTC_PREFIX + metadataName, java.util.Date.class);
-        }
         return SUPPORTED_TYPES;
     }
 
