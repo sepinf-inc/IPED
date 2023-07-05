@@ -85,6 +85,9 @@ Processing:
 Analysis:
 ![image](https://github.com/sepinf-inc/IPED/assets/7276994/5fca2b65-6763-4bc1-9284-604c8b325d54)
 
+Data Carving & Video Thumbnails:
+![image](https://github.com/sepinf-inc/IPED/assets/7276994/4d908fe5-6cb1-443b-96fa-d937fa1d2e2d)
+
 Regex Results:
 ![image](https://github.com/sepinf-inc/IPED/assets/7276994/db34adc7-d7b9-4b56-8a35-99e095380d0b)
 
