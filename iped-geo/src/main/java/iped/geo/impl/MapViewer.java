@@ -66,12 +66,13 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
     @Override
     public void redraw() {
         if (unprocessedChange != null) {
+            updatingCheckbox = false; // resets any update
             tableChanged(unprocessedChange);
-        }
-
-        if (mapaPanel.browserCanvas.isLoaded()) {
-            if (!updatingCheckbox) {
-                mapaPanel.updateMap();
+        } else {
+            if (mapaPanel.browserCanvas.isLoaded()) {
+                if (!updatingCheckbox) {
+                    mapaPanel.updateMap();
+                }
             }
         }
     }
