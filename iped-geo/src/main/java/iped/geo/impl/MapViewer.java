@@ -20,6 +20,7 @@ import iped.search.IMultiSearchResult;
 import iped.viewers.api.GUIProvider;
 import iped.viewers.api.IMultiSearchResultProvider;
 import iped.viewers.api.ResultSetViewer;
+import iped.viewers.bookmarks.IBookmarksController;
 import javafx.application.Platform;
 
 public class MapViewer implements ResultSetViewer, TableModelListener, ListSelectionListener {
@@ -102,6 +103,11 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
                 IItemId item = resultsProvider.getResults().getItem(e.getFirstRow());
                 Boolean b = (Boolean) resultsTable.getModel().getValueAt(e.getFirstRow(), e.getColumn());
                 changedCheckBox.put(item, b);
+            }
+            if (IBookmarksController.get().isMultiSetting()) {
+                return;
+            } else {
+                updatingCheckbox = true;
             }
         }
 
