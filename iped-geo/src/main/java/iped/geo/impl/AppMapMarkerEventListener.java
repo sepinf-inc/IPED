@@ -27,7 +27,9 @@ public class AppMapMarkerEventListener implements MarkerEventListener {
         boolean olddesabilitaTemp = mapViewer.desabilitaTemp;
         mapViewer.desabilitaTemp = true;
         if (e != null) {
-            AppMapMarkerEventListener.doTableSelection(t, pos, e.isShiftDown());
+            if (!((e.getModifiersEx() & MouseEvent.CTRL_DOWN_MASK) == MouseEvent.CTRL_DOWN_MASK)) {
+                AppMapMarkerEventListener.doTableSelection(t, pos, e.isShiftDown());
+            }
         }
 
         IItemId[] siblings = mapaPanel.getTrackSiblings();
@@ -86,6 +88,14 @@ public class AppMapMarkerEventListener implements MarkerEventListener {
 
     @Override
     public void onMouseReleased(String mid, MouseEvent e) {
+    }
+
+    /**
+     * Returns true when marker state changed, so it needs to be updated.
+     */
+    @Override
+    public boolean onViewReset(String mid) {
+        return false;
     }
 
 }
