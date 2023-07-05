@@ -90,12 +90,4 @@ public class AppMapMarkerEventListener implements MarkerEventListener {
     public void onMouseReleased(String mid, MouseEvent e) {
     }
 
-    /**
-     * Returns true when marker state changed, so it needs to be updated.
-     */
-    @Override
-    public boolean onViewReset(String mid) {
-        return false;
-    }
-
 }
