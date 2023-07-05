@@ -343,6 +343,7 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
     }
 
     public void update() {
+        mapViewer.applyCheckedItems();
         browserCanvas.update();
         mapaDesatualizado = false;
     }
