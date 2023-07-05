@@ -83,6 +83,12 @@
             <artifactId>gt-geojson</artifactId>
             <version>19.2</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.roaringbitmap/RoaringBitmap -->
+        <dependency>
+            <groupId>org.roaringbitmap</groupId>
+            <artifactId>RoaringBitmap</artifactId>
+            <version>0.9.45</version>
+        </dependency>
 
     </dependencies>
 
