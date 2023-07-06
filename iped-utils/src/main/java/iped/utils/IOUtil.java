@@ -439,6 +439,7 @@ public class IOUtil {
                             msg.progress = true;
 
                     } catch (Exception e) {
+                        break;
                     }
             }
         };
