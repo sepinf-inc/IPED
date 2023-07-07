@@ -91,7 +91,7 @@ public class CADViewer extends AbstractViewer {
                 pb.redirectErrorStream(true);
                 try {
                     Process process = pb.start();
-                    IOUtil.ignoreInputStream(process.getInputStream());
+                    IOUtil.ignoreInputStream(process);
 
                 } catch (IOException e1) {
                     e1.printStackTrace();
