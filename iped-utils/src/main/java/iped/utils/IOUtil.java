@@ -423,36 +423,14 @@ public class IOUtil {
     }
 
     public static void ignoreInputStream(final InputStream stream) {
-        ignoreInputStream(stream, null);
+        ignoreInputStream(stream, null, false);
     }
 
     public static void ignoreInputStream(final Process p) {
-        ignoreInputStream(p, null);
+        ignoreInputStream(p.getInputStream(), null, true);
     }
 
-    public static void ignoreInputStream(final Process p, final ContainerVolatile msg) {
-        Thread t = new Thread() {
-            @Override
-            public void run() {
-                byte[] out = new byte[1024];
-                int read = 0;
-                while (p.isAlive() && read != -1)
-                    try {
-                        read = p.getInputStream().read(out);
-                        if (msg != null)
-                            msg.progress = true;
-
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        break;
-                    }
-            }
-        };
-        t.setDaemon(true);
-        t.start();
-    }
-
-    public static void ignoreInputStream(final InputStream stream, final ContainerVolatile msg) {
+    public static void ignoreInputStream(final InputStream stream, final ContainerVolatile msg, boolean process) {
         Thread t = new Thread() {
             @Override
             public void run() {
@@ -466,7 +444,7 @@ public class IOUtil {
 
                     } catch (Exception e) {
                         e.printStackTrace();
-                        if (e.getMessage().contains("closed")) {
+                        if (process || e.getMessage().contains("closed")) {
                             break;
                         }
                     }
