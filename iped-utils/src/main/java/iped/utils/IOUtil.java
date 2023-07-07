@@ -426,6 +426,32 @@ public class IOUtil {
         ignoreInputStream(stream, null);
     }
 
+    public static void ignoreInputStream(final Process p) {
+        ignoreInputStream(p, null);
+    }
+
+    public static void ignoreInputStream(final Process p, final ContainerVolatile msg) {
+        Thread t = new Thread() {
+            @Override
+            public void run() {
+                byte[] out = new byte[1024];
+                int read = 0;
+                while (p.isAlive() && read != -1)
+                    try {
+                        read = p.getInputStream().read(out);
+                        if (msg != null)
+                            msg.progress = true;
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        break;
+                    }
+            }
+        };
+        t.setDaemon(true);
+        t.start();
+    }
+
     public static void ignoreInputStream(final InputStream stream, final ContainerVolatile msg) {
         Thread t = new Thread() {
             @Override
@@ -439,7 +465,10 @@ public class IOUtil {
                             msg.progress = true;
 
                     } catch (Exception e) {
-                        break;
+                        e.printStackTrace();
+                        if (e.getMessage().contains("closed")) {
+                            break;
+                        }
                     }
             }
         };
