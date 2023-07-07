@@ -271,7 +271,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         }
         pb.redirectErrorStream(true);
         Process p = pb.start();
-        IOUtil.ignoreInputStream(p.getInputStream());
+        IOUtil.ignoreInputStream(p);
         long timeoutSecs = MIN_TIMEOUT / 3 + TIMEOUT_PER_MB * input.length() / (1 << 20);
         boolean finished = p.waitFor(timeoutSecs, TimeUnit.SECONDS);
         if (!finished) {
