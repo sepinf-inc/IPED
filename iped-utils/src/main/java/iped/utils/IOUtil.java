@@ -423,14 +423,23 @@ public class IOUtil {
     }
 
     public static void ignoreInputStream(final InputStream stream) {
-        ignoreInputStream(stream, null, false);
+        ignoreInputStream0(stream, null, false);
     }
 
     public static void ignoreInputStream(final Process p) {
-        ignoreInputStream(p.getInputStream(), null, true);
+        ignoreInputStream0(p.getInputStream(), null, true);
     }
 
+    public static void ignoreErrorStream(Process p) {
+        ignoreInputStream0(p.getErrorStream(), null, true);
+    }
+
+    @Deprecated
     public static void ignoreInputStream(final InputStream stream, final ContainerVolatile msg, boolean process) {
+        ignoreInputStream0(stream, msg, process);
+    }
+
+    private static void ignoreInputStream0(final InputStream stream, final ContainerVolatile msg, boolean process) {
         Thread t = new Thread() {
             @Override
             public void run() {
