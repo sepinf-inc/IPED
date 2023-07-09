@@ -423,40 +423,35 @@ public class IOUtil {
     }
 
     public static void ignoreInputStream(final InputStream stream) {
-        ignoreInputStream0(stream, null, false);
+        ignoreInputStream0(stream);
     }
 
     public static void ignoreInputStream(final Process p) {
-        ignoreInputStream0(p.getInputStream(), null, true);
+        ignoreInputStream0(p.getInputStream());
     }
 
     public static void ignoreErrorStream(Process p) {
-        ignoreInputStream0(p.getErrorStream(), null, true);
+        ignoreInputStream0(p.getErrorStream());
     }
 
     @Deprecated
-    public static void ignoreInputStream(final InputStream stream, final ContainerVolatile msg, boolean process) {
-        ignoreInputStream0(stream, msg, process);
+    public static void ignoreInputStream(final InputStream stream, final ContainerVolatile msg) {
+        ignoreInputStream0(stream);
     }
 
-    private static void ignoreInputStream0(final InputStream stream, final ContainerVolatile msg, boolean process) {
+    private static void ignoreInputStream0(final InputStream stream) {
         Thread t = new Thread() {
             @Override
             public void run() {
                 byte[] out = new byte[1024];
                 int read = 0;
-                while (read != -1)
-                    try {
+                try {
+                    while (read != -1) {
                         read = stream.read(out);
-                        if (msg != null)
-                            msg.progress = true;
-
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        if (process || e.getMessage().contains("closed")) {
-                            break;
-                        }
                     }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         };
         t.setDaemon(true);
