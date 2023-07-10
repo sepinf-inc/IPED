@@ -46,7 +46,6 @@ import iped.app.home.MainFrame;
 import iped.app.home.configurables.ConfigurablePanel;
 import iped.app.home.configurables.ConfigurablePanelFactory;
 import iped.app.home.configurables.api.ConfigurableValidationException;
-import iped.app.home.configurables.api.IConfigurablePanel;
 import iped.app.home.configurables.api.IConfigurablePanelFactory;
 import iped.app.home.newcase.NewCaseContainerPanel;
 import iped.app.home.style.StyleManager;
@@ -62,7 +61,6 @@ import iped.engine.config.ProfileManager;
 import iped.engine.config.SerializedConfigurationDirectory;
 import iped.engine.config.TaskInstallerConfig;
 import iped.engine.task.AbstractTask;
-import iped.engine.task.IScriptTask;
 import iped.engine.task.ScriptTask;
 
 /*
@@ -507,7 +505,8 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
                 NewCaseContainerPanel.getInstance().getIpedProcess().setProfile(null);
             else
                 NewCaseContainerPanel.getInstance().getIpedProcess().setProfile(selectedProfile);
-            mainFrame.startIPEDProcessing();
+
+            NewCaseContainerPanel.getInstance().startIPEDProcessing();
         });
 
         panelButtons.add(buttoCancel);

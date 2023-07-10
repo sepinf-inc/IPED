@@ -86,7 +86,7 @@ public class MainFrame extends JFrame {
 
 
     /**
-     *Adjust layout configurations, sizes and behaviors
+     * Adjust layout configurations, sizes and behaviors
      */
     private void setupLayout() throws Exception {
         UiScale.loadUserSetting();
@@ -112,8 +112,6 @@ public class MainFrame extends JFrame {
         cardsContentPanel.add(new ConfigPanel(this), MainFrameCardsNames.CONFIG.getName());
         cardsContentPanel.add(new NewCaseContainerPanel(this), MainFrameCardsNames.NEW_CASE.getName());
         cardsContentPanel.add(new OpenCasePanel(this), MainFrameCardsNames.OPEN_CASE.getName());
-        pmc = new ProcessManagerContainer(this);
-        cardsContentPanel.add(pmc, MainFrameCardsNames.PROCESS_MANAGER.getName());
 
         setHomeFrameSize();
         setFrameIcon();
@@ -169,11 +167,6 @@ public class MainFrame extends JFrame {
      */
     public void showPanel(MainFrameCardsNames cardName){
         ((CardLayout) cardsContentPanel.getLayout()).show(cardsContentPanel, cardName.getName());
-    }
-
-    public void startIPEDProcessing(){
-        showPanel(MainFrameCardsNames.PROCESS_MANAGER);
-        pmc.startProcess();
     }
 
     /**

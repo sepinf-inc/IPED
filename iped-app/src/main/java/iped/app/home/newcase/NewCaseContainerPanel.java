@@ -17,6 +17,7 @@ import iped.app.home.newcase.model.IPEDProcess;
 import iped.app.home.newcase.tabs.caseinfo.CaseInfoTab;
 import iped.app.home.newcase.tabs.evidence.EvidencesTab;
 import iped.app.home.newcase.tabs.process.ProcessOptionTab;
+import iped.app.home.processmanager.ProcessManagerContainer;
 import iped.app.ui.Messages;
 
 /**
@@ -28,6 +29,7 @@ public class NewCaseContainerPanel extends DefaultPanel {
     private JTabbedPane tabbedPane;
     private static NewCaseContainerPanel instance;
     private IPEDProcess ipedProcess;
+    private ProcessManagerContainer pmc;
 
     /**
      * Construc and save this instance reference to a static variable
@@ -52,6 +54,7 @@ public class NewCaseContainerPanel extends DefaultPanel {
      * @return JTabbedPane
      */
     private JTabbedPane setupTabbedPanel(){
+
         tabbedPane = new JTabbedPane(JTabbedPane.LEFT);
         tabbedPane.setEnabled(false);
         tabbedPane.setUI(new BasicTabbedPaneUI() {
@@ -60,6 +63,9 @@ public class NewCaseContainerPanel extends DefaultPanel {
         tabbedPane.addTab(Messages.get("Home.CaseInformation"), null, new CaseInfoTab(mainFrame), Messages.get("Home.CaseInformationTollTip"));
         tabbedPane.addTab(Messages.get("Home.Evidences"), null, new EvidencesTab(mainFrame), Messages.get("Home.EvidencesToolTip"));
         tabbedPane.addTab(Messages.get("Home.ProcessOptions"), null, new ProcessOptionTab(mainFrame), Messages.get("Home.ProcessOptionsToolTip"));
+        pmc = new ProcessManagerContainer(mainFrame);
+        tabbedPane.addTab(Messages.get("Home.ProcessingTab"), null, pmc, Messages.get("Home.ProcessingTabTooltip"));
+
         return tabbedPane;
     }
 
@@ -73,7 +79,7 @@ public class NewCaseContainerPanel extends DefaultPanel {
     }
 
     /**
-     * Displau the previous Tab available
+     * Display the previous Tab available
      */
     public void goToPreviousTab(){
         int selectedIndex = tabbedPane.getSelectedIndex();
@@ -100,5 +106,10 @@ public class NewCaseContainerPanel extends DefaultPanel {
         if( ipedProcess == null )
             ipedProcess = new IPEDProcess();
         return ipedProcess;
+    }
+
+    public void startIPEDProcessing() {
+        goToNextTab();
+        pmc.startProcess();
     }
 }

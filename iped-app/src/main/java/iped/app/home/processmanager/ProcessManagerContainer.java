@@ -1,5 +1,25 @@
 package iped.app.home.processmanager;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Image;
+import java.nio.file.Paths;
+import java.util.Objects;
+
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+
+import org.apache.commons.lang3.exception.ExceptionUtils;
+
 /*
  * @created 27/09/2022
  * @project IPED
@@ -8,18 +28,11 @@ package iped.app.home.processmanager;
 
 import iped.app.home.DefaultPanel;
 import iped.app.home.MainFrame;
-import iped.app.home.MainFrameCardsNames;
 import iped.app.home.newcase.NewCaseContainerPanel;
 import iped.app.home.newcase.model.IPEDProcess;
 import iped.app.home.newcase.tabs.caseinfo.CaseInfoManager;
 import iped.app.home.style.StyleManager;
 import iped.app.ui.Messages;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-
-import javax.swing.*;
-import java.awt.*;
-import java.nio.file.Paths;
-import java.util.Objects;
 
 public class ProcessManagerContainer extends DefaultPanel implements ProcessListener {
 
@@ -50,7 +63,7 @@ public class ProcessManagerContainer extends DefaultPanel implements ProcessList
     @Override
     protected void createAndShowGUI() {
         ipedProcess = NewCaseContainerPanel.getInstance().getIpedProcess();
-        this.setLayout( new BoxLayout( this, BoxLayout.PAGE_AXIS ) );
+        this.setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
         this.add(createTitlePanel());
         createLabelIcons();
         currentLabelIcon = new JLabel(startingIcon, JLabel.CENTER);
@@ -79,6 +92,7 @@ public class ProcessManagerContainer extends DefaultPanel implements ProcessList
 
     private JPanel createProcessRunningPanel(){
         processRunningPanel = new JPanel();
+        processRunningPanel.setLayout(new BorderLayout());
         processRunningPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         processRunningPanel.setBackground(super.getCurrentBackGroundColor());
         logTextArea = new JTextArea();
@@ -87,7 +101,7 @@ public class ProcessManagerContainer extends DefaultPanel implements ProcessList
         logTextArea.setMaximumSize(new Dimension(Short.MAX_VALUE, Short.MAX_VALUE));
         logTextArea.setEditable(false);
         logTextArea.setBorder(BorderFactory.createLineBorder(Color.black,1));
-        processRunningPanel.add(new JScrollPane(logTextArea));
+        processRunningPanel.add(new JScrollPane(logTextArea), BorderLayout.CENTER);
         processRunningPanel.setVisible(false);
         return processRunningPanel;
     }
@@ -97,7 +111,9 @@ public class ProcessManagerContainer extends DefaultPanel implements ProcessList
         errorOptionsButtonPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         errorOptionsButtonPanel.setBackground(super.getCurrentBackGroundColor());
         JButton buttonBack = new JButton(Messages.get("Home.ProcessManager.BackToCaseInfo"));
-        buttonBack.addActionListener(e->mainFrame.showPanel(MainFrameCardsNames.NEW_CASE) );
+        buttonBack.addActionListener(e -> {
+            NewCaseContainerPanel.getInstance().goToPreviousTab();
+        });
         errorOptionsButtonPanel.add(buttonBack);
         JButton buttonShowLog = new JButton(Messages.get("Home.ProcessManager.ShowTerminalLog"));
         buttonShowLog.addActionListener(e->{
@@ -118,7 +134,9 @@ public class ProcessManagerContainer extends DefaultPanel implements ProcessList
         successOptionsButtonPanel.setBackground(super.getCurrentBackGroundColor());
 
         JButton buttonBackCase = new JButton(Messages.get("Home.ProcessManager.BackToCaseInfo"));
-        buttonBackCase.addActionListener(e->mainFrame.showPanel(MainFrameCardsNames.NEW_CASE));
+        buttonBackCase.addActionListener(e -> {
+            NewCaseContainerPanel.getInstance().goToPreviousTab();
+        });
         successOptionsButtonPanel.add(buttonBackCase);
 
         buttonOpenCase = new JButton(Messages.get("Home.ProcessManager.OpenCase"));
