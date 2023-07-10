@@ -34,6 +34,7 @@ public class Messages {
         } catch (URISyntaxException e1) {
             e1.printStackTrace();
         }
+        file = new File(System.getProperty("user.dir")+ "/iped/localization");
         if (file != null && !file.exists()) {
             File baseFile = new File(System.getProperty("user.dir"));
             do {

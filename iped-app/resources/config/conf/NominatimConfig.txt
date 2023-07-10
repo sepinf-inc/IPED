@@ -1,0 +1,14 @@
+#host name of the nominatim server
+hostName=10.65.6.2
+
+#port of the nominatim server service
+hostPort=8080
+
+#protocol of the nominatim server service (http or https)
+protocol=http
+
+#protocol of the nominatim server service (http or https)
+connectionPoolSize=auto
+
+#Query to be passed via URL to test if service is available at task init
+serviceTestUrlQuery=/?country=brazil
