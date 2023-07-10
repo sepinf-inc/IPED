@@ -182,18 +182,48 @@ public class ProcessManager {
     }
 
     public void readProcessOutput(Process process, JTextArea logTextArea) throws IOException {
-
-        BufferedReader inputReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        String line;
-        while ((line = inputReader.readLine()) != null){
-            String finalLine = line;
-            SwingUtilities.invokeLater(new Runnable() {public void run(){ logTextArea.append(finalLine + "\n"); }});
-        }
-        BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-        while ((line = errorReader.readLine()) != null){
-            String finalLine = line;
-            SwingUtilities.invokeLater(new Runnable() {public void run(){ logTextArea.append(finalLine + "\n"); }});
-        }
+        Runnable routput = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    BufferedReader inputReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                    String line;
+                    while ((line = inputReader.readLine()) != null) {
+                        String finalLine = line;
+                        SwingUtilities.invokeLater(new Runnable() {
+                            public void run() {
+                                logTextArea.append(finalLine + "\n");
+                            }
+                        });
+                    }
+                } catch (Exception e) {
+                    // TODO: handle exception
+                }
+            }
+        };
+        Thread toutput = new Thread(routput);
+        toutput.start();
+        Runnable rerror = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    String line;
+                    BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+                    while ((line = errorReader.readLine()) != null) {
+                        String finalLine = line;
+                        SwingUtilities.invokeLater(new Runnable() {
+                            public void run() {
+                                logTextArea.append(finalLine + "\n");
+                            }
+                        });
+                    }
+                } catch (Exception e) {
+                    // TODO: handle exception
+                }
+            }
+        };
+        Thread terror = new Thread(rerror);
+        terror.start();
     }
 
     public void readProcessOutput(Process process, StringBuffer outputText) throws IOException {
