@@ -482,11 +482,14 @@ public class Manager {
         LOGGER.log(CONSOLE, "Deleting connections from graph...");
         GraphService graphService = null;
         try {
-            graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
-            graphService.start(new File(output, GraphTask.DB_HOME_DIR));
-            int deletions = graphService.deleteRelationshipsFromDatasource(evidenceUUID);
-            LOGGER.log(CONSOLE, "Deleted {} graph connections.", deletions);
-
+            if (new File(output, GraphTask.DB_DATA_PATH).exists()) {
+                graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
+                graphService.start(new File(output, GraphTask.DB_HOME_DIR));
+                int deletions = graphService.deleteRelationshipsFromDatasource(evidenceUUID);
+                LOGGER.log(CONSOLE, "Deleted {} graph connections.", deletions);
+            } else {
+                LOGGER.log(CONSOLE, "Graph database not found.");
+            }
         } finally {
             if (graphService != null) {
                 graphService.stop();
