@@ -380,6 +380,13 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             return;
         }
 
+        try {
+            evidence.getTempFile();
+        } catch (IOException e) {
+            LOGGER.warn("Error creating temp file {} ({} bytes) {}", evidence.getPath(), evidence.getLength(), e.toString());
+            return;
+        }
+
         TemporaryResources tmp = new TemporaryResources();
         File tmpFile = getTempFileToTranscript(evidence, tmp);
         if (tmpFile == null) {
