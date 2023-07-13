@@ -177,6 +177,7 @@ div.deletedIcon {
 	font-family: Arial;
 }
 
+
 /**************************
  * WhatsApp Conversations *
  **************************/
@@ -202,15 +203,152 @@ div.deletedIcon {
     visibility: hidden;
 }
 
+.arrow {    
+	display: table-cell;
+	vertical-align: top;
+	padding-top:10px;	
+}
+
+.arrow-left {
+	display: table-cell;
+	border-top: 8px solid transparent;
+	border-bottom: 8px solid transparent; 
+	border-right: 16px solid #fcfbf6; 
+	margin-top: 16px;
+	cursor: pointer;
+}
+
+.arrow-right {
+	display: table-cell;
+	border-top: 8px solid transparent;
+	border-bottom: 8px solid transparent; 
+	border-left: 16px solid #f3ffe8; 
+	margin-top: 16px;
+	cursor: pointer;
+}
+
+.bubble-right{
+	float:right;
+	padding-right:6px;
+	display: table-cell;
+	margin: 5px 0px 5px 0px;   
+	max-width:90%;
+}
+
+.bubble-right:hover .from{
+	background-color: #def1f3 !important;
+}
+
+.bubble-right:hover .arrow-left{
+    border-right: 16px solid #def1f3 !important;
+}
+
+.bubble-right:hover .to{
+    background-color: #def1f3 !important;
+}
+
+.bubble-right:hover .arrow-right{
+    border-left: 16px solid #def1f3 !important;
+}
+
+.bubble-left{
+	float:left;
+	padding-left:6px;
+	display: table-cell;
+	margin: 5px 0px 5px 0px;    
+	max-width:90%;	
+}
+
+.bubble-left:hover .from{
+	background-color: #def1f3 !important;
+}
+
+.bubble-left:hover .arrow-left{
+    border-right: 16px solid #def1f3 !important;
+}
+
+.bubble-left:hover .to{
+    background-color: #def1f3 !important;
+}
+
+.bubble-left:hover .arrow-right{
+    border-left: 16px solid #def1f3 !important;
+}
+
+.arrow-left-special {
+	display: table-cell;
+	border-top: 8px solid transparent;
+	border-bottom: 8px solid transparent; 
+	border-right: 16px solid #66ccff; 
+	margin-top: 16px;
+	cursor: pointer;
+}
+
+.arrow-right-special {
+	display: table-cell;
+	border-top: 8px solid transparent;
+	border-bottom: 8px solid transparent; 
+	border-left: 16px solid #66ccff; 
+	margin-top: 16px;
+	cursor: pointer;
+}
+
+.bubble-right-special{
+	float:right;
+	padding-right:6px;
+	display: table-cell;
+	margin: 5px 0px 5px 0px;   
+	max-width:90%;
+}
+
+.bubble-right-special:hover .from{
+	background-color: #00aaff !important;
+}
+
+.bubble-right-special:hover .arrow-left-special{
+    border-right: 16px solid #00aaff !important;
+}
+
+.bubble-right-special:hover .to{
+    background-color: #00aaff !important;
+}
+
+.bubble-right-special:hover .arrow-right-special{
+    border-left: 16px solid #00aaff !important;
+}
+
+.bubble-left-special{
+	float:left;
+	padding-left:6px;
+	display: table-cell;
+	margin: 5px 0px 5px 0px;    
+	max-width:90%;	
+}
+
+.bubble-left-special:hover .from{
+	background-color: #00aaff !important;
+}
+
+.bubble-left-special:hover .arrow-left-special{
+    border-right: 16px solid #00aaff !important;
+}
+
+.bubble-left-special:hover .to{
+    background-color: #00aaff !important;
+}
+
+.bubble-left-special:hover .arrow-right-special{
+    border-left: 16px solid #00aaff !important;
+}
+
 #conversation .incoming, #conversation .outgoing,
  #conversation .date, #conversation .specialmessage,
  #conversation .recoveredChat {
 	cursor: pointer;
 	border-radius: 4px;
-	box-shadow: 0 0 6px #b8b7b7;
 	display: block;
 	padding: 8px 10px;
-	position: relative;
+	word-break: break-word;
 }
 
 #conversation .systemmessage {
@@ -219,7 +357,6 @@ div.deletedIcon {
 	box-shadow: 0 0 6px #b8b7b7;
 	display: block;
 	padding: 8px 10px 14px 10px;
-	position: relative;
 }
 
 #conversation .date
@@ -231,6 +368,7 @@ div.deletedIcon {
 	text-align: center;
 	margin-top: 8px;
 	margin-bottom: 8px;
+	box-shadow: 0 0 6px #b8b7b7;
 }
 
 #conversation .recoveredChat
@@ -242,6 +380,7 @@ div.deletedIcon {
 	text-align: center;
 	margin-top: 12px;
 	margin-bottom: 8px;
+	box-shadow: 0 0 6px #b8b7b7;
 }
 
 #conversation .systemmessage
@@ -291,68 +430,10 @@ div.deletedIcon {
 	background-color: #fcfbf6;
 }
 
-#conversation .incoming:hover
-{
-	background-color: #def1f3;
-}
-
-#conversation .incoming:before
-{
-	width: 0; 
-	height: 0; 
-	border-top: 8px solid transparent;
-	border-bottom: 8px solid transparent; 
-	border-right:16px solid #fcfbf6; 
-	content: "";
-	position: absolute;
-	top: 11px;
-}
-
-#conversation .incoming:hover:before
-{
-	border-right:16px solid #def1f3; 
-}
-
 #conversation .specialmessage
 {
 	color: #333333;
 	background-color: #66ccff;
-}
-
-#conversation .specialmessage:hover
-{
-	background-color: #00aaff;
-}
-
-#conversation .specialmessage:before
-{
-	width: 0; 
-	height: 0; 
-	border-top: 8px solid transparent;
-	border-bottom: 8px solid transparent; 
-	content: "";
-	position: absolute;
-	top: 11px;
-}
-
-#conversation .specialmessage.to:before
-{
-	border-left:16px solid #66ccff; 
-}
-
-#conversation .specialmessage.from:before
-{
-	border-right:16px solid #66ccff; 
-}
-
-#conversation .specialmessage.to:hover:before
-{
-	border-left:16px solid #00aaff;
-}
-
-#conversation .specialmessage.from:hover:before
-{
-	border-right:16px solid #00aaff;
 }
 
 #conversation .outgoing
@@ -360,33 +441,11 @@ div.deletedIcon {
 	background-color: #f3ffe8;
 }
 
-#conversation .outgoing:hover
-{
-	background-color: #def1f3;
-}
-
-#conversation .outgoing:before
-{
-	width: 0; 
-	height: 0; 
-	border-top: 8px solid transparent;
-	border-bottom: 8px solid transparent; 
-	border-left:16px solid #f3ffe8; 
-	content: "";
-	position: absolute;
-	top: 11px;
-}
-
-#conversation .outgoing:hover:before
-{
-	border-left:16px solid #def1f3;
-}
-
 #conversation .to
 {
-	float: right;    
-	margin: 5px 20px 5px 45px;         
-	text-align: right;
+	display: table-cell;
+	text-align: justify;
+	box-shadow: -8px 8px 8px -4px #b8b7b7;
 }
 
 #conversation .to::before
@@ -396,8 +455,9 @@ div.deletedIcon {
 
 #conversation .from
 {
-	float: left;   
-	margin: 5px 45px 5px 20px;         
+	display: table-cell;
+	box-shadow: 8px 8px 8px -4px #b8b7b7;	
+	text-align: justify;
 }
 
 #conversation .from::before
@@ -468,6 +528,7 @@ div.deletedIcon {
 	color: #aaaaaa; 
 	font-size: small;
 }
+
 
 /** SMALL ICONS **/
 img.lock {width:16px;height:16px;margin-right:1px;margin-left:1px;vertical-align:top;content: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAABh0lEQVRYhWNgIA0wA3EgEC8C4htA/AWKQeyFQBwAxEwkmkk0cATiK0D8nwC+BMT21LY8F4j/EGE5DP8G4mxqWR5LgsXoOJpSy5WB+AcOw0Ehcp0BEv+4QucbECtS4oDlWAz9C8TtQCyMpE4EiDuhcujql5JruSAQ/8JiYCwePfFY1IPMECDHAZFYDNtChL5tWPSFk+OAOiwGRRKhLxqLvlpyHDAVi0HmROizwKJvKjkOmInFIGMi9Blj0TdzSDlAGWrIOiwGxUDl8OEYLPrWQeVAZjPishgUv3ewaKY2BtlhgW45PxA/o4PlMPwMaicc+NLRchj2QXZA2gA4II1SB3wA4rVQ/IHeDjjGgFkZHaeXA0BVrzIDJgBVu7/p4YCbWCyHgdv0cMBrBuyFCUjsFT0cAMLYqlds1TfNHABqatki6Qexv9PTAegGUKp/1AFkGfAAiM9A8QNKHZBKhgGU4lRkBzgNgAMckB3ABsQX6Wj5BaidKEAKiFcC8XsaWgwyewUQS8IsBQB+Dn1JZGAhugAAAABJRU5ErkJggg=='); }
