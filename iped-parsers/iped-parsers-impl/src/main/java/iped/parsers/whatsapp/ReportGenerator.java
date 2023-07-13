@@ -179,6 +179,15 @@ public class ReportGenerator {
             WAContactsDirectory contactsDirectory,
             WAAccount account) {
 
+		boolean isFrom = false;
+		boolean isTo = false;
+		boolean isFromSpecial = false;
+		boolean isToSpecial = false;
+		String bubbleFrom = "<div class=\"bubble-left\"><div class=\"arrow\"><div class=\"arrow-left\"></div></div>";
+		String bubbleTo =  "<div class=\"bubble-right\">";
+		String bubbleFromSpecial = "<div class=\"bubble-left-special\"><div class=\"arrow\"><div class=\"arrow-left-special\"></div></div>";
+		String bubbleToSpecial =  "<div class=\"bubble-right-special\">";
+
         out.println("<div class=\"linha\" id=\"" + message.getUniqueId() + "\">"); //$NON-NLS-1$
 
         switch (message.getMessageType()) {
@@ -224,73 +233,91 @@ public class ReportGenerator {
                 break;
             case MISSED_VIDEO_CALL:
                 if (message.isFromMe()) {
-                    out.println("<div class=\"specialmessage to\">"); //$NON-NLS-1$
+					isToSpecial = true;
+                    out.println(bubbleToSpecial+"<div class=\"specialmessage to\">"); //$NON-NLS-1$
                 } else {
-                    out.println("<div class=\"specialmessage from\">"); //$NON-NLS-1$
+					isFromSpecial = true;				
+                    out.println(bubbleFromSpecial+"<div class=\"specialmessage from\">"); //$NON-NLS-1$
                 }
                 out.println(Messages.getString("WhatsAppReport.MissedVideoCall")); //$NON-NLS-1$
                 break;
             case MISSED_VOICE_CALL:
                 if (message.isFromMe()) {
-                    out.println("<div class=\"specialmessage to\">"); //$NON-NLS-1$
+					isToSpecial = true;
+                    out.println(bubbleToSpecial+"<div class=\"specialmessage to\">"); //$NON-NLS-1$
                 } else {
-                    out.println("<div class=\"specialmessage from\">"); //$NON-NLS-1$
+					isFromSpecial = true;				
+                    out.println(bubbleFromSpecial+"<div class=\"specialmessage from\">"); //$NON-NLS-1$
                 }
                 out.println(Messages.getString("WhatsAppReport.MissedVoiceCall")); //$NON-NLS-1$
                 break;
             case REFUSED_VOICE_CALL:
                 if (message.isFromMe()) {
-                    out.println("<div class=\"specialmessage to\">"); //$NON-NLS-1$
+					isToSpecial = true;
+                    out.println(bubbleToSpecial+"<div class=\"specialmessage to\">"); //$NON-NLS-1$
                 } else {
-                    out.println("<div class=\"specialmessage from\">"); //$NON-NLS-1$
-                }
+					isFromSpecial = true;				
+                    out.println(bubbleFromSpecial+"<div class=\"specialmessage from\">"); //$NON-NLS-1$
+                }				
                 out.println(Messages.getString("WhatsAppReport.RefusedVoiceCall")); //$NON-NLS-1$
                 break;
             case REFUSED_VIDEO_CALL:
                 if (message.isFromMe()) {
-                    out.println("<div class=\"specialmessage to\">"); //$NON-NLS-1$
+					isToSpecial = true;
+                    out.println(bubbleToSpecial+"<div class=\"specialmessage to\">"); //$NON-NLS-1$
                 } else {
-                    out.println("<div class=\"specialmessage from\">"); //$NON-NLS-1$
+					isFromSpecial = true;				
+                    out.println(bubbleFromSpecial+"<div class=\"specialmessage from\">"); //$NON-NLS-1$
                 }
                 out.println(Messages.getString("WhatsAppReport.RefusedVideoCall")); //$NON-NLS-1$
                 break;
             case UNAVAILABLE_VOICE_CALL:
                 if (message.isFromMe()) {
-                    out.println("<div class=\"specialmessage to\">"); //$NON-NLS-1$
+					isToSpecial = true;
+                    out.println(bubbleToSpecial+"<div class=\"specialmessage to\">"); //$NON-NLS-1$
                 } else {
-                    out.println("<div class=\"specialmessage from\">"); //$NON-NLS-1$
+					isFromSpecial = true;				
+                    out.println(bubbleFromSpecial+"<div class=\"specialmessage from\">"); //$NON-NLS-1$
                 }
                 out.println(Messages.getString("WhatsAppReport.UnavailableVoiceCall")); //$NON-NLS-1$
                 break;
             case UNAVAILABLE_VIDEO_CALL:
                 if (message.isFromMe()) {
-                    out.println("<div class=\"specialmessage to\">"); //$NON-NLS-1$
+					isToSpecial = true;
+                    out.println(bubbleToSpecial+"<div class=\"specialmessage to\">"); //$NON-NLS-1$
                 } else {
-                    out.println("<div class=\"specialmessage from\">"); //$NON-NLS-1$
+					isFromSpecial = true;				
+                    out.println(bubbleFromSpecial+"<div class=\"specialmessage from\">"); //$NON-NLS-1$
                 }
                 out.println(Messages.getString("WhatsAppReport.UnavailableVideoCall")); //$NON-NLS-1$
                 break;
             case UNKNOWN_VOICE_CALL:
                 if (message.isFromMe()) {
-                    out.println("<div class=\"specialmessage to\">"); //$NON-NLS-1$
+					isToSpecial = true;
+                    out.println(bubbleToSpecial+"<div class=\"specialmessage to\">"); //$NON-NLS-1$
                 } else {
-                    out.println("<div class=\"specialmessage from\">"); //$NON-NLS-1$
+					isFromSpecial = true;				
+                    out.println(bubbleFromSpecial+"<div class=\"specialmessage from\">"); //$NON-NLS-1$
                 }
                 out.println(Messages.getString("WhatsAppReport.UnknownVoiceCall")); //$NON-NLS-1$
                 break;
             case UNKNOWN_VIDEO_CALL:
                 if (message.isFromMe()) {
-                    out.println("<div class=\"specialmessage to\">"); //$NON-NLS-1$
+					isToSpecial = true;
+                    out.println(bubbleToSpecial+"<div class=\"specialmessage to\">"); //$NON-NLS-1$
                 } else {
-                    out.println("<div class=\"specialmessage from\">"); //$NON-NLS-1$
+					isFromSpecial = true;				
+                    out.println(bubbleFromSpecial+"<div class=\"specialmessage from\">"); //$NON-NLS-1$
                 }
                 out.println(Messages.getString("WhatsAppReport.UnknownVideoCall")); //$NON-NLS-1$
                 break;
             case VIDEO_CALL:
                 if (message.isFromMe()) {
-                    out.println("<div class=\"specialmessage to\">"); //$NON-NLS-1$
+					isToSpecial = true;
+                    out.println(bubbleToSpecial+"<div class=\"specialmessage to\">"); //$NON-NLS-1$
                 } else {
-                    out.println("<div class=\"specialmessage from\">"); //$NON-NLS-1$
+					isFromSpecial = true;				
+                    out.println(bubbleFromSpecial+"<div class=\"specialmessage from\">"); //$NON-NLS-1$
                 }
                 out.println(Messages.getString("WhatsAppReport.VideoCall")); //$NON-NLS-1$
                 if (message.getMediaDuration() > 0) {
@@ -300,9 +327,11 @@ public class ReportGenerator {
                 break;
             case VOICE_CALL:
                 if (message.isFromMe()) {
-                    out.println("<div class=\"specialmessage to\">"); //$NON-NLS-1$
+					isToSpecial = true;
+                    out.println(bubbleToSpecial+"<div class=\"specialmessage to\">"); //$NON-NLS-1$
                 } else {
-                    out.println("<div class=\"specialmessage from\">"); //$NON-NLS-1$
+					isFromSpecial = true;				
+                    out.println(bubbleFromSpecial+"<div class=\"specialmessage from\">"); //$NON-NLS-1$
                 }
                 out.println(Messages.getString("WhatsAppReport.VoiceCall") + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
                 out.println(
@@ -374,13 +403,15 @@ public class ReportGenerator {
                 String exportPath = null;
 
                 if (message.isFromMe()) {
-                    out.println("<div class=\"outgoing to\">"); //$NON-NLS-1$
+                    out.println(bubbleTo+"<div class=\"outgoing to\">"); //$NON-NLS-1$
+					isTo = true;
                     if (account != null && !account.isUnknown()) {
                         name = account.getName();
                         number = message.getLocalResource();
                     }
                 } else {
-                    out.println("<div class=\"incoming from\">"); //$NON-NLS-1$
+                    out.println(bubbleFrom+"<div class=\"incoming from\">"); //$NON-NLS-1$
+					isFrom = true;
                     number = message.getRemoteResource();
                     if (number != null) {
                         WAContact contact = contactsDirectory.getContact(number);
@@ -709,6 +740,15 @@ public class ReportGenerator {
             out.println("</span>"); //$NON-NLS-1$
 
         }
+
+		if (isTo)
+			out.println("</div><div class=\"arrow\"><div class=\"arrow-right\"></div></div>"); 
+		if (isFrom)
+			out.println("</div>");
+		if (isToSpecial)
+			out.println("</div><div class=\"arrow\"><div class=\"arrow-right-special\"></div></div>"); 
+		if (isFromSpecial)
+			out.println("</div>");
 
         out.println("</div></div>"); //$NON-NLS-1$
 
