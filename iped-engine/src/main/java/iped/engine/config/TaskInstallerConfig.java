@@ -136,7 +136,15 @@ public class TaskInstallerConfig implements Configurable<String> {
             AbstractTask task = (AbstractTask) iterator.next();
             if(task instanceof IScriptTask) {
                 output.append("<task script=\"");
-                output.append(((IScriptTask) task).getScriptFileName());
+                String scriptFullPath = ((IScriptTask) task).getScriptFileName();
+                String scriptRelPath = "";
+                if (scriptFullPath.contains(CUSTOM_SCRIPT_BASE)) {
+                    scriptRelPath = "custom/"
+                            + scriptFullPath.substring(scriptFullPath.lastIndexOf(File.separator) + 1);
+                } else {
+                    scriptRelPath = scriptFullPath.substring(scriptFullPath.lastIndexOf(File.separator) + 1);
+                }
+                output.append(scriptRelPath);
                 output.append("\"></task>\n");
             }else {
                 output.append("<task class=\"");
