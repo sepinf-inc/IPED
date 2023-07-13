@@ -342,19 +342,30 @@ public class ScriptEditPanel extends JPanel implements DocumentListener{
             if(insertionMode) {
                 if(rbPython.isSelected()) {
                     scriptTask = new PythonTask(destFile);
+                    scriptTask.checkTaskCompliance(textArea.getText());
+
+                    try {
+                        Files.write(destFile.toPath(), textArea.getText().getBytes(StandardCharsets.UTF_8));
+                    } catch (IOException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+
                 }else {
+                    scriptTask.checkTaskCompliance(textArea.getText());
+
+                    try {
+                        Files.write(destFile.toPath(), textArea.getText().getBytes(StandardCharsets.UTF_8));
+                    } catch (IOException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+
                     scriptTask = new ScriptTask(destFile);
                 }
             }
             
-            scriptTask.checkTaskCompliance(textArea.getText());
 
-            try {
-                Files.write(destFile.toPath(), textArea.getText().getBytes(StandardCharsets.UTF_8));
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
 
             scriptTaskToSave=scriptTask;
         }
