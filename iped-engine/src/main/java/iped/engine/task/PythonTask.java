@@ -346,7 +346,7 @@ public class PythonTask extends AbstractTask implements IScriptTask {
 
     @Override
     public String getScriptFileName() {
-        return scriptFile.getName();
+        return scriptFile.getAbsolutePath();
     }
 
     @Override
@@ -360,6 +360,12 @@ public class PythonTask extends AbstractTask implements IScriptTask {
             boolean getConfigurablesMethodFound=false;
             while ((str = in.readLine()) != null) {
                 str=str.trim();
+                if (str.startsWith("class ")) {
+                    String className = str.substring(6, str.indexOf(":"));
+                    if (!this.getName().startsWith(className)) {
+                        throw new ScriptTaskComplianceException("Class name differs from file name.");
+                    }
+                }
                 if(str.startsWith("def")) {
                     str=str.substring(3).trim();
                     if(str.startsWith("process")) {

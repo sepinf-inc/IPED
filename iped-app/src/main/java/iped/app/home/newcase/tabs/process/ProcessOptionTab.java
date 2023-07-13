@@ -485,14 +485,17 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
 
         JButton buttoAddScriptTask = new JButton(Messages.get("Home.ProcOptions.AddScriptTask"));
         buttoAddScriptTask.addActionListener( e -> {
-            File scriptDir = Paths.get(System.getProperty(IConfigurationDirectory.IPED_APP_ROOT), TaskInstallerConfig.SCRIPT_BASE).toFile();
+            File scriptDir = Paths
+                    .get(System.getProperty(IConfigurationDirectory.IPED_APP_ROOT), TaskInstallerConfig.SCRIPT_BASE)
+                    .toFile();
             File exampleScriptFile = new File(scriptDir, ScriptEditPanel.TEMPLATE_SCRIPT_NAME);
             TaskConfigDialog tcd = new TaskConfigDialog(selectedConfigurationManager, new ScriptTask(exampleScriptFile), mainFrame);
             tcd.setModalityType(ModalityType.APPLICATION_MODAL);
             tcd.setVisible(true);
             
-            if(tcd.getScriptTask()!=null) {
-                tasksTableModel.addData((AbstractTask) tcd.getScriptTask(), true);
+            AbstractTask addedTask = (AbstractTask) tcd.getScriptTask();
+            if (addedTask != null) {
+                tasksTableModel.addData(addedTask, true);
                 tasksTableModel.fireTableRowsInserted(taskArrayList.size()-1, taskArrayList.size()-1);
                 selectedConfigurationManager.notifyUpdate(taskInstallerConfig);
             }

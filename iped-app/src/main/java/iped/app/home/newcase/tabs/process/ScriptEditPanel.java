@@ -69,9 +69,21 @@ public class ScriptEditPanel extends JPanel implements DocumentListener{
     public ScriptEditPanel(MainFrame mainFrame, IScriptTask scriptTask) {
         super();
         this.scriptTask = scriptTask;
-        if(scriptTask.getScriptFileName().equals(TEMPLATE_SCRIPT_NAME)) {
+        File scriptDir = Paths
+                .get(System.getProperty(IConfigurationDirectory.IPED_APP_ROOT), TaskInstallerConfig.SCRIPT_BASE)
+                .toFile();
+        File exampleScriptFile = new File(scriptDir, ScriptEditPanel.TEMPLATE_SCRIPT_NAME);
+        File customScriptDir = Paths
+                .get(System.getProperty(IConfigurationDirectory.IPED_APP_ROOT), TaskInstallerConfig.CUSTOM_SCRIPT_BASE)
+                .toFile();
+        if (scriptTask.getScriptFileName().equals(exampleScriptFile.getAbsolutePath())) {
             insertionMode=true;
-            isScriptEditable=true;
+            isScriptEditable = true;
+        } else {
+            // is script file is in custom script path, enable edition
+            if (scriptTask.getScriptFileName().startsWith(customScriptDir.getAbsolutePath())) {
+                isScriptEditable = true;
+            }
         }
     }
 
@@ -167,7 +179,8 @@ public class ScriptEditPanel extends JPanel implements DocumentListener{
             textArea.setEnabled(false);
 
             titlePanel.add(templatePanel, BorderLayout.SOUTH);
-            titlePanel.setEnabled(true);//cannot modify existing script name
+            titlePanel.setEnabled(true);// cannot modify existing script name
+            titleText.setEnabled(true);// cannot modify existing script name
 
             ButtonGroup bg = new ButtonGroup();
             rbJavascript = new JRadioButton("Javascript");
@@ -195,14 +208,16 @@ public class ScriptEditPanel extends JPanel implements DocumentListener{
             changeToJavascript();
         }else {
             titlePanel.setEnabled(false);//cannot modify existing script name
+            titleText.setEnabled(false);// cannot modify existing script name
         }
 
         try {
             if(scriptTask!=null) {
-                String scriptName =scriptTask.getScriptFileName();
+                String scriptName = scriptTask.getScriptFileName();
 
-                File scriptFile = new File(scriptDir, scriptTask.getScriptFileName());
-                titleText.setText(scriptName.substring(0,scriptName.lastIndexOf(".")));
+                File scriptFile = new File(scriptName);
+                titleText.setText(scriptName.substring(0, scriptName.lastIndexOf("."))
+                        .substring(scriptName.lastIndexOf(File.separator) + 1));
 
                 setScriptTask(scriptFile);
             }
@@ -315,29 +330,32 @@ public class ScriptEditPanel extends JPanel implements DocumentListener{
 
     public void applyChanges() throws ScriptTaskComplianceException {
         if(scriptChanged) {            
-            scriptTask.checkTaskCompliance(textArea.getText());
             
-            File scriptDir = Paths.get(System.getProperty(IConfigurationDirectory.IPED_APP_ROOT), TaskInstallerConfig.SCRIPT_BASE).toFile();
+            File scriptDir = Paths.get(System.getProperty(IConfigurationDirectory.IPED_APP_ROOT),
+                    TaskInstallerConfig.CUSTOM_SCRIPT_BASE).toFile();
             String extension=".js";
             if(scriptTask instanceof PythonTask) {
                 extension=".py";
             }
             File destFile = new File(scriptDir, titleText.getText()+extension);
-            try {
-                Files.write(destFile.toPath(),textArea.getText().getBytes(StandardCharsets.UTF_8));
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
 
             if(insertionMode) {
                 if(rbPython.isSelected()) {
                     scriptTask = new PythonTask(destFile);
                 }else {
-                    scriptTask= new ScriptTask(destFile);
+                    scriptTask = new ScriptTask(destFile);
                 }
             }
             
+            scriptTask.checkTaskCompliance(textArea.getText());
+
+            try {
+                Files.write(destFile.toPath(), textArea.getText().getBytes(StandardCharsets.UTF_8));
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+
             scriptTaskToSave=scriptTask;
         }
     }

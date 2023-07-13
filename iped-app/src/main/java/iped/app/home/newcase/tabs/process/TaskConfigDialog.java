@@ -168,6 +168,7 @@ public class TaskConfigDialog extends JDialog {
                 }
                 if(task instanceof IScriptTask) {
                     scriptPanel.applyChanges();
+                    task = (AbstractTask) scriptPanel.getScriptTask();
                 }
                 this.setVisible(false);
             }catch(ConfigurableValidationException | ScriptTaskComplianceException cve) {
