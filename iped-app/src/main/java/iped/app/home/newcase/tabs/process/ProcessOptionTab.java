@@ -513,7 +513,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         });
 
         panelButtons.add(buttoCancel);
-        panelButtons.add(buttoAddScriptTask);
+        // panelButtons.add(buttoAddScriptTask);
         panelButtons.add(buttonStartProcess);
         return panelButtons;
     }
