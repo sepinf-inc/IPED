@@ -1494,5 +1494,11 @@
     	<sub-class-of type="message/x-chat-message"/>
     </mime-type>
 
-</mime-info>
+	<mime-type type="application/hikvisionfs">
+    	<magic priority="60">
+      		<match value="HIKVISION@HANGZHOU" type="string" offset="528"/>
+    	</magic>
+    	<sub-class-of type="application/octet-stream"/>
+  	</mime-type>
 
+</mime-info>
