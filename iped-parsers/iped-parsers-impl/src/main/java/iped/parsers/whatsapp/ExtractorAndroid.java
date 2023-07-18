@@ -79,7 +79,7 @@ public class ExtractorAndroid extends Extractor {
     private boolean hasSubjectCol = false;
     private boolean hasMediaDurationCol = false;
     private boolean hasGroupParticiantsTable = true;
-    private boolean hasFoward = false;
+    private boolean hasForwardedCol = false;
     private SQLException parsingException = null;
 
     public ExtractorAndroid(String itemPath, File databaseFile, WAContactsDirectory contacts, WAAccount account, boolean recoverDeletedRecords) {
@@ -151,7 +151,7 @@ public class ExtractorAndroid extends Extractor {
                     hasEditVersionCol = SQLite3DBParser.checkIfColumnExists(conn, "messages", "edit_version"); //$NON-NLS-1$ //$NON-NLS-2$
                     hasMediaCaptionCol = SQLite3DBParser.checkIfColumnExists(conn, "messages", "media_caption"); //$NON-NLS-1$ //$NON-NLS-2$
                     hasMediaDurationCol = SQLite3DBParser.checkIfColumnExists(conn, "messages", "media_duration"); //$NON-NLS-1$ //$NON-NLS-2$
-                    hasFoward = SQLite3DBParser.checkIfColumnExists(conn, "messages", "forwarded"); //$NON-NLS-1$ //$NON-NLS-2$
+                    hasForwardedCol = SQLite3DBParser.checkIfColumnExists(conn, "messages", "forwarded"); //$NON-NLS-1$ //$NON-NLS-2$
                     if (!hasChatView) {
                         hasSubjectCol = SQLite3DBParser.checkIfColumnExists(conn, "chat_list", "subject"); //$NON-NLS-1$ //$NON-NLS-2$
                     }
@@ -503,7 +503,7 @@ public class ExtractorAndroid extends Extractor {
             }
         }
         m.setDeleted(deleted);
-        m.setForwarded(hasFoward && (rs.getInt("forwarded") > 0));
+        m.setForwarded(hasForwardedCol && (rs.getInt("forwarded") > 0));
 
         return m;
     }
