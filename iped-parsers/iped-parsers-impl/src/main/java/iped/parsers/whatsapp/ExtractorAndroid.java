@@ -347,6 +347,8 @@ public class ExtractorAndroid extends Extractor {
             query = SELECT_MESSAGES_NO_MEDIA_DURATION;
         } else if (!hasMediaCaptionCol) {
             query = SELECT_MESSAGES_NO_MEDIA_CAPTION;
+        } else if (!hasForwardedCol) {
+            query = SELECT_MESSAGES_NO_FORWARDED;
         } else if (hasThumbTable) {
             query = SELECT_MESSAGES_THUMBS_TABLE;
         } else if (hasEditVersionCol) {
@@ -662,17 +664,26 @@ public class ExtractorAndroid extends Extractor {
             + "key_from_me as fromMe, timestamp, media_url as mediaUrl, " //$NON-NLS-1$
             + "media_mime_type as mediaMime, media_size as mediaSize, media_name as mediaName, " //$NON-NLS-1$
             + "media_wa_type as messageType, null as thumbData, latitude, longitude, " //$NON-NLS-1$
-            + "(forwarded & 1) as forwarded, " //$NON-NLS-1$
+            + "NULL as forwarded, " //$NON-NLS-1$
             + "NULL as mediaCaption, media_hash as mediaHash, raw_data as rawData FROM " //$NON-NLS-1$
             + "messages WHERE remoteId=? and status!=-1 ORDER BY timestamp"; //$NON-NLS-1$
-    
+
     private static final String SELECT_MESSAGES_NO_MEDIA_CAPTION = "SELECT _id AS id, key_remote_jid " //$NON-NLS-1$
             + "as remoteId, remote_resource AS remoteResource, status, data, " //$NON-NLS-1$
             + "key_from_me as fromMe, timestamp, media_url as mediaUrl, " //$NON-NLS-1$
             + "media_mime_type as mediaMime, media_size as mediaSize, media_name as mediaName, " //$NON-NLS-1$
             + "media_wa_type as messageType, null as thumbData, latitude, longitude, media_duration, " //$NON-NLS-1$
-            + "(forwarded & 1) as forwarded, " //$NON-NLS-1$
+            + "NULL as forwarded, " //$NON-NLS-1$
             + "NULL as mediaCaption, media_hash as mediaHash, raw_data as rawData FROM " //$NON-NLS-1$
+            + "messages WHERE remoteId=? and status!=-1 ORDER BY timestamp"; //$NON-NLS-1$
+    
+    private static final String SELECT_MESSAGES_NO_FORWARDED = "SELECT _id AS id, key_remote_jid " //$NON-NLS-1$
+            + "as remoteId, remote_resource AS remoteResource, status, data, " //$NON-NLS-1$
+            + "key_from_me as fromMe, timestamp, media_url as mediaUrl, " //$NON-NLS-1$
+            + "media_mime_type as mediaMime, media_size as mediaSize, media_name as mediaName, " //$NON-NLS-1$
+            + "media_wa_type as messageType, null as thumbData, latitude, longitude, media_duration, " //$NON-NLS-1$
+            + "NULL as forwarded, " //$NON-NLS-1$
+            + "media_caption as mediaCaption, media_hash as mediaHash, raw_data as rawData FROM " //$NON-NLS-1$
             + "messages WHERE remoteId=? and status!=-1 ORDER BY timestamp"; //$NON-NLS-1$
     
     private static final String SELECT_MESSAGES_NO_THUMBS_TABLE = "SELECT _id AS id, key_remote_jid " //$NON-NLS-1$
