@@ -291,6 +291,7 @@ public class RemoteWav2Vec2Service {
                             bis.mark(5);
                             if (bis.read() == -1) {
                                 logger.info(prefix + "Possible Kubernetes live test");
+                                requestsReceived.decrementAndGet();
                                 return;
                             }
                             bis.reset();

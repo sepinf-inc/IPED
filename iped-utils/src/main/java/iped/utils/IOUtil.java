@@ -423,23 +423,35 @@ public class IOUtil {
     }
 
     public static void ignoreInputStream(final InputStream stream) {
-        ignoreInputStream(stream, null);
+        ignoreInputStream0(stream);
     }
 
+    public static void ignoreInputStream(final Process p) {
+        ignoreInputStream0(p.getInputStream());
+    }
+
+    public static void ignoreErrorStream(Process p) {
+        ignoreInputStream0(p.getErrorStream());
+    }
+
+    @Deprecated
     public static void ignoreInputStream(final InputStream stream, final ContainerVolatile msg) {
+        ignoreInputStream0(stream);
+    }
+
+    private static void ignoreInputStream0(final InputStream stream) {
         Thread t = new Thread() {
             @Override
             public void run() {
                 byte[] out = new byte[1024];
                 int read = 0;
-                while (read != -1)
-                    try {
+                try {
+                    while (read != -1) {
                         read = stream.read(out);
-                        if (msg != null)
-                            msg.progress = true;
-
-                    } catch (Exception e) {
                     }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         };
         t.setDaemon(true);
