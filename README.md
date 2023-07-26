@@ -2,7 +2,7 @@
 
 IPED is an open source software that can be used to process and analyze digital evidence, often seized at crime scenes by law enforcement or in a corporate investigation by private examiners.
 
-## Introduction
+## History
 
 IPED - Digital Evidence Processor and Indexer (translated from Portuguese) is a tool implemented in java and originally and still developed by digital forensic experts from Brazilian Federal Police since 2012. Although it was always open source, only in 2019 its code was officially published.
 
@@ -32,13 +32,13 @@ It will generate an snapshot version of IPED in target/release folder.
 
 On Linux you also must build The Sleuthkit and additional dependencies. Please refer to [Linux Section](https://github.com/sepinf-inc/IPED/wiki/Linux)
 
-If you want to contribute to the project, refer to [Contributing](https://github.com/lfcnassif/IPED/wiki/Contributing)
+Contributions are very welcome! Before contributing please refer to [Contributing](https://github.com/lfcnassif/IPED/wiki/Contributing)
 
 ## Features
 
 Some of IPED several features are listed below:
 
-- Supported hashes: md5, sha-1, sha-256, sha-512 and edonkey. PhotoDNA is also available **for law enforcement** (please contact sepinf dot inc dot ditec at pf dot gov dot br)
+- Supported hashes: md5, sha-1, sha-256, sha-512 and edonkey. PhotoDNA is also available **for law enforcement** (please contact iped at pf dot gov dot br)
 - Supported hash sets: NIST NSRL, NIST CAID, ProjectVIC, Interpol ICSE, standard CSV format
 - Fast hash deduplication 
 - Signature analysis
@@ -76,3 +76,35 @@ Some of IPED several features are listed below:
 - Web API for searching remote cases, get file metadata, raw content, decoded text, thumbnails and posting bookmarks
 - Creation of bookmarks/tags for interesting data
 - HTML, CSV reports and portable cases with tagged data
+
+## Screenshots
+
+Processing:
+![image](https://github.com/sepinf-inc/IPED/assets/7276994/bf29b44a-a924-4c65-845c-6282a4b91861)
+
+Analysis:
+![image](https://github.com/sepinf-inc/IPED/assets/7276994/5fca2b65-6763-4bc1-9284-604c8b325d54)
+
+Data Carving & Video Thumbnails:
+![image](https://github.com/sepinf-inc/IPED/assets/7276994/4d908fe5-6cb1-443b-96fa-d937fa1d2e2d)
+
+Regex Results:
+![image](https://github.com/sepinf-inc/IPED/assets/7276994/db34adc7-d7b9-4b56-8a35-99e095380d0b)
+
+Map:
+![image](https://github.com/sepinf-inc/IPED/assets/7276994/279b9280-3a72-484a-8aed-e4d015df196f)
+
+Communication links:
+![image](https://github.com/sepinf-inc/IPED/assets/7276994/8b164948-fa36-47b8-a249-f64547a36b28)
+
+Face search:
+![image](https://github.com/sepinf-inc/IPED/assets/7276994/55ceb13c-dc21-40cd-a6e2-a6e3d6ed49a6)
+
+Audio Transcription:
+![image](https://github.com/sepinf-inc/IPED/assets/7276994/ebded2ad-f88d-43c8-9699-66e498c9939c)
+
+Timeline:
+![image](https://github.com/sepinf-inc/IPED/assets/7276994/011657e3-8ff2-4105-b3c2-116980772fc0)
+
+Time chart:
+![image](https://github.com/sepinf-inc/IPED/assets/7276994/81df1c18-361d-49f1-b755-36520437803a)

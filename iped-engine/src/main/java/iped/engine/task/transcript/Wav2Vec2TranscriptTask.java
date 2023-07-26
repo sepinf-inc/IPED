@@ -73,6 +73,17 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
             return;
         }
         
+        String ipedRoot = System.getProperty(IConfigurationDirectory.IPED_ROOT);
+        if (SystemUtils.IS_OS_WINDOWS && ipedRoot == null) {
+            ipedRoot = Configuration.getInstance().appRoot;
+            if (!new File(ipedRoot, "python/python.exe").exists()) {
+                // Possibly generating report on a machine that have never run iped processing.
+                this.transcriptConfig.setEnabled(false);
+                logger.warn("Python.exe not found, disabling transcription module.");
+                return;
+            }
+        }
+
         if (!deque.isEmpty())
             return;
         

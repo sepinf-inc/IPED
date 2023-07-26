@@ -324,9 +324,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         this.isMultiCase = isMultiCase;
         this.casesPathFile = casesPathFile;
         this.processingManager = processingManager;
-        if (processingManager != null) {
-            processingManager.setSearchAppOpen(true);
-        }
 
         LOGGER = LoggerFactory.getLogger(App.class);
         LOGGER.info("Starting..."); //$NON-NLS-1$
@@ -341,7 +338,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         if (SwingUtilities.isEventDispatchThread()) {
             createGUI();
-            LOGGER.info("GUI created"); //$NON-NLS-1$
+
         } else {
             try {
                 SwingUtilities.invokeAndWait(new Runnable() {
@@ -349,7 +346,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                     public void run() {
                         try {
                             createGUI();
-                            LOGGER.info("GUI created"); //$NON-NLS-1$
 
                         } catch (Throwable t) {
                             t.printStackTrace();
@@ -424,7 +420,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         if (!Util.isJavaFXPresent()) {
             JOptionPane.showMessageDialog(this, Messages.get("NoJavaFX.Error"), "Error", JOptionPane.ERROR_MESSAGE);
-            System.exit(1);
+            return;
         }
 
         String tab = "     "; //$NON-NLS-1$
@@ -434,6 +430,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         this.addWindowListener(this);
         this.setIconImages(IconUtil.getIconImages("search", "/iped/app/icon"));
         this.setVisible(true);
+        if (processingManager != null) {
+            processingManager.setSearchAppOpen(true);
+        }
+
         ToolTipManager.sharedInstance().setInitialDelay(10);
 
         dockingControl = new CControl(this);
@@ -785,6 +785,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         updateIconContainersUI(IconManager.getIconSize(), false);
 
         setupKeyboardShortcuts();
+
+        LOGGER.info("UI created"); //$NON-NLS-1$
     }
 
     /**
@@ -1490,6 +1492,15 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     public IIPEDSearcher createNewSearch(String query) {
         CaseSearcherFilter csf = new CaseSearcherFilter(query);
         csf.applyUIQueryFilters();
+        return csf.getSearcher();
+    }
+
+    @Override
+    public IIPEDSearcher createNewSearch(String query, boolean applyFilters) {
+        CaseSearcherFilter csf = new CaseSearcherFilter(query);
+        if (applyFilters) {
+            csf.applyUIQueryFilters();
+        }
         return csf.getSearcher();
     }
 

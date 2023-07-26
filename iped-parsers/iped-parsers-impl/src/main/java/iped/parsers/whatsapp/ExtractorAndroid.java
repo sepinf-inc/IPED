@@ -2,16 +2,19 @@ package iped.parsers.whatsapp;
 
 import static iped.parsers.whatsapp.Message.MessageType.APP_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.AUDIO_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_CHAT;
 import static iped.parsers.whatsapp.Message.MessageType.CONTACT_MESSAGE;
-import static iped.parsers.whatsapp.Message.MessageType.DELETED_FROM_SENDER;
+import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_ADMIN;
+import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_SENDER;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_MESSAGE;
-import static iped.parsers.whatsapp.Message.MessageType.ENCRIPTION_KEY_CHANGED;
+import static iped.parsers.whatsapp.Message.MessageType.ENCRYPTION_KEY_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.GIF_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CREATED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_DESCRIPTION_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_ICON_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.IMAGE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.LOCATION_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.MESSAGES_ENCRYPTED;
 import static iped.parsers.whatsapp.Message.MessageType.MESSAGES_NOW_ENCRYPTED;
 import static iped.parsers.whatsapp.Message.MessageType.MISSED_VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.MISSED_VOICE_CALL;
@@ -76,6 +79,7 @@ public class ExtractorAndroid extends Extractor {
     private boolean hasSubjectCol = false;
     private boolean hasMediaDurationCol = false;
     private boolean hasGroupParticiantsTable = true;
+    private boolean hasForwardedCol = false;
     private SQLException parsingException = null;
 
     public ExtractorAndroid(String itemPath, File databaseFile, WAContactsDirectory contacts, WAAccount account, boolean recoverDeletedRecords) {
@@ -147,6 +151,7 @@ public class ExtractorAndroid extends Extractor {
                     hasEditVersionCol = SQLite3DBParser.checkIfColumnExists(conn, "messages", "edit_version"); //$NON-NLS-1$ //$NON-NLS-2$
                     hasMediaCaptionCol = SQLite3DBParser.checkIfColumnExists(conn, "messages", "media_caption"); //$NON-NLS-1$ //$NON-NLS-2$
                     hasMediaDurationCol = SQLite3DBParser.checkIfColumnExists(conn, "messages", "media_duration"); //$NON-NLS-1$ //$NON-NLS-2$
+                    hasForwardedCol = SQLite3DBParser.checkIfColumnExists(conn, "messages", "forwarded"); //$NON-NLS-1$ //$NON-NLS-2$
                     if (!hasChatView) {
                         hasSubjectCol = SQLite3DBParser.checkIfColumnExists(conn, "chat_list", "subject"); //$NON-NLS-1$ //$NON-NLS-2$
                     }
@@ -342,6 +347,8 @@ public class ExtractorAndroid extends Extractor {
             query = SELECT_MESSAGES_NO_MEDIA_DURATION;
         } else if (!hasMediaCaptionCol) {
             query = SELECT_MESSAGES_NO_MEDIA_CAPTION;
+        } else if (!hasForwardedCol) {
+            query = SELECT_MESSAGES_NO_FORWARDED;
         } else if (hasThumbTable) {
             query = SELECT_MESSAGES_THUMBS_TABLE;
         } else if (hasEditVersionCol) {
@@ -498,6 +505,7 @@ public class ExtractorAndroid extends Extractor {
             }
         }
         m.setDeleted(deleted);
+        m.setForwarded(hasForwardedCol && (rs.getInt("forwarded") > 0));
 
         return m;
     }
@@ -533,7 +541,7 @@ public class ExtractorAndroid extends Extractor {
                             result = YOU_ADMIN;
                             break;
                         case 18:
-                            result = ENCRIPTION_KEY_CHANGED;
+                            result = ENCRYPTION_KEY_CHANGED;
                             break;
                         case 19:
                             result = MESSAGES_NOW_ENCRYPTED;
@@ -543,6 +551,12 @@ public class ExtractorAndroid extends Extractor {
                             break;
                         case 27:
                             result = GROUP_DESCRIPTION_CHANGED;
+                            break;
+                        case 46:
+                            result = BUSINESS_CHAT;
+                            break;
+                        case 67:
+                            result = MESSAGES_ENCRYPTED;
                             break;
                         default:
                             break;
@@ -598,7 +612,13 @@ public class ExtractorAndroid extends Extractor {
                     if (edit_version == 5) {
                         result = DELETED_MESSAGE;
                     } else {
-                        result = DELETED_FROM_SENDER;
+                        result = DELETED_BY_SENDER;
+                    }
+                } else {
+                    if (status == 0) {
+                        result = DELETED_BY_SENDER;
+                    } else if (status == 4 || status == 5) {
+                        result = DELETED_MESSAGE;
                     }
                 }
                 break;
@@ -607,6 +627,12 @@ public class ExtractorAndroid extends Extractor {
                 break;
             case 20:
                 result = STICKER_MESSAGE;
+                break;
+            case 64:
+                if (status == 0) {
+                    result = DELETED_BY_ADMIN;
+                }
+                break;
             default:
                 break;
         }
@@ -638,15 +664,26 @@ public class ExtractorAndroid extends Extractor {
             + "key_from_me as fromMe, timestamp, media_url as mediaUrl, " //$NON-NLS-1$
             + "media_mime_type as mediaMime, media_size as mediaSize, media_name as mediaName, " //$NON-NLS-1$
             + "media_wa_type as messageType, null as thumbData, latitude, longitude, " //$NON-NLS-1$
+            + "NULL as forwarded, " //$NON-NLS-1$
             + "NULL as mediaCaption, media_hash as mediaHash, raw_data as rawData FROM " //$NON-NLS-1$
             + "messages WHERE remoteId=? and status!=-1 ORDER BY timestamp"; //$NON-NLS-1$
-    
+
     private static final String SELECT_MESSAGES_NO_MEDIA_CAPTION = "SELECT _id AS id, key_remote_jid " //$NON-NLS-1$
             + "as remoteId, remote_resource AS remoteResource, status, data, " //$NON-NLS-1$
             + "key_from_me as fromMe, timestamp, media_url as mediaUrl, " //$NON-NLS-1$
             + "media_mime_type as mediaMime, media_size as mediaSize, media_name as mediaName, " //$NON-NLS-1$
             + "media_wa_type as messageType, null as thumbData, latitude, longitude, media_duration, " //$NON-NLS-1$
+            + "NULL as forwarded, " //$NON-NLS-1$
             + "NULL as mediaCaption, media_hash as mediaHash, raw_data as rawData FROM " //$NON-NLS-1$
+            + "messages WHERE remoteId=? and status!=-1 ORDER BY timestamp"; //$NON-NLS-1$
+    
+    private static final String SELECT_MESSAGES_NO_FORWARDED = "SELECT _id AS id, key_remote_jid " //$NON-NLS-1$
+            + "as remoteId, remote_resource AS remoteResource, status, data, " //$NON-NLS-1$
+            + "key_from_me as fromMe, timestamp, media_url as mediaUrl, " //$NON-NLS-1$
+            + "media_mime_type as mediaMime, media_size as mediaSize, media_name as mediaName, " //$NON-NLS-1$
+            + "media_wa_type as messageType, null as thumbData, latitude, longitude, media_duration, " //$NON-NLS-1$
+            + "NULL as forwarded, " //$NON-NLS-1$
+            + "media_caption as mediaCaption, media_hash as mediaHash, raw_data as rawData FROM " //$NON-NLS-1$
             + "messages WHERE remoteId=? and status!=-1 ORDER BY timestamp"; //$NON-NLS-1$
     
     private static final String SELECT_MESSAGES_NO_THUMBS_TABLE = "SELECT _id AS id, key_remote_jid " //$NON-NLS-1$
@@ -654,6 +691,7 @@ public class ExtractorAndroid extends Extractor {
             + "key_from_me as fromMe, timestamp, media_url as mediaUrl, " //$NON-NLS-1$
             + "media_mime_type as mediaMime, media_size as mediaSize, media_name as mediaName, " //$NON-NLS-1$
             + "media_wa_type as messageType, null as thumbData, edit_version, latitude, longitude, media_duration, " //$NON-NLS-1$
+            + "(forwarded & 1) as forwarded, " //$NON-NLS-1$
             + "media_caption as mediaCaption, media_hash as mediaHash, raw_data as rawData FROM " //$NON-NLS-1$
             + "messages WHERE remoteId=? and status!=-1 ORDER BY timestamp"; //$NON-NLS-1$
 
@@ -662,6 +700,7 @@ public class ExtractorAndroid extends Extractor {
             + "key_from_me as fromMe, timestamp, media_url as mediaUrl, " //$NON-NLS-1$
             + "media_mime_type as mediaMime, media_size as mediaSize, media_name as mediaName, " //$NON-NLS-1$
             + "media_wa_type as messageType, null as thumbData, latitude, longitude, media_duration, " //$NON-NLS-1$
+            + "(forwarded & 1) as forwarded, " //$NON-NLS-1$
             + "media_caption as mediaCaption, media_hash as mediaHash, raw_data as rawData FROM " //$NON-NLS-1$
             + "messages WHERE remoteId=? and status!=-1 ORDER BY timestamp"; //$NON-NLS-1$
 
@@ -670,6 +709,7 @@ public class ExtractorAndroid extends Extractor {
             + "messages.key_from_me as fromMe, messages.timestamp as timestamp, media_url as mediaUrl, " //$NON-NLS-1$
             + "media_mime_type as mediaMime, media_size as mediaSize, media_name as mediaName, " //$NON-NLS-1$
             + "media_wa_type as messageType, raw_data as rawData, edit_version, latitude, longitude, media_duration, " //$NON-NLS-1$
+            + "(forwarded & 1) as forwarded, " //$NON-NLS-1$
             + "media_caption as mediaCaption, media_hash as mediaHash, thumbnail as thumbData FROM " //$NON-NLS-1$
             + "messages LEFT JOIN message_thumbnails ON (messages.key_id = message_thumbnails.key_id " //$NON-NLS-1$
             + "AND messages.key_remote_jid = message_thumbnails.key_remote_jid " //$NON-NLS-1$
