@@ -69,6 +69,7 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.utils.DateUtils;
+import org.sleuthkit.datamodel.SleuthkitCase;
 
 import iped.data.IItem;
 import iped.datasource.IDataSource;
@@ -76,6 +77,7 @@ import iped.engine.data.DataSource;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.Item;
 import iped.engine.lucene.analysis.FastASCIIFoldingFilter;
+import iped.engine.sleuthkit.SleuthkitInputStreamFactory;
 import iped.engine.task.ImageThumbTask;
 import iped.engine.task.MinIOTask.MinIOInputInputStreamFactory;
 import iped.engine.task.similarity.ImageSimilarityTask;
@@ -810,7 +812,14 @@ public class IndexItem extends BasicProps {
             if (doc.get(IndexItem.SOURCE_PATH) != null && doc.get(IndexItem.SOURCE_DECODER) != null) {
                 String sourcePath = doc.get(IndexItem.SOURCE_PATH);
                 String className = doc.get(IndexItem.SOURCE_DECODER);
-                if (!MinIOInputInputStreamFactory.class.getName().equals(className)) {
+                if (SleuthkitInputStreamFactory.class.getName().equals(className)) {
+                    // Use the correct TSK database (sleuth.db location and name may change in some
+                    // situations), to avoid issue #1782.
+                    SleuthkitCase sleuthCase = iCase.getSleuthCase();
+                    if (sleuthCase != null) {
+                        sourcePath = sleuthCase.getDbDirPath() + File.separatorChar + sleuthCase.getDatabaseName();
+                    }
+                } else if (!MinIOInputInputStreamFactory.class.getName().equals(className)) {
                     sourcePath = Util.getResolvedFile(outputBase.getParent(), sourcePath).toString();
                 }
                 synchronized (inputStreamFactories) {
