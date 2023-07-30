@@ -79,7 +79,7 @@ enableGraphGeneration = true
 # This is used to detect possible encrypted items.
 # Also makes indexing faster and reduces index size, specially when indexing unallocated space.
 # May cause loss of hits surrounded by "random" content.
-entropyTest = true
+entropyTest = false
 
 # Indexes files contents. If disabled, indexes only the properties of files.
 indexFileContents = true
@@ -136,3 +136,5 @@ enableDocThumbs = false
 # Enables HTML report generation on automatic extractions or from selected items.
 # Generation settings can be modified in file "conf/HTMLReportConfig.txt"
 enableHTMLReport = true
+
+enableHikvisionFS = true

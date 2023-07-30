@@ -52,7 +52,7 @@ public class SleuthkitInputStreamFactory extends SeekableInputStreamFactory {
         if (content != null) {
             this.content = content;
         } else {
-            this.emptyContent = true;
+            this.emptyContent = false; //Will need an external configuration parameter 
         }
     }
 
