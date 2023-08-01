@@ -203,13 +203,15 @@ div.deletedIcon {
     visibility: hidden;
 }
 
-.arrow {    
+/*Arrow*/
+.aw {    
 	display: table-cell;
 	vertical-align: top;
 	padding-top:10px;	
 }
 
-.arrow-left {
+/*Arrow-left*/
+.awl {
 	display: table-cell;
 	border-top: 8px solid transparent;
 	border-bottom: 8px solid transparent; 
@@ -218,7 +220,8 @@ div.deletedIcon {
 	cursor: pointer;
 }
 
-.arrow-right {
+/*Arrow-right*/
+.awr {
 	display: table-cell;
 	border-top: 8px solid transparent;
 	border-bottom: 8px solid transparent; 
@@ -227,7 +230,8 @@ div.deletedIcon {
 	cursor: pointer;
 }
 
-.bubble-right{
+/*bubble-right*/
+.bbr{
 	float:right;
 	padding-right:6px;
 	display: table-cell;
@@ -235,23 +239,24 @@ div.deletedIcon {
 	max-width:90%;
 }
 
-.bubble-right:hover .from{
+.bbr:hover .from{
 	background-color: #def1f3 !important;
 }
 
-.bubble-right:hover .arrow-left{
+.bbr:hover .awl{
     border-right: 16px solid #def1f3 !important;
 }
 
-.bubble-right:hover .to{
+.bbr:hover .to{
     background-color: #def1f3 !important;
 }
 
-.bubble-right:hover .arrow-right{
+.bbr:hover .awr{
     border-left: 16px solid #def1f3 !important;
 }
 
-.bubble-left{
+/*bubble-left*/
+.bbl{
 	float:left;
 	padding-left:6px;
 	display: table-cell;
@@ -259,23 +264,24 @@ div.deletedIcon {
 	max-width:90%;	
 }
 
-.bubble-left:hover .from{
+.bbl:hover .from{
 	background-color: #def1f3 !important;
 }
 
-.bubble-left:hover .arrow-left{
+.bbl:hover .awl{
     border-right: 16px solid #def1f3 !important;
 }
 
-.bubble-left:hover .to{
+.bbl:hover .to{
     background-color: #def1f3 !important;
 }
 
-.bubble-left:hover .arrow-right{
+.bbl:hover .awr{
     border-left: 16px solid #def1f3 !important;
 }
 
-.arrow-left-special {
+/*arrow-left-special*/
+.awls {
 	display: table-cell;
 	border-top: 8px solid transparent;
 	border-bottom: 8px solid transparent; 
@@ -284,7 +290,8 @@ div.deletedIcon {
 	cursor: pointer;
 }
 
-.arrow-right-special {
+/*arrow-right-special*/
+.awrs {
 	display: table-cell;
 	border-top: 8px solid transparent;
 	border-bottom: 8px solid transparent; 
@@ -293,7 +300,8 @@ div.deletedIcon {
 	cursor: pointer;
 }
 
-.bubble-right-special{
+/*bubble-right-special*/
+.bbrs{
 	float:right;
 	padding-right:6px;
 	display: table-cell;
@@ -301,23 +309,24 @@ div.deletedIcon {
 	max-width:90%;
 }
 
-.bubble-right-special:hover .from{
+.bbrs:hover .from{
 	background-color: #00aaff !important;
 }
 
-.bubble-right-special:hover .arrow-left-special{
+.bbrs:hover .awls{
     border-right: 16px solid #00aaff !important;
 }
 
-.bubble-right-special:hover .to{
+.bbrs:hover .to{
     background-color: #00aaff !important;
 }
 
-.bubble-right-special:hover .arrow-right-special{
+.bbrs:hover .awrs{
     border-left: 16px solid #00aaff !important;
 }
 
-.bubble-left-special{
+/*bubble-left-special*/
+.bbls{
 	float:left;
 	padding-left:6px;
 	display: table-cell;
@@ -325,19 +334,19 @@ div.deletedIcon {
 	max-width:90%;	
 }
 
-.bubble-left-special:hover .from{
+.bbls:hover .from{
 	background-color: #00aaff !important;
 }
 
-.bubble-left-special:hover .arrow-left-special{
+.bbls:hover .awls{
     border-right: 16px solid #00aaff !important;
 }
 
-.bubble-left-special:hover .to{
+.bbls:hover .to{
     background-color: #00aaff !important;
 }
 
-.bubble-left-special:hover .arrow-right-special{
+.bbls:hover .awrs{
     border-left: 16px solid #00aaff !important;
 }
 

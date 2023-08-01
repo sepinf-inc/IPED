@@ -31,7 +31,7 @@ import iped.utils.SimpleHTMLEncoder;
  */
 public class ReportGenerator {
 
-    private static final int MIN_SIZE_TO_SPLIT_CHAT = 5000000;
+    private static final int MIN_SIZE_TO_SPLIT_CHAT = 6000000;
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd"); //$NON-NLS-1$
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX"); //$NON-NLS-1$
@@ -183,10 +183,10 @@ public class ReportGenerator {
 		boolean isTo = false;
 		boolean isFromSpecial = false;
 		boolean isToSpecial = false;
-		String bubbleFrom = "<div class=\"bubble-left\"><div class=\"arrow\"><div class=\"arrow-left\"></div></div>";
-		String bubbleTo =  "<div class=\"bubble-right\">";
-		String bubbleFromSpecial = "<div class=\"bubble-left-special\"><div class=\"arrow\"><div class=\"arrow-left-special\"></div></div>";
-		String bubbleToSpecial =  "<div class=\"bubble-right-special\">";
+		String bubbleFrom = "<div class=\"bbl\"><div class=\"aw\"><div class=\"awl\"></div></div>";
+		String bubbleTo =  "<div class=\"bbr\">";
+		String bubbleFromSpecial = "<div class=\"bbls\"><div class=\"aw\"><div class=\"awls\"></div></div>";
+		String bubbleToSpecial =  "<div class=\"bbrs\">";
 
         out.println("<div class=\"linha\" id=\"" + message.getUniqueId() + "\">"); //$NON-NLS-1$
 
@@ -742,11 +742,11 @@ public class ReportGenerator {
         }
 
 		if (isTo)
-			out.println("</div><div class=\"arrow\"><div class=\"arrow-right\"></div></div>"); 
+			out.println("</div><div class=\"aw\"><div class=\"awr\"></div></div>"); 
 		if (isFrom)
 			out.println("</div>");
 		if (isToSpecial)
-			out.println("</div><div class=\"arrow\"><div class=\"arrow-right-special\"></div></div>"); 
+			out.println("</div><div class=\"aw\"><div class=\"awrs\"></div></div>"); 
 		if (isFromSpecial)
 			out.println("</div>");
 
