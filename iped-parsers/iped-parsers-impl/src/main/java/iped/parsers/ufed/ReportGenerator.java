@@ -22,7 +22,7 @@ import iped.utils.SimpleHTMLEncoder;
  */
 public class ReportGenerator {
 
-    private static final int MIN_SIZE_TO_SPLIT_CHAT = 5000000;
+    private static final int MIN_SIZE_TO_SPLIT_CHAT = 6000000;
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd"); //$NON-NLS-1$
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ"); //$NON-NLS-1$
@@ -86,16 +86,24 @@ public class ReportGenerator {
     }
 
     private void printMessage(PrintWriter out, UfedMessage message, boolean group, boolean chatDeleted) {
+
+		boolean isFrom = false;
+		boolean isTo = false;
+		String bubbleFrom = "<div class=\"bbl\"><div class=\"aw\"><div class=\"awl\"></div></div>";
+		String bubbleTo =  "<div class=\"bbr\">";
+
         out.println("<div id=\"" + message.getId() + "\" class=\"linha\">"); //$NON-NLS-1$
         String name = null;
         if (message.isSystemMessage()) {
             out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
         } else {
             if (message.isFromMe()) {
-                out.println("<div class=\"outgoing to\">"); //$NON-NLS-1$
+                out.println(bubbleTo+"<div class=\"outgoing to\">"); //$NON-NLS-1$
+                isTo = true;
                 name = message.getLocalResource();
             } else {
-                out.println("<div class=\"incoming from\">"); //$NON-NLS-1$
+                out.println(bubbleFrom+"<div class=\"incoming from\">"); //$NON-NLS-1$
+                isFrom = true;
                 name = message.getRemoteResource();
             }
             if (name == null)
@@ -187,6 +195,12 @@ public class ReportGenerator {
             out.println(timeFormat.format(message.getTimeStamp())); // $NON-NLS-1$
             out.println("</span>"); //$NON-NLS-1$
         }
+
+		if (isTo)
+			out.println("</div><div class=\"aw\"><div class=\"awr\"></div></div>"); 
+		if (isFrom)
+			out.println("</div>");
+
         out.println("</div></div>"); //$NON-NLS-1$
     }
 

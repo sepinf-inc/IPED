@@ -33,7 +33,7 @@ import iped.utils.SimpleHTMLEncoder;
 
 public class ReportGenerator {
 
-    private static final int MIN_SIZE_TO_SPLIT_CHAT = 5000000;
+    private static final int MIN_SIZE_TO_SPLIT_CHAT = 6000000;
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd"); //$NON-NLS-1$
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX"); //$NON-NLS-1$
@@ -337,11 +337,20 @@ public class ReportGenerator {
     }
 
     private void printMessage(PrintWriter out, Message message, boolean group) {
+
+		boolean isFrom = false;
+		boolean isTo = false;
+		String bubbleFrom = "<div class=\"bbl\"><div class=\"aw\"><div class=\"awl\"></div></div>";
+		String bubbleTo =  "<div class=\"bbr\">";
+
+
         out.println("<div class=\"linha\" id=\"" + message.getId() + "\">"); //$NON-NLS-1$
         if (message.isFromMe()) {
-            out.println("<div class=\"outgoing to\">"); //$NON-NLS-1$
+            out.println(bubbleTo+"<div class=\"outgoing to\">"); //$NON-NLS-1$
+            isTo = true;
         } else {
-            out.println("<div class=\"incoming from\">"); //$NON-NLS-1$
+            out.println(bubbleFrom+"<div class=\"incoming from\">"); //$NON-NLS-1$
+            isFrom = true;
         }
         Contact contact = message.getFrom();
         if (contact != null) {
@@ -384,6 +393,11 @@ public class ReportGenerator {
             out.println(timeFormat.format(message.getTimeStamp()) + " &nbsp;"); //$NON-NLS-1$
         }
         out.println("</span>"); //$NON-NLS-1$
+
+		if (isTo)
+			out.println("</div><div class=\"aw\"><div class=\"awr\"></div></div>"); 
+		if (isFrom)
+			out.println("</div>");
 
         out.println("</div></div>"); //$NON-NLS-1$
 
