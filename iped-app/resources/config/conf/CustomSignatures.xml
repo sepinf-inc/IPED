@@ -1416,5 +1416,30 @@
     	<sub-class-of type="message/x-chat-message"/>
     </mime-type>
 
+    <mime-type type="video/x-matroska">
+        <magic priority="60">
+            <match value="0x1A45DFA3" type="string" offset="0">
+                <match value="matroska" type="string" offset="4:64">
+                </match>
+            </match>
+        </magic>
+        <glob pattern="*.mkv" />
+    </mime-type>
+
+    <mime-type type="audio/x-matroska">
+        <sub-class-of type="video/x-matroska" />
+        <glob pattern="*.mka" />
+    </mime-type>
+
+    <mime-type type="video/webm">
+        <magic priority="60">
+            <match value="0x1A45DFA3" type="string" offset="0">
+                <match value="webm" type="string" offset="4:64">
+                </match>
+            </match>
+        </magic>
+        <glob pattern="*.webm" />
+    </mime-type>
+
 </mime-info>
 
