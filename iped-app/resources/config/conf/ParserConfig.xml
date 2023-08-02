@@ -353,6 +353,9 @@
         <parser class="iped.parsers.mail.win10.Win10MailParser"></parser>
         <parser class="iped.parsers.discord.DiscordParser"></parser>
 
+        <parser class="iped.parsers.android.contact.ContactParser"></parser>
+        <parser class="iped.parsers.android.contactdb2.ContactParserDb2"></parser>
+
     </parsers>
 
     <encodingDetectors>
