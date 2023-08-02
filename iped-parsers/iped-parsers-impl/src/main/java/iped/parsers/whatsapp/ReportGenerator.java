@@ -31,7 +31,7 @@ import iped.utils.SimpleHTMLEncoder;
  */
 public class ReportGenerator {
 
-    private static final int MIN_SIZE_TO_SPLIT_CHAT = 6000000;
+    private int minSizeSplitChat = 6000000;
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd"); //$NON-NLS-1$
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX"); //$NON-NLS-1$
@@ -51,6 +51,10 @@ public class ReportGenerator {
 
     public int getNextMsgNum() {
         return currentMsg;
+    }
+
+    public void setMinSizeSplitChat(int minSizeSplitChat) {
+        this.minSizeSplitChat = minSizeSplitChat;
     }
 
     public byte[] genarateContactHtml(WAContact contact) throws UnsupportedEncodingException {
@@ -160,7 +164,7 @@ public class ReportGenerator {
                 }
                 printMessage(out, m, c.isGroupChat(), contactsDirectory, account);
                 currentMsg += 1;
-                if (currentMsg != c.getMessages().size() && bout.size() >= MIN_SIZE_TO_SPLIT_CHAT) {
+                if (currentMsg != c.getMessages().size() && bout.size() >= minSizeSplitChat) {
                     out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
                             + Messages.getString("WhatsAppReport.ChatContinues") + "</div></div>"); //$NON-NLS-1$ //$NON-NLS-2$
                     break;
