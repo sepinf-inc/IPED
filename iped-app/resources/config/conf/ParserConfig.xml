@@ -303,6 +303,7 @@
                 <param name="downloadConnectionTimeout" type="int">500</param>
                 <param name="downloadReadTimeout" type="int">1000</param>
                 <param name="recoverDeletedRecords" type="bool">true</param>
+                <param name="minSizeSplitChat" type="int">6000000</param>
             </params>
         </parser>
         <parser class="iped.parsers.ufed.UFEDChatParser">
