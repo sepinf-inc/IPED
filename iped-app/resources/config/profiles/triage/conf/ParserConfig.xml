@@ -49,6 +49,8 @@
         <parser class="org.apache.tika.parser.image.HeifParser"></parser>
         <parser class="org.apache.tika.parser.iptc.IptcAnpaParser"></parser-->
         <parser class="org.apache.tika.parser.iwork.IWorkPackageParser"></parser>
+        <parser class="org.apache.tika.parser.iwork.iwana.IWork13PackageParser"></parser>
+		<parser class="org.apache.tika.parser.iwork.iwana.IWork18PackageParser"></parser>
         <!--parser class="org.apache.tika.parser.image.JpegParser"></parser-->
         <!--We have our own impls
         <parser class="org.apache.tika.parser.mail.RFC822Parser"></parser>
