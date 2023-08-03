@@ -86,9 +86,11 @@ public class TorTcParser extends AbstractParser {
         String itemText = readInputStream(stream);
 
         if (itemText != null) {
-            if (itemText.indexOf("\r\n") > 2) {
-                itemText = itemText.substring(0, itemText.indexOf("\r\n"));
+            int idx = itemText.indexOf("\n");
+            if (idx > 2) {
+                itemText = itemText.substring(0, idx);
             }
+            itemText = itemText.stripTrailing();
 
             if (!(itemText.contains("BUILD_FLAGS") || itemText.contains("SOCKS") || itemText.contains("HS_STATE"))) {
                 throw new TikaException("Invalid or incomplete TOR TC carved fragment");
