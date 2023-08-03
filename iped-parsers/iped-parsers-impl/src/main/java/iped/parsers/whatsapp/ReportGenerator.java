@@ -188,9 +188,9 @@ public class ReportGenerator {
         boolean isFromSpecial = false;
         boolean isToSpecial = false;
         String bubbleFrom = "<div class=\"bbl\"><div class=\"aw\"><div class=\"awl\"></div></div>";
-        String bubbleTo =  "<div class=\"bbr\">";
+        String bubbleTo = "<div class=\"bbr\">";
         String bubbleFromSpecial = "<div class=\"bbls\"><div class=\"aw\"><div class=\"awls\"></div></div>";
-        String bubbleToSpecial =  "<div class=\"bbrs\">";
+        String bubbleToSpecial = "<div class=\"bbrs\">";
 
         out.println("<div class=\"linha\" id=\"" + message.getUniqueId() + "\">"); //$NON-NLS-1$
 
@@ -746,11 +746,11 @@ public class ReportGenerator {
         }
 
         if (isTo)
-            out.println("</div><div class=\"aw\"><div class=\"awr\"></div></div>"); 
+            out.println("</div><div class=\"aw\"><div class=\"awr\"></div></div>");
         if (isFrom)
             out.println("</div>");
         if (isToSpecial)
-            out.println("</div><div class=\"aw\"><div class=\"awrs\"></div></div>"); 
+            out.println("</div><div class=\"aw\"><div class=\"awrs\"></div></div>");
         if (isFromSpecial)
             out.println("</div>");
 
