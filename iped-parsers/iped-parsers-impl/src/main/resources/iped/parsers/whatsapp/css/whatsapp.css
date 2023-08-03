@@ -102,37 +102,37 @@ div.deletedIcon {
  
 #topbar
 {
-	position:fixed;
-	background:#475959;
-	border:1px solid #394d4d;
-	width:640px;
-	z-index:100;
+    position:fixed;
+    background:#475959;
+    border:1px solid #394d4d;
+    width:640px;
+    z-index:100;
 }
 
 #topbar.telegram
 {
-	position:fixed;
-	background:#5682a3;
-	border:1px solid #394d4d;
-	width:640px;
-	z-index:100;
+    position:fixed;
+    background:#5682a3;
+    border:1px solid #394d4d;
+    width:640px;
+    z-index:100;
 }
 
 
 #topbar .left
 {
-	float: left;
-	display:block;
-	margin:0.5em;
-	color: #ffffff;
-	font-family: Arial;
+    float: left;
+    display:block;
+    margin:0.5em;
+    color: #ffffff;
+    font-family: Arial;
 }
 
 #topbar .right
 {
-	float: right;
-	display:block;
-	margin:0.5em;
+    float: right;
+    display:block;
+    margin:0.5em;
 }
 
 /***********************
@@ -141,40 +141,40 @@ div.deletedIcon {
  
 #chatlist
 {
-	width: 640px;
-	font-family: Arial;
+    width: 640px;
+    font-family: Arial;
 }
 
 #chatlist .contact
 {
-	cursor: pointer;
-	height: 64px;
-	background-color: #ffffff;
-	border-bottom: 2px solid #e5e5e5;
-	display: block;
-	padding: 6px 6px;
-	position: relative;
+    cursor: pointer;
+    height: 64px;
+    background-color: #ffffff;
+    border-bottom: 2px solid #e5e5e5;
+    display: block;
+    padding: 6px 6px;
+    position: relative;
 }
 
 #chatlist .contact:hover
 {
-	background-color: #1ba4d3;
+    background-color: #1ba4d3;
 }
 #chatlist .left
 {
-	float: left;
-	display:block;
-	margin:0.5em;
-	color: #ffffff;
+    float: left;
+    display:block;
+    margin:0.5em;
+    color: #ffffff;
 }
 
 #chatlist .right
 {
-	float: right;
-	display:block;
-	margin:0.5em;
-	color: #666666;
-	font-family: Arial;
+    float: right;
+    display:block;
+    margin:0.5em;
+    color: #666666;
+    font-family: Arial;
 }
 
 
@@ -184,19 +184,19 @@ div.deletedIcon {
  
 #conversation
 {
-	width: 640px;
-	font-family: Arial;
-	color: #000000;
+    width: 640px;
+    font-family: Arial;
+    color: #000000;
 }
 
 #conversation .linha
 {
-	display: block;
+    display: block;
 }
 
 #conversation .linha:after
 {
-	content: ".";
+    content: ".";
     display: block;
     height: 0;
     clear: both;
@@ -205,42 +205,42 @@ div.deletedIcon {
 
 /*Arrow*/
 .aw {    
-	display: table-cell;
-	vertical-align: top;
-	padding-top:10px;	
+    display: table-cell;
+    vertical-align: top;
+    padding-top:10px;
 }
 
 /*Arrow-left*/
 .awl {
-	display: table-cell;
-	border-top: 8px solid transparent;
-	border-bottom: 8px solid transparent; 
-	border-right: 16px solid #fcfbf6; 
-	margin-top: 16px;
-	cursor: pointer;
+    display: table-cell;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent; 
+    border-right: 16px solid #fcfbf6; 
+    margin-top: 16px;
+    cursor: pointer;
 }
 
 /*Arrow-right*/
 .awr {
-	display: table-cell;
-	border-top: 8px solid transparent;
-	border-bottom: 8px solid transparent; 
-	border-left: 16px solid #f3ffe8; 
-	margin-top: 16px;
-	cursor: pointer;
+    display: table-cell;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent; 
+    border-left: 16px solid #f3ffe8; 
+    margin-top: 16px;
+    cursor: pointer;
 }
 
 /*bubble-right*/
 .bbr{
-	float:right;
-	padding-right:6px;
-	display: table-cell;
-	margin: 5px 0px 5px 0px;   
-	max-width:90%;
+    float:right;
+    padding-right:6px;
+    display: table-cell;
+    margin: 5px 0px 5px 0px;   
+    max-width:90%;
 }
 
 .bbr:hover .from{
-	background-color: #def1f3 !important;
+    background-color: #def1f3 !important;
 }
 
 .bbr:hover .awl{
@@ -257,15 +257,15 @@ div.deletedIcon {
 
 /*bubble-left*/
 .bbl{
-	float:left;
-	padding-left:6px;
-	display: table-cell;
-	margin: 5px 0px 5px 0px;    
-	max-width:90%;	
+    float:left;
+    padding-left:6px;
+    display: table-cell;
+    margin: 5px 0px 5px 0px;    
+    max-width:90%;
 }
 
 .bbl:hover .from{
-	background-color: #def1f3 !important;
+    background-color: #def1f3 !important;
 }
 
 .bbl:hover .awl{
@@ -282,35 +282,35 @@ div.deletedIcon {
 
 /*arrow-left-special*/
 .awls {
-	display: table-cell;
-	border-top: 8px solid transparent;
-	border-bottom: 8px solid transparent; 
-	border-right: 16px solid #66ccff; 
-	margin-top: 16px;
-	cursor: pointer;
+    display: table-cell;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent; 
+    border-right: 16px solid #66ccff; 
+    margin-top: 16px;
+    cursor: pointer;
 }
 
 /*arrow-right-special*/
 .awrs {
-	display: table-cell;
-	border-top: 8px solid transparent;
-	border-bottom: 8px solid transparent; 
-	border-left: 16px solid #66ccff; 
-	margin-top: 16px;
-	cursor: pointer;
+    display: table-cell;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent; 
+    border-left: 16px solid #66ccff; 
+    margin-top: 16px;
+    cursor: pointer;
 }
 
 /*bubble-right-special*/
 .bbrs{
-	float:right;
-	padding-right:6px;
-	display: table-cell;
-	margin: 5px 0px 5px 0px;   
-	max-width:90%;
+    float:right;
+    padding-right:6px;
+    display: table-cell;
+    margin: 5px 0px 5px 0px;   
+    max-width:90%;
 }
 
 .bbrs:hover .from{
-	background-color: #00aaff !important;
+    background-color: #00aaff !important;
 }
 
 .bbrs:hover .awls{
@@ -327,15 +327,15 @@ div.deletedIcon {
 
 /*bubble-left-special*/
 .bbls{
-	float:left;
-	padding-left:6px;
-	display: table-cell;
-	margin: 5px 0px 5px 0px;    
-	max-width:90%;	
+    float:left;
+    padding-left:6px;
+    display: table-cell;
+    margin: 5px 0px 5px 0px;    
+    max-width:90%;
 }
 
 .bbls:hover .from{
-	background-color: #00aaff !important;
+    background-color: #00aaff !important;
 }
 
 .bbls:hover .awls{
@@ -353,189 +353,189 @@ div.deletedIcon {
 #conversation .incoming, #conversation .outgoing,
  #conversation .date, #conversation .specialmessage,
  #conversation .recoveredChat {
-	cursor: pointer;
-	border-radius: 4px;
-	display: block;
-	padding: 8px 10px;
-	word-break: break-word;
+    cursor: pointer;
+    border-radius: 4px;
+    display: block;
+    padding: 8px 10px;
+    word-break: break-word;
 }
 
 #conversation .systemmessage {
-	cursor: pointer;
-	border-radius: 4px;
-	box-shadow: 0 0 6px #b8b7b7;
-	display: block;
-	padding: 8px 10px 14px 10px;
+    cursor: pointer;
+    border-radius: 4px;
+    box-shadow: 0 0 6px #b8b7b7;
+    display: block;
+    padding: 8px 10px 14px 10px;
 }
 
 #conversation .date
 {
-	background-color: #d7f5ff;
-	color: #000000;
-	width: 160px;
-	margin: 0 auto;
-	text-align: center;
-	margin-top: 8px;
-	margin-bottom: 8px;
-	box-shadow: 0 0 6px #b8b7b7;
+    background-color: #d7f5ff;
+    color: #000000;
+    width: 160px;
+    margin: 0 auto;
+    text-align: center;
+    margin-top: 8px;
+    margin-bottom: 8px;
+    box-shadow: 0 0 6px #b8b7b7;
 }
 
 #conversation .recoveredChat
 {
-	background-color: #ec0000;
-	color: #ffffff;
-	width: 320px;
-	margin: 0 auto;
-	text-align: center;
-	margin-top: 12px;
-	margin-bottom: 8px;
-	box-shadow: 0 0 6px #b8b7b7;
+    background-color: #ec0000;
+    color: #ffffff;
+    width: 320px;
+    margin: 0 auto;
+    text-align: center;
+    margin-top: 12px;
+    margin-bottom: 8px;
+    box-shadow: 0 0 6px #b8b7b7;
 }
 
 #conversation .systemmessage
 {
-	background-color: #f7f787;
-	color: #333333;
-	margin: 0 auto;
-	text-align: center;
-	margin-top: 8px;
-	margin-bottom: 8px;
+    background-color: #f7f787;
+    color: #333333;
+    margin: 0 auto;
+    text-align: center;
+    margin-top: 8px;
+    margin-bottom: 8px;
 }
 
 #conversation .systemmessage:hover
 {
-	background-color: #f0f080;
+    background-color: #f0f080;
 }
 
 #conversation .pages
 {
-	background-color: #f4fa58;
-	color: #333333;
-	width: 300px;
-	margin: 0 auto;
-	text-align: center;
-	margin-top: 8px;
-	margin-bottom: 8px;
+    background-color: #f4fa58;
+    color: #333333;
+    width: 300px;
+    margin: 0 auto;
+    text-align: center;
+    margin-top: 8px;
+    margin-bottom: 8px;
 }
 
 #conversation .time
 {
-	color: #888888;
-	float: right;
-	padding-left: 10px;
-	font-size: small;
+    color: #888888;
+    float: right;
+    padding-left: 10px;
+    font-size: small;
 }
 #conversation .recovered
 {
-	color: #FF0000;
-	float: left;
-	padding-right: 10px;
-	font-size: small;
+    color: #FF0000;
+    float: left;
+    padding-right: 10px;
+    font-size: small;
 }
 
 #conversation .incoming
 {
-	color: #000000;
-	background-color: #fcfbf6;
+    color: #000000;
+    background-color: #fcfbf6;
 }
 
 #conversation .specialmessage
 {
-	color: #333333;
-	background-color: #66ccff;
+    color: #333333;
+    background-color: #66ccff;
 }
 
 #conversation .outgoing
 {
-	background-color: #f3ffe8;
+    background-color: #f3ffe8;
 }
 
 #conversation .to
 {
-	display: table-cell;
-	text-align: justify;
-	box-shadow: -8px 8px 8px -4px #b8b7b7;
+    display: table-cell;
+    text-align: justify;
+    box-shadow: -8px 8px 8px -4px #b8b7b7;
 }
 
 #conversation .to::before
 {
-	right: -16px;    
+    right: -16px;    
 }
 
 #conversation .from
 {
-	display: table-cell;
-	box-shadow: 8px 8px 8px -4px #b8b7b7;	
-	text-align: justify;
+    display: table-cell;
+    box-shadow: 8px 8px 8px -4px #b8b7b7;
+    text-align: justify;
 }
 
 #conversation .from::before
 {
-	left: -16px;           
+    left: -16px;           
 }
 
 #conversation .thumb {
-	max-width: 160px;
-	max-height: 160px;
+    max-width: 160px;
+    max-height: 160px;
 }
 
 #conversation .reaction {
-	cursor: pointer;
-	border-radius: 16px;
-	box-shadow: 0 0 6px #888888;
-	padding: 2px 6px;
-	position: relative;
-	background-color: #FFFFFF;
+    cursor: pointer;
+    border-radius: 16px;
+    box-shadow: 0 0 6px #888888;
+    padding: 2px 6px;
+    position: relative;
+    background-color: #FFFFFF;
 }
 
 #conversation .reaction.from
 {
-	float: left;   
-	margin: -10px 0px 0px 30px;
+    float: left;   
+    margin: -10px 0px 0px 30px;
 }
 
 #conversation .reaction.to
 {
-	float: right;   
-	margin: -10px 30px 0px 0px;
+    float: right;   
+    margin: -10px 30px 0px 0px;
 }
 
 #conversation .reaction .tt {
-	visibility: hidden;
-	color: #000000;
-	border-radius: 6px;
-	padding: 10% 10%;
-	position: absolute;
-	z-index: 1;
-	font-size: small;
-	box-shadow: 0 0 6px #AAAABB;
-	bottom: 0%;
-	white-space: nowrap;
+    visibility: hidden;
+    color: #000000;
+    border-radius: 6px;
+    padding: 10% 10%;
+    position: absolute;
+    z-index: 1;
+    font-size: small;
+    box-shadow: 0 0 6px #AAAABB;
+    bottom: 0%;
+    white-space: nowrap;
 }
 
 #conversation .reaction.to .tt {
-	text-align: right;
-	right: 110%;
+    text-align: right;
+    right: 110%;
 }
 
 #conversation .reaction.from .tt {
-	text-align: left;
-	left: 110%;
+    text-align: left;
+    left: 110%;
 }
 
 #conversation .reaction:hover .tt {
-	visibility: visible;
-	background-color: #EEEEFF;
+    visibility: visible;
+    background-color: #EEEEFF;
 }
 
 #conversation .reaction:hover {
-	background-color: #EEEEFF;
+    background-color: #EEEEFF;
 }
 
 #conversation .fwd {
-	font-style: italic; 
-	color: #aaaaaa; 
-	font-size: small;
+    font-style: italic; 
+    color: #aaaaaa; 
+    font-size: small;
 }
 
 
