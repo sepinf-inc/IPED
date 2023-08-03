@@ -94,7 +94,7 @@ public class ReportGenerator {
         boolean isFrom = false;
         boolean isTo = false;
         String bubbleFrom = "<div class=\"bbl\"><div class=\"aw\"><div class=\"awl\"></div></div>";
-        String bubbleTo =  "<div class=\"bbr\">";
+        String bubbleTo = "<div class=\"bbr\">";
 
         out.println("<div id=\"" + message.getId() + "\" class=\"linha\">"); //$NON-NLS-1$
         String name = null;
@@ -102,11 +102,11 @@ public class ReportGenerator {
             out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
         } else {
             if (message.isFromMe()) {
-                out.println(bubbleTo+"<div class=\"outgoing to\">"); //$NON-NLS-1$
+                out.println(bubbleTo + "<div class=\"outgoing to\">"); //$NON-NLS-1$
                 isTo = true;
                 name = message.getLocalResource();
             } else {
-                out.println(bubbleFrom+"<div class=\"incoming from\">"); //$NON-NLS-1$
+                out.println(bubbleFrom + "<div class=\"incoming from\">"); //$NON-NLS-1$
                 isFrom = true;
                 name = message.getRemoteResource();
             }
