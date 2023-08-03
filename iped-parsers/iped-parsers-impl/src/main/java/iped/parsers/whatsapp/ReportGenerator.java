@@ -31,7 +31,7 @@ import iped.utils.SimpleHTMLEncoder;
  */
 public class ReportGenerator {
 
-    private int minSizeSplitChat = 6000000;
+    private int minChatSplitSize = 6000000;
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd"); //$NON-NLS-1$
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX"); //$NON-NLS-1$
@@ -53,8 +53,8 @@ public class ReportGenerator {
         return currentMsg;
     }
 
-    public void setMinSizeSplitChat(int minSizeSplitChat) {
-        this.minSizeSplitChat = minSizeSplitChat;
+    public void setMinChatSplitSize(int minChatSplitSize) {
+        this.minChatSplitSize = minChatSplitSize;
     }
 
     public byte[] genarateContactHtml(WAContact contact) throws UnsupportedEncodingException {
@@ -164,7 +164,7 @@ public class ReportGenerator {
                 }
                 printMessage(out, m, c.isGroupChat(), contactsDirectory, account);
                 currentMsg += 1;
-                if (currentMsg != c.getMessages().size() && bout.size() >= minSizeSplitChat) {
+                if (currentMsg != c.getMessages().size() && bout.size() >= minChatSplitSize) {
                     out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
                             + Messages.getString("WhatsAppReport.ChatContinues") + "</div></div>"); //$NON-NLS-1$ //$NON-NLS-2$
                     break;
@@ -183,14 +183,14 @@ public class ReportGenerator {
             WAContactsDirectory contactsDirectory,
             WAAccount account) {
 
-		boolean isFrom = false;
-		boolean isTo = false;
-		boolean isFromSpecial = false;
-		boolean isToSpecial = false;
-		String bubbleFrom = "<div class=\"bbl\"><div class=\"aw\"><div class=\"awl\"></div></div>";
-		String bubbleTo =  "<div class=\"bbr\">";
-		String bubbleFromSpecial = "<div class=\"bbls\"><div class=\"aw\"><div class=\"awls\"></div></div>";
-		String bubbleToSpecial =  "<div class=\"bbrs\">";
+        boolean isFrom = false;
+        boolean isTo = false;
+        boolean isFromSpecial = false;
+        boolean isToSpecial = false;
+        String bubbleFrom = "<div class=\"bbl\"><div class=\"aw\"><div class=\"awl\"></div></div>";
+        String bubbleTo =  "<div class=\"bbr\">";
+        String bubbleFromSpecial = "<div class=\"bbls\"><div class=\"aw\"><div class=\"awls\"></div></div>";
+        String bubbleToSpecial =  "<div class=\"bbrs\">";
 
         out.println("<div class=\"linha\" id=\"" + message.getUniqueId() + "\">"); //$NON-NLS-1$
 
@@ -237,90 +237,90 @@ public class ReportGenerator {
                 break;
             case MISSED_VIDEO_CALL:
                 if (message.isFromMe()) {
-					isToSpecial = true;
+                    isToSpecial = true;
                     out.println(bubbleToSpecial+"<div class=\"specialmessage to\">"); //$NON-NLS-1$
                 } else {
-					isFromSpecial = true;				
+                    isFromSpecial = true;
                     out.println(bubbleFromSpecial+"<div class=\"specialmessage from\">"); //$NON-NLS-1$
                 }
                 out.println(Messages.getString("WhatsAppReport.MissedVideoCall")); //$NON-NLS-1$
                 break;
             case MISSED_VOICE_CALL:
                 if (message.isFromMe()) {
-					isToSpecial = true;
+                    isToSpecial = true;
                     out.println(bubbleToSpecial+"<div class=\"specialmessage to\">"); //$NON-NLS-1$
                 } else {
-					isFromSpecial = true;				
+                    isFromSpecial = true;
                     out.println(bubbleFromSpecial+"<div class=\"specialmessage from\">"); //$NON-NLS-1$
                 }
                 out.println(Messages.getString("WhatsAppReport.MissedVoiceCall")); //$NON-NLS-1$
                 break;
             case REFUSED_VOICE_CALL:
                 if (message.isFromMe()) {
-					isToSpecial = true;
+                    isToSpecial = true;
                     out.println(bubbleToSpecial+"<div class=\"specialmessage to\">"); //$NON-NLS-1$
                 } else {
-					isFromSpecial = true;				
+                    isFromSpecial = true;
                     out.println(bubbleFromSpecial+"<div class=\"specialmessage from\">"); //$NON-NLS-1$
-                }				
+                }
                 out.println(Messages.getString("WhatsAppReport.RefusedVoiceCall")); //$NON-NLS-1$
                 break;
             case REFUSED_VIDEO_CALL:
                 if (message.isFromMe()) {
-					isToSpecial = true;
+                    isToSpecial = true;
                     out.println(bubbleToSpecial+"<div class=\"specialmessage to\">"); //$NON-NLS-1$
                 } else {
-					isFromSpecial = true;				
+                    isFromSpecial = true;
                     out.println(bubbleFromSpecial+"<div class=\"specialmessage from\">"); //$NON-NLS-1$
                 }
                 out.println(Messages.getString("WhatsAppReport.RefusedVideoCall")); //$NON-NLS-1$
                 break;
             case UNAVAILABLE_VOICE_CALL:
                 if (message.isFromMe()) {
-					isToSpecial = true;
+                    isToSpecial = true;
                     out.println(bubbleToSpecial+"<div class=\"specialmessage to\">"); //$NON-NLS-1$
                 } else {
-					isFromSpecial = true;				
+                    isFromSpecial = true;
                     out.println(bubbleFromSpecial+"<div class=\"specialmessage from\">"); //$NON-NLS-1$
                 }
                 out.println(Messages.getString("WhatsAppReport.UnavailableVoiceCall")); //$NON-NLS-1$
                 break;
             case UNAVAILABLE_VIDEO_CALL:
                 if (message.isFromMe()) {
-					isToSpecial = true;
+                    isToSpecial = true;
                     out.println(bubbleToSpecial+"<div class=\"specialmessage to\">"); //$NON-NLS-1$
                 } else {
-					isFromSpecial = true;				
+                    isFromSpecial = true;
                     out.println(bubbleFromSpecial+"<div class=\"specialmessage from\">"); //$NON-NLS-1$
                 }
                 out.println(Messages.getString("WhatsAppReport.UnavailableVideoCall")); //$NON-NLS-1$
                 break;
             case UNKNOWN_VOICE_CALL:
                 if (message.isFromMe()) {
-					isToSpecial = true;
+                    isToSpecial = true;
                     out.println(bubbleToSpecial+"<div class=\"specialmessage to\">"); //$NON-NLS-1$
                 } else {
-					isFromSpecial = true;				
+                    isFromSpecial = true;
                     out.println(bubbleFromSpecial+"<div class=\"specialmessage from\">"); //$NON-NLS-1$
                 }
                 out.println(Messages.getString("WhatsAppReport.UnknownVoiceCall")); //$NON-NLS-1$
                 break;
             case UNKNOWN_VIDEO_CALL:
                 if (message.isFromMe()) {
-					isToSpecial = true;
+                    isToSpecial = true;
                     out.println(bubbleToSpecial+"<div class=\"specialmessage to\">"); //$NON-NLS-1$
                 } else {
-					isFromSpecial = true;				
+                    isFromSpecial = true;
                     out.println(bubbleFromSpecial+"<div class=\"specialmessage from\">"); //$NON-NLS-1$
                 }
                 out.println(Messages.getString("WhatsAppReport.UnknownVideoCall")); //$NON-NLS-1$
                 break;
             case VIDEO_CALL:
                 if (message.isFromMe()) {
-					isToSpecial = true;
+                    isToSpecial = true;
                     out.println(bubbleToSpecial+"<div class=\"specialmessage to\">"); //$NON-NLS-1$
                 } else {
-					isFromSpecial = true;				
+                    isFromSpecial = true;
                     out.println(bubbleFromSpecial+"<div class=\"specialmessage from\">"); //$NON-NLS-1$
                 }
                 out.println(Messages.getString("WhatsAppReport.VideoCall")); //$NON-NLS-1$
@@ -331,10 +331,10 @@ public class ReportGenerator {
                 break;
             case VOICE_CALL:
                 if (message.isFromMe()) {
-					isToSpecial = true;
+                    isToSpecial = true;
                     out.println(bubbleToSpecial+"<div class=\"specialmessage to\">"); //$NON-NLS-1$
                 } else {
-					isFromSpecial = true;				
+                    isFromSpecial = true;
                     out.println(bubbleFromSpecial+"<div class=\"specialmessage from\">"); //$NON-NLS-1$
                 }
                 out.println(Messages.getString("WhatsAppReport.VoiceCall") + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -408,14 +408,14 @@ public class ReportGenerator {
 
                 if (message.isFromMe()) {
                     out.println(bubbleTo+"<div class=\"outgoing to\">"); //$NON-NLS-1$
-					isTo = true;
+                    isTo = true;
                     if (account != null && !account.isUnknown()) {
                         name = account.getName();
                         number = message.getLocalResource();
                     }
                 } else {
                     out.println(bubbleFrom+"<div class=\"incoming from\">"); //$NON-NLS-1$
-					isFrom = true;
+                    isFrom = true;
                     number = message.getRemoteResource();
                     if (number != null) {
                         WAContact contact = contactsDirectory.getContact(number);
@@ -745,14 +745,14 @@ public class ReportGenerator {
 
         }
 
-		if (isTo)
-			out.println("</div><div class=\"aw\"><div class=\"awr\"></div></div>"); 
-		if (isFrom)
-			out.println("</div>");
-		if (isToSpecial)
-			out.println("</div><div class=\"aw\"><div class=\"awrs\"></div></div>"); 
-		if (isFromSpecial)
-			out.println("</div>");
+        if (isTo)
+            out.println("</div><div class=\"aw\"><div class=\"awr\"></div></div>"); 
+        if (isFrom)
+            out.println("</div>");
+        if (isToSpecial)
+            out.println("</div><div class=\"aw\"><div class=\"awrs\"></div></div>"); 
+        if (isFromSpecial)
+            out.println("</div>");
 
         out.println("</div></div>"); //$NON-NLS-1$
 
