@@ -342,18 +342,12 @@ public class ReportGenerator {
 
     private void printMessage(PrintWriter out, Message message, boolean group) {
 
-        boolean isFrom = false;
-        boolean isTo = false;
-        String bubbleFrom = "<div class=\"bbl\"><div class=\"aw\"><div class=\"awl\"></div></div>";
-        String bubbleTo = "<div class=\"bbr\">";
-
         out.println("<div class=\"linha\" id=\"" + message.getId() + "\">"); //$NON-NLS-1$
         if (message.isFromMe()) {
-            out.println(bubbleTo + "<div class=\"outgoing to\">"); //$NON-NLS-1$
-            isTo = true;
+            out.println("<div class=\"bbr\"><div class=\"outgoing to\">"); //$NON-NLS-1$
         } else {
-            out.println(bubbleFrom + "<div class=\"incoming from\">"); //$NON-NLS-1$
-            isFrom = true;
+            out.println(
+                    "<div class=\"bbl\"><div class=\"aw\"><div class=\"awl\"></div></div><div class=\"incoming from\">"); //$NON-NLS-1$
         }
         Contact contact = message.getFrom();
         if (contact != null) {
@@ -397,10 +391,11 @@ public class ReportGenerator {
         }
         out.println("</span>"); //$NON-NLS-1$
 
-        if (isTo)
+        if (message.isFromMe()) {
             out.println("</div><div class=\"aw\"><div class=\"awr\"></div></div>");
-        if (isFrom)
+        } else {
             out.println("</div>");
+        }
 
         out.println("</div></div>"); //$NON-NLS-1$
 
