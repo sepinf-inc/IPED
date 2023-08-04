@@ -171,6 +171,7 @@ public class WhatsAppParser extends SQLite3DBParser {
     private int downloadConnectionTimeout = 500;
     private int downloadReadTimeout = 500;
     private boolean recoverDeletedRecords = true;
+    private int minChatSplitSize = 6000000;
 
 
     @Override
@@ -211,6 +212,11 @@ public class WhatsAppParser extends SQLite3DBParser {
     @Field
     public void setRecoverDeletedRecords(boolean recoverDeletedRecords) {
         this.recoverDeletedRecords = recoverDeletedRecords;
+    }
+
+    @Field
+    public void setMinChatSplitSize(int minChatSplitSize) {
+        this.minChatSplitSize = minChatSplitSize;
     }
 
     private boolean isDownloadMediaFilesEnabled() {
@@ -278,6 +284,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             int frag = 0;
             int firstMsg = 0;
             ReportGenerator reportGenerator = new ReportGenerator();
+            reportGenerator.setMinChatSplitSize(this.minChatSplitSize);
             byte[] bytes = reportGenerator.generateNextChatHtml(c, contacts, account);
             while (bytes != null) {
                 Metadata chatMetadata = new Metadata();

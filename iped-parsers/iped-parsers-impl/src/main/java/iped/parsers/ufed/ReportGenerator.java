@@ -22,7 +22,7 @@ import iped.utils.SimpleHTMLEncoder;
  */
 public class ReportGenerator {
 
-    private static final int MIN_SIZE_TO_SPLIT_CHAT = 5000000;
+    private int minChatSplitSize = 6000000;
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd"); //$NON-NLS-1$
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ"); //$NON-NLS-1$
@@ -36,6 +36,10 @@ public class ReportGenerator {
 
     public int getNextMsgNum() {
         return currentMsg;
+    }
+
+    public void setMinChatSplitSize(int minChatSplitSize) {
+        this.minChatSplitSize = minChatSplitSize;
     }
 
     private static final String format(String text) {
@@ -70,7 +74,7 @@ public class ReportGenerator {
             boolean isGroup = c.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants").length > 2; //$NON-NLS-1$
             printMessage(out, m, isGroup, c.isDeleted());
 
-            if (currentMsg++ != msgs.size() - 1 && bout.size() >= MIN_SIZE_TO_SPLIT_CHAT) {
+            if (currentMsg++ != msgs.size() - 1 && bout.size() >= minChatSplitSize) {
                 out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
                         + Messages.getString("WhatsAppReport.ChatContinues") + "</div></div>"); //$NON-NLS-1$ //$NON-NLS-2$
                 break;
@@ -86,16 +90,23 @@ public class ReportGenerator {
     }
 
     private void printMessage(PrintWriter out, UfedMessage message, boolean group, boolean chatDeleted) {
+
+        boolean isFrom = false;
+        boolean isTo = false;
+
         out.println("<div id=\"" + message.getId() + "\" class=\"linha\">"); //$NON-NLS-1$
         String name = null;
         if (message.isSystemMessage()) {
             out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
         } else {
             if (message.isFromMe()) {
-                out.println("<div class=\"outgoing to\">"); //$NON-NLS-1$
+                out.println("<div class=\"bbr\"><div class=\"outgoing to\">"); //$NON-NLS-1$
+                isTo = true;
                 name = message.getLocalResource();
             } else {
-                out.println("<div class=\"incoming from\">"); //$NON-NLS-1$
+                out.println(
+                        "<div class=\"bbl\"><div class=\"aw\"><div class=\"awl\"></div></div><div class=\"incoming from\">"); //$NON-NLS-1$
+                isFrom = true;
                 name = message.getRemoteResource();
             }
             if (name == null)
@@ -187,6 +198,12 @@ public class ReportGenerator {
             out.println(timeFormat.format(message.getTimeStamp())); // $NON-NLS-1$
             out.println("</span>"); //$NON-NLS-1$
         }
+
+        if (isTo)
+            out.println("</div><div class=\"aw\"><div class=\"awr\"></div></div>"); 
+        if (isFrom)
+            out.println("</div>");
+
         out.println("</div></div>"); //$NON-NLS-1$
     }
 

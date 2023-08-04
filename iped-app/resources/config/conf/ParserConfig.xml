@@ -292,6 +292,7 @@
         <parser class="iped.parsers.telegram.TelegramParser">
             <params>
                 <param name="enabledForUfdr" type="bool">true</param>
+                <param name="minChatSplitSize" type="int">6000000</param>
             </params>
         </parser>
         <parser class="iped.parsers.skype.SkypeParser"></parser>
@@ -305,10 +306,14 @@
                 <param name="downloadConnectionTimeout" type="int">500</param>
                 <param name="downloadReadTimeout" type="int">1000</param>
                 <param name="recoverDeletedRecords" type="bool">true</param>
+                <param name="minChatSplitSize" type="int">6000000</param>
             </params>
         </parser>
         <parser class="iped.parsers.ufed.UFEDChatParser">
             <!--<mime-exclude>application/x-ufed-chat-whatsapp</mime-exclude>-->
+            <params>
+                <param name="minChatSplitSize" type="int">6000000</param>
+            </params>            
         </parser>
         
         <parser class="iped.parsers.emule.KnownMetParser">

@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
@@ -63,6 +64,8 @@ public class UFEDChatParser extends AbstractParser {
 
     public static final String ATTACHED_MEDIA_MSG = "ATTACHED_MEDIA: ";
 
+    private int minChatSplitSize = 6000000;
+
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(UFED_CHAT_MIME, UFED_CHAT_WA_MIME,
             UFED_CHAT_TELEGRAM);
 
@@ -78,6 +81,11 @@ public class UFEDChatParser extends AbstractParser {
             }
         }
         return UFED_CHAT_PREVIEW_MIME;
+    }
+
+    @Field
+    public void setMinChatSplitSize(int minChatSplitSize) {
+        this.minChatSplitSize = minChatSplitSize;
     }
 
     @Override
@@ -136,6 +144,7 @@ public class UFEDChatParser extends AbstractParser {
 
             if (extractor.shouldParseEmbedded(metadata)) {
                 ReportGenerator reportGenerator = new ReportGenerator(searcher);
+                reportGenerator.setMinChatSplitSize(this.minChatSplitSize);
                 byte[] bytes = reportGenerator.generateNextChatHtml(chat, messages);
                 int frag = 0;
                 int firstMsg = 0;
