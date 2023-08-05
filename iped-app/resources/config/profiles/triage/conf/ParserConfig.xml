@@ -138,6 +138,7 @@
         <parser class="org.apache.tika.parser.EmptyParser">
             <mime>application/vnd.rn-realmedia</mime>
             <mime>application/java-archive</mime>
+            <mime>audio/ilbc</mime>
             <mime>application/x-tika-unix-dump</mime>
 			<mime>application/x-cpio</mime>
         </parser>

@@ -144,6 +144,7 @@
         <parser class="org.apache.tika.parser.EmptyParser">
             <mime>application/vnd.rn-realmedia</mime>
             <mime>application/java-archive</mime>
+            <mime>audio/ilbc</mime>
         </parser>
         
         <parser class="org.gagravarr.tika.FlacParser"></parser>
