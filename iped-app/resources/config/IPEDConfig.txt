@@ -93,9 +93,9 @@ enableIndexToElasticSearch = false
 enableMinIO = false
 
 # Enable audio transcription.
-# Default implementation uses VOSK transcription [EXPERIMENTAL] on local CPU (slow and medium quality).
-# We include Vosk portable models for 'en' and 'pt-BR', the lang model is taken from 'locale' in LocalConfig.txt
-# You can change it from Vosk to Microsoft Azure or Google Cloud services (faster and better quality).
+# Default implementation uses VOSK transcription on local CPU (slow and not good accuracy).
+# You can change it to a local Facebook Wav2Vec2 implementation (slower on CPU, faster on GPU and good accuracy)
+# or remote Microsoft Azure or Google Cloud services (faster and good accuracy).
 # Configure it in conf/AudioTranscriptConfig.txt
 enableAudioTranscription = false
 
