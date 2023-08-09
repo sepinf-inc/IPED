@@ -1460,6 +1460,10 @@
         </magic>
         <glob pattern="*.lbc"/>
     </mime-type>
+    
+    <mime-type type="application/vnd.apple.unknown.13">
+        <sub-class-of type="application/vnd.apple.iwork"/>
+    </mime-type>
 
     <mime-type type="application/x-lzfse">
         <magic priority="50">
