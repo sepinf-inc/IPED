@@ -423,6 +423,7 @@ public class AD1Extractor implements Closeable {
         private int compressed_size = 0;
         private byte[] uncompressed_buffer = new byte[(int) chunkSize];
         private int uncompressed_size = -1;
+        private volatile boolean closed;
 
         private FileHeader header;
         long position = 0;
@@ -435,6 +436,7 @@ public class AD1Extractor implements Closeable {
 
         @Override
         public void seek(long pos) throws IOException {
+            checkIfClosed();
             if (pos >= size())
                 throw new IOException("Position requested larger than size");
             position = pos;
@@ -442,16 +444,19 @@ public class AD1Extractor implements Closeable {
 
         @Override
         public long position() throws IOException {
+            checkIfClosed();
             return position;
         }
 
         @Override
         public long size() throws IOException {
+            // allow reading size even if closed
             return header.getFileSize();
         }
 
         @Override
         public int read() throws IOException {
+            checkIfClosed();
             byte[] b = new byte[1];
             int i;
             do {
@@ -465,11 +470,14 @@ public class AD1Extractor implements Closeable {
         }
 
         public long skip(long n) throws IOException {
+            checkIfClosed();
             this.seek(position + n);
             return n;
         }
 
         public int read(byte buf[], int off, int len) throws IOException {
+
+            checkIfClosed();
 
             if (position >= size())
                 return -1;
@@ -508,7 +516,16 @@ public class AD1Extractor implements Closeable {
 
         @Override
         public void close() {
-            inflater.end();
+            if (!closed) {
+                closed = true;
+                inflater.end();
+            }
+        }
+
+        private void checkIfClosed() throws IOException {
+            if (closed) {
+                throw new IOException("InputStream already closed.");
+            }
         }
 
     }
