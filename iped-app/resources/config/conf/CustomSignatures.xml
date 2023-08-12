@@ -1449,5 +1449,12 @@
         <glob pattern="*.lbc"/>
     </mime-type>
 
+    <mime-type type="application/x-lzfse">
+        <magic priority="50">
+            <match value="bvx" type="string" offset="0"/>
+        </magic>
+        <glob pattern="*.lzfse"/>
+    </mime-type>
+
 </mime-info>
 
