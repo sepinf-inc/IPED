@@ -1338,7 +1338,7 @@ L.KMLMarker = L.Marker.extend({
             }
     
             if(this.parent){
-                if(!e.originalEvent.ctrlKey && !e.originalEvent.shiftKey && this.selected=='false'){
+                if(!e.originalEvent.ctrlKey && !e.originalEvent.shiftKey){
                     this.parent.deselectAll();
                 }
             }
