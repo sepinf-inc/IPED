@@ -364,7 +364,7 @@ L.KML = L.MarkerClusterGroup.extend({
     },
 	marca: function (id, b){
         try{
-            let marker_checkbox = document.getElementById('marker_checkbox')
+            let marker_checkbox = document.getElementById('marker_checkbox_'+this.id)
             if(b=='true'){
                 this.markers[id].checked='true';
                 if(marker_checkbox){
@@ -722,7 +722,7 @@ L.KML = L.MarkerClusterGroup.extend({
         m.selected=selected;
         m.name = name;
         m.descr = descr;
-        m.bindPopup('<input type="checkbox" id="marker_checkbox" value=""  onclick="L.checkMarker(window.clickedMark.id)"/><h2>' + m.name + '</h2>' + m.descr, { className: 'kml-popup'});
+        m.bindPopup('<input type="checkbox" id="marker_checkbox_'+id+'" value=""  onclick="L.checkMarker(window.clickedMark.id)"/><h2>' + m.name + '</h2>' + m.descr, { className: 'kml-popup'});
         this.popupOpened=false;
         m.styleUrl='#item';
         m.parent=this;
@@ -1359,10 +1359,10 @@ L.KMLMarker = L.Marker.extend({
             }
             this.atualizaIcone();
 
-            if(this.checked=='true'){
-                document.getElementById('marker_checkbox').checked=true;
+            if(this.checked && this.checked=='true'){                
+                document.getElementById('marker_checkbox_'+this.id).checked=true;
             }else{
-                document.getElementById('marker_checkbox').checked=false;
+                document.getElementById('marker_checkbox_'+this.id).checked=false;
             }
             
             var button = (typeof e.originalEvent.which != "undefined") ? e.originalEvent.which : e.originalEvent.button;
