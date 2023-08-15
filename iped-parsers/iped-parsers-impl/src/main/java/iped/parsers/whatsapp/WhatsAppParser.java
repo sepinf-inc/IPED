@@ -68,6 +68,7 @@ import org.xml.sax.SAXException;
 import iped.data.IItem;
 import iped.data.IItemReader;
 import iped.io.SeekableInputStream;
+import iped.parsers.plist.detector.PListDetector;
 import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.sqlite.SQLite3Parser;
 import iped.parsers.standard.StandardParser;
@@ -100,7 +101,7 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     public static final MediaType WA_USER_XML = MediaType.application("x-whatsapp-user-xml"); //$NON-NLS-1$
 
-    public static final MediaType WA_USER_PLIST = MediaType.application("x-whatsapp-user-plist"); //$NON-NLS-1$
+    public static final MediaType WA_USER_PLIST = PListDetector.WA_USER_PLIST;
 
     public static final MediaType WHATSAPP_ACCOUNT = MediaType.application("x-whatsapp-account"); //$NON-NLS-1$
 
@@ -790,17 +791,22 @@ public class WhatsAppParser extends SQLite3DBParser {
         WAAccount account = new WAAccount("unknownAccount");
         account.setUnknown(true);
         if (searcher != null) {
-            // Array with possible WA account file names, order by priority
-            String[] names = isAndroid
-                    ? new String[] { "com.whatsapp.w4b_preferences_light.xml", "com.whatsapp_preferences_light.xml",
-                            "com.whatsapp.w4b_preferences.xml", "com.whatsapp_preferences.xml" }
-                    : new String[] { "group.net.whatsapp.WhatsApp.shared.plist" };
             StringBuilder query = new StringBuilder();
-            query.append(BasicProps.NAME).append(":(");
-            for (int i = 0; i < names.length; i++) {
-                query.append(" \"").append(names[i]).append('"');
+            // Array with possible WA account file names, order by priority
+            String[] names;
+            if (isAndroid) {
+                names = new String[] { "com.whatsapp.w4b_preferences_light.xml", "com.whatsapp_preferences_light.xml",
+                        "com.whatsapp.w4b_preferences.xml", "com.whatsapp_preferences.xml" };
+                query.append(BasicProps.NAME).append(":(");
+                for (int i = 0; i < names.length; i++) {
+                    query.append(" \"").append(names[i]).append('"');
+                }
+                query.append(')');
+            } else {
+                names = new String[] { null };
+                query.append(BasicProps.CONTENTTYPE).append(":\"");
+                query.append(WA_USER_PLIST.toString()).append("\"");
             }
-            query.append(')');
 
             List<IItemReader> result = searcher.search(query.toString());
             List<IItemReader> items = getBestItems(result, dbPath, names);
@@ -836,7 +842,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                     IItemReader item = result.get(j);
                     // Check if WA type (business or not), path and name match
                     if (isWABusiness(item.getPath()) == isWABusiness && item.getPath().startsWith(path)
-                            && item.getName().equalsIgnoreCase(names[i])) {
+                            && (names[i] == null || item.getName().equalsIgnoreCase(names[i]))) {
                         bests.add(item);
                         result.remove(j--);
                     }
