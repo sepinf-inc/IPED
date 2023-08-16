@@ -298,7 +298,7 @@ public class SevenZipParser extends AbstractParser {
 
                 boolean isLoop = false;
                 if (extractedLen == parentFile.length()) {
-                    try (BufferedInputStream isp = new BufferedInputStream(new FileInputStream(parentFile))) {
+                    try (InputStream isp = new BufferedInputStream(new FileInputStream(parentFile))) {
                         byte[] buf1 = new byte[4096];
                         byte[] buf2 = new byte[4096];
                         boolean dif = false;
