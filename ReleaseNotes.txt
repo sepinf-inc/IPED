@@ -1,6 +1,14 @@
-xx/08/2023: IPED-4.1.4:
-#1786: Improve the detection of Matroska files: MKV, MKA and WEBM (@tc-wleite) 
-#1769: Map renders locations but a blank background if default map server was never changed [regression 4.1.0] (@lfcnassif)
+16/08/2023: IPED-4.1.4:
+News:
+#1294: Support parsing iCloud backup LZFSE compressed files (@lfcnassif)
+#1525: Support parsing MacOS XXXXX.partial.emlx emails attachments (@lfcnassif)
+#1798: Support iLBC (Internet Low Bitrate Codec) audios (@tc-wleite)
+#1786: Improve the detection of Matroska files: MKV, MKA and WEBM (@tc-wleite)
+#1815: Improve the detection of WhatsApp iOS account plist file (@lfcnassif)
+#1793: Improve the detection of Apple iWork 13 documents (@lfcnassif)
+#1809: Make VideoThumbTask work on videos in mounted paths longer than 256 chars on Windows (@lfcnassif, @tc-wleite)
+Fixes: 
+#1769: Map renders locations but a blank background [regression 4.1.0] (@lfcnassif)
 #1774: Old WhatsApp databases parsing affected by forwarded message feature [regression 4.1.3] (@hauck-jvsh, @lfcnassif)
 #1791: WhatsApp parser may lose recent messages (@tc-wleite)
 #1765: Aborting IOException from AudioTranscriptTask (@lfcnassif)
@@ -8,6 +16,7 @@ xx/08/2023: IPED-4.1.4:
 #1782: Error opening items inside an E01 from an unmounted READ ONLY Windows network share (@tc-wleite)
 #1762: --remove evidence option fails if graph feature wasn't enabled (@lfcnassif)
 #1757: Infinite loop in IOUtil.ignoreInputStream() causing thread leak and wasting CPU (@hauck-jvsh, @lfcnassif)
+#1814: Corrupted ISO caused an "infinite recursion loop" in SevenZipParser (@tc-wleite, @lfcnassif)
 #1752: TorTcParser timestamp in UTC although not informed (@patrickdalla, @lfcnassif)
 #1795: TorTcParser giving different values on Linux and Windows (@lfcnassif)
 #1750: Absence of JavaFX aborting processing if user clicks on "Preview Case" (@lfcnassif)
