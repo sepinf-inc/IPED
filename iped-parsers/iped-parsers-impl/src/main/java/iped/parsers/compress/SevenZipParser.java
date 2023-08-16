@@ -1,5 +1,6 @@
 package iped.parsers.compress;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -149,7 +150,7 @@ public class SevenZipParser extends AbstractParser {
                     itemsToExtract.add(i);
             }
             // Processa as pastas na ordem (em profundidade)
-            MyExtractCallback extractCallback = new MyExtractCallback(simpleInArchive, context, xhtml, extractor, tmp);
+            MyExtractCallback extractCallback = new MyExtractCallback(simpleInArchive, context, xhtml, extractor, tmp, file);
             for (int i : folderMap.values()) {
                 inArchive.extractSlow(i, extractCallback.getStream(i, null));
                 extractCallback.setOperationResult(null);
@@ -184,18 +185,20 @@ public class SevenZipParser extends AbstractParser {
         TemporaryResources tmp;
 
         ISimpleInArchiveItem item;
+        File parentFile;
 
         byte[] tmpBuf = new byte[32 * 1024 * 1024];
         int bufPos = 0;
         File tmpFile;
 
         public MyExtractCallback(ISimpleInArchive simpleInArchive, ParseContext context, ContentHandler handler,
-                EmbeddedDocumentExtractor extractor, TemporaryResources tmp) {
+                EmbeddedDocumentExtractor extractor, TemporaryResources tmp, File parentFile) {
             this.simpleInArchive = simpleInArchive;
             this.context = context;
             this.handler = handler;
             this.extractor = extractor;
             this.tmp = tmp;
+            this.parentFile = parentFile;
         }
 
         @Override
@@ -256,10 +259,14 @@ public class SevenZipParser extends AbstractParser {
 
             try {
                 if (tmpFile == null) {
-                    parseSubitem(new ByteArrayInputStream(tmpBuf, 0, bufPos));
+                    try (InputStream is = new ByteArrayInputStream(tmpBuf, 0, bufPos);
+                            InputStream isAux = new ByteArrayInputStream(tmpBuf, 0, bufPos)) {
+                        parseSubitem(is, isAux, parentFile, bufPos);
+                    }
                 } else {
-                    try (InputStream is = new FileInputStream(tmpFile)) {
-                        parseSubitem(is);
+                    try (InputStream is = new BufferedInputStream(new FileInputStream(tmpFile));
+                            InputStream isAux = new BufferedInputStream(new FileInputStream(tmpFile))) {
+                        parseSubitem(is, isAux, parentFile, tmpFile.length());
                     }
                 }
 
@@ -273,7 +280,8 @@ public class SevenZipParser extends AbstractParser {
 
         }
 
-        private void parseSubitem(InputStream is) throws SAXException, IOException {
+        private void parseSubitem(InputStream is, InputStream isAux, File parentFile, long extractedLen)
+                throws SAXException, IOException {
 
             String subitemPath = ""; //$NON-NLS-1$
             try {
@@ -288,11 +296,35 @@ public class SevenZipParser extends AbstractParser {
                 if (item.isFolder())
                     entrydata.set(ExtraProperties.EMBEDDED_FOLDER, "true"); //$NON-NLS-1$
 
-                if (extractor.shouldParseEmbedded(entrydata))
+                boolean isLoop = false;
+                if (extractedLen == parentFile.length()) {
+                    try (BufferedInputStream isp = new BufferedInputStream(new FileInputStream(parentFile))) {
+                        byte[] buf1 = new byte[4096];
+                        byte[] buf2 = new byte[4096];
+                        boolean dif = false;
+                        OUT: while (true) {
+                            int r1 = isp.read(buf1);
+                            if (r1 == -1)
+                                break;
+                            int r2 = isAux.readNBytes(buf2, 0, r1);
+                            if (r2 != r1)
+                                break;
+                            for (int i = 0; i < r1; i++) {
+                                if (buf1[i] != buf2[i]) {
+                                    dif = true;
+                                    break OUT;
+                                }
+                            }
+                        }
+                        if (!dif) {
+                            LOGGER.warn("Loop detected while extracting subitem {} ", subitemPath); //$NON-NLS-1$
+                            isLoop = true;
+                        }
+                    }
+                }
+
+                if (!isLoop && extractor.shouldParseEmbedded(entrydata))
                     extractor.parseEmbedded(is, handler, entrydata, true);
-
-
-                
                 
             } catch (SevenZipException e) {
                 LOGGER.warn("Error extracting subitem {} {}", subitemPath, e.getMessage()); //$NON-NLS-1$
