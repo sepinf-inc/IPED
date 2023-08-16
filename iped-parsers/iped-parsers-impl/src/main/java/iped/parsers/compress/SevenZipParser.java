@@ -1,6 +1,5 @@
 package iped.parsers.compress;
 
-import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -150,7 +149,7 @@ public class SevenZipParser extends AbstractParser {
                     itemsToExtract.add(i);
             }
             // Processa as pastas na ordem (em profundidade)
-            MyExtractCallback extractCallback = new MyExtractCallback(simpleInArchive, context, xhtml, extractor, tmp, file);
+            MyExtractCallback extractCallback = new MyExtractCallback(simpleInArchive, context, xhtml, extractor, tmp);
             for (int i : folderMap.values()) {
                 inArchive.extractSlow(i, extractCallback.getStream(i, null));
                 extractCallback.setOperationResult(null);
@@ -185,20 +184,18 @@ public class SevenZipParser extends AbstractParser {
         TemporaryResources tmp;
 
         ISimpleInArchiveItem item;
-        File parentFile;
 
         byte[] tmpBuf = new byte[32 * 1024 * 1024];
         int bufPos = 0;
         File tmpFile;
 
         public MyExtractCallback(ISimpleInArchive simpleInArchive, ParseContext context, ContentHandler handler,
-                EmbeddedDocumentExtractor extractor, TemporaryResources tmp, File parentFile) {
+                EmbeddedDocumentExtractor extractor, TemporaryResources tmp) {
             this.simpleInArchive = simpleInArchive;
             this.context = context;
             this.handler = handler;
             this.extractor = extractor;
             this.tmp = tmp;
-            this.parentFile = parentFile;
         }
 
         @Override
@@ -259,14 +256,10 @@ public class SevenZipParser extends AbstractParser {
 
             try {
                 if (tmpFile == null) {
-                    try (InputStream is = new ByteArrayInputStream(tmpBuf, 0, bufPos);
-                            InputStream isAux = new ByteArrayInputStream(tmpBuf, 0, bufPos)) {
-                        parseSubitem(is, isAux, parentFile, bufPos);
-                    }
+                    parseSubitem(new ByteArrayInputStream(tmpBuf, 0, bufPos));
                 } else {
-                    try (InputStream is = new BufferedInputStream(new FileInputStream(tmpFile));
-                            InputStream isAux = new BufferedInputStream(new FileInputStream(tmpFile))) {
-                        parseSubitem(is, isAux, parentFile, tmpFile.length());
+                    try (InputStream is = new FileInputStream(tmpFile)) {
+                        parseSubitem(is);
                     }
                 }
 
@@ -280,8 +273,7 @@ public class SevenZipParser extends AbstractParser {
 
         }
 
-        private void parseSubitem(InputStream is, InputStream isAux, File parentFile, long extractedLen)
-                throws SAXException, IOException {
+        private void parseSubitem(InputStream is) throws SAXException, IOException {
 
             String subitemPath = ""; //$NON-NLS-1$
             try {
@@ -296,38 +288,11 @@ public class SevenZipParser extends AbstractParser {
                 if (item.isFolder())
                     entrydata.set(ExtraProperties.EMBEDDED_FOLDER, "true"); //$NON-NLS-1$
 
-                // Check if this subitem is equal to its parentFile. This should avoid an
-                // infinite recursion loop observed in a corrupted ISO file (see issue #1814).
-                boolean isLoop = false;
-                if (extractedLen > 0 && extractedLen == parentFile.length()) {
-                    // If both length are exactly the same, compare each byte.
-                    try (InputStream isp = new BufferedInputStream(new FileInputStream(parentFile))) {
-                        byte[] buf1 = new byte[4096];
-                        byte[] buf2 = new byte[buf1.length];
-                        boolean dif = false;
-                        OUT: while (true) {
-                            int r1 = isp.read(buf1);
-                            if (r1 == -1)
-                                break;
-                            int r2 = isAux.readNBytes(buf2, 0, r1);
-                            if (r2 != r1)
-                                break;
-                            for (int i = 0; i < r1; i++) {
-                                if (buf1[i] != buf2[i]) {
-                                    dif = true;
-                                    break OUT;
-                                }
-                            }
-                        }
-                        if (!dif) {
-                            LOGGER.warn("Loop detected while extracting subitem {} ", subitemPath); //$NON-NLS-1$
-                            isLoop = true;
-                        }
-                    }
-                }
-
-                if (!isLoop && extractor.shouldParseEmbedded(entrydata))
+                if (extractor.shouldParseEmbedded(entrydata))
                     extractor.parseEmbedded(is, handler, entrydata, true);
+
+
+                
                 
             } catch (SevenZipException e) {
                 LOGGER.warn("Error extracting subitem {} {}", subitemPath, e.getMessage()); //$NON-NLS-1$
