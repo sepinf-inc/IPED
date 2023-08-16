@@ -1,7 +1,7 @@
 16/08/2023: IPED-4.1.4:
 News:
 #1294: Support parsing iCloud backup LZFSE compressed files (@lfcnassif)
-#1525: Support parsing MacOS XXXXX.partial.emlx emails attachments (@lfcnassif)
+#1525: Support parsing MacOS XXXXX.partial.emlx emails attachments (@FelipeFcosta, @lfcnassif)
 #1798: Support iLBC (Internet Low Bitrate Codec) audios (@tc-wleite)
 #1786: Improve the detection of Matroska files: MKV, MKA and WEBM (@tc-wleite)
 #1815: Improve the detection of WhatsApp iOS account plist file (@lfcnassif)
