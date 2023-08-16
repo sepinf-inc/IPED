@@ -296,11 +296,14 @@ public class SevenZipParser extends AbstractParser {
                 if (item.isFolder())
                     entrydata.set(ExtraProperties.EMBEDDED_FOLDER, "true"); //$NON-NLS-1$
 
+                // Check if this subitem is equal to its parentFile. This should avoid an
+                // infinite recursion loop observed in a corrupted ISO file (see issue #1814).
                 boolean isLoop = false;
-                if (extractedLen == parentFile.length()) {
+                if (extractedLen > 0 && extractedLen == parentFile.length()) {
+                    // If both length are exactly the same, compare each byte.
                     try (InputStream isp = new BufferedInputStream(new FileInputStream(parentFile))) {
                         byte[] buf1 = new byte[4096];
-                        byte[] buf2 = new byte[4096];
+                        byte[] buf2 = new byte[buf1.length];
                         boolean dif = false;
                         OUT: while (true) {
                             int r1 = isp.read(buf1);
