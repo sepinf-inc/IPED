@@ -96,11 +96,6 @@ public abstract class AbstractCarver implements Carver {
                     end--;
                 }
             }
-            System.err.println("\n>>>>parentEvidence.getFileOffset()="+parentEvidence.getFileOffset()+"\n"+
-                    "minEnd="+minEnd+"\n"+
-                    "end="+end+"\n"+
-                    "len="+len+"\n"+
-                    "header.getOffset()="+header.getOffset()+"\n");
             len = end - header.getOffset();
         }
 
