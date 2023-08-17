@@ -164,6 +164,7 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
         Element lengthBigEndian = XMLUtil.getFirstElement(carverTypeEl, "lengthBigEndian");
         Element minLength = XMLUtil.getFirstElement(carverTypeEl, "minLength");
         Element maxLength = XMLUtil.getFirstElement(carverTypeEl, "maxLength");
+        Element trimTrailingZeros = XMLUtil.getFirstElement(carverTypeEl, "trimTrailingZeros");
         Element carverScriptFile = XMLUtil.getFirstElement(carverTypeEl, "carverScriptFile");
 
         if (name != null) {
@@ -188,6 +189,9 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
         }
         if (maxLength != null) {
             ct.setMaxLength(Long.parseLong(maxLength.getTextContent().trim()));
+        }
+        if (trimTrailingZeros != null) {
+            ct.setTrimTrailingZeros(Boolean.parseBoolean(trimTrailingZeros.getTextContent().trim()));
         }
         if (carverClass != null) {
             ct.setCarverClass(carverClass.getTextContent().trim());

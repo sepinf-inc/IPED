@@ -12,6 +12,7 @@ import iped.carvers.api.Hit;
 import iped.carvers.api.InvalidCarvedObjectException;
 import iped.carvers.api.Signature.SignatureType;
 import iped.data.IItem;
+import iped.io.SeekableInputStream;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
 
@@ -76,6 +77,33 @@ public abstract class AbstractCarver implements Carver {
                 && !MediaTypes.UNALLOCATED.equals(parentEvidence.getMediaType())) {
             len = parentEvidence.getLength() - header.getOffset();
         }
+        
+        // Discard trailing zeros, if enabled for this carver type
+        CarverType typeCarved = header.getSignature().getCarverType();
+        if (typeCarved.isTrimTrailingZeros()) {
+            long end = Math.min(header.getOffset() + len, parentEvidence.getLength());
+            long minEnd = header.getOffset();
+            if (typeCarved.getMinLength() != null) {
+                minEnd += typeCarved.getMinLength();
+            }
+            // Read bytes in reverse order from the end, until a non-zero is found
+            try (SeekableInputStream is = parentEvidence.getSeekableInputStream()) {
+                while (end > minEnd) {
+                    is.seek(end - 1);
+                    if (is.read() != 0) {
+                        break;
+                    }
+                    end--;
+                }
+            }
+            System.err.println("\n>>>>parentEvidence.getFileOffset()="+parentEvidence.getFileOffset()+"\n"+
+                    "minEnd="+minEnd+"\n"+
+                    "end="+end+"\n"+
+                    "len="+len+"\n"+
+                    "header.getOffset()="+header.getOffset()+"\n");
+            len = end - header.getOffset();
+        }
+
         // Workaround for https://github.com/sepinf-inc/IPED/issues/1327
         if (len <= 0) {
             return null;
