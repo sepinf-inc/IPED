@@ -24,7 +24,6 @@ public class CarverType implements Serializable {
     int sizePos = -1, sizeBytes;
     ArrayList<Signature> signatures = new ArrayList<Signature>();
     private Long minLength = null, maxLength = null;
-    boolean trimTrailingZeros = false;
     boolean stopOnNextHeader = false;
     boolean hasFooter = false;
     boolean hasLengthRef = false;
@@ -142,14 +141,6 @@ public class CarverType implements Serializable {
 
     public void setMaxLength(long maxLength) {
         this.maxLength = maxLength;
-    }
-
-    public boolean isTrimTrailingZeros() {
-        return trimTrailingZeros;
-    }
-
-    public void setTrimTrailingZeros(boolean trimTrailingZeros) {
-        this.trimTrailingZeros = trimTrailingZeros;
     }
 
     public boolean isStopOnNextHeader() {
