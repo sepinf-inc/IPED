@@ -243,7 +243,7 @@
                 <headerSignature>\53\44\4C?\00\00\00\FF</headerSignature>
             </signatures>
             <minLength>128</minLength>
-            <maxLength>32768</maxLength>
+            <maxLength>65536</maxLength>
             <mediaType>application/x-shareaza-download</mediaType>
             <stopOnNextHeader>true</stopOnNextHeader>
         </carverType>
