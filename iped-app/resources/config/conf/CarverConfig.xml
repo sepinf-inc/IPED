@@ -246,6 +246,7 @@
             <maxLength>32768</maxLength>
             <mediaType>application/x-shareaza-download</mediaType>
             <trimTrailingZeros>true</trimTrailingZeros>
+            <stopOnNextHeader>true</stopOnNextHeader>
         </carverType>
         
         <!--carverType>
