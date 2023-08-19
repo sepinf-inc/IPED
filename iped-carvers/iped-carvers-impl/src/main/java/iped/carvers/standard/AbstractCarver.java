@@ -238,11 +238,13 @@ public abstract class AbstractCarver implements Carver {
             CarverType type = hit.getSignature().getCarverType();
             long len = Math.min(parentEvidence.getLength() - hit.getOffset(), type.getMaxLength());
             boolean ready = false;
-            if (hit.getOffset() + len <= currOffset || headersWithStopOnNext.size() > maxWaitingHeaders) {
+            if (hit.getOffset() + len <= currOffset) {
                 ready = true;
             } else if (!hit.equals(last) && type.equals(last.getSignature().getCarverType())) {
                 ready = true;
                 len = Math.min(len, last.getOffset());
+            } else if (headersWithStopOnNext.size() > maxWaitingHeaders) {
+                ready = true;
             }
             if (ready) {
                 it.remove();
