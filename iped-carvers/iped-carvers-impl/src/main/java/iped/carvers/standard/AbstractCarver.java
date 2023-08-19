@@ -22,6 +22,17 @@ public abstract class AbstractCarver implements Carver {
 
     protected ArrayDeque<Hit> headersWaitingFooters = new ArrayDeque<>();
 
+    /**
+     * This list stores headers with "stop on next header" option enabled. These
+     * types of carved items do not have a footer nor a length defined in its
+     * content, so the end of the item is taken from the defined maxLength
+     * configuration. Instead of processing them as soon as they are found (in
+     * notifyHit()), they are added to this list. Whenever a new hit is notified,
+     * items in this list will be processed if the new hit is of the same type (in
+     * this case, the end of the processed hit will be limited to the start of the
+     * new hit), or when the offset of the new hit exceeds the maximum offset of the
+     * hit in the list. (See #1816 discussion)
+     */
     protected LinkedList<Hit> headersWithStopOnNext = new LinkedList<>();
 
     protected int maxWaitingHeaders = 1000;
