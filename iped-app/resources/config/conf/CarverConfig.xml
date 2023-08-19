@@ -240,7 +240,7 @@
         <carverType>
             <name>SD</name>
             <signatures>
-                <headerSignature>\53\44\4C?\00\00\00\FF</headerSignature>
+                <headerSignature>SDL?\00\00\00\FF</headerSignature>
             </signatures>
             <minLength>128</minLength>
             <maxLength>65536</maxLength>
