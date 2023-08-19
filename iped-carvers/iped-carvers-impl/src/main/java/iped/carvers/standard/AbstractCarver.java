@@ -13,7 +13,6 @@ import iped.carvers.api.Hit;
 import iped.carvers.api.InvalidCarvedObjectException;
 import iped.carvers.api.Signature.SignatureType;
 import iped.data.IItem;
-import iped.io.SeekableInputStream;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
 
