@@ -228,14 +228,13 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
 
                 long t0 = System.currentTimeMillis();
 
-                bos.write(MESSAGES.VERSION_1_1.toString().getBytes());
+                bos.write(MESSAGES.VERSION_1_2.toString().getBytes());
                 // bos.write("\n".getBytes());
 
                 bos.write(MESSAGES.AUDIO_SIZE.toString().getBytes());
 
                 DataOutputStream dos = new DataOutputStream(bos);
-                // WAV part should be smaller than 1min, so smaller than 2GB
-                dos.writeInt((int) tmpFile.length());
+                dos.writeLong(tmpFile.length());
                 dos.flush();
 
                 Files.copy(tmpFile.toPath(), bos);
