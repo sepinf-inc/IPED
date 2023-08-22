@@ -328,7 +328,9 @@ public class RemoteWav2Vec2Service {
                             }else {
                                 size=dis.readInt();
                             }
-                            
+                            if (size < 0) {
+                                throw new Exception("Invalid file size");
+                            }
 
                             logger.info(prefix + "Receiving " + new DecimalFormat().format(size) + " bytes...");
 
