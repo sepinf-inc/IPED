@@ -46,7 +46,7 @@ public class RemoteWav2Vec2Service {
         ERROR,
         REGISTER,
         STATS,
-        WARN, VERSION_1_1, PING
+        WARN, VERSION_1_1, VERSION_1_2, PING
     }
     
     static class OpenConnectons {
@@ -275,6 +275,7 @@ public class RemoteWav2Vec2Service {
                         BufferedInputStream bis = null;
                         boolean error = false;
                         OpenConnectons opc = null;
+                        String protocol = "VERSION_1_0";
                         try {
                             client.setSoTimeout(CLIENT_TIMEOUT_MILLIS);
                             bis = new BufferedInputStream(client.getInputStream());
@@ -295,25 +296,24 @@ public class RemoteWav2Vec2Service {
                             bis.mark(min + 1);
                             byte[] bytes = bis.readNBytes(min);
                             String cmd = new String(bytes);
-                            
                             if (MESSAGES.VERSION_1_1.toString().startsWith(cmd)) {
                                 bis.reset();
                                 bytes = bis.readNBytes(MESSAGES.VERSION_1_1.toString().length());
-                                cmd = new String(bytes);
-
-                                logger.info("Protocol Version {}", cmd);
-
+                                protocol = new String(bytes);
+                                bis.mark(min + 1);
                                 synchronized (beaconQueq) {
                                     opc = new OpenConnectons(client, bis, writer, this);
                                     beaconQueq.add(opc);
                                 }
 
-                                bytes = bis.readNBytes(MESSAGES.AUDIO_SIZE.toString().length());
-                                cmd = new String(bytes);
-
-                            } else {
-                                logger.info("Protocol Version VERSION_1_0");
                             }
+                            logger.info("Protocol Version {}", protocol);
+
+                            // read the audio_size message
+                            bis.reset();
+                            bytes = bis.readNBytes(MESSAGES.AUDIO_SIZE.toString().length());
+                            cmd = new String(bytes);
+
 
                             
                             if (!MESSAGES.AUDIO_SIZE.toString().equals(cmd)) {
@@ -322,14 +322,21 @@ public class RemoteWav2Vec2Service {
                             }
 
                             DataInputStream dis = new DataInputStream(bis);
-                            int size = dis.readInt();
+                            long size;
+                            if (MESSAGES.VERSION_1_2.toString().equals(protocol)) {
+                                size=dis.readLong();
+                            }else {
+                                size=dis.readInt();
+                            }
+                            
 
                             logger.info(prefix + "Receiving " + new DecimalFormat().format(size) + " bytes...");
 
                             tmpFile = Files.createTempFile("audio", ".tmp");
                             try (OutputStream os = Files.newOutputStream(tmpFile)) {
                                 byte[] buf = new byte[8192];
-                                int i = 0, read = 0;
+                                int i = 0;
+                                long read = 0;
                                 while (read < size && (i = bis.read(buf)) >= 0) {
                                     os.write(buf, 0, i);
                                     read += i;
