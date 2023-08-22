@@ -1,5 +1,6 @@
 package iped.app.bootstrap;
 
+import java.awt.*;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -17,6 +18,8 @@ import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import iped.app.home.MainFrame;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.tika.utils.SystemUtils;
 
 import ag.ion.bion.officelayer.application.IOfficeApplication;
@@ -35,7 +38,7 @@ import iped.viewers.util.UNOLibFinder;
 /**
  * Bootstrap class to start the main application process with a custom classpath
  * with plugin jars.
- * 
+ *
  * @author Luís Nassif
  *
  */
@@ -72,6 +75,14 @@ public class Bootstrap {
     }
 
     protected void run(String args[]) {
+
+
+        //Check if no args was passed and if there is any display available to run graphical interface
+        if(ArrayUtils.isEmpty(args) && ( ! ArrayUtils.isEmpty(GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()) ) ){
+            MainFrame.main(args);
+            return;
+        }
+
 
         List<String> heapArgs = new ArrayList<>();
         List<String> finalArgs = new ArrayList<>();
@@ -131,13 +142,13 @@ public class Bootstrap {
             iped.setLogConfiguration(logConfig);
 
             Configuration.getInstance().loadConfigurables(iped.getConfigPath(), false);
-            
+
             configLoaded();
-            
+
             String classpath = getDefaultClassPath(iped);
-            
+
             PluginConfig pluginConfig = ConfigurationManager.get().findObject(PluginConfig.class);
-            
+
             if (pluginConfig.getTskJarFile() != null) {
                 classpath += separator + pluginConfig.getTskJarFile().getAbsolutePath();
             }
@@ -175,7 +186,7 @@ public class Bootstrap {
             cmd.add("-Djava.net.useSystemProxies=true"); // fix for #1446
             cmd.add(getMainClassName());
             cmd.addAll(finalArgs);
-            
+
             ProcessBuilder pb = new ProcessBuilder();
             // pb.directory(directory)
             pb.command(cmd);
@@ -209,7 +220,7 @@ public class Bootstrap {
 
         System.exit(exit);
     }
-    
+
     private static void cleanTempFolder() {
         if (subProcessTempFolder != null && subProcessTempFolder.isDirectory()) {
             for (File file : subProcessTempFolder.listFiles()) {
@@ -230,7 +241,7 @@ public class Bootstrap {
     protected void configLoaded() {
         new SplashScreenManager().start();
     }
-    
+
     private static List<String> getCustomJVMArgs(){
         return Arrays.asList("-XX:+IgnoreUnrecognizedVMOptions",
                 "-XX:+HeapDumpOnOutOfMemoryError",

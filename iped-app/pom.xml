@@ -26,12 +26,12 @@
             <groupId>com.fifesoft</groupId>
             <artifactId>rsyntaxtextarea</artifactId>
             <version>3.3.2</version>
-        </dependency>        
+        </dependency>
         <dependency>
           <groupId>com.fifesoft</groupId>
           <artifactId>autocomplete</artifactId>
           <version>3.3.1</version>
-        </dependency>        
+        </dependency>
         <dependency>
             <groupId>iped</groupId>
             <artifactId>iped-geo</artifactId>
@@ -661,50 +661,6 @@
                             </archive>
                         </configuration>
                     </execution>
-                    <execution>
-                        <id>create-iped_home-jar</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                        <configuration>
-                            <excludes>
-                                <exclude>*.netbeans_automatic_build*</exclude>
-                            </excludes>
-                            <finalName>iped_home</finalName>
-                            <outputDirectory>${release.dir}</outputDirectory>
-                            <forceCreation>true</forceCreation>
-                            <archive>
-                                <addMavenDescriptor>false</addMavenDescriptor>
-                                <manifest>
-                                    <addClasspath>true</addClasspath>
-                                    <classpathPrefix>lib/</classpathPrefix>
-                                    <mainClass>iped.app.bootstrap.BootstrapHome</mainClass>
-                                </manifest>
-                            </archive>
-                        </configuration>
-                    </execution>
-                    <!--execution>
-                        <id>create-gui-jar</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                        <configuration>
-                            <excludes>
-                                <exclude>*.netbeans_automatic_build*</exclude>
-                            </excludes>
-                            <finalName>iped-gui</finalName>
-                            <outputDirectory>${release.dir}</outputDirectory>
-                            <forceCreation>true</forceCreation>
-                            <archive>
-                                <addMavenDescriptor>false</addMavenDescriptor>
-                                <manifest>
-                                    <addClasspath>true</addClasspath>
-                                    <classpathPrefix>lib/</classpathPrefix>
-                                    <mainClass>br.gov.pf.labld.cases.CaseManagement</mainClass>
-                                </manifest>
-                            </archive>
-                        </configuration>
-                    </execution-->
                     <execution>
                         <id>create-search-jar</id>
                         <goals>
