@@ -253,7 +253,7 @@ public abstract class AbstractCarver implements Carver {
                 ready = true;
             } else if (!hit.equals(last) && type.equals(last.getSignature().getCarverType())) {
                 ready = true;
-                len = Math.min(len, last.getOffset());
+                len = Math.min(len, last.getOffset() - hit.getOffset());
             } else if (headersWithStopOnNext.size() > maxWaitingHeaders) {
                 ready = true;
             }
