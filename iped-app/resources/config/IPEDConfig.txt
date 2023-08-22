@@ -92,6 +92,10 @@ enableIndexToElasticSearch = false
 # You must configure at least host/port options in conf/MinIOConfig.txt
 enableMinIO = false
 
+# Enables OCR on images and scanned PDF files. It can increase processing time a lot.
+# OCR language dictionary and other advanced configurations can be found in conf/OCRConfig.txt.
+enableOCR = false
+
 # Enable audio transcription.
 # Default implementation uses VOSK transcription on local CPU (slow and not good accuracy).
 # You can change it to a local Facebook Wav2Vec2 implementation (slower on CPU, faster on GPU and good accuracy)
