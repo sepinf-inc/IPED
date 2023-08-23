@@ -46,7 +46,9 @@ public class RemoteWav2Vec2Service {
         ERROR,
         REGISTER,
         STATS,
-        WARN, VERSION_1_1, VERSION_1_2, PING
+        WARN, VERSION_1_1,
+        VERSION_1_2,
+        PING
     }
     
     static class OpenConnectons {
@@ -282,11 +284,20 @@ public class RemoteWav2Vec2Service {
                             writer = new PrintWriter(
                                     new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8), true);
 
-                            writer.println(MESSAGES.ACCEPTED);
-                            requestsAccepted.incrementAndGet();
-
-                            String clientName = "Client " + client.getInetAddress().getHostAddress() + ":" + client.getPort();
+                            String clientName = "Client " + client.getInetAddress().getHostAddress() + ":"
+                                    + client.getPort();
                             String prefix = clientName + " - ";
+                            writer.println(MESSAGES.ACCEPTED);
+
+                            bis.mark(5);
+                            if (bis.read() == -1) {
+                                logger.info(prefix + "Possible Kubernetes live test");
+                                requestsReceived.decrementAndGet();
+                                return;
+                            }
+                            bis.reset();
+
+                            requestsAccepted.incrementAndGet();
 
                             logger.info(prefix + "Accepted connection.");
 
@@ -314,8 +325,6 @@ public class RemoteWav2Vec2Service {
                             bytes = bis.readNBytes(MESSAGES.AUDIO_SIZE.toString().length());
                             cmd = new String(bytes);
 
-
-                            
                             if (!MESSAGES.AUDIO_SIZE.toString().equals(cmd)) {
                                 error = true;
                                 throw new IOException("Size msg not received!");

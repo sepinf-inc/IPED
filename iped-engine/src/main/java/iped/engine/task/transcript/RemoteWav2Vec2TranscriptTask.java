@@ -234,6 +234,7 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
                 bos.write(MESSAGES.AUDIO_SIZE.toString().getBytes());
 
                 DataOutputStream dos = new DataOutputStream(bos);
+                // Must use long see #1833
                 dos.writeLong(tmpFile.length());
                 dos.flush();
 
