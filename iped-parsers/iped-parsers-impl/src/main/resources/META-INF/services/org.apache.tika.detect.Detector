@@ -1,1 +1,2 @@
 iped.parsers.sqlite.detector.SQLiteContainerDetector
+iped.parsers.plist.detector.PListDetector
