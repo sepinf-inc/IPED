@@ -324,12 +324,20 @@ public class RemoteWav2Vec2Service {
                             DataInputStream dis = new DataInputStream(bis);
                             long size;
                             if (MESSAGES.VERSION_1_2.toString().equals(protocol)) {
-                                size=dis.readLong();
-                            }else {
-                                size=dis.readInt();
+                                size = dis.readLong();
+                            } else {
+                                size = dis.readInt();
                             }
                             if (size < 0) {
-                                throw new Exception("Invalid file size");
+                                try {
+                                    OutputStream o = OutputStream.nullOutputStream();
+                                    IOUtil.copyInputToOutputStream(dis, o);
+                                    o.close();
+                                    throw new Exception("Invalid file size");
+                                } catch (IOException e) {
+                                    throw new Exception("Invalid file size");
+                                }
+
                             }
 
                             logger.info(prefix + "Receiving " + new DecimalFormat().format(size) + " bytes...");
@@ -404,6 +412,7 @@ public class RemoteWav2Vec2Service {
                             if (writer != null) {
                                 writer.println(error ? MESSAGES.ERROR : MESSAGES.WARN);
                                 writer.println(errorMsg + ": " + e.toString().replace('\n', ' ').replace('\r', ' '));
+                                writer.flush();
                             }
                         } finally {
                             jobs.decrementAndGet();
