@@ -94,6 +94,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
     ArrayList<Date[]> definedFilters = new ArrayList<Date[]>();
     HashSet<String> excludedEvents = new HashSet<String>();
     HashSet<String> hiddenEvents = new HashSet<String>();
+    HashSet<String> selectedEvents = new HashSet<String>();
     private static final String resPath = '/' + App.class.getPackageName().replace('.', '/') + '/';
 
     Date startFilterDate = null;
@@ -998,6 +999,14 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
         this.hiddenEvents = hiddenEvents;
     }
 
+    public HashSet<String> getSelectedEvents() {
+    	return selectedEvents;
+    }
+    
+    public void setSelectedEvents(HashSet<String> selectedEvents) {
+    	this.selectedEvents = selectedEvents;
+    }
+    
     @Override
     public void updateUI() {
         super.updateUI();
