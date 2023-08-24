@@ -338,6 +338,7 @@ public class RemoteWav2Vec2Service {
                                 size = dis.readInt();
                             }
                             if (size < 0) {
+                                error = true;
                                 try {
                                     OutputStream o = OutputStream.nullOutputStream();
                                     IOUtil.copyInputToOutputStream(dis, o);
@@ -412,15 +413,25 @@ public class RemoteWav2Vec2Service {
                             writer.println(Double.toString(result.score));
                             writer.println(result.text);
                             writer.println(MESSAGES.DONE);
-
+                            writer.flush();
                             logger.info(prefix + "Transcritpion sent.");
 
                         } catch (Exception e) {
                             String errorMsg = "Exception while transcribing";
                             logger.warn(errorMsg, e);
                             if (writer != null) {
-                                writer.println(error ? MESSAGES.ERROR : MESSAGES.WARN);
-                                writer.println(errorMsg + ": " + e.toString().replace('\n', ' ').replace('\r', ' '));
+
+                                if ("Invalid file size".equals(e.getMessage())
+                                        && protocol.compareTo(MESSAGES.VERSION_1_2.toString()) < 0) {
+                                    writer.println("0");
+                                    writer.println(
+                                            "Audios longer than 2GB are not supported by old clients, please update your client version!");
+                                    writer.println(MESSAGES.DONE);
+                                } else {
+                                    writer.println(error ? MESSAGES.ERROR : MESSAGES.WARN);
+                                    writer.println(
+                                            errorMsg + ": " + e.toString().replace('\n', ' ').replace('\r', ' '));
+                                }
                                 writer.flush();
                             }
                         } finally {
