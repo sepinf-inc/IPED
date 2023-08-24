@@ -11,6 +11,11 @@ video {
 	max-height:400px;
 }
 
+audio {
+	max-width:100%;
+	width:550px;
+}
+
 div.audioImg {
     width: 100px;
     height: 102px;
