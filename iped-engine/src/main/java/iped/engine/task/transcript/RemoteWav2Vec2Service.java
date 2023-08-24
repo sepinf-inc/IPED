@@ -48,6 +48,7 @@ public class RemoteWav2Vec2Service {
         STATS,
         WARN, VERSION_1_1,
         VERSION_1_2,
+        VERSION_1_0,
         PING
     }
     
@@ -277,7 +278,7 @@ public class RemoteWav2Vec2Service {
                         BufferedInputStream bis = null;
                         boolean error = false;
                         OpenConnectons opc = null;
-                        String protocol = "VERSION_1_0";
+                        String protocol = MESSAGES.VERSION_1_0.toString();
                         try {
                             client.setSoTimeout(CLIENT_TIMEOUT_MILLIS);
                             bis = new BufferedInputStream(client.getInputStream());
@@ -307,7 +308,7 @@ public class RemoteWav2Vec2Service {
                             bis.mark(min + 1);
                             byte[] bytes = bis.readNBytes(min);
                             String cmd = new String(bytes);
-                            if (MESSAGES.VERSION_1_1.toString().startsWith(cmd)) {
+                            if (!MESSAGES.AUDIO_SIZE.toString().startsWith(cmd)) {
                                 bis.reset();
                                 bytes = bis.readNBytes(MESSAGES.VERSION_1_1.toString().length());
                                 protocol = new String(bytes);
