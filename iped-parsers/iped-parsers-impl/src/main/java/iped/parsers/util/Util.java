@@ -288,7 +288,24 @@ public class Util {
     public static String getReportHref(IItemReader item) {
         String exportPath = getExportPath(item);
         String originalPath = getSourceFileIfExists(item).orElse("");
-        return "javascript:openIfExists('" + exportPath + "','" + originalPath + "')";
+        StringBuilder sb = new StringBuilder();
+        sb.append("javascript:open");
+        String type = item.getMediaType().getType();
+        if (type.equals("image")) {
+            sb.append("Image");
+        } else if (type.equals("audio")) {
+            sb.append("Audio");
+        } else if (type.equals("video")) {
+            sb.append("Video");
+        } else {
+            sb.append("Other");
+        }
+        sb.append("('");
+        sb.append(exportPath);
+        sb.append("','");
+        sb.append(originalPath);
+        sb.append("')");
+        return sb.toString();
     }
 
     public static String getSourceFileIfExists(String originalPath) {
