@@ -503,14 +503,14 @@ public class ReportGenerator {
                                 String source = iped.parsers.util.Util.getSourceFileIfExists(mediaItem)
                                         .orElse("");
                                 if (message.getMessageType() == MessageType.AUDIO_MESSAGE) {
-                                    out.println(Messages.getString("WhatsAppReport.AudioMessageTitle")); //$NON-NLS-1$
+                                    out.println(Messages.getString("WhatsAppReport.AudioMessageTitle") + "<br>"); //$NON-NLS-1$
                                     out.println("<div class=\"audioImg iped-audio\" " //$NON-NLS-1$
                                             + " title=\"Audio\" " + "data-src1=\"" + format(exportPath) + "\" "
                                             + "data-src2=\"" //$NON-NLS-1$
                                             + format(source) + "\" ></div>");
                                     out.println("</a><br>"); //$NON-NLS-1$
                                 } else {
-                                    out.println(Messages.getString("WhatsAppReport.VideoMessageTitle")); //$NON-NLS-1$
+                                    out.println(Messages.getString("WhatsAppReport.VideoMessageTitle") + "<br>"); //$NON-NLS-1$
                                     if (thumb != null) {
                                         out.print("<img class=\"thumb iped-video\" src=\""); //$NON-NLS-1$
                                         out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
