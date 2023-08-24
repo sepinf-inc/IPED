@@ -37,12 +37,18 @@ public class EmojiUtil {
             Set<String> usedEmojis = new HashSet<String>();
             Map<Integer, String> replacedLines = new HashMap<Integer, String>();
             int idx = 0;
+            boolean insidePrev = false;
             while ((s = in.readLine()) != null) {
                 final int len = s.length();
                 boolean found = false;
+                boolean inside = insidePrev;
                 for (int i = 0; i < len;) {
                     int c = s.codePointAt(i);
-                    if (c > 0x2000 && base64ImagesPerCode.containsKey(format(c))) {
+                    if (c == '<') {
+                        inside = true;
+                    } else if (c == '>') {
+                        inside = false;
+                    } else if (!inside && c > 0x2000 && base64ImagesPerCode.containsKey(format(c))) {
                         found = true;
                         break;
                     }
@@ -52,9 +58,14 @@ public class EmojiUtil {
                     StringBuilder line = new StringBuilder();
                     StringBuilder sb = new StringBuilder();
                     String key = "";
+                    inside = insidePrev;
                     for (int i = 0; i < len;) {
                         int c = s.codePointAt(i);
-                        if (c > 0x2000) {
+                        if (c == '<') {
+                            inside = true;
+                        } else if (c == '>') {
+                            inside = false;
+                        } else if (!inside && c > 0x2000) {
                             sb.delete(0, sb.length());
                             sb.append(format(c));
                             if (base64ImagesPerCode.containsKey(sb.toString())) {
@@ -89,6 +100,7 @@ public class EmojiUtil {
                     }
                     replacedLines.put(idx, line.toString());
                 }
+                insidePrev = inside;
                 idx++;
             }
             if (!replacedLines.isEmpty()) {
