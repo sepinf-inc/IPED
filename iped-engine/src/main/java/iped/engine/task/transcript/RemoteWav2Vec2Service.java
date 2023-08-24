@@ -332,7 +332,7 @@ public class RemoteWav2Vec2Service {
 
                             DataInputStream dis = new DataInputStream(bis);
                             long size;
-                            if (MESSAGES.VERSION_1_2.toString().equals(protocol)) {
+                            if (protocol.compareTo(MESSAGES.VERSION_1_2.toString()) >= 0) {
                                 size = dis.readLong();
                             } else {
                                 size = dis.readInt();
