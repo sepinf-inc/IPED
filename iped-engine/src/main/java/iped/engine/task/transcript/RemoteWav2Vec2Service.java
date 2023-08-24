@@ -343,10 +343,10 @@ public class RemoteWav2Vec2Service {
                                     OutputStream o = OutputStream.nullOutputStream();
                                     IOUtil.copyInputToOutputStream(dis, o);
                                     o.close();
-                                    throw new Exception("Invalid file size");
+
                                 } catch (IOException e) {
-                                    throw new Exception("Invalid file size");
                                 }
+                                throw new Exception("Invalid file size: " + size);
 
                             }
 
@@ -421,7 +421,7 @@ public class RemoteWav2Vec2Service {
                             logger.warn(errorMsg, e);
                             if (writer != null) {
 
-                                if ("Invalid file size".equals(e.getMessage())
+                                if (e.getMessage() != null && e.getMessage().startsWith("Invalid file size:")
                                         && protocol.compareTo(MESSAGES.VERSION_1_2.toString()) < 0) {
                                     writer.println("0");
                                     writer.println(
