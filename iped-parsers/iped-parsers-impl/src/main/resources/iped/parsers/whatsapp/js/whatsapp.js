@@ -1,9 +1,37 @@
-function openIfExists(url2, url1){
+function openImage(url2, url1){
     if (navigator.userAgent.search("JavaFX") >= 0) return;
-    const img1 = new Image();
-    img1.onload = () => window.location = url1;
-    img1.onerror = () => window.location = url2;
-    img1.src = url1;
+    const aux = new Image();
+    aux.onload = () => window.location = url1;
+    aux.onerror = () => window.location = url2;
+    aux.src = url1;
+}
+
+function openAudio(url2, url1){
+    openAV(url2, url1, 'audio');
+}
+
+function openVideo(url2, url1){
+    openAV(url2, url1, 'video');
+}
+
+function openAV(url2, url1, type){
+    if (navigator.userAgent.search("JavaFX") >= 0) return;
+    const aux = document.createElement(type);
+    aux.style.display = 'none';
+    aux.addEventListener('loadedmetadata', () => {
+        aux.remove();
+        window.location = url1;
+    });
+    aux.addEventListener('error', () => {
+        aux.remove();
+        window.location = url2;
+    });
+    aux.src = url1;
+    document.body.append(aux);
+}
+
+function openOther(url2, url1){
+    window.location = url2;
 }
 
 function createMediaElement(elementType, el) {
