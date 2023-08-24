@@ -279,12 +279,6 @@ public class Util {
         return sb.toString();
     }
 
-    public static String getReportHref(String hash, String ext, String originalPath) {
-        String exportPath = getExportPath(hash, ext);
-        String path = getSourceFileIfExists(originalPath);
-        return "javascript:openIfExists('" + exportPath + "','" + path + "')";
-    }
-
     public static String getReportHref(IItemReader item) {
         String exportPath = getExportPath(item);
         String originalPath = getSourceFileIfExists(item).orElse("");
