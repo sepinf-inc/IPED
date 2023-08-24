@@ -39,11 +39,6 @@ function createMediaElement(elementType, el) {
     const mediaElement = document.createElement(elementType);
     const controls = document.createAttribute("controls");
     mediaElement.setAttributeNode(controls);
-    if (elementType == 'video') {
-        const st = document.createAttribute("style");
-        st.value = 'max-width:400px; max-height:400px;';	
-        mediaElement.setAttributeNode(st);
-    }    
     const src1 = el.getAttribute("data-src1");
     if (src1) {
         const sourceElement = document.createElement("source");
