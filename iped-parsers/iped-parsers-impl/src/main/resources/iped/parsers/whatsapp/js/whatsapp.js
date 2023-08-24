@@ -31,6 +31,7 @@ function openAV(url2, url1, type){
 }
 
 function openOther(url2, url1){
+    if (navigator.userAgent.search("JavaFX") >= 0) return;
     window.location = url2;
 }
 
