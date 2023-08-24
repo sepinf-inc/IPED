@@ -6,6 +6,11 @@ body
 	margin:0 auto;
 }
 
+video {
+	max-width:400px;
+	max-height:400px;
+}
+
 div.audioImg {
     width: 100px;
     height: 102px;
