@@ -50,6 +50,8 @@ public class HashTask extends AbstractTask {
 
     private static final int HASH_BUFFER_LEN = 1024 * 1024;
 
+    private static final ExecutorService executorService = Executors.newCachedThreadPool();
+
     public enum HASH {
         MD5("md5"), //$NON-NLS-1$
         SHA1("sha-1"), //$NON-NLS-1$
@@ -70,8 +72,6 @@ public class HashTask extends AbstractTask {
     }
 
     private HashMap<String, MessageDigest> digestMap = new LinkedHashMap<String, MessageDigest>();
-    
-    private ExecutorService executorService;
 
     private HashTaskConfig hashConfig;
 
@@ -102,13 +102,13 @@ public class HashTask extends AbstractTask {
             }
         }
 
-        executorService = Executors.newFixedThreadPool(digestMap.size());
-
     }
 
     @Override
     public void finish() throws Exception {
-        executorService.shutdown();
+        if (!executorService.isShutdown()) {
+            executorService.shutdown();
+        }
     }
 
     public void process(IItem evidence) {
