@@ -22,7 +22,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
-import java.security.Provider;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -32,7 +31,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,8 +46,6 @@ import iped.parsers.whatsapp.WhatsAppParser;
 public class HashTask extends AbstractTask {
 
     private static Logger LOGGER = LoggerFactory.getLogger(HashTask.class);
-
-    private static Provider BC_PROVIDER = new BouncyCastleProvider();
 
     private static final int HASH_BUFFER_LEN = 1024 * 1024;
 
@@ -97,7 +93,7 @@ public class HashTask extends AbstractTask {
             if (!algorithm.equalsIgnoreCase(HASH.EDONKEY.toString())) {
                 digest = MessageDigest.getInstance(algorithm.toUpperCase());
             } else {
-                digest = MessageDigest.getInstance("MD4", BC_PROVIDER); //$NON-NLS-1$
+                digest = MessageDigest.getInstance("MD4", "BC"); //$NON-NLS-1$
             }
             digestMap.put(algorithm, digest);
             if (HASH.SHA256.toString().equals(algorithm)) {
