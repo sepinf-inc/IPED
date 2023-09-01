@@ -93,7 +93,7 @@ public class HashTask extends AbstractTask {
             if (!algorithm.equalsIgnoreCase(HASH.EDONKEY.toString())) {
                 digest = MessageDigest.getInstance(algorithm.toUpperCase());
             } else {
-                digest = MessageDigest.getInstance("MD4", "BC"); //$NON-NLS-1$
+                digest = MessageDigest.getInstance("MD4"); //$NON-NLS-1$
             }
             digestMap.put(algorithm, digest);
             if (HASH.SHA256.toString().equals(algorithm)) {
