@@ -168,8 +168,9 @@ public class ExtractorIOS extends Extractor {
                             c.setId(rs.getLong("id")); //$NON-NLS-1$
                             c.setSubject(Util.getUTF8String(rs, "subject")); //$NON-NLS-1$
                             c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
+                            c.setDeleted(rs.getInt("ZREMOVED") != 0);
                             remote.setAvatarPath(rs.getString("avatarPath")); //$NON-NLS-1$
-                            if (recoverDeletedRecords) {
+                            if (recoverDeletedRecords && !c.isDeleted()) {
                                 activeChats.add(c.getId());
                             }
                             list.add(c);
@@ -545,7 +546,7 @@ public class ExtractorIOS extends Extractor {
                     WAContact contact = contacts.getContact(contactId);
                     Chat c = new Chat(contact);
                     c.setId(row.getIntValue("Z_PK")); //$NON-NLS-1$
-                    c.setDeleted(row.isDeletedRow());
+                    c.setDeleted(row.getIntValue("ZREMOVED") != 0 || row.isDeletedRow());
                     c.setSubject(row.getTextValue("ZPARTNERNAME")); //$NON-NLS-1$
                     c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
                     result.add(c);
@@ -652,13 +653,13 @@ public class ExtractorIOS extends Extractor {
      * ** static strings ***
      */
     private static final String SELECT_CHAT_LIST = "SELECT ZWACHATSESSION.Z_PK as id, ZCONTACTJID AS contact, " //$NON-NLS-1$
-            + "ZPARTNERNAME as subject, ZLASTMESSAGEDATE, ZPATH as avatarPath " //$NON-NLS-1$
+            + "ZPARTNERNAME as subject, ZLASTMESSAGEDATE, ZPATH as avatarPath,ZREMOVED as ZREMOVED" //$NON-NLS-1$
             + "FROM ZWACHATSESSION " //$NON-NLS-1$
             + "LEFT JOIN ZWAPROFILEPICTUREITEM ON ZWAPROFILEPICTUREITEM.ZJID = ZWACHATSESSION.ZCONTACTJID " //$NON-NLS-1$
             + "ORDER BY ZLASTMESSAGEDATE DESC"; //$NON-NLS-1$
 
     private static final String SELECT_CHAT_LIST_NO_PPIC = "SELECT ZWACHATSESSION.Z_PK as id, ZCONTACTJID AS contact, " //$NON-NLS-1$
-            + "ZPARTNERNAME as subject, ZLASTMESSAGEDATE, NULL as avatarPath " //$NON-NLS-1$
+            + "ZPARTNERNAME as subject, ZLASTMESSAGEDATE, NULL as avatarPath , 0 as ZREMOVED" //$NON-NLS-1$
             + "FROM ZWACHATSESSION " //$NON-NLS-1$
             + "ORDER BY ZLASTMESSAGEDATE DESC"; //$NON-NLS-1$
     /*
