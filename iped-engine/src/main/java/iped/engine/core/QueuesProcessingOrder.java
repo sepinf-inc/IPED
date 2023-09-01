@@ -16,6 +16,7 @@ import iped.parsers.emule.PartMetParser;
 import iped.parsers.mail.RFC822Parser;
 import iped.parsers.mail.win10.Win10MailParser;
 import iped.parsers.python.PythonParser;
+import iped.parsers.shareaza.ShareazaDownloadParser;
 import iped.parsers.shareaza.ShareazaLibraryDatParser;
 import iped.parsers.skype.SkypeParser;
 import iped.parsers.sqlite.SQLite3Parser;
@@ -71,6 +72,7 @@ public class QueuesProcessingOrder {
         mediaTypes.put(MediaType.parse(PartMetParser.EMULE_PART_MET_MIME_TYPE), 2);
         mediaTypes.put(MediaType.parse(AresParser.ARES_MIME_TYPE), 2);
         mediaTypes.put(MediaType.parse(ShareazaLibraryDatParser.LIBRARY_DAT_MIME_TYPE), 2);
+        mediaTypes.put(MediaType.parse(ShareazaDownloadParser.SHAREAZA_DOWNLOAD_META), 2);
        
         mediaTypes.put(WhatsAppParser.WA_DB, 2);
         mediaTypes.put(WhatsAppParser.MSG_STORE, 3);

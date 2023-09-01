@@ -19,6 +19,7 @@ import iped.data.SelectionListener;
 import iped.io.IStreamSource;
 import iped.parsers.discord.DiscordParser;
 import iped.parsers.mail.win10.Win10MailParser;
+import iped.parsers.shareaza.ShareazaDownloadParser;
 import iped.parsers.skype.SkypeParser;
 import iped.parsers.telegram.TelegramParser;
 import iped.parsers.util.Util;
@@ -113,7 +114,8 @@ public class HtmlLinkViewer extends HtmlViewer implements SelectionListener {
                 || UFED_HTML_REPORT_MIME.equals(contentType) || PREVIEW_WITH_LINKS_MIME.equals(contentType)
                 || TelegramParser.TELEGRAM_CHAT.toString().equals(contentType)
                 || Win10MailParser.WIN10_MAIL_MSG.toString().equals(contentType)
-                || DiscordParser.CHAT_MIME_TYPE.equals(contentType);
+                || DiscordParser.CHAT_MIME_TYPE.equals(contentType)
+                || ShareazaDownloadParser.SHAREAZA_DOWNLOAD_META.equals(contentType);
     }
 
     @Override
