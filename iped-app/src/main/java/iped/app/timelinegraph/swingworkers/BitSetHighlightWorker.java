@@ -30,6 +30,10 @@ public class BitSetHighlightWorker extends CancelableWorker<Void, Void> {
     boolean highlight = true;
     JTable t = null;
 
+    public String getProgressNote() {
+        return Messages.get("TimeLineGraph.highlightingItemsProgressLabel");
+    }
+
     public BitSetHighlightWorker(IpedDateAxis domainAxis, IMultiSearchResultProvider resultsProvider, BitSet bs, boolean highlight, boolean clearPreviousSelection) {
         this.resultsProvider = resultsProvider;
         this.t = resultsProvider.getResultsTable();
@@ -50,7 +54,7 @@ public class BitSetHighlightWorker extends CancelableWorker<Void, Void> {
     @Override
     protected Void doInBackground() throws Exception {
         progressDialog = new ProgressDialog(App.get(), this, true, 0, ModalityType.TOOLKIT_MODAL);
-        progressDialog.setNote(Messages.get("TimeLineGraph.highlightingItemsProgressLabel"));
+        progressDialog.setNote(getProgressNote());
         doProcess();
         return null;
     }

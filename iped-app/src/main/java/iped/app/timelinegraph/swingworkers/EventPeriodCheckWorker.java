@@ -1,12 +1,12 @@
 package iped.app.timelinegraph.swingworkers;
 
 import java.util.BitSet;
-import java.util.Date;
 
 import javax.swing.JTable;
 
 import iped.app.timelinegraph.IpedDateAxis;
 import iped.app.ui.BookmarksController;
+import iped.app.ui.Messages;
 import iped.viewers.api.IMultiSearchResultProvider;
 
 /*
@@ -36,6 +36,11 @@ public class EventPeriodCheckWorker extends BitSetHighlightWorker {
         resultsProvider.getIPEDSource().getMultiBookmarks().saveState();
         BookmarksController.get().updateUISelection();
         super.done();
+    }
+
+    @Override
+    public String getProgressNote() {
+        return Messages.get("TimeLineGraph.checkingItemsProgressLabel");
     }
 
 }
