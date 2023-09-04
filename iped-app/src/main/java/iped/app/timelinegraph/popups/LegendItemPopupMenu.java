@@ -3,6 +3,7 @@ package iped.app.timelinegraph.popups;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.BitSet;
 import java.util.Iterator;
 import java.util.List;
 
@@ -15,8 +16,12 @@ import org.jfree.chart.title.LegendItemBlockContainer;
 
 import iped.app.timelinegraph.IpedChartPanel;
 import iped.app.timelinegraph.IpedCombinedDomainXYPlot;
+import iped.app.timelinegraph.datasets.IpedTimelineDataset;
+import iped.app.timelinegraph.swingworkers.EventPeriodCheckWorker;
 import iped.app.ui.App;
 import iped.app.ui.Messages;
+import iped.engine.data.IPEDSource;
+import iped.viewers.api.IMultiSearchResultProvider;
 
 public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
     IpedChartPanel ipedChartPanel;
@@ -24,6 +29,7 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
     JMenuItem show;
     JMenuItem filter;
     JMenuItem unfilter;
+
     JMenuItem select;
     JMenuItem unselect;
 
@@ -103,10 +109,24 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
     
     public void selectEvents(List<LegendItemBlockContainer> selLegends) {
         List<LegendItemBlockContainer> selLegendsList = ipedChartPanel.getIpedChartsPanel().getLegendList().getSelectedValuesList();
-    	for (int i = 0; i < selLegendsList.size(); i++) {
-    		LegendItemBlockContainer valor = selLegendsList.get(i);
-    		
-    	}
+        if (selLegends != null && selLegends.size() > 0) {
+            LegendItemBlockContainer libc = selLegendsList.get(0);
+            IpedTimelineDataset ds = (IpedTimelineDataset) libc.getDataset();
+
+
+            BitSet bs = new BitSet();// creates empty bitset
+            IMultiSearchResultProvider msrp = ipedChartPanel.getIpedChartsPanel().getResultsProvider();
+            IPEDSource is = (IPEDSource) msrp.getIPEDSource();
+
+            for (int i = 0; i < selLegends.size(); i++) {
+                libc = selLegendsList.get(i);
+                ds.bitSetItems(libc.getSeriesKey().toString(), bs);// set bits of items in serie
+            }
+
+            EventPeriodCheckWorker bsCheck = new EventPeriodCheckWorker(
+                    ipedChartPanel.getIpedChartsPanel().getDomainAxis(), msrp, bs, true);
+            bsCheck.execute();
+        }
     }
     
     public void unselectEvents(List<LegendItemBlockContainer> selLegends) {
@@ -182,10 +202,10 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
         
         //IMPORTANT
         if (e.getSource() == select) {
-        	showSelection(selLegends);
+            selectEvents(selLegends);
         }
         if (e.getSource() == unselect) {
-        	showSelection(selLegends);
+            unselectEvents(selLegends);
         }
     }
 
@@ -257,22 +277,6 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
         }
         else{
             hide.setEnabled(true);
-        }
-        
-        //Select
-        if(!selectionContainsSelect){
-        	select.setEnabled(false);
-        }
-        else{
-        	select.setEnabled(true);
-        }
-        
-        //Unselect
-        if(!selectionContainsUnselect){
-        	unselect.setEnabled(false);
-        }
-        else{
-        	unselect.setEnabled(true);
         }
         
         super.show(invoker, x, y);

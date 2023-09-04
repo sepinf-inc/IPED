@@ -2,6 +2,7 @@ package iped.app.timelinegraph.datasets;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -52,11 +53,11 @@ import iped.app.timelinegraph.cache.persistance.CachePersistance;
 import iped.app.ui.App;
 import iped.app.ui.CaseSearcherFilter;
 import iped.app.ui.Messages;
-import iped.app.ui.MetadataPanel.ValueCount;
 import iped.data.IIPEDSource;
 import iped.data.IItemId;
 import iped.data.IMultiBookmarks;
 import iped.engine.data.IPEDMultiSource;
+import iped.engine.data.IPEDSource;
 import iped.engine.data.ItemId;
 import iped.engine.search.MultiSearchResult;
 import iped.search.IMultiSearchResult;
@@ -987,6 +988,31 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
         // clone.values = (DefaultKeyedValues2D) this.values.clone();
         clone.workingCalendar = (Calendar) this.workingCalendar.clone();
         return clone;
+    }
+
+    public List<IItemId> bitSetItems(String eventType, BitSet bs) {
+        StringBuffer timeFilter = new StringBuffer();
+        timeFilter.append("timeEvent:\"");
+        timeFilter.append(eventType + "\"");
+
+        CaseSearcherFilter csf = new CaseSearcherFilter(timeFilter.toString());
+        csf.applyUIQueryFilters(exceptThis);
+        csf.execute();
+        try {
+            IMultiSearchResultProvider msrp = ipedChartsPanel.getResultsProvider();
+            IPEDSource is = (IPEDSource) msrp.getIPEDSource();
+
+            MultiSearchResult resultSet = (MultiSearchResult) csf.get();
+            List<IItemId> result = new ArrayList<IItemId>();
+            for (int i = 0; i < resultSet.getLength(); i++) {
+                IItemId itemId = resultSet.getItem(i);
+                bs.set(is.getLuceneId(itemId));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
     public List<IItemId> getItems(int item, int seriesId) {
