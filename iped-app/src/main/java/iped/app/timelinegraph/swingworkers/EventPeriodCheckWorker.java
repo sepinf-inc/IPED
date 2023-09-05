@@ -19,9 +19,14 @@ public class EventPeriodCheckWorker extends BitSetHighlightWorker {
         super(domainAxis, resultsProvider, bs, clearPreviousSelection);
     }
 
+    public EventPeriodCheckWorker(IpedDateAxis domainAxis, IMultiSearchResultProvider resultsProvider,
+            boolean highlight, RoaringBitmap bs) {
+        super(domainAxis, resultsProvider, bs, false);
+        this.highlight = highlight;
+    }
+
     @Override
     public void processResultsItem(JTable t, int i) {
-        Boolean checked = (Boolean) t.getModel().getValueAt(i, 1);
         t.getModel().setValueAt(highlight, i, 1);
     }
 

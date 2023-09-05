@@ -118,7 +118,7 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
         }
     }
 
-    public void checkEventItems(List<LegendItemBlockContainer> selLegends) {
+    public void checkEventItems(List<LegendItemBlockContainer> selLegends, boolean check) {
         List<LegendItemBlockContainer> selLegendsList = ipedChartPanel.getIpedChartsPanel().getLegendList().getSelectedValuesList();
         if (selLegends != null && selLegends.size() > 0) {
             LegendItemBlockContainer libc = selLegendsList.get(0);
@@ -133,8 +133,14 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
                 ds.bitSetItems(libc.getSeriesKey().toString(), bs);// set bits of items in serie
             }
 
-            EventPeriodCheckWorker bsCheck = new EventPeriodCheckWorker(
-                    ipedChartPanel.getIpedChartsPanel().getDomainAxis(), msrp, bs, true);
+            EventPeriodCheckWorker bsCheck;
+            if(check) {
+                bsCheck = new EventPeriodCheckWorker(
+                        ipedChartPanel.getIpedChartsPanel().getDomainAxis(), msrp, bs, true);
+            }else{
+                bsCheck = new EventPeriodCheckWorker(
+                        ipedChartPanel.getIpedChartsPanel().getDomainAxis(), msrp, false, bs);
+            }
             bsCheck.execute();
         }
     }
@@ -212,10 +218,10 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
 
         //IMPORTANT
         if (e.getSource() == checkItems) {
-            checkEventItems(selLegends);
+            checkEventItems(selLegends, true);
         }
         if (e.getSource() == uncheckItems) {
-            unselectEvents(selLegends);
+            checkEventItems(selLegends, false);
         }
 
         if (e.getSource() == selectAll) {
