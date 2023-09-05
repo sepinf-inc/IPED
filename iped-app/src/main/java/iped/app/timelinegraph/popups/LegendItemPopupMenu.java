@@ -55,19 +55,19 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
         unfilter.addActionListener(this);
         add(unfilter);
 
-        selectAll = new JMenuItem("Select all event types");
+        selectAll = new JMenuItem(Messages.getString("TimeLineGraph.selectAllEventTypes"));
         selectAll.addActionListener(this);
         add(selectAll);
         
-        unselectAll = new JMenuItem("Unselect all event types");
+        unselectAll = new JMenuItem(Messages.getString("TimeLineGraph.unselectAllEventTypes"));
         unselectAll.addActionListener(this);
         add(unselectAll);
 
-        checkItems = new JMenuItem("Check corresponding events items");
+        checkItems = new JMenuItem(Messages.getString("TimeLineGraph.checkEventItems"));
         checkItems.addActionListener(this);
         add(checkItems);
         
-        uncheckItems = new JMenuItem("Uncheck corresponding events items");
+        uncheckItems = new JMenuItem(Messages.getString("TimeLineGraph.uncheckEventItems"));
         uncheckItems.addActionListener(this);
         add(uncheckItems);
     }
