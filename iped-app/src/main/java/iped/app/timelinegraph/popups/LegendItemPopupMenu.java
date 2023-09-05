@@ -30,8 +30,8 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
     JMenuItem filter;
     JMenuItem unfilter;
 
-    JMenuItem select;
-    JMenuItem unselect;
+    JMenuItem checkItems;
+    JMenuItem uncheckItems;
 
     public LegendItemPopupMenu(IpedChartPanel ipedChartPanel) {
         this.ipedChartPanel = ipedChartPanel;
@@ -52,13 +52,13 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
         unfilter.addActionListener(this);
         add(unfilter);
         
-        select = new JMenuItem("Select all events");
-        select.addActionListener(this);
-        add(select);
+        checkItems = new JMenuItem("Check corresponding events items");
+        checkItems.addActionListener(this);
+        add(checkItems);
         
-        unselect = new JMenuItem("Unselect all events");
-        unselect.addActionListener(this);
-        add(unselect);
+        uncheckItems = new JMenuItem("Uncheck corresponding events items");
+        uncheckItems.addActionListener(this);
+        add(uncheckItems);
     }
 
     public boolean isSelected(List<LegendItemBlockContainer> selLegends, String currSeries) {
@@ -106,13 +106,12 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
             }
         }
     }
-    
-    public void selectEvents(List<LegendItemBlockContainer> selLegends) {
+
+    public void checkEventItems(List<LegendItemBlockContainer> selLegends) {
         List<LegendItemBlockContainer> selLegendsList = ipedChartPanel.getIpedChartsPanel().getLegendList().getSelectedValuesList();
         if (selLegends != null && selLegends.size() > 0) {
             LegendItemBlockContainer libc = selLegendsList.get(0);
             IpedTimelineDataset ds = (IpedTimelineDataset) libc.getDataset();
-
 
             RoaringBitmap bs = new RoaringBitmap();// creates empty bitset
             IMultiSearchResultProvider msrp = ipedChartPanel.getIpedChartsPanel().getResultsProvider();
@@ -201,10 +200,10 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
         }
         
         //IMPORTANT
-        if (e.getSource() == select) {
-            selectEvents(selLegends);
+        if (e.getSource() == checkItems) {
+            checkEventItems(selLegends);
         }
-        if (e.getSource() == unselect) {
+        if (e.getSource() == uncheckItems) {
             unselectEvents(selLegends);
         }
     }
