@@ -2,7 +2,6 @@ package iped.app.timelinegraph.datasets;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -39,6 +38,7 @@ import org.jfree.data.xy.AbstractIntervalXYDataset;
 import org.jfree.data.xy.IntervalXYDataset;
 import org.jfree.data.xy.TableXYDataset;
 import org.jfree.data.xy.XYDomainInfo;
+import org.roaringbitmap.RoaringBitmap;
 
 import iped.app.timelinegraph.DateUtil;
 import iped.app.timelinegraph.IpedChartPanel;
@@ -990,7 +990,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
         return clone;
     }
 
-    public List<IItemId> bitSetItems(String eventType, BitSet bs) {
+    public List<IItemId> bitSetItems(String eventType, RoaringBitmap bs) {
         StringBuffer timeFilter = new StringBuffer();
         timeFilter.append("timeEvent:\"");
         timeFilter.append(eventType + "\"");
@@ -1006,7 +1006,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
             List<IItemId> result = new ArrayList<IItemId>();
             for (int i = 0; i < resultSet.getLength(); i++) {
                 IItemId itemId = resultSet.getItem(i);
-                bs.set(is.getLuceneId(itemId));
+                bs.add(is.getLuceneId(itemId));
             }
         } catch (Exception e) {
             e.printStackTrace();

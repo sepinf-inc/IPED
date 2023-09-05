@@ -3,7 +3,6 @@ package iped.app.timelinegraph.popups;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.BitSet;
 import java.util.Iterator;
 import java.util.List;
 
@@ -13,6 +12,7 @@ import javax.swing.JPopupMenu;
 
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.title.LegendItemBlockContainer;
+import org.roaringbitmap.RoaringBitmap;
 
 import iped.app.timelinegraph.IpedChartPanel;
 import iped.app.timelinegraph.IpedCombinedDomainXYPlot;
@@ -114,7 +114,7 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
             IpedTimelineDataset ds = (IpedTimelineDataset) libc.getDataset();
 
 
-            BitSet bs = new BitSet();// creates empty bitset
+            RoaringBitmap bs = new RoaringBitmap();// creates empty bitset
             IMultiSearchResultProvider msrp = ipedChartPanel.getIpedChartsPanel().getResultsProvider();
             IPEDSource is = (IPEDSource) msrp.getIPEDSource();
 

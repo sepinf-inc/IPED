@@ -1,8 +1,8 @@
 package iped.app.timelinegraph.swingworkers;
 
-import java.util.BitSet;
-
 import javax.swing.JTable;
+
+import org.roaringbitmap.RoaringBitmap;
 
 import iped.app.timelinegraph.IpedDateAxis;
 import iped.app.ui.BookmarksController;
@@ -14,7 +14,8 @@ import iped.viewers.api.IMultiSearchResultProvider;
  */
 public class EventPeriodCheckWorker extends BitSetHighlightWorker {
 
-    public EventPeriodCheckWorker(IpedDateAxis domainAxis, IMultiSearchResultProvider resultsProvider, BitSet bs, boolean clearPreviousSelection) {
+    public EventPeriodCheckWorker(IpedDateAxis domainAxis, IMultiSearchResultProvider resultsProvider, RoaringBitmap bs,
+            boolean clearPreviousSelection) {
         super(domainAxis, resultsProvider, bs, clearPreviousSelection);
     }
 
