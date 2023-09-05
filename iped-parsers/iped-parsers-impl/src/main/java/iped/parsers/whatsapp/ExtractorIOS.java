@@ -170,7 +170,7 @@ public class ExtractorIOS extends Extractor {
                             c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
                             c.setDeleted(rs.getInt("ZREMOVED") != 0);
                             remote.setAvatarPath(rs.getString("avatarPath")); //$NON-NLS-1$
-                            if (recoverDeletedRecords && !c.isDeleted()) {
+                            if (recoverDeletedRecords) {
                                 activeChats.add(c.getId());
                             }
                             list.add(c);
