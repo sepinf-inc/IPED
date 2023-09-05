@@ -30,6 +30,9 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
     JMenuItem filter;
     JMenuItem unfilter;
 
+    JMenuItem selectAll;
+    JMenuItem unselectAll;
+
     JMenuItem checkItems;
     JMenuItem uncheckItems;
 
@@ -51,7 +54,15 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
         unfilter = new JMenuItem(Messages.getString("TimeLineGraph.unfilterEventFromResultSet", "Unfilter"));
         unfilter.addActionListener(this);
         add(unfilter);
+
+        selectAll = new JMenuItem("Select all event types");
+        selectAll.addActionListener(this);
+        add(selectAll);
         
+        unselectAll = new JMenuItem("Unselect all event types");
+        unselectAll.addActionListener(this);
+        add(unselectAll);
+
         checkItems = new JMenuItem("Check corresponding events items");
         checkItems.addActionListener(this);
         add(checkItems);
@@ -198,7 +209,7 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
             }
             ipedChartPanel.filterSelection();
         }
-        
+
         //IMPORTANT
         if (e.getSource() == checkItems) {
             checkEventItems(selLegends);
@@ -206,6 +217,17 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
         if (e.getSource() == uncheckItems) {
             unselectEvents(selLegends);
         }
+
+        if (e.getSource() == selectAll) {
+            JList list = ipedChartPanel.getIpedChartsPanel().getLegendList();
+            list.addSelectionInterval(0, list.getModel().getSize());
+        }
+
+        if (e.getSource() == unselectAll) {
+            JList list = ipedChartPanel.getIpedChartsPanel().getLegendList();
+            list.removeSelectionInterval(0, list.getModel().getSize());
+        }
+
     }
 
     @Override
@@ -219,6 +241,18 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
         boolean selectionContainsSelect = false;
         boolean selectionContainsUnselect = false;
         
+        if (selLegends.isEmpty()) {
+            unselectAll.setEnabled(false);
+        } else {
+            unselectAll.setEnabled(true);
+        }
+
+        if (selLegends.size() >= list.getModel().getSize()) {
+            selectAll.setEnabled(false);
+        } else {
+            selectAll.setEnabled(true);
+        }
+
         for (Iterator iterator = selLegends.iterator(); iterator.hasNext();) {
             LegendItemBlockContainer legendItemBlockContainer = (LegendItemBlockContainer) iterator.next();
             
