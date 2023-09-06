@@ -24,12 +24,17 @@ public class PDFCarver extends DefaultCarver {
             if (lastFooter != null) {
                 carveFromLastFooter(parentEvidence);
             }
+            resetState();
             headersWaitingFooters.addLast(hit);
         }
 
         if (hit.getSignature().isFooter()) {
             if (lastXREF == null) {
-                // footer without corresponding crossref => invalid PDF
+                // footer without corresponding crossref => invalid footer
+                // so try to carve from last valid footer if not null
+                if (lastFooter != null) {
+                    carveFromLastFooter(parentEvidence);
+                }
                 resetState();
             } else {
                 Hit lastHead = headersWaitingFooters.peekLast();
@@ -40,10 +45,14 @@ public class PDFCarver extends DefaultCarver {
                         lastFooter = hit;
                     } else {
                         // probably invalid footer as crossref offset info is inconsistent
+                        // so try to carve from last valid footer if not null
+                        if (lastFooter != null) {
+                            carveFromLastFooter(parentEvidence);
+                        }
                         resetState();
                     }
                 } else {
-                    // try to carve incomplete PDF?
+                    // try to carve PDF without footer?
                 }
             }
         }
@@ -54,6 +63,7 @@ public class PDFCarver extends DefaultCarver {
 
         if (isStartXrefHit(hit)) {
             lastXREFOffset = readXREFOffset(parentEvidence, hit);
+
             lastHitWasStartXRef = true;
         } else {
             lastHitWasStartXRef = false;
@@ -63,6 +73,8 @@ public class PDFCarver extends DefaultCarver {
     }
 
     private void resetState() {
+        headersWaitingFooters.clear();
+        lastFooter = null;
         lastXREF = null;
         lastXREFOffset = -1;
     }
