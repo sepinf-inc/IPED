@@ -11,8 +11,20 @@ public class BookmarkAndKey implements Comparable<BookmarkAndKey> {
         collator.setStrength(Collator.PRIMARY);
     }
 
-    public String name;
-    public KeyStroke key;
+    private final String name;
+    private KeyStroke key;
+
+    public String getName() {
+        return name;
+    }
+
+    public KeyStroke getKey() {
+        return key;
+    }
+
+    public void setKey(KeyStroke key) {
+        this.key = key;
+    }
 
     public BookmarkAndKey(String name) {
         this.name = name;
