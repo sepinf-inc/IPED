@@ -12,19 +12,18 @@ import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import javax.swing.Icon;
 
 import iped.app.ui.IconManager;
-import iped.data.IItemId;
 import iped.data.IMultiBookmarks;
 
 public class BookmarkIcon implements Icon {
     public static final String columnName = "$BookmarkIcon";
 
     private static final Map<Color, Icon> iconPerColor = new HashMap<Color, Icon>();
+    private static final Map<String, Icon> iconPerBookmarkStr = new HashMap<String, Icon>();
     private static final Stroke strokeBorder = new BasicStroke(1f);
     private static final RenderingHints renderingHints;
 
@@ -42,38 +41,29 @@ public class BookmarkIcon implements Icon {
     private final Color[] colors;
 
     public static Icon getIcon(IMultiBookmarks bookmarks, String str) {
-        String sep = " | ";
-        if (str.indexOf(sep) < 0) {
-            return getIcon(bookmarks.getBookmarkColor(str));
-        }
-
-        String[] bookmarkNames = str.split(sep);
-        Color[] colors = new Color[bookmarkNames.length];
-        for (int i = 0; i < bookmarkNames.length; i++) {
-            colors[i] = bookmarks.getBookmarkColor(bookmarkNames[i]);
-        }
-
-        return getIcon(colors);
-    }
-
-    public static Icon getIcon(IMultiBookmarks bookmarks, IItemId id) {
-        if (id == null || bookmarks == null) {
+        if (str == null || str.isEmpty()) {
             return null;
         }
-        List<String> l = bookmarks.getBookmarkList(id);
-        if (l == null || l.isEmpty()) {
-            return null;
-        }
-        if (l.size() == 1) {
-            return getIcon(bookmarks.getBookmarkColor(l.get(0)));
-        }
 
-        Color[] colors = new Color[l.size()];
-        for (int i = 0; i < colors.length; i++) {
-            colors[i] = bookmarks.getBookmarkColor(l.get(i));
-        }
+        synchronized (iconPerBookmarkStr) {
+            Icon icon = iconPerBookmarkStr.get(str);
+            if (icon == null) {
+                String sep = " | ";
+                if (str.indexOf(sep) < 0) {
+                    return getIcon(bookmarks.getBookmarkColor(str));
+                }
 
-        return getIcon(colors);
+                String[] bookmarkNames = str.split(sep);
+                Color[] colors = new Color[bookmarkNames.length];
+                for (int i = 0; i < bookmarkNames.length; i++) {
+                    colors[i] = bookmarks.getBookmarkColor(bookmarkNames[i]);
+                }
+
+                icon = new BookmarkIcon(colors);
+                iconPerBookmarkStr.put(str, icon);
+            }
+            return icon;
+        }
     }
 
     public static synchronized Icon getIcon(Color color) {
@@ -83,10 +73,6 @@ public class BookmarkIcon implements Icon {
             iconPerColor.put(color, icon);
         }
         return icon;
-    }
-
-    public static synchronized Icon getIcon(Color[] colors) {
-        return new BookmarkIcon(colors);
     }
 
     private BookmarkIcon(Color color) {
@@ -119,7 +105,7 @@ public class BookmarkIcon implements Icon {
             double d = 1;
             Shape saveClip = g2.getClip();
             for (Color c : colors) {
-                g2.clip(new Rectangle2D.Double(d + 0.1, 0, w - 0.2, size));
+                g2.clip(new Rectangle2D.Double(d, 0, w, size));
                 g2.setColor(c == null ? BookmarkStandardColors.defaultColor : c);
                 g2.fillRoundRect(1, 2, size - 3, size - 4, arc, arc);
                 g2.setClip(saveClip);

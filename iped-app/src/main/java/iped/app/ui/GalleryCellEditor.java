@@ -36,6 +36,7 @@ import javax.swing.table.TableCellEditor;
 
 import iped.app.ui.bookmarks.BookmarkIcon;
 import iped.data.IMultiBookmarks;
+import iped.engine.util.Util;
 
 public class GalleryCellEditor extends AbstractCellEditor implements TableCellEditor, ActionListener {
 
@@ -105,7 +106,9 @@ public class GalleryCellEditor extends AbstractCellEditor implements TableCellEd
         IMultiBookmarks bookmarks = App.get().appCase.getMultiBookmarks();
         check.setSelected(bookmarks.isChecked(cellValue.id));
         cLabel.setText(cellValue.name);
-        cLabel.setIcon(BookmarkIcon.getIcon(bookmarks, cellValue.id));
+        String itemBookmarksStr = Util.concatStrings(bookmarks.getBookmarkList(cellValue.id));
+        cLabel.setToolTipText(itemBookmarksStr);
+        cLabel.setIcon(BookmarkIcon.getIcon(bookmarks, itemBookmarksStr));
 
         GalleryCellRenderer.adjustGalleryCellContent(cellValue, label, warningColor, table);
 
