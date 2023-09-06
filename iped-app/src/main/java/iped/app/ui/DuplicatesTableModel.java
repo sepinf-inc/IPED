@@ -68,7 +68,8 @@ public class DuplicatesTableModel extends BaseTableModel {
         App.get().parentItemModel.fireTableDataChanged();
     }
 
-    public void listDuplicates(Document doc) {
+    @Override
+    public void listItems(Document doc) {
 
         String hash = doc.get(IndexItem.HASH);
         if (hash == null || hash.trim().isEmpty())

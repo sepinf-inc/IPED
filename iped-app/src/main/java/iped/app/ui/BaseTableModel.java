@@ -110,4 +110,6 @@ public abstract class BaseTableModel extends AbstractTableModel
     public IMultiSearchResult getSearchResult() {
         return MultiSearchResult.get(App.get().appCase, results);
     }
+    
+    public abstract void listItems(Document doc);
 }

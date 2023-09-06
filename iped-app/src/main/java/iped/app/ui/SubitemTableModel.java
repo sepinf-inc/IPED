@@ -55,7 +55,8 @@ public class SubitemTableModel extends BaseTableModel {
         App.get().parentItemModel.fireTableDataChanged();
     }
 
-    public void listSubItems(Document doc) {
+    @Override
+    public void listItems(Document doc) {
 
         String parentId = doc.get(IndexItem.ID);
 

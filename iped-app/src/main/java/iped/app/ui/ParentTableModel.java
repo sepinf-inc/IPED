@@ -53,7 +53,8 @@ public class ParentTableModel extends BaseTableModel {
         App.get().subItemModel.fireTableDataChanged();
     }
 
-    public void listParents(final Document doc) {
+    @Override
+    public void listItems(Document doc) {
 
         String textQuery = null;
         String parentId = doc.get(IndexItem.PARENTID);

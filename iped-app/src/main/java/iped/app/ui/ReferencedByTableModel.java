@@ -77,7 +77,8 @@ public class ReferencedByTableModel extends BaseTableModel {
         parsingTask.execute();
     }
 
-    public void listReferencingItems(Document doc) {
+    @Override
+    public void listItems(Document doc) {
 
         String md5 = doc.get(HashTask.HASH.MD5.toString());
         String sha1 = doc.get(HashTask.HASH.SHA1.toString());
