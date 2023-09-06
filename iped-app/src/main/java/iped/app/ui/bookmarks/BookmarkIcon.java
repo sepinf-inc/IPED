@@ -8,11 +8,14 @@ import java.awt.RenderingHints;
 import java.awt.RenderingHints.Key;
 import java.awt.geom.AffineTransform;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.swing.Icon;
 
 import iped.app.ui.IconManager;
+import iped.data.IItemId;
+import iped.data.IMultiBookmarks;
 
 public class BookmarkIcon implements Icon {
     public static final String columnName = "$BookmarkIcon";
@@ -33,6 +36,22 @@ public class BookmarkIcon implements Icon {
 
     private final Color color;
 
+    public static Icon getIcon(IMultiBookmarks bookmarks, IItemId id) {
+        if (id == null || bookmarks == null) {
+            return null;
+        }
+        List<String> l = bookmarks.getBookmarkList(id);
+        if (l == null || l.isEmpty()) {
+            return null;
+        }
+        if (l.size() == 1) {
+            return getIcon(bookmarks.getBookmarkColor(l.get(0)));
+        }
+        
+        //TODO: [#1866] Handle multiple bookmarks
+        return getIcon(bookmarks.getBookmarkColor(l.get(0)));
+    }
+    
     public static synchronized Icon getIcon(Color color) {
         Icon icon = iconPerColor.get(color);
         if (icon == null) {
@@ -56,7 +75,7 @@ public class BookmarkIcon implements Icon {
         g2.translate(x, y);
 
         int size = getIconWidth();
-        int arc = size / 3;
+        int arc = size / 3 + 2;
 
         g.setColor(colorShadow);
         g.fillRoundRect(2, 2, size - 4, size - 4, arc, arc);
