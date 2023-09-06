@@ -22,7 +22,6 @@ import java.awt.Rectangle;
 
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
-import javax.swing.event.ListSelectionEvent;
 
 import org.apache.lucene.document.Document;
 
@@ -51,15 +50,7 @@ public class DuplicatesTableModel extends BaseTableModel {
     }
 
     @Override
-    public void valueChanged(ListSelectionEvent evt) {
-        ListSelectionModel lsm = (ListSelectionModel) evt.getSource();
-
-        if (lsm.getMinSelectionIndex() == -1 || selectedIndex == lsm.getMinSelectionIndex()) {
-            selectedIndex = lsm.getMinSelectionIndex();
-            return;
-        }
-
-        selectedIndex = lsm.getMinSelectionIndex();
+    public void valueChanged(ListSelectionModel lsm) {
         App.get().getTextViewer().textTable.scrollRectToVisible(new Rectangle());
 
         FileProcessor parsingTask = new FileProcessor(results.getLuceneIds()[selectedIndex], false);

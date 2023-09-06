@@ -23,7 +23,6 @@ import java.util.stream.Collectors;
 
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
-import javax.swing.event.ListSelectionEvent;
 
 import org.apache.lucene.document.Document;
 
@@ -43,16 +42,7 @@ public class ReferencedByTableModel extends BaseTableModel {
     private static final long serialVersionUID = 1L;
 
     @Override
-    public void valueChanged(ListSelectionEvent evt) {
-        ListSelectionModel lsm = (ListSelectionModel) evt.getSource();
-
-        if (lsm.getMinSelectionIndex() == -1 || selectedIndex == lsm.getMinSelectionIndex()) {
-            selectedIndex = lsm.getMinSelectionIndex();
-            return;
-        }
-
-        selectedIndex = lsm.getMinSelectionIndex();
-
+    public void valueChanged(ListSelectionModel lsm) {
         int id = results.getLuceneIds()[selectedIndex];
         IItem item = App.get().appCase.getItemByLuceneID(id);
 

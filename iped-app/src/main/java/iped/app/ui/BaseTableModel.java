@@ -3,6 +3,8 @@ package iped.app.ui;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
+import javax.swing.ListSelectionModel;
+import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 
@@ -110,6 +112,21 @@ public abstract class BaseTableModel extends AbstractTableModel
     public IMultiSearchResult getSearchResult() {
         return MultiSearchResult.get(App.get().appCase, results);
     }
+
+    @Override
+    public final void valueChanged(ListSelectionEvent evt) {
+        ListSelectionModel lsm = (ListSelectionModel) evt.getSource();
+
+        if (lsm.getMinSelectionIndex() == -1 || selectedIndex == lsm.getMinSelectionIndex()) {
+            selectedIndex = lsm.getMinSelectionIndex();
+            return;
+        }
+
+        selectedIndex = lsm.getMinSelectionIndex();
+        valueChanged(lsm);
+    }
+    
+    public abstract void valueChanged(ListSelectionModel lsm);
     
     public abstract void listItems(Document doc);
 }
