@@ -116,6 +116,7 @@ import iped.app.config.LogConfiguration;
 import iped.app.config.XMLResultSetViewerConfiguration;
 import iped.app.graph.AppGraphAnalytics;
 import iped.app.ui.bookmarks.BookmarkIcon;
+import iped.app.ui.bookmarks.BookmarkTreeCellRenderer;
 import iped.app.ui.controls.CSelButton;
 import iped.app.ui.controls.CustomButton;
 import iped.app.ui.themes.ThemeManager;
