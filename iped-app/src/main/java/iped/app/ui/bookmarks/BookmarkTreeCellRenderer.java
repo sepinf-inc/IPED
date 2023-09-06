@@ -1,4 +1,4 @@
-package iped.app.ui;
+package iped.app.ui.bookmarks;
 
 import java.awt.Component;
 
@@ -6,6 +6,9 @@ import javax.swing.Icon;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultTreeCellRenderer;
 
+import iped.app.ui.App;
+import iped.app.ui.BookmarksTreeModel;
+import iped.app.ui.IconManager;
 import iped.utils.LocalizedFormat;
 
 public class BookmarkTreeCellRenderer extends DefaultTreeCellRenderer {
