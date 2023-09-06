@@ -18,6 +18,7 @@
  */
 package iped.engine.data;
 
+import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -60,6 +61,7 @@ public class Bookmarks implements IBookmarks {
     private TreeMap<Integer, String> bookmarkNames = new TreeMap<Integer, String>();
     private TreeMap<Integer, String> bookmarkComments = new TreeMap<Integer, String>();
     private TreeMap<Integer, KeyStroke> bookmarkKeyStrokes = new TreeMap<Integer, KeyStroke>();
+    private TreeMap<Integer, Color> bookmarkColors = new TreeMap<Integer, Color>();
     private Set<Integer> reportBookmarks = new TreeSet<Integer>();
 
     private int selectedItens = 0, totalItems, lastId;
@@ -269,6 +271,7 @@ public class Bookmarks implements IBookmarks {
         bookmarkNames.put(bookmarkId, bookmarkName);
         bookmarkComments.put(bookmarkId, null);
         bookmarkKeyStrokes.put(bookmarkId, null);
+        bookmarkColors.put(bookmarkId, null);
 
         return bookmarkId;
     }
@@ -279,6 +282,7 @@ public class Bookmarks implements IBookmarks {
         bookmarkNames.remove(bookmark);
         bookmarkComments.remove(bookmark);
         bookmarkKeyStrokes.remove(bookmark);
+        bookmarkColors.remove(bookmark);
         reportBookmarks.remove(bookmark);
 
         int bookmarkOrder = bookmark / bookmarkBits;
@@ -313,6 +317,14 @@ public class Bookmarks implements IBookmarks {
 
     public String getBookmarkComment(int bookmarkId) {
         return bookmarkComments.get(bookmarkId);
+    }
+
+    public synchronized void setBookmarkColor(int bookmarkId, Color color) {
+        bookmarkColors.put(bookmarkId, color);
+    }
+
+    public Color getBookmarkColor(int bookmarkId) {
+        return bookmarkColors.get(bookmarkId);
     }
 
     public synchronized void setBookmarkKeyStroke(int bookmarkId, KeyStroke key) {
@@ -483,6 +495,7 @@ public class Bookmarks implements IBookmarks {
         this.bookmarkComments = state.bookmarkComments;
         this.bookmarkKeyStrokes = state.bookmarkKeyStrokes;
         this.reportBookmarks = state.reportBookmarks;
+        this.bookmarkColors = state.bookmarkColors;
     }
 
     public static Bookmarks load(File file) throws ClassNotFoundException, IOException {

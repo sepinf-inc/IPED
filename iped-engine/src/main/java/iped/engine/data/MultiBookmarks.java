@@ -1,5 +1,6 @@
 package iped.engine.data;
 
+import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -182,6 +183,20 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
             String comm = m.getBookmarkComment(m.getBookmarkId(bookmarkName));
             if (comm != null)
                 return comm;
+        }
+        return null;
+    }
+
+    public void setBookmarkColor(String bookmarkName, Color color) {
+        for (IBookmarks m : map.values())
+            m.setBookmarkColor(m.getBookmarkId(bookmarkName), color);
+    }
+
+    public Color getBookmarkColor(String bookmarkName) {
+        for (IBookmarks m : map.values()) {
+            Color color = m.getBookmarkColor(m.getBookmarkId(bookmarkName));
+            if (color != null)
+                return color;
         }
         return null;
     }
