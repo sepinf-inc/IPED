@@ -27,7 +27,6 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.IOException;
-import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
@@ -70,6 +69,7 @@ import org.apache.lucene.util.BytesRef;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import iped.app.ui.bookmarks.BookmarkAndKey;
 import iped.data.IItem;
 import iped.data.IItemId;
 import iped.engine.data.IPEDMultiSource;
@@ -109,35 +109,6 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
 
     private HashMap<KeyStroke, String> keystrokeToBookmark = new HashMap<>();
 
-    private final Collator collator;
-
-    private class BookmarkAndKey implements Comparable<BookmarkAndKey> {
-        String bookmark;
-        KeyStroke key;
-
-        public BookmarkAndKey(String bookmark) {
-            this.bookmark = bookmark;
-        }
-
-        public boolean equals(Object obj) {
-            if (obj instanceof BookmarkAndKey) {
-                return ((BookmarkAndKey) obj).bookmark.equalsIgnoreCase(bookmark);
-            } else if (obj instanceof String) {
-                return ((String) obj).equalsIgnoreCase(bookmark);
-            }
-            return false;
-        }
-
-        public String toString() {
-            return bookmark + (key != null ? " (" + key.toString().replace("released ", "") + ")" : "");
-        }
-
-        @Override
-        public int compareTo(BookmarkAndKey other) {
-            return collator.compare(bookmark, other.bookmark);
-        }
-    }
-
     public static BookmarksManager get() {
         return instance;
     }
@@ -161,9 +132,6 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
     }
 
     private BookmarksManager() {
-
-        collator = Collator.getInstance();
-        collator.setStrength(Collator.PRIMARY);
 
         dialog.setTitle(Messages.getString("BookmarksManager.Title")); //$NON-NLS-1$
         dialog.setSize(480, 480);
