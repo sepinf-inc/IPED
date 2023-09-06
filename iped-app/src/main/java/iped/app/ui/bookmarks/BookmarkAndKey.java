@@ -11,28 +11,28 @@ public class BookmarkAndKey implements Comparable<BookmarkAndKey> {
         collator.setStrength(Collator.PRIMARY);
     }
 
-    public String bookmark;
+    public String name;
     public KeyStroke key;
 
-    public BookmarkAndKey(String bookmark) {
-        this.bookmark = bookmark;
+    public BookmarkAndKey(String name) {
+        this.name = name;
     }
 
     public boolean equals(Object obj) {
         if (obj instanceof BookmarkAndKey) {
-            return ((BookmarkAndKey) obj).bookmark.equalsIgnoreCase(bookmark);
+            return ((BookmarkAndKey) obj).name.equalsIgnoreCase(name);
         } else if (obj instanceof String) {
-            return ((String) obj).equalsIgnoreCase(bookmark);
+            return ((String) obj).equalsIgnoreCase(name);
         }
         return false;
     }
 
     public String toString() {
-        return bookmark + (key != null ? " (" + key.toString().replace("released ", "") + ")" : "");
+        return name + (key != null ? " (" + key.toString().replace("released ", "") + ")" : "");
     }
 
     @Override
     public int compareTo(BookmarkAndKey other) {
-        return collator.compare(bookmark, other.bookmark);
+        return collator.compare(name, other.name);
     }
 }
