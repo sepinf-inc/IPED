@@ -57,19 +57,8 @@ public class TableCellRenderer extends DefaultTableCellRenderer {
                 String str = (String) value;
                 if (!str.isEmpty()) {
                     toopTip = str;
-                    String sep = " | ";
                     IMultiBookmarks multiBookmarks = App.get().appCase.getMultiBookmarks();
-                    if (str.indexOf(sep) < 0) {
-                        icon = BookmarkIcon.getIcon(multiBookmarks.getBookmarkColor(str));
-                    } else {
-                        String[] bookmarks = str.split(sep);
-                        Color[] colors = new Color[bookmarks.length];
-                        for (int i = 0; i < bookmarks.length; i++) {
-                            colors[i] = multiBookmarks.getBookmarkColor(bookmarks[i]);
-                        }
-                        // TODO: Handle multiple bookmarks
-                        icon = BookmarkIcon.getIcon(colors[0]);
-                    }
+                    icon = BookmarkIcon.getIcon(multiBookmarks, str);
                 }
             }
 
