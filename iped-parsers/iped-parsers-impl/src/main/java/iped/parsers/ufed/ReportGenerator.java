@@ -113,8 +113,6 @@ public class ReportGenerator {
                 name = Messages.getString("ReportGenerator.Unknown"); //$NON-NLS-1$
         }
 
-        if (chatDeleted || message.isDeleted())
-            out.println("🚫 "); //$NON-NLS-1$
 
         if (name != null)
             out.println(
@@ -192,17 +190,23 @@ public class ReportGenerator {
             out.print("<p><i>" + Messages.getString("WhatsAppReport.FoundInPedoHashDB") + " "
                     + format(message.getChildPornSets().toString()) + "</i></p>");
         }
-
         if (message.getTimeStamp() != null) {
             out.println("<span class=\"time\">"); //$NON-NLS-1$
             out.println(timeFormat.format(message.getTimeStamp())); // $NON-NLS-1$
             out.println("</span>"); //$NON-NLS-1$
         }
-
+        if (chatDeleted || message.isDeleted()) {
+            out.println("<br/><span class=\"recovered\">"); //$NON-NLS-1$
+            out.println("<i>" + Messages.getString("WhatsAppReport.MessageDeletedRecovered") + "</i>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            out.println("<div class=\"deletedIcon\"></div>"); //$NON-NLS-1$
+            out.println("</span>"); //$NON-NLS-1$
+        }
         if (isTo)
             out.println("</div><div class=\"aw\"><div class=\"awr\"></div></div>"); 
         if (isFrom)
             out.println("</div>");
+
+
 
         out.println("</div></div>"); //$NON-NLS-1$
     }
