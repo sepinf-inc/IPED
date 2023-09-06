@@ -70,6 +70,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.app.ui.bookmarks.BookmarkAndKey;
+import iped.app.ui.bookmarks.BookmarkListRenderer;
 import iped.data.IItem;
 import iped.data.IItemId;
 import iped.engine.data.IPEDMultiSource;
@@ -218,6 +219,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
             list.removeKeyListener(kl);
         }
         list.addKeyListener(this);
+        list.setCellRenderer(new BookmarkListRenderer());
 
         dialog.setLocationRelativeTo(App.get());
 
