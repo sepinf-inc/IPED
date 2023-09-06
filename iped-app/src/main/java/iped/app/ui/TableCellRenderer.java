@@ -18,17 +18,22 @@
  */
 package iped.app.ui;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.io.IOException;
 
 import javax.swing.Icon;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableModel;
 
 import org.apache.lucene.document.Document;
 
+import iped.app.ui.bookmarks.BookmarkIcon;
 import iped.data.IItemId;
+import iped.data.IMultiBookmarks;
 import iped.engine.task.index.IndexItem;
+import iped.localization.LocalizedProperties;
 
 public class TableCellRenderer extends DefaultTableCellRenderer {
 
@@ -42,35 +47,58 @@ public class TableCellRenderer extends DefaultTableCellRenderer {
 
         int idx = table.convertRowIndexToModel(row);
         int col = table.convertColumnIndexToModel(column);
-        String localizedNameProp = iped.localization.LocalizedProperties.getLocalizedField(IndexItem.NAME);
-        String colName = table.getModel().getColumnName(col);
-
-        if (table.getModel() instanceof SearchResultTableModel
-                && (colName.equalsIgnoreCase(IndexItem.NAME) || colName.equalsIgnoreCase(localizedNameProp))) {
-            try {
-                IItemId item = ((SearchResultTableModel) table.getModel()).getSearchResult().getItem(idx);
-                int docId = App.get().appCase.getLuceneId(item);
-                Document doc = App.get().appCase.getSearcher().doc(docId);
-                if (Boolean.valueOf(doc.get(IndexItem.ISDIR))) {
-                    setIcon(IconManager.getFolderIcon());
-                } else {
-                    String type = doc.get(IndexItem.TYPE);
-                    String contentType = doc.get(IndexItem.CONTENTTYPE);
-                    Icon icon = Boolean.valueOf(doc.get(IndexItem.ISROOT))
-                            ? IconManager.getFileIcon(contentType, type, IconManager.getDiskIcon())
-                            : IconManager.getFileIcon(contentType, type);
-                    setIcon(icon);
+        TableModel model = table.getModel();
+        String colName = model.getColumnName(col);
+        Icon icon = null;
+        String toopTip = null;
+        if (model instanceof SearchResultTableModel && colName.equalsIgnoreCase(BookmarkIcon.columnName)) {
+            setText("");
+            if (value != null) {
+                String str = (String) value;
+                if (!str.isEmpty()) {
+                    toopTip = str;
+                    String sep = " | ";
+                    IMultiBookmarks multiBookmarks = App.get().appCase.getMultiBookmarks();
+                    if (str.indexOf(sep) < 0) {
+                        icon = BookmarkIcon.getIcon(multiBookmarks.getBookmarkColor(str));
+                    } else {
+                        String[] bookmarks = str.split(sep);
+                        Color[] colors = new Color[bookmarks.length];
+                        for (int i = 0; i < bookmarks.length; i++) {
+                            colors[i] = multiBookmarks.getBookmarkColor(bookmarks[i]);
+                        }
+                        // TODO: Handle multiple bookmarks
+                        icon = BookmarkIcon.getIcon(colors[0]);
+                    }
                 }
-
-            } catch (IOException e) {
-                setIcon(null);
             }
 
-        } else {
-            setIcon(null);
+        } else if (model instanceof SearchResultTableModel) {
+            if (colName.equalsIgnoreCase(IndexItem.NAME)
+                    || colName.equalsIgnoreCase(LocalizedProperties.getLocalizedField(IndexItem.NAME))
+                    || (model instanceof DuplicatesTableModel && (colName.equalsIgnoreCase(IndexItem.PATH)
+                            || colName.equalsIgnoreCase(LocalizedProperties.getLocalizedField(IndexItem.PATH))))) {
+                try {
+                    IItemId item = ((SearchResultTableModel) model).getSearchResult().getItem(idx);
+                    int docId = App.get().appCase.getLuceneId(item);
+                    Document doc = App.get().appCase.getSearcher().doc(docId);
+                    if (Boolean.valueOf(doc.get(IndexItem.ISDIR))) {
+                        icon = IconManager.getFolderIcon();
+                    } else {
+                        String type = doc.get(IndexItem.TYPE);
+                        String contentType = doc.get(IndexItem.CONTENTTYPE);
+                        icon = Boolean.valueOf(doc.get(IndexItem.ISROOT))
+                                ? IconManager.getFileIcon(contentType, type, IconManager.getDiskIcon())
+                                : IconManager.getFileIcon(contentType, type);
+                    }
+                } catch (IOException e) {
+                }
+            }
         }
+
+        setIcon(icon);
+        setToolTipText(toopTip);
 
         return this;
     }
-
 }
