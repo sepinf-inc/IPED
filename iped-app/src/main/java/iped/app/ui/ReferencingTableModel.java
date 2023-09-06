@@ -18,14 +18,9 @@
  */
 package iped.app.ui;
 
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.table.AbstractTableModel;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.Term;
@@ -38,116 +33,15 @@ import iped.engine.search.IPEDSearcher;
 import iped.engine.search.LuceneSearchResult;
 import iped.engine.search.MultiSearchResult;
 import iped.engine.task.HashTask;
-import iped.engine.task.index.IndexItem;
 import iped.parsers.ares.AresParser;
 import iped.parsers.emule.KnownMetParser;
 import iped.parsers.shareaza.ShareazaLibraryDatParser;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 
-public class ReferencingTableModel extends AbstractTableModel
-        implements MouseListener, ListSelectionListener, SearchResultTableModel {
+public class ReferencingTableModel extends BaseTableModel {
 
-    /**
-     *
-     */
     private static final long serialVersionUID = 1L;
-
-    private LuceneSearchResult results = new LuceneSearchResult(0);
-    private int selectedIndex = -1;
-
-    public void clear() {
-        results = new LuceneSearchResult(0);
-        fireTableDataChanged();
-    }
-
-    @Override
-    public int getColumnCount() {
-        return 3;
-    }
-
-    @Override
-    public int getRowCount() {
-        return results.getLength();
-    }
-
-    @Override
-    public String getColumnName(int col) {
-        if (col == 2)
-            return IndexItem.NAME;
-
-        return ""; //$NON-NLS-1$
-    }
-
-    @Override
-    public boolean isCellEditable(int row, int col) {
-        if (col == 1) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    public Class<?> getColumnClass(int c) {
-        if (c == 1) {
-            return Boolean.class;
-        } else {
-            return String.class;
-        }
-    }
-
-    @Override
-    public void setValueAt(Object value, int row, int col) {
-        App.get().appCase.getMultiBookmarks().setChecked((Boolean) value,
-                App.get().appCase.getItemId(results.getLuceneIds()[row]));
-        BookmarksController.get().updateUISelection();
-    }
-
-    @Override
-    public Object getValueAt(int row, int col) {
-        if (col == 0) {
-            return row + 1;
-
-        } else if (col == 1) {
-            return App.get().appCase.getMultiBookmarks()
-                    .isChecked(App.get().appCase.getItemId(results.getLuceneIds()[row]));
-
-        } else {
-            try {
-                Document doc = App.get().appCase.getSearcher().doc(results.getLuceneIds()[row]);
-                return doc.get(IndexItem.NAME);
-            } catch (Exception e) {
-                // e.printStackTrace();
-            }
-            return ""; //$NON-NLS-1$
-        }
-    }
-
-    @Override
-    public void mouseClicked(MouseEvent arg0) {
-    }
-
-    @Override
-    public void mouseEntered(MouseEvent arg0) {
-    }
-
-    @Override
-    public void mouseExited(MouseEvent arg0) {
-    }
-
-    @Override
-    public void mousePressed(MouseEvent arg0) {
-    }
-
-    @Override
-    public void mouseReleased(MouseEvent evt) {
-        if (evt.getClickCount() == 2 && selectedIndex != -1) {
-            int docId = results.getLuceneIds()[selectedIndex];
-            ExternalFileOpen.open(docId);
-        }
-
-    }
 
     @Override
     public void valueChanged(ListSelectionEvent evt) {
@@ -163,7 +57,6 @@ public class ReferencingTableModel extends AbstractTableModel
 
         FileProcessor parsingTask = new FileProcessor(id, false);
         parsingTask.execute();
-
     }
 
     public void listReferencingItems(Document doc) {
@@ -205,21 +98,23 @@ public class ReferencingTableModel extends AbstractTableModel
 
         if (textQuery != null || query != null) {
             try {
-                IPEDSearcher task = query != null ? new IPEDSearcher(App.get().appCase, query, BasicProps.NAME) : new IPEDSearcher(App.get().appCase, textQuery.toString(), BasicProps.NAME);
+                IPEDSearcher task = query != null ? new IPEDSearcher(App.get().appCase, query, BasicProps.NAME)
+                        : new IPEDSearcher(App.get().appCase, textQuery.toString(), BasicProps.NAME);
                 task.setRewritequery(false);
                 results = MultiSearchResult.get(task.multiSearch(), App.get().appCase);
-    
+
                 final int length = results.getLength();
-    
+
                 if (length > 0) {
                     SwingUtilities.invokeLater(new Runnable() {
                         @Override
                         public void run() {
-                            App.get().referencesDock.setTitleText(Messages.getString("ReferencesTab.Title") + " " + length);
+                            App.get().referencesDock
+                                    .setTitleText(Messages.getString("ReferencesTab.Title") + " " + length);
                         }
                     });
                 }
-    
+
             } catch (Exception e) {
                 results = new LuceneSearchResult(0);
                 e.printStackTrace();
@@ -227,12 +122,5 @@ public class ReferencingTableModel extends AbstractTableModel
         }
 
         fireTableDataChanged();
-
     }
-
-    @Override
-    public MultiSearchResult getSearchResult() {
-        return MultiSearchResult.get(App.get().appCase, results);
-    }
-
 }

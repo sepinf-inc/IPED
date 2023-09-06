@@ -19,14 +19,10 @@
 package iped.app.ui;
 
 import java.awt.Rectangle;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.table.AbstractTableModel;
 
 import org.apache.lucene.document.Document;
 
@@ -36,105 +32,22 @@ import iped.engine.search.MultiSearchResult;
 import iped.engine.task.index.IndexItem;
 import iped.properties.BasicProps;
 import iped.search.IIPEDSearcher;
-import iped.search.IMultiSearchResult;
 
-public class DuplicatesTableModel extends AbstractTableModel
-        implements MouseListener, ListSelectionListener, SearchResultTableModel {
+public class DuplicatesTableModel extends BaseTableModel {
 
-    /**
-     *
-     */
     private static final long serialVersionUID = 1L;
-
-    LuceneSearchResult results = new LuceneSearchResult(0);
-    int selectedIndex = -1;
-
-    @Override
-    public int getColumnCount() {
-        return 3;
-    }
-
-    @Override
-    public int getRowCount() {
-        return results.getLength();
-    }
-
-    @Override
-    public String getColumnName(int col) {
-        if (col == 2)
-            return IndexItem.PATH;
-
-        return ""; //$NON-NLS-1$
-    }
-
-    @Override
-    public boolean isCellEditable(int row, int col) {
-        if (col == 1) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    public Class<?> getColumnClass(int c) {
-        if (c == 1) {
-            return Boolean.class;
-        } else {
-            return String.class;
-        }
-    }
-
-    @Override
-    public void setValueAt(Object value, int row, int col) {
-        App.get().appCase.getMultiBookmarks().setChecked((Boolean) value,
-                App.get().appCase.getItemId(results.getLuceneIds()[row]));
-        BookmarksController.get().updateUISelection();
-    }
 
     @Override
     public Object getValueAt(int row, int col) {
-        if (col == 0) {
-            return row + 1;
-
-        } else if (col == 1) {
-            return App.get().appCase.getMultiBookmarks()
-                    .isChecked(App.get().appCase.getItemId(results.getLuceneIds()[row]));
-
-        } else {
+        if (col == 2) {
             try {
                 Document doc = App.get().appCase.getSearcher().doc(results.getLuceneIds()[row]);
                 return doc.get(IndexItem.PATH);
-
             } catch (Exception e) {
-                // e.printStackTrace();
             }
-            return ""; //$NON-NLS-1$
+            return "";
         }
-    }
-
-    @Override
-    public void mouseClicked(MouseEvent arg0) {
-    }
-
-    @Override
-    public void mouseEntered(MouseEvent arg0) {
-    }
-
-    @Override
-    public void mouseExited(MouseEvent arg0) {
-    }
-
-    @Override
-    public void mousePressed(MouseEvent arg0) {
-    }
-
-    @Override
-    public void mouseReleased(MouseEvent evt) {
-        if (evt.getClickCount() == 2 && selectedIndex != -1) {
-            int docId = results.getLuceneIds()[selectedIndex];
-            ExternalFileOpen.open(docId);
-        }
+        return super.getValueAt(row, col);
     }
 
     @Override
@@ -166,8 +79,8 @@ public class DuplicatesTableModel extends AbstractTableModel
         String id = doc.get(IndexItem.ID);
         String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
 
-        textQuery += " && NOT (" + IndexItem.ID + ":" + id; //$NON-NLS-1$ //$NON-NLS-2$
-        textQuery += " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        textQuery += " && NOT (" + IndexItem.ID + ":" + id;
+        textQuery += " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID + ")";
 
         try {
             IIPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery, BasicProps.PATH);
@@ -180,7 +93,7 @@ public class DuplicatesTableModel extends AbstractTableModel
                     @Override
                     public void run() {
                         App.get().duplicateDock
-                                .setTitleText(duplicates + Messages.getString("DuplicatesTableModel.Duplicates")); //$NON-NLS-1$
+                                .setTitleText(duplicates + Messages.getString("DuplicatesTableModel.Duplicates"));
                     }
                 });
             }
@@ -191,12 +104,5 @@ public class DuplicatesTableModel extends AbstractTableModel
         }
 
         fireTableDataChanged();
-
     }
-
-    @Override
-    public IMultiSearchResult getSearchResult() {
-        return MultiSearchResult.get(App.get().appCase, results);
-    }
-
 }
