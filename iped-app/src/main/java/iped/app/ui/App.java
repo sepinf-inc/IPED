@@ -115,6 +115,7 @@ import bibliothek.gui.dock.themes.basic.action.BasicTitleViewItem;
 import iped.app.config.LogConfiguration;
 import iped.app.config.XMLResultSetViewerConfiguration;
 import iped.app.graph.AppGraphAnalytics;
+import iped.app.ui.bookmarks.BookmarkIcon;
 import iped.app.ui.controls.CSelButton;
 import iped.app.ui.controls.CustomButton;
 import iped.app.ui.themes.ThemeManager;
@@ -572,7 +573,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         subItemScroll = new JScrollPane(subItemTable);
         subItemTable.getColumnModel().getColumn(0).setPreferredWidth(40);
         subItemTable.getColumnModel().getColumn(1).setPreferredWidth(20);
-        subItemTable.getColumnModel().getColumn(2).setPreferredWidth(largeColWidth);
+        subItemTable.getColumnModel().getColumn(3).setPreferredWidth(largeColWidth);
         subItemTable.setDefaultRenderer(String.class, new TableCellRenderer());
         subItemTable.addKeyListener(new SpaceKeyListener());
 
@@ -580,7 +581,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         duplicatesScroll = new JScrollPane(duplicatesTable);
         duplicatesTable.getColumnModel().getColumn(0).setPreferredWidth(40);
         duplicatesTable.getColumnModel().getColumn(1).setPreferredWidth(20);
-        duplicatesTable.getColumnModel().getColumn(2).setPreferredWidth(largeColWidth);
+        duplicatesTable.getColumnModel().getColumn(3).setPreferredWidth(largeColWidth);
         duplicatesTable.setDefaultRenderer(String.class, new TableCellRenderer());
         duplicatesTable.addKeyListener(new SpaceKeyListener());
 
@@ -588,14 +589,14 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         parentItemScroll = new JScrollPane(parentItemTable);
         parentItemTable.getColumnModel().getColumn(0).setPreferredWidth(40);
         parentItemTable.getColumnModel().getColumn(1).setPreferredWidth(20);
-        parentItemTable.getColumnModel().getColumn(2).setPreferredWidth(largeColWidth);
+        parentItemTable.getColumnModel().getColumn(3).setPreferredWidth(largeColWidth);
         parentItemTable.setDefaultRenderer(String.class, new TableCellRenderer());
         parentItemTable.addKeyListener(new SpaceKeyListener());
 
         referencesTable = new HitsTable(referencesModel);
         referencesTable.getColumnModel().getColumn(0).setPreferredWidth(40);
         referencesTable.getColumnModel().getColumn(1).setPreferredWidth(20);
-        referencesTable.getColumnModel().getColumn(2).setPreferredWidth(largeColWidth);
+        referencesTable.getColumnModel().getColumn(3).setPreferredWidth(largeColWidth);
         referencesTable.setDefaultRenderer(String.class, new TableCellRenderer());
         referencesTable.addKeyListener(new SpaceKeyListener());
         referencesScroll = new JScrollPane(referencesTable);
@@ -603,7 +604,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         referencedByTable = new HitsTable(referencedByModel);
         referencedByTable.getColumnModel().getColumn(0).setPreferredWidth(40);
         referencedByTable.getColumnModel().getColumn(1).setPreferredWidth(20);
-        referencedByTable.getColumnModel().getColumn(2).setPreferredWidth(largeColWidth);
+        referencedByTable.getColumnModel().getColumn(3).setPreferredWidth(largeColWidth);
         referencedByTable.setDefaultRenderer(String.class, new TableCellRenderer());
         referencedByTable.addKeyListener(new SpaceKeyListener());
         referencedByScroll = new JScrollPane(referencedByTable);
@@ -1421,13 +1422,21 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     private void updateIconContainerUI(JComponent comp, int size, boolean updateUI) {
         if (comp instanceof JTable) {
-            ((JTable) comp).setRowHeight(size);
+            JTable table = (JTable) comp;
+            table.setRowHeight(size);
+            
+            // Sets bookmark icons column width based on current icon size 
+            for (int i = 0; i < table.getColumnCount(); i++) {
+                if (table.getColumnName(i).equals(BookmarkIcon.columnName)) {
+                    table.getColumnModel().getColumn(i).setPreferredWidth(size + 4);
+                }
+            }
         }
         if (updateUI) {
             comp.updateUI();
         }
     }
-    
+
     @Override
     public String getSortColumn() {
         SortKey ordem = resultsTable.getRowSorter().getSortKeys().get(0);

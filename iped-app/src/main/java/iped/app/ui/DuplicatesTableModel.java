@@ -38,7 +38,7 @@ public class DuplicatesTableModel extends BaseTableModel {
 
     @Override
     public Object getValueAt(int row, int col) {
-        if (col == 2) {
+        if (col == 3) {
             try {
                 Document doc = App.get().appCase.getSearcher().doc(results.getLuceneIds()[row]);
                 return doc.get(IndexItem.PATH);

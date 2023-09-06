@@ -10,9 +10,11 @@ import javax.swing.table.AbstractTableModel;
 
 import org.apache.lucene.document.Document;
 
+import iped.app.ui.bookmarks.BookmarkIcon;
 import iped.engine.search.LuceneSearchResult;
 import iped.engine.search.MultiSearchResult;
 import iped.engine.task.index.IndexItem;
+import iped.engine.util.Util;
 import iped.search.IMultiSearchResult;
 
 public abstract class BaseTableModel extends AbstractTableModel
@@ -31,7 +33,7 @@ public abstract class BaseTableModel extends AbstractTableModel
 
     @Override
     public int getColumnCount() {
-        return 3;
+        return 4;
     }
 
     @Override
@@ -41,9 +43,13 @@ public abstract class BaseTableModel extends AbstractTableModel
 
     @Override
     public String getColumnName(int col) {
-        if (col == 2)
-            return IndexItem.NAME;
+        switch (col) {
+            case 2:
+                return BookmarkIcon.columnName;
 
+            case 3:
+                return IndexItem.NAME;
+        }
         return "";
     }
 
@@ -68,13 +74,21 @@ public abstract class BaseTableModel extends AbstractTableModel
     public Object getValueAt(int row, int col) {
         switch (col) {
             case 0:
+                // Row counter
                 return row + 1;
 
             case 1:
+                // Item Checkbox
                 return App.get().appCase.getMultiBookmarks()
                         .isChecked(App.get().appCase.getItemId(results.getLuceneIds()[row]));
 
             case 2:
+                // Item Bookmarks
+                return Util.concatStrings(App.get().appCase.getMultiBookmarks()
+                        .getBookmarkList(App.get().appCase.getItemId(results.getLuceneIds()[row])));
+
+            case 3:
+                // Item Name
                 try {
                     Document doc = App.get().appCase.getSearcher().doc(results.getLuceneIds()[row]);
                     return doc.get(IndexItem.NAME);
@@ -125,8 +139,8 @@ public abstract class BaseTableModel extends AbstractTableModel
         selectedIndex = lsm.getMinSelectionIndex();
         valueChanged(lsm);
     }
-    
+
     public abstract void valueChanged(ListSelectionModel lsm);
-    
+
     public abstract void listItems(Document doc);
 }
