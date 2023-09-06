@@ -556,8 +556,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             }
         });
 
-        int largeColWidth = 4096;
-
         appGraphAnalytics = new AppGraphAnalytics();
 
         viewerController = new ViewerController();
@@ -565,49 +563,29 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         hitsTable = new HitsTable(new HitsTableModel(viewerController.getTextViewer()));
         hitsScroll = new JScrollPane(hitsTable);
         hitsTable.getColumnModel().getColumn(0).setPreferredWidth(50);
-        hitsTable.getColumnModel().getColumn(1).setPreferredWidth(largeColWidth);
+        hitsTable.getColumnModel().getColumn(1).setPreferredWidth(4096);
 
         viewerController.setHitsTableInTextViewer(hitsTable);
 
         subItemTable = new HitsTable(subItemModel);
         subItemScroll = new JScrollPane(subItemTable);
-        subItemTable.getColumnModel().getColumn(0).setPreferredWidth(40);
-        subItemTable.getColumnModel().getColumn(1).setPreferredWidth(20);
-        subItemTable.getColumnModel().getColumn(3).setPreferredWidth(largeColWidth);
-        subItemTable.setDefaultRenderer(String.class, new TableCellRenderer());
-        subItemTable.addKeyListener(new SpaceKeyListener());
+        setupItemTable(subItemTable);
 
         duplicatesTable = new HitsTable(duplicatesModel);
         duplicatesScroll = new JScrollPane(duplicatesTable);
-        duplicatesTable.getColumnModel().getColumn(0).setPreferredWidth(40);
-        duplicatesTable.getColumnModel().getColumn(1).setPreferredWidth(20);
-        duplicatesTable.getColumnModel().getColumn(3).setPreferredWidth(largeColWidth);
-        duplicatesTable.setDefaultRenderer(String.class, new TableCellRenderer());
-        duplicatesTable.addKeyListener(new SpaceKeyListener());
+        setupItemTable(duplicatesTable);
 
         parentItemTable = new HitsTable(parentItemModel);
         parentItemScroll = new JScrollPane(parentItemTable);
-        parentItemTable.getColumnModel().getColumn(0).setPreferredWidth(40);
-        parentItemTable.getColumnModel().getColumn(1).setPreferredWidth(20);
-        parentItemTable.getColumnModel().getColumn(3).setPreferredWidth(largeColWidth);
-        parentItemTable.setDefaultRenderer(String.class, new TableCellRenderer());
-        parentItemTable.addKeyListener(new SpaceKeyListener());
+        setupItemTable(parentItemTable);
 
         referencesTable = new HitsTable(referencesModel);
-        referencesTable.getColumnModel().getColumn(0).setPreferredWidth(40);
-        referencesTable.getColumnModel().getColumn(1).setPreferredWidth(20);
-        referencesTable.getColumnModel().getColumn(3).setPreferredWidth(largeColWidth);
-        referencesTable.setDefaultRenderer(String.class, new TableCellRenderer());
-        referencesTable.addKeyListener(new SpaceKeyListener());
         referencesScroll = new JScrollPane(referencesTable);
+        setupItemTable(referencesTable);
 
         referencedByTable = new HitsTable(referencedByModel);
-        referencedByTable.getColumnModel().getColumn(0).setPreferredWidth(40);
-        referencedByTable.getColumnModel().getColumn(1).setPreferredWidth(20);
-        referencedByTable.getColumnModel().getColumn(3).setPreferredWidth(largeColWidth);
-        referencedByTable.setDefaultRenderer(String.class, new TableCellRenderer());
-        referencedByTable.addKeyListener(new SpaceKeyListener());
         referencedByScroll = new JScrollPane(referencedByTable);
+        setupItemTable(referencedByTable);
 
         categoryTree = new JTree(new Object[0]);
         categoryTree.setCellRenderer(new CategoryTreeCellRenderer());
@@ -790,6 +768,14 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         LOGGER.info("UI created"); //$NON-NLS-1$
     }
 
+    private void setupItemTable(HitsTable itemTable) {
+        itemTable.getColumnModel().getColumn(0).setPreferredWidth(40);
+        itemTable.getColumnModel().getColumn(1).setPreferredWidth(20);
+        itemTable.getColumnModel().getColumn(3).setPreferredWidth(4096);
+        itemTable.setDefaultRenderer(String.class, new TableCellRenderer());
+        itemTable.addKeyListener(new SpaceKeyListener());
+    }
+    
     /**
      * Setup application global keyboard shortcuts. TODO update existing keyboard
      * shortcut handling code to use this.
