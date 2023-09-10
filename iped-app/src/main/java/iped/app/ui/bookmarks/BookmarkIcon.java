@@ -9,7 +9,6 @@ import java.awt.RenderingHints;
 import java.awt.RenderingHints.Key;
 import java.awt.Shape;
 import java.awt.Stroke;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.util.HashMap;
 import java.util.Map;
@@ -48,12 +47,11 @@ public class BookmarkIcon implements Icon {
         synchronized (iconPerBookmarkStr) {
             Icon icon = iconPerBookmarkStr.get(str);
             if (icon == null) {
-                String sep = " | ";
-                if (str.indexOf(sep) < 0) {
+                if (str.indexOf(" | ") < 0) {
                     return getIcon(bookmarks.getBookmarkColor(str));
                 }
 
-                String[] bookmarkNames = str.split(sep);
+                String[] bookmarkNames = str.split(" \\| ");
                 Color[] colors = new Color[bookmarkNames.length];
                 for (int i = 0; i < bookmarkNames.length; i++) {
                     colors[i] = bookmarks.getBookmarkColor(bookmarkNames[i]);
@@ -89,25 +87,22 @@ public class BookmarkIcon implements Icon {
     public void paintIcon(Component comp, Graphics g, int x, int y) {
         Graphics2D g2 = (Graphics2D) g;
         RenderingHints saveHints = g2.getRenderingHints();
-        AffineTransform saveTransform = g2.getTransform();
-
         g2.setRenderingHints(renderingHints);
-        g2.translate(x, y);
 
         int size = getIconWidth();
         int arc = size / 3 + 2;
 
         if (colors == null) {
             g2.setColor(color == null ? BookmarkStandardColors.defaultColor : color);
-            g2.fillRoundRect(1, 2, size - 3, size - 4, arc, arc);
+            g2.fillRoundRect(x + 1, y + 1, size - 2, size - 2, arc, arc);
         } else {
-            double w = (size - 3) / (double) colors.length;
-            double d = 1;
+            double w = (size - 2) / (double) colors.length;
+            double d = x + 1;
             Shape saveClip = g2.getClip();
             for (Color c : colors) {
-                g2.clip(new Rectangle2D.Double(d, 0, w, size));
+                g2.clip(new Rectangle2D.Double(d, y, w, size));
                 g2.setColor(c == null ? BookmarkStandardColors.defaultColor : c);
-                g2.fillRoundRect(1, 2, size - 3, size - 4, arc, arc);
+                g2.fillRoundRect(x + 1, y + 1, size - 2, size - 2, arc, arc);
                 g2.setClip(saveClip);
                 d += w;
             }
@@ -121,19 +116,18 @@ public class BookmarkIcon implements Icon {
 
         g2.setStroke(strokeBorder);
         g2.setColor(colorBorder);
-        g2.drawRoundRect(1, 2, size - 3, size - 4, arc, arc);
+        g2.drawRoundRect(x + 1, y + 1, size - 2, size - 2, arc, arc);
 
-        g2.setTransform(saveTransform);
         g2.setRenderingHints(saveHints);
     }
 
     @Override
     public int getIconWidth() {
-        return IconManager.getIconSize();
+        return IconManager.getIconSize() - 2;
     }
 
     @Override
     public int getIconHeight() {
-        return getIconWidth();
+        return IconManager.getIconSize() - 2;
     }
 }
