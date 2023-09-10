@@ -771,7 +771,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     private void setupItemTable(HitsTable itemTable) {
         itemTable.getColumnModel().getColumn(0).setPreferredWidth(40);
-        itemTable.getColumnModel().getColumn(1).setPreferredWidth(20);
+        itemTable.getColumnModel().getColumn(1).setPreferredWidth(18);
         itemTable.getColumnModel().getColumn(3).setPreferredWidth(4096);
         itemTable.setDefaultRenderer(String.class, new TableCellRenderer());
         itemTable.addKeyListener(new SpaceKeyListener());
@@ -1417,7 +1417,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             // Set bookmark icons column width based on current icon size 
             for (int i = 0; i < table.getColumnCount(); i++) {
                 if (table.getColumnName(i).equals(BookmarkIcon.columnName)) {
-                    table.getColumnModel().getColumn(i).setPreferredWidth(size + 4);
+                    table.getColumnModel().getColumn(i).setPreferredWidth(size + 2);
                 }
             }
         }
