@@ -413,7 +413,6 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
                 multiBookmarks.newBookmark(name);
                 multiBookmarks.setBookmarkComment(name, comment);
                 multiBookmarks.setBookmarkColor(name, BookmarkColorsManager.getInitialColor(multiBookmarks.getUsedColors(), name));
-                multiBookmarks.saveState();
                 updateList();
             }
             list.clearSelection();
