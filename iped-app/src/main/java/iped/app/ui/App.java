@@ -516,7 +516,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         resultsTable.setShowGrid(false);
         resultsTable.setAutoscrolls(false);
         ((JComponent) resultsTable.getDefaultRenderer(Boolean.class)).setOpaque(true);
-        
+
         InputMap inputMap = resultsTable.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         inputMap.put(KeyStroke.getKeyStroke("SPACE"), "none"); //$NON-NLS-1$ //$NON-NLS-2$
         inputMap.put(KeyStroke.getKeyStroke("ctrl SPACE"), "none"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -688,11 +688,12 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         defaultSelectedColor = dockingControl.getController().getColors()
                 .get(ColorMap.COLOR_KEY_TAB_BACKGROUND_SELECTED);
 
-        timelineButton = new CCheckBox(Messages.get("App.ToggleTimelineView"), IconUtil.getToolbarIcon("time", resPath)) {
+        timelineButton = new CCheckBox(Messages.get("App.ToggleTimelineView"),
+                IconUtil.getToolbarIcon("time", resPath)) {
             protected void changed() {
                 if (timelineListener != null)
-                    timelineListener.setTimelineTableView(isSelected());                
-            }            
+                    timelineListener.setTimelineTableView(isSelected());
+            }
         };
         timelineListener = new TimelineListener(timelineButton, IconUtil.getToolbarIcon("timeon", resPath));
 
@@ -776,7 +777,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         itemTable.setDefaultRenderer(String.class, new TableCellRenderer());
         itemTable.addKeyListener(new SpaceKeyListener());
     }
-    
+
     /**
      * Setup application global keyboard shortcuts. TODO update existing keyboard
      * shortcut handling code to use this.
@@ -1394,7 +1395,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     public TreeListener getTreeListener() {
         return treeListener;
     }
-    
+
     public void updateIconContainersUI(int size, boolean updateUI) {
         updateIconContainerUI(tree, size, updateUI);
         updateIconContainerUI(bookmarksTree, size, updateUI);
@@ -1413,8 +1414,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         if (comp instanceof JTable && comp != gallery) {
             JTable table = (JTable) comp;
             table.setRowHeight(size);
-            
-            // Set bookmark icons column width based on current icon size 
+
+            // Set bookmark icons column width based on current icon size
             for (int i = 0; i < table.getColumnCount(); i++) {
                 if (table.getColumnName(i).equals(BookmarkIcon.columnName)) {
                     table.getColumnModel().getColumn(i).setPreferredWidth(size + 2);
