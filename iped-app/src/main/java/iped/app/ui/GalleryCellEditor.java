@@ -107,7 +107,7 @@ public class GalleryCellEditor extends AbstractCellEditor implements TableCellEd
         check.setSelected(bookmarks.isChecked(cellValue.id));
         cLabel.setText(cellValue.name);
         String itemBookmarksStr = Util.concatStrings(bookmarks.getBookmarkList(cellValue.id));
-        cLabel.setToolTipText(itemBookmarksStr);
+        cLabel.setToolTipText(itemBookmarksStr.isEmpty() ? null : itemBookmarksStr);
         cLabel.setIcon(BookmarkIcon.getIcon(bookmarks, itemBookmarksStr));
 
         GalleryCellRenderer.adjustGalleryCellContent(cellValue, label, warningColor, table);

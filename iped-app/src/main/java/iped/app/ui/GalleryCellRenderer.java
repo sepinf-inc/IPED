@@ -114,7 +114,7 @@ public class GalleryCellRenderer implements TableCellRenderer {
         check.setSelected(bookmarks.isChecked(cellValue.id));
         cLabel.setText(cellValue.name);
         String itemBookmarksStr = Util.concatStrings(bookmarks.getBookmarkList(cellValue.id));
-        cLabel.setToolTipText(itemBookmarksStr);
+        cLabel.setToolTipText(itemBookmarksStr.isEmpty() ? null : itemBookmarksStr);
         cLabel.setIcon(BookmarkIcon.getIcon(bookmarks, itemBookmarksStr));
 
         labelH = label.getHeight();
