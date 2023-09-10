@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -325,6 +326,10 @@ public class Bookmarks implements IBookmarks {
 
     public Color getBookmarkColor(int bookmarkId) {
         return bookmarkColors.get(bookmarkId);
+    }
+
+    public Set<Color> getUsedColors() {
+        return new HashSet<Color>(bookmarkColors.values());
     }
 
     public synchronized void setBookmarkKeyStroke(int bookmarkId, KeyStroke key) {

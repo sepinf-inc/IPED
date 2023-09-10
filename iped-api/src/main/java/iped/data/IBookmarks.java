@@ -96,6 +96,8 @@ public interface IBookmarks extends Serializable {
 
     Color getBookmarkColor(int bookmarkId);
     
+    Set<Color> getUsedColors();
+    
     void setBookmarkKeyStroke(int bookmarkId, KeyStroke key);
 
     KeyStroke getBookmarkKeyStroke(int bookmarkId);

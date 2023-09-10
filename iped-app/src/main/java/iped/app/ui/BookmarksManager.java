@@ -70,9 +70,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.app.ui.bookmarks.BookmarkAndKey;
+import iped.app.ui.bookmarks.BookmarkColorsManager;
 import iped.app.ui.bookmarks.BookmarkListRenderer;
 import iped.data.IItem;
 import iped.data.IItemId;
+import iped.data.IMultiBookmarks;
 import iped.engine.data.IPEDMultiSource;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.ItemId;
@@ -403,18 +405,20 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
 
     @Override
     public void actionPerformed(final ActionEvent evt) {
-
+        IMultiBookmarks multiBookmarks = App.get().appCase.getMultiBookmarks();
         if (evt.getSource() == newButton) {
-            String texto = newBookmark.getText().trim();
+            String name = newBookmark.getText().trim();
             String comment = comments.getText().trim();
-            if (!texto.isEmpty() && !listModel.contains(new BookmarkAndKey(texto))) {
-                App.get().appCase.getMultiBookmarks().newBookmark(texto);
-                App.get().appCase.getMultiBookmarks().setBookmarkComment(texto, comment);
+            if (!name.isEmpty() && !listModel.contains(new BookmarkAndKey(name))) {
+                multiBookmarks.newBookmark(name);
+                multiBookmarks.setBookmarkComment(name, comment);
+                multiBookmarks.setBookmarkColor(name, BookmarkColorsManager.getInitialColor(multiBookmarks.getUsedColors(), name));
+                multiBookmarks.saveState();
                 updateList();
             }
             list.clearSelection();
             for (int i = 0; i < listModel.size(); i++) {
-                if (listModel.get(i).getName().equalsIgnoreCase(texto)) {
+                if (listModel.get(i).getName().equalsIgnoreCase(name)) {
                     list.setSelectedIndex(i);
                 }
             }
@@ -424,8 +428,8 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
             int idx = list.getSelectedIndex();
             if (idx != -1) {
                 String bookmarkName = list.getModel().getElementAt(idx).getName();
-                App.get().appCase.getMultiBookmarks().setBookmarkComment(bookmarkName, comments.getText());
-                App.get().appCase.getMultiBookmarks().saveState();
+                multiBookmarks.setBookmarkComment(bookmarkName, comments.getText());
+                multiBookmarks.saveState();
             }
         }
 
@@ -446,10 +450,10 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
             if (result == JOptionPane.YES_OPTION) {
                 for (int index : list.getSelectedIndices()) {
                     String bookmark = list.getModel().getElementAt(index).getName();
-                    App.get().appCase.getMultiBookmarks().delBookmark(bookmark);
+                    multiBookmarks.delBookmark(bookmark);
                 }
                 updateList();
-                App.get().appCase.getMultiBookmarks().saveState();
+                multiBookmarks.saveState();
                 BookmarksController.get().updateUI();
 
             }
@@ -467,9 +471,9 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
                         JOptionPane.showMessageDialog(dialog, Messages.getString("BookmarksManager.AlreadyExists"));
                         return;
                     }
-                    App.get().appCase.getMultiBookmarks().renameBookmark(bookmark, newBookmark);
+                    multiBookmarks.renameBookmark(bookmark, newBookmark);
                     updateList(bookmark, newBookmark);
-                    App.get().appCase.getMultiBookmarks().saveState();
+                    multiBookmarks.saveState();
                     BookmarksController.get().updateUI();
                 }
             }

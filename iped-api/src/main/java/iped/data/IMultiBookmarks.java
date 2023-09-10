@@ -91,10 +91,12 @@ public interface IMultiBookmarks extends Serializable {
 
     void setBookmarkComment(String texto, String comment);
 
-    public Color getBookmarkColor(String bookmarkName);
+    Color getBookmarkColor(String bookmarkName);
 
     void setBookmarkColor(String bookmarkName, Color color);
     
+    Set<Color> getUsedColors();
+
     boolean isInReport(String bookmark);
 
     void setInReport(String bookmark, boolean checked);

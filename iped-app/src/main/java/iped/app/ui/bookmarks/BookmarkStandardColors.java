@@ -46,9 +46,8 @@ public class BookmarkStandardColors {
         colors[33] = new Color(218, 226, 240);
         colors[34] = new Color(243, 239, 248);
         colors[35] = new Color(230, 210, 226);
-        
         colors[36] = new Color(100, 100, 100);
-        colors[37] = new Color(160, 160, 160);
+        colors[37] = new Color(200, 200, 200);
         colors[38] = new Color(220, 220, 220);
     }
 }
