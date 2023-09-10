@@ -18,7 +18,6 @@
  */
 package iped.app.ui;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.io.IOException;
 
