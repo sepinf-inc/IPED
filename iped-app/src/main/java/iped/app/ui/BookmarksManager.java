@@ -297,8 +297,9 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
 
     private boolean includeDuplicatesUsingHash(int countSelected, int countDocs) {
         // A case with 44M items take ~2600ms using the linear approach with BitSet.
-        // The same case takes ~2200ms when selected 1000 items using the hash Lucene search approach.
-        // So, we decide to use the hash approach if the estimated time is lower than the linear approach time.
+        // The same case takes ~2200ms when selected 1000 items using the hash Lucene
+        // search approach. So, we decide to use the hash approach if the estimated time
+        // is lower than the linear approach time.
         return 2200L * countSelected / 1000 < 2600L * countDocs / 44_000_000;
     }
 
@@ -324,7 +325,8 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
 
                 for (IItemId itemId : uniqueSelectedIds) {
                     IItem item = ipedCase.getItemByItemId(itemId);
-                    if (item.getHash() != null && !item.getHash().isEmpty() && !emptyDataHashes.contains(item.getHash())) {
+                    if (item.getHash() != null && !item.getHash().isEmpty()
+                            && !emptyDataHashes.contains(item.getHash())) {
                         hashes.add(item.getHash().toLowerCase());
                         selectedIdsSet.add(itemId);
                     }
@@ -375,7 +377,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
                 sdv = reader.getSortedDocValues(BasicProps.HASH);
                 Iterator<Integer> docIt = ipedCase.getLuceneIdStream().iterator();
                 while (docIt.hasNext()) {
-                	int doc = docIt.next();
+                    int doc = docIt.next();
                     int ord = DocValuesUtil.getOrd(sdv, doc);
                     if (ord != -1 && hashOrd.get(ord) && !luceneIds.get(doc)) {
                         IItemId itemId = ipedCase.getItemId(doc);
@@ -421,7 +423,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
                 return;
             }
         }
-        
+
         IMultiBookmarks multiBookmarks = App.get().appCase.getMultiBookmarks();
         if (evt.getSource() == butNew) {
             String name = newBookmark.getText().trim();
@@ -429,7 +431,8 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
             if (!name.isEmpty() && !listModel.contains(new BookmarkAndKey(name))) {
                 multiBookmarks.newBookmark(name);
                 multiBookmarks.setBookmarkComment(name, comment);
-                multiBookmarks.setBookmarkColor(name, BookmarkColorsManager.getInitialColor(multiBookmarks.getUsedColors(), name));
+                multiBookmarks.setBookmarkColor(name,
+                        BookmarkColorsManager.getInitialColor(multiBookmarks.getUsedColors(), name));
                 updateList();
             }
             list.clearSelection();
@@ -479,8 +482,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
                 newBookmark = newBookmark.trim();
                 int selIdx = list.getSelectedIndex();
                 String bookmark = list.getModel().getElementAt(selIdx).getName();
-                if (!bookmark.equalsIgnoreCase(newBookmark)
-                        && listModel.contains(new BookmarkAndKey(newBookmark))) {
+                if (!bookmark.equalsIgnoreCase(newBookmark) && listModel.contains(new BookmarkAndKey(newBookmark))) {
                     JOptionPane.showMessageDialog(dialog, Messages.getString("BookmarksManager.AlreadyExists"));
                     return;
                 }
@@ -530,7 +532,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
                     : "BookmarksManager.AlertNoHighlightedItems"));
             return;
         }
-        
+
         new Thread() {
             public void run() {
                 if (duplicates.isSelected())
@@ -575,32 +577,32 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
     public void keyPressed(KeyEvent e) {
         if (e.isConsumed())
             return;
-        
+
         if (e.getKeyCode() == KeyEvent.VK_SHIFT || e.getKeyCode() == KeyEvent.VK_CONTROL
                 || e.getKeyCode() == KeyEvent.VK_ALT) {
             return;
         }
 
-        //Avoid conflict with CTRL+A (select all), CTRL+B (Open bookmarks manager window)
-        //and CTRL+C (copy selected table cell content).
+        // Avoid conflict with CTRL+A (select all), CTRL+B (Open bookmarks manager
+        // window) and CTRL+C (copy selected table cell content).
         if (e.isControlDown() && (e.getKeyCode() == 'B' || e.getKeyCode() == 'C')) {
             showMessage(Messages.getString("BookmarksManager.KeyStrokeAlert4"));
             e.consume();
             return;
         }
-        
-        //Avoid conflict with keys used for selection/navigation in the bookmark list,
-        //items table or items gallery.
-        if ((e.isControlDown() && e.getKeyCode() == 'A')
-                || e.getKeyCode() == KeyEvent.VK_LEFT || e.getKeyCode() == KeyEvent.VK_RIGHT
-                || e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_DOWN
-                || e.getKeyCode() == KeyEvent.VK_HOME || e.getKeyCode() == KeyEvent.VK_END
-                || e.getKeyCode() == KeyEvent.VK_PAGE_UP || e.getKeyCode() == KeyEvent.VK_PAGE_DOWN) {
+
+        // Avoid conflict with keys used for selection/navigation in the bookmark list,
+        // items table or items gallery.
+        if ((e.isControlDown() && e.getKeyCode() == 'A') || e.getKeyCode() == KeyEvent.VK_LEFT
+                || e.getKeyCode() == KeyEvent.VK_RIGHT || e.getKeyCode() == KeyEvent.VK_UP
+                || e.getKeyCode() == KeyEvent.VK_DOWN || e.getKeyCode() == KeyEvent.VK_HOME
+                || e.getKeyCode() == KeyEvent.VK_END || e.getKeyCode() == KeyEvent.VK_PAGE_UP
+                || e.getKeyCode() == KeyEvent.VK_PAGE_DOWN) {
             return;
         }
 
-        //Avoid conflict with keys that are used for item selection (space) and
-        //recursive item selection (R).
+        // Avoid conflict with keys that are used for item selection (space) and
+        // recursive item selection (R).
         if (e.getKeyCode() == KeyEvent.VK_SPACE || e.getKeyCode() == 'R') {
             if (e.getSource() == list) {
                 showMessage(Messages.getString("BookmarksManager.KeyStrokeAlert4"));
@@ -668,16 +670,17 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
     private void showMessage(String msg) {
         JOptionPane.showMessageDialog(dialog, msg, dialog.getTitle(), JOptionPane.INFORMATION_MESSAGE);
     }
-    
+
     public boolean hasSingleKeyShortcut() {
-       for (KeyStroke k : keystrokeToBookmark.keySet()) {
-           if ((k.getModifiers() & (InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK)) == 0) {
-               int c = k.getKeyCode();
-               if ((c >= KeyEvent.VK_0 && c <= KeyEvent.VK_9) || (c >= KeyEvent.VK_A && c <= KeyEvent.VK_Z)) {
-                   return true;
-               }
-           }
-       }
-       return false; 
+        for (KeyStroke k : keystrokeToBookmark.keySet()) {
+            if ((k.getModifiers()
+                    & (InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK)) == 0) {
+                int c = k.getKeyCode();
+                if ((c >= KeyEvent.VK_0 && c <= KeyEvent.VK_9) || (c >= KeyEvent.VK_A && c <= KeyEvent.VK_Z)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }
