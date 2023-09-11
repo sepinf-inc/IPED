@@ -405,6 +405,23 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
 
     @Override
     public void actionPerformed(final ActionEvent evt) {
+        if (evt.getSource() == butAdd || evt.getSource() == butRemove || evt.getSource() == butUpdateComment
+                || evt.getSource() == butRename || evt.getSource() == butDelete) {
+            // Check if there is at least one bookmark selected
+            if (list.getSelectedIndex() == -1) {
+                showMessage(Messages.getString("BookmarksManager.AlertNoSelectedBookmarks"));
+                return;
+            }
+        }
+
+        if (evt.getSource() == butUpdateComment || evt.getSource() == butRename) {
+            // Check if there is more than one bookmark selected
+            if (list.getSelectedIndices().length > 1) {
+                showMessage(Messages.getString("BookmarksManager.AlertMultipleSelectedBookmarks"));
+                return;
+            }
+        }
+        
         IMultiBookmarks multiBookmarks = App.get().appCase.getMultiBookmarks();
         if (evt.getSource() == butNew) {
             String name = newBookmark.getText().trim();
@@ -425,11 +442,9 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
         }
         if (evt.getSource() == butUpdateComment) {
             int idx = list.getSelectedIndex();
-            if (idx != -1) {
-                String bookmarkName = list.getModel().getElementAt(idx).getName();
-                multiBookmarks.setBookmarkComment(bookmarkName, comments.getText());
-                multiBookmarks.saveState();
-            }
+            String bookmarkName = list.getModel().getElementAt(idx).getName();
+            multiBookmarks.setBookmarkComment(bookmarkName, comments.getText());
+            multiBookmarks.saveState();
         }
 
         if (evt.getSource() == butAdd || evt.getSource() == butRemove || evt.getSource() == butNew) {
@@ -441,7 +456,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
                 bookmarks.add(list.getModel().getElementAt(index).getName());
 
             boolean insert = evt.getSource() == butAdd || evt.getSource() == butNew;
-            bookmark(uniqueSelectedIds, bookmarks, insert);
+            bookmark(uniqueSelectedIds, bookmarks, insert, evt.getSource() == butNew);
 
         } else if (evt.getSource() == butDelete) {
             int result = JOptionPane.showConfirmDialog(dialog, Messages.getString("BookmarksManager.ConfirmDelete"), //$NON-NLS-1$
@@ -463,18 +478,16 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
             if (newBookmark != null && !newBookmark.trim().isEmpty()) {
                 newBookmark = newBookmark.trim();
                 int selIdx = list.getSelectedIndex();
-                if (selIdx != -1) {
-                    String bookmark = list.getModel().getElementAt(selIdx).getName();
-                    if (!bookmark.equalsIgnoreCase(newBookmark)
-                            && listModel.contains(new BookmarkAndKey(newBookmark))) {
-                        JOptionPane.showMessageDialog(dialog, Messages.getString("BookmarksManager.AlreadyExists"));
-                        return;
-                    }
-                    multiBookmarks.renameBookmark(bookmark, newBookmark);
-                    updateList(bookmark, newBookmark);
-                    multiBookmarks.saveState();
-                    BookmarksController.get().updateUI();
+                String bookmark = list.getModel().getElementAt(selIdx).getName();
+                if (!bookmark.equalsIgnoreCase(newBookmark)
+                        && listModel.contains(new BookmarkAndKey(newBookmark))) {
+                    JOptionPane.showMessageDialog(dialog, Messages.getString("BookmarksManager.AlreadyExists"));
+                    return;
                 }
+                multiBookmarks.renameBookmark(bookmark, newBookmark);
+                updateList(bookmark, newBookmark);
+                multiBookmarks.saveState();
+                BookmarksController.get().updateUI();
             }
         }
 
@@ -511,7 +524,13 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
         return uniqueSelectedIds;
     }
 
-    private void bookmark(ArrayList<IItemId> uniqueSelectedIds, List<String> bookmarks, boolean insert) {
+    private void bookmark(ArrayList<IItemId> uniqueSelectedIds, List<String> bookmarks, boolean insert, boolean isNew) {
+        if (uniqueSelectedIds.isEmpty() && !isNew) {
+            showMessage(Messages.getString(checked.isSelected() ? "BookmarksManager.AlertNoCheckedtems"
+                    : "BookmarksManager.AlertNoHighlightedItems"));
+            return;
+        }
+        
         new Thread() {
             public void run() {
                 if (duplicates.isSelected())
@@ -635,7 +654,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
             }
             ArrayList<IItemId> uniqueSelectedIds = getUniqueSelectedIds();
             bookmark(uniqueSelectedIds, Collections.singletonList(bookmark),
-                    (e.getModifiersEx() & KeyEvent.ALT_DOWN_MASK) == 0);
+                    (e.getModifiersEx() & KeyEvent.ALT_DOWN_MASK) == 0, false);
             e.consume();
         }
 
