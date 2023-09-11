@@ -19,6 +19,8 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.tika.utils.SystemUtils;
 import org.slf4j.Logger;
@@ -41,7 +43,8 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
     private static final int TIMEOUT_SECONDS = 3600;
 
     private static PriorityQueue<SleuthkitClient> clientPriorityQueue = new PriorityQueue<>();
-    private static Object lock = new Object();
+    private static ReentrantLock lock = new ReentrantLock();
+    private static Condition emptyCondVar = lock.newCondition();
 
     private static List<SleuthkitClient> clientsList = new ArrayList<>();
 
@@ -122,11 +125,21 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
 
     public static SleuthkitClient get() {
 
-        synchronized (lock) {
+        lock.lock();
+        try {
+            while (clientPriorityQueue.isEmpty()) {
+                try {
+                    emptyCondVar.await();
+                } catch (InterruptedException e) {
+                    return null;
+                 }
+            }
             SleuthkitClient sc = clientPriorityQueue.poll();
             sc.priority++;
             clientPriorityQueue.add(sc);
             return sc;
+        } finally {
+            lock.unlock();
         }
 
     }
@@ -139,9 +152,13 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
                 @Override
                 public void run() {
                     SleuthkitClient sc = new SleuthkitClient();
-                    synchronized (lock) {
+                    lock.lock();
+                    try {
                         clientPriorityQueue.add(sc);
                         clientsList.add(sc);
+                        emptyCondVar.signalAll();
+                    } finally {
+                        lock.unlock();
                     }
                 }
             };
@@ -305,10 +322,13 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
     synchronized void removeStream(SleuthkitClientInputStream stream) {
         boolean removed = currentStreams.remove(stream);
         if (removed) {
-            synchronized (lock) {
+            lock.lock();
+            try {
                 clientPriorityQueue.remove(this);
                 priority--;
                 clientPriorityQueue.add(this);
+            } finally {
+                lock.unlock();
             }
         }
     }
