@@ -11,7 +11,9 @@ import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.swing.Icon;
@@ -23,7 +25,7 @@ public class BookmarkIcon implements Icon {
     public static final String columnName = "$BookmarkIcon";
 
     private static final Map<Color, Icon> iconPerColor = new HashMap<Color, Icon>();
-    private static final Map<String, Icon> iconPerBookmarkStr = new HashMap<String, Icon>();
+    private static final Map<List<Color>, Icon> iconPerColorList = new HashMap<List<Color>, Icon>();
     private static final Stroke strokeBorder = new BasicStroke(1f);
     private static final Stroke strokeChecked = new BasicStroke(2.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
     private static final RenderingHints renderingHints;
@@ -46,22 +48,20 @@ public class BookmarkIcon implements Icon {
         if (str == null || str.isEmpty()) {
             return null;
         }
-
-        synchronized (iconPerBookmarkStr) {
-            Icon icon = iconPerBookmarkStr.get(str);
+        if (str.indexOf(" | ") < 0) {
+            return getIcon(bookmarks.getBookmarkColor(str));
+        }
+        // Multiple bookmarks
+        String[] bookmarkNames = str.split(" \\| ");
+        List<Color> l = new ArrayList<Color>(bookmarkNames.length);
+        for (String name : bookmarkNames) {
+            l.add(bookmarks.getBookmarkColor(name));
+        }
+        synchronized (iconPerColorList) {
+            Icon icon = iconPerColorList.get(l);
             if (icon == null) {
-                if (str.indexOf(" | ") < 0) {
-                    return getIcon(bookmarks.getBookmarkColor(str));
-                }
-
-                String[] bookmarkNames = str.split(" \\| ");
-                Color[] colors = new Color[bookmarkNames.length];
-                for (int i = 0; i < bookmarkNames.length; i++) {
-                    colors[i] = bookmarks.getBookmarkColor(bookmarkNames[i]);
-                }
-
-                icon = new BookmarkIcon(colors);
-                iconPerBookmarkStr.put(str, icon);
+                icon = new BookmarkIcon(l);
+                iconPerColorList.put(l, icon);
             }
             return icon;
         }
@@ -86,9 +86,9 @@ public class BookmarkIcon implements Icon {
         this.checkedColor = null;
     }
 
-    private BookmarkIcon(Color[] colors) {
+    private BookmarkIcon(List<Color> colors) {
         this.color = null;
-        this.colors = colors;
+        this.colors = colors.toArray(new Color[0]);
         this.checkedColor = null;
     }
 
