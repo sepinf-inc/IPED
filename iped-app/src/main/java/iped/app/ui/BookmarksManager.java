@@ -515,6 +515,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
             if (newColor != null && !newColor.equals(currentColor)) {
                 multiBookmarks.setBookmarkColor(currentName, newColor);
                 changed = true;
+                BookmarkColorsManager.storeNameToColor(currentName, newColor);
             }
 
             if (changed) {
