@@ -27,6 +27,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -224,6 +226,17 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
             list.removeKeyListener(kl);
         }
         list.addKeyListener(this);
+        list.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                // Double click in the list opens edit dialog
+                if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
+                    if (list.getSelectedIndices().length == 1) {
+                        actionPerformed(new ActionEvent(butEdit, 0, ""));
+                    }
+                }
+            }
+        });
         list.setCellRenderer(new BookmarkListRenderer());
 
         dialog.setLocationRelativeTo(App.get());
