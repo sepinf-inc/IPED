@@ -38,7 +38,7 @@ public class BookmarkIcon implements Icon {
         renderingHints = new RenderingHints(hints);
     }
 
-    private final Color color;
+    private final Color color, checkedColor;
     private final Color[] colors;
     private Boolean checked;
 
@@ -83,17 +83,20 @@ public class BookmarkIcon implements Icon {
     private BookmarkIcon(Color color) {
         this.color = color;
         this.colors = null;
+        this.checkedColor = null;
     }
 
     private BookmarkIcon(Color[] colors) {
         this.color = null;
         this.colors = colors;
+        this.checkedColor = null;
     }
 
     private BookmarkIcon(Color color, Boolean checked) {
         this.color = color;
         this.colors = null;
         this.checked = checked;
+        this.checkedColor = BookmarkColorsManager.getForeground(color);
     }
 
     @Override
@@ -110,7 +113,7 @@ public class BookmarkIcon implements Icon {
             g2.setColor(c);
             g2.fillRoundRect(x + 1, y + 1, size - 2, size - 2, arc, arc);
             if (checked == Boolean.TRUE) {
-                g2.setColor(Color.WHITE);
+                g2.setColor(checkedColor);
                 g2.setStroke(strokeChecked);
                 GeneralPath gp = new GeneralPath();
                 gp.moveTo(x + 1 + size / 5.0, y + 1 + size * 2 / 5.0);

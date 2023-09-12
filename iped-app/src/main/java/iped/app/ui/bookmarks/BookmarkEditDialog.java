@@ -24,7 +24,7 @@ public class BookmarkEditDialog extends JDialog {
     private static final long serialVersionUID = -8204366293115657785L;
 
     private String newName;
-    private Color newColor;
+    private Color newColor, selColor;
 
     private JButton selButton;
 
@@ -55,6 +55,9 @@ public class BookmarkEditDialog extends JDialog {
         p1.add(txtName, BorderLayout.CENTER);
 
         // Bookmark color
+        if (currentColor == null) {
+            currentColor = BookmarkStandardColors.defaultColor;
+        }
         JPanel p2 = new JPanel(new BorderLayout(2, 2));
         add(p2, BorderLayout.CENTER);
 
@@ -65,7 +68,7 @@ public class BookmarkEditDialog extends JDialog {
         int x = 0;
         int y = 0;
         boolean seen = false;
-        newColor = currentColor;
+        selColor = currentColor;
         for (int i = 0; i < numColors; i++) {
             int idx = x < 9 ? x + y * 9 : BookmarkStandardColors.numStandardColors + y;
             Color color = idx < BookmarkStandardColors.colors.length ? BookmarkStandardColors.colors[idx] : null;
@@ -96,7 +99,7 @@ public class BookmarkEditDialog extends JDialog {
                         ((BookmarkIcon) (selButton.getIcon())).setChecked(false);
                         selButton.repaint();
                     }
-                    newColor = icon.getColor();
+                    selColor = icon.getColor();
                     icon.setChecked(true);
                     selButton = but;
                 }
@@ -113,7 +116,7 @@ public class BookmarkEditDialog extends JDialog {
         JPanel p3 = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 2));
         add(p3, BorderLayout.SOUTH);
 
-        Dimension dim = new Dimension(90, 30);
+        Dimension dim = new Dimension(100, 30);
         JButton butOk = new JButton();
         butOk.setText(UIManager.get("OptionPane.okButtonText").toString());
         butOk.setPreferredSize(dim);
@@ -127,14 +130,13 @@ public class BookmarkEditDialog extends JDialog {
         butOk.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 newName = txtName.getText().trim();
+                newColor = selColor;
                 setVisible(false);
             }
         });
 
         butCancel.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                newName = null;
-                newColor = null;
                 setVisible(false);
             }
         });
