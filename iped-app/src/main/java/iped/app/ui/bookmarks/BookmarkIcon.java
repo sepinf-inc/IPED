@@ -9,6 +9,7 @@ import java.awt.RenderingHints;
 import java.awt.RenderingHints.Key;
 import java.awt.Shape;
 import java.awt.Stroke;
+import java.awt.geom.GeneralPath;
 import java.awt.geom.Rectangle2D;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,6 +25,7 @@ public class BookmarkIcon implements Icon {
     private static final Map<Color, Icon> iconPerColor = new HashMap<Color, Icon>();
     private static final Map<String, Icon> iconPerBookmarkStr = new HashMap<String, Icon>();
     private static final Stroke strokeBorder = new BasicStroke(1f);
+    private static final Stroke strokeChecked = new BasicStroke(2.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
     private static final RenderingHints renderingHints;
 
     static {
@@ -38,6 +40,7 @@ public class BookmarkIcon implements Icon {
 
     private final Color color;
     private final Color[] colors;
+    private Boolean checked;
 
     public static Icon getIcon(IMultiBookmarks bookmarks, String str) {
         if (str == null || str.isEmpty()) {
@@ -73,6 +76,10 @@ public class BookmarkIcon implements Icon {
         return icon;
     }
 
+    public static BookmarkIcon getIcon(Color color, boolean checked) {
+        return new BookmarkIcon(color, checked);
+    }
+
     private BookmarkIcon(Color color) {
         this.color = color;
         this.colors = null;
@@ -81,6 +88,12 @@ public class BookmarkIcon implements Icon {
     private BookmarkIcon(Color[] colors) {
         this.color = null;
         this.colors = colors;
+    }
+
+    private BookmarkIcon(Color color, Boolean checked) {
+        this.color = color;
+        this.colors = null;
+        this.checked = checked;
     }
 
     @Override
@@ -93,8 +106,18 @@ public class BookmarkIcon implements Icon {
         int arc = size / 3 + 2;
 
         if (colors == null) {
-            g2.setColor(color == null ? BookmarkStandardColors.defaultColor : color);
+            Color c = color == null ? BookmarkStandardColors.defaultColor : color;
+            g2.setColor(c);
             g2.fillRoundRect(x + 1, y + 1, size - 2, size - 2, arc, arc);
+            if (checked == Boolean.TRUE) {
+                g2.setColor(Color.WHITE);
+                g2.setStroke(strokeChecked);
+                GeneralPath gp = new GeneralPath();
+                gp.moveTo(x + 1 + size / 5.0, y + 1 + size * 2 / 5.0);
+                gp.lineTo(x + size / 2.0, y - 1 + size * 4 / 5.0);
+                gp.lineTo(x - 1 + size * 4 / 5.0, y + 1 + size / 5.0);
+                g2.draw(gp);
+            }
         } else {
             double w = (size - 2) / (double) colors.length;
             double d = x + 1;
@@ -123,11 +146,23 @@ public class BookmarkIcon implements Icon {
 
     @Override
     public int getIconWidth() {
-        return IconManager.getIconSize() - 2;
+        return IconManager.getIconSize() + (checked != null ? 2 : -2);
     }
 
     @Override
     public int getIconHeight() {
-        return IconManager.getIconSize() - 2;
+        return getIconWidth();
+    }
+
+    public Color getColor() {
+        return color;
+    }
+
+    public Boolean getChecked() {
+        return checked;
+    }
+
+    public void setChecked(Boolean checked) {
+        this.checked = checked;
     }
 }

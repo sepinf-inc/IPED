@@ -19,6 +19,7 @@
 package iped.app.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
@@ -71,6 +72,7 @@ import org.slf4j.LoggerFactory;
 
 import iped.app.ui.bookmarks.BookmarkAndKey;
 import iped.app.ui.bookmarks.BookmarkColorsManager;
+import iped.app.ui.bookmarks.BookmarkEditDialog;
 import iped.app.ui.bookmarks.BookmarkListRenderer;
 import iped.data.IItem;
 import iped.data.IItemId;
@@ -100,7 +102,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
     JCheckBox duplicates = new JCheckBox();
     JButton butAdd = new JButton(Messages.getString("BookmarksManager.Add")); //$NON-NLS-1$
     JButton butRemove = new JButton(Messages.getString("BookmarksManager.Remove")); //$NON-NLS-1$
-    JButton butRename = new JButton(Messages.getString("BookmarksManager.Rename")); //$NON-NLS-1$
+    JButton butEdit = new JButton(Messages.getString("BookmarksManager.Edit")); //$NON-NLS-1$
     JTextField newBookmark = new JTextField();
     JTextArea comments = new JTextArea();
     JButton butNew = new JButton(Messages.getString("BookmarksManager.New")); //$NON-NLS-1$
@@ -154,6 +156,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
         butAdd.setToolTipText(Messages.getString("BookmarksManager.Add.Tip")); //$NON-NLS-1$
         butRemove.setToolTipText(Messages.getString("BookmarksManager.Remove.Tip")); //$NON-NLS-1$
         butDelete.setToolTipText(Messages.getString("BookmarksManager.Delete.Tip")); //$NON-NLS-1$
+        butEdit.setToolTipText(Messages.getString("BookmarksManager.Edit.Tip")); //$NON-NLS-1$
 
         JPanel top = new JPanel(new GridLayout(3, 2, 0, 5));
         top.add(msg);
@@ -178,7 +181,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
         left1.add(left3);
 
         JPanel left2 = new JPanel(new GridLayout(0, 1, 0, 0));
-        left2.add(butRename);
+        left2.add(butEdit);
         left2.add(butDelete);
 
         JPanel left = new JPanel(new BorderLayout());
@@ -211,7 +214,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
         butAdd.addActionListener(this);
         butUpdateComment.addActionListener(this);
         butRemove.addActionListener(this);
-        butRename.addActionListener(this);
+        butEdit.addActionListener(this);
         butNew.addActionListener(this);
         butDelete.addActionListener(this);
 
@@ -408,7 +411,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
     @Override
     public void actionPerformed(final ActionEvent evt) {
         if (evt.getSource() == butAdd || evt.getSource() == butRemove || evt.getSource() == butUpdateComment
-                || evt.getSource() == butRename || evt.getSource() == butDelete) {
+                || evt.getSource() == butEdit || evt.getSource() == butDelete) {
             // Check if there is at least one bookmark selected
             if (list.getSelectedIndex() == -1) {
                 showMessage(Messages.getString("BookmarksManager.AlertNoSelectedBookmarks"));
@@ -416,7 +419,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
             }
         }
 
-        if (evt.getSource() == butUpdateComment || evt.getSource() == butRename) {
+        if (evt.getSource() == butUpdateComment || evt.getSource() == butEdit) {
             // Check if there is more than one bookmark selected
             if (list.getSelectedIndices().length > 1) {
                 showMessage(Messages.getString("BookmarksManager.AlertMultipleSelectedBookmarks"));
@@ -475,21 +478,36 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
 
             }
 
-        } else if (evt.getSource() == butRename) {
-            String newBookmark = JOptionPane.showInputDialog(dialog, Messages.getString("BookmarksManager.NewName"), //$NON-NLS-1$
-                    list.getSelectedValue().getName());
-            if (newBookmark != null && !newBookmark.trim().isEmpty()) {
-                newBookmark = newBookmark.trim();
-                int selIdx = list.getSelectedIndex();
-                String bookmark = list.getModel().getElementAt(selIdx).getName();
-                if (!bookmark.equalsIgnoreCase(newBookmark) && listModel.contains(new BookmarkAndKey(newBookmark))) {
-                    JOptionPane.showMessageDialog(dialog, Messages.getString("BookmarksManager.AlreadyExists"));
-                    return;
+        } else if (evt.getSource() == butEdit) {
+            String currentName = list.getSelectedValue().getName();
+            Color currentColor = multiBookmarks.getBookmarkColor(currentName);
+            BookmarkEditDialog editDialog = new BookmarkEditDialog(dialog, currentName, currentColor);
+            editDialog.setVisible(true);
+
+            boolean changed = false;
+            String newName = editDialog.getNewName();
+            if (newName != null) {
+                if (!newName.isEmpty() && !newName.equals(currentName)) {
+                    if (!currentName.equalsIgnoreCase(newName) && listModel.contains(new BookmarkAndKey(newName))) {
+                        JOptionPane.showMessageDialog(dialog, Messages.getString("BookmarksManager.AlreadyExists"));
+                    } else {
+                        multiBookmarks.renameBookmark(currentName, newName);
+                        updateList(currentName, newName);
+                        currentName = newName;
+                        changed = true;
+                    }
                 }
-                multiBookmarks.renameBookmark(bookmark, newBookmark);
-                updateList(bookmark, newBookmark);
+            }
+            Color newColor = editDialog.getNewColor();
+            if (newColor != null && !newColor.equals(currentColor)) {
+                multiBookmarks.setBookmarkColor(currentName, newColor);
+                changed = true;
+            }
+
+            if (changed) {
                 multiBookmarks.saveState();
                 BookmarksController.get().updateUI();
+                list.repaint();
             }
         }
 
