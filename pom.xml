@@ -30,7 +30,7 @@
         <plugin.rsc>${basedir}/resources/plugins</plugin.rsc>
         
         <!--dependencies-->
-        <tika.version>2.4.0</tika.version><!-- SyncMetadata change done in commit 7811b9a can be reverted when version is upgraded to include solution of https://issues.apache.org/jira/browse/TIKA-4126 -->
+        <tika.version>2.4.0</tika.version><!-- SyncMetadata change done in commit b673cf4 can be reverted when version is upgraded to include solution of https://issues.apache.org/jira/browse/TIKA-4126 -->
         <tika.core.version>2.4.0-p1</tika.core.version>
         <pdfbox.version>2.0.27</pdfbox.version>
         <lucene.version>9.2.0</lucene.version>
