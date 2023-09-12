@@ -779,8 +779,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     }
 
     /**
-     * Setup application global keyboard shortcuts. TODO update existing keyboard
-     * shortcut handling code to use this.
+     * Setup application global keyboard shortcuts. TODO: Check if other existing
+     * keyboard shortcuts may be handled globally.
      */
     private void setupKeyboardShortcuts() {
         KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
@@ -800,6 +800,13 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                             toggleGlobalGrayScale();
                         }
                         // avoid being used as different shortcut (e.g. bookmark key)
+                        return true;
+                    }
+                    if (e.getKeyCode() == KeyEvent.VK_B) {
+                        if (e.getID() == KeyEvent.KEY_RELEASED) {
+                            // Shortcut to BookmarkManager Window
+                            BookmarksManager.setVisible();
+                        }
                         return true;
                     }
                 }
