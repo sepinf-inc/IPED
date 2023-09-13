@@ -4,6 +4,8 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -17,6 +19,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.UIManager;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 import iped.app.ui.Messages;
 
@@ -38,6 +42,23 @@ public class BookmarkEditDialog extends JDialog {
         content.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         setContentPane(content);
 
+        // Preview label
+        BookmarkCellRenderer previewRenderer = new BookmarkCellRenderer();
+        previewRenderer.setBookmark(currentName, currentColor);
+        JLabel previewLabel = new JLabel() {
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g;
+                int w = getWidth();
+                int h = getHeight();
+                g2.setFont(getFont());
+                previewRenderer.paint(g2, w, h);
+            }
+        };
+        previewLabel.setPreferredSize(new Dimension(20, 20));
+
         // Bookmark name
         JPanel p1 = new JPanel(new BorderLayout(2, 2));
         add(p1, BorderLayout.NORTH);
@@ -50,6 +71,24 @@ public class BookmarkEditDialog extends JDialog {
             @Override
             public void focusGained(FocusEvent e) {
                 txtName.selectAll();
+            }
+        });
+        txtName.getDocument().addDocumentListener(new DocumentListener() {
+            public void changedUpdate(DocumentEvent e) {
+                updatePreview();
+            }
+
+            public void removeUpdate(DocumentEvent e) {
+                updatePreview();
+            }
+
+            public void insertUpdate(DocumentEvent e) {
+                updatePreview();
+            }
+
+            public void updatePreview() {
+                previewRenderer.setBookmark(txtName.getText(), selColor);
+                previewLabel.repaint();
             }
         });
         p1.add(txtName, BorderLayout.CENTER);
@@ -102,6 +141,8 @@ public class BookmarkEditDialog extends JDialog {
                     selColor = icon.getColor();
                     icon.setChecked(true);
                     selButton = but;
+                    previewRenderer.setBookmark(txtName.getText(), selColor);
+                    previewLabel.repaint();
                 }
             });
 
@@ -111,6 +152,12 @@ public class BookmarkEditDialog extends JDialog {
             }
         }
         p2.add(colorGrid, BorderLayout.CENTER);
+
+        // Preview
+        JPanel p4 = new JPanel(new BorderLayout());
+        p4.setBorder(BorderFactory.createEmptyBorder(10, 2, 2, 2));
+        p4.add(previewLabel, BorderLayout.CENTER);
+        p2.add(p4, BorderLayout.SOUTH);
 
         // Buttons
         JPanel p3 = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 2));

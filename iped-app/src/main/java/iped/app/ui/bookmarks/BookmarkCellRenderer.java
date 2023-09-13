@@ -5,6 +5,7 @@ import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.RenderingHints.Key;
+import java.awt.Toolkit;
 import java.awt.geom.Rectangle2D;
 import java.util.HashMap;
 import java.util.Map;
@@ -22,12 +23,40 @@ public class BookmarkCellRenderer {
 
     static {
         Map<Key, Object> hints = new HashMap<Key, Object>();
+        try {
+            @SuppressWarnings("unchecked")
+            Map<Key, Object> desktopHints = (Map<Key, Object>) Toolkit.getDefaultToolkit()
+                    .getDesktopProperty("awt.font.desktophints");
+            if (desktopHints != null) {
+                hints.putAll(desktopHints);
+            }
+        } catch (Exception e) {
+        }
         hints.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         hints.put(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
         hints.put(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
         hints.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
         hints.put(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
         renderingHints = new RenderingHints(hints);
+    }
+
+    void setBookmark(String str, Color color) {
+        boolean strChanged = false;
+        if (!str.equals(lastStr)) {
+            strChanged = true;
+            if (names == null || names.length != 1) {
+                names = new String[1];
+            }
+            lastStr = names[0] = str;
+        }
+        if (colors == null || colors.length < names.length) {
+            colors = new Color[1];
+        }
+        colors[0] = color;
+        if (strChanged) {
+            maxSpacing = Integer.MAX_VALUE;
+            clippedNamesMemo.clear();
+        }
     }
 
     public void setBookmarks(IMultiBookmarks bookmarks, String str) {
@@ -129,13 +158,13 @@ public class BookmarkCellRenderer {
         g.setRenderingHints(renderingHints);
         FontMetrics fm = g.getFontMetrics();
         ClippedString[] cn = getClippedNames(fm, g, w);
-        int y = (int) ((h - fm.getHeight()) / 2.0 + fm.getAscent());
+        int y = (int) Math.round((h - 1 - fm.getHeight()) / 2.0 + fm.getAscent());
         int x = 0;
         for (int i = 0; i < cn.length; i++) {
             ClippedString cs = cn[i];
             Color c = colors[i];
             g.setColor(c);
-            g.fillRoundRect(x, 1, cs.w, h - 1, h / 2, h / 2);
+            g.fillRoundRect(x, 0, cs.w, h - 1, h / 2, h / 2);
             g.setColor(BookmarkColorsUtil.getForeground(c));
             g.drawString(cs.str, x + 3, y);
             x += cs.w + 1;
