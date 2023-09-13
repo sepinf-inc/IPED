@@ -50,10 +50,11 @@ public class BookmarkColorsUtil {
         if (colorsMemo.containsKey(key)) {
             return colorsMemo.get(key);
         }
-        int off = key % BookmarkStandardColors.numStandardColors;
+        int num = BookmarkStandardColors.numStandardColors;
+        int off = (key % num + num) % num;
         Color ret = BookmarkStandardColors.colors[off];
-        for (int i = 0; i < BookmarkStandardColors.numStandardColors; i++) {
-            int idx = (off + i) % BookmarkStandardColors.numStandardColors;
+        for (int i = 0; i < num; i++) {
+            int idx = (off + i) % num;
             Color c = BookmarkStandardColors.colors[idx];
             if (!usedColors.contains(c)) {
                 ret = c;
