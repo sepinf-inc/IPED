@@ -19,6 +19,8 @@
 package iped.app.ui;
 
 import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.io.IOException;
 
 import javax.swing.Icon;
@@ -28,6 +30,7 @@ import javax.swing.table.TableModel;
 
 import org.apache.lucene.document.Document;
 
+import iped.app.ui.bookmarks.BookmarkCellRenderer;
 import iped.app.ui.bookmarks.BookmarkIcon;
 import iped.data.IItemId;
 import iped.data.IMultiBookmarks;
@@ -37,6 +40,8 @@ import iped.localization.LocalizedProperties;
 public class TableCellRenderer extends DefaultTableCellRenderer {
 
     private static final long serialVersionUID = 1L;
+    private boolean customPaint;
+    private BookmarkCellRenderer bookmarkCellRenderer;
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
@@ -48,21 +53,35 @@ public class TableCellRenderer extends DefaultTableCellRenderer {
         int col = table.convertColumnIndexToModel(column);
         TableModel model = table.getModel();
         String colName = model.getColumnName(col);
+
         Icon icon = null;
         String toopTip = null;
-        if (model instanceof SearchResultTableModel && colName.equalsIgnoreCase(BookmarkIcon.columnName)) {
-            setText("");
-            if (value != null) {
+        customPaint = false;
+
+        if (model instanceof SearchResultTableModel) {
+            if (colName.equalsIgnoreCase(ResultTableModel.BOOKMARK_COL)) {
                 String str = (String) value;
                 if (!str.isEmpty()) {
-                    toopTip = str;
                     IMultiBookmarks multiBookmarks = App.get().appCase.getMultiBookmarks();
-                    icon = BookmarkIcon.getIcon(multiBookmarks, str);
+                    if (bookmarkCellRenderer == null) {
+                        bookmarkCellRenderer = new BookmarkCellRenderer();
+                    }
+                    bookmarkCellRenderer.setBookmarks(multiBookmarks, str);
+                    customPaint = true;
                 }
-            }
 
-        } else if (model instanceof SearchResultTableModel) {
-            if (colName.equalsIgnoreCase(IndexItem.NAME)
+            } else if (colName.equalsIgnoreCase(BookmarkIcon.columnName)) {
+                setText("");
+                if (value != null) {
+                    String str = (String) value;
+                    if (!str.isEmpty()) {
+                        toopTip = str;
+                        IMultiBookmarks multiBookmarks = App.get().appCase.getMultiBookmarks();
+                        icon = BookmarkIcon.getIcon(multiBookmarks, str);
+                    }
+                }
+
+            } else if (colName.equalsIgnoreCase(IndexItem.NAME)
                     || colName.equalsIgnoreCase(LocalizedProperties.getLocalizedField(IndexItem.NAME))
                     || (model instanceof DuplicatesTableModel && (colName.equalsIgnoreCase(IndexItem.PATH)
                             || colName.equalsIgnoreCase(LocalizedProperties.getLocalizedField(IndexItem.PATH))))) {
@@ -88,5 +107,20 @@ public class TableCellRenderer extends DefaultTableCellRenderer {
         setToolTipText(toopTip);
 
         return this;
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        if (customPaint) {
+            Graphics2D g2 = (Graphics2D) g;
+            int w = getWidth();
+            int h = getHeight();
+            g2.setBackground(getBackground());
+            g2.clearRect(0, 0, w, h);
+            g2.setFont(getFont());
+            bookmarkCellRenderer.paint(g2, w, h);
+        } else {
+            super.paintComponent(g);
+        }
     }
 }

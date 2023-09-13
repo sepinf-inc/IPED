@@ -73,7 +73,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.app.ui.bookmarks.BookmarkAndKey;
-import iped.app.ui.bookmarks.BookmarkColorsManager;
+import iped.app.ui.bookmarks.BookmarkColorsUtil;
 import iped.app.ui.bookmarks.BookmarkEditDialog;
 import iped.app.ui.bookmarks.BookmarkListRenderer;
 import iped.data.IItem;
@@ -448,7 +448,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
                 multiBookmarks.newBookmark(name);
                 multiBookmarks.setBookmarkComment(name, comment);
                 multiBookmarks.setBookmarkColor(name,
-                        BookmarkColorsManager.getInitialColor(multiBookmarks.getUsedColors(), name));
+                        BookmarkColorsUtil.getInitialColor(multiBookmarks.getUsedColors(), name));
                 updateList();
             }
             list.clearSelection();
@@ -515,7 +515,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
             if (newColor != null && !newColor.equals(currentColor)) {
                 multiBookmarks.setBookmarkColor(currentName, newColor);
                 changed = true;
-                BookmarkColorsManager.storeNameToColor(currentName, newColor);
+                BookmarkColorsUtil.storeNameToColor(currentName, newColor);
             }
 
             if (changed) {

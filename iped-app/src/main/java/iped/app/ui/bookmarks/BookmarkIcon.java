@@ -96,7 +96,7 @@ public class BookmarkIcon implements Icon {
         this.color = color;
         this.colors = null;
         this.checked = checked;
-        this.checkedColor = BookmarkColorsManager.getForeground(color);
+        this.checkedColor = BookmarkColorsUtil.getForeground(color);
     }
 
     @Override

@@ -20,7 +20,7 @@ import java.util.Set;
 
 import iped.utils.IOUtil;
 
-public class BookmarkColorsManager {
+public class BookmarkColorsUtil {
     private static final String colorsMemoFile = System.getProperty("user.home") + "/.iped/bkmclr.dat";
 
     private static Map<Integer, Color> colorsMemo = Collections.synchronizedMap(new LinkedHashMap<Integer, Color>());
