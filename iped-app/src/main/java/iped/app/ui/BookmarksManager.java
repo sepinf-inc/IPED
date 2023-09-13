@@ -696,7 +696,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
 
     // alt key remove from bookmark
     private KeyStroke getRemoveKey(KeyStroke k) {
-        return KeyStroke.getKeyStroke(k.getKeyCode(), KeyEvent.ALT_DOWN_MASK, true);
+        return KeyStroke.getKeyStroke(k.getKeyCode(), k.getModifiers() | KeyEvent.ALT_DOWN_MASK, true);
     }
 
     private void showMessage(String msg) {
