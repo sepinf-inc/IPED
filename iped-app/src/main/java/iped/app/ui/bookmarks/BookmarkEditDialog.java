@@ -17,12 +17,13 @@ import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
 import javax.swing.UIManager;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import iped.app.ui.BookmarksManager;
 import iped.app.ui.Messages;
+import iped.app.ui.utils.JTextFieldLimited;
 
 public class BookmarkEditDialog extends JDialog {
     private static final long serialVersionUID = -8204366293115657785L;
@@ -65,7 +66,8 @@ public class BookmarkEditDialog extends JDialog {
 
         p1.add(new JLabel(Messages.getString("BookmarksManager.Edit.Name") + ":"), BorderLayout.NORTH);
 
-        JTextField txtName = new JTextField();
+        JTextFieldLimited txtName = new JTextFieldLimited();
+        txtName.setLimit(BookmarksManager.maxBookmarkNameLength);
         txtName.setText(currentName);
         txtName.addFocusListener(new FocusAdapter() {
             @Override

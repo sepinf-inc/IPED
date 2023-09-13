@@ -56,7 +56,6 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
-import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -76,6 +75,7 @@ import iped.app.ui.bookmarks.BookmarkAndKey;
 import iped.app.ui.bookmarks.BookmarkColorsUtil;
 import iped.app.ui.bookmarks.BookmarkEditDialog;
 import iped.app.ui.bookmarks.BookmarkListRenderer;
+import iped.app.ui.utils.JTextFieldLimited;
 import iped.data.IItem;
 import iped.data.IItemId;
 import iped.data.IMultiBookmarks;
@@ -96,6 +96,8 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
 
     private static BookmarksManager instance = new BookmarksManager();
 
+    public static final int maxBookmarkNameLength = 256;
+
     JDialog dialog = new JDialog(App.get());
     JLabel msg = new JLabel(Messages.getString("BookmarksManager.Dataset")); //$NON-NLS-1$
     JRadioButton highlighted = new JRadioButton();
@@ -105,7 +107,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
     JButton butAdd = new JButton(Messages.getString("BookmarksManager.Add")); //$NON-NLS-1$
     JButton butRemove = new JButton(Messages.getString("BookmarksManager.Remove")); //$NON-NLS-1$
     JButton butEdit = new JButton(Messages.getString("BookmarksManager.Edit")); //$NON-NLS-1$
-    JTextField newBookmark = new JTextField();
+    JTextFieldLimited newBookmark = new JTextFieldLimited();
     JTextArea comments = new JTextArea();
     JButton butNew = new JButton(Messages.getString("BookmarksManager.New")); //$NON-NLS-1$
     JButton butUpdateComment = new JButton(Messages.getString("BookmarksManager.Update")); //$NON-NLS-1$
@@ -151,6 +153,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
 
         updateList();
 
+        newBookmark.setLimit(maxBookmarkNameLength);
         newBookmark.setToolTipText(Messages.getString("BookmarksManager.NewBookmark.Tip")); //$NON-NLS-1$
         comments.setToolTipText(Messages.getString("BookmarksManager.CommentsTooltip")); //$NON-NLS-1$
         butUpdateComment.setToolTipText(Messages.getString("BookmarksManager.UpdateTooltip")); //$NON-NLS-1$
