@@ -54,7 +54,7 @@ public class FragmentLargeBinaryTask extends BaseCarveTask {
 
     @Override
     protected void process(IItem evidence) throws Exception {
-        if (true) return;
+
         boolean hasSpecificParser = ParsingTask.hasSpecificParser(autoParser, evidence);
         boolean hadParserException = Boolean.valueOf(evidence.getMetadata().get(StandardParser.PARSER_EXCEPTION));
 
