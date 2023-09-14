@@ -16,7 +16,7 @@ public class BookmarkCellRenderer {
     private static final RenderingHints renderingHints;
 
     private String[] names;
-    private Color[] colors;
+    private Color[] colors, foregrounds;
     private final Map<Integer, ClippedString[]> clippedNamesMemo = new HashMap<Integer, ClippedString[]>();
     private int maxSpacing;
     private String lastStr;
@@ -51,8 +51,10 @@ public class BookmarkCellRenderer {
         }
         if (colors == null || colors.length < names.length) {
             colors = new Color[1];
+            foregrounds = new Color[1];
         }
         colors[0] = color;
+        foregrounds[0] = BookmarkColorsUtil.getForeground(color);
         if (strChanged) {
             maxSpacing = Integer.MAX_VALUE;
             clippedNamesMemo.clear();
@@ -76,10 +78,12 @@ public class BookmarkCellRenderer {
         }
         if (colors == null || colors.length < names.length) {
             colors = new Color[names.length];
+            foregrounds = new Color[names.length];
         }
         for (int i = 0; i < names.length; i++) {
             Color c = bookmarks.getBookmarkColor(names[i]);
-            colors[i] = c == null ? BookmarkStandardColors.defaultColor : c;
+            c = colors[i] = c == null ? BookmarkStandardColors.defaultColor : c;
+            foregrounds[i] = BookmarkColorsUtil.getForeground(c);
         }
         if (strChanged) {
             maxSpacing = Integer.MAX_VALUE;
@@ -158,14 +162,13 @@ public class BookmarkCellRenderer {
         g.setRenderingHints(renderingHints);
         FontMetrics fm = g.getFontMetrics();
         ClippedString[] cn = getClippedNames(fm, g, w);
-        int y = (int) Math.round((h - 1 - fm.getHeight()) / 2.0 + fm.getAscent());
+        int y = (h - fm.getHeight()) / 2 + fm.getAscent();
         int x = 0;
         for (int i = 0; i < cn.length; i++) {
             ClippedString cs = cn[i];
-            Color c = colors[i];
-            g.setColor(c);
-            g.fillRoundRect(x, 0, cs.w, h - 1, h / 2, h / 2);
-            g.setColor(BookmarkColorsUtil.getForeground(c));
+            g.setColor(colors[i]);
+            g.fillRoundRect(x, 1, cs.w, h - 2, h / 2, h / 2);
+            g.setColor(foregrounds[i]);
             g.drawString(cs.str, x + 3, y);
             x += cs.w + 1;
         }
