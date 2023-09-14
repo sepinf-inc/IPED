@@ -19,6 +19,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import iped.app.home.MainFrame;
+import iped.app.ui.AppMain;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.tika.utils.SystemUtils;
 
@@ -77,8 +78,9 @@ public class Bootstrap {
     protected void run(String args[]) {
 
 
+        boolean isIpedSearchApp = getMainClassName().equalsIgnoreCase( AppMain.class.getCanonicalName() ) ;
         //Check if no args was passed and if there is any display available to run graphical interface
-        if(ArrayUtils.isEmpty(args) && ( ! ArrayUtils.isEmpty(GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()) ) ){
+        if((!isIpedSearchApp) && ArrayUtils.isEmpty(args) && ( ! ArrayUtils.isEmpty(GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()) ) ){
             MainFrame.main(args);
             return;
         }

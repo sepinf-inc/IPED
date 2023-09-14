@@ -137,7 +137,7 @@ public class ReportInfoDialog extends JDialog implements ActionListener {
         rInvestigatedNames.setWrapStyleWord(true);
 
         JLabel organizationName = new JLabel(Messages.getString("ReportDialog.organizationName")); //$NON-NLS-1$
-        panel.add(organizationName, getGridBagConstraints(0, lineNumber, 1, 1));
+        panel.add(organizationName, getGridBagConstraints(0, ++lineNumber, 1, 1));
         panel.add(rOrganizationName, getGridBagConstraints(1, lineNumber++, 2, 1));
 
         JLabel contact = new JLabel(Messages.getString("ReportDialog.contact")); //$NON-NLS-1$
