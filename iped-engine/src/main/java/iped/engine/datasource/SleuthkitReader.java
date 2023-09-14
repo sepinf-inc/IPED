@@ -1100,23 +1100,27 @@ public class SleuthkitReader extends DataSourceReader {
             evidence.setPath(inheritedPath + path);
         }
 
+        evidence.setIdInDataSource(Long.toString(content.getId()));
+        evidence.setInputStreamFactory(new SleuthkitInputStreamFactory(sleuthCase, null,false));
+        boolean hasFSTask = FSTask(evidence.getSeekableInputStream());
+        if (content instanceof Image) {
+            evidence.setRoot(true);
+            if (!hasFSTask)
+                evidence.setMediaType(getMediaType(evidence.getExt()));
+        } else {
+            evidence.setIsDir(true);
+        }
 
         evidence.setHasChildren(content.hasChildren());
 
         // evidence.setSleuthFile(content);
         evidence.setHash(""); //$NON-NLS-1$
-        evidence.setIdInDataSource(Long.toString(content.getId()));
-        // below is used to don't process images, partitions or file systems raw data
-        evidence.setInputStreamFactory(new SleuthkitInputStreamFactory(sleuthCase, null));
-
-
-        if (content instanceof Image) {
-            evidence.setRoot(true);
-            if (!isNotTSKFS(evidence.getSeekableInputStream()))
-                evidence.setMediaType(getMediaType(evidence.getExt()));
-        } else {
-            evidence.setIsDir(true);
+        if (!hasFSTask){
+            evidence.setIdInDataSource(Long.toString(content.getId()));
+            // below is used to don't process images, partitions or file systems raw data
+            evidence.setInputStreamFactory(new SleuthkitInputStreamFactory(sleuthCase, null));
         }
+
 
         boolean first = true;
         Integer tskId = (int) content.getId();
@@ -1185,7 +1189,7 @@ public class SleuthkitReader extends DataSourceReader {
         return false;
     }
 
-    private boolean isNotTSKFS(SeekableInputStream fis) {
+    private boolean FSTask(SeekableInputStream fis) {
 
 
         try {
