@@ -11,7 +11,7 @@ externalParsingMaxMem = 512M
 
 # Parse files with no specific decoder, like binaries, unknown, pagefile, unallocated, etc.
 # Printable windows-1252, UTF-8 and UTF-16 strings are extracted from the files to be processed.
-parseUnknownFiles = false
+parseUnknownFiles = true
 
 # Parse corrupted files extracting printable windows-1252, UTF-8 and UTF-16 strings.
 # For example, deleted and partially overwritten images could have searchable plain text into them.
