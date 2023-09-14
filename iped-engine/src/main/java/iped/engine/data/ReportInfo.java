@@ -22,7 +22,7 @@ import iped.engine.localization.Messages;
 public class ReportInfo implements Serializable {
 
     /**
-     * 
+     *
      */
     private static final long serialVersionUID = 1L;
 
@@ -44,6 +44,10 @@ public class ReportInfo implements Serializable {
     public List<String> examinersID = new ArrayList<>();
     public List<EvidenceDesc> evidences = new ArrayList<>();
     public String finalEvidenceDesc;
+    public List<String> investigatedName = new ArrayList<>();
+    public String organizationName;
+    public String contact;
+    public String caseNotes;
 
     class EvidenceDesc implements Serializable {
 
@@ -149,12 +153,23 @@ public class ReportInfo implements Serializable {
         return mat.toString();
     }
 
+
+
     public String getExaminersText() {
         if (examiners.size() == 1)
             return examiners.get(0);
         String result = "";
         for (String examiner : examiners)
             result += examiner + "; ";
+        return result;
+    }
+
+    public String getInvestigatedNameText() {
+        if (investigatedName.size() == 1)
+            return investigatedName.get(0);
+        String result = "";
+        for (String name : investigatedName)
+            result += name + "; ";
         return result;
     }
 
@@ -193,6 +208,12 @@ public class ReportInfo implements Serializable {
             e.desc = evidence.getString("desc");
             evidences.add(e);
         }
+        array = json.getJSONArray("investigatedNames");
+        for (int i = 0; i < array.length(); i++)
+            investigatedName.add(array.getString(i));
+        organizationName = json.getString("organizationName");
+        contact = json.getString("contact");
+        caseNotes = json.getString("caseNotes");
     }
 
     public File writeReportInfoFile() throws IOException {

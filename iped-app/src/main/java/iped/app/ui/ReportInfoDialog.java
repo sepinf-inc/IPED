@@ -24,7 +24,7 @@ import iped.engine.data.ReportInfo;
 public class ReportInfoDialog extends JDialog implements ActionListener {
 
     /**
-     * 
+     *
      */
     private static final long serialVersionUID = 1L;
 
@@ -44,6 +44,10 @@ public class ReportInfoDialog extends JDialog implements ActionListener {
     JTextField rLabNumber = new JTextField();
     JTextField rLabDate = new JTextField();
     JTextArea rEvidences = new JTextArea();
+    JTextArea rInvestigatedNames = new JTextArea();
+    JTextField rOrganizationName = new JTextField();
+    JTextField rContact = new JTextField();
+    JTextArea rCaseNotes = new JTextArea();
 
     private GridBagConstraints getGridBagConstraints(int x, int y, int width, int height) {
         GridBagConstraints c = new GridBagConstraints();
@@ -74,56 +78,77 @@ public class ReportInfoDialog extends JDialog implements ActionListener {
 
         JPanel panel = new JPanel(new GridBagLayout());
 
+        int lineNumber = 0;
         JLabel loadFile = new JLabel();
         loadFile.setText(Messages.getString("ReportDialog.LoadInfo"));
-        panel.add(loadFile, getGridBagConstraints(0, 0, 2, 1));
-        panel.add(infoButton, getGridBagConstraints(2, 0, 1, 1));
+        panel.add(loadFile, getGridBagConstraints(0, lineNumber, 2, 1));
+        panel.add(infoButton, getGridBagConstraints(2, lineNumber++, 1, 1));
 
         JLabel num = new JLabel(Messages.getString("ReportDialog.ReportNum")); //$NON-NLS-1$
-        panel.add(num, getGridBagConstraints(0, 1, 1, 1));
-        panel.add(rNumber, getGridBagConstraints(1, 1, 2, 1));
+        panel.add(num, getGridBagConstraints(0, lineNumber, 1, 1));
+        panel.add(rNumber, getGridBagConstraints(1, lineNumber++, 2, 1));
 
         JLabel date = new JLabel(Messages.getString("ReportDialog.ReportDate")); //$NON-NLS-1$
-        panel.add(date, getGridBagConstraints(0, 2, 1, 1));
-        panel.add(rDate, getGridBagConstraints(1, 2, 2, 1));
+        panel.add(date, getGridBagConstraints(0, lineNumber, 1, 1));
+        panel.add(rDate, getGridBagConstraints(1, lineNumber++, 2, 1));
 
         JLabel title = new JLabel(Messages.getString("ReportDialog.ReportTitle")); //$NON-NLS-1$
-        panel.add(title, getGridBagConstraints(0, 3, 1, 1));
-        panel.add(rTitle, getGridBagConstraints(1, 3, 2, 1));
+        panel.add(title, getGridBagConstraints(0, lineNumber, 1, 1));
+        panel.add(rTitle, getGridBagConstraints(1, lineNumber++, 2, 1));
 
         JLabel examiner = new JLabel(Messages.getString("ReportDialog.Examiner")); //$NON-NLS-1$
-        panel.add(examiner, getGridBagConstraints(0, 4, 1, 1));
-        panel.add(rExaminer, getGridBagConstraints(1, 4, 2, 1));
+        panel.add(examiner, getGridBagConstraints(0, lineNumber, 1, 1));
+        panel.add(rExaminer, getGridBagConstraints(1, lineNumber++, 2, 1));
 
         JLabel ipl = new JLabel(Messages.getString("ReportDialog.Investigation")); //$NON-NLS-1$
-        panel.add(ipl, getGridBagConstraints(0, 5, 1, 1));
-        panel.add(rCaseNumber, getGridBagConstraints(1, 5, 2, 1));
+        panel.add(ipl, getGridBagConstraints(0, lineNumber, 1, 1));
+        panel.add(rCaseNumber, getGridBagConstraints(1, lineNumber++, 2, 1));
 
         JLabel request = new JLabel(Messages.getString("ReportDialog.Request")); //$NON-NLS-1$
-        panel.add(request, getGridBagConstraints(0, 6, 1, 1));
-        panel.add(rRequestForm, getGridBagConstraints(1, 6, 2, 1));
+        panel.add(request, getGridBagConstraints(0, lineNumber, 1, 1));
+        panel.add(rRequestForm, getGridBagConstraints(1, lineNumber++, 2, 1));
 
         JLabel requestDate = new JLabel(Messages.getString("ReportDialog.RequestDate")); //$NON-NLS-1$
-        panel.add(requestDate, getGridBagConstraints(0, 7, 1, 1));
-        panel.add(rRequestDate, getGridBagConstraints(1, 7, 2, 1));
+        panel.add(requestDate, getGridBagConstraints(0, lineNumber, 1, 1));
+        panel.add(rRequestDate, getGridBagConstraints(1, lineNumber++, 2, 1));
 
         JLabel requester = new JLabel(Messages.getString("ReportDialog.Requester")); //$NON-NLS-1$
-        panel.add(requester, getGridBagConstraints(0, 8, 1, 1));
-        panel.add(rRequester, getGridBagConstraints(1, 8, 2, 1));
+        panel.add(requester, getGridBagConstraints(0, lineNumber, 1, 1));
+        panel.add(rRequester, getGridBagConstraints(1, lineNumber++, 2, 1));
 
         JLabel record = new JLabel(Messages.getString("ReportDialog.Record")); //$NON-NLS-1$
-        panel.add(record, getGridBagConstraints(0, 9, 1, 1));
-        panel.add(rLabNumber, getGridBagConstraints(1, 9, 2, 1));
+        panel.add(record, getGridBagConstraints(0, lineNumber, 1, 1));
+        panel.add(rLabNumber, getGridBagConstraints(1, lineNumber++, 2, 1));
 
         JLabel recordDate = new JLabel(Messages.getString("ReportDialog.RecordDate")); //$NON-NLS-1$
-        panel.add(recordDate, getGridBagConstraints(0, 10, 1, 1));
-        panel.add(rLabDate, getGridBagConstraints(1, 10, 2, 1));
+        panel.add(recordDate, getGridBagConstraints(0, lineNumber, 1, 1));
+        panel.add(rLabDate, getGridBagConstraints(1, lineNumber++, 2, 1));
 
         JLabel evidences = new JLabel(Messages.getString("ReportDialog.Evidences")); //$NON-NLS-1$
-        panel.add(evidences, getGridBagConstraints(0, 11, 1, 1));
-        panel.add(rEvidences, getGridBagConstraints(1, 11, 2, 2));
+        panel.add(evidences, getGridBagConstraints(0, lineNumber, 1, 1));
+        panel.add(rEvidences, getGridBagConstraints(1, lineNumber++, 2, 2));
         rEvidences.setLineWrap(true);
         rEvidences.setWrapStyleWord(true);
+
+        JLabel investigatedNames = new JLabel(Messages.getString("ReportDialog.InvestigatedNames")); //$NON-NLS-1$
+        panel.add(investigatedNames, getGridBagConstraints(0, ++lineNumber, 1, 1));
+        panel.add(rInvestigatedNames, getGridBagConstraints(1, lineNumber++, 2, 2));
+        rInvestigatedNames.setLineWrap(true);
+        rInvestigatedNames.setWrapStyleWord(true);
+
+        JLabel organizationName = new JLabel(Messages.getString("ReportDialog.organizationName")); //$NON-NLS-1$
+        panel.add(organizationName, getGridBagConstraints(0, lineNumber, 1, 1));
+        panel.add(rOrganizationName, getGridBagConstraints(1, lineNumber++, 2, 1));
+
+        JLabel contact = new JLabel(Messages.getString("ReportDialog.contact")); //$NON-NLS-1$
+        panel.add(contact, getGridBagConstraints(0, lineNumber, 1, 1));
+        panel.add(rContact, getGridBagConstraints(1, lineNumber++, 2, 1));
+
+        JLabel caseNotes = new JLabel(Messages.getString("ReportDialog.caseNotes")); //$NON-NLS-1$
+        panel.add(caseNotes, getGridBagConstraints(0, ++lineNumber, 1, 1));
+        panel.add(rCaseNotes, getGridBagConstraints(1, lineNumber++, 2, 2));
+        rCaseNotes.setLineWrap(true);
+        rCaseNotes.setWrapStyleWord(true);
 
         fullPanel.add(panel, BorderLayout.CENTER);
         JPanel bPanel = new JPanel(new BorderLayout());
@@ -195,6 +220,10 @@ public class ReportInfoDialog extends JDialog implements ActionListener {
         rLabNumber.setText(info.labCaseNumber);
         rLabDate.setText(info.labCaseDate);
         rEvidences.setText(info.getEvidenceDescHtml());
+        rInvestigatedNames.setText(info.getInvestigatedNameText());
+        rOrganizationName.setText(info.organizationName);
+        rContact.setText(info.contact);
+        rCaseNotes.setText(info.caseNotes);
     }
 
     private void loadTextFields() {
