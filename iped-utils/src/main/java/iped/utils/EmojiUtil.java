@@ -25,9 +25,7 @@ public class EmojiUtil {
     public static String replaceByImages(String inStr) {
         byte[] inBytes = inStr.getBytes(StandardCharsets.UTF_8);
         byte[] outBytes = replaceByImages(inBytes);
-        String ret = new String(outBytes, StandardCharsets.UTF_8);
-        System.err.println(ret);
-        return ret;
+        return new String(outBytes, StandardCharsets.UTF_8);
     }
 
     public static byte[] replaceByImages(byte[] inBytes) {
