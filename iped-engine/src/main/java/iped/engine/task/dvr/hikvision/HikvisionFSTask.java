@@ -38,6 +38,7 @@ public class HikvisionFSTask extends AbstractTask {
     public static final String IMAGE_FEATURES = "imageFeatures"; //$NON-NLS-1$
 
 	private static final MediaType h264MediaType = MediaType.application("video/x-msvideo"); //$NON-NLS-1$
+    private static final MediaType txtLogType = MediaType.parse("text/plain"); 
 
     private static boolean taskEnabled = false;
     private static final AtomicBoolean init = new AtomicBoolean(false);
@@ -118,7 +119,6 @@ public class HikvisionFSTask extends AbstractTask {
 			
 			for (DataBlockEntry objDBE : HikvisionFSExtractor.getDataBlockEntryList()) {
 			
-
 				// Just process a few datablocks for testing ...
 				//if (objDBE.dataOffset > 28991029248L)
 				//	continue;	
@@ -171,10 +171,47 @@ public class HikvisionFSTask extends AbstractTask {
 				
 				//Free some memory - ONFI8 table can allocate GIGAS of memory
 				objDBE.clear();
-				
-				
+                				
 			}
 			
+            //Read System Logs
+            for (SystemLogHeader objSLH : HikvisionFSExtractor.getSystemLogHeaderList()) {
+
+                Item offsetFile = new Item();
+                offsetFile.setName(objSLH.name);
+                offsetFile.setPath(evidence.getPath() + "/" + objSLH.name);
+                offsetFile.setLength(objSLH.dataSize);
+                offsetFile.setSumVolume(false);
+                offsetFile.setParent(evidence);
+
+                //offsetFile.setDeleted(parentEvidence.isDeleted());
+
+                offsetFile.setMediaType(txtLogType);
+                offsetFile.setFileOffset(objSLH.dataOffset);                
+
+                if (evidence.getIdInDataSource() != null) {
+                    offsetFile.setIdInDataSource(evidence.getIdInDataSource());
+                    offsetFile.setInputStreamFactory(evidence.getInputStreamFactory());
+                }
+
+                // optimization to not create more temp files
+                if (evidence.hasTmpFile()) {
+                    try {
+                        offsetFile.setParentTmpFile(evidence.getTempFile());
+                        offsetFile.setParentOffset(objSLH.dataOffset);
+                    } catch (IOException e) {
+                        // ignore
+                    }
+                }
+                evidence.setHasChildren(true);
+
+                offsetFile.setExtraAttribute(IndexItem.PARENT_TRACK_ID, Util.getTrackID(evidence));
+                totalProcessed.incrementAndGet();
+
+                worker.processNewItem(offsetFile);
+
+            }
+
 
 					
 			HikvisionFSExtractor.clear();
