@@ -29,6 +29,7 @@ public class SleuthkitInputStreamFactory extends SeekableInputStreamFactory {
     private SleuthkitCase sleuthkitCase;
     private Content content;
     private boolean emptyContent = false;
+    private boolean passthroughContent = false;
 
     public SleuthkitInputStreamFactory(Path dataSource) {
         super(dataSource.toUri());
@@ -65,9 +66,17 @@ public class SleuthkitInputStreamFactory extends SeekableInputStreamFactory {
         }
     }
 
+    public void setPassthroughContent(boolean value){
+        this.passthroughContent = value;
+    }
+
     @Override
     public boolean returnsEmptyInputStream() {
-        return this.emptyContent;
+
+        if (passthroughContent)
+            return true;
+        else
+            return this.emptyContent;
     }
 
     public SleuthkitCase getSleuthkitCase() {
