@@ -4,12 +4,14 @@ package iped.app.home.newcase.model;/*
  * @author Thiago S. Figueiredo
  */
 
+import iped.engine.data.ReportInfo;
+
 import java.nio.file.Path;
 import java.util.ArrayList;
 
 public class IPEDProcess {
 
-    private CaseInfo caseInfo;
+    private ReportInfo reportInfo;
     private ArrayList<Evidence> evidenceList;
     private Path caseOutputPath;
     private ArrayList<String> options;
@@ -17,16 +19,16 @@ public class IPEDProcess {
     private String profile;
 
     public IPEDProcess() {
-        caseInfo = new CaseInfo();
+        //caseInfo = new CaseInfo();
         evidenceList = new ArrayList<>();
     }
 
-    public CaseInfo getCaseInfo() {
-        return caseInfo;
+    public ReportInfo getReportInfo() {
+        return reportInfo;
     }
 
-    public void setCaseInfo(CaseInfo caseInfo) {
-        this.caseInfo = caseInfo;
+    public void setReportInfo(ReportInfo reportInfo) {
+        this.reportInfo = reportInfo;
     }
 
     public ArrayList<Evidence> getEvidenceList() {

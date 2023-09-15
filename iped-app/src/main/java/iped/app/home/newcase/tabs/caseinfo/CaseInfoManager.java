@@ -9,6 +9,7 @@ import com.github.openjson.JSONException;
 import com.github.openjson.JSONObject;
 import iped.app.home.newcase.model.CaseInfo;
 import iped.app.home.newcase.model.Evidence;
+import iped.engine.data.ReportInfo;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
@@ -22,27 +23,32 @@ import java.util.ArrayList;
 
 public class CaseInfoManager {
 
-    public void saveCaseInfo(CaseInfo caseInfo, File destinationFile){
+    /*public void saveCaseInfo(ReportInfo reportInfo, File destinationFile){
         try {
-            JSONObject caseInfoJson = new JSONObject();
-            caseInfoJson.put("caseNumber", caseInfo.getCaseNumber() );
-            caseInfoJson.put( "caseName", caseInfo.getCaseName() );
-            caseInfoJson.put( "investigatedNames", caseInfo.getInvestigatedNames() );
-            caseInfoJson.put( "requestDate", caseInfo.getRequestDate() );
-            caseInfoJson.put("requester", caseInfo.getRequester());
-            caseInfoJson.put("organizationName", caseInfo.getOrganizationName() );
-            caseInfoJson.put( "examiners", caseInfo.getExaminers() );
-            caseInfoJson.put("contact", caseInfo.getContact());
-            caseInfoJson.put("caseNotes", caseInfo.getCaseNotes());
-            caseInfoJson.put("materials", caseInfo.getMaterials());
+            JSONObject reportInfoJson = new JSONObject();
+            reportInfoJson.put("reportNumber", reportInfo.reportNumber );
+            reportInfoJson.put("reportDate", reportInfo.reportDate);
+            reportInfoJson.put( "reportTitle", reportInfo.reportTitle );
+            reportInfoJson.put( "examiners", reportInfo.examiners );
+            reportInfoJson.put( "investigatedNames", reportInfo.investigatedName );
+            reportInfoJson.put("organizationName", reportInfo.organizationName );
+            reportInfoJson.put("contact", reportInfo.contact);
+            reportInfoJson.put("caseNotes", reportInfo.caseNotes);
+            reportInfoJson.put("caseNumber", reportInfo.caseNumber);
+            reportInfoJson.put("requestForm", reportInfo.requestForm);
+            reportInfoJson.put( "requestDate", reportInfo.requestDate );
+            reportInfoJson.put("requester", reportInfo.requester);
+            reportInfoJson.put("labCaseNumber", reportInfo.labCaseNumber);
+            reportInfoJson.put("labCaseDate", reportInfo.labCaseDate);
+            reportInfoJson.put("evidences", reportInfo.evidences);
             FileWriter writer = new FileWriter(destinationFile, StandardCharsets.UTF_8);
-            writer.write(caseInfoJson.toString());
+            writer.write(reportInfoJson.toString());
             writer.flush();
             writer.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
+    }*/
 
     public void validateCasePath(Path casePath) throws CaseException {
         if( casePath == null)
@@ -53,8 +59,8 @@ public class CaseInfoManager {
             throw new CaseException("The case process is not finished.");
     }
 
-    public void castEvidenceListToMaterialsList(CaseInfo caseInfo, ArrayList<Evidence> evidenceList){
-        if( (evidenceList == null || evidenceList.isEmpty()) || (caseInfo == null) )
+    public void castEvidenceListToMaterialsList(ReportInfo reportInfo, ArrayList<Evidence> evidenceList){
+        if( (evidenceList == null || evidenceList.isEmpty()) || (reportInfo == null) )
             return;
         ArrayList<String> materialList = new ArrayList<>();
         for( Evidence currentEvidence : evidenceList ){
@@ -63,7 +69,30 @@ public class CaseInfoManager {
                 materialDescription = (currentEvidence.getFileName() == null || currentEvidence.getFileName().isEmpty())? "no information.." : currentEvidence.getFileName();
             materialList.add(materialDescription);
         }
-        caseInfo.setMaterials(materialList);
+        reportInfo.evidences = 
+        //reportInfo.setMaterials(materialList);
+    }
+
+   /* public CaseInfo readCaseInfoFile(File fileToLoad){
+        ReportInfo ri = new ReportInfo();
+        CaseInfo caseInfo = new CaseInfo();
+        try {
+            ri.readJsonInfoFile(fileToLoad);
+            caseInfo.setCaseNumber( ri.caseNumber );
+            caseInfo.setCaseName( ri.reportTitle );
+            caseInfo.setInvestigatedNames( new ArrayList<>(ri.investigatedName));
+            caseInfo.setRequestDate( ri.requestDate );
+            caseInfo.setRequester(ri.requester);
+            caseInfo.setOrganizationName( ri.organizationName );
+            caseInfo.setExaminers(new ArrayList<>( ri.examiners ));
+            caseInfo.setContact(ri.contact);
+            caseInfo.setCaseNotes(ri.caseNotes);
+            caseInfo.setMaterials(new ArrayList<>());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }finally {
+            return caseInfo;
+        }
     }
 
     public CaseInfo loadCaseInfo(File fileToLoad) throws IOException {
@@ -95,7 +124,7 @@ public class CaseInfoManager {
                 caseInfo.getMaterials().add((String) value);
         });
         return caseInfo;
-    }
+    }*/
 
     private JSONArray getJsonArray(JSONObject json, String name ){
         JSONArray array = new JSONArray();

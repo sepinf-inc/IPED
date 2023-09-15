@@ -8,6 +8,7 @@ import iped.app.home.newcase.model.CaseInfo;
 import iped.app.home.newcase.tabs.caseinfo.CaseInfoManager;
 import iped.app.home.style.StyleManager;
 import iped.app.ui.Messages;
+import iped.engine.data.ReportInfo;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.swing.*;
@@ -25,8 +26,8 @@ public class CaseTableCellRender extends DefaultTableCellRenderer {
         DefaultTableCellRenderer result = (DefaultTableCellRenderer) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         Path casePath = (Path) value;
         //Check if caseinfo file exists
-        CaseInfo caseInfo = getCaseInfoFromPath(casePath);
-        JPanel rowPanel = caseInfo != null ? getCaseInfoJPanel(caseInfo, casePath) : getPathJLabel(casePath);
+        ReportInfo reportInfo = getCaseInfoFromPath(casePath);
+        JPanel rowPanel = reportInfo != null ? getCaseInfoJPanel(reportInfo, casePath) : getPathJLabel(casePath);
         setRowBackgroundColor(row, isSelected, rowPanel, hasFocus);
         rowPanel.setBorder(BorderFactory.createEmptyBorder(3, 15, 3, 15));
         table.setRowHeight(row, (int) rowPanel.getPreferredSize().getHeight());
@@ -55,30 +56,30 @@ public class CaseTableCellRender extends DefaultTableCellRenderer {
         return new JLabel(getLabelText("Home.OpenCase.CaseLocation", casePath.toString()));
     }
 
-    private JPanel getCaseInfoJPanel(CaseInfo caseInfo, Path casePath){
+    private JPanel getCaseInfoJPanel(ReportInfo reportInfo, Path casePath){
         JPanel casePanel = new JPanel();
         casePanel.setLayout(new BoxLayout(casePanel, BoxLayout.PAGE_AXIS));
         casePanel.add(getCasePathJlabel(casePath));
-        if( !StringUtils.isBlank(caseInfo.getCaseNumber()) )
-            casePanel.add(new JLabel( getLabelText("Home.NewCase.CaseNumber", caseInfo.getCaseNumber()) ) );
-        if( !StringUtils.isBlank(caseInfo.getCaseName()) )
-            casePanel.add(new JLabel(getLabelText("Home.NewCase.CaseName", caseInfo.getCaseName()) ));
-        if( ! (caseInfo.getInvestigatedNames() == null || caseInfo.getInvestigatedNames().isEmpty()) )
-            casePanel.add(new JLabel(getLabelText("Home.NewCase.Investigated", caseInfo.getInvestigatedNames().stream().map(String::trim).collect(Collectors.joining(", "))) ));
-        if( !StringUtils.isBlank(caseInfo.getRequestDate()) )
-            casePanel.add(new JLabel(getLabelText("Home.NewCase.RequestDate", caseInfo.getRequestDate()) ));
-        if( !StringUtils.isBlank(caseInfo.getRequester()) )
-            casePanel.add(new JLabel(getLabelText("Home.NewCase.Requester", caseInfo.getRequester()) ));
-        if( !StringUtils.isBlank(caseInfo.getOrganizationName()) )
-            casePanel.add(new JLabel(getLabelText("Home.NewCase.OrganizationName", caseInfo.getOrganizationName()) ));
-        if( !(caseInfo.getExaminers() == null || caseInfo.getExaminers().isEmpty()) )
-            casePanel.add(new JLabel(getLabelText("Home.NewCase.Examiners", caseInfo.getExaminers().stream().map(String::trim).collect(Collectors.joining(", "))  )) );
-        if( !StringUtils.isBlank(caseInfo.getContact()) )
-            casePanel.add(new JLabel(getLabelText("Home.NewCase.Contact", caseInfo.getContact()) ));
-        if( !StringUtils.isBlank(caseInfo.getCaseNotes()) )
-            casePanel.add(new JLabel(getLabelText("Home.NewCase.Notes", caseInfo.getCaseNotes()) ));
-        if( !(caseInfo.getMaterials() == null || caseInfo.getMaterials().isEmpty()) )
-            casePanel.add(new JLabel(getLabelText("Home.NewCase.Materials", caseInfo.getMaterials().stream().map(String::trim).collect(Collectors.joining(", "))) ));
+        if( !StringUtils.isBlank(reportInfo.caseNumber) )
+            casePanel.add(new JLabel( getLabelText("Home.NewCase.CaseNumber", reportInfo.caseNumber) ) );
+        if( !StringUtils.isBlank(reportInfo.reportTitle) )
+            casePanel.add(new JLabel(getLabelText("Home.NewCase.CaseName", reportInfo.reportTitle) ));
+        if( ! (reportInfo.investigatedName == null || reportInfo.investigatedName.isEmpty()) )
+            casePanel.add(new JLabel(getLabelText("Home.NewCase.Investigated", reportInfo.investigatedName.stream().map(String::trim).collect(Collectors.joining(", "))) ));
+        if( !StringUtils.isBlank(reportInfo.requestDate) )
+            casePanel.add(new JLabel(getLabelText("Home.NewCase.RequestDate", reportInfo.requestDate) ));
+        if( !StringUtils.isBlank(reportInfo.requester) )
+            casePanel.add(new JLabel(getLabelText("Home.NewCase.Requester", reportInfo.requester) ));
+        if( !StringUtils.isBlank(reportInfo.organizationName) )
+            casePanel.add(new JLabel(getLabelText("Home.NewCase.OrganizationName", reportInfo.organizationName) ));
+        if( !(reportInfo.examiners == null || reportInfo.examiners.isEmpty()) )
+            casePanel.add(new JLabel(getLabelText("Home.NewCase.Examiners", reportInfo.examiners.stream().map(String::trim).collect(Collectors.joining(", "))  )) );
+        if( !StringUtils.isBlank(reportInfo.contact) )
+            casePanel.add(new JLabel(getLabelText("Home.NewCase.Contact", reportInfo.contact) ));
+        if( !StringUtils.isBlank(reportInfo.caseNotes) )
+            casePanel.add(new JLabel(getLabelText("Home.NewCase.Notes", reportInfo.caseNotes) ));
+        /*if( !(reportInfo.evidences == null || reportInfo.evidences.isEmpty()) )
+            casePanel.add(new JLabel(getLabelText("Home.NewCase.Materials", reportInfo.evidences.stream().map(String::trim).collect(Collectors.joining(", "))) ));*/
         return casePanel;
     }
 
@@ -86,17 +87,17 @@ public class CaseTableCellRender extends DefaultTableCellRenderer {
         return "<HTML><b>"+Messages.get(messageID)+": </b>" + text + "</html>";
     }
 
-    private CaseInfo getCaseInfoFromPath(Path path){
+    private ReportInfo getCaseInfoFromPath(Path path){
         File caseInfoFile = Paths.get(path.toString(), "CaseInfo.json").toFile();
-        CaseInfo caseInfo = null;
+        ReportInfo reportInfo = null;
         if( caseInfoFile.exists() ){
             try {
-                caseInfo = new CaseInfoManager().loadCaseInfo(caseInfoFile);
-            } catch (IOException ex) {
+                reportInfo =  ReportInfo.readReportInfoFile(caseInfoFile); //new CaseInfoManager().loadCaseInfo(caseInfoFile);
+            } catch (ClassNotFoundException | IOException ex) {
                 ex.printStackTrace();
             }
         }
-        return caseInfo;
+        return reportInfo;
     }
 
 }

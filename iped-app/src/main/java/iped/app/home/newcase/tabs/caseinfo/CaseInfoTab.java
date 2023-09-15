@@ -6,7 +6,6 @@ package iped.app.home.newcase.tabs.caseinfo;/*
 
 import iped.app.home.DefaultPanel;
 import iped.app.home.MainFrame;
-import iped.app.home.newcase.model.CaseInfo;
 import iped.app.home.newcase.NewCaseContainerPanel;
 import iped.app.home.newcase.model.ExistentCaseOptions;
 import iped.app.home.newcase.model.IPEDProcess;
@@ -15,6 +14,7 @@ import iped.app.home.utils.CasePathManager;
 import iped.app.ui.Messages;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.LocalConfig;
+import iped.engine.data.ReportInfo;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -41,11 +41,16 @@ public class CaseInfoTab extends DefaultPanel {
     private JTextField textFieldCaseOutput;
     private JCheckBox checkBoxOutputOnSSD;
     private JButton buttonSelectCaseOutput;
-    private JTextField textFieldCaseNumber;
-    private JTextField textFieldCaseName;
+    private JTextField textFieldReportNumber;
+    private JTextField textFieldReportDate;
+    private JTextField textFieldReportTitle;
     private JTextArea textAreaInvestigatedNames;
     private JTextField textFieldRequestDate;
-    private JTextField textFieldDemandant;
+    private JTextField textFieldCaseNumber;
+    private JTextField textFieldLabCaseNumber;
+    private JTextField textFieldLabCaseDate;
+    private JTextField textFieldRequestForm;
+    private JTextField textFieldRequester;
     private JTextField textFieldOrganization;
     private JTextArea textAreaExaminerNames;
     private JTextField textFieldContact;
@@ -88,12 +93,17 @@ public class CaseInfoTab extends DefaultPanel {
     private void createFormComponentInstances(){
         localConfig = ConfigurationManager.get().findObject(LocalConfig.class);
 
-        textFieldCaseNumber = new JTextField();
-        textFieldCaseName = new JTextField();
+        textFieldReportNumber = new JTextField();
+        textFieldReportDate = new JTextField();
+        textFieldReportTitle = new JTextField();
         textAreaInvestigatedNames = new JTextArea();
         textAreaInvestigatedNames.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         textFieldRequestDate = new JTextField();
-        textFieldDemandant = new JTextField();
+        textFieldCaseNumber = new JTextField();
+        textFieldRequestForm = new JTextField();
+        textFieldRequester = new JTextField();
+        textFieldLabCaseNumber = new JTextField();
+        textFieldLabCaseDate = new JTextField();
         textFieldOrganization = new JTextField();
         textAreaExaminerNames = new JTextArea();
         textAreaExaminerNames.setBorder(BorderFactory.createLineBorder(Color.BLACK));
@@ -199,31 +209,46 @@ public class CaseInfoTab extends DefaultPanel {
 
         int currentLine = 0;
 
-        panelForm.add(new JLabel(Messages.get("Home.NewCase.CaseNumber")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
-        panelForm.add(textFieldCaseNumber, getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
+        panelForm.add(new JLabel(Messages.get("ReportDialog.ReportNum")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
+        panelForm.add(textFieldReportNumber, getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
 
-        panelForm.add(new JLabel(Messages.get("Home.NewCase.CaseName")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
-        panelForm.add(textFieldCaseName, getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
+        panelForm.add(new JLabel(Messages.get("ReportDialog.ReportDate")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
+        panelForm.add(textFieldReportDate, getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
 
-        panelForm.add(new JLabel(Messages.get("Home.NewCase.Investigated")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
-        panelForm.add(textAreaInvestigatedNames, getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
+        panelForm.add(new JLabel(Messages.get("ReportDialog.ReportTitle")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
+        panelForm.add(textFieldReportTitle, getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
 
-        panelForm.add(new JLabel(Messages.get("Home.NewCase.RequestDate")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
-        panelForm.add(textFieldRequestDate, getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
-
-        panelForm.add(new JLabel(Messages.get("Home.NewCase.Requester")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
-        panelForm.add(textFieldDemandant, getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
-
-        panelForm.add(new JLabel(Messages.get("Home.NewCase.OrganizationName")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
-        panelForm.add(textFieldOrganization, getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
-
-        panelForm.add(new JLabel(Messages.get("Home.NewCase.Examiners")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
+        panelForm.add(new JLabel(Messages.get("ReportDialog.Examiner")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
         panelForm.add(textAreaExaminerNames, getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
 
-        panelForm.add(new JLabel(Messages.get("Home.NewCase.Contact")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
+        panelForm.add(new JLabel(Messages.get("ReportDialog.Investigation")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
+        panelForm.add(textFieldCaseNumber, getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
+
+        panelForm.add(new JLabel(Messages.get("ReportDialog.Request")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
+        panelForm.add(textFieldRequestForm, getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
+
+        panelForm.add(new JLabel(Messages.get("ReportDialog.RequestDate")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
+        panelForm.add(textFieldRequestDate, getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
+
+        panelForm.add(new JLabel(Messages.get("ReportDialog.Requester")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
+        panelForm.add(textFieldRequester, getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
+
+        panelForm.add(new JLabel(Messages.get("ReportDialog.Record")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
+        panelForm.add(textFieldLabCaseNumber, getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
+
+        panelForm.add(new JLabel(Messages.get("ReportDialog.RecordDate")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
+        panelForm.add(textFieldLabCaseDate, getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
+
+        panelForm.add(new JLabel(Messages.get("ReportDialog.InvestigatedNames")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
+        panelForm.add(textAreaInvestigatedNames, getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
+
+        panelForm.add(new JLabel(Messages.get("ReportDialog.organizationName")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
+        panelForm.add(textFieldOrganization, getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
+
+        panelForm.add(new JLabel(Messages.get("ReportDialog.contact")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
         panelForm.add(textFieldContact, getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
 
-        panelForm.add(new JLabel(Messages.get("Home.NewCase.Notes")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
+        panelForm.add(new JLabel(Messages.get("ReportDialog.caseNotes")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
         panelForm.add(textAreaCaseNotes, getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
 
         //----------------Case data buttons-----------------
@@ -293,20 +318,19 @@ public class CaseInfoTab extends DefaultPanel {
         buttonSaveCaseData.addActionListener( e -> {
             File destinationFile = showSaveCaseInfoFileChooser(Messages.get("Home.NewCase.ChooseCaseInfoFileOutput"));
             populateCaseInfo();
-            new CaseInfoManager().saveCaseInfo(ipedProcess.getCaseInfo(), destinationFile);
+            ipedProcess.getReportInfo().saveJsonInfoFile(destinationFile);
         });
         JButton buttonLoadCaseData = new JButton(Messages.get("Home.NewCase.LoadCaseData"));
         buttonLoadCaseData.addActionListener(e -> {
             File caseInfoSourceFile = showLoadCaseInfoFileChooser( Messages.get("Home.NewCase.ChooseCaseInfoFile") );
-            CaseInfo caseInfo = null;
+            ReportInfo reportInfo = new ReportInfo();
             try {
-                caseInfo = new CaseInfoManager().loadCaseInfo(caseInfoSourceFile);
+                reportInfo.readJsonInfoFile(caseInfoSourceFile);
             } catch (IOException ex) {
                 ex.printStackTrace();
-            }
-            if(caseInfo == null)
                 return;
-            ipedProcess.setCaseInfo(caseInfo);
+            }
+            ipedProcess.setReportInfo(reportInfo);
             populateFormCaseInfo();
         });
         panelCaseData.add(buttonSaveCaseData);
@@ -397,35 +421,49 @@ public class CaseInfoTab extends DefaultPanel {
     }
 
     private void populateCaseInfo(){
-        CaseInfo caseInfo = ipedProcess.getCaseInfo();
-        caseInfo.setCaseNumber(textFieldCaseNumber.getText());
-        caseInfo.setCaseName(textFieldCaseName.getText());
-        caseInfo.setInvestigatedNames(new ArrayList<>(Arrays.asList(textAreaInvestigatedNames.getText().split("\n") )));
-        caseInfo.setRequestDate(textFieldRequestDate.getText());
-        caseInfo.setRequester(textFieldDemandant.getText());
-        caseInfo.setOrganizationName(textFieldOrganization.getText());
-        caseInfo.setExaminers(new ArrayList<>( Arrays.asList(textAreaExaminerNames.getText().split("\n")) ));
-        caseInfo.setContact(textFieldContact.getText());
-        caseInfo.setCaseNotes(textAreaCaseNotes.getText());
+        ReportInfo reportInfo = ipedProcess.getReportInfo();
+        if( reportInfo == null ) {
+            reportInfo = new ReportInfo();
+            ipedProcess.setReportInfo(reportInfo);
+        }
+        reportInfo.reportNumber = textFieldReportNumber.getText();
+        reportInfo.reportDate = textFieldReportDate.getText();
+        reportInfo.reportTitle = textFieldReportTitle.getText();
+        reportInfo.examiners = new ArrayList<>( Arrays.asList(textAreaExaminerNames.getText().split("\n")) );
+        reportInfo.caseNumber = textFieldReportNumber.getText();
+        reportInfo.requestForm = textFieldRequestForm.getText();
+        reportInfo.requestDate = textFieldRequestDate.getText();
+        reportInfo.requester = textFieldRequester.getText();
+        reportInfo.labCaseNumber = textFieldCaseNumber.getText();
+        reportInfo.labCaseDate = textFieldLabCaseDate.getText();
+        reportInfo.investigatedName = new ArrayList<>(Arrays.asList(textAreaInvestigatedNames.getText().split("\n") ));
+        reportInfo.organizationName = textFieldOrganization.getText();
+        reportInfo.contact = textFieldContact.getText();
+        reportInfo.caseNotes = textAreaCaseNotes.getText();
     }
 
     private void populateFormCaseInfo(){
-        CaseInfo caseInfo = ipedProcess.getCaseInfo();
-        textFieldCaseNumber.setText( caseInfo.getCaseNumber() != null ? caseInfo.getCaseNumber() : textFieldCaseNumber.getText() );
-        textFieldCaseName.setText(caseInfo.getCaseName() != null ? caseInfo.getCaseName() : textFieldCaseName.getText() );
-        if( (caseInfo.getInvestigatedNames() != null) && (!caseInfo.getInvestigatedNames().isEmpty()) ){
-            String investigatedNames = caseInfo.getInvestigatedNames().stream().map(String::trim).collect(Collectors.joining("\n"));
-            textAreaInvestigatedNames.setText(investigatedNames);
-        }
-        textFieldRequestDate.setText(caseInfo.getRequestDate() != null ? caseInfo.getRequestDate() : textFieldRequestDate.getText() );
-        textFieldDemandant.setText(caseInfo.getRequester() != null? caseInfo.getRequester() : textFieldDemandant.getText() );
-        textFieldOrganization.setText(caseInfo.getOrganizationName() != null ? caseInfo.getOrganizationName() : textFieldOrganization.getText() );
-        if( (caseInfo.getExaminers() != null) && (!caseInfo.getExaminers().isEmpty())){
-            String examinerNames = caseInfo.getExaminers().stream().map(String::trim).collect(Collectors.joining("\n"));
+        ReportInfo reportInfo = ipedProcess.getReportInfo();
+        textFieldReportNumber.setText( reportInfo.reportNumber != null ? reportInfo.reportNumber : textFieldReportNumber.getText() );
+        textFieldReportDate.setText( reportInfo.reportDate != null ? reportInfo.reportDate : textFieldReportDate.getText() );
+        textFieldReportTitle.setText(reportInfo.reportTitle != null ? reportInfo.reportTitle : textFieldReportTitle.getText() );
+        if( (reportInfo.examiners != null) && (!reportInfo.examiners.isEmpty())){
+            String examinerNames = reportInfo.examiners.stream().map(String::trim).collect(Collectors.joining("\n"));
             textAreaExaminerNames.append(examinerNames);
         }
-        textFieldContact.setText(caseInfo.getContact() != null ? caseInfo.getContact() : textFieldContact.getText() );
-        textAreaCaseNotes.setText(caseInfo.getCaseNotes() != null ? caseInfo.getCaseNotes() : textAreaCaseNotes.getText() );
+        textFieldCaseNumber.setText( reportInfo.caseNumber != null ? reportInfo.caseNumber : textFieldCaseNumber.getText() );
+        textFieldRequestForm.setText( reportInfo.requestForm != null ? reportInfo.requestForm : textFieldRequestForm.getText() );
+        textFieldRequestDate.setText(reportInfo.requestDate != null ? reportInfo.requestDate : textFieldRequestDate.getText() );
+        textFieldRequester.setText(reportInfo.requester != null? reportInfo.requester : textFieldRequester.getText() );
+        textFieldLabCaseNumber.setText(reportInfo.labCaseNumber != null? reportInfo.labCaseNumber : textFieldLabCaseNumber.getText() );
+        textFieldLabCaseDate.setText(reportInfo.labCaseDate != null? reportInfo.labCaseDate : textFieldLabCaseDate.getText() );
+        if( (reportInfo.investigatedName != null) && (!reportInfo.investigatedName.isEmpty()) ){
+            String investigatedNames = reportInfo.investigatedName.stream().map(String::trim).collect(Collectors.joining("\n"));
+            textAreaInvestigatedNames.setText(investigatedNames);
+        }
+        textFieldOrganization.setText(reportInfo.organizationName != null ? reportInfo.organizationName : textFieldOrganization.getText() );
+        textFieldContact.setText(reportInfo.contact != null ? reportInfo.contact : textFieldContact.getText() );
+        textAreaCaseNotes.setText(reportInfo.caseNotes != null ? reportInfo.caseNotes : textAreaCaseNotes.getText() );
     }
 
 }
