@@ -83,6 +83,7 @@ import iped.engine.localization.Messages;
 import iped.engine.sleuthkit.SleuthkitClient;
 import iped.engine.sleuthkit.SleuthkitInputStreamFactory;
 import iped.engine.task.carver.BaseCarveTask;
+import iped.engine.task.ThumbTask;
 import iped.engine.task.index.IndexItem;
 import iped.engine.util.UIPropertyListenerProvider;
 import iped.engine.util.Util;
@@ -1101,8 +1102,13 @@ public class SleuthkitReader extends DataSourceReader {
         }
 
         evidence.setIdInDataSource(Long.toString(content.getId()));
-        evidence.setInputStreamFactory(new SleuthkitInputStreamFactory(sleuthCase, null,false));
+        SleuthkitInputStreamFactory objSleuthkitInputStreamFactory = new SleuthkitInputStreamFactory(sleuthCase, null,false);
+        evidence.setInputStreamFactory(objSleuthkitInputStreamFactory);
         boolean hasFSTask = FSTask(evidence.getSeekableInputStream());
+
+        if (hasFSTask) //Workaround for not call fragmentLargeBinaryTask task
+            objSleuthkitInputStreamFactory.setPassthroughContent(true);
+       
         if (content instanceof Image) {
             evidence.setRoot(true);
             if (!hasFSTask)
@@ -1139,6 +1145,9 @@ public class SleuthkitReader extends DataSourceReader {
         }
 
         addToProcessingQueue(caseData, evidence);
+
+        if (hasFSTask) //Workaround for not call entropy task
+            evidence.setExtraAttribute(ThumbTask.HAS_THUMB, true);
 
         return evidence;
     }
