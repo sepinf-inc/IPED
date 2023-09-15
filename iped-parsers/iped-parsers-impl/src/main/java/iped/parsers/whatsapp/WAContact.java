@@ -27,8 +27,8 @@ public class WAContact {
     public WAContact(String id) {
         if (id != null) {
             String[] idSplit = id.split("@", 2);
-            this.id = idSplit[0];
-            this.suffix = idSplit.length > 1 ? idSplit[1] : "";
+            this.id = idSplit[0].trim();
+            this.suffix = idSplit.length > 1 ? idSplit[1].trim() : "";
         } else {
             this.id = this.suffix = "";
         }
