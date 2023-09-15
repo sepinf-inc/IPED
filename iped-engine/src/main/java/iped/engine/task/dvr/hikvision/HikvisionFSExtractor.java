@@ -64,7 +64,7 @@ public class HikvisionFSExtractor{
 		readBytesFromAbsoluteFilePos(is, vetor_240, found, 240);
 		
 		hvfs.masterSector.hddSize = readLongFromBufLE(vetor_240, 64, 8);
-		hvfs.masterSector.systemLogOffset =  readLongFromBufLE(vetor_240, 88, 8);
+		hvfs.masterSector.systemLogOffsetEnd =  readLongFromBufLE(vetor_240, 88, 8);
 		hvfs.masterSector.systemLogSize =  readLongFromBufLE(vetor_240, 96, 8);
 		hvfs.masterSector.videoDataAreaOffset =  readLongFromBufLE(vetor_240, 112, 8);
 		hvfs.masterSector.dataBlockSize =  readLongFromBufLE(vetor_240, 128, 8);
@@ -490,6 +490,97 @@ public class HikvisionFSExtractor{
 
 	}
 	
+	public ArrayList<SystemLogHeader> getSystemLogHeaderList() throws Exception{
+
+
+		long systemLogOffsetStart = 0xA200;
+		long systemLogSize = this.hvfs.masterSector.systemLogOffsetEnd - systemLogOffsetStart;
+
+		int foundIni = 0;
+		int foundEnd = 0;
+		int next = 0;		
+
+		SimpleDateFormat DateFor = new SimpleDateFormat("dd-MM-yyyy EEE HH'h'-mm'm'-ss's'");
+		DateFor.setTimeZone(TimeZone.getTimeZone("GMT+0"));
+
+		Date dateTime;
+		String sTime = "";
+
+		byte RATS_SIG [] = {(byte)0x52,(byte)0x41,(byte)0x54,(byte)0x53,(byte)0x01,(byte)0x00,(byte)0x00,(byte)0x00};  //RATS signature
+		int sigLength = RATS_SIG.length;
+		byte logArrayBuffer []; 		
+		
+		int logArraySize = (int) systemLogSize;
+		
+		logArrayBuffer = new byte [logArraySize]; 	
+
+		ArrayList<SystemLogHeader> systemLogHeaderList =  new ArrayList<SystemLogHeader>() ;	
+
+		//Load RATS table
+		readBytesFromAbsoluteFilePos(is, logArrayBuffer, systemLogOffsetStart, logArraySize);
+		
+		foundEnd = 0;
+		next = 0;
+		while ( foundEnd != -1){
+			
+			foundIni = KPM.indexOf(logArrayBuffer, RATS_SIG, next);
+			foundEnd = KPM.indexOf(logArrayBuffer, RATS_SIG, foundIni + 8);
+			
+			if (foundEnd != -1){
+
+				int logSize = foundEnd - foundIni;
+				byte variableArray [] = new byte [logSize];					
+			
+
+				System.arraycopy(logArrayBuffer, foundIni, variableArray, 0, logSize);
+
+				SystemLogHeader objSystemLogHeader = new SystemLogHeader();
+			
+				objSystemLogHeader.createdTime = readLongFromBufLE(logArrayBuffer, foundIni + sigLength + 4, 4);
+
+
+				objSystemLogHeader.type = readLongFromBufLE(logArrayBuffer, foundIni + sigLength + 4 + 2, 2);
+
+				int stringSize = logSize - 14;
+				byte stringArray [] = new byte[stringSize];
+
+				int j = 0;
+				for (int i=foundIni + 14 + 1; i < stringArray.length; i++)
+					stringArray[j++] = (byte)readLongFromBufLE(logArrayBuffer, i, 1);
+
+				String description = new String(stringArray, "ISO-8859-1");
+				objSystemLogHeader.description = description;
+
+				dateTime = new Date(objSystemLogHeader.createdTime * 1000);
+				sTime = DateFor.format(dateTime);
+
+				objSystemLogHeader.dataOffset = systemLogOffsetStart + 14 + next;
+				objSystemLogHeader.dataSize = stringSize;	
+
+				objSystemLogHeader.name = "System Log - "+ objSystemLogHeader.getTypeDescription() + " - "+ sTime + ".log";
+				objSystemLogHeader.path = "logs";
+
+				systemLogHeaderList.add(objSystemLogHeader);
+
+				variableArray = null;
+				dateTime = null;
+				stringArray = null;
+
+				next = foundEnd;
+				
+
+			}
+
+			
+		}
+
+
+		logArrayBuffer = null;
+		
+		return systemLogHeaderList;
+
+	}
+	
 	private long readLongFromBufLE(byte [] cbuf, int pos, int tam) {
 	
 		long r = 0L;
@@ -501,7 +592,9 @@ public class HikvisionFSExtractor{
 		return r;
 	
 	}
-	
+
+
+
     private int readBytesFromAbsoluteFilePos(SeekableInputStream is,byte[] cbuf, long off, long len)  throws IOException  {
 				
 		int r = -1;
@@ -576,7 +669,7 @@ class MasterSector {
 
 	byte signature []  = new byte [18];
 	public long hddSize = 0L;
-	public long systemLogOffset = 0L;
+	public long systemLogOffsetEnd = 0L;
 	public long systemLogSize = 0L;
 	public long dataBlockSize = 0L;
 	public long videoDataAreaOffset = 0L;
@@ -601,7 +694,7 @@ class MasterSector {
 			System.out.println("---MasterSector---");
 			System.out.println("signature:           "+(new String(this.signature, "ISO-8859-1"))+" | "+Arrays.toString(signature));
 			System.out.println("hddSize:             "+this.hddSize+" | "+String.format("0x%08X", hddSize));
-			System.out.println("systemLogOffset:     "+this.systemLogOffset+" | "+String.format("0x%08X", systemLogOffset));
+			System.out.println("systemLogOffsetEnd:  "+this.systemLogOffsetEnd+" | "+String.format("0x%08X", systemLogOffsetEnd));
 			System.out.println("systemLogSize:       "+this.systemLogSize+" | "+String.format("0x%08X", systemLogSize));
 			System.out.println("dataBlockSize:       "+this.dataBlockSize+" | "+String.format("0x%08X", dataBlockSize));
 			System.out.println("videoDataAreaOffset: "+this.videoDataAreaOffset+" | "+String.format("0x%08X", videoDataAreaOffset));
@@ -772,6 +865,61 @@ class VideoFileHeader {
 		System.out.println("type:    "+this.type+" | "+String.format("0x%08X", type));
 		
 		
+	}
+	
+}
+
+class SystemLogHeader {
+	
+	public long createdTime = 0L;
+	public long type = 0; 
+	public long dataOffset = 0L;
+	public long dataSize = 0L;	
+	public String description = "";
+	public String name = "";
+	public String path = "";
+
+
+	public String getTypeDescription(){
+
+		String ret = "Invalid type";
+		int code = (int)this.type;
+
+		switch(code){
+
+			case 1:
+				ret = "Start Motion Detection - Stop Motion Detection";
+				break;
+			case 2:
+				ret = "Video Loss Alarm - Illegal Login - HDD Full";
+				break;
+			case 3:
+				ret = "Power On - Local Operation Shutdown - Local Operation: Login - Logout - Local Operation: Configure Parameters - Abnormal Shutdown";
+				break;
+			case 4:
+				ret = "Local HDD Information - HDD S.M.A.R.T - Start Recording - Stop Recording";
+				break;								
+
+		}
+
+		return ret;
+	}
+
+
+	public void clear(){
+	}
+
+	public void debug(){
+
+		System.out.println("---SystemLogHeader---");
+		System.out.println("createdTime     :"+this.createdTime+" | "+String.format("0x%08X", createdTime));
+		System.out.println("type            :"+this.type+" | "+String.format("0x%08X", type));
+		System.out.println("dataOffset      :"+this.dataOffset+" | "+String.format("0x%08X", dataOffset));
+		System.out.println("dataSize        :"+this.dataSize+" | "+String.format("0x%08X", dataSize));
+		System.out.println("description     :"+description);
+		System.out.println("name:           :"+name);
+		System.out.println("path:           :"+path);
+
 	}
 	
 }
