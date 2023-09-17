@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Image;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
 
@@ -169,12 +170,16 @@ public class ProcessManagerContainer extends DefaultPanel implements ProcessList
         //Populate caseinfo materials with evidences info
         ciManager.castEvidenceListToReportInfo(ipedProcess.getReportInfo(), ipedProcess.getEvidenceList());
         //Save the CaseInfo.json on case output
-        ipedProcess.getReportInfo().saveJsonInfoFile(Paths.get(ipedProcess.getCaseOutputPath().toString(), "CaseInfo.json").toFile());
+        Path caseinfoPath = Paths.get(ipedProcess.getCaseOutputPath().toString(), "CaseInfo.json");
+        ipedProcess.getReportInfo().saveJsonInfoFile(caseinfoPath.toFile());
+        ipedProcess.getOptions().add("-asap");
+        ipedProcess.getOptions().add(caseinfoPath.toAbsolutePath().toString());
     }
 
     public void startProcess(){
         switchPanelTo(STARTING_PROCESS);
         saveCaseInfoJsonOnCaseOutputPath();
+
         Thread t = new Thread(() -> {
             try {
                 //After complete the execution the user can back to case info and start the process again, so wee need to clean the previous log
