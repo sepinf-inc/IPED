@@ -18,7 +18,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
-import iped.engine.data.ReportInfo;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 /*
@@ -168,7 +167,7 @@ public class ProcessManagerContainer extends DefaultPanel implements ProcessList
         CaseInfoManager ciManager = new CaseInfoManager();
         ipedProcess.getEvidenceList();
         //Populate caseinfo materials with evidences info
-        //ciManager.castEvidenceListToMaterialsList(ipedProcess.getReportInfo(), ipedProcess.getEvidenceList());
+        ciManager.castEvidenceListToReportInfo(ipedProcess.getReportInfo(), ipedProcess.getEvidenceList());
         //Save the CaseInfo.json on case output
         ipedProcess.getReportInfo().saveJsonInfoFile(Paths.get(ipedProcess.getCaseOutputPath().toString(), "CaseInfo.json").toFile());
     }

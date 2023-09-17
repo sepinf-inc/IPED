@@ -59,18 +59,15 @@ public class CaseInfoManager {
             throw new CaseException("The case process is not finished.");
     }
 
-    public void castEvidenceListToMaterialsList(ReportInfo reportInfo, ArrayList<Evidence> evidenceList){
+    public void castEvidenceListToReportInfo(ReportInfo reportInfo, ArrayList<Evidence> evidenceList){
         if( (evidenceList == null || evidenceList.isEmpty()) || (reportInfo == null) )
             return;
-        ArrayList<String> materialList = new ArrayList<>();
         for( Evidence currentEvidence : evidenceList ){
             String materialDescription = currentEvidence.getMaterial() != null ? currentEvidence.getMaterial() : currentEvidence.getAlias();
             if(materialDescription == null || materialDescription.isEmpty())
                 materialDescription = (currentEvidence.getFileName() == null || currentEvidence.getFileName().isEmpty())? "no information.." : currentEvidence.getFileName();
-            materialList.add(materialDescription);
+            reportInfo.evidences.add(reportInfo.getEvidenceDescInstance(String.valueOf(evidenceList.indexOf(currentEvidence)) , materialDescription));
         }
-        reportInfo.evidences = 
-        //reportInfo.setMaterials(materialList);
     }
 
    /* public CaseInfo readCaseInfoFile(File fileToLoad){

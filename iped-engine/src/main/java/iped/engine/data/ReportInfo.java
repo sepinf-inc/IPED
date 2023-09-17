@@ -47,6 +47,16 @@ public class ReportInfo implements Serializable {
         private static final long serialVersionUID = 1L;
 
         String id, desc;
+
+        public String getId() {
+            return id;
+        }
+
+        public String getDesc() {
+            return desc;
+        }
+
+
     }
 
     /**
@@ -146,7 +156,12 @@ public class ReportInfo implements Serializable {
         return mat.toString();
     }
 
-
+    public EvidenceDesc getEvidenceDescInstance(String id, String desc){
+        EvidenceDesc ed = new EvidenceDesc();
+        ed.id = id;
+        ed.desc = desc;
+        return ed;
+    }
 
     public String getExaminersText() {
         if (examiners.size() == 1)
@@ -194,7 +209,14 @@ public class ReportInfo implements Serializable {
             reportInfoJson.put("requester", this.requester);
             reportInfoJson.put("labCaseNumber", this.labCaseNumber);
             reportInfoJson.put("labCaseDate", this.labCaseDate);
-            reportInfoJson.put("evidences", this.evidences);
+            JSONArray evidecesArray = new JSONArray();
+            for( EvidenceDesc evidenceDesc : this.evidences ){
+                JSONObject jo = new JSONObject();
+                jo.put("id", evidenceDesc.id);
+                jo.put("desc", evidenceDesc.desc);
+                evidecesArray.put(jo);
+            }
+            reportInfoJson.put("evidences", evidecesArray );
             FileWriter writer = new FileWriter(targetFile, StandardCharsets.UTF_8);
             writer.write(reportInfoJson.toString());
             writer.flush();
