@@ -536,20 +536,23 @@ public class HikvisionFSExtractor{
 
 				SystemLogHeader objSystemLogHeader = new SystemLogHeader();
 			
-				objSystemLogHeader.createdTime = readLongFromBufLE(logArrayBuffer, foundIni + sigLength + 4, 4);
+				objSystemLogHeader.createdTime = readLongFromBufLE(variableArray, sigLength + 4, 4);
 
 
-				objSystemLogHeader.type = readLongFromBufLE(logArrayBuffer, foundIni + sigLength + 4 + 2, 2);
+				objSystemLogHeader.majorType = readLongFromBufLE(variableArray, sigLength + 4 + 2, 2);
+				objSystemLogHeader.minorType = readLongFromBufLE(variableArray, sigLength + 4 + 2 + 2, 2);
 
 				int stringSize = logSize - 14;
 				byte stringArray [] = new byte[stringSize];
 
+				/*
 				int j = 0;
-				for (int i=foundIni + 14 + 1; i < stringArray.length; i++)
-					stringArray[j++] = (byte)readLongFromBufLE(logArrayBuffer, i, 1);
+				for (int i=  14 + 1; i < stringArray.length; i++)
+					stringArray[j++] = (byte)readLongFromBufLE(variableArray, i, 1);
 
 				String description = new String(stringArray, "ISO-8859-1");
 				objSystemLogHeader.description = description;
+				*/
 
 				dateTime = new Date(objSystemLogHeader.createdTime * 1000);
 				sTime = DateFor.format(dateTime);
@@ -557,8 +560,10 @@ public class HikvisionFSExtractor{
 				objSystemLogHeader.dataOffset = systemLogOffsetStart + 14 + next;
 				objSystemLogHeader.dataSize = stringSize;	
 
-				objSystemLogHeader.name = "System Log - "+ objSystemLogHeader.getTypeDescription() + " - "+ sTime + ".log";
+				objSystemLogHeader.name = "System Log - "+ objSystemLogHeader.getMajorTypeDescription() + " - " + objSystemLogHeader.getMinorTypeDescription()  +" - "+ sTime + ".log";
 				objSystemLogHeader.path = "logs";
+
+				objSystemLogHeader.parserMinorTypeInfo(variableArray);
 
 				systemLogHeaderList.add(objSystemLogHeader);
 
@@ -872,7 +877,8 @@ class VideoFileHeader {
 class SystemLogHeader {
 	
 	public long createdTime = 0L;
-	public long type = 0; 
+	public long majorType = 0; 
+	public long minorType = 0; 
 	public long dataOffset = 0L;
 	public long dataSize = 0L;	
 	public String description = "";
@@ -880,29 +886,163 @@ class SystemLogHeader {
 	public String path = "";
 
 
-	public String getTypeDescription(){
+	public String getMajorTypeDescription(){
 
-		String ret = "Invalid type";
-		int code = (int)this.type;
+		String ret = "Major Unknown";
+		int code = (int)this.majorType;
 
 		switch(code){
 
-			case 1:
-				ret = "Start Motion Detection - Stop Motion Detection";
+			case 0x1:
+				ret = "Alarm";
 				break;
-			case 2:
-				ret = "Video Loss Alarm - Illegal Login - HDD Full";
+			case 0x2:
+				ret = "Exception";
 				break;
-			case 3:
-				ret = "Power On - Local Operation Shutdown - Local Operation: Login - Logout - Local Operation: Configure Parameters - Abnormal Shutdown";
+			case 0x3:
+				ret = "Operation";
 				break;
-			case 4:
-				ret = "Local HDD Information - HDD S.M.A.R.T - Start Recording - Stop Recording";
+			case 0x4:
+				ret = "Information";
 				break;								
 
 		}
 
 		return ret;
+	}
+
+	public String getMinorTypeDescription(){
+
+		String ret = "Minor Unknown";
+		int code = (int)this.minorType;
+
+		switch(code){
+
+			case 0x41:
+				ret = "Power On";
+				break;
+			case 0x42:
+				ret = "Local: Shutdown";
+				break;
+			case 0x43:
+				ret = "Local: Abnormal Shutdown";
+				break;
+			case 0x50:
+				ret = "Local: Login";
+				break;								
+			case 0x51:
+				ret = "Local: Logout";
+				break;				
+			case 0x5C:
+				ret = "Local: Initialize HDD";
+				break;				
+			case 0x6e:
+				ret = "HDD Detect";
+				break;				
+			case 0x70:
+				ret = "Remote: Login";
+				break;				
+			case 0x71:
+				ret = "Remote: Logout";
+				break;				
+			case 0x76:
+				ret = "Remote: Get Parameters";
+				break;				
+			case 0x78:
+				ret = "Remote: Get Working Status";
+				break;				
+			case 0x79:
+				ret = "Remote: Alarm Arming";
+				break;				
+			case 0x7a:
+				ret = "Remote: Alarm Disarming";
+				break;				
+			case 0x82:
+				ret = "Remote: Initialize HDD";
+				break;				
+			case 0x86:
+				ret = "Remote: Export Config File";
+				break;				
+			case 0xa1:
+				ret = "HDD Information";
+				break;				
+			case 0xa2:
+				ret = "S.M.A.R.T. Information";
+				break;												
+			case 0xa3:
+				ret = "Start Record";
+				break;												
+			case 0xa4:
+				ret = "Stop Record";
+				break;												
+			case 0x03:
+				ret = "Start Motion Detection";
+				break;												
+			case 0x04:
+				ret = "Stop Motion Detection";
+				break;												
+			case 0x05:
+				ret = "Start Video Tampering";
+				break;												
+			case 0x06:
+				ret = "Stop Video Tampering";
+				break;												
+			case 0x22:
+				ret = "Illegal Login";
+				break;												
+
+
+
+
+		}
+
+		return ret;
+	}
+
+	private String getStringFromByteArray(byte [] byteArray, int offsetIni, int length, String charset) throws Exception{
+
+		String ret = "";
+
+		byte stringArray [] = new byte[length];				
+		byte byteRead = 0;
+		
+		int j = 0;
+		for (int i=0; i < length && (i+offsetIni) < byteArray.length ; i++){
+			byteRead = byteArray[i+offsetIni];
+			if (byteRead != 0x00 && j < stringArray.length){
+				stringArray[j++] = byteRead;
+			}
+		}
+
+		ret = new String(stringArray, 0, j,charset);
+		stringArray = null;
+
+		return ret;
+	}
+
+	//TODO - parse log special info
+	public void parserMinorTypeInfo(byte [] byteArrayLogInfo) throws Exception{
+
+		int minorCode = (int)this.minorType;
+		int majorCode = (int)this.majorType;
+		int baseOffset = 14; // RATS field , plus creatime , plus major code
+
+		if (majorCode == 0x4 && minorCode == 0xa2 ){ //"S.M.A.R.T. Information"
+
+
+
+				String firmware = getStringFromByteArray(byteArrayLogInfo, baseOffset + 1081, 10,"UTF-8");
+				String model = getStringFromByteArray(byteArrayLogInfo, baseOffset + 1091, 41,"UTF-8");
+				String serial = getStringFromByteArray(byteArrayLogInfo, baseOffset + 1132, 22,"UTF-8");
+				
+				//System.out.println(firmware+" "+model+" "+serial);
+				//this.serialInfo = serialString;
+				
+
+		}
+
+		return;
+
 	}
 
 
@@ -913,7 +1053,8 @@ class SystemLogHeader {
 
 		System.out.println("---SystemLogHeader---");
 		System.out.println("createdTime     :"+this.createdTime+" | "+String.format("0x%08X", createdTime));
-		System.out.println("type            :"+this.type+" | "+String.format("0x%08X", type));
+		System.out.println("majorType       :"+this.majorType+" | "+String.format("0x%08X", majorType));
+		System.out.println("minorType       :"+this.minorType+" | "+String.format("0x%08X", minorType));
 		System.out.println("dataOffset      :"+this.dataOffset+" | "+String.format("0x%08X", dataOffset));
 		System.out.println("dataSize        :"+this.dataSize+" | "+String.format("0x%08X", dataSize));
 		System.out.println("description     :"+description);
