@@ -1,5 +1,6 @@
 package iped.engine.config;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Path;
@@ -18,7 +19,7 @@ public class FileSystemConfig extends AbstractPropertiesConfigurable {
     private boolean toAddUnallocated = false;
     private boolean toAddFileSlacks = false;
     private boolean robustImageReading;
-    private int numImageReaders = (int) Math.ceil((float) Runtime.getRuntime().availableProcessors() / 4);
+    private int numImageReaders = getDefaultNumImageReaders();
     private long unallocatedFragSize = 1 << 30;
     private long minOrphanSizeToIgnore = -1;
     private boolean ignoreHardLinks = true;
@@ -109,6 +110,22 @@ public class FileSystemConfig extends AbstractPropertiesConfigurable {
 
     public boolean isIgnoreHardLinks() {
         return ignoreHardLinks;
+    }
+    
+    public int getDefaultNumImageReaders() {
+        return (int) Math.ceil((float) Runtime.getRuntime().availableProcessors() / 4); 
+    }
+
+    @Override
+    public void save(Path resource) {
+        try {
+            File confDir = new File(resource.toFile(), Configuration.CONF_DIR);
+            confDir.mkdirs();
+            File confFile = new File(confDir, CONFIG_FILE);            
+            properties.store(confFile);
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 }

@@ -1,5 +1,6 @@
 package iped.engine.config;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.DirectoryStream.Filter;
@@ -14,7 +15,7 @@ public class OCRConfig extends AbstractPropertiesConfigurable {
     private static final long serialVersionUID = 1L;
 
     private static final String CONFIG_FILE0 = "IPEDConfig.txt"; //$NON-NLS-1$
-    public static final String CONFIG_FILE = "conf/OCRConfig.txt"; //$NON-NLS-1$
+    public static final String CONFIG_FILE = "OCRConfig.txt"; //$NON-NLS-1$
 
     private Boolean enableOCR;
     private boolean skipKnownFiles;
@@ -166,6 +167,18 @@ public class OCRConfig extends AbstractPropertiesConfigurable {
 
     public String getMaxConvImageSize() {
         return maxConvImageSize;
+    }
+
+    @Override
+    public void save(Path resource) {
+        try {
+            File confDir = new File(resource.toFile(), Configuration.CONF_DIR);
+            confDir.mkdirs();
+            File confFile = new File(confDir, CONFIG_FILE);            
+            properties.store(confFile);
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 }

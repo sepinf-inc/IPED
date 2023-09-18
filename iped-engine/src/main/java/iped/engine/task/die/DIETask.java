@@ -116,7 +116,11 @@ public class DIETask extends AbstractTask {
 
     @Override
     public List<Configurable<?>> getConfigurables() {
-        return Arrays.asList(new EnableTaskProperty(ENABLE_PARAM));
+        EnableTaskProperty result = ConfigurationManager.get().getEnableTaskPropertyObject(ENABLE_PARAM);
+        if(result == null) {
+            result = new EnableTaskProperty(ENABLE_PARAM);
+        }
+        return Arrays.asList(result);
     }
 
     /**

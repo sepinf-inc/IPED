@@ -15,7 +15,11 @@ public class AudioTranscriptTask extends AbstractTask {
 
     @Override
     public List<Configurable<?>> getConfigurables() {
-        return Arrays.asList(new AudioTranscriptConfig());
+        AudioTranscriptConfig result = ConfigurationManager.get().findObject(AudioTranscriptConfig.class);
+        if(result == null) {
+            result = new AudioTranscriptConfig();
+        }
+        return Arrays.asList(result);
     }
 
     @Override

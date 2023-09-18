@@ -27,13 +27,13 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
 
     public static final String NUM_THREADS = "numThreads";
 
-    private static final String HASH_DB = "hashesDB";
+    public static final String HASH_DB = "hashesDB";
 
-    private static final String IPED_TEMP = "indexTemp";
+    public static final String IPED_TEMP = "indexTemp";
 
     private static final String TEMP_ON_SSD = "indexTempOnSSD";
 
-    private static final String OUTPUT_ON_SSD = "outputOnSSD";
+    public static final String OUTPUT_ON_SSD = "outputOnSSD";
 
     private static final String DEFAULT_VAL = "default";
 
@@ -107,7 +107,7 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
         if (value != null && !value.equalsIgnoreCase(DEFAULT_VAL)) { // $NON-NLS-1$
             numThreads = Integer.valueOf(value);
         } else {
-            numThreads = Runtime.getRuntime().availableProcessors();
+            numThreads = getDefaultNumThreads();
         }
 
         value = properties.getProperty(TEMP_ON_SSD); // $NON-NLS-1$
@@ -149,6 +149,11 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
         return indexTempOnSSD;
     }
 
+    public void setIndexTempOnSSD(Boolean indexTempOnSSD){
+        properties.setProperty(TEMP_ON_SSD, Boolean.valueOf(indexTempOnSSD).toString());
+        this.indexTempOnSSD = Boolean.valueOf(indexTempOnSSD);
+    }
+
     public File getIndexTemp() {
         return indexTemp;
     }
@@ -161,6 +166,12 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
         return numThreads;
     }
 
+    public void setNumThreads(int numThreads){
+        this.numThreads = numThreads;
+        String stringValue = (numThreads == Runtime.getRuntime().availableProcessors()) ? DEFAULT_VAL : String.valueOf(numThreads);
+        properties.setProperty(NUM_THREADS, stringValue);
+    }
+
     public File getHashDbFile() {
         return hashDbFile;
     }
@@ -168,7 +179,7 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
     public void setHashDbFile(File hashDbFile) {
         this.hashDbFile = hashDbFile;
     }
-
+    
     public static void clearLocalParameters(File localConfig) throws IOException {
         List<String> lines = Files.readAllLines(localConfig.toPath());
         ArrayList<String> newLines = new ArrayList<>();
@@ -189,4 +200,21 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
         }
         Files.write(localConfig.toPath(), newLines);
     }
+
+    @Override
+    public void save(Path resource) {
+        try {
+            File confDir = new File(resource.toFile(), Configuration.CONF_DIR);
+            confDir.mkdirs();
+            File confFile = new File(confDir, CONFIG_FILE);
+            properties.store(confFile);
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public int getDefaultNumThreads() {
+        return Runtime.getRuntime().availableProcessors();
+    }
+
 }

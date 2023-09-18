@@ -9,17 +9,28 @@
 
     <artifactId>iped-app</artifactId>
     <packaging>jar</packaging>
-    
+
     <properties>
     	<release.dir>${project.parent.build.directory}/release/iped-${project.version}</release.dir>
     	<parent.root>${resources.dir}/../..</parent.root>
     </properties>
-    
+
     <dependencies>
         <dependency>
             <groupId>iped</groupId>
             <artifactId>iped-engine</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/com.fifesoft/rsyntaxtextarea -->
+        <dependency>
+            <groupId>com.fifesoft</groupId>
+            <artifactId>rsyntaxtextarea</artifactId>
+            <version>3.3.2</version>
+        </dependency>
+        <dependency>
+          <groupId>com.fifesoft</groupId>
+          <artifactId>autocomplete</artifactId>
+          <version>3.3.1</version>
         </dependency>
         <dependency>
             <groupId>iped</groupId>
@@ -58,7 +69,7 @@
             <version>0.9.39</version>
         </dependency>
     </dependencies>
-    
+
     <build>
         <plugins>
             <plugin>
@@ -99,7 +110,7 @@
                         <goals>
                             <goal>analyze</goal>
                         </goals>
-                    </execution>                                        
+                    </execution>
                     <execution>
                         <id>unpack-jre</id>
                         <phase>package</phase>
@@ -576,7 +587,7 @@
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
-                    </execution>                    
+                    </execution>
                     <execution>
                         <id>copy-dependencies</id>
                         <phase>package</phase>
@@ -637,7 +648,7 @@
                             <finalName>iped</finalName>
                             <outputDirectory>${release.dir}</outputDirectory>
                             <forceCreation>true</forceCreation>
-                            <archive>                                
+                            <archive>
                                 <addMavenDescriptor>false</addMavenDescriptor>
                                 <manifest>
                                     <addClasspath>true</addClasspath>
@@ -646,32 +657,10 @@
                                 </manifest>
                                 <manifestEntries>
                                     <SplashScreen-Image>iped/app/splash/iped.png</SplashScreen-Image>
-                                </manifestEntries>  
+                                </manifestEntries>
                             </archive>
                         </configuration>
                     </execution>
-                    <!--execution>
-                        <id>create-gui-jar</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                        <configuration>
-                            <excludes>
-                                <exclude>*.netbeans_automatic_build*</exclude>
-                            </excludes>
-                            <finalName>iped-gui</finalName>
-                            <outputDirectory>${release.dir}</outputDirectory>
-                            <forceCreation>true</forceCreation>
-                            <archive>
-                                <addMavenDescriptor>false</addMavenDescriptor>
-                                <manifest>
-                                    <addClasspath>true</addClasspath>
-                                    <classpathPrefix>lib/</classpathPrefix>
-                                    <mainClass>br.gov.pf.labld.cases.CaseManagement</mainClass>
-                                </manifest>
-                            </archive>
-                        </configuration>
-                    </execution-->
                     <execution>
                         <id>create-search-jar</id>
                         <goals>
@@ -681,7 +670,7 @@
                             <finalName>iped-search-app</finalName>
                             <outputDirectory>${lib.dir}</outputDirectory>
                             <forceCreation>true</forceCreation>
-                            <archive>                                
+                            <archive>
                                 <addMavenDescriptor>false</addMavenDescriptor>
                                 <manifest>
                                     <addClasspath>true</addClasspath>
@@ -689,7 +678,7 @@
                                 </manifest>
                                 <manifestEntries>
                                     <SplashScreen-Image>iped/app/splash/iped.png</SplashScreen-Image>
-                                </manifestEntries>                                
+                                </manifestEntries>
                             </archive>
                         </configuration>
                     </execution>
@@ -734,7 +723,7 @@
                     </execution>
                 </executions>
             </plugin>
-            
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
@@ -864,5 +853,5 @@
                 </configuration>
             </plugin>
         </plugins>
-    </build>    
+    </build>
 </project>

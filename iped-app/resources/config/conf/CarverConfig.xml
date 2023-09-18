@@ -245,7 +245,6 @@
             <minLength>128</minLength>
             <maxLength>65536</maxLength>
             <mediaType>application/x-shareaza-download</mediaType>
-            <stopOnNextHeader>true</stopOnNextHeader>
         </carverType>
         
         <!--carverType>
