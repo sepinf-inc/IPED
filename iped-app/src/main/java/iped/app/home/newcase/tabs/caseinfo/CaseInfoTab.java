@@ -16,10 +16,12 @@ import iped.app.ui.Messages;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.LocalConfig;
 import iped.engine.data.ReportInfo;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.filechooser.FileSystemView;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.io.File;
@@ -62,6 +64,7 @@ public class CaseInfoTab extends DefaultPanel {
     private JRadioButton radioCaseOutRestart;
     private ButtonGroup buttonGroupCaseOutOptions;
     private FileNameExtensionFilter jsonFilter = new FileNameExtensionFilter("caseinfo.json", new String[]{"json", "JSON"});
+    private ArrayList<JTextComponent> caseInfoInputList;
 
     public CaseInfoTab(MainFrame mainFrame) {
         super(mainFrame);
@@ -93,35 +96,51 @@ public class CaseInfoTab extends DefaultPanel {
 
     private void createFormComponentInstances(){
         localConfig = ConfigurationManager.get().findObject(LocalConfig.class);
+        caseInfoInputList = new ArrayList<>();
 
         textFieldReportNumber = new JTextField();
+        caseInfoInputList.add(textFieldReportNumber);
         textFieldReportDate = new JTextField();
+        caseInfoInputList.add(textFieldReportDate);
         textFieldReportTitle = new JTextField();
+        caseInfoInputList.add(textFieldReportTitle);
         JTextAreaTabFocus tabFocus = new JTextAreaTabFocus();
         textAreaInvestigatedNames = new JTextArea();
+        caseInfoInputList.add(textAreaInvestigatedNames);
         textAreaInvestigatedNames.addKeyListener(tabFocus);
         textAreaInvestigatedNames.setBorder(BorderFactory.createLineBorder(Color.gray));
         textAreaInvestigatedNames.setLineWrap(true);
         textAreaInvestigatedNames.setWrapStyleWord(true);
         textFieldRequestDate = new JTextField();
+        caseInfoInputList.add(textFieldRequestDate);
         textFieldCaseNumber = new JTextField();
+        caseInfoInputList.add(textFieldCaseNumber);
         textFieldRequestForm = new JTextField();
+        caseInfoInputList.add(textFieldRequestForm);
         textFieldRequester = new JTextField();
+        caseInfoInputList.add(textFieldRequester);
         textFieldLabCaseNumber = new JTextField();
+        caseInfoInputList.add(textFieldLabCaseNumber);
         textFieldLabCaseDate = new JTextField();
+        caseInfoInputList.add(textFieldLabCaseDate);
         textFieldOrganization = new JTextField();
+        caseInfoInputList.add(textFieldOrganization);
         textAreaExaminerNames = new JTextArea();
+        caseInfoInputList.add(textAreaExaminerNames);
         textAreaExaminerNames.setBorder(BorderFactory.createLineBorder(Color.gray));
         textAreaExaminerNames.addKeyListener(tabFocus);
         textAreaExaminerNames.setLineWrap(true);
         textAreaExaminerNames.setWrapStyleWord(true);
         textFieldContact = new JTextField();
+        caseInfoInputList.add(textFieldContact);
         textAreaCaseNotes = new JTextArea();
+        caseInfoInputList.add(textAreaCaseNotes);
         textAreaCaseNotes.setBorder(BorderFactory.createLineBorder(Color.gray));
         textAreaCaseNotes.setRows(5);
         textAreaCaseNotes.addKeyListener(tabFocus);
         textAreaCaseNotes.setLineWrap(true);
         textAreaCaseNotes.setWrapStyleWord(true);
+
         textFieldCaseOutput = new JTextField();
         textFieldCaseOutput.setEditable(false);
         checkBoxOutputOnSSD = new JCheckBox(Messages.get("Home.NewCase.IsCaseOutputOnSSD"));
@@ -333,6 +352,12 @@ public class CaseInfoTab extends DefaultPanel {
         });
         JButton buttonLoadCaseData = new JButton(Messages.get("Home.NewCase.LoadCaseData"));
         buttonLoadCaseData.addActionListener(e -> {
+            if( isCaseInfoFormFilled() ){
+                int selectedOption = JOptionPane.showConfirmDialog(null, "Deseja sobrescrever as informação existentes?", "Sobrescrever informações", JOptionPane.YES_NO_OPTION);
+                if(selectedOption == 1)
+                    return;
+            }
+
             File caseInfoSourceFile = showLoadCaseInfoFileChooser( Messages.get("Home.NewCase.ChooseCaseInfoFile") );
             ReportInfo reportInfo = new ReportInfo();
             try {
@@ -453,6 +478,21 @@ public class CaseInfoTab extends DefaultPanel {
         reportInfo.caseNotes = textAreaCaseNotes.getText();
     }
 
+    /**
+     * Check if there is any information filled in case info form
+     * @return
+     */
+    private boolean isCaseInfoFormFilled(){
+        for(JTextComponent currentCaseInfoInput : caseInfoInputList ){
+            if(StringUtils.isEmpty(currentCaseInfoInput.getText()) )
+                return true;
+        }
+        return false;
+    }
+
+    /**
+     * Fill the form inputs with reportinfo class data
+     */
     private void populateFormCaseInfo(){
         ReportInfo reportInfo = ipedProcess.getReportInfo();
         textFieldReportNumber.setText( reportInfo.reportNumber != null ? reportInfo.reportNumber : textFieldReportNumber.getText() );
