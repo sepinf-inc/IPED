@@ -11,6 +11,7 @@ import iped.app.home.newcase.model.ExistentCaseOptions;
 import iped.app.home.newcase.model.IPEDProcess;
 import iped.app.home.style.StyleManager;
 import iped.app.home.utils.CasePathManager;
+import iped.app.home.utils.JTextAreaTabFocus;
 import iped.app.ui.Messages;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.LocalConfig;
@@ -96,8 +97,12 @@ public class CaseInfoTab extends DefaultPanel {
         textFieldReportNumber = new JTextField();
         textFieldReportDate = new JTextField();
         textFieldReportTitle = new JTextField();
+        JTextAreaTabFocus tabFocus = new JTextAreaTabFocus();
         textAreaInvestigatedNames = new JTextArea();
-        textAreaInvestigatedNames.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        textAreaInvestigatedNames.addKeyListener(tabFocus);
+        textAreaInvestigatedNames.setBorder(BorderFactory.createLineBorder(Color.gray));
+        textAreaInvestigatedNames.setLineWrap(true);
+        textAreaInvestigatedNames.setWrapStyleWord(true);
         textFieldRequestDate = new JTextField();
         textFieldCaseNumber = new JTextField();
         textFieldRequestForm = new JTextField();
@@ -106,11 +111,17 @@ public class CaseInfoTab extends DefaultPanel {
         textFieldLabCaseDate = new JTextField();
         textFieldOrganization = new JTextField();
         textAreaExaminerNames = new JTextArea();
-        textAreaExaminerNames.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        textAreaExaminerNames.setBorder(BorderFactory.createLineBorder(Color.gray));
+        textAreaExaminerNames.addKeyListener(tabFocus);
+        textAreaExaminerNames.setLineWrap(true);
+        textAreaExaminerNames.setWrapStyleWord(true);
         textFieldContact = new JTextField();
         textAreaCaseNotes = new JTextArea();
-        textAreaCaseNotes.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        textAreaCaseNotes.setBorder(BorderFactory.createLineBorder(Color.gray));
         textAreaCaseNotes.setRows(5);
+        textAreaCaseNotes.addKeyListener(tabFocus);
+        textAreaCaseNotes.setLineWrap(true);
+        textAreaCaseNotes.setWrapStyleWord(true);
         textFieldCaseOutput = new JTextField();
         textFieldCaseOutput.setEditable(false);
         checkBoxOutputOnSSD = new JCheckBox(Messages.get("Home.NewCase.IsCaseOutputOnSSD"));
@@ -192,7 +203,7 @@ public class CaseInfoTab extends DefaultPanel {
      * Create a new JPanel instance containing all inputs
      * @return JPanel - A JPanel containing all data input form itens
      */
-    private JPanel createFormPanel(){
+    private JScrollPane createFormPanel(){
         JPanel panelForm = new JPanel(new GridBagLayout());
         panelForm.setBackground(super.getCurrentBackGroundColor());
         createFormComponentInstances();
@@ -265,7 +276,7 @@ public class CaseInfoTab extends DefaultPanel {
         panelCaseOutputOptions = createCaseOutputOptionsPanel();
         panelForm.add(panelCaseOutputOptions, getGridBagConstraints(column0, currentLine, fullColumnWidth, fullWeightx, new Insets(10,10,0,10)));
 
-        return panelForm;
+        return  new JScrollPane(panelForm);
 
     }
 
@@ -430,11 +441,11 @@ public class CaseInfoTab extends DefaultPanel {
         reportInfo.reportDate = textFieldReportDate.getText();
         reportInfo.reportTitle = textFieldReportTitle.getText();
         reportInfo.examiners = new ArrayList<>( Arrays.asList(textAreaExaminerNames.getText().split("\n")) );
-        reportInfo.caseNumber = textFieldReportNumber.getText();
+        reportInfo.caseNumber = textFieldCaseNumber.getText();
         reportInfo.requestForm = textFieldRequestForm.getText();
         reportInfo.requestDate = textFieldRequestDate.getText();
         reportInfo.requester = textFieldRequester.getText();
-        reportInfo.labCaseNumber = textFieldCaseNumber.getText();
+        reportInfo.labCaseNumber = textFieldLabCaseNumber.getText();
         reportInfo.labCaseDate = textFieldLabCaseDate.getText();
         reportInfo.investigatedName = new ArrayList<>(Arrays.asList(textAreaInvestigatedNames.getText().split("\n") ));
         reportInfo.organizationName = textFieldOrganization.getText();
