@@ -173,7 +173,9 @@ public class NominatimTask extends AbstractTask {
             if (result != null) {
                 if (result.isDone()) {
                     String content = result.get();
-                    processNominatimResult(evidence, content);
+                    if (content != null) {
+                        processNominatimResult(evidence, content);
+                    }
                     queries.remove(evidence);
                 } else {
                     reEnqueueItem(evidence);
