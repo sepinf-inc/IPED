@@ -506,8 +506,9 @@ public class HikvisionFSExtractor{
 		Date dateTime;
 		String sTime = "";
 
-		byte RATS_SIG [] = {(byte)0x52,(byte)0x41,(byte)0x54,(byte)0x53,(byte)0x01,(byte)0x00,(byte)0x00,(byte)0x00};  //RATS signature
+		byte RATS_SIG [] = {(byte)0x52,(byte)0x41,(byte)0x54,(byte)0x53};  //RATS signature
 		int sigLength = RATS_SIG.length;
+		sigLength += 4; //There are two types = 0x01,0x00,0x00,0x00 and 0x14,0x00,0x00,0x00
 		byte logArrayBuffer []; 		
 		
 		int logArraySize = (int) systemLogSize;
@@ -521,64 +522,53 @@ public class HikvisionFSExtractor{
 		
 		foundEnd = 0;
 		next = 0;
-		while ( foundEnd != -1){
+		while ( next !=  (logArraySize-1)){
 			
 			foundIni = KPM.indexOf(logArrayBuffer, RATS_SIG, next);
-			foundEnd = KPM.indexOf(logArrayBuffer, RATS_SIG, foundIni + 8);
+			foundEnd = KPM.indexOf(logArrayBuffer, RATS_SIG, foundIni + sigLength);
 			
-			if (foundEnd != -1){
+			if (foundIni == -1 && foundEnd == -1)
+				break;
 
-				int logSize = foundEnd - foundIni;
-				byte variableArray [] = new byte [logSize];					
-			
-
-				System.arraycopy(logArrayBuffer, foundIni, variableArray, 0, logSize);
-
-				SystemLogHeader objSystemLogHeader = new SystemLogHeader();
-			
-				objSystemLogHeader.createdTime = readLongFromBufLE(variableArray, sigLength + 4, 4);
-
-
-				objSystemLogHeader.majorType = readLongFromBufLE(variableArray, sigLength + 4 + 2, 2);
-				objSystemLogHeader.minorType = readLongFromBufLE(variableArray, sigLength + 4 + 2 + 2, 2);
-
-				int stringSize = logSize - 14;
-				byte stringArray [] = new byte[stringSize];
-
-				/*
-				int j = 0;
-				for (int i=  14 + 1; i < stringArray.length; i++)
-					stringArray[j++] = (byte)readLongFromBufLE(variableArray, i, 1);
-
-				String description = new String(stringArray, "ISO-8859-1");
-				objSystemLogHeader.description = description;
-				*/
-
-				dateTime = new Date(objSystemLogHeader.createdTime * 1000);
-				sTime = DateFor.format(dateTime);
-
-				objSystemLogHeader.dataOffset = systemLogOffsetStart + 14 + next;
-				objSystemLogHeader.dataSize = stringSize;	
-
-				objSystemLogHeader.name = "System Log - "+ objSystemLogHeader.getMajorTypeDescription() + " - " + objSystemLogHeader.getMinorTypeDescription()  +" - "+ sTime + ".log";
-				objSystemLogHeader.path = "logs";
-
-				objSystemLogHeader.parserMinorTypeInfo(variableArray);
-
-				systemLogHeaderList.add(objSystemLogHeader);
-
-				variableArray = null;
-				dateTime = null;
-				stringArray = null;
-
-				next = foundEnd;
-				
-
+			if (foundEnd == -1){
+				foundEnd = logArraySize -1;
 			}
 
+			int logSize = foundEnd - foundIni;
+			byte variableArray [] = new byte [logSize];					
+		
+
+			System.arraycopy(logArrayBuffer, foundIni, variableArray, 0, logSize);
+
+			SystemLogHeader objSystemLogHeader = new SystemLogHeader();
+		
+			objSystemLogHeader.createdTime = readLongFromBufLE(variableArray, sigLength + 4, 4);
+
+
+			objSystemLogHeader.majorType = readLongFromBufLE(variableArray, sigLength + 4 + 2, 2);
+			objSystemLogHeader.minorType = readLongFromBufLE(variableArray, sigLength + 4 + 2 + 2, 2);
+
+			dateTime = new Date(objSystemLogHeader.createdTime * 1000);
+			sTime = DateFor.format(dateTime);
+
+			int dataLogIndex = 14;
+
+			objSystemLogHeader.dataOffset = systemLogOffsetStart + dataLogIndex + next;
+			objSystemLogHeader.dataSize = logSize - dataLogIndex;	
+
+			objSystemLogHeader.name = "System Log - "+ objSystemLogHeader.getMajorTypeDescription() + " - " + objSystemLogHeader.getMinorTypeDescription()  +" - "+ sTime + ".log";
+			objSystemLogHeader.path = "logs";
+
+			objSystemLogHeader.parserMinorTypeInfo(Arrays.copyOfRange(variableArray, dataLogIndex, logSize-1));
+
+			systemLogHeaderList.add(objSystemLogHeader);
+
+			variableArray = null;
+			dateTime = null;
+
+			next = foundEnd;
 			
 		}
-
 
 		logArrayBuffer = null;
 		
@@ -932,7 +922,10 @@ class SystemLogHeader {
 				break;								
 			case 0x51:
 				ret = "Local: Logout";
-				break;				
+				break;
+			case 0x52:
+				ret = "Local: Configure Parameters";
+				break;
 			case 0x5C:
 				ret = "Local: Initialize HDD";
 				break;				
@@ -947,7 +940,10 @@ class SystemLogHeader {
 				break;				
 			case 0x76:
 				ret = "Remote: Get Parameters";
-				break;				
+				break;
+			case 0x77:
+				ret = "Remote: Configure Parameters";
+				break;
 			case 0x78:
 				ret = "Remote: Get Working Status";
 				break;				
@@ -957,15 +953,21 @@ class SystemLogHeader {
 			case 0x7a:
 				ret = "Remote: Alarm Disarming";
 				break;				
+			case 0x80:
+				ret = "Remote: Playback by Time";
+				break;				
 			case 0x82:
 				ret = "Remote: Initialize HDD";
 				break;				
 			case 0x86:
 				ret = "Remote: Export Config File";
 				break;				
+			case 0xa0:
+				ret = "Time Sync.";
+				break;
 			case 0xa1:
 				ret = "HDD Information";
-				break;				
+				break;
 			case 0xa2:
 				ret = "S.M.A.R.T. Information";
 				break;												
@@ -974,7 +976,10 @@ class SystemLogHeader {
 				break;												
 			case 0xa4:
 				ret = "Stop Record";
-				break;												
+				break;								
+			case 0xaa:
+				ret = "System Running State";
+				break;
 			case 0x03:
 				ret = "Start Motion Detection";
 				break;												
@@ -989,10 +994,16 @@ class SystemLogHeader {
 				break;												
 			case 0x22:
 				ret = "Illegal Login";
-				break;												
-
-
-
+				break;									
+			case 0x24:
+				ret = "HDD Error";
+				break;
+			case 0x27:
+				ret = "Network Disconnected";
+				break;
+			case 0x54:
+				ret = "Hik-Connect Offline Exception";
+				break;
 
 		}
 
@@ -1025,18 +1036,41 @@ class SystemLogHeader {
 
 		int minorCode = (int)this.minorType;
 		int majorCode = (int)this.majorType;
-		int baseOffset = 14; // RATS field , plus creatime , plus major code
 
-		if (majorCode == 0x4 && minorCode == 0xa2 ){ //"S.M.A.R.T. Information"
-
+		if (majorCode == 0x4 && minorCode == 0xa2 ){ //S.M.A.R.T. Information
 
 
-				String firmware = getStringFromByteArray(byteArrayLogInfo, baseOffset + 1081, 10,"UTF-8");
-				String model = getStringFromByteArray(byteArrayLogInfo, baseOffset + 1091, 41,"UTF-8");
-				String serial = getStringFromByteArray(byteArrayLogInfo, baseOffset + 1132, 22,"UTF-8");
+
+				String firmware = getStringFromByteArray(byteArrayLogInfo, 1081, 10,"UTF-8");
+				String model = getStringFromByteArray(byteArrayLogInfo, 1091, 41,"UTF-8");
+				String serial = getStringFromByteArray(byteArrayLogInfo, 1132, 22,"UTF-8");
 				
+				this.description += "Model:"+model+"\n";
+				this.description += "Serial:"+serial+"\n";
+				this.description += "Firmware:"+firmware+"\n";
+
 				//System.out.println(firmware+" "+model+" "+serial);
-				//this.serialInfo = serialString;
+
+
+		}
+
+		if (majorCode == 0x4 && ( minorCode == 0xa3 || minorCode == 0xa4) ){ //Start Record; Stop Record
+
+				int channelNumber = (int)byteArrayLogInfo[54];
+				int streamType  = (int)byteArrayLogInfo[66];
+				boolean recordEnabled  = (byteArrayLogInfo[62]==0x01)?true:false;
+				boolean eventEnabled  = (byteArrayLogInfo[63]==0x01)?true:false;
+				int recordTypeStatus = (int)byteArrayLogInfo[64];
+				int motionDetectionStatus = (int)byteArrayLogInfo[70];
+
+				this.description += "Channel:"+channelNumber+"\n";
+				this.description += "Stream Type:"+streamType+"\n";
+				this.description += "Record:"+recordEnabled+"\n";
+				this.description += "Event:"+eventEnabled+"\n";
+				this.description += "Record Type:"+recordTypeStatus+"\n";
+				this.description += "Motion Detection:"+motionDetectionStatus+"\n";
+
+				//System.out.println(channelNumber+" "+streamType+" "+recordEnabled+" "+eventEnabled+" "+recordTypeStatus+" "+motionDetectionStatus);
 				
 
 		}
