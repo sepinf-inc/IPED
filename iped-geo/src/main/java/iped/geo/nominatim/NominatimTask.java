@@ -207,22 +207,29 @@ public class NominatimTask extends AbstractTask {
 
         try {
             JSONObject obj = (JSONObject) new JSONParser().parse(content);
+
             JSONArray features = (JSONArray) obj.get("features");
-            JSONObject properties = (JSONObject) ((JSONObject) features.get(0)).get("properties");
-            JSONObject address = (JSONObject) properties.get("address");
-            String country = (String) address.get("country");
-            evidence.getMetadata().add(NOMINATIM_COUNTRY_METADATA, country);
-            String state = (String) address.get("state");
-            evidence.getMetadata().add(NOMINATIM_STATE_METADATA, country + ":" + state);
-            String city = (String) address.get("city");
-            evidence.getMetadata().add(NOMINATIM_CITY_METADATA, country + ":" + state + ":" + city);
-            String suburb = (String) address.get("suburb");
-            if (suburb != null) {
-                evidence.getMetadata().add(NOMINATIM_SUBURB_METADATA,
-                        country + ":" + state + ":" + city + ":" + suburb);
+            if (features != null) { // no error
+                JSONObject properties = (JSONObject) ((JSONObject) features.get(0)).get("properties");
+                JSONObject address = (JSONObject) properties.get("address");
+                String country = (String) address.get("country");
+                evidence.getMetadata().add(NOMINATIM_COUNTRY_METADATA, country);
+                String state = (String) address.get("state");
+                evidence.getMetadata().add(NOMINATIM_STATE_METADATA, country + ":" + state);
+                String city = (String) address.get("city");
+                if (city == null) {
+                    city = (String) address.get("town");
+                }
+                evidence.getMetadata().add(NOMINATIM_CITY_METADATA, country + ":" + state + ":" + city);
+                String suburb = (String) address.get("suburb");
+                if (suburb != null) {
+                    evidence.getMetadata().add(NOMINATIM_SUBURB_METADATA,
+                            country + ":" + state + ":" + city + ":" + suburb);
+                }
+                String addresstype = (String) properties.get("addresstype");
+                evidence.getMetadata().add(NOMINATIM_ADDRESSTYPE_METADATA, addresstype);
             }
-            String addresstype = (String) properties.get("addresstype");
-            evidence.getMetadata().add(NOMINATIM_ADDRESSTYPE_METADATA, addresstype);
+
         } catch (ParseException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
