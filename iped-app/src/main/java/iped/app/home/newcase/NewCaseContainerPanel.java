@@ -56,16 +56,20 @@ public class NewCaseContainerPanel extends DefaultPanel {
     private JTabbedPane setupTabbedPanel(){
 
         tabbedPane = new JTabbedPane(JTabbedPane.LEFT);
-        tabbedPane.setEnabled(false);
+        //tabbedPane.setEnabled(false);
+
+
         tabbedPane.setUI(new BasicTabbedPaneUI() {
             @Override protected int calculateTabHeight(int tabPlacement, int tabIndex, int fontHeight) {return 45;}
         });
+
         tabbedPane.addTab(Messages.get("Home.CaseInformation"), null, new CaseInfoTab(mainFrame), Messages.get("Home.CaseInformationTollTip"));
         tabbedPane.addTab(Messages.get("Home.Evidences"), null, new EvidencesTab(mainFrame), Messages.get("Home.EvidencesToolTip"));
         tabbedPane.addTab(Messages.get("Home.ProcessOptions"), null, new ProcessOptionTab(mainFrame), Messages.get("Home.ProcessOptionsToolTip"));
         pmc = new ProcessManagerContainer(mainFrame);
         tabbedPane.addTab(Messages.get("Home.ProcessingTab"), null, pmc, Messages.get("Home.ProcessingTabTooltip"));
-
+        disableTabs();
+        tabbedPane.setEnabledAt(0, true);
         return tabbedPane;
     }
 
@@ -74,8 +78,12 @@ public class NewCaseContainerPanel extends DefaultPanel {
      */
     public void goToNextTab(){
         int selectedIndex = tabbedPane.getSelectedIndex();
-        int nextIndex = selectedIndex == tabbedPane.getTabCount()-1 ? 0 : selectedIndex+1;
+        boolean isLastTabIndex =  (selectedIndex == tabbedPane.getTabCount()-1);
+        //if is in the last tab index, prevent to get a invalid index
+        int nextIndex = isLastTabIndex ? selectedIndex : selectedIndex+1;
+        disableTabs();
         tabbedPane.setSelectedIndex(nextIndex);
+        tabbedPane.setEnabledAt(nextIndex, true);
     }
 
     /**
@@ -83,8 +91,17 @@ public class NewCaseContainerPanel extends DefaultPanel {
      */
     public void goToPreviousTab(){
         int selectedIndex = tabbedPane.getSelectedIndex();
-        int previousIndex = selectedIndex == tabbedPane.getTabCount()-1 ? selectedIndex-1 : 0 ;
+        boolean isTheFirstTabIndex = selectedIndex == 0;
+        int previousIndex = isTheFirstTabIndex ? selectedIndex : selectedIndex-1 ;
+        disableTabs();
         tabbedPane.setSelectedIndex(previousIndex);
+        tabbedPane.setEnabledAt(previousIndex, true);
+    }
+
+    private void disableTabs(){
+        for( int i = 0; i < tabbedPane.getTabCount(); i++ ){
+            tabbedPane.setEnabledAt(i, false);
+        }
     }
 
     /**

@@ -480,8 +480,8 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
     private Component createNavigationButtonsPanel() {
         JPanel panelButtons = new JPanel();
         panelButtons.setBackground(super.getCurrentBackGroundColor());
-        JButton buttoCancel = new JButton(Messages.get("Home.Back"));
-        buttoCancel.addActionListener( e -> NewCaseContainerPanel.getInstance().goToPreviousTab());
+        JButton buttonGoBack = new JButton(Messages.get("Home.Back"));
+        buttonGoBack.addActionListener( e -> NewCaseContainerPanel.getInstance().goToPreviousTab());
 
         JButton buttoAddScriptTask = new JButton(Messages.get("Home.ProcOptions.AddScriptTask"));
         buttoAddScriptTask.addActionListener( e -> {
@@ -512,7 +512,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
             NewCaseContainerPanel.getInstance().startIPEDProcessing();
         });
 
-        panelButtons.add(buttoCancel);
+        panelButtons.add(buttonGoBack);
         // panelButtons.add(buttoAddScriptTask);
         panelButtons.add(buttonStartProcess);
         return panelButtons;
