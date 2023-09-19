@@ -295,7 +295,7 @@ public class CaseInfoTab extends DefaultPanel {
         panelCaseOutputOptions = createCaseOutputOptionsPanel();
         panelForm.add(panelCaseOutputOptions, getGridBagConstraints(column0, currentLine, fullColumnWidth, fullWeightx, new Insets(10,10,0,10)));
 
-        return  new JScrollPane(panelForm);
+        return new JScrollPane(panelForm);
 
     }
 
@@ -353,7 +353,7 @@ public class CaseInfoTab extends DefaultPanel {
         JButton buttonLoadCaseData = new JButton(Messages.get("Home.NewCase.LoadCaseData"));
         buttonLoadCaseData.addActionListener(e -> {
             if( isCaseInfoFormFilled() ){
-                int selectedOption = JOptionPane.showConfirmDialog(null, "Deseja sobrescrever as informação existentes?", "Sobrescrever informações", JOptionPane.YES_NO_OPTION);
+                int selectedOption = JOptionPane.showConfirmDialog(null, Messages.get("Home.NewCase.OpenCaseFileDialogMessage"), Messages.get("Home.NewCase.OpenCaseFileDialogTitle"), JOptionPane.YES_NO_OPTION);
                 if(selectedOption == 1)
                     return;
             }
@@ -476,6 +476,7 @@ public class CaseInfoTab extends DefaultPanel {
         reportInfo.organizationName = textFieldOrganization.getText();
         reportInfo.contact = textFieldContact.getText();
         reportInfo.caseNotes = textAreaCaseNotes.getText();
+        reportInfo.evidences = new ArrayList<>();
     }
 
     /**
@@ -484,7 +485,7 @@ public class CaseInfoTab extends DefaultPanel {
      */
     private boolean isCaseInfoFormFilled(){
         for(JTextComponent currentCaseInfoInput : caseInfoInputList ){
-            if(StringUtils.isEmpty(currentCaseInfoInput.getText()) )
+            if(! StringUtils.isEmpty(currentCaseInfoInput.getText()) )
                 return true;
         }
         return false;
@@ -494,27 +495,30 @@ public class CaseInfoTab extends DefaultPanel {
      * Fill the form inputs with reportinfo class data
      */
     private void populateFormCaseInfo(){
+        String emptyValue = "";
         ReportInfo reportInfo = ipedProcess.getReportInfo();
-        textFieldReportNumber.setText( reportInfo.reportNumber != null ? reportInfo.reportNumber : textFieldReportNumber.getText() );
-        textFieldReportDate.setText( reportInfo.reportDate != null ? reportInfo.reportDate : textFieldReportDate.getText() );
-        textFieldReportTitle.setText(reportInfo.reportTitle != null ? reportInfo.reportTitle : textFieldReportTitle.getText() );
+        textFieldReportNumber.setText( reportInfo.reportNumber != null ? reportInfo.reportNumber : emptyValue );
+        textFieldReportDate.setText( reportInfo.reportDate != null ? reportInfo.reportDate : emptyValue );
+        textFieldReportTitle.setText(reportInfo.reportTitle != null ? reportInfo.reportTitle : emptyValue );
         if( (reportInfo.examiners != null) && (!reportInfo.examiners.isEmpty())){
             String examinerNames = reportInfo.examiners.stream().map(String::trim).collect(Collectors.joining("\n"));
             textAreaExaminerNames.append(examinerNames);
-        }
-        textFieldCaseNumber.setText( reportInfo.caseNumber != null ? reportInfo.caseNumber : textFieldCaseNumber.getText() );
-        textFieldRequestForm.setText( reportInfo.requestForm != null ? reportInfo.requestForm : textFieldRequestForm.getText() );
-        textFieldRequestDate.setText(reportInfo.requestDate != null ? reportInfo.requestDate : textFieldRequestDate.getText() );
-        textFieldRequester.setText(reportInfo.requester != null? reportInfo.requester : textFieldRequester.getText() );
-        textFieldLabCaseNumber.setText(reportInfo.labCaseNumber != null? reportInfo.labCaseNumber : textFieldLabCaseNumber.getText() );
-        textFieldLabCaseDate.setText(reportInfo.labCaseDate != null? reportInfo.labCaseDate : textFieldLabCaseDate.getText() );
+        }else
+            textAreaExaminerNames.setText(emptyValue);
+        textFieldCaseNumber.setText( reportInfo.caseNumber != null ? reportInfo.caseNumber : emptyValue );
+        textFieldRequestForm.setText( reportInfo.requestForm != null ? reportInfo.requestForm : emptyValue );
+        textFieldRequestDate.setText(reportInfo.requestDate != null ? reportInfo.requestDate : emptyValue );
+        textFieldRequester.setText(reportInfo.requester != null? reportInfo.requester : emptyValue );
+        textFieldLabCaseNumber.setText(reportInfo.labCaseNumber != null? reportInfo.labCaseNumber : emptyValue );
+        textFieldLabCaseDate.setText(reportInfo.labCaseDate != null? reportInfo.labCaseDate : emptyValue );
         if( (reportInfo.investigatedName != null) && (!reportInfo.investigatedName.isEmpty()) ){
             String investigatedNames = reportInfo.investigatedName.stream().map(String::trim).collect(Collectors.joining("\n"));
             textAreaInvestigatedNames.setText(investigatedNames);
-        }
-        textFieldOrganization.setText(reportInfo.organizationName != null ? reportInfo.organizationName : textFieldOrganization.getText() );
-        textFieldContact.setText(reportInfo.contact != null ? reportInfo.contact : textFieldContact.getText() );
-        textAreaCaseNotes.setText(reportInfo.caseNotes != null ? reportInfo.caseNotes : textAreaCaseNotes.getText() );
+        }else
+            textAreaInvestigatedNames.setText(emptyValue);
+        textFieldOrganization.setText(reportInfo.organizationName != null ? reportInfo.organizationName : emptyValue );
+        textFieldContact.setText(reportInfo.contact != null ? reportInfo.contact : emptyValue );
+        textAreaCaseNotes.setText(reportInfo.caseNotes != null ? reportInfo.caseNotes : emptyValue );
     }
 
 }

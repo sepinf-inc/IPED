@@ -42,7 +42,7 @@ public class ReportInfo implements Serializable {
     public String contact;
     public String caseNotes;
 
-    class EvidenceDesc implements Serializable {
+    public class EvidenceDesc implements Serializable {
 
         private static final long serialVersionUID = 1L;
 

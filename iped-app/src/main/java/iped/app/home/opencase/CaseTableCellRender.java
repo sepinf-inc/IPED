@@ -20,6 +20,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.stream.Collectors;
 
+import static java.util.Comparator.comparing;
+
 public class CaseTableCellRender extends DefaultTableCellRenderer {
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -61,25 +63,25 @@ public class CaseTableCellRender extends DefaultTableCellRenderer {
         casePanel.setLayout(new BoxLayout(casePanel, BoxLayout.PAGE_AXIS));
         casePanel.add(getCasePathJlabel(casePath));
         if( !StringUtils.isBlank(reportInfo.caseNumber) )
-            casePanel.add(new JLabel( getLabelText("Home.NewCase.CaseNumber", reportInfo.caseNumber) ) );
+            casePanel.add(new JLabel( getLabelText("ReportDialog.Investigation", reportInfo.caseNumber) ) );
         if( !StringUtils.isBlank(reportInfo.reportTitle) )
-            casePanel.add(new JLabel(getLabelText("Home.NewCase.CaseName", reportInfo.reportTitle) ));
+            casePanel.add(new JLabel(getLabelText("ReportDialog.ReportTitle", reportInfo.reportTitle) ));
         if( ! (reportInfo.investigatedName == null || reportInfo.investigatedName.isEmpty()) )
-            casePanel.add(new JLabel(getLabelText("Home.NewCase.Investigated", reportInfo.investigatedName.stream().map(String::trim).collect(Collectors.joining(", "))) ));
+            casePanel.add(new JLabel(getLabelText("ReportDialog.InvestigatedNames", reportInfo.investigatedName.stream().map(String::trim).collect(Collectors.joining(", "))) ));
         if( !StringUtils.isBlank(reportInfo.requestDate) )
-            casePanel.add(new JLabel(getLabelText("Home.NewCase.RequestDate", reportInfo.requestDate) ));
+            casePanel.add(new JLabel(getLabelText("ReportDialog.RequestDate", reportInfo.requestDate) ));
         if( !StringUtils.isBlank(reportInfo.requester) )
-            casePanel.add(new JLabel(getLabelText("Home.NewCase.Requester", reportInfo.requester) ));
+            casePanel.add(new JLabel(getLabelText("ReportDialog.Requester", reportInfo.requester) ));
         if( !StringUtils.isBlank(reportInfo.organizationName) )
-            casePanel.add(new JLabel(getLabelText("Home.NewCase.OrganizationName", reportInfo.organizationName) ));
+            casePanel.add(new JLabel(getLabelText("ReportDialog.organizationName", reportInfo.organizationName) ));
         if( !(reportInfo.examiners == null || reportInfo.examiners.isEmpty()) )
-            casePanel.add(new JLabel(getLabelText("Home.NewCase.Examiners", reportInfo.examiners.stream().map(String::trim).collect(Collectors.joining(", "))  )) );
+            casePanel.add(new JLabel(getLabelText("ReportDialog.Examiner", reportInfo.examiners.stream().map(String::trim).collect(Collectors.joining(", "))  )) );
         if( !StringUtils.isBlank(reportInfo.contact) )
-            casePanel.add(new JLabel(getLabelText("Home.NewCase.Contact", reportInfo.contact) ));
+            casePanel.add(new JLabel(getLabelText("ReportDialog.contact", reportInfo.contact) ));
         if( !StringUtils.isBlank(reportInfo.caseNotes) )
-            casePanel.add(new JLabel(getLabelText("Home.NewCase.Notes", reportInfo.caseNotes) ));
-        /*if( !(reportInfo.evidences == null || reportInfo.evidences.isEmpty()) )
-            casePanel.add(new JLabel(getLabelText("Home.NewCase.Materials", reportInfo.evidences.stream().map(String::trim).collect(Collectors.joining(", "))) ));*/
+            casePanel.add(new JLabel(getLabelText("ReportDialog.caseNotes", reportInfo.caseNotes) ));
+        if( !(reportInfo.evidences == null || reportInfo.evidences.isEmpty()) )
+            casePanel.add(new JLabel(getLabelText("ReportDialog.Evidences", reportInfo.evidences.stream().sorted( comparing(ReportInfo.EvidenceDesc::getId) ).map( ReportInfo.EvidenceDesc::getDesc ).collect( Collectors.joining(", ") )) ));
         return casePanel;
     }
 
@@ -92,8 +94,9 @@ public class CaseTableCellRender extends DefaultTableCellRenderer {
         ReportInfo reportInfo = null;
         if( caseInfoFile.exists() ){
             try {
-                reportInfo =  ReportInfo.readReportInfoFile(caseInfoFile); //new CaseInfoManager().loadCaseInfo(caseInfoFile);
-            } catch (ClassNotFoundException | IOException ex) {
+                reportInfo = new ReportInfo();
+                reportInfo.readJsonInfoFile(caseInfoFile);
+            } catch (IOException ex) {
                 ex.printStackTrace();
             }
         }
