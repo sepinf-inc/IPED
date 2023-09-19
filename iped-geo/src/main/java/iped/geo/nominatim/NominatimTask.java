@@ -3,7 +3,11 @@ package iped.geo.nominatim;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -21,6 +25,10 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.message.BasicHeaderElementIterator;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.protocol.HttpContext;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +45,14 @@ public class NominatimTask extends AbstractTask {
 
     static final String NOMINATIM_METADATA = "nominatim:geojson";
     protected static final long CUSTOM_KEEP_ALIVE = 5000;
+
+    public static final String NOMINATIM_COUNTRY_METADATA = "nominatim:country";
+    public static final String NOMINATIM_STATE_METADATA = "nominatim:state";
+    public static final String NOMINATIM_CITY_METADATA = "nominatim:city";
+    public static final String NOMINATIM_ADDRESSTYPE_METADATA = "nominatim:addrestype";
+    public static final String NOMINATIM_SUBURB_METADATA = "nominatim:suburb";
+
+    static int MAXTOTAL = 200;
 
     /* The http connection pool is static to be used application wide */
     static PoolingHttpClientConnectionManager cm = null;
@@ -57,6 +73,8 @@ public class NominatimTask extends AbstractTask {
         return Arrays.asList(new NominatimConfig());
     }
 
+    static private ExecutorService queryExecutor = Executors.newFixedThreadPool(10);
+
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
         count.incrementAndGet();
@@ -64,7 +82,7 @@ public class NominatimTask extends AbstractTask {
             nominatimConfig = (NominatimConfig) configurationManager.findObject(NominatimConfig.class);
 
             cm = new PoolingHttpClientConnectionManager();
-            cm.setMaxTotal(200);
+            cm.setMaxTotal(MAXTOTAL);
             cm.setDefaultMaxPerRoute(nominatimConfig.getConnectionPoolSize());
             myStrategy = new ConnectionKeepAliveStrategy() {
                 @Override
@@ -116,43 +134,98 @@ public class NominatimTask extends AbstractTask {
         }
     }
 
+    private Future<String> executeQuery(String lat, String longit) {
+        HttpGet get = new HttpGet(baseUrl + "/reverse?addressdetails=1&format=geojson&lat=" + lat + "&lon=" + longit);
+
+        Future<String> f = queryExecutor.submit(() -> {
+            try {
+                try (CloseableHttpResponse response = httpClient.execute(get)) {
+                    try (BufferedReader in = new BufferedReader(
+                            new InputStreamReader(response.getEntity().getContent()))) {
+                        String inputLine;
+                        StringBuffer content = new StringBuffer();
+                        while ((inputLine = in.readLine()) != null) {
+                            content.append(inputLine);
+                        }
+
+                        return content.toString();
+                    }
+                }
+            } catch (ClientProtocolException cpe) {
+                cpe.printStackTrace();
+                LOGGER.warn(cpe.getMessage());
+            } catch (Exception e) {
+                LOGGER.warn(e.getMessage());
+                e.printStackTrace();
+            }
+            return null;
+        });
+
+        return f;
+    }
+
+    static HashMap<IItem, Future<String>> queries = new HashMap<IItem, Future<String>>();
+
     @Override
     protected void process(IItem evidence) throws Exception {
         if (!unresolvedServer) {
-            String featureString = evidence.getMetadata().get(GeofileParser.FEATURE_STRING);
+            Future<String> result = queries.get(evidence);
+            if (result != null) {
+                if (result.isDone()) {
+                    String content = result.get();
+                    processNominatimResult(evidence, content);
+                    queries.remove(evidence);
+                } else {
+                    reEnqueueItem(evidence);
+                }
+            } else {
+                String featureString = evidence.getMetadata().get(GeofileParser.FEATURE_STRING);
 
-            if (featureString == null || featureString.length() < 5) {
-                String location = evidence.getMetadata().get(ExtraProperties.LOCATIONS);
+                if (featureString == null || featureString.length() < 5) {
+                    String location = evidence.getMetadata().get(ExtraProperties.LOCATIONS);
 
-                if (location != null && location.length() >= 1) {
-                    String[] locs = location.split(";"); //$NON-NLS-1$
-                    String lat = locs[0].trim();
-                    String longit = locs[1].trim();
+                    if (location != null && location.length() >= 1) {
+                        String[] locs = location.split(";"); //$NON-NLS-1$
+                        String lat = locs[0].trim();
+                        String longit = locs[1].trim();
 
-                    try {
-                        HttpGet get = new HttpGet(baseUrl + "/reverse?format=geojson&lat=" + lat + "&lon=" + longit);
-                        try (CloseableHttpResponse response = httpClient.execute(get)) {
-                            try (BufferedReader in = new BufferedReader(
-                                    new InputStreamReader(response.getEntity().getContent()))) {
-                                String inputLine;
-                                StringBuffer content = new StringBuffer();
-                                while ((inputLine = in.readLine()) != null) {
-                                    content.append(inputLine);
-                                }
+                        Future<String> f = executeQuery(lat, longit);
+                        queries.put(evidence, f);
 
-                                evidence.getMetadata().add(NOMINATIM_METADATA, content.toString());
-                            }
-                        }
-                    } catch (ClientProtocolException cpe) {
-                        cpe.printStackTrace();
-                        LOGGER.warn(cpe.getMessage());
-                    } catch (Exception e) {
-                        LOGGER.warn(e.getMessage());
-                        e.printStackTrace();
+                        reEnqueueItem(evidence);
                     }
                 }
             }
+
         }
+    }
+
+    private void processNominatimResult(IItem evidence, String content) {
+        evidence.getMetadata().add(NOMINATIM_METADATA, content);
+
+        try {
+            JSONObject obj = (JSONObject) new JSONParser().parse(content);
+            JSONArray features = (JSONArray) obj.get("features");
+            JSONObject properties = (JSONObject) ((JSONObject) features.get(0)).get("properties");
+            JSONObject address = (JSONObject) properties.get("address");
+            String country = (String) address.get("country");
+            evidence.getMetadata().add(NOMINATIM_COUNTRY_METADATA, country);
+            String state = (String) address.get("state");
+            evidence.getMetadata().add(NOMINATIM_STATE_METADATA, country + ":" + state);
+            String city = (String) address.get("city");
+            evidence.getMetadata().add(NOMINATIM_CITY_METADATA, country + ":" + state + ":" + city);
+            String suburb = (String) address.get("suburb");
+            if (suburb != null) {
+                evidence.getMetadata().add(NOMINATIM_SUBURB_METADATA,
+                        country + ":" + state + ":" + city + ":" + suburb);
+            }
+            String addresstype = (String) properties.get("addresstype");
+            evidence.getMetadata().add(NOMINATIM_ADDRESSTYPE_METADATA, addresstype);
+        } catch (ParseException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
     }
 
     class IdleConnectionMonitorThread extends Thread {
