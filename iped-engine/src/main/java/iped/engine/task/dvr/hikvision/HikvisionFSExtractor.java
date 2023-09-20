@@ -6,6 +6,22 @@ import java.text.*;
 
 import iped.io.SeekableInputStream;
 
+
+/*
+
+ * HikvisionExtractor.
+ *
+ * @author guilherme.dutra
+
+
+Reference information:
+https://eudl.eu/pdf/10.1007/978-3-319-25512-5_13
+https://github.com/theAtropos4n6/HikvisionLogAnalyzer
+
+
+ */
+
+
 public class HikvisionFSExtractor{  
 	
 	private SeekableInputStream is = null;
@@ -559,7 +575,9 @@ public class HikvisionFSExtractor{
 			objSystemLogHeader.name = "System Log - "+ objSystemLogHeader.getMajorTypeDescription() + " - " + objSystemLogHeader.getMinorTypeDescription()  +" - "+ sTime + ".log";
 			objSystemLogHeader.path = "logs";
 
-			objSystemLogHeader.parserMinorTypeInfo(Arrays.copyOfRange(variableArray, dataLogIndex, logSize-1));
+			objSystemLogHeader.description = objSystemLogHeader.parseMinorTypeInfo(Arrays.copyOfRange(variableArray, dataLogIndex, logSize-1),objSystemLogHeader.minorType);
+
+			//System.out.println(objSystemLogHeader.getMinorTypeDescription() + "\n"+ objSystemLogHeader.description);
 
 			systemLogHeaderList.add(objSystemLogHeader);
 
@@ -878,7 +896,7 @@ class SystemLogHeader {
 
 	public String getMajorTypeDescription(){
 
-		String ret = "Major Unknown";
+		String ret = "Major Type Unknown";
 		int code = (int)this.majorType;
 
 		switch(code){
@@ -903,7 +921,7 @@ class SystemLogHeader {
 
 	public String getMinorTypeDescription(){
 
-		String ret = "Minor Unknown";
+		String ret = "Minor Type Unknown";
 		int code = (int)this.minorType;
 
 		switch(code){
@@ -1031,51 +1049,184 @@ class SystemLogHeader {
 		return ret;
 	}
 
+	private String getIPFromByteArray(byte [] byteArray, int offsetIni, int length) throws Exception{
+
+		String ret = "";
+
+		for (int i=0; i < length && (i+offsetIni) < byteArray.length ; i++){
+			if (i!=length-1)
+				ret += String.valueOf((int)byteArray[i+offsetIni] & 0xff)+".";
+			else
+				ret += String.valueOf((int)byteArray[i+offsetIni] & 0xff);
+		}			
+
+		return ret;
+
+	}
+
 	//TODO - parse log special info
-	public void parserMinorTypeInfo(byte [] byteArrayLogInfo) throws Exception{
+	public String parseMinorTypeInfo(byte [] byteArrayLogInfo, long minorType) throws Exception{
 
-		int minorCode = (int)this.minorType;
-		int majorCode = (int)this.majorType;
+		String ret = "";
 
-		if (majorCode == 0x4 && minorCode == 0xa2 ){ //S.M.A.R.T. Information
+		// Remote Login, Logout; Remote: Alarm Disarming, Arming; Remote:  Get Working Status, Export Config File,Get Parameters;
+		if ( minorType == 0x70 || minorType == 0x71 || minorType == 0x7a || minorType == 0x78 || minorType == 0x86 || minorType == 0x76 || minorType == 0x79) { 
 
-
-
-				String firmware = getStringFromByteArray(byteArrayLogInfo, 1081, 10,"UTF-8");
-				String model = getStringFromByteArray(byteArrayLogInfo, 1091, 41,"UTF-8");
-				String serial = getStringFromByteArray(byteArrayLogInfo, 1132, 22,"UTF-8");
-				
-				this.description += "Model:"+model+"\n";
-				this.description += "Serial:"+serial+"\n";
-				this.description += "Firmware:"+firmware+"\n";
-
-				//System.out.println(firmware+" "+model+" "+serial);
-
+			String user = getStringFromByteArray(byteArrayLogInfo, 2, 6,"UTF-8");
+			String ip = getIPFromByteArray(byteArrayLogInfo, 18,4);
+			
+			ret += "User: "+user+"\n";
+			ret += "IP: "+ip+"\n";
 
 		}
 
-		if (majorCode == 0x4 && ( minorCode == 0xa3 || minorCode == 0xa4) ){ //Start Record; Stop Record
+		//S.M.A.R.T. Information
+		if (minorType == 0xa2 ){ 
 
-				int channelNumber = (int)byteArrayLogInfo[54];
-				int streamType  = (int)byteArrayLogInfo[66];
-				boolean recordEnabled  = (byteArrayLogInfo[62]==0x01)?true:false;
-				boolean eventEnabled  = (byteArrayLogInfo[63]==0x01)?true:false;
-				int recordTypeStatus = (int)byteArrayLogInfo[64];
-				int motionDetectionStatus = (int)byteArrayLogInfo[70];
-
-				this.description += "Channel:"+channelNumber+"\n";
-				this.description += "Stream Type:"+streamType+"\n";
-				this.description += "Record:"+recordEnabled+"\n";
-				this.description += "Event:"+eventEnabled+"\n";
-				this.description += "Record Type:"+recordTypeStatus+"\n";
-				this.description += "Motion Detection:"+motionDetectionStatus+"\n";
-
-				//System.out.println(channelNumber+" "+streamType+" "+recordEnabled+" "+eventEnabled+" "+recordTypeStatus+" "+motionDetectionStatus);
-				
+			String firmware = getStringFromByteArray(byteArrayLogInfo, 1081, 10,"UTF-8");
+			String model = getStringFromByteArray(byteArrayLogInfo, 1091, 41,"UTF-8");
+			String serial = getStringFromByteArray(byteArrayLogInfo, 1132, 22,"UTF-8");
+			
+			ret += "Model: "+model+"\n";
+			ret += "Serial: "+serial+"\n";
+			ret += "Firmware: "+firmware+"\n";
 
 		}
 
-		return;
+		//HDD Information
+		if (minorType == 0xa1 ){
+
+			String hddNumber = getStringFromByteArray(byteArrayLogInfo, 46, 1,"UTF-8");
+			String firmware = getStringFromByteArray(byteArrayLogInfo, 78, 12,"UTF-8");
+			String model = getStringFromByteArray(byteArrayLogInfo, 90, 40,"UTF-8");
+			String serial = getStringFromByteArray(byteArrayLogInfo, 58, 20,"UTF-8");
+			
+			ret += "HDD: "+hddNumber+"\n";
+			ret += "Model: "+model+"\n";
+			ret += "Serial: "+serial+"\n";
+			ret += "Firmware: "+firmware+"\n";
+
+		}
+
+		//Power On
+		if (minorType == 0x41 ){
+
+			String model = getStringFromByteArray(byteArrayLogInfo, 54, 65,"UTF-8");
+			String serial = getStringFromByteArray(byteArrayLogInfo, 118, 27,"UTF-8");
+			String firmware = "";
+			String build = "";
+
+			ret += "Model: "+model+"\n";
+			ret += "Serial: "+serial+"\n";
+			ret += "Firmware: "+firmware+"\n";
+			ret += "Build: "+build+"\n";
+
+		}
+
+		//Start Record; Stop Record
+		if (minorType == 0xa3 || minorType == 0xa4){ 
+
+			int channelNumber = (int)byteArrayLogInfo[54];
+			int streamType  = (int)byteArrayLogInfo[66];
+			String streamTypeString = "Unknown Stream";
+			boolean recordEnabled  = (byteArrayLogInfo[62]==0x01)?true:false;
+			boolean eventEnabled  = (byteArrayLogInfo[63]==0x01)?true:false;
+			int recordTypeStatus = (int)byteArrayLogInfo[64];
+			String recordTypeString = "Unknown";
+			int motionDetectionStatus = (int)byteArrayLogInfo[70];
+			String motionDetectionString = "None";
+
+			if (recordTypeStatus==0x09){
+				recordTypeString = "Event";
+			}else if (recordTypeStatus==0x00){
+				recordTypeString = "Continuous";
+			}
+
+			if (streamType==0x01){
+				streamTypeString = "Sub-Stream";
+			}else if (recordTypeStatus==0x00){
+				streamTypeString = "Main Stream";
+			}
+
+			if (motionDetectionStatus != 0x00){
+				motionDetectionString = String.valueOf(motionDetectionStatus);
+			}
+			
+			ret += "Channel: "+channelNumber+"\n";
+			ret += "Stream Type: "+streamTypeString+"\n";
+			ret += "Record: "+(recordEnabled?"On":"Off")+"\n";
+			ret += "Event: "+(eventEnabled?"On":"Off")+"\n";
+			ret += "Record Type: "+recordTypeString+"\n";
+			ret += "Motion Detection on Camera: "+motionDetectionString+"\n";
+
+		}
+
+		//Illegal Login
+		if (minorType == 0x22){ 
+
+			String user = getStringFromByteArray(byteArrayLogInfo, 2, 20,"UTF-8");
+			String ip = getIPFromByteArray(byteArrayLogInfo, 22,4);
+			
+			ret += "User: "+user+"\n";
+			ret += "IP: "+ip+"\n";
+
+		}
+
+		// Local Login, Logout
+		if ( minorType == 0x50 || minorType == 0x51){ 
+
+			String user = getStringFromByteArray(byteArrayLogInfo, 2, 20,"UTF-8");
+			
+			ret += "User: "+user+"\n";
+
+		}
+
+		//Remote: Initialize HDD
+		if (minorType == 0x82){ 
+
+			String user = getStringFromByteArray(byteArrayLogInfo, 2, 6,"UTF-8");
+			String ip = getIPFromByteArray(byteArrayLogInfo, 18,4);
+			
+			ret += "User: "+user+"\n";
+			ret += "IP: "+ip+"\n";
+
+		}
+
+		// Local: Initialize HDD
+		if ( minorType == 0x5C){ 
+
+			String user = getStringFromByteArray(byteArrayLogInfo, 2, 20,"UTF-8");
+			
+			ret += "User: "+user+"\n";
+
+		}
+
+		//Start Motion Detection, Stop Motion Detection, Start Video Tampering, Stop Video Tampering
+		if (minorType == 0x03 || minorType == 0x04 || minorType == 0x05 || minorType == 0x06){ 
+
+			int channelNumber = (int)byteArrayLogInfo[2];
+
+			ret += "Channel: "+channelNumber+"\n";
+
+		}
+
+		//HDD Detect
+		if (minorType == 0x6e){ 
+
+			ret = "";
+
+		}
+
+		// Local: Shutdown
+		if ( minorType == 0x42){ 
+
+			String user = getStringFromByteArray(byteArrayLogInfo, 2, 6,"UTF-8");
+			
+			ret += "User: "+user+"\n";
+
+		}
+
+		return ret;
 
 	}
 
