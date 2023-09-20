@@ -48,7 +48,11 @@ import iped.app.home.configurables.ConfigurablePanelFactory;
 import iped.app.home.configurables.api.ConfigurableValidationException;
 import iped.app.home.configurables.api.IConfigurablePanelFactory;
 import iped.app.home.newcase.NewCaseContainerPanel;
+import iped.app.home.newcase.model.ExistentCaseOptions;
+import iped.app.home.newcase.model.IPEDProcess;
+import iped.app.home.processmanager.ProcessManager;
 import iped.app.home.style.StyleManager;
+import iped.app.ui.App;
 import iped.app.ui.Messages;
 import iped.configuration.Configurable;
 import iped.configuration.EnabledInterface;
@@ -62,6 +66,7 @@ import iped.engine.config.SerializedConfigurationDirectory;
 import iped.engine.config.TaskInstallerConfig;
 import iped.engine.task.AbstractTask;
 import iped.engine.task.ScriptTask;
+import iped.exception.IPEDException;
 
 /*
  * @created 13/09/2022
@@ -79,23 +84,23 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
     JFileChooser scriptChooser = new JFileChooser();
     private JComboBox<IConfigurationDirectory> profilesCombo;
     private ConfigurationManager selectedConfigurationManager;//configuration manager corresponding to the current profile selected
-    
+
     /**
      * The default config manager will be used as the base line to create the task list.
-     * Other profiles will only enable or disable these tasks, or add delete Script tasks. 
+     * Other profiles will only enable or disable these tasks, or add delete Script tasks.
      */
     private ConfigurationManager defaultConfigurationManager;//configuration manager corresponding to iped default distributed configuration
-    
+
     private JPanel selectProfilePanel;
     private JPanel createProfilePanel;
     private JTextField tfProfileName;
     private JButton buttonStartProcess;
-    
+
     /**
      * Profile representing the configs in "conf" folder.
      */
     ConfigurationDirectory baselineProfile;
-    
+
     private JButton deleteProfileBtn;
     private Object[] profilesArray;
     private boolean isInsertingProfile;
@@ -114,9 +119,9 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         this.createObjectInstances();
         this.setLayout( new BorderLayout() );
         this.add(createTitlePanel(), BorderLayout.NORTH);
-        
+
         JComponent panelForm = createFormPanel();
-        
+
         this.add(panelForm, BorderLayout.CENTER);
         this.add(createNavigationButtonsPanel(), BorderLayout.SOUTH);
         //show select profile panel and hide create profile panel
@@ -125,7 +130,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
     }
 
     /**
-     * Executed on tab initialization. Creates some needed object references. 
+     * Executed on tab initialization. Creates some needed object references.
      */
     private void createObjectInstances(){
         //create the baseline profile item on profilemanager
@@ -173,10 +178,10 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         fsPanel.setLayout(new BoxLayout( fsPanel, BoxLayout.PAGE_AXIS ));
         tabPane.add(iped.engine.localization.Messages.getString(FileSystemConfig.class.getName()), fsPanel);
         tabPane.setPreferredSize(new Dimension(600,2000));
-        
+
         panelForm.add(tabPane);
 
-        
+
         ItemListener[] listeners = profilesCombo.getItemListeners();
         for (int i = 0; i < listeners.length; i++) {
             profilesCombo.removeItemListener(listeners[i]);
@@ -218,10 +223,10 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
                     loadTasksTables(configDirectory);
                     setupFSConfigPanel(null);
                 }
-                if(configDirectory instanceof SerializedConfigurationDirectory) {                    
-                    selectProfilePanel.add(deleteProfileBtn);                    
+                if(configDirectory instanceof SerializedConfigurationDirectory) {
+                    selectProfilePanel.add(deleteProfileBtn);
                 }else {
-                    selectProfilePanel.remove(deleteProfileBtn);                    
+                    selectProfilePanel.remove(deleteProfileBtn);
                 }
                 selectProfilePanel.updateUI();
             }
@@ -262,7 +267,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
                 } catch (ConfigurableValidationException e1) {
                     e1.printStackTrace();
                 }
-                
+
                 updateTaskInstallerConfig();
                 IConfigurationDirectory dir = ProfileManager.get().createProfile(tfProfileName.getText(), selectedConfigurationManager);
                 profilesCombo.addItem(dir);
@@ -312,7 +317,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
     /**
      * Update selected profile task installer configurable with the tasks states
      * defined in UI.
-     */    
+     */
     private void updateTaskInstallerConfig() {
         List<AbstractTask> tasks = new ArrayList<>();
         for(int i=0; i<tasksTableModel.getRowCount();i++) {
@@ -336,7 +341,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
             return null;
         }
     }
-    
+
     private void loadTasksTables(IConfigurationDirectory selectedDirectory){
         selectedConfigurationManager = new ConfigurationManager(selectedDirectory);
 
@@ -362,20 +367,20 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         //Creates a list with all AbstractTask class instance from the TaskInstaller.xml file
         taskArrayList = taskInstallerConfig.getNewTaskInstances();
         ArrayList<Boolean> enabled = new ArrayList<Boolean>();
-        ArrayList<EnabledInterface> enabledConfigurables = new ArrayList<EnabledInterface>(); 
+        ArrayList<EnabledInterface> enabledConfigurables = new ArrayList<EnabledInterface>();
 
         for(AbstractTask currentTask : taskArrayList  ){
             List<Configurable<?>> configurableList = null;
             try {
                 configurableList = currentTask.getConfigurables();
-            }catch (Exception e) {                
+            }catch (Exception e) {
             }
             if (configurableList == null || configurableList.isEmpty()){
                 enabledConfigurables.add(null);
                 enabled.add(currentTask.isEnabled());
                 continue;
             }
-            
+
             EnabledInterface enabledConfigurable = null;
             for (Iterator iterator = configurableList.iterator(); iterator.hasNext();) {
                 Configurable<?> configurable = (Configurable<?>) iterator.next();
@@ -421,7 +426,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
 
                 return tip;
             }
-            
+
         };
         setupTableLayout();
         JScrollPane scrollTablePane = new JScrollPane();
@@ -435,10 +440,10 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
      */
     private void setupFSConfigPanel(JPanel panel){
         Configurable<?> fsConfig = ConfigurationManager.get().findObject(FileSystemConfig.class);
-        
+
         IConfigurablePanelFactory configPanelFactory = ConfigurablePanelFactory.getInstance();
         fsConfigPanel = (ConfigurablePanel) configPanelFactory.createConfigurablePanel(null, fsConfig, mainFrame);
-        
+
         fsConfigPanel.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
@@ -447,10 +452,10 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         });
 
         fsConfigPanel.createConfigurableGUI();
-        
+
         if(fsScrollPanel==null) {
             fsScrollPanel = new JScrollPane(fsConfigPanel);
-            panel.add(fsScrollPanel);        
+            panel.add(fsScrollPanel);
         }else {
             fsScrollPanel.setViewportView(fsConfigPanel);
         }
@@ -462,7 +467,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         jtableTasks.setModel(tasksTableModel);
         jtableTasks.getColumn( jtableTasks.getColumnName(3)).setCellRenderer(new TaskTableConfigurablesCellRenderer(selectedConfigurationManager, mainFrame));
         jtableTasks.getColumn( jtableTasks.getColumnName(3)).setCellEditor(new TableTaskOptionsCellEditor(new JCheckBox()) );
-        
+
         jtableTasks.getColumn( jtableTasks.getColumnName(1)).setCellRenderer(new TableTaskEnabledCellRenderer(jtableTasks.getDefaultRenderer(jtableTasks.getColumnClass(1))));
 
         jtableTasks.getColumn( jtableTasks.getColumnName(2)).setCellRenderer( new TableTaskLabelCellRenderer() );
@@ -471,7 +476,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         jtableTasks.getColumn( jtableTasks.getColumnName(0)).setMaxWidth(30);
         jtableTasks.getColumn( jtableTasks.getColumnName(1)).setMaxWidth(30);
         jtableTasks.getColumn( jtableTasks.getColumnName(3)).setMaxWidth(60);
-        
+
         jtableTasks.setTransferHandler(new LineOrderTransferHandler());
         jtableTasks.setDropMode(DropMode.INSERT_ROWS);
         //jtableTasks.setDragEnabled(true);
@@ -492,7 +497,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
             TaskConfigDialog tcd = new TaskConfigDialog(selectedConfigurationManager, new ScriptTask(exampleScriptFile), mainFrame);
             tcd.setModalityType(ModalityType.APPLICATION_MODAL);
             tcd.setVisible(true);
-            
+
             AbstractTask addedTask = (AbstractTask) tcd.getScriptTask();
             if (addedTask != null) {
                 tasksTableModel.addData(addedTask, true);
@@ -503,11 +508,39 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
 
         buttonStartProcess = new JButton(Messages.get("Home.ProcOptions.StartProcessing"));
         buttonStartProcess.addActionListener(e -> {
+            IPEDProcess ipp = NewCaseContainerPanel.getInstance().getIpedProcess();
+            boolean existsCaseOnOutput = false;
+            try {
+                ProcessManager.validateCaseOutput(ipp.getCaseOutputPath());
+            }catch(IPEDException ex){
+                existsCaseOnOutput = true;
+                //if already has a case in the output directory and the user do not select an option in the caseinfotab, show the options again!!
+                if( ipp.getExistentCaseOption() == null ) {
+                    Object[] options = {Messages.get("Home.AppendExistentCase"), Messages.get("Home.ContinueExistentCase"), Messages.get("Home.RestartExistentCase"), Messages.get("Case.Cancel")};
+                    int result = JOptionPane.showOptionDialog(this, Messages.getString("Home.ProcessManager.ExistentCaseAlertMessage"), Messages.getString("Home.ProcessManager.ExistentCaseAlertTitle"), JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[3]);
+                    switch (result) {
+                        case 0:
+                            ipp.setExistentCaseOption(ExistentCaseOptions.APPEND);
+                            break;
+                        case 1:
+                            ipp.setExistentCaseOption(ExistentCaseOptions.CONTINUE);
+                            break;
+                        case 2:
+                            ipp.setExistentCaseOption(ExistentCaseOptions.RESTART);
+                            break;
+                        default:
+                            ipp.setExistentCaseOption(null);
+                            return;
+                    }
+                }
+            }
+            if( ! existsCaseOnOutput )
+                ipp.setExistentCaseOption(null);
             String selectedProfile = ((IConfigurationDirectory) profilesCombo.getSelectedItem()).getName();
             if(baselineProfile.getName().equalsIgnoreCase(selectedProfile) )
-                NewCaseContainerPanel.getInstance().getIpedProcess().setProfile(null);
+                ipp.setProfile(null);
             else
-                NewCaseContainerPanel.getInstance().getIpedProcess().setProfile(selectedProfile);
+                ipp.setProfile(selectedProfile);
 
             NewCaseContainerPanel.getInstance().startIPEDProcessing();
         });

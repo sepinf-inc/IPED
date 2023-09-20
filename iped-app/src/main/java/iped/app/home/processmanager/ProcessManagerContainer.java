@@ -172,8 +172,7 @@ public class ProcessManagerContainer extends DefaultPanel implements ProcessList
         //Save the CaseInfo.json on case output
         Path caseinfoPath = Paths.get(ipedProcess.getCaseOutputPath().toString(), "CaseInfo.json");
         ipedProcess.getReportInfo().saveJsonInfoFile(caseinfoPath.toFile());
-        ipedProcess.getOptions().add("-asap");
-        ipedProcess.getOptions().add(caseinfoPath.toAbsolutePath().toString());
+        ipedProcess.addOptionValue("-asap", caseinfoPath.toAbsolutePath().toString());
     }
 
     public void startProcess(){

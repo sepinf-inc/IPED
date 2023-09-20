@@ -9,6 +9,7 @@ import iped.app.home.newcase.model.IPEDProcess;
 import iped.app.home.utils.CasePathManager;
 import iped.configuration.IConfigurationDirectory;
 import iped.engine.util.Util;
+import iped.exception.IPEDException;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.swing.*;
@@ -98,6 +99,18 @@ public class ProcessManager {
         return javaBin;
     }
 
+    public static void validateCaseOutput(Path caseOutput) throws IPEDException{
+        boolean isExistsCase = Paths.get(caseOutput.toString(), "IPED-SearchApp.exe").toFile().exists();
+        if(isExistsCase) {
+            //check if the existent case is finished, if yes the user cannot choose the continue options
+            boolean isCaseFinished = Paths.get(caseOutput.toString(), "iped", "data", "processing_finished").toFile().exists();
+            if( isCaseFinished )
+                throw new IPEDException("There is already a finished case in the output directory");
+            else
+                throw new IPEDException("There is already a unfinished case in the output directory");
+        }
+    }
+
     private String getRootPath(){
         String rootPath = null;
         try {
@@ -156,12 +169,16 @@ public class ProcessManager {
     public void startIpedProcess(IPEDProcess ipedProcess, JTextArea logTextArea) throws IpedStartException {
         try {
             ArrayList<String> commandList =  new ArrayList<>();
-            commandList.add(getJarBinCommand());
-            commandList.addAll(getIpedJarCommand());
+            if (org.apache.tika.utils.SystemUtils.IS_OS_WINDOWS){
+                commandList.add( Paths.get(System.getProperty(IConfigurationDirectory.IPED_APP_ROOT), "iped.exe").toString() );
+            }else {
+                commandList.add(getJarBinCommand());
+                commandList.addAll(getIpedJarCommand());
+            }
             commandList.addAll(getEvidencesCommandList(ipedProcess.getEvidenceList()) );
             commandList.addAll(getCaseOutputCommand(ipedProcess.getCaseOutputPath()));
             commandList.addAll(getProfileCommand(ipedProcess.getProfile()));
-            commandList.addAll(ipedProcess.getOptions());
+            commandList.addAll(ipedProcess.getOptionsAsList());
             if(ipedProcess.getExistentCaseOption() != null)
                 commandList.add(ipedProcess.getExistentCaseOption().getCommand());
             System.out.println("IPED command: " + String.join(" ", commandList.toArray(new String[0])));
