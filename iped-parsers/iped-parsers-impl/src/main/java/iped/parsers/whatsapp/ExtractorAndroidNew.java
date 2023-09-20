@@ -50,7 +50,9 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.whatsapp.Message.MessageStatus;
@@ -69,6 +71,7 @@ public class ExtractorAndroidNew extends Extractor {
     @Override
     protected List<Chat> extractChatList() throws WAExtractorException {
         List<Chat> list = new ArrayList<>();
+        Map<Long, Chat> idToChat = new HashMap<Long, Chat>();
 
         try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
             try (ResultSet rs = stmt.executeQuery(SELECT_CHAT_VIEW)) {
@@ -82,12 +85,14 @@ public class ExtractorAndroidNew extends Extractor {
                     c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
                     if (!(contactId.endsWith("@status") || contactId.endsWith("@broadcast"))) { //$NON-NLS-1$ //$NON-NLS-2$
                         list.add(c);
+                        idToChat.put(c.getId(), c);
                     }
                 }
 
+                extractMessages(conn, idToChat);
+                extractCalls(conn, idToChat);
+
                 for (Chat c : list) {
-                    c.setMessages(extractMessages(conn, c));
-                    c.getMessages().addAll(extractCalls(conn, c));
                     c.getMessages().sort((o1, o2) -> o1.getTimeStamp().compareTo(o2.getTimeStamp()));
                     if (c.isGroupChat()) {
                         setGroupMembers(c, conn, SELECT_GROUP_MEMBERS);
@@ -137,14 +142,15 @@ public class ExtractorAndroidNew extends Extractor {
         }
     }
 
-    private List<Message> extractCalls(Connection conn, Chat c) throws SQLException {
-        List<Message> messages = new ArrayList<>();
-
+    private void extractCalls(Connection conn, Map<Long, Chat> idToChat) throws SQLException {
         try (PreparedStatement stmt = conn.prepareStatement(SELECT_CALLS)) {
-            stmt.setFetchSize(1000);
-            stmt.setLong(1, c.getId());
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
+                long chatId = rs.getLong("chatId");
+                Chat c = idToChat.get(chatId);
+                if (c == null) {
+                    continue;
+                }
                 Message m = new Message();
                 m.setRemoteId(c.getRemote().getFullId());
                 int call_result = rs.getInt("call_result");
@@ -180,22 +186,22 @@ public class ExtractorAndroidNew extends Extractor {
                 m.setMediaDuration(rs.getInt("duration"));
                 m.setTimeStamp(new Date(rs.getLong("timestamp")));
 
-                messages.add(m);
+                c.getMessages().add(m);
             }
 
         }
-
-        return messages;
     }
 
-    private List<Message> extractMessages(Connection conn, Chat c) throws SQLException {
+    private void extractMessages(Connection conn, Map<Long,Chat> idToChat) throws SQLException {
         boolean hasReactionTable = SQLite3DBParser.containsTable("message_add_on_reaction", conn);
-        List<Message> messages = new ArrayList<>();
         try (PreparedStatement stmt = conn.prepareStatement(getSelectMessagesQuery(conn))) {
-            stmt.setFetchSize(1000);
-            stmt.setLong(1, c.getId());
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
+                long chatId = rs.getLong("chatId");
+                Chat c = idToChat.get(chatId);
+                if (c == null) {
+                    continue;
+                }
                 Message m = new Message();
                 if (account != null)
                     m.setLocalResource(account.getId());
@@ -269,11 +275,10 @@ public class ExtractorAndroidNew extends Extractor {
                     }
                 }
                 m.setForwarded(rs.getInt("forwarded") > 0);
-                messages.add(m);
+                c.getMessages().add(m);
 
             }
         }
-        return messages;
     }
 
     protected Message.MessageType decodeMessageType(int messageType, int status, Integer edit_version, String caption,
@@ -434,7 +439,7 @@ public class ExtractorAndroidNew extends Extractor {
                 + " left join message_location ml on m._id=ml.message_row_id "
                 + " left join message_system ms on m._id=ms.message_row_id"
                 + " left join message_vcard mv on m._id=mv.message_row_id"
-                + " left join message_thumbnail mt on m._id=mt.message_row_id where chatId=? and status!=-1 ;";
+                + " left join message_thumbnail mt on m._id=mt.message_row_id where status!=-1";
     }
 
     private static String getSelectBlockedQuery(Connection conn) throws SQLException {
@@ -444,10 +449,9 @@ public class ExtractorAndroidNew extends Extractor {
         return "select is_blocked as isBlocked from message_system_block_contact where message_row_id=?";
     }
     
-    private static final String SELECT_CALLS = "select c_l._id as id, c_l.call_id, c_l.video_call, c_l.duration, c_l.timestamp, c_l.call_result, c_l.from_me,\r\n"
-            + " cv._id as chatId, cv.raw_string_jid as remoteId\r\n"
-            + "  from call_log c_l inner join chat c on c_l.jid_row_id=c.jid_row_id inner join chat_view cv on cv._id=c._id\r\n"
-            + "where chatId=?";
+    private static final String SELECT_CALLS = "select c_l._id as id, c_l.call_id, c_l.video_call, c_l.duration, c_l.timestamp, c_l.call_result, c_l.from_me,"
+            + " cv._id as chatId, cv.raw_string_jid as remoteId"
+            + " from call_log c_l inner join chat c on c_l.jid_row_id=c.jid_row_id inner join chat_view cv on cv._id=c._id";
 
     private static final String SELECT_GROUP_MEMBERS = "select g._id as group_id, g.raw_string as group_name, u._id as user_id, u.raw_string as member "
             + "FROM group_participant_user gp inner join jid g on g._id=gp.group_jid_row_id inner join jid u on u._id=gp.user_jid_row_id where u.server='s.whatsapp.net' and u.type=0 and group_name=?"; //$NON-NLS-1$
