@@ -177,7 +177,7 @@ public class OpenCasePanel extends DefaultPanel implements ProcessListener {
                     printWriter.println(currentPath.toString());
                 printWriter.close();
                 fileWriter.close();
-                pm.openMulticase(multiCaseFile);
+                pm.openMulticase(caseList.get(0), multiCaseFile);
             } catch (Exception ex) {
                 ex.printStackTrace();
                 JOptionPane.showMessageDialog(OpenCasePanel.this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);

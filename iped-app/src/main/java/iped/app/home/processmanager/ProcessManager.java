@@ -117,7 +117,7 @@ public class ProcessManager {
         return rootPath;
     }
 
-    public void openMulticase(File multiCaseFile){
+    public void openMulticase(Path casePath,  File multiCaseFile){
         ArrayList<String> commandList =  new ArrayList<>();
         commandList.add(getJarBinCommand());
         commandList.addAll(getIpedSearchAppJarCommand(CasePathManager.getInstance().getCasePath().toPath()));

@@ -16,6 +16,7 @@ import iped.app.ui.Messages;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.LocalConfig;
 import iped.engine.data.ReportInfo;
+import iped.utils.IconUtil;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.swing.*;
@@ -44,6 +45,7 @@ public class CaseInfoTab extends DefaultPanel {
     private JTextField textFieldCaseOutput;
     private JCheckBox checkBoxOutputOnSSD;
     private JButton buttonSelectCaseOutput;
+    private JButton buttonCheckCaseOutput;
     private JTextField textFieldReportNumber;
     private JTextField textFieldReportDate;
     private JTextField textFieldReportTitle;
@@ -168,6 +170,15 @@ public class CaseInfoTab extends DefaultPanel {
                 setCaseOutputValue(fileChooserDestino.getSelectedFile().toPath());
             }
         } );
+        buttonCheckCaseOutput = new JButton("");
+        Image img = (new ImageIcon(getClass().getResource("/iped/app/ui/refresh.png"))).getImage();
+        Image resizedIcon = img.getScaledInstance( 15, 15,  java.awt.Image.SCALE_SMOOTH ) ;
+        buttonCheckCaseOutput.setIcon( new ImageIcon(resizedIcon) );
+        buttonCheckCaseOutput.addActionListener(e -> {
+            if(ipedProcess.getCaseOutputPath() != null)
+                setCaseOutputValue(ipedProcess.getCaseOutputPath());
+
+        });
     }
 
     private File showSaveCaseInfoFileChooser(String title){
@@ -309,6 +320,7 @@ public class CaseInfoTab extends DefaultPanel {
         panelCaseOutput.setBackground(Color.white);
         panelCaseOutput.add(textFieldCaseOutput);
         panelCaseOutput.add(buttonSelectCaseOutput);
+        panelCaseOutput.add(buttonCheckCaseOutput);
         return panelCaseOutput;
     }
 
