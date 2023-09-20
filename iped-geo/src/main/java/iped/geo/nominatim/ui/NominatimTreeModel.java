@@ -29,6 +29,7 @@ public class NominatimTreeModel implements TreeModel {
     private static boolean modelLoaded = false;
 
     public NominatimTreeModel(IMultiSearchResultProvider app) {
+        modelLoaded = false;
         this.app = app;
     }
 
