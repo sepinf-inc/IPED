@@ -143,7 +143,7 @@ public class NominatimTreeModel implements TreeModel {
                 TermsEnum te = ssdv.termsEnum();
                 BytesRef br = te.next();
                 if (br != null) {
-                    if (br.utf8ToString().startsWith("{\"error\"")) {
+                    if (br.utf8ToString().startsWith(NominatimTask.JSON_ERROR_PREFIX)) {
                         hasUnableToGeoCode = true;
                     } else {
                         hasUnableToGeoCode = false;

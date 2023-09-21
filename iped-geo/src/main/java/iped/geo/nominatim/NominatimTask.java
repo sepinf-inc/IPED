@@ -52,6 +52,8 @@ public class NominatimTask extends AbstractTask {
     public static final String NOMINATIM_ADDRESSTYPE_METADATA = "nominatim:addrestype";
     public static final String NOMINATIM_SUBURB_METADATA = "nominatim:suburb";
 
+    public static final String JSON_ERROR_PREFIX = "{\"error\"";
+
     static int MAXTOTAL = 200;
 
     /* The http connection pool is static to be used application wide */
@@ -67,6 +69,8 @@ public class NominatimTask extends AbstractTask {
     static boolean unresolvedServer = true;
 
     private NominatimConfig nominatimConfig;
+
+    private Exception unresolvedException;
 
     @Override
     public List<Configurable<?>> getConfigurables() {
@@ -114,6 +118,7 @@ public class NominatimTask extends AbstractTask {
                     unresolvedServer = true;
                 }
             } catch (Exception e) {
+                unresolvedException = e;
                 unresolvedServer = true;
             }
 
@@ -151,14 +156,10 @@ public class NominatimTask extends AbstractTask {
                         return content.toString();
                     }
                 }
-            } catch (ClientProtocolException cpe) {
-                cpe.printStackTrace();
-                LOGGER.warn(cpe.getMessage());
             } catch (Exception e) {
                 LOGGER.warn(e.getMessage());
-                e.printStackTrace();
+                return getErrorJson(e);
             }
-            return null;
         });
 
         return f;
@@ -199,7 +200,14 @@ public class NominatimTask extends AbstractTask {
                 }
             }
 
+        } else {
+            // add the error message to nominatim metadata
+            evidence.getMetadata().add(NOMINATIM_METADATA, getErrorJson(unresolvedException));
         }
+    }
+
+    private String getErrorJson(Exception unresolvedException2) {
+        return JSON_ERROR_PREFIX + " : \"" + unresolvedException.getMessage() + "\"}";
     }
 
     private void processNominatimResult(IItem evidence, String content) {
