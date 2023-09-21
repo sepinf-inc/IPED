@@ -140,15 +140,18 @@ public class NominatimTreeModel implements TreeModel {
                 LeafReader reader = app.getIPEDSource().getLeafReader();
 
                 SortedSetDocValues ssdv = reader.getSortedSetDocValues(NominatimTask.NOMINATIM_METADATA);
-                TermsEnum te = ssdv.termsEnum();
-                BytesRef br = te.next();
-                if (br != null) {
-                    if (br.utf8ToString().startsWith(NominatimTask.JSON_ERROR_PREFIX)) {
-                        hasUnableToGeoCode = true;
-                    } else {
-                        hasUnableToGeoCode = false;
+                if (ssdv != null) {
+                    TermsEnum te = ssdv.termsEnum();
+                    BytesRef br = te.next();
+                    if (br != null) {
+                        if (br.utf8ToString().startsWith(NominatimTask.JSON_ERROR_PREFIX)) {
+                            hasUnableToGeoCode = true;
+                        } else {
+                            hasUnableToGeoCode = false;
+                        }
                     }
-
+                } else {
+                    hasUnableToGeoCode = false;
                 }
             } catch (IOException e) {
                 // TODO: handle exception
