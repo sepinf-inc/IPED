@@ -1,10 +1,14 @@
 package iped.utils;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 
 import iped.io.SeekableInputStream;
 
@@ -27,11 +31,18 @@ public class FileInputStreamFactory extends SeekableInputStreamFactory {
                 file = new File(source.toFile(), subPath);
             }
             if (IS_WINDOWS) {
-                //this is a workaround to support cases where there are folders with trailing spaces on the name
-                return new File("\\\\?\\" + file.getAbsolutePath());
-            } else {
-                return file;
+                // workaround for https://github.com/sepinf-inc/IPED/issues/1861
+                File f =  new File("\\\\?\\" + file.getAbsolutePath());
+                try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(f))) {
+                    file = File.createTempFile("iped", ".tmp");
+                    file.deleteOnExit();
+                    Files.copy(bis, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    
+                } catch (IOException e1) {
+                    throw new RuntimeException(e1);
+                }
             }
+            return file;
         }
     }
 
