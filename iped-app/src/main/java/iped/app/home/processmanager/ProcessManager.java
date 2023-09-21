@@ -69,6 +69,15 @@ public class ProcessManager {
         return commandArgs;
     }
 
+    public ArrayList<String> getAsapParameter(IPEDProcess ipp){
+        ArrayList<String> commandArgs = new ArrayList<>();
+        if( ipp != null && ipp.getAsapFile() != null && ipp.getAsapFile().toFile().exists() ) {
+            commandArgs.add("-asap");
+            commandArgs.add("\"" + ipp.getAsapFile().toAbsolutePath().toString() +"\"");
+        }
+        return commandArgs;
+    }
+
     public ArrayList<String> getIpedSearchAppJarCommand(Path caseOutput){
         ArrayList<String> cmds = new ArrayList<>();
         cmds.add("-jar");
@@ -83,7 +92,7 @@ public class ProcessManager {
         return cmds;
     }
 
-    public String getJarBinCommand(){
+    public String getJreBinCommand(){
         String javaBin = "java";
         File embeddedJRE = Paths.get(getRootPath(), "jre").toFile();
         File javaHome = new File(System.getProperty("java.home"));
@@ -132,7 +141,7 @@ public class ProcessManager {
 
     public void openMulticase(Path casePath,  File multiCaseFile){
         ArrayList<String> commandList =  new ArrayList<>();
-        commandList.add(getJarBinCommand());
+        commandList.add(getJreBinCommand());
         commandList.addAll(getIpedSearchAppJarCommand(CasePathManager.getInstance().getCasePath().toPath()));
         commandList.add("-multicases");
         commandList.add(multiCaseFile.getPath());
@@ -143,7 +152,7 @@ public class ProcessManager {
 
     public void openSingleCase(Path casePath){
         ArrayList<String> commandList =  new ArrayList<>();
-        commandList.add(getJarBinCommand());
+        commandList.add(getJreBinCommand());
         commandList.addAll(getIpedSearchAppJarCommand(casePath));
         StringBuffer output = new StringBuffer();
         startIpedSearchAppProcess(commandList, output);
@@ -172,13 +181,14 @@ public class ProcessManager {
             if (org.apache.tika.utils.SystemUtils.IS_OS_WINDOWS){
                 commandList.add( Paths.get(System.getProperty(IConfigurationDirectory.IPED_APP_ROOT), "iped.exe").toString() );
             }else {
-                commandList.add(getJarBinCommand());
+                commandList.add(getJreBinCommand());
                 commandList.addAll(getIpedJarCommand());
             }
             commandList.addAll(getEvidencesCommandList(ipedProcess.getEvidenceList()) );
             commandList.addAll(getCaseOutputCommand(ipedProcess.getCaseOutputPath()));
             commandList.addAll(getProfileCommand(ipedProcess.getProfile()));
             commandList.addAll(ipedProcess.getOptionsAsList());
+            commandList.addAll(getAsapParameter(ipedProcess));
             if(ipedProcess.getExistentCaseOption() != null)
                 commandList.add(ipedProcess.getExistentCaseOption().getCommand());
             System.out.println("IPED command: " + String.join(" ", commandList.toArray(new String[0])));

@@ -17,6 +17,7 @@ public class IPEDProcess {
     private Map<String, String> options;
     private ExistentCaseOptions existentCaseOption;
     private String profile;
+    private Path asapFile;
 
     public IPEDProcess() {
         evidenceList = new ArrayList<>();
@@ -94,5 +95,13 @@ public class IPEDProcess {
 
     public void setExistentCaseOption(ExistentCaseOptions existentCaseOption) {
         this.existentCaseOption = existentCaseOption;
+    }
+
+    public Path getAsapFile() {
+        return asapFile;
+    }
+
+    public void setAsapFile(Path asapFile) {
+        this.asapFile = asapFile;
     }
 }
