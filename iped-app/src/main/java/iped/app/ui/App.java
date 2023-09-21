@@ -135,7 +135,6 @@ import iped.engine.search.IPEDSearcher;
 import iped.engine.search.MultiSearchResult;
 import iped.engine.task.ImageThumbTask;
 import iped.engine.util.Util;
-import iped.geo.nominatim.ui.NominatimPanel;
 import iped.parsers.standard.StandardParser;
 import iped.search.IIPEDSearcher;
 import iped.search.IMultiSearchResult;
@@ -271,10 +270,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     private Query query = null;
 
     private Set<String> highlightTerms = new HashSet<>();
-
-    private NominatimPanel nominatimPanel;
-
-    private DefaultSingleCDockable nominatimTabDock;
 
     private App() {
     }
@@ -631,7 +626,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         metadataPanel = new MetadataPanel();
         categoriesPanel = new JScrollPane(categoryTree);
-        nominatimPanel = new NominatimPanel(this);
         bookmarksPanel = new JScrollPane(bookmarksTree);
 
         recursiveTreeList = new JCheckBox(Messages.getString("App.RecursiveListing")); //$NON-NLS-1$
@@ -864,9 +858,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     private void createAllDockables() {
         categoriesTabDock = createDockable("categoriestab", Messages.getString("CategoryTreeModel.RootName"), //$NON-NLS-1$ //$NON-NLS-2$
                 categoriesPanel);
-        nominatimTabDock = createDockable("nominatimtab", "nominatimPanel", //$NON-NLS-1$ //$NON-NLS-2$
-                nominatimPanel);
-
         metadataTabDock = createDockable("metadatatab", Messages.getString("App.Metadata"), metadataPanel); //$NON-NLS-1$ //$NON-NLS-2$
         if (evidencePanel != null) {
             evidenceTabDock = createDockable("evidencetab", Messages.getString("TreeViewModel.RootName"), //$NON-NLS-1$ //$NON-NLS-2$
@@ -979,7 +970,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 referencedByScroll);
 
         dockingControl.addDockable(categoriesTabDock);
-        dockingControl.addDockable(nominatimTabDock);
         dockingControl.addDockable(metadataTabDock);
         if (evidenceTabDock != null) {
             dockingControl.addDockable(evidenceTabDock);
@@ -1144,7 +1134,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         List<DefaultSingleCDockable> docks = new ArrayList<>();
         docks.addAll(Arrays.asList(hitsDock, subitemDock, duplicateDock, parentDock, tableTabDock, galleryTabDock,
                 bookmarksTabDock, evidenceTabDock, metadataTabDock, categoriesTabDock, graphDock, referencesDock,
-                referencedByDock, nominatimTabDock));
+                referencedByDock));
         docks.addAll(viewerDocks);
         docks.addAll(rsTabDock);
         rsTabDock.clear();
@@ -1328,9 +1318,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         categoriesTabDock.setLocation(CLocation.base().normalWest(0.20).north(0.5));
         categoriesTabDock.setVisible(true);
 
-        nominatimTabDock.setLocationsAside(categoriesTabDock);
-        nominatimTabDock.setVisible(true);
-
         if (evidenceTabDock != null) {
             evidenceTabDock.setLocationsAside(categoriesTabDock);
             evidenceTabDock.setVisible(true);
@@ -1347,7 +1334,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         selectDockableTab(viewerDocks.get(viewerDocks.size() - 1));
         selectDockableTab(categoriesTabDock);
-        selectDockableTab(nominatimTabDock);
         selectDockableTab(bookmarksTabDock);
         selectDockableTab(tableTabDock);
 
