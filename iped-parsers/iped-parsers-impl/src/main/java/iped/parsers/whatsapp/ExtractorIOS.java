@@ -270,13 +270,6 @@ public class ExtractorIOS extends Extractor {
                     }
                     Message m = createMessageFromDB(rs, chat);
                     chat.getMessages().add(m);
-                    
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }                    
                 }
             }
         } catch (SQLException e) {
