@@ -63,7 +63,6 @@ import iped.parsers.whatsapp.Message.MessageStatus;
  */
 public class ExtractorAndroidNew extends Extractor {
 
-
     public ExtractorAndroidNew(String itemPath, File databaseFile, WAContactsDirectory contacts, WAAccount account) {
         super(itemPath, databaseFile, contacts, account, false);
     }
@@ -192,7 +191,7 @@ public class ExtractorAndroidNew extends Extractor {
         }
     }
 
-    private void extractMessages(Connection conn, Map<Long,Chat> idToChat) throws SQLException {
+    private void extractMessages(Connection conn, Map<Long, Chat> idToChat) throws SQLException {
         boolean hasReactionTable = SQLite3DBParser.containsTable("message_add_on_reaction", conn);
         try (PreparedStatement stmt = conn.prepareStatement(getSelectMessagesQuery(conn))) {
             ResultSet rs = stmt.executeQuery();
@@ -250,7 +249,7 @@ public class ExtractorAndroidNew extends Extractor {
                 if (hasAddOn) {
                     extractAddOns(conn, m, hasReactionTable);
                 }
-                
+
                 if (m.getMessageType() == BLOCKED_CONTACT && isUnblocked(conn, m.getId())) {
                     m.setMessageType(UNBLOCKED_CONTACT);
                 }
@@ -418,19 +417,21 @@ public class ExtractorAndroidNew extends Extractor {
     private static final String SELECT_ADD_ONS = "SELECT message_add_on_type as type,timestamp, status,jid.raw_string as remoteResource,from_me as fromMe FROM message_add_on m left join jid on jid._id=m.sender_jid_row_id where parent_message_row_id=?";
 
     private static final String SELECT_ADD_ONS_REACTIONS = "SELECT message_add_on_type as type,timestamp, status,jid.raw_string as remoteResource,from_me as fromMe, r.reaction as reaction"
-            + " FROM message_add_on m" 
+            + " FROM message_add_on m"
             + " left join jid on jid._id=m.sender_jid_row_id"
             + " left join message_add_on_reaction r on r.message_add_on_row_id=m._id"
             + " where parent_message_row_id=?";
 
     private static String getSelectMessagesQuery(Connection conn) throws SQLException {
-        String captionCol = SQLite3DBParser.checkIfColumnExists(conn, "message_media", "media_caption") ? "mm.media_caption" : "null";
+        String captionCol = SQLite3DBParser.checkIfColumnExists(conn, "message_media", "media_caption")
+                ? "mm.media_caption"
+                : "null";
         return "select m._id AS id,cv._id as chatId, cv.raw_string_jid "
                 + " as remoteId, jid.raw_string as remoteResource, status, mv.vcard, m.text_data, "
                 + " m.from_me as fromMe, m.timestamp as timestamp, message_url as mediaUrl,"
                 + " mm.mime_type as mediaMime, mm.file_length as mediaSize, media_name as mediaName, "
-                + " m.message_type as messageType, latitude, longitude, mm.media_duration, "
-                + captionCol + " as mediaCaption, mm.file_hash as mediaHash, thumbnail as thumbData,"
+                + " m.message_type as messageType, latitude, longitude, mm.media_duration, " + captionCol
+                + " as mediaCaption, mm.file_hash as mediaHash, thumbnail as thumbData,"
                 + " ms.action_type as actionType, m.message_add_on_flags as hasAddOn,"
                 + " (m.origination_flags & 1) as forwarded"
                 + " from message m inner join chat_view cv on m.chat_row_id=cv._id"
@@ -448,9 +449,9 @@ public class ExtractorAndroidNew extends Extractor {
         }
         return "select is_blocked as isBlocked from message_system_block_contact where message_row_id=?";
     }
-    
-    private static final String SELECT_CALLS = "select c_l._id as id, c_l.call_id, c_l.video_call, c_l.duration, c_l.timestamp, c_l.call_result, c_l.from_me,"
-            + " cv._id as chatId, cv.raw_string_jid as remoteId"
+
+    private static final String SELECT_CALLS = "select c_l._id as id, c_l.call_id, c_l.video_call, c_l.duration,"
+            + " c_l.timestamp, c_l.call_result, c_l.from_me, cv._id as chatId, cv.raw_string_jid as remoteId"
             + " from call_log c_l inner join chat c on c_l.jid_row_id=c.jid_row_id inner join chat_view cv on cv._id=c._id";
 
     private static final String SELECT_GROUP_MEMBERS = "select g._id as group_id, g.raw_string as group_name, u._id as user_id, u.raw_string as member "
