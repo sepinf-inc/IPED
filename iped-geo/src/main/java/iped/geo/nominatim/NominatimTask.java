@@ -67,10 +67,9 @@ public class NominatimTask extends AbstractTask {
     static String baseUrl = "";
 
     static boolean unresolvedServer = true;
+    static private Exception unresolvedException = new Exception("Task not initialized");
 
     private NominatimConfig nominatimConfig;
-
-    private Exception unresolvedException;
 
     @Override
     public List<Configurable<?>> getConfigurables() {
@@ -81,50 +80,55 @@ public class NominatimTask extends AbstractTask {
 
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
-        count.incrementAndGet();
-        if (cm == null) {
-            nominatimConfig = (NominatimConfig) configurationManager.findObject(NominatimConfig.class);
+        try {
+            count.incrementAndGet();
+            if (cm == null) {
+                nominatimConfig = (NominatimConfig) configurationManager.findObject(NominatimConfig.class);
 
-            cm = new PoolingHttpClientConnectionManager();
-            cm.setMaxTotal(MAXTOTAL);
-            cm.setDefaultMaxPerRoute(nominatimConfig.getConnectionPoolSize());
-            myStrategy = new ConnectionKeepAliveStrategy() {
-                @Override
-                public long getKeepAliveDuration(HttpResponse response, HttpContext context) {
-                    HeaderElementIterator it = new BasicHeaderElementIterator(
-                            response.headerIterator(HTTP.CONN_KEEP_ALIVE));
-                    while (it.hasNext()) {
-                        HeaderElement he = it.nextElement();
-                        String param = he.getName();
-                        String value = he.getValue();
-                        if (value != null && param.equalsIgnoreCase("timeout")) {
-                            return Long.parseLong(value) * 1000;
+                cm = new PoolingHttpClientConnectionManager();
+                cm.setMaxTotal(MAXTOTAL);
+                cm.setDefaultMaxPerRoute(nominatimConfig.getConnectionPoolSize());
+                myStrategy = new ConnectionKeepAliveStrategy() {
+                    @Override
+                    public long getKeepAliveDuration(HttpResponse response, HttpContext context) {
+                        HeaderElementIterator it = new BasicHeaderElementIterator(
+                                response.headerIterator(HTTP.CONN_KEEP_ALIVE));
+                        while (it.hasNext()) {
+                            HeaderElement he = it.nextElement();
+                            String param = he.getName();
+                            String value = he.getValue();
+                            if (value != null && param.equalsIgnoreCase("timeout")) {
+                                return Long.parseLong(value) * 1000;
+                            }
                         }
+                        return CUSTOM_KEEP_ALIVE;
                     }
-                    return CUSTOM_KEEP_ALIVE;
-                }
-            };
+                };
 
-            try {
-                httpClient = HttpClients.custom().setKeepAliveStrategy(myStrategy)
-                        .setConnectionManager(cm).build();
-                String defaultTestCountry = "brazil";
-                baseUrl = nominatimConfig.getProtocol() + "://" + nominatimConfig.getHostName() + ":"
-                        + nominatimConfig.getHostPort();
-                HttpGet get = new HttpGet(baseUrl + nominatimConfig.getServiceTestUrlQuery());
-                try (CloseableHttpResponse response = httpClient.execute(get)) {
-                    unresolvedServer = false;
-                } catch (ClientProtocolException cpe) {
+                try {
+                    httpClient = HttpClients.custom().setKeepAliveStrategy(myStrategy).setConnectionManager(cm).build();
+                    String defaultTestCountry = "brazil";
+                    baseUrl = nominatimConfig.getProtocol() + "://" + nominatimConfig.getHostName() + ":"
+                            + nominatimConfig.getHostPort();
+                    HttpGet get = new HttpGet(baseUrl + nominatimConfig.getServiceTestUrlQuery());
+                    try (CloseableHttpResponse response = httpClient.execute(get)) {
+                        unresolvedServer = false;
+                    } catch (ClientProtocolException cpe) {
+                        unresolvedException = cpe;
+                        unresolvedServer = true;
+                    }
+                } catch (Exception e) {
+                    unresolvedException = e;
                     unresolvedServer = true;
                 }
-            } catch (Exception e) {
-                unresolvedException = e;
-                unresolvedServer = true;
-            }
 
-            /* thread to monitor connections closed by the host */
-            staleMonitor = new IdleConnectionMonitorThread(cm);
-            staleMonitor.start();
+                /* thread to monitor connections closed by the host */
+                staleMonitor = new IdleConnectionMonitorThread(cm);
+                staleMonitor.start();
+            }
+        } catch (Exception e) {
+            unresolvedException = e;
+            unresolvedServer = true;
         }
     }
 
@@ -201,8 +205,16 @@ public class NominatimTask extends AbstractTask {
             }
 
         } else {
-            // add the error message to nominatim metadata
-            evidence.getMetadata().add(NOMINATIM_METADATA, getErrorJson(unresolvedException));
+            // check to see if there would be a location to resolve
+            String featureString = evidence.getMetadata().get(GeofileParser.FEATURE_STRING);
+
+            if (featureString == null || featureString.length() < 5) {
+                String location = evidence.getMetadata().get(ExtraProperties.LOCATIONS);
+                if (location != null && location.length() >= 1) {
+                    // add the error message to nominatim metadata
+                    evidence.getMetadata().add(NOMINATIM_METADATA, getErrorJson(unresolvedException));
+                }
+            }
         }
     }
 
