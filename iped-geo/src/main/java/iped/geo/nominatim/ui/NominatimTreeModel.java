@@ -165,11 +165,13 @@ public class NominatimTreeModel implements TreeModel {
 
             try {
                 SortedSetDocValues ssdv = reader.getSortedSetDocValues(NominatimTask.NOMINATIM_COUNTRY_METADATA);
-                TermsEnum te = ssdv.termsEnum();
-                BytesRef br = te.next();
-                while (br != null) {
-                    countries.add(new Country(br.utf8ToString()));
-                    br = te.next();
+                if (ssdv != null) {
+                    TermsEnum te = ssdv.termsEnum();
+                    BytesRef br = te.next();
+                    while (br != null) {
+                        countries.add(new Country(br.utf8ToString()));
+                        br = te.next();
+                    }
                 }
             } catch (IOException e) {
                 // TODO Auto-generated catch block
@@ -192,20 +194,22 @@ public class NominatimTreeModel implements TreeModel {
 
             try {
                 SortedSetDocValues ssdv = reader.getSortedSetDocValues(NominatimTask.NOMINATIM_STATE_METADATA);
-                TermsEnum te = ssdv.termsEnum();
-                BytesRef br = te.next();
-                while (br != null) {
-                    String stateCompleteName = br.utf8ToString();
-                    if (stateCompleteName.startsWith(country.name)) {
-                        found = true;
-                        states.add(new State(country, stateCompleteName));
-                    } else {
-                        if (found) {
-                            // it is not necessary to loop till the end as the data is sorted
-                            break;
+                if (ssdv != null) {
+                    TermsEnum te = ssdv.termsEnum();
+                    BytesRef br = te.next();
+                    while (br != null) {
+                        String stateCompleteName = br.utf8ToString();
+                        if (stateCompleteName.startsWith(country.name)) {
+                            found = true;
+                            states.add(new State(country, stateCompleteName));
+                        } else {
+                            if (found) {
+                                // it is not necessary to loop till the end as the data is sorted
+                                break;
+                            }
                         }
+                        br = te.next();
                     }
-                    br = te.next();
                 }
             } catch (IOException e) {
                 // TODO Auto-generated catch block
@@ -235,20 +239,22 @@ public class NominatimTreeModel implements TreeModel {
 
             try {
                 SortedSetDocValues ssdv = reader.getSortedSetDocValues(NominatimTask.NOMINATIM_CITY_METADATA);
-                TermsEnum te = ssdv.termsEnum();
-                BytesRef br = te.next();
-                while (br != null) {
-                    String cityCompleteName = br.utf8ToString();
-                    if (cityCompleteName.startsWith(state.name)) {
-                        found = true;
-                        cities.add(new City(state.country, state, cityCompleteName));
-                    } else {
-                        if (found) {
-                            // it is not necessary to loop till the end as the data is sorted
-                            break;
+                if (ssdv != null) {
+                    TermsEnum te = ssdv.termsEnum();
+                    BytesRef br = te.next();
+                    while (br != null) {
+                        String cityCompleteName = br.utf8ToString();
+                        if (cityCompleteName.startsWith(state.name)) {
+                            found = true;
+                            cities.add(new City(state.country, state, cityCompleteName));
+                        } else {
+                            if (found) {
+                                // it is not necessary to loop till the end as the data is sorted
+                                break;
+                            }
                         }
+                        br = te.next();
                     }
-                    br = te.next();
                 }
             } catch (IOException e) {
                 // TODO Auto-generated catch block
