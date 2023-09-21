@@ -413,7 +413,7 @@ public class IOUtil {
     public static File getFile(IItemReader item) {
         if (hasFile(item)) {
             FileInputStreamFactory fisf = ((FileInputStreamFactory) item.getInputStreamFactory());
-            return fisf.getFile(item.getIdInDataSource());
+            return fisf.getPath(item.getIdInDataSource()).toFile();
         }
         return null;
     }

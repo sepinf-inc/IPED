@@ -20,10 +20,10 @@ public class FileInputStreamFactory extends SeekableInputStreamFactory {
         super(dataSource.toUri());
     }
 
-    public File getFile(String subPath) {
+    public Path getPath(String subPath) {
         Path source = Paths.get(this.dataSource);
         try {
-            return source.resolve(subPath).toFile();
+            return source.resolve(subPath);
 
         } catch (InvalidPathException e) {
             File file = new File(subPath);
@@ -42,13 +42,13 @@ public class FileInputStreamFactory extends SeekableInputStreamFactory {
                     throw new RuntimeException(e1);
                 }
             }
-            return file;
+            return file.toPath();
         }
     }
 
     @Override
     public SeekableInputStream getSeekableInputStream(String subPath) throws IOException {
-        File file = getFile(subPath);
+        File file = getPath(subPath).toFile();
         if (file.isFile())
             return new SeekableFileInputStream(file);
         else
