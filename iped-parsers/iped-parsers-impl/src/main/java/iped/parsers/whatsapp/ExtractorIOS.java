@@ -202,8 +202,7 @@ public class ExtractorIOS extends Extractor {
                 extractMessages(conn, idToChat, firstTry, true);
 
                 for (Chat c : list) {
-                    extractMessages(conn, c, undeletedMessages, messagesUndeletedTable, mediaItems,
-                            groupMembers, firstTry);
+                    extractMessages(c, undeletedMessages, messagesUndeletedTable, mediaItems, groupMembers, firstTry);
                     if (c.isGroupChat()) {
                         try {
                             setGroupMembers(c, conn, SELECT_GROUP_MEMBERS);
@@ -283,10 +282,9 @@ public class ExtractorIOS extends Extractor {
         }
     }
     
-    private void extractMessages(Connection conn, Chat chat, Map<Long, List<SqliteRow>> undeletedMessages,
+    private void extractMessages(Chat chat, Map<Long, List<SqliteRow>> undeletedMessages,
             SQLiteUndeleteTable undeleteTable, Map<Long, SqliteRow> mediaItems, Map<Long, SqliteRow> groupMembers,
-            boolean firstTry)
-            throws SQLException {
+            boolean firstTry)            throws SQLException {
         
         if (undeleteTable != null && !undeletedMessages.isEmpty()) {
             Set<MessageWrapperForDuplicateRemoval> activeMessages = new HashSet<>();
