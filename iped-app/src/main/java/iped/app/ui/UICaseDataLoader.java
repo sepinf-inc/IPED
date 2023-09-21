@@ -36,6 +36,7 @@ import iped.engine.data.IPEDMultiSource;
 import iped.engine.data.IPEDSource;
 import iped.engine.task.ParsingTask;
 import iped.engine.task.SignatureTask;
+import iped.geo.nominatim.ui.NominatimPanel;
 import iped.parsers.standard.StandardParser;
 
 public class UICaseDataLoader extends SwingWorker<Void, Integer> {
@@ -174,6 +175,7 @@ public class UICaseDataLoader extends SwingWorker<Void, Integer> {
     public void done() {
         try {
             CategoryTreeModel.install();
+            NominatimPanel.install(App.get());
             App.get().filterManager.loadFilters();
             BookmarksController.get().updateUIandHistory();
     
