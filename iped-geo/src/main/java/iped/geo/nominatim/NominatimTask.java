@@ -43,7 +43,7 @@ public class NominatimTask extends AbstractTask {
 
     private static Logger LOGGER = LoggerFactory.getLogger(NominatimTask.class);
 
-    static final String NOMINATIM_METADATA = "nominatim:geojson";
+    public static final String NOMINATIM_METADATA = "nominatim:geojson";
     protected static final long CUSTOM_KEEP_ALIVE = 5000;
 
     public static final String NOMINATIM_COUNTRY_METADATA = "nominatim:country";

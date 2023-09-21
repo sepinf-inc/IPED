@@ -25,6 +25,7 @@ public class NominatimTreeModel implements TreeModel {
 
     IMultiSearchResultProvider app;
     static String ROOT = "Nominatim Entities";
+    static String UNABLETOGEOCODE = "(Unable to GeoCode)";
 
     private static boolean modelLoaded = false;
 
@@ -130,6 +131,32 @@ public class NominatimTreeModel implements TreeModel {
     TreeMap<Country, State[]> statesMap = new TreeMap<>();
     TreeMap<State, City[]> citiesMap = new TreeMap<>();
     TreeMap<City, Suburb[]> suburbsMap = new TreeMap<>();
+
+    private Boolean hasUnableToGeoCode = null;
+
+    public boolean hasUnableToGeoCode() {
+        if (hasUnableToGeoCode == null) {
+            try {
+                LeafReader reader = app.getIPEDSource().getLeafReader();
+
+                SortedSetDocValues ssdv = reader.getSortedSetDocValues(NominatimTask.NOMINATIM_METADATA);
+                TermsEnum te = ssdv.termsEnum();
+                BytesRef br = te.next();
+                if (br != null) {
+                    if (br.utf8ToString().startsWith("{\"error\"")) {
+                        hasUnableToGeoCode = true;
+                    } else {
+                        hasUnableToGeoCode = false;
+                    }
+
+                }
+            } catch (IOException e) {
+                // TODO: handle exception
+            }
+        }
+
+        return hasUnableToGeoCode;
+    }
 
     public ArrayList<Country> getCountries() {
         if (countries == null) {
@@ -287,7 +314,15 @@ public class NominatimTreeModel implements TreeModel {
             return null;
         }
         if (parent == ROOT) {
-            return getCountries().get(index);
+            if (hasUnableToGeoCode()) {
+                if (index == getCountries().size()) {
+                    return UNABLETOGEOCODE;
+                } else {
+                    return getCountries().get(index);
+                }
+            } else {
+                return getCountries().get(index);
+            }
         }
         if (parent instanceof Country) {
             return getStates((Country) parent)[index];
@@ -307,7 +342,11 @@ public class NominatimTreeModel implements TreeModel {
             return 0;
         }
         if (parent == ROOT) {
-            return getCountries().size();
+            if (hasUnableToGeoCode()) {
+                return getCountries().size() + 1;
+            } else {
+                return getCountries().size();
+            }
         }
         if (parent instanceof Country) {
             return getStates((Country) parent).length;
@@ -327,7 +366,11 @@ public class NominatimTreeModel implements TreeModel {
             return true;
         }
         if (node == ROOT) {
-            return getCountries().size() == 0;
+            if (hasUnableToGeoCode()) {
+                return false;
+            } else {
+                return getCountries().size() == 0;
+            }
         }
         if (node instanceof Country) {
             return getStates((Country) node).length == 0;
