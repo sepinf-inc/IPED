@@ -202,7 +202,9 @@ public class ExtractorIOS extends Extractor {
                 extractMessages(conn, idToChat, firstTry, true);
 
                 for (Chat c : list) {
-                    extractMessages(c, undeletedMessages, messagesUndeletedTable, mediaItems, groupMembers, firstTry);
+                    if (messagesUndeletedTable != null && !undeletedMessages.isEmpty()) {
+                        mergeUndeletedMessages(c, undeletedMessages, mediaItems, groupMembers, firstTry);
+                    }
                     if (c.isGroupChat()) {
                         try {
                             setGroupMembers(c, conn, SELECT_GROUP_MEMBERS);
@@ -264,11 +266,10 @@ public class ExtractorIOS extends Extractor {
                 while (rs.next()) {
                     long chatId = rs.getLong("chatId");
                     Chat chat = idToChat.get(chatId);
-                    if (chat == null || chat.isGroupChat() != isGroupChat) {
-                        continue;
+                    if (chat != null && chat.isGroupChat() == isGroupChat) {
+                        Message m = createMessageFromDB(rs, chat);
+                        chat.getMessages().add(m);
                     }
-                    Message m = createMessageFromDB(rs, chat);
-                    chat.getMessages().add(m);
                 }
             }
         } catch (SQLException e) {
@@ -282,30 +283,34 @@ public class ExtractorIOS extends Extractor {
         }
     }
     
-    private void extractMessages(Chat chat, Map<Long, List<SqliteRow>> undeletedMessages,
-            SQLiteUndeleteTable undeleteTable, Map<Long, SqliteRow> mediaItems, Map<Long, SqliteRow> groupMembers,
-            boolean firstTry)            throws SQLException {
-        
-        if (undeleteTable != null && !undeletedMessages.isEmpty()) {
+    private void mergeUndeletedMessages(Chat chat, Map<Long, List<SqliteRow>> undeletedMessages,
+            Map<Long, SqliteRow> mediaItems, Map<Long, SqliteRow> groupMembers, boolean firstTry) throws SQLException {
+
+        // Get deleted messages for this Chat
+        List<SqliteRow> undeletedRows = undeletedMessages.get(chat.getId());
+        if (undeletedRows != null && !undeletedRows.isEmpty()) {
+
+            // Get active messages for this Chat
             Set<MessageWrapperForDuplicateRemoval> activeMessages = new HashSet<>();
             Map<Long, Message> activeMessageIds = new HashMap<>();
-            for(Message m : chat.getMessages()) {
+            for (Message m : chat.getMessages()) {
                 activeMessages.add(new MessageWrapperForDuplicateRemoval(m));
                 activeMessageIds.put(m.getId(), m);
             }
 
-            // get deleted messages
-            List<SqliteRow> undeletedRows = undeletedMessages.getOrDefault(chat.getId(), Collections.emptyList());
             for (SqliteRow row : undeletedRows) {
                 try {
                     if (!firstTry || row.isDeletedRow()) {
-                    Message m = createMessageFromUndeletedRecord(row, chat, mediaItems, groupMembers);
-                    if (!activeMessages.contains(new MessageWrapperForDuplicateRemoval(m))) { //do not include deleted message if already there
-                        if (!activeMessageIds.containsKey(m.getId()) ||
-                            !compareMessagesAlmostTheSame(activeMessageIds.get(m.getId()), m)) { //also remove messages with same id that have the same start text (possibly corrupted recovered record)
-                            chat.getMessages().add(m);
+                        Message m = createMessageFromUndeletedRecord(row, chat, mediaItems, groupMembers);
+                        if (!activeMessages.contains(new MessageWrapperForDuplicateRemoval(m))) {
+                            // Do not include deleted message if already there.
+                            // Also remove messages with same id that have the same start text (possibly
+                            // corrupted recovered record).
+                            if (!activeMessageIds.containsKey(m.getId())
+                                    || !compareMessagesAlmostTheSame(activeMessageIds.get(m.getId()), m)) {
+                                chat.getMessages().add(m);
+                            }
                         }
-                    }
                     }
                 } catch (SQLException e) {
                     logger.warn("Error creating undelete message for whatsapp ios", e); //$NON-NLS-1$
@@ -313,10 +318,9 @@ public class ExtractorIOS extends Extractor {
                     logger.warn("Error creating undelete message for whatsapp ios", e); //$NON-NLS-1$
                 }
             }
-    
+
             Collections.sort(chat.getMessages(), (a, b) -> a.getTimeStamp().compareTo(b.getTimeStamp()));
         }
-
     }
 
     private Message createMessageFromDB(ResultSet rs, Chat chat) throws SQLException {
