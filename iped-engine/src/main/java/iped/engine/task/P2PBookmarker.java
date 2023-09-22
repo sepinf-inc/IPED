@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import iped.parsers.threema.ThreemaParser;
 import org.apache.lucene.document.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,6 +68,7 @@ public class P2PBookmarker {
         p2pPrograms.put(SkypeParser.FILETRANSFER_MIME_TYPE, new P2PProgram(IndexItem.HASH, "Skype")); //$NON-NLS-1$
         p2pPrograms.put(SkypeParser.CONVERSATION_MIME_TYPE, new P2PProgram(IndexItem.HASH, "Skype")); //$NON-NLS-1$
         p2pPrograms.put(TelegramParser.TELEGRAM_CHAT.toString(), new P2PProgram(IndexItem.HASH, "Telegram")); // $NON-NLS-1$
+        p2pPrograms.put(ThreemaParser.THREEMA_CHAT.toString(), new P2PProgram(IndexItem.HASH, "Threema")); // $NON-NLS-1$
         p2pPrograms.put(GDriveCloudGraphParser.GDRIVE_CLOUD_GRAPH_REG.toString(), new P2PProgram(HashTask.HASH.MD5.toString(), "GoogleDrive"));
         p2pPrograms.put(GDriveSnapshotParser.GDRIVE_SNAPSHOT_REG.toString(), new P2PProgram(HashTask.HASH.MD5.toString(), "GoogleDrive"));
 
