@@ -157,7 +157,6 @@ public class ExtractorIOS extends Extractor {
                     }
                 }
 
-                Map<Long, Chat> idToChat = new HashMap<Long, Chat>();                
                 String chatListQuery = hasProfilePictureItemTable ? SELECT_CHAT_LIST : SELECT_CHAT_LIST_NO_PPIC;
 
                 try (ResultSet rs = stmt.executeQuery(chatListQuery)) {
@@ -175,7 +174,6 @@ public class ExtractorIOS extends Extractor {
                                 activeChats.add(c.getId());
                             }
                             list.add(c);
-                            idToChat.put(c.getId(), c);
                         }
                     }
                 } catch (SQLException ex) {
@@ -198,6 +196,10 @@ public class ExtractorIOS extends Extractor {
                 }
 
                 // Extract messages of all non-group and group chats at once, not per chat
+                Map<Long, Chat> idToChat = new HashMap<Long, Chat>();
+                for (Chat c : list) {
+                    idToChat.put(c.getId(), c);
+                }
                 extractMessages(conn, idToChat, firstTry, false);
                 extractMessages(conn, idToChat, firstTry, true);
 
