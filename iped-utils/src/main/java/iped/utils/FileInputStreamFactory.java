@@ -32,14 +32,22 @@ public class FileInputStreamFactory extends SeekableInputStreamFactory {
             }
             if (IS_WINDOWS) {
                 // workaround for https://github.com/sepinf-inc/IPED/issues/1861
-                File f =  new File("\\\\?\\" + file.getAbsolutePath());
-                try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(f))) {
-                    file = File.createTempFile("iped", ".tmp");
-                    file.deleteOnExit();
-                    Files.copy(bis, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                    
-                } catch (IOException e1) {
-                    throw new RuntimeException(e1);
+                if (file.isDirectory()) {
+                    try {
+                        file = Files.createTempDirectory("iped").toFile();
+                        file.deleteOnExit();
+                    } catch (IOException e1) {
+                        throw new RuntimeException(e1);
+                    }
+                } else {
+                    File f = new File("\\\\?\\" + file.getAbsolutePath());
+                    try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(f))) {
+                        file = File.createTempFile("iped", ".tmp");
+                        file.deleteOnExit();
+                        Files.copy(bis, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    } catch (IOException e1) {
+                        throw new RuntimeException(e1);
+                    }
                 }
             }
             return file.toPath();
