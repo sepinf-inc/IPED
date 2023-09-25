@@ -25,6 +25,7 @@ import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.UserPrincipal;
 import java.util.Date;
 import java.util.LinkedList;
@@ -43,6 +44,7 @@ import iped.engine.data.DataSource;
 import iped.engine.data.Item;
 import iped.properties.ExtraProperties;
 import iped.utils.FileInputStreamFactory;
+import iped.utils.fsw.PathWrapper;
 
 public class FolderTreeReader extends DataSourceReader {
 
@@ -117,7 +119,12 @@ public class FolderTreeReader extends DataSourceReader {
             File file = path.toFile();
             IItem item = new Item();
             item.setDataSource(dataSource);
-            String relativePath = rootFile.toPath().relativize(path).toString();
+            String relativePath;
+            if (path instanceof PathWrapper) {
+                relativePath = rootFile.toPath().relativize(((PathWrapper) path).getWrappedPath()).toString();
+            } else {
+                relativePath = rootFile.toPath().relativize(path).toString();
+            }
             item.setIdInDataSource(relativePath);
             item.setInputStreamFactory(inputStreamFactory);
             if (file.equals(rootFile)) {
@@ -152,7 +159,7 @@ public class FolderTreeReader extends DataSourceReader {
         }
 
         public void walk(File file) throws IOException {
-            Path startingDir = file.toPath();
+            Path startingDir = PathWrapper.create(file.toPath());
             Files.walkFileTree(startingDir, this);
         }
 
@@ -184,9 +191,18 @@ public class FolderTreeReader extends DataSourceReader {
                     item.setIsDir(true);
                 }
 
-                item.setAccessDate(new Date(attr.lastAccessTime().toMillis()));
-                item.setCreationDate(new Date(attr.creationTime().toMillis()));
-                item.setModificationDate(new Date(attr.lastModifiedTime().toMillis()));
+                FileTime lastAccessTime = attr.lastAccessTime();
+                if (lastAccessTime != null) {
+                    item.setAccessDate(new Date(lastAccessTime.toMillis()));
+                }
+                FileTime creationTime = attr.creationTime();
+                if (creationTime != null) {
+                    item.setCreationDate(new Date(creationTime.toMillis()));
+                }
+                FileTime lastModifiedTime = attr.lastModifiedTime();
+                if (lastModifiedTime != null) {
+                    item.setModificationDate(new Date(lastModifiedTime.toMillis()));
+                }
                 item.setLength(attr.size());
 
                 try {
