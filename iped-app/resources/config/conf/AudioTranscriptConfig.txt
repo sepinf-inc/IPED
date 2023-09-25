@@ -7,7 +7,7 @@
 # Default implementation uses Vosk transcription on local CPU (slow and medium quality).
 # We include small portable models for 'en' and 'pt-BR', if you want to use a different language model
 # you should download it from https://alphacephei.com/vosk/models and put in 'models/vosk/[lang]' folder.
-#implementationClass = iped.engine.task.transcript.VoskTranscriptTask
+implementationClass = iped.engine.task.transcript.VoskTranscriptTask
 
 # Uses a local/remote wav2vec2 implementation for transcription. Accuracy is much better than most Vosk models.
 # The local impl is AT LEAST 1 order of magnitude slower than Vosk on high end CPUs. Using a good GPU is highly recommended!
@@ -30,9 +30,6 @@
 # Finally you must set environment variable GOOGLE_APPLICATION_CREDENTIALS pointing to your credential file
 #implementationClass = iped.engine.task.transcript.GoogleTranscriptTask
 
-# If you want to use the Deepgram service implementation, comment above and uncomment below.
-# There are no dependency files required, all requests uses only native java libraries.
-implementationClass = iped.engine.task.transcript.DeepgramTranscriptTask
 
 #########################################
 # Global options
@@ -59,24 +56,6 @@ minTimeout = 180
 
 # Number of seconds to wait for each audio second transcription. 'minTimeout' param above is added to this.
 timeoutPerSec = 3
-
-#########################################
-# Deepgram options
-#########################################
-# Set your Deepgram API key here (available at https://console.deepgram.com/signup?jump=keys) 
-# If you don't want to set the key in this config file, you can also set using command line parameter -XDeepgramApiKey=XXXXXXXX
-# The API key is a 40 chars alphanumeric lowercase combination
-deepgramKey = a1b2c3...
-
-# Punctuation adds punctuation and capitalization to your transcript.
-punctuate = true
-
-# Diarize recognizes speaker changes and assigns a speaker to each word in the transcript. (Ex.: [Speaker 0]: Hi / [Speaker 1]: Hello)
-diarize = true
-
-# Deepgram's Smart Format feature applies additional formatting to transcripts to optimize them for human readability.
-smart_format = true
-
 
 #########################################
 # VoskTranscriptTask options

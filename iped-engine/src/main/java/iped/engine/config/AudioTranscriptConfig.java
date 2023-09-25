@@ -31,10 +31,6 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
     private static final String GOOGLE_MODEL = "googleModel";
     private static final String LANG_AUTO_VAL = "auto";
     private static final String SKIP_KNOWN_FILES = "skipKnownFiles";
-    private static final String DEEPGRAM_KEY = "deepgramKey";
-    private static final String DEEPGRAM_PUNCTUATE = "punctuate";
-    private static final String DEEPGRAM_DIARIZE = "diarize";
-    private static final String DEEPGRAM_SMART_FORMAT = "smart_format";
 
     private List<String> languages = new ArrayList<>();
     private List<String> mimesToProcess = new ArrayList<>();
@@ -50,12 +46,6 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
     private String wav2vec2Service;
     private String googleModel;
     private boolean skipKnownFiles = true;
-    private String deepgramKey;
-
-    private boolean deepgramDetectLanguage = false;
-    private boolean deepgramPunctuate = false;
-    private boolean deepgramDiarize = false;
-    private boolean deepgramSmartFormat = false;
 
     public boolean getSkipKnownFiles() {
         return this.skipKnownFiles;
@@ -127,16 +117,6 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
         return googleModel;
     }
 
-    public String getDeepgramKey() { return deepgramKey; }
-
-    public String getDeepgramPunctuate() { return String.valueOf(deepgramPunctuate);}
-
-    public String getDeepgramDiarize() { return String.valueOf(deepgramDiarize); }
-
-    public String getDeepgramSmartFormat() { return String.valueOf(deepgramSmartFormat); }
-
-    public boolean isDeepgramDetectLanguage() { return deepgramDetectLanguage; }
-
     @Override
     public void processProperties(UTF8Properties properties) {
 
@@ -171,43 +151,6 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
         googleModel = properties.getProperty(GOOGLE_MODEL);
         if (googleModel != null) {
             googleModel = googleModel.trim();
-        }
-
-        String skipKnown = properties.getProperty(SKIP_KNOWN_FILES);
-        if (skipKnown != null) {
-            this.skipKnownFiles = Boolean.valueOf(skipKnown.trim());
-        }
-        String value = properties.getProperty(MIN_TIMEOUT_KEY);
-        if (value != null) {
-            minTimeout = Integer.valueOf(value.trim());
-        }
-        value = properties.getProperty(TIMEOUT_PER_SEC_KEY);
-        if (value != null) {
-            timeoutPerSec = Integer.valueOf(value.trim());
-        }
-        value = properties.getProperty(DEEPGRAM_KEY);
-        if(value != null && value.trim().length() == 40)
-        {
-            deepgramKey = value.trim();
-        }
-        value = properties.getProperty(DEEPGRAM_PUNCTUATE);
-        if(value != null && value.trim().equalsIgnoreCase("true"))
-        {
-            deepgramPunctuate = true;
-        }
-        value = properties.getProperty(DEEPGRAM_DIARIZE);
-        if(value != null && value.trim().equalsIgnoreCase("true"))
-        {
-            deepgramDiarize = true;
-        }
-        value = properties.getProperty(DEEPGRAM_SMART_FORMAT);
-        if(value != null && value.trim().equalsIgnoreCase("true"))
-        {
-            deepgramSmartFormat = true;
-        }
-        if(LANG_AUTO_VAL.equalsIgnoreCase(langs))
-        {
-            deepgramDetectLanguage = true;
         }
     }
 
