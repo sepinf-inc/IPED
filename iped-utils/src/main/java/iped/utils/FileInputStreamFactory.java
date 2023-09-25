@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
+import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -32,7 +33,7 @@ public class FileInputStreamFactory extends SeekableInputStreamFactory {
             }
             if (IS_WINDOWS) {
                 // workaround for https://github.com/sepinf-inc/IPED/issues/1861
-                if (file.isDirectory()) {
+                if (isDirectory(file.getAbsolutePath())) {
                     try {
                         file = Files.createTempDirectory("iped").toFile();
                         file.deleteOnExit();
@@ -52,6 +53,17 @@ public class FileInputStreamFactory extends SeekableInputStreamFactory {
             }
             return file.toPath();
         }
+    }
+
+    boolean isDirectory(String path) {
+        try {
+            Files.newDirectoryStream(Path.of(path));
+        } catch (NotDirectoryException ioe) {
+            return false;
+        } catch (Exception e) {
+            return true;
+        }
+        return true;
     }
 
     @Override
