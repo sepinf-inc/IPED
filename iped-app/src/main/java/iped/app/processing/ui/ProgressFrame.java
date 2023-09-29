@@ -614,7 +614,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         sb.append("<tr");
         if (pct >= 0) {
             // Color based on percentage can be adjusted here
-            int c = pct == 0 ? 255 : 245 - pct * 3 / 2;
+            int c = pct == 0 ? 255 : 245 - Math.min(75, pct) * 3 / 2;
             sb.append(" bgcolor=#").append(String.format("%02X%02X%02X", c, c, 255));
         }
         sb.append(" class=").append(enabled ? "a" : "d");
