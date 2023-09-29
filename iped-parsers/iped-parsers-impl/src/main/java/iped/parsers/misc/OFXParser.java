@@ -557,7 +557,7 @@ public class OFXParser extends AbstractParser {
             File file = tis.getFile();
 
             FileInputStream inputStream = new FileInputStream(file);							
-            Reader reader = new InputStreamReader(inputStream, Charset.forName("UTF-8"));
+            Reader reader = new InputStreamReader(inputStream);
 
             AggregateUnmarshaller aggregate = new AggregateUnmarshaller(ResponseEnvelope.class);
 
