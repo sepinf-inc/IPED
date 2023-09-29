@@ -1547,5 +1547,19 @@
         <glob pattern="*.lzfse"/>
     </mime-type>
 
+	<mime-type type="application/x-ofx-v1">
+             <magic priority="50">
+                     <match value="OFXHEADER:100" type="string" offset="0"/>
+             </magic>
+		 <glob pattern="*.ofx"/>
+    </mime-type>
+
+    <mime-type type="application/x-ofx-v2">
+        <sub-class-of type="application/x-ofx-v1"/>
+        <magic priority="50">
+            <match value="OFX OFXHEADER=&quot;200&quot;" type="string" offset="0:8192"/>
+        </magic>
+    </mime-type>
+
 </mime-info>
 
