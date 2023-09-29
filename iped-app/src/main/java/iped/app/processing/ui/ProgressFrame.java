@@ -83,6 +83,8 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
     long secsToEnd;
     private Date indexStart;
     private Worker[] workers;
+    private String[] lastWorkerTaskPath;
+    private long[] lastWorkerTime;
     private static final NumberFormat nf = LocalizedFormat.getNumberInstance();
     private boolean paused = false;
     private String decodingDir = null;
@@ -240,6 +242,8 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
 
         } else if ("workers".equals(evt.getPropertyName())) { //$NON-NLS-1$
             workers = (Worker[]) evt.getNewValue();
+            lastWorkerTaskPath = new String[workers.length];
+            lastWorkerTime = new long[workers.length];
         }
 
     }
@@ -249,32 +253,57 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
             return "";
         StringBuilder msg = new StringBuilder();
         startTable(msg);
-        addTitle(msg, 3, Messages.getString("ProgressFrame.CurrentItems"));
+        addTitle(msg, 4, Messages.getString("ProgressFrame.CurrentItems"));
 
+        long now = System.currentTimeMillis();
         boolean hasWorkerAlive = false;
-        for (Worker worker : workers) {
+        for (int i = 0; i < workers.length; i++) {
+            Worker worker = workers[i];
             if (!worker.isAlive())
                 continue;
             hasWorkerAlive = true;
-            startRow(msg, worker.getName(), worker.state != STATE.PAUSED);
 
             AbstractTask task = worker.runningTask;
+            String taskName = task == null ? null : task.getName();
+
+            IItem evidence = worker.evidence;
+            String evidencePath = evidence == null ? null : evidence.getPath();
+
+            String wt = "-";
+            int pct = -1;
+            if (taskName != null && evidencePath != null) {
+                String taskPath = taskName + evidencePath;
+                if (!taskPath.equals(lastWorkerTaskPath[i])) {
+                    lastWorkerTime[i] = now;
+                    lastWorkerTaskPath[i] = taskPath;
+                } else if (worker.state != STATE.PAUSED) {
+                    long t = (now - lastWorkerTime[i]) / 1000;
+                    wt = t < 60 ? t + "s" : t / 60 + "m";
+                    pct = (int) Math.min(t / 30, 60);
+                }
+            } else {
+                lastWorkerTaskPath[i] = null;
+            }
+
+            startRow(msg, worker.getName(), worker.state != STATE.PAUSED, pct);
+
             if (worker.state == STATE.PAUSED) {
                 addCell(msg, Messages.getString("ProgressFrame.Paused"), Align.CENTER);
             } else if (worker.state == STATE.PAUSING) {
                 addCell(msg, Messages.getString("ProgressFrame.Pausing"), Align.CENTER);
             } else if (task != null) {
-                addCell(msg, task.getName());
+                addCell(msg, taskName);
             } else {
                 addCell(msg, "-", Align.CENTER);
             }
 
-            IItem evidence = worker.evidence;
+            addCell(msg, wt, wt.equals("-") ? Align.CENTER : Align.RIGHT);
+
             if (evidence != null) {
                 String len = "";
                 if (evidence.getLength() != null && evidence.getLength() > 0)
                     len = " (" + nf.format(evidence.getLength()) + " bytes)";
-                finishRow(msg, evidence.getPath() + len);
+                finishRow(msg, evidencePath + len);
             } else {
                 finishRow(msg, Messages.getString("ProgressFrame.WaitingItem"));
             }
@@ -638,7 +667,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
             }
         }
     }
-    
+
     private static String formatMB(long value) {
         return nf.format(value >>> 20) + " MB";
     }
