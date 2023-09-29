@@ -23,8 +23,10 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.RenderingHints.Key;
 import java.awt.Taskbar;
 import java.awt.Taskbar.State;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -36,6 +38,8 @@ import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.text.NumberFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -90,9 +94,27 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
     private String decodingDir = null;
     private long physicalMemory;
 
-    private class RestrictedSizeLabel extends JLabel {
+    private static class RestrictedSizeLabel extends JLabel {
 
         private static final long serialVersionUID = 1L;
+
+        private static final RenderingHints renderingHints;
+
+        static {
+            Map<Key, Object> hints = new HashMap<>();
+            try {
+                @SuppressWarnings("unchecked")
+                Map<Key, Object> desktopHints = (Map<Key, Object>) Toolkit.getDefaultToolkit()
+                        .getDesktopProperty("awt.font.desktophints");
+                if (desktopHints != null) {
+                    hints.putAll(desktopHints);
+                }
+            } catch (Exception e) {
+            }
+            hints.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            hints.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+            renderingHints = new RenderingHints(hints);
+        }
 
         public Dimension getMaximumSize() {
             return this.getPreferredSize();
@@ -100,10 +122,10 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
 
         public void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g;
-            g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+            RenderingHints saveHints = g2.getRenderingHints();
+            g2.setRenderingHints(renderingHints);
             super.paintComponent(g2);
+            g2.setRenderingHints(saveHints);
         }
     }
 
