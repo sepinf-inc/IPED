@@ -87,7 +87,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
     long secsToEnd;
     private Date indexStart;
     private Worker[] workers;
-    private String[] lastWorkerTaskPath;
+    private String[] lastWorkerTaskItemId;
     private long[] lastWorkerTime;
     private static final NumberFormat nf = LocalizedFormat.getNumberInstance();
     private boolean paused = false;
@@ -264,7 +264,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
 
         } else if ("workers".equals(evt.getPropertyName())) { //$NON-NLS-1$
             workers = (Worker[]) evt.getNewValue();
-            lastWorkerTaskPath = new String[workers.length];
+            lastWorkerTaskItemId = new String[workers.length];
             lastWorkerTime = new long[workers.length];
         }
 
@@ -289,22 +289,21 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
             String taskName = task == null ? null : task.getName();
 
             IItem evidence = worker.evidence;
-            String evidencePath = evidence == null ? null : evidence.getPath();
 
             String wt = "-";
             int pct = -1;
-            if (taskName != null && evidencePath != null) {
-                String taskPath = taskName + evidencePath;
-                if (!taskPath.equals(lastWorkerTaskPath[i])) {
+            if (taskName != null && evidence != null) {
+                String taskId = taskName + evidence.getId();
+                if (!taskId.equals(lastWorkerTaskItemId[i])) {
                     lastWorkerTime[i] = now;
-                    lastWorkerTaskPath[i] = taskPath;
+                    lastWorkerTaskItemId[i] = taskId;
                 } else if (worker.state != STATE.PAUSED) {
                     long t = (now - lastWorkerTime[i]) / 1000;
                     wt = t < 60 ? t + "s" : t / 60 + "m";
                     pct = (int) Math.min(t / 30, 60);
                 }
             } else {
-                lastWorkerTaskPath[i] = null;
+                lastWorkerTaskItemId[i] = null;
             }
 
             startRow(msg, worker.getName(), worker.state != STATE.PAUSED, pct);
@@ -325,7 +324,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
                 String len = "";
                 if (evidence.getLength() != null && evidence.getLength() > 0)
                     len = " (" + nf.format(evidence.getLength()) + " bytes)";
-                finishRow(msg, evidencePath + len);
+                finishRow(msg, evidence.getPath() + len);
             } else {
                 finishRow(msg, Messages.getString("ProgressFrame.WaitingItem"));
             }
