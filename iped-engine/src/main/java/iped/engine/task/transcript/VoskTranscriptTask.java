@@ -97,7 +97,8 @@ public class VoskTranscriptTask extends AbstractTranscriptTask {
             int words = 0;
 
             int nbytes;
-            byte[] buf = new byte[1 << 20];
+            // Buffer must be small (see #1909)
+            byte[] buf = new byte[(int) Math.min(tmpFile.length(), 1 << 16)];
             while ((nbytes = ais.read(buf)) >= 0) {
                 if (recognizer.acceptWaveForm(buf, nbytes)) {
                     TextScoreWords result = decodeFromJson(recognizer.getResult());
