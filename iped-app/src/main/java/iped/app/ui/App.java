@@ -1425,7 +1425,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             // Set bookmark icons column width based on current icon size
             for (int i = 0; i < table.getColumnCount(); i++) {
                 if (table.getColumnName(i).equals(BookmarkIcon.columnName)) {
-                    table.getColumnModel().getColumn(i).setPreferredWidth(size + 2);
+                    table.getColumnModel().getColumn(i).setPreferredWidth(size + 4);
                 }
             }
         }
