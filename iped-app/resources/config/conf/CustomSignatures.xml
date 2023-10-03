@@ -1561,5 +1561,12 @@
         </magic>
     </mime-type>
 
+	<mime-type type="application/x-ofc">
+             <magic priority="50">
+                     <match value="&lt;OFC&gt;" type="string" offset="0"/>
+             </magic>
+		 <glob pattern="*.ofc"/>
+    </mime-type>
+
 </mime-info>
 
