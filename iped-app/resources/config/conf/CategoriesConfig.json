@@ -88,7 +88,7 @@
         {"name": "Chat Activities", "mimes": ["application/x-ufed-chatactivity"]},
         {"name": "Others Chats", "mimes":["application/x-ufed-html-chats", "application/x-ufed-chats-txt", "application/x-ufed-chat", "application/x-ufed-chat-preview"]}
     ]},
-    {"name": "Open Financial Exchange", "mimes": ["application/x-ofx-v1","application/x-ofx-v2"]},
+    {"name": "Open Financial Exchange", "mimes": ["application/x-ofx-v1","application/x-ofx-v2","application/x-ofc"]},
     {"name": "USN Journal", "mimes": ["application/x-usnjournal-$J", "application/x-usnjournal-report-html", "application/x-usnjournal-report-csv", "application/x-usnjournal-registry"]},
     {"name": "Programs and Libraries", "mimes": ["application/java-archive", "application/x-dosexec", "application/x-msdownload", "application/x-bat", "application/vnd.ms-cab-compressed", "application/x-font-ttf", "application/pkcs7-signature", "application/vnd.ms-htmlhelp", "application/java-vm", "application/vnd.ms-pki.seccat", "application/x-ms-installer", "application/x-ufed-html-apps", "application/x-ufed-installedapplication"]},
     {"name": "Unallocated", "mimes": ["application/x-unallocated"]},
