@@ -84,6 +84,9 @@ import org.slf4j.LoggerFactory;
  * 
  * @author guilherme.dutra
  * 
+ * Reference:
+ * http://moneymvps.org/faq/article/8.aspx
+ * 
 **/
 
 public class OFXParser extends AbstractParser {
