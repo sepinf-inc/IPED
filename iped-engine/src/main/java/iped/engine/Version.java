@@ -23,7 +23,7 @@ package iped.engine;
  */
 public class Version {
 
-    public static String APP_VERSION = "4.1.4"; //$NON-NLS-1$
+    public static String APP_VERSION = "4.1.5"; //$NON-NLS-1$
     public static String APP_NAME_PREFIX = "Indexador e Processador de Evidências Digitais"; //$NON-NLS-1$
     public static String APP_NAME = APP_NAME_PREFIX + " " + APP_VERSION; //$NON-NLS-1$
     public static String APP_EXT = "IPED"; //$NON-NLS-1$

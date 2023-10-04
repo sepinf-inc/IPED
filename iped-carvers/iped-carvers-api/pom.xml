@@ -8,7 +8,7 @@
     <parent>
         <groupId>iped</groupId>
         <artifactId>iped-carvers</artifactId>
-        <version>4.1.4</version>
+        <version>4.1.5</version>
     </parent>
     <artifactId>iped-carvers-api</artifactId>
 
