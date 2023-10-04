@@ -85,7 +85,7 @@ public class WAContactsExtractorIOS extends WAContactsExtractor {
                 if (!id.endsWith(WAContact.waSuffix)) {
                     id += WAContact.waSuffix;
                 }
-                if (! directory.hasContact(id)) { // only recover contact if it does not exist already
+                if (! directory.hasContact(Util.getNameFromId(id))) { // only recover contact if it does not exist already
                     WAContact c = directory.getContact(id);
                     c.setDisplayName(nullToEmpty(row.getTextValue("ZHIGHLIGHTEDNAME"))); //$NON-NLS-1$
                     c.setWaName(nullToEmpty(row.getTextValue("ZFULLNAME"))); //$NON-NLS-1$
