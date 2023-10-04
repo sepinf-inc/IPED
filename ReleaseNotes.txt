@@ -1,3 +1,22 @@
+04/10/2023: IPED-4.1.5:
+Fixes:
+#1903: RCE vulnerability in libwebp dependency (@tc-wleite, @lfcnassif)
+#1879: Many dates read from UFDR can be decoded using a wrong timezone (@tc-wleite)
+#1898: Discord Parser showing wrong attachment file (@felipecampanini, @lfcnassif)
+#1843: Some deleted chats or messages not being tagged as deleted (@hauck-jvsh)
+#1868: PDF xmp timestamps aren't extracted with timezone info (@patrickdalla)
+#1833: Transcribing audios with more than 2GB on remote service never ends (@hauck-jvsh, @lfcnassif)
+#1880: Error while parsing WhatsApp contacts (@tc-wleite)
+#1840: Fix links to audio and videos in WhatsApp chats, if files are in an input folder (@tc-wleite, @lfcnassif)
+#1836: Broken links in Whatsapp chats when attachments file names contain emojis (@tc-wleite, @gfd2020)
+#1897: Just first regex hit is shown if multiple regex patterns match the same input string (@tc-wleite)
+#1870: NPE in SleuthkitClient when generating report with a virtual disk (@aberenguel, @lfcnassif)
+#1875: ALT+Key to remove from bookmark not working properly with CRTL and SHIFT shortcuts (@tc-wleite)
+#1846: APFS password not set when opening the case on Linux (@aberenguel)
+#1909: Vosk transcription may slow down during large cases processing (@tc-wleite)
+#1842: Improve layout for audio and video tags in whatsapp chats opened in browser (@tc-wleite)
+
+
 16/08/2023: IPED-4.1.4:
 News:
 #1294: Support parsing iCloud backup LZFSE compressed files (@lfcnassif)
