@@ -57,7 +57,11 @@ public class WAContactsExtractorIOS extends WAContactsExtractor {
             }
 
             while (rs.next()) {
-                WAContact c = directory.getContact(getString(rs, "ZWHATSAPPID") + "@s.whatsapp.net"); //$NON-NLS-1$ //$NON-NLS-2$
+                String id = getString(rs, "ZWHATSAPPID");
+                if (!id.endsWith("@s.whatsapp.net")) {
+                    id += "@s.whatsapp.net";
+                }
+                WAContact c = directory.getContact(id);
                 c.setDisplayName(getString(rs, "ZHIGHLIGHTEDNAME")); //$NON-NLS-1$
                 c.setWaName(getString(rs, "ZFULLNAME")); //$NON-NLS-1$
                 c.setNickName(getString(rs, "ZNICKNAME")); //$NON-NLS-1$
@@ -78,8 +82,11 @@ public class WAContactsExtractorIOS extends WAContactsExtractor {
         if (undeletedContactsTable != null) {
             for (var row : undeletedContactsTable.getTableRows()) {
                 var id = row.getTextValue("ZWHATSAPPID");
+                if (!id.endsWith("@s.whatsapp.net")) {
+                    id += "@s.whatsapp.net";
+                }
                 if (! directory.hasContact(id)) { // only recover contact if it does not exist already
-                    WAContact c = directory.getContact(id + "@s.whatsapp.net"); //$NON-NLS-1$
+                    WAContact c = directory.getContact(id);
                     c.setDisplayName(nullToEmpty(row.getTextValue("ZHIGHLIGHTEDNAME"))); //$NON-NLS-1$
                     c.setWaName(nullToEmpty(row.getTextValue("ZFULLNAME"))); //$NON-NLS-1$
                     c.setNickName(nullToEmpty(row.getTextValue("ZNICKNAME"))); //$NON-NLS-1$
