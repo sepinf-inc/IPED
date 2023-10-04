@@ -190,10 +190,6 @@ public class ReportGenerator {
             out.println("<div class=\"deletedIcon\"></div>"); //$NON-NLS-1$
             out.println("</span>"); //$NON-NLS-1$
         }
-        if (isTo)
-            out.println("</div><div class=\"aw\"><div class=\"awr\"></div></div>"); 
-        if (isFrom)
-            out.println("</div>");
 
 
 
