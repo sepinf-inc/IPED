@@ -200,7 +200,7 @@ public class ExtractorAndroid extends Extractor {
 
                 for (Chat c : undeletedChats) {
                     String remoteId = c.getRemote().getId();
-                    remoteId += c.isGroupChat() ? "@g.us" : "@s.whatsapp.net"; //$NON-NLS-1$ //$NON-NLS-2$
+                    remoteId += c.isGroupChat() ? "@g.us" : WAContact.waSuffix;
                     if (!activeChats.contains(remoteId)) {
                         list.add(c);
                         if (firstTry && c.isDeleted()) {
@@ -337,7 +337,7 @@ public class ExtractorAndroid extends Extractor {
         boolean recoverDeleted = undeleteTable != null && !undeletedMessages.isEmpty();
 
         String id = remote.getId();
-        id += isGroupChat ? "@g.us" : "@s.whatsapp.net"; //$NON-NLS-1$ //$NON-NLS-2$
+        id += isGroupChat ? "@g.us" : WAContact.waSuffix;
         
         Set<MessageWrapperForDuplicateRemoval> activeMessages = new HashSet<>();
         Map<Long, Message> activeMessageIds = new HashMap<>();
