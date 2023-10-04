@@ -58,8 +58,8 @@ public class WAContactsExtractorIOS extends WAContactsExtractor {
 
             while (rs.next()) {
                 String id = getString(rs, "ZWHATSAPPID");
-                if (!id.endsWith("@s.whatsapp.net")) {
-                    id += "@s.whatsapp.net";
+                if (!id.endsWith(WAContact.waSuffix)) {
+                    id += WAContact.waSuffix;
                 }
                 WAContact c = directory.getContact(id);
                 c.setDisplayName(getString(rs, "ZHIGHLIGHTEDNAME")); //$NON-NLS-1$
@@ -82,8 +82,8 @@ public class WAContactsExtractorIOS extends WAContactsExtractor {
         if (undeletedContactsTable != null) {
             for (var row : undeletedContactsTable.getTableRows()) {
                 var id = row.getTextValue("ZWHATSAPPID");
-                if (!id.endsWith("@s.whatsapp.net")) {
-                    id += "@s.whatsapp.net";
+                if (!id.endsWith(WAContact.waSuffix)) {
+                    id += WAContact.waSuffix;
                 }
                 if (! directory.hasContact(id)) { // only recover contact if it does not exist already
                     WAContact c = directory.getContact(id);
