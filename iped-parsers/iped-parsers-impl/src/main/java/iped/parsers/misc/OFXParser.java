@@ -134,29 +134,29 @@ public class OFXParser extends AbstractParser {
             if (number != null){
 
                 if (number instanceof Double){
-                    cell.setCellType(CellType.NUMERIC);	
+                    cell.setCellType(CellType.NUMERIC);    
                     cell.setCellValue((double)number); 
                 }else if(number instanceof Float){
-                    cell.setCellType(CellType.NUMERIC);	
+                    cell.setCellType(CellType.NUMERIC);    
                     cell.setCellValue((float)number);    
                 }else if(number instanceof Integer){
-                    cell.setCellType(CellType.NUMERIC);	
+                    cell.setCellType(CellType.NUMERIC);    
                     cell.setCellValue((int)number);
                 }else{
 
                     if (isValidNumber(number.toString())){
-                        cell.setCellType(CellType.NUMERIC);	
+                        cell.setCellType(CellType.NUMERIC);    
                         cell.setCellValue(number.toString());            
                     }else{
-                        cell.setCellType(CellType.STRING);	
+                        cell.setCellType(CellType.STRING);    
                         cell.setCellValue(number.toString());
                     }
                 }
             }else{
-                cell.setCellType(CellType.STRING);	
+                cell.setCellType(CellType.STRING);    
                 cell.setCellValue("");            
             }
-		}
+        }
 
 
     }
@@ -165,10 +165,10 @@ public class OFXParser extends AbstractParser {
 
         if (cell != null){
             if (value != null){
-                cell.setCellType(CellType.STRING);	
+                cell.setCellType(CellType.STRING);    
                 cell.setCellValue(value.toString());            
             }else{
-                cell.setCellType(CellType.STRING);	
+                cell.setCellType(CellType.STRING);    
                 cell.setCellValue("");
             }
         }
@@ -180,9 +180,9 @@ public class OFXParser extends AbstractParser {
         if (cell != null){
             if (value != null){
                 cell.setCellValue(value);
-                cell.setCellStyle(cellStyle);	          
+                cell.setCellStyle(cellStyle);              
             }else{
-                cell.setCellType(CellType.STRING);	
+                cell.setCellType(CellType.STRING);    
                 cell.setCellValue("");
             }
         }
@@ -280,7 +280,7 @@ public class OFXParser extends AbstractParser {
             setStringCellValue(cell,sr.getAccessKey());
 
             for (int i=0 ; i < cnb; i++)
-                sheetSig.autoSizeColumn(i);	
+                sheetSig.autoSizeColumn(i);    
 
         }
         cell = null;
@@ -310,7 +310,7 @@ public class OFXParser extends AbstractParser {
 
                 short bankCount = 1;
                 for (BankStatementResponseTransaction b : bank) {
-			   
+               
                     short cnb = 0;
                     short rnb = 0;
                     BankStatementResponse bsr = b.getMessage();
@@ -321,16 +321,16 @@ public class OFXParser extends AbstractParser {
                     rowheadBank.createCell(cnb++).setCellValue("Bank Id");
                     rowheadBank.createCell(cnb++).setCellValue("Account Number");
                     rowheadBank.createCell(cnb++).setCellValue("Branch Id");
-                    rowheadBank.createCell(cnb++).setCellValue("Account Type");	
-                    rowheadBank.createCell(cnb++).setCellValue("Account Key");	
-                    rowheadBank.createCell(cnb++).setCellValue("Currency Code");		   			   
+                    rowheadBank.createCell(cnb++).setCellValue("Account Type");    
+                    rowheadBank.createCell(cnb++).setCellValue("Account Key");    
+                    rowheadBank.createCell(cnb++).setCellValue("Currency Code");                          
                     rowheadBank.createCell(cnb++).setCellValue("Ledger Balance Amount");
-                    rowheadBank.createCell(cnb++).setCellValue("Ledger Balance Date");		   			   
+                    rowheadBank.createCell(cnb++).setCellValue("Ledger Balance Date");                          
                     rowheadBank.createCell(cnb++).setCellValue("Available Balance Amount");
                     rowheadBank.createCell(cnb++).setCellValue("Available Balance Date");
                     rowheadBank.createCell(cnb++).setCellValue("Transaction Start Date");
                     rowheadBank.createCell(cnb++).setCellValue("Transaction End Date");
-				
+                
                     if (bsr != null ){
 
                         cnb = 0;
@@ -389,15 +389,15 @@ public class OFXParser extends AbstractParser {
                         }else{
                             cnb += 2;
                         }
-				   
+                   
                         TransactionList tl = bsr.getTransactionList();                   
 
                         Date ds = null;
                         Date de = null;
-                        if ( tl != null) {				
+                        if ( tl != null) {                
                             ds = tl.getStart();
-                            de = tl.getEnd();				
-                        }				
+                            de = tl.getEnd();                
+                        }                
 
                         if ( ds != null){
                             cell = rowBank.createCell(cnb++);
@@ -429,21 +429,21 @@ public class OFXParser extends AbstractParser {
                             
                             short cnt = 0;
                             short rnt = 0;
-					   
+                       
                             HSSFSheet sheetTrans = workbook.createSheet("Bank_"+bankCount+" Transactions");
 
                             HSSFRow rowheadTrans = sheetTrans.createRow(rnt++);
                             rowheadTrans.createCell(cnt++).setCellValue("Type");
                             rowheadTrans.createCell(cnt++).setCellValue("Id");
                             rowheadTrans.createCell(cnt++).setCellValue("Date Posted");
-                            rowheadTrans.createCell(cnt++).setCellValue("Ammount");		   
-                            rowheadTrans.createCell(cnt++).setCellValue("Memo");		
-                            rowheadTrans.createCell(cnt++).setCellValue("Check Number");	
-                            rowheadTrans.createCell(cnt++).setCellValue("Date Initiated");		   
-                            rowheadTrans.createCell(cnt++).setCellValue("Date Available");		   
-                            rowheadTrans.createCell(cnt++).setCellValue("Correction Id");	
-                            rowheadTrans.createCell(cnt++).setCellValue("Server-Assigned Temporary Id");	
-                            rowheadTrans.createCell(cnt++).setCellValue("Reference Number");	
+                            rowheadTrans.createCell(cnt++).setCellValue("Ammount");           
+                            rowheadTrans.createCell(cnt++).setCellValue("Memo");        
+                            rowheadTrans.createCell(cnt++).setCellValue("Check Number");    
+                            rowheadTrans.createCell(cnt++).setCellValue("Date Initiated");           
+                            rowheadTrans.createCell(cnt++).setCellValue("Date Available");           
+                            rowheadTrans.createCell(cnt++).setCellValue("Correction Id");    
+                            rowheadTrans.createCell(cnt++).setCellValue("Server-Assigned Temporary Id");    
+                            rowheadTrans.createCell(cnt++).setCellValue("Reference Number");    
                             rowheadTrans.createCell(cnt++).setCellValue("Standard Industrial Code");
                             rowheadTrans.createCell(cnt++).setCellValue("Payee Id");
                             rowheadTrans.createCell(cnt++).setCellValue("Name");                            
@@ -452,7 +452,7 @@ public class OFXParser extends AbstractParser {
                             rowheadTrans.createCell(cnt++).setCellValue("Currency Exchange Rate"); 
                             rowheadTrans.createCell(cnt++).setCellValue("Original Currency Code"); 
                             rowheadTrans.createCell(cnt++).setCellValue("Original Currency Exchange Rate"); 
-					   
+                       
                             for (Transaction transaction : list) {
                                 
                                 cnt = 0;
@@ -531,8 +531,8 @@ public class OFXParser extends AbstractParser {
                             }
                             
                             for (int i=0 ; i < cnt; i++)
-                                sheetTrans.autoSizeColumn(i);			   
-				         }
+                                sheetTrans.autoSizeColumn(i);               
+                         }
 
                     }
                     bankCount++;   
@@ -553,20 +553,20 @@ public class OFXParser extends AbstractParser {
 
         TemporaryResources tmp = null;
 
-		try{
+        try{
 
             tmp = new TemporaryResources();
             TikaInputStream tis = TikaInputStream.get(stream, tmp);
             File file = tis.getFile();
 
-            FileInputStream inputStream = new FileInputStream(file);							
+            FileInputStream inputStream = new FileInputStream(file);                            
             Reader reader = new InputStreamReader(inputStream);
 
             AggregateUnmarshaller aggregate = new AggregateUnmarshaller(ResponseEnvelope.class);
 
-	        //Fix Timezone to the current system settings instead of GMT defalt
+            //Fix Timezone to the current system settings instead of GMT defalt
             DefaultStringConversion  conv = new DefaultStringConversion (TimeZone.getDefault().getID()); 
- 	        aggregate.setConversion(conv);
+             aggregate.setConversion(conv);
 
             ResponseEnvelope re = (ResponseEnvelope) aggregate.unmarshal(reader);
 
@@ -587,7 +587,7 @@ public class OFXParser extends AbstractParser {
 
             ByteArrayOutputStream bout = new ByteArrayOutputStream();
             workbook.write(bout);
-            workbook.close();				
+            workbook.close();                
             ByteArrayInputStream is1 = new ByteArrayInputStream(bout.toByteArray());
 
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,new ParsingEmbeddedDocumentExtractor(context));
