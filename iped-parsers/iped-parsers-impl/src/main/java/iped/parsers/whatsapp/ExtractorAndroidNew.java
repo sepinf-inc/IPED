@@ -51,6 +51,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Comparator;
+import java.util.Collections;
 
 import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.whatsapp.Message.MessageStatus;
@@ -60,6 +62,12 @@ import iped.parsers.whatsapp.Message.MessageStatus;
  * @author Hauck
  */
 public class ExtractorAndroidNew extends Extractor {
+
+    Comparator<Message> comparatorMessage = new Comparator<Message>() {
+      public int compare(Message u1, Message u2) {
+        return Long.compare(u1.getId(), u2.getId());
+      }
+    };
 
 
     public ExtractorAndroidNew(String itemPath, File databaseFile, WAContactsDirectory contacts, WAAccount account) {
@@ -269,11 +277,35 @@ public class ExtractorAndroidNew extends Extractor {
                     }
                 }
                 m.setForwarded(rs.getInt("forwarded") > 0);
+
+                boolean hasQuote = rs.getInt("hasQuote") == 1;
+                if (hasQuote) {
+                    m.setDataQuote(Util.getUTF8String(rs, "text_data_quote"));
+                    m.setQuoted(hasQuote);
+                    // must consider that all messages are in chronological order
+                    m.setMessageQuote(searchMessage(messages,rs.getLong("id_quote")));
+                }
+
                 messages.add(m);
 
             }
         }
+
         return messages;
+    }
+
+    private Message searchMessage(List<Message> messages, Long id){
+
+        Message tmp = new Message();
+        tmp.setId(id);
+        int index = Collections.binarySearch(messages, tmp, comparatorMessage);
+        tmp = null;
+        if (index >= 0){
+            return messages.get(index);
+        }else{
+            return null;
+        }
+
     }
 
     protected Message.MessageType decodeMessageType(int messageType, int status, Integer edit_version, String caption,
@@ -427,13 +459,19 @@ public class ExtractorAndroidNew extends Extractor {
                 + " m.message_type as messageType, latitude, longitude, mm.media_duration, "
                 + captionCol + " as mediaCaption, mm.file_hash as mediaHash, thumbnail as thumbData,"
                 + " ms.action_type as actionType, m.message_add_on_flags as hasAddOn,"
-                + " (m.origination_flags & 1) as forwarded"
+                + " (m.origination_flags & 1) as forwarded,"
+                + " CASE WHEN mq.message_row_id IS NOT NULL THEN 1 ELSE 0 END AS hasQuote,"
+                + " mq.text_data as text_data_quote,"
+                + " mq2._id as id_quote"                
                 + " from message m inner join chat_view cv on m.chat_row_id=cv._id"
                 + " left join message_media mm on mm.message_row_id=m._id"
                 + " left join jid on jid._id=m.sender_jid_row_id"
                 + " left join message_location ml on m._id=ml.message_row_id "
                 + " left join message_system ms on m._id=ms.message_row_id"
                 + " left join message_vcard mv on m._id=mv.message_row_id"
+                + " left join message_quoted mq on m._id=mq.message_row_id"
+                + " left join ( select _id, message.key_id,message_quoted.message_row_id from message inner join message_quoted on message.key_id = message_quoted.key_id)"
+                + " as mq2 on mq2.key_id = mq.key_id and mq2.message_row_id = m._id"
                 + " left join message_thumbnail mt on m._id=mt.message_row_id where chatId=? and status!=-1 ;";
     }
 
