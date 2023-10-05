@@ -501,7 +501,7 @@ public class ReportGenerator {
                             out.print("</div>");
                             break;                        
                         case APP_MESSAGE:
-                            quoteIcon = "\uD83D\uDDCE";
+                            quoteIcon = "\uD83D\uDCC4";
                             if (messageQuoteString == null || messageQuoteString.isEmpty()){
                                 messageQuoteString = "Document";
                             }
