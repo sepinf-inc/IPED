@@ -659,7 +659,7 @@ public class ExtractorIOS extends Extractor {
             + "ORDER BY ZLASTMESSAGEDATE DESC"; //$NON-NLS-1$
 
     private static final String SELECT_CHAT_LIST_NO_PPIC = "SELECT ZWACHATSESSION.Z_PK as id, ZCONTACTJID AS contact, " //$NON-NLS-1$
-            + "ZPARTNERNAME as subject, ZLASTMESSAGEDATE, NULL as avatarPath , 0 as ZREMOVED " //$NON-NLS-1$
+            + "ZPARTNERNAME as subject, ZLASTMESSAGEDATE, NULL as avatarPath, 0 as ZREMOVED " //$NON-NLS-1$
             + "FROM ZWACHATSESSION " //$NON-NLS-1$
             + "ORDER BY ZLASTMESSAGEDATE DESC"; //$NON-NLS-1$
     /*
