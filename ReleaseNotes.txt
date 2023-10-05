@@ -1,4 +1,4 @@
-04/10/2023: IPED-4.1.5:
+05/10/2023: IPED-4.1.5:
 Fixes:
 #1903: RCE vulnerability in libwebp dependency (@tc-wleite, @lfcnassif)
 #1879: Many dates read from UFDR can be decoded using a wrong timezone (@tc-wleite)
