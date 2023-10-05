@@ -198,6 +198,62 @@ div.deletedIcon {
     visibility: hidden;
 }
 
+/*Quotes*/
+html {
+    scroll-padding-top: 84px;
+}
+  
+div:target{
+    animation-name: div-animate;
+    animation-duration: 2.5s; 
+}
+  
+.quote_from {
+      background:#F5F7F6;
+      border-radius: 5px;
+      border-left: 4px solid #01A280;
+      padding: 5px;	
+}
+  
+.quote_to {
+    background:#DEF6D4;
+    border-radius: 5px;
+    border-left: 4px solid #01A280;
+    padding: 5px;	
+}
+
+.quote_user {
+    font-family: Arial;
+    color: #01A280;	
+}
+
+.quote_msg {
+    font-family: Arial;
+    color: #67747D;	
+}
+
+@keyframes div-animate {
+    0% {background: rgba(175, 211, 240,1);}
+    100% {background: rgba(175, 211, 240,0);}
+}
+  
+.bbl:hover .from div {
+    background-color: #def1f3 !important;
+}
+
+.bbl:hover .to div {
+    background-color: #def1f3 !important;
+}
+
+.bbr:hover .from div{
+    background-color: #def1f3 !important;
+}
+
+.bbr:hover .to div{
+    background-color: #def1f3 !important;
+}
+
+
 /*Arrow*/
 .aw {
     display: table-cell;
