@@ -448,10 +448,10 @@ public class ReportGenerator {
                             + Messages.getString("WhatsAppReport.Forwarded") + "</span><br/>");
                 }
 
+                String quoteClass = (message.isFromMe())?"quote_to":"quote_from";
+                String messageQuoteString = message.getDataQuote();
                 if (message.isQuoted() && messageQuote != null){
 
-                    String quoteClass = (message.isFromMe())?"quote_to":"quote_from";
-                    String messageQuoteString = message.getDataQuote();
                     String quoteIcon = "";
                     String quoteDuration = "("+formatMMSS(messageQuote.getMediaDuration())+")";
                     String quoteUser = getBestContactName(messageQuote,contactsDirectory,account);
@@ -521,6 +521,10 @@ public class ReportGenerator {
                             break;
                     }
                     
+                } else if (message.isQuoted() && messageQuote == null){ //Original message deleted by user
+                    //TODO - get user that delete message and message type
+                    out.print("<div class=\""+quoteClass+"\"><span class=\"quote_user\">"+"Deleted by User"+
+                    "</span></br><span class=\"quote_msg\">"+format(messageQuoteString) + "</span></div>");
                 }
 
                 switch (message.getMessageType()) {
