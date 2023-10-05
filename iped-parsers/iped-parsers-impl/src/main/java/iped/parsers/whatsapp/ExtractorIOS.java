@@ -464,7 +464,7 @@ public class ExtractorIOS extends Extractor {
                             m.setMessageType(APP_MESSAGE);
                         } else if (mediaMime.startsWith("audio")) {
                             m.setMessageType(AUDIO_MESSAGE);
-                        } else if (m.getMediaCaption() != null ){
+                        } else if (m.getMediaCaption() != null) {
                             m.setMessageType(UNKNOWN_MEDIA_MESSAGE);
                         }
                     }
@@ -472,7 +472,7 @@ public class ExtractorIOS extends Extractor {
                     m.setMessageType(UNKNOWN_MEDIA_MESSAGE);
                 }
             }
-            
+
             if (MEDIA_MESSAGES.contains(m.getMessageType())) {
                 try {
                     m.setMediaHash(mediaItem.getTextValue("ZVCARDNAME"), true); //$NON-NLS-1$
