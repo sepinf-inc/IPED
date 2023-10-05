@@ -449,31 +449,35 @@ public class ExtractorIOS extends Extractor {
             m.setUrl(mediaItem.getTextValue("ZMEDIAURL")); //$NON-NLS-1$
             m.setLatitude(mediaItem.getFloatValue("ZLATITUDE")); //$NON-NLS-1$
             m.setLongitude(mediaItem.getFloatValue("ZLONGITUDE")); //$NON-NLS-1$
+
+            // This block must be before "if (MEDIA_MESSAGES.contains(m.getMessageType()))",
+            // otherwise Media Hash won't be set. See issue #1921.
+            if (messageType == 0 && m.getData() == null) {
+                if (m.getMediaMime() != null) {
+                    var mediaMime = m.getMediaMime();
+                    if (mediaMime != null) {
+                        if (mediaMime.startsWith("image")) {
+                            m.setMessageType(IMAGE_MESSAGE);
+                        } else if (mediaMime.startsWith("video")) {
+                            m.setMessageType(VIDEO_MESSAGE);
+                        } else if (mediaMime.startsWith("application")) {
+                            m.setMessageType(APP_MESSAGE);
+                        } else if (mediaMime.startsWith("audio")) {
+                            m.setMessageType(AUDIO_MESSAGE);
+                        } else if (m.getMediaCaption() != null ){
+                            m.setMessageType(UNKNOWN_MEDIA_MESSAGE);
+                        }
+                    }
+                } else if (m.getMediaCaption() != null) {
+                    m.setMessageType(UNKNOWN_MEDIA_MESSAGE);
+                }
+            }
+            
             if (MEDIA_MESSAGES.contains(m.getMessageType())) {
                 try {
                     m.setMediaHash(mediaItem.getTextValue("ZVCARDNAME"), true); //$NON-NLS-1$
                 } catch (IllegalArgumentException e) {
                 } // ignore
-            }
-        }
-        if (messageType == 0 && m.getData() == null) {
-            if (m.getMediaMime() != null) {
-                var mediaMime = m.getMediaMime();
-                if (mediaMime != null) {
-                    if (mediaMime.startsWith("image")) {
-                        m.setMessageType(IMAGE_MESSAGE);
-                    } else if (mediaMime.startsWith("video")) {
-                        m.setMessageType(VIDEO_MESSAGE);
-                    } else if (mediaMime.startsWith("application")) {
-                        m.setMessageType(APP_MESSAGE);
-                    } else if (mediaMime.startsWith("audio")) {
-                        m.setMessageType(AUDIO_MESSAGE);
-                    } else if (m.getMediaCaption() != null ){
-                        m.setMessageType(UNKNOWN_MEDIA_MESSAGE);
-                    }
-                }
-            } else if (m.getMediaCaption() != null) {
-                m.setMessageType(UNKNOWN_MEDIA_MESSAGE);
             }
         }
         m.setDeleted(row.isDeletedRow());
