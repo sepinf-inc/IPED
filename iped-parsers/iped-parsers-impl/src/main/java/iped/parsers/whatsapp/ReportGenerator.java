@@ -44,6 +44,7 @@ public class ReportGenerator {
     private static final String lockedIcon = "<img class=\"lock\"/>";
     private static final String locationIcon = "<img class=\"location\"/>";
     private static final String forwardedIcon = "<img class=\"fwd\"/>";
+    private static final String waSuffix = "@s.whatsapp.net";
 
     public ReportGenerator() {
     }
@@ -190,8 +191,14 @@ public class ReportGenerator {
         String bubbleTo = "<div class=\"bbr\"><div class=\"outgoing to\">";
         String bubbleFromSpecial = "<div class=\"bbls\"><div class=\"aw\"><div class=\"awls\"></div></div><div class=\"specialmessage from\">";
         String bubbleToSpecial = "<div class=\"bbrs\"><div class=\"specialmessage to\">";
+        String quoteClick = "";
+        Message messageQuote = message.getMessageQuote();
 
-        out.println("<div class=\"linha\" id=\"" + message.getUniqueId() + "\">"); //$NON-NLS-1$
+        if (message.isQuoted() && messageQuote != null){
+            quoteClick = "onclick=\"goAnchorId("+messageQuote.getId()+");\"";
+        }
+
+        out.println("<div class=\"linha\" id=\"" + message.getUniqueId() + "\" "+quoteClick+">"); //$NON-NLS-1$
 
         switch (message.getMessageType()) {
             case UNKNOWN_MESSAGE:
@@ -440,6 +447,82 @@ public class ReportGenerator {
                     out.println(forwardedIcon + "<span class=\"fwd\">"
                             + Messages.getString("WhatsAppReport.Forwarded") + "</span><br/>");
                 }
+
+                if (message.isQuoted() && messageQuote != null){
+
+                    String quoteClass = (message.isFromMe())?"quote_to":"quote_from";
+                    String messageQuoteString = message.getDataQuote();
+                    String quoteIcon = "";
+                    String quoteDuration = "("+formatMMSS(messageQuote.getMediaDuration())+")";
+                    String quoteUser = getBestContactName(messageQuote,contactsDirectory,account);
+                    byte[] thumbQuote = messageQuote.getThumbData();                               
+
+                    switch (messageQuote.getMessageType()) {
+                        case AUDIO_MESSAGE:
+                            if (messageQuoteString == null || messageQuoteString.isEmpty()){
+                                messageQuoteString = "Audio";
+                            }
+                            quoteIcon = "\uD83C\uDFA7";
+                            out.print("<div class=\""+quoteClass+"\"><span class=\"quote_user\">"+quoteUser+
+                            "</span></br><span class=\"quote_msg\">"+quoteIcon +
+                                " "+ format(messageQuoteString) + " "+  quoteDuration + "</span></div>");                                    
+                            break;
+                        case VIDEO_MESSAGE:     
+                        case GIF_MESSAGE:                           
+                            quoteIcon = "\uD83D\uDCF9";
+                            if (messageQuoteString == null || messageQuoteString.isEmpty()){
+                                messageQuoteString = "Video";
+                            }
+                            out.print("<div class=\""+quoteClass+"\" style=\"display:flex\"><div style=\"width:100%\"><span class=\"quote_user\">"+quoteUser+
+                            "</span></br><span class=\"quote_msg\">"+quoteIcon +
+                                " "+ format(messageQuoteString) + " "+  quoteDuration + "</span></div>");
+                            if (thumbQuote != null) {
+                                out.print("<div><img style=\"width:33px;height:33px\" src=\"");
+                                out.print("data:image/jpg;base64," + Util.encodeBase64(thumbQuote) + "\"></div>");
+                            } else {
+                                out.println("<div class=\"videoImg\" style=\"width:33px;height:33px\" title=\"Video\"></div>");
+                            }
+                            out.print("</div>");
+                            break;                        
+                        case STICKER_MESSAGE:
+                        case IMAGE_MESSAGE:
+                            quoteIcon = "\uD83D\uDDBC";
+                            if (messageQuoteString == null || messageQuoteString.isEmpty()){
+                                messageQuoteString = "Photo";
+                            }
+                            out.print("<div class=\""+quoteClass+"\" style=\"display:flex\"><div style=\"width:100%\"><span class=\"quote_user\">"+quoteUser+
+                                "</span></br><span class=\"quote_msg\">"+quoteIcon +" "+ format(messageQuoteString) + " </span></div>");                                    
+                            if (thumbQuote != null) {
+                                out.print("<div><img style=\"width:33px;height:33px\" src=\"");
+                                out.print("data:image/jpg;base64," + Util.encodeBase64(thumbQuote) + "\"></div>");
+                            } else {
+                                out.println("<div class=\"imageImg\" style=\"width:33px;height:33px\" title=\"Image\"></div>"); //$NON-NLS-1$
+                            }
+                            out.print("</div>");
+                            break;                        
+                        case APP_MESSAGE:
+                            quoteIcon = "\uD83D\uDDCE";
+                            if (messageQuoteString == null || messageQuoteString.isEmpty()){
+                                messageQuoteString = "Document";
+                            }
+                            out.print("<div class=\""+quoteClass+"\" style=\"display:flex\"><div style=\"width:100%\"><span class=\"quote_user\">"+quoteUser+
+                                "</span></br><span class=\"quote_msg\">"+quoteIcon +" "+ format(messageQuoteString) + " </span></div>");                                    
+                            if (thumbQuote != null) {
+                                out.print("<div><img style=\"width:33px;height:33px\" src=\"");
+                                out.print("data:image/jpg;base64," + Util.encodeBase64(thumbQuote) + "\"></div>");
+                            } else {
+                                out.println("<div class=\"attachImg\" style=\"width:33px;height:33px\" title=\"Doc\"></div>"); //$NON-NLS-1$
+                            }
+                            out.print("</div>");
+                            break;                            
+                        default:
+                            out.print("<div class=\""+quoteClass+"\"><span class=\"quote_user\">"+quoteUser+
+                            "</span></br><span class=\"quote_msg\">"+format(messageQuoteString) + "</span></div>");
+                            break;
+                    }
+                    
+                }
+
                 switch (message.getMessageType()) {
                     case TEXT_MESSAGE:
                         if (message.getData() != null) {
@@ -772,6 +855,42 @@ public class ReportGenerator {
             }
             out.println("</div><br>");
         }
+    }
+
+    private String getBestContactName(Message a, WAContactsDirectory contactsDirectory,WAAccount account){
+        String name = null;
+        String number = null;
+        if (a.isFromMe()) {
+            if (account != null && !account.isUnknown()) {
+                name = account.getName();
+            } else {
+                name = "[" + Messages.getString("WhatsAppReport.Owner") + "]";
+            }
+        } else {
+            number = a.getRemoteResource();
+            if (number != null) {
+                WAContact contact = contactsDirectory.getContact(number);
+                if (contact != null) {
+                    name = contact.getName();
+                }
+                if (number.endsWith(waSuffix)) {
+                    number = number.substring(0, number.length() - waSuffix.length());
+                }
+            }
+        }
+        name = name == null ? "" : name.trim();
+        number = number == null ? "" : number.trim();
+        if (!number.isEmpty()) {
+            if (name.isEmpty()) {
+                name = number;
+            } else if (!number.equals(name)) {
+                name += " (" + number + ")";
+            }
+        }
+        if (name != null) {
+            return format(name);
+        }
+        return "";
     }
 
     public static String formatMMSS(int duration) {
