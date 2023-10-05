@@ -68,6 +68,17 @@ function createMediaControls() {
     });
 }
 
+function goAnchorId(id){
+	var div = document.getElementById(id);
+	if (div){
+	    location.hash = '';
+		window.scrollTo(0, div.getBoundingClientRect().top + window.scrollY);	
+		location.href="#"+id;
+	}else{
+		return false;
+	}
+}
+
 if (navigator.userAgent.search("JavaFX") < 0) {
     document.write("<style>.iped-audio, .iped-video {display: none; }</style>");
     if (document.readyState != "loading") {
