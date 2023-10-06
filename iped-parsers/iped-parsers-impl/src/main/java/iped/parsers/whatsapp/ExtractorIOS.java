@@ -274,16 +274,45 @@ public class ExtractorIOS extends Extractor {
                     }
 
                     if (m.isQuoted()) {
-                        // must consider that all messages are in chronological order
-                        Message mq = searchMessageByUuid(messages,getUuidQuoteFromMetadata(rs.getString("metadata")));
-                        m.setMessageQuote(mq);
+                        String metadata = rs.getString("metadata");
+                        int size = getPositiveValueFromMetadata(metadata,1);
+                        int pos = 0;
+                        if (size >= 0){
+                            pos = 2;
+                            String uuidQuote = getSubStringFromMetadata(metadata, pos, size);
 
-                        //TODO get dataquote from METADATA
-                        if (mq != null){
-                            m.setDataQuote(mq.getData());
-                        }else{
-                            m.setDataQuote(null);
+                            // must consider that all messages are in chronological order
+                            Message mq = searchMessageByUuid(messages,uuidQuote);
+                            m.setMessageQuote(mq);
+
+                            pos += size;
+                            int unknowflag = getPositiveValueFromMetadata(metadata,pos);
+
+                            pos += 1;
+                            size = getPositiveValueFromMetadata(metadata,pos); //Get size of contac name
+                            pos += 1;
+                            String contact = getSubStringFromMetadata(metadata, pos, size);
+
+                            /*
+                            pos += size + 2;
+                            size = getPositiveValueFromMetadata(metadata,pos);
+                            pos += 1;
+                            String dataQuote = getSubStringFromMetadata(metadata, pos, size);
+                            */
+
+
+                            //TODO get dataquote from METADATA
+                            if (mq != null){
+                                m.setDataQuote(mq.getData());
+                            }else{
+                                m.setDataQuote(null);
+                            }
+
                         }
+
+
+
+
                     }
 
 
@@ -396,7 +425,7 @@ public class ExtractorIOS extends Extractor {
 
         m.setUuid(rs.getString("uuid"));
 
-        m.setQuoted(getHasQuoteFromMetadata(rs.getString("metadata")));
+        m.setQuoted(getPositiveValueFromMetadata(rs.getString("metadata"),0)==0x2A);
 
         return m;
     }
@@ -412,11 +441,38 @@ public class ExtractorIOS extends Extractor {
         return null;
     }
 
+    public int getPositiveValueFromMetadata(String metadata, int pos){
+        int ret = -1;
+        if (metadata != null){
+            byte [] metadataArray = metadata.getBytes();
+            if (metadataArray!= null && metadataArray.length >= pos+1){
+                return (int)metadataArray[pos];
+            }
+        }        
+        return ret;
+    }
+
+    public String getSubStringFromMetadata(String metadata, int pos, int length){
+        String ret = null;
+        if (metadata != null){
+            if (metadata.length() >= pos + length){
+                return metadata.substring(pos,pos + length);
+            }                
+        }        
+        return ret;
+    }
+
+
     public String getUuidQuoteFromMetadata(String metadata){
         String ret = null;
         if (metadata != null){
-            if (metadata.length() >= 22){
-                return metadata.substring(2,22);
+            byte [] metadataArray = metadata.getBytes();
+            int size = 0;
+            if (metadataArray!= null && metadataArray.length >= 2){
+                size = (int)metadataArray[1];
+                if (metadata.length() >= size + 2){
+                    return metadata.substring(2,size + 2);
+                }                
             }
         }        
         return ret;
@@ -426,8 +482,8 @@ public class ExtractorIOS extends Extractor {
         boolean ret = false;
         if (metadata != null){
             byte [] metadataArray = metadata.getBytes();
-            if (metadataArray!= null && metadataArray.length >= 2){
-                if (metadataArray[0] == 0x2A && metadataArray[1] == 0x14){
+            if (metadataArray!= null && metadataArray.length >= 1){
+                if (metadataArray[0] == 0x2A){
                     return true;
                 }
             }
