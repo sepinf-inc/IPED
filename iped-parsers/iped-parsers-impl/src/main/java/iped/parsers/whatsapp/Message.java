@@ -70,6 +70,7 @@ public class Message {
     private String dataQuote;
     private Message messageQuote = null;
     private boolean quoted = false;
+    private String uuid = null;
 
     static {
         try {
@@ -489,6 +490,14 @@ public class Message {
 
     public void setMessageQuote(Message messageQuote){
         this.messageQuote = messageQuote;
+    }
+
+    public String getUuid() {
+        return this.uuid;
+    }
+
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
     }
 
     public static enum MessageType {
