@@ -191,7 +191,6 @@ public class ReportGenerator {
         String bubbleTo = "<div class=\"bbr\"><div class=\"outgoing to\">";
         String bubbleFromSpecial = "<div class=\"bbls\"><div class=\"aw\"><div class=\"awls\"></div></div><div class=\"specialmessage from\">";
         String bubbleToSpecial = "<div class=\"bbrs\"><div class=\"specialmessage to\">";
-        Message messageQuote = message.getMessageQuote();
 
         out.println("<div class=\"linha\" id=\"" + message.getUniqueId() + "\">"); //$NON-NLS-1$
 
@@ -444,16 +443,12 @@ public class ReportGenerator {
                 }
 
                 String quoteClass = (message.isFromMe())?"quote_to":"quote_from";                
-                String messageQuoteString = message.getDataQuote();
+                Message messageQuote = message.getMessageQuote();
+                String dataQuote = message.getDataQuote();
 
                 if (message.isQuoted() && messageQuote != null){
 
                     String quoteClick = "onclick=\"goToAnchorId("+messageQuote.getId()+");\"";
-
-                    if (messageQuoteString == null){
-                        messageQuoteString = messageQuote.getData();
-                    }
-
                     String quoteIcon = "";
                     String quoteDuration = "("+formatMMSS(messageQuote.getMediaDuration())+")";
                     String quoteUser = getBestContactName(messageQuote,contactsDirectory,account);
@@ -461,23 +456,23 @@ public class ReportGenerator {
 
                     switch (messageQuote.getMessageType()) {
                         case AUDIO_MESSAGE:
-                            if (messageQuoteString == null || messageQuoteString.isEmpty()){
-                                messageQuoteString = "Audio";
+                            if (dataQuote == null || dataQuote.isEmpty()){
+                                dataQuote = "Audio";
                             }
                             quoteIcon = "\uD83C\uDFA7";
                             out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><span class=\"quote_user\">"+quoteUser+
                             "</span></br><span class=\"quote_msg\">"+quoteIcon +
-                                " "+ format(messageQuoteString) + " "+  quoteDuration + "</span></div>");                                    
+                                " "+ format(dataQuote) + " "+  quoteDuration + "</span></div>");                                    
                             break;
                         case VIDEO_MESSAGE:     
                         case GIF_MESSAGE:                           
                             quoteIcon = "\uD83D\uDCF9";
-                            if (messageQuoteString == null || messageQuoteString.isEmpty()){
-                                messageQuoteString = "Video";
+                            if (dataQuote == null || dataQuote.isEmpty()){
+                                dataQuote = "Video";
                             }
                             out.print("<div class=\""+quoteClass+"\" "+quoteClick+" style=\"display:flex\"><div style=\"width:100%\"><span class=\"quote_user\">"+quoteUser+
                             "</span></br><span class=\"quote_msg\">"+quoteIcon +
-                                " "+ format(messageQuoteString) + " "+  quoteDuration + "</span></div>");
+                                " "+ format(dataQuote) + " "+  quoteDuration + "</span></div>");
                             if (thumbQuote != null) {
                                 out.print("<div><img style=\"width:33px;height:33px\" src=\"");
                                 out.print("data:image/jpg;base64," + Util.encodeBase64(thumbQuote) + "\"></div>");
@@ -489,11 +484,11 @@ public class ReportGenerator {
                         case STICKER_MESSAGE:
                         case IMAGE_MESSAGE:
                             quoteIcon = "\uD83D\uDDBC";
-                            if (messageQuoteString == null || messageQuoteString.isEmpty()){
-                                messageQuoteString = "Photo";
+                            if (dataQuote == null || dataQuote.isEmpty()){
+                                dataQuote = "Photo";
                             }
                             out.print("<div class=\""+quoteClass+"\" "+quoteClick+" style=\"display:flex\"><div style=\"width:100%\"><span class=\"quote_user\">"+quoteUser+
-                                "</span></br><span class=\"quote_msg\">"+quoteIcon +" "+ format(messageQuoteString) + " </span></div>");                                    
+                                "</span></br><span class=\"quote_msg\">"+quoteIcon +" "+ format(dataQuote) + " </span></div>");                                    
                             if (thumbQuote != null) {
                                 out.print("<div><img style=\"width:33px;height:33px\" src=\"");
                                 out.print("data:image/jpg;base64," + Util.encodeBase64(thumbQuote) + "\"></div>");
@@ -504,11 +499,11 @@ public class ReportGenerator {
                             break;                        
                         case APP_MESSAGE:
                             quoteIcon = "\uD83D\uDCC4";
-                            if (messageQuoteString == null || messageQuoteString.isEmpty()){
-                                messageQuoteString = "Document";
+                            if (dataQuote == null || dataQuote.isEmpty()){
+                                dataQuote = "Document";
                             }
                             out.print("<div class=\""+quoteClass+"\" "+quoteClick+" style=\"display:flex\"><div style=\"width:100%\"><span class=\"quote_user\">"+quoteUser+
-                                "</span></br><span class=\"quote_msg\">"+quoteIcon +" "+ format(messageQuoteString) + " </span></div>");                                    
+                                "</span></br><span class=\"quote_msg\">"+quoteIcon +" "+ format(dataQuote) + " </span></div>");                                    
                             if (thumbQuote != null) {
                                 out.print("<div><img style=\"width:33px;height:33px\" src=\"");
                                 out.print("data:image/jpg;base64," + Util.encodeBase64(thumbQuote) + "\"></div>");
@@ -519,14 +514,14 @@ public class ReportGenerator {
                             break;                            
                         default:
                             out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><span class=\"quote_user\">"+quoteUser+
-                            "</span></br><span class=\"quote_msg\">"+format(messageQuoteString) + "</span></div>");
+                            "</span></br><span class=\"quote_msg\">"+format(dataQuote) + "</span></div>");
                             break;
                     }
                     
                 } else if (message.isQuoted() && messageQuote == null){ //Original message deleted by user
                     //TODO - get user that delete message and message type
                     out.print("<div class=\""+quoteClass+"\"><span class=\"quote_user\">"+Messages.getString("WhatsAppReport.MessageDeletedBySender")+
-                    "</span></br><span class=\"quote_msg\">"+format(messageQuoteString) + "</span></div>");
+                    "</span></br><span class=\"quote_msg\">"+format(dataQuote) + "</span></div>");
                 }
 
                 switch (message.getMessageType()) {
