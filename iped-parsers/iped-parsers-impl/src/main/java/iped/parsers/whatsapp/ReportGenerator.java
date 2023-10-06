@@ -521,7 +521,7 @@ public class ReportGenerator {
                 } else if (message.isQuoted() && messageQuote == null){ //Original message deleted by user
                     //TODO - get user that delete message and message type
                     out.print("<div class=\""+quoteClass+"\"><span class=\"quote_user\">"+Messages.getString("WhatsAppReport.MessageDeletedBySender")+
-                    "</span></br><span class=\"quote_msg\">"+format(dataQuote) + "</span></div>");
+                    " or not found</span></br><span class=\"quote_msg\">"+format(dataQuote) + "</span></div>");
                 }
 
                 switch (message.getMessageType()) {
