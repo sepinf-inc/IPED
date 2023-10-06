@@ -191,14 +191,9 @@ public class ReportGenerator {
         String bubbleTo = "<div class=\"bbr\"><div class=\"outgoing to\">";
         String bubbleFromSpecial = "<div class=\"bbls\"><div class=\"aw\"><div class=\"awls\"></div></div><div class=\"specialmessage from\">";
         String bubbleToSpecial = "<div class=\"bbrs\"><div class=\"specialmessage to\">";
-        String quoteClick = "";
         Message messageQuote = message.getMessageQuote();
 
-        if (message.isQuoted() && messageQuote != null){
-            quoteClick = "onclick=\"goToAnchorId("+messageQuote.getId()+");\"";
-        }
-
-        out.println("<div class=\"linha\" id=\"" + message.getUniqueId() + "\" "+quoteClick+">"); //$NON-NLS-1$
+        out.println("<div class=\"linha\" id=\"" + message.getUniqueId() + "\">"); //$NON-NLS-1$
 
         switch (message.getMessageType()) {
             case UNKNOWN_MESSAGE:
@@ -453,6 +448,8 @@ public class ReportGenerator {
 
                 if (message.isQuoted() && messageQuote != null){
 
+                    String quoteClick = "onclick=\"goToAnchorId("+messageQuote.getId()+");\"";
+
                     if (messageQuoteString == null){
                         messageQuoteString = messageQuote.getData();
                     }
@@ -468,7 +465,7 @@ public class ReportGenerator {
                                 messageQuoteString = "Audio";
                             }
                             quoteIcon = "\uD83C\uDFA7";
-                            out.print("<div class=\""+quoteClass+"\"><span class=\"quote_user\">"+quoteUser+
+                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><span class=\"quote_user\">"+quoteUser+
                             "</span></br><span class=\"quote_msg\">"+quoteIcon +
                                 " "+ format(messageQuoteString) + " "+  quoteDuration + "</span></div>");                                    
                             break;
@@ -478,7 +475,7 @@ public class ReportGenerator {
                             if (messageQuoteString == null || messageQuoteString.isEmpty()){
                                 messageQuoteString = "Video";
                             }
-                            out.print("<div class=\""+quoteClass+"\" style=\"display:flex\"><div style=\"width:100%\"><span class=\"quote_user\">"+quoteUser+
+                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+" style=\"display:flex\"><div style=\"width:100%\"><span class=\"quote_user\">"+quoteUser+
                             "</span></br><span class=\"quote_msg\">"+quoteIcon +
                                 " "+ format(messageQuoteString) + " "+  quoteDuration + "</span></div>");
                             if (thumbQuote != null) {
@@ -495,7 +492,7 @@ public class ReportGenerator {
                             if (messageQuoteString == null || messageQuoteString.isEmpty()){
                                 messageQuoteString = "Photo";
                             }
-                            out.print("<div class=\""+quoteClass+"\" style=\"display:flex\"><div style=\"width:100%\"><span class=\"quote_user\">"+quoteUser+
+                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+" style=\"display:flex\"><div style=\"width:100%\"><span class=\"quote_user\">"+quoteUser+
                                 "</span></br><span class=\"quote_msg\">"+quoteIcon +" "+ format(messageQuoteString) + " </span></div>");                                    
                             if (thumbQuote != null) {
                                 out.print("<div><img style=\"width:33px;height:33px\" src=\"");
@@ -510,7 +507,7 @@ public class ReportGenerator {
                             if (messageQuoteString == null || messageQuoteString.isEmpty()){
                                 messageQuoteString = "Document";
                             }
-                            out.print("<div class=\""+quoteClass+"\" style=\"display:flex\"><div style=\"width:100%\"><span class=\"quote_user\">"+quoteUser+
+                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+" style=\"display:flex\"><div style=\"width:100%\"><span class=\"quote_user\">"+quoteUser+
                                 "</span></br><span class=\"quote_msg\">"+quoteIcon +" "+ format(messageQuoteString) + " </span></div>");                                    
                             if (thumbQuote != null) {
                                 out.print("<div><img style=\"width:33px;height:33px\" src=\"");
@@ -521,7 +518,7 @@ public class ReportGenerator {
                             out.print("</div>");
                             break;                            
                         default:
-                            out.print("<div class=\""+quoteClass+"\"><span class=\"quote_user\">"+quoteUser+
+                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><span class=\"quote_user\">"+quoteUser+
                             "</span></br><span class=\"quote_msg\">"+format(messageQuoteString) + "</span></div>");
                             break;
                     }

@@ -222,6 +222,14 @@ div:target{
     padding: 5px;	
 }
 
+.quote_to:hover {
+	background-color: #88F1F3 !important;
+}
+
+.quote_from:hover {
+	background-color: #88F1F3 !important;
+}
+
 .quote_user {
     font-family: Arial;
     color: #01A280;	
@@ -237,23 +245,6 @@ div:target{
     100% {background: rgba(175, 211, 240,0);}
 }
   
-.bbl:hover .from div {
-    background-color: #def1f3 !important;
-}
-
-.bbl:hover .to div {
-    background-color: #def1f3 !important;
-}
-
-.bbr:hover .from div{
-    background-color: #def1f3 !important;
-}
-
-.bbr:hover .to div{
-    background-color: #def1f3 !important;
-}
-
-
 /*Arrow*/
 .aw {
     display: table-cell;
