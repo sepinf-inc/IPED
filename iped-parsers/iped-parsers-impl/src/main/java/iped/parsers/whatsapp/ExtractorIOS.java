@@ -272,6 +272,14 @@ public class ExtractorIOS extends Extractor {
                         activeMessages.add(new MessageWrapperForDuplicateRemoval(m));
                         activeMessageIds.put(m.getId(), m);
                     }
+
+                    if (m.isQuoted()) {
+                        //m.setDataQuote(null);
+                        // must consider that all messages are in chronological order
+                        m.setMessageQuote(searchMessageByUuid(messages,getUuidQuoteFromMetadata(rs.getString("metadata"))));
+                    }
+
+
                     messages.add(m);
                 }
             }
@@ -378,8 +386,48 @@ public class ExtractorIOS extends Extractor {
             decodeReceiptInfo(m, receiptInfo);
         }
         m.setForwarded(rs.getInt("forwarded") > 0);
+
+        m.setUuid(rs.getString("uuid"));
+
+        m.setQuoted(getHasQuoteFromMetadata(rs.getString("metadata")));
+
         return m;
     }
+
+    private Message searchMessageByUuid(List<Message> messages, String uuid){
+        if (messages != null && uuid != null){
+            for (Message m : messages){
+                if (m.getUuid() != null && m.getUuid().compareTo(uuid)==0){
+                    return m;
+                }
+            }
+        }
+        return null;
+    }
+
+    public String getUuidQuoteFromMetadata(String metadata){
+        String ret = null;
+        if (metadata != null){
+            if (metadata.length() >= 22){
+                return metadata.substring(2,22);
+            }
+        }        
+        return ret;
+    }
+
+    public boolean getHasQuoteFromMetadata(String metadata){
+        boolean ret = false;
+        if (metadata != null){
+            byte [] metadataArray = metadata.getBytes();
+            if (metadataArray!= null && metadataArray.length >= 2){
+                if (metadataArray[0] == 0x2A && metadataArray[1] == 0x14){
+                    return true;
+                }
+            }
+        }        
+        return ret;
+    }
+    
 
     private Message createMessageFromUndeletedRecord(SqliteRow row, Chat chat, Map<Long, SqliteRow> mediaItems,
             Map<Long, SqliteRow> groupMemebers) throws SQLException {
@@ -684,6 +732,8 @@ public class ExtractorIOS extends Extractor {
             + "ZLATITUDE as latitude, ZLONGITUDE as longitude, ZMEDIAURL as url, ZXMPPTHUMBPATH as thumbpath, " //$NON-NLS-1$
             + "INFO.ZRECEIPTINFO as receiptInfo, " //$NON-NLS-1$
             + "(1 << 7 & ZFLAGS) as forwarded, " //$NON-NLS-1$
+            + "ZWAMESSAGE.ZSTANZAID as uuid, " //$NON-NLS-1$
+            + "ZWAMEDIAITEM.ZMETADATA as metadata, " //$NON-NLS-1$
             + "ZGROUPEVENTTYPE as gEventType, ZMESSAGETYPE as messageType FROM ZWAMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAMEDIAITEM ON ZWAMESSAGE.Z_PK = ZWAMEDIAITEM.ZMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAMESSAGEINFO INFO ON INFO.Z_PK = ZWAMESSAGE.ZMESSAGEINFO " //$NON-NLS-1$
@@ -697,6 +747,8 @@ public class ExtractorIOS extends Extractor {
             + "ZLATITUDE as latitude, ZLONGITUDE as longitude, ZMEDIAURL as url, ZXMPPTHUMBPATH as thumbpath, " //$NON-NLS-1$
             + "INFO.ZRECEIPTINFO as receiptInfo, " //$NON-NLS-1$
             + "(1 << 7 & ZFLAGS) as forwarded, " //$NON-NLS-1$
+            + "ZWAMESSAGE.ZSTANZAID as uuid, " //$NON-NLS-1$
+            + "ZWAMEDIAITEM.ZMETADATA as metadata, " //$NON-NLS-1$
             + "ZGROUPEVENTTYPE as gEventType, ZMESSAGETYPE as messageType FROM ZWAMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAMEDIAITEM ON ZWAMESSAGE.Z_PK = ZWAMEDIAITEM.ZMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAMESSAGEINFO INFO ON INFO.Z_PK = ZWAMESSAGE.ZMESSAGEINFO " //$NON-NLS-1$
