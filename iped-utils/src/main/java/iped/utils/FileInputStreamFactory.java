@@ -60,8 +60,8 @@ public class FileInputStreamFactory extends SeekableInputStreamFactory {
             Files.newDirectoryStream(Path.of(path));
         } catch (NotDirectoryException ioe) {
             return false;
-        } catch (Exception e) {
-            return true;
+        } catch (IOException e) {
+            return new File(path).isDirectory();
         }
         return true;
     }
