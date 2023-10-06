@@ -274,9 +274,16 @@ public class ExtractorIOS extends Extractor {
                     }
 
                     if (m.isQuoted()) {
-                        //m.setDataQuote(null);
                         // must consider that all messages are in chronological order
-                        m.setMessageQuote(searchMessageByUuid(messages,getUuidQuoteFromMetadata(rs.getString("metadata"))));
+                        Message mq = searchMessageByUuid(messages,getUuidQuoteFromMetadata(rs.getString("metadata")));
+                        m.setMessageQuote(mq);
+
+                        //TODO get dataquote from METADATA
+                        if (mq != null){
+                            m.setDataQuote(mq.getData());
+                        }else{
+                            m.setDataQuote(null);
+                        }
                     }
 
 
