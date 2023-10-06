@@ -763,6 +763,8 @@ public class ExtractorIOS extends Extractor {
             + "ZLATITUDE as latitude, ZLONGITUDE as longitude, ZMEDIAURL as url, ZXMPPTHUMBPATH as thumbpath, " //$NON-NLS-1$
             + "INFO.ZRECEIPTINFO as receiptInfo, " //$NON-NLS-1$
             + "(1 << 7 & ZFLAGS) as forwarded, " //$NON-NLS-1$
+            + "ZWAMESSAGE.ZSTANZAID as uuid, " //$NON-NLS-1$
+            + "ZWAMEDIAITEM.ZMETADATA as metadata, " //$NON-NLS-1$            
             + "ZGROUPEVENTTYPE as gEventType, ZMESSAGETYPE as messageType FROM ZWAMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAMEDIAITEM ON ZWAMESSAGE.Z_PK = ZWAMEDIAITEM.ZMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAMESSAGEINFO INFO ON INFO.Z_PK = ZWAMESSAGE.ZMESSAGEINFO " //$NON-NLS-1$
@@ -776,6 +778,8 @@ public class ExtractorIOS extends Extractor {
             + "ZLATITUDE as latitude, ZLONGITUDE as longitude, ZMEDIAURL as url, ZXMPPTHUMBPATH as thumbpath, " //$NON-NLS-1$
             + "INFO.ZRECEIPTINFO as receiptInfo, " //$NON-NLS-1$
             + "(1 << 7 & ZFLAGS) as forwarded, " //$NON-NLS-1$
+            + "ZWAMESSAGE.ZSTANZAID as uuid, " //$NON-NLS-1$
+            + "ZWAMEDIAITEM.ZMETADATA as metadata, " //$NON-NLS-1$            
             + "ZGROUPEVENTTYPE as gEventType, ZMESSAGETYPE as messageType FROM ZWAMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAMEDIAITEM ON ZWAMESSAGE.Z_PK = ZWAMEDIAITEM.ZMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAGROUPMEMBER ON ZWAGROUPMEMBER.ZCHATSESSION = chatId AND ZWAGROUPMEMBER.Z_PK = ZGROUPMEMBER " //$NON-NLS-1$
