@@ -195,7 +195,7 @@ public class ReportGenerator {
         Message messageQuote = message.getMessageQuote();
 
         if (message.isQuoted() && messageQuote != null){
-            quoteClick = "onclick=\"goAnchorId("+messageQuote.getId()+");\"";
+            quoteClick = "onclick=\"goToAnchorId("+messageQuote.getId()+");\"";
         }
 
         out.println("<div class=\"linha\" id=\"" + message.getUniqueId() + "\" "+quoteClick+">"); //$NON-NLS-1$
@@ -448,9 +448,14 @@ public class ReportGenerator {
                             + Messages.getString("WhatsAppReport.Forwarded") + "</span><br/>");
                 }
 
-                String quoteClass = (message.isFromMe())?"quote_to":"quote_from";
+                String quoteClass = (message.isFromMe())?"quote_to":"quote_from";                
                 String messageQuoteString = message.getDataQuote();
+
                 if (message.isQuoted() && messageQuote != null){
+
+                    if (messageQuoteString == null){
+                        messageQuoteString = messageQuote.getData();
+                    }
 
                     String quoteIcon = "";
                     String quoteDuration = "("+formatMMSS(messageQuote.getMediaDuration())+")";
