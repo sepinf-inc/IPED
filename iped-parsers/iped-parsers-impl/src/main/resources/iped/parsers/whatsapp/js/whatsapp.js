@@ -68,12 +68,18 @@ function createMediaControls() {
     });
 }
 
-function goAnchorId(id){
+function goToAnchorId(id){
+	var scroll_padding_top = 84;
 	var div = document.getElementById(id);
-	if (div){
+	var scrollY = window.scrollY;
+	if (div){	
+		var top = div.getBoundingClientRect().top;	
 	    location.hash = '';
-		window.scrollTo(0, div.getBoundingClientRect().top + window.scrollY);	
+		window.scrollTo(0, top + scrollY);	
 		location.href="#"+id;
+		if (top > scroll_padding_top){
+			window.scrollTo(0, scrollY);	
+		}		
 	}else{
 		return false;
 	}
