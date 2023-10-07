@@ -51,6 +51,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Comparator;
+import java.util.Collections;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,7 +82,14 @@ public class ExtractorAndroid extends Extractor {
     private boolean hasMediaDurationCol = false;
     private boolean hasGroupParticiantsTable = true;
     private boolean hasForwardedCol = false;
+    private boolean hasQuoteTable = false;
     private SQLException parsingException = null;
+
+    Comparator<Message> comparatorMessage = new Comparator<Message>() {
+      public int compare(Message u1, Message u2) {
+        return Long.compare(u1.getId(), u2.getId());
+      }
+    };
 
     public ExtractorAndroid(String itemPath, File databaseFile, WAContactsDirectory contacts, WAAccount account, boolean recoverDeletedRecords) {
         super(itemPath, databaseFile, contacts, account, recoverDeletedRecords);
@@ -152,6 +161,7 @@ public class ExtractorAndroid extends Extractor {
                     hasMediaCaptionCol = SQLite3DBParser.checkIfColumnExists(conn, "messages", "media_caption"); //$NON-NLS-1$ //$NON-NLS-2$
                     hasMediaDurationCol = SQLite3DBParser.checkIfColumnExists(conn, "messages", "media_duration"); //$NON-NLS-1$ //$NON-NLS-2$
                     hasForwardedCol = SQLite3DBParser.checkIfColumnExists(conn, "messages", "forwarded"); //$NON-NLS-1$ //$NON-NLS-2$
+                    hasQuoteTable = SQLite3DBParser.containsTable("messages_quotes", conn); 
                     if (!hasChatView) {
                         hasSubjectCol = SQLite3DBParser.checkIfColumnExists(conn, "chat_list", "subject"); //$NON-NLS-1$ //$NON-NLS-2$
                     }
@@ -342,7 +352,7 @@ public class ExtractorAndroid extends Extractor {
         Set<MessageWrapperForDuplicateRemoval> activeMessages = new HashSet<>();
         Map<Long, Message> activeMessageIds = new HashMap<>();
 
-        String query = getMessagesQuery(hasThumbTable, hasEditVersionCol, hasMediaDurationCol, hasMediaCaptionCol, hasForwardedCol);
+        String query = getMessagesQuery(hasThumbTable, hasEditVersionCol, hasMediaDurationCol, hasMediaCaptionCol, hasForwardedCol, hasQuoteTable);
 
         try (PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setFetchSize(1000);
@@ -354,6 +364,12 @@ public class ExtractorAndroid extends Extractor {
                         activeMessages.add(new MessageWrapperForDuplicateRemoval(m));
                         activeMessageIds.put(m.getId(), m);
                     }
+
+                    if (m.isQuoted()) {
+                        m.setDataQuote(Util.getUTF8String(rs, "data_quote"));
+                        // must consider that all messages are in chronological order
+                        m.setMessageQuote(searchMessage(messages,rs.getLong("id_quote")));
+                    }                    
                     messages.add(m);
                 }
             }
@@ -393,6 +409,20 @@ public class ExtractorAndroid extends Extractor {
             Collections.sort(messages, (a, b) -> a.getTimeStamp().compareTo(b.getTimeStamp()));
         }
         return messages;
+    }
+
+    private Message searchMessage(List<Message> messages, Long id){
+
+        Message tmp = new Message();
+        tmp.setId(id);
+        int index = Collections.binarySearch(messages, tmp, comparatorMessage);
+        tmp = null;
+        if (index >= 0){
+            return messages.get(index);
+        }else{
+            return null;
+        }
+
     }
 
     private Message createMessageFromDBRow(ResultSet rs, WAContact remote, boolean isGroupChat, boolean deleted,
@@ -493,6 +523,9 @@ public class ExtractorAndroid extends Extractor {
         }
         m.setDeleted(deleted);
         m.setForwarded(hasForwardedCol && (rs.getInt("forwarded") > 0));
+
+        m.setQuoted(hasQuoteTable && rs.getInt("quoted") == 1);
+
 
         return m;
     }
@@ -641,7 +674,7 @@ public class ExtractorAndroid extends Extractor {
     private static final String SELECT_CHAT_LIST_NO_SUBJECT = "SELECT _id as id,key_remote_jid AS contact, " //$NON-NLS-1$
             + " null as subject, 1230768000000 as creation FROM chat_list"; //$NON-NLS-1$
 
-    private static String getMessagesQuery(boolean hasThumbTable, boolean hasEditVersion, boolean hasMediaDuration, boolean hasMediaCaption, boolean hasForwarded) {
+    private static String getMessagesQuery(boolean hasThumbTable, boolean hasEditVersion, boolean hasMediaDuration, boolean hasMediaCaption, boolean hasForwarded, boolean hasQuote) {
         String query;
         if (hasThumbTable) {
             query = SELECT_MESSAGES_THUMBS_TABLE;
@@ -660,6 +693,11 @@ public class ExtractorAndroid extends Extractor {
         if (!hasForwarded) {
             query = query.replace("(forwarded & 1) as forwarded, ", "");
         }
+        if (!hasQuote) {
+            query = query.replace("mq.id_quote, mq.data_quote, CASE WHEN m.quoted_row_id IS NOT NULL AND m.quoted_row_id > 0 THEN 1 ELSE 0 END AS quoted, ", "");
+            query = query.replace("LEFT JOIN (select mq._id,m._id as id_quote, mq.data as data_quote from messages m inner join messages_quotes mq on m.key_id = mq.key_id) ", "");
+            query = query.replace("as mq on m.quoted_row_id = mq._id ", "");
+        }
         return query;
     }
 
@@ -668,7 +706,7 @@ public class ExtractorAndroid extends Extractor {
      * mensagens 1 - ? 4 - mensagens 5 - mensagens 6 - ligacao / audio 7 - mensagens
      * 8 - audio enviado 10 - audio recebido 12 - mensagens 13 - mensagens
      */
-    private static final String SELECT_MESSAGES_NO_THUMBS_TABLE = "SELECT _id AS id, key_remote_jid " //$NON-NLS-1$
+    private static final String SELECT_MESSAGES_NO_THUMBS_TABLE = "SELECT m._id AS id, key_remote_jid " //$NON-NLS-1$
             + "as remoteId, remote_resource AS remoteResource, status, data, " //$NON-NLS-1$
             + "key_from_me as fromMe, timestamp, media_url as mediaUrl, " //$NON-NLS-1$
             + "media_mime_type as mediaMime, media_size as mediaSize, media_name as mediaName, " //$NON-NLS-1$
@@ -677,10 +715,13 @@ public class ExtractorAndroid extends Extractor {
             + "media_duration, " //$NON-NLS-1$
             + "media_caption as mediaCaption, " //$NON-NLS-1$
             + "(forwarded & 1) as forwarded, " //$NON-NLS-1$
-            + "media_hash as mediaHash, raw_data as rawData FROM " //$NON-NLS-1$
-            + "messages WHERE remoteId=? and status!=-1 ORDER BY timestamp"; //$NON-NLS-1$
+            + "mq.id_quote, mq.data_quote, CASE WHEN m.quoted_row_id IS NOT NULL AND m.quoted_row_id > 0 THEN 1 ELSE 0 END AS quoted, " //$NON-NLS-1$          
+            + "media_hash as mediaHash, raw_data as rawData FROM messages m " //$NON-NLS-1$
+            + "LEFT JOIN (select mq._id,m._id as id_quote, mq.data as data_quote from messages m inner join messages_quotes mq on m.key_id = mq.key_id) "
+            + "as mq on m.quoted_row_id = mq._id " //$NON-NLS-1$
+            + "WHERE remoteId=? and status!=-1 ORDER BY timestamp"; //$NON-NLS-1$
 
-    private static final String SELECT_MESSAGES_THUMBS_TABLE = "SELECT _id AS id, messages.key_remote_jid " //$NON-NLS-1$
+    private static final String SELECT_MESSAGES_THUMBS_TABLE = "SELECT m._id AS id, messages.key_remote_jid " //$NON-NLS-1$
             + "as remoteId, remote_resource AS remoteResource, status, data, " //$NON-NLS-1$
             + "messages.key_from_me as fromMe, messages.timestamp as timestamp, media_url as mediaUrl, " //$NON-NLS-1$
             + "media_mime_type as mediaMime, media_size as mediaSize, media_name as mediaName, " //$NON-NLS-1$
@@ -689,8 +730,11 @@ public class ExtractorAndroid extends Extractor {
             + "media_duration, " //$NON-NLS-1$
             + "media_caption as mediaCaption, " //$NON-NLS-1$
             + "(forwarded & 1) as forwarded, " //$NON-NLS-1$
-            + "media_hash as mediaHash, thumbnail as thumbData FROM " //$NON-NLS-1$
-            + "messages LEFT JOIN message_thumbnails ON (messages.key_id = message_thumbnails.key_id " //$NON-NLS-1$
+            + "mq.id_quote, mq.data_quote, CASE WHEN m.quoted_row_id IS NOT NULL AND m.quoted_row_id > 0 THEN 1 ELSE 0 END AS quoted, " //$NON-NLS-1$          
+            + "media_hash as mediaHash, thumbnail as thumbData FROM messages m " //$NON-NLS-1$
+            + "LEFT JOIN (select mq._id,m._id as id_quote, mq.data as data_quote from messages m inner join messages_quotes mq on m.key_id = mq.key_id) "
+            + "as mq on m.quoted_row_id = mq._id " //$NON-NLS-1$            
+            + "LEFT JOIN message_thumbnails ON (messages.key_id = message_thumbnails.key_id " //$NON-NLS-1$
             + "AND messages.key_remote_jid = message_thumbnails.key_remote_jid " //$NON-NLS-1$
             + "AND messages.key_from_me = message_thumbnails.key_from_me) " //$NON-NLS-1$
             + "WHERE remoteId=? and status!=-1 ORDER BY timestamp"; //$NON-NLS-1$
