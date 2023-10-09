@@ -129,8 +129,14 @@ public class ALeappPluginsManager {
 
 
         } catch (Exception e) {
-            // the file does not have an __artifacts__ declared variable, meaning it is not
-            // a plugin.
+            if (e.getMessage().contains("artifacts")) {
+                // Ignores as the file does not have an __artifacts__ declared variable, meaning
+                // it is not
+                // a plugin.
+            } else {
+                throw e; // otherwise, rethrows the exception
+            }
+
         }
 
     }
