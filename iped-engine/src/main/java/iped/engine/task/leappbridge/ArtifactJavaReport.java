@@ -119,9 +119,8 @@ public class ArtifactJavaReport {
                 for (String property : (Collection<String>) headers) {
                     if (data[i] != null) {
                         addMetadata(m, property, data[i].toString());
-
-                        i++;
                     }
+                    i++;
                 }
             }
             subItem.setExtraAttribute(IndexItem.PARENT_TRACK_ID, parentInfo.getTrackId());
@@ -140,7 +139,7 @@ public class ArtifactJavaReport {
      * Properly maps, format and add leap html columns as IPED item metadata
      */
     private void addMetadata(Metadata m, String property, String value) throws IOException {
-        if (value.trim().equals("")) {
+        if (value == null || value.trim().equals("")) {
             return;
         }
         if (property.contains("Latitude")) {
@@ -168,7 +167,7 @@ public class ArtifactJavaReport {
                 location = null;
             }
         }
-        m.add("aleap:" + property, value);
+        m.add("aleapp:" + property, value);
 
         // some plugins have the linked item per artifact record
         if (value.startsWith(reportDumpPath.getCanonicalPath())) {
