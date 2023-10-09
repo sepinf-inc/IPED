@@ -444,10 +444,10 @@ public class ReportGenerator {
 
                 String quoteClass = (message.isFromMe())?"quote_to":"quote_from";                
                 Message messageQuote = message.getMessageQuote();
-                String dataQuote = message.getDataQuote();
 
                 if (message.isQuoted() && messageQuote != null){
 
+                    String dataQuote = messageQuote.getData();
                     String quoteClick = "onclick=\"goToAnchorId("+messageQuote.getId()+");\"";
                     String quoteIcon = "";
                     String quoteDuration = "("+formatMMSS(messageQuote.getMediaDuration())+")";
@@ -460,7 +460,7 @@ public class ReportGenerator {
                                 dataQuote = "Audio";
                             }
                             quoteIcon = "\uD83C\uDFA7";
-                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><span class=\"quote_user\">"+quoteUser+
+                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+" style=\"display:table;width:-webkit-fill-available;\"><div style=\"display:table-cell;\"><span class=\"quote_user\">"+quoteUser+
                             "</span></br><span class=\"quote_msg\">"+quoteIcon +
                                 " "+ format(dataQuote) + " "+  quoteDuration + "</span></div>");                                    
                             break;
@@ -470,16 +470,15 @@ public class ReportGenerator {
                             if (dataQuote == null || dataQuote.isEmpty()){
                                 dataQuote = "Video";
                             }
-                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+" style=\"display:flex\"><div style=\"width:100%\"><span class=\"quote_user\">"+quoteUser+
+                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+" style=\"display:table;width:-webkit-fill-available;\"><div style=\"display:table-cell;vertical-align:top;border-right: 10px solid transparent;\"><span class=\"quote_user\">"+quoteUser+
                             "</span></br><span class=\"quote_msg\">"+quoteIcon +
                                 " "+ format(dataQuote) + " "+  quoteDuration + "</span></div>");
                             if (thumbQuote != null) {
-                                out.print("<div><img style=\"width:33px;height:33px\" src=\"");
+                                out.print("<div><img style=\"width:33px;height:33px;display:table-cell\" src=\"");
                                 out.print("data:image/jpg;base64," + Util.encodeBase64(thumbQuote) + "\"></div>");
                             } else {
-                                out.println("<div class=\"videoImg\" style=\"width:33px;height:33px\" title=\"Video\"></div>");
+                                out.println("<div class=\"videoImg\" style=\"width:33px;height:33px;display:table-cell\" title=\"Video\"></div>");
                             }
-                            out.print("</div>");
                             break;                        
                         case STICKER_MESSAGE:
                         case IMAGE_MESSAGE:
@@ -487,41 +486,45 @@ public class ReportGenerator {
                             if (dataQuote == null || dataQuote.isEmpty()){
                                 dataQuote = "Photo";
                             }
-                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+" style=\"display:flex\"><div style=\"width:100%\"><span class=\"quote_user\">"+quoteUser+
+                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+" style=\"display:table;width:-webkit-fill-available;\"><div style=\"display:table-cell;vertical-align:top;border-right: 10px solid transparent;\"><span class=\"quote_user\">"+quoteUser+
                                 "</span></br><span class=\"quote_msg\">"+quoteIcon +" "+ format(dataQuote) + " </span></div>");                                    
                             if (thumbQuote != null) {
-                                out.print("<div><img style=\"width:33px;height:33px\" src=\"");
+                                out.print("<div><img style=\"width:33px;height:33px;display:table-cell\" src=\"");
                                 out.print("data:image/jpg;base64," + Util.encodeBase64(thumbQuote) + "\"></div>");
                             } else {
-                                out.println("<div class=\"imageImg\" style=\"width:33px;height:33px\" title=\"Image\"></div>"); //$NON-NLS-1$
+                                out.println("<div class=\"imageImg\" style=\"width:33px;height:33px;display:table-cell\" title=\"Image\"></div>"); //$NON-NLS-1$
                             }
-                            out.print("</div>");
                             break;                        
                         case APP_MESSAGE:
                             quoteIcon = "\uD83D\uDCC4";
                             if (dataQuote == null || dataQuote.isEmpty()){
                                 dataQuote = "Document";
                             }
-                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+" style=\"display:flex\"><div style=\"width:100%\"><span class=\"quote_user\">"+quoteUser+
+                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+" style=\"display:table;width:-webkit-fill-available;\"><div style=\"display:table-cell;vertical-align:top;border-right: 10px solid transparent;\"><span class=\"quote_user\">"+quoteUser+
                                 "</span></br><span class=\"quote_msg\">"+quoteIcon +" "+ format(dataQuote) + " </span></div>");                                    
                             if (thumbQuote != null) {
-                                out.print("<div><img style=\"width:33px;height:33px\" src=\"");
+                                out.print("<div><img style=\"width:33px;height:33px;display:table-cell\" src=\"");
                                 out.print("data:image/jpg;base64," + Util.encodeBase64(thumbQuote) + "\"></div>");
                             } else {
-                                out.println("<div class=\"attachImg\" style=\"width:33px;height:33px\" title=\"Doc\"></div>"); //$NON-NLS-1$
+                                out.println("<div class=\"attachImg\" style=\"width:33px;height:33px;display:table-cell\" title=\"Doc\"></div>"); //$NON-NLS-1$
                             }
-                            out.print("</div>");
                             break;                            
                         default:
-                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><span class=\"quote_user\">"+quoteUser+
-                            "</span></br><span class=\"quote_msg\">"+format(dataQuote) + "</span></div>");
+                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+" style=\"display:table;width:-webkit-fill-available;\"><div style=\"display:table-cell;\"><span class=\"quote_user\">"+quoteUser+
+                            "</span></br><span class=\"quote_msg\">"+ format(dataQuote) + "</span></div>");
                             break;
                     }
+                    if (messageQuote.isDeleted()) {
+                        out.println("<div style=\"display:table-footer-group\"><br/><span style=\"float:none\" class=\"recovered\">"); //$NON-NLS-1$
+                        out.println("<i>" + "Partially recovered" + "</i>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                        out.println("<div class=\"deletedIcon\"></div>"); //$NON-NLS-1$
+                        out.println("</span></div>"); //$NON-NLS-1$
+                    }                    
+                    out.print("</div>");
                     
-                } else if (message.isQuoted() && messageQuote == null){ //Original message deleted by user
-                    //TODO - get user that delete message and message type
-                    out.print("<div class=\""+quoteClass+"\"><span class=\"quote_user\">"+Messages.getString("WhatsAppReport.MessageDeletedBySender")+
-                    " or not found</span></br><span class=\"quote_msg\">"+format(dataQuote) + "</span></div>");
+                } else if (message.isQuoted() && messageQuote == null){ //References not found
+                    out.print("<div class=\""+quoteClass+"\"><span class=\"quote_user\">"+
+                    "Reference not found</span></br><span class=\"quote_msg\">"+format("") + "</span></div>");
                 }
 
                 switch (message.getMessageType()) {
@@ -891,7 +894,7 @@ public class ReportGenerator {
         if (name != null) {
             return format(name);
         }
-        return "";
+        return "User Unknown";
     }
 
     public static String formatMMSS(int duration) {
