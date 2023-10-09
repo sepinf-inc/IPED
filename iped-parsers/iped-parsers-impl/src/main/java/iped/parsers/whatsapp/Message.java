@@ -67,10 +67,11 @@ public class Message {
     private IItemReader mediaItem = null;
     private String mediaQuery = null;
     private List<MessageAddOn> addOns = new ArrayList<>();
-    private String dataQuote;
+    private long idQuote;
     private Message messageQuote = null;
     private boolean quoted = false;
     private String uuid = null;
+    private String metaData = null;
 
     static {
         try {
@@ -468,12 +469,12 @@ public class Message {
         this.callId = callId;
     }
 
-    public String getDataQuote() {
-        return dataQuote;
+    public long getIdQuote() {
+        return idQuote;
     }
 
-    public void setDataQuote(String dataQuote) {
-        this.dataQuote = dataQuote;
+    public void setIdQuote(long idQuote) {
+        this.idQuote = idQuote;
     }
 
     public boolean isQuoted() {
@@ -498,6 +499,14 @@ public class Message {
 
     public void setUuid(String uuid) {
         this.uuid = uuid;
+    }
+
+    public String getMetaData() {
+        return this.metaData;
+    }
+
+    public void setMetaData(String metaData) {
+        this.metaData = metaData;
     }
 
     public static enum MessageType {
