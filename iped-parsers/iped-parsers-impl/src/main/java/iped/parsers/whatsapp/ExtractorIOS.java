@@ -249,6 +249,7 @@ public class ExtractorIOS extends Extractor {
             boolean firstTry)
             throws SQLException {
         List<Message> messages = new ArrayList<>();
+        long fakeIds = Long.MAX_VALUE;
         
         boolean recoverDeleted = undeleteTable != null && !undeletedMessages.isEmpty();
         
@@ -272,50 +273,6 @@ public class ExtractorIOS extends Extractor {
                         activeMessages.add(new MessageWrapperForDuplicateRemoval(m));
                         activeMessageIds.put(m.getId(), m);
                     }
-
-                    if (m.isQuoted()) {
-                        String metadata = rs.getString("metadata");
-                        int size = getPositiveValueFromMetadata(metadata,1);
-                        int pos = 0;
-                        if (size >= 0){
-                            pos = 2;
-                            String uuidQuote = getSubStringFromMetadata(metadata, pos, size);
-
-                            // must consider that all messages are in chronological order
-                            Message mq = searchMessageByUuid(messages,uuidQuote);
-                            m.setMessageQuote(mq);
-
-                            pos += size;
-                            int unknowflag = getPositiveValueFromMetadata(metadata,pos);
-
-                            pos += 1;
-                            size = getPositiveValueFromMetadata(metadata,pos); //Get size of contac name
-                            pos += 1;
-                            String contact = getSubStringFromMetadata(metadata, pos, size);
-
-                            /*
-                            pos += size + 2;
-                            size = getPositiveValueFromMetadata(metadata,pos);
-                            pos += 1;
-                            String dataQuote = getSubStringFromMetadata(metadata, pos, size);
-                            */
-
-
-                            //TODO get dataquote from METADATA
-                            if (mq != null){
-                                m.setDataQuote(mq.getData());
-                            }else{
-                                m.setDataQuote(null);
-                            }
-
-                        }
-
-
-
-
-                    }
-
-
                     messages.add(m);
                 }
             }
@@ -351,6 +308,44 @@ public class ExtractorIOS extends Extractor {
             }
     
             Collections.sort(messages, (a, b) -> a.getTimeStamp().compareTo(b.getTimeStamp()));
+        }
+
+        //Find quote messages
+        for (Message m: messages){
+            if (m.isQuoted() && m.getMetaData() != null) {
+                String metadata = m.getMetaData();
+                int size = getPositiveValueFromMetadata(metadata,1);
+                int pos = 0;
+                if (size >= 0){
+                    pos = 2;
+                    String uuidQuote = getSubStringFromMetadata(metadata, pos, size);
+                    Message messageQuote = searchMessageByUuid(messages,uuidQuote);
+                    if (messageQuote == null){ //TODO - get full carved quote messages from ZMETADATA
+
+                        pos += size;
+                        int unknowflag = getPositiveValueFromMetadata(metadata,pos);
+
+                        pos += 1;
+                        size = getPositiveValueFromMetadata(metadata,pos); //Get size of contac name
+                        pos += 1;
+                        String contact = getSubStringFromMetadata(metadata, pos, size);
+
+                        //pos += size + 2;
+                        //size = getPositiveValueFromMetadata(metadata,pos);
+                        //pos += 1;
+                        //String dataQuote = getSubStringFromMetadata(metadata, pos, size);
+
+                        messageQuote = new Message();
+                        messageQuote.setId(fakeIds--);
+                        messageQuote.setData("[Not Implemented]");
+                        //messageQuote.setFromMe(0);
+                        messageQuote.setRemoteResource(contact); // $NON-NLS-1$
+                        messageQuote.setMessageType(decodeMessageType(0, -1));
+                        messageQuote.setDeleted(true);
+                    }
+                    m.setMessageQuote(messageQuote);
+                }
+            }
         }
 
         return messages;
@@ -423,9 +418,9 @@ public class ExtractorIOS extends Extractor {
         }
         m.setForwarded(rs.getInt("forwarded") > 0);
 
-        m.setUuid(rs.getString("uuid"));
-
         m.setQuoted(getPositiveValueFromMetadata(rs.getString("metadata"),0)==0x2A);
+        m.setUuid(rs.getString("uuid"));        
+        m.setMetaData(rs.getString("metadata"));
 
         return m;
     }
