@@ -9,6 +9,7 @@ import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MediaTypeRegistry;
 
+import iped.engine.task.leappbridge.LeappBridgeTask;
 import iped.parsers.ares.AresParser;
 import iped.parsers.discord.DiscordParser;
 import iped.parsers.emule.KnownMetParser;
@@ -88,6 +89,8 @@ public class QueuesProcessingOrder {
         mediaTypes.put(Win10MailParser.WIN10_MAIL_DB, 2);
         mediaTypes.put(RFC822Parser.RFC822_PARTIAL0_MIME, 2);
         mediaTypes.put(RFC822Parser.RFC822_PARTIAL1_MIME, 2);
+
+        mediaTypes.put(LeappBridgeTask.DEVICEDETAILS, 4);
 
         return mediaTypes;
     }
