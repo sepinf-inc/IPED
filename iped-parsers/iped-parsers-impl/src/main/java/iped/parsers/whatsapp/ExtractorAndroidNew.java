@@ -63,12 +63,6 @@ import iped.parsers.whatsapp.Message.MessageStatus;
  */
 public class ExtractorAndroidNew extends Extractor {
 
-    Comparator<Message> comparatorMessage = new Comparator<Message>() {
-      public int compare(Message u1, Message u2) {
-        return Long.compare(u1.getId(), u2.getId());
-      }
-    };
-
 
     public ExtractorAndroidNew(String itemPath, File databaseFile, WAContactsDirectory contacts, WAAccount account) {
         super(itemPath, databaseFile, contacts, account, false);
@@ -199,6 +193,7 @@ public class ExtractorAndroidNew extends Extractor {
     private List<Message> extractMessages(Connection conn, Chat c) throws SQLException {
         boolean hasReactionTable = SQLite3DBParser.containsTable("message_add_on_reaction", conn);
         List<Message> messages = new ArrayList<>();
+        long fakeIds = Long.MAX_VALUE;
         try (PreparedStatement stmt = conn.prepareStatement(getSelectMessagesQuery(conn))) {
             stmt.setFetchSize(1000);
             stmt.setLong(1, c.getId());
@@ -278,34 +273,43 @@ public class ExtractorAndroidNew extends Extractor {
                 }
                 m.setForwarded(rs.getInt("forwarded") > 0);
 
-                boolean hasQuote = rs.getInt("hasQuote") == 1;
-                if (hasQuote) {
-                    m.setDataQuote(Util.getUTF8String(rs, "text_data_quote"));
-                    m.setQuoted(hasQuote);
-                    // must consider that all messages are in chronological order
-                    m.setMessageQuote(searchMessage(messages,rs.getLong("id_quote")));
-                }
+                m.setQuoted(rs.getInt("hasQuote") == 1);
+                m.setIdQuote(rs.getLong("id_quote"));
 
                 messages.add(m);
 
+            }
+
+            //Find quote messages            
+            for (Message m: messages){
+                if (m.isQuoted()) {
+                    Message messageQuote = searchMessageById(messages,m.getIdQuote());
+                    if (messageQuote == null){
+                        messageQuote = new Message();
+                        messageQuote.setId(fakeIds--);
+                        messageQuote.setData(Util.getUTF8String(rs, "text_data_quote"));
+                        messageQuote.setFromMe(rs.getInt("from_me_quote") == 1);
+                        messageQuote.setRemoteResource(rs.getString("raw_string_quote"));
+                        messageQuote.setMessageType(decodeMessageType(rs.getInt("message_type_quote"), -1, -1, "", -1));
+                        messageQuote.setDeleted(true);
+                    }
+                    m.setMessageQuote(messageQuote);
+                }
             }
         }
 
         return messages;
     }
 
-    private Message searchMessage(List<Message> messages, Long id){
-
-        Message tmp = new Message();
-        tmp.setId(id);
-        int index = Collections.binarySearch(messages, tmp, comparatorMessage);
-        tmp = null;
-        if (index >= 0){
-            return messages.get(index);
-        }else{
-            return null;
+    private Message searchMessageById(List<Message> messages, Long id){
+        if (messages != null){
+            for (Message m: messages){
+                if (m.getId()==id){
+                    return m;
+                }
+            }
         }
-
+        return null;
     }
 
     protected Message.MessageType decodeMessageType(int messageType, int status, Integer edit_version, String caption,
@@ -460,18 +464,18 @@ public class ExtractorAndroidNew extends Extractor {
                 + captionCol + " as mediaCaption, mm.file_hash as mediaHash, thumbnail as thumbData,"
                 + " ms.action_type as actionType, m.message_add_on_flags as hasAddOn,"
                 + " (m.origination_flags & 1) as forwarded,"
-                + " CASE WHEN mq.message_row_id IS NOT NULL THEN 1 ELSE 0 END AS hasQuote,"
-                + " mq.text_data as text_data_quote,"
-                + " mq2._id as id_quote"                
+                + " CASE WHEN mq.message_row_id IS NOT NULL THEN 1 ELSE 0 END AS hasQuote, "
+                + " mq.id_quote, mq.text_data_quote, mq.from_me_quote, mq.message_type_quote,mq.raw_string_quote"
                 + " from message m inner join chat_view cv on m.chat_row_id=cv._id"
                 + " left join message_media mm on mm.message_row_id=m._id"
                 + " left join jid on jid._id=m.sender_jid_row_id"
                 + " left join message_location ml on m._id=ml.message_row_id "
                 + " left join message_system ms on m._id=ms.message_row_id"
                 + " left join message_vcard mv on m._id=mv.message_row_id"
-                + " left join message_quoted mq on m._id=mq.message_row_id"
-                + " left join ( select _id, message.key_id,message_quoted.message_row_id from message inner join message_quoted on message.key_id = message_quoted.key_id)"
-                + " as mq2 on mq2.key_id = mq.key_id and mq2.message_row_id = m._id"
+                + " left join ( select mq.message_row_id, m._id as id_quote, mq.text_data as text_data_quote, mq.from_me as from_me_quote,"
+                + " mq.message_type as message_type_quote, j.raw_string as raw_string_quote from message_quoted mq"
+                + " left join jid j on j._id = mq.sender_jid_row_id "
+                + " left join message m on m.key_id = mq.key_id) as mq on mq.message_row_id = m._id "
                 + " left join message_thumbnail mt on m._id=mt.message_row_id where chatId=? and status!=-1 ;";
     }
 
