@@ -85,12 +85,6 @@ public class ExtractorAndroid extends Extractor {
     private boolean hasQuoteTable = false;
     private SQLException parsingException = null;
 
-    Comparator<Message> comparatorMessage = new Comparator<Message>() {
-      public int compare(Message u1, Message u2) {
-        return Long.compare(u1.getId(), u2.getId());
-      }
-    };
-
     public ExtractorAndroid(String itemPath, File databaseFile, WAContactsDirectory contacts, WAAccount account, boolean recoverDeletedRecords) {
         super(itemPath, databaseFile, contacts, account, recoverDeletedRecords);
     }
@@ -345,6 +339,7 @@ public class ExtractorAndroid extends Extractor {
         List<Message> messages = new ArrayList<>();
         
         boolean recoverDeleted = undeleteTable != null && !undeletedMessages.isEmpty();
+        long fakeIds = Long.MAX_VALUE;
 
         String id = remote.getId();
         id += isGroupChat ? "@g.us" : WAContact.waSuffix;
@@ -364,12 +359,6 @@ public class ExtractorAndroid extends Extractor {
                         activeMessages.add(new MessageWrapperForDuplicateRemoval(m));
                         activeMessageIds.put(m.getId(), m);
                     }
-
-                    if (m.isQuoted()) {
-                        m.setDataQuote(Util.getUTF8String(rs, "data_quote"));
-                        // must consider that all messages are in chronological order
-                        m.setMessageQuote(searchMessage(messages,rs.getLong("id_quote")));
-                    }                    
                     messages.add(m);
                 }
             }
@@ -408,21 +397,36 @@ public class ExtractorAndroid extends Extractor {
     
             Collections.sort(messages, (a, b) -> a.getTimeStamp().compareTo(b.getTimeStamp()));
         }
+
+        //Find quote messages        
+        for (Message m: messages){
+            if (m.isQuoted()) {
+                Message messageQuote = searchMessageById(messages,m.getIdQuote());
+                if (messageQuote == null){ //TODO - get carved quote messages
+                    messageQuote = new Message();
+                    messageQuote.setId(fakeIds--);
+                    messageQuote.setData("[Not Implemented]");
+                    //messageQuote.setFromMe(0);
+                    messageQuote.setRemoteResource("[Not Implemented]");
+                    messageQuote.setMessageType(decodeMessageType(0, -1, -1, "", 0));
+                    messageQuote.setDeleted(true);
+                }
+                m.setMessageQuote(messageQuote);
+            } 
+        }
+
         return messages;
     }
 
-    private Message searchMessage(List<Message> messages, Long id){
-
-        Message tmp = new Message();
-        tmp.setId(id);
-        int index = Collections.binarySearch(messages, tmp, comparatorMessage);
-        tmp = null;
-        if (index >= 0){
-            return messages.get(index);
-        }else{
-            return null;
+    private Message searchMessageById(List<Message> messages, Long id){        
+        if (messages != null){
+            for (Message m: messages){
+                if (m.getId()==id){
+                    return m;
+                }
+            }
         }
-
+        return null;
     }
 
     private Message createMessageFromDBRow(ResultSet rs, WAContact remote, boolean isGroupChat, boolean deleted,
@@ -525,6 +529,7 @@ public class ExtractorAndroid extends Extractor {
         m.setForwarded(hasForwardedCol && (rs.getInt("forwarded") > 0));
 
         m.setQuoted(hasQuoteTable && rs.getInt("quoted") == 1);
+        m.setIdQuote(rs.getLong("id_quote"));
 
 
         return m;
