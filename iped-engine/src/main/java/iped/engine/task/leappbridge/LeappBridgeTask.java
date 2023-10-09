@@ -1,5 +1,6 @@
 package iped.engine.task.leappbridge;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -13,9 +14,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.lucene.document.Document;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.mime.MediaType;
 
 import com.google.common.io.Files;
 
@@ -29,6 +32,7 @@ import iped.engine.data.IPEDSource;
 import iped.engine.data.Item;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.task.AbstractPythonTask;
+import iped.engine.task.ExportFileTask;
 import iped.engine.task.index.IndexItem;
 import iped.engine.util.ParentInfo;
 import iped.properties.BasicProps;
@@ -39,9 +43,9 @@ import jep.JepException;
 
 public class LeappBridgeTask extends AbstractPythonTask {
 
-    private static final String DEVICE_DETAILS_HTML = "DeviceDetails";
+    public static MediaType DEVICEDETAILS = MediaType.application("x-leapp-devicedetails");
 
-    private static final String DEVICE_INFO_PROPERTY = "DEVICE_INFO";
+    private static final String DEVICE_DETAILS_HTML = "DeviceDetails.html";
 
     private static final String ALEAPP_PLUGIN = "ALEAPP:PLUGIN";
 
@@ -54,6 +58,7 @@ public class LeappBridgeTask extends AbstractPythonTask {
     static AtomicInteger count = new AtomicInteger(0);
 
     HashMap<String, Item> mappedEvidences = new HashMap<String, Item>();
+    static HashMap<Integer, List<File>> tempDirs = new HashMap<Integer, List<File>>();
 
     public LeappBridgeTask() {
     }
@@ -91,14 +96,19 @@ public class LeappBridgeTask extends AbstractPythonTask {
         Jep jep = super.getJep();
         pluginsManager.init(jep);
         jep.eval("from scripts.ilapfuncs import OutputParameters");
-
     }
 
     @Override
     public void finish() throws Exception {
-
+        // removes temporary folders
+        for (List<File> dirs : tempDirs.values()) {
+            for (File tempDir : dirs) {
+                if (tempDir.exists()) {
+                    FileUtils.deleteDirectory(tempDir);
+                }
+            }
+        }
     }
-
 
     public void executePlugin(IItem evidence, LeapArtifactsPlugin p, List<String> filesFound, File reportDumpPath) {
         Jep jep = getJep();
@@ -124,10 +134,19 @@ public class LeappBridgeTask extends AbstractPythonTask {
                 jep.eval("sys.path.append('" + scriptsDir.getCanonicalPath().replace("\\", "\\\\") + "\\\\ALEAPP')");
 
                 // temp directory to save log and device info files
-                if (tmp == null) {
-                    tmp = Files.createTempDir();
-                    tmp.mkdirs();
-                    tmp.deleteOnExit();
+                tmp = Files.createTempDir();
+                tmp.mkdirs();
+                tmp.deleteOnExit();
+
+                int leappRepEvidence = evidence.getParentId();
+
+                synchronized (tempDirs) {
+                    List<File> tempFolders = tempDirs.get(leappRepEvidence);
+                    if (tempFolders == null) {
+                        tempFolders = new ArrayList<File>();
+                        tempDirs.put(leappRepEvidence, tempFolders);
+                    }
+                    tempFolders.add(tmp);
                 }
 
                 jep.eval("import scripts.artifact_report");
@@ -135,7 +154,7 @@ public class LeappBridgeTask extends AbstractPythonTask {
                 jep.eval("import os");
                 jep.eval("import sys");
                 jep.eval("from java.lang import System");
-                jep.eval("from iped.engine.task.jleapp import ArtifactJavaReport");
+                jep.eval("from iped.engine.task.leappbridge import ArtifactJavaReport");
                 jep.eval("from " + p.getModuleName() + " import " + p.getMethodName() + " as parse");
 
 
@@ -162,26 +181,19 @@ public class LeappBridgeTask extends AbstractPythonTask {
                     try {
                         jep.eval("OutputParameters('" + tmp.getCanonicalPath() + "')");
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        if (e.getMessage().contains("<class 'FileExistsError'>")) {
+                            // skips as the dir already exists so it there is no need to create it but we
+                            // can continue without it
+                        } else {
+                            throw e;
+                        }
                     }
                     jep.eval("logfunc('" + PLUGIN_EXECUTION_MESSAGE + ":" + p.getModuleName() + "')");
                     jep.eval("parse(" + lists + ",'" + reportPath.getCanonicalPath() + "',dumb,True)");
                 }
 
-                File[] fs = new File(tmp.getCanonicalPath()).listFiles();
-                if (fs.length > 0) {
-                    File deviceInfo = new File(new File(fs[0], "Script Logs"), "DeviceInfo.html");
-                    if (deviceInfo.exists()) {
-                        List<String> deviceInfoList = new ArrayList<String>();
-                        deviceInfoList.addAll(Files.readLines(deviceInfo, Charset.forName("UTF-8")));
-                        for (String info : deviceInfoList) {
-                            // collected device info
-                            evidence.getMetadata().add(DEVICE_INFO_PROPERTY, info);
-                        }
-                    }
-                }
             } catch (Exception e) {
-                if (e.getMessage().contains("FileNotFoundError1")) {
+                if (e.getMessage().contains("FileNotFoundError")) {
                     if (e.getStackTrace()[0].getLineNumber() == 138) {
                         System.out.println();
                     }
@@ -205,7 +217,6 @@ public class LeappBridgeTask extends AbstractPythonTask {
     public void process(IItem evidence) throws Exception {
         if (evidence.getName().equals("Dump")) {
             Item subItem = (Item) evidence.createChildItem();
-            // Item fileEvidence = mappedEvidences.get(file.toString());
             ParentInfo parentInfo = new ParentInfo(evidence);
 
             String name = REPORT_EVIDENCE_NAME;
@@ -217,9 +228,9 @@ public class LeappBridgeTask extends AbstractPythonTask {
             subItem.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
             worker.processNewItem(subItem);
 
+            // creates on subitem for each plugin execution
             for (LeapArtifactsPlugin p : pluginsManager.getPlugins()) {
                 Item psubItem = (Item) subItem.createChildItem();
-                // Item fileEvidence = mappedEvidences.get(file.toString());
                 ParentInfo pparentInfo = new ParentInfo(subItem);
 
                 String moduleName = p.moduleName;
@@ -233,15 +244,14 @@ public class LeappBridgeTask extends AbstractPythonTask {
                 worker.processNewItem(psubItem);
             }
 
+            // creates subitem to hold device info collected
             Item devDetailsSubItem = (Item) subItem.createChildItem();
-            // Item fileEvidence = mappedEvidences.get(file.toString());
             ParentInfo pparentInfo = new ParentInfo(subItem);
-
             devDetailsSubItem.setName(DEVICE_DETAILS_HTML);
+            devDetailsSubItem.setMediaType(DEVICEDETAILS);
             devDetailsSubItem.setPath(parentInfo.getPath() + "/" + DEVICE_DETAILS_HTML);
             devDetailsSubItem.setSubItem(true);
             devDetailsSubItem.setSubitemId(1);
-            devDetailsSubItem.getMetadata().set(ALEAPP_DEVICE_DETAILS, "true");
             devDetailsSubItem.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
             worker.processNewItem(devDetailsSubItem);
         }
@@ -258,10 +268,10 @@ public class LeappBridgeTask extends AbstractPythonTask {
             }
         }
         
-        // the device details should be the last to process as it gets output from every
+        // the device details must be the last to process as it gets output from every
         // plugin execution
-        String isDevDetail = evidence.getMetadata().get(ALEAPP_DEVICE_DETAILS);
-        if (isDevDetail != null && isDevDetail.equals("true")) {
+        MediaType mt = evidence.getMediaType();
+        if (mt != null && mt.equals(DEVICEDETAILS)) {
             int priority = worker.manager.getProcessingQueues().getCurrentQueuePriority();
             if (priority < START_QUEUE_PRIORITY + 1) {
                 reEnqueueItem(evidence, START_QUEUE_PRIORITY + 1);
@@ -273,20 +283,41 @@ public class LeappBridgeTask extends AbstractPythonTask {
     }
 
     private void processDeviceDetails(IItem evidence) {
-        IPEDSearcher filesSearcher = new IPEDSearcher(ipedCase);
-        String query = "parentId:\"" + evidence.getParentId() + "\"";
+        /*
+         * Leapp declares static references to temporary "device details" html
+         * OutputParameters. This causes a new concurrent plugin execution to overwrite
+         * this static variable. So, there is no garantee that the content become
+         * scrambled. It is not a problem though, as all this writings are to be merged
+         * anyway in a single DeviceInfo.html.
+         */
 
-        filesSearcher.setQuery(query);
+        Integer leappRepEvidence = evidence.getParentId();
+        List<File> tempFolders = tempDirs.get(leappRepEvidence);
+
         try {
-            SearchResult filesResult = filesSearcher.search();
-            for (int j = 0; j < filesResult.getLength(); j++) {
-                int artLuceneId = ipedCase.getLuceneId(filesResult.getId(j));
-                Document artdoc = ipedCase.getReader().document(artLuceneId);
-                String info = artdoc.get(DEVICE_INFO_PROPERTY);
-                if (info != null) {
-                    evidence.getMetadata().add(DEVICE_INFO_PROPERTY, info);
+            ExportFileTask extractor = new ExportFileTask();
+            extractor.setWorker(worker);
+            StringBuffer sb = new StringBuffer();
+            sb.append("<html><body>");
+            for (File tmp : tempFolders) {
+                File[] fs = new File(tmp.getCanonicalPath()).listFiles();
+                if (fs.length > 0) {
+                    File deviceInfo = new File(new File(fs[0], "Script Logs"), "DeviceInfo.html");
+                    if (deviceInfo.exists()) {
+                        List<String> deviceInfoList = new ArrayList<String>();
+                        deviceInfoList.addAll(Files.readLines(deviceInfo, Charset.forName("UTF-8")));
+                        for (String info : deviceInfoList) {
+                            // collected device info
+                            sb.append(info);
+                        }
+                    }
                 }
             }
+            sb.append("</body></html>");
+
+            // export thumb data to internal database
+            ByteArrayInputStream is = new ByteArrayInputStream(sb.toString().getBytes());
+            extractor.extractFile(is, evidence, evidence.getLength());
 
         } catch (Exception e) {
             e.printStackTrace();
