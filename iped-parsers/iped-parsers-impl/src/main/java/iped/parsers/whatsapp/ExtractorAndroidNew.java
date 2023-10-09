@@ -276,12 +276,7 @@ public class ExtractorAndroidNew extends Extractor {
                 m.setQuoted(rs.getInt("hasQuote") == 1);
                 m.setIdQuote(rs.getLong("id_quote"));
 
-                messages.add(m);
-
-            }
-
-            //Find quote messages            
-            for (Message m: messages){
+                //Find quote messages            
                 if (m.isQuoted()) {
                     Message messageQuote = searchMessageById(messages,m.getIdQuote());
                     if (messageQuote == null){
@@ -295,6 +290,7 @@ public class ExtractorAndroidNew extends Extractor {
                     }
                     m.setMessageQuote(messageQuote);
                 }
+                messages.add(m);
             }
         }
 
