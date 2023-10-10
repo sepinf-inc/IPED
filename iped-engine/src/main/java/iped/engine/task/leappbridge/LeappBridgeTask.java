@@ -3,7 +3,6 @@ package iped.engine.task.leappbridge;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -14,11 +13,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.lucene.document.Document;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.io.Files;
 
@@ -27,7 +27,6 @@ import iped.data.IItem;
 import iped.engine.config.ALeappConfig;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
-import iped.engine.config.TaskInstallerConfig;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.Item;
 import iped.engine.search.IPEDSearcher;
@@ -35,6 +34,7 @@ import iped.engine.task.AbstractPythonTask;
 import iped.engine.task.ExportFileTask;
 import iped.engine.task.index.IndexItem;
 import iped.engine.util.ParentInfo;
+import iped.parsers.python.PythonParser;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.SearchResult;
@@ -42,6 +42,8 @@ import jep.Jep;
 import jep.JepException;
 
 public class LeappBridgeTask extends AbstractPythonTask {
+
+    public static Logger logger = LoggerFactory.getLogger(LeappBridgeTask.class);
 
     public static MediaType DEVICEDETAILS = MediaType.application("x-leapp-devicedetails");
 
@@ -58,7 +60,8 @@ public class LeappBridgeTask extends AbstractPythonTask {
     static AtomicInteger count = new AtomicInteger(0);
 
     HashMap<String, Item> mappedEvidences = new HashMap<String, Item>();
-    static HashMap<Integer, List<File>> tempDirs = new HashMap<Integer, List<File>>();
+
+    static HashMap<Integer, StringBuffer> devInfoBuffers = new HashMap<Integer, StringBuffer>();
 
     public LeappBridgeTask() {
     }
@@ -72,8 +75,6 @@ public class LeappBridgeTask extends AbstractPythonTask {
 
     private ExecutorService service;
 
-    private boolean multiprocess = false;
-
     static private File tmp;
 
     static private int START_QUEUE_PRIORITY = 3;
@@ -85,6 +86,27 @@ public class LeappBridgeTask extends AbstractPythonTask {
         return c;
     }
 
+    public static void logfunc(String message) {
+        logger.info(message);
+    }
+
+    public static void logdevinfo(String message) {
+        Jep jep = PythonParser.getJep();
+        Item evidence = (Item) jep.getValue("evidence");
+        int leappRepEvidence = evidence.getParentId();
+        StringBuffer stringBuffer;
+        synchronized (devInfoBuffers) {
+            stringBuffer = devInfoBuffers.get(leappRepEvidence);
+            if (stringBuffer == null) {
+                stringBuffer = new StringBuffer();
+                devInfoBuffers.put(leappRepEvidence, stringBuffer);
+            }
+        }
+        synchronized (stringBuffer) {
+            stringBuffer.append(message + "<br/>");
+        }
+    }
+
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
         int incremented = count.incrementAndGet();
@@ -94,26 +116,24 @@ public class LeappBridgeTask extends AbstractPythonTask {
         }
 
         Jep jep = super.getJep();
-        pluginsManager.init(jep);
-        jep.eval("from scripts.ilapfuncs import OutputParameters");
+
+        PythonHook pt = new PythonHook(jep);
+        pt.overrideModuleFunction("scripts.ilapfuncs", "logfunc", LeappBridgeTask.class.getMethod("logfunc", String.class));
+        pt.overrideModuleFunction("scripts.ilapfuncs", "logdevinfo",
+                LeappBridgeTask.class.getMethod("logdevinfo", String.class));
+        pt.overrideHtmlReport("scripts.artifact_report", "ArtifactHtmlReport", ArtifactJavaReport.class);
+
+        pluginsManager.init(jep, getAleappScriptsDir());
     }
 
     @Override
     public void finish() throws Exception {
-        // removes temporary folders
-        for (List<File> dirs : tempDirs.values()) {
-            for (File tempDir : dirs) {
-                if (tempDir.exists()) {
-                    FileUtils.deleteDirectory(tempDir);
-                }
-            }
-        }
     }
 
     public void executePlugin(IItem evidence, LeapArtifactsPlugin p, List<String> filesFound, File reportDumpPath) {
         Jep jep = getJep();
         try {
-            // some plugins depends on a sorted list
+            // some plugins depend on a sorted list
             Collections.sort(filesFound);
 
             StringBuffer list = new StringBuffer("[");
@@ -122,32 +142,20 @@ public class LeappBridgeTask extends AbstractPythonTask {
             }
             String lists = list.toString().substring(0, list.length() - 1) + "]";
             try {
-                jep.eval("from ALEAPP.scripts.search_files import FileSeekerBase");
+                jep.eval("from scripts.search_files import FileSeekerBase");
                 jep.eval("import sys");
                 jep.eval("from java.lang import System");
                 jep.eval("from scripts.ilapfuncs import OutputParameters");
                 jep.eval("from scripts.ilapfuncs import logfunc");
-                File pythonDir = new File(Configuration.getInstance().configPath, TaskInstallerConfig.SCRIPT_BASE);
-                File aleappDir = new File(pythonDir, "ALEAPP");
-                File scriptsDir = new File(aleappDir, "scripts");
 
-                jep.eval("sys.path.append('" + scriptsDir.getCanonicalPath().replace("\\", "\\\\") + "\\\\ALEAPP')");
+                File scriptsDir = new File(getAleappScriptsDir(), "scripts");
+
+                jep.eval("sys.path.append('" + scriptsDir.getCanonicalPath().replace("\\", "\\\\") + "')");
 
                 // temp directory to save log and device info files
                 tmp = Files.createTempDir();
                 tmp.mkdirs();
                 tmp.deleteOnExit();
-
-                int leappRepEvidence = evidence.getParentId();
-
-                synchronized (tempDirs) {
-                    List<File> tempFolders = tempDirs.get(leappRepEvidence);
-                    if (tempFolders == null) {
-                        tempFolders = new ArrayList<File>();
-                        tempDirs.put(leappRepEvidence, tempFolders);
-                    }
-                    tempFolders.add(tmp);
-                }
 
                 jep.eval("import scripts.artifact_report");
                 jep.eval("from multiprocessing import Process");
@@ -171,26 +179,8 @@ public class LeappBridgeTask extends AbstractPythonTask {
                 jep.set("pluginName", p.getModuleName());
                 jep.set("mappedEvidences", mappedEvidences);
 
-                if (multiprocess) {
-                    jep.eval("def parseProcess():" + "\n    OutputParameters('" + tmp.getCanonicalPath() + "')"
-                            + "\n    logfunc('" + PLUGIN_EXECUTION_MESSAGE + ":" + p.getModuleName() + "')"
-                            + "\n    parse(" + lists + ",'" + reportPath.getCanonicalPath() + "',dumb,True)");
-                    jep.eval("if __name__ == '__main__':" + "\n    p = Process(target=parseProcess, args=())"
-                            + "\n    p.start()" + "\n    p.join()");
-                } else {
-                    try {
-                        jep.eval("OutputParameters('" + tmp.getCanonicalPath() + "')");
-                    } catch (Exception e) {
-                        if (e.getMessage().contains("<class 'FileExistsError'>")) {
-                            // skips as the dir already exists so it there is no need to create it but we
-                            // can continue without it
-                        } else {
-                            throw e;
-                        }
-                    }
-                    jep.eval("logfunc('" + PLUGIN_EXECUTION_MESSAGE + ":" + p.getModuleName() + "')");
-                    jep.eval("parse(" + lists + ",'" + reportPath.getCanonicalPath() + "',dumb,True)");
-                }
+                jep.eval("logfunc('" + PLUGIN_EXECUTION_MESSAGE + ":" + p.getModuleName() + "')");
+                jep.eval("parse(" + lists + ",'" + reportPath.getCanonicalPath() + "',dumb,True)");
 
             } catch (Exception e) {
                 if (e.getMessage().contains("FileNotFoundError")) {
@@ -206,6 +196,19 @@ public class LeappBridgeTask extends AbstractPythonTask {
         } finally {
             // jep.close();
         }
+    }
+
+    private File getAleappScriptsDir() {
+        ALeappConfig config = (ALeappConfig) getConfigurables().get(0);
+        
+        File aleappDir;
+        if (config.getAleapScriptsDir() != null) {
+            aleappDir = new File(config.getAleapScriptsDir());
+        } else {
+            File pythonDir = new File(Configuration.getInstance().appRoot, "tools");
+            aleappDir = new File(pythonDir, "ALEAPP");
+        }
+        return aleappDir;
     }
 
     @Override
@@ -290,37 +293,28 @@ public class LeappBridgeTask extends AbstractPythonTask {
          * scrambled. It is not a problem though, as all this writings are to be merged
          * anyway in a single DeviceInfo.html.
          */
-
         Integer leappRepEvidence = evidence.getParentId();
-        List<File> tempFolders = tempDirs.get(leappRepEvidence);
+        StringBuffer stringBuffer = devInfoBuffers.get(leappRepEvidence);
 
-        try {
-            ExportFileTask extractor = new ExportFileTask();
-            extractor.setWorker(worker);
-            StringBuffer sb = new StringBuffer();
-            sb.append("<html><body>");
-            for (File tmp : tempFolders) {
-                File[] fs = new File(tmp.getCanonicalPath()).listFiles();
-                if (fs.length > 0) {
-                    File deviceInfo = new File(new File(fs[0], "Script Logs"), "DeviceInfo.html");
-                    if (deviceInfo.exists()) {
-                        List<String> deviceInfoList = new ArrayList<String>();
-                        deviceInfoList.addAll(Files.readLines(deviceInfo, Charset.forName("UTF-8")));
-                        for (String info : deviceInfoList) {
-                            // collected device info
-                            sb.append(info);
-                        }
-                    }
-                }
+        if (stringBuffer != null) {
+            try {
+                ExportFileTask extractor = new ExportFileTask();
+                extractor.setWorker(worker);
+                StringBuffer sb = new StringBuffer();
+                sb.append("<html><body>");
+                sb.append(stringBuffer);
+                sb.append("</body></html>");
+                // export thumb data to internal database
+                ByteArrayInputStream is = new ByteArrayInputStream(sb.toString().getBytes());
+                extractor.extractFile(is, evidence, evidence.getLength());
+
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-            sb.append("</body></html>");
-
-            // export thumb data to internal database
-            ByteArrayInputStream is = new ByteArrayInputStream(sb.toString().getBytes());
-            extractor.extractFile(is, evidence, evidence.getLength());
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        } else {
+            // if there is no device detail, ignores next processing removing the item from
+            // the case
+            evidence.setToIgnore(true);
         }
     }
 

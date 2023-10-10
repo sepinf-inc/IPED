@@ -43,6 +43,10 @@ public class ArtifactJavaReport {
         this("", "");
     }
 
+    public ArtifactJavaReport(String name) {
+        this(name, "");
+    }
+
     public ArtifactJavaReport(String name, String category) {
         jep = PythonParser.getJep();
         this.name = name;
@@ -58,6 +62,10 @@ public class ArtifactJavaReport {
 
     static public MediaType celPhoneExtractionMediaType = new MediaType("application", "celphone-extraction");
     
+    public void start_artifact_report(String repFolder, String repName) {
+        start_artifact_report(repFolder, repName, "");
+    }
+
     public void start_artifact_report(String repFolder, String repName, String artifact_description) {
         this.repName = repName;
         currentReportMediaType = MediaType
@@ -65,28 +73,41 @@ public class ArtifactJavaReport {
 
     }
 
+    public void add_script() {
+        nope();
+    }
+
     public void add_script(String script) {
-        System.out.println(script);
-        // skip
+        nope();
     }
 
     public void add_section_heading(String heading, String size) {
-        // skip
+        nope();
     }
 
     public void write_minor_header(Object heading, Object heading_tag) {
-        // skip
+        nope();
     }
 
     public void write_lead_text(String text) {
-        // skip
+        nope();
     }
 
     public void write_raw_html(String code) {
-        // skip
+        nope();
     }
 
     public void write_artifact_data_table(Object headers, Object data_list, String file) {
+        if (data_list != null) {
+            if (data_list instanceof Collection) {
+                for (Object data_fields : (Collection) data_list) {
+                    write_artifact_data_item(headers, data_fields, file);
+                }
+            }
+        }
+    }
+
+    public void write_artifact_data_item(Object headers, Object data_fields, String file) {
         try {
             if (currentReportEvidence == null) {
                 currentReportEvidence = (Item) pluginEvidence;
@@ -114,7 +135,7 @@ public class ArtifactJavaReport {
             }
 
             int i = 0;
-            Object[] data = ((Collection) data_list).toArray();
+            Object[] data = ((Collection) data_fields).toArray();
             if (data != null) {
                 for (String property : (Collection<String>) headers) {
                     if (data[i] != null) {
@@ -181,8 +202,8 @@ public class ArtifactJavaReport {
         System.out.println("add_section_heading:" + heading + "(" + size + ")");
     }
 
-    public void end_artifact_report(String ending) {
-        System.out.println("END REPORT:" + name);
+
+    public void end_artifact_report(String... ending) {
     }
 
     public void add_image_file(Object param, Object param1, Object param2, Object secondImage) {
@@ -235,11 +256,6 @@ public class ArtifactJavaReport {
     }
 
     public void nope() {
-        try {
-            throw new Exception("NOPE");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     static public void ipedlog(String message) {

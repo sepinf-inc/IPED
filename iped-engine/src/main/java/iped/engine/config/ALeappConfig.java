@@ -4,7 +4,7 @@ import iped.utils.UTF8Properties;
 
 public class ALeappConfig extends AbstractTaskPropertiesConfig {
 
-    String aleapFolder;
+    String aleapScriptsDir;
 
     /**
      * 
@@ -17,7 +17,7 @@ public class ALeappConfig extends AbstractTaskPropertiesConfig {
     void processProperties(UTF8Properties properties) {
         String value = properties.getProperty("aleapFolder"); //$NON-NLS-1$
         if (value != null) {
-            aleapFolder = value.trim();
+            aleapScriptsDir = value.trim();
         }
     }
 
@@ -29,6 +29,14 @@ public class ALeappConfig extends AbstractTaskPropertiesConfig {
     @Override
     public String getTaskConfigFileName() {
         return CONFIG_FILE;
+    }
+
+    public String getAleapScriptsDir() {
+        return aleapScriptsDir;
+    }
+
+    public void setAleapScriptsDir(String aleapScriptsDir) {
+        this.aleapScriptsDir = aleapScriptsDir;
     }
 
 }
