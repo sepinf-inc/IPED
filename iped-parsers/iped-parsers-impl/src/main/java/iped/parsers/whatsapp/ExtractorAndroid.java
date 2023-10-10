@@ -528,7 +528,7 @@ public class ExtractorAndroid extends Extractor {
         m.setDeleted(deleted);
         m.setForwarded(hasForwardedCol && (rs.getInt("forwarded") > 0));
 
-        m.setQuoted(hasQuoteTable && rs.getInt("quoted") == 1);
+        m.setQuoted(hasQuoteTable && rs.getInt("quoted_row_id") > 0);
 
         if (hasQuoteTable){
             m.setIdQuote(rs.getLong("id_quote"));
@@ -702,7 +702,7 @@ public class ExtractorAndroid extends Extractor {
             query = query.replace("(forwarded & 1) as forwarded, ", "");
         }
         if (!hasQuote) {
-            query = query.replace("mq.id_quote, mq.data_quote, CASE WHEN m.quoted_row_id IS NOT NULL AND m.quoted_row_id > 0 THEN 1 ELSE 0 END AS quoted, ", "");
+            query = query.replace("mq.id_quote, mq.data_quote, m.quoted_row_id, ", "");
             query = query.replace("LEFT JOIN (select mq._id,m._id as id_quote, mq.data as data_quote from messages m inner join messages_quotes mq on m.key_id = mq.key_id) ", "");
             query = query.replace("as mq on m.quoted_row_id = mq._id ", "");
         }
@@ -723,7 +723,7 @@ public class ExtractorAndroid extends Extractor {
             + "media_duration, " //$NON-NLS-1$
             + "media_caption as mediaCaption, " //$NON-NLS-1$
             + "(forwarded & 1) as forwarded, " //$NON-NLS-1$
-            + "mq.id_quote, mq.data_quote, CASE WHEN m.quoted_row_id IS NOT NULL AND m.quoted_row_id > 0 THEN 1 ELSE 0 END AS quoted, " //$NON-NLS-1$          
+            + "mq.id_quote, mq.data_quote, m.quoted_row_id, " //$NON-NLS-1$          
             + "media_hash as mediaHash, raw_data as rawData FROM messages m " //$NON-NLS-1$
             + "LEFT JOIN (select mq._id,m._id as id_quote, mq.data as data_quote from messages m inner join messages_quotes mq on m.key_id = mq.key_id) "
             + "as mq on m.quoted_row_id = mq._id " //$NON-NLS-1$
@@ -738,7 +738,7 @@ public class ExtractorAndroid extends Extractor {
             + "media_duration, " //$NON-NLS-1$
             + "media_caption as mediaCaption, " //$NON-NLS-1$
             + "(forwarded & 1) as forwarded, " //$NON-NLS-1$
-            + "mq.id_quote, mq.data_quote, CASE WHEN m.quoted_row_id IS NOT NULL AND m.quoted_row_id > 0 THEN 1 ELSE 0 END AS quoted, " //$NON-NLS-1$          
+            + "mq.id_quote, mq.data_quote, m.quoted_row_id, " //$NON-NLS-1$          
             + "media_hash as mediaHash, thumbnail as thumbData FROM messages m " //$NON-NLS-1$
             + "LEFT JOIN (select mq._id,m._id as id_quote, mq.data as data_quote from messages m inner join messages_quotes mq on m.key_id = mq.key_id) "
             + "as mq on m.quoted_row_id = mq._id " //$NON-NLS-1$            
