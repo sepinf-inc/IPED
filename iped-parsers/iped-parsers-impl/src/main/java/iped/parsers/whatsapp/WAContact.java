@@ -2,6 +2,8 @@ package iped.parsers.whatsapp;
 
 public class WAContact {
 
+    protected static final String waSuffix = "@s.whatsapp.net";
+    
     private final String id;
 
     private final String suffix;

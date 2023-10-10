@@ -462,31 +462,35 @@ public class ExtractorIOS extends Extractor {
             m.setUrl(mediaItem.getTextValue("ZMEDIAURL")); //$NON-NLS-1$
             m.setLatitude(mediaItem.getFloatValue("ZLATITUDE")); //$NON-NLS-1$
             m.setLongitude(mediaItem.getFloatValue("ZLONGITUDE")); //$NON-NLS-1$
+
+            // This block must be before "if (MEDIA_MESSAGES.contains(m.getMessageType()))",
+            // otherwise Media Hash won't be set. See issue #1921.
+            if (messageType == 0 && m.getData() == null) {
+                if (m.getMediaMime() != null) {
+                    var mediaMime = m.getMediaMime();
+                    if (mediaMime != null) {
+                        if (mediaMime.startsWith("image")) {
+                            m.setMessageType(IMAGE_MESSAGE);
+                        } else if (mediaMime.startsWith("video")) {
+                            m.setMessageType(VIDEO_MESSAGE);
+                        } else if (mediaMime.startsWith("application")) {
+                            m.setMessageType(APP_MESSAGE);
+                        } else if (mediaMime.startsWith("audio")) {
+                            m.setMessageType(AUDIO_MESSAGE);
+                        } else if (m.getMediaCaption() != null) {
+                            m.setMessageType(UNKNOWN_MEDIA_MESSAGE);
+                        }
+                    }
+                } else if (m.getMediaCaption() != null) {
+                    m.setMessageType(UNKNOWN_MEDIA_MESSAGE);
+                }
+            }
+
             if (MEDIA_MESSAGES.contains(m.getMessageType())) {
                 try {
                     m.setMediaHash(mediaItem.getTextValue("ZVCARDNAME"), true); //$NON-NLS-1$
                 } catch (IllegalArgumentException e) {
                 } // ignore
-            }
-        }
-        if (messageType == 0 && m.getData() == null) {
-            if (m.getMediaMime() != null) {
-                var mediaMime = m.getMediaMime();
-                if (mediaMime != null) {
-                    if (mediaMime.startsWith("image")) {
-                        m.setMessageType(IMAGE_MESSAGE);
-                    } else if (mediaMime.startsWith("video")) {
-                        m.setMessageType(VIDEO_MESSAGE);
-                    } else if (mediaMime.startsWith("application")) {
-                        m.setMessageType(APP_MESSAGE);
-                    } else if (mediaMime.startsWith("audio")) {
-                        m.setMessageType(AUDIO_MESSAGE);
-                    } else if (m.getMediaCaption() != null ){
-                        m.setMessageType(UNKNOWN_MEDIA_MESSAGE);
-                    }
-                }
-            } else if (m.getMediaCaption() != null) {
-                m.setMessageType(UNKNOWN_MEDIA_MESSAGE);
             }
         }
         m.setDeleted(row.isDeletedRow());
@@ -666,13 +670,13 @@ public class ExtractorIOS extends Extractor {
      * ** static strings ***
      */
     private static final String SELECT_CHAT_LIST = "SELECT ZWACHATSESSION.Z_PK as id, ZCONTACTJID AS contact, " //$NON-NLS-1$
-            + "ZPARTNERNAME as subject, ZLASTMESSAGEDATE, ZPATH as avatarPath,ZREMOVED as ZREMOVED" //$NON-NLS-1$
+            + "ZPARTNERNAME as subject, ZLASTMESSAGEDATE, ZPATH as avatarPath, ZREMOVED " //$NON-NLS-1$
             + "FROM ZWACHATSESSION " //$NON-NLS-1$
             + "LEFT JOIN ZWAPROFILEPICTUREITEM ON ZWAPROFILEPICTUREITEM.ZJID = ZWACHATSESSION.ZCONTACTJID " //$NON-NLS-1$
             + "ORDER BY ZLASTMESSAGEDATE DESC"; //$NON-NLS-1$
 
     private static final String SELECT_CHAT_LIST_NO_PPIC = "SELECT ZWACHATSESSION.Z_PK as id, ZCONTACTJID AS contact, " //$NON-NLS-1$
-            + "ZPARTNERNAME as subject, ZLASTMESSAGEDATE, NULL as avatarPath , 0 as ZREMOVED" //$NON-NLS-1$
+            + "ZPARTNERNAME as subject, ZLASTMESSAGEDATE, NULL as avatarPath, 0 as ZREMOVED " //$NON-NLS-1$
             + "FROM ZWACHATSESSION " //$NON-NLS-1$
             + "ORDER BY ZLASTMESSAGEDATE DESC"; //$NON-NLS-1$
     /*
