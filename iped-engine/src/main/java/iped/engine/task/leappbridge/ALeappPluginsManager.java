@@ -12,8 +12,6 @@ import java.util.Map.Entry;
 
 import org.apache.tika.metadata.Metadata;
 
-import iped.engine.config.Configuration;
-import iped.engine.config.TaskInstallerConfig;
 import iped.engine.util.PathPatternMap;
 import iped.properties.BasicProps;
 import jep.Jep;
@@ -50,7 +48,7 @@ public class ALeappPluginsManager {
 
     }
 
-    synchronized public void init(Jep pjep) {
+    synchronized public void init(Jep pjep, File aleappPath) {
         this.jep = pjep;
 
         synchronized (initialized) {
@@ -63,9 +61,6 @@ public class ALeappPluginsManager {
                     return;
                 }
 
-                File pythonParsersFolder = new File(Configuration.getInstance().configPath,
-                        TaskInstallerConfig.SCRIPT_BASE);
-                File aleappPath = new File(pythonParsersFolder, "ALEAPP");
                 File scriptsPath = new File(aleappPath, "scripts");
                 File artifactsPath = new File(scriptsPath, "artifacts");
                 if (artifactsPath.exists()) {
