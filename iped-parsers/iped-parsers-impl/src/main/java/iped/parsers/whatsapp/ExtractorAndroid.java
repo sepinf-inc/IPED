@@ -529,7 +529,10 @@ public class ExtractorAndroid extends Extractor {
         m.setForwarded(hasForwardedCol && (rs.getInt("forwarded") > 0));
 
         m.setQuoted(hasQuoteTable && rs.getInt("quoted") == 1);
-        m.setIdQuote(rs.getLong("id_quote"));
+
+        if (hasQuoteTable){
+            m.setIdQuote(rs.getLong("id_quote"));
+        }
 
 
         return m;
