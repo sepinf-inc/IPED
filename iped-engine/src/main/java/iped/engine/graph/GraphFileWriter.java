@@ -310,7 +310,7 @@ public class GraphFileWriter implements Closeable, Flushable {
     }
 
     private static void compressGeneratedCSVFiles(File root) throws IOException {
-        Arrays.asList(root.listFiles()).stream().forEach(f -> {
+        Arrays.asList(root.listFiles()).parallelStream().forEach(f -> {
             File gzip = new File(f.getAbsolutePath() + ".gzip");
             try (GZIPOutputStream gzos = new GZIPOutputStream(
                     Files.newOutputStream(gzip.toPath(), StandardOpenOption.CREATE))) {
@@ -327,7 +327,7 @@ public class GraphFileWriter implements Closeable, Flushable {
     }
 
     private static void uncompressPreviousCSVFiles(File root) {
-        Arrays.asList(root.listFiles()).stream().forEach(f -> {
+        Arrays.asList(root.listFiles()).parallelStream().forEach(f -> {
             int idx = f.getAbsolutePath().lastIndexOf(".gzip");
             if (idx != -1) {
                 File csv = new File(f.getAbsolutePath().substring(0, idx));
@@ -373,7 +373,7 @@ public class GraphFileWriter implements Closeable, Flushable {
     public static void prepareMultiCaseCSVs(File output, List<File> csvParents) throws IOException {
         AtomicInteger subDir = new AtomicInteger(-1);
         Set<String> ids = Collections.synchronizedSet(new HashSet<>());
-        csvParents.stream().forEach(parent -> {
+        csvParents.parallelStream().forEach(parent -> {
             int num = subDir.incrementAndGet();
             try {
                 File[] subFiles = parent.listFiles();
