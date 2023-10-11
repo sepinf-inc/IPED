@@ -49,6 +49,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.HashMap;
 import java.util.TimeZone;
 import java.util.regex.Pattern;
 
@@ -270,6 +271,8 @@ public class ExtractorIOS extends Extractor {
         Set<MessageWrapperForDuplicateRemoval> activeMessages = new HashSet<>();
         Map<Long, Message> activeMessageIds = new HashMap<>();
 
+        HashMap<String, Message> messagesMap = new HashMap<String, Message>();
+
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setFetchSize(1000);
             stmt.setLong(1, chat.getId());
@@ -279,6 +282,9 @@ public class ExtractorIOS extends Extractor {
                     if (recoverDeleted) {
                         activeMessages.add(new MessageWrapperForDuplicateRemoval(m));
                         activeMessageIds.put(m.getId(), m);
+                    }
+                    if (m.getUuid() != null && !m.getUuid().isEmpty()){
+                        messagesMap.put(m.getUuid(),m);
                     }
                     messages.add(m);
                 }
@@ -303,6 +309,9 @@ public class ExtractorIOS extends Extractor {
                     if (!activeMessages.contains(new MessageWrapperForDuplicateRemoval(m))) { //do not include deleted message if already there
                         if (!activeMessageIds.containsKey(m.getId()) ||
                             !compareMessagesAlmostTheSame(activeMessageIds.get(m.getId()), m)) { //also remove messages with same id that have the same start text (possibly corrupted recovered record)
+                            if (m.getUuid() != null && !m.getUuid().isEmpty()){
+                                messagesMap.put(m.getUuid(),m);
+                            }
                             messages.add(m);
                         }
                     }
@@ -326,7 +335,7 @@ public class ExtractorIOS extends Extractor {
                 if (size >= 0){
                     pos = 2;
                     String uuidQuote = getSubStringFromMetadata(metadata, pos, size);
-                    Message messageQuote = searchMessageByUuid(messages,uuidQuote);
+                    Message messageQuote = messagesMap.get(uuidQuote);
                     if (messageQuote == null){ //TODO - get full carved quote messages from ZMETADATA
 
                         pos += size;
@@ -354,6 +363,8 @@ public class ExtractorIOS extends Extractor {
                 }
             }
         }
+        messagesMap.clear();
+        messagesMap = null;        
 
         return messages;
     }
@@ -432,17 +443,6 @@ public class ExtractorIOS extends Extractor {
         }
 
         return m;
-    }
-
-    private Message searchMessageByUuid(List<Message> messages, String uuid){
-        if (messages != null && uuid != null){
-            for (Message m : messages){
-                if (m.getUuid() != null && m.getUuid().compareTo(uuid)==0){
-                    return m;
-                }
-            }
-        }
-        return null;
     }
 
     public int getPositiveValueFromMetadata(String metadata, int pos){
