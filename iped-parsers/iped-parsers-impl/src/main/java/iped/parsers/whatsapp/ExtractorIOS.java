@@ -425,9 +425,11 @@ public class ExtractorIOS extends Extractor {
         }
         m.setForwarded(rs.getInt("forwarded") > 0);
 
-        m.setQuoted(getPositiveValueFromMetadata(rs.getString("metadata"),0)==0x2A);
-        m.setUuid(rs.getString("uuid"));        
-        m.setMetaData(rs.getString("metadata"));
+        if (hasZSTANZAIDAndZMETADATAColumns){
+            m.setQuoted(getPositiveValueFromMetadata(rs.getString("metadata"),0)==0x2A);
+            m.setUuid(rs.getString("uuid"));        
+            m.setMetaData(rs.getString("metadata"));
+        }
 
         return m;
     }
