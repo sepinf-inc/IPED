@@ -788,6 +788,7 @@ public class ExtractorAndroid extends Extractor {
             + "mq.edit_version, "
             + "mq.media_duration, "
             + "mq.media_caption as mediaCaption, "
+            + "null as forwarded, " //$NON-NLS-1$            
             + "m._id as quoted_row_id, "         
             + "mq.media_hash as mediaHash, mq.raw_data as rawData FROM " 
             + "messages_quotes mq LEFT join messages m on m.key_id = mq.key_id "
@@ -801,6 +802,7 @@ public class ExtractorAndroid extends Extractor {
             + "mq.edit_version, " //$NON-NLS-1$
             + "mq.media_duration, " //$NON-NLS-1$
             + "mq.media_caption as mediaCaption, " //$NON-NLS-1$
+            + "null as forwarded, " //$NON-NLS-1$             
             + "m._id quoted_row_id, " //$NON-NLS-1$          
             + "mq.media_hash as mediaHash, thumbnail as thumbData FROM messages_quotes mq " //$NON-NLS-1$   
             + "LEFT join messages m on m.key_id = mq.key_id " //$NON-NLS-1$          
