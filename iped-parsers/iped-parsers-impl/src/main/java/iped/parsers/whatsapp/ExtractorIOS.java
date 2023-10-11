@@ -464,22 +464,6 @@ public class ExtractorIOS extends Extractor {
         return ret;
     }
 
-
-    public String getUuidQuoteFromMetadata(String metadata){
-        String ret = null;
-        if (metadata != null){
-            byte [] metadataArray = metadata.getBytes();
-            int size = 0;
-            if (metadataArray!= null && metadataArray.length >= 2){
-                size = (int)metadataArray[1];
-                if (metadata.length() >= size + 2){
-                    return metadata.substring(2,size + 2);
-                }                
-            }
-        }        
-        return ret;
-    }
-
     public boolean getHasQuoteFromMetadata(String metadata){
         boolean ret = false;
         if (metadata != null){

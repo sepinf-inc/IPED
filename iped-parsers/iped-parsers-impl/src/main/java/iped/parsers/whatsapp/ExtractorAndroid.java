@@ -51,8 +51,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Comparator;
-import java.util.Collections;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -339,7 +337,6 @@ public class ExtractorAndroid extends Extractor {
         List<Message> messages = new ArrayList<>();
         
         boolean recoverDeleted = undeleteTable != null && !undeletedMessages.isEmpty();
-        long fakeIds = Long.MAX_VALUE;
 
         String id = remote.getId();
         id += isGroupChat ? "@g.us" : WAContact.waSuffix;

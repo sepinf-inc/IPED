@@ -51,8 +51,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.Comparator;
-import java.util.Collections;
 import java.util.HashMap;
 
 import iped.parsers.sqlite.SQLite3DBParser;
@@ -191,7 +189,6 @@ public class ExtractorAndroidNew extends Extractor {
         return messages;
     }
 
-
     private List<Message> extractMessages(Connection conn, Chat c) throws SQLException {
         boolean hasReactionTable = SQLite3DBParser.containsTable("message_add_on_reaction", conn);
         List<Message> messages = new ArrayList<>();
@@ -199,7 +196,6 @@ public class ExtractorAndroidNew extends Extractor {
         List<Message> messagesQuotes = extractQuoteMessages(conn, c);
         HashMap<Long, Message> messagesMap = new HashMap<Long, Message>();
 
-        long fakeIds = Long.MAX_VALUE;
         try (PreparedStatement stmt = conn.prepareStatement(getSelectMessagesQuery(conn))) {
             stmt.setFetchSize(1000);
             stmt.setLong(1, c.getId());
