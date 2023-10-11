@@ -1,7 +1,10 @@
 package iped.engine.task.leappbridge;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
 
@@ -13,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import iped.data.IItem;
 import iped.engine.core.Worker;
 import iped.engine.data.Item;
+import iped.engine.task.ExportFileTask;
 import iped.engine.task.index.IndexItem;
 import iped.engine.util.ParentInfo;
 import iped.engine.util.Util;
@@ -35,6 +39,7 @@ public class ArtifactJavaReport {
     private File moduleDir;
     String pluginName;
     private MediaType currentReportMediaType;
+    private File reportPath;
 
     static private Logger LOGGER = LoggerFactory.getLogger(ArtifactJavaReport.class);
 
@@ -55,6 +60,7 @@ public class ArtifactJavaReport {
         this.worker = (Worker) jep.getValue("worker");
         this.leappTask = (LeappBridgeTask) jep.getValue("leappTask");
         this.reportDumpPath = (File) jep.getValue("reportDumpPath");
+        this.reportPath = (File) jep.getValue("reportPath");
         this.moduleDir = (File) jep.getValue("moduleDir");
         this.pluginName = (String) jep.getValue("pluginName");
         this.mappedEvidences = (HashMap<String, Item>) jep.getValue("mappedEvidences");
@@ -143,7 +149,7 @@ public class ArtifactJavaReport {
             if (data != null) {
                 for (String property : (Collection<String>) headers) {
                     if (data[i] != null) {
-                        addMetadata(m, property, data[i].toString());
+                        addMetadata(subItem, property, data[i].toString());
                     }
                     i++;
                 }
@@ -163,7 +169,9 @@ public class ArtifactJavaReport {
     /*
      * Properly maps, format and add leap html columns as IPED item metadata
      */
-    private void addMetadata(Metadata m, String property, String value) throws IOException {
+    private void addMetadata(Item subItem, String property, String value) throws IOException {
+        Metadata m = subItem.getMetadata();
+
         if (value == null || value.trim().equals("")) {
             return;
         }
@@ -199,6 +207,22 @@ public class ArtifactJavaReport {
             String filel = value.toString().substring(reportDumpPath.getCanonicalPath().length());
             String filename = filel.substring(filel.lastIndexOf("/") + 1);
             m.add(ExtraProperties.LINKED_ITEMS, "path:\"*" + filel + "\" && name:\"" + filename + "\"");
+        }
+        int refpos = value.indexOf("href=");
+        if (refpos >= 0) {
+            String refFile = value.substring(refpos + 5);
+            String strDelimiter = refFile.substring(0, 1);
+            refFile = refFile.substring(1, refFile.indexOf(strDelimiter, 2));
+
+            if (refFile.startsWith(reportPath.getName())) {
+                byte[] bytes = Files
+                        .readAllBytes(Path.of(reportPath.getParentFile().getAbsolutePath() + "/" + refFile));
+
+                ExportFileTask extractor = new ExportFileTask();
+                extractor.setWorker(worker);
+                ByteArrayInputStream is = new ByteArrayInputStream(bytes);
+                extractor.extractFile(is, subItem, subItem.getLength());
+            }
         }
     }
 

@@ -52,7 +52,7 @@ public class LeappBridgeTask extends AbstractPythonTask {
 
     private static final String ALEAPP_PLUGIN = "ALEAPP:PLUGIN";
 
-    private static final String REPORT_EVIDENCE_NAME = "ALeapp_Report";
+    static final String REPORT_EVIDENCE_NAME = "ALeapp_Report";
 
     private static final String ALEAPP_DEVICE_DETAILS = "ALEAPP:DEVICE_DETAILS";
 
@@ -153,11 +153,6 @@ public class LeappBridgeTask extends AbstractPythonTask {
 
                 jep.eval("sys.path.append('" + scriptsDir.getCanonicalPath().replace("\\", "\\\\") + "')");
 
-                // temp directory to save log and device info files
-                tmp = Files.createTempDir();
-                tmp.mkdirs();
-                tmp.deleteOnExit();
-
                 jep.eval("import scripts.artifact_report");
                 jep.eval("from multiprocessing import Process");
                 jep.eval("import os");
@@ -175,6 +170,7 @@ public class LeappBridgeTask extends AbstractPythonTask {
                 jep.set("evidence", evidence);
                 jep.set("worker", worker);
                 jep.set("reportDumpPath", reportDumpPath);
+                jep.set("reportPath", reportPath);
                 jep.set("leappTask", this);
                 jep.set("moduleDir", this.output);
                 jep.set("pluginName", p.getModuleName());
@@ -418,7 +414,7 @@ public class LeappBridgeTask extends AbstractPythonTask {
             tmpFileRef = tmpResources.createTemporaryFile();
             tmpFileRef.deleteOnExit();
             reportPath = new File(tmpFileRef.getParentFile().getAbsolutePath(),
-                    "/leapptaskreps/ALEAPP_Reports_" + tmpFileRef.getName());
+                    "/leapptaskreps/" + REPORT_EVIDENCE_NAME + "_" + tmpFileRef.getName());
             reportPath.mkdirs();
             reportPath.deleteOnExit();
 
