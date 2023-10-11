@@ -460,7 +460,7 @@ public class ReportGenerator {
                                 dataQuote = "Audio";
                             }
                             quoteIcon = "\uD83C\uDFA7";
-                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+" style=\"display:table;width:-webkit-fill-available;\"><div style=\"display:table-cell;\"><span class=\"quote_user\">"+quoteUser+
+                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div style=\"display:table-cell;\"><span class=\"quote_user\">"+quoteUser+
                             "</span></br><span class=\"quote_msg\">"+quoteIcon +
                                 " "+ format(dataQuote) + " "+  quoteDuration + "</span></div>");                                    
                             break;
@@ -470,7 +470,7 @@ public class ReportGenerator {
                             if (dataQuote == null || dataQuote.isEmpty()){
                                 dataQuote = "Video";
                             }
-                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+" style=\"display:table;width:-webkit-fill-available;\"><div style=\"display:table-cell;vertical-align:top;border-right: 10px solid transparent;\"><span class=\"quote_user\">"+quoteUser+
+                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div style=\"display:table-cell;vertical-align:top;border-right: 10px solid transparent;\"><span class=\"quote_user\">"+quoteUser+
                             "</span></br><span class=\"quote_msg\">"+quoteIcon +
                                 " "+ format(dataQuote) + " "+  quoteDuration + "</span></div>");
                             if (thumbQuote != null) {
@@ -486,13 +486,13 @@ public class ReportGenerator {
                             if (dataQuote == null || dataQuote.isEmpty()){
                                 dataQuote = "Photo";
                             }
-                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+" style=\"display:table;width:-webkit-fill-available;\"><div style=\"display:table-cell;vertical-align:top;border-right: 10px solid transparent;\"><span class=\"quote_user\">"+quoteUser+
+                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div style=\"display:table-cell;vertical-align:top;border-right: 10px solid transparent;\"><span class=\"quote_user\">"+quoteUser+
                                 "</span></br><span class=\"quote_msg\">"+quoteIcon +" "+ format(dataQuote) + " </span></div>");                                    
                             if (thumbQuote != null) {
                                 out.print("<div><img style=\"width:33px;height:33px;display:table-cell\" src=\"");
                                 out.print("data:image/jpg;base64," + Util.encodeBase64(thumbQuote) + "\"></div>");
                             } else {
-                                out.println("<div class=\"imageImg\" style=\"width:33px;height:33px;display:table-cell\" title=\"Image\"></div>"); //$NON-NLS-1$
+                                out.println("<div class=\"imageImg\" style=\"width:33px;height:33px;display:table-cell\" title=\"Image\"></div>");
                             }
                             break;                        
                         case APP_MESSAGE:
@@ -500,25 +500,25 @@ public class ReportGenerator {
                             if (dataQuote == null || dataQuote.isEmpty()){
                                 dataQuote = "Document";
                             }
-                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+" style=\"display:table;width:-webkit-fill-available;\"><div style=\"display:table-cell;vertical-align:top;border-right: 10px solid transparent;\"><span class=\"quote_user\">"+quoteUser+
+                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div style=\"display:table-cell;vertical-align:top;border-right: 10px solid transparent;\"><span class=\"quote_user\">"+quoteUser+
                                 "</span></br><span class=\"quote_msg\">"+quoteIcon +" "+ format(dataQuote) + " </span></div>");                                    
                             if (thumbQuote != null) {
                                 out.print("<div><img style=\"width:33px;height:33px;display:table-cell\" src=\"");
                                 out.print("data:image/jpg;base64," + Util.encodeBase64(thumbQuote) + "\"></div>");
                             } else {
-                                out.println("<div class=\"attachImg\" style=\"width:33px;height:33px;display:table-cell\" title=\"Doc\"></div>"); //$NON-NLS-1$
+                                out.println("<div class=\"attachImg\" style=\"width:33px;height:33px;display:table-cell\" title=\"Doc\"></div>");
                             }
                             break;                            
                         default:
-                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+" style=\"display:table;width:-webkit-fill-available;\"><div style=\"display:table-cell;\"><span class=\"quote_user\">"+quoteUser+
+                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div style=\"display:table-cell;\"><span class=\"quote_user\">"+quoteUser+
                             "</span></br><span class=\"quote_msg\">"+ format(dataQuote) + "</span></div>");
                             break;
                     }
                     if (messageQuote.isDeleted()) {
-                        out.println("<div style=\"display:table-footer-group\"><br/><span style=\"float:none\" class=\"recovered\">"); //$NON-NLS-1$
-                        out.println("<i>" + "Partially recovered" + "</i>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                        out.println("<div class=\"deletedIcon\"></div>"); //$NON-NLS-1$
-                        out.println("</span></div>"); //$NON-NLS-1$
+                        out.println("<div style=\"display:table-footer-group\"><br/><span style=\"float:none\" class=\"recovered\">");
+                        out.println("<i>" + "Partially recovered" + "</i>");
+                        out.println("<div class=\"deletedIcon\"></div>");
+                        out.println("</span></div>");
                     }                    
                     out.print("</div>");
                     
