@@ -38,6 +38,7 @@ import iped.parsers.python.PythonParser;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.SearchResult;
+import iped.utils.pythonhook.PythonHook;
 import jep.Jep;
 import jep.JepException;
 
@@ -216,9 +217,15 @@ public class LeappBridgeTask extends AbstractPythonTask {
         return "LeappTask";
     }
 
+    static HashSet<String> dumpStatFolderNames = new HashSet<String>();
+    static {
+        dumpStatFolderNames.add("Dump");
+        dumpStatFolderNames.add("backup");
+    };
+
     @Override
     public void process(IItem evidence) throws Exception {
-        if (evidence.getName().equals("Dump")) {
+        if (dumpStatFolderNames.contains(evidence.getName())) {
             Item subItem = (Item) evidence.createChildItem();
             ParentInfo parentInfo = new ParentInfo(evidence);
 

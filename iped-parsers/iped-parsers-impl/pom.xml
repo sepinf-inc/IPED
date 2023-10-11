@@ -190,11 +190,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-    		<groupId>black.ninia</groupId>
-  			<artifactId>jep</artifactId>
-  			<version>4.0.3</version>
-  		</dependency>
-        <dependency>
             <groupId>net.sf</groupId>
             <artifactId>java-dbx</artifactId>
             <version>${java.dbx.version}</version>
