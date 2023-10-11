@@ -53,6 +53,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Comparator;
 import java.util.Collections;
+import java.util.HashMap;
 
 import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.whatsapp.Message.MessageStatus;
@@ -196,6 +197,7 @@ public class ExtractorAndroidNew extends Extractor {
         List<Message> messages = new ArrayList<>();
 
         List<Message> messagesQuotes = extractQuoteMessages(conn, c);
+        HashMap<Long, Message> messagesMap = new HashMap<Long, Message>();
 
         long fakeIds = Long.MAX_VALUE;
         try (PreparedStatement stmt = conn.prepareStatement(getSelectMessagesQuery(conn))) {
@@ -277,38 +279,31 @@ public class ExtractorAndroidNew extends Extractor {
                 }
                 m.setForwarded(rs.getInt("forwarded") > 0);
 
+                messagesMap.put(m.getId(),m);
+
                 messages.add(m);
             }
         }
 
-        //Find quote messages            
-        for (Message m: messages){
-            Message MessageQuoteRefence = searchMessageById(messagesQuotes,m.getId());
-            if (MessageQuoteRefence != null){ // Has quote
-                //Try to find orginal message in messages
-                Message messageQuote = searchMessageById(messages,MessageQuoteRefence.getIdQuote());
-                if (messageQuote != null){ // has found original message reference, more complete
-                    m.setMessageQuote(messageQuote);
-                }else{ // not found original message reference, get info from message_quotes table, less complete
-                    MessageQuoteRefence.setDeleted(true);
-                    MessageQuoteRefence.setId(MessageQuoteRefence.getIdQuote()); 
-                    m.setMessageQuote(MessageQuoteRefence);
+        //Find quote messages
+        for (Message mq: messagesQuotes){
+            Message m = messagesMap.get(mq.getId());
+            if (m != null){// Has quote
+                Message original = messagesMap.get(mq.getIdQuote());//Try to find orginal message in messages
+                if (original != null){// has found original message reference, more complete
+                    m.setMessageQuote(original);
+                }else{// not found original message reference, get info from message_quotes table, less complete
+                    mq.setDeleted(true);
+                    mq.setId(mq.getIdQuote());
+                    m.setMessageQuote(mq);
                 }
                 m.setQuoted(true);
-            }            
-        }
-        return messages;
-    }
-
-    private Message searchMessageById(List<Message> messages, Long id){
-        if (messages != null){
-            for (Message m: messages){
-                if (m.getId()==id){
-                    return m;
-                }
             }
         }
-        return null;
+        messagesMap.clear();
+        messagesMap = null;
+
+        return messages;
     }
 
     private List<Message> extractQuoteMessages(Connection conn, Chat c) throws SQLException {
