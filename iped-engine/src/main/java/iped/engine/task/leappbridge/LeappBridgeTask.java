@@ -122,7 +122,7 @@ public class LeappBridgeTask extends AbstractPythonTask {
         pt.overrideModuleFunction("scripts.ilapfuncs", "logfunc", LeappBridgeTask.class.getMethod("logfunc", String.class));
         pt.overrideModuleFunction("scripts.ilapfuncs", "logdevinfo",
                 LeappBridgeTask.class.getMethod("logdevinfo", String.class));
-        pt.overrideHtmlReport("scripts.artifact_report", "ArtifactHtmlReport", ArtifactJavaReport.class);
+        pt.wrapsClass("scripts.artifact_report", "ArtifactHtmlReport", ArtifactJavaReport.class);
 
         pluginsManager.init(jep, getAleappScriptsDir());
     }

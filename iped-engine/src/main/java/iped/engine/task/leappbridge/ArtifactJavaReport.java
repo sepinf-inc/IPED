@@ -61,7 +61,11 @@ public class ArtifactJavaReport {
     }
 
     static public MediaType celPhoneExtractionMediaType = new MediaType("application", "celphone-extraction");
-    
+
+    public void start_artifact_report(String repFolder) {
+        start_artifact_report(repFolder, "", "");
+    }
+
     public void start_artifact_report(String repFolder, String repName) {
         start_artifact_report(repFolder, repName, "");
     }

@@ -1,8 +1,9 @@
-package iped.engine.task.leappbridge;
+package iped.utils.pythonhook;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -16,8 +17,9 @@ public class PythonHook {
 
     HashMap<String, HashMap<String, String>> modifications = new HashMap<String, HashMap<String, String>>();
     HashMap<String, List<String>> appends = new HashMap<String, List<String>>();
+    HashSet<String> modulesToClear = new HashSet<String>();
 
-    PythonHook(Jep jep) {
+    public PythonHook(Jep jep) {
         this.jep = jep;
         installHook();
     }
@@ -32,23 +34,22 @@ public class PythonHook {
     }
 
     public boolean hasModule(String module) {
-        HashMap<String, String> modification = modifications.get(module);
-        if (modification != null) {
-            return true;
-        } else {
-            return false;
-        }
+        return modifications.get(module) != null || appends.get(module) != null;
     }
 
     public String processHook(String filename, String module, String source) {
-        HashMap<String, String> modification = modifications.get(module);
         List<String> append = appends.get(module);
-        if (modification == null && append == null) {
-            return null;
-        }
-        if (modification != null) {
-            for (Entry<String, String> fileModifications : modification.entrySet()) {
-                source = source.replace(fileModifications.getKey(), fileModifications.getValue());
+        if (modulesToClear.contains(module)) {
+            source = "";
+        } else {
+            HashMap<String, String> modification = modifications.get(module);
+            if (modification == null && append == null) {
+                return null;
+            }
+            if (modification != null) {
+                for (Entry<String, String> fileModifications : modification.entrySet()) {
+                    source = source.replace(fileModifications.getKey(), fileModifications.getValue());
+                }
             }
         }
         if (append != null) {
@@ -131,7 +132,7 @@ public class PythonHook {
      * not supported as this feature is not supported by JEP to call java object
      * methods
      */
-    public void overrideClass(String module, String pythonClass, Class<ArtifactJavaReport> class1) {
+    public void overrideClass(String module, String pythonClass, Class class1) {
         String packageName = class1.getPackageName();
         String className = class1.getSimpleName();
         addModification(module, "class " + pythonClass,
@@ -140,25 +141,25 @@ public class PythonHook {
     }
 
     /*
-     * As ALeapp HTML Report class has methods with keywords, we create a wrapping
-     * class to replace method call with keywords, ignoring their values
+     * Replaces a class declaration with the java implemented class. If the original
+     * python class has methods with keywords, any call to it will raise keywords
+     * not supported as this feature is not supported by JEP to call java object
+     * methods
      */
-    public void overrideHtmlReport(String module, String pythonClass, Class<ArtifactJavaReport> class1) {
+    public void wrapsClass(String module, String pythonClass, Class class1) {
         String packageName = class1.getPackageName();
         String className = class1.getSimpleName();
-        addModification(module, "class " + pythonClass,
-                "from " + packageName + " import " + className + "\n" + "class " + pythonClass + "2");
-        addModification(module, "def __init__(self, artifact_name, artifact_category=''):\n",
-                "def __init__(self, artifact_name, artifact_category=''):\n        self.wrapped = " + className
-                        + "(artifact_name,artifact_category)\n");
-        String append = "\n\nclass " + pythonClass + "(" + pythonClass + "2):\n"
-                + "    def write_artifact_data_table(self, data_headers, data_list, source_path,\n"
-                + "                                  write_total=True, write_location=True, html_escape=True, cols_repeated_at_bottom=True,\n"
-                + "                                  table_responsive=True, table_style='', table_id='dtBasicExample', html_no_escape=[]):\n"
-                + "        self.wrapped.write_artifact_data_table(data_headers, data_list, source_path)\n"
-                + "    def start_artifact_report(self, report_folder, artifact_file_name, artifact_description=''):\n"
-                + "        self.wrapped.start_artifact_report(report_folder, artifact_file_name, artifact_description)\n";
+        addClearModule(module);
+        addAppend(module, "from " + packageName + " import " + className + "\n");
+        String append = "\n\nclass " + pythonClass + "(RemoveKeywordArgsWrapper):\n"
+                + "    def __init__(self, *args):\n"
+                + "        super().__init__(" + className + "(*args))\n";
+        addAppend(module, "\n" + removeKeywordsWrapper);
         addAppend(module, append);
+    }
+
+    private void addClearModule(String module) {
+        modulesToClear.add(module);
     }
 
     private void addAppend(String module, String str) {
@@ -169,6 +170,18 @@ public class PythonHook {
         }
         append.add(str);
     }
+
+    private static String removeKeywordsWrapper = "class RemoveKeywordArgsWrapper:\n" + "    def __init__(self, w):\n"
+            + "                self.wrapped = w\n" + "                pass\n"
+            + "    def __getattribute__(self, name):\n" + "        if(name == \"wrapped\"):\n"
+            + "            return object.__getattribute__(self, name)\n"
+            + "        attr = object.__getattribute__(self.wrapped, name)\n" + "        if hasattr(attr, '__call__'):\n"
+            + "            def newfunc(*args, **kwargs):\n"
+            + "                a = list(args)\n" + "                a.insert(0,self.wrapped)\n"
+            + "                args = tuple(a)\n"
+            + "                result = attr(*args)\n"
+            + "                return result\n" + "            return newfunc\n" + "        else:\n"
+            + "            return attr\n" + "";
 
 }
 
