@@ -207,8 +207,14 @@ public class ExtractorIOS extends Extractor {
                 extractMessages(conn, idToChat, firstTry, true);
 
                 for (Chat c : list) {
+                    HashMap<String, Message> messagesMap = new HashMap<String, Message>();
+                    for (Message m : c.getMessages()) {
+                        if (m.getUuid() != null && !m.getUuid().isEmpty()) {
+                            messagesMap.put(m.getUuid(), m);
+                        }
+                    }
                     if (messagesUndeletedTable != null && !undeletedMessages.isEmpty()) {
-                        mergeUndeletedMessages(c, undeletedMessages, mediaItems, groupMembers, firstTry);
+                        mergeUndeletedMessages(c, messagesMap, undeletedMessages, mediaItems, groupMembers, firstTry);
                     }
                     if (c.isGroupChat()) {
                         try {
@@ -221,11 +227,9 @@ public class ExtractorIOS extends Extractor {
                             }
                         }
                     }
-                }
 
-                // Find quoted messages
-                for (Chat c : list) {
-                    findQuotedMessages(c.getMessages());
+                    // Find quoted messages
+                    findQuotedMessages(c.getMessages(), messagesMap);
                 }
 
                 if (recoverDeletedRecords && !firstTry) {
@@ -274,7 +278,7 @@ public class ExtractorIOS extends Extractor {
         if (!hasZSTANZAIDAndZMETADATAColumns){
             sql = sql.replace("ZWAMESSAGE.ZSTANZAID as uuid, ZWAMEDIAITEM.ZMETADATA as metadata, ", "");
         }
-        
+
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
@@ -297,7 +301,7 @@ public class ExtractorIOS extends Extractor {
         }
     }
     
-    private void mergeUndeletedMessages(Chat chat, Map<Long, List<SqliteRow>> undeletedMessages,
+    private void mergeUndeletedMessages(Chat chat, Map<String, Message> messagesMap, Map<Long, List<SqliteRow>> undeletedMessages,
             Map<Long, SqliteRow> mediaItems, Map<Long, SqliteRow> groupMembers, boolean firstTry) throws SQLException {
 
         // Get deleted messages for this Chat
@@ -322,6 +326,9 @@ public class ExtractorIOS extends Extractor {
                             // corrupted recovered record).
                             if (!activeMessageIds.containsKey(m.getId())
                                     || !compareMessagesAlmostTheSame(activeMessageIds.get(m.getId()), m)) {
+                                if (m.getUuid() != null && !m.getUuid().isEmpty()) {
+                                    messagesMap.put(m.getUuid(), m);
+                                }
                                 chat.getMessages().add(m);
                             }
                         }
@@ -337,7 +344,7 @@ public class ExtractorIOS extends Extractor {
         }
     }
 
-    private void findQuotedMessages(List<Message> messages) {
+    private void findQuotedMessages(List<Message> messages, Map<String, Message> messagesMap) {
         long fakeIds = Long.MAX_VALUE;
         for (Message m : messages) {
             if (m.isQuoted() && m.getMetaData() != null) {
@@ -347,8 +354,8 @@ public class ExtractorIOS extends Extractor {
                 if (size >= 0) {
                     pos = 2;
                     String uuidQuote = getSubStringFromMetadata(metadata, pos, size);
-                    Message messageQuote = searchMessageByUuid(messages, uuidQuote);
-                    if (messageQuote == null) { // TODO - get full carved quote messages from ZMETADATA
+                    Message messageQuote = messagesMap.get(uuidQuote);
+                    if (messageQuote == null){ //TODO - get full carved quote messages from ZMETADATA
 
                         pos += size;
                         int unknowflag = getPositiveValueFromMetadata(metadata, pos);
@@ -451,17 +458,6 @@ public class ExtractorIOS extends Extractor {
         }
 
         return m;
-    }
-
-    private Message searchMessageByUuid(List<Message> messages, String uuid){
-        if (messages != null && uuid != null){
-            for (Message m : messages){
-                if (m.getUuid() != null && m.getUuid().compareTo(uuid)==0){
-                    return m;
-                }
-            }
-        }
-        return null;
     }
 
     public int getPositiveValueFromMetadata(String metadata, int pos){
