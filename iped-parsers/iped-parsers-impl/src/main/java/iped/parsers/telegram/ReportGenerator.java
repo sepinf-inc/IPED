@@ -33,7 +33,7 @@ import iped.utils.SimpleHTMLEncoder;
 
 public class ReportGenerator {
 
-    private static final int MIN_SIZE_TO_SPLIT_CHAT = 5000000;
+    private int minChatSplitSize = 6000000;
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd"); //$NON-NLS-1$
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX"); //$NON-NLS-1$
@@ -52,6 +52,10 @@ public class ReportGenerator {
 
     public int getNextMsgNum() {
         return currentMsg;
+    }
+
+    public void setMinChatSplitSize(int minChatSplitSize) {
+        this.minChatSplitSize = minChatSplitSize;
     }
 
     private String format(String s) {
@@ -128,7 +132,7 @@ public class ReportGenerator {
 
             printMessage(out, m, c.isGroup());
 
-            if (currentMsg != c.getMessages().size() && bout.size() >= MIN_SIZE_TO_SPLIT_CHAT) {
+            if (currentMsg != c.getMessages().size() && bout.size() >= minChatSplitSize) {
                 out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
                         + Messages.getString("WhatsAppReport.ChatContinues") + "</div></div>"); //$NON-NLS-1$ //$NON-NLS-2$
                 break;
@@ -337,11 +341,13 @@ public class ReportGenerator {
     }
 
     private void printMessage(PrintWriter out, Message message, boolean group) {
+
         out.println("<div class=\"linha\" id=\"" + message.getId() + "\">"); //$NON-NLS-1$
         if (message.isFromMe()) {
-            out.println("<div class=\"outgoing to\">"); //$NON-NLS-1$
+            out.println("<div class=\"bbr\"><div class=\"outgoing to\">"); //$NON-NLS-1$
         } else {
-            out.println("<div class=\"incoming from\">"); //$NON-NLS-1$
+            out.println(
+                    "<div class=\"bbl\"><div class=\"aw\"><div class=\"awl\"></div></div><div class=\"incoming from\">"); //$NON-NLS-1$
         }
         Contact contact = message.getFrom();
         if (contact != null) {
@@ -384,6 +390,12 @@ public class ReportGenerator {
             out.println(timeFormat.format(message.getTimeStamp()) + " &nbsp;"); //$NON-NLS-1$
         }
         out.println("</span>"); //$NON-NLS-1$
+
+        if (message.isFromMe()) {
+            out.println("</div><div class=\"aw\"><div class=\"awr\"></div></div>");
+        } else {
+            out.println("</div>");
+        }
 
         out.println("</div></div>"); //$NON-NLS-1$
 

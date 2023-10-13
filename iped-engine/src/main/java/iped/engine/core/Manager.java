@@ -25,6 +25,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
+import java.security.Security;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -47,6 +48,7 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.Directory;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import iped.data.ICaseData;
 import iped.data.IItem;
@@ -154,7 +156,13 @@ public class Manager {
     private final AtomicBoolean initSleuthkitServers = new AtomicBoolean(false);
 
     private static final String appWinExeFileName = "IPED-SearchApp.exe";
-    
+
+    static {
+        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
+            Security.addProvider(new BouncyCastleProvider());
+        }
+    }
+
     public static Manager getInstance() {
         return instance;
     }

@@ -32,6 +32,7 @@ public class GoogleTranscriptTask extends AbstractTranscriptTask {
     // must be set in environment variable
     private static final String CREDENTIAL_KEY = "GOOGLE_APPLICATION_CREDENTIALS";
 
+    /*
     public static final MediaType mp3 = MediaType.audio("mpeg");
     public static final MediaType ogg = MediaType.audio("vorbis");
     public static final MediaType flac = MediaType.audio("x-flac");
@@ -40,7 +41,8 @@ public class GoogleTranscriptTask extends AbstractTranscriptTask {
     public static final MediaType amr = MediaType.audio("amr");
     public static final MediaType aac = MediaType.audio("x-aac");
     public static final MediaType speex = MediaType.audio("speex");
-
+     */
+    
     private static Object lock = new Object();
     private static long lastTime = 0;
 

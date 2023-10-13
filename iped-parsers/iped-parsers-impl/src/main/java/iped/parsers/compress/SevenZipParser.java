@@ -1,5 +1,6 @@
 package iped.parsers.compress;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -258,7 +259,7 @@ public class SevenZipParser extends AbstractParser {
                 if (tmpFile == null) {
                     parseSubitem(new ByteArrayInputStream(tmpBuf, 0, bufPos));
                 } else {
-                    try (InputStream is = new FileInputStream(tmpFile)) {
+                    try (InputStream is = new BufferedInputStream(new FileInputStream(tmpFile))) {
                         parseSubitem(is);
                     }
                 }

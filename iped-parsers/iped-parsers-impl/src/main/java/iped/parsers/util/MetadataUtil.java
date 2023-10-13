@@ -249,6 +249,8 @@ public class MetadataUtil {
         generalKeys.add(ExtraProperties.USER_NOTES);
         generalKeys.add(ExtraProperties.THUMBNAIL_BASE64);
         generalKeys.add(ExtraProperties.DOWNLOADED_DATA);
+        generalKeys.add(ExtraProperties.TRANSCRIPT_ATTR);
+        generalKeys.add(ExtraProperties.CONFIDENCE_ATTR);
         generalKeys.add(OCRParser.OCR_CHAR_COUNT);
         generalKeys.add(RawStringParser.COMPRESS_RATIO);
 
