@@ -276,31 +276,40 @@ public class ExtractorAndroidNew extends Extractor {
                 }
                 m.setForwarded(rs.getInt("forwarded") > 0);
 
+                m.setUuid(rs.getString("uuid")); 
+
                 c.getMessages().add(m);
             }
         }
         
+        long fakeIds = Long.MAX_VALUE;
         for (Chat c : idToChat.values()) {
             HashMap<Long, Message> messagesMap = new HashMap<Long, Message>();
+            HashMap<String, Message> messagesMapUuid = new HashMap<String, Message>();
             for (Message m : c.getMessages()) {
                 messagesMap.put(m.getId(), m);
+                if (m.getUuid() != null && !m.getUuid().isEmpty()) {
+                    messagesMapUuid.put(m.getUuid(), m);
+                }
             }
             // Find quote messages
             List<Message> messagesQuotes = extractQuoteMessages(conn, c);
             for (Message mq: messagesQuotes){
                 Message m = messagesMap.get(mq.getId());
                 if (m != null){// Has quote
-                    Message original = messagesMap.get(mq.getIdQuote());//Try to find orginal message in messages
+                    Message original = messagesMapUuid.get(mq.getUuid());//Try to find orginal message in messages
                     if (original != null){// has found original message reference, more complete
                         m.setMessageQuote(original);
                     }else{// not found original message reference, get info from message_quotes table, less complete
                         mq.setDeleted(true);
-                        mq.setId(mq.getIdQuote());
+                        mq.setId(fakeIds--);
                         m.setMessageQuote(mq);
                     }
                     m.setQuoted(true);
                 }
             }
+            messagesMap.clear();
+            messagesMapUuid.clear();
         }
 
     }
@@ -346,7 +355,7 @@ public class ExtractorAndroidNew extends Extractor {
                     m.setMessageType(UNBLOCKED_CONTACT);
                 }
 
-                m.setIdQuote(rs.getLong("id_quote"));
+                m.setUuid(rs.getString("uuid")); 
 
                 messages.add(m);
             }
@@ -506,7 +515,7 @@ public class ExtractorAndroidNew extends Extractor {
                 + " m.from_me as fromMe, m.timestamp as timestamp, message_url as mediaUrl,"
                 + " mm.mime_type as mediaMime, mm.file_length as mediaSize, media_name as mediaName, "
                 + " m.message_type as messageType, latitude, longitude, mm.media_duration, " + captionCol
-                + " as mediaCaption, mm.file_hash as mediaHash, thumbnail as thumbData,"
+                + " as mediaCaption, mm.file_hash as mediaHash, thumbnail as thumbData, m.key_id as uuid,"
                 + " ms.action_type as actionType, m.message_add_on_flags as hasAddOn,"
                 + " (m.origination_flags & 1) as forwarded"
                 + " from message m inner join chat_view cv on m.chat_row_id=cv._id"
@@ -524,13 +533,12 @@ public class ExtractorAndroidNew extends Extractor {
                 +" mm.mime_type as mediaMime, mm.file_length as mediaSize, media_name as mediaName,"
                 +" mq.message_type as messageType, latitude, longitude, mm.media_duration,"
                 +" mm.file_hash as mediaHash,"
-				+" m._id as id_quote"
+				+" mq.key_id as uuid"
                 +" from message_quoted mq inner join chat_view cv on mq.chat_row_id=cv._id"
                 +" left join message_quoted_media mm on mm.message_row_id=mq.message_row_id"
                 +" left join jid on jid._id=mq.sender_jid_row_id"
                 +" left join message_quoted_location ml on mq.message_row_id=ml.message_row_id"
                 +" left join message_quoted_vcard mv on mq.message_row_id=mv.message_row_id"
-				+" left join message m on m.key_id = mq.key_id"
                 +" where chatId=?";
 
     private static String getSelectBlockedQuery(Connection conn) throws SQLException {
