@@ -345,7 +345,7 @@ public class ExtractorAndroid extends Extractor {
         Map<Long, Message> activeMessageIds = new HashMap<>();
 
         List<Message> messagesQuotes = new ArrayList<>();
-        HashMap<Long, Message> messagesMapId = new HashMap<Long, Message>();
+        HashMap<String, Message> messagesMapUuid = new HashMap<String, Message>();
         HashMap<Long, Message> messagesMapIdQuote = new HashMap<Long, Message>();
 
         if (hasQuoteCol){
@@ -383,8 +383,10 @@ public class ExtractorAndroid extends Extractor {
                         activeMessages.add(new MessageWrapperForDuplicateRemoval(m));
                         activeMessageIds.put(m.getId(), m);
                     }
-                    messagesMapId.put(m.getId(),m);
                     messagesMapIdQuote.put(m.getIdQuote(),m);
+                    if (m.getUuid() != null && !m.getUuid().isEmpty()) {
+                        messagesMapUuid.put(m.getUuid(), m);
+                    }                    
                     messages.add(m);
                 }
             }
@@ -411,8 +413,10 @@ public class ExtractorAndroid extends Extractor {
                     if (!activeMessages.contains(new MessageWrapperForDuplicateRemoval(m))) { //do not include deleted message if already there
                         if (!activeMessageIds.containsKey(m.getId()) ||
                             !compareMessagesAlmostTheSame(activeMessageIds.get(m.getId()), m)) { //also remove messages with same id that have the same start text (possibly corrupted recovered record)
-                            messagesMapId.put(m.getId(),m);
                             messagesMapIdQuote.put(m.getIdQuote(),m);
+                            if (m.getUuid() != null && !m.getUuid().isEmpty()) {
+                                messagesMapUuid.put(m.getUuid(), m);
+                            }                            
                             messages.add(m);
                         }
                     }}
@@ -427,24 +431,23 @@ public class ExtractorAndroid extends Extractor {
         }
 
         //Find quote messages
+        long fakeIds = Long.MAX_VALUE;
         for (Message mq: messagesQuotes){
             Message m = messagesMapIdQuote.get(mq.getId());
             if (m != null){// Has quote
-                Message original = messagesMapId.get(mq.getIdQuote());//Try to find orginal message in messages
+                Message original = messagesMapUuid.get(mq.getUuid());//Try to find orginal message in messages
                 if (original != null){// has found original message reference, more complete
                     m.setMessageQuote(original);
                 }else{// not found original message reference, get info from message_quotes table, less complete
                     mq.setDeleted(true);
-                    mq.setId(mq.getIdQuote());
+                    mq.setId(fakeIds--);
                     m.setMessageQuote(mq);
                 }
                 m.setQuoted(true);
             }
         }
         messagesMapIdQuote.clear();
-        messagesMapIdQuote = null;
-        messagesMapId.clear();
-        messagesMapId = null;
+        messagesMapUuid.clear();
 
         return messages;
     }
@@ -550,6 +553,7 @@ public class ExtractorAndroid extends Extractor {
 
         if (hasQuoteCol){
             m.setIdQuote(rs.getInt("quoted_row_id"));
+            m.setUuid(rs.getString("key_id"));
         }
 
         return m;
@@ -719,7 +723,7 @@ public class ExtractorAndroid extends Extractor {
             query = query.replace("(forwarded & 1) as forwarded, ", "");
         }
         if (!hasQuote) {
-            query = query.replace("quoted_row_id, ", "");
+            query = query.replace("quoted_row_id, messages.key_id, ", "");
         }
         return query;
     }
@@ -757,7 +761,7 @@ public class ExtractorAndroid extends Extractor {
             + "media_duration, " //$NON-NLS-1$
             + "media_caption as mediaCaption, " //$NON-NLS-1$
             + "(forwarded & 1) as forwarded, " //$NON-NLS-1$
-            + "quoted_row_id, " //$NON-NLS-1$
+            + "quoted_row_id, messages.key_id, " //$NON-NLS-1$
             + "media_hash as mediaHash, raw_data as rawData FROM " //$NON-NLS-1$
             + "messages WHERE remoteId=? and status!=-1 ORDER BY timestamp"; //$NON-NLS-1$
 
@@ -770,7 +774,7 @@ public class ExtractorAndroid extends Extractor {
             + "media_duration, " //$NON-NLS-1$
             + "media_caption as mediaCaption, " //$NON-NLS-1$
             + "(forwarded & 1) as forwarded, " //$NON-NLS-1$
-            + "quoted_row_id, " //$NON-NLS-1$          
+            + "quoted_row_id, messages.key_id, " //$NON-NLS-1$          
             + "media_hash as mediaHash, thumbnail as thumbData FROM " //$NON-NLS-1$          
             + "messages LEFT JOIN message_thumbnails ON (messages.key_id = message_thumbnails.key_id " //$NON-NLS-1$
             + "AND messages.key_remote_jid = message_thumbnails.key_remote_jid " //$NON-NLS-1$
@@ -789,9 +793,8 @@ public class ExtractorAndroid extends Extractor {
             + "mq.media_duration, "
             + "mq.media_caption as mediaCaption, "
             + "null as forwarded, " //$NON-NLS-1$            
-            + "m._id as quoted_row_id, "         
-            + "mq.media_hash as mediaHash, mq.raw_data as rawData FROM " 
-            + "messages_quotes mq LEFT join messages m on m.key_id = mq.key_id "
+            + "mq.quoted_row_id, mq.key_id, "         
+            + "mq.media_hash as mediaHash, mq.raw_data as rawData FROM messages_quotes mq "
             + "WHERE remoteId=? and mq.status!=-1 ORDER BY mq.timestamp";
 
     private static final String SELECT_QUOTES_THUMBS_TABLE = "SELECT mq._id AS id, mq.key_remote_jid " //$NON-NLS-1$
@@ -803,9 +806,8 @@ public class ExtractorAndroid extends Extractor {
             + "mq.media_duration, " //$NON-NLS-1$
             + "mq.media_caption as mediaCaption, " //$NON-NLS-1$
             + "null as forwarded, " //$NON-NLS-1$             
-            + "m._id quoted_row_id, " //$NON-NLS-1$          
-            + "mq.media_hash as mediaHash, thumbnail as thumbData FROM messages_quotes mq " //$NON-NLS-1$   
-            + "LEFT join messages m on m.key_id = mq.key_id " //$NON-NLS-1$          
+            + "mq.quoted_row_id, mq.key_id, " //$NON-NLS-1$          
+            + "mq.media_hash as mediaHash, thumbnail as thumbData FROM messages_quotes mq " //$NON-NLS-1$         
             + "LEFT JOIN message_thumbnails ON (mq.key_id = message_thumbnails.key_id " //$NON-NLS-1$
             + "AND mq.key_remote_jid = message_thumbnails.key_remote_jid " //$NON-NLS-1$
             + "AND mq.key_from_me = message_thumbnails.key_from_me) " //$NON-NLS-1$
