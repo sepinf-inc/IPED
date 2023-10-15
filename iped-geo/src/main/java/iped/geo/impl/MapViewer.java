@@ -20,6 +20,7 @@ import iped.search.IMultiSearchResult;
 import iped.viewers.api.GUIProvider;
 import iped.viewers.api.IMultiSearchResultProvider;
 import iped.viewers.api.ResultSetViewer;
+import iped.viewers.api.events.RowSorterTableDataChange;
 import iped.viewers.bookmarks.IBookmarksController;
 import javafx.application.Platform;
 
@@ -101,6 +102,13 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
 
     @Override
     public void tableChanged(TableModelEvent e) {
+        if (e instanceof RowSorterTableDataChange) {
+            if (((RowSorterTableDataChange) e).getSortKeys() == null) {
+                // ignores as it is clearing the sort order in intermediary operations
+                return;
+            }
+        }
+
         if (e.getColumn() == 1) {// if the event was fired by checkbox on column 1
             if (!desabilitaTemp) {// the change was fired by an event inside the map itself, so, do not repeat
                                   // operation
