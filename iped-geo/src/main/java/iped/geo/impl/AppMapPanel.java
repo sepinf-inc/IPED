@@ -70,6 +70,11 @@ public class AppMapPanel extends JPanel implements Consumer<Object[]> {
     private MapPanelConfig mpConfig;
 
     private JProgressBar gpsProgressBar;
+
+    /*
+     * SwingWorker that prepares the result with georeferenced items that will be
+     * sent to the map
+     */
     private GetResultsJSWorker jsWorker;
     private PropertyChangeListener lastPropertyChangeListener;
 
@@ -333,20 +338,22 @@ public class AppMapPanel extends JPanel implements Consumer<Object[]> {
     public void accept(Object[] result) {
         KMLResult kmlResult = (KMLResult) result[0];
 
-        if (result[1] != null) {
-            geoReferencedBitmap = (RoaringBitmap[]) result[1];
-        }
+        if (kmlResult != null) {
+            if (result[1] != null) {
+                geoReferencedBitmap = (RoaringBitmap[]) result[1];
+            }
 
-        if (kmlResult.getItemsWithGPS() == 0) {
-            gpsProgressBar.setValue(0);
-            gpsProgressBar.setString(Messages.getString("KMLResult.NoGPSItem"));
-        } else {
-            gpsProgressBar.setVisible(false);
-        }
-        this.kmlResult = kmlResult;
-        browserCanvas.setKML(kmlResult.getKML());
+            if (kmlResult.getItemsWithGPS() == 0) {
+                gpsProgressBar.setValue(0);
+                gpsProgressBar.setString(Messages.getString("KMLResult.NoGPSItem"));
+            } else {
+                gpsProgressBar.setVisible(false);
+            }
+            this.kmlResult = kmlResult;
+            browserCanvas.setKML(kmlResult.getKML());
 
-        mapaDesatualizado = false;
+            mapaDesatualizado = false;
+        }
     }
 
     public void update() {
