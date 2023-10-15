@@ -413,7 +413,16 @@
     <mime-type type="application/x-shareaza-library-dat-entry">
         <sub-class-of type="application/x-metadata-entry"/>
     </mime-type>
-    
+
+    <mime-type type="application/x-shareaza-download">
+        <_comment>Shareaza download control file (.sd)</_comment>
+        <sub-class-of type="application/x-p2p"/>
+    	<magic priority="60">
+            <match value="0x53444C00000000FF" type="string" offset="0" mask="0xFFFFFF00FFFFFFFF"/>
+     	</magic>
+        <glob pattern="*.sd"/>
+    </mime-type>
+
     <mime-type type="application/x-bittorrent-resume-dat">
         <_comment>BitTorrent Client Resume.dat file</_comment>
         <sub-class-of type="application/x-p2p"/>
@@ -1492,6 +1501,50 @@
     
     <mime-type type="call/x-discord-call">
     	<sub-class-of type="message/x-chat-message"/>
+    </mime-type>
+
+    <mime-type type="video/x-matroska">
+        <magic priority="60">
+            <match value="0x1A45DFA3" type="string" offset="0">
+                <match value="matroska" type="string" offset="4:64">
+                </match>
+            </match>
+        </magic>
+        <glob pattern="*.mkv" />
+    </mime-type>
+
+    <mime-type type="audio/x-matroska">
+        <sub-class-of type="video/x-matroska" />
+        <glob pattern="*.mka" />
+    </mime-type>
+
+    <mime-type type="video/webm">
+        <magic priority="60">
+            <match value="0x1A45DFA3" type="string" offset="0">
+                <match value="webm" type="string" offset="4:64">
+                </match>
+            </match>
+        </magic>
+        <glob pattern="*.webm" />
+    </mime-type>
+
+    <mime-type type="audio/ilbc">
+        <magic priority="60">
+            <match value="0x2321694C424333300A" type="string" offset="0"/>
+            <match value="0x2321694C424332300A" type="string" offset="0"/>
+        </magic>
+        <glob pattern="*.lbc"/>
+    </mime-type>
+    
+    <mime-type type="application/vnd.apple.unknown.13">
+        <sub-class-of type="application/vnd.apple.iwork"/>
+    </mime-type>
+    
+    <mime-type type="application/x-lzfse">
+        <magic priority="50">
+            <match value="bvx" type="string" offset="0"/>
+        </magic>
+        <glob pattern="*.lzfse"/>
     </mime-type>
 
 </mime-info>

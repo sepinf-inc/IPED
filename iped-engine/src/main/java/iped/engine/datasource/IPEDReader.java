@@ -62,6 +62,7 @@ import iped.engine.data.Item;
 import iped.engine.io.MetadataInputStreamFactory;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.LuceneSearchResult;
+import iped.engine.task.EmbeddedDiskProcessTask;
 import iped.engine.task.HashDBLookupTask;
 import iped.engine.task.HashTask;
 import iped.engine.task.MinIOTask.MinIOInputInputStreamFactory;
@@ -127,7 +128,7 @@ public class IPEDReader extends DataSourceReader {
         // Configuração para não expandir containers
         CategoryToExpandConfig expandConfig = ConfigurationManager.get().findObject(CategoryToExpandConfig.class);
         expandConfig.setEnabled(false);
-
+        EmbeddedDiskProcessTask.setEnabled(false);
         CarverTask.setEnabled(false);
         LedCarveTask.setEnabled(false);
         HashDBLookupTask.setEnabled(false);

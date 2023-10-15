@@ -485,7 +485,7 @@ public class Util {
             if (C_Library == null) {
                 C_Library = (CLibrary) Native.loadLibrary("c", CLibrary.class);
             }
-            C_Library.putenv(key + "=" + value);
+            C_Library.setenv(key, value, true);
         }
     }
 
