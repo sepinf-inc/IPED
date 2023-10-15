@@ -200,14 +200,17 @@ public class ArtifactJavaReport {
                 location = null;
             }
         }
-        m.add("aleapp:" + property, value);
 
         // some plugins have the linked item per artifact record
         if (value.startsWith(reportDumpPath.getCanonicalPath())) {
             String filel = value.toString().substring(reportDumpPath.getCanonicalPath().length());
             String filename = filel.substring(filel.lastIndexOf("/") + 1);
             m.add(ExtraProperties.LINKED_ITEMS, "path:\"*" + filel + "\" && name:\"" + filename + "\"");
+
+            m.add("aleapp:" + property, filel);
+            return;
         }
+
         int refpos = value.indexOf("href=");
         if (refpos >= 0) {
             String refFile = value.substring(refpos + 5);
@@ -222,8 +225,14 @@ public class ArtifactJavaReport {
                 extractor.setWorker(worker);
                 ByteArrayInputStream is = new ByteArrayInputStream(bytes);
                 extractor.extractFile(is, subItem, subItem.getLength());
+
+                return; // do not add metadata with this value as it contains temporary reference
+            } else {
+                nope();
             }
         }
+
+        m.add("aleapp:" + property, value);
     }
 
     public void add_section_heading(String heading, int size) {
