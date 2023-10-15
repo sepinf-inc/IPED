@@ -195,6 +195,10 @@
         <sub-class-of type="application/x-metadata-entry"/>
     </mime-type>
             
+    <mime-type type="application/x-leapp-devicedetails">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+    
     <mime-type type="application/x-firefox-history">
         <sub-class-of type="text/html"/>
     </mime-type>
