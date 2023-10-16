@@ -510,11 +510,15 @@ public class AppMapPanel extends JPanel implements Consumer<Object[]> {
 
     public String getSelectedJSONFeature() {
         try {
-            IItemId item = resultsProvider.getResults().getItem(resultsProvider.getResultsTable().convertRowIndexToModel(resultsProvider.getResultsTable().getSelectionModel().getLeadSelectionIndex()));
-            int docId = resultsProvider.getIPEDSource().getLuceneId(item);
-            Document doc = resultsProvider.getIPEDSource().getReader().document(docId);
-            String jsonFeature = doc.get(GeofileParser.FEATURE_STRING);
-            return jsonFeature;
+            int leadIndex = resultsProvider.getResultsTable().getSelectionModel().getLeadSelectionIndex();
+            if (leadIndex != -1) {
+                IItemId item = resultsProvider.getResults()
+                        .getItem(resultsProvider.getResultsTable().convertRowIndexToModel(leadIndex));
+                int docId = resultsProvider.getIPEDSource().getLuceneId(item);
+                Document doc = resultsProvider.getIPEDSource().getReader().document(docId);
+                String jsonFeature = doc.get(GeofileParser.FEATURE_STRING);
+                return jsonFeature;
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
