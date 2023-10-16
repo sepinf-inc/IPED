@@ -476,24 +476,29 @@ public class AppMapPanel extends JPanel implements Consumer<Object[]> {
 
     public IItemId[] getTrackSiblings() {
         try {
-            IItemId item = resultsProvider.getResults().getItem(resultsProvider.getResultsTable().convertRowIndexToModel(resultsProvider.getResultsTable().getSelectionModel().getLeadSelectionIndex()));
-            int docId = resultsProvider.getIPEDSource().getLuceneId(item);
-            Document doc = resultsProvider.getIPEDSource().getReader().document(docId);
-            String parentId = doc.get(IndexItem.PARENTID);
-            if (parentId != null) {
-                int parentDocId = resultsProvider.getIPEDSource().getLuceneId(new ItemId(item.getSourceId(), Integer.parseInt(parentId)));
-                Document parentDoc = resultsProvider.getIPEDSource().getReader().document(parentDocId);
-                if ("1".equals(parentDoc.get("geo:isTrack"))) {
-                    IIPEDSearcher search = resultsProvider.createNewSearch("parentId:" + parentId, trackSortFields);
+            int leadIndex = resultsProvider.getResultsTable().getSelectionModel().getLeadSelectionIndex();
+            if (leadIndex != -1) {
+                IItemId item = resultsProvider.getResults()
+                        .getItem(resultsProvider.getResultsTable().convertRowIndexToModel(leadIndex));
+                int docId = resultsProvider.getIPEDSource().getLuceneId(item);
+                Document doc = resultsProvider.getIPEDSource().getReader().document(docId);
+                String parentId = doc.get(IndexItem.PARENTID);
+                if (parentId != null) {
+                    int parentDocId = resultsProvider.getIPEDSource()
+                            .getLuceneId(new ItemId(item.getSourceId(), Integer.parseInt(parentId)));
+                    Document parentDoc = resultsProvider.getIPEDSource().getReader().document(parentDocId);
+                    if ("1".equals(parentDoc.get("geo:isTrack"))) {
+                        IIPEDSearcher search = resultsProvider.createNewSearch("parentId:" + parentId, trackSortFields);
 
-                    IMultiSearchResult results = search.multiSearch();
+                        IMultiSearchResult results = search.multiSearch();
 
-                    if (results.getLength() > 0) {
-                        IItemId[] siblings = new IItemId[results.getLength()];
-                        for (int i = 0; i < results.getLength(); i++) {
-                            siblings[i] = results.getItem(i);
+                        if (results.getLength() > 0) {
+                            IItemId[] siblings = new IItemId[results.getLength()];
+                            for (int i = 0; i < results.getLength(); i++) {
+                                siblings[i] = results.getItem(i);
+                            }
+                            return siblings;
                         }
-                        return siblings;
                     }
                 }
             }
