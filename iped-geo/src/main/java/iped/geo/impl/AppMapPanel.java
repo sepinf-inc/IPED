@@ -447,7 +447,7 @@ public class AppMapPanel extends JPanel implements Consumer<Object[]> {
         t.getModel().removeTableModelListener(lastMidTableModelListener);
         t.getModel().addTableModelListener(lastMidTableModelListener);
 
-        int pos = 0;
+        int pos = -1;
         IMultiSearchResult results = this.getResultsProvider().getResults();
         for (int i = 0; i < results.getLength(); i++) {
             IItemId item = results.getItem(i);
@@ -459,9 +459,13 @@ public class AppMapPanel extends JPanel implements Consumer<Object[]> {
         }
 
         lastMid = mid;
-        lastPos = t.convertRowIndexToView(pos);
+        if (pos != -1) {
+            lastPos = t.convertRowIndexToView(pos);
 
-        return lastPos;
+            return lastPos;
+        } else {
+            return -1;
+        }
     }
 
     public MapViewer getMapViewer() {
