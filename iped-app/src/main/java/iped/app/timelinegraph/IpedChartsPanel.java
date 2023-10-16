@@ -936,7 +936,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
     @Override
     public void clearFilter() {
-        chartPanel.removeAllFilters();
+        chartPanel.removeAllFilters(false);
     }
 
     @Override
