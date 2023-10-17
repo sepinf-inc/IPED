@@ -64,9 +64,6 @@ public class ALeappPluginsManager {
                 File scriptsPath = new File(aleappPath, "scripts");
                 File artifactsPath = new File(scriptsPath, "artifacts");
                 if (artifactsPath.exists()) {
-                    jep.eval("sys.path.append('" + aleappPath.getAbsolutePath().replace("\\", "\\\\") + "')");
-                    jep.eval("sys.path.append('" + scriptsPath.getAbsolutePath().replace("\\", "\\\\") + "')");
-                    jep.eval("sys.path.append('" + artifactsPath.getAbsolutePath().replace("\\", "\\\\") + "')");
                     File[] scripts = artifactsPath.listFiles();
                     if (scripts != null) {
                         for (File file : scripts) {
