@@ -76,6 +76,8 @@ public class LeappBridgeTask extends AbstractPythonTask {
 
     private ExecutorService service;
 
+    private File aleappDir;
+
     static private File tmp;
 
     static private int START_QUEUE_PRIORITY = 3;
@@ -118,13 +120,26 @@ public class LeappBridgeTask extends AbstractPythonTask {
 
         Jep jep = super.getJep();
 
-        PythonHook pt = new PythonHook(jep);
-        pt.overrideModuleFunction("scripts.ilapfuncs", "logfunc", LeappBridgeTask.class.getMethod("logfunc", String.class));
-        pt.overrideModuleFunction("scripts.ilapfuncs", "logdevinfo",
-                LeappBridgeTask.class.getMethod("logdevinfo", String.class));
-        pt.wrapsClass("scripts.artifact_report", "ArtifactHtmlReport", ArtifactJavaReport.class);
+        File aleappPath = getAleappScriptsDir();
+        File scriptsPath = new File(aleappPath, "scripts");
+        File artifactsPath = new File(scriptsPath, "artifacts");
+        if (artifactsPath.exists()) {
+            jep.eval("sys.path.append('" + aleappPath.getCanonicalPath().replace("\\", "\\\\") + "')");
+            jep.eval("sys.path.append('" + scriptsPath.getCanonicalPath().replace("\\", "\\\\") + "')");
+            jep.eval("sys.path.append('" + artifactsPath.getCanonicalPath().replace("\\", "\\\\") + "')");
+            jep.eval("from geopy.geocoders import Nominatim");
 
-        pluginsManager.init(jep, getAleappScriptsDir());
+            PythonHook pt = new PythonHook(jep);
+            pt.overrideModuleFunction("scripts.ilapfuncs", "logfunc",
+                    LeappBridgeTask.class.getMethod("logfunc", String.class));
+            pt.overrideModuleFunction("scripts.ilapfuncs", "logdevinfo",
+                    LeappBridgeTask.class.getMethod("logdevinfo", String.class));
+            pt.wrapsClass("scripts.artifact_report", "ArtifactHtmlReport", ArtifactJavaReport.class);
+
+            pluginsManager.init(jep, getAleappScriptsDir());
+        } else {
+            throw new Exception("ALeapp plugin scripts path not found:" + artifactsPath.getCanonicalPath());
+        }
     }
 
     @Override
@@ -196,14 +211,21 @@ public class LeappBridgeTask extends AbstractPythonTask {
     }
 
     private File getAleappScriptsDir() {
-        ALeappConfig config = (ALeappConfig) getConfigurables().get(0);
-        
-        File aleappDir;
-        if (config.getAleapScriptsDir() != null) {
-            aleappDir = new File(config.getAleapScriptsDir());
-        } else {
-            File pythonDir = new File(Configuration.getInstance().appRoot, "tools");
-            aleappDir = new File(pythonDir, "ALEAPP");
+        if (aleappDir == null) {
+            ALeappConfig config = (ALeappConfig) getConfigurables().get(0);
+
+            if (config.getAleapScriptsDir() != null) {
+                aleappDir = new File(config.getAleapScriptsDir());
+            } else {
+                File pythonDir = new File(Configuration.getInstance().appRoot, "tools");
+                aleappDir = new File(pythonDir, "ALEAPP");
+            }
+
+            try {
+                logger.info("ALeapp scripts dir:" + aleappDir.getCanonicalPath());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
         return aleappDir;
     }

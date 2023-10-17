@@ -65,7 +65,6 @@ public class PythonHook {
         jep.eval("import sys");
         jep.eval("import importlib");
         jep.eval("from java.lang import System");
-        jep.eval("from geopy.geocoders import Nominatim");
         jep.eval("from importlib.util import spec_from_loader");
         jep.set("javahook", this);
         jep.eval(installHookClass);
