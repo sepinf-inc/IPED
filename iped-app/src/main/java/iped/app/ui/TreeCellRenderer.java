@@ -29,6 +29,7 @@ import org.apache.lucene.document.Document;
 import iped.app.ui.TreeViewModel.Node;
 import iped.engine.task.index.IndexItem;
 import iped.properties.BasicProps;
+import iped.properties.ExtraProperties;
 
 public class TreeCellRenderer extends DefaultTreeCellRenderer {
 
@@ -43,10 +44,15 @@ public class TreeCellRenderer extends DefaultTreeCellRenderer {
         boolean isDir = Boolean.valueOf(node.getDoc().get(IndexItem.ISDIR)) || node.docId == -1;
         super.getTreeCellRendererComponent(tree, value, selected, expanded, !isDir, row, hasFocus);
 
+        boolean isDecodedReport = Boolean.valueOf(node.getDoc().get(ExtraProperties.DECODED_DATA));
+        isDecodedReport = isDecodedReport && Boolean.valueOf(node.getDoc().get(BasicProps.HASCHILD));
+
         if (row == 0) {
             setIcon(rootIcon);
         } else if (isDir) {
             setIcon(IconManager.getFolderIcon(expanded));
+        } else if (isDecodedReport) {
+            setIcon(IconManager.getReportFolderIcon(expanded));
         } else {
             Document doc = node.getDoc();
             String type = doc.get(BasicProps.TYPE);
