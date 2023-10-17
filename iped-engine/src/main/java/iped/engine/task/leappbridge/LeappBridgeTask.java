@@ -195,12 +195,6 @@ public class LeappBridgeTask extends AbstractPythonTask {
                 jep.eval("parse(" + lists + ",'" + reportPath.getCanonicalPath() + "',dumb,True)");
 
             } catch (Exception e) {
-                if (e.getMessage().contains("FileNotFoundError")) {
-                    if (e.getStackTrace()[0].getLineNumber() == 138) {
-                        System.out.println();
-                    }
-                }
-                System.out.println(lists);
                 e.printStackTrace();
             } finally {
             }
