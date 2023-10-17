@@ -52,7 +52,8 @@ public class LeappBridgeTask extends AbstractPythonTask {
 
     private static final String ALEAPP_PLUGIN = "ALEAPP:PLUGIN";
 
-    static final String REPORT_EVIDENCE_NAME = "ALeapp_Report";
+    static final String REPORT_EVIDENCE_NAME = "LEAPP_Reports";
+    static final String REPORT_FOLDER_NAME = "LEAPP_Reports_";
 
     private static final String ALEAPP_DEVICE_DETAILS = "ALEAPP:DEVICE_DETAILS";
 
@@ -431,7 +432,7 @@ public class LeappBridgeTask extends AbstractPythonTask {
             tmpFileRef = tmpResources.createTemporaryFile();
             tmpFileRef.deleteOnExit();
             reportPath = new File(tmpFileRef.getParentFile().getAbsolutePath(),
-                    "/leapptaskreps/" + REPORT_EVIDENCE_NAME + "_" + tmpFileRef.getName());
+                    "/leapptaskreps/" + REPORT_FOLDER_NAME + tmpFileRef.getName());
             reportPath.mkdirs();
             reportPath.deleteOnExit();
 
