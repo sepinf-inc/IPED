@@ -180,7 +180,7 @@ public class LeappBridgeTask extends AbstractPythonTask {
                 // creates a dumb file seeker. some plugins refers to directory although not
                 // using it.
                 jep.eval("dumb = FileSeekerBase()");
-                jep.eval("dumb.directory='" + reportPath.getCanonicalPath() + "'");
+                jep.eval("dumb.directory='" + reportPath.getCanonicalPath().replace("\\", "\\\\") + "'");
 
                 jep.set("evidence", evidence);
                 jep.set("worker", worker);
@@ -192,7 +192,7 @@ public class LeappBridgeTask extends AbstractPythonTask {
                 jep.set("mappedEvidences", mappedEvidences);
 
                 jep.eval("logfunc('" + PLUGIN_EXECUTION_MESSAGE + ":" + p.getModuleName() + "')");
-                jep.eval("parse(" + lists + ",'" + reportPath.getCanonicalPath() + "',dumb,True)");
+                jep.eval("parse(" + lists + ",'" + reportPath.getCanonicalPath().replace("\\", "\\\\") + "',dumb,True)");
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -229,15 +229,15 @@ public class LeappBridgeTask extends AbstractPythonTask {
         return "LeappTask";
     }
 
-    static HashSet<String> dumpStatFolderNames = new HashSet<String>();
+    static HashSet<String> dumpStartFolderNames = new HashSet<String>();
     static {
-        dumpStatFolderNames.add("Dump");
-        dumpStatFolderNames.add("backup");
+        dumpStartFolderNames.add("Dump");
+        dumpStartFolderNames.add("backup");
     };
 
     @Override
     public void process(IItem evidence) throws Exception {
-        if (dumpStatFolderNames.contains(evidence.getName())) {
+        if (dumpStartFolderNames.contains(evidence.getName())) {
             Item subItem = (Item) evidence.createChildItem();
             ParentInfo parentInfo = new ParentInfo(evidence);
 
@@ -376,7 +376,7 @@ public class LeappBridgeTask extends AbstractPythonTask {
                             if (tmp.getCanonicalPath().startsWith(sourcePath)) {
                                 reportDumpPath = new File(sourcePath);
                                 // the file returned by getTempFile() is the file itself
-                                filesFound.add(tmp.getCanonicalPath());
+                                filesFound.add(tmp.getCanonicalPath().replace("\\", "\\\\"));
                                 // mappedEvidences.put(tmp.getCanonicalPath(), (Item) item);
                             } else {
                                 // the file returned by getTempFile() is a copy to the file in a temp folder
@@ -388,7 +388,7 @@ public class LeappBridgeTask extends AbstractPythonTask {
                                 try {
                                     File file_found = new File(artfolder, artname);
                                     Files.move(tmp, file_found);
-                                    filesFound.add(file_found.getCanonicalPath());
+                                    filesFound.add(file_found.getCanonicalPath().replace("\\", "\\\\"));
                                     // mappedEvidences.put(file_found.getCanonicalPath(), (Item) item);
                                 } catch (Exception e) {
                                     e.printStackTrace();
@@ -406,7 +406,8 @@ public class LeappBridgeTask extends AbstractPythonTask {
             } else {
                 Metadata m = evidence.getMetadata();
                 for (String file : filesFound) {
-                    String filel = file.substring(reportDumpPath.getCanonicalPath().length());
+                    String filel = file.substring(reportDumpPath.getCanonicalPath().replace("\\", "\\\\").length());
+                    filel = filel.replace("\\\\", "/");
                     String filename = filel.substring(filel.lastIndexOf("/") + 1);
                     m.add(ExtraProperties.LINKED_ITEMS, "path:\"*" + filel + "\" && name:\"" + filename + "\"");
                 }
