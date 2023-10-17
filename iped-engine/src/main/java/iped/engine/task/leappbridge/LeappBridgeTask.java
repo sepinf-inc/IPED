@@ -77,7 +77,7 @@ public class LeappBridgeTask extends AbstractPythonTask {
 
     private ExecutorService service;
 
-    private File aleappDir;
+    static private File aleappDir;
 
     static private File tmp;
 
