@@ -4,7 +4,6 @@ import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.util.Date;
@@ -14,8 +13,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import org.apache.pdfbox.io.RandomAccessBufferedFileInputStream;
+
 import iped.app.timelinegraph.cache.persistance.CachePersistance;
-import iped.utils.SeekableFileInputStream;
 
 public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
     HashMap<String, TreeMap<Long, Long>> upperPeriodIndex = new HashMap<String, TreeMap<Long, Long>>();
@@ -41,7 +41,7 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
         this.monthIndexCacheFiles.put(string, new File(new File(f, string), "1"));
 
         int committed = 0;
-        try (SeekableFileInputStream lcacheSfis = new SeekableFileInputStream(cacheFile); CacheDataInputStream lcacheDis = new CacheDataInputStream(lcacheSfis)) {
+        try (RandomAccessBufferedFileInputStream lcacheSfis = new RandomAccessBufferedFileInputStream(cacheFile); CacheDataInputStream lcacheDis = new CacheDataInputStream(lcacheSfis)) {
             committed = lcacheDis.readShort();
         }
         if (committed != 1) {
@@ -52,11 +52,8 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
 
     public static class CacheDataInputStream extends DataInputStream {
 
-        public InputStream wrapped;
-
-        public CacheDataInputStream(InputStream in) {
+        public CacheDataInputStream(RandomAccessBufferedFileInputStream in) {
             super(in);
-            wrapped = in;
         }
 
         public int readInt2() throws IOException {
@@ -80,16 +77,16 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
     Date lastStartDate = null;
     Date lastEndDate = null;
 
-    public SeekableFileInputStream getTmpCacheSfis(String className) throws IOException {
+    public RandomAccessBufferedFileInputStream getTmpCacheSfis(String className) throws IOException {
         File f = cacheFiles.get(className);
         if (f != null) {
-            return new SeekableFileInputStream(f);
+            return new RandomAccessBufferedFileInputStream(f);
         } else {
             return null;
         }
     }
 
-    public ResultIterator iterator(String className, SeekableFileInputStream lcacheSfis, Date startDate, Date endDate) {
+    public ResultIterator iterator(String className, RandomAccessBufferedFileInputStream lcacheSfis, Date startDate, Date endDate) {
         try {
             CacheDataInputStream lcacheDis = new CacheDataInputStream(lcacheSfis);
 
@@ -100,7 +97,7 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
 
             CacheTimePeriodEntry[] cache = timelineCache.get(className, entries);
 
-            long startpos = lcacheSfis.position();// position of first entry in cache
+            long startpos = lcacheSfis.getPosition();// position of first entry in cache
             if (startDate != null) {
                 // if start date is given, search for the position of correspondent first entry
                 // throught month index
@@ -161,7 +158,7 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
         int cacheCurrentIndex = 0;// current index being iterated (sum with startIndex to identify correspondent
                                   // cache array index)
         private CacheTimePeriodEntry[] lcache;// cache array to iterate
-        private SeekableFileInputStream lcacheSfis;// seekable stream to index file (to read from when entry not in cache)
+        private RandomAccessBufferedFileInputStream lcacheSfis;// seekable stream to index file (to read from when entry not in cache)
         private CacheDataInputStream lcacheDis;// data parser stream to same above index file
         private TreeMap<Long, Integer> lcacheIndexes;
         private long startDate = 0;
@@ -179,7 +176,7 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
                                    // from position in file)
         private long startPos;// start position in file to iterate
 
-        public ResultIterator(long pos, Integer startIndex, TimelineCache timelineCache, SeekableFileInputStream lcacheSfis, CacheDataInputStream lcacheDis, long endDate, String className) {
+        public ResultIterator(long pos, Integer startIndex, TimelineCache timelineCache, RandomAccessBufferedFileInputStream lcacheSfis, CacheDataInputStream lcacheDis, long endDate, String className) {
             this.startPos = pos;
             this.startIndex = startIndex;
             this.lcache = timelineCache.caches.get(className);
@@ -193,10 +190,6 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
             this.useCache = this.lcache != null;
             this.hasSoftCache = timelineCache.hasSoftCacheFor(className);
             nextSeekPos = startPos;
-        }
-
-        public long getPosition() throws IOException {
-            return lcacheSfis.position();
         }
 
         @Override
@@ -228,11 +221,11 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
                 if (lastHasNext == null) {// not in cache so load from file
                     long curpos = nextSeekPos;
                     synchronized (lcacheSfis) {
-                        if (nextSeekPos != lcacheSfis.position()) {
+                        if (nextSeekPos != lcacheSfis.getPosition()) {
                             lcacheSfis.seek(nextSeekPos);
                         }
                         lastHasNext = cp.loadNextEntry(lcacheDis, cp.isBitstreamSerialize());
-                        nextSeekPos = lcacheSfis.position();
+                        nextSeekPos = lcacheSfis.getPosition();
                     }
                     countRead++;
                     if (lcache != null && useCache) {

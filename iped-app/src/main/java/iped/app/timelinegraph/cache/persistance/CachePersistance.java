@@ -30,6 +30,7 @@ import javax.xml.bind.DatatypeConverter;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.pdfbox.io.RandomAccessBufferedFileInputStream;
 import org.jfree.data.time.TimePeriod;
 import org.roaringbitmap.RoaringBitmap;
 
@@ -43,7 +44,6 @@ import iped.app.timelinegraph.cache.TimeStampCache;
 import iped.app.timelinegraph.cache.TimelineCache;
 import iped.app.ui.App;
 import iped.utils.IOUtil;
-import iped.utils.SeekableFileInputStream;
 
 /*
  * Class implementing method for timeline chart cache persistance
@@ -399,7 +399,6 @@ public class CachePersistance {
                 eventOrd = dis.readInt();
             } catch (Exception e) {
                 e.printStackTrace();
-                long pos = ((SeekableFileInputStream) dis.wrapped).position();
             }
         }
         return ct;
@@ -431,7 +430,7 @@ public class CachePersistance {
         public CacheFileIterator(File f) {
             this.f = f;
             try {
-                dis = new CacheDataInputStream(new FileInputStream(f));
+                dis = new CacheDataInputStream(new RandomAccessBufferedFileInputStream(f));
             } catch (FileNotFoundException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
