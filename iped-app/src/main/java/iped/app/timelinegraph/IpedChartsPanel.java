@@ -607,7 +607,17 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
             @Override
             public void changed(CDockableLocationEvent dockableEvent) {
                 if (!isUpdated && dockableEvent.isShowingChanged()) {
-                    self.refreshChart();
+                    self.remove(splitPane);
+                    self.add(loadingLabel);
+                    self.repaint();
+                    Runnable r = new Runnable() {
+                        @Override
+                        public void run() {
+                            ipedTimelineDatasetManager.startBackgroundCacheCreation();
+                            self.refreshChart();
+                        }
+                    };
+                    new Thread(r).start();
                 }
             }
         };
@@ -763,7 +773,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         }
         if (!dataSetUpdated.getAndSet(true)) {
             new Thread(populateEventNames).start();
-            ipedTimelineDatasetManager.startBackgroundCacheCreation();
+            //ipedTimelineDatasetManager.startBackgroundCacheCreation();
         }
 
         if (internalUpdate) {
@@ -960,7 +970,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
     @Override
     public void clearFilter() {
-        chartPanel.removeAllFilters();
+        chartPanel.removeAllFilters(false);
     }
 
     @Override

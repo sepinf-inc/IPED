@@ -19,5 +19,5 @@ updateRefsToMinIO = false
 # Time out in seconds for the connection, read and write operations
 timeOut = 30
 
-# Number of times the upload will be retried
+# Number of times the upload will be retried. Value -1 retries forever.
 retries = 1

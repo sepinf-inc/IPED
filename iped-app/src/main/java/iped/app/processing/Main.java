@@ -253,9 +253,10 @@ public class Main {
             public void run() {
                 byte[] buf = new byte[4096];
                 try {
-                    while (is.read(buf) == -1) {
-                        provider.cancel(true);
-                    }
+                    while (is.read(buf) != -1)
+                        ;
+                    provider.cancel(true);
+
                 } catch (Exception e) {
                     // ignore
                 }

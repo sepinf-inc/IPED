@@ -37,7 +37,6 @@ public class IpedTimelineDatasetManager {
 
     List<TimeStampCache> timeStampCaches = new ArrayList<>();
     volatile boolean isCacheLoaded = false;
-
     TimeStampCache selectedTimeStampCache;
 
     public IpedTimelineDatasetManager(IpedChartsPanel ipedChartsPanel) {
@@ -95,7 +94,6 @@ public class IpedTimelineDatasetManager {
                 } catch (InterruptedException | ExecutionException e) {
                     e.printStackTrace();
                 }
-                first = false;
             }
         }
     }

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedList;
 
 import iped.carvers.api.CarvedItemListener;
 import iped.carvers.api.Carver;
@@ -21,6 +22,19 @@ public abstract class AbstractCarver implements Carver {
 
     protected ArrayDeque<Hit> headersWaitingFooters = new ArrayDeque<>();
 
+    /**
+     * This list stores headers with "stop on next header" option enabled. These
+     * types of carved items do not have a footer nor a length defined in its
+     * content, so the end of the item is taken from the defined maxLength
+     * configuration. Instead of processing them as soon as they are found (in
+     * notifyHit()), they are added to this list. Whenever a new hit is notified,
+     * items in this list will be processed if the new hit is of the same type (in
+     * this case, the end of the processed hit will be limited to the start of the
+     * new hit), or when the offset of the new hit exceeds the maximum offset of the
+     * hit in the list. (See #1816 discussion)
+     */
+    protected LinkedList<Hit> headersWithStopOnNext = new LinkedList<>();
+
     protected int maxWaitingHeaders = 1000;
 
     private ArrayList<CarvedItemListener> carvedItemListeners = new ArrayList<CarvedItemListener>();
@@ -30,7 +44,7 @@ public abstract class AbstractCarver implements Carver {
 
     // carveia do cabeçalho a partir da informação de tamanho retornada pelo método
     // getLengthFromHit
-    public IItem carveFromLengthRef(IItem parentEvidence, Hit header, Hit lengthRef) throws IOException {
+    private IItem carveFromLengthRef(IItem parentEvidence, Hit header, Hit lengthRef) throws IOException {
 
         headersWaitingFooters.pollLast();
 
@@ -76,6 +90,7 @@ public abstract class AbstractCarver implements Carver {
                 && !MediaTypes.UNALLOCATED.equals(parentEvidence.getMediaType())) {
             len = parentEvidence.getLength() - header.getOffset();
         }
+
         // Workaround for https://github.com/sepinf-inc/IPED/issues/1327
         if (len <= 0) {
             return null;
@@ -169,11 +184,19 @@ public abstract class AbstractCarver implements Carver {
     @Override
     public void notifyHit(IItem parentEvidence, Hit hit) throws IOException {
 
+        CarverType type = hit.getSignature().getCarverType();
+        
         // se é um cabeçalho de um carvertype sem footer
-        if (hit.getSignature().isHeader() && !hit.getSignature().getCarverType().hasFooter()) {
-            if (!hit.getSignature().getCarverType().hasLengthRef()) {
-                // carveia a partir da informação de tamanho
-                carveFromHeader(parentEvidence, hit);
+        if (hit.getSignature().isHeader() && !type.hasFooter()) {
+            if (!type.hasLengthRef()) {
+                // Add to a list of headers that should stop on the next header, and with no
+                // footer and no length information, just a maximum length.
+                if (type.isStopOnNextHeader() && type.getMaxLength() != null) {
+                    headersWithStopOnNext.add(hit);
+                } else {
+                    // carveia a partir da informação de tamanho
+                    carveFromHeader(parentEvidence, hit);
+                }
             } else {
                 // adiciona header para ser processado depois
                 headersWaitingFooters.addLast(hit);
@@ -212,10 +235,40 @@ public abstract class AbstractCarver implements Carver {
         }
 
         clearOldHeaders(parentEvidence);
+        processHeadersWithStopOnNext(parentEvidence, hit.getOffset());
+    }
+
+    protected void processHeadersWithStopOnNext(IItem parentEvidence, long currOffset) throws IOException {
+        if (headersWithStopOnNext.isEmpty()) {
+            return;
+        }
+        Hit last = headersWithStopOnNext.getLast();
+        Iterator<Hit> it = headersWithStopOnNext.iterator();
+        while (it.hasNext()) {
+            Hit hit = it.next();
+            CarverType type = hit.getSignature().getCarverType();
+            long len = Math.min(parentEvidence.getLength() - hit.getOffset(), type.getMaxLength());
+            boolean ready = false;
+            if (hit.getOffset() + len <= currOffset) {
+                ready = true;
+            } else if (!hit.equals(last) && type.equals(last.getSignature().getCarverType())) {
+                ready = true;
+                len = Math.min(len, last.getOffset() - hit.getOffset());
+            } else if (headersWithStopOnNext.size() > maxWaitingHeaders) {
+                ready = true;
+            }
+            if (ready) {
+                it.remove();
+                if (type.getMinLength() == null || len >= type.getMinLength()) {
+                    carveFromHeader(parentEvidence, hit, len);
+                }
+            }
+        }
     }
 
     @Override
     public void notifyEnd(IItem parentEvidence) throws IOException {
+        processHeadersWithStopOnNext(parentEvidence, Long.MAX_VALUE);
         headersWaitingFooters.clear();
     }
 

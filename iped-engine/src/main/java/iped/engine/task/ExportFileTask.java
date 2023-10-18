@@ -281,7 +281,7 @@ public class ExportFileTask extends AbstractTask {
             if (doNotExport(evidence)) {
                 evidence.setTempAttribute(IndexItem.IGNORE_CONTENT_REF, "true");
 
-            } else if (!MinIOTask.isTaskEnabled() || caseData.isIpedReport()) {
+            } else {
                 extract(evidence);
             }
 

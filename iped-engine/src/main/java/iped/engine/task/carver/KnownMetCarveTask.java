@@ -174,7 +174,7 @@ public class KnownMetCarveTask extends BaseCarveTask {
                                     try {
                                         inParse = evidence.getSeekableInputStream();
                                         inParse.seek(offset);
-                                        List<KnownMetEntry> l = KnownMetDecoder.parseToList(inParse, len);
+                                        List<KnownMetEntry> l = KnownMetDecoder.parseToList(inParse, len, true);
                                         if (!l.isEmpty()) {
                                             addCarvedFile(evidence, offset, len, "Carved-" + offset + "-known.met", //$NON-NLS-1$ //$NON-NLS-2$
                                                     eMuleMediaType);
@@ -209,7 +209,7 @@ public class KnownMetCarveTask extends BaseCarveTask {
                                 int bytesRead = inParse.readNBytes(buf2, 0, buf2.length);
                                 if (bytesRead > 25) {
                                     KnownMetEntry entry = new KnownMetEntry();
-                                    int len = KnownMetDecoder.parseEntry(entry, 1, buf2);
+                                    int len = KnownMetDecoder.parseEntry(entry, 1, buf2, true);
                                     if (len > 0) {
                                         addCarvedFile(evidence, offset, len + 1, "Carved-" + offset + "-part.met", //$NON-NLS-1$ //$NON-NLS-2$
                                                 eMulePartMetMediaType);
