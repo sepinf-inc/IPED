@@ -96,6 +96,7 @@ public class IpedTimelineDatasetManager {
                 }
             }
         }
+        threadPool.shutdown();
     }
 
     public TimeStampCache getCache() {
