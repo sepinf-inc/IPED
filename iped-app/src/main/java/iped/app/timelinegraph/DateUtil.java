@@ -80,27 +80,27 @@ public class DateUtil {
             int month = ((b[5] - 48) * 10 + (b[6] - 48)) - 1;
             int day = (b[8] - 48) * 10 + (b[9] - 48);
             long time = ((b[11] - 48) * 10 + (b[12] - 48)) * 3600000 + ((b[14] - 48) * 10 + (b[15] - 48)) * 60000 + ((b[17] - 48) * 10 + (b[18] - 48)) * 1000 + computerTimezoneOffset;
-            if(time>=24*3600000) {
-                day+=1;
-                time = time % 24*3600000;
-            }else {
-                if(time<0) {
-                    day-=1;
-                    time = 24*3600000 + time;
+            if (time >= 24 * 3600000) {
+                day += 1;
+                time = time % 24 * 3600000;
+            } else {
+                if (time < 0) {
+                    day -= 1;
+                    time = 24 * 3600000 + time;
                 }
             }
 
             if (timePeriodClass == Day.class) {
                 return new Date(year, month, day);
             } else if (timePeriodClass == Hour.class) {
-                int hour = (int) Math.floorDiv(time,1000*60*60);
-                return new Date(year, month, day, hour , 0, 0);
+                int hour = (int) Math.floorDiv(time, 1000 * 60 * 60);
+                return new Date(year, month, day, hour, 0, 0);
             } else if (timePeriodClass == Year.class) {
                 Date d = new Date(year, month, day);
                 return new Date(d.getYear(), 0, 1);
             } else if (timePeriodClass == Quarter.class) {
                 Date d = new Date(year, month, day);
-                return new Date(d.getYear(), Math.floorDiv(d.getMonth(),3)*3, 1);
+                return new Date(d.getYear(), Math.floorDiv(d.getMonth(), 3) * 3, 1);
             } else if (timePeriodClass == Month.class) {
                 Date d = new Date(year, month, day);
                 return new Date(d.getYear(), d.getMonth(), 1);
@@ -110,21 +110,18 @@ public class DateUtil {
                 calendar.setTime(d);
                 int week;
                 // sometimes the last few days of the year are considered to fall in
-                // the *first* week of the following year.  Refer to the Javadocs for
+                // the *first* week of the following year. Refer to the Javadocs for
                 // GregorianCalendar.
                 int tempWeek = calendar.get(Calendar.WEEK_OF_YEAR);
-                if (tempWeek == 1
-                        && calendar.get(Calendar.MONTH) == Calendar.DECEMBER) {
+                if (tempWeek == 1 && calendar.get(Calendar.MONTH) == Calendar.DECEMBER) {
                     week = 1;
                     year = (short) (calendar.get(Calendar.YEAR) + 1);
-                }
-                else {
+                } else {
                     week = (byte) Math.min(tempWeek, Week.LAST_WEEK_IN_YEAR);
                     int yyyy = calendar.get(Calendar.YEAR);
                     // alternatively, sometimes the first few days of the year are
                     // considered to fall in the *last* week of the previous year...
-                    if (calendar.get(Calendar.MONTH) == Calendar.JANUARY
-                            && week >= 52) {
+                    if (calendar.get(Calendar.MONTH) == Calendar.JANUARY && week >= 52) {
                         yyyy--;
                     }
                     year = (short) yyyy;
@@ -141,30 +138,30 @@ public class DateUtil {
 
                 return c.getTime();
             } else if (timePeriodClass == Minute.class) {
-                int hour = (int) Math.floorDiv(time,1000*60*60);
-                int minute = (int) Math.floorDiv(time,1000*60) - hour*60;
+                int hour = (int) Math.floorDiv(time, 1000 * 60 * 60);
+                int minute = (int) Math.floorDiv(time, 1000 * 60) - hour * 60;
                 return new Date(year, month, day, hour, minute, 0);
             } else if (timePeriodClass == iped.jfextensions.model.Minute.class) {
-                int hour = (int) Math.floorDiv(time,1000*60*60);
-                int minute = (int) Math.floorDiv(time,1000*60) - hour*60;
+                int hour = (int) Math.floorDiv(time, 1000 * 60 * 60);
+                int minute = (int) Math.floorDiv(time, 1000 * 60) - hour * 60;
                 return new Date(year, month, day, hour, minute, 0);
             } else if (timePeriodClass == Second.class) {
-                int hour = (int) Math.floorDiv(time,1000*60*60);
-                int minute = (int) Math.floorDiv(time,1000*60) - hour*60;
-                int second = (int) Math.floorDiv(time,1000) - hour*60*60 - minute*60;
+                int hour = (int) Math.floorDiv(time, 1000 * 60 * 60);
+                int minute = (int) Math.floorDiv(time, 1000 * 60) - hour * 60;
+                int second = (int) Math.floorDiv(time, 1000) - hour * 60 * 60 - minute * 60;
                 return new Date(year, month, day, hour, minute, second);
             } else if (timePeriodClass == Millisecond.class) {
                 return new Date(new Date(year, month, day).getTime() + time);
             } else if (timePeriodClass == FixedMillisecond.class) {
                 return new Date(new Date(year, month, day).getTime() + time);
             }
-        }catch(Exception e) {
+        } catch (Exception e) {
             return null;
-            
+
         }
         throw new RuntimeException(timePeriodClass.getName() + " not handled!");
     }
-    
+
     public static Date ISO8601DateParse(Class<? extends TimePeriod> timePeriodClass, String timeStr) {
         TimePeriod t = null;
         byte b[] = timeStr.getBytes();

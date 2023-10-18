@@ -148,7 +148,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
      */
     Semaphore memoryCacheReloadSem = new Semaphore(1); // semaphore that controls start and end of load of cache window contourning the
     private IpedTimelineDatasetManager ipedTimelineDatasetManager;
-                                                       // visible items
+    // visible items
 
     public IpedTimelineDataset(IpedTimelineDatasetManager ipedTimelineDatasetManager, IMultiSearchResultProvider resultsProvider, String splitValue) throws Exception {
         this.ipedChartsPanel = ipedTimelineDatasetManager.ipedChartsPanel;
@@ -238,7 +238,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                                             }
                                         }
                                     } else {
-                                        // not split by bookmark, so filter by selected bookmark                                        
+                                        // not split by bookmark, so filter by selected bookmark
                                         if (selectedBookmarks.size() > 0) {
                                             if (selectedBookmarks.contains("Bookmarks")) {
                                                 include = true;
@@ -312,7 +312,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
 
     static public Date MIN_DATE = new Date(0, 0, 1);// 01/01/1900 is the min JfreeChart date
     static public Date MAX_DATE = new Date(8099, 11, 31);// 01/01/9999 is the maxJfreeChart date
-    
+
     public void caseSearchFilterLoad() throws Exception {
         memoryCacheReloadSem.acquire();
 
@@ -324,8 +324,9 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
             if (ipedChartsPanel.getChartPanel().getSplitByCategory() && splitValue != null && !splitValue.equals("Categories")) {
                 queryText += "category=\"" + splitValue + "\"";
             }
-            
-            //method to wait available mem to continue. This can avoid a commom OOM problem if there is low mem and, at first timeline index creation is not finished.
+
+            // method to wait available mem to continue. This can avoid a commom OOM problem
+            // if there is low mem and, at first timeline index creation is not finished.
             try {
                 ipedChartsPanel.getIpedTimelineDatasetManager().waitMemory();
             } catch (OutOfMemoryError e) {
@@ -383,7 +384,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                 }
 
                 try (SeekableFileInputStream sfis = a.getTmpCacheSfis(className)) {
-                    if(sfis!=null) {
+                    if (sfis != null) {
                         Iterator<CacheTimePeriodEntry> it = a.iterator(className, sfis, startDate, endDate);
                         while (it != null && it.hasNext()) {
                             ipedChartsPanel.getIpedTimelineDatasetManager().waitMemory();// method to wait available mem to continue.
@@ -456,7 +457,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                     t.start();// runs out of visibility asynchronously so to release GUI thread to the user.
                 } else {
                     memoryCacheReloadSem.release();// releases imediatelly as all cache was loaded
-                }                
+                }
 
             } else {
                 memoryCacheReloadSem.release();// releases imediatelly as all cache was loaded
@@ -588,7 +589,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
     }
 
     public void cancel() {
-        if(!cancelled) {
+        if (!cancelled) {
             if (csfs != null && csfs.size() > 0) {
                 for (CaseSearcherFilter csf : csfs) {
                     csf.getSearcher().cancel();
@@ -1026,7 +1027,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
             LeafReader reader = resultsProvider.getIPEDSource().getLeafReader();
             String eventField = ipedChartsPanel.getTimeEventColumnName(eventType);
             SortedSetDocValues values = reader.getSortedSetDocValues(eventField);
-            if(values!=null) {
+            if (values != null) {
                 for (int i = 0; i < resultSet.getLength(); i++) {
                     IItemId itemId = resultSet.getItem(i);
                     int doc = srcCase.getLuceneId(itemId);
@@ -1057,7 +1058,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                         result.add(itemId);
                     }
                 }
-            }else {
+            } else {
                 SortedDocValues svalues = reader.getSortedDocValues(eventField);
                 for (int i = 0; i < resultSet.getLength(); i++) {
                     IItemId itemId = resultSet.getItem(i);
@@ -1073,7 +1074,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                     boolean found = false;
                     if (doc != DocIdSetIterator.NO_MORE_DOCS) {
                         int ord = (int) svalues.ordValue();
-                        if(ord != SortedSetDocValues.NO_MORE_ORDS) {
+                        if (ord != SortedSetDocValues.NO_MORE_ORDS) {
                             String timeStr = EventTimestampCache.cloneBr(svalues.lookupOrd(ord));
                             if (timeStr.isEmpty()) {
                                 continue;
@@ -1102,10 +1103,9 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
     }
 
     /*
-    public void addValue(ValueCount valueCount, String eventType) {
-        accumulator.addValue(valueCount, eventType);
-    }
-    */
+     * public void addValue(ValueCount valueCount, String eventType) {
+     * accumulator.addValue(valueCount, eventType); }
+     */
 
     @Override
     public Range getDomainBounds(List visibleSeriesKeys, boolean includeInterval) {
@@ -1157,7 +1157,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                 colEvents.add(eventType);
                 col = colEvents.size() - 1;
             }
-            
+
             synchronized (rowTimestamps) {
                 int row = rowTimestamps.indexOf(t);
                 if (row == -1) {
@@ -1180,7 +1180,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                     c.value += count.value;
                 }
             }
-            
+
         }
 
         void remove(TimePeriod t) {
@@ -1197,8 +1197,8 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
     @Override
     public void notifyVisibleRange(double lowerBound, double upperBound) {
         try {
-            cancel();//cancels any running loading
-            waitLoaded();//waits till last cancellation finishes
+            cancel();// cancels any running loading
+            waitLoaded();// waits till last cancellation finishes
 
             startCaseSearchFilterLoad();
             IpedTimelineDataset self = this;
@@ -1206,15 +1206,16 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                 @Override
                 public void run() {
                     synchronized (self) {
-                        boolean c = waitLoaded();//repaints after dataset finalization
-                        if(!c) {
+                        boolean c = waitLoaded();// repaints after dataset finalization
+                        if (!c) {
                             ipedChartsPanel.getChartPanel().getChart().getPlot().notifyListeners(new PlotChangeEvent(ipedChartsPanel.getChartPanel().getChart().getPlot()));
                             ipedChartsPanel.repaint();
-                        };
+                        }
+                        ;
                     }
                 }
             };
-            //r.run();
+            // r.run();
             new Thread(r).start();
         } catch (Exception e) {
             e.printStackTrace();

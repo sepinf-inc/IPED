@@ -35,8 +35,8 @@ public class EventTimestampCache implements Runnable {
     int emptyOrd;
 
     private Integer eventInternalOrd;
-    
-    static HashSet<Integer>done = new HashSet<>();
+
+    static HashSet<Integer> done = new HashSet<>();
 
     public EventTimestampCache(IpedChartsPanel ipedChartsPanel, IMultiSearchResultProvider resultsProvider, TimeStampCache timeStampCache, String eventType, int ord) {
         this.eventType = eventType;
@@ -50,7 +50,6 @@ public class EventTimestampCache implements Runnable {
         LeafReader reader = resultsProvider.getIPEDSource().getLeafReader();
 
         IndexTimeStampCache timeStampCache = (IndexTimeStampCache) this.timeStampCache;
-        
 
         DocIdSetIterator timeStampValues;
         try {
@@ -61,22 +60,22 @@ public class EventTimestampCache implements Runnable {
                     SortedSetDocValues values = reader.getSortedSetDocValues(eventField);
                     TermsEnum tenum = values.termsEnum();
                     Long emptyValueOrd = getEmptyOrd(tenum);
-                    if(emptyValueOrd==null) {
+                    if (emptyValueOrd == null) {
                         tenum = values.termsEnum();
                     }
                     Map<String, long[]> parsedDateCache = getParsedCache(tenum, (int) values.getValueCount());
 
                     int doc = values.nextDoc();
-                    while (doc != DocIdSetIterator.NO_MORE_DOCS) {                        
+                    while (doc != DocIdSetIterator.NO_MORE_DOCS) {
                         int ord = (int) values.nextOrd();
                         while (ord != SortedSetDocValues.NO_MORE_ORDS) {
-                            if(emptyValueOrd==null || ord!=emptyValueOrd) {
+                            if (emptyValueOrd == null || ord != emptyValueOrd) {
                                 for (Class<? extends TimePeriod> timePeriodClass : timeStampCache.getPeriodClassesToCache()) {
                                     Date date = null;
                                     long[] cache = parsedDateCache.get(timePeriodClass.getSimpleName());
                                     if (cache == null) {
                                         date = DateUtil.ISO8601DateParse(timePeriodClass, values.lookupOrd(ord).bytes);
-                                    }else {
+                                    } else {
                                         date = new Date(cache[ord]);
                                     }
                                     if (date != null) {
@@ -92,21 +91,21 @@ public class EventTimestampCache implements Runnable {
                     SortedDocValues values = (SortedDocValues) timeStampValues;
                     TermsEnum tenum = values.termsEnum();
                     Long emptyValueOrd = getEmptyOrd(tenum);
-                    if(emptyValueOrd==null) {
+                    if (emptyValueOrd == null) {
                         tenum = values.termsEnum();
                     }
                     Map<String, long[]> parsedDateCache = getParsedCache(tenum, values.getValueCount());
-                    
+
                     int doc = values.nextDoc();
                     while (doc != DocIdSetIterator.NO_MORE_DOCS) {
                         int ord = values.ordValue();
-                        if(emptyValueOrd==null || ord!=emptyValueOrd) {
+                        if (emptyValueOrd == null || ord != emptyValueOrd) {
                             for (Class<? extends TimePeriod> timePeriodClass : timeStampCache.getPeriodClassesToCache()) {
                                 Date date = null;
                                 long[] cache = parsedDateCache.get(timePeriodClass.getSimpleName());
                                 if (cache == null) {
                                     date = DateUtil.ISO8601DateParse(timePeriodClass, values.lookupOrd(ord).bytes);
-                                }else {
+                                } else {
                                     date = new Date(cache[ord]);
                                 }
                                 if (date != null) {
@@ -120,9 +119,9 @@ public class EventTimestampCache implements Runnable {
             }
             done.add(eventInternalOrd);
 
-
         } catch (AlreadyClosedException e) {
-            //IPED closing before cache creation can throw this exception. So, we avoid logging it.
+            // IPED closing before cache creation can throw this exception. So, we avoid
+            // logging it.
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -140,10 +139,10 @@ public class EventTimestampCache implements Runnable {
         BytesRef bref = lenum.next();
 
         long ord = lenum.ord();
-        if(bref.bytes.length<=0) {
+        if (bref.bytes.length <= 0) {
             return ord;
         }
-            
+
         return null;
     }
 
@@ -154,18 +153,18 @@ public class EventTimestampCache implements Runnable {
 
             BytesRef bref = lenum.next();
 
-            while(bref!=null) {
+            while (bref != null) {
                 long ord = lenum.ord();
-                if(bref.bytes.length>10) {
+                if (bref.bytes.length > 10) {
                     Date date = DateUtil.ISO8601DateParse(timePeriodClass, bref.bytes);
-                    a[(int) ord]= date.getTime();
+                    a[(int) ord] = date.getTime();
                 }
-                
+
                 bref = lenum.next();
             }
             result.put(timePeriodClass.getSimpleName(), a);
         }
-            
+
         return result;
     }
 
@@ -178,16 +177,17 @@ public class EventTimestampCache implements Runnable {
         final int len = UnicodeUtil.UTF8toUTF16(br.bytes, br.offset, br.length, saida);
         return new String(saida, 0, len);
     }
-    
-    public class LRUCache<K, V>{
-        // Define Node with pointers to the previous and next items and a key, value pair
+
+    public class LRUCache<K, V> {
+        // Define Node with pointers to the previous and next items and a key, value
+        // pair
         class Node<T, U> {
             Node<T, U> previous;
             Node<T, U> next;
             T key;
             U value;
 
-            public Node(Node<T, U> previous, Node<T, U> next, T key, U value){
+            public Node(Node<T, U> previous, Node<T, U> next, T key, U value) {
                 this.previous = previous;
                 this.next = next;
                 this.key = key;
@@ -201,7 +201,7 @@ public class EventTimestampCache implements Runnable {
         private int maxSize;
         private int currentSize;
 
-        public LRUCache(int maxSize){
+        public LRUCache(int maxSize) {
             this.maxSize = maxSize;
             this.currentSize = 0;
             leastRecentlyUsed = new Node<K, V>(null, null, null, null);
@@ -209,13 +209,13 @@ public class EventTimestampCache implements Runnable {
             cache = new HashMap<K, Node<K, V>>();
         }
 
-        public V get(K key){
+        public V get(K key) {
             Node<K, V> tempNode = cache.get(key);
-            if (tempNode == null){
+            if (tempNode == null) {
                 return null;
             }
             // If MRU leave the list as it is
-            else if (tempNode.key == mostRecentlyUsed.key){
+            else if (tempNode.key == mostRecentlyUsed.key) {
                 return mostRecentlyUsed.value;
             }
 
@@ -223,14 +223,15 @@ public class EventTimestampCache implements Runnable {
             Node<K, V> nextNode = tempNode.next;
             Node<K, V> previousNode = tempNode.previous;
 
-            // If at the left-most, we update LRU 
-            if (tempNode.key == leastRecentlyUsed.key){
+            // If at the left-most, we update LRU
+            if (tempNode.key == leastRecentlyUsed.key) {
                 nextNode.previous = null;
                 leastRecentlyUsed = nextNode;
             }
 
-            // If we are in the middle, we need to update the items before and after our item
-            else if (tempNode.key != mostRecentlyUsed.key){
+            // If we are in the middle, we need to update the items before and after our
+            // item
+            else if (tempNode.key != mostRecentlyUsed.key) {
                 previousNode.next = nextNode;
                 nextNode.previous = previousNode;
             }
@@ -245,8 +246,8 @@ public class EventTimestampCache implements Runnable {
 
         }
 
-        public void put(K key, V value){
-            if (cache.containsKey(key)){
+        public void put(K key, V value) {
+            if (cache.containsKey(key)) {
                 return;
             }
 
@@ -257,19 +258,19 @@ public class EventTimestampCache implements Runnable {
             mostRecentlyUsed = myNode;
 
             // Delete the left-most entry and update the LRU pointer
-            if (currentSize == maxSize){
+            if (currentSize == maxSize) {
                 cache.remove(leastRecentlyUsed.key);
                 leastRecentlyUsed = leastRecentlyUsed.next;
                 leastRecentlyUsed.previous = null;
             }
 
             // Update cache size, for the first added entry update the LRU pointer
-            else if (currentSize < maxSize){
-                if (currentSize == 0){
+            else if (currentSize < maxSize) {
+                if (currentSize == 0) {
                     leastRecentlyUsed = myNode;
                 }
                 currentSize++;
             }
         }
-    }    
+    }
 }

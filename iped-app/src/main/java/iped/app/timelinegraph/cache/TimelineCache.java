@@ -19,10 +19,10 @@ public class TimelineCache {
     HashMap<String, CacheTimePeriodEntry[]> caches = new HashMap<String, CacheTimePeriodEntry[]>();
     HashMap<String, Reference<CacheTimePeriodEntry>[]> softCaches = new HashMap<String, Reference<CacheTimePeriodEntry>[]>();
     String lastCachePeriod = null;
-    
+
     static HashSet<String> neverUnloadCache = new HashSet<String>();
     static {
-        //neverUnloadCache.add("Day");
+        // neverUnloadCache.add("Day");
     }
 
     static TimelineCache singleton = new TimelineCache();
@@ -35,7 +35,7 @@ public class TimelineCache {
     }
 
     public void clean(String period, Date startDate, Date endDate) {
-        if(!neverUnloadCache.contains(period)) {
+        if (!neverUnloadCache.contains(period)) {
             Runnable r = new Runnable() {
                 @Override
                 public void run() {
@@ -61,7 +61,7 @@ public class TimelineCache {
     }
 
     public void cleanPeriod(String period) {
-        if(!neverUnloadCache.contains(period)) {
+        if (!neverUnloadCache.contains(period)) {
             CacheTimePeriodEntry[] cache = caches.get(period);
             if (cache != null) {
                 for (int i = 0; i < cache.length; i++) {
@@ -70,7 +70,7 @@ public class TimelineCache {
             }
         }
     }
-    
+
     public CacheTimePeriodEntry[] get(String className, int size) {
         if (!className.equals(lastCachePeriod)) {
             if (lastCachePeriod != null) {
@@ -84,7 +84,7 @@ public class TimelineCache {
             cache = new CacheTimePeriodEntry[size];
             caches.put(className, cache);
         }
-        if(hasSoftCacheFor(className) && softCaches.get(className)==null) {
+        if (hasSoftCacheFor(className) && softCaches.get(className) == null) {
             SoftReference<CacheTimePeriodEntry>[] softCache = new SoftReference[size];
             softCaches.put(className, softCache);
         }
@@ -92,24 +92,26 @@ public class TimelineCache {
         return cache;
     }
 
-    /* returns the index in the cache of the entry in the especified file position */
+    /*
+     * returns the index in the cache of the entry in the especified file position
+     */
     public Integer getIndex(String className, long pos) {
         return cachesIndexes.get(className).get(pos);
     }
-    
+
     Map<String, Semaphore> cachesIndexesSem = new HashMap<String, Semaphore>();
 
     public void liberateCachesIndexes(String className) {
         Semaphore sem = cachesIndexesSem.get(className);
-        if(sem!=null) {
+        if (sem != null) {
             sem.release();
         }
     }
-    
+
     public Map<Long, Integer> getCachesIndexes(String className, boolean exclusive) {
-        if(exclusive) {
+        if (exclusive) {
             Semaphore sem = cachesIndexesSem.get(className);
-            if(sem==null) {
+            if (sem == null) {
                 sem = new Semaphore(1);
                 cachesIndexesSem.put(className, sem);
             }
@@ -121,17 +123,17 @@ public class TimelineCache {
         }
         return getCachesIndexesInternal(className);
     }
-    
+
     public Map<Long, Integer> getCachesIndexes(String className) {
         Semaphore sem = cachesIndexesSem.get(className);
-        if(sem!=null) {
+        if (sem != null) {
             try {
                 sem.acquire();
             } catch (InterruptedException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
                 return null;
-            }finally {
+            } finally {
                 sem.release();
             }
         }
@@ -140,7 +142,7 @@ public class TimelineCache {
 
     public Map<Long, Integer> getCachesIndexesInternal(String className) {
         TreeMap<Long, Integer> cacheIndex = this.cachesIndexes.get(className);
-        if(cacheIndex==null) {
+        if (cacheIndex == null) {
             cacheIndex = new TreeMap<Long, Integer>();
             this.cachesIndexes.put(className, cacheIndex);
         }
@@ -148,7 +150,7 @@ public class TimelineCache {
     }
 
     public boolean hasSoftCacheFor(String className) {
-        return className.equals("Day")||className.equals("Week")||className.equals("Month");
+        return className.equals("Day") || className.equals("Week") || className.equals("Month");
     }
 
     public HashMap<String, Reference<CacheTimePeriodEntry>[]> getSoftCaches() {

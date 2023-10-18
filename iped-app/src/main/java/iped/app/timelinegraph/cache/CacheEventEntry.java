@@ -9,7 +9,7 @@ import iped.app.timelinegraph.IpedChartsPanel;
  */
 public class CacheEventEntry {
     public String event = null;
-    int eventOrd=-1;
+    int eventOrd = -1;
     public RoaringBitmap docIds;
 
     public CacheEventEntry(int eventOrd) {
@@ -17,15 +17,15 @@ public class CacheEventEntry {
     }
 
     public int getEventOrd() {
-        if(eventOrd==-1) {
-            eventOrd=IpedChartsPanel.getEventOrd(event);
+        if (eventOrd == -1) {
+            eventOrd = IpedChartsPanel.getEventOrd(event);
         }
         return eventOrd;
     }
 
     public String getEventName() {
-        if(event==null) {
-            event=IpedChartsPanel.getEventName(eventOrd);
+        if (event == null) {
+            event = IpedChartsPanel.getEventName(eventOrd);
         }
         return event;
     }

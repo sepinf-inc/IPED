@@ -22,22 +22,22 @@ import iped.app.timelinegraph.datasets.IpedTimelineDatasetManager;
 
 public class PersistedArrayList implements Set<CacheTimePeriodEntry> {
     int docCount = 0;
-    Map<Long,CacheTimePeriodEntry> inMemoryEntries = new TreeMap<Long, CacheTimePeriodEntry>();
+    Map<Long, CacheTimePeriodEntry> inMemoryEntries = new TreeMap<Long, CacheTimePeriodEntry>();
     String timePeriod;
     private int flushCount = 0;
     List<Future> flushes = new ArrayList<Future>();
     boolean isFlushing = false;
-    
+
     private static final Logger logger = LogManager.getLogger(PersistedArrayList.class);
-    
+
     AtomicInteger size = new AtomicInteger(0);
     File indexDirectory;
 
     ArrayList<File> flushFiles = new ArrayList<File>();
 
     private AtomicInteger flushSize = new AtomicInteger(0);
-    static private int flushMaxSize = Runtime.getRuntime().maxMemory()>1536*1024*1024?1000000:Runtime.getRuntime().maxMemory()>1024*1024*1024?100000:10000;
-    private int minAvailableMemoryNotToFlush = 40000000;//~40MB
+    static private int flushMaxSize = Runtime.getRuntime().maxMemory() > 1536 * 1024 * 1024 ? 1000000 : Runtime.getRuntime().maxMemory() > 1024 * 1024 * 1024 ? 100000 : 10000;
+    private int minAvailableMemoryNotToFlush = 40000000;// ~40MB
 
     public PersistedArrayList(Class<? extends TimePeriod> timePeriodClass) {
         this.timePeriod = timePeriodClass.getSimpleName();
@@ -50,16 +50,16 @@ public class PersistedArrayList implements Set<CacheTimePeriodEntry> {
 
     @Override
     public boolean isEmpty() {
-        return size.get()==0;
+        return size.get() == 0;
     }
 
     @Override
     public boolean contains(Object o) {
-        if(o instanceof CacheTimePeriodEntry) {
+        if (o instanceof CacheTimePeriodEntry) {
             return false;
         }
         CacheTimePeriodEntry ctpe = (CacheTimePeriodEntry) o;
-        if(inMemoryEntries.containsKey(ctpe.date)) {
+        if (inMemoryEntries.containsKey(ctpe.date)) {
             return true;
         }
         return false;
@@ -67,19 +67,19 @@ public class PersistedArrayList implements Set<CacheTimePeriodEntry> {
 
     @Override
     public Iterator<CacheTimePeriodEntry> iterator() {
-        int flushCount=flushFiles.size();
-        if(flushCount<=0) {
+        int flushCount = flushFiles.size();
+        if (flushCount <= 0) {
             return inMemoryEntries.values().iterator();
-        }else {
+        } else {
             try {
                 waitPendingFlushes();
             } catch (InterruptedException | ExecutionException ex) {
                 ex.printStackTrace();
             }
-            
-            Iterator<CacheTimePeriodEntry>[] iterators = new Iterator[1+flushCount];
+
+            Iterator<CacheTimePeriodEntry>[] iterators = new Iterator[1 + flushCount];
             iterators[0] = inMemoryEntries.values().iterator();
-            int i=1;
+            int i = 1;
             for (Iterator iterator = flushFiles.iterator(); iterator.hasNext();) {
                 File f = (File) iterator.next();
                 iterators[i] = new CacheFileIterator(f);
@@ -102,7 +102,7 @@ public class PersistedArrayList implements Set<CacheTimePeriodEntry> {
 
     @Override
     public boolean add(CacheTimePeriodEntry e) {
-        if(isFlushing) {
+        if (isFlushing) {
             try {
                 waitPendingFlushes();
             } catch (InterruptedException | ExecutionException ex) {
@@ -113,7 +113,7 @@ public class PersistedArrayList implements Set<CacheTimePeriodEntry> {
             flush();
             flushSize.set(0);
         }
-        
+
         size.incrementAndGet();
         flushSize.incrementAndGet();
         inMemoryEntries.put(e.date, e);
@@ -140,7 +140,7 @@ public class PersistedArrayList implements Set<CacheTimePeriodEntry> {
         throw new RuntimeException("Method not implemented");
     }
 
-    @Override        
+    @Override
     public boolean retainAll(Collection<?> c) {
         throw new RuntimeException("Method not implemented");
     }
@@ -170,30 +170,30 @@ public class PersistedArrayList implements Set<CacheTimePeriodEntry> {
     }
 
     private void flush() {
-        isFlushing=true;
+        isFlushing = true;
         final Collection<CacheTimePeriodEntry> setToFlush = inMemoryEntries.values();
         inMemoryEntries = new TreeMap<Long, CacheTimePeriodEntry>();
-        
+
         final int lflushCount = flushCount++;
-        
+
         CachePersistance cp = CachePersistance.getInstance();
         Future f = cp.cachePersistanceExecutor.submit(new Runnable() {
             @Override
             public void run() {
                 try {
                     indexDirectory = cp.getBaseDir();
-                    indexDirectory = new File(indexDirectory,"cacheflushes");
+                    indexDirectory = new File(indexDirectory, "cacheflushes");
                     indexDirectory = new File(indexDirectory, timePeriod);
                     indexDirectory.mkdirs();
-                    File flushFile = new File(indexDirectory,Integer.toString(lflushCount));
-                    
+                    File flushFile = new File(indexDirectory, Integer.toString(lflushCount));
+
                     flushFiles.add(flushFile);
                     cp.saveIntermediaryCacheSet(setToFlush, flushFile);
-                }catch(Exception e) {
-                  e.printStackTrace();  
+                } catch (Exception e) {
+                    e.printStackTrace();
                 } finally {
                     setToFlush.clear();
-                    isFlushing=false;
+                    isFlushing = false;
                 }
             }
         });
@@ -210,7 +210,7 @@ public class PersistedArrayList implements Set<CacheTimePeriodEntry> {
                     f.getParentFile().delete();
                 }
             }
-        }); 
-        
+        });
+
     }
 }

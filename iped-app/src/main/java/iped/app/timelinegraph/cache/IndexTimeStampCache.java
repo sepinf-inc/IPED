@@ -72,26 +72,26 @@ public class IndexTimeStampCache implements TimeStampCache {
                 CachePersistance cp = CachePersistance.getInstance();
                 try {
                     TimeIndexedMap c = cp.loadNewCache(periodClasses);
-                    if (c!=null) {
+                    if (c != null) {
                         cacheExists = true;
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
-            
+
             if (!cacheExists) {
                 Date d1 = new Date();
                 logger.info("Starting to build time cache of [{}]...", periodClassesToCache.toString());
-                
+
                 ArrayList<EventTimestampCache> cacheLoaders = new ArrayList<EventTimestampCache>();
-                
+
                 String[] cachedEventNames = ipedChartsPanel.getOrdToEventName();
 
-                int ord=0;
-                while (ord<cachedEventNames.length) {
+                int ord = 0;
+                while (ord < cachedEventNames.length) {
                     String eventType = cachedEventNames[ord];
-                    if(eventType!=null && !eventType.isEmpty()) {
+                    if (eventType != null && !eventType.isEmpty()) {
                         cacheLoaders.add(new EventTimestampCache(ipedChartsPanel, resultsProvider, this, cachedEventNames[ord], ord));
                     }
                     ord++;
@@ -106,7 +106,7 @@ public class IndexTimeStampCache implements TimeStampCache {
                 try {
                     synchronized (monitor) {
                         monitor.wait();
-                        
+
                         if (Manager.getInstance() != null && Manager.getInstance().isProcessingFinished()) {
                         }
                         CachePersistance cp = CachePersistance.getInstance();
@@ -125,7 +125,7 @@ public class IndexTimeStampCache implements TimeStampCache {
 
                         newCache.createOrLoadUpperPeriodIndex(this);
 
-                        Date d2 = new Date();                        
+                        Date d2 = new Date();
                         logger.info("Time to build timeline index of [{}]: {}ms", periodClassesToCache.toString(), (d2.getTime() - d1.getTime()));
                     }
                 } catch (InterruptedException e) {
@@ -173,18 +173,17 @@ public class IndexTimeStampCache implements TimeStampCache {
         // TODO Auto-generated method stub
         return null;
     }
-    
+
     public RoaringBitmap add(Class<? extends TimePeriod> timePeriodClass, Date t, String eventType, RoaringBitmap docs) {
         PersistedArrayList l = (PersistedArrayList) newCache.get(timePeriodClass.getSimpleName());
         if (l == null) {
             l = new PersistedArrayList(timePeriodClass);
             newCache.put(timePeriodClass.getSimpleName(), l);
         }
-        
-        if(docs==null) {
+
+        if (docs == null) {
             docs = new RoaringBitmap();
         }
-
 
         CacheTimePeriodEntry selectedCt = null;
         CacheEventEntry selectedCe = null;
@@ -193,26 +192,25 @@ public class IndexTimeStampCache implements TimeStampCache {
 
         if (selectedCt == null) {
             selectedCt = new CacheTimePeriodEntry();
-            selectedCt.date=t.getTime();
+            selectedCt.date = t.getTime();
             l.add(selectedCt);
         }
 
         selectedCt.addEventEntry(eventType, docs);
-        
+
         return docs;
     }
-    
+
     public RoaringBitmap add(Class<? extends TimePeriod> timePeriodClass, Date t, int eventInternalOrd, RoaringBitmap docs) {
         PersistedArrayList l = (PersistedArrayList) newCache.get(timePeriodClass.getSimpleName());
         if (l == null) {
             l = new PersistedArrayList(timePeriodClass);
             newCache.put(timePeriodClass.getSimpleName(), l);
         }
-        
-        if(docs==null) {
+
+        if (docs == null) {
             docs = new RoaringBitmap();
         }
-
 
         CacheTimePeriodEntry selectedCt = null;
         CacheEventEntry selectedCe = null;
@@ -221,18 +219,18 @@ public class IndexTimeStampCache implements TimeStampCache {
 
         if (selectedCt == null) {
             selectedCt = new CacheTimePeriodEntry();
-            selectedCt.date=t.getTime();
+            selectedCt.date = t.getTime();
             l.add(selectedCt);
         }
 
         selectedCt.addEventEntry(eventInternalOrd, docs);
-        
+
         return docs;
     }
 
     public RoaringBitmap get(Class<? extends TimePeriod> timePeriodClass, Date t, Integer eventInternalOrd) {
         PersistedArrayList l = (PersistedArrayList) newCache.get(timePeriodClass.getSimpleName());
-        if(l==null) {
+        if (l == null) {
             l = new PersistedArrayList(timePeriodClass);
             newCache.put(timePeriodClass.getSimpleName(), l);
         }
@@ -243,16 +241,16 @@ public class IndexTimeStampCache implements TimeStampCache {
         }
 
         RoaringBitmap result = selectedCt.getEventDocIds(eventInternalOrd);
-        if(result==null) {
+        if (result == null) {
             return null;
         }
 
         return result;
     }
-    
+
     public RoaringBitmap get(Class<? extends TimePeriod> timePeriodClass, Date t, String eventType) {
         PersistedArrayList l = (PersistedArrayList) newCache.get(timePeriodClass.getSimpleName());
-        if(l==null) {
+        if (l == null) {
             l = new PersistedArrayList(timePeriodClass);
             newCache.put(timePeriodClass.getSimpleName(), l);
         }
@@ -263,7 +261,7 @@ public class IndexTimeStampCache implements TimeStampCache {
         }
 
         RoaringBitmap result = selectedCt.getEventDocIds(eventType);
-        if(result==null) {
+        if (result == null) {
             return null;
         }
 
@@ -288,7 +286,7 @@ public class IndexTimeStampCache implements TimeStampCache {
                 newCache.put(timePeriodClass.getSimpleName(), l);
             }
         }
-        
+
         CacheTimePeriodEntry selectedCt = null;
         CacheEventEntry selectedCe = null;
 
@@ -296,7 +294,7 @@ public class IndexTimeStampCache implements TimeStampCache {
 
         if (selectedCt == null) {
             selectedCt = new CacheTimePeriodEntry();
-            selectedCt.date=t.getTime();
+            selectedCt.date = t.getTime();
             l.add(selectedCt);
         }
 
