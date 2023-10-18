@@ -116,6 +116,10 @@ public class LeappBridgeTask extends AbstractPythonTask {
 
     }
 
+    public static void media_to_html(String mediaPath, Collection filesFound, String report_folder) {
+        ArtifactJavaReport.nope();
+    }
+
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
         int incremented = count.incrementAndGet();
@@ -141,6 +145,8 @@ public class LeappBridgeTask extends AbstractPythonTask {
             pt.overrideModuleFunction("scripts.ilapfuncs", "timeline",
                     LeappBridgeTask.class.getMethod("timeline", String.class, String.class, Collection.class,
                             Collection.class));
+            pt.overrideModuleFunction("scripts.ilapfuncs", "media_to_html", LeappBridgeTask.class
+                    .getMethod("media_to_html", String.class, Collection.class, String.class));
             pt.overrideModuleFunction("scripts.ilapfuncs", "logdevinfo",
                     LeappBridgeTask.class.getMethod("logdevinfo", String.class));
             pt.wrapsClass("scripts.artifact_report", "ArtifactHtmlReport", ArtifactJavaReport.class);

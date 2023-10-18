@@ -292,7 +292,7 @@ public class ArtifactJavaReport {
         nope();
     }
 
-    public void nope() {
+    static public void nope() {
     }
 
     static public void ipedlog(String message) {
