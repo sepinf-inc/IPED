@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -111,6 +112,10 @@ public class LeappBridgeTask extends AbstractPythonTask {
         }
     }
 
+    public static void timeline(String reportFolder, String tlactivity, Collection datalist, Collection data_headers) {
+
+    }
+
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
         int incremented = count.incrementAndGet();
@@ -133,6 +138,9 @@ public class LeappBridgeTask extends AbstractPythonTask {
             PythonHook pt = new PythonHook(jep);
             pt.overrideModuleFunction("scripts.ilapfuncs", "logfunc",
                     LeappBridgeTask.class.getMethod("logfunc", String.class));
+            pt.overrideModuleFunction("scripts.ilapfuncs", "timeline",
+                    LeappBridgeTask.class.getMethod("timeline", String.class, String.class, Collection.class,
+                            Collection.class));
             pt.overrideModuleFunction("scripts.ilapfuncs", "logdevinfo",
                     LeappBridgeTask.class.getMethod("logdevinfo", String.class));
             pt.wrapsClass("scripts.artifact_report", "ArtifactHtmlReport", ArtifactJavaReport.class);
