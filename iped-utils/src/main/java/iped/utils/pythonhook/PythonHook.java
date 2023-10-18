@@ -125,9 +125,16 @@ public class PythonHook {
         String packageName = method.getDeclaringClass().getPackageName();
         String className = method.getDeclaringClass().getSimpleName();
         String methodName = method.getName();
+        StringBuffer params = new StringBuffer("");
+        for (int i = 0; i < method.getParameterCount(); i++) {
+            params.append("param" + i);
+            if (i < method.getParameterCount()) {
+                params.append(",");
+            }
+        }
         addModification(module, "def " + functionName, "def " + functionName
-                + "(str):\n    from " + packageName + " import " + className + "\n    " + className + "." + methodName
-                + "(str)\ndef " + functionName + "2");
+                + "(" + params + "):\n    from " + packageName + " import " + className + "\n    " + className + "."
+                + methodName + "(" + params + ")\ndef " + functionName + "2");
     }
 
     /*
