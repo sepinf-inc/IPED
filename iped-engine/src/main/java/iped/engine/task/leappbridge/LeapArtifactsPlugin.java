@@ -4,9 +4,13 @@ import java.nio.file.FileSystems;
 import java.nio.file.PathMatcher;
 import java.util.HashSet;
 
+import jep.python.PyCallable;
+
 public class LeapArtifactsPlugin {
     String moduleName;
     String methodName;
+    PyCallable method;
+
     String name;
     HashSet<String> patterns = new HashSet<String>();
     HashSet<PathMatcher> compiledPatterns = new HashSet<PathMatcher>();
@@ -21,10 +25,6 @@ public class LeapArtifactsPlugin {
 
     public String getMethodName() {
         return methodName;
-    }
-
-    public void setMethodName(String methodName) {
-        this.methodName = methodName;
     }
 
     public String getName() {
@@ -46,6 +46,15 @@ public class LeapArtifactsPlugin {
     public void addPattern(String pattern) {
         patterns.add(pattern);
         compiledPatterns.add(FileSystems.getDefault().getPathMatcher("glob:" + pattern));
+    }
+
+    public PyCallable getMethod() {
+        return method;
+    }
+
+    public void setMethod(PyCallable method) {
+        this.method = method;
+        this.methodName = (String) method.getAttr("__name__");
     }
 
 }

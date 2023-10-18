@@ -96,11 +96,10 @@ public class ALeappPluginsManager {
                 Collection c = e.getValue();
 
                 PyCallable p = (PyCallable) c.toArray()[2];
-                String methodName = (String) p.getAttr("__name__");
 
                 LeapArtifactsPlugin plugin = new LeapArtifactsPlugin();
                 plugin.setModuleName(moduleName);
-                plugin.setMethodName(methodName);
+                plugin.setMethod(p);
                 plugin.setName((String) c.toArray()[0]);
 
                 Object o = c.toArray()[1];

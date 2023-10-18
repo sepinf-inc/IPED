@@ -189,7 +189,12 @@ public class LeappBridgeTask extends AbstractPythonTask {
                 jep.eval("import sys");
                 jep.eval("from java.lang import System");
                 jep.eval("from iped.engine.task.leappbridge import ArtifactJavaReport");
-                jep.eval("from " + p.getModuleName() + " import " + p.getMethodName() + " as parse");
+                if (p.getMethodName().contains("lambda")) {
+                    jep.eval("from " + p.getModuleName() + " import *");
+                    jep.set("parse", p.getMethod());
+                } else {
+                    jep.eval("from " + p.getModuleName() + " import " + p.getMethodName() + " as parse");
+                }
 
 
                 // creates a dumb file seeker. some plugins refers to directory although not
