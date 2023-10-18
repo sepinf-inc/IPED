@@ -439,8 +439,8 @@ public class LeappBridgeTask extends AbstractPythonTask {
             TemporaryResources tmpResources = new TemporaryResources();
             tmpFileRef = tmpResources.createTemporaryFile();
             tmpFileRef.deleteOnExit();
-            reportPath = new File(tmpFileRef.getParentFile().getAbsolutePath(),
-                    "/leapptaskreps/" + REPORT_FOLDER_NAME + tmpFileRef.getName());
+            reportPath = new File(tmpFileRef.getParentFile().getParentFile().getAbsolutePath(),
+                    REPORT_FOLDER_NAME + tmpFileRef.getName());
             reportPath.mkdirs();
             reportPath.deleteOnExit();
 
