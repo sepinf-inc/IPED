@@ -12,8 +12,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -1144,7 +1142,6 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
         }
 
         CachePersistance cp = new CachePersistance();
-        ExecutorService persistanceThreadPool = Executors.newFixedThreadPool(1);
 
         public void addValue(Count count, TimePeriod t, String eventType) {
             if (min == null || t.getStart().before(min.getStart())) {
