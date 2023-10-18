@@ -39,7 +39,6 @@ import iped.app.timelinegraph.cache.CacheEventEntry;
 import iped.app.timelinegraph.cache.CacheTimePeriodEntry;
 import iped.app.timelinegraph.cache.PersistedArrayList;
 import iped.app.timelinegraph.cache.TimeIndexedMap;
-import iped.app.timelinegraph.cache.TimeIndexedMap.CacheDataInputStream;
 import iped.app.timelinegraph.cache.TimeStampCache;
 import iped.app.timelinegraph.cache.TimelineCache;
 import iped.app.ui.App;
@@ -374,7 +373,7 @@ public class CachePersistance {
         this.bitstreamSerialize = bitstreamSerialize;
     }
 
-    static public CacheTimePeriodEntry loadNextEntry(CacheDataInputStream dis, boolean bitstreamSerialize) throws IOException {
+    static public CacheTimePeriodEntry loadNextEntry(DataInputStream dis, boolean bitstreamSerialize) throws IOException {
         CacheTimePeriodEntry ct = new CacheTimePeriodEntry();
         ct.date = dis.readLong();
         int eventOrd = dis.readInt();
@@ -387,10 +386,10 @@ public class CachePersistance {
                 ce.docIds.deserialize(dis);
             } else {
                 ce.docIds = new RoaringBitmap();
-                int docId = dis.readInt2();
+                int docId = dis.readInt();
                 while (docId != -1) {
                     ce.docIds.add(docId);
-                    docId = dis.readInt2();
+                    docId = dis.readInt();
                 }
             }
 
@@ -404,7 +403,7 @@ public class CachePersistance {
         return ct;
     }
 
-    static public CacheTimePeriodEntry loadIntermediaryNextEntry(CacheDataInputStream dis) throws IOException {
+    static public CacheTimePeriodEntry loadIntermediaryNextEntry(DataInputStream dis) throws IOException {
         CacheTimePeriodEntry ct = new CacheTimePeriodEntry();
         ct.date = dis.readLong();
         int evCode = dis.readInt();
@@ -424,13 +423,13 @@ public class CachePersistance {
 
     static public class CacheFileIterator implements Iterator<CacheTimePeriodEntry> {
         File f;
-        CacheDataInputStream dis;
+        DataInputStream dis;
         CacheTimePeriodEntry currentCt = new CacheTimePeriodEntry();
 
         public CacheFileIterator(File f) {
             this.f = f;
             try {
-                dis = new CacheDataInputStream(new RandomAccessBufferedFileInputStream(f));
+                dis = new DataInputStream(new RandomAccessBufferedFileInputStream(f));
             } catch (FileNotFoundException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();

@@ -1,7 +1,6 @@
 package iped.app.timelinegraph.cache;
 
 import java.io.DataInputStream;
-import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.lang.ref.Reference;
@@ -41,36 +40,12 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
         this.monthIndexCacheFiles.put(string, new File(new File(f, string), "1"));
 
         int committed = 0;
-        try (RandomAccessBufferedFileInputStream lcacheSfis = new RandomAccessBufferedFileInputStream(cacheFile); CacheDataInputStream lcacheDis = new CacheDataInputStream(lcacheSfis)) {
+        try (RandomAccessBufferedFileInputStream lcacheSfis = new RandomAccessBufferedFileInputStream(cacheFile); DataInputStream lcacheDis = new DataInputStream(lcacheSfis)) {
             committed = lcacheDis.readShort();
         }
         if (committed != 1) {
             String msg = "File not committed:" + f.getName();
             throw new IOException(msg);
-        }
-    }
-
-    public static class CacheDataInputStream extends DataInputStream {
-
-        public CacheDataInputStream(RandomAccessBufferedFileInputStream in) {
-            super(in);
-        }
-
-        public int readInt2() throws IOException {
-            byte[] chs = new byte[4];
-            int i = in.read(chs);
-            if (i < 0) {
-                throw new EOFException();
-            }
-            int ch1 = chs[0] & 0xFF;
-            int ch2 = chs[1] & 0xFF;
-            int ch3 = chs[2] & 0xFF;
-            int ch4 = chs[3] & 0xFF;
-
-            if (ch1 == -1 && ch1 == -1 && ch2 == -1 && ch3 == -1) {
-                return -1;
-            }
-            return ((ch1 << 24) + (ch2 << 16) + (ch3 << 8) + (ch4 << 0));
         }
     }
 
@@ -88,12 +63,12 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
 
     public ResultIterator iterator(String className, RandomAccessBufferedFileInputStream lcacheSfis, Date startDate, Date endDate) {
         try {
-            CacheDataInputStream lcacheDis = new CacheDataInputStream(lcacheSfis);
+            DataInputStream lcacheDis = new DataInputStream(lcacheSfis);
 
             // skips header
             lcacheSfis.seek(2l);
             String timezoneID = lcacheDis.readUTF();
-            int entries = lcacheDis.readInt2();
+            int entries = lcacheDis.readInt();
 
             CacheTimePeriodEntry[] cache = timelineCache.get(className, entries);
 
@@ -159,7 +134,7 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
                                   // cache array index)
         private CacheTimePeriodEntry[] lcache;// cache array to iterate
         private RandomAccessBufferedFileInputStream lcacheSfis;// seekable stream to index file (to read from when entry not in cache)
-        private CacheDataInputStream lcacheDis;// data parser stream to same above index file
+        private DataInputStream lcacheDis;// data parser stream to same above index file
         private TreeMap<Long, Integer> lcacheIndexes;
         private long startDate = 0;
         private long endDate;
@@ -176,7 +151,7 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
                                    // from position in file)
         private long startPos;// start position in file to iterate
 
-        public ResultIterator(long pos, Integer startIndex, TimelineCache timelineCache, RandomAccessBufferedFileInputStream lcacheSfis, CacheDataInputStream lcacheDis, long endDate, String className) {
+        public ResultIterator(long pos, Integer startIndex, TimelineCache timelineCache, RandomAccessBufferedFileInputStream lcacheSfis, DataInputStream lcacheDis, long endDate, String className) {
             this.startPos = pos;
             this.startIndex = startIndex;
             this.lcache = timelineCache.caches.get(className);
