@@ -355,25 +355,6 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         if (ipedTimelineDatasetManager == null) {
             ipedTimelineDatasetManager = new IpedTimelineDatasetManager(this);
         }
-
-        // Call refreshchart on init to load cache for first timeline exhibition.
-        Runnable r = new Runnable() {
-            @Override
-            public void run() {
-                Date d1 = new Date();
-                logger.info("Starting to load time cache of Day time period...");
-                try {
-                    refreshChart().get();
-                } catch (InterruptedException | ExecutionException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-                Date d2 = new Date();
-                logger.info("Loaded time cache of Day time period in {}ms", d2.getTime() - d1.getTime());
-            }
-        };
-        Thread t = new Thread(r);
-        t.start();// call to load day cache in background
     }
 
     public String getTimeEventColumnName(String timeEvent) {
