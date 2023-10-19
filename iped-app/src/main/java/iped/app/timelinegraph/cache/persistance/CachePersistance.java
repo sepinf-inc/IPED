@@ -10,7 +10,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
@@ -29,7 +28,6 @@ import java.util.concurrent.Executors;
 import javax.xml.bind.DatatypeConverter;
 
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.io.FileUtils;
 import org.apache.pdfbox.io.RandomAccessBufferedFileInputStream;
 import org.jfree.data.time.TimePeriod;
 import org.roaringbitmap.RoaringBitmap;
@@ -116,11 +114,6 @@ public class CachePersistance {
             if (!found) {
                 baseDir = new File(tempCasesDir, uuid);
                 baseDir.mkdirs();
-                if (baseDir.exists()) {
-                    try (RandomAccessFile ras = new RandomAccessFile(new File(baseDir, "case.txt"), "rw")) {
-                        ras.writeUTF(App.get().casesPathFile.getAbsolutePath().toString());
-                    }
-                }
             }
 
             // thread to clean caches with no correspondent original data
@@ -133,21 +126,7 @@ public class CachePersistance {
                             if (tempCasesDir.listFiles() != null) {
                                 for (File f : tempCasesDir.listFiles()) {
                                     if (f.isDirectory() && !f.getName().equals(uuid)) {
-                                        File caseFile = new File(f, "case.txt");
-                                        if (!caseFile.exists()) {
-                                            continue;
-                                        }
-                                        try (RandomAccessFile ras = new RandomAccessFile(caseFile, "r")) {
-                                            String casePath = ras.readUTF();
-                                            if (casePath != null) {
-                                                File caseDir = new File(casePath);
-                                                if (!caseDir.exists()) {
-                                                    FileUtils.forceDelete(f);
-                                                }
-                                            }
-                                        } catch (Exception e) {
-                                            e.printStackTrace();
-                                        }
+                                        IOUtil.deleteDirectory(f);
                                     }
                                 }
                             }
