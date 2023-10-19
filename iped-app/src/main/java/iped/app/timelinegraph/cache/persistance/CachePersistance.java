@@ -116,8 +116,10 @@ public class CachePersistance {
             if (!found) {
                 baseDir = new File(tempCasesDir, uuid);
                 baseDir.mkdirs();
-                try (RandomAccessFile ras = new RandomAccessFile(new File(baseDir, "case.txt"), "rw")) {
-                    ras.writeUTF(App.get().casesPathFile.getAbsolutePath().toString());
+                if (baseDir.exists()) {
+                    try (RandomAccessFile ras = new RandomAccessFile(new File(baseDir, "case.txt"), "rw")) {
+                        ras.writeUTF(App.get().casesPathFile.getAbsolutePath().toString());
+                    }
                 }
             }
 
@@ -176,8 +178,10 @@ public class CachePersistance {
     public void saveNewCache(TimeStampCache timeStampCache) {
         if (bitstreamSerializeAsDefault) {
             try {
-                bitstreamSerializeFile.createNewFile();// mark this cache as containing bitstreams serialized
-                bitstreamSerialize = true;
+                if (bitstreamSerializeFile.getParentFile().exists()) {
+                    bitstreamSerializeFile.createNewFile();// mark this cache as containing bitstreams serialized
+                    bitstreamSerialize = true;
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
