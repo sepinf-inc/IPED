@@ -44,7 +44,7 @@ public class ArtifactJavaReport {
     private MediaType currentReportMediaType;
     private File reportPath;
 
-    static private String KEY_PROPERTY_NAME = "Key";
+    static private String KEY_PROPERTY_NAME = "key";
     private String lastKeyValue = null;
 
     static private Logger LOGGER = LoggerFactory.getLogger(ArtifactJavaReport.class);
@@ -250,7 +250,13 @@ public class ArtifactJavaReport {
         if (d != null) {
             Property p;
             if (property.toLowerCase().contains("value") && lastKeyValue != null) {
-                p = Property.internalDate("aleapp:" + pluginName + "_" + lastKeyValue);
+                String eventType = "";
+                if (pluginName.contains("FCMQueuedMessagesDump")) {
+                    eventType = "fcm_dump_" + repName.substring(repName.lastIndexOf(".") + 1);
+                } else {
+                    eventType = pluginName;
+                }
+                p = Property.internalDate("aleapp:" + eventType + "_" + lastKeyValue);
             } else {
                 p = Property.internalDate("aleapp:" + pluginName + "_ts");
             }
