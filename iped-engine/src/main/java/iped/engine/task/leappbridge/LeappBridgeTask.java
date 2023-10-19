@@ -8,7 +8,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -39,6 +41,7 @@ import iped.parsers.python.PythonParser;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.SearchResult;
+import iped.utils.pythonhook.FileHook;
 import iped.utils.pythonhook.PythonHook;
 import jep.Jep;
 import jep.JepException;
@@ -120,6 +123,11 @@ public class LeappBridgeTask extends AbstractPythonTask {
         ArtifactJavaReport.nope();
     }
 
+    public static Object open(Collection args, Map kargs) {
+        Iterator iargs = args.iterator();
+        return new FileHook(iargs.next().toString());
+    }
+
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
         int incremented = count.incrementAndGet();
@@ -140,6 +148,7 @@ public class LeappBridgeTask extends AbstractPythonTask {
             jep.eval("from geopy.geocoders import Nominatim");
 
             PythonHook pt = new PythonHook(jep);
+            //pt.overrideFileOpen(LeappBridgeTask.class.getMethod("open", Collection.class, Map.class));
             pt.overrideModuleFunction("scripts.ilapfuncs", "logfunc",
                     LeappBridgeTask.class.getMethod("logfunc", String.class));
             pt.overrideModuleFunction("scripts.ilapfuncs", "timeline",
@@ -400,6 +409,9 @@ public class LeappBridgeTask extends AbstractPythonTask {
                                 // mappedEvidences.put(tmp.getCanonicalPath(), (Item) item);
                             } else {
                                 // the file returned by getTempFile() is a copy to the file in a temp folder
+                                // so recreate the path structure inside the temp folder
+                                // and move it accordingly to be recognizable by
+                                // ALeapp scripts
                                 String artParentPath = artpath.substring(0, artpath.lastIndexOf("/"));
                                 String artname = artpath.substring(artParentPath.length());
                                 File artfolder = new File(reportDumpPath, artParentPath);
@@ -409,7 +421,6 @@ public class LeappBridgeTask extends AbstractPythonTask {
                                     File file_found = new File(artfolder, artname);
                                     Files.move(tmp, file_found);
                                     filesFound.add(file_found.getCanonicalPath().replace("\\", "\\\\"));
-                                    // mappedEvidences.put(file_found.getCanonicalPath(), (Item) item);
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }
