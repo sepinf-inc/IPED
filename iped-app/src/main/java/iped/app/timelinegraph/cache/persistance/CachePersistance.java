@@ -132,8 +132,12 @@ public class CachePersistance {
                         try {
                             if (tempCasesDir.listFiles() != null) {
                                 for (File f : tempCasesDir.listFiles()) {
-                                    if (!f.getName().equals(uuid)) {
-                                        try (RandomAccessFile ras = new RandomAccessFile(new File(f, "case.txt"), "r")) {
+                                    if (f.isDirectory() && !f.getName().equals(uuid)) {
+                                        File caseFile = new File(f, "case.txt");
+                                        if (!caseFile.exists()) {
+                                            continue;
+                                        }
+                                        try (RandomAccessFile ras = new RandomAccessFile(caseFile, "r")) {
                                             String casePath = ras.readUTF();
                                             if (casePath != null) {
                                                 File caseDir = new File(casePath);
