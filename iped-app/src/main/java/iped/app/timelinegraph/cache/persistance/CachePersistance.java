@@ -74,11 +74,11 @@ public class CachePersistance {
         startDir = new File(App.get().casesPathFile, "iped");
         startDir = new File(startDir, "data");
 
-        bitstreamSerializeFile = new File(startDir, "bitstreamSerialize");
-        bitstreamSerialize = bitstreamSerializeFile.exists();
-
         startDir = new File(startDir, "timecache");
         startDir.mkdirs();
+
+        bitstreamSerializeFile = new File(startDir, "bitstreamSerialize");
+        bitstreamSerialize = bitstreamSerializeFile.exists();
 
         // if case cache folder is not writable, use user.home for caches
         if (!IOUtil.canWrite(startDir)) {
