@@ -132,8 +132,8 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     static String ordToEventName[];
     static private HashMap<String, Integer> eventNameToOrd = new HashMap<>();
     AtomicBoolean dataSetUpdated = new AtomicBoolean();
-
-    boolean isUpdated = true;
+    AtomicBoolean loadingCacheStarted = new AtomicBoolean();
+    volatile boolean isUpdated = true;
 
     String[] timeFields = { BasicProps.TIMESTAMP, BasicProps.TIME_EVENT };
     LegendItemPopupMenu legendItemPopupMenu = null;
@@ -469,8 +469,10 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         try {
             IpedChartsPanel self = this;
 
-            self.remove(splitPane);// .setVisible(false);
+            self.remove(splitPane);
+            self.remove(loadingLabel);
             self.add(loadingLabel);
+            self.repaint();
 
             if (swRefresh != null) {
                 synchronized (swRefresh) {
@@ -533,8 +535,9 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
                                 isUpdated = true;
                             }
 
-                            if (chart != null) {
+                            if (chart != null && !isCancelled()) {
                                 self.remove(loadingLabel);
+                                self.remove(splitPane);
                                 self.add(splitPane);
                                 splitPane.setTopComponent(chartPanel);
                                 splitPane.setBottomComponent(listScroller);
@@ -603,16 +606,16 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
             @Override
             public void changed(CDockableLocationEvent dockableEvent) {
                 if (!isUpdated && dockableEvent.isShowingChanged()) {
-                    self.remove(splitPane);
-                    self.add(loadingLabel);
-                    self.repaint();
-                    Runnable r = new Runnable() {
-                        @Override
-                        public void run() {
-                            ipedTimelineDatasetManager.startBackgroundCacheCreation();
-                        }
-                    };
-                    new Thread(r).start();
+                    refreshChart();
+                    if (!loadingCacheStarted.getAndSet(true)) {
+                        Runnable r = new Runnable() {
+                            @Override
+                            public void run() {
+                                ipedTimelineDatasetManager.startCacheCreation();
+                            }
+                        };
+                        new Thread(r).start();
+                    }
                 }
             }
         };

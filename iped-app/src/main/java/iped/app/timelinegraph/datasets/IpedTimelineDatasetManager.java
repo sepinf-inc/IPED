@@ -70,7 +70,7 @@ public class IpedTimelineDatasetManager {
     /*
      * Start the creation of cache for timeline chart
      */
-    public void startBackgroundCacheCreation() {
+    public void startCacheCreation() {
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
