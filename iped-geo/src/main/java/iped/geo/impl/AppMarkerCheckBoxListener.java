@@ -2,10 +2,8 @@ package iped.geo.impl;
 
 import javax.swing.JTable;
 
-import iped.data.IItemId;
 import iped.geo.MarkerCheckBoxListener;
 import iped.geo.kml.GetResultsKMLWorker;
-import iped.search.IMultiSearchResult;
 
 public class AppMarkerCheckBoxListener implements MarkerCheckBoxListener {
     AppMapPanel mapaPanel;
@@ -25,9 +23,11 @@ public class AppMarkerCheckBoxListener implements MarkerCheckBoxListener {
         mid = GetResultsKMLWorker.getBaseGID(mid);
 
         pos = mapaPanel.getItemPositioninResultsTable(mid);
-        JTable t = mapaPanel.getResultsProvider().getResultsTable();
-        mapaPanel.disableLastMidReset();
-        t.setValueAt(checked, pos, t.convertColumnIndexToView(1));
+        if (pos != -1) {
+            JTable t = mapaPanel.getResultsProvider().getResultsTable();
+            mapaPanel.disableLastMidReset();
+            t.setValueAt(checked, pos, t.convertColumnIndexToView(1));
+        }
 
     }
 
