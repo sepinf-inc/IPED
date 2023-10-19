@@ -69,8 +69,13 @@ public class CachePersistance {
 
     public CachePersistance() {
         File startDir;
-        startDir = new File(App.get().casesPathFile, "iped");
-        startDir = new File(startDir, "data");
+        if (App.get().appCase.getAtomicSources().size() == 1) {
+            // single case
+            startDir = new File(App.get().casesPathFile, "iped/data");
+        } else {
+            // multicase: use the same base dir as multicase graphs
+            startDir = new File(App.get().casesPathFile.getParentFile(), "iped-multicases");
+        }
 
         startDir = new File(startDir, "timecache");
         startDir.mkdirs();
@@ -78,24 +83,11 @@ public class CachePersistance {
         bitstreamSerializeFile = new File(startDir, "bitstreamSerialize");
         bitstreamSerialize = bitstreamSerializeFile.exists();
 
-        // if case cache folder is not writable, use user.home for caches
-        if (!IOUtil.canWrite(startDir)) {
-            startDir = new File(System.getProperty("user.home"), ".iped");
-            startDir = new File(startDir, "timecache");
-            getTempBaseDir(startDir);
-        } else {
-            getTempBaseDir(startDir);
-        }
+        getTempBaseDir(startDir);
     }
 
     public void getTempBaseDir(File startDir) {
         try {
-            baseDir = startDir;
-            baseDir.mkdirs();
-            final File tempCasesDir = baseDir;
-
-            boolean found = false;
-
             Set<String> uuids = App.get().appCase.getEvidenceUUIDs();
             MessageDigest md = DigestUtils.getMd5Digest();
             for (Iterator iterator = uuids.iterator(); iterator.hasNext();) {
@@ -105,16 +97,15 @@ public class CachePersistance {
 
             String uuid = DatatypeConverter.printHexBinary(md.digest());
 
-            File tempDirCase = new File(tempCasesDir, uuid);
-            if (tempDirCase.exists()) {
-                found = true;
-                baseDir = tempDirCase;
-            }
-
-            if (!found) {
-                baseDir = new File(tempCasesDir, uuid);
+            baseDir = new File(startDir, uuid);
+            if (!baseDir.exists() && !baseDir.mkdirs()) {
+                // cache doesn't exist and folder is not writable, use user.home for caches
+                startDir = new File(System.getProperty("user.home"), ".iped/timecache");
+                baseDir = new File(startDir, uuid);
                 baseDir.mkdirs();
             }
+
+            final File finalStartDir = startDir;
 
             // thread to clean caches with no correspondent original data
             if (t == null) {
@@ -123,8 +114,8 @@ public class CachePersistance {
                     @Override
                     public void run() {
                         try {
-                            if (tempCasesDir.listFiles() != null) {
-                                for (File f : tempCasesDir.listFiles()) {
+                            if (finalStartDir.isDirectory()) {
+                                for (File f : finalStartDir.listFiles()) {
                                     if (f.isDirectory() && !f.getName().equals(uuid)) {
                                         IOUtil.deleteDirectory(f);
                                     }
