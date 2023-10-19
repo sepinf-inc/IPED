@@ -6,9 +6,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.Property;
 import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +24,7 @@ import iped.engine.util.ParentInfo;
 import iped.engine.util.Util;
 import iped.parsers.python.PythonParser;
 import iped.properties.ExtraProperties;
+import iped.utils.DateUtil;
 import jep.Jep;
 
 public class ArtifactJavaReport {
@@ -40,6 +43,9 @@ public class ArtifactJavaReport {
     String pluginName;
     private MediaType currentReportMediaType;
     private File reportPath;
+
+    static private String KEY_PROPERTY_NAME = "Key";
+    private String lastKeyValue = null;
 
     static private Logger LOGGER = LoggerFactory.getLogger(ArtifactJavaReport.class);
 
@@ -111,6 +117,7 @@ public class ArtifactJavaReport {
         if (data_list != null) {
             if (data_list instanceof Collection) {
                 for (Object data_fields : (Collection) data_list) {
+                    lastKeyValue = null;
                     write_artifact_data_item(headers, data_fields, file);
                 }
             }
@@ -230,6 +237,25 @@ public class ArtifactJavaReport {
             } else {
                 nope();
             }
+        }
+
+        if (property.toLowerCase().contains(KEY_PROPERTY_NAME)) {
+            // some htmls are formated as key value pairs. So keep the last read key value
+            // to name following properties. This is used mainly to better
+            // name some timestamps event types.
+            lastKeyValue = value;
+        }
+
+        Date d = DateUtil.tryToParseDate(value);
+        if (d != null) {
+            Property p;
+            if (property.toLowerCase().contains("value") && lastKeyValue != null) {
+                p = Property.internalDate("aleapp:" + pluginName + "_" + lastKeyValue);
+            } else {
+                p = Property.internalDate("aleapp:" + pluginName + "_ts");
+            }
+            m.set(p, d);
+            return;
         }
 
         m.add("aleapp:" + property, value);
