@@ -60,13 +60,36 @@ public class PythonHook {
         return source;
     }
 
+    public void overrideFileOpen(Method method) {
+        String packageName = method.getDeclaringClass().getPackageName();
+        String className = method.getDeclaringClass().getSimpleName();
+        String methodName = method.getName();
+
+        jep.eval(contextWrapper);
+
+        StringBuffer def = new StringBuffer("lambda *args, **kwargs:");
+        def.append("ContextWrapper(");
+        def.append(className + "." + methodName + "(");
+        def.append("locals()['args'],locals()['kwargs']");
+        def.append(")");
+        def.append(")");
+
+        // overrides open
+        jep.eval("from " + packageName + " import " + className);
+        jep.eval("globals()['__builtins__']['oldopen']=globals()['__builtins__']['open']");
+        jep.eval("globals()['__builtins__']['open']=" + def);
+    }
+
     public void installHook() {
         jep.eval("import traceback");
         jep.eval("import sys");
         jep.eval("import importlib");
+        jep.eval("import builtins");
         jep.eval("from java.lang import System");
         jep.eval("from importlib.util import spec_from_loader");
+        jep.eval("from iped.utils.pythonhook import FileHook");
         jep.set("javahook", this);
+
         jep.eval(installHookClass);
 
         jep.eval("sys.meta_path.insert(0, ImphookFileLoader())");
@@ -107,7 +130,7 @@ public class PythonHook {
             + "            return None\n"
             + "    def create_module(self, spec):\n"
             + "        modules=spec.name.split('.')\n"
-            + "        with open(spec.origin+'/'+modules[len(modules)-1]+'.py',  encoding='utf8') as f:\n"
+            + "        with open(spec.origin+'/'+modules[len(modules)-1]+'.py') as f:\n"
             + "            source = f.read()\n"   
             + "        source = javahook.processHook(spec.origin, spec.name, source)\n"
             + "        if(source == None):\n"
@@ -193,6 +216,19 @@ public class PythonHook {
             + "                result = attr(*args)\n"
             + "                return result\n" + "            return newfunc\n" + "        else:\n"
             + "            return attr\n" + "";
+
+    private static String contextWrapper = "class ContextWrapper:\n" + "    def __init__(self, w):\n"
+            + "                self.wrapped = w\n" + "                pass\n"
+            + "    def __enter__(self):\n" + "        self.wrapped.enter()\n" + "        return self.wrapped\n"
+            + "    def __exit__(self, *args):\n"
+            + "        self.wrapped.exit(locals()['args'])\n"
+            + "    def __getattribute__(self, name):\n" + "        if(name == \"wrapped\"):\n"
+            + "            return object.__getattribute__(self, name)\n"
+            + "        attr = object.__getattribute__(self.wrapped, name)\n" + "        if hasattr(attr, '__call__'):\n"
+            + "            def newfunc(*args, **kwargs):\n" + "                a = list(args)\n"
+            + "                a.insert(0,self.wrapped)\n" + "                args = tuple(a)\n"
+            + "                result = attr(*args)\n" + "                return result\n"
+            + "            return newfunc\n" + "        else:\n" + "            return attr\n" + "";
 
 }
 
