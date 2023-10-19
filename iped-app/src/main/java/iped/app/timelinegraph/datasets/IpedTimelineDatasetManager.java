@@ -7,6 +7,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -89,6 +90,7 @@ public class IpedTimelineDatasetManager {
             Future<?> future = threadPool.submit(timeStampCache);
             // first loads the Day cache alone to speed up it, then run others in parallel
             if (first) {
+                first = false;
                 try {
                     future.get();
                 } catch (InterruptedException | ExecutionException e) {
@@ -97,6 +99,11 @@ public class IpedTimelineDatasetManager {
             }
         }
         threadPool.shutdown();
+        try {
+            threadPool.awaitTermination(12, TimeUnit.HOURS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     public TimeStampCache getCache() {
