@@ -366,12 +366,30 @@ public class LeappBridgeTask extends AbstractPythonTask {
         }
     }
 
+    static private void moveDir(File fromDir, File toDir) throws IOException {
+        toDir.mkdirs();
+        // moves the directory
+        try (DirectoryStream<Path> ds = Files.newDirectoryStream(fromDir.toPath())) {
+            for (Path child : ds) {
+                if (Files.isDirectory(child)) {
+                    Path targetFile = toDir.toPath().resolve(child.getFileName());
+                    moveDir(child.toFile(), targetFile.toFile());
+                } else {
+                    Path targetFile = toDir.toPath().resolve(child.getFileName());
+                    Files.move(child, targetFile);
+                }
+            }
+        }
+    }
+
     static HashSet<LeapArtifactsPlugin> processedPlugins = new HashSet<LeapArtifactsPlugin>();
 
     private void processPlugin(LeapArtifactsPlugin p, IItem evidence, IItem dumpEvidence, String dumpPath,
             File reportDumpPath) throws IOException {
         try {
-
+            // find files on dump that is needed by the plugin and exports them
+            // to tmp folder if needed. ALeapp plugins will work on
+            // these tmp copies of the files.
             List<String> filesFound = new ArrayList<String>();
             for (String pattern : p.patterns) {
                 IPEDSearcher filesSearcher = new IPEDSearcher(ipedCase);
@@ -421,7 +439,11 @@ public class LeappBridgeTask extends AbstractPythonTask {
 
                                 try {
                                     File file_found = new File(artfolder, artname);
-                                    Files.move(tmp, file_found);
+                                    if (!tmp.isDirectory()) {
+                                        Files.move(tmp.toPath(), file_found.toPath());
+                                    } else {
+                                        moveDir(tmp, file_found);
+                                    }
                                     filesFound.add(file_found.getCanonicalPath().replace("\\", "\\\\"));
                                 } catch (Exception e) {
                                     e.printStackTrace();
