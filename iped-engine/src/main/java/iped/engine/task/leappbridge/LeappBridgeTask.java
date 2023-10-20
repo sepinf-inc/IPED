@@ -19,6 +19,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.commons.lang.SystemUtils;
 import org.apache.lucene.document.Document;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.metadata.Metadata;
@@ -143,9 +144,9 @@ public class LeappBridgeTask extends AbstractPythonTask {
         File scriptsPath = new File(aleappPath, "scripts");
         File artifactsPath = new File(scriptsPath, "artifacts");
         if (artifactsPath.exists()) {
-            jep.eval("sys.path.append('" + aleappPath.getCanonicalPath().replace("\\", "\\\\") + "')");
-            jep.eval("sys.path.append('" + scriptsPath.getCanonicalPath().replace("\\", "\\\\") + "')");
-            jep.eval("sys.path.append('" + artifactsPath.getCanonicalPath().replace("\\", "\\\\") + "')");
+            jep.eval("sys.path.append('" + preparePythonLiteralPath(aleappPath.getCanonicalPath()) + "')");
+            jep.eval("sys.path.append('" + preparePythonLiteralPath(scriptsPath.getCanonicalPath()) + "')");
+            jep.eval("sys.path.append('" + preparePythonLiteralPath(artifactsPath.getCanonicalPath()) + "')");
             jep.eval("from geopy.geocoders import Nominatim");
 
             PythonHook pt = new PythonHook(jep);
@@ -191,7 +192,7 @@ public class LeappBridgeTask extends AbstractPythonTask {
 
                 File scriptsDir = new File(getAleappScriptsDir(), "scripts");
 
-                jep.eval("sys.path.append('" + scriptsDir.getCanonicalPath().replace("\\", "\\\\") + "')");
+                jep.eval("sys.path.append('" + preparePythonLiteralPath(scriptsDir.getCanonicalPath()) + "')");
 
                 jep.eval("import scripts.artifact_report");
                 jep.eval("from multiprocessing import Process");
@@ -384,6 +385,17 @@ public class LeappBridgeTask extends AbstractPythonTask {
 
     static HashSet<LeapArtifactsPlugin> processedPlugins = new HashSet<LeapArtifactsPlugin>();
 
+    static public String preparePythonLiteralPath(String path) {
+        if (SystemUtils.IS_OS_WINDOWS) {
+            // prepares to file path str to be used as a string literal inside python
+            return path.replace("\\", "\\\\");
+        } else {
+            // does not makes the replacement as the input does not uses "\" as path
+            // separator avoiding unnecessary CPU usage
+            return path;
+        }
+    }
+
     private void processPlugin(LeapArtifactsPlugin p, IItem evidence, IItem dumpEvidence, String dumpPath,
             File reportDumpPath) throws IOException {
         try {
@@ -425,7 +437,8 @@ public class LeappBridgeTask extends AbstractPythonTask {
                             if (tmp.getCanonicalPath().startsWith(sourcePath)) {
                                 reportDumpPath = new File(sourcePath);
                                 // the file returned by getTempFile() is the file itself
-                                filesFound.add(tmp.getCanonicalPath().replace("\\", "\\\\"));
+                                String fileStr = tmp.getCanonicalPath();
+                                filesFound.add(preparePythonLiteralPath(fileStr));
                                 // mappedEvidences.put(tmp.getCanonicalPath(), (Item) item);
                             } else {
                                 // the file returned by getTempFile() is a copy to the file in a temp folder
@@ -439,12 +452,10 @@ public class LeappBridgeTask extends AbstractPythonTask {
 
                                 try {
                                     File file_found = new File(artfolder, artname);
-                                    if (!tmp.isDirectory()) {
-                                        Files.move(tmp.toPath(), file_found.toPath());
-                                    } else {
-                                        moveDir(tmp, file_found);
-                                    }
-                                    filesFound.add(file_found.getCanonicalPath().replace("\\", "\\\\"));
+                                    Path slink = Files.createSymbolicLink(file_found.toPath(), tmp.toPath());
+                                    slink.toFile().deleteOnExit();
+                                    String fileStr = file_found.getCanonicalPath();
+                                    filesFound.add(preparePythonLiteralPath(fileStr));
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }
@@ -461,8 +472,8 @@ public class LeappBridgeTask extends AbstractPythonTask {
             } else {
                 Metadata m = evidence.getMetadata();
                 for (String file : filesFound) {
-                    String filel = file.substring(reportDumpPath.getCanonicalPath().replace("\\", "\\\\").length());
-                    filel = filel.replace("\\\\", "/");
+                    String filel = file.substring(preparePythonLiteralPath(reportDumpPath.getCanonicalPath()).length());
+                    filel = prepareIPEDLiteralPath(filel);
                     String filename = filel.substring(filel.lastIndexOf("/") + 1);
                     m.add(ExtraProperties.LINKED_ITEMS, "path:\"*" + filel + "\" && name:\"" + filename + "\"");
                 }
@@ -472,6 +483,14 @@ public class LeappBridgeTask extends AbstractPythonTask {
         } finally {
         }
 
+    }
+
+    private String prepareIPEDLiteralPath(String filel) {
+        if (SystemUtils.IS_OS_WINDOWS) {
+            return filel.replace("\\\\", "/");
+        } else {
+            return filel;
+        }
     }
 
     static HashMap<String, String> escapedFiles = new HashMap<String, String>();
