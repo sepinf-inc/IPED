@@ -253,7 +253,7 @@ public class IPEDReader extends DataSourceReader {
                     newIds.add(oldToNewIdMap[oldId]);
             reportState.addBookmark(newIds, newLabelId);
         }
-        reportState.saveState();
+        reportState.saveState(true);
     }
 
     private void insertParentTreeNodes(LuceneSearchResult result) throws Exception {
