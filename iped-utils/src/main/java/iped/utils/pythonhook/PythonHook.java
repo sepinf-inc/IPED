@@ -130,7 +130,7 @@ public class PythonHook {
             + "            return None\n"
             + "    def create_module(self, spec):\n"
             + "        modules=spec.name.split('.')\n"
-            + "        with open(spec.origin+'/'+modules[len(modules)-1]+'.py') as f:\n"
+            + "        with open(spec.origin+'/'+modules[len(modules)-1]+'.py',  encoding='utf8') as f:\n"
             + "            source = f.read()\n"   
             + "        source = javahook.processHook(spec.origin, spec.name, source)\n"
             + "        if(source == None):\n"
@@ -156,7 +156,8 @@ public class PythonHook {
             }
         }
         addModification(module, "def " + functionName, "def " + functionName
-                + "(" + params + "):\n    from " + packageName + " import " + className + "\n    " + className + "."
+                + "(" + params + "):\n    from " + packageName + " import " + className + "\n    return " + className
+                + "."
                 + methodName + "(" + params + ")\ndef " + functionName + "2");
     }
 

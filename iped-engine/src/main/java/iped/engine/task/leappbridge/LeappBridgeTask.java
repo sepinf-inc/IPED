@@ -19,7 +19,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.SystemUtils;
 import org.apache.lucene.document.Document;
 import org.apache.tika.io.TemporaryResources;
@@ -122,8 +121,14 @@ public class LeappBridgeTask extends AbstractPythonTask {
 
     }
 
-    public static void media_to_html(String mediaPath, Collection filesFound, String report_folder) {
-        ArtifactJavaReport.nope();
+    public static String media_to_html(String mediaPath, Collection filesFound, String report_folder) {
+        for (Object file : filesFound) {
+            if (file.toString().contains(mediaPath)) {
+                String resultado = "<a href=\"" + file.toString() + "\"></a>";
+                return resultado;
+            }
+        }
+        return "";
     }
 
     public static Object open(Collection args, Map kargs) {
@@ -221,6 +226,7 @@ public class LeappBridgeTask extends AbstractPythonTask {
                 jep.set("leappTask", this);
                 jep.set("moduleDir", this.output);
                 jep.set("pluginName", p.getModuleName());
+
                 jep.set("mappedEvidences", mappedEvidences);
 
                 jep.eval("logfunc('" + PLUGIN_EXECUTION_MESSAGE + ":" + p.getModuleName() + "')");
@@ -258,7 +264,7 @@ public class LeappBridgeTask extends AbstractPythonTask {
 
     @Override
     public String getName() {
-        return "LeappTask";
+        return "LeappBridgeTask";
     }
 
     static HashSet<String> dumpStartFolderNames = new HashSet<String>();
@@ -440,12 +446,8 @@ public class LeappBridgeTask extends AbstractPythonTask {
                             String sourcePath = new File(
                                     ipedCase.getCaseDir() + "/" + artdoc.get(IndexItem.SOURCE_PATH)).getCanonicalPath();
 
-                            if (j == 0 && tmp.getCanonicalPath().startsWith(sourcePath)) {
-                                // only the first item must be tested as the following will be in same subdir
-                                temporaryReportDumpPath = true;
-                            }
 
-                            if (!temporaryReportDumpPath) {
+                            if (tmp.getCanonicalPath().startsWith(sourcePath)) {
                                 reportDumpPath = new File(sourcePath);
                                 // the file returned by getTempFile() is the file itself
                                 String fileStr = tmp.getCanonicalPath();
@@ -565,11 +567,6 @@ public class LeappBridgeTask extends AbstractPythonTask {
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            try {
-                // clean temporary folder created when processing evidence
-                FileUtils.cleanDirectory(reportPath);
-            } catch (IOException e) {
-            }
         }
     }
 

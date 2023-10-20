@@ -218,21 +218,34 @@ public class ArtifactJavaReport {
         // some plugins have the linked item per artifact record
         if (value.startsWith(reportDumpPath.getCanonicalPath())) {
             String filel = value.toString().substring(reportDumpPath.getCanonicalPath().length());
-            filel = LeappBridgeTask.revertSpecialChars(filel).replace("/", "////");
-            String filename = filel.substring(filel.lastIndexOf("/") + 1);
-            m.add(ExtraProperties.LINKED_ITEMS, "path:\"*" + filel + "\" && name:\"" + filename + "\"");
-
-            m.add("aleapp:" + property, filel);
+            addLinkMetadata(m, property, filel);
             return;
         }
 
         int refpos = value.indexOf("href=");
+        int sizeTag = 5;
+        if (refpos == -1) {
+            refpos = value.indexOf("src=");
+            sizeTag = 4;
+        }
         if (refpos >= 0) {
-            String refFile = value.substring(refpos + 5);
-            String strDelimiter = refFile.substring(0, 1);
-            refFile = refFile.substring(1, refFile.indexOf(strDelimiter, 2));
+            String refFileStr = value.substring(refpos + sizeTag);// from end of "href=" till end
+            String strDelimiter = refFileStr.substring(0, 1); // read used string delimiter (quote or double quote)
+            refFileStr = refFileStr.substring(1, refFileStr.indexOf(strDelimiter, 2)); // to end string delimiter
 
-            if (refFile.startsWith(reportPath.getName())) {
+            if (refFileStr.startsWith("." + File.pathSeparator)) {
+                refFileStr = reportDumpPath + File.pathSeparator + refFileStr.substring(1);
+            }
+
+            File refFile = new File(refFileStr);
+
+            if (refFile.getCanonicalPath().startsWith(reportDumpPath.getCanonicalPath())) {
+                // the referenced file is an existent file inside the dump
+                // so adds a link to it
+                String filel = refFileStr.toString().substring(reportDumpPath.getCanonicalPath().length());
+                addLinkMetadata(m, filel);
+            } else if (refFileStr.startsWith(reportPath.getName())) {
+                // file is in report path.
                 byte[] bytes = Files
                         .readAllBytes(Path.of(reportPath.getParentFile().getAbsolutePath() + "/" + refFile));
 
@@ -273,6 +286,17 @@ public class ArtifactJavaReport {
         }
 
         m.add("aleapp:" + property, value);
+    }
+
+    private void addLinkMetadata(Metadata m, String filel) throws IOException {
+        filel = LeappBridgeTask.revertSpecialChars(filel).replace("/", "////");
+        String filename = filel.substring(filel.lastIndexOf("/") + 1);
+        m.add(ExtraProperties.LINKED_ITEMS, "path:\"*" + filel + "\" && name:\"" + filename + "\"");
+    }
+
+    private void addLinkMetadata(Metadata m, String property, String filel) throws IOException {
+        addLinkMetadata(m, filel);
+        m.add("aleapp:" + property, filel);
     }
 
     public void add_section_heading(String heading, int size) {
