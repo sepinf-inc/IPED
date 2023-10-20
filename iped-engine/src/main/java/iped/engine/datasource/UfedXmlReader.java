@@ -436,19 +436,9 @@ public class UfedXmlReader extends DataSourceReader {
             out.setTimeZone(TimeZone.getTimeZone("GMT")); //$NON-NLS-1$
         }
 
-        private DateFormat lastDateFormat = null;
-
         private Date parseDate(String value) throws ParseException {
-            if (lastDateFormat != null) {
-                try {
-                    return lastDateFormat.parse(value);
-                } catch (ParseException e) {
-                    // ignore
-                }
-            }
             for (DateFormat df : dfs) {
                 try {
-                    lastDateFormat = df;
                     return df.parse(value);
                 } catch (ParseException e) {
                     // ignore

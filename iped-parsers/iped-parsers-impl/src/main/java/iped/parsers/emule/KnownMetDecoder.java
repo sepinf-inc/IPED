@@ -8,16 +8,15 @@ import java.util.Date;
 import java.util.List;
 
 public class KnownMetDecoder {
-    private static boolean DEBUG = false;
-    private static int MAX_SIZE = 1 << 27;
-    private static final long dataMin = System.currentTimeMillis() - 1000L * 60 * 60 * 24 * 365 * 20; // Aprox. -20 anos
-    private static final long dataMax = System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 365 * 5; // Aprox. +5 anos
+    private static int MAX_SIZE = 1 << 28;
+    private static final long dataMin = System.currentTimeMillis() - 1000L * 60 * 60 * 24 * 365 * 30; // About -30 years
+    private static final long dataMax = System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 365 * 5; // About +5 years
 
     public static List<KnownMetEntry> parseToList(InputStream is) throws IOException {
-        return parseToList(is, MAX_SIZE);
+        return parseToList(is, MAX_SIZE, false);
     }
 
-    public static List<KnownMetEntry> parseToList(InputStream is, int maxSize) throws IOException {
+    public static List<KnownMetEntry> parseToList(InputStream is, int maxSize, boolean checkConstraints) throws IOException {
         List<KnownMetEntry> l = new ArrayList<KnownMetEntry>();
         byte[] block = new byte[1 << 20];
         byte[] b = new byte[0];
@@ -36,63 +35,50 @@ public class KnownMetDecoder {
         if (b.length < 5)
             return null;
         int numFiles = toInt(b, 1);
-        if (DEBUG)
-            System.err.println("   " + numFiles); //$NON-NLS-1$
         if (numFiles < 0) {
             return null;
         }
 
         int pos = 5;
-        for (int i = 0; i < numFiles; i++) {
-            if (DEBUG)
-                System.err.println("      " + i); //$NON-NLS-1$
+
+        while (pos < b.length) {
             KnownMetEntry entry = new KnownMetEntry();
-            int len = parseEntry(entry, pos, b);
+            int len = parseEntry(entry, pos, b, checkConstraints);
             if (len <= 0) {
                 pos++;
                 continue;
             }
             pos += len;
-            if (DEBUG)
-                System.err.println(entry);
             l.add(entry);
         }
         return l;
     }
 
-    public static int parseEntry(KnownMetEntry entry, int offset, byte[] b) {
+    public static int parseEntry(KnownMetEntry entry, int offset, byte[] b, boolean checkConstraints) {
         int pos = offset;
         long ms = toInt(b, pos) * 1000L;
-        if (ms < dataMin || ms > dataMax)
+        if (checkConstraints && (ms < dataMin || ms > dataMax))
             return 0;
         Date date = new Date(ms);
         entry.setLastModified(date);
         pos += 4;
-        if (DEBUG)
-            System.err.println("      " + date); //$NON-NLS-1$
 
         String hash = toHex(b, pos, 16);
         if (hash == null)
             return -1;
         entry.setHash(hash);
         pos += 16;
-        if (DEBUG)
-            System.err.println("      Hash=" + hash); //$NON-NLS-1$
 
         int numParts = toSmall(b, pos);
-        if (numParts > 4096 || numParts < 0)
+        if (checkConstraints && (numParts > 4096 || numParts < 0))
             return -2;
 
-        if (DEBUG)
-            System.err.println("      Parts=" + numParts); //$NON-NLS-1$
         pos += 2;
         pos += 16 * numParts;
 
         int numTags = toInt(b, pos);
-        if (numTags < 0 || numTags > 1024)
+        if (checkConstraints && (numTags < 0 || numTags > 1024))
             return -3;
-        if (DEBUG)
-            System.err.println("      Tags=" + numTags); //$NON-NLS-1$
 
         // For some files numTags is zero (or one), but the parser will try to read at least 
         // the first two tags, which should be the file name and its size. 
@@ -100,17 +86,11 @@ public class KnownMetDecoder {
             numTags = 2;
         
         pos += 4;
-        if (numTags > 0 && DEBUG)
-            System.err.println();
 
         for (int j = 0; j < numTags; j++) {
-            if (DEBUG)
-                System.err.println("          TagNum=" + j); //$NON-NLS-1$
             int tagType = toByte(b, pos);
             pos++;
             int tagId = 0;
-            if (DEBUG)
-                System.err.println("          TagType=" + tagType); //$NON-NLS-1$
             if ((tagType & 0x80) != 0) {
                 tagId = toByte(b, pos);
                 tagType &= 0x7F;
@@ -120,12 +100,8 @@ public class KnownMetDecoder {
                 pos += 2;
                 if (len == 1)
                     tagId = toByte(b, pos);
-                if (DEBUG)
-                    System.err.println("          TagLen=" + len); //$NON-NLS-1$
                 pos += len;
             }
-            if (DEBUG)
-                System.err.println("          TagID=" + Integer.toHexString(tagId)); //$NON-NLS-1$
             String strVal = null;
             int iVal = 0;
             long lVal = 0;
@@ -140,13 +116,9 @@ public class KnownMetDecoder {
                 if (strVal == null)
                     return -5;
                 pos += slen;
-                if (DEBUG)
-                    System.err.println("          Str=" + strVal); //$NON-NLS-1$
             } else if (tagType == 3) {
                 iVal = toInt(b, pos);
                 pos += 4;
-                if (DEBUG)
-                    System.err.println("          Int=" + iVal); //$NON-NLS-1$
             } else if (tagType == 4) {
                 pos += 4;
             } else if (tagType == 5) {
@@ -162,15 +134,9 @@ public class KnownMetDecoder {
             } else if (tagType == 11) {
                 lVal = toLong(b, pos);
                 pos += 8;
-                if (DEBUG)
-                    System.err.println("          Long=" + lVal); //$NON-NLS-1$
             } else {
-                if (DEBUG)
-                    System.err.println("TagType desconhecido = " + tagType); //$NON-NLS-1$
                 return -6;
             }
-            if (DEBUG)
-                System.err.println();
 
             if (tagId == 0x01) {
                 entry.setName(strVal);

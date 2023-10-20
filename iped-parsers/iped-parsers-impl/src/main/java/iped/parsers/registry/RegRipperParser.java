@@ -269,7 +269,7 @@ public class RegRipperParser extends AbstractParser {
             pb.directory(new File(TOOL_PATH));
         }
         Process p = pb.start();
-        IOUtil.ignoreInputStream(p.getErrorStream());
+        IOUtil.ignoreErrorStream(p);
         byte[] bytes = IOUtil.loadInputStream(p.getInputStream());
         return new String(bytes, StandardCharsets.ISO_8859_1).strip();
     }
@@ -302,16 +302,17 @@ public class RegRipperParser extends AbstractParser {
             public void run() {
                 byte[] out = new byte[1024];
                 int read = 0;
-                while (read != -1)
-                    try {
+                try {
+                    while (read != -1) {
                         if (os != null)
                             os.write(out, 0, read);
                         if (msg != null)
                             msg.progress = true;
                         read = stream.read(out);
-
-                    } catch (Exception e) {
                     }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         };
         t.start();

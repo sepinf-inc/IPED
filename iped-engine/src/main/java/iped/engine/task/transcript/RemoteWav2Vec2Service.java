@@ -46,7 +46,10 @@ public class RemoteWav2Vec2Service {
         ERROR,
         REGISTER,
         STATS,
-        WARN, VERSION_1_1, PING
+        WARN, VERSION_1_1,
+        VERSION_1_2,
+        VERSION_1_0,
+        PING
     }
     
     static class OpenConnectons {
@@ -275,26 +278,25 @@ public class RemoteWav2Vec2Service {
                         BufferedInputStream bis = null;
                         boolean error = false;
                         OpenConnectons opc = null;
+                        String protocol = MESSAGES.VERSION_1_0.toString();
                         try {
                             client.setSoTimeout(CLIENT_TIMEOUT_MILLIS);
                             bis = new BufferedInputStream(client.getInputStream());
                             writer = new PrintWriter(
                                     new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8), true);
 
-
-
-
-                            String clientName = "Client " + client.getInetAddress().getHostAddress() + ":" + client.getPort();
+                            String clientName = "Client " + client.getInetAddress().getHostAddress() + ":"
+                                    + client.getPort();
                             String prefix = clientName + " - ";
                             writer.println(MESSAGES.ACCEPTED);
 
                             bis.mark(5);
                             if (bis.read() == -1) {
                                 logger.info(prefix + "Possible Kubernetes live test");
+                                requestsReceived.decrementAndGet();
                                 return;
                             }
                             bis.reset();
-
 
                             requestsAccepted.incrementAndGet();
 
@@ -306,41 +308,56 @@ public class RemoteWav2Vec2Service {
                             bis.mark(min + 1);
                             byte[] bytes = bis.readNBytes(min);
                             String cmd = new String(bytes);
-                            
-                            if (MESSAGES.VERSION_1_1.toString().startsWith(cmd)) {
+                            if (!MESSAGES.AUDIO_SIZE.toString().startsWith(cmd)) {
                                 bis.reset();
                                 bytes = bis.readNBytes(MESSAGES.VERSION_1_1.toString().length());
-                                cmd = new String(bytes);
-
-                                logger.info("Protocol Version {}", cmd);
-
+                                protocol = new String(bytes);
+                                bis.mark(min + 1);
                                 synchronized (beaconQueq) {
                                     opc = new OpenConnectons(client, bis, writer, this);
                                     beaconQueq.add(opc);
                                 }
 
-                                bytes = bis.readNBytes(MESSAGES.AUDIO_SIZE.toString().length());
-                                cmd = new String(bytes);
-
-                            } else {
-                                logger.info("Protocol Version VERSION_1_0");
                             }
+                            logger.info("Protocol Version {}", protocol);
 
-                            
+                            // read the audio_size message
+                            bis.reset();
+                            bytes = bis.readNBytes(MESSAGES.AUDIO_SIZE.toString().length());
+                            cmd = new String(bytes);
+
                             if (!MESSAGES.AUDIO_SIZE.toString().equals(cmd)) {
                                 error = true;
                                 throw new IOException("Size msg not received!");
                             }
 
                             DataInputStream dis = new DataInputStream(bis);
-                            int size = dis.readInt();
+                            long size;
+                            if (protocol.compareTo(MESSAGES.VERSION_1_2.toString()) >= 0) {
+                                size = dis.readLong();
+                            } else {
+                                size = dis.readInt();
+                            }
+                            if (size < 0) {
+                                error = true;
+                                try {
+                                    OutputStream o = OutputStream.nullOutputStream();
+                                    IOUtil.copyInputToOutputStream(dis, o);
+                                    o.close();
+
+                                } catch (IOException e) {
+                                }
+                                throw new Exception("Invalid file size: " + size);
+
+                            }
 
                             logger.info(prefix + "Receiving " + new DecimalFormat().format(size) + " bytes...");
 
                             tmpFile = Files.createTempFile("audio", ".tmp");
                             try (OutputStream os = Files.newOutputStream(tmpFile)) {
                                 byte[] buf = new byte[8192];
-                                int i = 0, read = 0;
+                                int i = 0;
+                                long read = 0;
                                 while (read < size && (i = bis.read(buf)) >= 0) {
                                     os.write(buf, 0, i);
                                     read += i;
@@ -397,15 +414,26 @@ public class RemoteWav2Vec2Service {
                             writer.println(Double.toString(result.score));
                             writer.println(result.text);
                             writer.println(MESSAGES.DONE);
-
+                            writer.flush();
                             logger.info(prefix + "Transcritpion sent.");
 
                         } catch (Exception e) {
                             String errorMsg = "Exception while transcribing";
                             logger.warn(errorMsg, e);
                             if (writer != null) {
-                                writer.println(error ? MESSAGES.ERROR : MESSAGES.WARN);
-                                writer.println(errorMsg + ": " + e.toString().replace('\n', ' ').replace('\r', ' '));
+
+                                if (e.getMessage() != null && e.getMessage().startsWith("Invalid file size:")
+                                        && protocol.compareTo(MESSAGES.VERSION_1_2.toString()) < 0) {
+                                    writer.println("0");
+                                    writer.println(
+                                            "Audios longer than 2GB are not supported by old clients, please update your client version!");
+                                    writer.println(MESSAGES.DONE);
+                                } else {
+                                    writer.println(error ? MESSAGES.ERROR : MESSAGES.WARN);
+                                    writer.println(
+                                            errorMsg + ": " + e.toString().replace('\n', ' ').replace('\r', ' '));
+                                }
+                                writer.flush();
                             }
                         } finally {
                             jobs.decrementAndGet();

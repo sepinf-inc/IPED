@@ -51,7 +51,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     }
 
     @Parameter(names = { "-d", "-data" }, description = "input data (can be used multiple times): "
-            + "folder, DD, 001, E01 images (+AFF on Linux), ISO, physical drive, "
+            + "DD, 001, E01, Ex01, VHD, VHDX, VMDK, Physical Drive, ISO, AFF (on Linux), AD1, UFDR, folder "
             + "or *.iped file (with tagged files to export and reindex)", validateWith = DatasourceExistsValidator.class, order = 0, splitter = NoSplitter.class)
     private List<File> datasources;
 

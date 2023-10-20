@@ -145,6 +145,8 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
     private static final int MAX_SUBITEM_DEPTH = 100;
     private static final String SUBITEM_DEPTH = "subitemDepth"; //$NON-NLS-1$
 
+    private static final String PARENT_CONTAINER_HASH = "PARENT_CONTAINER_HASH";
+
     /**
      * Max number of containers expanded concurrently. Configured to be half the
      * number of workers or external parsing processes if enabled. See
@@ -366,6 +368,11 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
                 super.reEnqueueItem(evidence);
                 return;
             }
+            // Don't expand subitem if its hash is equal to parent container hash, could lead to infinite recursion.
+            // See https://github.com/sepinf-inc/IPED/issues/1814
+            if (evidence.isSubItem() && evidence.getHash() != null && evidence.getHash().equals(evidence.getTempAttribute(PARENT_CONTAINER_HASH))) {
+                return;
+            }
         }
 
         TikaInputStream tis = null;
@@ -581,6 +588,9 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
 
             // root has children
             evidence.setHasChildren(true);
+
+            // see https://github.com/sepinf-inc/IPED/issues/1814
+            subItem.setTempAttribute(PARENT_CONTAINER_HASH, evidence.getHash());
 
             // protection for future concurrent access, see #794
             metadata = new SyncMetadata(metadata);

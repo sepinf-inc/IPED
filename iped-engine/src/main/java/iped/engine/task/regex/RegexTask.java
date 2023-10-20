@@ -303,11 +303,11 @@ public class RegexTask extends AbstractTask {
             while (fullMatcher.find()) {
                 int start = fullMatcher.start();
                 int end = fullMatcher.end();
-                String hit = text.substring(start, end);
+                String fullHit = text.substring(start, end);
                 int i = 0;
                 for (Regex regex : regexList) {
-                    if (regex.pattern.run(hit)) {
-                        hit = hit.substring(regex.prefix, hit.length() - regex.sufix);
+                    if (regex.pattern.run(fullHit)) {
+                        String hit = fullHit.substring(regex.prefix, fullHit.length() - regex.sufix);
                         if (regex.ignoreCases)
                             hit = hit.toLowerCase();
                         if (regexValidator.validate(regex, hit)) {

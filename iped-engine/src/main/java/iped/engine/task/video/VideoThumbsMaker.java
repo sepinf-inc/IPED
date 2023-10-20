@@ -13,6 +13,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -92,6 +93,7 @@ public class VideoThumbsMaker {
 
         boolean fixed = false;
         File lnk = null;
+        File subTmpFile = null;
         String videoStream = null;
         for (int step = numFrames <= 0 ? 0 : 1; step <= 1; step++) {
             if (step == 1) {
@@ -129,6 +131,25 @@ public class VideoThumbsMaker {
                     cmds.set(cmds.size() - 1, in.getPath());
                     step--;
                     continue;
+                }
+                if (inOrg.getAbsolutePath().length() > 256) {
+                    subTmpFile = File.createTempFile("_temp_video_", ".tmp", subTmp);
+                    subTmpFile.deleteOnExit();
+                    if (verbose) {
+                        System.err.println("Using temp file = " + subTmpFile); //$NON-NLS-1$
+                    }
+                    try {
+                        Files.copy(inOrg.toPath(), subTmpFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                        in = subTmpFile;
+                        cmds.set(cmds.size() - 1, in.getPath());
+                        step--;
+                        continue;
+                    } catch (IOException e) {
+                        if (verbose) {
+                            System.err.println("Error copying to temp a file with long path: " + inOrg.toPath()); //$NON-NLS-1$
+                            e.printStackTrace();
+                        }
+                    }
                 }
             }
             if (info != null) {
@@ -339,6 +360,9 @@ public class VideoThumbsMaker {
         }
         if (lnk != null) {
             lnk.delete();
+        }
+        if (subTmpFile != null) {
+            subTmpFile.delete();
         }
         if (images.size() == 0) {
             return result;

@@ -191,6 +191,14 @@ public class AppMain {
                 startUpControlClient = null;
             }
             
+            if (!App.get().isVisible()) {
+                if (processingManager != null) {
+                    return;
+                } else {
+                    System.exit(1);
+                }
+            }
+
             UICaseDataLoader init = new UICaseDataLoader(processingManager);
             init.execute();
 
