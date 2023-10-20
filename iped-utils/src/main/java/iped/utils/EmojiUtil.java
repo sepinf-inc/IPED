@@ -22,6 +22,12 @@ public class EmojiUtil {
     private static final Map<String, String> base64ImagesPerCode = new HashMap<String, String>();
     private static final AtomicBoolean init = new AtomicBoolean();
 
+    public static String replaceByImages(String inStr) {
+        byte[] inBytes = inStr.getBytes(StandardCharsets.UTF_8);
+        byte[] outBytes = replaceByImages(inBytes);
+        return new String(outBytes, StandardCharsets.UTF_8);
+    }
+
     public static byte[] replaceByImages(byte[] inBytes) {
         synchronized (init) {
             if (!init.get()) {
@@ -37,12 +43,18 @@ public class EmojiUtil {
             Set<String> usedEmojis = new HashSet<String>();
             Map<Integer, String> replacedLines = new HashMap<Integer, String>();
             int idx = 0;
+            boolean insidePrev = false;
             while ((s = in.readLine()) != null) {
                 final int len = s.length();
                 boolean found = false;
+                boolean inside = insidePrev;
                 for (int i = 0; i < len;) {
                     int c = s.codePointAt(i);
-                    if (c > 0x2000 && base64ImagesPerCode.containsKey(format(c))) {
+                    if (c == '<') {
+                        inside = true;
+                    } else if (c == '>') {
+                        inside = false;
+                    } else if (!inside && c > 0x2000 && base64ImagesPerCode.containsKey(format(c))) {
                         found = true;
                         break;
                     }
@@ -52,9 +64,14 @@ public class EmojiUtil {
                     StringBuilder line = new StringBuilder();
                     StringBuilder sb = new StringBuilder();
                     String key = "";
+                    inside = insidePrev;
                     for (int i = 0; i < len;) {
                         int c = s.codePointAt(i);
-                        if (c > 0x2000) {
+                        if (c == '<') {
+                            inside = true;
+                        } else if (c == '>') {
+                            inside = false;
+                        } else if (!inside && c > 0x2000) {
                             sb.delete(0, sb.length());
                             sb.append(format(c));
                             if (base64ImagesPerCode.containsKey(sb.toString())) {
@@ -89,6 +106,7 @@ public class EmojiUtil {
                     }
                     replacedLines.put(idx, line.toString());
                 }
+                insidePrev = inside;
                 idx++;
             }
             if (!replacedLines.isEmpty()) {
@@ -114,7 +132,7 @@ public class EmojiUtil {
                         }
                     } else if (!bodyFound) {
                         out.println(s);
-                        if (s.indexOf("<body>") >= 0) {
+                        if (s.indexOf("<body") >= 0) {
                             bodyFound = true;
                         }
                     } else {

@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.StringTokenizer;
 import java.util.TimeZone;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -63,7 +62,6 @@ import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.util.BytesRef;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.LegendItem;
 import org.jfree.chart.LegendItemCollection;
@@ -89,7 +87,6 @@ import org.jfree.data.xy.XYDataset;
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
 import bibliothek.gui.dock.common.event.CDockableLocationEvent;
 import bibliothek.gui.dock.common.event.CDockableLocationListener;
-import iped.app.timelinegraph.cache.IndexTimeStampCache;
 import iped.app.timelinegraph.datasets.AsynchronousDataset;
 import iped.app.timelinegraph.datasets.IpedTimelineDatasetManager;
 import iped.app.timelinegraph.popups.LegendItemPopupMenu;
@@ -105,7 +102,6 @@ import iped.engine.task.index.IndexItem;
 import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
 import iped.properties.BasicProps;
-import iped.properties.ExtraProperties;
 import iped.utils.IconUtil;
 import iped.viewers.api.GUIProvider;
 import iped.viewers.api.IMultiSearchResultProvider;
@@ -136,8 +132,8 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     static String ordToEventName[];
     static private HashMap<String, Integer> eventNameToOrd = new HashMap<>();
     AtomicBoolean dataSetUpdated = new AtomicBoolean();
-
-    boolean isUpdated = true;
+    AtomicBoolean loadingCacheStarted = new AtomicBoolean();
+    volatile boolean isUpdated = true;
 
     String[] timeFields = { BasicProps.TIMESTAMP, BasicProps.TIME_EVENT };
     LegendItemPopupMenu legendItemPopupMenu = null;
@@ -359,25 +355,6 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         if (ipedTimelineDatasetManager == null) {
             ipedTimelineDatasetManager = new IpedTimelineDatasetManager(this);
         }
-        
-        //Call refreshchart on init to load cache for first timeline exhibition.
-        Runnable r = new Runnable() {
-            @Override
-            public void run() {
-                Date d1 = new Date();
-                logger.info("Starting to load time cache of Day time period...");
-                try {
-                    refreshChart().get();
-                } catch (InterruptedException | ExecutionException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-                Date d2 = new Date();
-                logger.info("Loaded time cache of Day time period in {}ms",d2.getTime()-d1.getTime());
-            }
-        };
-        Thread t = new Thread(r);
-        t.start();//call to load day cache in background
     }
 
     public String getTimeEventColumnName(String timeEvent) {
@@ -473,8 +450,10 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         try {
             IpedChartsPanel self = this;
 
-            self.remove(splitPane);// .setVisible(false);
+            self.remove(splitPane);
+            self.remove(loadingLabel);
             self.add(loadingLabel);
+            self.repaint();
 
             if (swRefresh != null) {
                 synchronized (swRefresh) {
@@ -537,8 +516,9 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
                                 isUpdated = true;
                             }
 
-                            if (chart != null) {
+                            if (chart != null && !isCancelled()) {
                                 self.remove(loadingLabel);
+                                self.remove(splitPane);
                                 self.add(splitPane);
                                 splitPane.setTopComponent(chartPanel);
                                 splitPane.setBottomComponent(listScroller);
@@ -607,7 +587,16 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
             @Override
             public void changed(CDockableLocationEvent dockableEvent) {
                 if (!isUpdated && dockableEvent.isShowingChanged()) {
-                    self.refreshChart();
+                    refreshChart();
+                    if (!loadingCacheStarted.getAndSet(true)) {
+                        Runnable r = new Runnable() {
+                            @Override
+                            public void run() {
+                                ipedTimelineDatasetManager.startCacheCreation();
+                            }
+                        };
+                        new Thread(r).start();
+                    }
                 }
             }
         };
@@ -728,16 +717,16 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
                     if (timeEventGroupValues != null) {
                         TermsEnum te = timeEventGroupValues.termsEnum();
                         ordToEventName = new String[(int) timeEventGroupValues.getValueCount()];
-                        int j=0;
-                        while (j<timeEventGroupValues.getValueCount()) {
+                        int j = 0;
+                        while (j < timeEventGroupValues.getValueCount()) {
                             String eventType = timeEventGroupValues.lookupOrd(j).utf8ToString();
-                            ordToEventName[j]=eventType;
-                            eventNameToOrd.put(eventType,j);
+                            ordToEventName[j] = eventType;
+                            eventNameToOrd.put(eventType, j);
                             for (int i = 0; i < columnsArray.length; i++) {
                                 if (columnsArray[i].toLowerCase().equals(eventType)) {
                                     timeEventColumnNamesList.put(eventType, columnsArray[i]);
                                 }
-                            }                            
+                            }
                             j++;
                         }
                     }
@@ -763,7 +752,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         }
         if (!dataSetUpdated.getAndSet(true)) {
             new Thread(populateEventNames).start();
-            ipedTimelineDatasetManager.startBackgroundCacheCreation();
+            ipedTimelineDatasetManager.startCacheCreation();
         }
 
         if (internalUpdate) {
@@ -960,7 +949,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
     @Override
     public void clearFilter() {
-        chartPanel.removeAllFilters();
+        chartPanel.removeAllFilters(false);
     }
 
     @Override

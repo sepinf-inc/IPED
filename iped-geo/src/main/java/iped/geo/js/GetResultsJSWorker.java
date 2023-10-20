@@ -19,8 +19,12 @@ import javax.swing.SortOrder;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.lucene.document.Document;
 import org.apache.tika.metadata.Metadata;
+import org.roaringbitmap.RoaringBitmap;
 
 import iped.data.IItemId;
+import iped.engine.data.IPEDMultiSource;
+import iped.engine.data.IPEDSource;
+import iped.engine.search.MultiSearchResult;
 import iped.geo.AbstractMapCanvas;
 import iped.geo.kml.KMLResult;
 import iped.geo.localization.Messages;
@@ -43,20 +47,27 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
     private double minlat;
     private double maxlat;
 
+    RoaringBitmap[] lastResultBitmap = null;
+    private IPEDMultiSource msource;
+
     public GetResultsJSWorker(IMultiSearchResultProvider app, String[] colunas, JProgressBar progress, AbstractMapCanvas browserCanvas, Consumer consumer) {
         this.app = app;
         this.colunas = colunas;
         this.progress = progress;
         this.browserCanvas = browserCanvas;
         this.consumer = consumer;
+
+        int sourceId = 0;
+        msource = (IPEDMultiSource) this.app.getIPEDSource();
     }
 
     @Override
     public void done() {
         if (consumer != null) {
-            Object result = null;
+            Object[] result = new Object[2];
             try {
-                result = this.get();
+                result[0] = this.get();
+                result[1] = lastResultBitmap;
             } catch (Exception e) {
                 if (e instanceof CancellationException) {
 
@@ -118,7 +129,7 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
             String query = ExtraProperties.LOCATIONS.replace(":", "\\:") + ":*";
 
             IIPEDSearcher searcher = app.createNewSearch(query);
-            IMultiSearchResult multiResult = searcher.multiSearch();
+            MultiSearchResult multiResult = (MultiSearchResult) searcher.multiSearch();
 
             Map<IItemId, List<Integer>> gpsItems = new HashMap<>();
             for (IItemId item : multiResult.getIterator()) {
@@ -346,6 +357,12 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
             int batchSize = 1000;
             Semaphore sem = new Semaphore(batchSize);
 
+            List<IPEDSource> sources = msource.getAtomicSources();
+            lastResultBitmap = new RoaringBitmap[sources.size()];
+            for (int i = 0; i < sources.size(); i++) {
+                lastResultBitmap[i] = new RoaringBitmap();
+            }
+
             for (int row = 0; row < results.getLength(); row++) {
                 if (isCancelled()) {
                     return null;
@@ -376,6 +393,7 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
                             }
 
                             IItemId item = results.getItem(finalRow);
+                            lastResultBitmap[item.getSourceId()].add(item.getId());
 
                             int luceneId = app.getIPEDSource().getLuceneId(item);
                             Document doc = app.getIPEDSource().getSearcher().doc(luceneId);
