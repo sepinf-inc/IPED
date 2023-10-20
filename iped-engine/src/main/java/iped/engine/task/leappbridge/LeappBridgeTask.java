@@ -19,6 +19,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.SystemUtils;
 import org.apache.lucene.document.Document;
 import org.apache.tika.io.TemporaryResources;
@@ -399,6 +400,8 @@ public class LeappBridgeTask extends AbstractPythonTask {
     private void processPlugin(LeapArtifactsPlugin p, IItem evidence, IItem dumpEvidence, String dumpPath,
             File reportDumpPath) throws IOException {
         try {
+            boolean temporaryReportDumpPath = false;
+
             // find files on dump that is needed by the plugin and exports them
             // to tmp folder if needed. ALeapp plugins will work on
             // these tmp copies of the files.
@@ -420,6 +423,7 @@ public class LeappBridgeTask extends AbstractPythonTask {
                     Document artdoc = ipedCase.getReader().document(artLuceneId);
                     String decoded = artdoc.get(iped.properties.ExtraProperties.DECODED_DATA);
                     if (decoded == null || !decoded.equals("true")) {
+                        // only raw files are expected by ALeapp plugin (not iped extracted items)
                         String artpath = artdoc.get(BasicProps.PATH).substring(dumpPath.length());
 
                         artpath = replaceSpecialChars(artpath);
@@ -432,9 +436,16 @@ public class LeappBridgeTask extends AbstractPythonTask {
                         if (pluginsManager.hasPatternMatch(artpath, p)) {
                             IItem item = ipedCase.getItemByLuceneID(artLuceneId);
                             File tmp = item.getTempFile();
+
                             String sourcePath = new File(
                                     ipedCase.getCaseDir() + "/" + artdoc.get(IndexItem.SOURCE_PATH)).getCanonicalPath();
-                            if (tmp.getCanonicalPath().startsWith(sourcePath)) {
+
+                            if (j == 0 && tmp.getCanonicalPath().startsWith(sourcePath)) {
+                                // only the first item must be tested as the following will be in same subdir
+                                temporaryReportDumpPath = true;
+                            }
+
+                            if (!temporaryReportDumpPath) {
                                 reportDumpPath = new File(sourcePath);
                                 // the file returned by getTempFile() is the file itself
                                 String fileStr = tmp.getCanonicalPath();
@@ -452,8 +463,17 @@ public class LeappBridgeTask extends AbstractPythonTask {
 
                                 try {
                                     File file_found = new File(artfolder, artname);
-                                    Path slink = Files.createSymbolicLink(file_found.toPath(), tmp.toPath());
-                                    slink.toFile().deleteOnExit();
+                                    if (!file_found.exists()) {
+                                        // if the file wasn't already placed by prior iterations, move it
+
+                                        file_found.getParentFile().mkdirs();
+                                        // try to move if exception is thrown on symbolic link creation
+                                        if (!tmp.isDirectory()) {
+                                            Files.move(tmp.toPath(), file_found.toPath());
+                                        } else {
+                                            moveDir(tmp, file_found);
+                                        }
+                                    }
                                     String fileStr = file_found.getCanonicalPath();
                                     filesFound.add(preparePythonLiteralPath(fileStr));
                                 } catch (Exception e) {
@@ -545,6 +565,11 @@ public class LeappBridgeTask extends AbstractPythonTask {
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
+            try {
+                // clean temporary folder created when processing evidence
+                FileUtils.cleanDirectory(reportPath);
+            } catch (IOException e) {
+            }
         }
     }
 
