@@ -1,7 +1,6 @@
 package iped.app.timelinegraph.swingworkers;
 
 import java.awt.Dialog.ModalityType;
-import java.util.BitSet;
 import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -11,6 +10,7 @@ import javax.swing.JTable;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.roaringbitmap.RoaringBitmap;
 
 import iped.app.timelinegraph.IpedDateAxis;
 import iped.app.ui.App;
@@ -29,13 +29,18 @@ public class BitSetHighlightWorker extends CancelableWorker<Void, Void> {
 
     IMultiSearchResultProvider resultsProvider;
     IpedDateAxis domainAxis;
-    BitSet bs;
+    RoaringBitmap bs;
     boolean clearPreviousItemsHighlighted;
     ProgressDialog progressDialog;
     boolean highlight = true;
     JTable t = null;
 
-    public BitSetHighlightWorker(IpedDateAxis domainAxis, IMultiSearchResultProvider resultsProvider, BitSet bs, boolean highlight, boolean clearPreviousSelection) {
+    public String getProgressNote() {
+        return Messages.get("TimeLineGraph.highlightingItemsProgressLabel");
+    }
+
+    public BitSetHighlightWorker(IpedDateAxis domainAxis, IMultiSearchResultProvider resultsProvider, RoaringBitmap bs,
+            boolean highlight, boolean clearPreviousSelection) {
         this.resultsProvider = resultsProvider;
         this.t = resultsProvider.getResultsTable();
         this.clearPreviousItemsHighlighted = clearPreviousSelection;
@@ -44,7 +49,8 @@ public class BitSetHighlightWorker extends CancelableWorker<Void, Void> {
         this.domainAxis = domainAxis;
     }
 
-    public BitSetHighlightWorker(IpedDateAxis domainAxis, IMultiSearchResultProvider resultsProvider, BitSet bs, boolean clearPreviousSelection) {
+    public BitSetHighlightWorker(IpedDateAxis domainAxis, IMultiSearchResultProvider resultsProvider, RoaringBitmap bs,
+            boolean clearPreviousSelection) {
         this(domainAxis, resultsProvider, bs, true, clearPreviousSelection);
     }
 
@@ -55,7 +61,7 @@ public class BitSetHighlightWorker extends CancelableWorker<Void, Void> {
     @Override
     protected Void doInBackground() throws Exception {
         progressDialog = new ProgressDialog(App.get(), this, true, 0, ModalityType.TOOLKIT_MODAL);
-        progressDialog.setNote(Messages.get("TimeLineGraph.highlightingItemsProgressLabel"));
+        progressDialog.setNote(getProgressNote());
         doProcess();
         return null;
     }
@@ -86,10 +92,10 @@ public class BitSetHighlightWorker extends CancelableWorker<Void, Void> {
 
     class SelectionSlice implements Runnable {
         int start = 0;
-        BitSet bs;
+        RoaringBitmap bs;
         private Semaphore sem;
 
-        public SelectionSlice(BitSet bs, int start, Semaphore sem) {
+        public SelectionSlice(RoaringBitmap bs, int start, Semaphore sem) {
             this.start = start;
             this.bs = bs;
             this.sem = sem;
@@ -109,7 +115,7 @@ public class BitSetHighlightWorker extends CancelableWorker<Void, Void> {
                         }
                         progressDialog.setProgress(count.value++);
                         int docid = resultsProvider.getIPEDSource().getLuceneId(resultsProvider.getResults().getItem(i));
-                        if (bs.get(docid)) {
+                        if (bs.contains(docid)) {
                             processResultsItem(t, i);
                         }
                     } catch (Exception e) {
@@ -130,7 +136,7 @@ public class BitSetHighlightWorker extends CancelableWorker<Void, Void> {
     }
 
     // process docids on BitSet parameter in parallel
-    public void highlightDocIdsParallel(BitSet bs, boolean highlight, boolean clearPreviousSelection) {
+    public void highlightDocIdsParallel(RoaringBitmap bs, boolean highlight, boolean clearPreviousSelection) {
         Date d1 = new Date();
 
         ExecutorService executor = Executors.newFixedThreadPool(1);
@@ -162,7 +168,7 @@ public class BitSetHighlightWorker extends CancelableWorker<Void, Void> {
     }
 
     // process docids on BitSet parameter sequentially
-    public void highlightDocIds(BitSet bs, boolean highlight, boolean clearPreviousSelection) {
+    public void highlightDocIds(RoaringBitmap bs, boolean highlight, boolean clearPreviousSelection) {
         Date d1 = new Date();
 
         t.getSelectionModel().setValueIsAdjusting(true);
@@ -177,7 +183,7 @@ public class BitSetHighlightWorker extends CancelableWorker<Void, Void> {
                     break;
                 }
                 progressDialog.setProgress(i);
-                if (bs.get(i)) {
+                if (bs.contains(i)) {
                     processResultsItem(t, i);
                 }
             }

@@ -752,7 +752,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         }
         if (!dataSetUpdated.getAndSet(true)) {
             new Thread(populateEventNames).start();
-            // ipedTimelineDatasetManager.startBackgroundCacheCreation();
+            ipedTimelineDatasetManager.startCacheCreation();
         }
 
         if (internalUpdate) {
@@ -1085,5 +1085,5 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     public static String[] getOrdToEventName() {
         return ordToEventName;
     }
-
+    
 }

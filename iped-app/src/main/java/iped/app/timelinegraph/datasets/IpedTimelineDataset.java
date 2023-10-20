@@ -39,6 +39,7 @@ import org.jfree.data.xy.AbstractIntervalXYDataset;
 import org.jfree.data.xy.IntervalXYDataset;
 import org.jfree.data.xy.TableXYDataset;
 import org.jfree.data.xy.XYDomainInfo;
+import org.roaringbitmap.RoaringBitmap;
 
 import iped.app.timelinegraph.DateUtil;
 import iped.app.timelinegraph.IpedChartPanel;
@@ -57,6 +58,7 @@ import iped.data.IIPEDSource;
 import iped.data.IItemId;
 import iped.data.IMultiBookmarks;
 import iped.engine.data.IPEDMultiSource;
+import iped.engine.data.IPEDSource;
 import iped.engine.data.ItemId;
 import iped.engine.search.MultiSearchResult;
 import iped.search.IMultiSearchResult;
@@ -999,6 +1001,31 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
         // clone.values = (DefaultKeyedValues2D) this.values.clone();
         clone.workingCalendar = (Calendar) this.workingCalendar.clone();
         return clone;
+    }
+
+    public List<IItemId> bitSetItems(String eventType, RoaringBitmap bs) {
+        StringBuffer timeFilter = new StringBuffer();
+        timeFilter.append("timeEvent:\"");
+        timeFilter.append(eventType + "\"");
+
+        CaseSearcherFilter csf = new CaseSearcherFilter(timeFilter.toString());
+        csf.applyUIQueryFilters(exceptThis);
+        csf.execute();
+        try {
+            IMultiSearchResultProvider msrp = ipedChartsPanel.getResultsProvider();
+            IPEDSource is = (IPEDSource) msrp.getIPEDSource();
+
+            MultiSearchResult resultSet = (MultiSearchResult) csf.get();
+            List<IItemId> result = new ArrayList<IItemId>();
+            for (int i = 0; i < resultSet.getLength(); i++) {
+                IItemId itemId = resultSet.getItem(i);
+                bs.add(is.getLuceneId(itemId));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
     public List<IItemId> getItems(int item, int seriesId) {
