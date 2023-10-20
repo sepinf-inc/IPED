@@ -3,6 +3,9 @@ package iped.engine.task.leappbridge;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -22,8 +25,6 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.io.Files;
 
 import iped.configuration.Configurable;
 import iped.data.IItem;
@@ -290,7 +291,6 @@ public class LeappBridgeTask extends AbstractPythonTask {
                 psubItem.setSubItem(true);
                 psubItem.setSubitemId(1);
                 psubItem.getMetadata().set(ALEAPP_PLUGIN, moduleName);
-                psubItem.setHasChildren(true);
                 psubItem.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
                 worker.processNewItem(psubItem);
             }
@@ -475,6 +475,11 @@ public class LeappBridgeTask extends AbstractPythonTask {
             String dumpPath = dumpEvidence.getPath();
 
             processPlugin(p, evidence, dumpEvidence, dumpPath, reportDumpPath);
+
+            if (!evidence.hasChildren()) {
+                evidence.setToIgnore(true);
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
         } finally {

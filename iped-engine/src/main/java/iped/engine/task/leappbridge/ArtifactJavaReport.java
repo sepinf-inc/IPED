@@ -116,7 +116,11 @@ public class ArtifactJavaReport {
     public void write_artifact_data_table(Object headers, Object data_list, String file) {
         if (data_list != null) {
             if (data_list instanceof Collection) {
-                for (Object data_fields : (Collection) data_list) {
+                Collection coll = (Collection) data_list;
+                if (coll.size() > 0) {
+                    pluginEvidence.setHasChildren(true);
+                }
+                for (Object data_fields : coll) {
                     lastKeyValue = null;
                     write_artifact_data_item(headers, data_fields, file);
                 }
