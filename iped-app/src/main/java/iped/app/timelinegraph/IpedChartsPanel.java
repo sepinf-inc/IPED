@@ -752,7 +752,6 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         }
         if (!dataSetUpdated.getAndSet(true)) {
             new Thread(populateEventNames).start();
-            ipedTimelineDatasetManager.startCacheCreation();
         }
 
         if (internalUpdate) {
