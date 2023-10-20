@@ -392,6 +392,8 @@ public class LeappBridgeTask extends AbstractPythonTask {
                     if (decoded == null || !decoded.equals("true")) {
                         String artpath = artdoc.get(BasicProps.PATH).substring(dumpPath.length());
 
+                        artpath = replaceSpecialChars(artpath);
+
                         if (artpath.contains(">>")) {
                             // item is a decoded data, so it is not the source of the informations
                             continue;
@@ -448,6 +450,25 @@ public class LeappBridgeTask extends AbstractPythonTask {
         } finally {
         }
 
+    }
+
+    static HashMap<String, String> escapedFiles = new HashMap<String, String>();
+
+    synchronized static public String replaceSpecialChars(String artpath) {
+        String escaped = artpath.replaceAll("[:*?\"<>|]", "_");
+        if (!escaped.equals(artpath)) {
+            escapedFiles.put(escaped, artpath);
+            return escaped;
+        }
+        return artpath;
+    }
+
+    synchronized static public String revertSpecialChars(String escaped) {
+        if (escapedFiles.containsKey(escaped)) {
+            return escapedFiles.get(escaped);
+        } else {
+            return escaped;
+        }
     }
 
     /*

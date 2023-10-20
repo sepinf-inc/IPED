@@ -130,6 +130,8 @@ public class ArtifactJavaReport {
 
     public void write_artifact_data_item(Object headers, Object data_fields, String file) {
         try {
+            file = LeappBridgeTask.replaceSpecialChars(file);
+
             if (currentReportEvidence == null) {
                 currentReportEvidence = (Item) pluginEvidence;
             }
@@ -151,6 +153,7 @@ public class ArtifactJavaReport {
             // if file parameters corresponds to a dump path, add a link to it
             if (file.startsWith(reportDumpPath.getCanonicalPath())) {
                 String filel = file.substring(reportDumpPath.getCanonicalPath().length());
+                filel = LeappBridgeTask.revertSpecialChars(filel).replace("/", "//");
                 String filename = filel.substring(filel.lastIndexOf("/") + 1);
                 m.add(ExtraProperties.LINKED_ITEMS, "path:\"*" + filel + "\" && name:\"" + filename + "\"");
             }
@@ -215,6 +218,7 @@ public class ArtifactJavaReport {
         // some plugins have the linked item per artifact record
         if (value.startsWith(reportDumpPath.getCanonicalPath())) {
             String filel = value.toString().substring(reportDumpPath.getCanonicalPath().length());
+            filel = LeappBridgeTask.revertSpecialChars(filel).replace("/", "////");
             String filename = filel.substring(filel.lastIndexOf("/") + 1);
             m.add(ExtraProperties.LINKED_ITEMS, "path:\"*" + filel + "\" && name:\"" + filename + "\"");
 
