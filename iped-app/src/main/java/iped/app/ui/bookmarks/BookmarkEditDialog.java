@@ -45,6 +45,9 @@ public class BookmarkEditDialog extends JDialog {
 
         // Preview label
         BookmarkCellRenderer previewRenderer = new BookmarkCellRenderer();
+        if (currentColor == null) {
+            currentColor = BookmarkStandardColors.defaultColor;
+        }
         previewRenderer.setBookmark(currentName, currentColor);
         JLabel previewLabel = new JLabel() {
             private static final long serialVersionUID = 1L;

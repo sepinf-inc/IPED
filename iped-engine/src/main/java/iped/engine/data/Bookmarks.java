@@ -272,8 +272,9 @@ public class Bookmarks implements IBookmarks {
         bookmarkNames.put(bookmarkId, bookmarkName);
         bookmarkComments.put(bookmarkId, null);
         bookmarkKeyStrokes.put(bookmarkId, null);
-        if (bookmarkColors != null)
-            bookmarkColors.put(bookmarkId, null);
+        if (bookmarkColors == null)
+            bookmarkColors = new TreeMap<Integer, Color>();
+        bookmarkColors.put(bookmarkId, null);
 
         return bookmarkId;
     }
@@ -284,8 +285,9 @@ public class Bookmarks implements IBookmarks {
         bookmarkNames.remove(bookmark);
         bookmarkComments.remove(bookmark);
         bookmarkKeyStrokes.remove(bookmark);
-        if (bookmarkColors != null)
-            bookmarkColors.remove(bookmark);
+        if (bookmarkColors == null)
+            bookmarkColors = new TreeMap<Integer, Color>();
+        bookmarkColors.remove(bookmark);
         reportBookmarks.remove(bookmark);
 
         int bookmarkOrder = bookmark / bookmarkBits;
@@ -323,8 +325,9 @@ public class Bookmarks implements IBookmarks {
     }
 
     public synchronized void setBookmarkColor(int bookmarkId, Color color) {
-        if (bookmarkColors != null)
-            bookmarkColors.put(bookmarkId, color);
+        if (bookmarkColors == null)
+            bookmarkColors = new TreeMap<Integer, Color>();
+        bookmarkColors.put(bookmarkId, color);
     }
 
     public Color getBookmarkColor(int bookmarkId) {
