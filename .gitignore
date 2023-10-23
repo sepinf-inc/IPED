@@ -3,3 +3,4 @@ nbactions.xml
 /.settings/
 /.classpath
 /.project
+.pydevproject

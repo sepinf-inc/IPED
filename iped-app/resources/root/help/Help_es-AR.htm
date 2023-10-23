@@ -1,0 +1,52 @@
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>IPED Forensics</title>
+        <title>Documento de AYUDA</title>
+    </head>
+    <body class="ipedtheme">
+        <p style="font-size:24px"><b>IPED - Documento de AYUDA</b></p>
+        <b>Sintaxis de búsqueda:</b><br />
+        <br />
+        Para abrir la interfaz de análisis, necesita un sistema operativo de 64 bits. Si su caso o informe está almacenado en un disco óptico, el análisis puede volverse lento. Si es así, copie todo el caso en un disco duro local, desde donde se debe abrir la aplicación de análisis..<br>
+        <br>
+        La búsqueda por palabra clave busca términos en el nombre del archivo y el contenido de los archivos de texto, como Word, Excel, PDF, correos electrónicos, páginas de Internet, chats, etc. Si está habilitado, OCR (<i>Reconocimiento óptico de caracteres</i>) La tecnología se utiliza para buscar texto en archivos de imagen. Sin embargo, es posible que algunos resultados no se encuentren en imágenes de baja calidad o baja resolución, o si las fuentes son pequeñas o poco comunes.<br>
+        <br>
+        La búsqueda por palabra clave no diferencia entre mayúsculas y minúsculas o acentos. <b>Pero se recomienda incluir acentos en las búsquedas, de modo que las palabras clave se resalten correctamente en la pestaña "Vista previa".</b>. No se recomienda buscar palabras clave comunes o muy cortas, como <b>OF</b>. A continuación se muestran algunos ejemplos de búsqueda:
+        <br>
+        <ul>
+            <li>1. <b>sospecha</b><br/>Buscar archivos que contengan el término exacto <b>sospecha</b>. Archivos que contienen <b>sospechoso</b> no se encontrarán.
+                <br><br /></li>
+            <li>2. <b>sospecha?</b><br/>Buscar archivos que contengan palabras que empiecen por <b>sospecha</b> más cualquier letra al final, como <b>sospechoso</b>.
+                <br><br /></li>
+            <li>3. <b>sospecha*</b><br/>Buscar archivos que contengan palabras que empiecen por <b>sospecha</b> con ou sin sufijo, como <b>sospecha</b>, <b>sospechoso</b> y <b>sospechado</b>.
+                <br><br /></li>
+            <li>4. <b>Sicrano~</b><br>Busca archivos que contengan palabras iguales o similares a <b>sicrano</b>, como <b>sicrano</b>, <b>cicrano</b> y < b>ciclano</b>. Es más lento, pero se recomienda su uso para buscar texto en imágenes (si se habilitó OCR).
+                <br /><br /></li>
+            <li>5. <b>"Thomas Edson"</b><br>Busque la expresión exacta <b>Thomas Edson</b>. No es posible usar * ? ~ entre comillas dobles.<br>
+                <br /></li>
+            <li>6. <b>Thomas Edson</b><br>Busca archivos que contengan cualquiera de las palabras <b>Thomas</b> o <b>Edson</b>. Es igual a buscar <b>Thomas OR Edson</b>
+                <br/><br /></li>
+            <li>7. <b>Thomas AND Edson</b><br>Busca tanto <b>Thomas</b> como <b>Edson</b>
+                <br><br /></li>
+            <li>8. <b>soborno -pago</b><br>Busca archivos que contengan <b>soborno</b> pero sin referencias a <b>pago</b>. Es igual a buscar <b>soborno Y NO pago</b>
+                <br /><br /></li>
+            <li>9. <b>(Thomas Edson) && pago</b><br>Busca archivos que contengan <b>pago</b> Y cualquiera de <b>Thomas</b> O <b>Edson</b>.
+                <br /><br /></li>
+            <li>10. <b>"Thomas Edson"~5</b><br>Busca archivos que contengan <b>Thomas</b> como máximo 5 palabras de distancia de <b>Edson</b>.
+                <br><br /></li>
+            <li>11. <b>(Thomas Edson John)@2</b><br>Busque archivos que contengan al menos dos términos del conjunto.
+                <br><br /></li>
+            <li>12. <b>nombre:recibo</b><br>Busca archivos que contengan <b>recibo</b> en su propiedad de nombre.
+                <br>Todas las propiedades que se muestran en el administrador de columnas se pueden utilizar, excepto "marcador" y "puntuación" actualmente.
+                <br><br /></li>
+            <li>13. <b>tamaño:[5000 TO *]</b><br>Busca archivos con un tamaño superior a 5000 bytes, inclusive. Utilice {} en lugar de [] para excluir el valor.
+                <br><br /></li>
+            <li>14. <b>modificado:[2015-01-31 TO 2015-03-31T12\:59\:59Z]</b><br>Buscar archivos con fecha de modificación entre las 00:00 horas del 31/01/2015 y el 12: 59:59pm del 31/03/2015.
+                <br><br /></li>
+            <li>15. <b>/<0-17>y(r|o)/</b><br>Busca expresiones regulares, delimitadas por 2 barras diagonales. Solo funciona para letras indexadas (alfanuméricas por defecto).
+                <br><br /></li>
+        </ul>
+        Para obtener más información sobre la sintaxis de búsqueda, consulte https://lucene.apache.org/core/9_2_0/queryparser/org/apache/lucene/queryparser/flexible/standard/StandardQueryParser.html.
+    </body>
+</html>

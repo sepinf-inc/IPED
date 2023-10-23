@@ -37,7 +37,7 @@ public class DBFWriter extends DBFBase {
 
     /* other class variables */
     DBFHeader header;
-    Vector v_records = new Vector();
+    Vector<Object> v_records = new Vector<>();
     int recordCount = 0;
     RandomAccessFile raf = null; /* Open and append records to an existing DBF */
     boolean appendMode = false;
@@ -291,7 +291,6 @@ public class DBFWriter extends DBFBase {
 
                         GregorianCalendar calendar = new GregorianCalendar();
                         calendar.setTime((Date) objectArray[j]);
-                        StringBuffer t_sb = new StringBuffer();
                         dataOutput.write(String.valueOf(calendar.get(Calendar.YEAR)).getBytes());
                         dataOutput.write(Utils.textPadding(String.valueOf(calendar.get(Calendar.MONTH) + 1),
                                 this.characterSetName, 2, Utils.ALIGN_RIGHT, (byte) '0'));

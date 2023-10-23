@@ -1,43 +1,120 @@
 # Audio transcript task config file.
 
+#########################################
+# Choose the transcription implementation
+#########################################
+
 # Default implementation uses Vosk transcription on local CPU (slow and medium quality).
 # We include small portable models for 'en' and 'pt-BR', if you want to use a different language model
 # you should download it from https://alphacephei.com/vosk/models and put in 'models/vosk/[lang]' folder.
-implementationClass = dpf.sp.gpinf.indexer.process.task.transcript.VoskTranscriptTask
+implementationClass = iped.engine.task.transcript.VoskTranscriptTask
+
+# Uses a local/remote wav2vec2 implementation for transcription. Accuracy is much better than most Vosk models.
+# The local impl is AT LEAST 1 order of magnitude slower than Vosk on high end CPUs. Using a good GPU is highly recommended!
+# The remote impl is useful if you have a central server/cluster with many GPUs to be shared among processing nodes.
+# For both the local or remote options, please check the installation steps: https://github.com/sepinf-inc/IPED/wiki/User-Manual#wav2vec2
+# If you use the local implementation, you must set 'huggingFaceModel' param below.
+# If you use the remote implementation, you must set 'wav2vec2Service' param below.
+#implementationClass = iped.engine.task.transcript.Wav2Vec2TranscriptTask
+#implementationClass = iped.engine.task.transcript.RemoteWav2Vec2TranscriptTask
 
 # If you want to use the Microsoft Azure service implementation, comment above and uncomment below.
+# You MUST include Microsoft client-sdk.jar into plugins folder.
+# Download it from https://csspeechstorage.blob.core.windows.net/maven/com/microsoft/cognitiveservices/speech/client-sdk/1.19.0/client-sdk-1.19.0.jar
 # You must pass your subscription key using command line parameter -XazureSubscriptionKey=XXXXXXXX
-# implementationClass = dpf.sp.gpinf.indexer.process.task.transcript.MicrosoftTranscriptTask
+#implementationClass = iped.engine.task.transcript.MicrosoftTranscriptTask
 
 # If you want to use the Google Service implementation, comment above and uncomment below.
 # You must include google-cloud-speech-1.22.5.jar AND ITS DEPENDENCIES in plugins folder.
 # You can download an all-in-one jar from https://gitlab.com/iped-project/iped-maven/-/blob/master/com/google/cloud/google-cloud-speech/1.22.5-shaded/google-cloud-speech-1.22.5-shaded.jar
 # Finally you must set environment variable GOOGLE_APPLICATION_CREDENTIALS pointing to your credential file
-#implementationClass = dpf.sp.gpinf.indexer.process.task.transcript.GoogleTranscriptTask
+#implementationClass = iped.engine.task.transcript.GoogleTranscriptTask
 
-# Minimum word score to include the word in transcription result. Applies just to Vosk implementation.
-minWordScore = 0.7
-
-# Specific for Microsoft service. Replace with your own subscription region identifier from here: https://aka.ms/speech/sdkregion
-serviceRegion = brazilsouth
+#########################################
+# Global options
+#########################################
 
 # Language model(s) to use when processing audios. 'auto' uses the 'locale' set on LocalConfig.txt
 # You can specify one or two languages separated by ; if Microsoft or Google are used.
 # Vosk implementation accepts just one language for now.
+# Wav2Vec2 local or remote implementation don't use this, you must set 'huggingFaceModel' below
 # Setting more than 1 lang model can result in wrong language detection.
 language = auto
+
+# Command to convert audios to wav before transcription. Do not change $INPUT or $OUTPUT params.
+convertCommand = mplayer -benchmark -vo null -vc null -srate 16000 -af format=s16le,channels=1 -ao pcm:fast:file=$OUTPUT $INPUT
+
+# Mime types or supertypes to process. If you want to add videos use ; as separator and update 'convertCommand'.
+mimesToProcess = audio/3gpp; audio/3gpp2; audio/vnd.3gpp.iufp; audio/x-aac; audio/x-aiff; audio/amr; audio/amr-wb; audio/amr-wb+; audio/mp4; audio/ogg; audio/vorbis; audio/x-oggflac; audio/x-oggpcm; audio/opus; audio/speex; audio/qcelp; audio/vnd.wave; audio/x-caf; audio/x-ms-wma; audio/x-opus+ogg; audio/ilbc
+
+# Skip known audios found in the hash lookup database.
+skipKnownFiles = true
+
+# Minimum number of seconds to wait for each audio transcription.
+minTimeout = 180
+
+# Number of seconds to wait for each audio second transcription. 'minTimeout' param above is added to this.
+timeoutPerSec = 3
+
+#########################################
+# VoskTranscriptTask options
+#########################################
+
+# Minimum word score to include the word in transcription result. Applies just to Vosk implementation.
+# If you don't want to see * in transcription results, set this to 0
+minWordScore = 0.5
+
+#########################################
+# Local Wav2Vec2TranscriptTask options
+#########################################
+
+# HuggingFace model card to be used by Wav2Vec2TranscriptTask. You must uncomment one of them.
+
+# Small models for portuguese, ~23-24% WER on tested data sets
+# huggingFaceModel = lgris/bp_400h_xlsr2_300M
+# huggingFaceModel = Edresson/wav2vec2-large-xlsr-coraa-portuguese
+
+# Small models for other languages, WER not evaluated
+# huggingFaceModel = jonatasgrosman/wav2vec2-large-xlsr-53-english
+# huggingFaceModel = jonatasgrosman/wav2vec2-large-xlsr-53-german
+# huggingFaceModel = jonatasgrosman/wav2vec2-large-xlsr-53-italian
+# huggingFaceModel = jonatasgrosman/wav2vec2-large-xlsr-53-spanish
+# huggingFaceModel = jonatasgrosman/wav2vec2-large-xlsr-53-french
+
+# Bigger models, better on tested pt-BR data sets, but uses more RAM and is ~2x slower.
+# The portuguese model has ~19% WER on tested data sets.
+# huggingFaceModel = jonatasgrosman/wav2vec2-xls-r-1b-portuguese
+# huggingFaceModel = jonatasgrosman/wav2vec2-xls-r-1b-english
+# huggingFaceModel = jonatasgrosman/wav2vec2-xls-r-1b-german
+# huggingFaceModel = jonatasgrosman/wav2vec2-xls-r-1b-italian
+# huggingFaceModel = jonatasgrosman/wav2vec2-xls-r-1b-spanish
+# huggingFaceModel = jonatasgrosman/wav2vec2-xls-r-1b-french
+
+#########################################
+# RemoteWav2Vec2TranscriptTask options
+#########################################
+
+# IP:PORT of the service/central node used by the RemoteWav2Vec2TranscriptTask implementation.
+# wav2vec2Service = 127.0.0.1:11111
+
+#########################################
+# MicrosoftTranscriptTask options
+#########################################
+
+# Specific for Microsoft service. Replace with your own subscription region identifier from here: https://aka.ms/speech/sdkregion
+serviceRegion = brazilsouth
 
 # Depending on your subscription, Microsoft limits the number of max concurrent requests
 maxConcurrentRequests = 100
 
+#########################################
+# GoogleTranscriptTask options
+#########################################
+
 # Depending on your subscription, Google limits your request rate (per minute or per second).
 requestIntervalMillis = 67
 
-# Command to convert audios to wav before transcription. Do not change $INPUT or $OUTPUT params.
-convertCommand = mplayer -benchmark -vo null -vc null -srate 16000 -af format=s16le -af channels=1 -ao pcm:fast:file=$OUTPUT $INPUT
-
-# Mime types or supertypes to process. If you want to add videos use ; as separator and update 'convertCommand'.
-mimesToProcess = audio
-
-# Max number of seconds to wait until each audio second is transcribed. A minimum of 10s is always wait.
-timeout = 3
+# Set the Google transcription model to be used.
+# Some possible values: default, phone_call, video, latest_short, latest_long
+# For more information, see https://cloud.google.com/speech-to-text/docs/transcription-model
+googleModel = latest_long

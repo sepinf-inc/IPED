@@ -1,1 +1,2 @@
-dpf.sp.gpinf.detector.SQLiteContainerDetector
+iped.parsers.sqlite.detector.SQLiteContainerDetector
+iped.parsers.plist.detector.PListDetector

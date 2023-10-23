@@ -19,22 +19,8 @@
 
 <properties>
 
-    <detectors>		
-        <!-- custom detectors from Tika -->
-        <detector class="org.apache.tika.detect.OverrideDetector"></detector>
-        <detector class="org.apache.tika.parser.microsoft.POIFSContainerDetector"></detector>
-        <detector class="org.apache.tika.parser.pkg.ZipContainerDetector"></detector>
-        <detector class="org.apache.tika.parser.apple.BPListDetector"></detector>
-        <!-- custom detectors from IPED -->
-        <detector class="dpf.sp.gpinf.detector.SQLiteContainerDetector"></detector>
-        <!-- other custom detectors -->
-        <detector class="org.gagravarr.tika.OggDetector"></detector>
-        <!-- default Tika detector -->
-        <detector class="org.apache.tika.mime.MimeTypes"></detector>
-    </detectors>
-
     <parsers>
-        <!--parser class="dpf.sp.gpinf.indexer.parsers.external.CompositeExternalParser"></parser-->
+        <!--parser class="iped.parsers.external.CompositeExternalParser"></parser-->
         
         <parser class="org.apache.tika.parser.apple.AppleSingleFileParser"></parser>
         <parser class="org.apache.tika.parser.apple.PListParser"></parser>
@@ -63,11 +49,13 @@
         <parser class="org.apache.tika.parser.image.HeifParser"></parser>
         <parser class="org.apache.tika.parser.iptc.IptcAnpaParser"></parser-->
         <parser class="org.apache.tika.parser.iwork.IWorkPackageParser"></parser>
-        <!--parser class="org.apache.tika.parser.jpeg.JpegParser"></parser-->
+        <parser class="org.apache.tika.parser.iwork.iwana.IWork13PackageParser"></parser>
+		<parser class="org.apache.tika.parser.iwork.iwana.IWork18PackageParser"></parser>
+        <!--parser class="org.apache.tika.parser.image.JpegParser"></parser-->
         <!--We have our own impls
         <parser class="org.apache.tika.parser.mail.RFC822Parser"></parser>
         <parser class="org.apache.tika.parser.mbox.MboxParser"></parser>
-        <parser class="org.apache.tika.parser.mbox.OutlookPSTParser"></parser>-->
+        <parser class="org.apache.tika.parser.microsoft.pst.OutlookPSTParser"></parser>-->
         <!--Returns empty content for some EMFs. Used below in MultipleParser
         <parser class="org.apache.tika.parser.microsoft.EMFParser"></parser-->
         <!--parser class="org.apache.tika.parser.microsoft.WMFParser"></parser-->
@@ -107,7 +95,7 @@
         <!-- we have our own impls
         <parser class="org.apache.tika.parser.pkg.PackageParser"></parser>
         <parser class="org.apache.tika.parser.pkg.RarParser"></parser>-->
-        <parser class="org.apache.tika.parser.rtf.RTFParser"></parser>
+        <parser class="org.apache.tika.parser.microsoft.rtf.RTFParser"></parser>
         <parser class="org.apache.tika.parser.sas.SAS7BDATParser"></parser>
         <!--used by FLVParserWrapper internally
         <parser class="org.apache.tika.parser.video.FLVParser"></parser> -->
@@ -117,7 +105,7 @@
         <parser class="org.apache.tika.parser.xml.DcXMLParser"></parser>-->
         <!--parser class="org.apache.tika.parser.dif.DIFParser"></parser-->
         <parser class="org.apache.tika.parser.xml.FictionBookParser"></parser>
-        <!--parser class="org.apache.tika.parser.chm.ChmParser"></parser-->
+        <!--parser class="org.apache.tika.parser.microsoft.chm.ChmParser"></parser-->
         <!-- we uses strings parser for this
         <parser class="org.apache.tika.parser.code.SourceCodeParser"></parser>
         <parser class="org.apache.tika.parser.mat.MatParser"></parser> -->
@@ -152,8 +140,9 @@
         <parser class="org.apache.tika.parser.EmptyParser">
             <mime>application/vnd.rn-realmedia</mime>
             <mime>application/java-archive</mime>
+            <mime>audio/ilbc</mime>
             <mime>application/x-tika-unix-dump</mime>
-			<mime>application/x-cpio</mime>
+            <mime>application/x-cpio</mime>
         </parser>
         
         <!--parser class="org.gagravarr.tika.FlacParser"></parser>
@@ -165,17 +154,17 @@
         
         
         <!--
-        <parser class="dpf.sp.gpinf.indexer.parsers.OCRParser"></parser>
+        <parser class="iped.parsers.ocr.OCRParser"></parser>
         
-        <parser class="dpf.sp.gpinf.indexer.parsers.MultipleParser">
+        <parser class="iped.parsers.misc.MultipleParser">
             <mime>image/jpeg</mime>
             <params>
                 <param name="parserName" type="string">JPEGParser</param>
-                <param name="parsers" type="string">dpf.sp.gpinf.indexer.parsers.OCRParser;org.apache.tika.parser.jpeg.JpegParser</param>
+                <param name="parsers" type="string">iped.parsers.ocr.OCRParser;org.apache.tika.parser.image.JpegParser</param>
             </params>
         </parser>
         
-        <parser class="dpf.sp.gpinf.indexer.parsers.MultipleParser">
+        <parser class="iped.parsers.misc.MultipleParser">
             <mime>image/bmp</mime>
             <mime>image/gif</mime>
             <mime>image/png</mime>
@@ -183,71 +172,71 @@
             <mime>image/x-jbig2</mime>
             <params>
                 <param name="parserName" type="string">ImageParser</param>
-                <param name="parsers" type="string">dpf.sp.gpinf.indexer.parsers.OCRParser;org.apache.tika.parser.image.ImageParser</param>
+                <param name="parsers" type="string">iped.parsers.ocr.OCRParser;org.apache.tika.parser.image.ImageParser</param>
             </params>
         </parser>
         
-        <parser class="dpf.sp.gpinf.indexer.parsers.MultipleParser">
+        <parser class="iped.parsers.misc.MultipleParser">
             <mime>image/webp</mime>
             <params>
                 <param name="parserName" type="string">WebpParser</param>
-                <param name="parsers" type="string">dpf.sp.gpinf.indexer.parsers.OCRParser;org.apache.tika.parser.image.WebPParser</param>
+                <param name="parsers" type="string">iped.parsers.ocr.OCRParser;org.apache.tika.parser.image.WebPParser</param>
             </params>
         </parser>
         
-        <parser class="dpf.sp.gpinf.indexer.parsers.MultipleParser">
+        <parser class="iped.parsers.misc.MultipleParser">
             <mime>image/vnd.adobe.photoshop</mime>
             <params>
                 <param name="parserName" type="string">PSDParser</param>
-                <param name="parsers" type="string">dpf.sp.gpinf.indexer.parsers.OCRParser;org.apache.tika.parser.image.PSDParser</param>
+                <param name="parsers" type="string">iped.parsers.ocr.OCRParser;org.apache.tika.parser.image.PSDParser</param>
             </params>
         </parser>
         
-        <parser class="dpf.sp.gpinf.indexer.parsers.MultipleParser">
+        <parser class="iped.parsers.misc.MultipleParser">
             <mime>image/tiff</mime>
             <params>
                 <param name="parserName" type="string">TiffParser</param>
-                <param name="parsers" type="string">dpf.sp.gpinf.indexer.parsers.OCRParser;org.apache.tika.parser.image.TiffParser;dpf.sp.gpinf.indexer.parsers.TiffPageParser</param>
+                <param name="parsers" type="string">iped.parsers.ocr.OCRParser;org.apache.tika.parser.image.TiffParser;iped.parsers.image.TiffPageParser</param>
             </params>
         </parser>
         
-        <parser class="dpf.sp.gpinf.indexer.parsers.MultipleParser">
+        <parser class="iped.parsers.misc.MultipleParser">
             <mime>image/heic</mime>
             <mime>image/heif</mime>
             <mime>image/heic-sequence</mime>
             <mime>image/heif-sequence</mime>
             <params>
                 <param name="parserName" type="string">HeicParser</param>
-                <param name="parsers" type="string">dpf.sp.gpinf.indexer.parsers.OCRParser;org.apache.tika.parser.image.HeifParser</param>
+                <param name="parsers" type="string">iped.parsers.ocr.OCRParser;org.apache.tika.parser.image.HeifParser</param>
             </params>
         </parser>
         
-        <parser class="dpf.sp.gpinf.indexer.parsers.MultipleParser">
+        <parser class="iped.parsers.misc.MultipleParser">
             <mime>image/emf</mime>
             <params>
                 <param name="parserName" type="string">EMFParser</param>
-                <param name="parsers" type="string">dpf.sp.gpinf.indexer.parsers.OCRParser;org.apache.tika.parser.microsoft.EMFParser</param>
+                <param name="parsers" type="string">iped.parsers.ocr.OCRParser;org.apache.tika.parser.microsoft.EMFParser</param>
             </params>
         </parser>
         
-        <parser class="dpf.sp.gpinf.indexer.parsers.MultipleParser">
+        <parser class="iped.parsers.misc.MultipleParser">
             <mime>image/wmf</mime>
             <params>
                 <param name="parserName" type="string">WMFParser</param>
-                <param name="parsers" type="string">dpf.sp.gpinf.indexer.parsers.OCRParser;org.apache.tika.parser.microsoft.WMFParser</param>
+                <param name="parsers" type="string">iped.parsers.ocr.OCRParser;org.apache.tika.parser.microsoft.WMFParser</param>
             </params>
         </parser>
         
-        <parser class="dpf.sp.gpinf.indexer.parsers.MultipleParser">
+        <parser class="iped.parsers.misc.MultipleParser">
             <mime>image/svg+xml</mime>
             <params>
                 <param name="parserName" type="string">SVGXMLParser</param>
-                <param name="parsers" type="string">dpf.sp.gpinf.indexer.parsers.OCRParser;dpf.sp.gpinf.indexer.parsers.XMLParser</param>
+                <param name="parsers" type="string">iped.parsers.ocr.OCRParser;iped.parsers.misc.XMLParser</param>
             </params>
         </parser>
         -->
         
-        <!--parser class="dpf.sp.gpinf.indexer.parsers.MultipleParser">
+        <!--parser class="iped.parsers.misc.MultipleParser">
             <mime>application/x-msdownload</mime>
             <mime>application/x-elf</mime>
             <mime>application/x-object</mime>
@@ -258,84 +247,91 @@
                 <param name="parserName" type="string">EXEParser</param>
                 <param name="parsers" type="string">
                     org.apache.tika.parser.executable.ExecutableParser;
-                    dpf.sp.gpinf.indexer.parsers.RawStringParser;
+                    iped.parsers.standard.RawStringParser;
                 </param>
             </params>
         </parser-->
         
-        <!--parser class="dpf.inc.sepinf.browsers.parsers.FirefoxSqliteParser">
+        <!--parser class="iped.parsers.browsers.firefox.FirefoxSqliteParser">
             <params>
                 <param name="extractEntries" type="bool">true</param>
             </params>
         </parser>
-        <parser class="dpf.inc.sepinf.browsers.parsers.ChromeSqliteParser"></parser>
-        <parser class="dpf.inc.sepinf.browsers.parsers.EdgeWebCacheParser"></parser>
-        <parser class="dpf.inc.sepinf.browsers.parsers.SafariSqliteParser"></parser>
-        <parser class="dpf.inc.sepinf.browsers.parsers.SafariPlistParser"></parser-->
+        <parser class="iped.parsers.browsers.chrome.ChromeSqliteParser"></parser>
+        <parser class="iped.parsers.browsers.edge.EdgeWebCacheParser"></parser>
+        <parser class="iped.parsers.browsers.safari.SafariSqliteParser"></parser>
+        <parser class="iped.parsers.browsers.safari.SafariPlistParser"></parser-->
         
         <!--Will be processed by RawStringParser below-->
-        <!--parser class="dpf.sp.gpinf.indexer.parsers.EDBParser"></parser-->
-        <!--parser class="dpf.sp.gpinf.indexer.parsers.RegistryParser"></parser>
-        <parser class="dpf.sp.gpinf.indexer.parsers.IndexDatParser"></parser-->
-        <parser class="dpf.sp.gpinf.indexer.parsers.PackageParser"></parser>
-        <parser class="dpf.sp.gpinf.indexer.parsers.SevenZipParser"></parser>
-        <parser class="dpf.sp.gpinf.indexer.parsers.XMLParser">
+        <!--parser class="iped.parsers.database.EDBParser"></parser-->
+        <!--parser class="iped.parsers.registry.RegRipperParser"></parser>
+        <parser class="iped.parsers.browsers.ie.IndexDatParser"></parser-->
+        <parser class="iped.parsers.compress.PackageParser"></parser>
+        <parser class="iped.parsers.compress.SevenZipParser"></parser>
+        <parser class="iped.parsers.compress.LZFSEParser"></parser>
+        <parser class="iped.parsers.misc.XMLParser">
             <mime-exclude>image/svg+xml</mime-exclude>
         </parser>
-        <parser class="dpf.sp.gpinf.indexer.parsers.RFC822Parser"></parser>
-        <parser class="dpf.sp.gpinf.indexer.parsers.MSGParser"></parser>
-        <parser class="dpf.sp.gpinf.indexer.parsers.MSAccessParser"></parser>
-        <parser class="dpf.sp.gpinf.indexer.parsers.MboxParser"></parser>
-        <parser class="dpf.sp.gpinf.indexer.parsers.IncrediMailParser"></parser>
-        <parser class="dpf.sp.gpinf.indexer.parsers.OutlookPSTParser">
+        <parser class="iped.parsers.mail.RFC822Parser"></parser>
+        <parser class="iped.parsers.mail.MSGParser"></parser>
+        <parser class="iped.parsers.database.MSAccessParser"></parser>
+        <parser class="iped.parsers.mail.MboxParser"></parser>
+        <parser class="iped.parsers.mail.IncrediMailParser"></parser>
+        <parser class="iped.parsers.mail.OutlookPSTParser">
             <params>
                 <param name="recoverDeleted" type="bool">false</param>
                 <param name="useLibpffParser" type="bool">false</param>
             </params>
         </parser>
-        <parser class="dpf.sp.gpinf.indexer.parsers.OutlookDBXParser"></parser>
-        <parser class="dpf.sp.gpinf.indexer.parsers.XBaseParser"></parser>
+        <parser class="iped.parsers.mail.OutlookDBXParser"></parser>
+        <parser class="iped.parsers.database.XBaseParser"></parser>
         <!--Will be processed by RawStringParser below-->
-        <!--parser class="dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser"></parser-->
-        <parser class="dpf.inc.sepinf.UsnJrnl.UsnJrnlParser">
+        <!--parser class="iped.parsers.sqlite.SQLite3Parser"></parser-->
+        <parser class="iped.parsers.usnjrnl.UsnJrnlParser">
             <params>
                 <param name="extractEntries" type="bool">false</param>
             </params>
         </parser>
-        <parser class="dpf.ap.gpinf.telegramextractor.TelegramParser">
+        <parser class="iped.parsers.telegram.TelegramParser">
             <params>
                 <param name="enabledForUfdr" type="bool">true</param>
+                <param name="minChatSplitSize" type="int">6000000</param>
             </params>
         </parser>
-        <parser class="dpf.mt.gpinf.skype.parser.SkypeParser"></parser>
-        <parser class="dpf.mg.udi.gpinf.vcardparser.VCardParser"></parser>
-        <parser class="dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser">
+        <parser class="iped.parsers.skype.SkypeParser"></parser>
+        <parser class="iped.parsers.tor.TorTcParser"></parser>
+        <parser class="iped.parsers.vcard.VCardParser"></parser>
+        <parser class="iped.parsers.whatsapp.WhatsAppParser">
             <params>
                 <param name="extractMessages" type="bool">false</param>
                 <param name="mergeBackups" type="bool">false</param>
                 <param name="linkMediasByNameAndApproxSizeFallback" type="bool">true</param>
                 <param name="downloadConnectionTimeout" type="int">500</param>
-                <param name="downloadReadTimeout" type="int">500</param>
+                <param name="downloadReadTimeout" type="int">1000</param>
+                <param name="minChatSplitSize" type="int">6000000</param>
             </params>
         </parser>
-        <parser class="dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser">
+        <parser class="iped.parsers.ufed.UFEDChatParser">
             <!--<mime-exclude>application/x-ufed-chat-whatsapp</mime-exclude>-->
+            <params>
+                <param name="minChatSplitSize" type="int">6000000</param>
+            </params>             
         </parser>
         
-        <parser class="dpf.sp.gpinf.indexer.parsers.KnownMetParser"></parser>
-        <parser class="dpf.sp.gpinf.indexer.parsers.PartMetParser"></parser>
-        <parser class="gpinf.emule.PreferencesDatParser"></parser>
-        <parser class="dpf.sp.gpinf.indexer.parsers.AresParser"></parser>
-        <parser class="dpf.mg.udi.gpinf.shareazaparser.ShareazaSearchesDatParser"></parser>
-        <parser class="dpf.mg.udi.gpinf.shareazaparser.ShareazaLibraryDatParser"></parser>
-        <parser class="dpf.mg.udi.gpinf.bittorrent.BitTorrentResumeDatParser"></parser>
-        <parser class="dpf.mg.udi.gpinf.bittorrent.TorrentFileParser"></parser>
-        <parser class="dpf.sp.gpinf.indexer.parsers.LNKShortcutParser"></parser>
-        <!--parser class="dpf.sp.gpinf.indexer.parsers.GenericOLEParser"></parser>
-        <parser class="dpf.sp.gpinf.indexer.parsers.PDFOCRTextParser"></parser>
-        <parser class="dpf.sp.gpinf.indexer.parsers.FLVParserWrapper"></parser>
-        <parser class="dpf.sp.gpinf.indexer.parsers.EmptyVideoParser"></parser-->
-        <parser class="dpf.sp.gpinf.indexer.parsers.RawStringParser">
+        <parser class="iped.parsers.emule.KnownMetParser"></parser>
+        <parser class="iped.parsers.emule.PartMetParser"></parser>
+        <parser class="iped.parsers.emule.PreferencesDatParser"></parser>
+        <parser class="iped.parsers.ares.AresParser"></parser>
+        <parser class="iped.parsers.shareaza.ShareazaSearchesDatParser"></parser>
+        <parser class="iped.parsers.shareaza.ShareazaLibraryDatParser"></parser>
+        <parser class="iped.parsers.bittorrent.BitTorrentResumeDatParser"></parser>
+        <parser class="iped.parsers.bittorrent.TorrentFileParser"></parser>
+        <parser class="iped.parsers.lnk.LNKShortcutParser"></parser>
+        <!--parser class="iped.parsers.misc.GenericOLEParser"></parser>
+        <parser class="iped.parsers.misc.PDFTextParser"></parser>
+        <parser class="iped.parsers.video.FLVParserWrapper"></parser>
+        <parser class="iped.parsers.video.EmptyVideoParser"></parser-->
+        <parser class="iped.parsers.standard.RawStringParser">
             <mime>application/skype</mime>
             <mime>application/irpf</mime>
             <mime>application/x-tika-msoffice</mime>
@@ -343,13 +339,22 @@
             <mime>application/x-edb</mime>
             <mime>application/x-sqlite3</mime>
         </parser>
-        <!--parser class="dpf.mt.gpinf.mapas.parsers.GeofileParser"></parser-->
-        <parser class="dpf.inc.sepinf.winx.parsers.WinXTimelineParser"></parser>
-        <parser class="dpf.inc.sepinf.gdrive.parsers.GDriveMainParser"></parser>
-        <parser class="dpf.pi.gpinf.firefox.parsers.FirefoxSavedSessionParser"></parser>
+        <!--parser class="iped.geo.parsers.GeofileParser"></parser-->
+        <parser class="iped.parsers.winx.WinXTimelineParser"></parser>
+        <parser class="iped.parsers.eventtranscript.EventTranscriptParser"></parser>
+        <parser class="iped.parsers.gdrive.GDriveMainParser"></parser>
+        <parser class="iped.parsers.browsers.firefox.FirefoxSavedSessionParser"></parser>
         
-        <!-- parser class="dpf.inc.sepinf.python.PythonParser"></parser-->
-        
+        <!-- parser class="iped.parsers.python.PythonParser"></parser-->
+        <parser class="iped.parsers.mail.win10.Win10MailParser"></parser>
+        <parser class="iped.parsers.discord.DiscordParser"></parser>
+
     </parsers>
+
+    <encodingDetectors>
+        <encodingDetector class="iped.engine.tika.HtmlEncodingDetector"/>
+        <encodingDetector class="org.apache.tika.parser.txt.UniversalEncodingDetector"/>
+        <encodingDetector class="iped.engine.tika.Icu4jEncodingDetector"/>
+    </encodingDetectors>
 
 </properties>

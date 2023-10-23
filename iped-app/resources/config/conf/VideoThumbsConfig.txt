@@ -24,3 +24,24 @@ Verbose = false
 # Comment to disable (full video preview image will be shown in the gallery).
 # Format: <gallery image width in pixels, minimum number of frames, maximum of frames frames>.
 GalleryThumbs = 320,2,3
+
+# Enables video frames extraction as video subitems.
+# If enabled, parallel to videoThumbs creation, video frames are to be created
+# as video subitems, so video frames will able to participate of the 
+# image processing pipeline (ocr, image similarity, and others)
+enableVideoThumbsSubitems = false
+
+# If enabled, uses a javascript function to compute the number of frames to extract from videos as subitems.
+# You can use the 'duration' variable: the video duration in seconds.
+# This applies just if 'enableVideoThumbsSubitems' is enabled.
+# At least a minimum of <columns> x <rows> frames from 'Layout' option are extracted.
+#numFramesEquation = Math.sqrt(duration)
+
+# Enables video frames extraction using original video resolution to be applied on Video Thumbs Subitems.
+# If enabled, first value of 'Layout' option above will be ignored.
+# This should help face detection on videos and other future features (like video ocr, so on...)
+enableVideoThumbsOriginalDimension = false
+
+# Upper bound width/height dimension size used when extracting video frames.
+# This applies and has precedence over all options above.
+maxDimensionSize = 1024

@@ -130,7 +130,7 @@ public class AhoCorasick {
                 // s.getOutputs().addAll(r.get(a).getOutputs());
                 if (r.get(a).getOutputs() != null)
                     for (Object o : r.get(a).getOutputs())
-                        s.getOutputs().add(o);
+                        s.addOutput(o);
             }
         }
     }

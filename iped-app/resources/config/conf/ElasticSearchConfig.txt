@@ -2,9 +2,6 @@
 # ElasticSearch Task configuration
 #################################
 
-# Enable indexing to ElasticSearch cluster
-enableIndexToElasticSearch = false
-
 # Host name or ip address of Elastic cluster
 host = Sepinf-hpw03
 
@@ -21,8 +18,8 @@ index.number_of_shards = 1
 # Number of replicas for each index shard. Often goes to a different node.
 index.number_of_replicas = 1
 
-# Index lifecycle policy. You must define it in Elastic.
-index.lifecycle.name = default_policy
+# Index lifecycle policy. You must define it in Elastic. For opendistro must be commented
+# index.lifecycle.name = default_policy
 
 # Minimum size of bulk index requests in bytes. Items are accumulated until this size is reached.
 # This is a per thread setting
@@ -48,3 +45,12 @@ index.mapping.total_fields.limit = 10000
 # Use a custom analyzer that tokenizes on non digits and non latin1 chars,
 # converts them to lowercase and uses asciifolding filter
 useCustomAnalyzer = true
+
+# Validate the SSL certificate, it is not recommended to disable this in production
+validateSSL = true
+
+# index the extracted text using term vectors. This improves the highlight speed, but increases the index size by around 30%. 
+useTermVector = false
+
+# Number of times the index request will be retried. Value -1 retries forever.
+retries = 1

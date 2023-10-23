@@ -247,7 +247,7 @@ public class DBFReader extends DBFBase {
                             t_float = Utils.trimLeftSpaces(t_float);
                             if (t_float.length > 0 && !Utils.contains(t_float, (byte) '?')) {
 
-                                recordObjects[i] = new Float(new String(t_float));
+                                recordObjects[i] = Float.parseFloat(new String(t_float));
                             } else {
 
                                 recordObjects[i] = null;
@@ -271,7 +271,7 @@ public class DBFReader extends DBFBase {
 
                             if (t_numeric.length > 0 && !Utils.contains(t_numeric, (byte) '?')) {
 
-                                recordObjects[i] = new Double(new String(t_numeric));
+                                recordObjects[i] = Double.parseDouble(new String(t_numeric));
                             } else {
 
                                 recordObjects[i] = null;

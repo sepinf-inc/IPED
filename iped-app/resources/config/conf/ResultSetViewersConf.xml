@@ -1,7 +1,11 @@
 <resultSetViewers>
 
 	<resultSetViewer>
-		<class>dpf.mt.gpinf.mapas.impl.MapaViewer</class>
+		<class>iped.geo.impl.MapViewer</class>
+	</resultSetViewer>
+
+	<resultSetViewer>
+		<class>iped.app.timelinegraph.IpedChartsPanel</class>
 	</resultSetViewer>
 
 </resultSetViewers>

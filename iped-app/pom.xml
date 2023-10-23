@@ -4,9 +4,9 @@
 	<parent>
         <groupId>iped</groupId>
         <artifactId>iped-parent</artifactId>
-        <version>4.0.0-snapshot</version>
+        <version>4.2-snapshot</version>
     </parent>
-    
+
     <artifactId>iped-app</artifactId>
     <packaging>jar</packaging>
     
@@ -41,7 +41,22 @@
             <artifactId>kharon</artifactId>
             <version>0.1.6</version>
         </dependency>
-        
+		<!-- https://mvnrepository.com/artifact/com.toedter/jcalendar -->
+		<dependency>
+		    <groupId>com.toedter</groupId>
+		    <artifactId>jcalendar</artifactId>
+		    <version>1.4</version>
+		</dependency>
+		<dependency>
+	  		<groupId>com.github.sepinf-inc</groupId>
+	  		<artifactId>jfreechartextensions</artifactId>
+	  		<version>5d6b903557dac49a925a7a62d5c6592bd07482c5</version>
+	  	</dependency>
+	  	<dependency>
+            <groupId>org.roaringbitmap</groupId>
+            <artifactId>RoaringBitmap</artifactId>
+            <version>0.9.39</version>
+        </dependency>
     </dependencies>
     
     <build>
@@ -51,6 +66,30 @@
                 <artifactId>findbugs-maven-plugin</artifactId>
                 <version>3.0.0</version>
             </plugin>
+			<plugin>
+				<groupId>com.googlecode.maven-download-plugin</groupId>
+				<artifactId>download-maven-plugin</artifactId>
+				<version>1.6.8</version>
+				<executions>
+					<execution>
+						<id>download-regripper</id>
+						<goals>
+							<goal>wget</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<url>https://github.com/sepinf-inc/RegRipper3.0/archive/refs/tags/3.0-p3.zip</url>
+					<unpack>true</unpack>
+					<fileMappers>
+                      <org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                        <pattern>RegRipper[^/]+/</pattern>
+                        <replacement>./</replacement>
+                      </org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                    </fileMappers>
+					<outputDirectory>${tools.dir}/regripper</outputDirectory>
+				</configuration>
+			</plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
@@ -73,6 +112,25 @@
                                     <groupId>java</groupId>
                                     <artifactId>jre</artifactId>
                                     <version>11.0.13</version>
+                                    <type>zip</type>
+                                    <overWrite>false</overWrite>
+                                    <outputDirectory>${release.dir}</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>unpack-python</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>org.python</groupId>
+                                    <artifactId>python-jep-dlib</artifactId>
+                                    <version>3.9.12-4.0.3-19.23.1</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${release.dir}</outputDirectory>
@@ -224,29 +282,10 @@
                                 <artifactItem>
                                     <groupId>abelcheung</groupId>
                                     <artifactId>rifiuti2</artifactId>
-                                    <version>0.6.1</version>
+                                    <version>0.7.0</version>
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>unpack-regripper</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>unpack</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>keydet89</groupId>
-                                    <artifactId>regripper</artifactId>
-                                    <version>2.8_20180406_p01</version>
-                                    <type>zip</type>
-                                    <overWrite>false</overWrite>
-                                    <outputDirectory>${release.dir}/../</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
@@ -262,7 +301,7 @@
                                 <artifactItem>
                                     <groupId>org.imagemagick</groupId>
                                     <artifactId>imagemagick-zip</artifactId>
-                                    <version>7.1.0-q8-x64</version>
+                                    <version>7.1.1-19-q8-x64+vcomp.dll</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
@@ -281,7 +320,7 @@
                                 <artifactItem>
                                     <groupId>tesseract</groupId>
                                     <artifactId>tesseract-zip</artifactId>
-                                    <version>5.0.0-alpha</version>
+                                    <version>5.3.2-24-g3922</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
@@ -303,7 +342,7 @@
                                     <version>6.2.0-r38109</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
-                                    <outputDirectory>${release.dir}/../</outputDirectory>
+                                    <outputDirectory>${tools.dir}</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
@@ -319,7 +358,7 @@
                                 <artifactItem>
                                     <groupId>org.sleuthkit</groupId>
                                     <artifactId>sleuthkit-dlls</artifactId>
-                                    <version>${sleuthkit.version}</version>
+                                    <version>4.11.1-p3</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
@@ -435,7 +474,7 @@
                                 <artifactItem>
                                     <groupId>dpf.ap</groupId>
     								<artifactId>telegram-decoder-impl</artifactId>
-    								<version>1.0.6-SNAPSHOT</version>
+    								<version>${telegram.impl.version}</version>
                                     <type>jar</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${plugin.dir}</outputDirectory>
@@ -473,7 +512,7 @@
                                 <artifactItem>
                                     <groupId>led</groupId>
                                     <artifactId>die</artifactId>
-                                    <version>20210505</version>
+                                    <version>20230125</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${release.dir}/models</outputDirectory>
@@ -603,8 +642,11 @@
                                 <manifest>
                                     <addClasspath>true</addClasspath>
                                     <classpathPrefix>lib/</classpathPrefix>
-                                    <mainClass>dpf.sp.gpinf.indexer.Main</mainClass>
+                                    <mainClass>iped.app.bootstrap.Bootstrap</mainClass>
                                 </manifest>
+                                <manifestEntries>
+                                    <SplashScreen-Image>iped/app/splash/iped.png</SplashScreen-Image>
+                                </manifestEntries>  
                             </archive>
                         </configuration>
                     </execution>
@@ -643,8 +685,11 @@
                                 <addMavenDescriptor>false</addMavenDescriptor>
                                 <manifest>
                                     <addClasspath>true</addClasspath>
-                                    <mainClass>dpf.sp.gpinf.indexer.desktop.AppMain</mainClass>
+                                    <mainClass>iped.app.bootstrap.BootstrapUI</mainClass>
                                 </manifest>
+                                <manifestEntries>
+                                    <SplashScreen-Image>iped/app/splash/iped.png</SplashScreen-Image>
+                                </manifestEntries>                                
                             </archive>
                         </configuration>
                     </execution>
@@ -661,7 +706,7 @@
                                 <addMavenDescriptor>false</addMavenDescriptor>
                                 <manifest>
                                     <addClasspath>true</addClasspath>
-                                    <mainClass>br.gov.pf.iped.webapi.Main</mainClass>
+                                    <mainClass>iped.engine.webapi.Main</mainClass>
                                 </manifest>
                             </archive>
                         </configuration>
@@ -679,7 +724,7 @@
                                 <addMavenDescriptor>false</addMavenDescriptor>
                                 <manifest>
                                     <addClasspath>true</addClasspath>
-                                    <mainClass>gpinf.hashdb.HashDBTool</mainClass>
+                                    <mainClass>iped.engine.hashdb.HashDBTool</mainClass>
                                 </manifest>
                             </archive>
                             <includes>
@@ -789,6 +834,23 @@
                             </resources>
                         </configuration>
                     </execution>
+                    <!-- COPY SCRIPTS -->
+                    <execution>
+                        <id>copy-scripts</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${release.dir}/scripts</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <filtering>false</filtering>
+                                    <directory>${resources.dir}/scripts</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
             <plugin>
@@ -802,6 +864,5 @@
                 </configuration>
             </plugin>
         </plugins>
-    </build>
-    
+    </build>    
 </project>

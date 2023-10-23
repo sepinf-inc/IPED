@@ -73,4 +73,17 @@ Windows Registry
 #IP Connections
 #Recordings
 #Mobile Cards
-#Application Usage
+#Applications Usage
+#Device Information
+#Activities Sensor
+#Credit Cards
+#Device Connectivity
+#Device Events
+#File Downloads
+#File Uploads
+#Financial Accounts
+#Fuzzy Data
+#Journeys
+#Networks Usage
+#Recognized Devices
+#Social Media Activities

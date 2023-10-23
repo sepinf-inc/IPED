@@ -7,7 +7,7 @@
         <p style="font-size:24px"><b>IPED Kurzhilfe</b></p>
         <b>Search Syntax:</b><br />
         <br />
-        Zum Starten des Analyseprogramms ist Java JRE Version 8 oder höher erforderlich, eine 64 Bit-JRE wird dringend empfohlen. Download unter <a href="http://www.java.com">www.java.com</a>. Falls der Fallbericht auf einem optischen Datenträger gespeichert ist, ist die Analyse sehr langsam. Falls dem so ist, wird empfohlen den gesamten Fall eine einen lokalen Datenträger (Festplatte/SSD) zu kopieren und von dort zu starten.<br>
+        Um die Analyseoberfläche zu öffnen, benötigen Sie ein 64-Bit-Betriebssystem. Falls der Fallbericht auf einem optischen Datenträger gespeichert ist, ist die Analyse sehr langsam. Falls dem so ist, wird empfohlen den gesamten Fall eine einen lokalen Datenträger (Festplatte/SSD) zu kopieren und von dort zu starten.<br>
         <br>
         Die Schlüsselwortsuche sucht nach Begriffen in Dateinamen und dem Inhalt von Textdateien wie Word, Excel, PDF, E-Mails, Internetseiten, Chats, und Ähnlichem. Falls aktiviert, sucht OCR-Technik (<i>Optical Character Recognition</i>) nach Texten in Bilddateien. Allerdings könnten einige Texte nicht gefunden werden, wenn die Bilder eine schlechte Qualität, niedrige Auflösung, kleine oder unübliche Schriften haben.<br>
         <br>
@@ -34,16 +34,18 @@
                 <br /><br /></li>
             <li>10. <b>"Thomas Edson"~5</b><br>Sucht nach Dateien, die <b>Thomas</b> sowie <b>Edson</b> enthalten, maximal 5 Wörter voneinander entfernt.
                 <br><br /></li>
-            <li>11. <b>name:receipt</b><br>Sucht nach Dateien, die <b>receipt</b> im Dateinamen enthalten.
+            <li>11. <b>(Thomas Edson John)@2</b><br>Suchen Sie nach Dateien, die mindestens zwei Begriffe aus der Menge enthalten.
+                <br><br /></li>
+            <li>12. <b>name:receipt</b><br>Sucht nach Dateien, die <b>receipt</b> im Dateinamen enthalten.
                 <br>Alle im Spaltenmanager angezeigten Eigenschaften können verwendet werden, mit Ausnahme von "Lesezeichen" und "Bewertung".
                 <br><br /></li>
-            <li>12. <b>size:[5000 TO *]</b><br>Sucht nach Dateien, welcher größer gleich 5000 Bytes sind.
+            <li>13. <b>size:[5000 TO *]</b><br>Sucht nach Dateien, welcher größer gleich 5000 Bytes sind. Verwenden Sie {} anstelle von [], um den Wert auszuschließen.
                 <br><br /></li>
-            <li>13. <b>modified:[2015-01-31 TO 2015-03-31T12\:59\:59Z]</b><br>Sucht nach Dateien mit Modifikationsdatum zwischen 31.01.2015, 00:00 Uhr und 31.01.2015, 12:59:59 Uhr.
+            <li>14. <b>modified:[2015-01-31 TO 2015-03-31T12\:59\:59Z]</b><br>Sucht nach Dateien mit Modifikationsdatum zwischen 31.01.2015, 00:00 Uhr und 31.01.2015, 12:59:59 Uhr.
                 <br><br /></li>
-            <li>14. <b>/<0-17>y(r|o)/</b><br>Suche nach regulärem Ausdruck, begrenzt durch zwei Schrägstriche. Funktioniert nur für indizierte Zeichen (Standardmäßig alphanumerisch).
+            <li>15. <b>/<0-17>y(r|o)/</b><br>Suche nach regulärem Ausdruck, begrenzt durch zwei Schrägstriche. Funktioniert nur für indizierte Zeichen (Standardmäßig alphanumerisch).
                 <br><br /></li>
         </ul>
-        Weitere Informationen zur Suchsyntax unter http://lucene.apache.org/core/4_9_0/queryparser/org/apache/lucene/queryparser/classic/package-summary.html.
+        Weitere Informationen zur Suchsyntax unter https://lucene.apache.org/core/9_2_0/queryparser/org/apache/lucene/queryparser/flexible/standard/StandardQueryParser.html.
     </body>
 </html>

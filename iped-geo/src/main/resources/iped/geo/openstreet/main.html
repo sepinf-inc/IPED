@@ -1,0 +1,274 @@
+<html> 
+    <head>
+
+		<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+
+		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+   integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI="
+   crossorigin=""/>
+
+		<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
+   integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM="
+   crossorigin=""></script>
+   
+        {{googlemaps_scripts}}   
+
+		<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" crossorigin=""></script>
+		<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" crossorigin=""></script>
+		<script>
+		{{markerclusterjs}}
+		</script>
+        <script>
+        {{leafletgeometryutil}}
+        </script>
+        <script>
+        {{leafletarrowheads}}
+        </script>
+		
+		<script>
+        function applyDarkTheme(){
+			var sSheetList = document.styleSheets;
+			
+			var rule = 'null';
+			var i=0;
+			while(i<document.styleSheets[2].rules.length){
+				 if(document.styleSheets[2].rules[i].selectorText.includes('img.leaflet-tile')){
+	    		     rule = document.styleSheets[2].rules[i];
+                     break;
+				 }
+				 i++;
+			}
+            if(rule != 'null'){
+                document.styleSheets[2].deleteRule(rule);
+            }
+
+            document.styleSheets[2].insertRule('img.leaflet-tile {filter: hue-rotate(180deg) brightness(80%) invert(1);}',0);
+            let contentBar = document.getElementById('barra_content');
+            contentBar.style='width:100%; border:0px;color:white;';
+
+            try{
+                let buttons = document.querySelectorAll('#barra_content input[type=\'image\']');
+                for(let btn of buttons) {
+                    btn.style.setProperty('filter','invert(1)');
+                }
+            }catch(e){
+                alert(e);
+            }
+        
+            document.body.style.background = 'black';
+        }
+        
+        function applyLightTheme(){
+            var rule = 'null';
+            var i=0;
+            while(i<document.styleSheets[2].rules.length){
+                 if(document.styleSheets[2].rules[i].selectorText.includes('img.leaflet-tile')){
+                     rule = document.styleSheets[2].rules[i]; 
+                     break;
+                 }
+                 i++;
+            }
+            if(rule != 'null'){
+                document.styleSheets[2].deleteRule(rule);
+            }
+            document.styleSheets[2].insertRule('img.leaflet-tile {filter: }',0);
+            document.getElementById('barra_content').style='width:100%; border:0px;color:black;';
+
+            try{
+                let buttons = document.querySelectorAll('#barra_content input[type=\'image\']');
+                for(let btn of buttons) {
+                    btn.style.removeProperty('filter');
+                }
+            }catch(e){
+                alert(e);
+            }
+	        
+            document.body.style.background = '';
+        }
+		</script>
+
+		<style type="text/css">
+		#map_canvas { height:800px; }
+		
+		.circle_class{
+			border: 2px dotted #38f;
+			background: rgba(255,255,255,0.5);
+			border-radius: 50%;
+			width: 0;
+			height: 0;
+			-moz-box-sizing: border-box;
+	     		box-sizing: border-box;
+			z-index: 800;
+		}
+		.leaflet-popup{
+            opacity: 0.8;
+        }
+		
+		.rect_class{
+			border-radius: 0%;
+		}
+		.kml-popup{
+			background: rgba(255,255,255,0.7);
+		}
+		body { 
+		  margin:0px;
+		  padding:0px 
+		}
+		</style>
+
+        <script type="text/javascript">
+		{{L.KML}}
+		</script>
+
+    <script>
+    var mpos=-1;
+    var mapImpl = "OSM";
+    var map;
+    var track;
+    var mapTilesLayer = null;
+
+    {{applyTheme}}
+
+    function setTileServerUrl(url) {
+        if(map){
+	        if(url){
+	            let oldmapTilesLayer = mapTilesLayer;
+	            if(url.includes('googleapis')){
+	                if(url.includes('hybrid')){
+	                    mapTilesLayer = L.gridLayer.googleMutant({type: 'hybrid'});
+	                }else if(url.includes('terrain')){
+	                    mapTilesLayer = L.gridLayer.googleMutant({type: 'terrain'});
+	                }else if(url.includes('satellite')){
+	                    mapTilesLayer = L.gridLayer.googleMutant({type: 'satellite'});
+	                }else{
+	                    mapTilesLayer = L.gridLayer.googleMutant({type: 'roadmap'});
+	                }
+	            }else{
+	                mapTilesLayer = L.tileLayer(url, {maxZoom: 18, minZoom: 2, tileSize: 512, zoomOffset: -1 });
+	            }
+	            try{
+	                mapTilesLayer.addTo(map);
+	                if(oldmapTilesLayer){
+	                    if(map.hasLayer(oldmapTilesLayer)){
+	                        map.removeLayer(oldmapTilesLayer);
+	                    }
+	                }
+	            }catch(e){
+	               alert(e);
+	            }
+	        }
+        }
+    }
+
+    function initialize() {
+        try{
+	        var kmlUrl = '';
+
+	
+	        map = new L.IPEDMap('map_canvas', { center: new L.LatLng(58.4, 43.0), zoom: 11, boxZoom:true });
+
+            var kml = '';
+            track = new L.KML();
+            track.onFullyLoaded=doFullyLoaded;
+	        
+            {{tilelayer_script}}
+
+            map.addLayer(track);
+        }catch(e){
+            alert(e);
+        }
+    }
+    
+    function doFullyLoaded(){
+       document.getElementById('ordem_descr').innerHTML = track.tourOrder;
+       document.getElementById('resultsinfo').innerHTML = track.markersCount(); 
+    }
+
+    function loadKml(kmlpar){
+        const parser = new DOMParser();
+        const kml = parser.parseFromString(kmlpar, 'text/xml');
+        track.addKML(kml);
+
+        document.getElementById('ordem_descr').innerHTML = track.tourOrder;
+        document.getElementById('resultsinfo').innerHTML = track.markersCount(); 
+
+        const bounds = track.getBounds();
+        map.fitBounds(bounds);
+    }
+
+    var lastLeadMarker = null;
+
+    function moveToMarker(m){
+        if(m){
+	        try{    
+	            track.deselectAll();
+	            track.highlight(m);
+	            window.app.markerMouseClickedBF(m.id,1,'');
+	    
+	            map.setView(m.getLatLng(), map.zoom);
+	        }catch(e){
+	            alert(e);
+	        }
+        }
+    }
+
+    function moveToNextMarker(){
+        m = track.getNextMarker();
+        moveToMarker(m);
+    }
+
+    function moveToPreviousMarker(){
+	    m = track.getPreviousMarker();
+	    moveToMarker(m);
+    }
+
+    function moveToLastMarker(){
+	    try{
+	        m = track.getLastMarker();
+	        moveToMarker(m);
+	    }catch(e){
+	        alert(e);
+	    }
+    }
+
+    function moveToFirstMarker(){
+        m = track.getFirstMarker();
+        moveToMarker(m);
+    }
+
+    function zoomOut(){
+    	track.viewAll();
+    }
+    
+function blobToString(b) {
+    var u, x;
+    u = URL.createObjectURL(b);
+    x = new XMLHttpRequest();
+    x.open('GET', u, false); // although sync, you're not fetching over internet
+    x.send();
+    URL.revokeObjectURL(u);
+    return x.responseText;
+}    
+    
+    function asyncCreatePaths(){
+        if(track.paths){
+        }else{
+            track.createPaths()
+        }
+    }
+	</script>
+
+    </head>
+    
+    <body onload="initialize();">
+       <table style="height:100%;width:100%"><tr>
+       <td width="*">
+  			<div id="map_canvas" style="width:100%;height:100%;"></div>
+  		</td>
+    <td width="50px" id="td_barra">
+    {{toolbar}}
+   </td></tr>
+</table>
+    </body>
+    <div id="the_side_bar" style="position:fixed;float:right;height:100%;width:100%; visibility:hidden"></div>    
+</html>

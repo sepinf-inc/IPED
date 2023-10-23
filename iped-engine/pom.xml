@@ -4,7 +4,7 @@
 	<parent>
         <groupId>iped</groupId>
         <artifactId>iped-parent</artifactId>
-        <version>4.0.0-snapshot</version>
+        <version>4.2-snapshot</version>
     </parent>
     
     <artifactId>iped-engine</artifactId>
@@ -29,14 +29,19 @@
     
     <dependencies>
         <dependency>
+            <groupId>com.github.oshi</groupId>
+            <artifactId>oshi-core-java11</artifactId>
+            <version>6.2.2</version>
+        </dependency>
+        <dependency>
             <groupId>com.google.zxing</groupId>
             <artifactId>core</artifactId>
-            <version>3.4.1</version>
+            <version>3.5.1</version>
         </dependency>
         <dependency>
             <groupId>com.google.zxing</groupId>
             <artifactId>javase</artifactId>
-            <version>3.4.1</version>
+            <version>3.5.0</version>
         </dependency>
         <dependency>
             <groupId>com.alphacephei</groupId>
@@ -47,6 +52,7 @@
             <groupId>com.microsoft.cognitiveservices.speech</groupId>
             <artifactId>client-sdk</artifactId>
             <version>1.19.0</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.google.cloud</groupId>
@@ -104,12 +110,6 @@
             <artifactId>iped-api</artifactId>
             <version>${project.version}</version>
         </dependency>
-        
-     	<dependency>
-    		<groupId>net.lingala.zip4j</groupId>
-    		<artifactId>zip4j</artifactId>
-    		<version>1.3.2</version>
-	  	</dependency>
     	<dependency>
     		<groupId>dk.brics.automaton</groupId>
     		<artifactId>automaton</artifactId>
@@ -163,14 +163,26 @@
             <type>jar</type>
         </dependency>
         <dependency>
-            <groupId>org.elasticsearch.client</groupId>
-            <artifactId>elasticsearch-rest-high-level-client</artifactId>
-            <version>7.6.1-shaded4</version>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-join</artifactId>
+            <version>${lucene.version}</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>org.opensearch.client</groupId>
+            <artifactId>opensearch-rest-high-level-client</artifactId>
+            <version>2.1.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>io.minio</groupId>
             <artifactId>minio</artifactId>
-            <version>7.1.4-shaded3</version>
+            <version>8.3.8</version>
         </dependency>
         <dependency>
             <groupId>postgresql</groupId>
@@ -197,22 +209,44 @@
         <dependency>
             <groupId>com.mchange</groupId>
             <artifactId>mchange-commons-java</artifactId>
-            <version>0.2.10</version>
+            <version>0.2.20</version>
         </dependency>
         <dependency>
             <groupId>com.mchange</groupId>
             <artifactId>c3p0</artifactId>
-            <version>0.9.5.4</version>
+            <version>0.9.5.5</version>
         </dependency>
+        <dependency>
+  			<groupId>org.apache.pdfbox</groupId>
+  			<artifactId>pdfbox</artifactId>
+  			<version>${pdfbox.version}</version>
+  			<exclusions>
+  			    <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+  			</exclusions>
+		</dependency>
+		<dependency>
+  			<groupId>org.apache.pdfbox</groupId>
+  			<artifactId>pdfbox-tools</artifactId>
+  			<version>${pdfbox.version}</version>
+		</dependency>
+		<dependency>
+  			<groupId>org.apache.pdfbox</groupId>
+  			<artifactId>xmpbox</artifactId>
+  			<version>${pdfbox.version}</version>
+  			<exclusions>
+  			    <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+  			</exclusions>
+		</dependency>
 		<dependency>
   			<groupId>org.apache.pdfbox</groupId>
   			<artifactId>jbig2-imageio</artifactId>
   			<version>3.0.4</version>
-		</dependency>
-        <dependency>
-	    	<groupId>com.optimaize.languagedetector</groupId>
-    		<artifactId>language-detector</artifactId>
-    		<version>0.6</version>
 		</dependency>
         <dependency>
    			<groupId>com.zaxxer</groupId>
@@ -232,7 +266,7 @@
         <dependency>
     		<groupId>io.swagger</groupId>
     		<artifactId>swagger-jersey2-jaxrs</artifactId>
-    		<version>1.5.24</version>
+    		<version>1.6.10</version>
 		</dependency>
 		<dependency>
   			<groupId>org.glassfish.jersey.media</groupId>
@@ -254,12 +288,20 @@
                     <groupId>org.slf4j</groupId>
                     <artifactId>slf4j-nop</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>javax.xml.bind</groupId>
+                    <artifactId>jaxb-api</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
 		<dependency>
 			<groupId>org.bouncycastle</groupId>
 			<artifactId>bcpkix-jdk15on</artifactId>
-			<version>1.64</version>
+			<version>1.70</version>
 		</dependency>
 		<dependency>
             <groupId>de.ruedigermoeller</groupId>
@@ -271,6 +313,28 @@
     				<artifactId>jackson-core</artifactId>
         		</exclusion>
         	</exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <!-- check https://github.com/sepinf-inc/IPED/issues/1068 when upgrading this -->
+            <version>1.21</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-langdetect-optimaize</artifactId>
+            <version>${tika.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-parser-nlp-module</artifactId>
+            <version>${tika.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.graalvm.sdk</groupId>
@@ -287,6 +351,5 @@
             <artifactId>js-scriptengine</artifactId>
             <version>${graalvm.version}</version>
         </dependency>
-    </dependencies>
-    
+     </dependencies>
 </project>

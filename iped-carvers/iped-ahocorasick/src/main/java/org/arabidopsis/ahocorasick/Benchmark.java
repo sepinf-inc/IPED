@@ -60,7 +60,7 @@ public class Benchmark {
             finder.add(word.getBytes("windows-1252"), word.getBytes("windows-1252"));
         finder.prepare();
 
-        Iterator it = finder.search(text.getBytes("windows-1252"));
+        Iterator<SearchResult> it = finder.search(text.getBytes("windows-1252"));
         while (it.hasNext())
             it.next();
 

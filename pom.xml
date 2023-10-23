@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>iped</groupId>
     <artifactId>iped-parent</artifactId>
-    <version>4.0.0-snapshot</version>
+    <version>4.2-snapshot</version>
     <packaging>pom</packaging>
     
     <modules>
@@ -30,17 +30,21 @@
         <plugin.rsc>${basedir}/resources/plugins</plugin.rsc>
         
         <!--dependencies-->
-        <tika.version>1.26</tika.version>
-        <lucene.version>9.0.0</lucene.version>
-        <sleuthkit.version>4.11.1-p2</sleuthkit.version>
+        <tika.version>2.4.0</tika.version><!-- SyncMetadata change done in commit b673cf4 can be reverted when version is upgraded to include solution of https://issues.apache.org/jira/browse/TIKA-4126 -->
+        <tika.core.version>2.4.0-p1</tika.core.version>
+        <pdfbox.version>2.0.27</pdfbox.version>
+        <lucene.version>9.2.0</lucene.version>
+        <sleuthkit.version>4.12.0.p1</sleuthkit.version>
         <libreoffice.version>7.2.2</libreoffice.version>
         <slf4j.version>1.7.25</slf4j.version>
         <log4j.version>2.17.1</log4j.version>
         <junit.version>4.13.1</junit.version>
-        <icepdf.version>6.3.2</icepdf.version>
-        <java.dbx.version>1.1-p5</java.dbx.version>
+        <icepdf.version>7.0.0</icepdf.version>
+        <java.dbx.version>1.1-p6</java.dbx.version>
         <xerial.sqlite.version>3.34.0</xerial.sqlite.version>
         <dockingframes.version>1.1.2</dockingframes.version>
+        <telegram.impl.version>1.0.9-SNAPSHOT</telegram.impl.version>
+        <twelvemonkeys.version>3.9.4</twelvemonkeys.version>
         <graalvm.version>22.0.0.2</graalvm.version>
     </properties>
 
@@ -61,6 +65,10 @@
             	<enabled>true</enabled>
         	</snapshots>
     	</repository>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -108,6 +116,14 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>findbugs-maven-plugin</artifactId>
                 <version>3.0.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.10.1</version>
+                <configuration>
+                    <forceJavacCompilerUse>false</forceJavacCompilerUse>
+                </configuration>
             </plugin>
         </plugins>
     </build>
