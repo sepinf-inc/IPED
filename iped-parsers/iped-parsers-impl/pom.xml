@@ -201,11 +201,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>github.sepinf</groupId>
-            <artifactId>png-reader</artifactId>
-            <version>jdk11+28-p1</version>
-        </dependency>
-        <dependency>
             <groupId>io.github.fmpfeifer</groupId>
             <artifactId>libfqlite</artifactId>
             <version>1.57.05</version>
