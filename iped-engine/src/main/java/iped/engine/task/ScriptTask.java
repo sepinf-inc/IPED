@@ -65,9 +65,10 @@ public class ScriptTask extends AbstractTask {
         try (InputStreamReader reader = new InputStreamReader(new FileInputStream(file), "UTF-8")) { //$NON-NLS-1$
 
             ScriptEngineManager manager = new ScriptEngineManager();
-            engine = manager.getEngineByName("graal.js");
+            String ext = file.getName().substring(file.getName().lastIndexOf('.') + 1);
+            engine = manager.getEngineByExtension(ext);
             Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
-            bindings.put("polyglot.js.nashorn-compat", true);
+            // bindings.put("polyglot.js.nashorn-compat", true);
             engine.eval(reader);
             inv = (Invocable) engine;
         }

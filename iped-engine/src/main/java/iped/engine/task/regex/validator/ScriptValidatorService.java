@@ -70,9 +70,10 @@ public class ScriptValidatorService implements RegexValidatorService {
 
         try (InputStreamReader reader = new InputStreamReader(new FileInputStream(file), "UTF-8")) { //$NON-NLS-1$
 
-            ScriptEngine engine = manager.getEngineByName("graal.js"); // $NON-NLS-1$
+            String ext = file.getName().substring(file.getName().lastIndexOf('.') + 1);
+            ScriptEngine engine = manager.getEngineByExtension(ext);
             Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
-            bindings.put("polyglot.js.nashorn-compat", true);
+            // bindings.put("polyglot.js.nashorn-compat", true);
             engine.eval(reader);
 
             return (Invocable) engine;

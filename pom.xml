@@ -45,7 +45,6 @@
         <dockingframes.version>1.1.2</dockingframes.version>
         <telegram.impl.version>1.0.9-SNAPSHOT</telegram.impl.version>
         <twelvemonkeys.version>3.9.4</twelvemonkeys.version>
-        <graalvm.version>22.0.0.2</graalvm.version>
     </properties>
 
     <repositories>
