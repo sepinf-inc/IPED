@@ -18,7 +18,6 @@ import iped.configuration.IConfigurationDirectory;
 import iped.engine.config.AudioTranscriptConfig;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
-import iped.exception.IPEDException;
 import oshi.SystemInfo;
 import oshi.hardware.CentralProcessor;
 import oshi.hardware.HardwareAbstractionLayer;
@@ -97,7 +96,20 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
 
     }
 
-    private Server startServer(int device) throws IOException {
+    private Server startServer(int device) throws StartupException {
+        try {
+            return startServer0(device);
+        } catch (Exception e) {
+            if (e instanceof StartupException) {
+                throw (StartupException) e;
+            } else {
+                e.printStackTrace();
+                throw new StartupException(e.toString());
+            }
+        }
+    }
+
+    private Server startServer0(int device) throws IOException {
         if (numProcesses != null && device == numProcesses) {
             return null;
         }
@@ -110,7 +122,7 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
         String script = ipedRoot + SCRIPT_PATH;
         String model = super.transcriptConfig.getHuggingFaceModel();
         if (model == null) {
-            throw new IPEDException("You must configure '" + AudioTranscriptConfig.HUGGING_FACE_MODEL
+            throw new StartupException("You must configure '" + AudioTranscriptConfig.HUGGING_FACE_MODEL
                     + "' in audio transcription config file.");
         }
 
@@ -125,7 +137,7 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
         String line = reader.readLine();
 
         if (!HUGGINGSOUND_LOADED.equals(line)) {
-            throw new IPEDException("'huggingsound' python lib not loaded correctly. Have you installed it?");
+            throw new StartupException("'huggingsound' python lib not loaded correctly. Have you installed it?");
         }
 
         int cudaCount = Integer.valueOf(reader.readLine());
@@ -143,7 +155,7 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
         line = reader.readLine();
 
         if (!MODEL_LOADED.equals(line)) {
-            throw new IPEDException("Error loading '" + model + "' transcription model.");
+            throw new StartupException("Error loading '" + model + "' transcription model.");
         }
 
         line = reader.readLine();
@@ -225,6 +237,9 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
             try {
                 return transcribeWavPart(f);
             } catch (Exception e) {
+                if (e instanceof RuntimeException) {
+                    throw (RuntimeException) e;
+                }
                 throw new RuntimeException(e);
             }
         });
