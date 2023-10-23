@@ -202,7 +202,7 @@ public class Bookmarks implements IBookmarks {
         }
         return ret;
     }
-    
+
     public final boolean hasBookmark(int id) {
         boolean hasBookmark = false;
         for (byte[] b : bookmarks) {
@@ -272,7 +272,8 @@ public class Bookmarks implements IBookmarks {
         bookmarkNames.put(bookmarkId, bookmarkName);
         bookmarkComments.put(bookmarkId, null);
         bookmarkKeyStrokes.put(bookmarkId, null);
-        bookmarkColors.put(bookmarkId, null);
+        if (bookmarkColors != null)
+            bookmarkColors.put(bookmarkId, null);
 
         return bookmarkId;
     }
@@ -283,7 +284,8 @@ public class Bookmarks implements IBookmarks {
         bookmarkNames.remove(bookmark);
         bookmarkComments.remove(bookmark);
         bookmarkKeyStrokes.remove(bookmark);
-        bookmarkColors.remove(bookmark);
+        if (bookmarkColors != null)
+            bookmarkColors.remove(bookmark);
         reportBookmarks.remove(bookmark);
 
         int bookmarkOrder = bookmark / bookmarkBits;
@@ -321,15 +323,16 @@ public class Bookmarks implements IBookmarks {
     }
 
     public synchronized void setBookmarkColor(int bookmarkId, Color color) {
-        bookmarkColors.put(bookmarkId, color);
+        if (bookmarkColors != null)
+            bookmarkColors.put(bookmarkId, color);
     }
 
     public Color getBookmarkColor(int bookmarkId) {
-        return bookmarkColors.get(bookmarkId);
+        return bookmarkColors == null ? null : bookmarkColors.get(bookmarkId);
     }
 
     public Set<Color> getUsedColors() {
-        return new HashSet<Color>(bookmarkColors.values());
+        return bookmarkColors == null ? new HashSet<Color>() : new HashSet<Color>(bookmarkColors.values());
     }
 
     public synchronized void setBookmarkKeyStroke(int bookmarkId, KeyStroke key) {
