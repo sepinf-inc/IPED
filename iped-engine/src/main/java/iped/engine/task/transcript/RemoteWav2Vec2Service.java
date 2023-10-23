@@ -269,6 +269,9 @@ public class RemoteWav2Vec2Service {
                     client.close();
                     continue;
                 }
+                if (executor.isTerminated()) {
+                    System.exit(1);
+                }
                 executor.execute(new Thread() {
                     @Override
                     public void run() {
@@ -397,6 +400,11 @@ public class RemoteWav2Vec2Service {
                                 t2 = System.currentTimeMillis();
                                 result = task.transcribeAudio(wavFile);
                                 t3 = System.currentTimeMillis();
+                            } catch (StartupException e) {
+                                error = true;
+                                // graceful shutdown to clean resources like temp files
+                                executor.shutdown();
+                                throw e;
                             } finally {
                                 transcriptSemaphore.release();
                             }
@@ -421,7 +429,6 @@ public class RemoteWav2Vec2Service {
                             String errorMsg = "Exception while transcribing";
                             logger.warn(errorMsg, e);
                             if (writer != null) {
-
                                 if (e.getMessage() != null && e.getMessage().startsWith("Invalid file size:")
                                         && protocol.compareTo(MESSAGES.VERSION_1_2.toString()) < 0) {
                                     writer.println("0");
