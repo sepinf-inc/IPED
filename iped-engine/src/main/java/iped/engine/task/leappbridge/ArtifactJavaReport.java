@@ -183,7 +183,7 @@ public class ArtifactJavaReport {
     /*
      * Properly maps, format and add leap html columns as IPED item metadata
      */
-    private void addMetadata(Item subItem, String property, String value) throws IOException {
+    private void addMetadata(Item subItem, String property, String value) {
         Metadata m = subItem.getMetadata();
 
         if (value == null || value.trim().equals("")) {
@@ -215,11 +215,16 @@ public class ArtifactJavaReport {
             }
         }
 
-        // some plugins have the linked item per artifact record
-        if (value.startsWith(reportDumpPath.getCanonicalPath())) {
-            String filel = value.toString().substring(reportDumpPath.getCanonicalPath().length());
-            addLinkMetadata(m, property, filel);
-            return;
+        try {
+            // some plugins have the linked item per artifact record
+            if (value.startsWith(reportDumpPath.getCanonicalPath())) {
+                String filel = value.toString().substring(reportDumpPath.getCanonicalPath().length());
+                addLinkMetadata(m, property, filel);
+                return;
+            }
+        } catch (IOException e) {
+            LeappBridgeTask.logger.warn("Error creation link to:" + value);
+            e.printStackTrace();
         }
 
         int refpos = value.indexOf("href=");
@@ -232,31 +237,35 @@ public class ArtifactJavaReport {
             String refFileStr = value.substring(refpos + sizeTag);// from end of "href=" till end
             String strDelimiter = refFileStr.substring(0, 1); // read used string delimiter (quote or double quote)
             refFileStr = refFileStr.substring(1, refFileStr.indexOf(strDelimiter, 2)); // to end string delimiter
-
             if (refFileStr.startsWith("." + File.pathSeparator)) {
                 refFileStr = reportDumpPath + File.pathSeparator + refFileStr.substring(1);
             }
 
-            File refFile = new File(refFileStr);
+            try {
+                File refFile = new File(refFileStr);
 
-            if (refFile.getCanonicalPath().startsWith(reportDumpPath.getCanonicalPath())) {
-                // the referenced file is an existent file inside the dump
-                // so adds a link to it
-                String filel = refFileStr.toString().substring(reportDumpPath.getCanonicalPath().length());
-                addLinkMetadata(m, filel);
-            } else if (refFileStr.startsWith(reportPath.getName())) {
-                // file is in report path.
-                byte[] bytes = Files
-                        .readAllBytes(Path.of(reportPath.getParentFile().getAbsolutePath() + "/" + refFile));
+                if (refFile.getCanonicalPath().startsWith(reportDumpPath.getCanonicalPath())) {
+                    // the referenced file is an existent file inside the dump
+                    // so adds a link to it
+                    String filel = refFileStr.toString().substring(reportDumpPath.getCanonicalPath().length());
+                    addLinkMetadata(m, filel);
+                } else if (refFileStr.startsWith(reportPath.getName())) {
+                    // file is in report path.
+                    byte[] bytes = Files
+                            .readAllBytes(Path.of(reportPath.getParentFile().getAbsolutePath() + "/" + refFile));
 
-                ExportFileTask extractor = new ExportFileTask();
-                extractor.setWorker(worker);
-                ByteArrayInputStream is = new ByteArrayInputStream(bytes);
-                extractor.extractFile(is, subItem, subItem.getLength());
+                    ExportFileTask extractor = new ExportFileTask();
+                    extractor.setWorker(worker);
+                    ByteArrayInputStream is = new ByteArrayInputStream(bytes);
+                    extractor.extractFile(is, subItem, subItem.getLength());
 
-                return; // do not add metadata with this value as it contains temporary reference
-            } else {
-                nope();
+                    return; // do not add metadata with this value as it contains temporary reference
+                } else {
+                    nope();
+                }
+            } catch (IOException e) {
+                LeappBridgeTask.logger.warn("Error creation link to:" + refFileStr);
+                e.printStackTrace();
             }
         }
 
