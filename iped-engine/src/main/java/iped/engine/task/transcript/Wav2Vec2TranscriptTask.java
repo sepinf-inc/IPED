@@ -266,7 +266,7 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
             String line;
             while (!TRANSCRIPTION_FINISHED.equals(line = server.reader.readLine())) {
                 if (line == null) {
-                    throw new RuntimeException("External transcription process crashed.");
+                    throw new ProcessCrashedException();
                 } else {
                     throw new RuntimeException("Transcription failed, returned: " + line);
                 }
