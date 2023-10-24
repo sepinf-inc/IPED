@@ -140,7 +140,9 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
             }
         }
 
-        line = reader.readLine();
+        String msgToIgnore = "Ignored unknown";
+        while ((line = reader.readLine()) != null && line.startsWith(msgToIgnore))
+            ;
 
         if (!MODEL_LOADED.equals(line)) {
             throw new IPEDException("Error loading '" + model + "' transcription model.");
