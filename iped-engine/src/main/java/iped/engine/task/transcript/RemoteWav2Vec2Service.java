@@ -189,6 +189,9 @@ public class RemoteWav2Vec2Service {
             public void run() {
                 while (true) {
                     try {
+                        if (executor.isShutdown()) {
+                            break;
+                        }
                         Thread.sleep(60000);
                         logger.info("Send beacons to {} clients", beaconQueq.size());
                         synchronized (beaconQueq) {
@@ -262,15 +265,15 @@ public class RemoteWav2Vec2Service {
         AtomicInteger jobs = new AtomicInteger();
         while (true) {
             try {
+                if (executor.isTerminated()) {
+                    System.exit(1);
+                }
                 Socket client = server.accept();
                 requestsReceived.incrementAndGet();
                 if (jobs.incrementAndGet() > MAX_CONNECTIONS) {
                     jobs.decrementAndGet();
                     client.close();
                     continue;
-                }
-                if (executor.isTerminated()) {
-                    System.exit(1);
                 }
                 executor.execute(new Thread() {
                     @Override
@@ -404,6 +407,7 @@ public class RemoteWav2Vec2Service {
                                 error = true;
                                 // graceful shutdown to clean resources like temp files
                                 executor.shutdown();
+                                server.close();
                                 throw e;
                             } finally {
                                 transcriptSemaphore.release();
@@ -470,6 +474,9 @@ public class RemoteWav2Vec2Service {
             public void run() {
                 while (true) {
                     try {
+                        if (executor.isShutdown()) {
+                            break;
+                        }
                         Thread.sleep(1000);
                         sendStats(ip, port, localPort, concurrentJobs, concurrentWavConvs);
 
