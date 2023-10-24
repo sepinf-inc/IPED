@@ -403,6 +403,10 @@ public class RemoteWav2Vec2Service {
                                 t2 = System.currentTimeMillis();
                                 result = task.transcribeAudio(wavFile);
                                 t3 = System.currentTimeMillis();
+                            } catch (ProcessCrashedException e) {
+                                // retry audio
+                                error = true;
+                                throw e;
                             } catch (StartupException e) {
                                 error = true;
                                 // graceful shutdown to clean resources like temp files
