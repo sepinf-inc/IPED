@@ -331,7 +331,7 @@ public class Bookmarks implements IBookmarks {
     }
 
     public Color getBookmarkColor(int bookmarkId) {
-        return bookmarkColors == null ? null : bookmarkColors.get(bookmarkId);
+        return bookmarkColors == null || bookmarkId == -1 ? null : bookmarkColors.get(bookmarkId);
     }
 
     public Set<Color> getUsedColors() {
