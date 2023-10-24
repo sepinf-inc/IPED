@@ -199,9 +199,12 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
 
     public Color getBookmarkColor(String bookmarkName) {
         for (IBookmarks m : map.values()) {
-            Color color = m.getBookmarkColor(m.getBookmarkId(bookmarkName));
-            if (color != null)
-                return color;
+            int bid = m.getBookmarkId(bookmarkName);
+            if (bid != -1) {
+                Color color = m.getBookmarkColor(bid);
+                if (color != null)
+                    return color;
+            }
         }
         return null;
     }
