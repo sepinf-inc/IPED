@@ -268,6 +268,10 @@ public class RemoteWav2Vec2Service {
                 if (executor.isTerminated()) {
                     System.exit(1);
                 }
+                if (executor.isShutdown()) {
+                    Thread.sleep(1000);
+                    continue;
+                }
                 Socket client = server.accept();
                 requestsReceived.incrementAndGet();
                 if (jobs.incrementAndGet() > MAX_CONNECTIONS) {
@@ -367,6 +371,10 @@ public class RemoteWav2Vec2Service {
                                 while (read < size && (i = bis.read(buf)) >= 0) {
                                     os.write(buf, 0, i);
                                     read += i;
+                                    if (executor.isShutdown()) {
+                                        error = true;
+                                        throw new Exception("Shutting down service instance...");
+                                    }
                                 }
                             }
 
@@ -382,6 +390,10 @@ public class RemoteWav2Vec2Service {
                             long t0, t1;
                             try {
                                 wavConvSemaphore.acquire();
+                                if (executor.isShutdown()) {
+                                    error = true;
+                                    throw new Exception("Shutting down service instance...");
+                                }
                                 t0 = System.currentTimeMillis();
                                 wavFile = task.getWavFile(tmpFile.toFile(), tmpFile.toString());
                                 t1 = System.currentTimeMillis();
@@ -400,6 +412,10 @@ public class RemoteWav2Vec2Service {
                             long t2, t3;
                             try {
                                 transcriptSemaphore.acquire();
+                                if (executor.isShutdown()) {
+                                    error = true;
+                                    throw new Exception("Shutting down service instance...");
+                                }
                                 t2 = System.currentTimeMillis();
                                 result = task.transcribeAudio(wavFile);
                                 t3 = System.currentTimeMillis();
