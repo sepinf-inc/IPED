@@ -4,6 +4,7 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.NotDirectoryException;
@@ -56,8 +57,7 @@ public class FileInputStreamFactory extends SeekableInputStreamFactory {
     }
 
     boolean isDirectory(String path) {
-        try {
-            Files.newDirectoryStream(Path.of(path));
+        try (DirectoryStream ds = Files.newDirectoryStream(Path.of(path))) {
         } catch (NotDirectoryException ioe) {
             return false;
         } catch (IOException e) {

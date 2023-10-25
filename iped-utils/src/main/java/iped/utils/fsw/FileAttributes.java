@@ -1,5 +1,6 @@
 package iped.utils.fsw;
 
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -36,8 +37,8 @@ public class FileAttributes implements BasicFileAttributes {
 
 	@Override
 	public boolean isDirectory() {
-		try {
-			Files.newDirectoryStream(path);
+        try (DirectoryStream ds = Files.newDirectoryStream(path)) {
+            Files.newDirectoryStream(path);
         } catch (NotDirectoryException ioe) {
     		return false;
         } catch (Exception e) {
