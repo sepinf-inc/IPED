@@ -195,9 +195,18 @@ public class ExtractorIOS extends Extractor {
                     }
                 }
 
+                // Extract messages of all non-group and group chats at once, not per chat
+                Map<Long, Chat> idToChat = new HashMap<Long, Chat>();
                 for (Chat c : list) {
-                    c.setMessages(extractMessages(conn, c, undeletedMessages, messagesUndeletedTable, mediaItems,
-                            groupMembers, firstTry));
+                    idToChat.put(c.getId(), c);
+                }
+                extractMessages(conn, idToChat, firstTry, false);
+                extractMessages(conn, idToChat, firstTry, true);
+
+                for (Chat c : list) {
+                    if (messagesUndeletedTable != null && !undeletedMessages.isEmpty()) {
+                        mergeUndeletedMessages(c, undeletedMessages, mediaItems, groupMembers, firstTry);
+                    }
                     if (c.isGroupChat()) {
                         try {
                             setGroupMembers(c, conn, SELECT_GROUP_MEMBERS);
@@ -244,35 +253,25 @@ public class ExtractorIOS extends Extractor {
         return cleanChatList(list);
     }
 
-    private List<Message> extractMessages(Connection conn, Chat chat, Map<Long, List<SqliteRow>> undeletedMessages,
-            SQLiteUndeleteTable undeleteTable, Map<Long, SqliteRow> mediaItems, Map<Long, SqliteRow> groupMembers,
-            boolean firstTry)
+    private void extractMessages(Connection conn, Map<Long, Chat> idToChat, boolean firstTry, boolean isGroupChat)
             throws SQLException {
-        List<Message> messages = new ArrayList<>();
-        
-        boolean recoverDeleted = undeleteTable != null && !undeletedMessages.isEmpty();
         
         String sql;
         if (hasZTitleColumn) {
-            sql = chat.isGroupChat() ? SELECT_MESSAGES_GROUP : SELECT_MESSAGES_USER;
+            sql = isGroupChat ? SELECT_MESSAGES_GROUP : SELECT_MESSAGES_USER;
         } else {
-            sql = chat.isGroupChat() ? SELECT_MESSAGES_GROUP_NOZTITLE : SELECT_MESSAGES_USER_NOZTITLE;
+            sql = isGroupChat ? SELECT_MESSAGES_GROUP_NOZTITLE : SELECT_MESSAGES_USER_NOZTITLE;
         }
         
-        Set<MessageWrapperForDuplicateRemoval> activeMessages = new HashSet<>();
-        Map<Long, Message> activeMessageIds = new HashMap<>();
-
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setFetchSize(1000);
-            stmt.setLong(1, chat.getId());
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    Message m = createMessageFromDB(rs, chat);
-                    if (recoverDeleted) {
-                        activeMessages.add(new MessageWrapperForDuplicateRemoval(m));
-                        activeMessageIds.put(m.getId(), m);
+                    long chatId = rs.getLong("chatId");
+                    Chat chat = idToChat.get(chatId);
+                    if (chat != null && chat.isGroupChat() == isGroupChat) {
+                        Message m = createMessageFromDB(rs, chat);
+                        chat.getMessages().add(m);
                     }
-                    messages.add(m);
                 }
             }
         } catch (SQLException e) {
@@ -284,20 +283,36 @@ public class ExtractorIOS extends Extractor {
                 parsingException = e;
             }
         }
+    }
+    
+    private void mergeUndeletedMessages(Chat chat, Map<Long, List<SqliteRow>> undeletedMessages,
+            Map<Long, SqliteRow> mediaItems, Map<Long, SqliteRow> groupMembers, boolean firstTry) throws SQLException {
 
-        if (recoverDeleted) {
-            // get deleted messages
-            List<SqliteRow> undeletedRows = undeletedMessages.getOrDefault(chat.getId(), Collections.emptyList());
+        // Get deleted messages for this Chat
+        List<SqliteRow> undeletedRows = undeletedMessages.get(chat.getId());
+        if (undeletedRows != null && !undeletedRows.isEmpty()) {
+
+            // Get active messages for this Chat
+            Set<MessageWrapperForDuplicateRemoval> activeMessages = new HashSet<>();
+            Map<Long, Message> activeMessageIds = new HashMap<>();
+            for (Message m : chat.getMessages()) {
+                activeMessages.add(new MessageWrapperForDuplicateRemoval(m));
+                activeMessageIds.put(m.getId(), m);
+            }
+
             for (SqliteRow row : undeletedRows) {
                 try {
                     if (!firstTry || row.isDeletedRow()) {
-                    Message m = createMessageFromUndeletedRecord(row, chat, mediaItems, groupMembers);
-                    if (!activeMessages.contains(new MessageWrapperForDuplicateRemoval(m))) { //do not include deleted message if already there
-                        if (!activeMessageIds.containsKey(m.getId()) ||
-                            !compareMessagesAlmostTheSame(activeMessageIds.get(m.getId()), m)) { //also remove messages with same id that have the same start text (possibly corrupted recovered record)
-                            messages.add(m);
+                        Message m = createMessageFromUndeletedRecord(row, chat, mediaItems, groupMembers);
+                        if (!activeMessages.contains(new MessageWrapperForDuplicateRemoval(m))) {
+                            // Do not include deleted message if already there.
+                            // Also remove messages with same id that have the same start text (possibly
+                            // corrupted recovered record).
+                            if (!activeMessageIds.containsKey(m.getId())
+                                    || !compareMessagesAlmostTheSame(activeMessageIds.get(m.getId()), m)) {
+                                chat.getMessages().add(m);
+                            }
                         }
-                    }
                     }
                 } catch (SQLException e) {
                     logger.warn("Error creating undelete message for whatsapp ios", e); //$NON-NLS-1$
@@ -305,11 +320,9 @@ public class ExtractorIOS extends Extractor {
                     logger.warn("Error creating undelete message for whatsapp ios", e); //$NON-NLS-1$
                 }
             }
-    
-            Collections.sort(messages, (a, b) -> a.getTimeStamp().compareTo(b.getTimeStamp()));
-        }
 
-        return messages;
+            Collections.sort(chat.getMessages(), (a, b) -> a.getTimeStamp().compareTo(b.getTimeStamp()));
+        }
     }
 
     private Message createMessageFromDB(ResultSet rs, Chat chat) throws SQLException {
@@ -449,31 +462,35 @@ public class ExtractorIOS extends Extractor {
             m.setUrl(mediaItem.getTextValue("ZMEDIAURL")); //$NON-NLS-1$
             m.setLatitude(mediaItem.getFloatValue("ZLATITUDE")); //$NON-NLS-1$
             m.setLongitude(mediaItem.getFloatValue("ZLONGITUDE")); //$NON-NLS-1$
+
+            // This block must be before "if (MEDIA_MESSAGES.contains(m.getMessageType()))",
+            // otherwise Media Hash won't be set. See issue #1921.
+            if (messageType == 0 && m.getData() == null) {
+                if (m.getMediaMime() != null) {
+                    var mediaMime = m.getMediaMime();
+                    if (mediaMime != null) {
+                        if (mediaMime.startsWith("image")) {
+                            m.setMessageType(IMAGE_MESSAGE);
+                        } else if (mediaMime.startsWith("video")) {
+                            m.setMessageType(VIDEO_MESSAGE);
+                        } else if (mediaMime.startsWith("application")) {
+                            m.setMessageType(APP_MESSAGE);
+                        } else if (mediaMime.startsWith("audio")) {
+                            m.setMessageType(AUDIO_MESSAGE);
+                        } else if (m.getMediaCaption() != null) {
+                            m.setMessageType(UNKNOWN_MEDIA_MESSAGE);
+                        }
+                    }
+                } else if (m.getMediaCaption() != null) {
+                    m.setMessageType(UNKNOWN_MEDIA_MESSAGE);
+                }
+            }
+
             if (MEDIA_MESSAGES.contains(m.getMessageType())) {
                 try {
                     m.setMediaHash(mediaItem.getTextValue("ZVCARDNAME"), true); //$NON-NLS-1$
                 } catch (IllegalArgumentException e) {
                 } // ignore
-            }
-        }
-        if (messageType == 0 && m.getData() == null) {
-            if (m.getMediaMime() != null) {
-                var mediaMime = m.getMediaMime();
-                if (mediaMime != null) {
-                    if (mediaMime.startsWith("image")) {
-                        m.setMessageType(IMAGE_MESSAGE);
-                    } else if (mediaMime.startsWith("video")) {
-                        m.setMessageType(VIDEO_MESSAGE);
-                    } else if (mediaMime.startsWith("application")) {
-                        m.setMessageType(APP_MESSAGE);
-                    } else if (mediaMime.startsWith("audio")) {
-                        m.setMessageType(AUDIO_MESSAGE);
-                    } else if (m.getMediaCaption() != null ){
-                        m.setMessageType(UNKNOWN_MEDIA_MESSAGE);
-                    }
-                }
-            } else if (m.getMediaCaption() != null) {
-                m.setMessageType(UNKNOWN_MEDIA_MESSAGE);
             }
         }
         m.setDeleted(row.isDeletedRow());
@@ -653,13 +670,13 @@ public class ExtractorIOS extends Extractor {
      * ** static strings ***
      */
     private static final String SELECT_CHAT_LIST = "SELECT ZWACHATSESSION.Z_PK as id, ZCONTACTJID AS contact, " //$NON-NLS-1$
-            + "ZPARTNERNAME as subject, ZLASTMESSAGEDATE, ZPATH as avatarPath,ZREMOVED as ZREMOVED" //$NON-NLS-1$
+            + "ZPARTNERNAME as subject, ZLASTMESSAGEDATE, ZPATH as avatarPath, ZREMOVED " //$NON-NLS-1$
             + "FROM ZWACHATSESSION " //$NON-NLS-1$
             + "LEFT JOIN ZWAPROFILEPICTUREITEM ON ZWAPROFILEPICTUREITEM.ZJID = ZWACHATSESSION.ZCONTACTJID " //$NON-NLS-1$
             + "ORDER BY ZLASTMESSAGEDATE DESC"; //$NON-NLS-1$
 
     private static final String SELECT_CHAT_LIST_NO_PPIC = "SELECT ZWACHATSESSION.Z_PK as id, ZCONTACTJID AS contact, " //$NON-NLS-1$
-            + "ZPARTNERNAME as subject, ZLASTMESSAGEDATE, NULL as avatarPath , 0 as ZREMOVED" //$NON-NLS-1$
+            + "ZPARTNERNAME as subject, ZLASTMESSAGEDATE, NULL as avatarPath, 0 as ZREMOVED " //$NON-NLS-1$
             + "FROM ZWACHATSESSION " //$NON-NLS-1$
             + "ORDER BY ZLASTMESSAGEDATE DESC"; //$NON-NLS-1$
     /*
@@ -687,7 +704,7 @@ public class ExtractorIOS extends Extractor {
             + "ZGROUPEVENTTYPE as gEventType, ZMESSAGETYPE as messageType FROM ZWAMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAMEDIAITEM ON ZWAMESSAGE.Z_PK = ZWAMEDIAITEM.ZMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAMESSAGEINFO INFO ON INFO.Z_PK = ZWAMESSAGE.ZMESSAGEINFO " //$NON-NLS-1$
-            + "WHERE chatId=? ORDER BY ZSORT"; //$NON-NLS-1$
+            + "ORDER BY ZSORT"; //$NON-NLS-1$
 
     private static final String SELECT_MESSAGES_GROUP = "SELECT ZWAMESSAGE.Z_PK AS id, ZWAMESSAGE.ZCHATSESSION " //$NON-NLS-1$
             + "as chatId, ZMEMBERJID AS remoteResource, ZMESSAGESTATUS AS status, ZTEXT AS data, " //$NON-NLS-1$
@@ -701,7 +718,7 @@ public class ExtractorIOS extends Extractor {
             + "LEFT JOIN ZWAMEDIAITEM ON ZWAMESSAGE.Z_PK = ZWAMEDIAITEM.ZMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAMESSAGEINFO INFO ON INFO.Z_PK = ZWAMESSAGE.ZMESSAGEINFO " //$NON-NLS-1$
             + "LEFT JOIN ZWAGROUPMEMBER ON ZWAGROUPMEMBER.ZCHATSESSION = chatId AND ZWAGROUPMEMBER.Z_PK = ZGROUPMEMBER " //$NON-NLS-1$
-            + "WHERE chatId=? ORDER BY ZSORT"; //$NON-NLS-1$
+            + "ORDER BY ZSORT"; //$NON-NLS-1$
     
     private static final String SELECT_MESSAGES_USER_NOZTITLE = "SELECT ZWAMESSAGE.Z_PK AS id, ZCHATSESSION " //$NON-NLS-1$
             + "as chatId, ZFROMJID AS remoteResource, ZMESSAGESTATUS AS status, ZTEXT AS data, " //$NON-NLS-1$
@@ -714,7 +731,7 @@ public class ExtractorIOS extends Extractor {
             + "ZGROUPEVENTTYPE as gEventType, ZMESSAGETYPE as messageType FROM ZWAMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAMEDIAITEM ON ZWAMESSAGE.Z_PK = ZWAMEDIAITEM.ZMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAMESSAGEINFO INFO ON INFO.Z_PK = ZWAMESSAGE.ZMESSAGEINFO " //$NON-NLS-1$
-            + "WHERE chatId=? ORDER BY ZSORT"; //$NON-NLS-1$
+            + "ORDER BY ZSORT"; //$NON-NLS-1$
 
     private static final String SELECT_MESSAGES_GROUP_NOZTITLE = "SELECT ZWAMESSAGE.Z_PK AS id, ZWAMESSAGE.ZCHATSESSION " //$NON-NLS-1$
             + "as chatId, ZMEMBERJID AS remoteResource, ZMESSAGESTATUS AS status, ZTEXT AS data, " //$NON-NLS-1$
@@ -728,7 +745,7 @@ public class ExtractorIOS extends Extractor {
             + "LEFT JOIN ZWAMEDIAITEM ON ZWAMESSAGE.Z_PK = ZWAMEDIAITEM.ZMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAGROUPMEMBER ON ZWAGROUPMEMBER.ZCHATSESSION = chatId AND ZWAGROUPMEMBER.Z_PK = ZGROUPMEMBER " //$NON-NLS-1$
             + "LEFT JOIN ZWAMESSAGEINFO INFO ON INFO.Z_PK = ZWAMESSAGE.ZMESSAGEINFO " //$NON-NLS-1$
-            + "WHERE chatId=? ORDER BY ZSORT"; //$NON-NLS-1$
+            + "ORDER BY ZSORT"; //$NON-NLS-1$
 
     private static final String VCARD_SEPARATOR = "_$!<VCard-Separator>!$_"; //$NON-NLS-1$
 

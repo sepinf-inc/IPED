@@ -18,6 +18,7 @@
  */
 package iped.engine.datasource;
 
+import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -62,6 +63,7 @@ import iped.engine.data.Item;
 import iped.engine.io.MetadataInputStreamFactory;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.LuceneSearchResult;
+import iped.engine.task.EmbeddedDiskProcessTask;
 import iped.engine.task.HashDBLookupTask;
 import iped.engine.task.HashTask;
 import iped.engine.task.MinIOTask.MinIOInputInputStreamFactory;
@@ -127,7 +129,7 @@ public class IPEDReader extends DataSourceReader {
         // Configuração para não expandir containers
         CategoryToExpandConfig expandConfig = ConfigurationManager.get().findObject(CategoryToExpandConfig.class);
         expandConfig.setEnabled(false);
-
+        EmbeddedDiskProcessTask.setEnabled(false);
         CarverTask.setEnabled(false);
         LedCarveTask.setEnabled(false);
         HashDBLookupTask.setEnabled(false);
@@ -244,15 +246,19 @@ public class IPEDReader extends DataSourceReader {
         for (int oldLabelId : selectedLabels) {
             String labelName = state.getBookmarkName(oldLabelId);
             String labelComment = state.getBookmarkComment(oldLabelId);
+            Color labelColor = state.getBookmarkColor(oldLabelId);
+
             int newLabelId = reportState.newBookmark(labelName);
             reportState.setBookmarkComment(newLabelId, labelComment);
+            reportState.setBookmarkColor(newLabelId, labelColor);
+
             ArrayList<Integer> newIds = new ArrayList<Integer>();
             for (int oldId = 0; oldId <= ipedCase.getLastId(); oldId++)
                 if (state.hasBookmark(oldId, oldLabelId) && oldToNewIdMap[oldId] != -1)
                     newIds.add(oldToNewIdMap[oldId]);
             reportState.addBookmark(newIds, newLabelId);
         }
-        reportState.saveState();
+        reportState.saveState(true);
     }
 
     private void insertParentTreeNodes(LuceneSearchResult result) throws Exception {

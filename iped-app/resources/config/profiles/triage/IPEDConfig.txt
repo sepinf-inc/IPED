@@ -20,7 +20,6 @@ enableLanguageDetect = false
 enableNamedEntityRecogniton = false
 enableGraphGeneration = false
 entropyTest = false
-enableSplitLargeBinary = false
 indexFileContents = true
 enableAudioTranscription = false
 enableCarving = false

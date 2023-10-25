@@ -150,7 +150,8 @@ public class DiscordParser extends AbstractParser {
 
                                     // Checking attachments image
                                     for (DiscordAttachment att : dr.getAttachments()) {
-                                        if (ce2.getKey().contains(att.getFilename()) && !ce2.getName().contains("data")) {
+                                        String[] parts = att.getUrl().split("https://cdn.discordapp.com/attachments/");
+                                        if (parts.length > 1 && ce2.getRequestURL().contains(parts[1])) {
                                             for (IItemReader ib : externalFiles) {
                                                 if (ib.getName() != null && ib.getName().equals(ce2.getName())) {
                                                     att.setMediaHash(ib.getHash());

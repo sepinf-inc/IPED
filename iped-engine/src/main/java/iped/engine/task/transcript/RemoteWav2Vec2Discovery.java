@@ -116,7 +116,7 @@ public class RemoteWav2Vec2Discovery {
 
     private static void discover(PrintWriter writer) throws IOException {
         String env_servers = System.getenv("IPED_TRANSCRIPTION_SERVERS");
-        if (env_servers != null && !env_servers.trim().isEmpty()) {
+        if (!servers.isEmpty() && env_servers != null && !env_servers.trim().isEmpty()) {
             String servers[] = env_servers.trim().split(",");
             writer.println(Integer.toString(servers.length));
             for (String server : servers) {
