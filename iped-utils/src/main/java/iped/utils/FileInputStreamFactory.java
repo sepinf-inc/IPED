@@ -57,13 +57,17 @@ public class FileInputStreamFactory extends SeekableInputStreamFactory {
     }
 
     boolean isDirectory(String path) {
-        try (DirectoryStream ds = Files.newDirectoryStream(Path.of(path))) {
-        } catch (NotDirectoryException ioe) {
-            return false;
-        } catch (IOException e) {
+        if (path.endsWith(" ")) {
+            try (DirectoryStream ds = Files.newDirectoryStream(Path.of(path))) {
+            } catch (NotDirectoryException ioe) {
+                return false;
+            } catch (IOException e) {
+                return new File(path).isDirectory();
+            }
+            return true;
+        } else {
             return new File(path).isDirectory();
         }
-        return true;
     }
 
     @Override
