@@ -22,163 +22,163 @@ import java.util.function.Consumer;
  *  folder and file names with trailing spaces, with the exception that it cannot access the Attributes of them, returning an Empty BasicAttributes instance. 
  */
 
-public class PathWrapper implements Path{
-	Path wrapped;
-	FileSystemWrapper fsw;
-	
-	public PathWrapper(FileSystemWrapper fs, Path path) {
-		this.wrapped = path;
-		this.fsw = fs;				
-	}
+public class PathWrapper implements Path {
+    Path wrapped;
+    FileSystemWrapper fsw;
 
-	public PathWrapper(Path path) {
-		this.wrapped = path;
-		this.fsw = new FileSystemWrapper(new FileSystemProviderWrapper(wrapped.getFileSystem().provider()), wrapped.getFileSystem());
-	}
+    public PathWrapper(FileSystemWrapper fs, Path path) {
+        this.wrapped = path;
+        this.fsw = fs;
+    }
 
-	public void forEach(Consumer<? super Path> action) {
-		wrapped.forEach(action);
-	}
+    public PathWrapper(Path path) {
+        this.wrapped = path;
+        this.fsw = new FileSystemWrapper(new FileSystemProviderWrapper(wrapped.getFileSystem().provider()), wrapped.getFileSystem());
+    }
 
-	public Spliterator<Path> spliterator() {
-		return wrapped.spliterator();
-	}
+    public void forEach(Consumer<? super Path> action) {
+        wrapped.forEach(action);
+    }
 
-	public FileSystem getFileSystem() {
-		return fsw;
-	}
+    public Spliterator<Path> spliterator() {
+        return wrapped.spliterator();
+    }
 
-	public boolean isAbsolute() {
-		return wrapped.isAbsolute();
-	}
+    public FileSystem getFileSystem() {
+        return fsw;
+    }
 
-	public Path getRoot() {
-		return new PathWrapper(fsw, wrapped.getRoot());
-	}
+    public boolean isAbsolute() {
+        return wrapped.isAbsolute();
+    }
 
-	public Path getFileName() {
-		return new PathWrapper(fsw, wrapped.getFileName());
-	}
+    public Path getRoot() {
+        return new PathWrapper(fsw, wrapped.getRoot());
+    }
 
-	public Path getParent() {
-		return new PathWrapper(fsw, wrapped.getParent());
-	}
+    public Path getFileName() {
+        return new PathWrapper(fsw, wrapped.getFileName());
+    }
 
-	public int getNameCount() {
-		return wrapped.getNameCount();
-	}
+    public Path getParent() {
+        return new PathWrapper(fsw, wrapped.getParent());
+    }
 
-	public Path getName(int index) {
-		return new PathWrapper(fsw, wrapped.getName(index));
-	}
+    public int getNameCount() {
+        return wrapped.getNameCount();
+    }
 
-	public Path subpath(int beginIndex, int endIndex) {
-		return new PathWrapper(fsw, wrapped.subpath(beginIndex, endIndex));
-	}
+    public Path getName(int index) {
+        return new PathWrapper(fsw, wrapped.getName(index));
+    }
 
-	public boolean startsWith(Path other) {
-		return wrapped.startsWith(other);
-	}
+    public Path subpath(int beginIndex, int endIndex) {
+        return new PathWrapper(fsw, wrapped.subpath(beginIndex, endIndex));
+    }
 
-	public boolean startsWith(String other) {
-		return wrapped.startsWith(other);
-	}
+    public boolean startsWith(Path other) {
+        return wrapped.startsWith(other);
+    }
 
-	public boolean endsWith(Path other) {
-		return wrapped.endsWith(other);
-	}
+    public boolean startsWith(String other) {
+        return wrapped.startsWith(other);
+    }
 
-	public boolean endsWith(String other) {
-		return wrapped.endsWith(other);
-	}
+    public boolean endsWith(Path other) {
+        return wrapped.endsWith(other);
+    }
 
-	public Path normalize() {
-		return new PathWrapper(fsw, wrapped.normalize());
-	}
+    public boolean endsWith(String other) {
+        return wrapped.endsWith(other);
+    }
 
-	public Path resolve(Path other) {
+    public Path normalize() {
+        return new PathWrapper(fsw, wrapped.normalize());
+    }
+
+    public Path resolve(Path other) {
         try {
             return new PathWrapper(fsw, wrapped.resolve(other));
         } catch (Exception e) {
             return new PathWrapper(new File(this.toString(), other.toString()).toPath());
         }
-	}
+    }
 
-	public Path resolve(String other) {
+    public Path resolve(String other) {
         return new PathWrapper(fsw, wrapped.resolve(other));
-	}
+    }
 
-	public Path resolveSibling(Path other) {
-		return new PathWrapper(fsw, wrapped.resolveSibling(other));
-	}
+    public Path resolveSibling(Path other) {
+        return new PathWrapper(fsw, wrapped.resolveSibling(other));
+    }
 
-	public Path resolveSibling(String other) {
-		return new PathWrapper(fsw, wrapped.resolveSibling(other));
-	}
+    public Path resolveSibling(String other) {
+        return new PathWrapper(fsw, wrapped.resolveSibling(other));
+    }
 
-	public Path relativize(Path other) {
-		return new PathWrapper(fsw, wrapped.relativize(other));
-	}
+    public Path relativize(Path other) {
+        return new PathWrapper(fsw, wrapped.relativize(other));
+    }
 
-	public URI toUri() {
-		return wrapped.toUri();
-	}
+    public URI toUri() {
+        return wrapped.toUri();
+    }
 
-	public Path toAbsolutePath() {
-		return new PathWrapper(fsw, wrapped.toAbsolutePath());
-	}
+    public Path toAbsolutePath() {
+        return new PathWrapper(fsw, wrapped.toAbsolutePath());
+    }
 
-	public Path toRealPath(LinkOption... options) throws IOException {
-		return new PathWrapper(fsw, wrapped.toRealPath(options));
-	}
+    public Path toRealPath(LinkOption... options) throws IOException {
+        return new PathWrapper(fsw, wrapped.toRealPath(options));
+    }
 
-	public File toFile() {
-		return new FileWrapper(wrapped);
-	}
+    public File toFile() {
+        return new FileWrapper(wrapped);
+    }
 
-	public WatchKey register(WatchService watcher, Kind<?>[] events, Modifier... modifiers) throws IOException {
-		return wrapped.register(watcher, events, modifiers);
-	}
+    public WatchKey register(WatchService watcher, Kind<?>[] events, Modifier... modifiers) throws IOException {
+        return wrapped.register(watcher, events, modifiers);
+    }
 
-	public WatchKey register(WatchService watcher, Kind<?>... events) throws IOException {
-		return wrapped.register(watcher, events);
-	}
+    public WatchKey register(WatchService watcher, Kind<?>... events) throws IOException {
+        return wrapped.register(watcher, events);
+    }
 
-	public Iterator<Path> iterator() {
-		Iterator<Path> wi = wrapped.iterator();
-		return new Iterator<Path>(){
+    public Iterator<Path> iterator() {
+        Iterator<Path> wi = wrapped.iterator();
+        return new Iterator<Path>() {
 
-			@Override
-			public boolean hasNext() {
-				return wi.hasNext();
-			}
+            @Override
+            public boolean hasNext() {
+                return wi.hasNext();
+            }
 
-			@Override
-			public Path next() {
-				return new PathWrapper(fsw, wi.next());
-			}
-		};
-	}
+            @Override
+            public Path next() {
+                return new PathWrapper(fsw, wi.next());
+            }
+        };
+    }
 
-	public int compareTo(Path other) {
-		return wrapped.compareTo(other);
-	}
+    public int compareTo(Path other) {
+        return wrapped.compareTo(other);
+    }
 
-	public boolean equals(Object other) {
-		return wrapped.equals(other);
-	}
+    public boolean equals(Object other) {
+        return wrapped.equals(other);
+    }
 
-	public int hashCode() {
-		return wrapped.hashCode();
-	}
+    public int hashCode() {
+        return wrapped.hashCode();
+    }
 
-	public String toString() {
-		return wrapped.toString();
-	}
+    public String toString() {
+        return wrapped.toString();
+    }
 
-	public Path getWrappedPath() {
-		return wrapped;
-	}
+    public Path getWrappedPath() {
+        return wrapped;
+    }
 
     private static final boolean IS_WINDOWS = System.getProperty("os.name").toLowerCase().startsWith("windows");
 

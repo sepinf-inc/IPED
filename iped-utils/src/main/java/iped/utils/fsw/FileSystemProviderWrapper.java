@@ -24,145 +24,141 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
-public class FileSystemProviderWrapper extends FileSystemProvider{
-	
-	FileSystemProvider wrapped;
-	
-	public FileSystemProviderWrapper(FileSystemProvider fsp) {
-		this.wrapped = fsp;
-	}
+public class FileSystemProviderWrapper extends FileSystemProvider {
 
-	public int hashCode() {
-		return wrapped.hashCode();
-	}
+    FileSystemProvider wrapped;
 
-	public boolean equals(Object obj) {
-		return wrapped.equals(obj);
-	}
+    public FileSystemProviderWrapper(FileSystemProvider fsp) {
+        this.wrapped = fsp;
+    }
 
-	public String getScheme() {
-		return wrapped.getScheme();
-	}
+    public int hashCode() {
+        return wrapped.hashCode();
+    }
 
-	public FileSystem newFileSystem(URI uri, Map<String, ?> env) throws IOException {
-		return new FileSystemWrapper(this,wrapped.newFileSystem(uri, env));
-	}
+    public boolean equals(Object obj) {
+        return wrapped.equals(obj);
+    }
 
-	public String toString() {
-		return wrapped.toString();
-	}
+    public String getScheme() {
+        return wrapped.getScheme();
+    }
 
-	public FileSystem getFileSystem(URI uri) {
-		return wrapped.getFileSystem(uri);
-	}
+    public FileSystem newFileSystem(URI uri, Map<String, ?> env) throws IOException {
+        return new FileSystemWrapper(this, wrapped.newFileSystem(uri, env));
+    }
 
-	public Path getPath(URI uri) {
-		return wrapped.getPath(uri);
-	}
+    public String toString() {
+        return wrapped.toString();
+    }
 
-	public FileSystem newFileSystem(Path path, Map<String, ?> env) throws IOException {
-		return wrapped.newFileSystem(path, env);
-	}
+    public FileSystem getFileSystem(URI uri) {
+        return wrapped.getFileSystem(uri);
+    }
 
-	public InputStream newInputStream(Path path, OpenOption... options) throws IOException {
+    public Path getPath(URI uri) {
+        return wrapped.getPath(uri);
+    }
+
+    public FileSystem newFileSystem(Path path, Map<String, ?> env) throws IOException {
+        return wrapped.newFileSystem(path, env);
+    }
+
+    public InputStream newInputStream(Path path, OpenOption... options) throws IOException {
         return wrapped.newInputStream(((PathWrapper) path).getWrappedPath(), options);
-	}
+    }
 
-	public OutputStream newOutputStream(Path path, OpenOption... options) throws IOException {
+    public OutputStream newOutputStream(Path path, OpenOption... options) throws IOException {
         return wrapped.newOutputStream(((PathWrapper) path).getWrappedPath(), options);
-	}
+    }
 
-	public FileChannel newFileChannel(Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs)
-			throws IOException {
+    public FileChannel newFileChannel(Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
         return wrapped.newFileChannel(((PathWrapper) path).getWrappedPath(), options, attrs);
-	}
+    }
 
-	public AsynchronousFileChannel newAsynchronousFileChannel(Path path, Set<? extends OpenOption> options,
-			ExecutorService executor, FileAttribute<?>... attrs) throws IOException {
+    public AsynchronousFileChannel newAsynchronousFileChannel(Path path, Set<? extends OpenOption> options, ExecutorService executor, FileAttribute<?>... attrs) throws IOException {
         return wrapped.newAsynchronousFileChannel(((PathWrapper) path).getWrappedPath(), options, executor, attrs);
-	}
+    }
 
-	public SeekableByteChannel newByteChannel(Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs)
-			throws IOException {
+    public SeekableByteChannel newByteChannel(Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
         return wrapped.newByteChannel(((PathWrapper) path).getWrappedPath(), options, attrs);
-	}
+    }
 
-	public DirectoryStream<Path> newDirectoryStream(Path dir, Filter<? super Path> filter) throws IOException {
-		return new DirectoryStreamWrapper(wrapped.newDirectoryStream(((PathWrapper)dir).getWrappedPath(), filter));
-	}
+    public DirectoryStream<Path> newDirectoryStream(Path dir, Filter<? super Path> filter) throws IOException {
+        return new DirectoryStreamWrapper(wrapped.newDirectoryStream(((PathWrapper) dir).getWrappedPath(), filter));
+    }
 
-	public void createDirectory(Path dir, FileAttribute<?>... attrs) throws IOException {
-		wrapped.createDirectory(((PathWrapper)dir).getWrappedPath(), attrs);
-	}
+    public void createDirectory(Path dir, FileAttribute<?>... attrs) throws IOException {
+        wrapped.createDirectory(((PathWrapper) dir).getWrappedPath(), attrs);
+    }
 
-	public void createSymbolicLink(Path link, Path target, FileAttribute<?>... attrs) throws IOException {
-		wrapped.createSymbolicLink(link, target, attrs);
-	}
+    public void createSymbolicLink(Path link, Path target, FileAttribute<?>... attrs) throws IOException {
+        wrapped.createSymbolicLink(link, target, attrs);
+    }
 
-	public void createLink(Path link, Path existing) throws IOException {
-		wrapped.createLink(link, existing);
-	}
+    public void createLink(Path link, Path existing) throws IOException {
+        wrapped.createLink(link, existing);
+    }
 
-	public void delete(Path path) throws IOException {
-		wrapped.delete(path);
-	}
+    public void delete(Path path) throws IOException {
+        wrapped.delete(path);
+    }
 
-	public boolean deleteIfExists(Path path) throws IOException {
-		return wrapped.deleteIfExists(path);
-	}
+    public boolean deleteIfExists(Path path) throws IOException {
+        return wrapped.deleteIfExists(path);
+    }
 
-	public Path readSymbolicLink(Path link) throws IOException {
-		return wrapped.readSymbolicLink(link);
-	}
+    public Path readSymbolicLink(Path link) throws IOException {
+        return wrapped.readSymbolicLink(link);
+    }
 
-	public void copy(Path source, Path target, CopyOption... options) throws IOException {
-		wrapped.copy(source, target, options);
-	}
+    public void copy(Path source, Path target, CopyOption... options) throws IOException {
+        wrapped.copy(source, target, options);
+    }
 
-	public void move(Path source, Path target, CopyOption... options) throws IOException {
-		wrapped.move(source, target, options);
-	}
+    public void move(Path source, Path target, CopyOption... options) throws IOException {
+        wrapped.move(source, target, options);
+    }
 
-	public boolean isSameFile(Path path, Path path2) throws IOException {
-		return wrapped.isSameFile(path, path2);
-	}
+    public boolean isSameFile(Path path, Path path2) throws IOException {
+        return wrapped.isSameFile(path, path2);
+    }
 
-	public boolean isHidden(Path path) throws IOException {
-		return wrapped.isHidden(path);
-	}
+    public boolean isHidden(Path path) throws IOException {
+        return wrapped.isHidden(path);
+    }
 
-	public FileStore getFileStore(Path path) throws IOException {
-		return wrapped.getFileStore(path);
-	}
+    public FileStore getFileStore(Path path) throws IOException {
+        return wrapped.getFileStore(path);
+    }
 
-	public void checkAccess(Path path, AccessMode... modes) throws IOException {
-		wrapped.checkAccess(path, modes);
-	}
+    public void checkAccess(Path path, AccessMode... modes) throws IOException {
+        wrapped.checkAccess(path, modes);
+    }
 
-	public <V extends FileAttributeView> V getFileAttributeView(Path path, Class<V> type, LinkOption... options) {
-		return wrapped.getFileAttributeView(path, type, options);
-	}
+    public <V extends FileAttributeView> V getFileAttributeView(Path path, Class<V> type, LinkOption... options) {
+        return wrapped.getFileAttributeView(path, type, options);
+    }
 
-	public <A extends BasicFileAttributes> A readAttributes(Path path, Class<A> type, LinkOption... options)
-			throws IOException {
-		A result;
-		try {
+    public <A extends BasicFileAttributes> A readAttributes(Path path, Class<A> type, LinkOption... options) throws IOException {
+        A result;
+        try {
             if (path.toString().endsWith(" ")) {
                 return (A) new FileAttributes((PathWrapper) path);
             }
             result = wrapped.readAttributes(((PathWrapper) path).getWrappedPath(), type, options);
-		}catch (Exception e) {
-			return (A) new FileAttributes((PathWrapper)path);
-		}
-		return  result;		
-	}
+        } catch (Exception e) {
+            return (A) new FileAttributes((PathWrapper) path);
+        }
+        return result;
+    }
 
-	public Map<String, Object> readAttributes(Path path, String attributes, LinkOption... options) throws IOException {
-		return wrapped.readAttributes(path, attributes, options);
-	}
+    public Map<String, Object> readAttributes(Path path, String attributes, LinkOption... options) throws IOException {
+        return wrapped.readAttributes(path, attributes, options);
+    }
 
-	public void setAttribute(Path path, String attribute, Object value, LinkOption... options) throws IOException {
-		wrapped.setAttribute(path, attribute, value, options);
-	}
+    public void setAttribute(Path path, String attribute, Object value, LinkOption... options) throws IOException {
+        wrapped.setAttribute(path, attribute, value, options);
+    }
 
 }
