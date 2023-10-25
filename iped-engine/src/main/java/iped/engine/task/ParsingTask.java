@@ -478,7 +478,10 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         String prevMediaType = evidence.getMediaType().toString();
         String parsedMediaType = metadata.get(StandardParser.INDEXER_CONTENT_TYPE);
         if (!prevMediaType.equals(parsedMediaType)) {
-            evidence.setMediaType(MediaType.parse(parsedMediaType));
+            MediaType mediaType = MediaType.parse(parsedMediaType);
+            if (mediaType != null) {
+                evidence.setMediaType(mediaType);
+            }
         }
 
         if (Boolean.valueOf(metadata.get(BasicProps.HASCHILD))) {
