@@ -162,9 +162,6 @@ public class FileSystemProviderWrapper extends FileSystemProvider{
 	}
 
 	public void setAttribute(Path path, String attribute, Object value, LinkOption... options) throws IOException {
-		if(path.toFile().getAbsolutePath().endsWith(" ")) {
-			System.out.println("");
-		}
 		wrapped.setAttribute(path, attribute, value, options);
 	}
 
