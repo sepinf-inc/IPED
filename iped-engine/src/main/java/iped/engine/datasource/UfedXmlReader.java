@@ -784,7 +784,7 @@ public class UfedXmlReader extends DataSourceReader {
                 boolean merged = false;
                 if (!itemSeq.isEmpty()) {
                     IItem parentItem = itemSeq.get(itemSeq.size() - 1);
-                    if (UFED_CONTACTPHOTO_MIME.equals(parentItem.getMediaType().getSubtype())) {
+                    if (parentItem.getMediaType() != null && UFED_CONTACTPHOTO_MIME.equals(parentItem.getMediaType().getSubtype())) {
                         String[] split = item.getIdInDataSource().split(UFDRInputStreamFactory.UFDR_PATH_PREFIX);
                         String exportPath = split[split.length - 1];
                         parentItem.getMetadata().set(AVATAR_PATH_META, exportPath);
