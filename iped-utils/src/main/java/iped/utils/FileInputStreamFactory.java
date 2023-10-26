@@ -27,6 +27,7 @@ public class FileInputStreamFactory extends SeekableInputStreamFactory {
     }
 
     public Path getPath(String subPath) {
+
         Path source = Paths.get(this.dataSource);
         try {
             return source.resolve(subPath);
@@ -37,23 +38,27 @@ public class FileInputStreamFactory extends SeekableInputStreamFactory {
                 file = new File(source.toFile(), subPath);
             }
             if (IS_WINDOWS) {
-                // workaround for https://github.com/sepinf-inc/IPED/issues/1861
-                if (isDirectory(source, file)) {
-                    try {
-                        file = Files.createTempDirectory("iped").toFile();
-                        file.deleteOnExit();
-                    } catch (IOException e1) {
-                        throw new RuntimeException(e1);
+                try {
+                    // workaround for https://github.com/sepinf-inc/IPED/issues/1861
+                    if (isDirectory(source, file)) {
+                        try {
+                            file = Files.createTempDirectory("iped").toFile();
+                            file.deleteOnExit();
+                        } catch (IOException e1) {
+                            throw new RuntimeException(e1);
+                        }
+                    } else {
+                        File f = new File("\\\\?\\" + file.getCanonicalPath());
+                        try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(f))) {
+                            file = File.createTempFile("iped", ".tmp");
+                            file.deleteOnExit();
+                            Files.copy(bis, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                        } catch (IOException e1) {
+                            throw new RuntimeException(e1);
+                        }
                     }
-                } else {
-                    File f = new File("\\\\?\\" + file.getAbsolutePath());
-                    try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(f))) {
-                        file = File.createTempFile("iped", ".tmp");
-                        file.deleteOnExit();
-                        Files.copy(bis, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                    } catch (IOException e1) {
-                        throw new RuntimeException(e1);
-                    }
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
                 }
             }
             return file.toPath();
@@ -70,13 +75,11 @@ public class FileInputStreamFactory extends SeekableInputStreamFactory {
 
         @Override
         public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-            System.out.println("Entering:" + dir);
             if (!fileToFind.getCanonicalPath().startsWith(dir.toFile().getCanonicalPath())) {
                 return FileVisitResult.SKIP_SUBTREE;
             }
             if (dir.toFile().getCanonicalPath().equals(fileToFind.getCanonicalPath())) {
                 foundPath = dir;
-                System.out.println("Found:" + dir);
                 return FileVisitResult.TERMINATE;
             }
             return FileVisitResult.CONTINUE;
@@ -84,10 +87,8 @@ public class FileInputStreamFactory extends SeekableInputStreamFactory {
 
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-            System.out.println("Visiting:" + file);
             if (file.toFile().getCanonicalPath().equals(fileToFind.getCanonicalPath())) {
                 foundPath = file;
-                System.out.println("Found:" + file);
                 return FileVisitResult.TERMINATE;
             }
             return FileVisitResult.CONTINUE;
