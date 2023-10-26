@@ -34,6 +34,10 @@ import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.table.TableCellEditor;
 
+import iped.app.ui.bookmarks.BookmarkIcon;
+import iped.data.IMultiBookmarks;
+import iped.engine.util.Util;
+
 public class GalleryCellEditor extends AbstractCellEditor implements TableCellEditor, ActionListener {
 
     private static final long serialVersionUID = 1L;
@@ -99,8 +103,12 @@ public class GalleryCellEditor extends AbstractCellEditor implements TableCellEd
             return panel;
         }
 
-        check.setSelected(App.get().appCase.getMultiBookmarks().isChecked(cellValue.id));
+        IMultiBookmarks bookmarks = App.get().appCase.getMultiBookmarks();
+        check.setSelected(bookmarks.isChecked(cellValue.id));
         cLabel.setText(cellValue.name);
+        String itemBookmarksStr = Util.concatStrings(bookmarks.getBookmarkList(cellValue.id));
+        cLabel.setToolTipText(itemBookmarksStr.isEmpty() ? null : itemBookmarksStr);
+        cLabel.setIcon(BookmarkIcon.getIcon(bookmarks, itemBookmarksStr));
 
         GalleryCellRenderer.adjustGalleryCellContent(cellValue, label, warningColor, table);
 

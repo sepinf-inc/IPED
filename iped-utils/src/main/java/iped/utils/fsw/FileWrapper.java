@@ -8,15 +8,15 @@ import java.nio.file.Path;
  * keep consistency with fsw package whenever toPath and path toFile are called.
  */
 
-public class FileWrapper extends File{
+public class FileWrapper extends File {
 
-	public FileWrapper(Path path) {
-		super(path.toString());
-	}
+    public FileWrapper(Path path) {
+        super(path.toString());
+    }
 
-	@Override
-	public Path toPath() {
-		return new PathWrapper(super.toPath());
-	}
+    @Override
+    public Path toPath() {
+        return new PathWrapper(super.toPath());
+    }
 
 }
