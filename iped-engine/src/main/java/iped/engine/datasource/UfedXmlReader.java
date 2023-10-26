@@ -16,7 +16,6 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.text.DateFormat;
-import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -89,7 +88,6 @@ import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
 import iped.utils.FileInputStreamFactory;
 import iped.utils.IOUtil;
-import iped.utils.LocalizedFormat;
 import iped.utils.SimpleHTMLEncoder;
 
 public class UfedXmlReader extends DataSourceReader {
@@ -192,7 +190,13 @@ public class UfedXmlReader extends DataSourceReader {
 
     private UFDRInputStreamFactory getUISF() {
         if (uisf == null) {
-            uisf = new UFDRInputStreamFactory(ufdrFile.toPath());
+            synchronized (uisfMap) {
+                uisf = uisfMap.get(ufdrFile);
+                if (uisf == null) {
+                    uisf = new UFDRInputStreamFactory(ufdrFile.toPath());
+                    uisfMap.put(ufdrFile, uisf);
+                }
+            }
         }
         return uisf;
     }
@@ -361,8 +365,6 @@ public class UfedXmlReader extends DataSourceReader {
         DateFormat[] dfs = { df1, df2, df3, df4, df5, df6 };
 
         DateFormat out = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-
-        private final DecimalFormat currencyFormat = LocalizedFormat.getDecimalInstance("#,##0.00");
 
         ArrayList<XmlNode> nodeSeq = new ArrayList<>();
         ArrayList<Item> itemSeq = new ArrayList<>();
@@ -1658,9 +1660,7 @@ public class UfedXmlReader extends DataSourceReader {
 
     @Override
     public void close() throws IOException {
-        if (uisf != null) {
-            uisf.close();
-        }
+        IOUtil.closeQuietly(uisf);
     }
 
 }
