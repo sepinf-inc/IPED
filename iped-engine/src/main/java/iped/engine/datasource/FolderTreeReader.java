@@ -242,7 +242,7 @@ public class FolderTreeReader extends DataSourceReader {
         public FileVisitResult visitFileFailed(Path path, IOException exception) throws IOException {
 
             if (exception != null) {
-                logger.error("File ignored: " + path.toFile().getAbsolutePath() + ": " + exception.toString());
+                logger.error("File/Folder ignored: " + path.toFile().getAbsolutePath() + ": " + exception.toString());
             }
 
             return FileVisitResult.CONTINUE;
