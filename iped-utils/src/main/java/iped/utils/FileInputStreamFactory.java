@@ -5,12 +5,15 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributes;
 
 import iped.io.SeekableInputStream;
 import iped.utils.fsw.PathWrapper;
@@ -35,7 +38,7 @@ public class FileInputStreamFactory extends SeekableInputStreamFactory {
             }
             if (IS_WINDOWS) {
                 // workaround for https://github.com/sepinf-inc/IPED/issues/1861
-                if (isDirectory(file)) {
+                if (isDirectory(source, file)) {
                     try {
                         file = Files.createTempDirectory("iped").toFile();
                         file.deleteOnExit();
@@ -57,20 +60,63 @@ public class FileInputStreamFactory extends SeekableInputStreamFactory {
         }
     }
 
-    boolean isDirectory(File f) {
+    class FilePathVisitor implements FileVisitor<Path> {
+        public File fileToFind;
+        public Path foundPath;
+
+        public FilePathVisitor(File fileToFind) {
+            this.fileToFind = fileToFind;
+        }
+
+        @Override
+        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+            System.out.println("Entering:" + dir);
+            if (!fileToFind.getCanonicalPath().startsWith(dir.toFile().getCanonicalPath())) {
+                return FileVisitResult.SKIP_SUBTREE;
+            }
+            if (dir.toFile().getCanonicalPath().equals(fileToFind.getCanonicalPath())) {
+                foundPath = dir;
+                System.out.println("Found:" + dir);
+                return FileVisitResult.TERMINATE;
+            }
+            return FileVisitResult.CONTINUE;
+        }
+
+        @Override
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+            System.out.println("Visiting:" + file);
+            if (file.toFile().getCanonicalPath().equals(fileToFind.getCanonicalPath())) {
+                foundPath = file;
+                System.out.println("Found:" + file);
+                return FileVisitResult.TERMINATE;
+            }
+            return FileVisitResult.CONTINUE;
+        }
+
+        @Override
+        public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+            return FileVisitResult.CONTINUE;
+        }
+
+        @Override
+        public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+            return FileVisitResult.CONTINUE;
+        }
+    }
+
+    boolean isDirectory(Path source, File f) {
         String strpath = f.getAbsolutePath();
         if (strpath.endsWith(" ")) {
-            Path parent = new PathWrapper(f.getParentFile().toPath());
+
+            Path startingDir = PathWrapper.create(source);
             Path path = null;
-            try (DirectoryStream<Path> ds = Files.newDirectoryStream(parent)) {
-                for (Path child : ds) {
-                    if (child.getFileName().toString().equals(f.getName())) {
-                        path = child;
-                        break;
-                    }
-                }
-            } catch (IOException e1) {
-                e1.printStackTrace();
+            try {
+                FilePathVisitor filePathVisitor = new FilePathVisitor(f);
+                System.out.println("Finding:" + f.getCanonicalPath());
+                Files.walkFileTree(startingDir, filePathVisitor);
+                path = filePathVisitor.foundPath;
+            } catch (IOException e2) {
+                e2.printStackTrace();
             }
 
             if (path == null) {
