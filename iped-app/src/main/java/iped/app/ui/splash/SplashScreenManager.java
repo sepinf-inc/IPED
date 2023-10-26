@@ -21,12 +21,12 @@ public class SplashScreenManager {
      * may be adjusted in the future, if a larger number of classes are loaded
      * during startup process.
      */
-    private static int maxProgress = 2300;
+    private static int maxProgress = 10500;
 
     /**
      * Expected initial progress (roughly).
      */
-    private static int minProgress = 0;
+    private static int minProgress = 3500;
 
     public void start() {
         SplashScreen sc = null;
