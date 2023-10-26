@@ -37,7 +37,6 @@ public class FileAttributes implements BasicFileAttributes {
     @Override
     public boolean isDirectory() {
         try (DirectoryStream ds = Files.newDirectoryStream(path)) {
-            Files.newDirectoryStream(path);
         } catch (NotDirectoryException ioe) {
             return false;
         } catch (Exception e) {
