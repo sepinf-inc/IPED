@@ -13,6 +13,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
 import iped.io.SeekableInputStream;
+import iped.utils.fsw.PathWrapper;
 
 public class FileInputStreamFactory extends SeekableInputStreamFactory {
 
@@ -34,7 +35,7 @@ public class FileInputStreamFactory extends SeekableInputStreamFactory {
             }
             if (IS_WINDOWS) {
                 // workaround for https://github.com/sepinf-inc/IPED/issues/1861
-                if (isDirectory(file.getAbsolutePath())) {
+                if (isDirectory(file)) {
                     try {
                         file = Files.createTempDirectory("iped").toFile();
                         file.deleteOnExit();
@@ -56,17 +57,35 @@ public class FileInputStreamFactory extends SeekableInputStreamFactory {
         }
     }
 
-    boolean isDirectory(String path) {
-        if (path.endsWith(" ")) {
-            try (DirectoryStream ds = Files.newDirectoryStream(Path.of(path))) {
+    boolean isDirectory(File f) {
+        String strpath = f.getAbsolutePath();
+        if (strpath.endsWith(" ")) {
+            Path parent = new PathWrapper(f.getParentFile().toPath());
+            Path path = null;
+            try (DirectoryStream<Path> ds = Files.newDirectoryStream(parent)) {
+                for (Path child : ds) {
+                    if (child.getFileName().toString().equals(f.getName())) {
+                        path = child;
+                        break;
+                    }
+                }
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+
+            if (path == null) {
+                return false;
+            }
+
+            try (DirectoryStream ds = Files.newDirectoryStream(path)) {
             } catch (NotDirectoryException ioe) {
                 return false;
             } catch (IOException e) {
-                return new File(path).isDirectory();
+                return new File(strpath).isDirectory();
             }
             return true;
         } else {
-            return new File(path).isDirectory();
+            return new File(strpath).isDirectory();
         }
     }
 
