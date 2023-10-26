@@ -8,63 +8,63 @@ import java.nio.file.attribute.FileTime;
 
 public class FileAttributes implements BasicFileAttributes {
 
-	PathWrapper path;
-	
-	public FileAttributes(PathWrapper path) {
-		this.path = path;
-	}
-	
+    PathWrapper path;
+    
+    public FileAttributes(PathWrapper path) {
+        this.path = path;
+    }
+    
 
-	@Override
-	public FileTime lastModifiedTime() {
-		return null;
-	}
+    @Override
+    public FileTime lastModifiedTime() {
+        return null;
+    }
 
-	@Override
-	public FileTime lastAccessTime() {
-		return null;
-	}
+    @Override
+    public FileTime lastAccessTime() {
+        return null;
+    }
 
-	@Override
-	public FileTime creationTime() {
-		return null;
-	}
+    @Override
+    public FileTime creationTime() {
+        return null;
+    }
 
-	@Override
-	public boolean isRegularFile() {
-		return path.toFile().isFile();
-	}
+    @Override
+    public boolean isRegularFile() {
+        return path.toFile().isFile();
+    }
 
-	@Override
-	public boolean isDirectory() {
+    @Override
+    public boolean isDirectory() {
         try (DirectoryStream ds = Files.newDirectoryStream(path)) {
             Files.newDirectoryStream(path);
         } catch (NotDirectoryException ioe) {
-    		return false;
+            return false;
         } catch (Exception e) {
-        	return true;
-		}
-		return true;
-	}
+            return true;
+        }
+        return true;
+    }
 
-	@Override
-	public boolean isSymbolicLink() {
-		return false;
-	}
+    @Override
+    public boolean isSymbolicLink() {
+        return false;
+    }
 
-	@Override
-	public boolean isOther() {
-		return false;
-	}
+    @Override
+    public boolean isOther() {
+        return false;
+    }
 
-	@Override
-	public long size() {
-		return path.toFile().length();
-	}
+    @Override
+    public long size() {
+        return path.toFile().length();
+    }
 
-	@Override
-	public Object fileKey() {
-		return null;
-	}
+    @Override
+    public Object fileKey() {
+        return null;
+    }
 
 }
