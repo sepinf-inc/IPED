@@ -121,6 +121,8 @@ public class UfedXmlReader extends DataSourceReader {
 
     private static Random random = new Random();
 
+    private static HashMap<File, UFDRInputStreamFactory> uisfMap = new HashMap<>();
+
     File root, ufdrFile;
     UFDRInputStreamFactory uisf;
     FileInputStreamFactory fisf, previewFisf;
@@ -188,7 +190,13 @@ public class UfedXmlReader extends DataSourceReader {
 
     private UFDRInputStreamFactory getUISF() {
         if (uisf == null) {
-            uisf = new UFDRInputStreamFactory(ufdrFile.toPath());
+            synchronized (uisfMap) {
+                uisf = uisfMap.get(ufdrFile);
+                if (uisf == null) {
+                    uisf = new UFDRInputStreamFactory(ufdrFile.toPath());
+                    uisfMap.put(ufdrFile, uisf);
+                }
+            }
         }
         return uisf;
     }
@@ -1659,9 +1667,7 @@ public class UfedXmlReader extends DataSourceReader {
 
     @Override
     public void close() throws IOException {
-        if (uisf != null) {
-            uisf.close();
-        }
+        IOUtil.closeQuietly(uisf);
     }
 
 }
