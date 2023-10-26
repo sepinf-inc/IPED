@@ -132,11 +132,7 @@ public class SplashScreenManager {
                         }
 
                         // Estimate the progress based on the number of loaded classes
-                        int progress = 0;
-
-                        // This causes illegal reflective access message on Console
-                        // progress += StartUpControl.getCurrentProcessSize();
-                        progress += server.getProgress();
+                        int progress = StartUpControl.getCurrentProcessSize() + server.getProgress();
 
                         // Also increment a bit as time goes by
                         progress += (System.currentTimeMillis() - startTime) / 100;
