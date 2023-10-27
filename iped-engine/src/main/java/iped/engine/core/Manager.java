@@ -21,6 +21,7 @@ package iped.engine.core;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -158,6 +159,16 @@ public class Manager {
     private static final String appWinExeFileName = "IPED-SearchApp.exe";
 
     static {
+
+        // installs the AmazonCorrettoCryptoProvider if it is available
+        try {
+            Class<?> clazz = Class.forName("com.amazon.corretto.crypto.provider.AmazonCorrettoCryptoProvider");
+            Method method = clazz.getMethod("install");
+            method.invoke(null);
+        } catch (Exception e) {
+            LOGGER.debug("AmazonCorrettoCryptoProvider not installed", e);
+        }
+
         if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
             Security.addProvider(new BouncyCastleProvider());
         }
