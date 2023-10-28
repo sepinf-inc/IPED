@@ -194,7 +194,7 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
                     if (zae.getSize() <= MAX_BYTES_CACHED) {
                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
                         int read;
-                        byte[] buf = new byte[8192];
+                        byte[] buf = new byte[UFDR_BUF_SIZE];
                         while ((read = is.read(buf, 0, buf.length)) >= 0) {
                             if (canceled.get()) {
                                 return null;
@@ -212,7 +212,7 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
                         tmp = Files.createTempFile("zip-stream", null);
                         try (OutputStream out = Files.newOutputStream(tmp)) {
                             int read;
-                            byte[] buf = new byte[8192];
+                            byte[] buf = new byte[UFDR_BUF_SIZE];
                             while (!canceled.get() && (read = is.read(buf, 0, buf.length)) >= 0) {
                                 out.write(buf, 0, read);
                             }
