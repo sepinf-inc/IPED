@@ -5,7 +5,6 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.Reader;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
@@ -263,12 +262,7 @@ public class Item implements IItem {
         return accessDate;
     }
 
-    /**
-     * @return um BufferedInputStream com o conteúdo do item
-     * @throws IOException
-     */
-    public BufferedInputStream getBufferedInputStream() throws IOException {
-
+    private int getBestBufferSize() {
         int len = 8192;
         if (length != null && length > len) {
             if (length < BUF_LEN) {
@@ -277,8 +271,15 @@ public class Item implements IItem {
                 len = BUF_LEN;
             }
         }
+        return len;
+    }
 
-        return new BufferedInputStream(getSeekableInputStream(), len);
+    /**
+     * @return um BufferedInputStream com o conteúdo do item
+     * @throws IOException
+     */
+    public BufferedInputStream getBufferedInputStream() throws IOException {
+        return new BufferedInputStream(getSeekableInputStream(), getBestBufferSize());
     }
 
     /**
@@ -593,21 +594,30 @@ public class Item implements IItem {
             if (tis != null && tis.hasFile()) {
                 tmpFile = tis.getFile();
             } else {
-                String ext = ".tmp"; //$NON-NLS-1$
-                if (type != null && !type.toString().isEmpty()) {
-                    ext = Util.getValidFilename("." + type.toString()); //$NON-NLS-1$
-                }
-                final Path path = Files.createTempFile("iped", ext); //$NON-NLS-1$
-                tmpResources.addResource(new Closeable() {
-                    public void close() throws IOException {
-                        Files.delete(path);
+                try (SeekableInputStream sis = getSeekableInputStream()) {
+                    if (sis instanceof SeekableFileInputStream) {
+                        File file = ((SeekableFileInputStream) sis).getFile();
+                        if (file != null && IOUtil.isTemporaryFile(file)) {
+                            tmpFile = file;
+                        }
                     }
-                });
-
-                try (InputStream in = getBufferedInputStream()) {
-                    Files.copy(in, path, StandardCopyOption.REPLACE_EXISTING);
+                    if (tmpFile == null) {
+                        String ext = ".tmp"; //$NON-NLS-1$
+                        if (type != null && !type.toString().isEmpty()) {
+                            ext = Util.getValidFilename("." + type.toString()); //$NON-NLS-1$
+                        }
+                        Path path = Files.createTempFile("iped", ext); //$NON-NLS-1$
+                        Files.copy(new BufferedInputStream(sis, getBestBufferSize()), path, StandardCopyOption.REPLACE_EXISTING);
+                        tmpFile = path.toFile();
+                    }
+                    tmpResources.addResource(new Closeable() {
+                        public void close() {
+                            if (tmpFile != null) {
+                                tmpFile.delete();
+                            }
+                        }
+                    });
                 }
-                tmpFile = path.toFile();
             }
 
         }
