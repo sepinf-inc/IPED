@@ -158,9 +158,9 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
         }
         synchronized (filesCache) {
             tmp = filesCache.get(path);
-        }
-        if (tmp != null) {
-            return new SeekableFileInputStream(tmp.toFile());
+            if (tmp != null) {
+                return new SeekableFileInputStream(tmp.toFile());
+            }
         }
 
         ZipArchiveEntry zae;
