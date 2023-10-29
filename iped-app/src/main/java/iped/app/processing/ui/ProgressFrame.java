@@ -34,7 +34,8 @@ import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.text.NumberFormat;
 import java.util.Date;
-import java.util.SortedMap;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.TreeMap;
 
 import javax.swing.BorderFactory;
@@ -306,7 +307,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
             if (task.isEnabled()) {
                 long time = taskTimes[i];
                 long sec = time / (1000000 * workers.length);
-                int pct = (int) ((100 * time + totalTime / 2) / totalTime);  // Round percentage
+                int pct = (int) ((100 * time) / totalTime);
 
                 startRow(msg, task.getName(), pct);
                 addCell(msg, nf.format(sec) + "s", Align.RIGHT);
@@ -331,16 +332,17 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         addTitle(msg, 3, Messages.getString("ProgressFrame.ParserTimes"));
 
         long totalTime = 0;
-        for (long parserTime : timesPerParser.values()) {
-            totalTime += parserTime;
-        }
+        for (Worker worker : workers)
+            for (AbstractTask task : worker.tasks)
+                if (task.getClass().equals(ParsingTask.class))
+                    totalTime += task.getTaskTime();
         if (totalTime < 1)
             totalTime = 1;
 
         for (String parserName : timesPerParser.keySet()) {
             long time = timesPerParser.get(parserName);
             long sec = time / (1000000 * workers.length);
-            int pct = (int) ((100 * time + totalTime / 2) / totalTime); // Round percentage
+            int pct = (int) ((100 * time) / totalTime);
 
             startRow(msg, parserName, pct);
             addCell(msg, nf.format(sec) + "s", Align.RIGHT);
