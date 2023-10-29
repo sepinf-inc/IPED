@@ -9,6 +9,7 @@ import java.io.OutputStream;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -159,7 +160,12 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
         synchronized (filesCache) {
             tmp = filesCache.get(path);
             if (tmp != null) {
-                return new SeekableFileInputStream(tmp.toFile());
+                try {
+                    return new SeekableFileInputStream(tmp.toFile());
+                } catch (NoSuchFileException e) {
+                    // Could have been deleted by Item.dispose()
+                    filesCache.remove(path);
+                }
             }
         }
 
