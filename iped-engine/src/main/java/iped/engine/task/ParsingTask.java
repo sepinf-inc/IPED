@@ -1,7 +1,7 @@
 /*
  * Copyright 2012-2014, Luis Filipe da Cruz Nassif
  * 
- * This file is part of Indexador e Processador de EvidÃªncias Digitais (IPED).
+ * This file is part of Indexador e Processador de Evidências Digitais (IPED).
  *
  * IPED is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,13 +23,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Base64;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -155,7 +153,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
     private static int max_expanding_containers;
 
     public static AtomicLong totalText = new AtomicLong();
-    public static Map<String, AtomicLong> times = Collections.synchronizedMap(new TreeMap<String, AtomicLong>());
+    private static final Map<String, Long> timesPerParser = new HashMap<String, Long>();
 
     private static Map<Integer, ZipBombStats> zipBombStatsMap = new ConcurrentHashMap<>();
     private static final Set<MediaType> typesToCheckZipBomb = getTypesToCheckZipbomb();
@@ -170,11 +168,11 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
     private boolean extractEmbedded;
     private volatile ParsingReader reader;
     private String firstParentPath = null;
-    private Map<Integer, Long> timeInDepth = new ConcurrentHashMap<>();
-    private volatile int depth = 0;
+    private volatile long subitemsTime;
     private Map<Object, ParentInfo> idToItemMap = new HashMap<>();
     private int numSubitems = 0;
     private StandardParser autoParser;
+    private long minItemSizeToFragment;
 
     private static Set<MediaType> getTypesToCheckZipbomb() {
         HashSet<MediaType> set = new HashSet<>();
@@ -307,34 +305,27 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             return;
         }
 
-        String parserName = getParserName(parser, evidence.getMetadata().get(Metadata.CONTENT_TYPE));
-        AtomicLong time = times.get(parserName);
-        if (time == null) {
-            time = new AtomicLong();
-            times.put(parserName, time);
-        }
-
-        SplitLargeBinaryConfig splitConfig = ConfigurationManager.get()
-                .findObject(SplitLargeBinaryConfig.class);
         if (((Item) evidence).getTextCache() == null
-                && ((evidence.getLength() == null || evidence.getLength() < splitConfig.getMinItemSizeToFragment())
-                || StandardParser.isSpecificParser(parser))) {
+                && ((evidence.getLength() == null || evidence.getLength() < minItemSizeToFragment)
+                        || StandardParser.isSpecificParser(parser))) {
+            ParsingTask task = null;
             try {
-                depth++;
-                ParsingTask task = new ParsingTask(worker, autoParser);
+                task = new ParsingTask(worker, autoParser);
                 task.parsingConfig = this.parsingConfig;
                 task.expandConfig = this.expandConfig;
-                task.depth = depth;
-                task.timeInDepth = timeInDepth;
                 task.safeProcess(evidence);
 
             } finally {
-                depth--;
+                String parserName = getParserName(parser, evidence.getMetadata().get(Metadata.CONTENT_TYPE));
+                long st = task == null ? 0 : task.subitemsTime;
                 long diff = System.nanoTime() / 1000 - start;
-                Long subitemsTime = timeInDepth.remove(depth + 1);
-                if (subitemsTime == null)
-                    subitemsTime = 0L;
-                time.addAndGet(diff - subitemsTime);
+                if (diff < st) {
+                    LOGGER.warn("{} Negative Parsing Time: {} {} Diff={} SubItemsTime={}",
+                            Thread.currentThread().getName(), evidence.getPath(), parserName, diff, st);
+                }
+                synchronized (timesPerParser) {
+                    timesPerParser.merge(parserName, diff - st, Long::sum);
+                }
             }
 
         }
@@ -694,8 +685,8 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
 
             // pausa contagem de timeout do pai antes de extrair e processar subitem
             if (reader.setTimeoutPaused(true)) {
+                long start = System.nanoTime() / 1000;
                 try {
-                    long start = System.nanoTime() / 1000;
 
                     ProcessTime time = ProcessTime.AUTO;
 
@@ -703,13 +694,10 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
                     Statistics.get().incSubitemsDiscovered();
                     numSubitems++;
 
-                    long diff = (System.nanoTime() / 1000) - start;
-                    Long prevTime = timeInDepth.get(depth);
-                    if (prevTime == null)
-                        prevTime = 0L;
-                    timeInDepth.put(depth, prevTime + diff);
-
                 } finally {
+                    // Store time spent on subitems processing
+                    subitemsTime += System.nanoTime() / 1000 - start;
+
                     // despausa contador de timeout do pai somente após processar subitem
                     reader.setTimeoutPaused(false);
 
@@ -787,6 +775,9 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
 
         parsingConfig = configurationManager.findObject(ParsingTaskConfig.class);
         expandConfig = configurationManager.findObject(CategoryToExpandConfig.class);
+
+        SplitLargeBinaryConfig splitConfig = configurationManager.findObject(SplitLargeBinaryConfig.class);
+        minItemSizeToFragment = splitConfig.getMinItemSizeToFragment();
 
         setupParsingOptions(configurationManager);
 
@@ -875,4 +866,10 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         totalText = null;
     }
 
+    public static void copyTimesPerParser(Map<String,Long> dest) {
+        dest.clear();
+        synchronized (timesPerParser) {
+            dest.putAll(timesPerParser);
+        }
+    }
 }
