@@ -34,8 +34,8 @@ import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.text.NumberFormat;
 import java.util.Date;
-import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -85,6 +85,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
     private boolean paused = false;
     private String decodingDir = null;
     private long physicalMemory;
+    private static final SortedMap<String, Long> timesPerParser = new TreeMap<String, Long>();
 
     private class RestrictedSizeLabel extends JLabel {
 
@@ -322,7 +323,8 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
     }
 
     private String getParserTimes() {
-        if (ParsingTask.times.isEmpty())
+        ParsingTask.copyTimesPerParser(timesPerParser);
+        if (timesPerParser.isEmpty())
             return "";
         StringBuilder msg = new StringBuilder();
         startTable(msg);
@@ -336,14 +338,12 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         if (totalTime < 1)
             totalTime = 1;
 
-        for (Object o : ParsingTask.times.entrySet().toArray()) {
-            @SuppressWarnings("unchecked")
-            Entry<String, AtomicLong> e = (Entry<String, AtomicLong>) o;
-            long time = e.getValue().get();
+        for (String parserName : timesPerParser.keySet()) {
+            long time = timesPerParser.get(parserName);
             long sec = time / (1000000 * workers.length);
             int pct = (int) ((100 * time) / totalTime);
 
-            startRow(msg, e.getKey(), pct);
+            startRow(msg, parserName, pct);
             addCell(msg, nf.format(sec) + "s", Align.RIGHT);
             finishRow(msg, pct + "%", Align.RIGHT);
         }
