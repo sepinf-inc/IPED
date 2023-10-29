@@ -233,22 +233,37 @@ public class Statistics {
         int carvedIgnored = getCorruptCarveIgnored();
         int ignored = getIgnored();
 
+        // Processing times per task
         long totalTime = 0;
         Worker[] workers = manager.getWorkers();
         long[] taskTimes = new long[workers[0].tasks.size()];
         for (Worker worker : workers) {
             for (int i = 0; i < taskTimes.length; i++) {
-                taskTimes[i] += worker.tasks.get(i).getTaskTime();
-                totalTime += worker.tasks.get(i).getTaskTime();
+                long t = worker.tasks.get(i).getTaskTime();
+                taskTimes[i] += t;
+                totalTime += t;
             }
         }
         LocalConfig localConfig = ConfigurationManager.get().findObject(LocalConfig.class);
         totalTime = totalTime / (1000000 * localConfig.getNumThreads());
+        StringBuilder sb = new StringBuilder();
+        sb.append("Processing Times per Task:\n\n");
+        sb.append(String.format("%-30s", "TASK"));
+        sb.append(String.format(" %7s", "TIME(s)"));
+        sb.append(String.format(" %6s", "PCT(%)"));
+        sb.append("\n");
+        sb.append(String.format("%-30s", "").replace(' ', '='));
+        sb.append(" ").append(String.format("%7s", "").replace(' ', '='));
+        sb.append(" ").append(String.format("%6s", "").replace(' ', '='));
+        sb.append("\n");
         for (int i = 0; i < taskTimes.length; i++) {
             long sec = taskTimes[i] / (1000000 * localConfig.getNumThreads());
-            LOGGER.info(workers[0].tasks.get(i).getName() + ":\tProcessing Time:\t" + sec + "s (" //$NON-NLS-1$ //$NON-NLS-2$
-                    + Math.round((100f * sec) / totalTime) + "%)"); //$NON-NLS-1$
+            sb.append(String.format("%-30s", workers[0].tasks.get(i).getName()));
+            sb.append(String.format(" %7d", sec));
+            sb.append(String.format(" %6d", Math.round((100f * sec) / totalTime)));
+            sb.append("\n");
         }
+        LOGGER.info(sb.toString());
 
         int numDocs;
         try (IndexReader reader = DirectoryReader.open(ConfiguredFSDirectory.open(indexDir))) {
