@@ -172,6 +172,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
     private Map<Object, ParentInfo> idToItemMap = new HashMap<>();
     private int numSubitems = 0;
     private StandardParser autoParser;
+    private long minItemSizeToFragment;
 
     private static Set<MediaType> getTypesToCheckZipbomb() {
         HashSet<MediaType> set = new HashSet<>();
@@ -304,12 +305,9 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             return;
         }
 
-        SplitLargeBinaryConfig splitConfig = ConfigurationManager.get()
-                .findObject(SplitLargeBinaryConfig.class);
         if (((Item) evidence).getTextCache() == null
-                && ((evidence.getLength() == null || evidence.getLength() < splitConfig.getMinItemSizeToFragment())
-                || StandardParser.isSpecificParser(parser))) {
-            
+                && ((evidence.getLength() == null || evidence.getLength() < minItemSizeToFragment)
+                        || StandardParser.isSpecificParser(parser))) {
             ParsingTask task = null;
             try {
                 task = new ParsingTask(worker, autoParser);
@@ -777,6 +775,9 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
 
         parsingConfig = configurationManager.findObject(ParsingTaskConfig.class);
         expandConfig = configurationManager.findObject(CategoryToExpandConfig.class);
+
+        SplitLargeBinaryConfig splitConfig = configurationManager.findObject(SplitLargeBinaryConfig.class);
+        minItemSizeToFragment = splitConfig.getMinItemSizeToFragment();
 
         setupParsingOptions(configurationManager);
 
