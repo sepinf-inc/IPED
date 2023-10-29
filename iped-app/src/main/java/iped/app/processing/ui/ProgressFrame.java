@@ -306,7 +306,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
             if (task.isEnabled()) {
                 long time = taskTimes[i];
                 long sec = time / (1000000 * workers.length);
-                int pct = (int) ((100 * time) / totalTime);
+                int pct = (int) ((100 * time + totalTime / 2) / totalTime);  // Round percentage
 
                 startRow(msg, task.getName(), pct);
                 addCell(msg, nf.format(sec) + "s", Align.RIGHT);
@@ -340,7 +340,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         for (String parserName : timesPerParser.keySet()) {
             long time = timesPerParser.get(parserName);
             long sec = time / (1000000 * workers.length);
-            int pct = (int) ((100 * time) / totalTime);
+            int pct = (int) ((100 * time + totalTime / 2) / totalTime); // Round percentage
 
             startRow(msg, parserName, pct);
             addCell(msg, nf.format(sec) + "s", Align.RIGHT);
