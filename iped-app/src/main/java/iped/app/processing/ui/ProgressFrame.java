@@ -40,7 +40,6 @@ import java.text.NumberFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.SortedMap;
 import java.util.TreeMap;
 
 import javax.swing.BorderFactory;
@@ -93,7 +92,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
     private boolean paused = false;
     private String decodingDir = null;
     private long physicalMemory;
-    private static final SortedMap<String, Long> timesPerParser = new TreeMap<String, Long>();
+    private static final Map<String, Long> timesPerParser = new TreeMap<String, Long>();
 
     private static class RestrictedSizeLabel extends JLabel {
 
