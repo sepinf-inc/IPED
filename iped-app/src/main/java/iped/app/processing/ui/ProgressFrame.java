@@ -386,10 +386,9 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         addTitle(msg, 3, Messages.getString("ProgressFrame.ParserTimes"));
 
         long totalTime = 0;
-        for (Worker worker : workers)
-            for (AbstractTask task : worker.tasks)
-                if (task.getClass().equals(ParsingTask.class))
-                    totalTime += task.getTaskTime();
+        for (long parserTime : timesPerParser.values()) {
+            totalTime += parserTime;
+        }
         if (totalTime < 1)
             totalTime = 1;
 
