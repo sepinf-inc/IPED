@@ -321,6 +321,10 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
                 String parserName = getParserName(parser, evidence.getMetadata().get(Metadata.CONTENT_TYPE));
                 long st = task == null ? 0 : task.subitemsTime;
                 long diff = System.nanoTime() / 1000 - start;
+                if (diff < st) {
+                    LOGGER.warn("{} Negative Parsing Time: {} {} Diff={} SubItemsTime={}",
+                            Thread.currentThread().getName(), evidence.getPath(), parserName, diff, st);
+                }
                 synchronized (timesPerParser) {
                     timesPerParser.merge(parserName, diff - st, Long::sum);
                 }
@@ -685,6 +689,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             if (reader.setTimeoutPaused(true)) {
                 long start = System.nanoTime() / 1000;
                 try {
+
                     ProcessTime time = ProcessTime.AUTO;
 
                     worker.processNewItem(subItem, time);
