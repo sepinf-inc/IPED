@@ -17,7 +17,6 @@ import org.apache.commons.text.lookup.StringLookup;
 import org.apache.commons.text.lookup.StringLookupFactory;
 
 import iped.data.IItemReader;
-import iped.parsers.util.ChildPornHashLookup;
 import iped.parsers.util.Messages;
 import iped.parsers.vcard.VCardParser;
 import iped.parsers.whatsapp.Message.MessageType;
@@ -641,7 +640,7 @@ public class ReportGenerator {
                         break;
                 }
                 if (mediaItem != null) {
-                    message.addChildPornSets(ChildPornHashLookup.lookupHash(mediaItem.getHash()));
+                    message.lookupAndAddChildPornSets(mediaItem.getHash());
                 }
                 break;
         }
