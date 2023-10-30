@@ -637,16 +637,6 @@ public class Item implements IItem {
         if (tmpFile == null) {
             if (tis != null && tis.hasFile()) {
                 tmpFile = tis.getFile();
-                return tmpFile;
-            }
-            String ext = ".tmp"; //$NON-NLS-1$
-            if (type != null && !type.toString().isEmpty()) {
-                ext = Util.getValidFilename("." + type.toString()); //$NON-NLS-1$
-            }
-            if (data != null) {
-                Path path = Files.createTempFile("iped", ext); //$NON-NLS-1$
-                Files.write(path, data);
-                tmpFile = path.toFile();
             } else {
                 try (SeekableInputStream sis = getSeekableInputStream()) {
                     if (sis instanceof SeekableFileInputStream) {
@@ -656,18 +646,26 @@ public class Item implements IItem {
                         }
                     }
                     if (tmpFile == null) {
+                        String ext = ".tmp"; //$NON-NLS-1$
+                        if (type != null && !type.toString().isEmpty()) {
+                            ext = Util.getValidFilename("." + type.toString()); //$NON-NLS-1$
+                        }
                         Path path = Files.createTempFile("iped", ext); //$NON-NLS-1$
-                        Files.copy(new BufferedInputStream(sis, getBestBufferSize()), path, StandardCopyOption.REPLACE_EXISTING);
+                        if (data != null) {
+                            Files.write(path, data);
+                        } else {
+                            Files.copy(new BufferedInputStream(sis, getBestBufferSize()), path, StandardCopyOption.REPLACE_EXISTING);
+                        }
                         tmpFile = path.toFile();
                     }
+                    final File finalFile = tmpFile;
+                    tmpResources.addResource(new Closeable() {
+                        public void close() {
+                            finalFile.delete();
+                        }
+                    });
                 }
             }
-            final File finalFile = tmpFile;
-            tmpResources.addResource(new Closeable() {
-                public void close() {
-                    finalFile.delete();
-                }
-            });
         }
         return tmpFile;
     }
