@@ -453,24 +453,24 @@ public class ShareazaDownloadParser extends AbstractParser {
                 int torrentVersion = read4Bytes(buffer);
                 int torrentValid = read4Bytes(buffer);
 
-                addLine(xhtml, "TORRENT VERSION:         " + torrentVersion);
-                addLine(xhtml, "    VALID:               " + torrentValid);
+                    addLine(xhtml, "TORRENT VERSION:         " + torrentVersion);
+                    addLine(xhtml, "    VALID:               " + torrentValid);
 
                 if (torrentValid > 0) {
 
                     String btHash = readHashString(buffer, 20);
-                    int trusted = read4Bytes(buffer);
+                    //int trusted = read4Bytes(buffer);
                     long size = read8Bytes(buffer);
                     int blockSize = read4Bytes(buffer);
                     int blockCount = read4Bytes(buffer);
 
-                    addLine(xhtml, "    BT HASH:         " + btHash);
-                    addLine(xhtml, "    TRUSTED:         " + trusted);
-                    addLine(xhtml, "    Size:         " + size);
-                    addLine(xhtml, "    BlockSize:    " + blockSize);
-                    addLine(xhtml, "    BlockCount:   " + blockCount);
+                    addLine(xhtml, "    BT HASH:             " + btHash);
+                    addLine(xhtml, "    Size:                " + size);
+                    addLine(xhtml, "    BlockSize:           " + blockSize);
+                    addLine(xhtml, "    BlockCount:          " + blockCount);
 
-                    for (int i = 0; i < blockCount; i++) {
+                    for (int i = 0; i < blockCount; ++i) {
+                        btHash = readHashString(buffer, 20);
                         addLine(xhtml, "    		BT HASH [" + i + "]:         " + btHash);
                     }
 
@@ -484,15 +484,15 @@ public class ShareazaDownloadParser extends AbstractParser {
                     int privateStr = read2Bytes(buffer);
                     int fileCount = read4Bytes(buffer);
 
-                    addLine(xhtml, "    TotalUpload:     " + totalUpload);
-                    addLine(xhtml, "    TotalDownload:   " + totalDownload);
-                    addLine(xhtml, "    Name:            " + name);
-                    addLine(xhtml, "    Encoding:        " + encoding);
-                    addLine(xhtml, "    Comment:         " + comment);
-                    addLine(xhtml, "    CreationDate:    " + creationDate);
-                    addLine(xhtml, "    CreatedBy:       " + createdBy);
-                    addLine(xhtml, "    Private:         " + getBoolStr(privateStr));
-                    addLine(xhtml, "    FileCount:   " + fileCount);
+                    addLine(xhtml, "    TotalUpload:         " + totalUpload);
+                    addLine(xhtml, "    TotalDownload:       " + totalDownload);
+                    addLine(xhtml, "    Name:                " + name);
+                    addLine(xhtml, "    Encoding:            " + encoding);
+                    addLine(xhtml, "    Comment:             " + comment);
+                    addLine(xhtml, "    CreationDate:        " + creationDate);
+                    addLine(xhtml, "    CreatedBy:           " + createdBy);
+                    addLine(xhtml, "    Private:             " + getBoolStr(privateStr));
+                    addLine(xhtml, "    FileCount:           " + fileCount);
 
                     for (int i = 0; i < fileCount; i++) {
                         addLine(xhtml, "    		BT FILE [" + i + "]:         " + btHash);
@@ -517,10 +517,10 @@ public class ShareazaDownloadParser extends AbstractParser {
                     int trackerIndex = read4Bytes(buffer);
                     int trackerMode = read4Bytes(buffer);
                     int nTrackers = read4Bytes(buffer);
-
-                    addLine(xhtml, "    TrackerIndex:          " + trackerIndex);
-                    addLine(xhtml, "    TrackerMode:           " + trackerMode);
-                    addLine(xhtml, "    Trackers:   " + nTrackers);
+                    
+                    addLine(xhtml, "    TrackerIndex:        " + trackerIndex);
+                    addLine(xhtml, "    TrackerMode:         " + trackerMode);
+                    addLine(xhtml, "    Trackers:            " + nTrackers);
 
                     for (int i = 0; i < nTrackers; i++) {
                         addLine(xhtml, "    nTrackers[" + i + "]:   " + fileCount);
@@ -541,9 +541,9 @@ public class ShareazaDownloadParser extends AbstractParser {
                         addLine(xhtml, "    			Tier:             " + tier);
                         addLine(xhtml, "    			Type:             " + type);
                     }
-
+                    
                     int length = read4Bytes(buffer);
-                    addLine(xhtml, "    Length:                " + length);
+                    addLine(xhtml, "    Source Length:       " + length);
 
                     if (length > 0) {
                         String nSource = readHashString(buffer, length);
@@ -556,9 +556,9 @@ public class ShareazaDownloadParser extends AbstractParser {
                     }
 
                     if (version >= 23) {
-                        addLine(xhtml, "TorrentSuccess:                 " + read4Bytes(buffer));
-                        addLine(xhtml, "BTH HASH:                       " + readHashString(buffer, 20));
-                        addLine(xhtml, "SEEDING:                        " + read2Bytes(buffer));
+                        addLine(xhtml, "    TorrentSuccess:      " + read4Bytes(buffer));
+                        addLine(xhtml, "    TorrentBlock:        " + readHashString(buffer, blockCount));
+                        addLine(xhtml, "    SEEDING:             " + read2Bytes(buffer));
                     }
                 }
 
