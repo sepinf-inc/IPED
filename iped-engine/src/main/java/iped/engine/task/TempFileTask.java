@@ -75,7 +75,7 @@ public class TempFileTask extends AbstractTask {
             try {
                 // skip items with File refs && carved items pointing to parent temp file
                 if (!IOUtil.hasFile(evidence) && (!(evidence instanceof Item) || !((Item) evidence).hasParentTmpFile())) {
-                    if (!evidence.isSubItem()) { // should we create temp files for large subitems?
+                    if (!evidence.isSubItem()) { // should we create temp files for subitems compressed into the sqlite storages?
                         evidence.getTempFile();
                     }
                 }
