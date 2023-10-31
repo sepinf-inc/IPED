@@ -77,11 +77,11 @@ public class DiscordParser extends AbstractParser {
 
     // private static final Set<MediaType> SUPPORTED_TYPES = new
     // HashSet<MediaType>();
-//
-//    static {
-//        SUPPORTED_TYPES.add(CHROME_INDEX_MIME_TYPE);
-//        SUPPORTED_TYPES.add(DISCORD_INDEX_MIME_TYPE);
-//    }
+    //
+    // static {
+    // SUPPORTED_TYPES.add(CHROME_INDEX_MIME_TYPE);
+    // SUPPORTED_TYPES.add(DISCORD_INDEX_MIME_TYPE);
+    // }
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
