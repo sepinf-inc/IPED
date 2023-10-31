@@ -21,10 +21,12 @@ package iped.engine.core;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
+import java.security.Security;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -47,6 +49,7 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.Directory;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import iped.data.ICaseData;
 import iped.data.IItem;
@@ -68,7 +71,6 @@ import iped.engine.graph.GraphFileWriter;
 import iped.engine.graph.GraphService;
 import iped.engine.graph.GraphServiceFactoryImpl;
 import iped.engine.graph.GraphTask;
-import iped.engine.io.ExeFileFilter;
 import iped.engine.io.ParsingReader;
 import iped.engine.localization.Messages;
 import iped.engine.lucene.ConfiguredFSDirectory;
@@ -153,7 +155,25 @@ public class Manager {
     AtomicLong partialCommitsTime = new AtomicLong();
 
     private final AtomicBoolean initSleuthkitServers = new AtomicBoolean(false);
-    
+
+    private static final String appWinExeFileName = "IPED-SearchApp.exe";
+
+    static {
+
+        // installs the AmazonCorrettoCryptoProvider if it is available
+        try {
+            Class<?> clazz = Class.forName("com.amazon.corretto.crypto.provider.AmazonCorrettoCryptoProvider");
+            Method method = clazz.getMethod("install");
+            method.invoke(null);
+        } catch (Exception e) {
+            LOGGER.debug("AmazonCorrettoCryptoProvider not installed", e);
+        }
+
+        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
+            Security.addProvider(new BouncyCastleProvider());
+        }
+    }
+
     public static Manager getInstance() {
         return instance;
     }
@@ -481,11 +501,14 @@ public class Manager {
         LOGGER.log(CONSOLE, "Deleting connections from graph...");
         GraphService graphService = null;
         try {
-            graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
-            graphService.start(new File(output, GraphTask.DB_HOME_DIR));
-            int deletions = graphService.deleteRelationshipsFromDatasource(evidenceUUID);
-            LOGGER.log(CONSOLE, "Deleted {} graph connections.", deletions);
-
+            if (new File(output, GraphTask.DB_DATA_PATH).exists()) {
+                graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
+                graphService.start(new File(output, GraphTask.DB_HOME_DIR));
+                int deletions = graphService.deleteRelationshipsFromDatasource(evidenceUUID);
+                LOGGER.log(CONSOLE, "Deleted {} graph connections.", deletions);
+            } else {
+                LOGGER.log(CONSOLE, "Graph database not found.");
+            }
         } finally {
             if (graphService != null) {
                 graphService.stop();
@@ -863,6 +886,7 @@ public class Manager {
                     if (file.isDirectory()) {
                         IOUtil.copyDirectory(file, dest); // $NON-NLS-1$ //$NON-NLS-2$
                     } else {
+                        dest.getParentFile().mkdirs();
                         IOUtil.copyFile(file, dest);
                     }
                 }
@@ -881,21 +905,25 @@ public class Manager {
             IOUtil.copyDirectory(new File(defaultProfile, "conf"), new File(output, "conf"));
             IOUtil.copyFile(new File(defaultProfile, Configuration.LOCAL_CONFIG), new File(output, Configuration.LOCAL_CONFIG));
             IOUtil.copyFile(new File(defaultProfile, Configuration.CONFIG_FILE), new File(output, Configuration.CONFIG_FILE));
+            resetLocalConfigToPortable(new File(output, Configuration.LOCAL_CONFIG));
             setSplashMessage(output);
 
             // copy non default profile
             File currentProfile = new File(Configuration.getInstance().configPath);
             if (!currentProfile.equals(defaultProfile)) {
                 IOUtil.copyDirectory(currentProfile, new File(output, Configuration.CASE_PROFILE_DIR), true);
+                resetLocalConfigToPortable(new File(output, Configuration.CASE_PROFILE_DIR + "/" + Configuration.LOCAL_CONFIG));
             }
 
             File binDir = new File(Configuration.getInstance().appRoot, "bin"); //$NON-NLS-1$
             if (binDir.exists())
                 IOUtil.copyDirectory(binDir, output.getParentFile()); // $NON-NLS-1$
             else {
-                for (File f : new File(Configuration.getInstance().appRoot).getParentFile()
-                        .listFiles(new ExeFileFilter()))
-                    IOUtil.copyFile(f, new File(output.getParentFile(), f.getName()));
+                // Copy only IPED Windows executable (#1698)
+                File exe = new File(new File(Configuration.getInstance().appRoot).getParentFile(), appWinExeFileName);
+                if (exe.exists()) {
+                    IOUtil.copyFile(exe, new File(output.getParentFile(), exe.getName()));
+                }
             }
         }
 
@@ -910,6 +938,13 @@ public class Manager {
             }
         }
 
+    }
+
+    // See https://github.com/sepinf-inc/IPED/issues/1142
+    private void resetLocalConfigToPortable(File localConfig) throws IOException {
+        if (localConfig.exists() && (caseData.isIpedReport() || args.isPortable())) {
+            LocalConfig.clearLocalParameters(localConfig);
+        }
     }
 
     public boolean isSearchAppOpen() {

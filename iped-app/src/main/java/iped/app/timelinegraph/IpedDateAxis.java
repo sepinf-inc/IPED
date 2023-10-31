@@ -304,14 +304,21 @@ public class IpedDateAxis extends DateAxis implements MouseResponsiveChartEntity
     }
 
     public String ISO8601DateFormatUTC(Date date) {
-        String result;
-        synchronized (ISO8601DATEFORMAT) {
-            TimeZone tz = ISO8601DATEFORMAT.getTimeZone();
-            ISO8601DATEFORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
-            result = ISO8601DATEFORMAT.format(date);
-            ISO8601DATEFORMAT.setTimeZone(tz);
-        }
-        return result;
+        StringBuffer result = new StringBuffer();
+        Date d = new Date(date.getTime() - DateUtil.computerTimezoneOffset);
+        result.append(String.format("%04d", d.getYear() + 1900));
+        result.append("-");
+        result.append(String.format("%02d", d.getMonth() + 1));
+        result.append("-");
+        result.append(String.format("%02d", d.getDate()));
+        result.append("T");
+        result.append(String.format("%02d", d.getHours()));
+        result.append(":");
+        result.append(String.format("%02d", d.getMinutes()));
+        result.append(":");
+        result.append(String.format("%02d", d.getSeconds()));
+        result.append("Z");
+        return result.toString();
     }
 
     public Date ISO8601DateParse(String strDate) {
@@ -409,6 +416,7 @@ public class IpedDateAxis extends DateAxis implements MouseResponsiveChartEntity
         if (canZoom(range)) {
             forceRange(range, turnOffAutoRange, notify);
             if (needTimePeriodClassUpdate) {
+                ipedChartsPanel.cancel();
                 ipedChartsPanel.refreshChart();
                 needTimePeriodClassUpdate = false;
             }
@@ -446,7 +454,6 @@ public class IpedDateAxis extends DateAxis implements MouseResponsiveChartEntity
     public void garanteeShowRange(Date min, Date max) {
         DateRange range = (DateRange) getRange();
         DateRange newRange = null;
-        System.out.println(range.getLowerMillis());
         if (range.getLowerMillis() > min.getTime()) {
             if (range.getUpperMillis() < max.getTime()) {
                 newRange = new DateRange(min.getTime(), max.getTime());

@@ -180,6 +180,7 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
         }
 
         String[] cmd = { "java", "-cp", classpath, "-Xmx128M", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                "-Djava.io.tmpdir=" + System.getProperty("java.io.tmpdir").replace("\"", "\\\"") + File.separator + "tsk-server-" + Math.abs(rand.nextLong()),
                 SleuthkitServer.class.getCanonicalName(), dbDirPath + "/" + SleuthkitReader.DB_NAME, //$NON-NLS-1$
                 String.valueOf(id), pipePath };
 

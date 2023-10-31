@@ -80,6 +80,9 @@
 #Device Connectivity
 #Device Events
 #File Downloads
+#File Uploads
+#Financial Accounts
+#Fuzzy Data
 #Journeys
 #Networks Usage
 #Recognized Devices

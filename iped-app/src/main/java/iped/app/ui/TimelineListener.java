@@ -1,7 +1,5 @@
 package iped.app.ui;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,17 +8,17 @@ import javax.swing.RowSorter;
 import javax.swing.RowSorter.SortKey;
 import javax.swing.SortOrder;
 
-import bibliothek.gui.dock.common.action.CButton;
+import bibliothek.gui.dock.common.action.CCheckBox;
 import iped.properties.BasicProps;
 
-public class TimelineListener implements ActionListener, ClearFilterListener {
+public class TimelineListener implements ClearFilterListener {
 
-    private CButton timelineButton;
+    private CCheckBox timelineButton;
     private Icon defaultIcon, filteredIcon;
     private boolean timelineViewEnabled = false;
     private List<? extends SortKey> timelinePrevSortKeys;
 
-    public TimelineListener(CButton timelineButton, Icon filteredIcon) {
+    public TimelineListener(CCheckBox timelineButton, Icon filteredIcon) {
         this.timelineButton = timelineButton;
         this.defaultIcon = timelineButton.getIcon();
         this.filteredIcon = filteredIcon;
@@ -32,18 +30,18 @@ public class TimelineListener implements ActionListener, ClearFilterListener {
 
     @Override
     public void clearFilter() {
-        timelineViewEnabled = false;
-        updateGUI(false);
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        toggleTimelineTableView();
+        timelineButton.setSelected(false);
     }
 
     public void toggleTimelineTableView() {
-        timelineViewEnabled = !timelineViewEnabled;
-        updateGUI(true);
+        timelineButton.setSelected(!timelineViewEnabled);
+    }
+    
+    public void setTimelineTableView(boolean isEnabled) {
+        if (timelineViewEnabled != isEnabled) {
+            timelineViewEnabled = isEnabled;
+            updateGUI(true);
+        }
     }
 
     private void updateGUI(boolean updateResults) {

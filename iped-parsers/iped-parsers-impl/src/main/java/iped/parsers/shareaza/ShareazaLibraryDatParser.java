@@ -131,7 +131,7 @@ public class ShareazaLibraryDatParser extends AbstractParser {
             bme.registerClassNameProperty(LibraryFolder.class, "path");
             bme.registerClassNameProperty(AlbumFolder.class, "name");
             bme.registerTransformationMapping(LibraryFile.class, ExtraProperties.LINKED_ITEMS, "md5:${md5}");
-            bme.registerTransformationMapping(LibraryFile.class, ExtraProperties.SHARED_HASHES, "${sha1}");
+            bme.registerTransformationMapping(LibraryFile.class, ExtraProperties.SHARED_HASHES, "${md5}");
             bme.extractEmbedded(0, context, metadata, handler, library.getLibraryFolders());
         }
 

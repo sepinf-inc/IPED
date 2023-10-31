@@ -15,8 +15,12 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.text.DecimalFormat;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -42,10 +46,36 @@ public class RemoteWav2Vec2Service {
         ERROR,
         REGISTER,
         STATS,
-        WARN
+        WARN, VERSION_1_1,
+        VERSION_1_2,
+        VERSION_1_0,
+        PING
+    }
+    
+    static class OpenConnectons {
+        Socket conn;
+        BufferedInputStream bis;
+        PrintWriter writer;
+        Thread t;
+
+        public OpenConnectons(Socket conn, BufferedInputStream bis, PrintWriter writer, Thread t) {
+            this.conn = conn;
+            this.bis = bis;
+            this.writer = writer;
+            this.t = t;
+        }
+
+        public void sendBeacon() {
+            writer.println(MESSAGES.PING.toString());
+            writer.flush();
+        }
     }
 
-    private static final int MAX_CON_QUEUE = 5000;
+    /**
+     * Max number of connections to receive WAVs simultaneously. Also used as
+     * backlog value: connection queue waiting for acceptance.
+     */
+    private static final int MAX_CONNECTIONS = 128;
 
     // This timeout should not be too high, otherwise clients with connection issues
     // would waste server time waiting for them while good clients are waiting.
@@ -53,12 +83,23 @@ public class RemoteWav2Vec2Service {
 
     private static ExecutorService executor = Executors.newCachedThreadPool();
 
+    /**
+     * Controls max number of simultaneous transcriptions
+     */
+    private static Semaphore transcriptSemaphore;
+
+    /**
+     * Control number of simultaneous audio conversions to WAV.
+     */
+    private static Semaphore wavConvSemaphore;
+
     private static final AtomicLong audiosTranscripted = new AtomicLong();
     private static final AtomicLong audiosDuration = new AtomicLong();
     private static final AtomicLong conversionTime = new AtomicLong();
     private static final AtomicLong transcriptionTime = new AtomicLong();
     private static final AtomicLong requestsReceived = new AtomicLong();
     private static final AtomicLong requestsAccepted = new AtomicLong();
+    private static List<OpenConnectons> beaconQueq = new LinkedList<>();
 
     private static Logger logger;
 
@@ -110,8 +151,15 @@ public class RemoteWav2Vec2Service {
         task.init(cm);
 
         int numConcurrentTranscriptions = Wav2Vec2TranscriptTask.getNumConcurrentTranscriptions();
+        int numLogicalCores = Runtime.getRuntime().availableProcessors();
 
-        try (ServerSocket server = new ServerSocket(localPort, MAX_CON_QUEUE)) {
+        // We already use a BlockingDeque to get an available transcription process,
+        // this Semaphore wouldn't be needed, but it guarantees a fairness policy.
+        transcriptSemaphore = new Semaphore(numConcurrentTranscriptions, true);
+
+        wavConvSemaphore = new Semaphore(numLogicalCores, true);
+
+        try (ServerSocket server = new ServerSocket(localPort, MAX_CONNECTIONS)) {
 
             server.setSoTimeout(0);
             // server.setReceiveBufferSize((1 << 16) - 1);
@@ -119,29 +167,61 @@ public class RemoteWav2Vec2Service {
 
             localPort = server.getLocalPort();
 
-            registerThis(discoveryIp, discoveryPort, localPort, numConcurrentTranscriptions);
+            registerThis(discoveryIp, discoveryPort, localPort, numConcurrentTranscriptions, numLogicalCores);
 
             logger.info("Transcription server listening on port: " + localPort);
             logger.info("Ready to work!");
 
-            startSendStatsThread(discoveryIp, discoveryPort, localPort, numConcurrentTranscriptions);
+            startSendStatsThread(discoveryIp, discoveryPort, localPort, numConcurrentTranscriptions, numLogicalCores);
 
-            waitRequests(server, task, numConcurrentTranscriptions, discoveryIp);
+            startBeaconThread();
+
+            waitRequests(server, task, discoveryIp);
 
         }
 
     }
 
-    private static void registerThis(String discoveryIp, int discoveryPort, int localPort, int concurrentJobs) throws Exception {
+    private static void startBeaconThread() {
+
+        executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    try {
+                        if (executor.isShutdown()) {
+                            break;
+                        }
+                        Thread.sleep(60000);
+                        logger.info("Send beacons to {} clients", beaconQueq.size());
+                        synchronized (beaconQueq) {
+                            for( var cliente:beaconQueq) {
+                                cliente.sendBeacon();
+                            }
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                }
+            }
+        });
+    }
+
+
+
+    private static void registerThis(String discoveryIp, int discoveryPort, int localPort, int concurrentJobs, int concurrentWavConvs) throws Exception {
         try (Socket client = new Socket(discoveryIp, discoveryPort);
                 InputStream is = client.getInputStream();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
                 PrintWriter writer = new PrintWriter(
                         new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8), true)) {
 
+            client.setSoTimeout(10000);
             writer.println(MESSAGES.REGISTER);
             writer.println(localPort);
             writer.println(concurrentJobs);
+            writer.println(concurrentWavConvs);
 
             if (!MESSAGES.DONE.toString().equals(reader.readLine())) {
                 throw new Exception("Registration failed!");
@@ -149,15 +229,17 @@ public class RemoteWav2Vec2Service {
         }
     }
 
-    private static void sendStats(String discoveryIp, int discoveryPort, int localPort, int concurrentJobs) throws Exception {
+    private static void sendStats(String discoveryIp, int discoveryPort, int localPort, int concurrentJobs, int concurrentWavConvs) throws Exception {
         try (Socket client = new Socket(discoveryIp, discoveryPort);
                 InputStream is = client.getInputStream();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
                 PrintWriter writer = new PrintWriter(new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8), true)) {
 
+            client.setSoTimeout(10000);
             writer.println(MESSAGES.STATS);
             writer.println(localPort);
             writer.println(concurrentJobs);
+            writer.println(concurrentWavConvs);
             writer.println(audiosTranscripted.getAndSet(0));
             writer.println(audiosDuration.getAndSet(0));
             writer.println(conversionTime.getAndSet(0));
@@ -171,55 +253,128 @@ public class RemoteWav2Vec2Service {
         }
     }
 
-    private static void waitRequests(ServerSocket server, Wav2Vec2TranscriptTask task, int numConcurrentTranscriptions, String discoveryIp) {
+    private static void removeFrombeaconQueq(OpenConnectons opc) {
+        if (opc != null) {
+            synchronized (beaconQueq) {
+                beaconQueq.remove(opc);
+            }
+        }
+    }
+
+    private static void waitRequests(ServerSocket server, Wav2Vec2TranscriptTask task, String discoveryIp) {
         AtomicInteger jobs = new AtomicInteger();
         while (true) {
             try {
+                if (executor.isTerminated()) {
+                    System.exit(1);
+                }
+                if (executor.isShutdown()) {
+                    Thread.sleep(1000);
+                    continue;
+                }
                 Socket client = server.accept();
                 requestsReceived.incrementAndGet();
-                if (jobs.incrementAndGet() > numConcurrentTranscriptions) {
+                if (jobs.incrementAndGet() > MAX_CONNECTIONS) {
                     jobs.decrementAndGet();
                     client.close();
                     continue;
                 }
-                executor.execute(new Runnable() {
+                executor.execute(new Thread() {
                     @Override
                     public void run() {
                         Path tmpFile = null;
+                        File wavFile = null;
                         PrintWriter writer = null;
                         BufferedInputStream bis = null;
                         boolean error = false;
+                        OpenConnectons opc = null;
+                        String protocol = MESSAGES.VERSION_1_0.toString();
                         try {
                             client.setSoTimeout(CLIENT_TIMEOUT_MILLIS);
                             bis = new BufferedInputStream(client.getInputStream());
                             writer = new PrintWriter(
                                     new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8), true);
 
+                            String clientName = "Client " + client.getInetAddress().getHostAddress() + ":"
+                                    + client.getPort();
+                            String prefix = clientName + " - ";
                             writer.println(MESSAGES.ACCEPTED);
+
+                            bis.mark(5);
+                            if (bis.read() == -1) {
+                                logger.info(prefix + "Possible Kubernetes live test");
+                                requestsReceived.decrementAndGet();
+                                return;
+                            }
+                            bis.reset();
+
                             requestsAccepted.incrementAndGet();
 
-                            String clientName = "Client " + client.getInetAddress().getHostAddress() + ":" + client.getPort();
-                            logger.info("Accepted connection from " + clientName);
+                            logger.info(prefix + "Accepted connection.");
 
-                            String prefix = clientName + " - ";
+                            int min = Math.min(MESSAGES.AUDIO_SIZE.toString().length(),
+                                    MESSAGES.VERSION_1_1.toString().length());
 
-                            byte[] bytes = bis.readNBytes(MESSAGES.AUDIO_SIZE.toString().length());
+                            bis.mark(min + 1);
+                            byte[] bytes = bis.readNBytes(min);
                             String cmd = new String(bytes);
+                            if (!MESSAGES.AUDIO_SIZE.toString().startsWith(cmd)) {
+                                bis.reset();
+                                bytes = bis.readNBytes(MESSAGES.VERSION_1_1.toString().length());
+                                protocol = new String(bytes);
+                                bis.mark(min + 1);
+                                synchronized (beaconQueq) {
+                                    opc = new OpenConnectons(client, bis, writer, this);
+                                    beaconQueq.add(opc);
+                                }
+
+                            }
+                            logger.info("Protocol Version {}", protocol);
+
+                            // read the audio_size message
+                            bis.reset();
+                            bytes = bis.readNBytes(MESSAGES.AUDIO_SIZE.toString().length());
+                            cmd = new String(bytes);
+
                             if (!MESSAGES.AUDIO_SIZE.toString().equals(cmd)) {
                                 error = true;
                                 throw new IOException("Size msg not received!");
                             }
 
                             DataInputStream dis = new DataInputStream(bis);
-                            int size = dis.readInt();
+                            long size;
+                            if (protocol.compareTo(MESSAGES.VERSION_1_2.toString()) >= 0) {
+                                size = dis.readLong();
+                            } else {
+                                size = dis.readInt();
+                            }
+                            if (size < 0) {
+                                error = true;
+                                try {
+                                    OutputStream o = OutputStream.nullOutputStream();
+                                    IOUtil.copyInputToOutputStream(dis, o);
+                                    o.close();
+
+                                } catch (IOException e) {
+                                }
+                                throw new Exception("Invalid file size: " + size);
+
+                            }
+
+                            logger.info(prefix + "Receiving " + new DecimalFormat().format(size) + " bytes...");
 
                             tmpFile = Files.createTempFile("audio", ".tmp");
                             try (OutputStream os = Files.newOutputStream(tmpFile)) {
                                 byte[] buf = new byte[8192];
-                                int i = 0, read = 0;
+                                int i = 0;
+                                long read = 0;
                                 while (read < size && (i = bis.read(buf)) >= 0) {
                                     os.write(buf, 0, i);
                                     read += i;
+                                    if (executor.isShutdown()) {
+                                        error = true;
+                                        throw new Exception("Shutting down service instance...");
+                                    }
                                 }
                             }
 
@@ -230,14 +385,21 @@ public class RemoteWav2Vec2Service {
                                 logger.info(prefix + "Received " + size + " audio bytes to transcribe.");
                             }
 
-                            long t0 = System.currentTimeMillis();
-
-                            // see https://github.com/sepinf-inc/IPED/issues/1400
-                            // now audios are already received as WAV 16Khz 16 bits LE per sample
-                            // wavFile = task.getWavFile(tmpFile.toFile(), tmpFile.toString());
-                            File wavFile = tmpFile.toFile();
-
-                            long t1 = System.currentTimeMillis();
+                            // Now we are converting to WAV on server side again, see
+                            // https://github.com/sepinf-inc/IPED/issues/1561
+                            long t0, t1;
+                            try {
+                                wavConvSemaphore.acquire();
+                                if (executor.isShutdown()) {
+                                    error = true;
+                                    throw new Exception("Shutting down service instance...");
+                                }
+                                t0 = System.currentTimeMillis();
+                                wavFile = task.getWavFile(tmpFile.toFile(), tmpFile.toString());
+                                t1 = System.currentTimeMillis();
+                            } finally {
+                                wavConvSemaphore.release();
+                            }
 
                             if (wavFile == null) {
                                 throw new IOException("Failed to convert audio to wav");
@@ -246,27 +408,63 @@ public class RemoteWav2Vec2Service {
                             }
                             long durationMillis = 1000 * wavFile.length() / (16000 * 2);
 
-                            TextAndScore result = task.transcribeAudio(wavFile);
-                            long t2 = System.currentTimeMillis();
+                            TextAndScore result;
+                            long t2, t3;
+                            try {
+                                transcriptSemaphore.acquire();
+                                if (executor.isShutdown()) {
+                                    error = true;
+                                    throw new Exception("Shutting down service instance...");
+                                }
+                                t2 = System.currentTimeMillis();
+                                result = task.transcribeAudio(wavFile);
+                                t3 = System.currentTimeMillis();
+                            } catch (ProcessCrashedException e) {
+                                // retry audio
+                                error = true;
+                                throw e;
+                            } catch (StartupException e) {
+                                error = true;
+                                // graceful shutdown to clean resources like temp files
+                                executor.shutdown();
+                                server.close();
+                                throw e;
+                            } finally {
+                                transcriptSemaphore.release();
+                            }
 
                             audiosTranscripted.incrementAndGet();
                             audiosDuration.addAndGet(durationMillis);
                             conversionTime.addAndGet(t1 - t0);
-                            transcriptionTime.addAndGet(t2 - t1);
+                            transcriptionTime.addAndGet(t3 - t2);
                             logger.info(prefix + "Transcritpion done.");
+
+                            // removes from the beacon queue to prevent beacons in the middle of the
+                            // transcription
+                            removeFrombeaconQueq(opc);
 
                             writer.println(Double.toString(result.score));
                             writer.println(result.text);
                             writer.println(MESSAGES.DONE);
-
+                            writer.flush();
                             logger.info(prefix + "Transcritpion sent.");
 
                         } catch (Exception e) {
                             String errorMsg = "Exception while transcribing";
                             logger.warn(errorMsg, e);
                             if (writer != null) {
-                                writer.println(error ? MESSAGES.ERROR : MESSAGES.WARN);
-                                writer.println(errorMsg + ": " + e.toString().replace('\n', ' ').replace('\r', ' '));
+                                if (e.getMessage() != null && e.getMessage().startsWith("Invalid file size:")
+                                        && protocol.compareTo(MESSAGES.VERSION_1_2.toString()) < 0) {
+                                    writer.println("0");
+                                    writer.println(
+                                            "Audios longer than 2GB are not supported by old clients, please update your client version!");
+                                    writer.println(MESSAGES.DONE);
+                                } else {
+                                    writer.println(error ? MESSAGES.ERROR : MESSAGES.WARN);
+                                    writer.println(
+                                            errorMsg + ": " + e.toString().replace('\n', ' ').replace('\r', ' '));
+                                }
+                                writer.flush();
                             }
                         } finally {
                             jobs.decrementAndGet();
@@ -276,6 +474,10 @@ public class RemoteWav2Vec2Service {
                             if (tmpFile != null) {
                                 tmpFile.toFile().delete();
                             }
+                            if (wavFile != null) {
+                                wavFile.delete();
+                            }
+                            removeFrombeaconQueq(opc);
                         }
                     }
                 });
@@ -286,14 +488,17 @@ public class RemoteWav2Vec2Service {
         }
     }
 
-    private static void startSendStatsThread(String ip, int port, int localPort, int concurrentJobs) {
+    private static void startSendStatsThread(String ip, int port, int localPort, int concurrentJobs, int concurrentWavConvs) {
         executor.execute(new Runnable() {
             @Override
             public void run() {
                 while (true) {
                     try {
+                        if (executor.isShutdown()) {
+                            break;
+                        }
                         Thread.sleep(1000);
-                        sendStats(ip, port, localPort, concurrentJobs);
+                        sendStats(ip, port, localPort, concurrentJobs, concurrentWavConvs);
 
                     } catch (Exception e) {
                         e.printStackTrace();

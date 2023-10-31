@@ -9,12 +9,11 @@ import javax.swing.SwingUtilities;
 
 import iped.engine.data.Bookmarks;
 import iped.utils.LocalizedFormat;
+import iped.viewers.bookmarks.IBookmarksController;
 
-public class BookmarksController {
+public class BookmarksController implements IBookmarksController {
 
     public static final String HISTORY_DIV = Messages.getString("BookmarksController.HistoryDelimiter"); //$NON-NLS-1$
-
-    private static BookmarksController instance;
 
     private static JFileChooser fileChooser;
     private static SearchStateFilter filter;
@@ -38,9 +37,13 @@ public class BookmarksController {
     }
 
     public static BookmarksController get() {
-        if (instance == null)
-            instance = new BookmarksController();
-        return instance;
+        IBookmarksController ibc = IBookmarksController.get();
+        if ((ibc == null) || !(ibc instanceof BookmarksController)) {
+            ibc = new BookmarksController();
+            IBookmarksController.registerBookmarksController(ibc);
+        }
+
+        return (BookmarksController) ibc;
     }
 
     public void setMultiSetting(boolean value) {
@@ -71,8 +74,9 @@ public class BookmarksController {
     }
 
     public void updateUISelection() {
-        // MapaModelUpdateListener.updatingSelection = true;
-        updateUI();
+        if (!multiSetting) {
+            updateUI();
+        }
     }
 
     public void updateUI() {
@@ -84,7 +88,7 @@ public class BookmarksController {
                                 + LocalizedFormat.format(App.get().appCase.getTotalItems()));
                 App.get().checkBox.setSelected(App.get().appCase.getMultiBookmarks().getTotalChecked() > 0);
                 App.get().bookmarksListener.updateModelAndSelection();
-                App.get().resultsTable.repaint();
+                App.get().repaintAllTableViews();
                 BookmarksManager.updateCounters();
             }
         });

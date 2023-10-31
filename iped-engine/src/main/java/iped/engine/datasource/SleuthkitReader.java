@@ -100,7 +100,8 @@ public class SleuthkitReader extends DataSourceReader {
     private static final String PASSWORD_PER_IMAGE = "data/PasswordPerImage.txt";
 
     // TODO update @deleteDatasource() when updating TSK
-    public static final String MIN_TSK_VER = "4.11.0";
+    public static final String MIN_TSK_VER_TESTED = "4.11.0";
+    public static final String MAX_TSK_VER_TESTED = "4.12.0";
 
     public static String DB_NAME = "sleuth.db"; //$NON-NLS-1$
     public static MediaType UNALLOCATED_MIMETYPE = BaseCarveTask.UNALLOCATED_MIMETYPE;
@@ -278,17 +279,18 @@ public class SleuthkitReader extends DataSourceReader {
             LOGGER.error("We recommend to apply the iped patch on sleuthkit, see https://github.com/sepinf-inc/IPED/wiki/Linux#the-sleuthkit"); //$NON-NLS-1$
         }
 
-        String[] minVerParts = MIN_TSK_VER.split("\\.");
+        String[] minVerParts = MIN_TSK_VER_TESTED.split("\\.");
         String[] currVerParts = tskVer.split("\\.");
 
         int majorVerExpected = Integer.valueOf(minVerParts[0]);
         int majorVerFound = Integer.valueOf(currVerParts[0]);
         int minorVerExpected = Integer.valueOf(minVerParts[1]);
         int minorVerFound = Integer.valueOf(currVerParts[1]);
+        int maxMinorVerTested = Integer.valueOf(MAX_TSK_VER_TESTED.split("\\.")[1]);
 
         if (majorVerExpected != majorVerFound || minorVerFound < minorVerExpected)
-            throw new Exception("Sleuthkit version " + tskVer + " not supported. Install version " + MIN_TSK_VER); //$NON-NLS-1$ //$NON-NLS-2$
-        else if (minorVerFound > minorVerExpected)
+            throw new Exception("Sleuthkit version " + tskVer + " not supported. Install version " + MIN_TSK_VER_TESTED); //$NON-NLS-1$ //$NON-NLS-2$
+        if (minorVerFound > maxMinorVerTested)
             LOGGER.error("Sleuthkit version " + tskVer + " not tested! It may contain incompatibilities!"); //$NON-NLS-1$ //$NON-NLS-2$
 
         tskChecked = true;

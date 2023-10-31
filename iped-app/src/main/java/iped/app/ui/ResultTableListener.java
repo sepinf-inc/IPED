@@ -127,6 +127,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
                 App.get().duplicateDock.setTitleText(Messages.getString("DuplicatesTableModel.Duplicates")); //$NON-NLS-1$
                 App.get().parentDock.setTitleText(Messages.getString("ParentTableModel.ParentCount")); //$NON-NLS-1$
                 App.get().referencesDock.setTitleText(Messages.getString("ReferencesTab.Title")); //$NON-NLS-1$
+                App.get().referencedByDock.setTitleText(Messages.getString("ReferencedByTab.Title")); //$NON-NLS-1$
 
                 lastTableDoc = docId;
                 FileProcessor parsingTask = new FileProcessor(docId, true);
@@ -222,10 +223,6 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
         } else if (evt.getKeyCode() == KeyEvent.VK_R && ((evt.getModifiersEx() & KeyEvent.ALT_DOWN_MASK) != 0)) {
             // Shortcut to Deep-Selection Remove (Item plus sub-items)
             recursiveItemSelection(false);
-            evt.consume();
-        } else if (evt.getKeyCode() == KeyEvent.VK_B && ((evt.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) != 0)) {
-            // Shortcut to BookmarkManager Window
-            BookmarksManager.setVisible();
             evt.consume();
         } else 
             BookmarksManager.get().keyPressed(evt);

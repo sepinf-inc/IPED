@@ -2,13 +2,14 @@ package iped.parsers.whatsapp;
 
 import java.util.Date;
 
-public class MessageAddOn {
+public class MessageAddOn implements Comparable<MessageAddOn> {
 
     private int type;
     private Date timeStamp;
     private int status;
     private String remoteResource;
     private boolean FromMe;
+    private String reaction;
 
     public int getType() {
         return type;
@@ -50,4 +51,19 @@ public class MessageAddOn {
         FromMe = fromMe;
     }
 
+    public String getReaction() {
+        return reaction;
+    }
+
+    public void setReaction(String reaction) {
+        this.reaction = reaction;
+    }
+
+    public int compareTo(MessageAddOn o) {
+        int cmp = Boolean.compare(timeStamp == null, o.timeStamp == null);
+        if (cmp == 0 && timeStamp != null) {
+            cmp = timeStamp.compareTo(o.timeStamp);
+        }
+        return cmp;
+    }
 }

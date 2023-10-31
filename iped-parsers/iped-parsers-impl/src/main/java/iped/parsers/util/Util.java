@@ -218,14 +218,16 @@ public class Util {
             public void run() {
                 byte[] out = new byte[1024];
                 int read = 0;
-                while (read != -1)
-                    try {
+                try {
+                    while (read != -1) {
                         read = stream.read(out);
-                        if (msg != null)
+                        if (msg != null) {
                             msg.progress = true;
-
-                    } catch (Exception e) {
+                        }
                     }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         };
         t.setDaemon(true);
@@ -238,14 +240,16 @@ public class Util {
             public void run() {
                 byte[] out = new byte[1024];
                 int read = 0;
-                while (read != -1)
-                    try {
+                try {
+                    while (read != -1) {
                         read = stream.read(out);
                         if (read > 0) {
                             logger.warn(new String(out, 0, read));
                         }
-                    } catch (Exception e) {
                     }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         };
         t.setDaemon(true);
@@ -275,16 +279,27 @@ public class Util {
         return sb.toString();
     }
 
-    public static String getReportHref(String hash, String ext, String originalPath) {
-        String exportPath = getExportPath(hash, ext);
-        String path = getSourceFileIfExists(originalPath);
-        return "javascript:openIfExists('" + exportPath + "','" + path + "')";
-    }
-
     public static String getReportHref(IItemReader item) {
         String exportPath = getExportPath(item);
         String originalPath = getSourceFileIfExists(item).orElse("");
-        return "javascript:openIfExists('" + exportPath + "','" + originalPath + "')";
+        StringBuilder sb = new StringBuilder();
+        sb.append("javascript:open");
+        String type = item.getMediaType().getType();
+        if (type.equals("image")) {
+            sb.append("Image");
+        } else if (type.equals("audio")) {
+            sb.append("Audio");
+        } else if (type.equals("video")) {
+            sb.append("Video");
+        } else {
+            sb.append("Other");
+        }
+        sb.append("('");
+        sb.append(exportPath);
+        sb.append("','");
+        sb.append(originalPath);
+        sb.append("')");
+        return sb.toString();
     }
 
     public static String getSourceFileIfExists(String originalPath) {

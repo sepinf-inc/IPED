@@ -26,6 +26,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.Collections;
 import java.util.List;
 
+import javax.script.Bindings;
 import javax.script.Invocable;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
@@ -46,6 +47,7 @@ public class ScriptTask extends AbstractTask {
     private File scriptFile;
     private ScriptEngine engine;
     private Invocable inv;
+    private String scriptName;
 
     public ScriptTask(File scriptFile) {
         this.scriptFile = scriptFile;
@@ -63,8 +65,10 @@ public class ScriptTask extends AbstractTask {
         try (InputStreamReader reader = new InputStreamReader(new FileInputStream(file), "UTF-8")) { //$NON-NLS-1$
 
             ScriptEngineManager manager = new ScriptEngineManager();
-            String ext = file.getName().substring(file.getName().lastIndexOf('.') + 1); // $NON-NLS-1$
-            engine = manager.getEngineByExtension(ext); // $NON-NLS-1$
+            String ext = file.getName().substring(file.getName().lastIndexOf('.') + 1);
+            engine = manager.getEngineByExtension(ext);
+            Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
+            // bindings.put("polyglot.js.nashorn-compat", true);
             engine.eval(reader);
             inv = (Invocable) engine;
         }
@@ -89,6 +93,8 @@ public class ScriptTask extends AbstractTask {
         engine.put("moduleDir", this.output); //$NON-NLS-1$
         engine.put("worker", this.worker); //$NON-NLS-1$
         engine.put("stats", this.stats); //$NON-NLS-1$
+
+        scriptName = (String) inv.invokeFunction("getName"); //$NON-NLS-1$
 
         inv.invokeFunction("init", configurationManager); //$NON-NLS-1$
 
@@ -124,12 +130,7 @@ public class ScriptTask extends AbstractTask {
 
     @Override
     public String getName() {
-        try {
-            return (String) inv.invokeFunction("getName"); //$NON-NLS-1$
-
-        } catch (NoSuchMethodException | ScriptException e) {
-            throw new RuntimeException(e);
-        }
+        return scriptName;
     }
 
 }

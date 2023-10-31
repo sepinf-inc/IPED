@@ -6,7 +6,7 @@ jobs:
 
   build-java11:
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v1
@@ -33,13 +33,13 @@ jobs:
 
     - name: Install External Tools
       run: |
-          sudo apt-get update && sudo apt install \
+          sudo apt-get update && sudo apt-get install \
           libscca-utils rifiuti2 libevtx-utils libevt-utils \
-          libmsiecf-utils=20181227-1.1 \
-          pff-tools=20180714-2 \
-          libesedb-utils=20181229-3.1 \
-          tesseract-ocr=4.1.1-2build2 \
-          tesseract-ocr-por=1:4.00~git30-7274cfa-1 \
+          libmsiecf-utils=20181227-2build1 \
+          pff-tools=20180714-3build1 \
+          libesedb-utils=20181229-3.1build2 \
+          tesseract-ocr \
+          tesseract-ocr-por \
           imagemagick \
           python3-pip
           sudo perl -MCPAN -e 'install Parse::Win32Registry'
@@ -64,7 +64,7 @@ jobs:
 
   build-java14:
     
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v1
@@ -92,13 +92,13 @@ jobs:
 
     - name: Install External Tools
       run: |        
-          sudo apt-get update && sudo apt install \
+          sudo add-apt-repository ppa:alex-p/tesseract-ocr-devel && sudo apt-get update && sudo apt-get install \
           libscca-utils rifiuti2 libevtx-utils libevt-utils \
-          libmsiecf-utils=20181227-1.1 \
-          pff-tools=20180714-2 \
-          libesedb-utils=20181229-3.1 \
-          tesseract-ocr=4.1.1-2build2 \
-          tesseract-ocr-por=1:4.00~git30-7274cfa-1 \
+          libmsiecf-utils=20181227-2build1 \
+          pff-tools=20180714-3build1 \
+          libesedb-utils=20181229-3.1build2 \
+          tesseract-ocr \
+          tesseract-ocr-por \
           imagemagick \
           python3-pip
           sudo perl -MCPAN -e 'install Parse::Win32Registry'

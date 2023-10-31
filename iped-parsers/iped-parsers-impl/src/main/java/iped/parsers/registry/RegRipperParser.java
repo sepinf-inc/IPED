@@ -39,7 +39,6 @@ import iped.parsers.registry.model.RegistryFileException;
 import iped.parsers.standard.RawStringParser;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.ItemInfo;
-import iped.parsers.util.Util;
 import iped.properties.ExtraProperties;
 import iped.utils.IOUtil;
 import iped.utils.SimpleHTMLEncoder;
@@ -270,13 +269,13 @@ public class RegRipperParser extends AbstractParser {
             pb.directory(new File(TOOL_PATH));
         }
         Process p = pb.start();
-        IOUtil.ignoreInputStream(p.getErrorStream());
+        IOUtil.ignoreErrorStream(p);
         byte[] bytes = IOUtil.loadInputStream(p.getInputStream());
         return new String(bytes, StandardCharsets.ISO_8859_1).strip();
     }
 
     private File getHtml(File file, TemporaryResources tmp) throws IOException {
-        String content = Util.decodeMixedCharset(Files.readAllBytes(file.toPath()));
+        String content = new String(Files.readAllBytes(file.toPath()), "UTF-8");
         if (content == null || content.isBlank()) {
             return null;
         }
@@ -303,16 +302,17 @@ public class RegRipperParser extends AbstractParser {
             public void run() {
                 byte[] out = new byte[1024];
                 int read = 0;
-                while (read != -1)
-                    try {
+                try {
+                    while (read != -1) {
                         if (os != null)
                             os.write(out, 0, read);
                         if (msg != null)
                             msg.progress = true;
                         read = stream.read(out);
-
-                    } catch (Exception e) {
                     }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         };
         t.start();

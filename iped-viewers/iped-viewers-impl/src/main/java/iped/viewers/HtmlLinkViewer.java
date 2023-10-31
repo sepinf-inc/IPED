@@ -49,7 +49,7 @@ public class HtmlLinkViewer extends HtmlViewer implements SelectionListener {
 
     public static final String UFED_HTML_REPORT_MIME = "application/x-ufed-html-report"; //$NON-NLS-1$
 
-    private AttachmentSearcher attachSearcher;
+    protected AttachmentSearcher attachSearcher;
 
     private HashSet<String> mediaHashesInView = new HashSet<>();
 
@@ -145,6 +145,9 @@ public class HtmlLinkViewer extends HtmlViewer implements SelectionListener {
             File file = null;
             try {
                 file = Util.getFileRenamedToExt(item.getTempFile(), item.getType());
+                if (IOUtil.isTemporaryFile(file)) {
+                    file.deleteOnExit();
+                }
             } catch (IOException e1) {
                 e1.printStackTrace();
             }

@@ -4,7 +4,7 @@
     <parent>
         <groupId>iped</groupId>
         <artifactId>iped-parsers</artifactId>
-        <version>4.1-snapshot</version>
+        <version>4.2-snapshot</version>
     </parent>
     <artifactId>iped-parsers-impl</artifactId>
     <packaging>jar</packaging>
@@ -47,12 +47,21 @@
           			<groupId>org.apache.tika</groupId>
     				<artifactId>tika-parser-image-module</artifactId>
         		</exclusion>
+        		<exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
         	</exclusions>
         </dependency>
         <dependency>
             <groupId>com.googlecode.plist</groupId>
             <artifactId>dd-plist</artifactId>
             <version>1.26</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>32.0.1-jre</version>
         </dependency>
 		<dependency>
   		    <groupId>org.apache.tika</groupId>
@@ -72,7 +81,7 @@
 		<dependency>
   		    <groupId>com.fasterxml.jackson.core</groupId>
 		    <artifactId>jackson-databind</artifactId>
-		    <version>2.13.4.1</version>
+		    <version>2.13.4.2</version>
 		</dependency>
 		<dependency>
 		    <groupId>com.googlecode.json-simple</groupId>
@@ -108,6 +117,10 @@
                 <exclusion>
                     <groupId>org.bouncycastle</groupId>
                     <artifactId>bcprov-ext-jdk15on</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -202,8 +215,23 @@
             <groupId>org.springframework</groupId>
             <artifactId>spring-expression</artifactId>
             <version>5.3.23</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework</groupId>
+                    <artifactId>spring-jcl</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
-
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>2.6</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.horrorho</groupId>
+            <artifactId>RagingMoose</artifactId>
+            <version>c92dba11561cb1423dd81e3bb9dea8ae92a392d3</version>
+        </dependency>
     </dependencies>
     
     <build>

@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,7 @@ public class RemoteWav2Vec2Discovery {
     private static final int PING_TIMEOUT = 10;
     private static Map<String, Long> servers = new ConcurrentHashMap<>();
     private static Map<String, Integer> concurrentJobs = new ConcurrentHashMap<>();
+    private static Map<String, Integer> concurrentWavConvs = new ConcurrentHashMap<>();
     private static int port;
     private static long startTime = 0;
 
@@ -62,7 +64,7 @@ public class RemoteWav2Vec2Discovery {
 
             server.setSoTimeout(0);
 
-            System.out.println("Service discovery running on " + server.getInetAddress().getHostAddress() + ":" + port);
+            System.out.println(new Date() + " Service discovery running on " + server.getInetAddress().getHostAddress() + ":" + port);
             startTime = System.currentTimeMillis();
 
             loadStats();
@@ -73,8 +75,8 @@ public class RemoteWav2Vec2Discovery {
                 try (Socket client = server.accept();
                         InputStream is = client.getInputStream();
                         BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
-                        PrintWriter writer = new PrintWriter(
-                                new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8), true)) {
+                        PrintWriter writer = new PrintWriter(new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8), true)) {
+                    client.setSoTimeout(10000);
                     String cmd = reader.readLine();
                     if (MESSAGES.REGISTER.toString().equals(cmd)) {
                         register(client, reader, writer);
@@ -85,6 +87,8 @@ public class RemoteWav2Vec2Discovery {
                     if (MESSAGES.STATS.toString().equals(cmd)) {
                         getStats(client, reader, writer);
                     }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
 
@@ -96,28 +100,44 @@ public class RemoteWav2Vec2Discovery {
 
     private static void register(Socket client, BufferedReader reader, PrintWriter writer) throws IOException {
         String ip = client.getInetAddress().getHostAddress();
+        String hostname = client.getInetAddress().getHostName();
+        System.out.println(new Date() + " Receiving registration from: " + ip);
         String port = reader.readLine();
         String address = ip + ":" + port;
         String nodeJobs = reader.readLine();
+        String nodeWavConvs = reader.readLine();
         writer.println(MESSAGES.DONE);
         if (servers.put(address, System.currentTimeMillis()) == null) {
-            System.out.println("Server registered: " + address);
+            System.out.println(new Date() + " Server registered: " + address + " hostname: " + hostname);
             concurrentJobs.put(address, Integer.valueOf(nodeJobs));
+            concurrentWavConvs.put(address, Integer.valueOf(nodeWavConvs));
         }
     }
 
     private static void discover(PrintWriter writer) throws IOException {
-        writer.println(Integer.toString(servers.size()));
-        for (String server : servers.keySet()) {
-            writer.println(server);
+        String env_servers = System.getenv("IPED_TRANSCRIPTION_SERVERS");
+        if (!servers.isEmpty() && env_servers != null && !env_servers.trim().isEmpty()) {
+            String servers[] = env_servers.trim().split(",");
+            writer.println(Integer.toString(servers.length));
+            for (String server : servers) {
+                writer.println(server.trim());
+            }
+        } else {
+            writer.println(Integer.toString(servers.size()));
+            for (String server : servers.keySet()) {
+                writer.println(server);
+            }
         }
+
     }
 
     private static void getStats(Socket client, BufferedReader reader, PrintWriter writer) throws IOException {
         String ip = client.getInetAddress().getHostAddress();
         String port = reader.readLine();
         String address = ip + ":" + port;
+        String hostname = client.getInetAddress().getHostName();
         String nodeJobs = reader.readLine();
+        String nodeWavConvs = reader.readLine();
 
         audiosTranscripted.addAndGet(Long.parseLong(reader.readLine()));
         audiosDuration.addAndGet(Long.parseLong(reader.readLine()));
@@ -131,14 +151,16 @@ public class RemoteWav2Vec2Discovery {
         writer.println(MESSAGES.DONE);
 
         if (servers.put(address, System.currentTimeMillis()) == null) {
-            System.out.println("Server registered: " + address);
+            System.out.println(new Date() + " Server registered: " + address + " hostname: " + hostname);
             concurrentJobs.put(address, Integer.valueOf(nodeJobs));
+            concurrentWavConvs.put(address, Integer.valueOf(nodeWavConvs));
         }
 
         int totalJobs = concurrentJobs.values().stream().reduce(0, Integer::sum);
+        int totalWavConvs = concurrentWavConvs.values().stream().reduce(0, Integer::sum);
 
-        conversionTimeReal.addAndGet(convTime / totalJobs);
         transcriptionTimeReal.addAndGet(transcriptTime / totalJobs);
+        conversionTimeReal.addAndGet(convTime / totalWavConvs);
     }
 
     private static void loadStats() throws IOException {
@@ -196,8 +218,12 @@ public class RemoteWav2Vec2Discovery {
                     if (seconds == 30) {
                         seconds = 0;
                         DecimalFormat df = new DecimalFormat();
+                        int totalJobs = concurrentJobs.values().stream().reduce(0, Integer::sum);
+                        int totalWavConvs = concurrentWavConvs.values().stream().reduce(0, Integer::sum);
                         System.out.println("Statistics:");
                         System.out.println("Online Nodes: " + servers.size());
+                        System.out.println("Concurrent Transcriptions: " + totalJobs);
+                        System.out.println("Concurrent WAV Conversions: " + totalWavConvs);
                         System.out.println("Online Time: " + df.format((System.currentTimeMillis() - startTime) / 1000) + "s");
                         System.out.println("Transcribed Audios: " + df.format(audiosTranscripted));
                         System.out.println("Transcribed Audios Duration: " + df.format(audiosDuration.get() / 1000) + "s");
@@ -215,10 +241,11 @@ public class RemoteWav2Vec2Discovery {
                     while (it.hasNext()) {
                         String server = it.next();
                         if (System.currentTimeMillis() - servers.get(server) >= PING_TIMEOUT * 1000) {
-                            System.out.println("No PING received for the last " + PING_TIMEOUT
+                            System.out.println(new Date() + " No PING received for the last " + PING_TIMEOUT
                                     + "s, removing server from list: " + server);
                             it.remove();
                             concurrentJobs.remove(server);
+                            concurrentWavConvs.remove(server);
                         }
                     }
                 }

@@ -237,6 +237,17 @@
             <mediaType>application/x-ares-galaxy</mediaType>
         </carverType>
 
+        <carverType>
+            <name>SD</name>
+            <signatures>
+                <headerSignature>SDL?\00\00\00\FF</headerSignature>
+            </signatures>
+            <minLength>128</minLength>
+            <maxLength>65536</maxLength>
+            <mediaType>application/x-shareaza-download</mediaType>
+            <stopOnNextHeader>true</stopOnNextHeader>
+        </carverType>
+        
         <!--carverType>
             <name>PLIST</name>
             <signatures>

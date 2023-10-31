@@ -174,6 +174,7 @@ public class SyncMetadata extends Metadata {
     @Override
     public synchronized void set(Property property, Calendar date) {
         checkReadOnly();
+        date.get(Calendar.HOUR_OF_DAY);
         super.set(property, date);
     }
 

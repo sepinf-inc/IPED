@@ -55,6 +55,8 @@
         <!--<parser class="org.apache.tika.parser.image.HeifParser"></parser>-->
         <parser class="org.apache.tika.parser.iptc.IptcAnpaParser"></parser>
         <parser class="org.apache.tika.parser.iwork.IWorkPackageParser"></parser>
+        <parser class="org.apache.tika.parser.iwork.iwana.IWork13PackageParser"></parser>
+		<parser class="org.apache.tika.parser.iwork.iwana.IWork18PackageParser"></parser>
         <!--<parser class="org.apache.tika.parser.image.JpegParser"></parser>-->
         <!--We have our own impls
         <parser class="org.apache.tika.parser.mail.RFC822Parser"></parser>
@@ -144,6 +146,7 @@
         <parser class="org.apache.tika.parser.EmptyParser">
             <mime>application/vnd.rn-realmedia</mime>
             <mime>application/java-archive</mime>
+            <mime>audio/ilbc</mime>
         </parser>
         
         <parser class="org.gagravarr.tika.FlacParser"></parser>
@@ -265,6 +268,7 @@
         <parser class="iped.parsers.browsers.ie.IndexDatParser"></parser>
         <parser class="iped.parsers.compress.PackageParser"></parser>    
         <parser class="iped.parsers.compress.SevenZipParser"></parser>
+        <parser class="iped.parsers.compress.LZFSEParser"></parser>
         <parser class="iped.parsers.misc.XMLParser">
             <mime-exclude>image/svg+xml</mime-exclude>
         </parser>
@@ -290,6 +294,7 @@
         <parser class="iped.parsers.telegram.TelegramParser">
             <params>
                 <param name="enabledForUfdr" type="bool">true</param>
+                <param name="minChatSplitSize" type="int">6000000</param>
             </params>
         </parser>
         <parser class="iped.parsers.skype.SkypeParser"></parser>
@@ -303,10 +308,14 @@
                 <param name="downloadConnectionTimeout" type="int">500</param>
                 <param name="downloadReadTimeout" type="int">1000</param>
                 <param name="recoverDeletedRecords" type="bool">true</param>
+                <param name="minChatSplitSize" type="int">6000000</param>
             </params>
         </parser>
         <parser class="iped.parsers.ufed.UFEDChatParser">
             <!--<mime-exclude>application/x-ufed-chat-whatsapp</mime-exclude>-->
+            <params>
+                <param name="minChatSplitSize" type="int">6000000</param>
+            </params>            
         </parser>
         
         <parser class="iped.parsers.emule.KnownMetParser">
@@ -347,7 +356,8 @@
         <parser class="iped.parsers.winx.WinXTimelineParser"></parser>
         <parser class="iped.parsers.gdrive.GDriveMainParser"></parser>
         <parser class="iped.parsers.browsers.firefox.FirefoxSavedSessionParser"></parser>
-        
+        <parser class="iped.parsers.eventtranscript.EventTranscriptParser"></parser>
+
         <parser class="iped.parsers.python.PythonParser"></parser>
         <parser class="iped.parsers.mail.win10.Win10MailParser"></parser>
         <parser class="iped.parsers.discord.DiscordParser"></parser>

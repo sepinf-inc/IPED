@@ -4,7 +4,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.DirectoryStream.Filter;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import org.slf4j.Logger;
@@ -25,6 +28,14 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
     public static final String NUM_THREADS = "numThreads";
 
     private static final String HASH_DB = "hashesDB";
+
+    private static final String IPED_TEMP = "indexTemp";
+
+    private static final String TEMP_ON_SSD = "indexTempOnSSD";
+
+    private static final String OUTPUT_ON_SSD = "outputOnSSD";
+
+    private static final String DEFAULT_VAL = "default";
 
     public static final DirectoryStream.Filter<Path> filter = new Filter<Path>() {
         @Override
@@ -57,12 +68,12 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
 
         File newTmp = null, tmp = new File(System.getProperty("java.io.basetmpdir")); //$NON-NLS-1$
 
-        value = properties.getProperty("indexTemp"); //$NON-NLS-1$
+        value = properties.getProperty(IPED_TEMP); // $NON-NLS-1$
         if (value != null) {
             value = value.trim();
         }
         if (ipedTemp == null) {
-            if (value != null && !value.equalsIgnoreCase("default")) { //$NON-NLS-1$
+            if (value != null && !value.equalsIgnoreCase(DEFAULT_VAL)) { // $NON-NLS-1$
                 newTmp = new File(value);
                 if (!newTmp.exists() && !newTmp.mkdirs()) {
                     if (logger != null)
@@ -93,13 +104,13 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
         if (value != null) {
             value = value.trim();
         }
-        if (value != null && !value.equalsIgnoreCase("default")) { //$NON-NLS-1$
+        if (value != null && !value.equalsIgnoreCase(DEFAULT_VAL)) { // $NON-NLS-1$
             numThreads = Integer.valueOf(value);
         } else {
             numThreads = Runtime.getRuntime().availableProcessors();
         }
 
-        value = properties.getProperty("indexTempOnSSD"); //$NON-NLS-1$
+        value = properties.getProperty(TEMP_ON_SSD); // $NON-NLS-1$
         if (value != null) {
             value = value.trim();
         }
@@ -107,7 +118,7 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
             indexTempOnSSD = Boolean.valueOf(value);
         }
 
-        value = properties.getProperty("outputOnSSD"); //$NON-NLS-1$
+        value = properties.getProperty(OUTPUT_ON_SSD); // $NON-NLS-1$
         if (value != null) {
             value = value.trim();
         }
@@ -156,5 +167,26 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
 
     public void setHashDbFile(File hashDbFile) {
         this.hashDbFile = hashDbFile;
+    }
+
+    public static void clearLocalParameters(File localConfig) throws IOException {
+        List<String> lines = Files.readAllLines(localConfig.toPath());
+        ArrayList<String> newLines = new ArrayList<>();
+        for (String line : lines) {
+            line = line.trim();
+            if (line.startsWith(NUM_THREADS)) {
+                line = NUM_THREADS + " = " + DEFAULT_VAL;
+            } else if (line.startsWith(TEMP_ON_SSD)) {
+                line = TEMP_ON_SSD + " = false";
+            } else if (line.startsWith(IPED_TEMP)) {
+                line = IPED_TEMP + " = " + DEFAULT_VAL;
+            } else if (line.startsWith(HASH_DB)) {
+                line = "#" + line;
+            } else if (line.startsWith(OUTPUT_ON_SSD)) {
+                line = OUTPUT_ON_SSD + " = false";
+            }
+            newLines.add(line);
+        }
+        Files.write(localConfig.toPath(), newLines);
     }
 }

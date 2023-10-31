@@ -92,6 +92,7 @@ public class TelegramParser extends SQLite3DBParser {
     private static boolean enabledForIOSUfdr = false;
 
     private boolean extractMessages = true;
+    private int minChatSplitSize = 6000000;
 
     public Set<MediaType> getSupportedTypes(ParseContext context) {
         return SUPPORTED_TYPES;
@@ -118,6 +119,11 @@ public class TelegramParser extends SQLite3DBParser {
     @Field
     public void setExtractMessages(boolean extractMessages) {
         this.extractMessages = extractMessages;
+    }
+
+    @Field
+    public void setMinChatSplitSize(int minChatSplitSize) {
+        this.minChatSplitSize = minChatSplitSize;
     }
 
     private void storeLinkedHashes(List<Message> messages, Metadata metadata) {
@@ -190,6 +196,7 @@ public class TelegramParser extends SQLite3DBParser {
         int firstMsg = 0;
         byte[] bytes;
         ReportGenerator r = new ReportGenerator(searcher);
+        r.setMinChatSplitSize(this.minChatSplitSize);
         while ((bytes = r.generateNextChatHtml(c)) != null) {
             int nextMsg = r.getNextMsgNum();
 

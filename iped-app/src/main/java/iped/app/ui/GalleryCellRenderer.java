@@ -31,6 +31,9 @@ import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.table.TableCellRenderer;
 
+import iped.app.ui.bookmarks.BookmarkIcon;
+import iped.data.IMultiBookmarks;
+import iped.engine.util.Util;
 import iped.utils.QualityIcon;
 
 public class GalleryCellRenderer implements TableCellRenderer {
@@ -107,8 +110,12 @@ public class GalleryCellRenderer implements TableCellRenderer {
             return panel;
         }
 
-        check.setSelected(App.get().appCase.getMultiBookmarks().isChecked(cellValue.id));
+        IMultiBookmarks bookmarks = App.get().appCase.getMultiBookmarks();
+        check.setSelected(bookmarks.isChecked(cellValue.id));
         cLabel.setText(cellValue.name);
+        String itemBookmarksStr = Util.concatStrings(bookmarks.getBookmarkList(cellValue.id));
+        cLabel.setToolTipText(itemBookmarksStr.isEmpty() ? null : itemBookmarksStr);
+        cLabel.setIcon(BookmarkIcon.getIcon(bookmarks, itemBookmarksStr));
 
         labelH = label.getHeight();
         adjustGalleryCellContent(cellValue, label, warningColor, table);

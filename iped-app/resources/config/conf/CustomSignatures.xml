@@ -35,7 +35,20 @@
      	</magic>
         <glob pattern="*.cdr"/>
     </mime-type>
-
+    
+    <mime-type type="image/x-corelphotopaint">
+    	<magic priority="60">
+          <match value="CPTFILE" type="string" offset="0" />
+          <match value="CPT9FILE" type="string" offset="0" />
+     	</magic>
+    </mime-type>
+    
+    <mime-type type="image/vnd.radiance">
+    	<magic priority="40">
+          <match value="#?RADIANCE" type="string" offset="0" />
+     	</magic>
+    </mime-type>
+        
 	<mime-type type="application/x-superfetch">
 		<_comment>Windows EVT Log</_comment>
     	<magic priority="40">
@@ -314,7 +327,7 @@
     
     <mime-type type="application/x-whatsapp-wadb">
         <sub-class-of type="application/x-sqlite3"/>
-        <glob pattern="wa*.db"/>
+        <glob pattern="wa.db"/>
     </mime-type>
     
     <mime-type type="application/x-whatsapp-contactsv2">
@@ -400,7 +413,16 @@
     <mime-type type="application/x-shareaza-library-dat-entry">
         <sub-class-of type="application/x-metadata-entry"/>
     </mime-type>
-    
+
+    <mime-type type="application/x-shareaza-download">
+        <_comment>Shareaza download control file (.sd)</_comment>
+        <sub-class-of type="application/x-p2p"/>
+    	<magic priority="60">
+            <match value="0x53444C00000000FF" type="string" offset="0" mask="0xFFFFFF00FFFFFFFF"/>
+     	</magic>
+        <glob pattern="*.sd"/>
+    </mime-type>
+
     <mime-type type="application/x-bittorrent-resume-dat">
         <_comment>BitTorrent Client Resume.dat file</_comment>
         <sub-class-of type="application/x-p2p"/>
@@ -580,6 +602,37 @@
     <mime-type type="application/x-incredimail">
         <sub-class-of type="message/rfc822"/>
         <glob pattern="*.imm"/>
+    </mime-type>
+    
+    <mime-type type="message/rfc822-partial">
+        <sub-class-of type="message/rfc822"/>
+        <glob pattern="*.partial.emlx"/>
+        <glob pattern="*.partial.emlx:DECOMP"/>
+    </mime-type>
+    
+    <mime-type type="message/x-emlx-partial">
+        <sub-class-of type="message/x-emlx"/>
+        <glob pattern="*.PARTIAL.EMLX"/>
+        <glob pattern="*.PARTIAL.EMLX:DECOMP"/>
+    </mime-type>
+    
+    <mime-type type="message/x-emlx">
+      <magic priority="60">
+        <match value="\nMIME-Version: 1.0\nx-store-info:" type="string" offset="2:10"/>
+        <match value="\nx-store-info:" type="string" offset="2:10"/>
+        <match value="\nX-Antivirus:" type="string" offset="2:10"/>
+        <match value="\nRelay-Version:" type="string" offset="2:10"/>
+        <match value="\n#!\ rnews" type="string" offset="2:10"/>
+        <match value="\nN#!\ rnews" type="string" offset="2:10"/>
+        <match value="\nForward\ to" type="string" offset="2:10"/>
+        <match value="\nPipe\ to" type="string" offset="2:10"/>
+        <match value="\nReturn-Path:" type="string" offset="2:10"/>
+        <match value="\nFrom:" type="string" offset="2:10"/>
+        <match value="\nReceived:" type="string" offset="2:10"/>
+        <match value="\nMessage-ID:" type="string" offset="2:10"/>
+      </magic>
+      <glob pattern="*.emlx"/>
+      <sub-class-of type="text/x-tika-text-based-message"/>
     </mime-type>
     
     <mime-type type="message/x-rfc822-mac">
@@ -1223,6 +1276,59 @@
     <mime-type type="application/x-win10-timeline-registry">     
         <sub-class-of type="application/x-metadata-entry"/>
     </mime-type>
+
+    <mime-type type="application/x-event-transcript">     
+        <sub-class-of type="application/x-sqlite3"/>
+        <glob pattern="EventTranscript.db"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-history">     
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-history-registry">     
+        <sub-class-of type="application/x-browser-registry"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-inventory-app">     
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-inventory-app-registry">     
+        <sub-class-of type="application/x-metadata-entry"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-app-interactivity">     
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-app-interactivity-registry">     
+        <sub-class-of type="application/x-metadata-entry"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-devices">     
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-devices-registry">     
+        <sub-class-of type="application/x-metadata-entry"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-census">     
+        <sub-class-of type="text/html"/>
+    </mime-type>
+    
+    <mime-type type="application/x-event-transcript-census-registry">     
+        <sub-class-of type="application/x-metadata-entry"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-networking">     
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-event-transcript-networking-registry">     
+        <sub-class-of type="application/x-metadata-entry"/>
+    </mime-type>
     
     <mime-type type="application/x-gdrive-cloud-graph-registry">     
         <sub-class-of type="application/x-metadata-entry"/>
@@ -1269,6 +1375,9 @@
     <mime-type type="application/x-whatsapp-user-xml">
         <sub-class-of type="application/dita+xml"/>
         <glob pattern="com.whatsapp_preferences.xml"/>
+        <glob pattern="com.whatsapp_preferences_light.xml"/>
+        <glob pattern="com.whatsapp.w4b_preferences.xml"/>
+        <glob pattern="com.whatsapp.w4b_preferences_light.xml"/>
     </mime-type>
     
     <mime-type type="application/x-whatsapp-user-plist">
@@ -1392,6 +1501,50 @@
     
     <mime-type type="call/x-discord-call">
     	<sub-class-of type="message/x-chat-message"/>
+    </mime-type>
+
+    <mime-type type="video/x-matroska">
+        <magic priority="60">
+            <match value="0x1A45DFA3" type="string" offset="0">
+                <match value="matroska" type="string" offset="4:64">
+                </match>
+            </match>
+        </magic>
+        <glob pattern="*.mkv" />
+    </mime-type>
+
+    <mime-type type="audio/x-matroska">
+        <sub-class-of type="video/x-matroska" />
+        <glob pattern="*.mka" />
+    </mime-type>
+
+    <mime-type type="video/webm">
+        <magic priority="60">
+            <match value="0x1A45DFA3" type="string" offset="0">
+                <match value="webm" type="string" offset="4:64">
+                </match>
+            </match>
+        </magic>
+        <glob pattern="*.webm" />
+    </mime-type>
+
+    <mime-type type="audio/ilbc">
+        <magic priority="60">
+            <match value="0x2321694C424333300A" type="string" offset="0"/>
+            <match value="0x2321694C424332300A" type="string" offset="0"/>
+        </magic>
+        <glob pattern="*.lbc"/>
+    </mime-type>
+    
+    <mime-type type="application/vnd.apple.unknown.13">
+        <sub-class-of type="application/vnd.apple.iwork"/>
+    </mime-type>
+    
+    <mime-type type="application/x-lzfse">
+        <magic priority="50">
+            <match value="bvx" type="string" offset="0"/>
+        </magic>
+        <glob pattern="*.lzfse"/>
     </mime-type>
 
 </mime-info>

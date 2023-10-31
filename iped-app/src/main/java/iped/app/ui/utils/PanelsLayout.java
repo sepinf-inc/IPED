@@ -8,8 +8,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -22,6 +24,7 @@ import bibliothek.gui.dock.common.intern.CDockable;
 import bibliothek.gui.dock.common.intern.station.CScreenDockStation;
 import bibliothek.gui.dock.common.location.CExternalizedLocation;
 import bibliothek.gui.dock.common.location.CMaximalExternalizedLocation;
+import bibliothek.gui.dock.common.location.CStackLocation;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
 import bibliothek.gui.dock.station.screen.ScreenDockProperty;
 import iped.app.ui.App;
@@ -37,7 +40,68 @@ public class PanelsLayout {
         BufferedReader in = null;
         try {
             if (file.exists() && replaceOldClassName()) {
+                // Store location and parent per CDockable before restoring the layout
+                Map<CDockable, CDockable> asidePerDockable = new HashMap<CDockable, CDockable>();
+                for (int i = 0; i < control.getCDockableCount(); i++) {
+                    CDockable di = control.getCDockable(i);
+                    CLocation li = di.getBaseLocation();
+                    if (li instanceof CStackLocation) {
+                        CStackLocation si = (CStackLocation) li;
+                        for (int j = 0; j < control.getCDockableCount(); j++) {
+                            if (j != i) {
+                                CDockable dj = control.getCDockable(j);
+                                CLocation lj = dj.getBaseLocation();
+                                if (lj instanceof CStackLocation) {
+                                    CStackLocation sj = (CStackLocation) lj;
+                                    if (si.getParent() != null && si.getParent().equals(sj.getParent())
+                                            && si.getIndex() == sj.getIndex() - 1) {
+                                        asidePerDockable.put(dj, di);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Restore previously saved layout
                 control.read(file);
+
+                // Store docks that are showing
+                List<CDockable> showingDockables = new ArrayList<CDockable>();
+                for (int i = 0; i < control.getCDockableCount(); i++) {
+                    CDockable dock = control.getCDockable(i);
+                    if (dock.intern().isDockableShowing()) {
+                        showingDockables.add(dock);
+                    }
+                }
+
+                // Fix #1565: handle CDockables added in newer IPED versions, that didn't exist
+                // when the layout was saved. If location is null, restore location based on
+                // positions before control.read().
+                boolean changed = false;
+                for (int i = 0; i < control.getCDockableCount(); i++) {
+                    CDockable dock = control.getCDockable(i);
+                    if (dock.getBaseLocation() == null) {
+                        changed = true;
+                        dock.setVisible(true);
+                        CDockable prevDock = asidePerDockable.get(dock);
+                        if (prevDock != null) {
+                            dock.setLocationsAside(prevDock);
+                        }
+                    }
+                }
+
+                if (changed) {
+                    // Restore docks that were showing (selected tabs)
+                    for (CDockable dock : showingDockables) {
+                        if (!dock.intern().isDockableShowing()) {
+                            if (dock instanceof DefaultSingleCDockable) {
+                                DefaultSingleCDockable sd = (DefaultSingleCDockable) dock;
+                                App.get().selectDockableTab(sd);
+                            }
+                        }
+                    }
+                }
             }
 
             if (fileExt.exists()) {

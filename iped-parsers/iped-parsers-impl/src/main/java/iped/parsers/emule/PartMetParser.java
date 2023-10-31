@@ -81,7 +81,7 @@ public class PartMetParser extends AbstractParser {
         }
 
         KnownMetEntry e = new KnownMetEntry();
-        int ret = iped.parsers.emule.KnownMetDecoder.parseEntry(e, 1, bytes);
+        int ret = iped.parsers.emule.KnownMetDecoder.parseEntry(e, 1, bytes, false);
         if (ret <= 0) {
             throw new TikaException("part.met file parsing returned error code " + ret);
         }
