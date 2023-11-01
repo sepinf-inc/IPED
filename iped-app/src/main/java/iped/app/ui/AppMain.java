@@ -37,7 +37,7 @@ public class AppMain {
     File casePath;
 
     // configure to debug the analysis UI with some case
-    File testPath = new File(System.getProperty("user.dir"));// = new File("E:\\teste\\case-to-debug");
+    File testPath = null;// = new File("E:\\teste\\case-to-debug");
 
     boolean isMultiCase = false;
     boolean nolog = false;
