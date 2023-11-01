@@ -37,7 +37,7 @@ public class AppMain {
     File casePath;
 
     // configure to debug the analysis UI with some case
-    File testPath = null;// = new File("E:\\teste\\case-to-debug");
+    File testPath = new File(System.getProperty("user.dir"));// = new File("E:\\teste\\case-to-debug");
 
     boolean isMultiCase = false;
     boolean nolog = false;
@@ -52,7 +52,7 @@ public class AppMain {
         
         // Set the UiScale (must be before any UI-related code).
         UiScale.loadUserSetting();
-
+        
         checkJavaVersion();
         AppMain appMain = new AppMain();
         try {
@@ -191,14 +191,6 @@ public class AppMain {
                 startUpControlClient = null;
             }
             
-            if (!App.get().isVisible()) {
-                if (processingManager != null) {
-                    return;
-                } else {
-                    System.exit(1);
-                }
-            }
-
             UICaseDataLoader init = new UICaseDataLoader(processingManager);
             init.execute();
 
