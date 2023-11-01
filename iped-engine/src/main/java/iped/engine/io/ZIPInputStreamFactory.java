@@ -9,6 +9,7 @@ import java.io.OutputStream;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -159,7 +160,12 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
         synchronized (filesCache) {
             tmp = filesCache.get(path);
             if (tmp != null) {
-                return new SeekableFileInputStream(tmp.toFile());
+                try {
+                    return new SeekableFileInputStream(tmp.toFile());
+                } catch (NoSuchFileException e) {
+                    // Could have been deleted by Item.dispose()
+                    filesCache.remove(path);
+                }
             }
         }
 
@@ -194,7 +200,7 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
                     if (zae.getSize() <= MAX_BYTES_CACHED) {
                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
                         int read;
-                        byte[] buf = new byte[8192];
+                        byte[] buf = new byte[UFDR_BUF_SIZE];
                         while ((read = is.read(buf, 0, buf.length)) >= 0) {
                             if (canceled.get()) {
                                 return null;
@@ -212,7 +218,7 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
                         tmp = Files.createTempFile("zip-stream", null);
                         try (OutputStream out = Files.newOutputStream(tmp)) {
                             int read;
-                            byte[] buf = new byte[8192];
+                            byte[] buf = new byte[UFDR_BUF_SIZE];
                             while (!canceled.get() && (read = is.read(buf, 0, buf.length)) >= 0) {
                                 out.write(buf, 0, read);
                             }
