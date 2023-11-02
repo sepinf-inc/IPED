@@ -224,10 +224,6 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
             // Shortcut to Deep-Selection Remove (Item plus sub-items)
             recursiveItemSelection(false);
             evt.consume();
-        } else if (evt.getKeyCode() == KeyEvent.VK_B && ((evt.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) != 0)) {
-            // Shortcut to BookmarkManager Window
-            BookmarksManager.setVisible();
-            evt.consume();
         } else 
             BookmarksManager.get().keyPressed(evt);
 
