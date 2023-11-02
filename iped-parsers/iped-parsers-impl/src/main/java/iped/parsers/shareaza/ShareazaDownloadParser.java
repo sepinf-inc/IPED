@@ -79,7 +79,7 @@ public class ShareazaDownloadParser extends AbstractParser {
             xhtml.startElement("body");
             xhtml.startElement("pre");
 
-            processSDFile(stream, xhtml, searcher, metadata, item.getName());
+            processSDFile(stream, xhtml, searcher, metadata, item.getPath());
 
             xhtml.endElement("pre");
             xhtml.endElement("body");
@@ -95,7 +95,7 @@ public class ShareazaDownloadParser extends AbstractParser {
     }
 
     public void processSDFile(InputStream inputStreamFile, XHTMLContentHandler xhtml, IItemSearcher searcher,
-            Metadata metadata, String evidenceName) throws IOException, SAXException {
+            Metadata metadata, String evidencePath) throws IOException, SAXException {
 
         DecimalFormat df = new DecimalFormat("#,##0");
         DecimalFormat df2 = new DecimalFormat("#,##0.0");
@@ -652,11 +652,11 @@ public class ShareazaDownloadParser extends AbstractParser {
             addLine(xhtml, "SERIAL ID:               " + serialID);
 
         } catch (BufferUnderflowException ex) {
-            addLine(xhtml, INCOMPLETE_FILE_EX_MESSAGE + " Evidence=" + evidenceName);
-            LOGGER.error(INCOMPLETE_FILE_EX_MESSAGE + " Evidence=" + evidenceName);
+            addLine(xhtml, INCOMPLETE_FILE_EX_MESSAGE + " Evidence=" + evidencePath);
+            LOGGER.warn(INCOMPLETE_FILE_EX_MESSAGE + " Evidence=" + evidencePath);
         } catch (Exception ex) {
-            addLine(xhtml, INCOMPLETE_FILE_EX_MESSAGE + " Evidence=" + evidenceName);
-            LOGGER.error(INCOMPLETE_FILE_EX_MESSAGE + " Evidence=" + evidenceName);
+            addLine(xhtml, INCOMPLETE_FILE_EX_MESSAGE + " Evidence=" + evidencePath);
+            LOGGER.warn(INCOMPLETE_FILE_EX_MESSAGE + " Evidence=" + evidencePath);
             ex.printStackTrace();
         }
     }
