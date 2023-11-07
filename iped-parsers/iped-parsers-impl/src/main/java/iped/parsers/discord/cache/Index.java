@@ -8,6 +8,8 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.ImmutableList;
+
 import iped.data.IItemReader;
 import iped.parsers.discord.cache.CacheAddr.InputStreamNotAvailable;
 
@@ -24,6 +26,9 @@ import iped.parsers.discord.cache.CacheAddr.InputStreamNotAvailable;
 public class Index {
 
     private static Logger logger = LoggerFactory.getLogger(Index.class);
+
+    static private final long MAGIC_NUMBER = 0xC3CA03C1l;
+    static private final List<Long> supportedVersions = ImmutableList.of(0x01000200l);
 
     private final long magicNumber;
     private final long version;
@@ -140,10 +145,21 @@ public class Index {
         this.lst = lst;
     }
 
-    public Index(InputStream is, String path, List<IItemReader> dataFiles, List<IItemReader> externalFiles) throws IOException {
+    public Index(InputStream is, String path, List<IItemReader> dataFiles, List<IItemReader> externalFiles)
+            throws IOException, ChromeCacheException {
 
         magicNumber = readUnsignedInt(is);
+        
+        if(magicNumber != MAGIC_NUMBER) {
+            throw new ChromeCacheException("Invalid index magic number:" + magicNumber);
+        }
+        
         version = readUnsignedInt(is);
+
+        if (supportedVersions.contains(version)) {
+            throw new ChromeCacheException("Unsupported index version number:" + version);
+        }
+
         entriesCont = read4bytes(is);
         bytesCont = read4bytes(is);
         lastFile = read4bytes(is);
