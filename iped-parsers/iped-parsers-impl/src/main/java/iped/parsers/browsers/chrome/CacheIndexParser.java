@@ -23,7 +23,6 @@ import org.xml.sax.SAXException;
 
 import iped.data.IItemReader;
 import iped.parsers.discord.cache.CacheEntry;
-import iped.parsers.discord.cache.ChromeCacheException;
 import iped.parsers.discord.cache.Index;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;

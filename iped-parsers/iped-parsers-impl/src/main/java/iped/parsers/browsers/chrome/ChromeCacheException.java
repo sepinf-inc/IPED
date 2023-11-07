@@ -1,4 +1,4 @@
-package iped.parsers.discord.cache;
+package iped.parsers.browsers.chrome;
 
 public class ChromeCacheException extends Exception {
 

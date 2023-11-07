@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.ImmutableList;
 
 import iped.data.IItemReader;
+import iped.parsers.browsers.chrome.ChromeCacheException;
 import iped.parsers.discord.cache.CacheAddr.InputStreamNotAvailable;
 
 /**
