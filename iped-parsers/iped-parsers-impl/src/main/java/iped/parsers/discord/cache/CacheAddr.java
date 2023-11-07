@@ -123,7 +123,7 @@ public class CacheAddr {
         switch (fileType) {
             case DATA_STREAM_FILE:
                 for (IItemReader extFile : externalFiles)
-                    if (extFile.getName().equals(fileNameStr)) {
+                    if (extFile.getName().equals(fileNameStr) || extFile.getName().startsWith(fileNameStr + ".")) {
                         return extFile.getBufferedInputStream();
                     }
                 break;
