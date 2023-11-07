@@ -118,37 +118,37 @@ public class CacheEntry {
     public CacheEntry(InputStream is, List<IItemReader> dataFiles, List<IItemReader> externalFiles) throws IOException {
         this.dataFiles = dataFiles;
         this.externalFiles = externalFiles;
-        hash = readUnsignedInt(is);
-        nextEntry = new CacheAddr(readUnsignedInt(is));
-        rankingsNode = new CacheAddr(readUnsignedInt(is));
-        reuseCount = read4bytes(is);
-        refetchCount = read4bytes(is);
-        state = read4bytes(is);
-        creationTime = read8bytes(is);
-        keyDataSize = read4bytes(is);
-        longKeyAddress = readUnsignedInt(is);
+        hash = Index.readUnsignedInt(is);
+        nextEntry = new CacheAddr(Index.readUnsignedInt(is));
+        rankingsNode = new CacheAddr(Index.readUnsignedInt(is));
+        reuseCount = Index.read4bytes(is);
+        refetchCount = Index.read4bytes(is);
+        state = Index.read4bytes(is);
+        creationTime = Index.read8bytes(is);
+        keyDataSize = Index.read4bytes(is);
+        longKeyAddress = Index.readUnsignedInt(is);
         longKeyAddressCacheAddress = new CacheAddr(longKeyAddress);
         dataStreamSize = new int[4];
-        dataStreamSize[0] = read4bytes(is);
-        dataStreamSize[1] = read4bytes(is);
-        dataStreamSize[2] = read4bytes(is);
-        dataStreamSize[3] = read4bytes(is);
+        dataStreamSize[0] = Index.read4bytes(is);
+        dataStreamSize[1] = Index.read4bytes(is);
+        dataStreamSize[2] = Index.read4bytes(is);
+        dataStreamSize[3] = Index.read4bytes(is);
 
         dataStreamAdresses = new CacheAddr[4];
-        dataStreamAdresses[0] = new CacheAddr(readUnsignedInt(is));
-        dataStreamAdresses[1] = new CacheAddr(readUnsignedInt(is));
-        dataStreamAdresses[2] = new CacheAddr(readUnsignedInt(is));
-        dataStreamAdresses[3] = new CacheAddr(readUnsignedInt(is));
+        dataStreamAdresses[0] = new CacheAddr(Index.readUnsignedInt(is));
+        dataStreamAdresses[1] = new CacheAddr(Index.readUnsignedInt(is));
+        dataStreamAdresses[2] = new CacheAddr(Index.readUnsignedInt(is));
+        dataStreamAdresses[3] = new CacheAddr(Index.readUnsignedInt(is));
 
-        flags = readUnsignedInt(is);
+        flags = Index.readUnsignedInt(is);
 
         paddings = new int[4];
-        paddings[0] = read4bytes(is);
-        paddings[1] = read4bytes(is);
-        paddings[2] = read4bytes(is);
-        paddings[3] = read4bytes(is);
+        paddings[0] = Index.read4bytes(is);
+        paddings[1] = Index.read4bytes(is);
+        paddings[2] = Index.read4bytes(is);
+        paddings[3] = Index.read4bytes(is);
 
-        selfHash = readUnsignedInt(is);
+        selfHash = Index.readUnsignedInt(is);
         if (keyDataSize > 0) {
             keyData = IOUtils.readFully(is, Math.min(256 - 24 * 4, keyDataSize));
 
@@ -240,10 +240,10 @@ public class CacheEntry {
 
         try (InputStream is = getResponseInfo()) {
 
-            httpResponse.put("payload_size", String.valueOf(read4bytes(is)));
-            httpResponse.put("flags", String.valueOf(read4bytes(is)));
-            httpResponse.put("request_time", Long.toString(read8bytes(is)));
-            httpResponse.put("response_time", Long.toString(read8bytes(is)));
+            httpResponse.put("payload_size", String.valueOf(Index.read4bytes(is)));
+            httpResponse.put("flags", String.valueOf(Index.read4bytes(is)));
+            httpResponse.put("request_time", Long.toString(Index.read8bytes(is)));
+            httpResponse.put("response_time", Long.toString(Index.read8bytes(is)));
 
             Pattern NULL_SEPARATOR = Pattern.compile("\\u0000");
             String[] lines = NULL_SEPARATOR.split(readString(is));
@@ -277,29 +277,13 @@ public class CacheEntry {
         return httpResponse;
     }
 
-    public static int read2bytes(InputStream is) throws IOException {
-        return (is.read() + (is.read() << 8));
-    }
-
-    public static int read4bytes(InputStream is) throws IOException {
-        return read2bytes(is) | (read2bytes(is) << 16);
-    }
-
-    public static long readUnsignedInt(InputStream is) throws IOException {
-        return (read2bytes(is) | (read2bytes(is) << 16)) & 0xffffffffL;
-    }
-
-    public static long read8bytes(InputStream is) throws IOException {
-        return read4bytes(is) | (readUnsignedInt(is) << 32);
-    }
-
     public String readString(InputStream is) throws IOException {
 
         int length;
         byte[] data = null;
         int ret;
 
-        length = read4bytes(is);
+        length = Index.read4bytes(is);
         data = new byte[length];
         ret = is.read(data);
 
