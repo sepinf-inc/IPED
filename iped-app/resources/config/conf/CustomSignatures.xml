@@ -1546,6 +1546,11 @@
         </magic>
         <glob pattern="*.lzfse"/>
     </mime-type>
+    
+    <mime-type type="application/x-discord-chat+json">
+        <sub-class-of type="application/json"/>
+        <glob pattern="*messages*"/>
+    </mime-type>    
 
 </mime-info>
 
