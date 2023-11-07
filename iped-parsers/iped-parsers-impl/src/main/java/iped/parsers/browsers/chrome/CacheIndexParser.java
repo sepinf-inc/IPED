@@ -22,6 +22,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import iped.data.IItemReader;
+import iped.parsers.discord.cache.CacheAddr.InputStreamNotAvailable;
 import iped.parsers.discord.cache.CacheEntry;
 import iped.parsers.discord.cache.Index;
 import iped.parsers.util.MetadataUtil;
@@ -92,11 +93,17 @@ public class CacheIndexParser extends AbstractParser {
                         }
 
                         String contentEncoding = httpResponse.get("content-encoding");
+                        InputStream is;
+                        try {
+                            is = ce.getResponseDataSize() > 0
+                                    ? ce.getResponseDataStream(httpResponse.get("content-encoding"))
+                                    : new ByteArrayInputStream(new byte[] {});
+                        } catch (InputStreamNotAvailable e) {
+                            LOGGER.warn("Input Stream for entry not found:" + ce.getRequestURL() + " in item "
+                                    + item.getPath());
 
-
-                        InputStream is = ce.getResponseDataSize() > 0
-                                ? ce.getResponseDataStream(httpResponse.get("content-encoding"))
-                                : new ByteArrayInputStream(new byte[] {});
+                            is = new ByteArrayInputStream(new byte[] {});
+                        }
 
                         Metadata entryMeta = new Metadata();
                         entryMeta.set("URL", ce.getRequestURL());
@@ -131,10 +138,8 @@ public class CacheIndexParser extends AbstractParser {
                     throw exception;
                 }
             } catch (IOException e1) {
-                // TODO Auto-generated catch block
                 e1.printStackTrace();
             } catch (ChromeCacheException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }
