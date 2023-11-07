@@ -15,6 +15,8 @@ import javax.imageio.ImageIO;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
+import org.apache.tika.io.TemporaryResources;
+import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
@@ -48,6 +50,7 @@ import iped.utils.ImageUtil;
 /***
  * 
  * @author PCF Campanini
+ * @author PCF Patrick Dalla Bernardina
  *
  */
 public class DiscordParser extends AbstractParser {
@@ -87,106 +90,98 @@ public class DiscordParser extends AbstractParser {
         IItemSearcher searcher = context.get(IItemSearcher.class);
         IItemReader item = context.get(IItemReader.class);
 
-        if (searcher != null && item != null) {
+        String commonQuery = BasicProps.EVIDENCE_UUID + ":" + item.getDataSource().getUUID() + " AND "
+                + BasicProps.PARENTID + ":" + item.getParentId() + " AND NOT " + BasicProps.LENGTH + ":0 AND "
+                + CacheIndexParser.IS_CACHE_INDEX_ENTRY.replace(":", "\\:") + ":true";
 
-            String commonQuery = BasicProps.EVIDENCE_UUID + ":" + item.getDataSource().getUUID() + " AND "
-                    + BasicProps.PARENTID + ":" + item.getId() + " AND NOT " + BasicProps.LENGTH + ":0 AND "
-                    + CacheIndexParser.IS_CACHE_INDEX_ENTRY + ":true";
+        try (InputStream is = TikaInputStream.get(indexFile, new TemporaryResources())) {
 
-            List<IItemReader> entries = searcher
-                    .search(commonQuery + " AND " + BasicProps.NAME + ":\"messages\\?limit\\=50\"");
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-            int chatVirtualId = 0;
+            List<DiscordRoot> discordRoot = null;
+            try {
+                discordRoot = mapper.readValue(is, new TypeReference<List<DiscordRoot>>() {
+                });
+            } catch (JsonProcessingException ex) {
+                LOGGER.error("Invalid JSON inside cache entry " + item.getPath());
+                ex.printStackTrace();
+            }
 
-            for (IItemReader reader : entries) {
-                try (InputStream is = reader.getBufferedInputStream()) {
+            if (!discordRoot.isEmpty()) {
+                metadata.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
 
-                    ObjectMapper mapper = new ObjectMapper();
-                    mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
-                    List<DiscordRoot> discordRoot = null;
-                    try {
-                        discordRoot = mapper.readValue(is, new TypeReference<List<DiscordRoot>>() {
-                        });
-                    } catch (JsonProcessingException ex) {
-                        LOGGER.error("Invalid JSON inside cache entry " + reader.getPath());
-                        ex.printStackTrace();
-                    }
-
-                    if (!discordRoot.isEmpty()) {
-                        HashMap<String, byte[]> avatarCache = new HashMap<>();
-                        // Checking if the image file is cached, to do so, iterates through all authors
-                        // and attachments to check if they are in the case, comparing their attributes
-                        for (DiscordRoot dr : discordRoot) {
-                            if (dr.getAuthor().getAvatar() != null) {
-                                byte[] avatar = avatarCache.get(dr.getAuthor().getAvatar());
-                                if (avatar != null) {
-                                    dr.getAuthor().setAvatarBytes(avatar);
-                                    break;
-                                } else {
-                                    List<IItemReader> avatars = searcher.search(
-                                            commonQuery + " AND " + BasicProps.NAME + ":" + dr.getAuthor().getAvatar()
-                                                    + " AND " + CacheIndexParser.IS_CACHE_INDEX_ENTRY + ":true");
-                                    for (IItemReader avatarItem : avatars) {
-                                        try (InputStream is2 = avatarItem.getBufferedInputStream()) {
-                                            BufferedImage img = ImageUtil.getSubSampledImage(is2, 64, 64);
-                                            img = ImageUtil.getOpaqueImage(img);
-                                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                                            ImageIO.write(img, "jpg", baos);
-                                            avatar = baos.toByteArray();
-                                            dr.getAuthor().setAvatarBytes(avatar);
-                                            avatarCache.put(dr.getAuthor().getAvatar(), avatar);
-                                            break;
-                                        } catch (InputStreamNotAvailable e) {
-                                            // ignore
-                                        } catch (Exception e) {
-                                            LOGGER.warn("Exception decoding Discord avatar", e);
-                                        }
+                HashMap<String, byte[]> avatarCache = new HashMap<>();
+                // Checking if the image file is cached, to do so, iterates through all authors
+                // and attachments to check if they are in the case, comparing their attributes
+                for (DiscordRoot dr : discordRoot) {
+                    if (dr.getAuthor().getAvatar() != null) {
+                        byte[] avatar = avatarCache.get(dr.getAuthor().getAvatar());
+                        if (avatar != null) {
+                            dr.getAuthor().setAvatarBytes(avatar);
+                            break;
+                        } else {
+                            try {
+                                List<IItemReader> avatars = searcher.search(commonQuery + " AND " + BasicProps.NAME
+                                        + ":" + dr.getAuthor().getAvatar() + "*");
+                                for (IItemReader avatarItem : avatars) {
+                                    try (InputStream is2 = avatarItem.getBufferedInputStream()) {
+                                        BufferedImage img = ImageUtil.getSubSampledImage(is2, 64, 64);
+                                        img = ImageUtil.getOpaqueImage(img);
+                                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                                        ImageIO.write(img, "jpg", baos);
+                                        avatar = baos.toByteArray();
+                                        dr.getAuthor().setAvatarBytes(avatar);
+                                        avatarCache.put(dr.getAuthor().getAvatar(), avatar);
+                                        break;
+                                    } catch (InputStreamNotAvailable e) {
+                                        // ignore
                                     }
                                 }
-                            }
-
-                            /*
-                             * for (DiscordAttachment att : dr.getAttachments()) { List<IItemReader> avatars
-                             * = searcher.search( commonQuery + " AND " + ":" + dr.getAuthor().getAvatar());
-                             * String[] parts =
-                             * att.getUrl().split("https://cdn.discordapp.com/attachments/"); if
-                             * (parts.length > 1 && ce2.getRequestURL().contains(parts[1])) { for
-                             * (IItemReader ib : externalFiles) { if (ib.getName() != null &&
-                             * ib.getName().equals(ce2.getName())) { att.setMediaHash(ib.getHash());
-                             * att.setContent_type(ib.getMediaType().toString()); break; } } } }
-                             */
-                        }
-                    }
-
-                    String chatName = "DiscordChat id(" + discordRoot.get(0).getId() + ")";
-
-                    Metadata chatMeta = new Metadata();
-                    chatMeta.set("URL", reader.getName());
-                    chatMeta.set(TikaCoreProperties.TITLE, chatName);
-                    chatMeta.set(StandardParser.INDEXER_CONTENT_TYPE, CHAT_MIME_TYPE);
-                    chatMeta.set(ExtraProperties.ITEM_VIRTUAL_ID, Integer.toString(chatVirtualId));
-                    chatMeta.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
-                    chatMeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
-
-                    for (DiscordRoot dr : discordRoot) {
-                        for (DiscordAttachment da : dr.getAttachments()) {
-                            if (da.getMediaHash() != null) {
-                                chatMeta.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + da.getMediaHash());
+                            } catch (Exception e) {
+                                LOGGER.warn("Exception decoding Discord avatar", e);
                             }
                         }
                     }
-
-                    // Sort messages by timestamp in ascending order
-                    Collections.sort(discordRoot);
-
-                    XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, chatMeta);
-                    new DiscordHTMLReport().printHTML(discordRoot, xhtml, searcher);
-
-                    extractMessages(chatName, discordRoot, handler, extractor, chatVirtualId);
                 }
-
             }
+
+            String chatName = "DiscordChat id(" + discordRoot.get(0).getId() + ")";
+
+            metadata.set("URL", item.getName());
+            metadata.set(TikaCoreProperties.TITLE, chatName);
+            metadata.set(StandardParser.INDEXER_CONTENT_TYPE, CHAT_MIME_TYPE);
+
+            for (DiscordRoot dr : discordRoot) {
+                for (DiscordAttachment da : dr.getAttachments()) {
+                    try {
+                        String[] parts = da.getUrl().split("https://cdn.discordapp.com/attachments/");
+
+                        if (parts.length > 1) {
+                            List<IItemReader> atts = searcher.search(commonQuery + " AND "
+                                    + CacheIndexParser.CACHE_URL.replace(":", "\\:") + ":" + parts[1]);
+                            for (IItemReader attsItem : atts) {
+                                da.setMediaHash(attsItem.getHash());
+                                da.setContent_type(attsItem.getMediaType().toString());
+                            }
+                        }
+                    } catch (Exception e) {
+                        LOGGER.warn("Exception decoding Discord attachment", e);
+                    }
+
+                    if (da.getMediaHash() != null) {
+                        metadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + da.getMediaHash());
+                    }
+                }
+            }
+
+            // Sort messages by timestamp in ascending order
+            Collections.sort(discordRoot);
+
+            XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
+            new DiscordHTMLReport().printHTML(discordRoot, xhtml, searcher);
+
+            extractMessages(chatName, discordRoot, handler, extractor, 0);
         }
     }
 

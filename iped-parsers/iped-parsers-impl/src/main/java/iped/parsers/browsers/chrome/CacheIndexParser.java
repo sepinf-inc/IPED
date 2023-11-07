@@ -24,6 +24,7 @@ import org.xml.sax.SAXException;
 import iped.data.IItemReader;
 import iped.parsers.discord.cache.CacheEntry;
 import iped.parsers.discord.cache.Index;
+import iped.parsers.util.MetadataUtil;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
@@ -39,7 +40,11 @@ public class CacheIndexParser extends AbstractParser {
     private static Logger LOGGER = LoggerFactory.getLogger(CacheIndexParser.class);
 
 
-    public static final String IS_CACHE_INDEX_ENTRY = "isChromeCacheEntry";
+    public static final String METADATA_PREFIX = "chromeCache";
+    public static final String IS_CACHE_INDEX_ENTRY = METADATA_PREFIX + ":isChromeCacheEntry";
+    public static final String CACHE_URL = METADATA_PREFIX + ":chromeCacheUrl";
+
+    private static final String CACHE_ENTRY_NAME = METADATA_PREFIX + ":cacheEntryName";
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -67,6 +72,8 @@ public class CacheIndexParser extends AbstractParser {
             List<IItemReader> dataFiles = searcher.search(commonQuery + " AND " + BasicProps.NAME
                     + ":(\"data_0\"  OR \"data_1\" OR \"data_2\" OR \"data_3\" OR \"data_4\" OR \"data_5\")");
 
+            MetadataUtil.addCustomMetadataPrefix("chromeCache");
+
             Index index;
             try {
                 index = new Index(indexFile, item.getPath(), dataFiles, externalFiles);
@@ -79,6 +86,10 @@ public class CacheIndexParser extends AbstractParser {
                     Map<String, String> httpResponse = ce.getHttpResponse();
 
                     try {
+
+                        if (ce.getRequestURL().contains("unknown")) {
+                            System.out.println();
+                        }
 
                         String contentEncoding = httpResponse.get("content-encoding");
 
@@ -95,7 +106,10 @@ public class CacheIndexParser extends AbstractParser {
                                 ce.getRequestURL().substring(ce.getRequestURL().lastIndexOf('/') + 1));
                         entryMeta.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
                         entryMeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
-                        entryMeta.set(CacheIndexParser.IS_CACHE_INDEX_ENTRY, Boolean.TRUE.toString());
+
+                        entryMeta.set(IS_CACHE_INDEX_ENTRY, Boolean.TRUE.toString());
+                        entryMeta.set(CACHE_ENTRY_NAME, ce.getName());
+                        entryMeta.set(CACHE_URL, ce.getRequestURL());
 
                         for (Map.Entry<String, String> entry : httpResponse.entrySet()) {
                             entryMeta.set(entry.getKey(), entry.getValue());
