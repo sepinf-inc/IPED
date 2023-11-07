@@ -2,6 +2,8 @@ package iped.parsers.discord.cache;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,8 +29,8 @@ public class Index {
 
     private static Logger logger = LoggerFactory.getLogger(Index.class);
 
-    static private final long MAGIC_NUMBER = 0xC3CA03C1l;
-    static private final List<Long> supportedVersions = ImmutableList.of(0x01000200l);
+    static private final long MAGIC_NUMBER_LE = 0xC103CAC3l; // magic number in little endian
+    static private final List<Long> supportedVersions = ImmutableList.of(0x00020001l);
 
     private final long magicNumber;
     private final long version;
@@ -150,13 +152,13 @@ public class Index {
 
         magicNumber = readUnsignedInt(is);
         
-        if(magicNumber != MAGIC_NUMBER) {
+        if (magicNumber != MAGIC_NUMBER_LE) {
             throw new ChromeCacheException("Invalid index magic number:" + magicNumber);
         }
         
         version = readUnsignedInt(is);
 
-        if (supportedVersions.contains(version)) {
+        if (!supportedVersions.contains(version)) {
             throw new ChromeCacheException("Unsupported index version number:" + version);
         }
 
@@ -231,11 +233,17 @@ public class Index {
     }
 
     public static long readUnsignedInt(InputStream is) throws IOException {
-        return (read2bytes(is) | (read2bytes(is) << 16)) & 0xffffffffL;
+        byte[] b = new byte[4];
+        is.read(b);
+        ByteBuffer bb = ByteBuffer.wrap(b);
+        bb.order(ByteOrder.LITTLE_ENDIAN);
+        return  Integer.toUnsignedLong(bb.getInt());
     }
 
     public static long read8bytes(InputStream is) throws IOException {
-        return read4bytes(is) | (readUnsignedInt(is) << 32);
+        byte b[] = new byte[8];
+        is.read(b);
+        return ByteBuffer.wrap(b).getLong() & 0xffffffffffffffffL;
     }
 
 }
