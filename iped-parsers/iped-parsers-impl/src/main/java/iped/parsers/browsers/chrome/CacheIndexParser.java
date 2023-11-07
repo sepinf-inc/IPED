@@ -102,10 +102,6 @@ public class CacheIndexParser extends AbstractParser {
                             entryMeta.set(entry.getKey(), entry.getValue());
                         }
 
-                        if (ce.getRequestURL().contains("messages")) {
-                            System.out.println();
-                        }
-
                         extractor.parseEmbedded(is, handler, entryMeta, true);
 
                     } catch (Exception ex) {
