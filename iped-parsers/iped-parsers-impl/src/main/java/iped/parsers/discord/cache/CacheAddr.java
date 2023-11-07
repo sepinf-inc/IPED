@@ -18,6 +18,13 @@ public class CacheAddr {
 
     private long address;
     private boolean initialized;
+    
+    static public final int DATA_STREAM_FILE = 0;
+    static public final int BLOCK_36 = 1;
+    static public final int BLOCK_256 = 2;
+    static public final int BLOCK_1024 = 3;
+    static public final int BLOCK_4096 = 4;
+
     private int fileType;
     private int numBlocks;
     private int fileSelector;
@@ -105,7 +112,7 @@ public class CacheAddr {
     }
 
     private int getBlockSize() {
-        return fileType == 2 ? 256 : (fileType == 3 ? 1024 : 4096);
+        return fileType == BLOCK_256 ? 256 : (fileType == BLOCK_1024 ? 1024 : 4096);
     }
 
     public InputStream getInputStream(List<IItemReader> dataFiles, List<IItemReader> externalFiles, Integer dataStreamSize) throws IOException {
@@ -114,15 +121,15 @@ public class CacheAddr {
         }
 
         switch (fileType) {
-            case 0:
+            case DATA_STREAM_FILE:
                 for (IItemReader extFile : externalFiles)
                     if (extFile.getName().equals(fileNameStr)) {
                         return extFile.getBufferedInputStream();
                     }
                 break;
-            case 2:
-            case 3:
-            case 4:
+            case BLOCK_256:
+            case BLOCK_1024:
+            case BLOCK_4096:
                 for (IItemReader dataFile : dataFiles)
                     if (dataFile.getName().equals(("data_" + fileSelector))) {
                         SeekableInputStream sis = dataFile.getSeekableInputStream();
