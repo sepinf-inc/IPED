@@ -122,9 +122,9 @@ public class DiscordHTMLReport {
 
                 // message sending time
                 xHandler.startElement("TD class='td-timestamp'");
-                xHandler.startElement("P");
-                xHandler.characters(dr.getTimestamp() == null ? "" : formatDate(dr.getTimestamp()));
-                xHandler.endElement("P");
+                if (dr.getTimestamp() != null) {
+                    formatDate(dr.getTimestamp(), xHandler);
+                }
                 xHandler.startElement("P");
                 xHandler.characters(dr.getEditedTimestamp() == null ? ""
                         : "(" + Messages.getString("DiscordParser.EditTime")
@@ -475,6 +475,19 @@ public class DiscordHTMLReport {
 
         return "<P>" + df1.format(date) + "<BR/>(" + df2.format(date) + ")</P>";
 
+    }
+
+    public void formatDate(Date date, XHTMLContentHandler xHandler) throws SAXException {
+
+        SimpleDateFormat df1 = new SimpleDateFormat("hh:mm:ss");
+        SimpleDateFormat df2 = new SimpleDateFormat(Messages.getString("DiscordParser.DateFormat2"));
+        
+        xHandler.startElement("p");
+        xHandler.characters(df1.format(date));
+        xHandler.startElement("BR");
+        xHandler.endElement("BR");
+        xHandler.characters("(" + df2.format(date) + ")");
+        xHandler.endElement("p");
     }
 
     private void printCheckbox(PrintWriter out, String hash) {
