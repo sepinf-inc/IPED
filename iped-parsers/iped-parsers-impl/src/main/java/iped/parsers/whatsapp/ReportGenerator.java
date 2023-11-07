@@ -456,7 +456,7 @@ public class ReportGenerator {
                     switch (messageQuote.getMessageType()) {
                         case AUDIO_MESSAGE:
                             if (dataQuote == null || dataQuote.isEmpty()){
-                                dataQuote = "Audio";
+                                dataQuote = Messages.getString("WhatsAppReport.Audio");
                             }
                             quoteIcon = "\uD83C\uDFA7";
                             out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div style=\"display:table-cell;\"><span class=\"quote_user\">"+quoteUser+
@@ -467,7 +467,7 @@ public class ReportGenerator {
                         case GIF_MESSAGE:                           
                             quoteIcon = "\uD83D\uDCF9";
                             if (dataQuote == null || dataQuote.isEmpty()){
-                                dataQuote = "Video";
+                                dataQuote = Messages.getString("WhatsAppReport.Video");
                             }
                             out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div style=\"display:table-cell;vertical-align:top;border-right: 10px solid transparent;\"><span class=\"quote_user\">"+quoteUser+
                             "</span></br><span class=\"quote_msg\">"+quoteIcon +
@@ -483,7 +483,7 @@ public class ReportGenerator {
                         case IMAGE_MESSAGE:
                             quoteIcon = "\uD83D\uDDBC";
                             if (dataQuote == null || dataQuote.isEmpty()){
-                                dataQuote = "Photo";
+                                dataQuote = Messages.getString("WhatsAppReport.Photo");
                             }
                             out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div style=\"display:table-cell;vertical-align:top;border-right: 10px solid transparent;\"><span class=\"quote_user\">"+quoteUser+
                                 "</span></br><span class=\"quote_msg\">"+quoteIcon +" "+ format(dataQuote) + " </span></div>");                                    
@@ -497,7 +497,7 @@ public class ReportGenerator {
                         case APP_MESSAGE:
                             quoteIcon = "\uD83D\uDCC4";
                             if (dataQuote == null || dataQuote.isEmpty()){
-                                dataQuote = "Document";
+                                dataQuote = Messages.getString("WhatsAppReport.Document");
                             }
                             out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div style=\"display:table-cell;vertical-align:top;border-right: 10px solid transparent;\"><span class=\"quote_user\">"+quoteUser+
                                 "</span></br><span class=\"quote_msg\">"+quoteIcon +" "+ format(dataQuote) + " </span></div>");                                    
@@ -515,15 +515,15 @@ public class ReportGenerator {
                     }
                     if (messageQuote.isDeleted()) {
                         out.println("<div style=\"display:table-footer-group\"><br/><span style=\"float:none\" class=\"recovered\">");
-                        out.println("<i>" + "Partially recovered" + "</i>");
                         out.println("<div class=\"deletedIcon\"></div>");
+                        out.println("<i>" + Messages.getString("WhatsAppReport.Recovered") + "</i>");
                         out.println("</span></div>");
                     }                    
                     out.print("</div>");
                     
-                } else if (message.isQuoted() && messageQuote == null){ //References not found
+                } else if (message.isQuoted() && messageQuote == null){ //Reference not found
                     out.print("<div class=\""+quoteClass+"\"><span class=\"quote_user\">"+
-                    "Reference not found</span></br><span class=\"quote_msg\">"+format("") + "</span></div>");
+                    Messages.getString("WhatsAppReport.ReferenceNotFound")+"</span></br><span class=\"quote_msg\">"+format("") + "</span></div>");
                 }
 
                 switch (message.getMessageType()) {
