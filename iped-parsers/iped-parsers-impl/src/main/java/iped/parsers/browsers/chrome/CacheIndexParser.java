@@ -23,6 +23,7 @@ import org.xml.sax.SAXException;
 
 import iped.data.IItemReader;
 import iped.parsers.discord.cache.CacheEntry;
+import iped.parsers.discord.cache.ChromeCacheException;
 import iped.parsers.discord.cache.Index;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
@@ -123,6 +124,9 @@ public class CacheIndexParser extends AbstractParser {
             } catch (IOException e1) {
                 // TODO Auto-generated catch block
                 e1.printStackTrace();
+            } catch (ChromeCacheException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
             }
         }
     }
