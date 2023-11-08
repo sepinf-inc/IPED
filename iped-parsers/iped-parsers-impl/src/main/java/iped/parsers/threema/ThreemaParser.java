@@ -18,18 +18,19 @@
  */
 package iped.parsers.threema;
 
-import iped.data.IItemReader;
-import iped.parsers.plist.detector.PListDetector;
-import iped.parsers.sqlite.SQLite3DBParser;
-import iped.parsers.sqlite.SQLite3Parser;
-import iped.parsers.standard.StandardParser;
-import iped.parsers.util.ItemInfo;
-import iped.parsers.threema.Message.MessageType;
-import iped.properties.BasicProps;
-import iped.properties.ExtraProperties;
-import iped.search.IItemSearcher;
-import iped.utils.EmptyInputStream;
-import iped.utils.SimpleHTMLEncoder;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
@@ -46,11 +47,18 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.*;
+import iped.data.IItemReader;
+import iped.parsers.plist.detector.PListDetector;
+import iped.parsers.sqlite.SQLite3DBParser;
+import iped.parsers.sqlite.SQLite3Parser;
+import iped.parsers.standard.StandardParser;
+import iped.parsers.threema.Message.MessageType;
+import iped.parsers.util.ItemInfo;
+import iped.properties.BasicProps;
+import iped.properties.ExtraProperties;
+import iped.search.IItemSearcher;
+import iped.utils.EmptyInputStream;
+import iped.utils.SimpleHTMLEncoder;
 
 /**
  * Parser para banco de dados do Threema Secure Messenger
@@ -114,9 +122,7 @@ public class ThreemaParser extends SQLite3DBParser {
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
 
-        try (TemporaryResources tmp = new TemporaryResources()) {
-            stream = TikaInputStream.get(stream, tmp);
-
+        try {
             String mimetype = metadata.get(StandardParser.INDEXER_CONTENT_TYPE);
 
             if (mimetype.equals(CHAT_STORAGE.toString()))
@@ -135,18 +141,16 @@ public class ThreemaParser extends SQLite3DBParser {
         }
     }
 
-    private void extractMediaFilesFromDatabase(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context, ExtractorFactory extractorIOSFactory) {
+    private void extractMediaFilesFromDatabase(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context, ExtractorFactory extractorIOSFactory) throws IOException, SAXException, TikaException {
 
         extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
-
-        TemporaryResources tmp = new TemporaryResources();
 
         IItemSearcher searcher = context.get(IItemSearcher.class);
 
         if (extractor.shouldParseEmbedded(metadata))
         {
-            TikaInputStream tis = TikaInputStream.get(stream, tmp);
-            try {
+            TikaInputStream tis = null;
+            try (TemporaryResources tmp = new TemporaryResources()) {
                 String filePath = null;
 
                 ItemInfo itemInfo = context.get(ItemInfo.class);
@@ -155,6 +159,7 @@ public class ThreemaParser extends SQLite3DBParser {
                     filePath = itemInfo.getPath();
                 }
 
+                tis = TikaInputStream.get(stream, tmp);
                 File tempDbFile = tis.getFile();
                 account = getUserAccount(searcher);
 
@@ -197,12 +202,11 @@ public class ThreemaParser extends SQLite3DBParser {
                 }
 
             } catch (Exception e) {
-                try {
+                if (tis != null) {
                     sqliteParser.parse(tis, handler, metadata, context);
-                } catch (Exception ex) {
-                    logger.warn("Error parsing ThreemaData", e);
                 }
-
+                // always throw exceptions to flag the file caused a parsing error
+                throw e;
             }
         }
 
