@@ -46,7 +46,7 @@ public class Index {
     private final int tableLength;
     private final int crash;
     private final int experiment;
-    private final long createTime;
+    private final Date createTime;
     private final int[] padding = new int[52];
     private int[] pad1 = new int[2];
     private int filled;
@@ -99,7 +99,7 @@ public class Index {
         return experiment;
     }
 
-    public long getCreateTime() {
+    public Date getCreateTime() {
         return createTime;
     }
 
@@ -174,7 +174,7 @@ public class Index {
         tableLength = read4bytes(is);
         crash = read4bytes(is);
         experiment = read4bytes(is);
-        createTime = read8bytes(is);
+        createTime = readDate(is);
 
         for (int i = 0; i < 52; i++) {
             padding[i] = (int) readUnsignedInt(is);
