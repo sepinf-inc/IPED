@@ -44,9 +44,9 @@ public class CacheIndexParser extends AbstractParser {
     public static final String METADATA_PREFIX = "chromeCache";
     public static final String IS_CACHE_INDEX_ENTRY = METADATA_PREFIX + ":isChromeCacheEntry";
     public static final String CACHE_URL = METADATA_PREFIX + ":chromeCacheUrl";
-
     private static final String CACHE_ENTRY_NAME = METADATA_PREFIX + ":cacheEntryName";
 
+    public static final String CACHE_ENTRY_COUNT = METADATA_PREFIX + ":numEntries";
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
         return SUPPORTED_TYPES;
@@ -61,6 +61,8 @@ public class CacheIndexParser extends AbstractParser {
 
         IItemSearcher searcher = context.get(IItemSearcher.class);
         IItemReader item = context.get(IItemReader.class);
+
+        context.set(CacheIndexParser.class, this);
 
         if (searcher != null && item != null) {
             String commonQuery = BasicProps.EVIDENCE_UUID + ":" + item.getDataSource().getUUID() + " AND "
@@ -78,6 +80,9 @@ public class CacheIndexParser extends AbstractParser {
             Index index;
             try {
                 index = new Index(indexFile, item.getPath(), dataFiles, externalFiles);
+
+                metadata.set(CACHE_ENTRY_COUNT, Integer.toString(index.getEntriesCont()));
+
                 TikaException exception = null;
 
                 List<CacheEntry> lce = index.getLst();

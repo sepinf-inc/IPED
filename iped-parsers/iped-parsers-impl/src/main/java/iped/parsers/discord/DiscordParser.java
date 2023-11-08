@@ -4,8 +4,10 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -73,7 +75,10 @@ public class DiscordParser extends AbstractParser {
 
     private static Logger LOGGER = LoggerFactory.getLogger(Index.class);
 
-    private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.parse(CHAT_MIME_TYPE));
+    private static final Set<MediaType> SUPPORTED_TYPES = new HashSet<MediaType>(
+            Arrays.asList(MediaType.parse(CHAT_MIME_TYPE), CacheIndexParser.CHROME_INDEX_MIME_TYPE));
+
+    CacheIndexParser cacheIndexParser;
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -82,6 +87,23 @@ public class DiscordParser extends AbstractParser {
 
     @Override
     public void parse(InputStream indexFile, ContentHandler handler, Metadata metadata, ParseContext context)
+            throws IOException, SAXException, TikaException {
+        String contentType = metadata.get(Metadata.CONTENT_TYPE);
+        if (contentType.equals(CHAT_MIME_TYPE)) {
+            parseDiscord(indexFile, handler, metadata, context);
+        } else {
+            // checks if CacheIndexParser was already executed
+            if (context.get(CacheIndexParser.class) == null) {
+                // if not, force its execution
+                if (cacheIndexParser == null) {
+                    cacheIndexParser = new CacheIndexParser();
+                }
+                cacheIndexParser.parse(indexFile, handler, metadata, context);
+            }
+        }
+    }
+
+    public void parseDiscord(InputStream indexFile, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
 
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
