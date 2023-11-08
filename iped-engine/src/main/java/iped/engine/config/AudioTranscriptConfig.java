@@ -152,6 +152,19 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
         if (googleModel != null) {
             googleModel = googleModel.trim();
         }
+
+        String skipKnown = properties.getProperty(SKIP_KNOWN_FILES);
+        if (skipKnown != null) {
+            this.skipKnownFiles = Boolean.valueOf(skipKnown.trim());
+        }
+        String value = properties.getProperty(MIN_TIMEOUT_KEY);
+        if (value != null) {
+            minTimeout = Integer.valueOf(value.trim());
+        }
+        value = properties.getProperty(TIMEOUT_PER_SEC_KEY);
+        if (value != null) {
+            timeoutPerSec = Integer.valueOf(value.trim());
+        }
     }
 
     /**

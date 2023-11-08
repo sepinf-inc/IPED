@@ -40,7 +40,7 @@ implementationClass = iped.engine.task.transcript.VoskTranscriptTask
 # Vosk implementation accepts just one language for now.
 # Wav2Vec2 local or remote implementation don't use this, you must set 'huggingFaceModel' below
 # Setting more than 1 lang model can result in wrong language detection.
-language = pt-BR
+language = auto
 
 # Command to convert audios to wav before transcription. Do not change $INPUT or $OUTPUT params.
 convertCommand = mplayer -benchmark -vo null -vc null -srate 16000 -af format=s16le,channels=1 -ao pcm:fast:file=$OUTPUT $INPUT
