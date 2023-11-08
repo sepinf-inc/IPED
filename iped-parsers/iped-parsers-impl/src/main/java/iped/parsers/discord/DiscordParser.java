@@ -76,8 +76,25 @@ public class DiscordParser extends AbstractParser {
     private static Logger LOGGER = LoggerFactory.getLogger(Index.class);
 
     private static final Set<MediaType> SUPPORTED_TYPES = new HashSet<MediaType>(
-            Arrays.asList(MediaType.parse(CHAT_MIME_TYPE), CacheIndexParser.CHROME_INDEX_MIME_TYPE));
+            Arrays.asList(MediaType.parse(CHAT_MIME_TYPE)));
 
+    static
+    {
+        // this code may be removed when backward parsersconfig.xml compatibility were
+        // not more desired
+        addChromeIndexMimeTypeSupport();
+    }
+
+    // this code may be removed when backward parsersconfig.xml compatibility were
+    // not more desired
+    @Deprecated
+    static private void addChromeIndexMimeTypeSupport() {
+        SUPPORTED_TYPES.add(CacheIndexParser.CHROME_INDEX_MIME_TYPE);
+    }
+
+    // this code may be removed when backward parsersconfig.xml compatibility were
+    // not more desired
+    @Deprecated
     CacheIndexParser cacheIndexParser;
 
     @Override
@@ -92,14 +109,22 @@ public class DiscordParser extends AbstractParser {
         if (contentType.equals(CHAT_MIME_TYPE)) {
             parseDiscord(indexFile, handler, metadata, context);
         } else {
-            // checks if CacheIndexParser was already executed
-            if (context.get(CacheIndexParser.class) == null) {
-                // if not, force its execution
-                if (cacheIndexParser == null) {
-                    cacheIndexParser = new CacheIndexParser();
-                }
-                cacheIndexParser.parse(indexFile, handler, metadata, context);
+            parseCacheIndex(indexFile, handler, metadata, context);
+        }
+    }
+
+    // this code may be removed when backward parsersconfig.xml compatibility were
+    // not more desired
+    @Deprecated
+    public void parseCacheIndex(InputStream indexFile, ContentHandler handler, Metadata metadata, ParseContext context)
+            throws IOException, SAXException, TikaException {
+        // checks if CacheIndexParser wasn't already executed
+        if (context.get(CacheIndexParser.class) == null) {
+            // if not, force its execution
+            if (cacheIndexParser == null) {
+                cacheIndexParser = new CacheIndexParser();
             }
+            cacheIndexParser.parse(indexFile, handler, metadata, context);
         }
     }
 
