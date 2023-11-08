@@ -8,7 +8,7 @@ import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
 
@@ -115,12 +115,11 @@ public class PartMetParser extends AbstractParser {
         xhtml.startElement("table", "class", "d");
 
         int hashDBHits = 0;
-        HashSet<String> hashSets = new HashSet<String>();
-        hashSets.addAll(ChildPornHashLookup.lookupHash(KnownMetParser.EDONKEY, e.getHash()));
+        List<String> hashSets = ChildPornHashLookup.lookupHash(KnownMetParser.EDONKEY, e.getHash());
         IItemReader item = KnownMetParser.searchItemInCase(searcher, KnownMetParser.EDONKEY, e.getHash());
         if (item != null)
-            hashSets.addAll(ChildPornHashLookup.lookupHash(item.getHash()));
-        if (!hashSets.isEmpty())
+            hashSets = ChildPornHashLookup.lookupHashAndMerge(item.getHash(), hashSets);
+        if (hashSets != null && !hashSets.isEmpty())
             hashDBHits++;
 
         AttributesImpl attributes = new AttributesImpl();

@@ -189,6 +189,9 @@ public class RemoteWav2Vec2Service {
             public void run() {
                 while (true) {
                     try {
+                        if (executor.isShutdown()) {
+                            break;
+                        }
                         Thread.sleep(60000);
                         logger.info("Send beacons to {} clients", beaconQueq.size());
                         synchronized (beaconQueq) {
@@ -262,6 +265,13 @@ public class RemoteWav2Vec2Service {
         AtomicInteger jobs = new AtomicInteger();
         while (true) {
             try {
+                if (executor.isTerminated()) {
+                    System.exit(1);
+                }
+                if (executor.isShutdown()) {
+                    Thread.sleep(1000);
+                    continue;
+                }
                 Socket client = server.accept();
                 requestsReceived.incrementAndGet();
                 if (jobs.incrementAndGet() > MAX_CONNECTIONS) {
@@ -361,6 +371,10 @@ public class RemoteWav2Vec2Service {
                                 while (read < size && (i = bis.read(buf)) >= 0) {
                                     os.write(buf, 0, i);
                                     read += i;
+                                    if (executor.isShutdown()) {
+                                        error = true;
+                                        throw new Exception("Shutting down service instance...");
+                                    }
                                 }
                             }
 
@@ -376,6 +390,10 @@ public class RemoteWav2Vec2Service {
                             long t0, t1;
                             try {
                                 wavConvSemaphore.acquire();
+                                if (executor.isShutdown()) {
+                                    error = true;
+                                    throw new Exception("Shutting down service instance...");
+                                }
                                 t0 = System.currentTimeMillis();
                                 wavFile = task.getWavFile(tmpFile.toFile(), tmpFile.toString());
                                 t1 = System.currentTimeMillis();
@@ -394,9 +412,23 @@ public class RemoteWav2Vec2Service {
                             long t2, t3;
                             try {
                                 transcriptSemaphore.acquire();
+                                if (executor.isShutdown()) {
+                                    error = true;
+                                    throw new Exception("Shutting down service instance...");
+                                }
                                 t2 = System.currentTimeMillis();
                                 result = task.transcribeAudio(wavFile);
                                 t3 = System.currentTimeMillis();
+                            } catch (ProcessCrashedException e) {
+                                // retry audio
+                                error = true;
+                                throw e;
+                            } catch (StartupException e) {
+                                error = true;
+                                // graceful shutdown to clean resources like temp files
+                                executor.shutdown();
+                                server.close();
+                                throw e;
                             } finally {
                                 transcriptSemaphore.release();
                             }
@@ -421,7 +453,6 @@ public class RemoteWav2Vec2Service {
                             String errorMsg = "Exception while transcribing";
                             logger.warn(errorMsg, e);
                             if (writer != null) {
-
                                 if (e.getMessage() != null && e.getMessage().startsWith("Invalid file size:")
                                         && protocol.compareTo(MESSAGES.VERSION_1_2.toString()) < 0) {
                                     writer.println("0");
@@ -463,6 +494,9 @@ public class RemoteWav2Vec2Service {
             public void run() {
                 while (true) {
                     try {
+                        if (executor.isShutdown()) {
+                            break;
+                        }
                         Thread.sleep(1000);
                         sendStats(ip, port, localPort, concurrentJobs, concurrentWavConvs);
 

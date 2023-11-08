@@ -41,12 +41,13 @@ import javax.xml.parsers.SAXParserFactory;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Property;
 import org.apache.tika.mime.MediaType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.ErrorHandler;
@@ -91,7 +92,9 @@ import iped.utils.SimpleHTMLEncoder;
 
 public class UfedXmlReader extends DataSourceReader {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(UfedXmlReader.class);
+    private static Logger LOGGER = LogManager.getLogger(UfedXmlReader.class);
+
+    private final Level CONSOLE = Level.getLevel("MSG"); //$NON-NLS-1$
 
     private static final String[] HEADER_STRINGS = { "project id", "extractionType", "sourceExtractions" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
@@ -107,6 +110,7 @@ public class UfedXmlReader extends DataSourceReader {
     public static final String UFED_ID = ExtraProperties.UFED_META_PREFIX + "id"; //$NON-NLS-1$
     public static final String UFED_MIME_PREFIX = MediaTypes.UFED_MIME_PREFIX;
     public static final String UFED_EMAIL_MIME = MediaTypes.UFED_EMAIL_MIME.toString();
+    public static final String UFED_CONTACTPHOTO_MIME = UFED_MIME_PREFIX + "contactphoto";
     public static final String MSISDN_PROP = "MSISDN";
 
     private static final String ESCAPED_UFED_ID = QueryParserUtil.escape(UFED_ID);
@@ -116,6 +120,8 @@ public class UfedXmlReader extends DataSourceReader {
             Arrays.asList(WhatsAppParser.WHATSAPP, TelegramParser.TELEGRAM, WhatsAppParser.WHATSAPP + " Business"));
 
     private static Random random = new Random();
+
+    private static HashMap<File, UFDRInputStreamFactory> uisfMap = new HashMap<>();
 
     File root, ufdrFile;
     UFDRInputStreamFactory uisf;
@@ -127,6 +133,7 @@ public class UfedXmlReader extends DataSourceReader {
     HashMap<String, String> ufdrPathToUfedId = new HashMap<>();
     private final List<String[]> deviceInfoData = new ArrayList<String[]>();
     private HashSet<String> addedImUfedIds = new HashSet<>();
+    private HashSet<String> addedTrackIds = new HashSet<>();
     
     public UfedXmlReader(ICaseData caseData, File output, boolean listOnly) {
         super(caseData, output, listOnly);
@@ -183,7 +190,13 @@ public class UfedXmlReader extends DataSourceReader {
 
     private UFDRInputStreamFactory getUISF() {
         if (uisf == null) {
-            uisf = new UFDRInputStreamFactory(ufdrFile.toPath());
+            synchronized (uisfMap) {
+                uisf = uisfMap.get(ufdrFile);
+                if (uisf == null) {
+                    uisf = new UFDRInputStreamFactory(ufdrFile.toPath());
+                    uisfMap.put(ufdrFile, uisf);
+                }
+            }
         }
         return uisf;
     }
@@ -520,6 +533,7 @@ public class UfedXmlReader extends DataSourceReader {
                 if (len != null)
                     size = Long.valueOf(len.trim());
 
+
                 if (listOnly) {
                     caseData.incDiscoveredEvidences(1);
                     caseData.incDiscoveredVolume(size);
@@ -774,11 +788,32 @@ public class UfedXmlReader extends DataSourceReader {
 
             } else if (qName.equals("file")) { //$NON-NLS-1$
                 itemSeq.remove(itemSeq.size() - 1);
-                setMediaResult(item);
-                try {
-                    Manager.getInstance().addItemToQueue(item);
-                } catch (Exception e) {
-                    throw new SAXException(e);
+
+                // See https://github.com/sepinf-inc/IPED/issues/1685
+                boolean merged = false;
+                if (!itemSeq.isEmpty()) {
+                    IItem parentItem = itemSeq.get(itemSeq.size() - 1);
+                    if (parentItem.getMediaType() != null && UFED_CONTACTPHOTO_MIME.equals(parentItem.getMediaType().getSubtype())) {
+                        String[] split = item.getIdInDataSource().split(UFDRInputStreamFactory.UFDR_PATH_PREFIX);
+                        String exportPath = split[split.length - 1];
+                        parentItem.getMetadata().set(AVATAR_PATH_META, exportPath);
+                        caseData.incDiscoveredEvidences(-1);
+                        merged = true;
+                    }
+                }
+
+                if (!merged) {
+                    setMediaResult(item);
+                    String trackId = Util.getTrackID(item);
+                    if (!addedTrackIds.add(trackId)) {
+                        LOGGER.log(CONSOLE, "Unexpected UFDR report.xml structure, item with duplicated track id {}: {}.\nPlease report this to project"
+                                + " developers sending the UFDR report.xml to add proper support for the new structure.", trackId, item.getPath());
+                    }
+                    try {
+                        Manager.getInstance().addItemToQueue(item);
+                    } catch (Exception e) {
+                        throw new SAXException(e);
+                    }
                 }
 
             } else if (qName.equals("model") && ( //$NON-NLS-1$
@@ -1632,9 +1667,7 @@ public class UfedXmlReader extends DataSourceReader {
 
     @Override
     public void close() throws IOException {
-        if (uisf != null) {
-            uisf.close();
-        }
+        IOUtil.closeQuietly(uisf);
     }
 
 }
