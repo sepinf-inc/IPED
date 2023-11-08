@@ -15,7 +15,7 @@ import iped.engine.search.IPEDSearcher;
 
 public class IPEDCrawler {
 
-    private static final boolean SKIP_KNOWN_FOLDERS = false;
+    private static final boolean SKIP_KNOWN_FOLDERS = true;
 
     private static ConcurrentLinkedQueue<File> cases = new ConcurrentLinkedQueue<>();
     private static AtomicInteger numCases = new AtomicInteger();
@@ -134,7 +134,9 @@ public class IPEDCrawler {
     private static void recurse(File folder) {
         if (SKIP_KNOWN_FOLDERS) {
             String name = folder.getName();
-            if (name.equals("indexador") || name.equals("Exportados") || name.equals("Exported") || name.equals("thumbs")) {
+            if (((name.equals("Exportados") || name.equals("Exported")) && (new File(folder.getParentFile(), IPEDSource.MODULE_DIR).exists() || new File(folder.getParentFile(), "indexador").exists())) ||
+                    ((name.equals("report") || name.equals("relatorio")) && new File(folder, "thumbs").exists()) ||
+                    (name.equals("indexador") && new File(folder, IPEDSource.INDEX_DIR).exists())) {
                 return;
             }
         }
