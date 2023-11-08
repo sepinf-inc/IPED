@@ -46,7 +46,9 @@ public class CacheIndexParser extends AbstractParser {
     public static final String CACHE_URL = METADATA_PREFIX + ":chromeCacheUrl";
     private static final String CACHE_ENTRY_NAME = METADATA_PREFIX + ":cacheEntryName";
 
+    public static final String CACHE_ENTRY_CREATED = METADATA_PREFIX + ":created";
     public static final String CACHE_ENTRY_COUNT = METADATA_PREFIX + ":numEntries";
+
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
         return SUPPORTED_TYPES;
@@ -122,6 +124,7 @@ public class CacheIndexParser extends AbstractParser {
                         entryMeta.set(IS_CACHE_INDEX_ENTRY, Boolean.TRUE.toString());
                         entryMeta.set(CACHE_ENTRY_NAME, ce.getName());
                         entryMeta.set(CACHE_URL, ce.getRequestURL());
+                        entryMeta.set(TikaCoreProperties.CREATED, ce.getCreationTime());
 
                         for (Map.Entry<String, String> entry : httpResponse.entrySet()) {
                             entryMeta.set(entry.getKey(), entry.getValue());

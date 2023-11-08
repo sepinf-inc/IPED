@@ -5,8 +5,11 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
+import org.apache.poi.hpsf.Filetime;
+import org.apache.poi.util.LittleEndianByteArrayInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -245,6 +248,13 @@ public class Index {
         byte b[] = new byte[8];
         is.read(b);
         return ByteBuffer.wrap(b).getLong() & 0xffffffffffffffffL;
+    }
+
+    public static Date readDate(InputStream is) throws IOException {
+        byte[] buf = new byte[8];
+        is.read(buf);
+        long timestamp = new LittleEndianByteArrayInputStream(buf).readLong();
+        return Filetime.filetimeToDate(timestamp * 10);
     }
 
 }

@@ -3,6 +3,7 @@ package iped.parsers.discord.cache;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +33,7 @@ public class CacheEntry {
     private int reuseCount;
     private int refetchCount;
     private int state;
-    private long creationTime;
+    private Date creationTime;
     private int keyDataSize;
     private CacheAddr longKeyAddressCacheAddress;
     private long longKeyAddress;
@@ -66,7 +67,7 @@ public class CacheEntry {
         return refetchCount;
     }
 
-    public long getCreationTime() {
+    public Date getCreationTime() {
         return creationTime;
     }
 
@@ -124,7 +125,8 @@ public class CacheEntry {
         reuseCount = Index.read4bytes(is);
         refetchCount = Index.read4bytes(is);
         state = Index.read4bytes(is);
-        creationTime = Index.read8bytes(is);
+        
+        creationTime = Index.readDate(is);
         keyDataSize = Index.read4bytes(is);
         longKeyAddress = Index.readUnsignedInt(is);
         longKeyAddressCacheAddress = new CacheAddr(longKeyAddress);
