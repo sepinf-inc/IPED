@@ -159,7 +159,7 @@ public class CacheEntry {
 
         selfHash = Index.readUnsignedInt(is);
         if (keyDataSize > 0) {
-            keyData = IOUtils.readFully(is, Math.min(256 - 24 * 4, keyDataSize));
+            keyData = IOUtils.readFully(is, Math.min((256 - 24 * 4) + (3 * 256), keyDataSize));
 
         } else {
             keyData = new byte[0];
@@ -196,10 +196,6 @@ public class CacheEntry {
                 } else {
                     key = new String(keyData);
                 }
-            }
-
-            if (key.contains("messages")) {
-                System.out.println();
             }
 
             if (key.contains("_dk_")) {
