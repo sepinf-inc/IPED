@@ -26,7 +26,7 @@ public class ExtractorIOS extends Extractor {
 
     public ExtractorIOS(String itemPath, File databaseFile, ThreemaAccount account, boolean recoverDeletedRecords) {
         super(itemPath, databaseFile, account, recoverDeletedRecords);
-        //$NON-NLS-1$
+        // $NON-NLS-1$
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT")); //$NON-NLS-1$
     }
@@ -37,26 +37,22 @@ public class ExtractorIOS extends Extractor {
 
         list = new ArrayList<>();
 
-        try (Connection conn = getConnection(); Statement stmt = conn.createStatement())
-        {
+        try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
             ResultSet rs = stmt.executeQuery(SELECT_CHAT_LIST);
 
-            while (rs.next())
-            {
+            while (rs.next()) {
                 Chat c = new Chat();
                 c.setId(rs.getLong("CHAT_ID"));
 
-                if(rs.getString("GROUP_ID") != null)
-                {
+                if (rs.getString("GROUP_ID") != null) {
                     c.setGroupChat(true);
                     c.setSubject(rs.getString("GROUP_NAME"));
                     c.setImage(rs.getBytes("GROUP_IMAGE"));
 
-                    //Update user identity, this information is only available if user joined a group
+                    // Update user identity, this information is only available if user joined a
+                    // group
                     account.setIdentity(rs.getString("GROUP_MY_IDENTITY"));
-                }
-                else
-                {
+                } else {
                     ThreemaContact contact = new ThreemaContact(rs.getString("CONTACT_FIRSTNAME"), rs.getString("CONTACT_LASTNAME"), rs.getString("CONTACT_NICKNAME"), rs.getString("CONTACT_IDENTITY"), null);
                     contact.setAvatar(rs.getBytes("CONTACT_IMAGE"));
                     c.setContact(contact);
@@ -67,10 +63,8 @@ public class ExtractorIOS extends Extractor {
                 list.add(c);
             }
 
-            for (Chat c : list)
-            {
-                if (c.isGroupChat())
-                {
+            for (Chat c : list) {
+                if (c.isGroupChat()) {
                     setGroupMembers(c, conn, SELECT_GROUP_MEMBERS);
                 }
                 c.setMessages(extractMessages(conn, c));
@@ -83,8 +77,7 @@ public class ExtractorIOS extends Extractor {
         return cleanChatList(list);
     }
 
-    private List<Message> extractMessages(Connection conn, Chat chat)
-            throws SQLException {
+    private List<Message> extractMessages(Connection conn, Chat chat) throws SQLException {
 
         List<Message> messages = new ArrayList<>();
 
@@ -110,21 +103,18 @@ public class ExtractorIOS extends Extractor {
         m.setId(rs.getLong("MESSAGE_ID")); //$NON-NLS-1$
         m.setFromMe(rs.getInt("IS_FROM_ME") == 1); //$NON-NLS-1$
 
-        if (!chat.isGroupChat())
-        {
+        if (!chat.isGroupChat()) {
             m.setRemoteResource(chat.getSubject()); // $NON-NLS-1$
-        }
-        else if(!m.isFromMe())
-        {
+        } else if (!m.isFromMe()) {
             ThreemaContact contact = new ThreemaContact(rs.getString("CONTACT_FIRSTNAME"), rs.getString("CONTACT_LASTNAME"), rs.getString("CONTACT_NICKNAME"), rs.getString("CONTACT_IDENTITY"), null);
             m.setRemoteResource(contact.getFullId());
         }
 
-        if(rs.getBoolean("IS_READ"))
+        if (rs.getBoolean("IS_READ"))
             m.setMessageStatus(MessageStatus.MESSAGE_VIEWED);
-        else if(rs.getBoolean("IS_DELIVERED"))
+        else if (rs.getBoolean("IS_DELIVERED"))
             m.setMessageStatus(MessageStatus.MESSAGE_DELIVERED);
-        else if(rs.getBoolean("SEND_FAILED"))
+        else if (rs.getBoolean("SEND_FAILED"))
             m.setMessageStatus(MessageStatus.MESSAGE_UNSENT);
         else
             m.setMessageStatus(MessageStatus.MESSAGE_SENT);
@@ -135,9 +125,8 @@ public class ExtractorIOS extends Extractor {
 
         int messageType = rs.getInt("MESSAGE_TYPE");
 
-        if(messageType != 0)
-        {
-            switch (messageType){
+        if (messageType != 0) {
+            switch (messageType) {
                 case 1:
                     m.setMessageType(GROUP_RENAMED);
                     break;
@@ -211,8 +200,7 @@ public class ExtractorIOS extends Extractor {
             }
         }
 
-        if (m.getMediaMime() != null)
-        {
+        if (m.getMediaMime() != null) {
             if (m.getMediaMime().startsWith("image")) {
                 m.setMessageType(IMAGE_MESSAGE);
             } else if (m.getMediaMime().startsWith("video")) {
@@ -221,7 +209,7 @@ public class ExtractorIOS extends Extractor {
                 m.setMessageType(APP_MESSAGE);
             } else if (m.getMediaMime().startsWith("audio")) {
                 m.setMessageType(AUDIO_MESSAGE);
-            } else{
+            } else {
                 m.setMessageType(UNKNOWN_MEDIA_MESSAGE);
             }
         }
@@ -233,36 +221,31 @@ public class ExtractorIOS extends Extractor {
         m.setLatitude(rs.getDouble("LATITUDE")); //$NON-NLS-1$
         m.setLongitude(rs.getDouble("LONGITUDE")); //$NON-NLS-1$
 
-        if(rs.getString("MESSAGE_JSON") != null) {
+        if (rs.getString("MESSAGE_JSON") != null) {
             try {
                 ObjectMapper mapper = new ObjectMapper();
                 JsonNode message_json = mapper.readTree(rs.getString("MESSAGE_JSON"));
                 JsonNode media_description = message_json.get("d");
-                if(media_description != null)
+                if (media_description != null)
                     m.setMediaDescription(media_description.asText());
             } catch (JsonProcessingException e) {
                 logger.warn("Error parsing Threema Message JSON: " + rs.getString("MESSAGE_JSON"));
             }
         }
 
-        if(rs.getString("MESSAGE_ARGS") != null)
-        {
+        if (rs.getString("MESSAGE_ARGS") != null) {
             try {
                 ObjectMapper mapper = new ObjectMapper();
                 JsonNode message_json = mapper.readTree(rs.getString("MESSAGE_ARGS"));
                 JsonNode call_initiator = message_json.get("CallInitiator");
 
-                if(call_initiator != null)
-                {
+                if (call_initiator != null) {
                     JsonNode call_time = message_json.get("CallTime");
 
-                    if(call_time != null)
-                    {
+                    if (call_time != null) {
                         m.setMessageType(THREEMA_CALL);
                         m.setMediaDuration(call_time.asText());
-                    }
-                    else
-                    {
+                    } else {
                         m.setMessageType(MISSED_CALL);
                     }
                 }
@@ -278,37 +261,27 @@ public class ExtractorIOS extends Extractor {
     /**
      * ** static strings ***
      */
-    private static final String SELECT_CHAT_LIST = "SELECT "
-        + "ZCONVERSATION.Z_PK as CHAT_ID," //$NON-NLS-1$
-        + "ZCONVERSATION.ZGROUPID as GROUP_ID, ZCONVERSATION.ZGROUPNAME as GROUP_NAME, ZGROUPIMAGE.ZDATA as GROUP_IMAGE, ZMESSAGE.ZDATE as LASTMESSAGE, ZCONVERSATION.ZGROUPMYIDENTITY as GROUP_MY_IDENTITY, " //$NON-NLS-1$
-        + "ZCONTACT.Z_PK as CONTACT_ID, ZCONTACT.ZFIRSTNAME as CONTACT_FIRSTNAME, ZCONTACT.ZLASTNAME as CONTACT_LASTNAME, ZCONTACT.ZPUBLICNICKNAME as CONTACT_NICKNAME, ZCONTACTIMAGE.ZDATA as CONTACT_IMAGE, ZCONTACT.ZIDENTITY as CONTACT_IDENTITY "
-        + "FROM ZCONVERSATION "
-        + "LEFT JOIN ZCONTACT ON ZCONVERSATION.ZCONTACT = ZCONTACT.Z_PK "
-        + "LEFT JOIN ZMESSAGE ON ZCONVERSATION.ZLASTMESSAGE = ZMESSAGE.Z_PK "
-        + "LEFT JOIN ZIMAGEDATA AS ZCONTACTIMAGE ON ZCONTACT.ZCONTACTIMAGE = ZCONTACTIMAGE.Z_PK "
-        + "LEFT JOIN ZIMAGEDATA AS ZGROUPIMAGE ON ZCONVERSATION.ZGROUPIMAGE = ZGROUPIMAGE.Z_PK "
-        + "ORDER BY ZMESSAGE.ZDATE DESC"; //$NON-NLS-1$
+    private static final String SELECT_CHAT_LIST = "SELECT " + "ZCONVERSATION.Z_PK as CHAT_ID," //$NON-NLS-2$
+            + "ZCONVERSATION.ZGROUPID as GROUP_ID, ZCONVERSATION.ZGROUPNAME as GROUP_NAME, ZGROUPIMAGE.ZDATA as GROUP_IMAGE, ZMESSAGE.ZDATE as LASTMESSAGE, ZCONVERSATION.ZGROUPMYIDENTITY as GROUP_MY_IDENTITY, " //$NON-NLS-1$
+            + "ZCONTACT.Z_PK as CONTACT_ID, ZCONTACT.ZFIRSTNAME as CONTACT_FIRSTNAME, ZCONTACT.ZLASTNAME as CONTACT_LASTNAME, ZCONTACT.ZPUBLICNICKNAME as CONTACT_NICKNAME, ZCONTACTIMAGE.ZDATA as CONTACT_IMAGE, ZCONTACT.ZIDENTITY as CONTACT_IDENTITY "
+            + "FROM ZCONVERSATION " + "LEFT JOIN ZCONTACT ON ZCONVERSATION.ZCONTACT = ZCONTACT.Z_PK " + "LEFT JOIN ZMESSAGE ON ZCONVERSATION.ZLASTMESSAGE = ZMESSAGE.Z_PK "
+            + "LEFT JOIN ZIMAGEDATA AS ZCONTACTIMAGE ON ZCONTACT.ZCONTACTIMAGE = ZCONTACTIMAGE.Z_PK " + "LEFT JOIN ZIMAGEDATA AS ZGROUPIMAGE ON ZCONVERSATION.ZGROUPIMAGE = ZGROUPIMAGE.Z_PK " + "ORDER BY ZMESSAGE.ZDATE DESC"; //$NON-NLS-3$
 
     private static final String SELECT_MESSAGES = "SELECT " //$NON-NLS-1$
-        + "ZMESSAGE.Z_PK as MESSAGE_ID, ZMESSAGE.ZTEXT as MESSAGE_TEXT, ZMESSAGE.ZISOWN as IS_FROM_ME, ZMESSAGE.ZREAD as IS_READ, ZMESSAGE.ZDELIVERED as IS_DELIVERED, " //$NON-NLS-1$
-        + "ZMESSAGE.ZSENDFAILED as SEND_FAILED, ZMESSAGE.ZSENDER as SENDER_ID, ZMESSAGE.ZDATE as SEND_DATE, " //$NON-NLS-1$
-        + "ZCONTACT.ZFIRSTNAME as CONTACT_FIRSTNAME, ZCONTACT.ZLASTNAME as CONTACT_LASTNAME, ZCONTACT.ZPUBLICNICKNAME as CONTACT_NICKNAME, ZCONTACT.ZIDENTITY as CONTACT_IDENTITY, "
-        + "ZMESSAGE.ZDELIVERYDATE as DELIVERY_DATE, ZMESSAGE.ZREADDATE as READ_DATE, ZMESSAGE.ZLATITUDE as LATITUDE, ZMESSAGE.ZLONGITUDE as LONGITUDE, " //$NON-NLS-1$
-        + "ZMESSAGE.ZFILENAME as FILE_NAME, ZMESSAGE.ZFILESIZE as FILE_SIZE, ZMESSAGE.ZJSON as FILE_JSON, ZMESSAGE.ZMIMETYPE as FILE_MIMETYPE, ZMESSAGE.ZTYPE as FILE_TYPE, " //$NON-NLS-1$
-        + "ZIMAGEDATA.ZDATA as THUMBNAIL_DATA, substr(ZFILEDATA.ZDATA, 2, length(ZFILEDATA.ZDATA)-2) as FILE_DATA, ZMESSAGE.ZJSON as MESSAGE_JSON, ZMESSAGE.ZARG as MESSAGE_ARGS, ZMESSAGE.ZTYPE1 as MESSAGE_TYPE " //$NON-NLS-1$
-        + "FROM ZMESSAGE " //$NON-NLS-1$
-        + "LEFT JOIN ZIMAGEDATA on ZMESSAGE.ZTHUMBNAIL = ZIMAGEDATA.Z_PK " //$NON-NLS-1$
-        + "LEFT JOIN ZFILEDATA on ZMESSAGE.ZDATA = ZFILEDATA.Z_PK " //$NON-NLS-1$
-        + "LEFT JOIN ZCONTACT on ZMESSAGE.ZSENDER = ZCONTACT.Z_PK "
-        + "WHERE ZMESSAGE.ZCONVERSATION = ?"; //$NON-NLS-1$
+            + "ZMESSAGE.Z_PK as MESSAGE_ID, ZMESSAGE.ZTEXT as MESSAGE_TEXT, ZMESSAGE.ZISOWN as IS_FROM_ME, ZMESSAGE.ZREAD as IS_READ, ZMESSAGE.ZDELIVERED as IS_DELIVERED, " //$NON-NLS-1$
+            + "ZMESSAGE.ZSENDFAILED as SEND_FAILED, ZMESSAGE.ZSENDER as SENDER_ID, ZMESSAGE.ZDATE as SEND_DATE, " //$NON-NLS-1$
+            + "ZCONTACT.ZFIRSTNAME as CONTACT_FIRSTNAME, ZCONTACT.ZLASTNAME as CONTACT_LASTNAME, ZCONTACT.ZPUBLICNICKNAME as CONTACT_NICKNAME, ZCONTACT.ZIDENTITY as CONTACT_IDENTITY, "
+            + "ZMESSAGE.ZDELIVERYDATE as DELIVERY_DATE, ZMESSAGE.ZREADDATE as READ_DATE, ZMESSAGE.ZLATITUDE as LATITUDE, ZMESSAGE.ZLONGITUDE as LONGITUDE, " //$NON-NLS-1$
+            + "ZMESSAGE.ZFILENAME as FILE_NAME, ZMESSAGE.ZFILESIZE as FILE_SIZE, ZMESSAGE.ZJSON as FILE_JSON, ZMESSAGE.ZMIMETYPE as FILE_MIMETYPE, ZMESSAGE.ZTYPE as FILE_TYPE, " //$NON-NLS-1$
+            + "ZIMAGEDATA.ZDATA as THUMBNAIL_DATA, substr(ZFILEDATA.ZDATA, 2, length(ZFILEDATA.ZDATA)-2) as FILE_DATA, ZMESSAGE.ZJSON as MESSAGE_JSON, ZMESSAGE.ZARG as MESSAGE_ARGS, ZMESSAGE.ZTYPE1 as MESSAGE_TYPE " //$NON-NLS-1$
+            + "FROM ZMESSAGE " //$NON-NLS-1$
+            + "LEFT JOIN ZIMAGEDATA on ZMESSAGE.ZTHUMBNAIL = ZIMAGEDATA.Z_PK " //$NON-NLS-1$
+            + "LEFT JOIN ZFILEDATA on ZMESSAGE.ZDATA = ZFILEDATA.Z_PK " //$NON-NLS-1$
+            + "LEFT JOIN ZCONTACT on ZMESSAGE.ZSENDER = ZCONTACT.Z_PK " + "WHERE ZMESSAGE.ZCONVERSATION = ?"; //$NON-NLS-2$
 
     private static final String SELECT_GROUP_MEMBERS = "SELECT " //$NON-NLS-1$
-        + "ZCONTACT.Z_PK as CONTACT_ID, ZCONTACT.ZFIRSTNAME as CONTACT_FIRSTNAME, ZCONTACT.ZLASTNAME as CONTACT_LASTNAME, ZCONTACT.ZPUBLICNICKNAME as CONTACT_NICKNAME, ZIMAGEDATA.ZDATA as CONTACT_IMAGE, ZCONTACT.ZIDENTITY as CONTACT_IDENTITY "
-        + "FROM ZMESSAGE "
-        + "INNER JOIN ZCONTACT on ZCONTACT.Z_PK = ZMESSAGE.ZSENDER "
-        + "LEFT JOIN ZIMAGEDATA on ZIMAGEDATA.Z_PK = ZCONTACT.ZCONTACTIMAGE "
-        + "WHERE ZMESSAGE.ZCONVERSATION = ?";
+            + "ZCONTACT.Z_PK as CONTACT_ID, ZCONTACT.ZFIRSTNAME as CONTACT_FIRSTNAME, ZCONTACT.ZLASTNAME as CONTACT_LASTNAME, ZCONTACT.ZPUBLICNICKNAME as CONTACT_NICKNAME, ZIMAGEDATA.ZDATA as CONTACT_IMAGE, ZCONTACT.ZIDENTITY as CONTACT_IDENTITY "
+            + "FROM ZMESSAGE " + "INNER JOIN ZCONTACT on ZCONTACT.Z_PK = ZMESSAGE.ZSENDER " + "LEFT JOIN ZIMAGEDATA on ZIMAGEDATA.Z_PK = ZCONTACT.ZCONTACTIMAGE " + "WHERE ZMESSAGE.ZCONVERSATION = ?";
 
-    private static final Set<MessageType> MEDIA_MESSAGES = ImmutableSet.of(AUDIO_MESSAGE, VIDEO_MESSAGE, GIF_MESSAGE,
-            APP_MESSAGE, IMAGE_MESSAGE);
+    private static final Set<MessageType> MEDIA_MESSAGES = ImmutableSet.of(AUDIO_MESSAGE, VIDEO_MESSAGE, GIF_MESSAGE, APP_MESSAGE, IMAGE_MESSAGE);
 }

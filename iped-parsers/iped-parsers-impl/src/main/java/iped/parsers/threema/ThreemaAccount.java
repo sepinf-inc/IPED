@@ -42,12 +42,9 @@ public class ThreemaAccount extends ThreemaContact {
                 value = rootDict.get("SentryAppDevice");
             }
 
-            if(value == null)
-            {
+            if (value == null) {
                 return new ThreemaAccount(null, null, strPushName, null, "missing device info");
-            }
-            else
-            {
+            } else {
                 return new ThreemaAccount(null, null, strPushName, null, value.toString());
             }
 
@@ -57,8 +54,7 @@ public class ThreemaAccount extends ThreemaContact {
     }
 
     public static void main(String[] args) {
-        try (FileInputStream fis = new FileInputStream(
-                "F:\\group.ch.threema.work.plist")) {
+        try (FileInputStream fis = new FileInputStream("F:\\group.ch.threema.work.plist")) {
             ThreemaAccount a = getFromIOSPlist(fis);
             assert a != null;
             System.out.println(a.getFullId());

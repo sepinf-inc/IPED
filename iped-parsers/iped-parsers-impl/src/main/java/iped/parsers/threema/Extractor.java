@@ -16,7 +16,7 @@ public abstract class Extractor {
     protected boolean recoverDeletedRecords;
     protected String itemPath;
 
-    protected Extractor(String itemPath,File databaseFile, ThreemaAccount account, boolean recoverDeletedRecords) {
+    protected Extractor(String itemPath, File databaseFile, ThreemaAccount account, boolean recoverDeletedRecords) {
         this.itemPath = itemPath;
         this.databaseFile = databaseFile;
         this.account = account;
@@ -66,9 +66,7 @@ public abstract class Extractor {
         List<Chat> cleanedList = new ArrayList<>();
         for (Chat c : list) {
             String remote = c.getContact() != null ? c.getContact().getId() : null;
-            if (!c.getMessages().isEmpty() || !c.getParticipants().isEmpty()
-                    || (c.getSubject() != null && !c.getSubject().isBlank())
-                    || (remote != null && !(remote = remote.strip()).isEmpty() && !remote.equals("0"))) {
+            if (!c.getMessages().isEmpty() || !c.getParticipants().isEmpty() || (c.getSubject() != null && !c.getSubject().isBlank()) || (remote != null && !(remote = remote.strip()).isEmpty() && !remote.equals("0"))) {
                 cleanedList.add(c);
             }
         }

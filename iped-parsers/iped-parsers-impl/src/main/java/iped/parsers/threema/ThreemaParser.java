@@ -115,18 +115,14 @@ public class ThreemaParser extends SQLite3DBParser {
     }
 
     @Override
-    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
-            throws IOException, SAXException, TikaException {
+    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
 
         try {
             String mimetype = metadata.get(StandardParser.INDEXER_CONTENT_TYPE);
 
-            if (mimetype.equals(CHAT_STORAGE.toString()))
-            {
+            if (mimetype.equals(CHAT_STORAGE.toString())) {
                 extractMediaFilesFromDatabase(stream, handler, metadata, context, new ExtractorIOSFactory());
-            }
-            else if(mimetype.equals(CHAT_STORAGE_F.toString()))
-            {
+            } else if (mimetype.equals(CHAT_STORAGE_F.toString())) {
                 parseThreemaMessages(stream, handler, metadata, context, new ExtractorIOSFactory());
             }
 
@@ -142,8 +138,7 @@ public class ThreemaParser extends SQLite3DBParser {
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
         IItemSearcher searcher = context.get(IItemSearcher.class);
 
-        if (extractor.shouldParseEmbedded(metadata))
-        {
+        if (extractor.shouldParseEmbedded(metadata)) {
             TikaInputStream tis = null;
             try (TemporaryResources tmp = new TemporaryResources()) {
                 String filePath = null;
@@ -289,8 +284,7 @@ public class ThreemaParser extends SQLite3DBParser {
                 bytes = nextBytes;
 
                 if (extractMessages) {
-                    extractMessages(chatName, c, msgSubset, account, chatVirtualId++, handler, extractor
-                    );
+                    extractMessages(chatName, c, msgSubset, account, chatVirtualId++, handler, extractor);
                 }
             }
             // clear heavy items references (possibly with thumbs loaded)
@@ -303,8 +297,7 @@ public class ThreemaParser extends SQLite3DBParser {
         ThreemaAccount account = new ThreemaAccount();
 
         if (searcher != null) {
-            String query = BasicProps.CONTENTTYPE + ":\"" +
-                THREEMA_USER_PLIST.toString() + "\"";
+            String query = BasicProps.CONTENTTYPE + ":\"" + THREEMA_USER_PLIST.toString() + "\"";
 
             List<IItemReader> result = searcher.search(query);
 
@@ -332,8 +325,7 @@ public class ThreemaParser extends SQLite3DBParser {
         }
     }
 
-    private void extractMessages(String chatName, Chat c, List<Message> messages, ThreemaAccount account, int parentVirtualId, ContentHandler handler,
-            EmbeddedDocumentExtractor extractor) throws SAXException, IOException {
+    private void extractMessages(String chatName, Chat c, List<Message> messages, ThreemaAccount account, int parentVirtualId, ContentHandler handler, EmbeddedDocumentExtractor extractor) throws SAXException, IOException {
         int msgCount = 0;
         for (Message m : messages) {
 
@@ -449,12 +441,9 @@ public class ThreemaParser extends SQLite3DBParser {
         ParseContext context;
         ThreemaParser connFactory;
 
+        abstract Extractor createMessageExtractor(String itemPath, File file, ThreemaAccount account, boolean recoverDeletedRecords);
 
-        abstract Extractor createMessageExtractor(String itemPath, File file,
-                ThreemaAccount account, boolean recoverDeletedRecords);
-
-        private void setConnectionParams(InputStream is, Metadata metadata, ParseContext context,
-                ThreemaParser connFactory) {
+        private void setConnectionParams(InputStream is, Metadata metadata, ParseContext context, ThreemaParser connFactory) {
             this.is = is;
             this.metadata = metadata;
             this.context = context;
@@ -469,11 +458,9 @@ public class ThreemaParser extends SQLite3DBParser {
                 throw new SQLException(e);
             }
 
-
         }
 
         public abstract MediaType getType2();
-
 
     }
 
@@ -518,7 +505,6 @@ public class ThreemaParser extends SQLite3DBParser {
             listsToProcess.add(messagesToProcess);
         }
 
-
         for (List<Message> listToProcess : listsToProcess) {
             searchMediaFilesForMessages(listToProcess, searcher);
         }
@@ -545,13 +531,10 @@ public class ThreemaParser extends SQLite3DBParser {
             String fileName = "";
             long fileSize = 0;
 
-            if(m.getData().length == 36)
-            {
+            if (m.getData().length == 36) {
                 fileName = new String(m.getData(), StandardCharsets.US_ASCII);
                 fileSize = m.getMediaSize();
-            }
-            else
-            {
+            } else {
                 fileName = "Threema_Media_item_" + m.getId();
                 fileSize = m.getData().length;
             }
@@ -579,11 +562,10 @@ public class ThreemaParser extends SQLite3DBParser {
             String fileNameAndSizeQuery = fileNameAndSizeQueryBuilder.toString();
             List<IItemReader> result = iped.parsers.util.Util.getItems(fileNameAndSizeQuery, searcher);
             for (IItemReader item : result) {
-                if (item.getName() != null && !item.getName().isEmpty() && item.getLength() != null
-                        && item.getLength() > 0) {
+                if (item.getName() != null && !item.getName().isEmpty() && item.getLength() != null && item.getLength() > 0) {
                     String fileName = item.getName();
                     long fileSize = item.getLength();
-                    if(fileName.contains("."))
+                    if (fileName.contains("."))
                         fileName = fileName.substring(0, fileName.indexOf("."));
                     Pair<String, Long> key = Pair.of(fileName, fileSize);
                     List<Message> messageList = fileNameAndSizeToSearchFor.get(key);

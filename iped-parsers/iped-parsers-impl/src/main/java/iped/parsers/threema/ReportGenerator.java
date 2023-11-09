@@ -64,8 +64,7 @@ public class ReportGenerator {
         ByteArrayOutputStream chatBytes = new ByteArrayOutputStream();
         PrintWriter printWriter = new PrintWriter(new OutputStreamWriter(chatBytes, StandardCharsets.UTF_8)); // $NON-NLS-1$
 
-        printMessageFile(printWriter, c.getTitle(), c.getSubject(), c.getImage(),
-                () -> {
+        printMessageFile(printWriter, c.getTitle(), c.getSubject(), c.getImage(), () -> {
             ByteArrayOutputStream bout = new ByteArrayOutputStream();
             PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, StandardCharsets.UTF_8)); // $NON-NLS-1$
 
@@ -252,7 +251,7 @@ public class ReportGenerator {
                     out.println(bubbleFromSpecial);
                 }
                 out.println(Messages.getString("ThreemaReport.ThreemaCall") + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
-                out.println( Messages.getString("ThreemaReport.Duration") + ": " + message.getMediaDuration()); //$NON-NLS-1$ //$NON-NLS-2$
+                out.println(Messages.getString("ThreemaReport.Duration") + ": " + message.getMediaDuration()); //$NON-NLS-1$ //$NON-NLS-2$
                 break;
             default:
                 IItemReader mediaItem = null;
@@ -335,15 +334,12 @@ public class ReportGenerator {
                             if (generatedThumb != null)
                                 thumb = generatedThumb;
 
-                            if (message.getMessageType() == MessageType.AUDIO_MESSAGE
-                                    || message.getMessageType() == MessageType.VIDEO_MESSAGE
-                                    || message.getMessageType() == MessageType.GIF_MESSAGE) {
+                            if (message.getMessageType() == MessageType.AUDIO_MESSAGE || message.getMessageType() == MessageType.VIDEO_MESSAGE || message.getMessageType() == MessageType.GIF_MESSAGE) {
                                 String source = iped.parsers.util.Util.getSourceFileIfExists(mediaItem).orElse("");
                                 if (message.getMessageType() == MessageType.AUDIO_MESSAGE) {
                                     out.println(Messages.getString("ThreemaReport.AudioMessageTitle") + "<br>"); //$NON-NLS-1$
                                     out.println("<div class=\"audioImg iped-audio\" " //$NON-NLS-1$
-                                            + " title=\"Audio\" " + "data-src1=\"" + format(exportPath) + "\" "
-                                            + "data-src2=\"" //$NON-NLS-1$
+                                            + " title=\"Audio\" " + "data-src1=\"" + format(exportPath) + "\" " + "data-src2=\"" //$NON-NLS-4$
                                             + format(source) + "\" ></div>");
                                     out.println("</a><br>"); //$NON-NLS-1$
                                 } else {
@@ -440,8 +436,7 @@ public class ReportGenerator {
         }
 
         if (!message.getChildPornSets().isEmpty()) {
-            out.print("<p><i>" + Messages.getString("ThreemaReport.FoundInPedoHashDB") + " "
-                    + format(message.getChildPornSets().toString()) + "</i></p>");
+            out.print("<p><i>" + Messages.getString("ThreemaReport.FoundInPedoHashDB") + " " + format(message.getChildPornSets().toString()) + "</i></p>");
         }
 
         out.println("<span class=\"time\">"); //$NON-NLS-1$

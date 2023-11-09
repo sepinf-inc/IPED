@@ -18,8 +18,7 @@ public class ThreemaContact {
 
     private boolean deleted = false;
 
-    public ThreemaContact(String firstName, String lastName, String nickName, String identity, String deviceID)
-    {
+    public ThreemaContact(String firstName, String lastName, String nickName, String identity, String deviceID) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.nickName = nickName;
@@ -28,7 +27,7 @@ public class ThreemaContact {
     }
 
     public String getId() {
-        if (identity != null && ! identity.isBlank())
+        if (identity != null && !identity.isBlank())
             return identity;
         else if (deviceID != null && !deviceID.isBlank())
             return deviceID;
@@ -36,18 +35,15 @@ public class ThreemaContact {
             return "";
     }
 
-    public String getFirstName()
-    {
+    public String getFirstName() {
         return (firstName == null) ? "" : firstName;
     }
 
-    public String getLastName()
-    {
+    public String getLastName() {
         return (lastName == null) ? "" : " " + lastName;
     }
 
-    public String getNickName()
-    {
+    public String getNickName() {
         return (nickName == null ? "" : " \"" + nickName + "\"");
     }
 
@@ -81,7 +77,9 @@ public class ThreemaContact {
         this.deleted = deleted;
     }
 
-    public void setIdentity(String identity) {this.identity = identity;}
+    public void setIdentity(String identity) {
+        this.identity = identity;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -95,7 +93,6 @@ public class ThreemaContact {
         }
 
         ThreemaContact c = (ThreemaContact) o;
-
 
         return this.getFullId().equals(c.getFullId());
 
