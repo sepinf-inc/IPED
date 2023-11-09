@@ -97,6 +97,12 @@ public class CacheIndexParser extends AbstractParser {
                     try {
 
                         String contentEncoding = httpResponse.get("content-encoding");
+                        if (contentEncoding == null) {
+                            contentEncoding = httpResponse.get("Content-Encoding");
+                        }
+                        if (contentEncoding != null) {
+                            contentEncoding = contentEncoding.trim();
+                        }
                         InputStream is;
                         try {
                             is = ce.getResponseDataSize() > 0
