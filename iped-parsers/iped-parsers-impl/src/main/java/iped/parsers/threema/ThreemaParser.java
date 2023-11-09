@@ -494,7 +494,7 @@ public class ThreemaParser extends SQLite3DBParser {
         List<Message> messagesToProcess = new ArrayList<>();
         int count = 0;
         for (Message m : messages) {
-            if (m.getData() != null) {
+            if (m.getData() != null || m.getDataName() != null) {
                 messagesToProcess.add(m);
                 count++;
                 if (count == MESSAGE_SEARCH_BATCH_SIZE) {
