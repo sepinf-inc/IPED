@@ -97,7 +97,8 @@ public class ThreemaParser extends SQLite3DBParser {
 
     private boolean extractMessages = true;
 
-    private boolean recoverDeletedRecords = true;
+    // TODO not implemented yet
+    private boolean recoverDeletedRecords = false;
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
@@ -109,6 +110,7 @@ public class ThreemaParser extends SQLite3DBParser {
         this.extractMessages = extractMessages;
     }
 
+    // TODO not implemented yet
     @Field
     public void setRecoverDeletedRecords(boolean recoverDeletedRecords) {
         this.recoverDeletedRecords = recoverDeletedRecords;
