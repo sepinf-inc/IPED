@@ -200,7 +200,7 @@ div.deletedIcon {
 
 /*Quotes*/
 html {
-    scroll-padding-top: 84px;
+    scroll-padding-top: var(--scroll-padding-top);
 }
   
 div:target{
@@ -574,6 +574,7 @@ div:target{
 :root {
     --bg-color: #fafafa;
     --text-color: #1b1e24;
+    --scroll-padding-top: 84px;    
 }
 .modal {
     display: none;

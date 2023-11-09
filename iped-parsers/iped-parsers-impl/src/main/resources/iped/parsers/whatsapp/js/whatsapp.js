@@ -69,7 +69,11 @@ function createMediaControls() {
 }
 
 function goToAnchorId(id){
-    var scroll_padding_top = 84;
+    var scroll_padding_top = document.getElementById('topbar').getBoundingClientRect().height;
+    var r = document.querySelector(':root');
+    var rs = getComputedStyle(r);
+    if (rs.getPropertyValue('--scroll-padding-top') != scroll_padding_top+'px')
+        r.style.setProperty('--scroll-padding-top', scroll_padding_top+'px');
     var div = document.getElementById(id);
     var scrollY = window.scrollY;
     if (div){
