@@ -344,7 +344,7 @@ public class ExtractorIOS extends Extractor {
     }
 
     private void findQuotedMessages(List<Message> messages, Map<String, Message> messagesMap) {
-        long fakeIds = Long.MAX_VALUE;
+        long fakeIds = 2000000000L;
         for (Message m : messages) {
             if (m.isQuoted() && m.getMetaData() != null) {
                 String metadata = m.getMetaData();

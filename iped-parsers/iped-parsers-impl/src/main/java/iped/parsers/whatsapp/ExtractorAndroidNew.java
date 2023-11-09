@@ -282,7 +282,7 @@ public class ExtractorAndroidNew extends Extractor {
             }
         }
         
-        long fakeIds = Long.MAX_VALUE;
+        long fakeIds = 2000000000L;
         for (Chat c : idToChat.values()) {
             HashMap<Long, Message> messagesMap = new HashMap<Long, Message>();
             HashMap<String, Message> messagesMapUuid = new HashMap<String, Message>();

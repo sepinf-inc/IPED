@@ -430,7 +430,7 @@ public class ExtractorAndroid extends Extractor {
         }
 
         //Find quote messages
-        long fakeIds = Long.MAX_VALUE;
+        long fakeIds = 2000000000L;
         for (Message mq: messagesQuotes){
             Message m = messagesMapIdQuote.get(mq.getId());
             if (m != null){// Has quote
