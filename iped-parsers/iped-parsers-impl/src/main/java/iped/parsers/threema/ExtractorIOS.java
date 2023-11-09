@@ -1,20 +1,63 @@
 package iped.parsers.threema;
 
+import static iped.parsers.threema.Message.MessageType.APP_MESSAGE;
+import static iped.parsers.threema.Message.MessageType.AUDIO_MESSAGE;
+import static iped.parsers.threema.Message.MessageType.GIF_MESSAGE;
+import static iped.parsers.threema.Message.MessageType.GROUP_CALL_ENDED;
+import static iped.parsers.threema.Message.MessageType.GROUP_CALL_STARTED;
+import static iped.parsers.threema.Message.MessageType.GROUP_CREATOR_LEFT;
+import static iped.parsers.threema.Message.MessageType.GROUP_ICON_CHANGED;
+import static iped.parsers.threema.Message.MessageType.GROUP_NOTE_ENDED;
+import static iped.parsers.threema.Message.MessageType.GROUP_NOTE_STARTED;
+import static iped.parsers.threema.Message.MessageType.GROUP_RENAMED;
+import static iped.parsers.threema.Message.MessageType.IMAGE_MESSAGE;
+import static iped.parsers.threema.Message.MessageType.MISSED_CALL;
+import static iped.parsers.threema.Message.MessageType.REJECTED_CALL;
+import static iped.parsers.threema.Message.MessageType.REJECTED_CALL_BUSY;
+import static iped.parsers.threema.Message.MessageType.REJECTED_CALL_DISABLED;
+import static iped.parsers.threema.Message.MessageType.REJECTED_CALL_OFF_HOURS;
+import static iped.parsers.threema.Message.MessageType.REJECTED_CALL_TIMEOUT;
+import static iped.parsers.threema.Message.MessageType.SELF_ADDED_TO_GROUP;
+import static iped.parsers.threema.Message.MessageType.SELF_LEFT_GROUP;
+import static iped.parsers.threema.Message.MessageType.SELF_REMOVED_FROM_GROUP;
+import static iped.parsers.threema.Message.MessageType.THREEMA_CALL;
+import static iped.parsers.threema.Message.MessageType.UNKNOWN_CALL_RESPONSE;
+import static iped.parsers.threema.Message.MessageType.UNKNOWN_MEDIA_MESSAGE;
+import static iped.parsers.threema.Message.MessageType.UNKNOWN_MESSAGE;
+import static iped.parsers.threema.Message.MessageType.USER_JOINED_GROUP;
+import static iped.parsers.threema.Message.MessageType.USER_LEFT_GROUP;
+import static iped.parsers.threema.Message.MessageType.USER_REMOVED_FROM_GROUP;
+import static iped.parsers.threema.Message.MessageType.VIDEO_MESSAGE;
+import static iped.parsers.threema.Message.MessageType.WORK_CONSUMER_INFO;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
+import java.util.TimeZone;
+
+import org.apache.tika.io.TemporaryResources;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableSet;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import iped.parsers.threema.Message.MessageType;
-import iped.parsers.threema.Message.MessageStatus;
-import java.io.File;
-import java.sql.*;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.*;
 
-import static iped.parsers.threema.Message.MessageType.*;
+import iped.parsers.threema.Message.MessageStatus;
+import iped.parsers.threema.Message.MessageType;
 
 /**
  *
@@ -24,8 +67,8 @@ public class ExtractorIOS extends Extractor {
 
     private static final Logger logger = LoggerFactory.getLogger(ExtractorIOS.class);
 
-    public ExtractorIOS(String itemPath, File databaseFile, ThreemaAccount account, boolean recoverDeletedRecords) {
-        super(itemPath, databaseFile, account, recoverDeletedRecords);
+    public ExtractorIOS(TemporaryResources tmp, String itemPath, File databaseFile, ThreemaAccount account, boolean recoverDeletedRecords) {
+        super(tmp, itemPath, databaseFile, account, recoverDeletedRecords);
         // $NON-NLS-1$
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT")); //$NON-NLS-1$
@@ -216,7 +259,21 @@ public class ExtractorIOS extends Extractor {
 
         m.setMediaName(rs.getString("FILE_NAME")); //$NON-NLS-1$
         m.setMediaSize(rs.getLong("FILE_SIZE")); //$NON-NLS-1$
-        m.setData(rs.getBytes("FILE_DATA"));
+
+        byte[] data = rs.getBytes("FILE_DATA");
+        if (data != null) {
+            if (data.length == 36) {
+                m.setDataName(new String(data, StandardCharsets.US_ASCII));
+            } else {
+                try {
+                    Path temp = tmp.createTempFile();
+                    Files.write(temp, data);
+                    m.setData(temp.toFile());
+                } catch (IOException e1) {
+                    logger.error("Unable to extract Threema attachment from {} {}", itemPath, e1.toString());
+                }
+            }
+        }
         m.setThumbnail(rs.getBytes("THUMBNAIL_DATA")); //$NON-NLS-1$
         m.setLatitude(rs.getDouble("LATITUDE")); //$NON-NLS-1$
         m.setLongitude(rs.getDouble("LONGITUDE")); //$NON-NLS-1$

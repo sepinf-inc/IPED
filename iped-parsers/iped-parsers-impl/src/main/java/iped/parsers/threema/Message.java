@@ -1,11 +1,12 @@
 package iped.parsers.threema;
 
-import iped.data.IItemReader;
-import iped.parsers.util.ChildPornHashLookup;
-import org.apache.commons.codec.binary.Hex;
-
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
+
+import iped.data.IItemReader;
 
 /**
  *
@@ -28,7 +29,8 @@ public class Message {
     private double longitude;
     private String url;
     private byte[] thumbnail;
-    private byte[] data;
+    private File data;
+    private String dataName;
     private String mediaDuration;
     private MessageStatus messageStatus;
 
@@ -64,12 +66,20 @@ public class Message {
         this.remoteResource = remoteResource;
     }
 
-    public byte[] getData() {
+    public File getData() {
         return data;
     }
 
-    public void setData(byte[] data) {
+    public void setData(File data) {
         this.data = data;
+    }
+
+    public String getDataName() {
+        return dataName;
+    }
+
+    public void setDataName(String dataName) {
+        this.dataName = dataName;
     }
 
     public int getStatus() {

@@ -20,9 +20,9 @@ package iped.parsers.threema;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -119,13 +119,13 @@ public class ThreemaParser extends SQLite3DBParser {
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
 
-        try {
+        try (TemporaryResources tmp = new TemporaryResources()) {
             String mimetype = metadata.get(StandardParser.INDEXER_CONTENT_TYPE);
 
             if (mimetype.equals(CHAT_STORAGE.toString())) {
-                extractMediaFilesFromDatabase(stream, handler, metadata, context, new ExtractorIOSFactory());
+                extractMediaFilesFromDatabase(stream, handler, metadata, context, new ExtractorIOSFactory(), tmp);
             } else if (mimetype.equals(CHAT_STORAGE_F.toString())) {
-                parseThreemaMessages(stream, handler, metadata, context, new ExtractorIOSFactory());
+                parseThreemaMessages(stream, handler, metadata, context, new ExtractorIOSFactory(), tmp);
             }
 
         } catch (Exception e) {
@@ -135,14 +135,14 @@ public class ThreemaParser extends SQLite3DBParser {
         }
     }
 
-    private List<Chat> extractChatList(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context, ExtractorFactory extractorIOSFactory) throws IOException, SAXException, TikaException {
+    private List<Chat> extractChatList(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context, ExtractorFactory extractorIOSFactory, TemporaryResources tmp) throws IOException, SAXException, TikaException {
 
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
         IItemSearcher searcher = context.get(IItemSearcher.class);
 
         if (extractor.shouldParseEmbedded(metadata)) {
             TikaInputStream tis = null;
-            try (TemporaryResources tmp = new TemporaryResources()) {
+            try {
                 String filePath = null;
 
                 ItemInfo itemInfo = context.get(ItemInfo.class);
@@ -158,7 +158,7 @@ public class ThreemaParser extends SQLite3DBParser {
                 exportWalLog(tempDbFile, context, tmp);
                 exportRollbackJournal(tempDbFile, context, tmp);
                 extractorIOSFactory.setConnectionParams(tis, metadata, context, this);
-                Extractor threemaExtractor = extractorIOSFactory.createMessageExtractor(filePath, tempDbFile, account, recoverDeletedRecords);
+                Extractor threemaExtractor = extractorIOSFactory.createMessageExtractor(tmp, filePath, tempDbFile, account, recoverDeletedRecords);
                 List<Chat> chatList = threemaExtractor.getChatList();
                 return chatList;
 
@@ -175,17 +175,18 @@ public class ThreemaParser extends SQLite3DBParser {
         return Collections.emptyList();
     }
 
-    private void extractMediaFilesFromDatabase(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context, ExtractorFactory extractorIOSFactory) throws IOException, SAXException, TikaException {
+    private void extractMediaFilesFromDatabase(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context, ExtractorFactory extractorIOSFactory, TemporaryResources tmp)
+            throws IOException, SAXException, TikaException {
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
-        List<Chat> chatList = extractChatList(stream, handler, metadata, context, new ExtractorIOSFactory());
+        List<Chat> chatList = extractChatList(stream, handler, metadata, context, new ExtractorIOSFactory(), tmp);
         for (Chat c : chatList) {
             // First search for hashes
             for (Message m : c.getMessages()) {
                 if (m.getMediaItem() != null || m.getData() == null) {
                     continue;
                 }
-                if (m.getData().length > 36) {
-                    try {
+                if (m.getData() != null) {
+                    try (InputStream is = new FileInputStream(m.getData())) {
                         Metadata embedFileData = new Metadata();
 
                         embedFileData.set(BasicProps.NAME, "Threema_Media_item_" + m.getId());
@@ -200,7 +201,7 @@ public class ThreemaParser extends SQLite3DBParser {
                         embedFileData.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
                         embedFileData.set(TikaCoreProperties.TITLE, "Threema_Media_item_" + m.getId());
 
-                        extractor.parseEmbedded(new ByteArrayInputStream(m.getData()), handler, embedFileData, false);
+                        extractor.parseEmbedded(is, handler, embedFileData, false);
 
                     } catch (Exception e) {
                         logger.warn("Error trying to parse Threema Database embedded files", e);
@@ -210,13 +211,13 @@ public class ThreemaParser extends SQLite3DBParser {
         }
     }
 
-    private void parseThreemaMessages(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context, ExtractorFactory extractorIOSFactory) throws TikaException {
+    private void parseThreemaMessages(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context, ExtractorFactory extractorIOSFactory, TemporaryResources tmp) throws TikaException {
         IItemSearcher searcher = context.get(IItemSearcher.class);
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
         if (extractor.shouldParseEmbedded(metadata)) {
             try {
                 ThreemaAccount account = getUserAccount(searcher);
-                List<Chat> chatList = extractChatList(stream, handler, metadata, context, new ExtractorIOSFactory());
+                List<Chat> chatList = extractChatList(stream, handler, metadata, context, new ExtractorIOSFactory(), tmp);
                 createReport(chatList, searcher, handler, extractor, account);
 
             } catch (Exception e) {
@@ -443,7 +444,7 @@ public class ThreemaParser extends SQLite3DBParser {
         ParseContext context;
         ThreemaParser connFactory;
 
-        abstract Extractor createMessageExtractor(String itemPath, File file, ThreemaAccount account, boolean recoverDeletedRecords);
+        abstract Extractor createMessageExtractor(TemporaryResources tmp, String itemPath, File file, ThreemaAccount account, boolean recoverDeletedRecords);
 
         private void setConnectionParams(InputStream is, Metadata metadata, ParseContext context, ThreemaParser connFactory) {
             this.is = is;
@@ -471,8 +472,8 @@ public class ThreemaParser extends SQLite3DBParser {
     protected static class ExtractorIOSFactory extends ExtractorFactory {
 
         @Override
-        public Extractor createMessageExtractor(String itemPath, File file, ThreemaAccount account, boolean recoverDeletedRecords) {
-            return new ExtractorIOS(itemPath, file, account, recoverDeletedRecords) {
+        public Extractor createMessageExtractor(TemporaryResources tmp, String itemPath, File file, ThreemaAccount account, boolean recoverDeletedRecords) {
+            return new ExtractorIOS(tmp, itemPath, file, account, recoverDeletedRecords) {
                 @Override
                 protected Connection getConnection() throws SQLException {
                     return ExtractorIOSFactory.this.getConnection();
@@ -533,12 +534,12 @@ public class ThreemaParser extends SQLite3DBParser {
             String fileName = "";
             long fileSize = 0;
 
-            if (m.getData().length == 36) {
-                fileName = new String(m.getData(), StandardCharsets.US_ASCII);
+            if (m.getDataName() != null) {
+                fileName = m.getDataName();
                 fileSize = m.getMediaSize();
-            } else {
+            } else if (m.getData() != null) {
                 fileName = "Threema_Media_item_" + m.getId();
-                fileSize = m.getData().length;
+                fileSize = m.getData().length();
             }
 
             if (!fileName.isEmpty() && fileSize > 0) {

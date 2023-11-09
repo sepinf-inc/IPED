@@ -1,22 +1,30 @@
 package iped.parsers.threema;
 
 import java.io.File;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.tika.io.TemporaryResources;
 
 /**
  *
  * @author André Rodrigues Costa <andre.arc@pf.gov.br>
  */
 public abstract class Extractor {
+    protected TemporaryResources tmp;
     protected final File databaseFile;
     protected List<Chat> chatList;
     protected ThreemaAccount account;
     protected boolean recoverDeletedRecords;
     protected String itemPath;
 
-    protected Extractor(String itemPath, File databaseFile, ThreemaAccount account, boolean recoverDeletedRecords) {
+    protected Extractor(TemporaryResources tmp, String itemPath, File databaseFile, ThreemaAccount account, boolean recoverDeletedRecords) {
+        this.tmp = tmp;
         this.itemPath = itemPath;
         this.databaseFile = databaseFile;
         this.account = account;
