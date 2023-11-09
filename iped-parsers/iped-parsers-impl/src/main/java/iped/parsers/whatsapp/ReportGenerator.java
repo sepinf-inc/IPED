@@ -129,7 +129,7 @@ public class ReportGenerator {
 
     }
 
-    public byte[] generateNextChatHtml(Chat c, WAContactsDirectory contactsDirectory, WAAccount account) {
+    public byte[] generateNextChatHtml(Chat c, WAContactsDirectory contactsDirectory, WAAccount account, int frag, StringBuilder histFrag) {
 
         if ((!firstFragment && currentMsg == 0) || (currentMsg > 0 && currentMsg == c.getMessages().size()))
             return null;
@@ -153,6 +153,7 @@ public class ReportGenerator {
                         + Messages.getString("WhatsAppReport.ChatContinuation") + "</div></div>"); //$NON-NLS-1$ //$NON-NLS-2$
 
             String lastDate = null;
+            String lastId = "1000000000";
             while (currentMsg < c.getMessages().size()) {
                 Message m = c.getMessages().get(currentMsg);
                 String thisDate = dateFormat.format(m.getTimeStamp());
@@ -162,13 +163,23 @@ public class ReportGenerator {
                     lastDate = thisDate;
                 }
                 printMessage(out, m, c.isGroupChat(), contactsDirectory, account);
+                lastId = m.getUniqueId();
                 currentMsg += 1;
-                if (currentMsg != c.getMessages().size() && bout.size() >= minChatSplitSize) {
+                if (currentMsg != c.getMessages().size() && bout.size() >= minChatSplitSize || lastId.compareTo("218814")==0) {
                     out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
                             + Messages.getString("WhatsAppReport.ChatContinues") + "</div></div>"); //$NON-NLS-1$ //$NON-NLS-2$
                     break;
                 }
             }
+
+            if (histFrag.length()==0){
+                histFrag.append("<input type=\"hidden\" id=\"fragMessageChat\" value=\""+Messages.getString("WhatsAppReport.ChatFragment")+"\"/>");
+                histFrag.append("<input type=\"hidden\" id=\"fragMessageId\" value=\""+Messages.getString("WhatsAppReport.ReferenceId")+"\"/>");
+                histFrag.append("<input type=\"hidden\" id=\"fragMessageClose\" value=\""+Messages.getString("WhatsAppReport.Close")+"\"/>");
+            }
+
+            histFrag.append("<input type=\"hidden\" id=\"frag"+ frag +"\" value=\""+lastId+"\"/>");
+            out.println(histFrag);
             out.flush();
             return new String(bout.toByteArray(), StandardCharsets.UTF_8);
         });
