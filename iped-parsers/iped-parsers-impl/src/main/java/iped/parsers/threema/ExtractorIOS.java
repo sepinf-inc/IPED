@@ -30,11 +30,13 @@ import static iped.parsers.threema.Message.MessageType.USER_REMOVED_FROM_GROUP;
 import static iped.parsers.threema.Message.MessageType.VIDEO_MESSAGE;
 import static iped.parsers.threema.Message.MessageType.WORK_CONSUMER_INFO;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -262,12 +264,12 @@ public class ExtractorIOS extends Extractor {
 
         byte[] data = rs.getBytes("FILE_DATA");
         if (data != null) {
-            if (data.length == 36) {
-                m.setDataName(new String(data, StandardCharsets.US_ASCII));
+            if (data.length == 38) {
+                m.setDataName(new String(data, 1, data.length - 2, StandardCharsets.US_ASCII));
             } else {
-                try {
+                try (ByteArrayInputStream bais = new ByteArrayInputStream(data, 1, data.length - 1)) {
                     Path temp = tmp.createTempFile();
-                    Files.write(temp, data);
+                    Files.copy(bais, temp, StandardCopyOption.REPLACE_EXISTING);
                     m.setData(temp.toFile());
                 } catch (IOException e1) {
                     logger.error("Unable to extract Threema attachment from {} {}", itemPath, e1.toString());
@@ -330,7 +332,7 @@ public class ExtractorIOS extends Extractor {
             + "ZCONTACT.ZFIRSTNAME as CONTACT_FIRSTNAME, ZCONTACT.ZLASTNAME as CONTACT_LASTNAME, ZCONTACT.ZPUBLICNICKNAME as CONTACT_NICKNAME, ZCONTACT.ZIDENTITY as CONTACT_IDENTITY, "
             + "ZMESSAGE.ZDELIVERYDATE as DELIVERY_DATE, ZMESSAGE.ZREADDATE as READ_DATE, ZMESSAGE.ZLATITUDE as LATITUDE, ZMESSAGE.ZLONGITUDE as LONGITUDE, " //$NON-NLS-1$
             + "ZMESSAGE.ZFILENAME as FILE_NAME, ZMESSAGE.ZFILESIZE as FILE_SIZE, ZMESSAGE.ZJSON as FILE_JSON, ZMESSAGE.ZMIMETYPE as FILE_MIMETYPE, ZMESSAGE.ZTYPE as FILE_TYPE, " //$NON-NLS-1$
-            + "ZIMAGEDATA.ZDATA as THUMBNAIL_DATA, substr(ZFILEDATA.ZDATA, 2, length(ZFILEDATA.ZDATA)-2) as FILE_DATA, ZMESSAGE.ZJSON as MESSAGE_JSON, ZMESSAGE.ZARG as MESSAGE_ARGS, ZMESSAGE.ZTYPE1 as MESSAGE_TYPE " //$NON-NLS-1$
+            + "ZIMAGEDATA.ZDATA as THUMBNAIL_DATA, ZFILEDATA.ZDATA as FILE_DATA, ZMESSAGE.ZJSON as MESSAGE_JSON, ZMESSAGE.ZARG as MESSAGE_ARGS, ZMESSAGE.ZTYPE1 as MESSAGE_TYPE " //$NON-NLS-1$
             + "FROM ZMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZIMAGEDATA on ZMESSAGE.ZTHUMBNAIL = ZIMAGEDATA.Z_PK " //$NON-NLS-1$
             + "LEFT JOIN ZFILEDATA on ZMESSAGE.ZDATA = ZFILEDATA.Z_PK " //$NON-NLS-1$
