@@ -149,4 +149,12 @@ public class CacheAddr {
         throw new InputStreamNotAvailable();
     }
 
+    public long getAddress() {
+        return address;
+    }
+
+    public void setAddress(long address) {
+        this.address = address;
+    }
+
 }

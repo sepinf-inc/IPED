@@ -27,25 +27,25 @@ public class CacheEntry {
 
     private static Logger logger = LoggerFactory.getLogger(CacheEntry.class);
 
-    private long hash;
-    private CacheAddr nextEntry;
-    private CacheAddr rankingsNode;
-    private int reuseCount;
-    private int refetchCount;
-    private int state;
-    private Date creationTime;
-    private int keyDataSize;
-    private CacheAddr longKeyAddressCacheAddress;
-    private long longKeyAddress;
-    private String longKey;
-    private int[] dataStreamSize;
-    private CacheAddr[] dataStreamAdresses;
-    private long flags;
-    private int[] paddings;
-    private long selfHash;
-    private byte[] keyData;
-    private List<IItemReader> dataFiles;
-    private List<IItemReader> externalFiles;
+    protected long hash;
+    protected CacheAddr nextEntry;
+    protected CacheAddr rankingsNode;
+    protected int reuseCount;
+    protected int refetchCount;
+    protected int state;
+    protected Date creationTime;
+    protected int keyDataSize;
+    protected CacheAddr longKeyAddressCacheAddress;
+    protected long longKeyAddress;
+    protected String key;
+    protected int[] dataStreamSize;
+    protected CacheAddr[] dataStreamAdresses;
+    protected long flags;
+    protected int[] paddings;
+    protected long selfHash;
+    protected byte[] keyData;
+    protected List<IItemReader> dataFiles;
+    protected List<IItemReader> externalFiles;
 
     public long getHash() {
         return hash;
@@ -116,9 +116,16 @@ public class CacheEntry {
      * @param externalFiles
      * @throws IOException
      */
-    public CacheEntry(InputStream is, List<IItemReader> dataFiles, List<IItemReader> externalFiles) throws IOException {
+    public CacheEntry(InputStream is, List<IItemReader> dataFiles, List<IItemReader> externalFiles)
+            throws IOException {
         this.dataFiles = dataFiles;
         this.externalFiles = externalFiles;
+
+        read(is);
+
+    }
+
+    private void read(InputStream is) throws IOException {
         hash = Index.readUnsignedInt(is);
         nextEntry = new CacheAddr(Index.readUnsignedInt(is));
         rankingsNode = new CacheAddr(Index.readUnsignedInt(is));
@@ -157,7 +164,6 @@ public class CacheEntry {
         } else {
             keyData = new byte[0];
         }
-
     }
 
     public int getResponseDataSize() {
@@ -179,19 +185,29 @@ public class CacheEntry {
     public String getRequestURL() {
         try {
 
-            if (longKey == null) {
+            if (key == null) {
                 if (keyDataSize < 0) {
                     return null;
                 }
 
                 if (longKeyAddress > 0) {
-                    longKey = new String(longKeyAddressCacheAddress.getInputStream(dataFiles, externalFiles, null).readNBytes(keyDataSize));
+                    key = new String(longKeyAddressCacheAddress.getInputStream(dataFiles, externalFiles, null)
+                            .readNBytes(keyDataSize));
                 } else {
-                    return new String(keyData);
+                    key = new String(keyData);
                 }
             }
 
-            return longKey;
+            if (key.contains("messages")) {
+                System.out.println();
+            }
+
+            if (key.contains("_dk_")) {
+                String[] parts = key.split(" ");
+                key = parts[parts.length - 1];
+            }
+
+            return key;
 
         } catch (Exception exe) {
             exe.printStackTrace();

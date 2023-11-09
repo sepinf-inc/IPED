@@ -92,38 +92,36 @@ public class CacheIndexParser extends AbstractParser {
                 for (CacheEntry ce : lce) {
 
                     Map<String, String> httpResponse = ce.getHttpResponse();
+                    String requestUrl = ce.getRequestURL();
 
                     try {
-
-                        if (ce.getRequestURL().contains("unknown")) {
-                            System.out.println();
-                        }
 
                         String contentEncoding = httpResponse.get("content-encoding");
                         InputStream is;
                         try {
                             is = ce.getResponseDataSize() > 0
-                                    ? ce.getResponseDataStream(httpResponse.get("content-encoding"))
+                                    ? ce.getResponseDataStream(contentEncoding)
                                     : new ByteArrayInputStream(new byte[] {});
                         } catch (InputStreamNotAvailable e) {
-                            LOGGER.warn("Input Stream for entry not found:" + ce.getRequestURL() + " in item "
+                            LOGGER.warn(
+                                    "Input Stream for entry not found:" + requestUrl + " in item "
                                     + item.getPath());
 
                             is = new ByteArrayInputStream(new byte[] {});
                         }
 
                         Metadata entryMeta = new Metadata();
-                        entryMeta.set("URL", ce.getRequestURL());
+                        entryMeta.set("URL", requestUrl);
                         entryMeta.set(TikaCoreProperties.TITLE,
-                                ce.getRequestURL().substring(ce.getRequestURL().lastIndexOf('/') + 1));
+                                requestUrl.substring(requestUrl.lastIndexOf('/') + 1));
                         entryMeta.set(TikaCoreProperties.RESOURCE_NAME_KEY,
-                                ce.getRequestURL().substring(ce.getRequestURL().lastIndexOf('/') + 1));
+                                requestUrl.substring(requestUrl.lastIndexOf('/') + 1));
                         entryMeta.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
                         entryMeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                         entryMeta.set(IS_CACHE_INDEX_ENTRY, Boolean.TRUE.toString());
                         entryMeta.set(CACHE_ENTRY_NAME, ce.getName());
-                        entryMeta.set(CACHE_URL, ce.getRequestURL());
+                        entryMeta.set(CACHE_URL, requestUrl);
                         entryMeta.set(TikaCoreProperties.CREATED, ce.getCreationTime());
 
                         for (Map.Entry<String, String> entry : httpResponse.entrySet()) {
@@ -146,9 +144,7 @@ public class CacheIndexParser extends AbstractParser {
                     throw exception;
                 }
             } catch (IOException e1) {
-                e1.printStackTrace();
             } catch (ChromeCacheException e) {
-                e.printStackTrace();
             }
         }
     }

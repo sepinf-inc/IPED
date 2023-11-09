@@ -34,12 +34,12 @@ public class Index {
     private static Logger logger = LoggerFactory.getLogger(Index.class);
 
     static private final long MAGIC_NUMBER_LE = 0xC103CAC3l; // magic number in little endian
-    static private final List<Long> supportedVersions = ImmutableList.of(0x00020001l);
+    static private final List<Long> supportedVersions = ImmutableList.of(0x00020001l, 0x00030000l);
 
     private final long magicNumber;
     private final long version;
     private final int entriesCont;
-    private final int bytesCont;
+    private long bytesCont;
     private final int lastFile;
     private final int id;
     private final CacheAddr stats;
@@ -71,7 +71,7 @@ public class Index {
         return entriesCont;
     }
 
-    public int getBytesCont() {
+    public long getBytesCont() {
         return bytesCont;
     }
 
@@ -176,7 +176,11 @@ public class Index {
         experiment = read4bytes(is);
         createTime = readDate(is);
 
-        for (int i = 0; i < 52; i++) {
+        if(version == 0x00030000l) {
+            bytesCont = read8bytes(is);
+        }
+
+        for (int i = 0; i < 50; i++) {
             padding[i] = (int) readUnsignedInt(is);
         }
 
@@ -217,14 +221,28 @@ public class Index {
             table[i] = new CacheAddr(readUnsignedInt(is));
         }
 
+        int validEntryCount = 0;
         for (CacheAddr ea : table) {
             try (InputStream eaIS = ea.getInputStream(dataFiles, externalFiles, null)) {
-                lst.add(new CacheEntry(eaIS, dataFiles, externalFiles));
+                validEntryCount++;
+                CacheEntry ce = new CacheEntry(eaIS, dataFiles, externalFiles);
+                lst.add(ce);
+                while (ce.getNextEntry().getAddress() != 0) {
+                    CacheAddr na = ce.getNextEntry();
+                    try (InputStream naIS = na.getInputStream(dataFiles, externalFiles, null)) {
+                        ce = new CacheEntry(naIS, dataFiles, externalFiles);
+                        lst.add(ce);
+                    }
+                }
             } catch (InputStreamNotAvailable e) {
                 continue;
             } catch (IOException e) {
                 logger.warn("Exception reading CacheEntry of Discord Index " + path, e);
             }
+        }
+        if (validEntryCount != entriesCont) {
+            System.out.println();
+
         }
     }
 
