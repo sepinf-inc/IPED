@@ -26,6 +26,7 @@ import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -91,13 +92,8 @@ public class ThreemaParser extends SQLite3DBParser {
 
     public static final MediaType THREEMA_USER_PLIST = PListDetector.THREEMA_USER_PLIST;
 
+    // This fallback parser is thread safe
     private final SQLite3Parser sqliteParser = new SQLite3Parser();
-
-    private List<Chat> chatList;
-
-    private ThreemaAccount account;
-
-    private EmbeddedDocumentExtractor extractor;
 
     private boolean extractMessages = true;
 
@@ -131,7 +127,7 @@ public class ThreemaParser extends SQLite3DBParser {
             }
             else if(mimetype.equals(CHAT_STORAGE_F.toString()))
             {
-                parseThreemaMessages(handler, metadata, context);
+                parseThreemaMessages(stream, handler, metadata, context, new ExtractorIOSFactory());
             }
 
         } catch (Exception e) {
@@ -141,10 +137,9 @@ public class ThreemaParser extends SQLite3DBParser {
         }
     }
 
-    private void extractMediaFilesFromDatabase(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context, ExtractorFactory extractorIOSFactory) throws IOException, SAXException, TikaException {
+    private List<Chat> extractChatList(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context, ExtractorFactory extractorIOSFactory) throws IOException, SAXException, TikaException {
 
-        extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
-
+        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
         IItemSearcher searcher = context.get(IItemSearcher.class);
 
         if (extractor.shouldParseEmbedded(metadata))
@@ -161,45 +156,14 @@ public class ThreemaParser extends SQLite3DBParser {
 
                 tis = TikaInputStream.get(stream, tmp);
                 File tempDbFile = tis.getFile();
-                account = getUserAccount(searcher);
+                ThreemaAccount account = getUserAccount(searcher);
 
                 exportWalLog(tempDbFile, context, tmp);
                 exportRollbackJournal(tempDbFile, context, tmp);
                 extractorIOSFactory.setConnectionParams(tis, metadata, context, this);
                 Extractor threemaExtractor = extractorIOSFactory.createMessageExtractor(filePath, tempDbFile, account, recoverDeletedRecords);
-                chatList = threemaExtractor.getChatList();
-
-                for(Chat c : chatList)
-                {
-                    // First search for hashes
-                    for (Message m : c.getMessages()) {
-                        if (m.getMediaItem() != null || m.getData() == null) {
-                            continue;
-                        }
-                        if(m.getData().length > 36)
-                        {
-                            try
-                            {
-                                Metadata embedFileData = new Metadata();
-
-                                embedFileData.set(BasicProps.NAME, "Threema_Media_item_" + m.getId());
-                                embedFileData.set(StandardParser.INDEXER_CONTENT_TYPE, m.getMediaMime());
-                                embedFileData.set(ExtraProperties.CARVEDBY_METADATA_NAME, this.getClass().getName());
-
-                                //This property forces media item to be extracted to sub-items folder (instead of db storage), allowing it to be accessible from External HTML viewers (useful chat reports)
-                                embedFileData.set(ExtraProperties.EXTRACTED_FILE, Boolean.TRUE.toString());
-
-                                embedFileData.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
-                                embedFileData.set(TikaCoreProperties.TITLE, "Threema_Media_item_" + m.getId());
-
-                                extractor.parseEmbedded(new ByteArrayInputStream(m.getData()), handler, embedFileData, false);
-
-                            } catch (Exception e) {
-                                logger.warn("Error trying to parse Threema Database embedded files", e);
-                            }
-                        }
-                    }
-                }
+                List<Chat> chatList = threemaExtractor.getChatList();
+                return chatList;
 
             } catch (Exception e) {
                 if (tis != null) {
@@ -207,19 +171,55 @@ public class ThreemaParser extends SQLite3DBParser {
                 }
                 // always throw exceptions to flag the file caused a parsing error
                 throw e;
+            } finally {
+                metadata.set(StandardParser.INDEXER_CONTENT_TYPE, extractorIOSFactory.getType2().toString());
             }
         }
-
-        metadata.set(StandardParser.INDEXER_CONTENT_TYPE, extractorIOSFactory.getType2().toString());
+        return Collections.emptyList();
     }
 
-    private void parseThreemaMessages(ContentHandler handler, Metadata metadata,
-                                      ParseContext context) throws TikaException {
+    private void extractMediaFilesFromDatabase(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context, ExtractorFactory extractorIOSFactory) throws IOException, SAXException, TikaException {
+        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
+        List<Chat> chatList = extractChatList(stream, handler, metadata, context, new ExtractorIOSFactory());
+        for (Chat c : chatList) {
+            // First search for hashes
+            for (Message m : c.getMessages()) {
+                if (m.getMediaItem() != null || m.getData() == null) {
+                    continue;
+                }
+                if (m.getData().length > 36) {
+                    try {
+                        Metadata embedFileData = new Metadata();
 
+                        embedFileData.set(BasicProps.NAME, "Threema_Media_item_" + m.getId());
+                        embedFileData.set(StandardParser.INDEXER_CONTENT_TYPE, m.getMediaMime());
+                        embedFileData.set(ExtraProperties.CARVEDBY_METADATA_NAME, this.getClass().getName());
+
+                        // This property forces media item to be extracted to sub-items folder (instead
+                        // of db storage), allowing it to be accessible from External HTML viewers
+                        // (useful chat reports)
+                        embedFileData.set(ExtraProperties.EXTRACTED_FILE, Boolean.TRUE.toString());
+
+                        embedFileData.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+                        embedFileData.set(TikaCoreProperties.TITLE, "Threema_Media_item_" + m.getId());
+
+                        extractor.parseEmbedded(new ByteArrayInputStream(m.getData()), handler, embedFileData, false);
+
+                    } catch (Exception e) {
+                        logger.warn("Error trying to parse Threema Database embedded files", e);
+                    }
+                }
+            }
+        }
+    }
+
+    private void parseThreemaMessages(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context, ExtractorFactory extractorIOSFactory) throws TikaException {
         IItemSearcher searcher = context.get(IItemSearcher.class);
-
+        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
         if (extractor.shouldParseEmbedded(metadata)) {
             try {
+                ThreemaAccount account = getUserAccount(searcher);
+                List<Chat> chatList = extractChatList(stream, handler, metadata, context, new ExtractorIOSFactory());
                 createReport(chatList, searcher, handler, extractor, account);
 
             } catch (Exception e) {
@@ -231,8 +231,6 @@ public class ThreemaParser extends SQLite3DBParser {
             }
         }
     }
-
-
 
     private void createReport(List<Chat> chatList, IItemSearcher searcher, ContentHandler handler, EmbeddedDocumentExtractor extractor, ThreemaAccount account) throws Exception {
         int chatVirtualId = 0;
