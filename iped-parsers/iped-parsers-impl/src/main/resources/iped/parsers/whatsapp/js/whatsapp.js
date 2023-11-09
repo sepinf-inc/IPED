@@ -69,20 +69,60 @@ function createMediaControls() {
 }
 
 function goToAnchorId(id){
-	var scroll_padding_top = 84;
-	var div = document.getElementById(id);
-	var scrollY = window.scrollY;
-	if (div){	
-		var top = div.getBoundingClientRect().top;	
-	    location.hash = '';
-		window.scrollTo(0, top + scrollY);	
-		location.href="#"+id;
-		if (top > scroll_padding_top){
-			window.scrollTo(0, scrollY);	
-		}		
-	}else{
-		return false;
-	}
+    var scroll_padding_top = 84;
+    var div = document.getElementById(id);
+    var scrollY = window.scrollY;
+    if (div){
+        var top = div.getBoundingClientRect().top;
+        location.hash = '';
+        window.scrollTo(0, top + scrollY);
+        location.href="#"+id;
+        if (top > scroll_padding_top){
+            window.scrollTo(0, scrollY);
+        }
+    }else{ // Id not found, can be in previous pages
+        var input;
+        var fragMessageChat = document.getElementById('fragMessageChat').value;
+        var fragMessageId = document.getElementById('fragMessageId').value;
+        var fragMessageClose = document.getElementById('fragMessageClose').value;
+        var i = 0;
+        while( true ){
+            input = document.getElementById('frag'+i);
+            if (input){
+                if (id <= input.value){
+                    show_prompt("",fragMessageChat + " " + i + "</br> "+fragMessageId+" "+id,false,fragMessageClose);
+                    break;
+                }else{
+                    i = i + 1;
+                }
+            }else{
+                break;
+            }
+        }
+        return false;
+    }
+}
+
+/* Author: https://github.com/lecoa/Vanilla-JS-Prompt */ 
+function show_prompt(title, message, pribtnHide = false, pribtnLabel = "Close", secBtnLabel = '', secBtnAction = '') {
+    document.getElementById("modal-alert-title").innerHTML = title;
+    document.getElementById("modal-alert-content").innerHTML = message;
+    if (pribtnHide) {
+        document.getElementById("modal-button-primary").style.display = "none";
+    } else {
+        document.getElementById("modal-button-primary").style.display = "inline-block";
+    }
+    document.getElementById("modal-button-primary").innerText = pribtnLabel;
+    if (secBtnLabel != '' && secBtnAction != '') {
+        document.getElementById("modal-button-secondary").innerText = secBtnLabel;
+        document.getElementById("modal-button-secondary").setAttribute('onclick', secBtnAction);
+        document.getElementById("modal-button-secondary").style.display = "inline-block";
+        document.getElementById("modal-button-primary").classList.add("default");
+    } else {
+        document.getElementById("modal-button-secondary").style.display = "none";
+        document.getElementById("modal-button-primary").classList.remove("default");
+    }
+    document.getElementById("modal-alert").style.display = "block";
 }
 
 if (navigator.userAgent.search("JavaFX") < 0) {
