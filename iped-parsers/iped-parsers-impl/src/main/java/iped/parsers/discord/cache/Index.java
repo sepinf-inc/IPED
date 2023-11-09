@@ -232,6 +232,8 @@ public class Index {
                     try (InputStream naIS = na.getInputStream(dataFiles, externalFiles, null)) {
                         ce = new CacheEntry(naIS, dataFiles, externalFiles);
                         lst.add(ce);
+                    } catch (Exception e) {
+                        break;// avoid potential infinite loop
                     }
                 }
             } catch (InputStreamNotAvailable e) {
