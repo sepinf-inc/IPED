@@ -206,7 +206,7 @@ public class DiscordParser extends AbstractParser {
 
                         if (parts.length > 1) {
                             List<IItemReader> atts = searcher.search(commonQuery + " AND "
-                                    + CacheIndexParser.CACHE_URL.replace(":", "\\:") + ":" + parts[1]);
+                                    + CacheIndexParser.CACHE_URL.replace(":", "\\:") + ":\"" + parts[1] + "\"");
                             for (IItemReader attsItem : atts) {
                                 da.setMediaHash(attsItem.getHash());
                                 da.setContent_type(attsItem.getMediaType().toString());
