@@ -40,7 +40,6 @@ public class CacheIndexParser extends AbstractParser {
 
     private static Logger LOGGER = LoggerFactory.getLogger(CacheIndexParser.class);
 
-
     public static final String METADATA_PREFIX = "chromeCache";
     public static final String IS_CACHE_INDEX_ENTRY = METADATA_PREFIX + ":isChromeCacheEntry";
     public static final String CACHE_URL = METADATA_PREFIX + ":chromeCacheUrl";
@@ -77,7 +76,7 @@ public class CacheIndexParser extends AbstractParser {
             List<IItemReader> dataFiles = searcher.search(commonQuery + " AND " + BasicProps.NAME
                     + ":(\"data_0\"  OR \"data_1\" OR \"data_2\" OR \"data_3\" OR \"data_4\" OR \"data_5\")");
 
-            MetadataUtil.addCustomMetadataPrefix("chromeCache");
+            MetadataUtil.addCustomMetadataPrefix(METADATA_PREFIX);
 
             Index index;
             try {
