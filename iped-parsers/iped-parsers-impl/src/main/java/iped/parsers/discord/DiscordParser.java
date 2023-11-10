@@ -1,10 +1,12 @@
 package iped.parsers.discord;
 
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -40,6 +42,7 @@ import iped.parsers.browsers.chrome.CacheIndexParser;
 import iped.parsers.discord.cache.CacheAddr.InputStreamNotAvailable;
 import iped.parsers.discord.cache.Index;
 import iped.parsers.discord.json.DiscordAttachment;
+import iped.parsers.discord.json.DiscordAuthor;
 import iped.parsers.discord.json.DiscordRoot;
 import iped.parsers.standard.StandardParser;
 import iped.properties.BasicProps;
@@ -73,10 +76,13 @@ public class DiscordParser extends AbstractParser {
     public static final String CALL_MIME_TYPE = "call/x-discord-call";
     public static final String ATTACH_MIME_TYPE = "message/x-discord-attachment";
 
+    public static final MediaType DISCORD_ACCOUNT = MediaType.application("x-discord-account"); //$NON-NLS-1$
+
     private static Logger LOGGER = LoggerFactory.getLogger(Index.class);
 
     private static final Set<MediaType> SUPPORTED_TYPES = new HashSet<MediaType>(
             Arrays.asList(MediaType.parse(CHAT_MIME_TYPE)));
+    private static final String ME_URL = "https://discord.com/api/v9/users/@me";
 
     static
     {
@@ -155,10 +161,10 @@ public class DiscordParser extends AbstractParser {
                 ex.printStackTrace();
             }
 
+            HashMap<String, byte[]> avatarCache = new HashMap<>();
             if (!discordRoot.isEmpty()) {
                 metadata.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
 
-                HashMap<String, byte[]> avatarCache = new HashMap<>();
                 // Checking if the image file is cached, to do so, iterates through all authors
                 // and attachments to check if they are in the case, comparing their attributes
                 for (DiscordRoot dr : discordRoot) {
@@ -195,6 +201,41 @@ public class DiscordParser extends AbstractParser {
 
             String chatName = "DiscordChat id(" + discordRoot.get(0).getId() + ")";
 
+            DiscordAuthor me = null;
+            // find me info
+            List<IItemReader> mes = searcher.search(
+                    commonQuery + " AND " + CacheIndexParser.CACHE_URL.replace(":", "\\:") + ":\"" + ME_URL + "\"");
+            for (IItemReader mei : mes) {
+                if (mei.getName().equals("@me")) {
+                    try (InputStream is2 = mei.getBufferedInputStream()) {
+                        try {
+                            byte[] mebytes = is2.readAllBytes();
+                            me = mapper.readValue(mebytes, new TypeReference<DiscordAuthor>() {
+                            });
+                            Metadata memeta = new Metadata();
+                            memeta.set(TikaCoreProperties.TITLE, me.getUsername());
+                            memeta.set(ExtraProperties.USER_NAME, me.getName());
+                            memeta.set(ExtraProperties.USER_PHONE, me.getPhone());
+                            memeta.set(ExtraProperties.USER_ACCOUNT, me.getId());
+                            memeta.set(ExtraProperties.USER_ACCOUNT_TYPE, "Discord");
+                            memeta.set(ExtraProperties.USER_EMAIL, me.getEmail());
+                            // memeta.set(ExtraProperties.USER_NOTES, me.getBio());
+                            memeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+
+                            if (me.getAvatar() != null) {
+                                byte[] meavatar = avatarCache.get(me.getAvatar());
+                                memeta.set(ExtraProperties.THUMBNAIL_BASE64,
+                                        Base64.getEncoder().encodeToString(meavatar));
+                            }
+                            memeta.set(StandardParser.INDEXER_CONTENT_TYPE, DISCORD_ACCOUNT.toString());
+                            extractor.parseEmbedded(new ByteArrayInputStream(mebytes), handler, memeta, false);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+
             metadata.set("URL", item.getName());
             metadata.set(TikaCoreProperties.TITLE, chatName);
             metadata.set(StandardParser.INDEXER_CONTENT_TYPE, CHAT_MIME_TYPE);
@@ -226,7 +267,7 @@ public class DiscordParser extends AbstractParser {
             Collections.sort(discordRoot);
 
             XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
-            new DiscordHTMLReport().printHTML(discordRoot, xhtml, searcher);
+            new DiscordHTMLReport(me).printHTML(discordRoot, xhtml, searcher);
 
             extractMessages(chatName, discordRoot, handler, extractor, 0);
         }

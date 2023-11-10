@@ -17,6 +17,7 @@ import org.xml.sax.SAXException;
 
 import iped.data.IItemReader;
 import iped.parsers.discord.json.DiscordAttachment;
+import iped.parsers.discord.json.DiscordAuthor;
 import iped.parsers.discord.json.DiscordMention;
 import iped.parsers.discord.json.DiscordReaction;
 import iped.parsers.discord.json.DiscordRoot;
@@ -24,6 +25,7 @@ import iped.parsers.util.Messages;
 import iped.parsers.util.Util;
 import iped.properties.BasicProps;
 import iped.search.IItemSearcher;
+import iped.utils.IOUtil;
 import iped.utils.SimpleHTMLEncoder;
 
 /***
@@ -49,7 +51,26 @@ public class DiscordHTMLReport {
             + ".h { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: center; vertical-align: middle; word-wrap: break-word; width: 110px; }"
             + ".check {vertical-align: top; }" + " TD:hover[onclick]{background-color:#F0F0F0; cursor:pointer} "
             + ".img {height: 256px}";
+    private DiscordAuthor me;
 
+    public DiscordHTMLReport(DiscordAuthor me) {
+        this.me = me;
+    }
+
+    private static byte[] readResourceAsBytes(String resource) {
+        byte[] result = null;
+        try {
+            result = IOUtil.loadInputStream(DiscordHTMLReport.class.getResourceAsStream(resource));
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+    private static String defaultAvatarMe = Base64.getEncoder().encodeToString(readResourceAsBytes("discordme.png"));
+    private static String defaultAvatarOther = Base64.getEncoder().encodeToString(readResourceAsBytes("discordme.png"));
 
     public void printHTML(List<DiscordRoot> drl, XHTMLContentHandler xHandler, IItemSearcher searcher)
             throws IOException {
@@ -90,10 +111,23 @@ public class DiscordHTMLReport {
                     xHandler.startElement("TR");
                     xHandler.startElement("TD");
                     if (dr.getAuthor().getAvatarBytes() == null) {
-                        xHandler.startElement(
-                                "img src='https://cdn.discordapp.com/avatars/" + format(dr.getAuthor().getId()) + "/"
-                                        + format(dr.getAuthor().getAvatar()) + ".png' alt='' width='50' height='50'");
-                        xHandler.endElement("img");
+                        String avatar = dr.getAuthor().getAvatar();
+                        if (avatar == null || avatar.trim().equals("")) {
+                            String defaultAvatar;
+                            if (me != null && dr.getAuthor().getId().equals(me.getId())) {
+                                defaultAvatar = defaultAvatarMe;
+                            } else {
+                                defaultAvatar = defaultAvatarOther;
+                            }
+                            xHandler.startElement("img src='data:image/png;base64, " + defaultAvatar
+                                    + "' alt='' width='50' height='50'");
+                            xHandler.endElement("img");
+                        } else {
+                            xHandler.startElement(
+                                    "img src='https://cdn.discordapp.com/avatars/" + format(dr.getAuthor().getId())
+                                            + "/" + format(avatar) + ".png' alt='' width='50' height='50'");
+                            xHandler.endElement("img");
+                        }
                     } else {
                         xHandler.startElement("img src='data:image/jpeg;base64, "
                                 + Base64.getEncoder().encodeToString(dr.getAuthor().getAvatarBytes())
@@ -244,6 +278,23 @@ public class DiscordHTMLReport {
                                         + "data-src2=\"" //$NON-NLS-1$
                                         + format(source) + "\"");
                                 xHandler.endElement("div");
+                            }
+                            if (item.getMediaType().toString().startsWith("video/")) {
+                                byte[] thumb = item.getThumb();
+                                if (thumb != null) {
+                                    xHandler.startElement("img class=\"thumb iped-video\" src=\""
+                                            + "data:image/jpg;base64," + iped.parsers.whatsapp.Util.encodeBase64(thumb)
+                                            + "\"" + " data-src1=\"" + format(exportPath) + "\"" + " data-src2=\""
+                                            + format(source) + "\"" + " title=\"" + att.getFilename() //$NON-NLS-1$ //$NON-NLS-2$
+                                            + "\"");
+                                    xHandler.endElement("img");
+
+                                } else {
+                                    xHandler.startElement("div class=\"videoImg iped-video\" title=\"Video\""
+                                            + " data-src1=\"" + format(exportPath) + "\"" + " data-src2=\""
+                                            + format(source) + "\"");
+                                    xHandler.startElement("div");
+                                }
                             }
 
                         } else {
