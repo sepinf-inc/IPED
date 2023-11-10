@@ -1377,6 +1377,14 @@
     <mime-type type="message/x-telegram-attachment">
         <sub-class-of type="message/x-telegram-message"/>
     </mime-type>
+    
+    <mime-type type="message/x-threema-message">
+        <sub-class-of type="message/x-chat-message"/>
+    </mime-type>
+    
+    <mime-type type="message/x-threema-attachment">
+        <sub-class-of type="message/x-threema-message"/>
+    </mime-type>
 
     <mime-type type="call/x-whatsapp-call">
         <sub-class-of type="message/x-chat-message"/>
