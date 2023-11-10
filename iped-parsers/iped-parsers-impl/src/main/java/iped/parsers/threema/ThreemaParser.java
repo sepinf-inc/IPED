@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -373,6 +374,9 @@ public class ThreemaParser extends SQLite3DBParser {
             if (m.getMediaQuery() != null && m.getMediaSize() > 2) {
                 meta.set(StandardParser.INDEXER_CONTENT_TYPE, THREEMA_ATTACHMENT.toString());
                 meta.set(ExtraProperties.LINKED_ITEMS, revertEscapeQuery(m.getMediaQuery())); // $NON-NLS-1$
+            }
+            if (m.getMediaItem() != null && m.getMediaItem().getThumb() != null) {
+                meta.set(ExtraProperties.THUMBNAIL_BASE64, Base64.getEncoder().encodeToString(m.getMediaItem().getThumb()));
             }
             if (!m.getChildPornSets().isEmpty()) {
                 meta.set("hash:status", "pedo"); //$NON-NLS-1$ //$NON-NLS-2$
