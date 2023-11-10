@@ -519,6 +519,9 @@ public class ThreemaParser extends SQLite3DBParser {
             for (Message m : messageList) {
                 m.setMediaItem(item);
                 m.setMediaQuery(escapeQuery(query));
+                if (m.getMediaSize() != item.getLength()) {
+                    m.setMediaSize(item.getLength());
+                }
             }
         }
     }
