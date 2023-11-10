@@ -45,6 +45,15 @@ import com.webcohesion.ofx4j.domain.data.banking.BankStatementResponse;
 import com.webcohesion.ofx4j.domain.data.banking.BankStatementResponseTransaction;
 import com.webcohesion.ofx4j.domain.data.banking.BankingResponseMessageSet;
 import com.webcohesion.ofx4j.domain.data.banking.BankAccountDetails;
+import com.webcohesion.ofx4j.domain.data.creditcard.CreditCardStatementResponse;
+import com.webcohesion.ofx4j.domain.data.creditcard.CreditCardStatementResponseTransaction;
+import com.webcohesion.ofx4j.domain.data.creditcard.CreditCardResponseMessageSet;
+import com.webcohesion.ofx4j.domain.data.creditcard.CreditCardAccountDetails;
+import com.webcohesion.ofx4j.domain.data.investment.transactions.*;
+import com.webcohesion.ofx4j.domain.data.investment.statements.*;
+import com.webcohesion.ofx4j.domain.data.investment.positions.*;
+import com.webcohesion.ofx4j.domain.data.investment.inv401k.*;
+import com.webcohesion.ofx4j.domain.data.investment.accounts.*;
 import com.webcohesion.ofx4j.domain.data.common.BalanceInfo;
 import com.webcohesion.ofx4j.domain.data.common.TransactionList;
 import com.webcohesion.ofx4j.domain.data.signon.SignonResponse;
@@ -547,6 +556,542 @@ public class OFXParser extends AbstractParser {
 
     }
 
+    public void decodeCreditCard(ResponseEnvelope re, HSSFWorkbook workbook) throws Exception{
+
+        
+        HSSFCell cell;
+
+        CellStyle cellStyle = workbook.createCellStyle();
+        CreationHelper createHelper = workbook.getCreationHelper();
+        cellStyle.setDataFormat(createHelper.createDataFormat().getFormat(dateStringDefault));
+
+
+        ResponseMessageSet message = re.getMessageSet(MessageSetType.creditcard);
+        if (message != null){
+
+            List<CreditCardStatementResponseTransaction> cc = ((CreditCardResponseMessageSet) message).getStatementResponses();
+
+            if (cc != null){
+
+                short TypeCount = 1;
+                for (CreditCardStatementResponseTransaction b : cc) {
+               
+                    short cnb = 0;
+                    short rnb = 0;
+                    CreditCardStatementResponse bsr = b.getMessage();
+
+                    HSSFSheet sheetType = workbook.createSheet("CreditCard_"+TypeCount);
+
+                    HSSFRow rowheadType = sheetType.createRow(rnb++);
+                    rowheadType.createCell(cnb++).setCellValue("Account Number");
+                    rowheadType.createCell(cnb++).setCellValue("Account Key");    
+                    rowheadType.createCell(cnb++).setCellValue("Currency Code");                          
+                    rowheadType.createCell(cnb++).setCellValue("Ledger Balance Amount");
+                    rowheadType.createCell(cnb++).setCellValue("Ledger Balance Date");                          
+                    rowheadType.createCell(cnb++).setCellValue("Available Balance Amount");
+                    rowheadType.createCell(cnb++).setCellValue("Available Balance Date");
+                    rowheadType.createCell(cnb++).setCellValue("Transaction Start Date");
+                    rowheadType.createCell(cnb++).setCellValue("Transaction End Date");
+                
+                    if (bsr != null ){
+
+                        cnb = 0;
+                        HSSFRow rowType = sheetType.createRow(rnb++);
+
+                        CreditCardAccountDetails bad = bsr.getAccount();
+                        if (bad != null){
+
+                            cell = rowType.createCell(cnb++);
+                            setStringCellValue(cell,bad.getAccountNumber());
+
+                            cell = rowType.createCell(cnb++);
+                            setStringCellValue(cell,bad.getAccountKey());
+
+
+                        }else{
+                            cnb += 2;
+                        }
+
+                        cell = rowType.createCell(cnb++);
+                        setStringCellValue(cell,bsr.getCurrencyCode());
+
+
+                        BalanceInfo bil = bsr.getLedgerBalance();
+                        if (bil != null) {
+
+                            cell = rowType.createCell(cnb++);
+                            setNumericCellValue(cell, bil.getAmount());
+
+                            cell = rowType.createCell(cnb++);
+                            setDateCellValue(cell,bil.getAsOfDate(),cellStyle);                            
+
+
+                        }else{
+                            cnb += 2;
+                        }
+
+                        BalanceInfo bia = bsr.getAvailableBalance();
+                        if (bia != null) {
+
+                            cell = rowType.createCell(cnb++);
+                            setNumericCellValue(cell, bia.getAmount());
+
+                            cell = rowType.createCell(cnb++);
+                            setDateCellValue(cell,bia.getAsOfDate(),cellStyle);                            
+
+                        }else{
+                            cnb += 2;
+                        }
+                   
+                        TransactionList tl = bsr.getTransactionList();                   
+
+                        Date ds = null;
+                        Date de = null;
+                        if ( tl != null) {                
+                            ds = tl.getStart();
+                            de = tl.getEnd();                
+                        }                
+
+                        if ( ds != null){
+                            cell = rowType.createCell(cnb++);
+                            setDateCellValue(cell,ds,cellStyle);       
+
+                        }else{
+                            cnb += 1;
+                        }
+
+
+                        if ( de != null){
+                            cell = rowType.createCell(cnb++);
+                            setDateCellValue(cell,de,cellStyle);                                   
+
+                        }else{
+                            cnb += 1;
+                        }
+
+                        for (int i=0 ; i < cnb; i++)
+                            sheetType.autoSizeColumn(i);
+
+                        ds = null;
+                        de = null;
+
+
+                        if ( tl != null) {
+
+                            List<Transaction> list = tl.getTransactions();
+                            
+                            short cnt = 0;
+                            short rnt = 0;
+                       
+                            HSSFSheet sheetTrans = workbook.createSheet("CreditCard_"+TypeCount+" Transactions");
+
+                            HSSFRow rowheadTrans = sheetTrans.createRow(rnt++);
+                            rowheadTrans.createCell(cnt++).setCellValue("Type");
+                            rowheadTrans.createCell(cnt++).setCellValue("Id");
+                            rowheadTrans.createCell(cnt++).setCellValue("Date Posted");
+                            rowheadTrans.createCell(cnt++).setCellValue("Ammount");           
+                            rowheadTrans.createCell(cnt++).setCellValue("Memo");        
+                            rowheadTrans.createCell(cnt++).setCellValue("Check Number");    
+                            rowheadTrans.createCell(cnt++).setCellValue("Date Initiated");           
+                            rowheadTrans.createCell(cnt++).setCellValue("Date Available");           
+                            rowheadTrans.createCell(cnt++).setCellValue("Correction Id");    
+                            rowheadTrans.createCell(cnt++).setCellValue("Server-Assigned Temporary Id");    
+                            rowheadTrans.createCell(cnt++).setCellValue("Reference Number");    
+                            rowheadTrans.createCell(cnt++).setCellValue("Standard Industrial Code");
+                            rowheadTrans.createCell(cnt++).setCellValue("Payee Id");
+                            rowheadTrans.createCell(cnt++).setCellValue("Name");                            
+                            rowheadTrans.createCell(cnt++).setCellValue("Payee"); 
+                            rowheadTrans.createCell(cnt++).setCellValue("Currency Code"); 
+                            rowheadTrans.createCell(cnt++).setCellValue("Currency Exchange Rate"); 
+                            rowheadTrans.createCell(cnt++).setCellValue("Original Currency Code"); 
+                            rowheadTrans.createCell(cnt++).setCellValue("Original Currency Exchange Rate"); 
+                       
+                            for (Transaction transaction : list) {
+                                
+                                cnt = 0;
+                                HSSFRow rowTrans = sheetTrans.createRow(rnt++);
+
+                                if (transaction.getTransactionType()!= null){
+                                    cell = rowTrans.createCell(cnt++);                                    
+                                    setStringCellValue(cell,transaction.getTransactionType().name());
+                                }else{
+                                    cnt += 1;
+                                }
+
+                                cell = rowTrans.createCell(cnt++);
+                                setStringCellValue(cell,transaction.getId());
+                                
+                                cell = rowTrans.createCell(cnt++);
+                                setDateCellValue(cell,transaction.getDatePosted(),cellStyle);
+                                
+                                cell = rowTrans.createCell(cnt++);
+                                setNumericCellValue(cell, transaction.getAmount());
+
+                                cell = rowTrans.createCell(cnt++);
+                                setStringCellValue(cell,transaction.getMemo());
+
+                                cell = rowTrans.createCell(cnt++);
+                                setStringCellValue(cell,transaction.getCheckNumber());
+
+                                cell = rowTrans.createCell(cnt++);
+                                setDateCellValue(cell,transaction.getDateInitiated(),cellStyle);
+                                
+                                cell = rowTrans.createCell(cnt++);
+                                setDateCellValue(cell,transaction.getDateAvailable(),cellStyle);                                
+
+                                cell = rowTrans.createCell(cnt++);
+                                setStringCellValue(cell,transaction.getCorrectionId());                                
+
+                                cell = rowTrans.createCell(cnt++);
+                                setStringCellValue(cell,transaction.getTempId());    
+
+                                cell = rowTrans.createCell(cnt++);
+                                setStringCellValue(cell,transaction.getReferenceNumber());
+
+                                cell = rowTrans.createCell(cnt++);
+                                setStringCellValue(cell,transaction.getStandardIndustrialCode());
+
+                                cell = rowTrans.createCell(cnt++);
+                                setStringCellValue(cell,transaction.getPayeeId());
+
+                                cell = rowTrans.createCell(cnt++);
+                                setStringCellValue(cell,transaction.getName());
+
+                                cell = rowTrans.createCell(cnt++);
+                                setStringCellValue(cell,transaction.getPayee());
+
+                                if (transaction.getCurrency()!= null){
+
+                                    cell = rowTrans.createCell(cnt++);
+                                    setStringCellValue(cell,transaction.getCurrency().getCode());
+
+                                    cell = rowTrans.createCell(cnt++);
+                                    setNumericCellValue(cell, transaction.getCurrency().getExchangeRate());
+                                }else{
+                                    cnt += 2;
+                                }
+                                
+                                if (transaction.getOriginalCurrency()!= null){
+                                    cell = rowTrans.createCell(cnt++);
+                                    setStringCellValue(cell,transaction.getOriginalCurrency().getCode());
+
+                                    cell = rowTrans.createCell(cnt++);
+                                    setNumericCellValue(cell, transaction.getOriginalCurrency().getExchangeRate());
+                                }else{
+                                    cnt += 2;
+                                }
+
+                            }
+                            
+                            for (int i=0 ; i < cnt; i++)
+                                sheetTrans.autoSizeColumn(i);               
+                         }
+
+                    }
+                    TypeCount++;   
+                }
+            }
+
+        }
+
+        cell = null;
+        cellStyle = null;
+        message = null;
+
+    }
+
+    //TODO - Finish implementing
+    public void decodeInvestiment(ResponseEnvelope re, HSSFWorkbook workbook) throws Exception{
+
+        
+        HSSFCell cell;
+
+        CellStyle cellStyle = workbook.createCellStyle();
+        CreationHelper createHelper = workbook.getCreationHelper();
+        cellStyle.setDataFormat(createHelper.createDataFormat().getFormat(dateStringDefault));
+
+
+        ResponseMessageSet message = re.getMessageSet(MessageSetType.investment);
+        if (message != null){
+
+            List<InvestmentStatementResponseTransaction> cc = ((InvestmentStatementResponseMessageSet) message).getStatementResponses();
+
+            if (cc != null){
+
+                short TypeCount = 1;
+                for (InvestmentStatementResponseTransaction b : cc) {
+               
+                    short cnb = 0;
+                    short rnb = 0;
+                    InvestmentStatementResponse bsr = b.getMessage();
+
+                    HSSFSheet sheetType = workbook.createSheet("Investment_"+TypeCount);
+
+                    HSSFRow rowheadType = sheetType.createRow(rnb++);
+                    rowheadType.createCell(cnb++).setCellValue("Date Of Statement");
+                    rowheadType.createCell(cnb++).setCellValue("Broker Id");
+                    rowheadType.createCell(cnb++).setCellValue("Account Number");
+                    rowheadType.createCell(cnb++).setCellValue("Account Key");    
+                    rowheadType.createCell(cnb++).setCellValue("Transaction Start Date");
+                    rowheadType.createCell(cnb++).setCellValue("Transaction End Date");
+                
+                    if (bsr != null ){
+
+                        cnb = 0;
+                        HSSFRow rowType = sheetType.createRow(rnb++);
+
+
+                        cell = rowType.createCell(cnb++);
+                        setDateCellValue(cell,bsr.getDateOfStatement(),cellStyle);
+
+
+                        InvestmentAccountDetails bad = bsr.getAccount();
+                        if (bad != null){
+
+                            cell = rowType.createCell(cnb++);
+                            setStringCellValue(cell,bad.getBrokerId());
+
+                            cell = rowType.createCell(cnb++);
+                            setStringCellValue(cell,bad.getAccountNumber());
+
+                            cell = rowType.createCell(cnb++);
+                            setStringCellValue(cell,bad.getAccountKey());
+
+
+                        }else{
+                            cnb += 3;
+                        }
+                   
+                        InvestmentTransactionList tl = bsr.getInvestmentTransactionList();                   
+                        /* TODO                        
+                            InvestmentPositionList positionList;
+                            InvestmentBalance accountBalance;
+                            FourOhOneKBalance fourOhOneKBalance;
+                            Inv401KInfo inv401KInfo;
+                        */
+
+                        Date ds = null;
+                        Date de = null;
+                        if ( tl != null) {                
+                            ds = tl.getStart();
+                            de = tl.getEnd();                
+                        }                
+
+                        if ( ds != null){
+                            cell = rowType.createCell(cnb++);
+                            setDateCellValue(cell,ds,cellStyle);       
+
+                        }else{
+                            cnb += 1;
+                        }
+
+
+                        if ( de != null){
+                            cell = rowType.createCell(cnb++);
+                            setDateCellValue(cell,de,cellStyle);                                   
+
+                        }else{
+                            cnb += 1;
+                        }
+
+                        for (int i=0 ; i < cnb; i++)
+                            sheetType.autoSizeColumn(i);
+
+                        ds = null;
+                        de = null;
+
+
+                        if ( tl != null) {
+
+                            //Bank Transactions
+                            List<InvestmentBankTransaction> listTrans = tl.getBankTransactions();
+
+                            if (listTrans != null && listTrans.size() > 0){
+
+                                short cnt = 0;
+                                short rnt = 0;
+                        
+                                HSSFSheet sheetTrans = workbook.createSheet("Investment_"+TypeCount+" BankTransactions");
+
+                                HSSFRow rowheadTrans = sheetTrans.createRow(rnt++);
+                                rowheadTrans.createCell(cnt++).setCellValue("Sub Account Fund");
+                                rowheadTrans.createCell(cnt++).setCellValue("Type");
+                                rowheadTrans.createCell(cnt++).setCellValue("Id");
+                                rowheadTrans.createCell(cnt++).setCellValue("Date Posted");
+                                rowheadTrans.createCell(cnt++).setCellValue("Ammount");           
+                                rowheadTrans.createCell(cnt++).setCellValue("Memo");        
+                                rowheadTrans.createCell(cnt++).setCellValue("Check Number");    
+                                rowheadTrans.createCell(cnt++).setCellValue("Date Initiated");           
+                                rowheadTrans.createCell(cnt++).setCellValue("Date Available");           
+                                rowheadTrans.createCell(cnt++).setCellValue("Correction Id");    
+                                rowheadTrans.createCell(cnt++).setCellValue("Server-Assigned Temporary Id");    
+                                rowheadTrans.createCell(cnt++).setCellValue("Reference Number");    
+                                rowheadTrans.createCell(cnt++).setCellValue("Standard Industrial Code");
+                                rowheadTrans.createCell(cnt++).setCellValue("Payee Id");
+                                rowheadTrans.createCell(cnt++).setCellValue("Name");                            
+                                rowheadTrans.createCell(cnt++).setCellValue("Payee"); 
+                                rowheadTrans.createCell(cnt++).setCellValue("Currency Code"); 
+                                rowheadTrans.createCell(cnt++).setCellValue("Currency Exchange Rate"); 
+                                rowheadTrans.createCell(cnt++).setCellValue("Original Currency Code"); 
+                                rowheadTrans.createCell(cnt++).setCellValue("Original Currency Exchange Rate"); 
+
+                                for (InvestmentBankTransaction list : listTrans){
+
+                                    Transaction transaction = list.getTransaction();
+                                    
+                                    cnt = 0;
+                                    HSSFRow rowTrans = sheetTrans.createRow(rnt++);
+
+                                    cell = rowTrans.createCell(cnt++);
+                                    setStringCellValue(cell,list.getSubAccountFund());
+
+                                    if (transaction.getTransactionType()!= null){
+                                        cell = rowTrans.createCell(cnt++);                                    
+                                        setStringCellValue(cell,transaction.getTransactionType().name());
+                                    }else{
+                                        cnt += 1;
+                                    }
+
+                                    cell = rowTrans.createCell(cnt++);
+                                    setStringCellValue(cell,transaction.getId());
+                                    
+                                    cell = rowTrans.createCell(cnt++);
+                                    setDateCellValue(cell,transaction.getDatePosted(),cellStyle);
+                                    
+                                    cell = rowTrans.createCell(cnt++);
+                                    setNumericCellValue(cell, transaction.getAmount());
+
+                                    cell = rowTrans.createCell(cnt++);
+                                    setStringCellValue(cell,transaction.getMemo());
+
+                                    cell = rowTrans.createCell(cnt++);
+                                    setStringCellValue(cell,transaction.getCheckNumber());
+
+                                    cell = rowTrans.createCell(cnt++);
+                                    setDateCellValue(cell,transaction.getDateInitiated(),cellStyle);
+                                    
+                                    cell = rowTrans.createCell(cnt++);
+                                    setDateCellValue(cell,transaction.getDateAvailable(),cellStyle);                                
+
+                                    cell = rowTrans.createCell(cnt++);
+                                    setStringCellValue(cell,transaction.getCorrectionId());                                
+
+                                    cell = rowTrans.createCell(cnt++);
+                                    setStringCellValue(cell,transaction.getTempId());    
+
+                                    cell = rowTrans.createCell(cnt++);
+                                    setStringCellValue(cell,transaction.getReferenceNumber());
+
+                                    cell = rowTrans.createCell(cnt++);
+                                    setStringCellValue(cell,transaction.getStandardIndustrialCode());
+
+                                    cell = rowTrans.createCell(cnt++);
+                                    setStringCellValue(cell,transaction.getPayeeId());
+
+                                    cell = rowTrans.createCell(cnt++);
+                                    setStringCellValue(cell,transaction.getName());
+
+                                    cell = rowTrans.createCell(cnt++);
+                                    setStringCellValue(cell,transaction.getPayee());
+
+                                    if (transaction.getCurrency()!= null){
+
+                                        cell = rowTrans.createCell(cnt++);
+                                        setStringCellValue(cell,transaction.getCurrency().getCode());
+
+                                        cell = rowTrans.createCell(cnt++);
+                                        setNumericCellValue(cell, transaction.getCurrency().getExchangeRate());
+                                    }else{
+                                        cnt += 2;
+                                    }
+                                    
+                                    if (transaction.getOriginalCurrency()!= null){
+                                        cell = rowTrans.createCell(cnt++);
+                                        setStringCellValue(cell,transaction.getOriginalCurrency().getCode());
+
+                                        cell = rowTrans.createCell(cnt++);
+                                        setNumericCellValue(cell, transaction.getOriginalCurrency().getExchangeRate());
+                                    }else{
+                                        cnt += 2;
+                                    }
+                                
+                                    for (int i=0 ; i < cnt; i++)
+                                        sheetTrans.autoSizeColumn(i);   
+
+                                }
+                            }
+
+
+                            //BaseInvestment
+                            List<BaseInvestmentTransaction> listTransBase = tl.getInvestmentTransactions();
+
+                            if (listTransBase != null && listTransBase.size() > 0){
+
+                                short cnt = 0;
+                                short rnt = 0;
+                        
+                                HSSFSheet sheetTrans = workbook.createSheet("Investment_"+TypeCount+" BaseInvestment");
+
+                                HSSFRow rowheadTrans = sheetTrans.createRow(rnt++);
+                                rowheadTrans.createCell(cnt++).setCellValue("Type");
+                                rowheadTrans.createCell(cnt++).setCellValue("Transaction Id");
+                                rowheadTrans.createCell(cnt++).setCellValue("Server Id");
+                                rowheadTrans.createCell(cnt++).setCellValue("Trade Date");           
+                                rowheadTrans.createCell(cnt++).setCellValue("Settlement Date");        
+                                rowheadTrans.createCell(cnt++).setCellValue("Reversal Id");    
+                                rowheadTrans.createCell(cnt++).setCellValue("Memo");           
+
+                                for (BaseInvestmentTransaction list : listTransBase){
+
+                                    InvestmentTransaction transaction = list.getInvestmentTransaction();
+                                    
+                                    cnt = 0;
+                                    HSSFRow rowTrans = sheetTrans.createRow(rnt++);
+
+                                    cell = rowTrans.createCell(cnt++);
+                                    setStringCellValue(cell,list.getTransactionType());
+
+                                    cell = rowTrans.createCell(cnt++);
+                                    setStringCellValue(cell,list.getTransactionId());
+
+                                    cell = rowTrans.createCell(cnt++);
+                                    setStringCellValue(cell,list.getServerId());
+
+                                    cell = rowTrans.createCell(cnt++);
+                                    setDateCellValue(cell,list.getTradeDate(),cellStyle);
+                                    
+                                    cell = rowTrans.createCell(cnt++);
+                                    setDateCellValue(cell,list.getSettlementDate(),cellStyle);
+
+                                    cell = rowTrans.createCell(cnt++);
+                                    setStringCellValue(cell,list.getReversalTransactionId());
+
+                                    cell = rowTrans.createCell(cnt++);
+                                    setStringCellValue(cell,list.getMemo());
+                                
+                                    for (int i=0 ; i < cnt; i++)
+                                        sheetTrans.autoSizeColumn(i);   
+
+                                }
+                            }
+
+
+                         }
+
+                    }
+                    TypeCount++;   
+                }
+            }
+
+        }
+
+        cell = null;
+        cellStyle = null;
+        message = null;
+
+    }
+
+
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
 
@@ -582,6 +1127,8 @@ public class OFXParser extends AbstractParser {
             if ( re != null){
                 decodeSignon(re, workbook);
                 decodeBank(re, workbook);
+                decodeCreditCard(re, workbook);
+                //decodeInvestiment(re, workbook);     //TODO - Finish implementing
             }
 
 
