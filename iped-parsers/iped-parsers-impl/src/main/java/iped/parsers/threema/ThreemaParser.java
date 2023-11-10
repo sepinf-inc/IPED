@@ -582,8 +582,8 @@ public class ThreemaParser extends SQLite3DBParser {
                     long fileSize = item.getLength();
                     Pair<String, Long> key = Pair.of(fileName, fileSize);
                     List<Message> messageList = fileNameAndSizeToSearchFor.get(key);
-                    String query = BasicProps.NAME + ":\"" + searcher.escapeQuery(fileName) + "\" AND " //$NON-NLS-1$ //$NON-NLS-2$
-                            + BasicProps.LENGTH + ":" + fileSize;
+                    // ReferencedBy tab works checking hash references only for now
+                    String query = BasicProps.HASH + ":" + item.getHash();
                     setItemToMessage(item, messageList, query);
                 }
             }
