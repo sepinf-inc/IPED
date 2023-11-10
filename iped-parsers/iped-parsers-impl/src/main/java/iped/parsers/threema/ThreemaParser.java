@@ -189,7 +189,8 @@ public class ThreemaParser extends SQLite3DBParser {
                     try (InputStream is = new FileInputStream(m.getData())) {
                         Metadata embedFileData = new Metadata();
 
-                        embedFileData.set(BasicProps.NAME, "Threema_Media_item_" + m.getId());
+                        String name = getMediaName(m);
+                        embedFileData.set(BasicProps.NAME, name);
                         embedFileData.set(StandardParser.INDEXER_CONTENT_TYPE, m.getMediaMime());
                         embedFileData.set(ExtraProperties.CARVEDBY_METADATA_NAME, this.getClass().getName());
 
@@ -199,7 +200,7 @@ public class ThreemaParser extends SQLite3DBParser {
                         embedFileData.set(ExtraProperties.EXTRACTED_FILE, Boolean.TRUE.toString());
 
                         embedFileData.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
-                        embedFileData.set(TikaCoreProperties.TITLE, "Threema_Media_item_" + m.getId());
+                        embedFileData.set(TikaCoreProperties.TITLE, name);
 
                         extractor.parseEmbedded(is, handler, embedFileData, false);
 
@@ -522,6 +523,14 @@ public class ThreemaParser extends SQLite3DBParser {
         }
     }
 
+    private String getMediaName(Message m) {
+        if (m.getMediaName() != null && !m.getMediaName().isBlank()) {
+            return m.getMediaName().strip();
+        } else {
+            return "Threema_Media_Item_" + m.getId();
+        }
+    }
+
     private void searchMediaFilesForMessages(List<Message> messages, IItemSearcher searcher) {
 
         Map<Pair<String, Long>, List<Message>> fileNameAndSizeToSearchFor = new HashMap<>();
@@ -538,7 +547,7 @@ public class ThreemaParser extends SQLite3DBParser {
                 fileName = m.getDataName();
                 fileSize = m.getMediaSize();
             } else if (m.getData() != null) {
-                fileName = "Threema_Media_item_" + m.getId();
+                fileName = getMediaName(m);
                 fileSize = m.getData().length();
             }
 
@@ -568,8 +577,6 @@ public class ThreemaParser extends SQLite3DBParser {
                 if (item.getName() != null && !item.getName().isEmpty() && item.getLength() != null && item.getLength() > 0) {
                     String fileName = item.getName();
                     long fileSize = item.getLength();
-                    if (fileName.contains("."))
-                        fileName = fileName.substring(0, fileName.indexOf("."));
                     Pair<String, Long> key = Pair.of(fileName, fileSize);
                     List<Message> messageList = fileNameAndSizeToSearchFor.get(key);
                     String query = BasicProps.NAME + ":\"" + searcher.escapeQuery(fileName) + "\" AND " //$NON-NLS-1$ //$NON-NLS-2$
