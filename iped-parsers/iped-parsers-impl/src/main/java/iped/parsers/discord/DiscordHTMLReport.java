@@ -60,7 +60,11 @@ public class DiscordHTMLReport {
             xHandler.startElement("head"); //$NON-NLS-1$
             xHandler.startElement("style"); //$NON-NLS-1$
             xHandler.characters(CSS); // $NON-NLS-1$
+            xHandler.characters(iped.parsers.whatsapp.Util.readResourceAsString("css/whatsapp.css"));
             xHandler.endElement("style"); //$NON-NLS-1$
+            xHandler.startElement("script"); //$NON-NLS-1$
+            xHandler.characters(iped.parsers.whatsapp.Util.readResourceAsString("js/whatsapp.js"));
+            xHandler.endElement("script"); //$NON-NLS-1$
             xHandler.endElement("head"); //$NON-NLS-1$
             
             xHandler.startElement("TABLE");
@@ -224,13 +228,23 @@ public class DiscordHTMLReport {
                                         + Base64.getEncoder().encodeToString(item.getThumb()) + "\" title=\""
                                         + format(att.getFilename()) + "\"");
                                 xHandler.endElement("img");
+                                xHandler.startElement("BR");
+                                xHandler.endElement("BR");
                             }
-                            xHandler.startElement("BR");
-                            xHandler.endElement("BR");
                             xHandler.startElement("DIV");
                             xHandler.characters(format(att.getFilename()));
                             xHandler.endElement("DIV");
                             xHandler.endElement("a");
+
+                            String exportPath = iped.parsers.util.Util.getExportPath(item);
+                            String source = iped.parsers.util.Util.getSourceFileIfExists(item).orElse("");
+                            if (item.getMediaType().toString().startsWith("audio/")) {
+                                xHandler.startElement("div class=\"audioImg iped-audio\" " //$NON-NLS-1$
+                                        + " title=\"Audio\" " + "data-src1=\"" + format(exportPath) + "\" "
+                                        + "data-src2=\"" //$NON-NLS-1$
+                                        + format(source) + "\"");
+                                xHandler.endElement("div");
+                            }
 
                         } else {
                             xHandler.startElement("DIV");
@@ -418,7 +432,8 @@ public class DiscordHTMLReport {
                         // if hash exists, at least 1 item will be returned
                         IItemReader item = it.next();
                         printCheckbox(out, att.getMediaHash());
-                        out.println("       <a onclick=\"app.open('hash:" + att.getMediaHash() + "')\" href='" + Util.getExportPath(item) + "'>");
+                        out.println("       <a onclick=\"app.open('hash:" + att.getMediaHash() + "')\" href='"
+                                + Util.getExportPath(item) + "'>");
                         if (item.getThumb() != null) {
                             out.println("       <img src=\"data:image/jpeg;base64," + Base64.getEncoder().encodeToString(item.getThumb()) + "\" title=\"" + format(att.getFilename()) + "\">");
                         }
