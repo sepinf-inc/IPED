@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.data.IItem;
 import iped.data.IItemReader;
 import iped.parsers.standard.RawStringParser;
 import iped.parsers.standard.StandardParser;
@@ -460,5 +461,27 @@ public class Util {
         return file;
     }
 
+    public static File getFileWithRightExt(IItem item) throws IOException {
+        File file = item.getTempFile();
+        String ext = item.getType();
+        boolean isTmpFile = IOUtil.isTemporaryFile(file);
+        boolean badExt = !ext.isEmpty() && !file.getName().endsWith("." + ext);
+        if (!isTmpFile && badExt) {
+            File tmp = File.createTempFile("iped", "." + ext);
+            tmp.deleteOnExit();
+            IOUtil.copyFile(file, tmp);
+            return tmp;
+        } else {
+            if (isTmpFile) {
+                file.deleteOnExit();
+                if (badExt) {
+                    file = Util.getFileRenamedToExt(file, ext);
+                }
+            } else {
+                file.setReadOnly();
+            }
+            return file;
+        }
+    }
 
 }
