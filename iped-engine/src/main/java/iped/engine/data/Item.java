@@ -1,9 +1,9 @@
 package iped.engine.data;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
@@ -197,6 +198,8 @@ public class Item implements IItem {
 
     private byte[] thumb;
 
+    private byte[] data;
+
     private ISeekableInputStreamFactory inputStreamFactory;
 
     static final int BUF_LEN = 8 * 1024 * 1024;
@@ -248,12 +251,12 @@ public class Item implements IItem {
             } catch (Exception e) {
                 LOGGER.warn("Error closing resources of " + getPath(), e);
             }
+            tmpResources = null;
         }
-        tmpResources = null;
+        data = null;
         tmpFile = null;
         tis = null;
         parentTmpFile = null;
-        
         try {
             if (textCache != null && clearTextCache) {
                 textCache.close();
@@ -271,12 +274,7 @@ public class Item implements IItem {
         return accessDate;
     }
 
-    /**
-     * @return um BufferedInputStream com o conteúdo do item
-     * @throws IOException
-     */
-    public BufferedInputStream getBufferedInputStream() throws IOException {
-
+    private int getBestBufferSize() {
         int len = 8192;
         if (length != null && length > len) {
             if (length < BUF_LEN) {
@@ -285,8 +283,18 @@ public class Item implements IItem {
                 len = BUF_LEN;
             }
         }
+        return len;
+    }
 
-        return new BufferedInputStream(getSeekableInputStream(), len);
+    /**
+     * @return um BufferedInputStream com o conteúdo do item
+     * @throws IOException
+     */
+    public BufferedInputStream getBufferedInputStream() throws IOException {
+        if (data != null) {
+            return new BufferedInputStream(new ByteArrayInputStream(data));
+        }
+        return new BufferedInputStream(getSeekableInputStream(), getBestBufferSize());
     }
 
     /**
@@ -535,6 +543,10 @@ public class Item implements IItem {
     @Override
     public SeekableInputStream getSeekableInputStream() throws IOException {
 
+        if (data != null) {
+            return new SeekableFileInputStream(new SeekableInMemoryByteChannel(data));
+        }
+
         // block 1 (referenciado abaixo)
         if (tmpFile == null && tis != null && tis.hasFile()) {
             tmpFile = tis.getFile();
@@ -582,7 +594,39 @@ public class Item implements IItem {
 
     @Override
     public SeekableByteChannel getSeekableByteChannel() throws IOException {
+        if (data != null) {
+            return new SeekableInMemoryByteChannel(data);
+        }
         return new SeekableByteChannelImpl(this.getSeekableInputStream());
+    }
+
+    /**
+     *  Cache data in memory for small items to avoid:
+     *  1. multiple decompression of data from compressed evidences
+     *  2. multiple reads from evidences in network shares
+     *  3. writing small temp files in temp dir, when possible
+     *  4. decrease heavy IO calls into kernel space 
+     *  
+     * @return true if data was cached on memory, false otherwise
+     */
+    public boolean cacheDataInMemory() {
+        if (length == null || length > BUF_LEN) {
+            return false;
+        }
+        if (data != null) {
+            return true;
+        }
+        try (InputStream is = this.getSeekableInputStream()) {
+            data = new byte[length.intValue()];
+            int i, offset = 0;
+            while (offset < data.length && (i = is.read(data, offset, data.length - offset)) != -1) {
+                offset += i;
+            }
+            return true;
+        } catch (IOException e) {
+            // ignore
+        }
+        return false;
     }
 
     /**
@@ -601,19 +645,30 @@ public class Item implements IItem {
             if (tis != null && tis.hasFile()) {
                 tmpFile = tis.getFile();
             } else {
-                String ext = ".tmp"; //$NON-NLS-1$
-                if (type != null && !type.toString().isEmpty()) {
-                    ext = Util.getValidFilename("." + type.toString()); //$NON-NLS-1$
+                try (SeekableInputStream sis = getSeekableInputStream()) {
+                    if (sis instanceof SeekableFileInputStream) {
+                        File file = ((SeekableFileInputStream) sis).getFile();
+                        if (file != null && IOUtil.isTemporaryFile(file)) {
+                            tmpFile = file;
+                        }
+                    }
+                    if (tmpFile == null) {
+                        String ext = ".tmp"; //$NON-NLS-1$
+                        if (type != null && !type.toString().isEmpty()) {
+                            ext = Util.getValidFilename("." + type.toString()); //$NON-NLS-1$
+                        }
+                        Path path = Files.createTempFile("iped", ext); //$NON-NLS-1$
+                        if (data != null) {
+                            Files.write(path, data);
+                        } else {
+                            Files.copy(new BufferedInputStream(sis, getBestBufferSize()), path, StandardCopyOption.REPLACE_EXISTING);
+                        }
+                        tmpFile = path.toFile();
+                    }
+                    refTmpFile = new ReferencedFile(tmpFile);
+                    addTmpResource(refTmpFile);
                 }
-                final Path path = Files.createTempFile("iped", ext); //$NON-NLS-1$
-                try (InputStream in = getBufferedInputStream()) {
-                    Files.copy(in, path, StandardCopyOption.REPLACE_EXISTING);
-                }
-                tmpFile = path.toFile();
-                refTmpFile = new ReferencedFile(tmpFile);
-                addTmpResource(refTmpFile);
             }
-
         }
         return tmpFile;
     }
@@ -640,14 +695,20 @@ public class Item implements IItem {
             if (tmpFile == null && tis != null && tis.hasFile()) {
                 tmpFile = tis.getFile();
             }
+            // reset tis, it may have been set (and consumed) by a previous call of this
+            // method
+            tis = null;
             if (tmpFile != null) {
                 try {
                     tis = TikaInputStream.get(tmpFile.toPath());
-                } catch (FileNotFoundException fnfe) {
+                } catch (IOException fnfe) {
                     tmpFile = null;
                 }
             }
-            if (tmpFile == null) {
+            if (tis == null && data != null) {
+                tis = TikaInputStream.get(data);
+            }
+            if (tis == null) {
                 tis = TikaInputStream.get(getBufferedInputStream());
             }
         }
