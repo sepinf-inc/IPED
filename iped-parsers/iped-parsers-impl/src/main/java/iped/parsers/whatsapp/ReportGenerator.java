@@ -17,7 +17,6 @@ import org.apache.commons.text.lookup.StringLookup;
 import org.apache.commons.text.lookup.StringLookupFactory;
 
 import iped.data.IItemReader;
-import iped.parsers.util.ChildPornHashLookup;
 import iped.parsers.util.Messages;
 import iped.parsers.vcard.VCardParser;
 import iped.parsers.whatsapp.Message.MessageType;
@@ -44,7 +43,6 @@ public class ReportGenerator {
     private static final String lockedIcon = "<img class=\"lock\"/>";
     private static final String locationIcon = "<img class=\"location\"/>";
     private static final String forwardedIcon = "<img class=\"fwd\"/>";
-    private static final String waSuffix = "@s.whatsapp.net";
 
     public ReportGenerator() {
     }
@@ -427,7 +425,7 @@ public class ReportGenerator {
                 if (!number.isEmpty()) {
                     if (name.isEmpty()) {
                         name = number;
-                    } else if (!number.equals(name) && !number.equals(name + waSuffix)) {
+                    } else if (!number.equals(name) && !number.equals(name + WAContact.waSuffix)) {
                         name += " (" + number + ")"; //$NON-NLS-1$ //$NON-NLS-2$
                     }
                 }
@@ -642,7 +640,7 @@ public class ReportGenerator {
                         break;
                 }
                 if (mediaItem != null) {
-                    message.addChildPornSets(ChildPornHashLookup.lookupHash(mediaItem.getHash()));
+                    message.lookupAndAddChildPornSets(mediaItem.getHash());
                 }
                 break;
         }
@@ -675,8 +673,8 @@ public class ReportGenerator {
                             if (contact != null) {
                                 name = contact.getName();
                             }
-                            if (number.endsWith(waSuffix)) {
-                                number = number.substring(0, number.length() - waSuffix.length());
+                            if (number.endsWith(WAContact.waSuffix)) {
+                                number = number.substring(0, number.length() - WAContact.waSuffix.length());
                             }
                         }
                     }

@@ -1,5 +1,6 @@
 package iped.engine.task;
 
+import java.awt.Color;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,12 +38,18 @@ public class P2PBookmarker {
     }
 
     class P2PProgram {
-        String hashName;
-        String appName;
+        final String hashName;
+        final String appName;
+        final Color color;
 
         public P2PProgram(String hashName, String appName) {
+            this(hashName, appName, null);
+        }
+
+        public P2PProgram(String hashName, String appName, Color color) {
             this.hashName = hashName;
             this.appName = appName;
+            this.color = color;
         }
     }
 
@@ -51,24 +58,36 @@ public class P2PBookmarker {
         if (isIpedReport)
             return;
 
-        LOGGER.info("Searching items shared by P2P..."); //$NON-NLS-1$
+        LOGGER.info("Searching for shared items...");
 
         HashMap<String, P2PProgram> p2pPrograms = new HashMap<String, P2PProgram>();
 
-        p2pPrograms.put(KnownMetParser.EMULE_MIME_TYPE, new P2PProgram(HashTask.HASH.EDONKEY.toString(), "Emule")); //$NON-NLS-1$
-        p2pPrograms.put(PartMetParser.EMULE_PART_MET_MIME_TYPE, new P2PProgram(HashTask.HASH.EDONKEY.toString(), "Emule")); //$NON-NLS-1$
-        p2pPrograms.put(AresParser.ARES_MIME_TYPE, new P2PProgram(HashTask.HASH.SHA1.toString(), "Ares")); //$NON-NLS-1$
+        P2PProgram progEMule = new P2PProgram(HashTask.HASH.EDONKEY.toString(), "Emule", new Color(140, 75, 30));
+        p2pPrograms.put(KnownMetParser.EMULE_MIME_TYPE, progEMule);
+        p2pPrograms.put(PartMetParser.EMULE_PART_MET_MIME_TYPE, progEMule);
+
+        p2pPrograms.put(AresParser.ARES_MIME_TYPE,
+                new P2PProgram(HashTask.HASH.SHA1.toString(), "Ares", new Color(238, 173, 0)));
+
         p2pPrograms.put(ShareazaLibraryDatParser.LIBRARY_DAT_MIME_TYPE,
-                new P2PProgram(HashTask.HASH.MD5.toString(), "Shareaza")); //$NON-NLS-1$
+                new P2PProgram(HashTask.HASH.MD5.toString(), "Shareaza", new Color(170, 20, 20)));
+
         p2pPrograms.put(WhatsAppParser.WHATSAPP_CHAT.toString(),
-                new P2PProgram(HashTask.HASH.SHA256.toString(), "WhatsApp")); //$NON-NLS-1$
+                new P2PProgram(HashTask.HASH.SHA256.toString(), "WhatsApp", new Color(32, 146, 90)));
+
         p2pPrograms.put(UFEDChatParser.UFED_CHAT_PREVIEW_MIME.toString(),
-                new P2PProgram(IndexItem.HASH.toString(), "UFED_Chats")); //$NON-NLS-1$
-        p2pPrograms.put(SkypeParser.FILETRANSFER_MIME_TYPE, new P2PProgram(IndexItem.HASH, "Skype")); //$NON-NLS-1$
-        p2pPrograms.put(SkypeParser.CONVERSATION_MIME_TYPE, new P2PProgram(IndexItem.HASH, "Skype")); //$NON-NLS-1$
-        p2pPrograms.put(TelegramParser.TELEGRAM_CHAT.toString(), new P2PProgram(IndexItem.HASH, "Telegram")); // $NON-NLS-1$
-        p2pPrograms.put(GDriveCloudGraphParser.GDRIVE_CLOUD_GRAPH_REG.toString(), new P2PProgram(HashTask.HASH.MD5.toString(), "GoogleDrive"));
-        p2pPrograms.put(GDriveSnapshotParser.GDRIVE_SNAPSHOT_REG.toString(), new P2PProgram(HashTask.HASH.MD5.toString(), "GoogleDrive"));
+                new P2PProgram(IndexItem.HASH.toString(), "UFED_Chats", new Color(0, 160, 160)));
+
+        P2PProgram progSkype = new P2PProgram(IndexItem.HASH, "Skype", new Color(50, 150, 220));
+        p2pPrograms.put(SkypeParser.FILETRANSFER_MIME_TYPE, progSkype);
+        p2pPrograms.put(SkypeParser.CONVERSATION_MIME_TYPE, progSkype);
+
+        p2pPrograms.put(TelegramParser.TELEGRAM_CHAT.toString(),
+                new P2PProgram(IndexItem.HASH, "Telegram", new Color(120, 190, 250)));
+
+        P2PProgram progGDrive = new P2PProgram(HashTask.HASH.MD5.toString(), "GoogleDrive");
+        p2pPrograms.put(GDriveCloudGraphParser.GDRIVE_CLOUD_GRAPH_REG.toString(), progGDrive);
+        p2pPrograms.put(GDriveSnapshotParser.GDRIVE_SNAPSHOT_REG.toString(), progGDrive);
 
         IPEDSource ipedSrc = new IPEDSource(caseDir);
         String queryText = ExtraProperties.SHARED_HASHES + ":*"; //$NON-NLS-1$
@@ -124,6 +143,9 @@ public class P2PBookmarker {
 
                 int labelId = ipedSrc.getBookmarks()
                         .newBookmark(Messages.getString("P2PBookmarker.P2PBookmarkPrefix") + bookmarkSufix); //$NON-NLS-1$
+                if (program.color != null) {
+                    ipedSrc.getBookmarks().setBookmarkColor(labelId, program.color);
+                }
                 ArrayList<Integer> ids = new ArrayList<Integer>();
                 for (int j = 0; j < result.getLength(); j++)
                     ids.add(result.getId(j));

@@ -34,6 +34,9 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -65,7 +68,7 @@ public class GraphFileWriter implements Closeable, Flushable {
 
     private File root;
 
-    public GraphFileWriter(File root, String defaultEntity) {
+    public GraphFileWriter(File root, String defaultEntity) throws Exception {
         super();
         this.root = root;
         root.mkdirs();
@@ -305,43 +308,65 @@ public class GraphFileWriter implements Closeable, Flushable {
         }
     }
 
-    public void compressGeneratedCSVFiles() throws IOException {
+    public void compressGeneratedCSVFiles() throws Exception {
         compressGeneratedCSVFiles(this.root);
     }
 
-    private static void compressGeneratedCSVFiles(File root) throws IOException {
-        Arrays.asList(root.listFiles()).stream().forEach(f -> {
-            File gzip = new File(f.getAbsolutePath() + ".gzip");
-            try (GZIPOutputStream gzos = new GZIPOutputStream(
-                    Files.newOutputStream(gzip.toPath(), StandardOpenOption.CREATE))) {
-                Files.copy(f.toPath(), gzos);
-                f.delete();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
+    private static void compressGeneratedCSVFiles(File root) throws Exception {
+        ExecutorService executor = Executors.newCachedThreadPool();
+        ArrayList<Future<?>> futures = new ArrayList<>();
+        for (File f : root.listFiles()) {
+            Runnable r = new Runnable() {
+                public void run() {
+                    File gzip = new File(f.getAbsolutePath() + ".gzip");
+                    try (GZIPOutputStream gzos = new GZIPOutputStream(Files.newOutputStream(gzip.toPath()))) {
+                        Files.copy(f.toPath(), gzos);
+                        f.delete();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            };
+            futures.add(executor.submit(r));
+        }
+        for (Future<?> f : futures) {
+            f.get();
+        }
+        executor.shutdown();
     }
 
-    public void uncompressPreviousCSVFiles() {
+    public void uncompressPreviousCSVFiles() throws Exception {
         uncompressPreviousCSVFiles(this.root);
     }
 
-    private static void uncompressPreviousCSVFiles(File root) {
-        Arrays.asList(root.listFiles()).stream().forEach(f -> {
+    private static void uncompressPreviousCSVFiles(File root) throws Exception {
+        ExecutorService executor = Executors.newCachedThreadPool();
+        ArrayList<Future<?>> futures = new ArrayList<>();
+        for (File f : root.listFiles()) {
             int idx = f.getAbsolutePath().lastIndexOf(".gzip");
-            if (idx != -1) {
-                File csv = new File(f.getAbsolutePath().substring(0, idx));
-                try (GZIPInputStream gzis = new GZIPInputStream(Files.newInputStream(f.toPath()))) {
-                    Files.copy(gzis, csv.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-                f.delete();
+            if (idx == -1) {
+                continue;
             }
-        });
+            Runnable r = new Runnable() {
+                public void run() {
+                    File csv = new File(f.getAbsolutePath().substring(0, idx));
+                    try (GZIPInputStream gzis = new GZIPInputStream(Files.newInputStream(f.toPath()))) {
+                        Files.copy(gzis, csv.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                    f.delete();
+                }
+            };
+            futures.add(executor.submit(r));
+        }
+        for (Future<?> f : futures) {
+            f.get();
+        }
+        executor.shutdown();
     }
 
-    public static int removeDeletedRelationships(String evidenceUUID, File csvRoot) throws IOException {
+    public static int removeDeletedRelationships(String evidenceUUID, File csvRoot) throws Exception {
         if (!csvRoot.exists()) {
             return 0;
         }
@@ -370,49 +395,55 @@ public class GraphFileWriter implements Closeable, Flushable {
     }
 
     // TODO improve to merge duplicate nodes instead of just skip
-    public static void prepareMultiCaseCSVs(File output, List<File> csvParents) throws IOException {
+    public static void prepareMultiCaseCSVs(File output, List<File> csvParents) throws Exception {
         AtomicInteger subDir = new AtomicInteger(-1);
         Set<String> ids = Collections.synchronizedSet(new HashSet<>());
-        csvParents.stream().forEach(parent -> {
-            int num = subDir.incrementAndGet();
-            try {
-                File[] subFiles = parent.listFiles();
-                if (subFiles == null)
-                    return;
-                for (File input : subFiles) {
-                    File dest = new File(output, num + File.separator + input.getName().replace(".gzip", ""));
-                    dest.getParentFile().mkdirs();
-                    if (input.getName().startsWith(NODE_CSV_PREFIX) && !input.getName().contains(HEADER_CSV_STR)
-                            && input.getName().endsWith(".csv.gzip")) {
-                        try (BufferedWriter writer = Files.newBufferedWriter(dest.toPath(), StandardOpenOption.APPEND,
-                                StandardOpenOption.CREATE);
-                                BufferedReader reader = new BufferedReader(
-                                        new InputStreamReader(new GZIPInputStream(Files.newInputStream(input.toPath())),
-                                                StandardCharsets.UTF_8))) {
-                            String line = null;
-                            while ((line = reader.readLine()) != null) {
-                                String id = line.substring(0, line.indexOf(','));
-                                if (ids.add(id)) {
-                                    writer.write(line);
-                                    writer.write("\r\n");
+        ExecutorService executor = Executors.newCachedThreadPool();
+        ArrayList<Future<?>> futures = new ArrayList<>();
+        for (File parent : csvParents) {
+            Runnable r = new Runnable() {
+                public void run() {
+                    int num = subDir.incrementAndGet();
+                    try {
+                        File[] subFiles = parent.listFiles();
+                        if (subFiles == null)
+                            return;
+                        for (File input : subFiles) {
+                            File dest = new File(output, num + File.separator + input.getName().replace(".gzip", ""));
+                            dest.getParentFile().mkdirs();
+                            if (input.getName().startsWith(NODE_CSV_PREFIX) && !input.getName().contains(HEADER_CSV_STR) && input.getName().endsWith(".csv.gzip")) {
+                                try (BufferedWriter writer = Files.newBufferedWriter(dest.toPath(), StandardOpenOption.APPEND, StandardOpenOption.CREATE);
+                                        BufferedReader reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(Files.newInputStream(input.toPath())), StandardCharsets.UTF_8))) {
+                                    String line = null;
+                                    while ((line = reader.readLine()) != null) {
+                                        String id = line.substring(0, line.indexOf(','));
+                                        if (ids.add(id)) {
+                                            writer.write(line);
+                                            writer.write("\r\n");
+                                        }
+                                    }
                                 }
-                            }
+                            } else
+                                try (GZIPInputStream gzis = new GZIPInputStream(Files.newInputStream(input.toPath()))) {
+                                    Files.copy(gzis, dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                                }
                         }
-                    } else
-                        try (GZIPInputStream gzis = new GZIPInputStream(Files.newInputStream(input.toPath()))) {
-                            Files.copy(gzis, dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                        }
-                }
-                File importArgs = new File(output, num + "/" + ARG_FILE_NAME);
-                String args = new String(Files.readAllBytes(importArgs.toPath()), StandardCharsets.UTF_8);
-                args = args.replace("=", "=" + num + "/").replace(",", "," + num + "/");
-                Files.write(importArgs.toPath(), args.getBytes(StandardCharsets.UTF_8),
-                        StandardOpenOption.TRUNCATE_EXISTING);
+                        File importArgs = new File(output, num + "/" + ARG_FILE_NAME);
+                        String args = new String(Files.readAllBytes(importArgs.toPath()), StandardCharsets.UTF_8);
+                        args = args.replace("=", "=" + num + "/").replace(",", "," + num + "/");
+                        Files.write(importArgs.toPath(), args.getBytes(StandardCharsets.UTF_8), StandardOpenOption.TRUNCATE_EXISTING);
 
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            };
+            futures.add(executor.submit(r));
+        }
+        for (Future<?> f : futures) {
+            f.get();
+        }
+        executor.shutdown();
     }
 
     public void writeCreateRelationship(Label label1, String idProperty1, Object propertyValue1, Label label2,

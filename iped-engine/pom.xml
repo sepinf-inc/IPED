@@ -335,6 +335,11 @@
                     <artifactId>commons-logging</artifactId>
                 </exclusion>
             </exclusions>
-         </dependency>
+        </dependency>
+        <dependency>
+            <groupId>org.openjdk.nashorn</groupId>
+            <artifactId>nashorn-core</artifactId>
+            <version>15.4</version>
+        </dependency>
      </dependencies>
 </project>

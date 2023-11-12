@@ -1,7 +1,6 @@
 package iped.app.timelinegraph.swingworkers;
 
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -9,6 +8,7 @@ import java.util.List;
 import org.jfree.chart.entity.ChartEntity;
 import org.jfree.chart.entity.EntityCollection;
 import org.jfree.chart.entity.XYItemEntity;
+import org.roaringbitmap.RoaringBitmap;
 
 import iped.app.timelinegraph.IpedDateAxis;
 import iped.app.timelinegraph.datasets.IpedTimelineDataset;
@@ -43,7 +43,7 @@ public class HighlightWorker extends BitSetHighlightWorker {
         Date d1 = new Date();
 
         ArrayList<IItemId> l = new ArrayList<IItemId>();
-        BitSet bs = new BitSet(resultsProvider.getResults().getLength());
+        RoaringBitmap bs = new RoaringBitmap();
 
         progressDialog.setMaximum(resultsProvider.getResults().getLength());
         MultiSearchResult msr = (MultiSearchResult) resultsProvider.getResults();
@@ -65,7 +65,7 @@ public class HighlightWorker extends BitSetHighlightWorker {
                     if (ids != null) {
                         for (Iterator iterator = ids.iterator(); iterator.hasNext();) {
                             IItemId iItemId = (IItemId) iterator.next();
-                            bs.set(is.getLuceneId(iItemId));
+                            bs.add(is.getLuceneId(iItemId));
                         }
                     }
                 }
