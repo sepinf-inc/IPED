@@ -99,7 +99,15 @@ public class ShareazaDownloadParser extends AbstractParser {
 
         DecimalFormat df = new DecimalFormat("#,##0");
         DecimalFormat df2 = new DecimalFormat("#,##0.0");
-
+        StringBuilder sbSources = new StringBuilder();
+        StringBuilder sbXML = new StringBuilder();
+        StringBuilder sbFile = new StringBuilder();
+        StringBuilder sbTorrent = new StringBuilder();
+        StringBuilder sbTigerDB = new StringBuilder();
+        StringBuilder sbEd2kDB = new StringBuilder();
+        StringBuilder sbPreview = new StringBuilder();
+        StringBuilder sbReview = new StringBuilder();
+        
         try {
             long fileSize = inputStreamFile.available();
             byte[] data = new byte[(int) fileSize];
@@ -290,47 +298,47 @@ public class ShareazaDownloadParser extends AbstractParser {
             }
 
             int numberOfSources = read2Bytes(buffer);
-            addLine(xhtml, "NUM_OF_SOURCES:                 " + numberOfSources);
+            sbSources.append("NUM_OF_SOURCES:                 " + numberOfSources+"\n");
 
             for (int i = 0; i < numberOfSources; i++) {
-                addLine(xhtml, "     SOURCE " + (i + 1) + ": ");
+                sbSources.append("     SOURCE " + (i + 1) + ": "+"\n");
 
                 String sourceTerm = readString(buffer);
-                addLine(xhtml, "          SOURCE ADDRESS:                 " + sourceTerm);
+                sbSources.append("          SOURCE ADDRESS:                 " + sourceTerm+"\n");
 
                 int protocolId = read4Bytes(buffer);
-                addLine(xhtml, "          PROTOCOL_ID:                    " + getProtocolName(protocolId));
+                sbSources.append("          PROTOCOL_ID:                    " + getProtocolName(protocolId)+"\n");
 
                 int guidValid = read4Bytes(buffer);
-                addLine(xhtml, "          GUID_VALID:                     " + guidValid);
+                sbSources.append("          GUID_VALID:                     " + guidValid+"\n");
 
                 if (guidValid != 0) {
-                    addLine(xhtml, "          GUID_VALUE:                     " + readHashString(buffer, 16));
+                    sbSources.append("          GUID_VALUE:                     " + readHashString(buffer, 16)+"\n");
                 }
 
                 long port = readUnsignedInt2Bytes(buffer);
-                addLine(xhtml, "          PORT:                           " + port);
+                sbSources.append("          PORT:                           " + port+"\n");
 
                 if (port != 0) {
                     String ip = read1Byte(buffer) + "." + read1Byte(buffer) + "." + read1Byte(buffer) + "."
                             + read1Byte(buffer);
-                    addLine(xhtml, "          IP_ADDRESS:                     " + ip);
+                    sbSources.append("          IP_ADDRESS:                     " + ip+"\n");
                 }
 
                 long serverPort = readUnsignedInt2Bytes(buffer);
-                addLine(xhtml, "          SERVER_PORT:                    " + serverPort);
+                sbSources.append("          SERVER_PORT:                    " + serverPort+"\n");
 
                 if (serverPort != 0) {
                     String serverIP = read1Byte(buffer) + "." + read1Byte(buffer) + "." + read1Byte(buffer) + "."
                             + read1Byte(buffer);
-                    addLine(xhtml, "          SERVER_IP:                      " + serverIP);
+                    sbSources.append("          SERVER_IP:                      " + serverIP+"\n");
                 }
 
                 String serverName = readString(buffer);
                 if (serverName.equals("")) {
                     serverName = "<none>";
                 }
-                addLine(xhtml, "          SERVER NAME:                    " + serverName);
+                sbSources.append("          SERVER NAME:                    " + serverName+"\n");
 
                 int index = read4Bytes(buffer);
                 int hashAuth = read4Bytes(buffer);
@@ -353,27 +361,27 @@ public class ShareazaDownloadParser extends AbstractParser {
                 Date d = new Date(epoch * 1000); // convert epoch seconds to microseconds
                 long numPastFraments = readUnsignedInt2Bytes(buffer);
 
-                addLine(xhtml, "          INDEX:                          " + index);
-                addLine(xhtml, "          HASH_AUTH:                      " + getBoolStr(hashAuth));
-                addLine(xhtml, "          Use_SHA1:                       " + getBoolStr(useSha1));
-                addLine(xhtml, "          Use_TIGER:                      " + getBoolStr(useTiger));
-                addLine(xhtml, "          Use_EDONKEY:                    " + getBoolStr(useEdonkey));
-                addLine(xhtml, "          Use_BTH:                        " + getBoolStr(useBith));
-                addLine(xhtml, "          Use_MD5:                        " + getBoolStr(useMd5));
-                addLine(xhtml, "          SERVER TYPE:                    " + serverType);
-                addLine(xhtml,
-                        "          NICK NAME:                      " + (nickName.isBlank() ? "<none>" : nickName));
-                addLine(xhtml, "          COUNTRY CODE:                   " + countryCode);
-                addLine(xhtml, "          COUNTRY NAME:                   " + countryName);
-                addLine(xhtml, "          SPEED:                          " + speed);
-                addLine(xhtml, "          Push Only:                      " + getBoolStr(pushOnly));
-                addLine(xhtml, "          Close Connection:               " + getBoolStr(closeConn));
-                addLine(xhtml, "          Read Content                    " + getBoolStr(readContent));
-                addLine(xhtml, "          Last Seen UTC:                  " + d);
-                addLine(xhtml, "          Number of past fragments:       " + numPastFraments);
+                sbSources.append("          INDEX:                          " + index+"\n");
+                sbSources.append("          HASH_AUTH:                      " + getBoolStr(hashAuth)+"\n");
+                sbSources.append("          Use_SHA1:                       " + getBoolStr(useSha1)+"\n");
+                sbSources.append("          Use_TIGER:                      " + getBoolStr(useTiger)+"\n");
+                sbSources.append("          Use_EDONKEY:                    " + getBoolStr(useEdonkey)+"\n");
+                sbSources.append("          Use_BTH:                        " + getBoolStr(useBith)+"\n");
+                sbSources.append("          Use_MD5:                        " + getBoolStr(useMd5)+"\n");
+                sbSources.append("          SERVER TYPE:                    " + serverType+"\n");
+                sbSources.append(
+                        "          NICK NAME:                      " + (nickName.isBlank() ? "<none>" : nickName)+"\n");
+                sbSources.append("          COUNTRY CODE:                   " + countryCode+"\n");
+                sbSources.append("          COUNTRY NAME:                   " + countryName+"\n");
+                sbSources.append("          SPEED:                          " + speed+"\n");
+                sbSources.append("          Push Only:                      " + getBoolStr(pushOnly)+"\n");
+                sbSources.append("          Close Connection:               " + getBoolStr(closeConn)+"\n");
+                sbSources.append("          Read Content                    " + getBoolStr(readContent)+"\n");
+                sbSources.append("          Last Seen UTC:                  " + d+"\n");
+                sbSources.append("          Number of past fragments:       " + numPastFraments+"\n");
 
                 if (numPastFraments != 0) {
-                    addLine(xhtml, "          Skipping fragments...");
+                    sbSources.append("          Skipping fragments..."+"\n");
 
                     for (int j = 0; j < numPastFraments; j++) {
                         read8Bytes(buffer); // begin
@@ -383,12 +391,12 @@ public class ShareazaDownloadParser extends AbstractParser {
 
                 if (version >= 39) {
                     int clientExtended = read4Bytes(buffer);
-                    addLine(xhtml, "          Client Extended:                " + getBoolStr(clientExtended));
+                    sbSources.append("          Client Extended:                " + getBoolStr(clientExtended)+"\n");
                 }
 
                 if (version >= 42) {
                     int metaIgnore = read4Bytes(buffer);
-                    addLine(xhtml, "          Meta Ignore:                    " + getBoolStr(metaIgnore));
+                    sbSources.append("          Meta Ignore:                    " + getBoolStr(metaIgnore)+"\n");
                 }
             }
 
@@ -397,41 +405,41 @@ public class ShareazaDownloadParser extends AbstractParser {
             String str1 = "";
 
             if (hasXML == 1) {
-                addLine(xhtml, "XML FILE: ");
-                readXMLNode(buffer, xhtml, 0);
+                sbXML.append("XML FILE: "+"\n");
+                readXMLNode(buffer, xhtml, 0, sbXML);
             }
 
             int hasFile = read2Bytes(buffer);
 
             if (hasFile == 1) {
-                addLine(xhtml, "FILE: ");
+                sbFile.append("FILE: "+"\n");
 
                 long nTotal = read8Bytes(buffer);
                 long nRemaning = read8Bytes(buffer);
                 int nFragments = read4Bytes(buffer);
                 long notStart = nTotal - nRemaning;
 
-                addLine(xhtml, "    TOTAL SIZE:          " + nTotal);
-                addLine(xhtml, "    TOTAL REMANING:      " + nRemaning);
-                addLine(xhtml, "    TOTAL DOWNLOADED:    " + notStart);
-                addLine(xhtml, "    NUMBER OF FRAGMENTS: " + nFragments);
+                sbFile.append("    TOTAL SIZE:          " + nTotal+"\n");
+                sbFile.append("    TOTAL REMANING:      " + nRemaning+"\n");
+                sbFile.append("    TOTAL DOWNLOADED:    " + notStart+"\n");
+                sbFile.append("    NUMBER OF FRAGMENTS: " + nFragments+"\n");
 
                 for (int i = 0; i < nFragments; i++) {
                     long nRangeBegin = read8Bytes(buffer);
                     long nRangeLength = read8Bytes(buffer);
 
-                    addLine(xhtml, "        FRAGMENT " + (i + 1));
-                    addLine(xhtml, "            RANGE BEGIN: " + nRangeBegin);
-                    addLine(xhtml, "            RANGE END:   " + (nRangeBegin + nRangeLength));
+                    sbFile.append("        FRAGMENT " + (i + 1)+"\n");
+                    sbFile.append("            RANGE BEGIN: " + nRangeBegin+"\n");
+                    sbFile.append("            RANGE END:   " + (nRangeBegin + nRangeLength)+"\n");
                 }
 
                 int nFiles = read4Bytes(buffer);
-                addLine(xhtml, "    NUMBER OF FILES:     " + nFiles);
+                sbFile.append("    NUMBER OF FILES:     " + nFiles+"\n");
 
                 for (int i = 0; i < nFiles; i++) {
-                    addLine(xhtml, "        FILE " + (i + 1));
+                    sbFile.append("        FILE " + (i + 1)+"\n");
                     str1 = readString(buffer);
-                    addLine(xhtml, "            FILE PATH:   " + str1);
+                    sbFile.append("            FILE PATH:   " + str1+"\n");
 
                     long offSet = read8Bytes(buffer);
                     long size = read8Bytes(buffer);
@@ -439,11 +447,11 @@ public class ShareazaDownloadParser extends AbstractParser {
                     str1 = readString(buffer);
                     int nPriority = read4Bytes(buffer);
 
-                    addLine(xhtml, "            OFFSET:      " + offSet);
-                    addLine(xhtml, "            SIZE:        " + size);
-                    addLine(xhtml, "            WRITE:       " + write);
-                    addLine(xhtml, "            FILE NAME:   " + str1);
-                    addLine(xhtml, "            PRIORITY:    " + nPriority);
+                    sbFile.append("            OFFSET:      " + offSet+"\n");
+                    sbFile.append("            SIZE:        " + size+"\n");
+                    sbFile.append("            WRITE:       " + write+"\n");
+                    sbFile.append("            FILE NAME:   " + str1+"\n");
+                    sbFile.append("            PRIORITY:    " + nPriority+"\n");
 
                 }
             }
@@ -453,8 +461,8 @@ public class ShareazaDownloadParser extends AbstractParser {
                 int torrentVersion = read4Bytes(buffer);
                 int torrentValid = read4Bytes(buffer);
 
-                    addLine(xhtml, "TORRENT VERSION:         " + torrentVersion);
-                    addLine(xhtml, "    VALID:               " + torrentValid);
+                    sbTorrent.append("TORRENT VERSION:         " + torrentVersion+"\n");
+                    sbTorrent.append("    VALID:               " + torrentValid+"\n");
 
                 if (torrentValid > 0) {
 
@@ -464,14 +472,14 @@ public class ShareazaDownloadParser extends AbstractParser {
                     int blockSize = read4Bytes(buffer);
                     int blockCount = read4Bytes(buffer);
 
-                    addLine(xhtml, "    BT HASH:             " + btHash);
-                    addLine(xhtml, "    Size:                " + size);
-                    addLine(xhtml, "    BlockSize:           " + blockSize);
-                    addLine(xhtml, "    BlockCount:          " + blockCount);
+                    sbTorrent.append("    BT HASH:             " + btHash+"\n");
+                    sbTorrent.append("    Size:                " + size+"\n");
+                    sbTorrent.append("    BlockSize:           " + blockSize+"\n");
+                    sbTorrent.append("    BlockCount:          " + blockCount+"\n");
 
                     for (int i = 0; i < blockCount; ++i) {
                         btHash = readHashString(buffer, 20);
-                        addLine(xhtml, "    		BT HASH [" + i + "]:         " + btHash);
+                        sbTorrent.append("    		BT HASH [" + i + "]:         " + btHash+"\n");
                     }
 
                     long totalUpload = read8Bytes(buffer);
@@ -481,50 +489,50 @@ public class ShareazaDownloadParser extends AbstractParser {
                     String comment = readString(buffer);
                     int creationDate = read4Bytes(buffer);
                     String createdBy = readString(buffer);
-                    int privateStr = read2Bytes(buffer);
-                    int fileCount = read4Bytes(buffer);
+                    int privateStr = read4Bytes(buffer);
+                    int fileCount = read2Bytes(buffer);
 
-                    addLine(xhtml, "    TotalUpload:         " + totalUpload);
-                    addLine(xhtml, "    TotalDownload:       " + totalDownload);
-                    addLine(xhtml, "    Name:                " + name);
-                    addLine(xhtml, "    Encoding:            " + encoding);
-                    addLine(xhtml, "    Comment:             " + comment);
-                    addLine(xhtml, "    CreationDate:        " + creationDate);
-                    addLine(xhtml, "    CreatedBy:           " + createdBy);
-                    addLine(xhtml, "    Private:             " + getBoolStr(privateStr));
-                    addLine(xhtml, "    FileCount:           " + fileCount);
+                    sbTorrent.append("    TotalUpload:         " + totalUpload+"\n");
+                    sbTorrent.append("    TotalDownload:       " + totalDownload+"\n");
+                    sbTorrent.append("    Name:                " + name+"\n");
+                    sbTorrent.append("    Encoding:            " + encoding+"\n");
+                    sbTorrent.append("    Comment:             " + comment+"\n");
+                    sbTorrent.append("    CreationDate:        " + creationDate+"\n");
+                    sbTorrent.append("    CreatedBy:           " + createdBy+"\n");
+                    sbTorrent.append("    Private:             " + getBoolStr(privateStr)+"\n");
+                    sbTorrent.append("    File Count:          " + fileCount+"\n");
 
                     for (int i = 0; i < fileCount; i++) {
-                        addLine(xhtml, "    		BT FILE [" + i + "]:         " + btHash);
+                        sbTorrent.append("    		   FILE [" + i + "]:         " + "\n");
 
                         long btSize = read8Bytes(buffer);
                         String btPath = readString(buffer);
                         String btName = readString(buffer);
+                        // TODO: Check why some files don't have hashes
                         String btSHA1 = readHashString(buffer, 20);
                         String btEDONKEY = readHashString(buffer, 16);
                         String btTIGER = readHashString(buffer, 24);
                         String btMD5 = readHashString(buffer, 16);
 
-                        addLine(xhtml, "    			Size:                           " + btSize);
-                        addLine(xhtml, "    			Path:                           " + btPath);
-                        addLine(xhtml, "    			Name:                           " + btName);
-                        addLine(xhtml, "    			SHA1:                           " + btSHA1);
-                        addLine(xhtml, "    			EDONKEY:                        " + btEDONKEY);
-                        addLine(xhtml, "    			TIGER:                          " + btTIGER);
-                        addLine(xhtml, "    			MD5:                            " + btMD5);
+                        sbTorrent.append("    			Size:                           " + btSize+"\n");
+                        sbTorrent.append("    			Path:                           " + btPath+"\n");
+                        sbTorrent.append("    			Name:                           " + btName+"\n");
+                        sbTorrent.append("    			SHA1:                           " + btSHA1+"\n");
+                        sbTorrent.append("    			EDONKEY:                        " + btEDONKEY+"\n");
+                        sbTorrent.append("    			TIGER:                          " + btTIGER+"\n");
+                        sbTorrent.append("    			MD5:                            " + btMD5+"\n");
                     }
 
                     int trackerIndex = read4Bytes(buffer);
                     int trackerMode = read4Bytes(buffer);
                     int nTrackers = read4Bytes(buffer);
                     
-                    addLine(xhtml, "    TrackerIndex:        " + trackerIndex);
-                    addLine(xhtml, "    TrackerMode:         " + trackerMode);
-                    addLine(xhtml, "    Trackers:            " + nTrackers);
+                    sbTorrent.append("    TrackerIndex:        " + trackerIndex+"\n");
+                    sbTorrent.append("    TrackerMode:         " + trackerMode+"\n");
+                    sbTorrent.append("    Trackers Count       " + nTrackers+"\n");
 
                     for (int i = 0; i < nTrackers; i++) {
-                        addLine(xhtml, "    nTrackers[" + i + "]:   " + fileCount);
-
+                        sbTorrent.append("    Tracker[" + i + "]:   " +"\n");
                         String address = readString(buffer);
                         int lastAccess = read4Bytes(buffer);
                         int lastSuccess = read4Bytes(buffer);
@@ -533,32 +541,32 @@ public class ShareazaDownloadParser extends AbstractParser {
                         int tier = read4Bytes(buffer);
                         int type = read4Bytes(buffer);
 
-                        addLine(xhtml, "    			Address:          " + address);
-                        addLine(xhtml, "    			LastAccess:       " + lastAccess);
-                        addLine(xhtml, "    			LastSuccess:      " + lastSuccess);
-                        addLine(xhtml, "    			NextTry:          " + nextTry);
-                        addLine(xhtml, "    			Failures:         " + failures);
-                        addLine(xhtml, "    			Tier:             " + tier);
-                        addLine(xhtml, "    			Type:             " + type);
+                        sbTorrent.append("    			Address:          " + address+"\n");
+                        sbTorrent.append("    			LastAccess:       " + lastAccess+"\n");
+                        sbTorrent.append("    			LastSuccess:      " + lastSuccess+"\n");
+                        sbTorrent.append("    			NextTry:          " + nextTry+"\n");
+                        sbTorrent.append("    			Failures:         " + failures+"\n");
+                        sbTorrent.append("    			Tier:             " + tier+"\n");
+                        sbTorrent.append("    			Type:             " + type+"\n");
                     }
                     
                     int length = read4Bytes(buffer);
-                    addLine(xhtml, "    Source Length:       " + length);
+                    sbTorrent.append("    Source Length:       " + length+"\n");
 
                     if (length > 0) {
                         String nSource = readHashString(buffer, length);
                         int infoStart = read4Bytes(buffer);
                         int infoSize = read4Bytes(buffer);
 
-                        addLine(xhtml, "    Source:                " + nSource);
-                        addLine(xhtml, "    InfoStart:             " + infoStart);
-                        addLine(xhtml, "    InfoSize:              " + infoSize);
+                        sbTorrent.append("    Source:                " + nSource+"\n");
+                        sbTorrent.append("    InfoStart:             " + infoStart+"\n");
+                        sbTorrent.append("    InfoSize:              " + infoSize+"\n");
                     }
 
                     if (version >= 23) {
-                        addLine(xhtml, "    TorrentSuccess:      " + read4Bytes(buffer));
-                        addLine(xhtml, "    TorrentBlock:        " + readHashString(buffer, blockCount));
-                        addLine(xhtml, "    SEEDING:             " + read2Bytes(buffer));
+                        sbTorrent.append("    TorrentSuccess:      " + read4Bytes(buffer)+"\n");
+                        sbTorrent.append("    TorrentBlock:        " + readHashString(buffer, blockCount)+"\n");
+                        sbTorrent.append("    SEEDING:             " + read2Bytes(buffer)+"\n");
                     }
                 }
 
@@ -568,11 +576,11 @@ public class ShareazaDownloadParser extends AbstractParser {
             int pTreeSize = read4Bytes(buffer);
             if (pTreeSize > 0) {
 
-                addLine(xhtml, "TIGER [TREE SIZE]:         " + pTreeSize);
+                sbTigerDB.append("TIGER [TREE SIZE]:         " + pTreeSize+"\n");
 
                 int hashTigerDatabaseSize = hashTigerDataBaseSize(pTreeSize);
 
-                addLine(xhtml, "TIGER [HASH DATABASE SIZE]:         " + hashTigerDatabaseSize);
+                sbTigerDB.append("TIGER [HASH DATABASE SIZE]:         " + hashTigerDatabaseSize+"\n");
 
                 padding(buffer, hashTigerDatabaseSize);
 
@@ -580,20 +588,20 @@ public class ShareazaDownloadParser extends AbstractParser {
                 int tigerSize = read4Bytes(buffer);
                 int tigerSuccess = read4Bytes(buffer);
 
-                addLine(xhtml, "TIGER [TIGER BLOCK] :         " + tigerBlock);
-                addLine(xhtml, "TIGER [TIGER SIZE]  :         " + tigerSize);
-                addLine(xhtml, "TIGER [TIGER SUCESS]:         " + tigerSuccess);
+                sbTigerDB.append("TIGER [TIGER BLOCK] :         " + tigerBlock+"\n");
+                sbTigerDB.append("TIGER [TIGER SIZE]  :         " + tigerSize+"\n");
+                sbTigerDB.append("TIGER [TIGER SUCESS]:         " + tigerSuccess+"\n");
 
                 padding(buffer, tigerBlock);
             }
 
             // ED2K HASH DATABASE
             int ed2kListSize = read4Bytes(buffer);
-            addLine(xhtml, "EDONKEY HASH DATABASE:");
-            addLine(xhtml, "     EDONKEY [LIST SIZE]:                " + ed2kListSize);
+            sbEd2kDB.append("EDONKEY HASH DATABASE:"+"\n");
+            sbEd2kDB.append("     EDONKEY [LIST SIZE]:                " + ed2kListSize+"\n");
 
             int ed2kListSerialSize = getEd2kListSerialSize(ed2kListSize);
-            addLine(xhtml, "     EDONKEY [HASH DATABASE SIZE]:       " + ed2kListSerialSize);
+            sbEd2kDB.append("     EDONKEY [HASH DATABASE SIZE]:       " + ed2kListSerialSize+"\n");
 
             padding(buffer, ed2kListSerialSize);
 
@@ -601,28 +609,28 @@ public class ShareazaDownloadParser extends AbstractParser {
                 int hashsetBlock = read4Bytes(buffer);
                 int hashsetSuccess = read4Bytes(buffer);
 
-                addLine(xhtml, "     EDONKEY [HASHSET BLOCK LENGTH]:     " + hashsetBlock);
-                addLine(xhtml, "     EDONKEY [HASHSET SUCCESS]:          " + hashsetSuccess);
+                sbEd2kDB.append("     EDONKEY [HASHSET BLOCK LENGTH]:     " + hashsetBlock+"\n");
+                sbEd2kDB.append("     EDONKEY [HASHSET SUCCESS]:          " + hashsetSuccess+"\n");
 
                 padding(buffer, hashsetBlock);
             }
 
             int numPreviews = read2Bytes(buffer);
-            addLine(xhtml, "NUMBER OF PREVIEWS:      " + numPreviews);
+            sbPreview.append("NUMBER OF PREVIEWS:      " + numPreviews+"\n");
 
             for (int i = 0; i < numPreviews; i++) {
                 String preview = readString(buffer);
-                addLine(xhtml, "    PREVIEW " + (i + 1) + ":           " + preview);
+                sbPreview.append("    PREVIEW " + (i + 1) + ":           " + preview+"\n");
 
             }
 
             if (version >= 32) {
                 int numReviews = read2Bytes(buffer);
-                addLine(xhtml, "NUMBER OF REVIEWS:       " + numReviews);
+                sbReview.append("NUMBER OF REVIEWS:       " + numReviews+"\n");
 
                 if (numReviews > 0) {
                     for (int i = 0; i < numReviews; i++) {
-                        addLine(xhtml, "     REVIEW " + (i + 1) + ":");
+                        sbReview.append("     REVIEW " + (i + 1) + ":"+"\n");
 
                         long userIP = read8Bytes(buffer);
                         int userPicture = read4Bytes(buffer);
@@ -630,11 +638,11 @@ public class ShareazaDownloadParser extends AbstractParser {
                         int fileRating = read4Bytes(buffer);
                         String fileComments = readString(buffer);
 
-                        addLine(xhtml, "     	USER IP:       " + userIP);
-                        addLine(xhtml, "     	USER PICTURE:  " + userPicture);
-                        addLine(xhtml, "     	USER NAME:     " + userName);
-                        addLine(xhtml, "     	FILE RATING:   " + fileRating);
-                        addLine(xhtml, "     	FILE COMMENTS: " + fileComments);
+                        sbReview.append("     	USER IP:       " + userIP+"\n");
+                        sbReview.append("     	USER PICTURE:  " + userPicture+"\n");
+                        sbReview.append("     	USER NAME:     " + userName+"\n");
+                        sbReview.append("     	FILE RATING:   " + fileRating+"\n");
+                        sbReview.append("     	FILE COMMENTS: " + fileComments+"\n");
                     }
                 }
             }
@@ -650,7 +658,7 @@ public class ShareazaDownloadParser extends AbstractParser {
             addLine(xhtml, "BOOSTED:                 " + getBoolStr(boosted));
             addLine(xhtml, "SHARED:                  " + getBoolStr(shared));
             addLine(xhtml, "SERIAL ID:               " + serialID);
-
+            
         } catch (BufferUnderflowException ex) {
             addLine(xhtml, INCOMPLETE_FILE_EX_MESSAGE + " Evidence=" + evidencePath);
             LOGGER.warn(INCOMPLETE_FILE_EX_MESSAGE + " Evidence=" + evidencePath);
@@ -658,6 +666,15 @@ public class ShareazaDownloadParser extends AbstractParser {
             addLine(xhtml, INCOMPLETE_FILE_EX_MESSAGE + " Evidence=" + evidencePath);
             LOGGER.warn(INCOMPLETE_FILE_EX_MESSAGE + " Evidence=" + evidencePath);
             ex.printStackTrace();
+        } finally {
+            addLines(xhtml, sbFile);
+            addLines(xhtml, sbPreview);
+            addLines(xhtml, sbReview);
+            addLines(xhtml, sbXML);
+            addLines(xhtml, sbTorrent);
+            addLines(xhtml, sbSources);
+            addLines(xhtml, sbEd2kDB);
+            addLines(xhtml, sbTigerDB);
         }
     }
 
@@ -845,7 +862,7 @@ public class ShareazaDownloadParser extends AbstractParser {
         return t;
     }
 
-    public void readXMLNode(ByteBuffer buffer, XHTMLContentHandler xhtml, int level) throws Exception {
+    public void readXMLNode(ByteBuffer buffer, XHTMLContentHandler xhtml, int level, StringBuilder sbXML) throws Exception {
 
         String node = "";
         String str1 = "";
@@ -857,23 +874,23 @@ public class ShareazaDownloadParser extends AbstractParser {
 
         node = readString(buffer);
         readString(buffer);
-        xhtml.characters(align + "<" + node);
+        sbXML.append(align + "<" + node);
 
         int numAttr = read2Bytes(buffer);
         for (int i = 0; i < numAttr; i++) {
             str1 = readString(buffer);
             str2 = readString(buffer);
-            xhtml.characters(" " + str1 + "=\"" + str2 + "\" ");
+            sbXML.append(" " + str1 + "=\"" + str2 + "\" ");
         }
-        addLine(xhtml, ">");
+        sbXML.append(">"+"\n");
 
         int numElement = read2Bytes(buffer);
 
         for (int i = 0; i < numElement; i++) {
-            readXMLNode(buffer, xhtml, level + 1);
+            readXMLNode(buffer, xhtml, level + 1, sbXML);
         }
 
-        addLine(xhtml, align + "</" + node + ">");
+        sbXML.append(align + "</" + node + ">"+"\n");
     }
 
     public String getHash(MessageDigest digest) throws Exception {
@@ -936,5 +953,13 @@ public class ShareazaDownloadParser extends AbstractParser {
     private void addLine(XHTMLContentHandler xhtml, String value) throws SAXException {
         xhtml.characters(value);
         xhtml.newline();
+    }
+    
+    private void addLines(XHTMLContentHandler xhtml, StringBuilder sb) throws SAXException {
+        String[] lines = sb.toString().split("\\n");
+        for(String s: lines){
+            xhtml.characters(s);
+            xhtml.newline();
+        }
     }
 }
