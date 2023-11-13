@@ -121,7 +121,6 @@ public class CacheIndexParser extends AbstractParser {
                                 requestUrl.substring(requestUrl.lastIndexOf('/') + 1));
                         entryMeta.set(TikaCoreProperties.RESOURCE_NAME_KEY,
                                 requestUrl.substring(requestUrl.lastIndexOf('/') + 1));
-                        entryMeta.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
                         entryMeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                         entryMeta.set(IS_CACHE_INDEX_ENTRY, Boolean.TRUE.toString());
