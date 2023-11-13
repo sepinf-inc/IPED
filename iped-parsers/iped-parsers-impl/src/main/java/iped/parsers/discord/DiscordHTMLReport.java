@@ -369,7 +369,7 @@ public class DiscordHTMLReport {
             out.println("<HEAD>");
             out.println(" <meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n");
             out.println("<style>" + CSS + "</style>");
-            out.println("<style>" + iped.parsers.whatsapp.Util.readResourceAsString("css/whatsapp.css") + "</style>");            
+            out.println("<style>" + iped.parsers.whatsapp.Util.readResourceAsString("css/whatsapp.css") + "</style>");
             out.println("<script>"); //$NON-NLS-1$
             out.println(iped.parsers.whatsapp.Util.readResourceAsString("js/whatsapp.js"));
             out.println("</script>"); //$NON-NLS-1$
@@ -506,14 +506,40 @@ public class DiscordHTMLReport {
                         // if hash exists, at least 1 item will be returned
                         IItemReader item = it.next();
                         printCheckbox(out, att.getMediaHash());
+
+                        String exportPath = iped.parsers.util.Util.getExportPath(item);
+                        String source = iped.parsers.util.Util.getSourceFileIfExists(item).orElse("");
+                        byte[] thumb = item.getThumb();
                         out.println("       <a onclick=\"app.open('hash:" + att.getMediaHash() + "')\" href='"
                                 + Util.getExportPath(item) + "'>");
                         if (item.getThumb() != null) {
-                            out.println("       <img src=\"data:image/jpeg;base64," + Base64.getEncoder().encodeToString(item.getThumb()) + "\" title=\"" + format(att.getFilename()) + "\">");
+                            out.println("       <img src=\"data:image/jpeg;base64,"
+                                    + Base64.getEncoder().encodeToString(thumb) + "\" title=\""
+                                    + format(att.getFilename()) + "\">");
                         }
+
                         out.println("       <BR/>");
                         out.println("       <DIV>" + format(att.getFilename()) + "</DIV>");
                         out.println("       </a>");
+
+                        if (item.getMediaType().toString().startsWith("audio/")) {
+                            out.println("<div class=\"audioImg iped-audio\" " //$NON-NLS-1$
+                                    + " title=\"Audio\" " + "data-src1=\"" + format(exportPath) + "\" " + "data-src2=\"" //$NON-NLS-4$
+                                    + format(source) + "\"></div>");
+                        }
+                        if (item.getMediaType().toString().startsWith("video/")) {
+                            if (thumb != null) {
+                                out.println("<img class=\"thumb iped-video\" src=\"" + "data:image/jpg;base64,"
+                                        + iped.parsers.whatsapp.Util.encodeBase64(thumb) + "\"" + " data-src1=\""
+                                        + format(exportPath) + "\"" + " data-src2=\"" + format(source) + "\"" //$NON-NLS-3$
+                                        + " title=\"" + att.getFilename() //$NON-NLS-1$
+                                        + "\"/>");
+
+                            } else {
+                                out.println("<div class=\"videoImg iped-video\" title=\"Video\"" + " data-src1=\""
+                                        + format(exportPath) + "\"" + " data-src2=\"" + format(source) + "\"></div>");
+                            }
+                        }
 
                     } else {
                         out.println("       <DIV>" + format(att.getFilename()) + "</DIV>");
