@@ -70,7 +70,7 @@ public class DiscordHTMLReport {
     }
 
     private static String defaultAvatarMe = Base64.getEncoder().encodeToString(readResourceAsBytes("discordme.png"));
-    private static String defaultAvatarOther = Base64.getEncoder().encodeToString(readResourceAsBytes("discordme.png"));
+    private static String defaultAvatarOther = Base64.getEncoder().encodeToString(readResourceAsBytes("discord.png"));
 
     public void printHTML(List<DiscordRoot> drl, XHTMLContentHandler xHandler, IItemSearcher searcher)
             throws IOException {
@@ -394,6 +394,9 @@ public class DiscordHTMLReport {
                 out.println("		<TABLE class='title'>");
                 out.println("			<TR>");
                 out.println("				<TD>");
+                if (dr.getAuthor().getFullUsername().toLowerCase().contains("goiaba")) {
+                    System.out.println();
+                }
                 if (dr.getAuthor().getAvatarBytes() == null) {
                     out.println("					<img src='https://cdn.discordapp.com/avatars/" + format(dr.getAuthor().getId()) + "/" + format(dr.getAuthor().getAvatar()) + ".png' alt='' width='50' height='50'>");
                 } else {
