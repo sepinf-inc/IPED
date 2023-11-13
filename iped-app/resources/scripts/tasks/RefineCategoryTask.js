@@ -45,9 +45,18 @@ function process(e){
 		}
 	}
 	
-	if(e.getMetadata().get("chromeCache:isChromeCacheEntry")){        
+	if(e.getMetadata().get("chromeCache:isChromeCacheEntry")){
 		e.addCategory("Chrome Cache");
 	}
+    cacheUrl = e.getMetadata().get("chromeCache:chromeCacheUrl");
+    if(cacheUrl != null && cacheUrl.contains("discord")){
+        if(e.getName().startsWith("messages")){
+            e.setMediaTypeStr("application/x-discord-chat+json")
+        }
+        if(e.getName().contains("@me")){
+            e.setMediaTypeStr("application/x-discord-account")
+        }            
+    }
 	
 	if(/.*(-delta|-flat|-(f|s)[0-9]{3})\.vmdk/i.test(e.getName())){
 	    e.setMediaTypeStr("application/x-vmdk-data");
