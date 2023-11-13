@@ -215,11 +215,15 @@ public class DiscordParser extends AbstractParser {
                         String[] parts = da.getUrl().split("https://cdn.discordapp.com/attachments/");
 
                         if (parts.length > 1) {
+                            long greater = 0;
                             List<IItemReader> atts = searcher.search(commonQuery + " AND "
                                     + CacheIndexParser.CACHE_URL.replace(":", "\\:") + ":\"" + parts[1] + "\"");
                             for (IItemReader attsItem : atts) {
-                                da.setMediaHash(attsItem.getHash());
-                                da.setContent_type(attsItem.getMediaType().toString());
+                                if (da.getSize() > greater) {
+                                    da.setMediaHash(attsItem.getHash());
+                                    da.setContent_type(attsItem.getMediaType().toString());
+                                    greater = da.getSize();
+                                }
                             }
                         }
                     } catch (Exception e) {
