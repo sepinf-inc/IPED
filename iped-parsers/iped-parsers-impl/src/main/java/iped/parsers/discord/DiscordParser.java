@@ -172,7 +172,6 @@ public class DiscordParser extends AbstractParser {
                         byte[] avatar = avatarCache.get(dr.getAuthor().getAvatar());
                         if (avatar != null) {
                             dr.getAuthor().setAvatarBytes(avatar);
-                            break;
                         } else {
                             try {
                                 List<IItemReader> avatars = searcher.search(commonQuery + " AND " + BasicProps.NAME
