@@ -72,6 +72,7 @@ public class DiscordParser extends AbstractParser {
     public static final String DATA_MIME_TYPE_V2_1 = "data-v21/x-discord-chat";
 
     public static final String CHAT_MIME_TYPE = "application/x-discord-chat+json";
+    public static final String CHAT_MIME_TYPE_HTML = "application/x-discord-chat";
     public static final String MSG_MIME_TYPE = "message/x-discord-message";
     public static final String CALL_MIME_TYPE = "call/x-discord-call";
     public static final String ATTACH_MIME_TYPE = "message/x-discord-attachment";
@@ -202,9 +203,11 @@ public class DiscordParser extends AbstractParser {
 
             DiscordAuthor me = extractAccount(searcher, commonQuery, mapper, avatarCache, handler, extractor);
 
-            metadata.set("URL", item.getName());
-            metadata.set(TikaCoreProperties.TITLE, chatName);
-            metadata.set(StandardParser.INDEXER_CONTENT_TYPE, CHAT_MIME_TYPE);
+            Metadata chatmetadata = new Metadata();
+
+            chatmetadata.set("URL", item.getName());
+            chatmetadata.set(TikaCoreProperties.TITLE, chatName);
+            chatmetadata.set(StandardParser.INDEXER_CONTENT_TYPE, CHAT_MIME_TYPE_HTML);
 
             for (DiscordRoot dr : discordRoot) {
                 for (DiscordAttachment da : dr.getAttachments()) {
@@ -224,7 +227,7 @@ public class DiscordParser extends AbstractParser {
                     }
 
                     if (da.getMediaHash() != null) {
-                        metadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + da.getMediaHash());
+                        chatmetadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + da.getMediaHash());
                     }
 
                 }
@@ -234,7 +237,8 @@ public class DiscordParser extends AbstractParser {
             Collections.sort(discordRoot);
 
             XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
-            new DiscordHTMLReport(me).printHTML(discordRoot, xhtml, searcher);
+            byte[] relatorio = new DiscordHTMLReport(me).convertToHTML(discordRoot, searcher);
+            extractor.parseEmbedded(new ByteArrayInputStream(relatorio), handler, chatmetadata, false);
 
             extractMessages(chatName, discordRoot, handler, extractor, 0);
         }

@@ -369,6 +369,11 @@ public class DiscordHTMLReport {
             out.println("<HEAD>");
             out.println(" <meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n");
             out.println("<style>" + CSS + "</style>");
+            out.println("<style>" + iped.parsers.whatsapp.Util.readResourceAsString("css/whatsapp.css") + "</style>");            
+            out.println("<script>"); //$NON-NLS-1$
+            out.println(iped.parsers.whatsapp.Util.readResourceAsString("js/whatsapp.js"));
+            out.println("</script>"); //$NON-NLS-1$
+
             out.println("</HEAD>");
             out.println("<BODY>");
         }
@@ -395,10 +400,27 @@ public class DiscordHTMLReport {
                 out.println("		<TABLE class='title'>");
                 out.println("			<TR>");
                 out.println("				<TD>");
+
                 if (dr.getAuthor().getAvatarBytes() == null) {
-                    out.println("					<img src='https://cdn.discordapp.com/avatars/" + format(dr.getAuthor().getId()) + "/" + format(dr.getAuthor().getAvatar()) + ".png' alt='' width='50' height='50'>");
+                    String avatar = dr.getAuthor().getAvatar();
+                    if (avatar == null || avatar.trim().equals("")) {
+                        String defaultAvatar;
+                        if (me != null && dr.getAuthor().getId().equals(me.getId())) {
+                            defaultAvatar = defaultAvatarMe;
+                        } else {
+                            defaultAvatar = defaultAvatarOther;
+                        }
+                        out.println("                   <img src='data:image/jpeg;base64, " + defaultAvatar
+                                + "' alt='' width='50' height='50'>");
+                    } else {
+                        out.println("                   <img src='https://cdn.discordapp.com/avatars/"
+                                + format(dr.getAuthor().getId()) + "/" + format(dr.getAuthor().getAvatar())
+                                + ".png' alt='' width='50' height='50'>");
+                    }
                 } else {
-                    out.println("					<img src='data:image/jpeg;base64, " + Base64.getEncoder().encodeToString(dr.getAuthor().getAvatarBytes()) + "' alt='' width='50' height='50'>");
+                    out.println("                   <img src='data:image/jpeg;base64, "
+                            + Base64.getEncoder().encodeToString(dr.getAuthor().getAvatarBytes())
+                            + "' alt='' width='50' height='50'>");
                 }
 
                 out.println("				</TD>");
