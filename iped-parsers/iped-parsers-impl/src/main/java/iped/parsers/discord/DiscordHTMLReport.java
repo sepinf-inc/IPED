@@ -510,12 +510,15 @@ public class DiscordHTMLReport {
                         String exportPath = iped.parsers.util.Util.getExportPath(item);
                         String source = iped.parsers.util.Util.getSourceFileIfExists(item).orElse("");
                         byte[] thumb = item.getThumb();
+
                         out.println("       <a onclick=\"app.open('hash:" + att.getMediaHash() + "')\" href='"
                                 + Util.getExportPath(item) + "'>");
-                        if (item.getThumb() != null) {
-                            out.println("       <img src=\"data:image/jpeg;base64,"
-                                    + Base64.getEncoder().encodeToString(thumb) + "\" title=\""
-                                    + format(att.getFilename()) + "\">");
+                        if (!item.getMediaType().toString().startsWith("video/")) {
+                            if (thumb != null) {
+                                out.println("       <img src=\"data:image/jpeg;base64,"
+                                        + Base64.getEncoder().encodeToString(thumb) + "\" title=\""
+                                        + format(att.getFilename()) + "\">");
+                            }
                         }
 
                         out.println("       <BR/>");
@@ -534,13 +537,10 @@ public class DiscordHTMLReport {
                                         + format(exportPath) + "\"" + " data-src2=\"" + format(source) + "\"" //$NON-NLS-3$
                                         + " title=\"" + att.getFilename() //$NON-NLS-1$
                                         + "\"/>");
-
-                            } else {
-                                out.println("<div class=\"videoImg iped-video\" title=\"Video\"" + " data-src1=\""
-                                        + format(exportPath) + "\"" + " data-src2=\"" + format(source) + "\"></div>");
                             }
+                            out.println("<div class=\"videoImg iped-video\" title=\"Video\"" + " data-src1=\""
+                                    + format(exportPath) + "\"" + " data-src2=\"" + format(source) + "\"></div>");
                         }
-
                     } else {
                         out.println("       <DIV>" + format(att.getFilename()) + "</DIV>");
                     }
