@@ -98,6 +98,8 @@ public class ThreemaParser extends SQLite3DBParser {
 
     private boolean extractMessages = true;
 
+    private boolean extractMediasAsFiles = false;
+
     // TODO not implemented yet
     private boolean recoverDeletedRecords = false;
 
@@ -109,6 +111,11 @@ public class ThreemaParser extends SQLite3DBParser {
     @Field
     public void setExtractMessages(boolean extractMessages) {
         this.extractMessages = extractMessages;
+    }
+
+    @Field
+    public void setExtractMediasAsFiles(boolean extractMediasAsFiles) {
+        this.extractMediasAsFiles = extractMediasAsFiles;
     }
 
     // TODO not implemented yet
@@ -197,8 +204,11 @@ public class ThreemaParser extends SQLite3DBParser {
 
                         // This property forces media item to be extracted to sub-items folder (instead
                         // of db storage), allowing it to be accessible from External HTML viewers
-                        // (useful chat reports)
-                        embedFileData.set(ExtraProperties.EXTRACTED_FILE, Boolean.TRUE.toString());
+                        // (useful chat reports). Since it doesn't work for medias found outside the DB,
+                        // a mixed behavior can confuse users, so it's disabled by default.
+                        if (extractMediasAsFiles) {
+                            embedFileData.set(ExtraProperties.EXTRACTED_FILE, Boolean.TRUE.toString());
+                        }
 
                         embedFileData.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
                         embedFileData.set(TikaCoreProperties.TITLE, name);

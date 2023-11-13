@@ -311,7 +311,12 @@
                 <param name="minChatSplitSize" type="int">6000000</param>
             </params>
         </parser>
-        <parser class="iped.parsers.threema.ThreemaParser"/>
+        <parser class="iped.parsers.threema.ThreemaParser">
+            <params>
+                <param name="extractMessages" type="bool">true</param>
+                <param name="extractMediasAsFiles" type="bool">false</param>
+            </params>
+        </parser>
         <parser class="iped.parsers.ufed.UFEDChatParser">
             <!--<mime-exclude>application/x-ufed-chat-whatsapp</mime-exclude>-->
             <params>
