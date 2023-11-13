@@ -200,40 +200,7 @@ public class DiscordParser extends AbstractParser {
 
             String chatName = "DiscordChat id(" + discordRoot.get(0).getId() + ")";
 
-            DiscordAuthor me = null;
-            // find me info
-            List<IItemReader> mes = searcher.search(
-                    commonQuery + " AND " + CacheIndexParser.CACHE_URL.replace(":", "\\:") + ":\"" + ME_URL + "\"");
-            for (IItemReader mei : mes) {
-                if (mei.getName().equals("@me")) {
-                    try (InputStream is2 = mei.getBufferedInputStream()) {
-                        try {
-                            byte[] mebytes = is2.readAllBytes();
-                            me = mapper.readValue(mebytes, new TypeReference<DiscordAuthor>() {
-                            });
-                            Metadata memeta = new Metadata();
-                            memeta.set(TikaCoreProperties.TITLE, me.getUsername());
-                            memeta.set(ExtraProperties.USER_NAME, me.getName());
-                            memeta.set(ExtraProperties.USER_PHONE, me.getPhone());
-                            memeta.set(ExtraProperties.USER_ACCOUNT, me.getId());
-                            memeta.set(ExtraProperties.USER_ACCOUNT_TYPE, "Discord");
-                            memeta.set(ExtraProperties.USER_EMAIL, me.getEmail());
-                            // memeta.set(ExtraProperties.USER_NOTES, me.getBio());
-                            memeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
-
-                            if (me.getAvatar() != null) {
-                                byte[] meavatar = avatarCache.get(me.getAvatar());
-                                memeta.set(ExtraProperties.THUMBNAIL_BASE64,
-                                        Base64.getEncoder().encodeToString(meavatar));
-                            }
-                            memeta.set(StandardParser.INDEXER_CONTENT_TYPE, DISCORD_ACCOUNT.toString());
-                            extractor.parseEmbedded(new ByteArrayInputStream(mebytes), handler, memeta, false);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            }
+            DiscordAuthor me = extractAccount(searcher, commonQuery, mapper, avatarCache, handler, extractor);
 
             metadata.set("URL", item.getName());
             metadata.set(TikaCoreProperties.TITLE, chatName);
@@ -259,6 +226,7 @@ public class DiscordParser extends AbstractParser {
                     if (da.getMediaHash() != null) {
                         metadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + da.getMediaHash());
                     }
+
                 }
             }
 
@@ -270,6 +238,49 @@ public class DiscordParser extends AbstractParser {
 
             extractMessages(chatName, discordRoot, handler, extractor, 0);
         }
+    }
+
+    private DiscordAuthor extractAccount(IItemSearcher searcher, String commonQuery, ObjectMapper mapper,
+            HashMap<String, byte[]> avatarCache, ContentHandler handler, EmbeddedDocumentExtractor extractor) {
+        DiscordAuthor me = null;
+        
+        try {
+            // find me info
+            List<IItemReader> mes = searcher
+                    .search(commonQuery + " AND " + CacheIndexParser.CACHE_URL.replace(":", "\\:") + ":\"" + ME_URL + "\"");
+            for (IItemReader mei : mes) {
+                if (mei.getName().equals("@me")) {
+                    try (InputStream is2 = mei.getBufferedInputStream()) {
+                        try {
+                            byte[] mebytes = is2.readAllBytes();
+                            me = mapper.readValue(mebytes, new TypeReference<DiscordAuthor>() {
+                            });
+                            Metadata memeta = new Metadata();
+                            memeta.set(TikaCoreProperties.TITLE, me.getUsername());
+                            memeta.set(ExtraProperties.USER_NAME, me.getName());
+                            memeta.set(ExtraProperties.USER_PHONE, me.getPhone());
+                            memeta.set(ExtraProperties.USER_ACCOUNT, me.getId());
+                            memeta.set(ExtraProperties.USER_ACCOUNT_TYPE, "Discord");
+                            memeta.set(ExtraProperties.USER_EMAIL, me.getEmail());
+                            // memeta.set(ExtraProperties.USER_NOTES, me.getBio());
+                            memeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+
+                            if (me.getAvatar() != null) {
+                                byte[] meavatar = avatarCache.get(me.getAvatar());
+                                memeta.set(ExtraProperties.THUMBNAIL_BASE64, Base64.getEncoder().encodeToString(meavatar));
+                            }
+                            memeta.set(StandardParser.INDEXER_CONTENT_TYPE, DISCORD_ACCOUNT.toString());
+                            extractor.parseEmbedded(new ByteArrayInputStream(mebytes), handler, memeta, false);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+        } catch (IOException e) {
+            LOGGER.error("Error searching for discord account:" + e.getClass().getCanonicalName());
+        }
+        return me;
     }
 
     private void extractMessages(String chatName, List<DiscordRoot> discordRoot, ContentHandler handler,
