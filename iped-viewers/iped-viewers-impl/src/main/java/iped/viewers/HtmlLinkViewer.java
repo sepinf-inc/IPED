@@ -113,7 +113,7 @@ public class HtmlLinkViewer extends HtmlViewer implements SelectionListener {
                 || UFED_HTML_REPORT_MIME.equals(contentType) || PREVIEW_WITH_LINKS_MIME.equals(contentType)
                 || TelegramParser.TELEGRAM_CHAT.toString().equals(contentType)
                 || Win10MailParser.WIN10_MAIL_MSG.toString().equals(contentType)
-                || DiscordParser.CHAT_MIME_TYPE.equals(contentType);
+                || DiscordParser.CHAT_MIME_TYPE_HTML.equals(contentType);
     }
 
     @Override
