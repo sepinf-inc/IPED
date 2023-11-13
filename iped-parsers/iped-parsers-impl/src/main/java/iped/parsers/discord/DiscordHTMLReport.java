@@ -110,6 +110,7 @@ public class DiscordHTMLReport {
                     xHandler.startElement("TABLE class='title'");
                     xHandler.startElement("TR");
                     xHandler.startElement("TD");
+
                     if (dr.getAuthor().getAvatarBytes() == null) {
                         String avatar = dr.getAuthor().getAvatar();
                         if (avatar == null || avatar.trim().equals("")) {
@@ -394,9 +395,6 @@ public class DiscordHTMLReport {
                 out.println("		<TABLE class='title'>");
                 out.println("			<TR>");
                 out.println("				<TD>");
-                if (dr.getAuthor().getFullUsername().toLowerCase().contains("goiaba")) {
-                    System.out.println();
-                }
                 if (dr.getAuthor().getAvatarBytes() == null) {
                     out.println("					<img src='https://cdn.discordapp.com/avatars/" + format(dr.getAuthor().getId()) + "/" + format(dr.getAuthor().getAvatar()) + ".png' alt='' width='50' height='50'>");
                 } else {
