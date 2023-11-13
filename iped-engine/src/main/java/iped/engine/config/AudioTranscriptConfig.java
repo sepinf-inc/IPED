@@ -11,7 +11,7 @@ import iped.utils.UTF8Properties;
 public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
 
     /**
-     *
+     * 
      */
     private static final long serialVersionUID = 1L;
     public static final String CONF_FILE = "AudioTranscriptConfig.txt";
@@ -169,7 +169,7 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
 
     /**
      * Avoid leaking the transcription service address (host:port)
-     *
+     * 
      * @param moduleOutput
      * @throws IOException
      */

@@ -30,7 +30,6 @@ implementationClass = iped.engine.task.transcript.VoskTranscriptTask
 # Finally you must set environment variable GOOGLE_APPLICATION_CREDENTIALS pointing to your credential file
 #implementationClass = iped.engine.task.transcript.GoogleTranscriptTask
 
-
 #########################################
 # Global options
 #########################################
