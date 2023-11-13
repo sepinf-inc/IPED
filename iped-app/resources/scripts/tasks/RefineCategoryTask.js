@@ -45,6 +45,10 @@ function process(e){
 		}
 	}
 	
+	if(e.getMetadata().get("chromeCache:isChromeCacheEntry")){        
+		e.addCategory("Chrome Cache");
+	}
+	
 	if(/.*(-delta|-flat|-(f|s)[0-9]{3})\.vmdk/i.test(e.getName())){
 	    e.setMediaTypeStr("application/x-vmdk-data");
 	}
