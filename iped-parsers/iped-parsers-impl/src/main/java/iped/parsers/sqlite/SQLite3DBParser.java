@@ -26,7 +26,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -189,7 +189,7 @@ public class SQLite3DBParser extends AbstractDBParser {
     @Override
     protected List<String> getTableNames(Connection connection, Metadata metadata, ParseContext context)
             throws SQLException {
-        List<String> tableNames = new LinkedList<String>();
+        List<String> tableNames = new ArrayList<String>();
 
         Statement st = null;
         try {

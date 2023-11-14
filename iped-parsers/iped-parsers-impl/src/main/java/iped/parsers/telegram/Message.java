@@ -19,10 +19,9 @@
 package iped.parsers.telegram;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import dpf.ap.gpinf.interfacetelegram.MessageInterface;
 import dpf.ap.gpinf.interfacetelegram.PhotoData;
@@ -52,7 +51,7 @@ public class Message implements MessageInterface {
     private long toId = 0;
     private Double latitude = null;
     private Double longitude = null;
-    private Set<String> childPornSets = new HashSet<>();
+    private List<String> childPornSets;
 
     public long getId() {
         return id;
@@ -68,7 +67,7 @@ public class Message implements MessageInterface {
 
     public void setMediaHash(String mediaHash) {
         this.mediaHash = mediaHash;
-        childPornSets.addAll(ChildPornHashLookup.lookupHash(mediaHash));
+        childPornSets = ChildPornHashLookup.lookupHashAndMerge(mediaHash, childPornSets);
     }
 
     public String getMediaFile() {
@@ -248,8 +247,8 @@ public class Message implements MessageInterface {
         this.longitude = longitude;
     }
 
-    public Set<String> getChildPornSets() {
-        return this.childPornSets;
+    public List<String> getChildPornSets() {
+        return childPornSets == null ? Collections.emptyList() : childPornSets;
     }
 
     public void addChildPornSets(Collection<String> sets) {

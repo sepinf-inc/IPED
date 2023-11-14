@@ -28,7 +28,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
@@ -199,13 +198,12 @@ public class KnownMetParser extends AbstractParser {
                 cells.add(e.getName());
                 String hash = e.getHash();
                 metadata.add(ExtraProperties.SHARED_HASHES, hash);
-                HashSet<String> hashSets = new HashSet<>();
-                hashSets.addAll(ChildPornHashLookup.lookupHash(EDONKEY, hash));
+                List<String> hashSets = ChildPornHashLookup.lookupHash(EDONKEY, hash);
                 item = searchItemInCase(searcher, EDONKEY, e.getHash());
                 if(item != null) {
-                    hashSets.addAll(ChildPornHashLookup.lookupHash(item.getHash()));
+                    hashSets = ChildPornHashLookup.lookupHashAndMerge(EDONKEY, hash, hashSets);
                 }
-                if (!hashSets.isEmpty()) {
+                if (hashSets != null && !hashSets.isEmpty()) {
                     hashDBHits++;
                     trClass = "rr"; //$NON-NLS-1$
                 }

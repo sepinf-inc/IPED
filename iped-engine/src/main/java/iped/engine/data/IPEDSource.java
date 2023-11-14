@@ -132,6 +132,8 @@ public class IPEDSource implements IIPEDSource {
 
     boolean isReport = false;
 
+    boolean askImagePathIfNotFound = true;
+
     public static boolean checkIfIsCaseFolder(File dir) {
         File module = new File(dir, MODULE_DIR);
         if (new File(module, INDEX_DIR).exists() && new File(module, LIB_DIR).exists() && new File(module, DATA_DIR).exists()) {
@@ -155,7 +157,11 @@ public class IPEDSource implements IIPEDSource {
     }
 
     public IPEDSource(File casePath, IndexWriter iw) {
+        this(casePath, iw, true);
+    }
 
+    public IPEDSource(File casePath, IndexWriter iw, boolean askImagePathIfNotFound) {
+        this.askImagePathIfNotFound = askImagePathIfNotFound;
         this.casePath = casePath;
         moduleDir = new File(casePath, MODULE_DIR);
         index = new File(moduleDir, INDEX_DIR);
@@ -239,6 +245,9 @@ public class IPEDSource implements IIPEDSource {
             multiBookmarks = new MultiBookmarks(Collections.singletonList(this));
 
         } catch (Exception e) {
+            if (e instanceof RuntimeException) {
+                throw (RuntimeException) e;
+            }
             throw new RuntimeException(e.getMessage(), e);
         }
     }
@@ -601,8 +610,13 @@ public class IPEDSource implements IIPEDSource {
                 if (newPaths.size() > 0) {
                     testCanWriteToCase(sleuthFile);
                     sleuthCase.setImagePaths(id, newPaths);
-                } else if (iw == null)
-                    askNewImagePath(id, paths, sleuthFile);
+                } else if (iw == null) {
+                    if (askImagePathIfNotFound) {
+                        askNewImagePath(id, paths, sleuthFile);
+                    } else {
+                        throw new RuntimeException("Image not found: " + paths.get(0));
+                    }
+                }
         }
     }
 
