@@ -162,6 +162,7 @@ public class CertificateParserTest extends TestCase {
 
         List<Exception> exceptions = new ArrayList<>();
         List<X509Certificate> certificates = new ArrayList<>();
+        List<Metadata> metadatas = new ArrayList<>();
 
         context.set(EmbeddedDocumentExtractor.class, new EmbeddedDocumentExtractor() {
             @Override
@@ -175,6 +176,7 @@ public class CertificateParserTest extends TestCase {
                 try {
                     CertificateFactory cf = CertificateFactory.getInstance("X.509");
                     X509Certificate cert = (X509Certificate) cf.generateCertificate(stream);
+                    certificates.add(cert);
                 } catch (Exception e) {
                     exceptions.add(e);
                 } finally {
@@ -188,6 +190,8 @@ public class CertificateParserTest extends TestCase {
             assertEquals(exceptions.size(), 0);
             assertEquals(certificates.size(), 1);
             assertEquals(certificates.get(0).getSubjectDN().toString(),
+                    "EMAILADDRESS=guilhermeandreuce@gmail.com, CN=pf.gov.br, OU=PF, O=Polícia Federal, L=Asa Sul, ST=Brasília, C=BR");
+            assertEquals(certificates.get(0).getSubjectX500Principal().getName(),
                     "1.2.840.113549.1.9.1=#161b6775696c6865726d65616e64726575636540676d61696c2e636f6d,CN=pf.gov.br,OU=PF,O=Polícia Federal,L=Asa Sul,ST=Brasília,C=BR");
 
         }
