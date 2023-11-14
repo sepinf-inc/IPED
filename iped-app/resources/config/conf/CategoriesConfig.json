@@ -89,7 +89,11 @@
         {"name": "Others Chats", "mimes":["application/x-ufed-html-chats", "application/x-ufed-chats-txt", "application/x-ufed-chat", "application/x-ufed-chat-preview"]}
     ]},
     {"name": "USN Journal", "mimes": ["application/x-usnjournal-$J", "application/x-usnjournal-report-html", "application/x-usnjournal-report-csv", "application/x-usnjournal-registry"]},
-    {"name": "Programs and Libraries", "mimes": ["application/java-archive", "application/x-dosexec", "application/x-msdownload", "application/x-bat", "application/vnd.ms-cab-compressed", "application/x-font-ttf", "application/pkcs7-signature", "application/vnd.ms-htmlhelp", "application/java-vm", "application/vnd.ms-pki.seccat", "application/x-ms-installer", "application/x-ufed-html-apps", "application/x-ufed-installedapplication"]},
+    {"name": "Programs and Libraries", 
+        "mimes": ["application/java-archive", "application/x-dosexec", "application/x-msdownload", "application/x-bat", "application/vnd.ms-cab-compressed", "application/x-font-ttf", "application/pkcs7-signature", "application/vnd.ms-htmlhelp", "application/java-vm", "application/vnd.ms-pki.seccat", "application/x-ms-installer", "application/x-ufed-html-apps", "application/x-ufed-installedapplication"],
+        "categories":[{"name": "Android Applications", "mimes": ["application/vnd.android.package-archive"]}]
+        },
+        
     {"name": "Unallocated", "mimes": ["application/x-unallocated"]},
     {"name": "File Slacks", "mimes": ["application/x-fileslack"]},
     {"name": "Plain Texts", "mimes": ["text"], "categories":[
