@@ -39,7 +39,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import iped.parsers.security.CertificateParser;
-import iped.parsers.standard.StandardParser;
+import iped.parsers.util.Messages;
 import iped.parsers.whatsapp.Util;
 import iped.utils.IOUtil;
 import iped.utils.ImageUtil;
@@ -54,7 +54,7 @@ import net.dongliu.apk.parser.bean.UseFeature;
 public class APKParser extends AbstractParser {
     private static final long serialVersionUID = 8308661247390527209L;
     private static final MediaType apkMimeType = MediaType.application("vnd.android.package-archive");
-    private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(apkMimeType);
+    public static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(apkMimeType);
     private static Logger LOGGER = LoggerFactory.getLogger(APKParser.class);
 
     // TODO: Use another property or reuse this one from CertificateParser?
@@ -116,9 +116,9 @@ public class APKParser extends AbstractParser {
             }
 
             add(xhtml, icon, name);
-            add(xhtml, "Package", apkMeta.getPackageName(), false);
-            add(xhtml, "Version", apkMeta.getVersionName(), false);
-            add(xhtml, "SDK Version", apkMeta.getCompileSdkVersion(), false);
+            add(xhtml, Messages.getString("APKParser.Package"), apkMeta.getPackageName(), false);
+            add(xhtml, Messages.getString("APKParser.Version"), apkMeta.getVersionName(), false);
+            add(xhtml, Messages.getString("APKParser.SDKVersion"), apkMeta.getCompileSdkVersion(), false);
 
             StringBuilder sb = new StringBuilder();
             Set<String> seenCertificates = new HashSet<String>();
@@ -129,7 +129,7 @@ public class APKParser extends AbstractParser {
             }
             if (signers != null && !signers.isEmpty()) {
                 for (ApkSigner s : signers) {
-                    sb.append("Path: ").append(s.getPath()).append("\n");
+                    sb.append(Messages.getString("APKParser.Path") + ": ").append(s.getPath()).append("\n");
 
                     for (CertificateMeta m : s.getCertificateMetas()) {
                         if (seenCertificates.add(m.toString())) {
@@ -140,7 +140,7 @@ public class APKParser extends AbstractParser {
                         }
                     }
                 }
-                add(xhtml, "Signers", sb.toString(), true);
+                add(xhtml, Messages.getString("APKParser.Signers"), sb.toString(), true);
             }
 
             List<ApkV2Signer> signers2 = null;
@@ -165,7 +165,7 @@ public class APKParser extends AbstractParser {
                     for (CertificateMeta m : certificates) {
                         sb.append(formatCertificate(m));
                     }
-                    add(xhtml, "Signers V2", sb.toString(), true);
+                    add(xhtml, Messages.getString("APKParser.SignersV2"), sb.toString(), true);
                 }
             }
 
@@ -179,7 +179,7 @@ public class APKParser extends AbstractParser {
             for (UseFeature feature : features) {
                 sb.append(feature.getName()).append("\n");
             }
-            add(xhtml, "Features", sb.toString(), true);
+            add(xhtml, Messages.getString("APKParser.Features"), sb.toString(), true);
 
             sb.delete(0, sb.length());
             List<String> permissions = apkMeta.getUsesPermissions();
@@ -187,10 +187,10 @@ public class APKParser extends AbstractParser {
             for (String permission : permissions) {
                 sb.append(permission).append("\n");
             }
-            add(xhtml, "Permissions", sb.toString(), true);
+            add(xhtml, Messages.getString("APKParser.Permissions"), sb.toString(), true);
 
             String manifestXml = apkFile.getManifestXml();
-            add(xhtml, "Manifest XML", manifestXml, true);
+            add(xhtml, Messages.getString("APKParser.Manifest"), manifestXml, true);
         } finally {
             IOUtil.closeQuietly(apkFile);
             tmp.close();
@@ -209,7 +209,6 @@ public class APKParser extends AbstractParser {
             cf = CertificateFactory.getInstance("X.509");
             X509Certificate cert = (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(m.getData()));
             Metadata certMetadata = new Metadata();
-            certMetadata.add(StandardParser.INDEXER_CONTENT_TYPE, CertificateParser.PEM_MIME.toString());
             certMetadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, cert.getSubjectX500Principal().getName());
             extractor.parseEmbedded(new ByteArrayInputStream(m.getData()), xhtml, certMetadata, true);
         } catch (CertificateException e) {
@@ -287,12 +286,17 @@ public class APKParser extends AbstractParser {
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss'Z'");
         df.setTimeZone(TimeZone.getTimeZone("UTC"));
         StringBuilder sb = new StringBuilder();
-        sb.append("  Certificate").append("\n");
-        sb.append("    Algorithm  : ").append(m.getSignAlgorithm()).append("\n");
-        sb.append("    MD5        : ").append(m.getCertMd5().toUpperCase()).append("\n");
-        sb.append("    OID        : ").append(m.getSignAlgorithmOID()).append("\n");
-        sb.append("    Start Date : ").append(df.format(m.getStartDate())).append("\n");
-        sb.append("    End Date   : ").append(df.format(m.getEndDate())).append("\n");
+        sb.append("  "+Messages.getString("APKParser.Certificate")).append("\n");
+        sb.append("    " + Messages.getString("APKParser.Algorithm") + "  : ").append(m.getSignAlgorithm())
+                .append("\n");
+        sb.append("    " + Messages.getString("APKParser.MD5") + "        : ").append(m.getCertMd5().toUpperCase())
+                .append("\n");
+        sb.append("    " + Messages.getString("APKParser.OID") + "        : ").append(m.getSignAlgorithmOID())
+                .append("\n");
+        sb.append("    " + Messages.getString("APKParser.StartDate") + "        : ").append(df.format(m.getStartDate()))
+                .append("\n");
+        sb.append("    " + Messages.getString("APKParser.EndDate") + "        : ").append(df.format(m.getEndDate()))
+                .append("\n");
         return sb.toString();
     }
 }
