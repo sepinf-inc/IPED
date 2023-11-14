@@ -18,6 +18,7 @@ GDrive Synced Files
 OLE files
 Georeferenced Files
 Peer-to-peer
+Android Applications
 #Event Files
 
 # Generates registry reports:

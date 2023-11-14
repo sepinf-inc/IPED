@@ -6,6 +6,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,6 +21,8 @@ import java.util.TimeZone;
 import javax.imageio.ImageIO;
 
 import org.apache.tika.exception.TikaException;
+import org.apache.tika.extractor.EmbeddedDocumentExtractor;
+import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.HttpHeaders;
@@ -28,10 +33,13 @@ import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import iped.parsers.security.CertificateParser;
+import iped.parsers.standard.StandardParser;
 import iped.parsers.whatsapp.Util;
 import iped.utils.IOUtil;
 import iped.utils.ImageUtil;
@@ -47,7 +55,8 @@ public class APKParser extends AbstractParser {
     private static final long serialVersionUID = 8308661247390527209L;
     private static final MediaType apkMimeType = MediaType.application("vnd.android.package-archive");
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(apkMimeType);
-    
+    private static Logger LOGGER = LoggerFactory.getLogger(APKParser.class);
+
     // TODO: Use another property or reuse this one from CertificateParser?
     private static final Property certStartDate = CertificateParser.NOTBEFORE;
 
@@ -64,6 +73,9 @@ public class APKParser extends AbstractParser {
         CustomApkFile apkFile = null;
         XHTMLContentHandler xhtml = null;
         File tmpFile = null;
+        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
+                new ParsingEmbeddedDocumentExtractor(context));
+
         try {
             TikaInputStream tis = TikaInputStream.get(stream, tmp);
             tmpFile = tis.getFile();
@@ -118,11 +130,13 @@ public class APKParser extends AbstractParser {
             if (signers != null && !signers.isEmpty()) {
                 for (ApkSigner s : signers) {
                     sb.append("Path: ").append(s.getPath()).append("\n");
+
                     for (CertificateMeta m : s.getCertificateMetas()) {
                         if (seenCertificates.add(m.toString())) {
                             sb.append(formatCertificate(m));
                             // TODO: Keep just one date or use a multivalued property? 
                             metadata.set(certStartDate, m.getStartDate());
+                            parseEmbeddedCertificate(m, extractor, xhtml);
                         }
                     }
                 }
@@ -141,6 +155,8 @@ public class APKParser extends AbstractParser {
                         if (seenCertificates.add(m.toString())) {
                             certificates.add(m);
                             metadata.set(certStartDate, m.getStartDate());
+
+                            parseEmbeddedCertificate(m, extractor, xhtml);
                         }
                     }
                 }
@@ -178,10 +194,26 @@ public class APKParser extends AbstractParser {
         } finally {
             IOUtil.closeQuietly(apkFile);
             tmp.close();
+
             if (xhtml != null) {
                 xhtml.endElement("table");
                 xhtml.endDocument();
             }
+        }
+    }
+
+    private void parseEmbeddedCertificate(CertificateMeta m, EmbeddedDocumentExtractor extractor,
+            ContentHandler xhtml) throws SAXException, IOException {
+        CertificateFactory cf;
+        try {
+            cf = CertificateFactory.getInstance("X.509");
+            X509Certificate cert = (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(m.getData()));
+            Metadata certMetadata = new Metadata();
+            certMetadata.add(StandardParser.INDEXER_CONTENT_TYPE, CertificateParser.PEM_MIME.toString());
+            certMetadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, cert.getSubjectX500Principal().getName());
+            extractor.parseEmbedded(new ByteArrayInputStream(m.getData()), xhtml, certMetadata, true);
+        } catch (CertificateException e) {
+            // LOGGER.warn("Invalid certificate data for APK:"+apkFile.get);
         }
     }
 
