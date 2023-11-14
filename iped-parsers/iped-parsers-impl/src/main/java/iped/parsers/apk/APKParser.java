@@ -89,6 +89,11 @@ public class APKParser extends AbstractParser {
             xhtml = new XHTMLContentHandler(handler, metadata);
             xhtml.startDocument();
 
+            xhtml.startElement("head");
+            xhtml.startElement("meta charset='UTF-8'");
+            xhtml.endElement("meta");
+            xhtml.endElement("head");
+
             xhtml.startElement("style");
             xhtml.characters(
                     ".tab {border-collapse: collapse; font-family: Arial, sans-serif; margin-right: 32px; margin-bottom: 32px; } "
