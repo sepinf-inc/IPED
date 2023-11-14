@@ -1546,6 +1546,7 @@
         </magic>
         <glob pattern="*.lzfse"/>
     </mime-type>
+    
 
 </mime-info>
 
