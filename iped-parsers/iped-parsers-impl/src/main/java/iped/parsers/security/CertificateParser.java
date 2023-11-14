@@ -68,9 +68,12 @@ public class CertificateParser extends AbstractParser {
     public static final Property NOTBEFORE = Property.internalDate("certificate:notBefore"); //$NON-NLS-1$
     public static final Property NOTAFTER = Property.internalDate("certificate:notAfter"); //$NON-NLS-1$
     public static final String ISSUER = "certificate:issuer"; //$NON-NLS-1$
+    private static final String X500_ISSUER = "certificate:X500Issuer";
     public static final String SUBJECT = "certificate:subject"; //$NON-NLS-1$
+    public static final String X500_SUBJECT = "certificate:X500Subject"; //$NON-NLS-1$
     public static final Property ISSUBJECTAUTHORITY = Property.internalBoolean("certificate:subjectIsCertAuthority"); //$NON-NLS-1$
     public static final String NOALTNAMES = "This certificate has no alternative names.";
+
     
     public CertificateParser() {
         MetadataUtil.setMetadataType(NOTBEFORE.getName(), Date.class);
@@ -147,8 +150,11 @@ public class CertificateParser extends AbstractParser {
 
                 metadata.set(NOTBEFORE, cert.getNotBefore());
                 metadata.set(NOTAFTER, cert.getNotAfter());
-                metadata.set(ISSUER, cert.getIssuerX500Principal().getName());
-                metadata.set(SUBJECT, cert.getSubjectX500Principal().getName());
+
+                metadata.set(X500_ISSUER, cert.getIssuerX500Principal().getName());
+                metadata.set(ISSUER, cert.getIssuerDN().getName());
+                metadata.set(X500_SUBJECT, cert.getSubjectX500Principal().getName());
+                metadata.set(SUBJECT, cert.getSubjectDN().getName());
                 if (cert.getBasicConstraints() <= -1) {
                     metadata.set(ISSUBJECTAUTHORITY, Boolean.FALSE.toString());
                 } else {
@@ -186,6 +192,15 @@ public class CertificateParser extends AbstractParser {
         xhtml.endElement("td");
         xhtml.startElement("td");
         xhtml.characters(cert.getSubjectX500Principal().getName());
+        xhtml.endElement("td");
+        xhtml.endElement("tr");
+
+        xhtml.startElement("tr");
+        xhtml.startElement("td");
+        xhtml.characters("Subject");
+        xhtml.endElement("td");
+        xhtml.startElement("td");
+        xhtml.characters(cert.getSubjectDN().getName());
         xhtml.endElement("td");
         xhtml.endElement("tr");
 
