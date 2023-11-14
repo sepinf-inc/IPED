@@ -68,7 +68,7 @@ public class CertificateParser extends AbstractParser {
     public static final Property NOTBEFORE = Property.internalDate("certificate:notBefore"); //$NON-NLS-1$
     public static final Property NOTAFTER = Property.internalDate("certificate:notAfter"); //$NON-NLS-1$
     public static final String ISSUER = "certificate:issuer"; //$NON-NLS-1$
-    private static final String X500_ISSUER = "certificate:X500Issuer";
+    public static final String X500_ISSUER = "certificate:X500Issuer";
     public static final String SUBJECT = "certificate:subject"; //$NON-NLS-1$
     public static final String X500_SUBJECT = "certificate:X500Subject"; //$NON-NLS-1$
     public static final Property ISSUBJECTAUTHORITY = Property.internalBoolean("certificate:subjectIsCertAuthority"); //$NON-NLS-1$
@@ -188,7 +188,7 @@ public class CertificateParser extends AbstractParser {
 
         xhtml.startElement("tr");
         xhtml.startElement("td");
-        xhtml.characters("Subject");
+        xhtml.characters("Subject X500");
         xhtml.endElement("td");
         xhtml.startElement("td");
         xhtml.characters(cert.getSubjectX500Principal().getName());
@@ -228,6 +228,15 @@ public class CertificateParser extends AbstractParser {
         xhtml.endElement("td");
         xhtml.startElement("td");
         xhtml.characters(cert.getSigAlgName());
+        xhtml.endElement("td");
+        xhtml.endElement("tr");
+
+        xhtml.startElement("tr");
+        xhtml.startElement("td");
+        xhtml.characters("Issuer X500");
+        xhtml.endElement("td");
+        xhtml.startElement("td");
+        xhtml.characters(cert.getIssuerX500Principal().getName());
         xhtml.endElement("td");
         xhtml.endElement("tr");
 

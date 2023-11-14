@@ -79,7 +79,7 @@ public class CertificateParserTest extends TestCase {
 
             assertEquals(
                     "1.2.840.113549.1.9.1=#161b6775696c6865726d65616e64726575636540676d61696c2e636f6d,CN=pf.gov.br,OU=PF,O=Polícia Federal,L=Asa Sul,ST=Brasília,C=BR",
-                    metadata.get(CertificateParser.SUBJECT));
+                    metadata.get(CertificateParser.X500_SUBJECT));
             assertEquals("2021-07-01", metadata.get(CertificateParser.NOTAFTER).substring(0, 10));
             assertEquals(
                     "Certificado:1.2.840.113549.1.9.1=#161b6775696c6865726d65616e64726575636540676d61696c2e636f6d,CN=pf.gov.br,OU=PF,O=Polícia Federal,L=Asa Sul,ST=Brasília,C=BR",
@@ -88,7 +88,7 @@ public class CertificateParserTest extends TestCase {
             assertEquals("true", metadata.get(CertificateParser.ISSUBJECTAUTHORITY));
             assertEquals(
                     "1.2.840.113549.1.9.1=#161b6775696c6865726d65616e64726575636540676d61696c2e636f6d,CN=pf.gov.br,OU=PF,O=Polícia Federal,L=Asa Sul,ST=Brasília,C=BR",
-                    metadata.get(CertificateParser.ISSUER));
+                    metadata.get(CertificateParser.X500_ISSUER));
             assertEquals("2021-06-01", metadata.get(CertificateParser.NOTBEFORE).substring(0, 10));
             assertEquals("text/plain", metadata.get(HttpHeaders.CONTENT_TYPE));
 
@@ -133,7 +133,7 @@ public class CertificateParserTest extends TestCase {
 
             assertEquals(
                     "1.2.840.113549.1.9.1=#161b6775696c6865726d65616e64726575636540676d61696c2e636f6d,CN=pf.gov.br,OU=PF,O=Polícia Federal,L=Asa Sul,ST=Brasília,C=BR",
-                    metadata.get(CertificateParser.SUBJECT));
+                    metadata.get(CertificateParser.X500_SUBJECT));
             assertEquals("2021-07-01", metadata.get(CertificateParser.NOTAFTER).substring(0, 10));
             assertEquals(
                     "Certificado:1.2.840.113549.1.9.1=#161b6775696c6865726d65616e64726575636540676d61696c2e636f6d,CN=pf.gov.br,OU=PF,O=Polícia Federal,L=Asa Sul,ST=Brasília,C=BR",
@@ -142,7 +142,7 @@ public class CertificateParserTest extends TestCase {
             assertEquals("true", metadata.get(CertificateParser.ISSUBJECTAUTHORITY));
             assertEquals(
                     "1.2.840.113549.1.9.1=#161b6775696c6865726d65616e64726575636540676d61696c2e636f6d,CN=pf.gov.br,OU=PF,O=Polícia Federal,L=Asa Sul,ST=Brasília,C=BR",
-                    metadata.get(CertificateParser.ISSUER));
+                    metadata.get(CertificateParser.X500_ISSUER));
             assertEquals("2021-06-01", metadata.get(CertificateParser.NOTBEFORE).substring(0, 10));
             assertEquals("text/plain", metadata.get(HttpHeaders.CONTENT_TYPE));
 
