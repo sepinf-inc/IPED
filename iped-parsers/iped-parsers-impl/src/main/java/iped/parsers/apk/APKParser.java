@@ -276,20 +276,29 @@ public class APKParser extends AbstractParser {
     }
 
     private String formatCertificate(CertificateMeta m) {
+        String[] titles = new String[5];
+        titles[0] = Messages.getString("APKParser.Algorithm");
+        titles[1] = Messages.getString("APKParser.MD5");
+        titles[2] = Messages.getString("APKParser.OID");
+        titles[3] = Messages.getString("APKParser.StartDate");
+        titles[4] = Messages.getString("APKParser.EndDate");
+        int w = 0;
+        for (String t : titles) {
+            w = Math.max(w, t.length());
+        }
+        for (int i = 0; i < titles.length; i++) {
+            titles[i] = String.format("    %-" + w + "d : ", titles[i]);
+        }
+
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss'Z'");
         df.setTimeZone(TimeZone.getTimeZone("UTC"));
         StringBuilder sb = new StringBuilder();
-        sb.append("  "+Messages.getString("APKParser.Certificate")).append("\n");
-        sb.append("    " + Messages.getString("APKParser.Algorithm") + "  : ").append(m.getSignAlgorithm())
-                .append("\n");
-        sb.append("    " + Messages.getString("APKParser.MD5") + "        : ").append(m.getCertMd5().toUpperCase())
-                .append("\n");
-        sb.append("    " + Messages.getString("APKParser.OID") + "        : ").append(m.getSignAlgorithmOID())
-                .append("\n");
-        sb.append("    " + Messages.getString("APKParser.StartDate") + "        : ").append(df.format(m.getStartDate()))
-                .append("\n");
-        sb.append("    " + Messages.getString("APKParser.EndDate") + "        : ").append(df.format(m.getEndDate()))
-                .append("\n");
+        sb.append("  ").append(Messages.getString("APKParser.Certificate")).append("\n");
+        sb.append(titles[0]).append(m.getSignAlgorithm()).append("\n");
+        sb.append(titles[1]).append(m.getCertMd5().toUpperCase()).append("\n");
+        sb.append(titles[2]).append(m.getSignAlgorithmOID()).append("\n");
+        sb.append(titles[3]).append(df.format(m.getStartDate())).append("\n");
+        sb.append(titles[4]).append(df.format(m.getEndDate())).append("\n");
         return sb.toString();
     }
 }
