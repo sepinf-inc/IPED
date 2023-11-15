@@ -287,7 +287,7 @@ public class APKParser extends AbstractParser {
             w = Math.max(w, t.length());
         }
         for (int i = 0; i < titles.length; i++) {
-            titles[i] = String.format("    %-" + w + "d : ", titles[i]);
+            titles[i] = String.format("    %-" + w + "s : ", titles[i]);
         }
 
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss'Z'");
