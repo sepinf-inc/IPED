@@ -32,8 +32,6 @@ import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
@@ -53,7 +51,6 @@ public class APKParser extends AbstractParser {
     private static final long serialVersionUID = 8308661247390527209L;
     private static final MediaType apkMimeType = MediaType.application("vnd.android.package-archive");
     public static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(apkMimeType);
-    private static Logger LOGGER = LoggerFactory.getLogger(APKParser.class);
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
