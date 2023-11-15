@@ -195,8 +195,8 @@ public class APKParser extends AbstractParser {
         }
     }
 
-    private void parseEmbeddedCertificate(CertificateMeta m, EmbeddedDocumentExtractor extractor,
-            ContentHandler xhtml) throws SAXException, IOException {
+    private void parseEmbeddedCertificate(CertificateMeta m, EmbeddedDocumentExtractor extractor, ContentHandler xhtml)
+            throws SAXException, IOException {
         CertificateFactory cf;
         try {
             cf = CertificateFactory.getInstance("X.509");
