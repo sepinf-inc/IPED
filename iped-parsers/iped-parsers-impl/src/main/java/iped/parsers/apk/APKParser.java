@@ -27,7 +27,6 @@ import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
-import org.apache.tika.metadata.Property;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
@@ -38,7 +37,6 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.parsers.security.CertificateParser;
 import iped.parsers.util.Messages;
 import iped.parsers.whatsapp.Util;
 import iped.utils.IOUtil;
@@ -56,9 +54,6 @@ public class APKParser extends AbstractParser {
     private static final MediaType apkMimeType = MediaType.application("vnd.android.package-archive");
     public static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(apkMimeType);
     private static Logger LOGGER = LoggerFactory.getLogger(APKParser.class);
-
-    // TODO: Use another property or reuse this one from CertificateParser?
-    private static final Property certStartDate = CertificateParser.NOTBEFORE;
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -139,8 +134,6 @@ public class APKParser extends AbstractParser {
                     for (CertificateMeta m : s.getCertificateMetas()) {
                         if (seenCertificates.add(m.toString())) {
                             sb.append(formatCertificate(m));
-                            // TODO: Keep just one date or use a multivalued property? 
-                            metadata.set(certStartDate, m.getStartDate());
                             parseEmbeddedCertificate(m, extractor, xhtml);
                         }
                     }
@@ -159,8 +152,6 @@ public class APKParser extends AbstractParser {
                     for (CertificateMeta m : s.getCertificateMetas()) {
                         if (seenCertificates.add(m.toString())) {
                             certificates.add(m);
-                            metadata.set(certStartDate, m.getStartDate());
-
                             parseEmbeddedCertificate(m, extractor, xhtml);
                         }
                     }
