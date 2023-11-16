@@ -41,8 +41,6 @@ import org.bouncycastle.asn1.ASN1TaggedObject;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.parsers.util.MetadataUtil;
-
 public class CertificateParser extends AbstractParser {
     /**
 	 * 
@@ -54,18 +52,13 @@ public class CertificateParser extends AbstractParser {
     public static final MediaType PKCS7_SIGNATURE = MediaType.application("pkcs7-signature");
     private static Set<MediaType> SUPPORTED_TYPES = null;
 
-    public static final Property NOTBEFORE = Property.internalDate("certificate:notBefore"); //$NON-NLS-1$
-    public static final Property NOTAFTER = Property.internalDate("certificate:notAfter"); //$NON-NLS-1$
+    public static final Property NOTBEFORE = Property.internalDate("certificate:notbefore"); //$NON-NLS-1$
+    public static final Property NOTAFTER = Property.internalDate("certificate:notafter"); //$NON-NLS-1$
     public static final String ISSUER = "certificate:issuer"; //$NON-NLS-1$
     public static final String SUBJECT = "certificate:subject"; //$NON-NLS-1$
     public static final Property ISSUBJECTAUTHORITY = Property.internalBoolean("certificate:subjectIsCertAuthority"); //$NON-NLS-1$
     public static final String NOALTNAMES = "This certificate has no alternative names.";
     
-    public CertificateParser() {
-        MetadataUtil.setMetadataType(NOTBEFORE.getName(), Date.class);
-        MetadataUtil.setMetadataType(NOTAFTER.getName(), Date.class);
-    }
-
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
         if (SUPPORTED_TYPES == null) {
@@ -99,11 +92,6 @@ public class CertificateParser extends AbstractParser {
                     List certs = p.getCertificates();
                     XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
                     xhtml.startDocument();
-                    xhtml.startElement("head"); //$NON-NLS-1$
-                    xhtml.startElement("style"); //$NON-NLS-1$
-                    xhtml.characters("table {border-collapse: collapse;} table, td, th {border: 1px solid black;}"); //$NON-NLS-1$
-                    xhtml.endElement("style"); //$NON-NLS-1$
-                    xhtml.endElement("head"); //$NON-NLS-1$
                     for (Iterator iterator = certs.iterator(); iterator.hasNext();) {
                         cert = (X509Certificate) iterator.next();
                         generateCertificateHtml(cert, xhtml);
@@ -122,11 +110,6 @@ public class CertificateParser extends AbstractParser {
                 }
                 XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
                 xhtml.startDocument();
-                xhtml.startElement("head"); //$NON-NLS-1$
-                xhtml.startElement("style"); //$NON-NLS-1$
-                xhtml.characters("table {border-collapse: collapse;} table, td, th {border: 1px solid black;}"); //$NON-NLS-1$
-                xhtml.endElement("style"); //$NON-NLS-1$
-                xhtml.endElement("head"); //$NON-NLS-1$
                 generateCertificateHtml(cert, xhtml);
                 xhtml.endDocument();
             }
@@ -153,7 +136,7 @@ public class CertificateParser extends AbstractParser {
     private void generateCertificateHtml(X509Certificate cert, XHTMLContentHandler xhtml)
             throws UnsupportedEncodingException, SAXException {
 
-        xhtml.startElement("table border='1'");
+        xhtml.startElement("table");
 
         xhtml.startElement("tr");
         xhtml.startElement("th");
