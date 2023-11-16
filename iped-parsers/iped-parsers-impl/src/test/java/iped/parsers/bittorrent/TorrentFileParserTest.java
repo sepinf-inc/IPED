@@ -2,23 +2,17 @@ package iped.parsers.bittorrent;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Set;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
-import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.BodyContentHandler;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import junit.framework.TestCase;
-
-public class TorrentFileParserTest extends TestCase {
-
-    private static InputStream getStream(String name) {
-        return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
-    }
+public class TorrentFileParserTest extends TorrentTestCase {
 
     @Test
     public void testBitTorrentFileSimpleParsing() throws IOException, SAXException, TikaException {
@@ -32,13 +26,11 @@ public class TorrentFileParserTest extends TestCase {
         try (InputStream stream = getStream("test-files/test_torrentSimple.torrent")) {
             parser.parse(stream, handler, metadata, context);
 
-            String hts = handler.toString();
+            Set<String> res = splitLines(handler.toString());
 
-            assertTrue(hts.contains("NovaROFull_19112020.exe"));
-            assertTrue(hts.contains("3259111196"));
-
+            assertTrue(res.contains("NovaROFull_19112020.exe"));
+            assertTrue(res.contains("3259111196"));
         }
-
     }
 
     @Test
@@ -53,16 +45,13 @@ public class TorrentFileParserTest extends TestCase {
         try (InputStream stream = getStream("test-files/test_torrentMultiple.torrent")) {
             parser.parse(stream, handler, metadata, context);
 
-            String hts = handler.toString();
+            Set<String> res = splitLines(handler.toString());
 
-            assertTrue(hts.contains("Big Buck Bunny"));
-            assertTrue(hts.contains("Big Buck Bunny.mp4"));
-            assertTrue(hts.contains("Big Buck Bunny.en.srt"));
-            assertTrue(hts.contains("140"));
-            assertTrue(hts.contains("276134947"));
-            assertTrue(hts.contains("310380"));
-
+            assertTrue(res.contains("Big Buck Bunny\\Big Buck Bunny.mp4"));
+            assertTrue(res.contains("Big Buck Bunny\\Big Buck Bunny.en.srt"));
+            assertTrue(res.contains("140"));
+            assertTrue(res.contains("276134947"));
+            assertTrue(res.contains("310380"));
         }
-
     }
 }
