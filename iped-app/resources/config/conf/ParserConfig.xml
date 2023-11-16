@@ -347,6 +347,20 @@
         <parser class="iped.parsers.misc.PDFTextParser"></parser>
         <parser class="iped.parsers.video.FLVParserWrapper"></parser>
         <parser class="iped.parsers.video.EmptyVideoParser"></parser>
+
+        <parser class="iped.parsers.security.CertificateParser"></parser>
+        <parser class="iped.parsers.misc.MultipleParser">
+            <mime>application/pkcs7-mime</mime>
+            <mime>application/pkcs7-signature</mime>
+            <params>
+                <param name="parserName" type="string">PKCS7Parser</param>
+                <param name="parsers" type="string">
+                    iped.parsers.security.CertificateParser;
+                    org.apache.tika.parser.crypto.Pkcs7Parser;
+                </param>
+            </params>
+        </parser>
+        
         <parser class="iped.parsers.standard.RawStringParser">
             <mime>application/skype</mime>
             <mime>application/irpf</mime>

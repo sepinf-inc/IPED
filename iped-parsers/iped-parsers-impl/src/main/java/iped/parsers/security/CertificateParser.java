@@ -22,6 +22,8 @@ import java.util.Set;
 import javax.xml.bind.DatatypeConverter;
 
 import org.apache.tika.exception.TikaException;
+import org.apache.tika.extractor.EmbeddedDocumentExtractor;
+import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.HttpHeaders;
@@ -40,31 +42,51 @@ import org.bouncycastle.asn1.ASN1String;
 import org.bouncycastle.asn1.ASN1TaggedObject;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
+
+import iped.parsers.util.MetadataUtil;
 
 public class CertificateParser extends AbstractParser {
     /**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
+
+    public static final MediaType X509_MIME = MediaType.application("x-x509-cert");
+
+    // these are old mimetypes before TIKA had implemented its mimetype
+    // x-x509-ca-cert
+    @Deprecated
 	public static final MediaType PEM_MIME = MediaType.application("x-pem-file");
+    @Deprecated
     public static final MediaType DER_MIME = MediaType.application("pkix-cert");
+
     private static final MediaType PKCS7_MIME = MediaType.application("pkcs7-mime");
     public static final MediaType PKCS7_SIGNATURE = MediaType.application("pkcs7-signature");
     private static Set<MediaType> SUPPORTED_TYPES = null;
 
-    public static final Property NOTBEFORE = Property.internalDate("certificate:notbefore"); //$NON-NLS-1$
-    public static final Property NOTAFTER = Property.internalDate("certificate:notafter"); //$NON-NLS-1$
+    public static final Property NOTBEFORE = Property.internalDate("certificate:notBefore"); //$NON-NLS-1$
+    public static final Property NOTAFTER = Property.internalDate("certificate:notAfter"); //$NON-NLS-1$
     public static final String ISSUER = "certificate:issuer"; //$NON-NLS-1$
+    public static final String X500_ISSUER = "certificate:X500Issuer";
     public static final String SUBJECT = "certificate:subject"; //$NON-NLS-1$
+    public static final String X500_SUBJECT = "certificate:X500Subject"; //$NON-NLS-1$
     public static final Property ISSUBJECTAUTHORITY = Property.internalBoolean("certificate:subjectIsCertAuthority"); //$NON-NLS-1$
     public static final String NOALTNAMES = "This certificate has no alternative names.";
+
     
+    public CertificateParser() {
+        MetadataUtil.setMetadataType(NOTBEFORE.getName(), Date.class);
+        MetadataUtil.setMetadataType(NOTAFTER.getName(), Date.class);
+    }
+
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
         if (SUPPORTED_TYPES == null) {
             Set<MediaType> set = new HashSet<>();
             set.add(PEM_MIME);
             set.add(DER_MIME);
+            set.add(X509_MIME);
             set.add(PKCS7_MIME);
             set.add(PKCS7_SIGNATURE);
             SUPPORTED_TYPES = set;
@@ -88,15 +110,23 @@ public class CertificateParser extends AbstractParser {
 
             if (mimeType.equals(PKCS7_SIGNATURE.toString())) {
                 try (InputStream certStream = new FileInputStream(file)) {
+                    EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
+                            new ParsingEmbeddedDocumentExtractor(context));
+
                     CertPath p = cf.generateCertPath(certStream, "PKCS7");
                     List certs = p.getCertificates();
-                    XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
-                    xhtml.startDocument();
+
                     for (Iterator iterator = certs.iterator(); iterator.hasNext();) {
                         cert = (X509Certificate) iterator.next();
-                        generateCertificateHtml(cert, xhtml);
+
+                        Metadata certMetadata = new Metadata();
+                        certMetadata.add(TikaCoreProperties.RESOURCE_NAME_KEY,
+                                cert.getSubjectX500Principal().getName());
+
+                        extractor.parseEmbedded(new ByteArrayInputStream(cert.getEncoded()), new DefaultHandler(),
+                                certMetadata,
+                                true);
                     }
-                    xhtml.endDocument();
                 }
             } else {
                 InputStream certStream = null;
@@ -110,21 +140,30 @@ public class CertificateParser extends AbstractParser {
                 }
                 XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
                 xhtml.startDocument();
+                xhtml.startElement("head"); //$NON-NLS-1$
+                xhtml.startElement("style"); //$NON-NLS-1$
+                xhtml.characters("table {border-collapse: collapse;} table, td, th {border: 1px solid black;}"); //$NON-NLS-1$
+                xhtml.endElement("style"); //$NON-NLS-1$
+                xhtml.endElement("head"); //$NON-NLS-1$
                 generateCertificateHtml(cert, xhtml);
                 xhtml.endDocument();
+
+                metadata.set(NOTBEFORE, cert.getNotBefore());
+                metadata.set(NOTAFTER, cert.getNotAfter());
+
+                metadata.set(X500_ISSUER, cert.getIssuerX500Principal().getName());
+                metadata.set(ISSUER, cert.getIssuerDN().getName());
+                metadata.set(X500_SUBJECT, cert.getSubjectX500Principal().getName());
+                metadata.set(SUBJECT, cert.getSubjectDN().getName());
+                if (cert.getBasicConstraints() <= -1) {
+                    metadata.set(ISSUBJECTAUTHORITY, Boolean.FALSE.toString());
+                } else {
+                    metadata.set(ISSUBJECTAUTHORITY, Boolean.TRUE.toString());
+                }
+                metadata.set(HttpHeaders.CONTENT_TYPE, "text/plain");
+                metadata.set(TikaCoreProperties.TITLE, "Certificado:" + cert.getSubjectX500Principal().getName());
             }
 
-            metadata.set(NOTBEFORE, cert.getNotBefore());
-            metadata.set(NOTAFTER, cert.getNotAfter());
-            metadata.set(ISSUER, cert.getIssuerX500Principal().getName());
-            metadata.set(SUBJECT, cert.getSubjectX500Principal().getName());
-            if (cert.getBasicConstraints() <= -1) {
-                metadata.set(ISSUBJECTAUTHORITY, Boolean.FALSE.toString());
-            } else {
-                metadata.set(ISSUBJECTAUTHORITY, Boolean.TRUE.toString());
-            }
-            metadata.set(HttpHeaders.CONTENT_TYPE, "text/plain");
-            metadata.set(TikaCoreProperties.TITLE, "Certificado:" + cert.getSubjectX500Principal().getName());
 
         } catch (Exception e) {
             throw new TikaException("Invalid or unkown certificate format.", e);
@@ -136,7 +175,7 @@ public class CertificateParser extends AbstractParser {
     private void generateCertificateHtml(X509Certificate cert, XHTMLContentHandler xhtml)
             throws UnsupportedEncodingException, SAXException {
 
-        xhtml.startElement("table");
+        xhtml.startElement("table border='1'");
 
         xhtml.startElement("tr");
         xhtml.startElement("th");
@@ -149,10 +188,19 @@ public class CertificateParser extends AbstractParser {
 
         xhtml.startElement("tr");
         xhtml.startElement("td");
-        xhtml.characters("Subject");
+        xhtml.characters("Subject X500");
         xhtml.endElement("td");
         xhtml.startElement("td");
         xhtml.characters(cert.getSubjectX500Principal().getName());
+        xhtml.endElement("td");
+        xhtml.endElement("tr");
+
+        xhtml.startElement("tr");
+        xhtml.startElement("td");
+        xhtml.characters("Subject");
+        xhtml.endElement("td");
+        xhtml.startElement("td");
+        xhtml.characters(cert.getSubjectDN().getName());
         xhtml.endElement("td");
         xhtml.endElement("tr");
 
@@ -180,6 +228,15 @@ public class CertificateParser extends AbstractParser {
         xhtml.endElement("td");
         xhtml.startElement("td");
         xhtml.characters(cert.getSigAlgName());
+        xhtml.endElement("td");
+        xhtml.endElement("tr");
+
+        xhtml.startElement("tr");
+        xhtml.startElement("td");
+        xhtml.characters("Issuer X500");
+        xhtml.endElement("td");
+        xhtml.startElement("td");
+        xhtml.characters(cert.getIssuerX500Principal().getName());
         xhtml.endElement("td");
         xhtml.endElement("tr");
 
@@ -242,10 +299,10 @@ public class CertificateParser extends AbstractParser {
                     ASN1Sequence altNameSeq = getAltnameSequence(altNameBytes);
                     final ASN1TaggedObject obj = (ASN1TaggedObject) altNameSeq.getObjectAt(1);
                     if (obj != null) {
-                        ASN1Primitive prim = obj.getObject();
+                        ASN1Primitive prim = obj.getLoadedObject();
                         // can be tagged one more time
                         if (prim instanceof ASN1TaggedObject) {
-                            prim = ASN1TaggedObject.getInstance(((ASN1TaggedObject) prim)).getObject();
+                            prim = ASN1TaggedObject.getInstance(((ASN1TaggedObject) prim)).getLoadedObject();
                         }
 
                         if (prim instanceof ASN1OctetString) {

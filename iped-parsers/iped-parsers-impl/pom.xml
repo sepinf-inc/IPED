@@ -28,6 +28,12 @@
     		<version>3.8.0</version>
     		<scope>test</scope>
 		</dependency>
+        <!-- https://mvnrepository.com/artifact/org.bouncycastle/bcutil-jdk18on -->
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcutil-jdk18on</artifactId>
+            <version>1.76</version>
+        </dependency>
 		<dependency>
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-parsers-standard-package</artifactId>
