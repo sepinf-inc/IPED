@@ -307,15 +307,17 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
             int rowModel = resultsTable.convertRowIndexToModel(selected[i]);
             IItemId item = results.getItem(rowModel);
 
-            List<Integer> subitems = kmlResult.getGPSItems().get(item);
-            if (subitems == null) {
-                String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
-                selecoes.put(gid, true);
-            } else {
-                for (Integer subitem : subitems) {
-                    String gid = "marker_" + item.getSourceId() + "_" + item.getId() + "_" //$NON-NLS-1$ //$NON-NLS-2$
-                            + subitem;
+            if (kmlResult != null && kmlResult.getGPSItems().containsKey(item)) {
+                List<Integer> subitems = kmlResult.getGPSItems().get(item);
+                if (subitems == null) {
+                    String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
                     selecoes.put(gid, true);
+                } else {
+                    for (Integer subitem : subitems) {
+                        String gid = "marker_" + item.getSourceId() + "_" + item.getId() + "_" //$NON-NLS-1$ //$NON-NLS-2$
+                                + subitem;
+                        selecoes.put(gid, true);
+                    }
                 }
             }
 
