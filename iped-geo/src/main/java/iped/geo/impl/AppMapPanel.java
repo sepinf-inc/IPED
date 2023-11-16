@@ -306,27 +306,30 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
         for (int i = 0; i < selected.length; i++) {
             int rowModel = resultsTable.convertRowIndexToModel(selected[i]);
             IItemId item = results.getItem(rowModel);
+            addSelection(selecoes, item);
+        }
 
-            if (kmlResult != null && kmlResult.getGPSItems().containsKey(item)) {
-                List<Integer> subitems = kmlResult.getGPSItems().get(item);
-                if (subitems == null) {
-                    String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
+        mapViewer.updateMapLeadCursor();
+
+        browserCanvas.sendSelection(selecoes);
+        browserCanvas.update();
+    }
+
+    public void addSelection(HashMap<String, Boolean> selecoes, IItemId item) {
+        if (kmlResult != null && kmlResult.getGPSItems().containsKey(item)) {
+            List<Integer> subitems = kmlResult.getGPSItems().get(item);
+            if (subitems == null) {
+                String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
+                selecoes.put(gid, true);
+            } else {
+                for (Integer subitem : subitems) {
+                    String gid = "marker_" + item.getSourceId() + "_" + item.getId() + "_" //$NON-NLS-1$ //$NON-NLS-2$
+                            + subitem;
                     selecoes.put(gid, true);
-                } else {
-                    for (Integer subitem : subitems) {
-                        String gid = "marker_" + item.getSourceId() + "_" + item.getId() + "_" //$NON-NLS-1$ //$NON-NLS-2$
-                                + subitem;
-                        selecoes.put(gid, true);
-                    }
                 }
             }
 
         }
-        
-        mapViewer.updateMapLeadCursor();
-        
-        browserCanvas.sendSelection(selecoes);
-        browserCanvas.update();
     }
 
     @Override
