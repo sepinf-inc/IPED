@@ -22,6 +22,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import iped.parsers.util.Messages;
+import iped.utils.LocalizedFormat;
 
 /**
  * Parser for Torrent Files
@@ -62,6 +63,7 @@ public class TorrentFileParser extends AbstractParser {
 
         List<FileInTorrent> files = extractFileList(dict);
 
+        char[] colAlign = { 'a', 'c', 'b', 'b', 'b' };
         boolean[] include = { true, true, false, false, false };
         for (FileInTorrent file : files) {
             if (!file.md5.isEmpty())
@@ -79,8 +81,9 @@ public class TorrentFileParser extends AbstractParser {
                 + ".rh { display: table-row; font-weight: bold; text-align: center; background-color:#AAAAEE; } " //$NON-NLS-1$
                 + ".ra { display: table-row; vertical-align: middle; } " //$NON-NLS-1$
                 + ".rb { display: table-row; background-color:#E7E7F0; vertical-align: middle; } " //$NON-NLS-1$
-                + ".a { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: center; vertical-align: middle; word-wrap: break-word; } " //$NON-NLS-1$
-                + ".b { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: left; vertical-align: middle; word-wrap: break-word; word-break: break-all; } "); //$NON-NLS-1$
+                + ".a { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: left; vertical-align: middle; word-wrap: break-word; } " //$NON-NLS-1$
+                + ".b { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: center; vertical-align: middle; word-wrap: break-word; } "
+                + ".c { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: right; vertical-align: middle; word-wrap: break-word; } "); //$NON-NLS-1$
         xhtml.endElement("style"); //$NON-NLS-1$
         xhtml.newline();
 
@@ -89,7 +92,7 @@ public class TorrentFileParser extends AbstractParser {
         xhtml.startElement("div", "class", "rh"); //$NON-NLS-1$ $NON-NLS-2$ $NON-NLS-3$
         for (int i = 0; i < header.length; i++) {
             if (include[i]) {
-                xhtml.startElement("div", "class", "a"); //$NON-NLS-1$ $NON-NLS-2$ $NON-NLS-3$
+                xhtml.startElement("div", "class", "b"); //$NON-NLS-1$ $NON-NLS-2$ $NON-NLS-3$
                 xhtml.characters(header[i]);
                 xhtml.endElement("div"); //$NON-NLS-1$
             }
@@ -103,9 +106,15 @@ public class TorrentFileParser extends AbstractParser {
                     file.ed2k };
             for (int i = 0; i < rowElements.length; i++) {
                 if (include[i]) {
-                    xhtml.startElement("div", "class", "a"); //$NON-NLS-1$ $NON-NLS-2$ $NON-NLS-3$
+                    xhtml.startElement("div", "class", String.valueOf(colAlign[i])); //$NON-NLS-1$ $NON-NLS-2$
                     if (rowElements[i].equals("")) { //$NON-NLS-1$
                         rowElements[i] = " "; //$NON-NLS-1$
+                    } else if (i == 1) {
+                        // File length column
+                        try {
+                            rowElements[i] = LocalizedFormat.format(Long.parseLong(rowElements[i]));
+                        } catch (Exception e) {
+                        }
                     }
                     xhtml.characters(rowElements[i]);
                     xhtml.endElement("div"); //$NON-NLS-1$
