@@ -609,7 +609,7 @@ public class Extractor {
 
     private String getAndroidExtractMessagesSQL() throws SQLException {
         return "SELECT m.*,md.data as mediaData FROM " + findTableVersion("messages", 5) + " m left join "
-                + findTableVersion("media", 5) + " md on (md.mid=m.mid and  m.uid=md.uid ) where m.uid=? order by date";
+                + findTableVersion("media", 5) + " md on (md.mid=m.mid and  m.uid=md.uid) where m.uid=? order by date";
     }
 
     private static final String EXTRACT_USERACCOUNT_SQL_IOS = "SELECT t0.value FROM T0 where key=2";
