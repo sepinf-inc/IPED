@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.mp4parser.tools.Hex;
+import org.apache.commons.codec.binary.Hex;
 
 import com.dampcake.bencode.BencodeInputStream;
 import com.dampcake.bencode.BencodeOutputStream;
@@ -156,7 +156,7 @@ public class BencodedDict {
             Object objBuffer = getObject(key);
             if (objBuffer != null && objBuffer instanceof ByteBuffer) {
                 ByteBuffer buffer = (ByteBuffer) objBuffer;
-                resp = Hex.encodeHex(buffer.array()).toUpperCase();
+                resp = new String(Hex.encodeHex(buffer.array(), false));
             }
         }
 
