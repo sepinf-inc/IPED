@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -21,6 +22,7 @@ import iped.parsers.discord.json.DiscordAuthor;
 import iped.parsers.discord.json.DiscordMention;
 import iped.parsers.discord.json.DiscordReaction;
 import iped.parsers.discord.json.DiscordRoot;
+import iped.parsers.discord.json.DiscordSticker;
 import iped.parsers.util.Messages;
 import iped.parsers.util.Util;
 import iped.properties.BasicProps;
@@ -71,6 +73,7 @@ public class DiscordHTMLReport {
 
     private static String defaultAvatarMe = Base64.getEncoder().encodeToString(readResourceAsBytes("discordme.png"));
     private static String defaultAvatarOther = Base64.getEncoder().encodeToString(readResourceAsBytes("discord.png"));
+    private static String lottiejs = new String(readResourceAsBytes("lottie-player.js"), Charset.forName("UTF-8"));
 
     public void printHTML(List<DiscordRoot> drl, XHTMLContentHandler xHandler, IItemSearcher searcher)
             throws IOException {
@@ -83,6 +86,9 @@ public class DiscordHTMLReport {
             xHandler.characters(CSS); // $NON-NLS-1$
             xHandler.characters(iped.parsers.whatsapp.Util.readResourceAsString("css/whatsapp.css"));
             xHandler.endElement("style"); //$NON-NLS-1$
+            xHandler.startElement(
+                    "script src=\"https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js\"");
+            xHandler.endElement("script"); //$NON-NLS-1$
             xHandler.startElement("script"); //$NON-NLS-1$
             xHandler.characters(iped.parsers.whatsapp.Util.readResourceAsString("js/whatsapp.js"));
             xHandler.endElement("script"); //$NON-NLS-1$
@@ -175,6 +181,22 @@ public class DiscordHTMLReport {
                 // message body
                 xHandler.startElement("TD");
 
+                List<DiscordSticker> stickers = dr.getStickers();
+                if (stickers != null) {
+                    for (DiscordSticker sticker : stickers) {
+                        String hash = sticker.getMediaHash();
+                        String query = BasicProps.HASH + ":" + hash;
+                        Iterator<IItemReader> it = searcher.searchIterable(query).iterator();
+                        // if hash exists, at least 1 item will be returned
+                        IItemReader item = it.next();
+                        byte buff[] = item.getBufferedInputStream().readAllBytes();
+                        xHandler.startElement(
+                                "lottie-player src=\"data:application/json;base64, "
+                                        + Base64.getEncoder().encodeToString(buff)
+                                        + "\" background=\"transparent\"  speed=\"1\"  style=\"width: 300px; height: 300px;\" loop controls autoplay");
+                        xHandler.endElement("lottie-player");
+                    }
+                }
                 // used for debug
                 // xHandler.startElement("TABLE><TR><TD>" + dr.toString() +
                 // "</TD></TR></TABLE");
@@ -373,6 +395,10 @@ public class DiscordHTMLReport {
             out.println("<script>"); //$NON-NLS-1$
             out.println(iped.parsers.whatsapp.Util.readResourceAsString("js/whatsapp.js"));
             out.println("</script>"); //$NON-NLS-1$
+            // out.println("<script
+            // src=\"https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js\"
+            // crossorigin=\"\"></script>"); //$NON-NLS-1$
+            out.println("<script>\n" + lottiejs + "\n</script>");
 
             out.println("</HEAD>");
             out.println("<BODY>");
@@ -448,6 +474,21 @@ public class DiscordHTMLReport {
 
             // message body
             out.println("	<TD>");
+
+            List<DiscordSticker> stickers = dr.getStickers();
+            if (stickers != null) {
+                for (DiscordSticker sticker : stickers) {
+                    String hash = sticker.getMediaHash();
+                    String query = BasicProps.HASH + ":" + hash;
+                    Iterator<IItemReader> it = searcher.searchIterable(query).iterator();
+                    // if hash exists, at least 1 item will be returned
+                    IItemReader item = it.next();
+                    byte buff[] = item.getBufferedInputStream().readAllBytes();
+                    out.println("<lottie-player src=\"data:application/json;base64, "
+                            + Base64.getEncoder().encodeToString(buff)
+                            + "\" background=\"transparent\"  speed=\"1\"  style=\"width: 300px; height: 300px;\" loop controls autoplay><lottie-player>");
+                }
+            }
 
             // used for debug
             // out.println("<TABLE><TR><TD>" + dr.toString() + "</TD></TR></TABLE>");
