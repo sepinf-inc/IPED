@@ -2,7 +2,6 @@ package iped.parsers.bittorrent;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Set;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
@@ -26,7 +25,7 @@ public class BitTorrentResumeDatParserTest extends TorrentTestCase {
         try (InputStream stream = getStream("test-files/test_resume.dat")) {
             parser.parse(stream, handler, metadata, context);
 
-            Set<String> res = splitLines(handler.toString());
+            String res = clean(handler.toString());
 
             assertTrue(res.contains("Sintel.torrent"));
             assertTrue(res.contains("63831927"));

@@ -5,8 +5,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
-import java.util.HashSet;
-import java.util.Set;
 
 import iped.parsers.util.BaseItemSearchContext;
 import junit.framework.TestCase;
@@ -24,16 +22,13 @@ public abstract class TorrentTestCase extends TestCase {
         return Files.newInputStream(getFile(name).toPath());
     }
 
-    protected Set<String> splitLines(String s) {
-        Set<String> ret = new HashSet<String>();
-        String[] lines = s.split("\\R");
-        for (String line : lines) {
-            ret.add(line);
-            // Remove possible number formatting
-            ret.add(line.replaceAll("[.,]", ""));
-            // Replace possible Windows-style path separators
-            ret.add(line.replace('\\', '/'));
-        }
-        return ret;
+    protected String clean(String s) {
+        StringBuilder ret = new StringBuilder();
+        ret.append(s).append("\n");
+        // Remove possible number formatting
+        ret.append(s.replaceAll("[.,]", ""));
+        // Replace possible Windows-style path separators
+        ret.append(s.replace('\\', '/'));
+        return ret.toString();
     }
 }
