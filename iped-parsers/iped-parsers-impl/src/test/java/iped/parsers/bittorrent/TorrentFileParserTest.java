@@ -47,8 +47,8 @@ public class TorrentFileParserTest extends TorrentTestCase {
 
             Set<String> res = splitLines(handler.toString());
 
-            assertTrue(res.contains("Big Buck Bunny\\Big Buck Bunny.mp4"));
-            assertTrue(res.contains("Big Buck Bunny\\Big Buck Bunny.en.srt"));
+            assertTrue(res.contains("Big Buck Bunny/Big Buck Bunny.mp4"));
+            assertTrue(res.contains("Big Buck Bunny/Big Buck Bunny.en.srt"));
             assertTrue(res.contains("140"));
             assertTrue(res.contains("276134947"));
             assertTrue(res.contains("310380"));
