@@ -44,6 +44,7 @@ import iped.parsers.discord.cache.Index;
 import iped.parsers.discord.json.DiscordAttachment;
 import iped.parsers.discord.json.DiscordAuthor;
 import iped.parsers.discord.json.DiscordRoot;
+import iped.parsers.discord.json.DiscordSticker;
 import iped.parsers.standard.StandardParser;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
@@ -210,6 +211,24 @@ public class DiscordParser extends AbstractParser {
             chatmetadata.set(StandardParser.INDEXER_CONTENT_TYPE, CHAT_MIME_TYPE_HTML);
 
             for (DiscordRoot dr : discordRoot) {
+                for (DiscordSticker sticker : dr.getStickers()) {
+                    try {
+                        long greater = 0;
+                        List<IItemReader> stickerItems = searcher.search(commonQuery + " AND "
+                                + CacheIndexParser.CACHE_URL.replace(":", "\\:") + ":\"" + sticker.getId() + ".json\""
+                                + " AND " + CacheIndexParser.CACHE_URL.replace(":", "\\:") + ":\"discord\"");
+                        for (IItemReader stickerItem : stickerItems) {
+                            sticker.setMediaHash(stickerItem.getHash());
+                        }
+                    } catch (Exception e) {
+                        LOGGER.warn("Exception decoding Discord attachment", e);
+                    }
+
+                    if (sticker.getMediaHash() != null) {
+                        chatmetadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + sticker.getMediaHash());
+                    }
+
+                }
                 for (DiscordAttachment da : dr.getAttachments()) {
                     try {
                         String[] parts = da.getUrl().split("https://cdn.discordapp.com/attachments/");
