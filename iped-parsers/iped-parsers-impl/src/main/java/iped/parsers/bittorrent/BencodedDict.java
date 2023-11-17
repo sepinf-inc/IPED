@@ -156,7 +156,7 @@ public class BencodedDict {
             Object objBuffer = getObject(key);
             if (objBuffer != null && objBuffer instanceof ByteBuffer) {
                 ByteBuffer buffer = (ByteBuffer) objBuffer;
-                resp = new String(Hex.encodeHex(buffer.array(), false));
+                resp = Hex.encodeHexString(buffer.array(), false);
             }
         }
 
