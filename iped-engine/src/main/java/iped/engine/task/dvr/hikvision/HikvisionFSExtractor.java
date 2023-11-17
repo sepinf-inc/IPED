@@ -286,14 +286,14 @@ public class HikvisionFSExtractor{
 		et = DateFor.format(dateEndTime);
 		nameType = "dataBlock";		
 				
-		objVideoFile.dataOffset = objDBE.dataOffset;
-		objVideoFile.dataSize = hvfs.masterSector.dataBlockSize;
-		objVideoFile.startTime = objDBE.startTime;
-		objVideoFile.endTime = objDBE.endTime;
-		objVideoFile.name = "ch "+objDBE.channelNumber+" - "+nameType+" - "+st+" to "+et+".avi";
-		objVideoFile.channelNumber = objDBE.channelNumber;
-		objVideoFile.path = String.valueOf(objDBE.channelNumber);
-		objVideoFile.type = 0;
+		objVideoFile.setDataOffset(objDBE.dataOffset);
+		objVideoFile.setDataSize(hvfs.masterSector.dataBlockSize);
+		objVideoFile.setStartTime(objDBE.startTime);
+		objVideoFile.setEndTime(objDBE.endTime);
+		objVideoFile.setName("ch "+objDBE.channelNumber+" - "+nameType+" - "+st+" to "+et+".avi");
+		objVideoFile.setChannelNumber(objDBE.channelNumber);
+		objVideoFile.setPath(String.valueOf(objDBE.channelNumber)+"/");
+		objVideoFile.setType(0);
 		
 		videoFileHeaderList.add(objVideoFile);
 
@@ -349,14 +349,14 @@ public class HikvisionFSExtractor{
 
 						nameType = "regular";
 						
-						objVideoFile.dataOffset = objDBE.dataOffset+firstTimeOffset;
-						objVideoFile.dataSize = videoFileSize;
-						objVideoFile.startTime = firstTimeVideo;
-						objVideoFile.endTime = lastTimeVideo;
-						objVideoFile.name = "ch "+objDBE.channelNumber+" - "+nameType+" - "+st+" to "+et+".avi";
-						objVideoFile.channelNumber = objDBE.channelNumber;
-						objVideoFile.path = String.valueOf(objDBE.channelNumber);
-						objVideoFile.type = 1;
+						objVideoFile.setDataOffset(objDBE.dataOffset+firstTimeOffset);
+						objVideoFile.setDataSize(videoFileSize);
+						objVideoFile.setStartTime(firstTimeVideo);
+						objVideoFile.setEndTime(lastTimeVideo);
+						objVideoFile.setName("ch "+objDBE.channelNumber+" - "+nameType+" - "+st+" to "+et+".avi");
+						objVideoFile.setChannelNumber(objDBE.channelNumber);
+						objVideoFile.setPath(String.valueOf(objDBE.channelNumber)+"/");
+						objVideoFile.setType(1);
 						
 						videoFileHeaderList.add(objVideoFile);
 
@@ -375,14 +375,14 @@ public class HikvisionFSExtractor{
 
 						nameType = "carved-time-in";							
 						
-						objVideoFile.dataOffset = objDBE.dataOffset+firstTimeOffset;
-						objVideoFile.dataSize = videoFileSize;
-						objVideoFile.startTime = firstTimeVideo;
-						objVideoFile.endTime = lastTimeVideo;
-						objVideoFile.name = "ch "+objDBE.channelNumber+" - "+nameType+" - "+st+" to "+et+".avi";
-						objVideoFile.channelNumber = objDBE.channelNumber;
-						objVideoFile.path = String.valueOf(objDBE.channelNumber);
-						objVideoFile.type = 2;
+						objVideoFile.setDataOffset(objDBE.dataOffset+firstTimeOffset);
+						objVideoFile.setDataSize(videoFileSize);
+						objVideoFile.setStartTime(firstTimeVideo);
+						objVideoFile.setEndTime(lastTimeVideo);
+						objVideoFile.setName("ch "+objDBE.channelNumber+" - "+nameType+" - "+st+" to "+et+".avi");
+						objVideoFile.setChannelNumber(objDBE.channelNumber);
+						objVideoFile.setPath(String.valueOf(objDBE.channelNumber)+"/");
+						objVideoFile.setType(2);
 						
 						videoFileHeaderList.add(objVideoFile);
 
@@ -401,14 +401,14 @@ public class HikvisionFSExtractor{
 
 						nameType = "carved-time-edge";							
 						
-						objVideoFile.dataOffset = objDBE.dataOffset+firstTimeOffset;
-						objVideoFile.dataSize = videoFileSize;
-						objVideoFile.startTime = firstTimeVideo;
-						objVideoFile.endTime = lastTimeVideo;
-						objVideoFile.name = "ch "+objDBE.channelNumber+" - "+nameType+" - "+st+" to "+et+".avi";
-						objVideoFile.channelNumber = objDBE.channelNumber;
-						objVideoFile.path = String.valueOf(objDBE.channelNumber);						
-						objVideoFile.type = 3;
+						objVideoFile.setDataOffset(objDBE.dataOffset+firstTimeOffset);
+						objVideoFile.setDataSize(videoFileSize);
+						objVideoFile.setStartTime(firstTimeVideo);
+						objVideoFile.setEndTime(lastTimeVideo);
+						objVideoFile.setName("ch "+objDBE.channelNumber+" - "+nameType+" - "+st+" to "+et+".avi");
+						objVideoFile.setChannelNumber(objDBE.channelNumber);
+						objVideoFile.setPath(String.valueOf(objDBE.channelNumber)+"/");
+						objVideoFile.setType(3);
 						
 						videoFileHeaderList.add(objVideoFile);
 
@@ -426,14 +426,14 @@ public class HikvisionFSExtractor{
 
 						nameType = "carved-time-out";							
 						
-						objVideoFile.dataOffset = objDBE.dataOffset+firstTimeOffset;
-						objVideoFile.dataSize = videoFileSize;
-						objVideoFile.startTime = firstTimeVideo;
-						objVideoFile.endTime = lastTimeVideo;
-						objVideoFile.name = "ch "+objDBE.channelNumber+" - "+nameType+" - "+st+" to "+et+".avi";
-						objVideoFile.channelNumber = objDBE.channelNumber;
-						objVideoFile.path = String.valueOf(objDBE.channelNumber);						
-						objVideoFile.type = 4;
+						objVideoFile.setDataOffset(objDBE.dataOffset+firstTimeOffset);
+						objVideoFile.setDataSize(videoFileSize);
+						objVideoFile.setStartTime(firstTimeVideo);
+						objVideoFile.setEndTime(lastTimeVideo);
+						objVideoFile.setName("ch "+objDBE.channelNumber+" - "+nameType+" - "+st+" to "+et+".avi");
+						objVideoFile.setChannelNumber(objDBE.channelNumber);
+						objVideoFile.setPath(String.valueOf(objDBE.channelNumber)+"/");
+						objVideoFile.setType(4);
 						
 						videoFileHeaderList.add(objVideoFile);
 
@@ -462,15 +462,15 @@ public class HikvisionFSExtractor{
 
 			objVideoFile = new VideoFileHeader();
 								
-			objVideoFile.dataOffset = objDBE.dataOffset+objDBE.lowestVideoDataOffset;
-			objVideoFile.dataSize = tmpOffset;
-			objVideoFile.startTime = 0;
-			objVideoFile.endTime = 0;
+			objVideoFile.setDataOffset(objDBE.dataOffset+objDBE.lowestVideoDataOffset);
+			objVideoFile.setDataSize(tmpOffset);
+			objVideoFile.setStartTime(0);
+			objVideoFile.setEndTime(0);
 			nameType = "carved-data-start";
-			objVideoFile.name = "ch "+objDBE.channelNumber+" - "+nameType+" - offset "+(objDBE.dataOffset+objDBE.highestVideoDataOffset)+" to "+(objDBE.dataOffset+objDBE.firstONFI8Offset)+".avi";
-			objVideoFile.channelNumber = objDBE.channelNumber;
-			objVideoFile.path = String.valueOf(objDBE.channelNumber);				
-			objVideoFile.type = 5;
+			objVideoFile.setName("ch "+objDBE.channelNumber+" - "+nameType+" - offset "+(objDBE.dataOffset+objDBE.highestVideoDataOffset)+" to "+(objDBE.dataOffset+objDBE.firstONFI8Offset)+".avi");
+			objVideoFile.setChannelNumber(objDBE.channelNumber);
+			objVideoFile.setPath(String.valueOf(objDBE.channelNumber)+"/");
+			objVideoFile.setType(5);
 			
 			videoFileHeaderList.add(objVideoFile);
 
@@ -482,16 +482,15 @@ public class HikvisionFSExtractor{
 
 			objVideoFile = new VideoFileHeader();
 								
-			objVideoFile.dataOffset = objDBE.dataOffset+objDBE.highestVideoDataOffset;
-			objVideoFile.dataSize = tmpOffset;
-			objVideoFile.startTime = 0;
-			objVideoFile.endTime = 0;
-			
+			objVideoFile.setDataOffset(objDBE.dataOffset+objDBE.highestVideoDataOffset);
+			objVideoFile.setDataSize(tmpOffset);
+			objVideoFile.setStartTime(0);
+			objVideoFile.setEndTime(0);			
 			nameType = "carved-data-end";
-			objVideoFile.name = "ch "+objDBE.channelNumber+" - "+nameType+" - offset "+(objDBE.dataOffset+objDBE.highestVideoDataOffset)+" to "+(objDBE.dataOffset+objDBE.firstONFI8Offset)+".avi";
-			objVideoFile.channelNumber = objDBE.channelNumber;
-			objVideoFile.path = String.valueOf(objDBE.channelNumber);				
-			objVideoFile.type = 6;
+			objVideoFile.setName("ch "+objDBE.channelNumber+" - "+nameType+" - offset "+(objDBE.dataOffset+objDBE.highestVideoDataOffset)+" to "+(objDBE.dataOffset+objDBE.firstONFI8Offset)+".avi");
+			objVideoFile.setChannelNumber(objDBE.channelNumber);
+			objVideoFile.setPath(String.valueOf(objDBE.channelNumber));
+			objVideoFile.setType(6);
 			
 			videoFileHeaderList.add(objVideoFile);
 
@@ -519,7 +518,6 @@ public class HikvisionFSExtractor{
 		SimpleDateFormat DateFor = new SimpleDateFormat("dd-MM-yyyy EEE HH'h'-mm'm'-ss's'");
 		DateFor.setTimeZone(TimeZone.getTimeZone("GMT+0"));
 
-		Date dateTime;
 		String sTime = "";
 
 		byte RATS_SIG [] = {(byte)0x52,(byte)0x41,(byte)0x54,(byte)0x53};  //RATS signature
@@ -535,7 +533,10 @@ public class HikvisionFSExtractor{
 
 		//Load RATS table
 		readBytesFromAbsoluteFilePos(is, logArrayBuffer, systemLogOffsetStart, logArraySize);
-		
+
+
+		String temp = "";
+
 		foundEnd = 0;
 		next = 0;
 		while ( next !=  (logArraySize-1)){
@@ -558,31 +559,33 @@ public class HikvisionFSExtractor{
 
 			SystemLogHeader objSystemLogHeader = new SystemLogHeader();
 		
-			objSystemLogHeader.createdTime = readLongFromBufLE(variableArray, sigLength + 4, 4);
+			objSystemLogHeader.setCreatedTime(readLongFromBufLE(variableArray, sigLength + 4, 4));
 
 
-			objSystemLogHeader.majorType = readLongFromBufLE(variableArray, sigLength + 4 + 2, 2);
-			objSystemLogHeader.minorType = readLongFromBufLE(variableArray, sigLength + 4 + 2 + 2, 2);
+			objSystemLogHeader.setMajorType(readLongFromBufLE(variableArray, sigLength + 4 + 2, 2));
+			objSystemLogHeader.setMinorType(readLongFromBufLE(variableArray, sigLength + 4 + 2 + 2, 2));
 
-			dateTime = new Date(objSystemLogHeader.createdTime * 1000);
-			sTime = DateFor.format(dateTime);
+			sTime = DateFor.format(objSystemLogHeader.getCreationDate());
 
 			int dataLogIndex = 14;
 
-			objSystemLogHeader.dataOffset = systemLogOffsetStart + dataLogIndex + next;
-			objSystemLogHeader.dataSize = logSize - dataLogIndex;	
+			objSystemLogHeader.setDataOffset(systemLogOffsetStart + dataLogIndex + next);
+			objSystemLogHeader.setDataSize(logSize - dataLogIndex);
 
-			objSystemLogHeader.name = "System Log - "+ objSystemLogHeader.getMajorTypeDescription() + " - " + objSystemLogHeader.getMinorTypeDescription()  +" - "+ sTime + ".log";
-			objSystemLogHeader.path = "logs";
+			temp = "System Log - "+ objSystemLogHeader.getMajorTypeDescription() + " - " + objSystemLogHeader.getMinorTypeDescription()  +" - "+ sTime + ".log";
+			objSystemLogHeader.setName(temp);
+			objSystemLogHeader.setPath("logs/");
 
-			objSystemLogHeader.description = objSystemLogHeader.parseMinorTypeInfo(Arrays.copyOfRange(variableArray, dataLogIndex, logSize-1),objSystemLogHeader.minorType);
+			temp = "Major Type: " + objSystemLogHeader.getMajorTypeDescription() + "\n";
+			temp += "Minor Type: " + objSystemLogHeader.getMinorTypeDescription() + "\n";
+			temp += "Date: " + objSystemLogHeader.getCreationDate().toString() + "\n";
+			temp += objSystemLogHeader.parseMinorTypeInfo(Arrays.copyOfRange(variableArray, dataLogIndex, logSize-1),objSystemLogHeader.getMinorType());
 
-			//System.out.println(objSystemLogHeader.getMinorTypeDescription() + "\n"+ objSystemLogHeader.description);
+			objSystemLogHeader.setDescription(temp);
 
 			systemLogHeaderList.add(objSystemLogHeader);
 
 			variableArray = null;
-			dateTime = null;
 
 			next = foundEnd;
 			
@@ -651,11 +654,22 @@ class HVFS {
 		masterSector.clear();
 		hikBtree1.clear();
 		hikBtree2.clear();
-		pageList.clear();	
-		if (dataBlockEntryList != null)		
-			dataBlockEntryList.clear();
-		if (videoFileHeaderList != null)
+		if (dataBlockEntryList != null){
+			for(DataBlockEntry o1 : this.dataBlockEntryList)
+            	o1.clear();			
+			dataBlockEntryList.clear();				
+		}
+		if (videoFileHeaderList != null){
+			for(VideoFileHeader o2 : this.videoFileHeaderList)
+            	o2.clear();			
 			videoFileHeaderList.clear();	
+		}
+		if (pageList != null){
+			for(Page o3 : this.pageList)
+            	o3.clear();			
+			pageList.clear();	
+		}
+
 
 		masterSector = null;
 		hikBtree1 = null;
@@ -805,9 +819,12 @@ class DataBlockEntry {
 	
 	
 	public void clear(){
-		if (onfi8List != null)
+		if (onfi8List != null){
+			for(ONFI8 o1 : this.onfi8List)
+            	o1.clear();
 			onfi8List.clear();
-		onfi8List = null;
+			onfi8List = null;
+		}
 	}
 	
 	public void debug(){
@@ -853,14 +870,87 @@ class ONFI8 {
 
 class VideoFileHeader {
 	
-	public long dataOffset = 0L;
-	public long dataSize = 0L;
-	public long startTime = 0L;
-	public long endTime = 0;
-	public long channelNumber = 0L;
-	public String name = "";
-	public String path = "";
-	public int type = 0; // 0 full dataBlock, 1 regular file, 2 caverd-time-in, 3 carved-time-edge, 4 carved-time-out, 5 carved-data-start, 6 carved-data-end
+	private long dataOffset = 0L;
+	private long dataSize = 0L;
+	private long startTime = 0L;
+	private long endTime = 0;
+	private long channelNumber = 0L;
+	private String name = "";
+	private String path = "";
+	private int type = 0; // 0 full dataBlock, 1 regular file, 2 caverd-time-in, 3 carved-time-edge, 4 carved-time-out, 5 carved-data-start, 6 carved-data-end
+
+
+	public Date getCreationDate(){
+		return new Date(this.startTime * 1000);
+	}
+
+	public Date getModificationDate(){
+		return new Date(this.endTime * 1000);
+	}
+
+	public String getName(){
+		return this.name;
+	}
+
+	public void setName(String name){
+		this.name = name;
+	}
+
+	public String getPath(){
+		return this.path;
+	}
+
+	public void setPath(String path){
+		this.path = path;
+	}
+
+	public long getDataOffset(){
+		return this.dataOffset;
+	}
+
+	public void setDataOffset(long dataOffset){
+		this.dataOffset = dataOffset;
+	}
+
+	public long getDataSize(){
+		return this.dataSize;
+	}
+
+	public void setDataSize(long dataSize){
+		this.dataSize = dataSize;
+	}
+
+	public void setStartTime(long startTime){
+		this.startTime = startTime;
+	}
+
+	public long getStartTime(){
+		return this.startTime;
+	}
+
+	public void setEndTime(long endTime){
+		this.endTime = endTime;
+	}
+
+	public long getEndTime(){
+		return this.endTime;
+	}
+
+	public void setChannelNumber(long channelNumber){
+		this.channelNumber = channelNumber;
+	}
+
+	public long getChannelNumber(){
+		return this.channelNumber;
+	}
+
+	public void setType(int type){
+		this.type = type;
+	}
+
+	public int getType(){
+		return this.type;
+	}
 
 	public void clear(){
 	}
@@ -884,14 +974,83 @@ class VideoFileHeader {
 
 class SystemLogHeader {
 	
-	public long createdTime = 0L;
-	public long majorType = 0; 
-	public long minorType = 0; 
-	public long dataOffset = 0L;
-	public long dataSize = 0L;	
-	public String description = "";
-	public String name = "";
-	public String path = "";
+	private long createdTime = 0L;
+	private long majorType = 0; 
+	private long minorType = 0; 
+	private long dataOffset = 0L;
+	private long dataSize = 0L;	
+	private String description = "";
+	private String name = "";
+	private String path = "";
+
+	public Date getCreationDate(){
+		return new Date(this.createdTime * 1000);
+	}
+
+	public String getDescription(){
+		return this.description;
+	}
+
+	public String getName(){
+		return this.name;
+	}
+
+	public String getPath(){
+		return this.path;
+	}
+
+	public long getCreatedTime(){
+		return this.createdTime;
+	}
+
+	public long getMajorType(){
+		return this.majorType;
+	}
+
+	public long getMinorType(){
+		return this.minorType;
+	}
+
+	public long getDataOffset(){
+		return this.dataOffset;
+	}
+
+
+	public long getDataSize(){
+		return this.dataSize;
+	}
+
+	public void setDescription(String description){
+		this.description = description;
+	}
+
+	public void setName(String name){
+		this.name = name;
+	}
+
+	public void setPath(String path){
+		this.path = path;
+	}
+
+	public void setCreatedTime(long createdTime){
+		this.createdTime = createdTime;
+	}
+
+	public void setDataOffset(long dataOffset){
+		this.dataOffset = dataOffset;
+	}
+
+	public void setDataSize(long dataSize){
+		this.dataSize = dataSize;
+	}
+
+	public void setMinorType(long minorType){
+		this.minorType = minorType;
+	}
+
+	public void setMajorType(long majorType){
+		this.majorType = majorType;
+	}
 
 
 	public String getMajorTypeDescription(){
@@ -1308,7 +1467,7 @@ class DataBlockEntryComparator implements Comparator<DataBlockEntry> {
 class VideoFileHeaderComparator implements Comparator<VideoFileHeader> {
 	@Override
 	public int compare(VideoFileHeader o1, VideoFileHeader o2) {
-		return Long.valueOf(o1.dataOffset).compareTo(Long.valueOf(o2.dataOffset));
+		return Long.valueOf(o1.getDataOffset()).compareTo(Long.valueOf(o2.getDataOffset()));
 	}
 }
 
