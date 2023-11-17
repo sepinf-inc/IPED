@@ -26,16 +26,16 @@ import iped.properties.MediaTypes;
 import iped.utils.IOUtil;
 import org.apache.commons.io.IOUtils;
 import iped.engine.task.carver.BaseCarveTask;
+import iped.engine.task.ExportFileTask;
+import iped.engine.core.Worker.ProcessTime;
+import iped.engine.config.HikvisionFSConfig;
+
 /**
  * HikvisionFSTask.
  *
  * @author guilherme.dutra
  */
 public class HikvisionFSTask extends AbstractTask {
-
-    public static final String enableParam = "enableHikvisionFS"; //$NON-NLS-1$
-
-    public static final String IMAGE_FEATURES = "imageFeatures"; //$NON-NLS-1$
 
 	private static final MediaType h264MediaType = MediaType.application("video/x-msvideo"); //$NON-NLS-1$
     private static final MediaType txtLogType = MediaType.parse("text/plain"); 
@@ -48,38 +48,44 @@ public class HikvisionFSTask extends AbstractTask {
     private static final AtomicLong totalFailed = new AtomicLong();
     private static final AtomicLong totalTime = new AtomicLong();
 
-    //private ImageSimilarity imageSimilarity;
+    private HikvisionFSConfig hikvisionFSConfig;
 
     private static final Logger logger = LoggerFactory.getLogger(HikvisionFSTask.class);
-	
-	
+		
 	public static HikvisionFSExtractor HikvisionFSExtractor;
 
+    @Override
     public boolean isEnabled() {
-        return taskEnabled;
+        return hikvisionFSConfig.isEnabled();
     }
 
-    public static void setEnabled(boolean enabled) {
-        taskEnabled = enabled;
+    public boolean getExtractDataBlock(){
+        return hikvisionFSConfig.getExtractDataBlock();
+    }
+
+    public boolean getExtractSystemLog(){
+        return hikvisionFSConfig.getExtractSystemLog();
     }
 
     @Override
     public List<Configurable<?>> getConfigurables() {
-        return Arrays.asList(new EnableTaskProperty(enableParam));
+        return Arrays.asList(new HikvisionFSConfig());
     }
 
     public void init(ConfigurationManager configurationManager) throws Exception {
+        
+        hikvisionFSConfig = configurationManager.findObject(HikvisionFSConfig.class);
         synchronized (init) {
             if (!init.get()) {
-                taskEnabled = configurationManager.getEnableTaskProperty(enableParam);
+                taskEnabled = hikvisionFSConfig.isEnabled();
 
                 if (!taskEnabled) {
-                    logger.info("Task disabled."); //$NON-NLS-1$
+                    logger.info("Task disabled.");
                     init.set(true);
                     return;
                 }
 
-                logger.info("Task enabled."); //$NON-NLS-1$
+                logger.info("Task enabled.");
                 init.set(true);
             }
         }
@@ -90,11 +96,11 @@ public class HikvisionFSTask extends AbstractTask {
         synchronized (finished) {
             if (taskEnabled && !finished.get()) {
                 finished.set(true);
-                logger.info("Total images processed: " + totalProcessed); //$NON-NLS-1$
-                logger.info("Total images not processed: " + totalFailed); //$NON-NLS-1$
+                logger.info("Total images processed: " + totalProcessed);
+                logger.info("Total images not processed: " + totalFailed);
                 long total = totalProcessed.longValue() + totalFailed.longValue();
                 if (total != 0) {
-                    logger.info("Average processing time (milliseconds): " + (totalTime.longValue() / total)); //$NON-NLS-1$
+                    logger.info("Average processing time (milliseconds): " + (totalTime.longValue() / total));
                 }
             }
         }
@@ -116,33 +122,32 @@ public class HikvisionFSTask extends AbstractTask {
 			HikvisionFSExtractor = new HikvisionFSExtractor();			
 			
 			HikvisionFSExtractor.init(is);
+
+            boolean extractDataBlock = getExtractDataBlock();
 			
 			for (DataBlockEntry objDBE : HikvisionFSExtractor.getDataBlockEntryList()) {
-			
-				// Just process a few datablocks for testing ...
-				//if (objDBE.dataOffset > 28991029248L)
-				//	continue;	
-
 
 				for (VideoFileHeader objVFH : HikvisionFSExtractor.getVideoFileHeaderList(objDBE, HikvisionFSExtractor.getDataBlockSize() )) {
 					
-                    // Do not process full datablock entry, this option must be optional ...
-                    if (objVFH.type == 0){
+                    if (!extractDataBlock && objVFH.getType() == VideoFileHeader.DATA_BLOCK){
                         continue;
                     }
 
 					Item offsetFile = new Item();
-					offsetFile.setName(objVFH.name);
-					offsetFile.setPath(evidence.getPath() + "/" + objVFH.name);
-					offsetFile.setLength(objVFH.dataSize);
+					offsetFile.setName(objVFH.getName());
+					offsetFile.setPath(evidence.getPath() + "/" + objVFH.getName());
+					offsetFile.setLength(objVFH.getDataSize());
 					offsetFile.setSumVolume(false);
 					offsetFile.setParent(evidence);
 
 					//offsetFile.setDeleted(parentEvidence.isDeleted());
 
+                    offsetFile.setCreationDate(objVFH.getCreationDate());
+                    offsetFile.setModificationDate(objVFH.getModificationDate());
+
 					offsetFile.setMediaType(h264MediaType);
 
-					offsetFile.setFileOffset(objVFH.dataOffset);
+					offsetFile.setFileOffset(objVFH.getDataOffset());
 
 
 					if (evidence.getIdInDataSource() != null) {
@@ -154,7 +159,7 @@ public class HikvisionFSTask extends AbstractTask {
 					if (evidence.hasTmpFile()) {
 						try {
 							offsetFile.setParentTmpFile(evidence.getTempFile());
-							offsetFile.setParentOffset(objVFH.dataOffset);
+							offsetFile.setParentOffset(objVFH.getDataOffset());
 						} catch (IOException e) {
 							// ignore
 						}
@@ -174,45 +179,39 @@ public class HikvisionFSTask extends AbstractTask {
                 				
 			}
 			
-            //Read System Logs
-            for (SystemLogHeader objSLH : HikvisionFSExtractor.getSystemLogHeaderList()) {
 
-                Item offsetFile = new Item();
-                offsetFile.setName(objSLH.name);
-                offsetFile.setPath(evidence.getPath() + "/" + objSLH.name);
-                offsetFile.setLength(objSLH.dataSize);
-                offsetFile.setSumVolume(false);
-                offsetFile.setParent(evidence);
+            //Read System Logs            
+            if (getExtractSystemLog()){
+                int i = 0;
+                for (SystemLogHeader objSLH : HikvisionFSExtractor.getSystemLogHeaderList()) {
 
-                //offsetFile.setDeleted(parentEvidence.isDeleted());
+                    evidence.setHasChildren(true);
 
-                offsetFile.setMediaType(txtLogType);
-                offsetFile.setFileOffset(objSLH.dataOffset);                
+                    Item newItem = new Item();
+                    newItem.setName(objSLH.getName());
+                    newItem.setPath(evidence.getPath() + "/" + objSLH.getName());
+                    newItem.setParent(evidence);               
+                    newItem.setSumVolume(false);
+                    newItem.setSubItem(true);
+                    newItem.setSubitemId(++i);
+                    
+                    newItem.setCreationDate(objSLH.getCreationDate());
+                    newItem.setMediaType(txtLogType);
 
-                if (evidence.getIdInDataSource() != null) {
-                    offsetFile.setIdInDataSource(evidence.getIdInDataSource());
-                    offsetFile.setInputStreamFactory(evidence.getInputStreamFactory());
+                    ExportFileTask extractor = new ExportFileTask();
+                    extractor.setWorker(worker);
+
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    baos.write(objSLH.getDescription().getBytes());
+                    ByteArrayInputStream is2 = new ByteArrayInputStream(baos.toByteArray());
+                    extractor.extractFile(is2, newItem, evidence.getLength());
+
+                    totalProcessed.incrementAndGet();
+
+                    worker.processNewItem(newItem);
+
                 }
-
-                // optimization to not create more temp files
-                if (evidence.hasTmpFile()) {
-                    try {
-                        offsetFile.setParentTmpFile(evidence.getTempFile());
-                        offsetFile.setParentOffset(objSLH.dataOffset);
-                    } catch (IOException e) {
-                        // ignore
-                    }
-                }
-                evidence.setHasChildren(true);
-
-                offsetFile.setExtraAttribute(IndexItem.PARENT_TRACK_ID, Util.getTrackID(evidence));
-                totalProcessed.incrementAndGet();
-
-                worker.processNewItem(offsetFile);
-
             }
-
-
 					
 			HikvisionFSExtractor.clear();
 			HikvisionFSExtractor = null;
