@@ -31,6 +31,8 @@ public abstract class TorrentTestCase extends TestCase {
             ret.add(line);
             // Remove possible number formatting
             ret.add(line.replaceAll("[.,]", ""));
+            // Replace possible Windows-style path separators
+            ret.add(line.replace('\\', '/'));
         }
         return ret;
     }
