@@ -95,15 +95,15 @@ public class TorrentFileParser extends AbstractParser {
         // Torrent General Info Table
         xhtml.startElement("table", "class", "dt");
         TorrentInfo info = extractTorrentInfo(dict);
-        outputInfo(xhtml, "Name", info.name);
-        outputInfo(xhtml, "InfoHash", info.infoHash, true);
-        outputInfo(xhtml, "Piece length", info.pieceLength);
-        outputInfo(xhtml, "Number of pieces", info.numPieces);
-        outputInfo(xhtml, "Number of files", files.size());
-        outputInfo(xhtml, "Announce", info.announce);
-        outputInfo(xhtml, "Comment", info.comment);
-        outputInfo(xhtml, "Created by", info.createdBy);
-        outputInfo(xhtml, "Creation date", info.creationDate);
+        outputInfo(xhtml, Messages.getString("TorrentFileDatParser.Name"), info.name);
+        outputInfo(xhtml, Messages.getString("TorrentFileDatParser.InfoHash"), info.infoHash, true);
+        outputInfo(xhtml, Messages.getString("TorrentFileDatParser.PieceLength"), info.pieceLength);
+        outputInfo(xhtml, Messages.getString("TorrentFileDatParser.NumberOfPieces"), info.numPieces);
+        outputInfo(xhtml, Messages.getString("TorrentFileDatParser.NumberOfFiles"), files.size());
+        outputInfo(xhtml, Messages.getString("TorrentFileDatParser.Announce"), info.announce);
+        outputInfo(xhtml, Messages.getString("TorrentFileDatParser.Comment"), info.comment);
+        outputInfo(xhtml, Messages.getString("TorrentFileDatParser.CreatedBy"), info.createdBy);
+        outputInfo(xhtml, Messages.getString("TorrentFileDatParser.CreationDate"), info.creationDate);
         xhtml.endElement("table");
 
         // Files Table
@@ -149,10 +149,10 @@ public class TorrentFileParser extends AbstractParser {
             xhtml.startElement("table", "class", "dt");
             xhtml.startElement("tr", "class", "rh");
             xhtml.startElement("td", "class", "b");
-            xhtml.characters("Piece");
+            xhtml.characters(Messages.getString("TorrentFileDatParser.Piece"));
             xhtml.endElement("td");
             xhtml.startElement("td", "class", "b");
-            xhtml.characters("SHA-1");
+            xhtml.characters(Messages.getString("TorrentFileDatParser.SHA1"));
             xhtml.endElement("td");
             xhtml.endElement("tr");
 
