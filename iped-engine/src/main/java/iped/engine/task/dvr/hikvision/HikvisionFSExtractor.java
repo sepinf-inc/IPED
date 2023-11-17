@@ -293,7 +293,7 @@ public class HikvisionFSExtractor{
 		objVideoFile.setName("ch "+objDBE.channelNumber+" - "+nameType+" - "+st+" to "+et+".avi");
 		objVideoFile.setChannelNumber(objDBE.channelNumber);
 		objVideoFile.setPath(String.valueOf(objDBE.channelNumber)+"/");
-		objVideoFile.setType(0);
+		objVideoFile.setType(VideoFileHeader.DATA_BLOCK);
 		
 		videoFileHeaderList.add(objVideoFile);
 
@@ -356,7 +356,7 @@ public class HikvisionFSExtractor{
 						objVideoFile.setName("ch "+objDBE.channelNumber+" - "+nameType+" - "+st+" to "+et+".avi");
 						objVideoFile.setChannelNumber(objDBE.channelNumber);
 						objVideoFile.setPath(String.valueOf(objDBE.channelNumber)+"/");
-						objVideoFile.setType(1);
+						objVideoFile.setType(VideoFileHeader.REGULAR);
 						
 						videoFileHeaderList.add(objVideoFile);
 
@@ -382,7 +382,7 @@ public class HikvisionFSExtractor{
 						objVideoFile.setName("ch "+objDBE.channelNumber+" - "+nameType+" - "+st+" to "+et+".avi");
 						objVideoFile.setChannelNumber(objDBE.channelNumber);
 						objVideoFile.setPath(String.valueOf(objDBE.channelNumber)+"/");
-						objVideoFile.setType(2);
+						objVideoFile.setType(VideoFileHeader.CARVED_TIME_IN);
 						
 						videoFileHeaderList.add(objVideoFile);
 
@@ -408,7 +408,7 @@ public class HikvisionFSExtractor{
 						objVideoFile.setName("ch "+objDBE.channelNumber+" - "+nameType+" - "+st+" to "+et+".avi");
 						objVideoFile.setChannelNumber(objDBE.channelNumber);
 						objVideoFile.setPath(String.valueOf(objDBE.channelNumber)+"/");
-						objVideoFile.setType(3);
+						objVideoFile.setType(VideoFileHeader.CARVED_TIME_EDGE);
 						
 						videoFileHeaderList.add(objVideoFile);
 
@@ -433,7 +433,7 @@ public class HikvisionFSExtractor{
 						objVideoFile.setName("ch "+objDBE.channelNumber+" - "+nameType+" - "+st+" to "+et+".avi");
 						objVideoFile.setChannelNumber(objDBE.channelNumber);
 						objVideoFile.setPath(String.valueOf(objDBE.channelNumber)+"/");
-						objVideoFile.setType(4);
+						objVideoFile.setType(VideoFileHeader.CARVED_TIME_OUT);
 						
 						videoFileHeaderList.add(objVideoFile);
 
@@ -470,7 +470,7 @@ public class HikvisionFSExtractor{
 			objVideoFile.setName("ch "+objDBE.channelNumber+" - "+nameType+" - offset "+(objDBE.dataOffset+objDBE.highestVideoDataOffset)+" to "+(objDBE.dataOffset+objDBE.firstONFI8Offset)+".avi");
 			objVideoFile.setChannelNumber(objDBE.channelNumber);
 			objVideoFile.setPath(String.valueOf(objDBE.channelNumber)+"/");
-			objVideoFile.setType(5);
+			objVideoFile.setType(VideoFileHeader.CARVED_DATA_START);
 			
 			videoFileHeaderList.add(objVideoFile);
 
@@ -490,7 +490,7 @@ public class HikvisionFSExtractor{
 			objVideoFile.setName("ch "+objDBE.channelNumber+" - "+nameType+" - offset "+(objDBE.dataOffset+objDBE.highestVideoDataOffset)+" to "+(objDBE.dataOffset+objDBE.firstONFI8Offset)+".avi");
 			objVideoFile.setChannelNumber(objDBE.channelNumber);
 			objVideoFile.setPath(String.valueOf(objDBE.channelNumber));
-			objVideoFile.setType(6);
+			objVideoFile.setType(VideoFileHeader.CARVED_DATA_END);
 			
 			videoFileHeaderList.add(objVideoFile);
 
@@ -878,6 +878,14 @@ class VideoFileHeader {
 	private String name = "";
 	private String path = "";
 	private int type = 0; // 0 full dataBlock, 1 regular file, 2 caverd-time-in, 3 carved-time-edge, 4 carved-time-out, 5 carved-data-start, 6 carved-data-end
+
+	public static final int DATA_BLOCK = 0;
+	public static final int REGULAR = 1;
+	public static final int CARVED_TIME_IN = 2;
+	public static final int CARVED_TIME_EDGE = 3;
+	public static final int CARVED_TIME_OUT = 4;
+	public static final int CARVED_DATA_START = 5;
+	public static final int CARVED_DATA_END = 6;
 
 
 	public Date getCreationDate(){
