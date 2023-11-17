@@ -137,4 +137,5 @@ enableDocThumbs = false
 # Generation settings can be modified in file "conf/HTMLReportConfig.txt"
 enableHTMLReport = true
 
+# Enables extraction of video files from Hikvision File System - DVR
 enableHikvisionFS = true
