@@ -269,7 +269,7 @@ public class TorrentFileParser extends AbstractParser {
                 for (int i = 0; i < n; i++) {
                     if (i * len + len <= piecesBytes.length) {
                         System.arraycopy(piecesBytes, i * len, sha1, 0, len);
-                        torrentInfo.pieces[i] = Hex.encodeHexString(sha1).toUpperCase();
+                        torrentInfo.pieces[i] = Hex.encodeHexString(sha1, false);
                     } else {
                         torrentInfo.pieces[i] = "-";
                     }
