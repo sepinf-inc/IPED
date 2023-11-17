@@ -298,47 +298,47 @@ public class ShareazaDownloadParser extends AbstractParser {
             }
 
             int numberOfSources = read2Bytes(buffer);
-            sbSources.append("NUM_OF_SOURCES:                 " + numberOfSources+"\n");
+            sbSources.append("Sources Count:           " + numberOfSources+"\n");
 
             for (int i = 0; i < numberOfSources; i++) {
-                sbSources.append("     SOURCE " + (i + 1) + ": "+"\n");
+                sbSources.append("     Source " + (i + 1) + ": "+"\n");
 
                 String sourceTerm = readString(buffer);
-                sbSources.append("          SOURCE ADDRESS:                 " + sourceTerm+"\n");
+                sbSources.append("          Source Address:                 " + sourceTerm+"\n");
 
                 int protocolId = read4Bytes(buffer);
-                sbSources.append("          PROTOCOL_ID:                    " + getProtocolName(protocolId)+"\n");
+                sbSources.append("          Protocol ID:                    " + getProtocolName(protocolId)+"\n");
 
                 int guidValid = read4Bytes(buffer);
-                sbSources.append("          GUID_VALID:                     " + guidValid+"\n");
+                sbSources.append("          GUID Valid:                     " + guidValid+"\n");
 
                 if (guidValid != 0) {
-                    sbSources.append("          GUID_VALUE:                     " + readHashString(buffer, 16)+"\n");
+                    sbSources.append("          GUID:                           " + readHashString(buffer, 16)+"\n");
                 }
 
                 long port = readUnsignedInt2Bytes(buffer);
-                sbSources.append("          PORT:                           " + port+"\n");
+                sbSources.append("          Port:                           " + port+"\n");
 
                 if (port != 0) {
                     String ip = read1Byte(buffer) + "." + read1Byte(buffer) + "." + read1Byte(buffer) + "."
                             + read1Byte(buffer);
-                    sbSources.append("          IP_ADDRESS:                     " + ip+"\n");
+                    sbSources.append("          IP Adress:                      " + ip+"\n");
                 }
 
                 long serverPort = readUnsignedInt2Bytes(buffer);
-                sbSources.append("          SERVER_PORT:                    " + serverPort+"\n");
+                sbSources.append("          Server Port:                    " + serverPort+"\n");
 
                 if (serverPort != 0) {
                     String serverIP = read1Byte(buffer) + "." + read1Byte(buffer) + "." + read1Byte(buffer) + "."
                             + read1Byte(buffer);
-                    sbSources.append("          SERVER_IP:                      " + serverIP+"\n");
+                    sbSources.append("          Server IP:                      " + serverIP+"\n");
                 }
 
                 String serverName = readString(buffer);
                 if (serverName.equals("")) {
                     serverName = "<none>";
                 }
-                sbSources.append("          SERVER NAME:                    " + serverName+"\n");
+                sbSources.append("          Server Name:                    " + serverName+"\n");
 
                 int index = read4Bytes(buffer);
                 int hashAuth = read4Bytes(buffer);
@@ -361,19 +361,19 @@ public class ShareazaDownloadParser extends AbstractParser {
                 Date d = new Date(epoch * 1000); // convert epoch seconds to microseconds
                 long numPastFraments = readUnsignedInt2Bytes(buffer);
 
-                sbSources.append("          INDEX:                          " + index+"\n");
-                sbSources.append("          HASH_AUTH:                      " + getBoolStr(hashAuth)+"\n");
-                sbSources.append("          Use_SHA1:                       " + getBoolStr(useSha1)+"\n");
-                sbSources.append("          Use_TIGER:                      " + getBoolStr(useTiger)+"\n");
-                sbSources.append("          Use_EDONKEY:                    " + getBoolStr(useEdonkey)+"\n");
-                sbSources.append("          Use_BTH:                        " + getBoolStr(useBith)+"\n");
-                sbSources.append("          Use_MD5:                        " + getBoolStr(useMd5)+"\n");
-                sbSources.append("          SERVER TYPE:                    " + serverType+"\n");
+                sbSources.append("          Index:                          " + index+"\n");
+                sbSources.append("          HASH Auth:                      " + getBoolStr(hashAuth)+"\n");
+                sbSources.append("          Use SHA1:                       " + getBoolStr(useSha1)+"\n");
+                sbSources.append("          Use TIGER:                      " + getBoolStr(useTiger)+"\n");
+                sbSources.append("          Use EDONKEY:                    " + getBoolStr(useEdonkey)+"\n");
+                sbSources.append("          Use BTH:                        " + getBoolStr(useBith)+"\n");
+                sbSources.append("          Use MD5:                        " + getBoolStr(useMd5)+"\n");
+                sbSources.append("          Server Type:                    " + serverType+"\n");
                 sbSources.append(
-                        "          NICK NAME:                      " + (nickName.isBlank() ? "<none>" : nickName)+"\n");
-                sbSources.append("          COUNTRY CODE:                   " + countryCode+"\n");
-                sbSources.append("          COUNTRY NAME:                   " + countryName+"\n");
-                sbSources.append("          SPEED:                          " + speed+"\n");
+                        "          Nick Name:                      " + (nickName.isBlank() ? "<none>" : nickName)+"\n");
+                sbSources.append("          Country Code:                   " + countryCode+"\n");
+                sbSources.append("          Country Name:                   " + countryName+"\n");
+                sbSources.append("          Speed:                          " + speed+"\n");
                 sbSources.append("          Push Only:                      " + getBoolStr(pushOnly)+"\n");
                 sbSources.append("          Close Connection:               " + getBoolStr(closeConn)+"\n");
                 sbSources.append("          Read Content                    " + getBoolStr(readContent)+"\n");
@@ -405,7 +405,7 @@ public class ShareazaDownloadParser extends AbstractParser {
             String str1 = "";
 
             if (hasXML == 1) {
-                sbXML.append("XML FILE: "+"\n");
+                sbXML.append("XML File: "+"\n");
                 readXMLNode(buffer, xhtml, 0, sbXML);
             }
 
@@ -472,14 +472,14 @@ public class ShareazaDownloadParser extends AbstractParser {
                     int blockSize = read4Bytes(buffer);
                     int blockCount = read4Bytes(buffer);
 
-                    sbTorrent.append("    BT HASH:             " + btHash+"\n");
+                    sbTorrent.append("    BitTorrent Hash:     " + btHash+"\n");
                     sbTorrent.append("    Size:                " + size+"\n");
                     sbTorrent.append("    BlockSize:           " + blockSize+"\n");
                     sbTorrent.append("    BlockCount:          " + blockCount+"\n");
 
                     for (int i = 0; i < blockCount; ++i) {
                         btHash = readHashString(buffer, 20);
-                        sbTorrent.append("    		BT HASH [" + i + "]:         " + btHash+"\n");
+                        sbTorrent.append("    		BitTorrent Hash: [" + i + "]:         " + btHash+"\n");
                     }
 
                     long totalUpload = read8Bytes(buffer);
@@ -503,36 +503,58 @@ public class ShareazaDownloadParser extends AbstractParser {
                     sbTorrent.append("    File Count:          " + fileCount+"\n");
 
                     for (int i = 0; i < fileCount; i++) {
-                        sbTorrent.append("    		   FILE [" + i + "]:         " + "\n");
+                        sbTorrent.append("          FILE [" + i + "]:" + "\n");
 
                         long btSize = read8Bytes(buffer);
                         String btPath = readString(buffer);
                         String btName = readString(buffer);
+                        sbTorrent.append("              Size:                           " + btSize+"\n");
+                        sbTorrent.append("              Path:                           " + btPath+"\n");
+                        sbTorrent.append("              Name:                           " + btName+"\n");
+                        
                         // TODO: Check why some files don't have hashes
-                        String btSHA1 = readHashString(buffer, 20);
-                        String btEDONKEY = readHashString(buffer, 16);
-                        String btTIGER = readHashString(buffer, 24);
-                        String btMD5 = readHashString(buffer, 16);
-
-                        sbTorrent.append("    			Size:                           " + btSize+"\n");
-                        sbTorrent.append("    			Path:                           " + btPath+"\n");
-                        sbTorrent.append("    			Name:                           " + btName+"\n");
-                        sbTorrent.append("    			SHA1:                           " + btSHA1+"\n");
-                        sbTorrent.append("    			EDONKEY:                        " + btEDONKEY+"\n");
-                        sbTorrent.append("    			TIGER:                          " + btTIGER+"\n");
-                        sbTorrent.append("    			MD5:                            " + btMD5+"\n");
+                        if (readControl4Bytes(buffer) != 0) {
+                            String btSHA1 = readHashString(buffer, 20);
+                            sbTorrent.append("              SHA1:                           " + btSHA1+"\n");
+                        }
+                        
+                        if (readControl4Bytes(buffer) != 0) {
+                            String btEDONKEY = readHashString(buffer, 16);
+                            sbTorrent.append("              EDONKEY:                        " + btEDONKEY+"\n");
+                        }
+                        
+                        if (readControl4Bytes(buffer) != 0) {
+                            String btTIGER = readHashString(buffer, 24);
+                            sbTorrent.append("              TIGER:                          " + btTIGER+"\n");
+                        }
+                        
+                        if (readControl4Bytes(buffer) != 0) {
+                            String btMD5 = readHashString(buffer, 16);
+                            sbTorrent.append("              MD5:                            " + btMD5+"\n");
+                        }
+                        
+                        //Torrent file header
+                        padding(buffer, 10);
+                        
+                        //Torrent file size
+                        int torrentFileSize = read4Bytes(buffer);
+                        sbTorrent.append("              Torrent File Size:              " + torrentFileSize+"\n");
+                        
+                        //Torrent File
+                        String torrentFile = readString(buffer, torrentFileSize);
+                        //sbTorrent.append("              Torrent File:                   " + torrentFile+"\n");
                     }
 
                     int trackerIndex = read4Bytes(buffer);
                     int trackerMode = read4Bytes(buffer);
-                    int nTrackers = read4Bytes(buffer);
+                    int nTrackers = read2Bytes(buffer);
                     
                     sbTorrent.append("    TrackerIndex:        " + trackerIndex+"\n");
                     sbTorrent.append("    TrackerMode:         " + trackerMode+"\n");
                     sbTorrent.append("    Trackers Count       " + nTrackers+"\n");
 
                     for (int i = 0; i < nTrackers; i++) {
-                        sbTorrent.append("    Tracker[" + i + "]:   " +"\n");
+                        sbTorrent.append("      Tracker[" + i + "]: " +"\n");
                         String address = readString(buffer);
                         int lastAccess = read4Bytes(buffer);
                         int lastSuccess = read4Bytes(buffer);
@@ -550,7 +572,7 @@ public class ShareazaDownloadParser extends AbstractParser {
                         sbTorrent.append("    			Type:             " + type+"\n");
                     }
                     
-                    int length = read4Bytes(buffer);
+                    int length = read2Bytes(buffer);
                     sbTorrent.append("    Source Length:       " + length+"\n");
 
                     if (length > 0) {
@@ -564,12 +586,12 @@ public class ShareazaDownloadParser extends AbstractParser {
                     }
 
                     if (version >= 23) {
-                        sbTorrent.append("    TorrentSuccess:      " + read4Bytes(buffer)+"\n");
-                        sbTorrent.append("    TorrentBlock:        " + readHashString(buffer, blockCount)+"\n");
-                        sbTorrent.append("    SEEDING:             " + read2Bytes(buffer)+"\n");
+                        sbTorrent.append("    TorrentSuccess:      " + read2Bytes(buffer)+"\n");
+                        String torrentBlock = readHashString(buffer, blockCount);
+                        //sbTorrent.append("    TorrentBlock:        " + torrentBlock +"\n");
+                        sbTorrent.append("    Seeding:             " + read2Bytes(buffer)+"\n");
                     }
                 }
-
             }
 
             // TIGER HASH DATABASE
@@ -648,20 +670,24 @@ public class ShareazaDownloadParser extends AbstractParser {
             }
 
             int expanded = read4Bytes(buffer);
-            int paused = read4Bytes(buffer);
-            int boosted = read4Bytes(buffer);
-            int shared = read4Bytes(buffer);
-            String serialID = readHashString(buffer, 4);
-
             addLine(xhtml, "EXPANDED:                " + getBoolStr(expanded));
+            
+            int paused = read4Bytes(buffer);
             addLine(xhtml, "PAUSED:                  " + getBoolStr(paused));
+            
+            int boosted = read4Bytes(buffer);
             addLine(xhtml, "BOOSTED:                 " + getBoolStr(boosted));
+            
+            int shared = read4Bytes(buffer);
             addLine(xhtml, "SHARED:                  " + getBoolStr(shared));
+            
+            String serialID = readHashString(buffer, 4);
             addLine(xhtml, "SERIAL ID:               " + serialID);
             
         } catch (BufferUnderflowException ex) {
             addLine(xhtml, INCOMPLETE_FILE_EX_MESSAGE + " Evidence=" + evidencePath);
             LOGGER.warn(INCOMPLETE_FILE_EX_MESSAGE + " Evidence=" + evidencePath);
+            ex.printStackTrace();
         } catch (Exception ex) {
             addLine(xhtml, INCOMPLETE_FILE_EX_MESSAGE + " Evidence=" + evidencePath);
             LOGGER.warn(INCOMPLETE_FILE_EX_MESSAGE + " Evidence=" + evidencePath);
@@ -769,6 +795,18 @@ public class ShareazaDownloadParser extends AbstractParser {
             }
             buffer.get(stringBytes);
             return new String(stringBytes, StandardCharsets.UTF_16LE);
+        }
+        return "";
+    }
+    
+    public String readString(ByteBuffer buffer, int length) throws BufferUnderflowException {
+        if (length > 0) {
+            byte[] stringBytes = new byte[length];
+            if (buffer.remaining() < length) {
+                throw new BufferUnderflowException();
+            }
+            buffer.get(stringBytes);
+            return new String(stringBytes, StandardCharsets.UTF_8);
         }
         return "";
     }
