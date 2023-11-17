@@ -3,6 +3,7 @@ package iped.carvers.custom;
 import java.util.Map;
 
 public class ResumeDatCarver extends TorrentCarver {
+    @Override
     public boolean isValid(Map<String, Object> dict) {
         for (String key : dict.keySet()) {
             Object value = dict.get(key);
@@ -15,5 +16,15 @@ public class ResumeDatCarver extends TorrentCarver {
             }
         }
         return false;
+    }
+
+    @Override
+    protected String getCarvedNamePrefix() {
+        return "Carved-Resume-";
+    }
+
+    @Override
+    protected String getCarvedNameSuffix() {
+        return ".dat";
     }
 }
