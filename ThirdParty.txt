@@ -175,3 +175,7 @@ Zlib
 JUnRAR
 - Site: https://github.com/edmund-wagner/junrar
 - License: licenses/JUNRAR.txt
+
+Lottie-player
+- Site: https://github.com/LottieFiles/lottie-player/blob/master/LICENSE
+- License: licenses/LOTTIE-PLAYER.txt
