@@ -68,10 +68,10 @@ public class ItemSearcher implements IItemSearcher {
     }
 
     private SearchResult getResult(String luceneQuery) {
-        IPEDSearcher searcher = new IPEDSearcher(iSource, luceneQuery);
-        searcher.setTreeQuery(true);
-        searcher.setNoScoring(true);
         try {
+            IPEDSearcher searcher = new IPEDSearcher(iSource, luceneQuery);
+            searcher.setTreeQuery(true);
+            searcher.setNoScoring(true);
             return searcher.search();
 
         } catch (Exception e) {
@@ -88,7 +88,8 @@ public class ItemSearcher implements IItemSearcher {
 
     @Override
     public String escapeQuery(String string) {
-        string = string.replace('“', '"').replace('”', '"').replace('„', '"');
+        string = string.replace('“', '"').replace('”', '"').replace('„', '"').replace('＂', '"');
+        string = string.replace('«', ' ').replace('»', ' ');
         return QueryParserUtil.escape(string);
     }
 
