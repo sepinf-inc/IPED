@@ -88,7 +88,7 @@ public class ItemSearcher implements IItemSearcher {
 
     @Override
     public String escapeQuery(String string) {
-        string = string.replace('“', '"').replace('”', '"');
+        string = string.replace('“', '"').replace('”', '"').replace('„', '"');
         return QueryParserUtil.escape(string);
     }
 
