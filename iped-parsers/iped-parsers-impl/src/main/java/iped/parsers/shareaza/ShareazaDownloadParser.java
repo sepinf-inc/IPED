@@ -875,7 +875,7 @@ public class ShareazaDownloadParser extends AbstractParser {
         int h3 = ldata[2] & 0xFF;
         int len = ldata[3] & 0xFF;
         if (h1 != 0xFF || h2 != 0xFE || h3 != 0xFF) {
-            throw new TikaException("Header not found FF-FE-FF:" + h1 + ":" + h2 + ":" + h3 + ":" + len);
+            throw new TikaException("Header FF-FE-FF not found: " + h1 + "-" + h2 + "-" + h3);
         }
         return len;
     }
