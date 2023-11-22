@@ -71,7 +71,6 @@ public class ShareazaDownloadParser extends AbstractParser {
 
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
         xhtml.startDocument();
-        xhtml.startElement("body");
         xhtml.startElement("pre");
         try {
             metadata.set(HttpHeaders.CONTENT_TYPE, SHAREAZA_DOWNLOAD_META);
@@ -93,7 +92,6 @@ public class ShareazaDownloadParser extends AbstractParser {
             throw e;
         } finally {
             xhtml.endElement("pre");
-            xhtml.endElement("body");
             xhtml.endDocument();
         }
 
