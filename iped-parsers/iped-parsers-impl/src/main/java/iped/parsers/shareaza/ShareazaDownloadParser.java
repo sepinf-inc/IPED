@@ -535,14 +535,12 @@ public class ShareazaDownloadParser extends AbstractParser {
 
                         // Torrent File
                         byte[] torrentFile = readString(buffer, torrentFileSize);
-
-                        Metadata torrentMeta = new Metadata();
-
-                        torrentMeta.set(TikaCoreProperties.TITLE, evidenceName + ".torrent");
-
-                        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
-
-                        extractor.parseEmbedded(new ByteArrayInputStream(torrentFile), handler, torrentMeta, true);
+                        if (torrentFile != null && torrentFile.length > 0) {
+                            Metadata torrentMeta = new Metadata();
+                            torrentMeta.set(TikaCoreProperties.TITLE, evidenceName + ".torrent");
+                            EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
+                            extractor.parseEmbedded(new ByteArrayInputStream(torrentFile), handler, torrentMeta, true);
+                        }
                     }
 
                     int trackerIndex = read4Bytes(buffer);
