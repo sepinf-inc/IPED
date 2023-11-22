@@ -472,9 +472,9 @@
                         <configuration>
                             <artifactItems>
                                 <artifactItem>
-                                    <groupId>dpf.ap</groupId>
+                                    <groupId>com.github.sepinf-inc.telegram-decoder</groupId>
     								<artifactId>telegram-decoder-impl</artifactId>
-    								<version>${telegram.impl.version}</version>
+    								<version>${telegram.version}</version>
                                     <type>jar</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${plugin.dir}</outputDirectory>
