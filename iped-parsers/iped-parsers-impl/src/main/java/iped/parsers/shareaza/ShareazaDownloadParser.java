@@ -126,8 +126,8 @@ public class ShareazaDownloadParser extends AbstractParser {
             String magic = new String(magicBytes);
             int version = buffer.getInt();
 
-            addLine(xhtml, "MAGIC:                          " + magic);
-            addLine(xhtml, "VERSION:                        " + version);
+            addLine(xhtml, "Magic:                   " + magic);
+            addLine(xhtml, "Version:                 " + version);
 
             if (!magic.equals("SDL")) {
                 addLine(xhtml, "ERROR: magic value 'SDL' not found");
@@ -145,7 +145,7 @@ public class ShareazaDownloadParser extends AbstractParser {
             }
 
             String fileName = readString(buffer);
-            addLine(xhtml, "FILE NAME:                      " + fileName);
+            addLine(xhtml, "File Name:               " + fileName);
 
             String searchTerms = "";
 
@@ -159,7 +159,7 @@ public class ShareazaDownloadParser extends AbstractParser {
                 searchTerms = "<not expected in this version>";
             }
 
-            addLine(xhtml, "SEARCH TERMS:                   " + searchTerms);
+            addLine(xhtml, "Search Terms:            " + searchTerms);
 
             byte[] fileLenBytes;
 
@@ -180,25 +180,24 @@ public class ShareazaDownloadParser extends AbstractParser {
 
                 double dbFileLen = fileLenLow / 1024.0 / 1024.0;
 
-                addLine(xhtml, "FILE LENGTH:                    " + df.format(fileLenLow) + " Bytes ("
+                addLine(xhtml, "File Length:             " + df.format(fileLenLow) + " Bytes ("
                         + df2.format(dbFileLen) + " MB)");
 
             } else {
                 fileLenBytes = new byte[4];
                 int fileLen = ByteBuffer.wrap(fileLenBytes).getInt();
-                addLine(xhtml, "FILE LENGTH:                    " + fileLen);
+                addLine(xhtml, "File Length:             " + fileLen);
             }
 
             int sha1Valid = readControl4Bytes(buffer);
-            addLine(xhtml, "SHA1_VALID:                     " + sha1Valid);
-
+            
             IItemReader item = null;
             HashSet<String> hashSets = new HashSet<String>();
 
             if (sha1Valid != 0) {
                 String hash = readHashString(buffer, 20);
                 metadata.add(ExtraProperties.SHARED_HASHES, hash);
-                addLine(xhtml, "SHA1:                           " + hash);
+                addLine(xhtml, "SHA1:                    " + hash);
                 hashSets.addAll(ChildPornHashLookup.lookupHash(HASH_SHA1, hash));
                 if (item == null) {
                     item = searchItemInCase(searcher, HASH_SHA1, hash);
@@ -206,26 +205,22 @@ public class ShareazaDownloadParser extends AbstractParser {
             }
 
             int sha1Trust = readControl4Bytes(buffer);
-            addLine(xhtml, "SHA1_TRUST:                     " + sha1Trust);
-
+            
             int tigerValid = readControl4Bytes(buffer);
-            addLine(xhtml, "TIGER_VALID:                    " + tigerValid);
-
+            
             if (tigerValid != 0) {
-                addLine(xhtml, "TIGER:                          " + readHashString(buffer, 24));
+                addLine(xhtml, "TIGER:                   " + readHashString(buffer, 24));
             }
 
             int tigerTrust = readControl4Bytes(buffer);
-            addLine(xhtml, "TIGER_TRUST:                    " + tigerTrust);
-
+            
             if (version >= 22) {
                 int md5Valid = readControl4Bytes(buffer);
-                addLine(xhtml, "MD5_VALID:                      " + md5Valid);
-
+            
                 if (md5Valid != 0) {
                     String hash = readHashString(buffer, 16);
                     metadata.add(ExtraProperties.SHARED_HASHES, hash);
-                    addLine(xhtml, "MD5:                            " + hash);
+                    addLine(xhtml, "MD5:                     " + hash);
                     hashSets.addAll(ChildPornHashLookup.lookupHash(HASH_MD5, hash));
                     if (item == null) {
                         item = searchItemInCase(searcher, HASH_MD5, hash);
@@ -233,18 +228,16 @@ public class ShareazaDownloadParser extends AbstractParser {
                 }
 
                 int md5Trust = readControl4Bytes(buffer);
-                addLine(xhtml, "MD5_TRUST:                      " + md5Trust);
 
             }
 
             if (version >= 13) {
                 int edonkeyValid = readControl4Bytes(buffer);
-                addLine(xhtml, "EDONKEY_VALID:                  " + edonkeyValid);
 
                 if (edonkeyValid != 0) {
                     String hash = readHashString(buffer, 16);
                     metadata.add(ExtraProperties.SHARED_HASHES, hash);
-                    addLine(xhtml, "EDONKEY:                        " + hash);
+                    addLine(xhtml, "EDONKEY:                 " + hash);
                     hashSets.addAll(ChildPornHashLookup.lookupHash(HASH_EDONKEY, hash));
                     if (item == null) {
                         item = searchItemInCase(searcher, HASH_EDONKEY, hash);
@@ -252,23 +245,20 @@ public class ShareazaDownloadParser extends AbstractParser {
                 }
 
                 int edonkeyTrust = readControl4Bytes(buffer);
-                addLine(xhtml, "EDONKEY_TRUST:                  " + edonkeyTrust);
             }
 
             if (version >= 37) {
                 int bthValid = readControl4Bytes(buffer);
-                addLine(xhtml, "BTH_VALID:                      " + bthValid);
 
                 if (bthValid != 0) {
-                    addLine(xhtml, "BTH HASH:                       " + readHashString(buffer, 20));
+                    addLine(xhtml, "BTH HASH:                " + readHashString(buffer, 20));
                 }
 
                 int bthTrust = readControl4Bytes(buffer);
-                addLine(xhtml, "BTH_TRUST:                      " + bthTrust);
 
             }
 
-            // Item found in the case?
+         // Item found in the case?
             if (item != null) {
                 hashSets.addAll(ChildPornHashLookup.lookupHash(item.getHash()));
                 xhtml.newline();
@@ -365,7 +355,7 @@ public class ShareazaDownloadParser extends AbstractParser {
                 long numPastFraments = readUnsignedInt2Bytes(buffer);
 
                 sbSources.append("          Index:                          " + index+"\n");
-                sbSources.append("          HASH Auth:                      " + getBoolStr(hashAuth)+"\n");
+                sbSources.append("          Hash Auth:                      " + getBoolStr(hashAuth)+"\n");
                 sbSources.append("          Use SHA1:                       " + getBoolStr(useSha1)+"\n");
                 sbSources.append("          Use TIGER:                      " + getBoolStr(useTiger)+"\n");
                 sbSources.append("          Use EDONKEY:                    " + getBoolStr(useEdonkey)+"\n");
@@ -415,34 +405,34 @@ public class ShareazaDownloadParser extends AbstractParser {
             int hasFile = read2Bytes(buffer);
 
             if (hasFile == 1) {
-                sbFile.append("FILE: "+"\n");
+                sbFile.append("File: "+"\n");
 
                 long nTotal = read8Bytes(buffer);
                 long nRemaning = read8Bytes(buffer);
                 int nFragments = read4Bytes(buffer);
                 long notStart = nTotal - nRemaning;
 
-                sbFile.append("    TOTAL SIZE:          " + nTotal+"\n");
-                sbFile.append("    TOTAL REMANING:      " + nRemaning+"\n");
-                sbFile.append("    TOTAL DOWNLOADED:    " + notStart+"\n");
-                sbFile.append("    NUMBER OF FRAGMENTS: " + nFragments+"\n");
+                sbFile.append("    Total Size:          " + nTotal+"\n");
+                sbFile.append("    Total Remaning:      " + nRemaning+"\n");
+                sbFile.append("    Total Downloaded:    " + notStart+"\n");
+                sbFile.append("    Number of Fragments: " + nFragments+"\n");
 
                 for (int i = 0; i < nFragments; i++) {
                     long nRangeBegin = read8Bytes(buffer);
                     long nRangeLength = read8Bytes(buffer);
 
-                    sbFile.append("        FRAGMENT " + (i + 1)+"\n");
-                    sbFile.append("            RANGE BEGIN: " + nRangeBegin+"\n");
-                    sbFile.append("            RANGE END:   " + (nRangeBegin + nRangeLength)+"\n");
+                    sbFile.append("        Fragment " + (i + 1)+"\n");
+                    sbFile.append("            Range Begin: " + nRangeBegin+"\n");
+                    sbFile.append("            Range End:   " + (nRangeBegin + nRangeLength)+"\n");
                 }
 
                 int nFiles = read4Bytes(buffer);
-                sbFile.append("    NUMBER OF FILES:     " + nFiles+"\n");
+                sbFile.append("    Number of Files:     " + nFiles+"\n");
 
                 for (int i = 0; i < nFiles; i++) {
-                    sbFile.append("        FILE " + (i + 1)+"\n");
+                    sbFile.append("        File " + (i + 1)+"\n");
                     str1 = readString(buffer);
-                    sbFile.append("            FILE PATH:   " + str1+"\n");
+                    sbFile.append("            File Path:   " + str1+"\n");
 
                     long offSet = read8Bytes(buffer);
                     long size = read8Bytes(buffer);
@@ -450,11 +440,11 @@ public class ShareazaDownloadParser extends AbstractParser {
                     str1 = readString(buffer);
                     int nPriority = read4Bytes(buffer);
 
-                    sbFile.append("            OFFSET:      " + offSet+"\n");
-                    sbFile.append("            SIZE:        " + size+"\n");
-                    sbFile.append("            WRITE:       " + write+"\n");
-                    sbFile.append("            FILE NAME:   " + str1+"\n");
-                    sbFile.append("            PRIORITY:    " + nPriority+"\n");
+                    sbFile.append("            Offset:      " + offSet+"\n");
+                    sbFile.append("            Size:        " + size+"\n");
+                    sbFile.append("            Write:       " + write+"\n");
+                    sbFile.append("            File Name:   " + str1+"\n");
+                    sbFile.append("            Priority:    " + nPriority+"\n");
 
                 }
             }
@@ -464,8 +454,8 @@ public class ShareazaDownloadParser extends AbstractParser {
                 int torrentVersion = read4Bytes(buffer);
                 int torrentValid = read4Bytes(buffer);
 
-                    sbTorrent.append("TORRENT VERSION:         " + torrentVersion+"\n");
-                    sbTorrent.append("    VALID:               " + torrentValid+"\n");
+                    sbTorrent.append("Torrent Version:         " + torrentVersion+"\n");
+                    sbTorrent.append("    Valid:               " + torrentValid+"\n");
 
                 if (torrentValid > 0) {
 
@@ -506,7 +496,7 @@ public class ShareazaDownloadParser extends AbstractParser {
                     sbTorrent.append("    File Count:          " + fileCount+"\n");
 
                     for (int i = 0; i < fileCount; i++) {
-                        sbTorrent.append("          FILE [" + i + "]:" + "\n");
+                        sbTorrent.append("          File [" + i + "]:" + "\n");
 
                         long btSize = read8Bytes(buffer);
                         String btPath = readString(buffer);
@@ -608,12 +598,12 @@ public class ShareazaDownloadParser extends AbstractParser {
             // TIGER HASH DATABASE
             int pTreeSize = read4Bytes(buffer);
             if (pTreeSize > 0) {
-
-                sbTigerDB.append("TIGER [TREE SIZE]:         " + pTreeSize+"\n");
+                sbTigerDB.append("TIGER Hash Database");
+                sbTigerDB.append("     Tree Size:               " + pTreeSize+"\n");
 
                 int hashTigerDatabaseSize = hashTigerDataBaseSize(pTreeSize);
 
-                sbTigerDB.append("TIGER [HASH DATABASE SIZE]:         " + hashTigerDatabaseSize+"\n");
+                sbTigerDB.append("     Hash Database Size:      " + hashTigerDatabaseSize+"\n");
 
                 padding(buffer, hashTigerDatabaseSize);
 
@@ -621,20 +611,20 @@ public class ShareazaDownloadParser extends AbstractParser {
                 int tigerSize = read4Bytes(buffer);
                 int tigerSuccess = read4Bytes(buffer);
 
-                sbTigerDB.append("TIGER [TIGER BLOCK] :         " + tigerBlock+"\n");
-                sbTigerDB.append("TIGER [TIGER SIZE]  :         " + tigerSize+"\n");
-                sbTigerDB.append("TIGER [TIGER SUCESS]:         " + tigerSuccess+"\n");
+                sbTigerDB.append("     Block:                   " + tigerBlock+"\n");
+                sbTigerDB.append("     Size:                    " + tigerSize+"\n");
+                sbTigerDB.append("     Success:                 " + tigerSuccess+"\n");
 
                 padding(buffer, tigerBlock);
             }
 
             // ED2K HASH DATABASE
             int ed2kListSize = read4Bytes(buffer);
-            sbEd2kDB.append("EDONKEY HASH DATABASE:"+"\n");
-            sbEd2kDB.append("     EDONKEY [LIST SIZE]:                " + ed2kListSize+"\n");
+            sbEd2kDB.append("EDONKEY Hash Database:"+"\n");
+            sbEd2kDB.append("     List Size:               " + ed2kListSize+"\n");
 
             int ed2kListSerialSize = getEd2kListSerialSize(ed2kListSize);
-            sbEd2kDB.append("     EDONKEY [HASH DATABASE SIZE]:       " + ed2kListSerialSize+"\n");
+            sbEd2kDB.append("     Hash Database Size:      " + ed2kListSerialSize+"\n");
 
             padding(buffer, ed2kListSerialSize);
 
@@ -642,28 +632,28 @@ public class ShareazaDownloadParser extends AbstractParser {
                 int hashsetBlock = read4Bytes(buffer);
                 int hashsetSuccess = read4Bytes(buffer);
 
-                sbEd2kDB.append("     EDONKEY [HASHSET BLOCK LENGTH]:     " + hashsetBlock+"\n");
-                sbEd2kDB.append("     EDONKEY [HASHSET SUCCESS]:          " + hashsetSuccess+"\n");
+                sbEd2kDB.append("     Hashset Block Length:    " + hashsetBlock+"\n");
+                sbEd2kDB.append("     Hashset Success:         " + hashsetSuccess+"\n");
 
                 padding(buffer, hashsetBlock);
             }
 
             int numPreviews = read2Bytes(buffer);
-            sbPreview.append("NUMBER OF PREVIEWS:      " + numPreviews+"\n");
+            sbPreview.append("Number of Previews:      " + numPreviews+"\n");
 
             for (int i = 0; i < numPreviews; i++) {
                 String preview = readString(buffer);
-                sbPreview.append("    PREVIEW " + (i + 1) + ":           " + preview+"\n");
+                sbPreview.append("     Preview " + (i + 1) + ":           " + preview+"\n");
 
             }
 
             if (version >= 32) {
                 int numReviews = read2Bytes(buffer);
-                sbReview.append("NUMBER OF REVIEWS:       " + numReviews+"\n");
+                sbReview.append("Number of Reviews:       " + numReviews+"\n");
 
                 if (numReviews > 0) {
                     for (int i = 0; i < numReviews; i++) {
-                        sbReview.append("     REVIEW " + (i + 1) + ":"+"\n");
+                        sbReview.append("     Review " + (i + 1) + ":"+"\n");
 
                         long userIP = read8Bytes(buffer);
                         int userPicture = read4Bytes(buffer);
@@ -671,29 +661,29 @@ public class ShareazaDownloadParser extends AbstractParser {
                         int fileRating = read4Bytes(buffer);
                         String fileComments = readString(buffer);
 
-                        sbReview.append("     	USER IP:       " + userIP+"\n");
-                        sbReview.append("     	USER PICTURE:  " + userPicture+"\n");
-                        sbReview.append("     	USER NAME:     " + userName+"\n");
-                        sbReview.append("     	FILE RATING:   " + fileRating+"\n");
-                        sbReview.append("     	FILE COMMENTS: " + fileComments+"\n");
+                        sbReview.append("     	User IP:       " + userIP+"\n");
+                        sbReview.append("     	User Picture:  " + userPicture+"\n");
+                        sbReview.append("     	User Name:     " + userName+"\n");
+                        sbReview.append("     	File Rating:   " + fileRating+"\n");
+                        sbReview.append("     	File Comments: " + fileComments+"\n");
                     }
                 }
             }
 
             int expanded = read4Bytes(buffer);
-            addLine(xhtml, "EXPANDED:                " + getBoolStr(expanded));
+            addLine(xhtml, "Expanded:                " + getBoolStr(expanded));
             
             int paused = read4Bytes(buffer);
-            addLine(xhtml, "PAUSED:                  " + getBoolStr(paused));
+            addLine(xhtml, "Paused:                  " + getBoolStr(paused));
             
             int boosted = read4Bytes(buffer);
-            addLine(xhtml, "BOOSTED:                 " + getBoolStr(boosted));
+            addLine(xhtml, "Boosted:                 " + getBoolStr(boosted));
             
             int shared = read4Bytes(buffer);
-            addLine(xhtml, "SHARED:                  " + getBoolStr(shared));
+            addLine(xhtml, "Shared:                  " + getBoolStr(shared));
             
             String serialID = readHashString(buffer, 4);
-            addLine(xhtml, "SERIAL ID:               " + serialID);
+            addLine(xhtml, "Serial ID:               " + serialID);
             
         } catch (BufferUnderflowException ex) {
             addLine(xhtml, INCOMPLETE_FILE_EX_MESSAGE + " Evidence=" + evidencePath);
