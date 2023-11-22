@@ -11,6 +11,7 @@ import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.Collections;
@@ -56,7 +57,11 @@ public class ShareazaDownloadParser extends AbstractParser {
 
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.parse(SHAREAZA_DOWNLOAD_META));
 
-    private static final String INCOMPLETE_FILE_EX_MESSAGE = "Error during file parser, possible incomplete or corrupted file.";
+    private static final String SDL_MAGIC_NOT_FOUND = "ERROR: magic value 'SDL' not found";
+    private static final String VERSION_BEFORE_11 = "ERROR: version less than 11 is not supported";
+    private static final String VERSION_AFTER_42 = "ERROR: version greater than 42 is not supported";
+    private static final String INCOMPLETE_FILE_EX_MESSAGE = "Error during file parsing, possible incomplete or corrupted file.";
+    private static final String ERROR_READING_CONTROL_BYTES = "Error reading control bytes, data is possibly corrupted";
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -65,6 +70,11 @@ public class ShareazaDownloadParser extends AbstractParser {
 
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
+
+        XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
+        xhtml.startDocument();
+        xhtml.startElement("body");
+        xhtml.startElement("pre");
         try {
             metadata.set(HttpHeaders.CONTENT_TYPE, SHAREAZA_DOWNLOAD_META);
             metadata.remove(TikaCoreProperties.RESOURCE_NAME_KEY);
@@ -73,29 +83,26 @@ public class ShareazaDownloadParser extends AbstractParser {
 
             IItemReader item = context.get(IItemReader.class);
 
-            XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
-            xhtml.startDocument();
-
-            xhtml.startElement("body");
-            xhtml.startElement("pre");
-
             processSDFile(stream, handler, xhtml, searcher, metadata, context, item.getPath(), item.getName());
-
-            xhtml.endElement("pre");
-            xhtml.endElement("body");
-            xhtml.endDocument();
 
             metadata.set(ExtraProperties.P2P_REGISTRY_COUNT, String.valueOf(1));
             metadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
+        } catch (TikaException | SAXException | IOException e) {
+            throw e;
         } catch (Exception e) {
             e.printStackTrace();
+            throw e;
+        } finally {
+            xhtml.endElement("pre");
+            xhtml.endElement("body");
+            xhtml.endDocument();
         }
 
     }
 
     public void processSDFile(InputStream inputStreamFile, ContentHandler handler, XHTMLContentHandler xhtml, IItemSearcher searcher, Metadata metadata, ParseContext context, String evidencePath, String evidenceName)
-            throws IOException, SAXException {
+            throws IOException, SAXException, TikaException {
 
         DecimalFormat df = new DecimalFormat("#,##0");
         DecimalFormat df2 = new DecimalFormat("#,##0.0");
@@ -127,18 +134,18 @@ public class ShareazaDownloadParser extends AbstractParser {
             addLine(xhtml, "Version:                 " + version);
 
             if (!magic.equals("SDL")) {
-                addLine(xhtml, "ERROR: magic value 'SDL' not found");
-                return;
+                addLine(xhtml, SDL_MAGIC_NOT_FOUND);
+                throw new TikaException(SDL_MAGIC_NOT_FOUND);
             }
 
             if (version < 11) {
-                addLine(xhtml, "ERROR: actually only version greater than 11 is supported");
-                return;
+                addLine(xhtml, VERSION_BEFORE_11);
+                throw new TikaException(VERSION_BEFORE_11);
             }
 
             if (version > 42) {
-                addLine(xhtml, "ERROR: actually only version less or equal to 42 is supported");
-                return;
+                addLine(xhtml, VERSION_AFTER_42);
+                throw new TikaException(VERSION_AFTER_42);
             }
 
             String fileName = readString(buffer);
@@ -678,13 +685,8 @@ public class ShareazaDownloadParser extends AbstractParser {
             addLine(xhtml, "Serial ID:               " + serialID);
 
         } catch (BufferUnderflowException ex) {
-            addLine(xhtml, INCOMPLETE_FILE_EX_MESSAGE + " Evidence=" + evidencePath);
-            LOGGER.warn(INCOMPLETE_FILE_EX_MESSAGE + " Evidence=" + evidencePath);
-            ex.printStackTrace();
-        } catch (Exception ex) {
-            addLine(xhtml, INCOMPLETE_FILE_EX_MESSAGE + " Evidence=" + evidencePath);
-            LOGGER.warn(INCOMPLETE_FILE_EX_MESSAGE + " Evidence=" + evidencePath);
-            ex.printStackTrace();
+            addLine(xhtml, INCOMPLETE_FILE_EX_MESSAGE);
+            throw new TikaException(INCOMPLETE_FILE_EX_MESSAGE);
         } finally {
             addLines(xhtml, sbFile);
             addLines(xhtml, sbPreview);
@@ -697,7 +699,7 @@ public class ShareazaDownloadParser extends AbstractParser {
         }
     }
 
-    public int hashTigerDataBaseSize(int nHeight) throws IOException {
+    public int hashTigerDataBaseSize(int nHeight) {
         long maxSize = 4294967295l / 2;
         int height = nHeight;
         int nodeCount = 1;
@@ -716,7 +718,7 @@ public class ShareazaDownloadParser extends AbstractParser {
 
     }
 
-    public int getEd2kListSerialSize(int nListSize) throws IOException {
+    public int getEd2kListSerialSize(int nListSize) {
         int nSize = 0;
         if (nListSize > 0)
             nSize += 16;
@@ -776,7 +778,7 @@ public class ShareazaDownloadParser extends AbstractParser {
         buffer.get(read);
     }
 
-    public String readString(ByteBuffer buffer) throws BufferUnderflowException {
+    public String readString(ByteBuffer buffer) throws BufferUnderflowException, TikaException {
         byte[] read = new byte[4];
         buffer.get(read);
         int length = readMiniHeader(read);
@@ -836,12 +838,12 @@ public class ShareazaDownloadParser extends AbstractParser {
         return ByteBuffer.wrap(read).order(ByteOrder.LITTLE_ENDIAN).getInt();
     }
 
-    public int readControl4Bytes(ByteBuffer buffer) throws Exception {
+    public int readControl4Bytes(ByteBuffer buffer) throws TikaException {
         byte[] read = new byte[4];
         buffer.get(read);
         int number = ByteBuffer.wrap(read).order(ByteOrder.LITTLE_ENDIAN).getInt();
         if (number != 1 && number != 0) {
-            throw new Exception();
+            throw new TikaException(ERROR_READING_CONTROL_BYTES);
         }
         return number;
     }
@@ -867,13 +869,13 @@ public class ShareazaDownloadParser extends AbstractParser {
         return sb.toString();
     }
 
-    public int readMiniHeader(byte[] ldata) {
+    public int readMiniHeader(byte[] ldata) throws TikaException {
         int h1 = ldata[0] & 0xFF;
         int h2 = ldata[1] & 0xFF;
         int h3 = ldata[2] & 0xFF;
         int len = ldata[3] & 0xFF;
         if (h1 != 0xFF || h2 != 0xFE || h3 != 0xFF) {
-            throw new RuntimeException("ERROR: not found 'header' FF-FE-FF:" + h1 + ":" + h2 + ":" + h3 + ":" + len);
+            throw new TikaException("Header not found FF-FE-FF:" + h1 + ":" + h2 + ":" + h3 + ":" + len);
         }
         return len;
     }
@@ -893,7 +895,7 @@ public class ShareazaDownloadParser extends AbstractParser {
         return t;
     }
 
-    public void readXMLNode(ByteBuffer buffer, XHTMLContentHandler xhtml, int level, StringBuilder sbXML) throws Exception {
+    public void readXMLNode(ByteBuffer buffer, XHTMLContentHandler xhtml, int level, StringBuilder sbXML) throws BufferUnderflowException, TikaException {
 
         String node = "";
         String str1 = "";
@@ -924,7 +926,7 @@ public class ShareazaDownloadParser extends AbstractParser {
         sbXML.append(align + "</" + node + ">" + "\n");
     }
 
-    public String getHash(MessageDigest digest) throws Exception {
+    public String getHash(MessageDigest digest) {
         byte[] sum = digest.digest();
         BigInteger bigInt = new BigInteger(1, sum);
         String output = bigInt.toString(16);
@@ -938,7 +940,7 @@ public class ShareazaDownloadParser extends AbstractParser {
         return sb.toString();
     }
 
-    public String getMD5(File file) throws Exception {
+    public String getMD5(File file) throws IOException, NoSuchAlgorithmException {
         MessageDigest dgMD5 = MessageDigest.getInstance("MD5");
         byte[] b = Files.readAllBytes(file.toPath());
         dgMD5.update(b);
