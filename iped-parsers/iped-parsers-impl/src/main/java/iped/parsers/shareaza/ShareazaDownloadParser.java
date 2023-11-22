@@ -38,6 +38,7 @@ import iped.data.IItemReader;
 import iped.parsers.util.ChildPornHashLookup;
 import iped.parsers.util.ExportFolder;
 import iped.parsers.util.Messages;
+import iped.parsers.util.MetadataUtil;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
@@ -53,6 +54,8 @@ public class ShareazaDownloadParser extends AbstractParser {
     private static final String HASH_EDONKEY = "edonkey";
     private static final String HASH_SHA1 = "sha1";
 
+    private static final String META_PREFIX = ExtraProperties.P2P_META_PREFIX;
+
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.parse(SHAREAZA_DOWNLOAD_META));
 
     private static final String SDL_MAGIC_NOT_FOUND = "ERROR: magic value 'SDL' not found";
@@ -62,6 +65,15 @@ public class ShareazaDownloadParser extends AbstractParser {
     private static final String ERROR_READING_CONTROL_BYTES = "Error reading control bytes, data is possibly corrupted";
 
     private static final int MAX_BUF_SIZE = 1 << 23;
+
+    static {
+        MetadataUtil.setMetadataType(META_PREFIX + "fileSize", Long.class);
+        MetadataUtil.setMetadataType(META_PREFIX + "totalDownloaded", Long.class);
+        // Commented out because these values are always 0 in the samples tested
+        // MetadataUtil.setMetadataType(META_PREFIX + "torrentTotalDownload", Long.class);
+        // MetadataUtil.setMetadataType(META_PREFIX + "torrentTotalUpload", Long.class);
+        MetadataUtil.setMetadataType(META_PREFIX + "shared", String.class);
+    }
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -165,7 +177,7 @@ public class ShareazaDownloadParser extends AbstractParser {
             addLine(xhtml, "Search Terms:            " + searchTerms);
 
             byte[] fileLenBytes;
-
+            long fileLen;
             if (version >= 29) {
                 fileLenBytes = new byte[8];
                 buffer.get(fileLenBytes);
@@ -180,16 +192,18 @@ public class ShareazaDownloadParser extends AbstractParser {
                 fileLenLow += (long) (fileLenBytes[5] & 0xFF) << 40;
                 fileLenLow += (long) (fileLenBytes[6] & 0xFF) << 48;
                 fileLenLow += (long) (fileLenBytes[7] & 0xFF) << 56;
-
+                fileLen = fileLenLow;
                 double dbFileLen = fileLenLow / 1024.0 / 1024.0;
 
                 addLine(xhtml, "File Length:             " + df.format(fileLenLow) + " Bytes (" + df2.format(dbFileLen) + " MB)");
 
             } else {
                 fileLenBytes = new byte[4];
-                int fileLen = ByteBuffer.wrap(fileLenBytes).getInt();
+                fileLen = ByteBuffer.wrap(fileLenBytes).getInt();
                 addLine(xhtml, "File Length:             " + fileLen);
             }
+
+            metadata.set(META_PREFIX + "fileSize", Long.toString(fileLen));
 
             int sha1Valid = readControl4Bytes(buffer);
 
@@ -417,6 +431,8 @@ public class ShareazaDownloadParser extends AbstractParser {
                 sbFile.append("    Total Downloaded:    " + notStart + "\n");
                 sbFile.append("    Number of Fragments: " + nFragments + "\n");
 
+                metadata.set(META_PREFIX + "totalDownloaded", Long.toString(notStart));
+
                 for (int i = 0; i < nFragments; i++) {
                     long nRangeBegin = read8Bytes(buffer);
                     long nRangeLength = read8Bytes(buffer);
@@ -494,6 +510,10 @@ public class ShareazaDownloadParser extends AbstractParser {
                     sbTorrent.append("    CreatedBy:           " + createdBy + "\n");
                     sbTorrent.append("    Private:             " + getBoolStr(privateStr) + "\n");
                     sbTorrent.append("    File Count:          " + fileCount + "\n");
+
+                    // Commented out because these values are always 0 in the samples tested
+                    // metadata.set(META_PREFIX + "torrentTotalDownload", Long.toString(totalDownload));
+                    // metadata.set(META_PREFIX + "torrentTotalUpload", Long.toString(totalUpload));
 
                     for (int i = 0; i < fileCount; i++) {
                         sbTorrent.append("          File [" + i + "]:" + "\n");
@@ -677,7 +697,9 @@ public class ShareazaDownloadParser extends AbstractParser {
             addLine(xhtml, "Boosted:                 " + getBoolStr(boosted));
 
             int shared = read4Bytes(buffer);
-            addLine(xhtml, "Shared:                  " + getBoolStr(shared));
+            String sharedStr = getBoolStr(shared);
+            addLine(xhtml, "Shared:                  " + sharedStr);
+            metadata.set(META_PREFIX + "shared", sharedStr);
 
             String serialID = readHashString(buffer, 4);
             addLine(xhtml, "Serial ID:               " + serialID);
