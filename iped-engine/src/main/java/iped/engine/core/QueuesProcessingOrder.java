@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import iped.parsers.threema.ThreemaParser;
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MediaTypeRegistry;
@@ -32,7 +33,7 @@ import iped.properties.MediaTypes;
  * prioridade padrão zero. Primeiro são processados os itens da fila de
  * prioridade 0, depois da fila de prioridade 1 e assim por diante. Assim é
  * possível configurar dependências de processamento entre os itens.
- * 
+ *
  * @author Nassif
  *
  */
@@ -60,7 +61,7 @@ public class QueuesProcessingOrder {
 
         // must be after sqlite processing to find storage_db.db
         mediaTypes.put(SkypeParser.SKYPE_MIME, 3);
-        
+
         //must be processed after all files to link the attachments
         mediaTypes.put(TelegramParser.TELEGRAM_USER_CONF, 2);
         mediaTypes.put(TelegramParser.TELEGRAM_DB, 3);
@@ -71,14 +72,15 @@ public class QueuesProcessingOrder {
         mediaTypes.put(MediaType.parse(PartMetParser.EMULE_PART_MET_MIME_TYPE), 2);
         mediaTypes.put(MediaType.parse(AresParser.ARES_MIME_TYPE), 2);
         mediaTypes.put(MediaType.parse(ShareazaLibraryDatParser.LIBRARY_DAT_MIME_TYPE), 2);
-       
+
         mediaTypes.put(WhatsAppParser.WA_DB, 2);
         mediaTypes.put(WhatsAppParser.MSG_STORE, 3);
         mediaTypes.put(WhatsAppParser.MSG_STORE_2, 4);
         mediaTypes.put(WhatsAppParser.CONTACTS_V2, 2);
         mediaTypes.put(WhatsAppParser.CHAT_STORAGE, 3);
         mediaTypes.put(WhatsAppParser.CHAT_STORAGE_2, 4);
-
+        mediaTypes.put(ThreemaParser.CHAT_STORAGE, 3);
+        mediaTypes.put(ThreemaParser.CHAT_STORAGE_F, 4);
         mediaTypes.put(UFEDChatParser.UFED_CHAT_MIME, 2);
 
         // avoid NPE when the parser gets the item from parseContext when external
@@ -93,7 +95,7 @@ public class QueuesProcessingOrder {
     }
 
     private static synchronized void setMediaRegistry() {
-        
+
         if (mediaRegistry == null) {
             mediaRegistry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
         }

@@ -22,6 +22,7 @@ import iped.parsers.gdrive.GDriveSnapshotParser;
 import iped.parsers.shareaza.ShareazaLibraryDatParser;
 import iped.parsers.skype.SkypeParser;
 import iped.parsers.telegram.TelegramParser;
+import iped.parsers.threema.ThreemaParser;
 import iped.parsers.ufed.UFEDChatParser;
 import iped.parsers.whatsapp.WhatsAppParser;
 import iped.properties.ExtraProperties;
@@ -84,6 +85,8 @@ public class P2PBookmarker {
 
         p2pPrograms.put(TelegramParser.TELEGRAM_CHAT.toString(),
                 new P2PProgram(IndexItem.HASH, "Telegram", new Color(120, 190, 250)));
+
+        p2pPrograms.put(ThreemaParser.THREEMA_CHAT.toString(), new P2PProgram(IndexItem.HASH, "Threema")); // $NON-NLS-1$
 
         P2PProgram progGDrive = new P2PProgram(HashTask.HASH.MD5.toString(), "GoogleDrive");
         p2pPrograms.put(GDriveCloudGraphParser.GDRIVE_CLOUD_GRAPH_REG.toString(), progGDrive);
