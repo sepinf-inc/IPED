@@ -9,9 +9,7 @@ import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.Collections;
@@ -938,13 +936,6 @@ public class ShareazaDownloadParser extends AbstractParser {
         }
         sb.append(output);
         return sb.toString();
-    }
-
-    public String getMD5(File file) throws IOException, NoSuchAlgorithmException {
-        MessageDigest dgMD5 = MessageDigest.getInstance("MD5");
-        byte[] b = Files.readAllBytes(file.toPath());
-        dgMD5.update(b);
-        return getHash(dgMD5);
     }
 
     public static void printNameWithLink(XHTMLContentHandler xhtml, IItemReader item, String name) throws SAXException {
