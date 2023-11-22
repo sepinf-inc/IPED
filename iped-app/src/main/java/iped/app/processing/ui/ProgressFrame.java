@@ -23,8 +23,10 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.RenderingHints.Key;
 import java.awt.Taskbar;
 import java.awt.Taskbar.State;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -36,8 +38,9 @@ import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.text.NumberFormat;
 import java.util.Date;
-import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -83,14 +86,35 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
     long secsToEnd;
     private Date indexStart;
     private Worker[] workers;
+    private String[] lastWorkerTaskItemId;
+    private long[] lastWorkerTime;
     private static final NumberFormat nf = LocalizedFormat.getNumberInstance();
     private boolean paused = false;
     private String decodingDir = null;
     private long physicalMemory;
+    private static final Map<String, Long> timesPerParser = new TreeMap<String, Long>();
 
-    private class RestrictedSizeLabel extends JLabel {
+    private static class RestrictedSizeLabel extends JLabel {
 
         private static final long serialVersionUID = 1L;
+
+        private static final RenderingHints renderingHints;
+
+        static {
+            Map<Key, Object> hints = new HashMap<>();
+            try {
+                @SuppressWarnings("unchecked")
+                Map<Key, Object> desktopHints = (Map<Key, Object>) Toolkit.getDefaultToolkit()
+                        .getDesktopProperty("awt.font.desktophints");
+                if (desktopHints != null) {
+                    hints.putAll(desktopHints);
+                }
+            } catch (Exception e) {
+            }
+            hints.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            hints.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+            renderingHints = new RenderingHints(hints);
+        }
 
         public Dimension getMaximumSize() {
             return this.getPreferredSize();
@@ -98,10 +122,10 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
 
         public void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g;
-            g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+            RenderingHints saveHints = g2.getRenderingHints();
+            g2.setRenderingHints(renderingHints);
             super.paintComponent(g2);
+            g2.setRenderingHints(saveHints);
         }
     }
 
@@ -240,6 +264,8 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
 
         } else if ("workers".equals(evt.getPropertyName())) { //$NON-NLS-1$
             workers = (Worker[]) evt.getNewValue();
+            lastWorkerTaskItemId = new String[workers.length];
+            lastWorkerTime = new long[workers.length];
         }
 
     }
@@ -249,27 +275,51 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
             return "";
         StringBuilder msg = new StringBuilder();
         startTable(msg);
-        addTitle(msg, 3, Messages.getString("ProgressFrame.CurrentItems"));
+        addTitle(msg, 4, Messages.getString("ProgressFrame.CurrentItems"));
 
+        long now = System.currentTimeMillis();
         boolean hasWorkerAlive = false;
-        for (Worker worker : workers) {
+        for (int i = 0; i < workers.length; i++) {
+            Worker worker = workers[i];
             if (!worker.isAlive())
                 continue;
             hasWorkerAlive = true;
-            startRow(msg, worker.getName(), worker.state != STATE.PAUSED);
 
             AbstractTask task = worker.runningTask;
+            String taskName = task == null ? null : task.getName();
+
+            IItem evidence = worker.evidence;
+
+            String wt = "-";
+            int pct = -1;
+            if (taskName != null && evidence != null) {
+                String taskId = taskName + evidence.getId();
+                if (!taskId.equals(lastWorkerTaskItemId[i])) {
+                    lastWorkerTime[i] = now;
+                    lastWorkerTaskItemId[i] = taskId;
+                } else if (worker.state != STATE.PAUSED) {
+                    long t = (now - lastWorkerTime[i]) / 1000;
+                    wt = t < 60 ? t + "s" : t / 60 + "m";
+                    pct = (int) Math.min(t / 30, 60);
+                }
+            } else {
+                lastWorkerTaskItemId[i] = null;
+            }
+
+            startRow(msg, worker.getName(), worker.state != STATE.PAUSED, pct);
+
             if (worker.state == STATE.PAUSED) {
                 addCell(msg, Messages.getString("ProgressFrame.Paused"), Align.CENTER);
             } else if (worker.state == STATE.PAUSING) {
                 addCell(msg, Messages.getString("ProgressFrame.Pausing"), Align.CENTER);
             } else if (task != null) {
-                addCell(msg, task.getName());
+                addCell(msg, taskName);
             } else {
                 addCell(msg, "-", Align.CENTER);
             }
 
-            IItem evidence = worker.evidence;
+            addCell(msg, wt, wt.equals("-") ? Align.CENTER : Align.RIGHT);
+
             if (evidence != null) {
                 String len = "";
                 if (evidence.getLength() != null && evidence.getLength() > 0)
@@ -310,7 +360,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
             if (task.isEnabled()) {
                 long time = taskTimes[i];
                 long sec = time / (1000000 * workers.length);
-                int pct = (int) ((100 * time) / totalTime);
+                int pct = (int) ((100 * time + totalTime / 2) / totalTime);  // Round percentage
 
                 startRow(msg, task.getName(), pct);
                 addCell(msg, nf.format(sec) + "s", Align.RIGHT);
@@ -327,28 +377,26 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
     }
 
     private String getParserTimes() {
-        if (ParsingTask.times.isEmpty())
+        ParsingTask.copyTimesPerParser(timesPerParser);
+        if (timesPerParser.isEmpty())
             return "";
         StringBuilder msg = new StringBuilder();
         startTable(msg);
         addTitle(msg, 3, Messages.getString("ProgressFrame.ParserTimes"));
 
         long totalTime = 0;
-        for (Worker worker : workers)
-            for (AbstractTask task : worker.tasks)
-                if (task.getClass().equals(ParsingTask.class))
-                    totalTime += task.getTaskTime();
+        for (long parserTime : timesPerParser.values()) {
+            totalTime += parserTime;
+        }
         if (totalTime < 1)
             totalTime = 1;
 
-        for (Object o : ParsingTask.times.entrySet().toArray()) {
-            @SuppressWarnings("unchecked")
-            Entry<String, AtomicLong> e = (Entry<String, AtomicLong>) o;
-            long time = e.getValue().get();
+        for (String parserName : timesPerParser.keySet()) {
+            long time = timesPerParser.get(parserName);
             long sec = time / (1000000 * workers.length);
-            int pct = (int) ((100 * time) / totalTime);
+            int pct = (int) ((100 * time + totalTime / 2) / totalTime); // Round percentage
 
-            startRow(msg, e.getKey(), pct);
+            startRow(msg, parserName, pct);
             addCell(msg, nf.format(sec) + "s", Align.RIGHT);
             finishRow(msg, pct + "%", Align.RIGHT);
         }
@@ -563,7 +611,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         sb.append("<tr");
         if (pct >= 0) {
             // Color based on percentage can be adjusted here
-            int c = pct == 0 ? 255 : 245 - pct * 3 / 2;
+            int c = pct == 0 ? 255 : 245 - Math.min(75, pct) * 3 / 2;
             sb.append(" bgcolor=#").append(String.format("%02X%02X%02X", c, c, 255));
         }
         sb.append(" class=").append(enabled ? "a" : "d");
@@ -638,7 +686,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
             }
         }
     }
-    
+
     private static String formatMB(long value) {
         return nf.format(value >>> 20) + " MB";
     }

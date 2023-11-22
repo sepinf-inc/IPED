@@ -1,12 +1,12 @@
 package iped.app.timelinegraph.swingworkers;
 
-import java.util.BitSet;
-import java.util.Date;
-
 import javax.swing.JTable;
+
+import org.roaringbitmap.RoaringBitmap;
 
 import iped.app.timelinegraph.IpedDateAxis;
 import iped.app.ui.BookmarksController;
+import iped.app.ui.Messages;
 import iped.viewers.api.IMultiSearchResultProvider;
 
 /*
@@ -14,13 +14,19 @@ import iped.viewers.api.IMultiSearchResultProvider;
  */
 public class EventPeriodCheckWorker extends BitSetHighlightWorker {
 
-    public EventPeriodCheckWorker(IpedDateAxis domainAxis, IMultiSearchResultProvider resultsProvider, BitSet bs, boolean clearPreviousSelection) {
+    public EventPeriodCheckWorker(IpedDateAxis domainAxis, IMultiSearchResultProvider resultsProvider, RoaringBitmap bs,
+            boolean clearPreviousSelection) {
         super(domainAxis, resultsProvider, bs, clearPreviousSelection);
+    }
+
+    public EventPeriodCheckWorker(IpedDateAxis domainAxis, IMultiSearchResultProvider resultsProvider,
+            boolean highlight, RoaringBitmap bs) {
+        super(domainAxis, resultsProvider, bs, false);
+        this.highlight = highlight;
     }
 
     @Override
     public void processResultsItem(JTable t, int i) {
-        Boolean checked = (Boolean) t.getModel().getValueAt(i, 1);
         t.getModel().setValueAt(highlight, i, 1);
     }
 
@@ -36,6 +42,11 @@ public class EventPeriodCheckWorker extends BitSetHighlightWorker {
         resultsProvider.getIPEDSource().getMultiBookmarks().saveState();
         BookmarksController.get().updateUISelection();
         super.done();
+    }
+
+    @Override
+    public String getProgressNote() {
+        return Messages.get("TimeLineGraph.checkingItemsProgressLabel");
     }
 
 }

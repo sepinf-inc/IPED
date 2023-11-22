@@ -9,7 +9,7 @@ import org.apache.tika.metadata.TikaCoreProperties;
 
 /**
  * Metadados extras produzidos pelos parsers do pacote.
- * 
+ *
  * @author Nassif
  *
  */
@@ -140,6 +140,8 @@ public class ExtraProperties {
     public static final String DECODED_DATA = "isDecodedData";
 
     public static final String DOWNLOADED_DATA = "downloadedData";
+
+    public static final String EXTRACTED_FILE = "extractedFile";
 
     public static final String FACE_COUNT = "face_count";
 

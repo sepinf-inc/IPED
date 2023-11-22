@@ -304,10 +304,14 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
 
     }
 
-    private void sleepBeforeRetry(long lastRequestTime) throws InterruptedException {
+    private void sleepBeforeRetry(long lastRequestTime) {
         long sleep = getRetryIntervalMillis() - (System.currentTimeMillis() - lastRequestTime);
         if (sleep > 0) {
-            Thread.sleep(sleep);
+            try {
+                Thread.sleep(sleep);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 

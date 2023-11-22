@@ -9,6 +9,7 @@ import java.util.Set;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
+import iped.parsers.threema.ThreemaParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -36,7 +37,7 @@ import netscape.javascript.JSObject;
 /**
  * Visualizador Html específico que abre links apontando para arquivos do caso,
  * como anexos transferidos em chats ou itens transferidos via P2P.
- * 
+ *
  * @author Nassif
  *
  */
@@ -109,8 +110,9 @@ public class HtmlLinkViewer extends HtmlViewer implements SelectionListener {
     @Override
     public boolean isSupportedType(String contentType) {
         return WhatsAppParser.WHATSAPP_CHAT.toString().equals(contentType)
-                || SkypeParser.CONVERSATION_MIME_TYPE.toString().equals(contentType)
-                || SkypeParser.FILETRANSFER_MIME_TYPE.toString().equals(contentType)
+                || ThreemaParser.THREEMA_CHAT.toString().equals(contentType)
+                || SkypeParser.CONVERSATION_MIME_TYPE.equals(contentType)
+                || SkypeParser.FILETRANSFER_MIME_TYPE.equals(contentType)
                 || UFED_HTML_REPORT_MIME.equals(contentType) || PREVIEW_WITH_LINKS_MIME.equals(contentType)
                 || TelegramParser.TELEGRAM_CHAT.toString().equals(contentType)
                 || Win10MailParser.WIN10_MAIL_MSG.toString().equals(contentType)
@@ -146,10 +148,7 @@ public class HtmlLinkViewer extends HtmlViewer implements SelectionListener {
             }
             File file = null;
             try {
-                file = Util.getFileRenamedToExt(item.getTempFile(), item.getType());
-                if (IOUtil.isTemporaryFile(file)) {
-                    file.deleteOnExit();
-                }
+                file = Util.getFileWithRightExt(item);
             } catch (IOException e1) {
                 e1.printStackTrace();
             }

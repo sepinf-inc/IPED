@@ -179,14 +179,14 @@
             <version>1.10.0</version>
         </dependency>
         <dependency>
-            <groupId>dpf.ap</groupId>
+            <groupId>com.github.sepinf-inc.telegram-decoder</groupId>
             <artifactId>telegram-decoder-api</artifactId>
-            <version>1.0.4-SNAPSHOT</version>
+            <version>${telegram.version}</version>
         </dependency>
         <dependency>
-            <groupId>dpf.ap</groupId>
+            <groupId>com.github.sepinf-inc.telegram-decoder</groupId>
             <artifactId>telegram-decoder-impl</artifactId>
-            <version>${telegram.impl.version}</version>
+            <version>${telegram.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -232,6 +232,11 @@
             <artifactId>RagingMoose</artifactId>
             <version>c92dba11561cb1423dd81e3bb9dea8ae92a392d3</version>
         </dependency>
+        <dependency>
+            <groupId>net.dongliu</groupId>
+            <artifactId>apk-parser</artifactId>
+            <version>2.6.10</version>
+        </dependency>        
     </dependencies>
     
     <build>

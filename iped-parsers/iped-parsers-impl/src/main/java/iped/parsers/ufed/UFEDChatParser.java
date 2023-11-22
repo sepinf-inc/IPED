@@ -198,6 +198,7 @@ public class UFEDChatParser extends AbstractParser {
     private UfedMessage createMessage(IItemReader msg, IItemReader attach) {
         UfedMessage m = new UfedMessage();
         m.setId(msg.getId());
+        m.setDeleted(msg.isDeleted());
         for (String body : msg.getMetadata().getValues(ExtraProperties.MESSAGE_BODY)) {
             if (!body.startsWith(ATTACHED_MEDIA_MSG))
                 m.setData(body);

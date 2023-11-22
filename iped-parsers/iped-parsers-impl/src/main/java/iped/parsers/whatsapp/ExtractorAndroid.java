@@ -47,7 +47,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -200,7 +199,7 @@ public class ExtractorAndroid extends Extractor {
 
                 for (Chat c : undeletedChats) {
                     String remoteId = c.getRemote().getId();
-                    remoteId += c.isGroupChat() ? "@g.us" : "@s.whatsapp.net"; //$NON-NLS-1$ //$NON-NLS-2$
+                    remoteId += c.isGroupChat() ? "@g.us" : WAContact.waSuffix;
                     if (!activeChats.contains(remoteId)) {
                         list.add(c);
                         if (firstTry && c.isDeleted()) {
@@ -262,7 +261,7 @@ public class ExtractorAndroid extends Extractor {
 
     private List<Chat> undeleteChats(SQLiteUndeleteTable undeleteChatListTable,
             SQLiteUndeleteTable undeleteChatTable, SQLiteUndeleteTable undeleteJIDTable, WAContactsDirectory contacts) {
-        List<Chat> result = new LinkedList<>();
+        List<Chat> result = new ArrayList<>();
         
         if (undeleteChatListTable != null && undeleteChatListTable.getTableRows() != null && !undeleteChatListTable.getTableRows().isEmpty()) {
             // this is the case of a database with the table "chat_list"
@@ -337,7 +336,7 @@ public class ExtractorAndroid extends Extractor {
         boolean recoverDeleted = undeleteTable != null && !undeletedMessages.isEmpty();
 
         String id = remote.getId();
-        id += isGroupChat ? "@g.us" : "@s.whatsapp.net"; //$NON-NLS-1$ //$NON-NLS-2$
+        id += isGroupChat ? "@g.us" : WAContact.waSuffix;
         
         Set<MessageWrapperForDuplicateRemoval> activeMessages = new HashSet<>();
         Map<Long, Message> activeMessageIds = new HashMap<>();

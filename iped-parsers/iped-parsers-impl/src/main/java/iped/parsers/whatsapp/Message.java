@@ -8,11 +8,9 @@ import java.nio.channels.FileChannel;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -63,10 +61,10 @@ public class Message {
     private int mediaDuration;
     private MessageStatus messageStatus;
     private String recoveredFrom = null;
-    private Set<String> childPornSets = new HashSet<>();
+    private List<String> childPornSets;
     private IItemReader mediaItem = null;
     private String mediaQuery = null;
-    private List<MessageAddOn> addOns = new ArrayList<>();
+    private List<MessageAddOn> addOns;
 
     static {
         try {
@@ -99,7 +97,6 @@ public class Message {
 
     public Message() {
         messageType = MessageType.TEXT_MESSAGE;
-        vcards = new ArrayList<>();
     }
 
     public long getId() {
@@ -219,7 +216,7 @@ public class Message {
         } else {
             this.mediaHash = mediaHash;
         }
-        childPornSets.addAll(ChildPornHashLookup.lookupHash(this.mediaHash));
+        childPornSets = ChildPornHashLookup.lookupHashAndMerge(this.mediaHash, childPornSets);
     }
 
     public byte[] getThumbData() {
@@ -320,7 +317,7 @@ public class Message {
     }
 
     public List<String> getVcards() {
-        return vcards;
+        return vcards == null ? Collections.emptyList() : vcards;
     }
 
     public void setVcards(List<String> vcards) {
@@ -424,12 +421,12 @@ public class Message {
         this.recoveredFrom = recoveredFrom;
     }
 
-    public Set<String> getChildPornSets() {
-        return childPornSets;
+    public List<String> getChildPornSets() {
+        return childPornSets == null ? Collections.emptyList() : childPornSets;
     }
 
-    public void addChildPornSets(Collection<String> sets) {
-        this.childPornSets.addAll(sets);
+    public void lookupAndAddChildPornSets(String hash) {
+        childPornSets = ChildPornHashLookup.lookupHashAndMerge(hash, childPornSets);
     }
     
     public IItemReader getMediaItem() {
@@ -449,11 +446,14 @@ public class Message {
     }
 
     public boolean addMessageAddOn(MessageAddOn m) {
+        if (addOns == null) {
+            addOns = new ArrayList<MessageAddOn>(1);
+        }
         return addOns.add(m);
     }
 
     public List<MessageAddOn> getAddOns() {
-        return addOns;
+        return addOns == null ? Collections.emptyList() : addOns;
     }
 
     public String getCallId() {
