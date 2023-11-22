@@ -61,6 +61,8 @@ public class ShareazaDownloadParser extends AbstractParser {
     private static final String INCOMPLETE_FILE_EX_MESSAGE = "Error during file parsing, possible incomplete or corrupted file.";
     private static final String ERROR_READING_CONTROL_BYTES = "Error reading control bytes, data is possibly corrupted";
 
+    private static final int MAX_BUF_SIZE = 1 << 23;
+
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
         return SUPPORTED_TYPES;
@@ -112,10 +114,11 @@ public class ShareazaDownloadParser extends AbstractParser {
         StringBuilder sbReview = new StringBuilder();
 
         try {
-            long fileSize = inputStreamFile.available();
-            byte[] data = new byte[(int) fileSize];
+            byte[] data = inputStreamFile.readNBytes(MAX_BUF_SIZE);
 
-            inputStreamFile.read(data);
+            if (data.length == MAX_BUF_SIZE && inputStreamFile.read() != -1) {
+                throw new TikaException("File size larger than max memory buffer size");
+            }
 
             ByteBuffer buffer = ByteBuffer.wrap(data);
             buffer.order(ByteOrder.LITTLE_ENDIAN);
