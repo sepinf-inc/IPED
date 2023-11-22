@@ -1,5 +1,6 @@
 package iped.parsers.shareaza;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,6 +20,8 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.tika.exception.TikaException;
+import org.apache.tika.extractor.EmbeddedDocumentExtractor;
+import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
@@ -79,7 +82,7 @@ public class ShareazaDownloadParser extends AbstractParser {
             xhtml.startElement("body");
             xhtml.startElement("pre");
 
-            processSDFile(stream, xhtml, searcher, metadata, item.getPath());
+            processSDFile(stream, handler, xhtml, searcher, metadata, context, item.getPath(), item.getName());
 
             xhtml.endElement("pre");
             xhtml.endElement("body");
@@ -94,8 +97,8 @@ public class ShareazaDownloadParser extends AbstractParser {
 
     }
 
-    public void processSDFile(InputStream inputStreamFile, XHTMLContentHandler xhtml, IItemSearcher searcher,
-            Metadata metadata, String evidencePath) throws IOException, SAXException {
+    public void processSDFile(InputStream inputStreamFile, ContentHandler handler, XHTMLContentHandler xhtml, IItemSearcher searcher,
+            Metadata metadata, ParseContext context, String evidencePath, String evidenceName) throws IOException, SAXException {
 
         DecimalFormat df = new DecimalFormat("#,##0");
         DecimalFormat df2 = new DecimalFormat("#,##0.0");
@@ -541,8 +544,16 @@ public class ShareazaDownloadParser extends AbstractParser {
                         sbTorrent.append("              Torrent File Size:              " + torrentFileSize+"\n");
                         
                         //Torrent File
-                        String torrentFile = readString(buffer, torrentFileSize);
-                        //sbTorrent.append("              Torrent File:                   " + torrentFile+"\n");
+                        byte[] torrentFile = readString(buffer, torrentFileSize);
+
+                        Metadata torrentMeta = new Metadata();
+                        
+                        torrentMeta.set(TikaCoreProperties.TITLE,evidenceName + ".torrent");    
+                        
+                        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
+                                new ParsingEmbeddedDocumentExtractor(context));
+                        
+                        extractor.parseEmbedded(new ByteArrayInputStream(torrentFile), handler, torrentMeta, true);
                     }
 
                     int trackerIndex = read4Bytes(buffer);
@@ -799,16 +810,16 @@ public class ShareazaDownloadParser extends AbstractParser {
         return "";
     }
     
-    public String readString(ByteBuffer buffer, int length) throws BufferUnderflowException {
+    public byte[] readString(ByteBuffer buffer, int length) throws BufferUnderflowException {
         if (length > 0) {
             byte[] stringBytes = new byte[length];
             if (buffer.remaining() < length) {
                 throw new BufferUnderflowException();
             }
             buffer.get(stringBytes);
-            return new String(stringBytes, StandardCharsets.UTF_8);
+            return stringBytes;
         }
-        return "";
+        return null;
     }
 
     public int readUnsignedInt2Bytes(ByteBuffer buffer) {
