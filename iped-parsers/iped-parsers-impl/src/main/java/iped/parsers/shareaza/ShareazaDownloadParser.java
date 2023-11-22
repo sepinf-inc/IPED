@@ -262,6 +262,7 @@ public class ShareazaDownloadParser extends AbstractParser {
 
             // Item found in the case?
             if (item != null) {
+                metadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + item.getHash());
                 hashSets.addAll(ChildPornHashLookup.lookupHash(item.getHash()));
                 xhtml.newline();
                 xhtml.startElement("b");
