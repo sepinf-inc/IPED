@@ -696,15 +696,15 @@ public class ShareazaDownloadParser extends AbstractParser {
     }
 
     public int hashTigerDataBaseSize(int nHeight) {
-        long maxSize = 4294967295l / 2;
         int height = nHeight;
         int nodeCount = 1;
         for (int nStep = height; nStep > 0; nStep--) {
             nodeCount *= 2;
 
-            if (nodeCount > maxSize) {
+            // overflow
+            if (nodeCount < 0) {
                 height = 0;
-                nodeCount = 0;
+                nodeCount = 1;
                 break;
             }
         }
@@ -984,4 +984,5 @@ public class ShareazaDownloadParser extends AbstractParser {
             xhtml.newline();
         }
     }
+
 }
