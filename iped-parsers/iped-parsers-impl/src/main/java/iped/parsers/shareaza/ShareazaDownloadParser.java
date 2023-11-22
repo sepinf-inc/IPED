@@ -170,16 +170,16 @@ public class ShareazaDownloadParser extends AbstractParser {
                 fileLenBytes = new byte[8];
                 buffer.get(fileLenBytes);
 
-                int fileLenLow = 0;
+                long fileLenLow = 0;
 
                 fileLenLow += (fileLenBytes[0] & 0xFF);
                 fileLenLow += (fileLenBytes[1] & 0xFF) << 8;
                 fileLenLow += (fileLenBytes[2] & 0xFF) << 16;
-                fileLenLow += (fileLenBytes[3] & 0xFF) << 24;
-                fileLenLow += (fileLenBytes[4] & 0xFF) << 32;
-                fileLenLow += (fileLenBytes[5] & 0xFF) << 40;
-                fileLenLow += (fileLenBytes[6] & 0xFF) << 48;
-                fileLenLow += (fileLenBytes[7] & 0xFF) << 56;
+                fileLenLow += (long) (fileLenBytes[3] & 0xFF) << 24;
+                fileLenLow += (long) (fileLenBytes[4] & 0xFF) << 32;
+                fileLenLow += (long) (fileLenBytes[5] & 0xFF) << 40;
+                fileLenLow += (long) (fileLenBytes[6] & 0xFF) << 48;
+                fileLenLow += (long) (fileLenBytes[7] & 0xFF) << 56;
 
                 double dbFileLen = fileLenLow / 1024.0 / 1024.0;
 
