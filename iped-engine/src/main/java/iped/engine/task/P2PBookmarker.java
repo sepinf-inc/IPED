@@ -84,7 +84,7 @@ public class P2PBookmarker {
                 new P2PProgram(shareazaHashes, "Shareaza", new Color(170, 20, 20)));
         
         p2pPrograms.put(ShareazaDownloadParser.SHAREAZA_DOWNLOAD_META,
-                new P2PProgram(shareazaHashes, "Shareaza Downloads", new Color(170, 20, 20)));
+                new P2PProgram(shareazaHashes, "Shareaza SD", new Color(170, 20, 20)));
 
         p2pPrograms.put(WhatsAppParser.WHATSAPP_CHAT.toString(),
                 new P2PProgram(HashTask.HASH.SHA256.toString(), "WhatsApp", new Color(32, 146, 90)));
