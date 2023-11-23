@@ -97,7 +97,6 @@ public class ShareazaDownloadParser extends AbstractParser {
             processSDFile(stream, handler, xhtml, searcher, metadata, context, item.getPath(), item.getName());
 
             metadata.set(ExtraProperties.P2P_REGISTRY_COUNT, String.valueOf(1));
-            metadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
         } catch (TikaException | SAXException | IOException e) {
             throw e;
