@@ -81,7 +81,7 @@ public class P2PBookmarker {
         List<String> shareazaHashes = Arrays.asList(HashTask.HASH.MD5.toString(), HashTask.HASH.SHA1.toString(), HashTask.HASH.EDONKEY.toString());
 
         p2pPrograms.put(ShareazaLibraryDatParser.LIBRARY_DAT_MIME_TYPE,
-                new P2PProgram(HashTask.HASH.MD5.toString(), "Shareaza", new Color(170, 20, 20)));
+                new P2PProgram(shareazaHashes, "Shareaza", new Color(170, 20, 20)));
         
         p2pPrograms.put(ShareazaDownloadParser.SHAREAZA_DOWNLOAD_META,
                 new P2PProgram(shareazaHashes, "Shareaza Downloads", new Color(170, 20, 20)));
