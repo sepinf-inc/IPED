@@ -431,7 +431,8 @@
     <mime-type type="application/x-shareaza-download">
         <_comment>Shareaza download control file (.sd)</_comment>
         <sub-class-of type="application/x-p2p"/>
-    	<magic priority="60">
+        <!-- priority must be bigger than video/x-ms-wmv to avoid false negatives -->
+    	<magic priority="65">
             <match value="0x53444C00000000FF" type="string" offset="0" mask="0xFFFFFF00FFFFFFFF"/>
      	</magic>
         <glob pattern="*.sd"/>
