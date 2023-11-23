@@ -106,7 +106,7 @@ public class P2PBookmarker {
         p2pPrograms.put(GDriveSnapshotParser.GDRIVE_SNAPSHOT_REG.toString(), progGDrive);
 
         IPEDSource ipedSrc = new IPEDSource(caseDir);
-        String queryText = ExtraProperties.SHARED_HASHES + ":*"; //$NON-NLS-1$
+        String queryText = ExtraProperties.SHARED_HASHES + ":* OR " + ExtraProperties.SHARED_ITEMS + ":*";
         IPEDSearcher searcher = new IPEDSearcher(ipedSrc, queryText);
         try {
             SearchResult p2pItems = searcher.search();
