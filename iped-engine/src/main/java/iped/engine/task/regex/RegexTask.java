@@ -302,7 +302,7 @@ public class RegexTask extends AbstractTask {
         for (String key : item.getExtraAttributeMap().keySet().toArray(new String[0])) {
             if (!key.startsWith(REGEX_PREFIX) && !ignoredKeys.contains(key)) {
                 Object val = item.getExtraAttribute(key);
-                sb.append(key).append(": ").append(val.toString());
+                sb.append(key).append(": ").append(val.toString()).append('\n');
             }
         }
         return new StringReader(sb.toString());
