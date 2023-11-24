@@ -182,6 +182,7 @@
     {"name": "File Downloads", "mimes": ["application/x-ufed-filedownload"]},
     {"name": "File Uploads", "mimes": ["application/x-ufed-fileupload"]},
     {"name": "Financial Accounts", "mimes": ["application/x-ufed-financialaccount"]},
+    {"name": "Transfers of Funds", "mimes": ["application/x-ufed-transferoffunds"]},
     {"name": "Fuzzy Data", "mimes": ["application/x-ufed-fuzzyentitymodel", "application/x-ufed-fuzzytimelinemodel"]},
     {"name": "Journeys", "mimes": ["application/x-ufed-journey"]},
     {"name": "Networks Usage", "mimes": ["application/x-ufed-networkusage"]},
