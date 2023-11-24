@@ -653,8 +653,8 @@ public class PostBoxCoding {
             m.setData(txt);
 
             offset += msglen;
-            // atributos
-            List<byte[]> atrs = readArray();
+
+            List<byte[]> attrs = readArray();
             List<byte[]> embededmedia = readArray();
             List<byte[]> referencemedia = readArray(12);
 
@@ -662,7 +662,7 @@ public class PostBoxCoding {
             m.setFromMe(!incoming);
 
             for (byte[] b : referencemedia) {
-                // convert from bigendian to littleendian
+                // convert from big endian to little endian
                 Util.invertByteArray(b, 0, 4);
                 Util.invertByteArray(b, 4, 8);
 
