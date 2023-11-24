@@ -281,44 +281,49 @@ public class PostBoxCoding {
         return (data & (1 << bit)) != 0;
     }
 
-    void readForward(byte flags) {
+    private void readForwardInfo(byte forwardInfoFlags) {
         long forwardAuthorId = readInt64(offset);
         offset += 8;
+
         int forwardDate = readInt32(offset);
         offset += 4;
 
-        if (testbit(flags, 1)) {
+        if (testbit(forwardInfoFlags, 1)) {
             long sourceID = readInt64(offset);
             offset += 8;
-
         }
 
-        if (testbit(flags, 2)) {
+        if (testbit(forwardInfoFlags, 2)) {
             long MessagePeerId = readInt64(offset);
             offset += 8;
-            ;
+
             int forwardSourceMessageNamespace = readInt32(offset);
             offset += 4;
-            int forwardSourceMessageIdId = readInt32(offset);
-            offset += 4;
-            ;
 
+            int forwardSourceMessageId = readInt32(offset);
+            offset += 4;
         }
 
-        if (testbit(flags, 3)) {
+        if (testbit(forwardInfoFlags, 3)) {
             int signatureLength = readInt32(offset);
             offset += 4;
+
             String authorSignature = readString(offset, signatureLength);
             offset += signatureLength;
         }
 
-        if (testbit(flags, 4)) {
+        if (testbit(forwardInfoFlags, 4)) {
             int psaTypeLength = readInt32(offset);
             offset += 4;
+
             String psaType = readString(offset, psaTypeLength);
             offset += psaTypeLength;
         }
 
+        if (testbit(forwardInfoFlags, 5)) {
+            int flags = readInt32(offset);
+            offset += 4;
+        }
     }
 
     List<byte[]> readArray() {
@@ -562,11 +567,14 @@ public class PostBoxCoding {
     }
 
     public void readMessage(byte[] key, byte[] data, Message m, HashMap<String, byte[]> mediaKey) {
-        // reference MessageHistoryTable.swift
+        // Reference:
+        // https://github.com/TelegramMessenger/Telegram-iOS/blob/master/submodules/Postbox/Sources/MessageHistoryTable.swift
+        // Function readIntermediateEntry
         if (m == null) {
             return;
         }
         this.data = data;
+
         PostBoxCoding pk = new PostBoxCoding();
         pk.setData(key);
         long peerKey = pk.readInt64(0, false);
@@ -575,64 +583,61 @@ public class PostBoxCoding {
 
         int timestampkey = pk.readInt32(12, false);
 
-        if (timestampkey < 631152000 && namespacekey > 631152000)
+        if (timestampkey != 631152000)
             timestampkey = namespacekey;
 
         byte type = readNextByte();
         if (type == int32) {
 
             int stableId = readInt32(offset);
+            offset += 4;
             m.setId(stableId);
 
-            offset += 4;
             int stableVersion = readInt32(offset);
             offset += 4;
 
-            byte dataFlagsValue = readNextByte();
-            long globalID = 0;
-            if (testbit(dataFlagsValue, 0)) {
-                globalID = readInt64(offset);
-                offset += 8;
-            }
-            int globtag = 0;
-            if (testbit(dataFlagsValue, 1)) {
-                globtag = readInt32(offset);
-                offset += 4;
-            }
-            long groupingKey = 0;
-            if (testbit(dataFlagsValue, 2)) {
-                groupingKey = readInt64(offset);
-                offset += 8;
-            }
-            int groupInfoID = 0;
-            if (testbit(dataFlagsValue, 3)) {
-                groupInfoID = readInt32(offset);
-                offset += 4;
-            }
+            byte dataFlags = readNextByte();
 
-            int localTagsValue = 0;
-            if (testbit(dataFlagsValue, 4)) {
-                localTagsValue = readInt32(offset);
+            if (testbit(dataFlags, 0)) {
+                long globallyUniqueId = readInt64(offset);
+                offset += 8;
+            }
+            if (testbit(dataFlags, 1)) {
+                int globalTags = readInt32(offset);
                 offset += 4;
+            }
+            if (testbit(dataFlags, 2)) {
+                long groupingKey = readInt64(offset);
+                offset += 8;
+            }
+            if (testbit(dataFlags, 3)) {
+                int groupInfo = readInt32(offset);
+                offset += 4;
+            }
+            if (testbit(dataFlags, 4)) {
+                int localTagsValue = readInt32(offset);
+                offset += 4;
+            }
+            if (testbit(dataFlags, 5)) {
+                long threadId = readInt64(offset);
+                offset += 8;
             }
 
             int flags = readInt32(offset);
             offset += 4;
 
-            int tagsValue = readInt32(offset);
+            int tags = readInt32(offset);
             offset += 4;
 
             byte forwardInfoFlags = readNextByte();
             if (forwardInfoFlags != 0) {
-                readForward(forwardInfoFlags);
+                readForwardInfo(forwardInfoFlags);
             }
-            byte hasautor = readNextByte();
-            long authorId = 0;
-
-            if (hasautor == 1) {
-                authorId = readInt64(offset);
-                m.setFrom(new Contact(authorId));
+            byte hasAuthor = readNextByte();
+            if (hasAuthor == 1) {
+                long authorId = readInt64(offset);
                 offset += 8;
+                m.setFrom(new Contact(authorId));
             }
 
             int msglen = readInt32(offset);
@@ -646,7 +651,7 @@ public class PostBoxCoding {
             List<byte[]> embededmedia = readArray();
             List<byte[]> referencemedia = readArray(12);
 
-            boolean incoming = testbit(flags, 2) || testbit(flags, 7);
+            boolean incoming = testbit(flags, 2) || testbit(flags, 8);
             m.setFromMe(!incoming);
 
             for (byte[] b : referencemedia) {
@@ -669,10 +674,9 @@ public class PostBoxCoding {
                     media.readMedia(m);
                 }
             }
-
         }
-        m.setTimeStamp(Date.from(Instant.ofEpochSecond(timestampkey)));
 
+        m.setTimeStamp(Date.from(Instant.ofEpochSecond(timestampkey)));
     }
 
     long getAccountId() {
