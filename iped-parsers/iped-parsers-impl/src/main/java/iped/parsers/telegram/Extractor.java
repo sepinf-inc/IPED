@@ -99,8 +99,7 @@ public class Extractor {
         try (PreparedStatement stmt = conn.prepareStatement(EXTRACT_USERACCOUNT_SQL_IOS)) {
             ResultSet rs = stmt.executeQuery();
             if (rs != null) {
-                PostBoxCoding p = new PostBoxCoding();
-                p.setData(rs.getBytes("value"));
+                PostBoxCoding p = new PostBoxCoding(rs.getBytes("value"));
                 long id = p.getAccountId();
                 if (id != 0) {
                     this.userAccount = getContact(id);
@@ -189,8 +188,7 @@ public class Extractor {
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
 
-                PostBoxCoding key = new PostBoxCoding();
-                key.setData(rs.getBytes("chatid"));
+                PostBoxCoding key = new PostBoxCoding(rs.getBytes("chatid"));
                 long chatid = key.readInt64(0, false);
 
                 Contact c = getContact(chatid);
@@ -501,8 +499,7 @@ public class Extractor {
 
                     Contact cont = getContact(id);
                     if (cont.getName() == null) {
-                        PostBoxCoding p = new PostBoxCoding();
-                        p.setData(rs.getBytes("value"));
+                        PostBoxCoding p = new PostBoxCoding(rs.getBytes("value"));
                         p.readUser(cont);
 
                     }

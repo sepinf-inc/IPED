@@ -39,22 +39,33 @@ public class PostBoxCoding {
 
     private static final Logger logger = LoggerFactory.getLogger(PostBoxCoding.class);
 
-    public static int int32 = 0;
-    public static int Int64 = 1;
-    public static int Bool = 2;
-    public static int DOUBLE = 3;
-    public static int STRING = 4;
-    public static int OBJECT = 5;
-    public static int Int32Array = 6;
-    public static int Int64Array = 7;
-    public static int ObjectArray = 8;
-    public static int ObjectDictionary = 9;
-    public static int Bytes = 10;
-    public static int Nil = 11;
-    public static int StringArray = 12;
-    public static int BytesArray = 13;
+    private static int tInt32 = 0;
+    private static int tInt64 = 1;
+    private static int tBool = 2;
+    private static int tDouble = 3;
+    private static int tString = 4;
+    private static int tObject = 5;
+    private static int tInt32Array = 6;
+    private static int tInt64Array = 7;
+    private static int tObjectArray = 8;
+    private static int tObjectDictionary = 9;
+    private static int tBytes = 10;
+    private static int tNil = 11;
+    private static int tStringArray = 12;
+    private static int tBytesArray = 13;
 
-    private byte[] data = null;
+    private static final int minTimestamp = 631152000; 
+    
+    private byte[] data;
+
+    private int offset = 0;
+
+    public PostBoxCoding() {
+    }
+
+    public PostBoxCoding(byte[] data) {
+        setData(data);
+    }
 
     public byte[] getData() {
         return data;
@@ -64,8 +75,6 @@ public class PostBoxCoding {
         this.data = data;
 
     }
-
-    private int offset = 0;
 
     public int readInt32(int start) {
         return readInt32(start, true);
@@ -177,7 +186,7 @@ public class PostBoxCoding {
     }
 
     public double decodeDoubleForKey(String key) {
-        if (findOfset(key, DOUBLE)) {
+        if (findOfset(key, tDouble)) {
             // todo verify if it is little or big endian
             long bits = readInt64(offset, false);
             return Double.longBitsToDouble(bits);
@@ -186,7 +195,7 @@ public class PostBoxCoding {
     }
 
     public byte[] decodeBytesForKey(String key) {
-        if (findOfset(key, Bytes)) {
+        if (findOfset(key, tBytes)) {
             int tam = readInt32(offset);
             offset += 4;
             if (offset + tam > data.length || tam == 0)
@@ -198,7 +207,7 @@ public class PostBoxCoding {
     }
 
     public String decodeStringForKey(String key) {
-        if (findOfset(key, STRING)) {
+        if (findOfset(key, tString)) {
             int tam = readInt32(offset);
             offset += 4;
             String aux = readString(offset, tam);
@@ -231,14 +240,14 @@ public class PostBoxCoding {
     }
 
     public GenericObj decodeObjectForKey(String key) {
-        if (findOfset(key, OBJECT)) {
+        if (findOfset(key, tObject)) {
             return readObj();
         }
         return null;
     }
 
     public int decodeInt32ForKey(String key) {
-        if (findOfset(key, int32)) {
+        if (findOfset(key, tInt32)) {
             int val = readInt32(offset);
             offset += 4;
             return val;
@@ -247,7 +256,7 @@ public class PostBoxCoding {
     }
 
     public long decodeInt64ForKey(String key) {
-        if (findOfset(key, Int64)) {
+        if (findOfset(key, tInt64)) {
             logger.debug("offset {}", offset);
             long val = readInt64(offset);
             offset += 8;
@@ -258,7 +267,7 @@ public class PostBoxCoding {
 
     public List<GenericObj> decodeObjectArrayForKey(String key) {
         ArrayList<GenericObj> l = new ArrayList<>();
-        if (findOfset(key, ObjectArray)) {
+        if (findOfset(key, tObjectArray)) {
             int tam = readInt32(offset);
             offset += 4;
             if (tam > data.length)
@@ -400,8 +409,7 @@ public class PostBoxCoding {
     void readPeersIds(Message m, byte[] d) {
         if (m == null || d == null)
             return;
-        PostBoxCoding peersDec = new PostBoxCoding();
-        peersDec.setData(d);
+        PostBoxCoding peersDec = new PostBoxCoding(d);
         long peers[] = peersDec.readInt64Array();
 
         String message = m.getData();
@@ -532,8 +540,7 @@ public class PostBoxCoding {
                         String text = "pool: " + decodeStringForKey("t");
                         for (GenericObj o : options) {
                             if (o != null && o.content != null) {
-                                PostBoxCoding opt = new PostBoxCoding();
-                                opt.setData(o.content);
+                                PostBoxCoding opt = new PostBoxCoding(o.content);
                                 text += "<br/>" + opt.decodeStringForKey("t");
                             }
                         }
@@ -575,19 +582,19 @@ public class PostBoxCoding {
         }
         this.data = data;
 
-        PostBoxCoding pk = new PostBoxCoding();
-        pk.setData(key);
+        PostBoxCoding pk = new PostBoxCoding(key);
         long peerKey = pk.readInt64(0, false);
 
-        int namespacekey = pk.readInt32(8, false);
+        int namespaceKey = pk.readInt32(8, false);
 
-        int timestampkey = pk.readInt32(12, false);
+        int timestampKey = pk.readInt32(12, false);
 
-        if (timestampkey != 631152000)
-            timestampkey = namespacekey;
-
+        if (timestampKey < minTimestamp && namespaceKey > minTimestamp) {
+            timestampKey = namespaceKey;
+        }
+        
         byte type = readNextByte();
-        if (type == int32) {
+        if (type == tInt32) {
 
             int stableId = readInt32(offset);
             offset += 4;
@@ -661,22 +668,20 @@ public class PostBoxCoding {
 
                 byte[] mediabytes = mediaKey.get(Util.byteArrayToHex(b));
                 if (mediabytes != null) {
-                    PostBoxCoding media = new PostBoxCoding();
-                    media.setData(mediabytes);
+                    PostBoxCoding media = new PostBoxCoding(mediabytes);
                     media.readMedia(m);
                 }
             }
 
             for (byte[] b : embededmedia) {
                 if (b != null) {
-                    PostBoxCoding media = new PostBoxCoding();
-                    media.setData(b);
+                    PostBoxCoding media = new PostBoxCoding(b);
                     media.readMedia(m);
                 }
             }
         }
 
-        m.setTimeStamp(Date.from(Instant.ofEpochSecond(timestampkey)));
+        m.setTimeStamp(Date.from(Instant.ofEpochSecond(timestampKey)));
     }
 
     long getAccountId() {
@@ -701,8 +706,7 @@ public class PostBoxCoding {
                 if (ph == null || ph.content == null) {
                     continue;
                 }
-                PostBoxCoding p2 = new PostBoxCoding();
-                p2.setData(ph.content);
+                PostBoxCoding p2 = new PostBoxCoding(ph.content);
                 Photo p = new Photo();
 
                 p.setName(p2.decodeInt64ForKey("v") + "_" + p2.decodeInt32ForKey("l"));
