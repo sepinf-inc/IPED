@@ -97,7 +97,6 @@ public class ShareazaDownloadParser extends AbstractParser {
             processSDFile(stream, handler, xhtml, searcher, metadata, context, item.getPath(), item.getName());
 
             metadata.set(ExtraProperties.P2P_REGISTRY_COUNT, String.valueOf(1));
-            metadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
         } catch (TikaException | SAXException | IOException e) {
             throw e;
@@ -209,14 +208,14 @@ public class ShareazaDownloadParser extends AbstractParser {
 
             IItemReader item = null;
             HashSet<String> hashSets = new HashSet<String>();
+            String md5 = null, sha1 = null, edonkey = null;
 
             if (sha1Valid != 0) {
-                String hash = readHashString(buffer, 20);
-                metadata.add(ExtraProperties.SHARED_HASHES, hash);
-                addLine(xhtml, "SHA1:                    " + hash);
-                hashSets.addAll(ChildPornHashLookup.lookupHash(HASH_SHA1, hash));
+                sha1 = readHashString(buffer, 20);
+                addLine(xhtml, "SHA1:                    " + sha1);
+                hashSets.addAll(ChildPornHashLookup.lookupHash(HASH_SHA1, sha1));
                 if (item == null) {
-                    item = searchItemInCase(searcher, HASH_SHA1, hash);
+                    item = searchItemInCase(searcher, HASH_SHA1, sha1);
                 }
             }
 
@@ -234,12 +233,11 @@ public class ShareazaDownloadParser extends AbstractParser {
                 int md5Valid = readControl4Bytes(buffer);
 
                 if (md5Valid != 0) {
-                    String hash = readHashString(buffer, 16);
-                    metadata.add(ExtraProperties.SHARED_HASHES, hash);
-                    addLine(xhtml, "MD5:                     " + hash);
-                    hashSets.addAll(ChildPornHashLookup.lookupHash(HASH_MD5, hash));
+                    md5 = readHashString(buffer, 16);
+                    addLine(xhtml, "MD5:                     " + md5);
+                    hashSets.addAll(ChildPornHashLookup.lookupHash(HASH_MD5, md5));
                     if (item == null) {
-                        item = searchItemInCase(searcher, HASH_MD5, hash);
+                        item = searchItemInCase(searcher, HASH_MD5, md5);
                     }
                 }
 
@@ -251,12 +249,11 @@ public class ShareazaDownloadParser extends AbstractParser {
                 int edonkeyValid = readControl4Bytes(buffer);
 
                 if (edonkeyValid != 0) {
-                    String hash = readHashString(buffer, 16);
-                    metadata.add(ExtraProperties.SHARED_HASHES, hash);
-                    addLine(xhtml, "EDONKEY:                 " + hash);
-                    hashSets.addAll(ChildPornHashLookup.lookupHash(HASH_EDONKEY, hash));
+                    edonkey = readHashString(buffer, 16);
+                    addLine(xhtml, "EDONKEY:                 " + edonkey);
+                    hashSets.addAll(ChildPornHashLookup.lookupHash(HASH_EDONKEY, edonkey));
                     if (item == null) {
-                        item = searchItemInCase(searcher, HASH_EDONKEY, hash);
+                        item = searchItemInCase(searcher, HASH_EDONKEY, edonkey);
                     }
                 }
 
@@ -418,20 +415,22 @@ public class ShareazaDownloadParser extends AbstractParser {
 
             int hasFile = read2Bytes(buffer);
 
+            long totalDownloaded = 0;
+
             if (hasFile == 1) {
                 sbFile.append("File: " + "\n");
 
                 long nTotal = read8Bytes(buffer);
                 long nRemaning = read8Bytes(buffer);
                 int nFragments = read4Bytes(buffer);
-                long notStart = nTotal - nRemaning;
+                totalDownloaded = nTotal - nRemaning;
 
                 sbFile.append("    Total Size:          " + nTotal + "\n");
                 sbFile.append("    Total Remaning:      " + nRemaning + "\n");
-                sbFile.append("    Total Downloaded:    " + notStart + "\n");
+                sbFile.append("    Total Downloaded:    " + totalDownloaded + "\n");
                 sbFile.append("    Number of Fragments: " + nFragments + "\n");
 
-                metadata.set(META_PREFIX + "totalDownloaded", Long.toString(notStart));
+                metadata.set(META_PREFIX + "totalDownloaded", Long.toString(totalDownloaded));
 
                 for (int i = 0; i < nFragments; i++) {
                     long nRangeBegin = read8Bytes(buffer);
@@ -700,6 +699,18 @@ public class ShareazaDownloadParser extends AbstractParser {
             String sharedStr = getBoolStr(shared);
             addLine(xhtml, "Shared:                  " + sharedStr);
             metadata.set(META_PREFIX + "shared", sharedStr);
+
+            if (Boolean.valueOf(sharedStr) && totalDownloaded > 0) {
+                if (md5 != null) {
+                    metadata.add(ExtraProperties.SHARED_HASHES, md5);
+                }
+                if (sha1 != null) {
+                    metadata.add(ExtraProperties.SHARED_HASHES, sha1);
+                }
+                if (edonkey != null) {
+                    metadata.add(ExtraProperties.SHARED_HASHES, edonkey);
+                }
+            }
 
             String serialID = readHashString(buffer, 4);
             addLine(xhtml, "Serial ID:               " + serialID);
