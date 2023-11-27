@@ -199,9 +199,26 @@ public class SQLiteContainerDetector implements Detector {
                         || tableNames.contains("media_v4")))
             return TelegramParser.TELEGRAM_DB;
         
-        if (tableNames.contains("t1") && tableNames.contains("t2") && tableNames.contains("t7")
-                && tableNames.contains("ft41") && tableNames.contains("t18"))
+        // detection for Telegram iOS DB
+        int count = 0;
+        for (String tableName : tableNames) {
+            if (tableName.startsWith("t") && tableName.length() <= 4) {
+                boolean digits = true;
+                for (int i = 1; i < tableName.length(); i++) {
+                    if (!Character.isDigit(tableName.charAt(i))) {
+                        digits = false;
+                    }
+                }
+                if (digits) {
+                    count++;
+                }
+            } else if (tableName.equals("__meta_fulltext_tables")) {
+                count++;
+            }
+        }
+        if (count == tableNames.size()) {
             return TelegramParser.TELEGRAM_DB_IOS;
+        }
 
         // iOS backups databases below
 
