@@ -1199,8 +1199,10 @@ public class Item implements IItem {
 
     public void setParentTmpFile(File parentTmpFile, Item parent) {
         this.parentTmpFile = parentTmpFile;
-        parent.refTmpFile.increment();
-        addTmpResource(parent.refTmpFile);
+        if (parent.refTmpFile != null) {
+            parent.refTmpFile.increment();
+            addTmpResource(parent.refTmpFile);
+        }
     }
 
     private void addTmpResource(Closeable c) {
