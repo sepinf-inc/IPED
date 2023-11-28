@@ -717,7 +717,7 @@ public class ShareazaDownloadParser extends AbstractParser {
 
         } catch (BufferUnderflowException ex) {
             addLine(xhtml, INCOMPLETE_FILE_EX_MESSAGE);
-            throw new TikaException(INCOMPLETE_FILE_EX_MESSAGE);
+            throw new TikaException(INCOMPLETE_FILE_EX_MESSAGE, ex);
         } finally {
             addLines(xhtml, sbFile);
             addLines(xhtml, sbPreview);
