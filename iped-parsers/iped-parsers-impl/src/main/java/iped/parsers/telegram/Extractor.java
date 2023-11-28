@@ -96,17 +96,17 @@ public class Extractor {
     }
 
     protected Contact extractUserAccountIOS() throws SQLException {
-        try (PreparedStatement stmt = conn.prepareStatement(EXTRACT_USERACCOUNT_SQL_IOS)) {
-            ResultSet rs = stmt.executeQuery();
-            if (rs != null) {
-                PostBoxCoding p = new PostBoxCoding(rs.getBytes("value"));
-                long id = p.getAccountId();
-                if (id != 0) {
-                    this.userAccount = getContact(id);
+        if (conn != null && SQLite3DBParser.containsTable("t0", conn)) {
+            try (PreparedStatement stmt = conn.prepareStatement(EXTRACT_USERACCOUNT_SQL_IOS)) {
+                ResultSet rs = stmt.executeQuery();
+                if (rs != null) {
+                    PostBoxCoding p = new PostBoxCoding(rs.getBytes("value"));
+                    long id = p.getAccountId();
+                    if (id != 0) {
+                        this.userAccount = getContact(id);
+                    }
                 }
-
             }
-
         }
         return this.userAccount;
     }
@@ -183,39 +183,41 @@ public class Extractor {
 
     protected ArrayList<Chat> extractChatListIOS() throws SQLException {
         ArrayList<Chat> l = new ArrayList<>();
-        logger.debug("Extracting chat list iOS");
-        try (PreparedStatement stmt = conn.prepareStatement(CHATS_SQL_IOS)) {
-            ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
+        if (conn != null && SQLite3DBParser.containsTable("t7", conn) && SQLite3DBParser.containsTable("t9", conn)) {
+            logger.debug("Extracting chat list iOS");
+            try (PreparedStatement stmt = conn.prepareStatement(CHATS_SQL_IOS)) {
+                ResultSet rs = stmt.executeQuery();
+                while (rs.next()) {
 
-                PostBoxCoding key = new PostBoxCoding(rs.getBytes("chatid"));
-                long chatid = key.readInt64(0, false);
+                    PostBoxCoding key = new PostBoxCoding(rs.getBytes("chatid"));
+                    long chatid = key.readInt64(0, false);
 
-                Contact c = getContact(chatid);
+                    Contact c = getContact(chatid);
 
-                Chat cg = null;
+                    Chat cg = null;
 
-                if (c.getName() != null && c.getName().startsWith("gp_name:")) {
+                    if (c.getName() != null && c.getName().startsWith("gp_name:")) {
 
-                    cg = new ChatGroup(c.getId(), c, c.getName());
+                        cg = new ChatGroup(c.getId(), c, c.getName());
 
-                } else {
+                    } else {
 
-                    cg = new Chat(c.getId(), c, c.getFullname());
+                        cg = new Chat(c.getId(), c, c.getFullname());
+
+                    }
+                    if (cg != null) {
+                        cg.setDeleted(rs.getBoolean("deleted"));
+
+                        logger.debug("Telegram chat id ", cg.getId());
+                        /*
+                         * ArrayList<Message> messages=extractMessages(conn, cg); if(messages == null ||
+                         * messages.isEmpty()) continue;
+                         */
+                        // cg.messages.addAll(messages);
+                        l.add(cg);
+                    }
 
                 }
-                if (cg != null) {
-                    cg.setDeleted(rs.getBoolean("deleted"));
-
-                    logger.debug("Telegram chat id ", cg.getId());
-                    /*
-                     * ArrayList<Message> messages=extractMessages(conn, cg); if(messages == null ||
-                     * messages.isEmpty()) continue;
-                     */
-                    // cg.messages.addAll(messages);
-                    l.add(cg);
-                }
-
             }
         }
         chatList = l;
@@ -285,11 +287,13 @@ public class Extractor {
     }
 
     public void extractMediaIOS() throws SQLException {
-        try (PreparedStatement stmt = conn.prepareStatement(EXTRACT_MEDIAS_SQL_IOS)) {
-            ResultSet rs = stmt.executeQuery();
-            if (rs != null) {
-                while (rs.next()) {
-                    mediakey.put(Util.byteArrayToHex(rs.getBytes("key")), rs.getBytes("value"));
+        if (conn != null && SQLite3DBParser.containsTable("t6", conn)) {
+            try (PreparedStatement stmt = conn.prepareStatement(EXTRACT_MEDIAS_SQL_IOS)) {
+                ResultSet rs = stmt.executeQuery();
+                if (rs != null) {
+                    while (rs.next()) {
+                        mediakey.put(Util.byteArrayToHex(rs.getBytes("key")), rs.getBytes("value"));
+                    }
                 }
             }
         }
@@ -322,54 +326,56 @@ public class Extractor {
 
     protected ArrayList<Message> extractMessagesIOS(Chat chat) throws SQLException {
         ArrayList<Message> msgs = new ArrayList<Message>();
-        try (PreparedStatement stmt = conn.prepareStatement(EXTRACT_MESSAGES_SQL_IOS)) {
-            ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
-            buffer.putLong(chat.getId());
-            stmt.setBytes(1, buffer.array());
-            ResultSet rs = stmt.executeQuery();
-            if (rs != null) {
-                ChatGroup cg = null;
-                if (chat.isGroup()) {
-                    cg = (ChatGroup) chat;
-                }
-                while (rs.next()) {
-                    PostBoxCoding p = new PostBoxCoding();
-
-                    Message message = new Message(0, chat);
-
-                    p.readMessage(rs.getBytes("key"), rs.getBytes("value"), message, mediakey);
-
-                    setFrom(message, chat);
-
-                    if (!chat.isGroup()) {
-                        if (message.isFromMe()) {
-                            message.setToId(chat.getId());
-                        } else if (this.userAccount != null) {
-                            message.setToId(this.userAccount.getId());
-                        }
+        if (conn != null && SQLite3DBParser.containsTable("t7", conn)) {
+            try (PreparedStatement stmt = conn.prepareStatement(EXTRACT_MESSAGES_SQL_IOS)) {
+                ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+                buffer.putLong(chat.getId());
+                stmt.setBytes(1, buffer.array());
+                ResultSet rs = stmt.executeQuery();
+                if (rs != null) {
+                    ChatGroup cg = null;
+                    if (chat.isGroup()) {
+                        cg = (ChatGroup) chat;
                     }
-
-                    if (cg != null && message.getFrom().getId() != 0) {
-                        cg.addMember(message.getFrom().getId());
-                    }
-
-                    if (message.getNames() != null && !message.getNames().isEmpty()) {
-                        for (PhotoData f : message.getNames()) {
-                            ArrayList<String> name = new ArrayList<>();
-                            name.add(f.getName());
-                            loadDocument(message, name, f.getSize());
+                    while (rs.next()) {
+                        PostBoxCoding p = new PostBoxCoding();
+    
+                        Message message = new Message(0, chat);
+    
+                        p.readMessage(rs.getBytes("key"), rs.getBytes("value"), message, mediakey);
+    
+                        setFrom(message, chat);
+    
+                        if (!chat.isGroup()) {
+                            if (message.isFromMe()) {
+                                message.setToId(chat.getId());
+                            } else if (this.userAccount != null) {
+                                message.setToId(this.userAccount.getId());
+                            }
                         }
-                        if (message.getMediaMime() == null && message.getType() == null) {
-                            message.setMediaMime("attach");
+    
+                        if (cg != null && message.getFrom().getId() != 0) {
+                            cg.addMember(message.getFrom().getId());
                         }
+    
+                        if (message.getNames() != null && !message.getNames().isEmpty()) {
+                            for (PhotoData f : message.getNames()) {
+                                ArrayList<String> name = new ArrayList<>();
+                                name.add(f.getName());
+                                loadDocument(message, name, f.getSize());
+                            }
+                            if (message.getMediaMime() == null && message.getType() == null) {
+                                message.setMediaMime("attach");
+                            }
+                        }
+    
+                        message.setFrom(getContact(message.getFrom().getId()));
+                        msgs.add(message);
                     }
-
-                    message.setFrom(getContact(message.getFrom().getId()));
-                    msgs.add(message);
                 }
             }
+            Collections.sort(msgs, MSG_TIME_COMPARATOR);
         }
-        Collections.sort(msgs, MSG_TIME_COMPARATOR);
         return msgs;
     }
 
@@ -487,7 +493,7 @@ public class Extractor {
     }
 
     protected void extractContactsIOS() throws SQLException {
-        if (conn != null) {
+        if (conn != null && SQLite3DBParser.containsTable("t2", conn)) {
             try (PreparedStatement stmt = conn.prepareStatement(EXTRACT_CONTACTS_SQL_IOS)) {
                 ResultSet rs = stmt.executeQuery();
                 if (rs == null)
