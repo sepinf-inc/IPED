@@ -296,7 +296,6 @@
     </mime-type>
     <mime-type type="application/x-telegram-db-ios">
         <sub-class-of type="application/x-sqlite3"/>
-        <glob pattern="db_sqlite"/>
     </mime-type>
 
 	<mime-type type="application/x-telegram-user-conf">
