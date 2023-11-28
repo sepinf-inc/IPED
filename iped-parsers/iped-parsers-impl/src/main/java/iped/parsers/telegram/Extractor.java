@@ -502,28 +502,29 @@ public class Extractor {
                 while (rs.next()) {
 
                     long id = rs.getLong("key");
-
-                    Contact cont = getContact(id);
-                    if (cont.getName() == null) {
-                        PostBoxCoding p = new PostBoxCoding(rs.getBytes("value"));
-                        p.readUser(cont);
-
-                    }
-
-                    if (cont.getPhone() != null) {
-                        nphones++;
-                    }
-                    // List<PhotoData> photo = d.getPhotoData();
-                    if (cont.getAvatar() != null && !cont.getPhotos().isEmpty()) {
-                        try {
-                            if (cont.getPhone() != null)
-                                searchAvatarFileName(cont, cont.getPhotos());
-                        } catch (IOException e) {
-                            // TODO: handle exception
-                            e.printStackTrace();
+                    
+                    if (id != 0) {
+                        Contact cont = getContact(id);
+                        if (cont.getName() == null) {
+                            PostBoxCoding p = new PostBoxCoding(rs.getBytes("value"));
+                            p.readUser(cont);
+    
+                        }
+    
+                        if (cont.getPhone() != null) {
+                            nphones++;
+                        }
+                        // List<PhotoData> photo = d.getPhotoData();
+                        if (cont.getAvatar() != null && !cont.getPhotos().isEmpty()) {
+                            try {
+                                if (cont.getPhone() != null)
+                                    searchAvatarFileName(cont, cont.getPhotos());
+                            } catch (IOException e) {
+                                // TODO: handle exception
+                                e.printStackTrace();
+                            }
                         }
                     }
-
                 }
             }
         }
