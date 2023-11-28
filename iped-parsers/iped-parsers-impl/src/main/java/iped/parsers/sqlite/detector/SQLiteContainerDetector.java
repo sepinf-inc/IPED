@@ -214,6 +214,8 @@ public class SQLiteContainerDetector implements Detector {
                 }
             } else if (tableName.equals("__meta_fulltext_tables")) {
                 count++;
+            } else if (tableName.startsWith("ft41")) {
+                count++;
             }
         }
         if (count == tableNames.size()) {
