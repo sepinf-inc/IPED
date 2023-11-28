@@ -611,10 +611,6 @@ public class Extractor {
 
     private static final String EXTRACT_USERACCOUNT_SQL_IOS = "SELECT t0.value FROM T0 where key=2";
 
-    private static final String CHATS_SQL = "SELECT d.did as chatId,u.name as chatName,u.data as chatData,"
-            + "c.name as groupName, c.data as groupData "
-            + "from dialogs d LEFT join users u on u.uid=d.did LEFT join chats c on -c.uid=d.did "
-            + "order by d.date desc";
     private static final String CHATS_SQL_V2 = "SELECT -c.uid as chatId,null as chatName,null as chatData, c.name as groupName, c.data as groupData ,d.date"
             + "            from chats c  LEFT join dialogs d on c.uid=-d.did "
             + "            UNION "
