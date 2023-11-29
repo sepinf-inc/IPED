@@ -101,7 +101,7 @@ public class Extractor {
                 ResultSet rs = stmt.executeQuery();
                 if (rs != null) {
                     PostBoxCoding p = new PostBoxCoding(rs.getBytes("value"));
-                    long id = p.getAccountId();
+                    long id = p.readAccountId();
                     if (id != 0) {
                         this.userAccount = getContact(id);
                     }
@@ -190,9 +190,9 @@ public class Extractor {
                 while (rs.next()) {
 
                     PostBoxCoding key = new PostBoxCoding(rs.getBytes("chatid"));
-                    long chatid = key.readInt64(0, false);
+                    long chatId = key.readChatId();
 
-                    Contact c = getContact(chatid);
+                    Contact c = getContact(chatId);
 
                     Chat cg = null;
 
