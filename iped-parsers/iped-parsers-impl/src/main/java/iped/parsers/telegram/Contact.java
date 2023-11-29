@@ -47,6 +47,10 @@ public class Contact implements ContactInterface {
         this.id = id;
     }
 
+    public String getTitle() {
+        return isGroup ? "Group - " + name : name;
+    }
+
     public String getName() {
         return name;
     }

@@ -155,7 +155,7 @@ public class TelegramParser extends SQLite3DBParser {
                     byte[] bytes = r.genarateContactHtml(c);
                     Metadata cMetadata = new Metadata();
                     cMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, TELEGRAM_CONTACT.toString());
-                    cMetadata.set(TikaCoreProperties.TITLE, c.getName());
+                    cMetadata.set(TikaCoreProperties.TITLE, c.getTitle());
                     cMetadata.set(ExtraProperties.USER_NAME, c.getName());
                     cMetadata.set(ExtraProperties.USER_PHONE, c.getPhone());
                     cMetadata.set(ExtraProperties.USER_ACCOUNT, c.getId() + "");
@@ -340,7 +340,7 @@ public class TelegramParser extends SQLite3DBParser {
                     byte[] bytes = r.genarateContactHtml(c);
                     Metadata cMetadata = new Metadata();
                     cMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, TELEGRAM_CONTACT.toString());
-                    cMetadata.set(TikaCoreProperties.TITLE, c.getName());
+                    cMetadata.set(TikaCoreProperties.TITLE, c.getTitle());
                     cMetadata.set(ExtraProperties.USER_NAME, c.getName());
                     cMetadata.set(ExtraProperties.USER_PHONE, c.getPhone());
                     cMetadata.set(ExtraProperties.USER_ACCOUNT, c.getId() + "");

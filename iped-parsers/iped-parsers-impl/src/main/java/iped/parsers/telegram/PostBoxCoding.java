@@ -514,7 +514,7 @@ public class PostBoxCoding {
         return 0;
     }
 
-    public void readUser(Contact c) {
+    public void readContact(Contact c) {
         PostBoxObject obj = readPostBoxObject(true);
         PostBoxObject user = obj.getPostBoxObject("_");
         if (user != null) {

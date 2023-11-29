@@ -493,7 +493,7 @@ public class Extractor {
                         Contact cont = getContact(id);
                         if (cont.getName() == null) {
                             PostBoxCoding p = new PostBoxCoding(rs.getBytes("value"));
-                            p.readUser(cont);
+                            p.readContact(cont);
     
                         }
     
