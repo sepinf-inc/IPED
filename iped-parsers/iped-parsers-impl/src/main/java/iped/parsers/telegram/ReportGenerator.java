@@ -81,11 +81,14 @@ public class ReportGenerator {
             out.println("<img src=\"data:image/jpg;base64," //$NON-NLS-1$
                     + iped.parsers.whatsapp.Util.encodeBase64(contact.getAvatar())
                     + "\" width=\"112\"/><br>"); //$NON-NLS-1$
-        out.println(Messages.getString("TelegramContact.ContactID") + contact.getId());
-        out.println("<br>" + Messages.getString("TelegramContact.FirstName") + format(contact.getName()));
-        out.println("<br>" + Messages.getString("TelegramContact.LastName") + format(contact.getLastName()));
-        out.println("<br>" + Messages.getString("TelegramContact.Username") + format(contact.getUsername()));
-        out.println("<br>" + Messages.getString("TelegramContact.Phone") + format(contact.getPhone()));
+        out.println(Messages.getString("TelegramContact.ContactID") + " " + contact.getId());
+        out.println("<br>" + Messages.getString("TelegramContact.FirstName") + " " + format(contact.getName()));
+        out.println("<br>" + Messages.getString("TelegramContact.LastName") + " " + format(contact.getLastName()));
+        out.println("<br>" + Messages.getString("TelegramContact.Username") + " " + format(contact.getUsername()));
+        out.println("<br>" + Messages.getString("TelegramContact.Phone") + " " + format(contact.getPhone()));
+        if (contact.isGroup()) {
+            out.println("<br>[" + Messages.getString("TelegramContact.Group") + "]");
+        }
         out.println("</body>\n</html>"); //$NON-NLS-1$
 
         out.flush();
