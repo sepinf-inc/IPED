@@ -13,6 +13,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -39,8 +40,6 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
 
     private static final int MAX_BYTES_CACHED = 1 << 27;
 
-    private static final int MAX_FILES_CACHED = 1 << 9;
-
     private static final int UFDR_BUF_SIZE = 1 << 16;
 
     private volatile ZipFile zip;
@@ -66,22 +65,7 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
         }
     }
 
-    private Map<String, Path> filesCache = new LinkedHashMap<String, Path>(128, 0.75f, true) {
-        private static final long serialVersionUID = 1L;
-
-        @Override
-        protected boolean removeEldestEntry(Map.Entry<String, Path> eldest) {
-            boolean remove = this.size() > MAX_FILES_CACHED;
-            if (remove) {
-                try {
-                    Files.deleteIfExists(eldest.getValue());
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            return remove;
-        }
-    };
+    private Map<String, Path> filesCache = new HashMap<>();
 
     public ZIPInputStreamFactory(Path dataSource) {
         super(dataSource.toUri());
