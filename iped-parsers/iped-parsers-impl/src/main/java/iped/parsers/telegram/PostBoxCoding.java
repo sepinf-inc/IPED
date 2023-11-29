@@ -524,7 +524,8 @@ public class PostBoxCoding {
             c.setPhone(user.getString("p"));
             String title = user.getString("t");
             if (title != null) {
-                c.setName("gp_name:" + title);
+                c.setGroup(true);
+                c.setName(title);
             }
             PostBoxObject[] objs = user.getPostBoxObjectArray("ph");
             if (objs != null && objs.length > 0) {

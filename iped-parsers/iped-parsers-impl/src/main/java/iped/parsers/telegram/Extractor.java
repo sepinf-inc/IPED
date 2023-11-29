@@ -191,7 +191,7 @@ public class Extractor {
 
                     Chat cg = null;
 
-                    if (c.getName() != null && c.getName().startsWith("gp_name:")) {
+                    if (c.isGroup()) {
 
                         cg = new ChatGroup(c.getId(), c, c.getName());
 
