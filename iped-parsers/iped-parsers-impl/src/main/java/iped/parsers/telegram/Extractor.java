@@ -96,7 +96,7 @@ public class Extractor {
     }
 
     protected Contact extractUserAccountIOS() throws SQLException {
-        if (conn != null && SQLite3DBParser.containsTable("t0", conn)) {
+        if (conn != null) {
             try (PreparedStatement stmt = conn.prepareStatement(EXTRACT_USERACCOUNT_SQL_IOS)) {
                 ResultSet rs = stmt.executeQuery();
                 if (rs != null) {
@@ -183,7 +183,7 @@ public class Extractor {
 
     protected ArrayList<Chat> extractChatListIOS() throws SQLException {
         ArrayList<Chat> l = new ArrayList<>();
-        if (conn != null && SQLite3DBParser.containsTable("t7", conn) && SQLite3DBParser.containsTable("t9", conn)) {
+        if (conn != null) {
             logger.debug("Extracting chat list iOS");
             try (PreparedStatement stmt = conn.prepareStatement(CHATS_SQL_IOS)) {
                 ResultSet rs = stmt.executeQuery();
@@ -287,7 +287,7 @@ public class Extractor {
     }
 
     public void extractMediaIOS() throws SQLException {
-        if (conn != null && SQLite3DBParser.containsTable("t6", conn)) {
+        if (conn != null) {
             try (PreparedStatement stmt = conn.prepareStatement(EXTRACT_MEDIAS_SQL_IOS)) {
                 ResultSet rs = stmt.executeQuery();
                 if (rs != null) {
@@ -326,7 +326,7 @@ public class Extractor {
 
     protected ArrayList<Message> extractMessagesIOS(Chat chat) throws SQLException {
         ArrayList<Message> msgs = new ArrayList<Message>();
-        if (conn != null && SQLite3DBParser.containsTable("t7", conn)) {
+        if (conn != null) {
             try (PreparedStatement stmt = conn.prepareStatement(EXTRACT_MESSAGES_SQL_IOS)) {
                 ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
                 buffer.putLong(chat.getId());
@@ -493,7 +493,7 @@ public class Extractor {
     }
 
     protected void extractContactsIOS() throws SQLException {
-        if (conn != null && SQLite3DBParser.containsTable("t2", conn)) {
+        if (conn != null) {
             try (PreparedStatement stmt = conn.prepareStatement(EXTRACT_CONTACTS_SQL_IOS)) {
                 ResultSet rs = stmt.executeQuery();
                 if (rs == null)
