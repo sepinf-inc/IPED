@@ -25,14 +25,6 @@ import iped.utils.IOUtil;
 
 public class Util {
 
-    protected static String byteArrayToHex(byte[] a) {
-        StringBuilder sb = new StringBuilder(a.length * 2);
-        for (byte b : a) {
-            sb.append(String.format("%02x", b));
-        }
-        return sb.toString();
-    }
-
     public static void invertByteArray(byte[] array, int start, int len) {
         for (int i = 0; i < len / 2; i++) {
             byte aux = array[start + i];

@@ -32,6 +32,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -292,7 +293,7 @@ public class Extractor {
                 ResultSet rs = stmt.executeQuery();
                 if (rs != null) {
                     while (rs.next()) {
-                        mediakey.put(Util.byteArrayToHex(rs.getBytes("key")), rs.getBytes("value"));
+                        mediakey.put(Hex.encodeHexString(rs.getBytes("key")), rs.getBytes("value"));
                     }
                 }
             }

@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -478,7 +479,7 @@ public class PostBoxCoding {
                 Util.invertByteArray(b, 0, 4);
                 Util.invertByteArray(b, 4, 8);
 
-                byte[] mediaBytes = mediaKey.get(Util.byteArrayToHex(b));
+                byte[] mediaBytes = mediaKey.get(Hex.encodeHexString(b));
                 if (mediaBytes != null) {
                     PostBoxCoding media = new PostBoxCoding(mediaBytes);
                     media.readMedia(m);
