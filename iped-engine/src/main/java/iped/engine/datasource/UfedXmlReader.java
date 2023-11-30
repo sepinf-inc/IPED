@@ -260,10 +260,6 @@ public class UfedXmlReader extends DataSourceReader {
             supportedApps.remove(TelegramParser.TELEGRAM);
         }
 
-        if (isIOS && !TelegramParser.isEnabledForIOSUfdr()) {
-            supportedApps.remove(TelegramParser.TELEGRAM);
-        }
-
         if (parsingConfig.getPhoneParsersToUse().equalsIgnoreCase("internal")) { //$NON-NLS-1$
             UFEDChatParser.setSupportedTypes(Collections.singleton(UFEDChatParser.UFED_CHAT_MIME));
             ignoreSupportedChats = true;
