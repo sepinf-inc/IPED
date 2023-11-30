@@ -293,6 +293,7 @@
         </parser>
         <parser class="iped.parsers.telegram.TelegramParser">
             <params>
+				<param name="extractMessages" type="bool">true</param>
                 <param name="enabledForUfdr" type="bool">true</param>
                 <param name="minChatSplitSize" type="int">6000000</param>
             </params>
