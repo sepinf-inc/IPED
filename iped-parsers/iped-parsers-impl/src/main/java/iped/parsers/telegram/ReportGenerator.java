@@ -264,7 +264,14 @@ public class ReportGenerator {
 
     private void printImage(PrintWriter out, Message message, boolean isLink) {
         if (isLink) {
-            out.print("Link:<br/>");
+            out.print("<b>" + Messages.getString("TelegramReport.Link") + "</b><br/>");
+            if (message.getUrl() != null) {
+                out.print(Messages.getString("TelegramReport.LinkURL") + ": " + format(message.getUrl()) + "<br/>");
+            }
+            if (message.getLinkTitle() != null) {
+                out.print(Messages.getString("TelegramReport.LinkTitle") + ": " + format(message.getLinkTitle())
+                        + "<br/>");
+            }
         }
         if (message.getMediaHash() != null) {
 
@@ -377,6 +384,17 @@ public class ReportGenerator {
             }
 
         }
+
+        PoolData poolData = message.getPoolData();
+        if (poolData != null) {
+            out.println("<b>" + Messages.getString("TelegramReport.Pool") + "</b><br/>" + format(poolData.getTitle()));
+            out.println("<ul>");
+            for (String opt : poolData.getOptions()) {
+                out.println("<li>" + format(opt) + "</li>");
+            }
+            out.println("</ul>");
+        }
+
         if (message.getData() != null) {
             out.print(format(message.getData()));
         }

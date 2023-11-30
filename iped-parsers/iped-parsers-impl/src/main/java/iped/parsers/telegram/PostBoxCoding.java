@@ -60,7 +60,7 @@ public class PostBoxCoding {
 
     private byte[] data;
 
-    private int offset = 0;
+    private int offset;
 
     public PostBoxCoding() {
     }
@@ -208,27 +208,41 @@ public class PostBoxCoding {
         return els;
     }
 
-    private List<PhotoData> getPhotos(PostBoxObject[] sizes) {
+    private List<PhotoData> getPhotos(PostBoxObject[] arr) {
         List<PhotoData> photos = new ArrayList<>();
 
-        for (PostBoxObject photo : sizes) {
-            long id = photo.getLong("i");
-            long volume = photo.getLong("v");
-            int local = photo.getInteger("l");
-            int size = photo.getInteger("n");
+        for (PostBoxObject a : arr) {
+            PostBoxObject photo = a.getPostBoxObject("r");
+            if (photo != null) {
+                long id = photo.getLong("i");
+                long volume = photo.getLong("v");
+                int local = photo.getInteger("l");
+                int size = photo.getInteger("n");
 
-            if (id != 0) {
-                Photo f = new Photo();
-                f.setName(id + "");
-                f.setSize(size);
-                photos.add(f);
-            }
+                Photo f = null;
+                if (id != 0) {
+                    f = new Photo();
+                    f.setName(String.valueOf(id));
+                    f.setSize(size);
+                }
 
-            if (volume != 0 && local != 0) {
-                Photo f = new Photo();
-                f.setName(volume + "_" + local);
-                f.setSize(size);
-                photos.add(f);
+                if (volume != 0 && local != 0) {
+                    f = new Photo();
+                    f.setName(volume + "_" + local);
+                    f.setSize(size);
+                }
+                if (f != null) {
+                    boolean seen = false;
+                    for (PhotoData p : photos) {
+                        if (p.getSize() == f.getSize() && p.getName().equals(f.getName())) {
+                            seen = true;
+                            break;
+                        }
+                    }
+                    if (!seen) {
+                        photos.add(f);
+                    }
+                }
             }
         }
 
@@ -289,16 +303,17 @@ public class PostBoxCoding {
             }
 
             List<PhotoData> files = new ArrayList<>();
-            String mimetype = null;
+            String mimeType = null;
             String url = media.getString("u");
+            String linkTitle = media.getString("ti");
             PostBoxObject im = media.getPostBoxObject("im");
             int size = 0;
             int action = 0;
             if (im != null && url != null) {
                 // link with image
-                PostBoxObject[] sizes = media.getPostBoxObjectArray("r");
+                PostBoxObject[] sizes = im.getPostBoxObjectArray("r");
                 if (sizes != null && sizes.length > 0) {
-                    mimetype = "link/image";
+                    mimeType = "link/image";
                     logger.debug("url: {}", url);
                     files = getPhotos(sizes);
                 }
@@ -306,100 +321,102 @@ public class PostBoxCoding {
                 PostBoxObject[] sizes = media.getPostBoxObjectArray("r");
                 if (sizes != null && sizes.length > 0) {
                     // image
-                    mimetype = "image";
+                    mimeType = "image";
                     files = getPhotos(sizes);
 
                 } else {
                     // other documents
-                    long id = media.getLong("i");
-                    if (id == 0) {
-                        // case id = fileId
-                        id = media.getLong("f");
-                    }
-                    long volume = media.getLong("v");
-                    int local = media.getInteger("l");
-                    size = media.getInteger("n");
-                    String fname = media.getString("fn");
-                    action = media.getInteger("_rawValue");
+                    PostBoxObject data = media.getPostBoxObject("r");
+                    if (data != null) {
+                        long id = data.getLong("i");
+                        if (id == 0) {
+                            // case id = fileId
+                            id = data.getLong("f");
+                        }
+                        long volume = data.getLong("v");
+                        int local = data.getInteger("l");
+                        size = data.getInteger("n");
+                        String fname = data.getString("fn");
 
-                    mimetype = media.getString("mt");
+                        action = media.getInteger("_rawValue");
+                        mimeType = media.getString("mt");
 
-                    // byte[] thumb = media.getBytes("itd");
+                        // byte[] thumb = media.getBytes("itd");
 
-                    logger.debug("v: {}", volume);
-                    logger.debug("l: {}", local);
-                    logger.debug("n: {}", size);
-                    logger.debug("action: {}", action);
+                        logger.debug("v: {}", volume);
+                        logger.debug("l: {}", local);
+                        logger.debug("n: {}", size);
+                        logger.debug("action: {}", action);
 
-                    if (fname != null) {
-                        Photo f = new Photo();
-                        logger.debug("name: {}", fname);
-                        f.setName(fname);
-                        f.setSize(size);
-                        files.add(f);
-                    }
+                        if (fname != null) {
+                            Photo f = new Photo();
+                            logger.debug("name: {}", fname);
+                            f.setName(fname);
+                            f.setSize(size);
+                            files.add(f);
+                        }
 
-                    if (id != 0) {
-                        Photo f = new Photo();
-                        logger.debug("name: {}", id);
-                        f.setName(id + "");
-                        f.setSize(size);
-                        files.add(f);
-                    }
+                        if (id != 0) {
+                            Photo f = new Photo();
+                            logger.debug("name: {}", id);
+                            f.setName(String.valueOf(id));
+                            f.setSize(size);
+                            files.add(f);
+                        }
 
-                    if (volume != 0 && local != 0) {
-                        Photo f = new Photo();
-                        f.setName(volume + "_" + local);
-                        logger.debug("name: {}", f.getName());
-                        f.setSize(size);
-                        files.add(f);
-                    }
+                        if (volume != 0 && local != 0) {
+                            Photo f = new Photo();
+                            f.setName(volume + "_" + local);
+                            logger.debug("name: {}", f.getName());
+                            f.setSize(size);
+                            files.add(f);
+                        }
 
-                    if (action == 2 || action == 3) {
-                        // add or remove users from group
-                        byte[] d = media.getBytes("peerIds");
-                        readPeersIds(m, d);
-                    }
-
-                    if (files.isEmpty()) {
+                        if (action == 2 || action == 3) {
+                            // add or remove users from group
+                            byte[] d = media.getBytes("peerIds");
+                            readPeersIds(m, d);
+                        }
+                    } else {
                         PostBoxObject[] options = media.getPostBoxObjectArray("os");
-                        if (options != null && options.length != 0) {// telegram pool
-                            offset = 0;
-                            String text = "pool: " + media.getString("t");
-                            for (PostBoxObject opt : options) {
-                                if (opt != null) {
-                                    String s = opt.getString("t");
-                                    if (s != null) {
-                                        text += "<br/>" + s;
+                        if (options != null) {
+                            // telegram pool
+                            String title = media.getString("t");
+                            if (title != null) {
+                                PoolData poolData = new PoolData(title);
+                                for (PostBoxObject opt : options) {
+                                    if (opt != null) {
+                                        String o = opt.getString("t");
+                                        if (o != null) {
+                                            poolData.add(o);
+                                        }
                                     }
                                 }
+                                m.setPoolData(poolData);
                             }
-                            if (m.getData() != null) {
-                                text = m.getData() + "<br/>" + text;
-                            }
-                            m.setData(text);
-                            logger.debug("pool: {}", text);
                         }
                     }
                 }
             }
 
-            if (m != null) {
-                // m.setThumb(thumb);
-                logger.debug("mimetype: {}", mimetype);
-                m.setMediaMime(mimetype);
-                if (files.size() == 1) {
-                    m.setMediasize(files.get(0).getSize());
-                }
-                m.setNames(files);
-                if (url != null) {
-                    m.setLink(true);
+            // m.setThumb(thumb);
+            logger.debug("mimeType: {}", mimeType);
+            m.setMediaMime(mimeType);
+            if (files.size() == 1) {
+                m.setMediasize(files.get(0).getSize());
+            }
+            m.setNames(files);
+            if (url != null) {
+                m.setLink(true);
+                if (mimeType == null) {
                     m.setMediaMime("link");
                 }
-
-                m.setType(MapTypeMSG.decodeMsg(action));
-                m.setMediasize(size);
+                m.setUrl(url);
+                m.setLinkTitle(linkTitle);
             }
+
+            m.setType(MapTypeMSG.decodeMsg(action));
+            m.setMediasize(size);
         }
     }
 

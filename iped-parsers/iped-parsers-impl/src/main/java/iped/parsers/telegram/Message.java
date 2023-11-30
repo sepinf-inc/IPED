@@ -18,6 +18,7 @@
  */
 package iped.parsers.telegram;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -52,6 +53,9 @@ public class Message implements MessageInterface {
     private Double latitude = null;
     private Double longitude = null;
     private List<String> childPornSets;
+    private String url;
+    private String linkTitle;
+    private PoolData poolData;
 
     public long getId() {
         return id;
@@ -253,5 +257,50 @@ public class Message implements MessageInterface {
 
     public void addChildPornSets(Collection<String> sets) {
         this.childPornSets.addAll(sets);
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    public String getLinkTitle() {
+        return linkTitle;
+    }
+
+    public void setLinkTitle(String linkTitle) {
+        this.linkTitle = linkTitle;
+    }
+
+    public PoolData getPoolData() {
+        return poolData;
+    }
+
+    public void setPoolData(PoolData poolData) {
+        this.poolData = poolData;
+    }
+}
+
+class PoolData {
+    private final String title;
+    private final List<String> options = new ArrayList<String>();
+
+    public PoolData(String title) {
+        this.title = title;
+    }
+
+    public void add(String option) {
+        options.add(option);
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public String[] getOptions() {
+        return options.toArray(new String[0]);
     }
 }
