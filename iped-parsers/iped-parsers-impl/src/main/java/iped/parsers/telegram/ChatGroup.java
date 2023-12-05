@@ -52,6 +52,6 @@ public class ChatGroup extends Chat {
         } else {
             sb.append("ID: ").append(getId());
         }
-        return super.toString();
+        return sb.toString();
     }
 }
