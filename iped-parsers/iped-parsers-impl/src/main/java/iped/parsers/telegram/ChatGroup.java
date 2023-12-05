@@ -40,4 +40,18 @@ public class ChatGroup extends Chat {
         }
     }
 
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        if (getName() != null) {
+            sb.append(getName());
+        } else if (getC() != null && getC().getName() != null) {
+            sb.append(getC().getName());
+        }
+        if (sb.length() > 0) {
+            sb.append(" (ID: ").append(getId()).append(")");
+        } else {
+            sb.append("ID: ").append(getId());
+        }
+        return super.toString();
+    }
 }
