@@ -152,18 +152,27 @@ public class Contact implements ContactInterface {
 
     @Override
     public String toString() {
-        String number = getPhone();
+        StringBuilder sb = new StringBuilder();
         String name = getFullname();
-        if (name == null)
-            name = "";
-        if (number != null && number.length() > 0) {
-            name += " (phone: " + number + ")";
-        } else if (getId() > 0) {
-            name += " (ID:" + getId() + " )";
+        if (name != null) {
+            sb.append(name.trim());
         }
-        if (name == null || name.trim().isEmpty())
-            name = "unknown";
-        return name;
+        String number = getPhone();
+        if (number != null && number.length() > 0) {
+            if (sb.length() > 0) {
+                sb.append(' ');
+            }
+            sb.append("(phone: ").append(number).append(')');
+        } else if (getId() > 0) {
+            if (sb.length() > 0) {
+                sb.append(' ');
+            }
+            sb.append("(ID:").append(getId()).append(')');
+        }
+        if (sb.length() == 0) {
+            sb.append("[unknown]");
+        }
+        return sb.toString();
     }
 
 }
