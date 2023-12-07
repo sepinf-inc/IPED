@@ -12,6 +12,8 @@ import iped.engine.task.AbstractTask;
 public class AudioTranscriptTask extends AbstractTask {
 
     private AbstractTranscriptTask impl;
+    private AbstractTranscriptTask implFallBack;
+    private boolean enableClientFallBack = false;
 
     @Override
     public List<Configurable<?>> getConfigurables() {
@@ -25,6 +27,21 @@ public class AudioTranscriptTask extends AbstractTask {
         impl = (AbstractTranscriptTask) Class.forName(transcriptConfig.getClassName()).getDeclaredConstructor().newInstance();
         impl.setWorker(worker);
         impl.init(configurationManager);
+
+        if (impl.getRequeueHeuristic() && impl.getClientTranscriptHelp()){
+            String classNameFallBack = impl.getClassNameFallBack();
+            if (classNameFallBack != null && !classNameFallBack.isEmpty()){                
+                implFallBack = (AbstractTranscriptTask) Class.forName(classNameFallBack).getDeclaredConstructor().newInstance();
+                if (implFallBack.isRemoteTask()){
+                    implFallBack = null;
+                    return;
+                }
+                enableClientFallBack = true;
+                implFallBack.setWorker(worker);
+                implFallBack.init(configurationManager);
+            }
+        }
+
     }
 
     public boolean isEnabled() {
@@ -34,11 +51,21 @@ public class AudioTranscriptTask extends AbstractTask {
     @Override
     public void finish() throws Exception {
         impl.finish();
+        if (enableClientFallBack){
+            implFallBack.finish();
+        }
+
     }
 
     @Override
     protected void process(IItem evidence) throws Exception {
-        impl.process(evidence);
+
+        if(evidence.isFallBackTask() && enableClientFallBack){
+            implFallBack.process(evidence);            
+        }else{            
+            impl.process(evidence);
+        }
+
     }
 
 }
