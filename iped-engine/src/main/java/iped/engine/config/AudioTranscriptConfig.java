@@ -32,6 +32,12 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
     private static final String LANG_AUTO_VAL = "auto";
     private static final String SKIP_KNOWN_FILES = "skipKnownFiles";
 
+    private static final String REQUEUE_HEURISTICS = "clientDynamicThreadRequeueHeuristics";
+    private static final String CLIENTE_HELP = "clientTranscriptHelp";
+    private static final String IMPL_CLASS_KEY_CLIENT = "clientTranscriptHelpImplementationClass";
+    private static final String REQUEUE_RATIO = "clientSplitQueueRatio";
+    private static final String REQUEUE_DELTA_TIME = "clientRequeueDeltaTime";
+
     private List<String> languages = new ArrayList<>();
     private List<String> mimesToProcess = new ArrayList<>();
     private String className;
@@ -46,6 +52,12 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
     private String wav2vec2Service;
     private String googleModel;
     private boolean skipKnownFiles = true;
+
+    private boolean requeueHeuristic = false;
+    private boolean clientTranscriptHelp = false;
+    private String classNameFallBack = "";
+    private int requeueRatio = 4;
+    private long requeueDeltaTime = 5000;
 
     public boolean getSkipKnownFiles() {
         return this.skipKnownFiles;
@@ -117,6 +129,27 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
         return googleModel;
     }
 
+    public boolean getRequeueHeuristic() {
+        return requeueHeuristic;
+    }
+
+    public boolean getClientTranscriptHelp() {
+        return clientTranscriptHelp;
+    }    
+
+    public String getClassNameFallBack() {
+        return classNameFallBack;
+    }    
+
+    public int getRequeueRatio() {
+        return requeueRatio;
+    }
+
+    public long getRequeueDeltaTime() {
+        return requeueDeltaTime;
+    }    
+
+
     @Override
     public void processProperties(UTF8Properties properties) {
 
@@ -164,6 +197,31 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
         value = properties.getProperty(TIMEOUT_PER_SEC_KEY);
         if (value != null) {
             timeoutPerSec = Integer.valueOf(value.trim());
+        }
+
+        value = properties.getProperty(REQUEUE_HEURISTICS);
+        if (value != null) {
+            requeueHeuristic = Boolean.valueOf(value.trim());
+        }
+
+        value = properties.getProperty(CLIENTE_HELP);
+        if (value != null) {
+            clientTranscriptHelp = Boolean.valueOf(value.trim());
+        }
+
+        value = properties.getProperty(IMPL_CLASS_KEY_CLIENT);
+        if (value != null) {
+            classNameFallBack = value.trim();
+        }
+
+        value = properties.getProperty(REQUEUE_RATIO);
+        if (value != null) {
+            requeueRatio = Integer.valueOf(value.trim());
+        }
+
+        value = properties.getProperty(REQUEUE_DELTA_TIME);
+        if (value != null) {
+            requeueDeltaTime = Long.valueOf(value.trim());
         }
     }
 
