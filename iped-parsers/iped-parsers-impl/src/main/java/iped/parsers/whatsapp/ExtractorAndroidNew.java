@@ -243,6 +243,9 @@ public class ExtractorAndroidNew extends Extractor {
                     m.setVcards(Arrays.asList(new String[] { Util.getUTF8String(rs, "vcard") }));
                 }
                 byte[] thumbData = rs.getBytes("thumbData"); //$NON-NLS-1$
+                if (thumbData == null) {
+                    thumbData = rs.getBytes("thumbData2"); //$NON-NLS-1$
+                }
 
                 boolean hasAddOn = rs.getInt("hasAddOn") != 0;
 
@@ -426,20 +429,30 @@ public class ExtractorAndroidNew extends Extractor {
         String captionCol = SQLite3DBParser.checkIfColumnExists(conn, "message_media", "media_caption")
                 ? "mm.media_caption"
                 : "null";
+
+        String mhtCol = "null";
+        String mhtTableJoin = "";
+        if (SQLite3DBParser.containsTable("media_hash_thumbnail", conn)) {
+            mhtCol = "mht.thumbnail";
+            mhtTableJoin = " left join media_hash_thumbnail mht on mm.file_hash=mht.media_hash";
+        }
+
         return "select m._id AS id,cv._id as chatId, cv.raw_string_jid "
                 + " as remoteId, jid.raw_string as remoteResource, status, mv.vcard, m.text_data, "
                 + " m.from_me as fromMe, m.timestamp as timestamp, message_url as mediaUrl,"
                 + " mm.mime_type as mediaMime, mm.file_length as mediaSize, media_name as mediaName, "
                 + " m.message_type as messageType, latitude, longitude, mm.media_duration, " + captionCol
-                + " as mediaCaption, mm.file_hash as mediaHash, thumbnail as thumbData,"
+                + " as mediaCaption, mm.file_hash as mediaHash, mt.thumbnail as thumbData,"
                 + " ms.action_type as actionType, m.message_add_on_flags as hasAddOn,"
-                + " (m.origination_flags & 1) as forwarded"
+                + " (m.origination_flags & 1) as forwarded, "
+                + " " + mhtCol + " as thumbData2"
                 + " from message m inner join chat_view cv on m.chat_row_id=cv._id"
                 + " left join message_media mm on mm.message_row_id=m._id"
                 + " left join jid on jid._id=m.sender_jid_row_id"
                 + " left join message_location ml on m._id=ml.message_row_id "
                 + " left join message_system ms on m._id=ms.message_row_id"
                 + " left join message_vcard mv on m._id=mv.message_row_id"
+                + mhtTableJoin
                 + " left join message_thumbnail mt on m._id=mt.message_row_id where status!=-1";
     }
 
