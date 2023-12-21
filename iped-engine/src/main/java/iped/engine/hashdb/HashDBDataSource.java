@@ -34,10 +34,10 @@ public class HashDBDataSource {
 
     private static final String ledFileLength = "fileLength";
     private static final String ledFileExt = "fileExt";
-    private static final String ledMd5_512 = "md5_512";
-    private static final String ledMd5_64k = "md5_64k";
+    public static final String ledMd5_512 = "md5_512";
+    public static final String ledMd5_64k = "md5_64k";
 
-    private static final String photoDna = "photoDna";
+    public static final String photoDna = "photoDna";
     private static final int photoDnaBase64Len = 192;
 
     private static final String propertySet = "set";

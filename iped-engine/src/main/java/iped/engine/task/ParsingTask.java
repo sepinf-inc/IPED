@@ -29,10 +29,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
+import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
@@ -45,6 +47,7 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.html.HtmlMapper;
 import org.apache.tika.parser.html.IdentityHtmlMapper;
+import org.apache.tika.utils.XMLReaderUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
@@ -159,6 +162,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
     private static final Set<MediaType> typesToCheckZipBomb = getTypesToCheckZipbomb();
 
     private static AtomicInteger containersBeingExpanded = new AtomicInteger();
+    private static AtomicBoolean tikaSAXPoolSizeSet = new AtomicBoolean(false);
 
     private CategoryToExpandConfig expandConfig;
     private ParsingTaskConfig parsingConfig;
@@ -237,8 +241,6 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         context.set(ArchiveStreamFactory.class, new ArchiveStreamFactory("Cp850")); //$NON-NLS-1$
         // Indexa conteudo de todos os elementos de HTMLs, como script, etc
         context.set(HtmlMapper.class, IdentityHtmlMapper.INSTANCE);
-        // we have seen very large records in valid docs
-        org.apache.poi.hpsf.CodePageString.setMaxRecordLength(512_000);
 
         context.set(IStreamSource.class, evidence);
         context.set(IItemReader.class, evidence);
@@ -790,6 +792,18 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         ParsingTaskConfig parsingConfig = configurationManager.findObject(ParsingTaskConfig.class);
         ParsersConfig parserConfig = configurationManager.findObject(ParsersConfig.class);
         System.setProperty("tika.config", parserConfig.getTmpConfigFile().getAbsolutePath());
+
+        // we have seen very large records in valid docs
+        org.apache.poi.hpsf.CodePageString.setMaxRecordLength(512_000);
+
+        // heavy Tika configuration
+        if (!tikaSAXPoolSizeSet.getAndSet(true)) {
+            try {
+                XMLReaderUtils.setPoolSize(Runtime.getRuntime().availableProcessors());
+            } catch (TikaException e) {
+                e.printStackTrace();
+            }
+        }
 
         // most options below are set using sys props because they are also used by
         // child external processes

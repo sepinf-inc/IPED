@@ -646,7 +646,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
                     List<float[]> locations = new ArrayList<>(values.length);
                     for (int i = 0; i < values.length; i++) {
                         String[] coord = values[i].split(";");
-                        float[] point = { Float.parseFloat(coord[0]), Float.parseFloat(coord[1]) };
+                        float[] point = { Float.parseFloat(coord[1]), Float.parseFloat(coord[0]) };
                         locations.add(point);
                     }
                     builder.array(key, locations.toArray());

@@ -2,7 +2,6 @@ package iped.geo.impl;
 
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map.Entry;
 
 import javax.swing.JPanel;
@@ -218,20 +217,7 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
                             int rowModel = resultsTable.convertRowIndexToModel(i);
 
                             IItemId item = results.getItem(rowModel);
-
-                            if (mapaPanel.kmlResult != null && mapaPanel.kmlResult.getGPSItems().containsKey(item)) {
-                                List<Integer> subitems = mapaPanel.kmlResult.getGPSItems().get(item);
-                                if (subitems == null) {
-                                    String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
-                                    selecoes.put(gid, selected);
-                                } else {
-                                    for (Integer subitem : subitems) {
-                                        String gid = "marker_" + item.getSourceId() + "_" + item.getId() + "_" //$NON-NLS-1$ //$NON-NLS-2$
-                                                + subitem;
-                                        selecoes.put(gid, selected);
-                                    }
-                                }
-                            }
+                            mapaPanel.addSelection(selecoes, item);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
