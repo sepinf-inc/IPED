@@ -40,7 +40,8 @@ public class ReportGenerator {
     private IItemSearcher searcher;
     private boolean firstFragment = true;
     private int currentMsg = 0;
-
+    
+    private static final String emptyMD5 = "d41d8cd98f00b204e9800998ecf8427e";
 
     private String creatSpanTag(String text) {
         return "<span class=\"tooltiptext\">" + SimpleHTMLEncoder.htmlEncode(text) + "</span>";
@@ -152,9 +153,11 @@ public class ReportGenerator {
         byte thumb[] = m.getThumb();
 
         if (searcher != null && thumb == null && m.getMediaHash() != null && !m.getMediaHash().isBlank()) {
-            List<IItemReader> result = iped.parsers.util.Util.getItems("md5:" + m.getMediaHash(), searcher);
-            if (result != null && !result.isEmpty()) {
-                thumb = result.get(0).getThumb();
+            if (!m.getMediaHash().equalsIgnoreCase(emptyMD5)) {
+                List<IItemReader> result = iped.parsers.util.Util.getItems("md5:" + m.getMediaHash(), searcher);
+                if (result != null && !result.isEmpty()) {
+                    thumb = result.get(0).getThumb();
+                }
             }
         }
 
