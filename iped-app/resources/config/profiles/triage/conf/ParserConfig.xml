@@ -328,6 +328,7 @@
         <parser class="iped.parsers.emule.PartMetParser"></parser>
         <parser class="iped.parsers.emule.PreferencesDatParser"></parser>
         <parser class="iped.parsers.ares.AresParser"></parser>
+        <parser class="iped.parsers.shareaza.ShareazaDownloadParser"></parser>
         <parser class="iped.parsers.shareaza.ShareazaSearchesDatParser"></parser>
         <parser class="iped.parsers.shareaza.ShareazaLibraryDatParser"></parser>
         <parser class="iped.parsers.bittorrent.BitTorrentResumeDatParser"></parser>

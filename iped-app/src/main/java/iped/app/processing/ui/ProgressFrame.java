@@ -143,6 +143,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
 
         pause = new JButton(Messages.getString("ProgressFrame.Pause")); //$NON-NLS-1$
         pause.addActionListener(this);
+        pause.setEnabled(false);
 
         openApp = new JButton(Messages.getString("ProgressFrame.OpenApp")); //$NON-NLS-1$
         openApp.addActionListener(this);
@@ -266,6 +267,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
             workers = (Worker[]) evt.getNewValue();
             lastWorkerTaskItemId = new String[workers.length];
             lastWorkerTime = new long[workers.length];
+            pause.setEnabled(true);
         }
 
     }
@@ -647,7 +649,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getSource().equals(pause)) {
+        if (e.getSource().equals(pause) && workers != null) {
             paused = !paused;
             if (paused)
                 pause.setText(Messages.getString("ProgressFrame.Continue")); //$NON-NLS-1$

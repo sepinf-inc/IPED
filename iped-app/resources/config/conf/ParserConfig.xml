@@ -340,6 +340,7 @@
                 <param name="extractEntries" type="bool">true</param>
             </params>
         </parser>
+        <parser class="iped.parsers.shareaza.ShareazaDownloadParser"></parser>
         <parser class="iped.parsers.shareaza.ShareazaSearchesDatParser"></parser>
         <parser class="iped.parsers.shareaza.ShareazaLibraryDatParser">
             <params>
