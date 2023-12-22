@@ -151,10 +151,8 @@ public class ReportGenerator {
     private TagHtml getThumbTag(Message m, String classnotfound) {
         byte thumb[] = m.getThumb();
 
-        if (thumb == null && m.getMediaHash() != null) {
-            List<IItemReader> result = null;
-            if (searcher != null)
-                result = iped.parsers.util.Util.getItems("hash:" + m.getMediaHash(), searcher);
+        if (searcher != null && thumb == null && m.getMediaHash() != null && !m.getMediaHash().isBlank()) {
+            List<IItemReader> result = iped.parsers.util.Util.getItems("hash:" + m.getMediaHash(), searcher);
             if (result != null && !result.isEmpty()) {
                 thumb = result.get(0).getThumb();
             }
