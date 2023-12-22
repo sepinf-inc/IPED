@@ -641,6 +641,8 @@ public class ReportGenerator {
 
                         if (message.getMediaCaption() != null)
                             out.println("<br>" + format(message.getMediaCaption()) + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
+                        else
+                            out.println("<br>"); //$NON-NLS-1$
                         break;
 
                     default:
