@@ -125,9 +125,13 @@ public class ReportGenerator {
     private static final String format(String s) {
         if (s == null || s.trim().isEmpty())
             return "-"; //$NON-NLS-1$
-        else
-            return SimpleHTMLEncoder.htmlEncode(s.trim());
+        
+        String ret = SimpleHTMLEncoder.htmlEncode(s.trim());
 
+        // Keep line breaks present in the content, converting to an HTML <br>
+        ret = ret.replaceAll("\n", "<br>\n");
+
+        return ret;
     }
 
     public byte[] generateNextChatHtml(Chat c, WAContactsDirectory contactsDirectory, WAAccount account, int frag, StringBuilder histFrag) {
