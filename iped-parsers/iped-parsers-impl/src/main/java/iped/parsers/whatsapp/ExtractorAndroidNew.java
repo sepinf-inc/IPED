@@ -15,6 +15,7 @@ import static iped.parsers.whatsapp.Message.MessageType.GIF_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CREATED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_DESCRIPTION_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_ICON_CHANGED;
+import static iped.parsers.whatsapp.Message.MessageType.GROUP_INVITE;
 import static iped.parsers.whatsapp.Message.MessageType.IMAGE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.LOCATION_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.MESSAGES_ENCRYPTED;
@@ -251,6 +252,7 @@ public class ExtractorAndroidNew extends Extractor {
                 if (thumbData == null) {
                     thumbData = rs.getBytes("thumbData2");
                 }
+                m.setThumbData(thumbData);
 
                 boolean hasAddOn = rs.getInt("hasAddOn") != 0;
 
@@ -262,7 +264,6 @@ public class ExtractorAndroidNew extends Extractor {
                     m.setMessageType(UNBLOCKED_CONTACT);
                 }
 
-                m.setThumbData(thumbData);
                 if (m.isFromMe()) {
                     switch (m.getStatus()) {
                         case 4:
@@ -282,9 +283,9 @@ public class ExtractorAndroidNew extends Extractor {
                     }
                 }
                 m.setForwarded(rs.getInt("forwarded") > 0);
-
                 m.setUuid(rs.getString("uuid")); 
-
+                m.setGroupInviteName(rs.getString("groupInviteName"));
+                
                 c.getMessages().add(m);
             }
         }
@@ -502,6 +503,9 @@ public class ExtractorAndroidNew extends Extractor {
             case 20:
                 result = STICKER_MESSAGE;
                 break;
+            case 24:
+                result = GROUP_INVITE;
+                break;
             case 42:
                 result = VIEW_ONCE_IMAGE_MESSAGE;
                 break;
@@ -553,6 +557,13 @@ public class ExtractorAndroidNew extends Extractor {
             bizStateTableJoin = " left join message_system_initial_privacy_provider msipp on m._id=msipp.message_row_id";
         }
 
+        String grpInvCol = "null";
+        String grpInvTableJoin = "";
+        if (SQLite3DBParser.containsTable("message_group_invite", conn)) {
+            grpInvCol = "mgi.group_name";
+            grpInvTableJoin = " left join message_group_invite mgi on m._id=mgi.message_row_id";
+        }
+
         return "select m._id AS id,cv._id as chatId, cv.raw_string_jid "
                 + " as remoteId, jid.raw_string as remoteResource, status, mv.vcard, m.text_data, "
                 + " m.from_me as fromMe, m.timestamp as timestamp, message_url as mediaUrl,"
@@ -562,7 +573,8 @@ public class ExtractorAndroidNew extends Extractor {
                 + " ms.action_type as actionType, m.message_add_on_flags as hasAddOn,"
                 + " (m.origination_flags & 1) as forwarded, "
                 + " " + mhtCol + " as thumbData2, "
-                + " " + bizStateCol + " as bizStateId "
+                + " " + bizStateCol + " as bizStateId, "
+                + " " + grpInvCol + " as groupInviteName "
                 + " from message m inner join chat_view cv on m.chat_row_id=cv._id"
                 + " left join message_media mm on mm.message_row_id=m._id"
                 + " left join jid on jid._id=m.sender_jid_row_id"
@@ -571,6 +583,7 @@ public class ExtractorAndroidNew extends Extractor {
                 + " left join message_vcard mv on m._id=mv.message_row_id"
                 + mhtTableJoin
                 + bizStateTableJoin
+                + grpInvTableJoin
                 + " left join message_thumbnail mt on m._id=mt.message_row_id where status!=-1";
     }
 

@@ -596,6 +596,20 @@ public class ReportGenerator {
                             }
                         }
                         break;
+                    case GROUP_INVITE:
+                        thumb = message.getThumbData();
+                        if (thumb != null) {
+                            out.print("<img class=\"thumb\" src=\"");
+                            out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\"/><br/>");
+                        }
+                        out.println("<b><u>" + Messages.getString("WhatsAppReport.GroupInvite") + "</u></b><br/>");
+                        if (message.getGroupInviteName() != null) {
+                            out.println("<b>" + message.getGroupInviteName() + "</b><br/>");
+                        }
+                        if (message.getData() != null) {
+                            out.println(format(message.getData()) + "<br/>");
+                        }
+                        break;
                     case DELETED_MESSAGE:
                         out.println("<i>" + deletedIcon + Messages.getString("WhatsAppReport.MessageDeleted") + "</i><br/>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         break;
