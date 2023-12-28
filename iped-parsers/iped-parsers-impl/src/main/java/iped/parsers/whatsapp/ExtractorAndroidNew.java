@@ -268,7 +268,8 @@ public class ExtractorAndroidNew extends Extractor {
                 m.setMediaSize(media_size);
                 m.setLatitude(rs.getDouble("latitude")); //$NON-NLS-1$
                 m.setLongitude(rs.getDouble("longitude")); //$NON-NLS-1$
-                m.setMessageType(decodeMessageType(type, status, edit_version, caption, rs.getInt("actionType"), rs.getInt("bizStateId")));
+                m.setMessageType(decodeMessageType(type, status, edit_version, caption, rs.getInt("actionType"),
+                        rs.getInt("bizStateId")));
                 m.setMediaDuration(rs.getInt("media_duration")); //$NON-NLS-1$
                 if (m.getMessageType() == CONTACT_MESSAGE) {
                     m.setVcards(Arrays.asList(new String[] { Util.getUTF8String(rs, "vcard") }));
@@ -308,7 +309,7 @@ public class ExtractorAndroidNew extends Extractor {
                     }
                 }
                 m.setForwarded(rs.getInt("forwarded") > 0);
-                m.setUuid(rs.getString("uuid")); 
+                m.setUuid(rs.getString("uuid"));
                 m.setGroupInviteName(rs.getString("groupInviteName"));
 
                 if (hasTemplateTables && m.getMessageType() == TEMPLATE_MESSAGE) {
@@ -318,7 +319,7 @@ public class ExtractorAndroidNew extends Extractor {
                 c.getMessages().add(m);
             }
         }
-        
+
         long fakeIds = 2000000000L;
         for (Chat c : idToChat.values()) {
             HashMap<Long, Message> messagesMap = new HashMap<Long, Message>();
@@ -331,13 +332,14 @@ public class ExtractorAndroidNew extends Extractor {
             }
             // Find quote messages
             List<Message> messagesQuotes = extractQuoteMessages(conn, c);
-            for (Message mq: messagesQuotes){
+            for (Message mq : messagesQuotes) {
                 Message m = messagesMap.get(mq.getId());
-                if (m != null){// Has quote
-                    Message original = messagesMapUuid.get(mq.getUuid());//Try to find orginal message in messages
-                    if (original != null){// has found original message reference, more complete
+                if (m != null) {// Has quote
+                    Message original = messagesMapUuid.get(mq.getUuid());// Try to find original message in messages
+                    if (original != null) {// has found original message reference, more complete
                         m.setMessageQuote(original);
-                    }else{// not found original message reference, get info from message_quotes table, less complete
+                    } else {// not found original message reference, get info from message_quotes table,
+                            // less complete
                         mq.setDeleted(true);
                         mq.setId(fakeIds--);
                         m.setMessageQuote(mq);
@@ -391,7 +393,7 @@ public class ExtractorAndroidNew extends Extractor {
                 if (m.getMessageType() == CONTACT_MESSAGE) {
                     m.setVcards(Arrays.asList(new String[] { Util.getUTF8String(rs, "vcard") }));
                 }
-                
+
                 byte[] thumbData = rs.getBytes("thumbData"); //$NON-NLS-1$
 
                 if (m.getMessageType() == BLOCKED_CONTACT && isUnblocked(conn, m.getId())) {
@@ -399,7 +401,7 @@ public class ExtractorAndroidNew extends Extractor {
                 }
                 m.setThumbData(thumbData);
 
-                m.setUuid(rs.getString("uuid")); 
+                m.setUuid(rs.getString("uuid"));
 
                 messages.add(m);
             }
@@ -629,18 +631,18 @@ public class ExtractorAndroidNew extends Extractor {
                 ? "mm.media_caption"
                 : "null";
         return "select mq.message_row_id as id,cv._id as chatId, cv.raw_string_jid as remoteId,"
-                +" jid.raw_string as remoteResource, mv.vcard, mq.text_data,"
-                +" mq.from_me as fromMe, mq.timestamp as timestamp, message_url as mediaUrl,"
-                +" mm.mime_type as mediaMime, mm.file_length as mediaSize, media_name as mediaName,"
-                +" mq.message_type as messageType, latitude, longitude, mm.media_duration, " + captionCol
-                +" as mediaCaption, mm.file_hash as mediaHash, mm.thumbnail as thumbData,"
-				+" mq.key_id as uuid"
-                +" from message_quoted mq inner join chat_view cv on mq.chat_row_id=cv._id"
-                +" left join message_quoted_media mm on mm.message_row_id=mq.message_row_id"
-                +" left join jid on jid._id=mq.sender_jid_row_id"
-                +" left join message_quoted_location ml on mq.message_row_id=ml.message_row_id"
-                +" left join message_quoted_vcard mv on mq.message_row_id=mv.message_row_id"
-                +" where chatId=?";
+                + " jid.raw_string as remoteResource, mv.vcard, mq.text_data,"
+                + " mq.from_me as fromMe, mq.timestamp as timestamp, message_url as mediaUrl,"
+                + " mm.mime_type as mediaMime, mm.file_length as mediaSize, media_name as mediaName,"
+                + " mq.message_type as messageType, latitude, longitude, mm.media_duration, " + captionCol
+                + " as mediaCaption, mm.file_hash as mediaHash, mm.thumbnail as thumbData,"
+				+ " mq.key_id as uuid"
+                + " from message_quoted mq inner join chat_view cv on mq.chat_row_id=cv._id"
+                + " left join message_quoted_media mm on mm.message_row_id=mq.message_row_id"
+                + " left join jid on jid._id=mq.sender_jid_row_id"
+                + " left join message_quoted_location ml on mq.message_row_id=ml.message_row_id"
+                + " left join message_quoted_vcard mv on mq.message_row_id=mv.message_row_id"
+                + " where chatId=?";
     }
 
     private static String getSelectBlockedQuery(Connection conn) throws SQLException {
