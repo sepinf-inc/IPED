@@ -18,21 +18,9 @@ public class ChatMerge {
                 int comp = u1.getTimeStamp().compareTo(u2.getTimeStamp());
                 if (comp != 0) {
                     return comp;
-                } else {
-                    return compareId(u1, u2);
                 }
-            } else {
-                return compareId(u1, u2);
             }
-        }
-
-        private int compareId(Message u1, Message u2) {
-            if (u1.getId() == u2.getId()) {
-                return 0;
-            } else if (u1.getId() < u2.getId())
-                return -1;
-            else
-                return 1;
+            return Long.compare(u1.getId(), u2.getId());
         }
     };
 
