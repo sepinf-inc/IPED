@@ -4,6 +4,7 @@ import static iped.parsers.whatsapp.Message.MessageType.APP_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.AUDIO_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.BLOCKED_CONTACT;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_CHAT;
+import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_META_SECURE_SERVICE;
 import static iped.parsers.whatsapp.Message.MessageType.CALL_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.CONTACT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_ADMIN;
@@ -241,7 +242,7 @@ public class ExtractorAndroidNew extends Extractor {
                 m.setMediaSize(media_size);
                 m.setLatitude(rs.getDouble("latitude")); //$NON-NLS-1$
                 m.setLongitude(rs.getDouble("longitude")); //$NON-NLS-1$
-                m.setMessageType(decodeMessageType(type, status, edit_version, caption, rs.getInt("actionType")));
+                m.setMessageType(decodeMessageType(type, status, edit_version, caption, rs.getInt("actionType"), rs.getInt("bizStateId")));
                 m.setMediaDuration(rs.getInt("media_duration")); //$NON-NLS-1$
                 if (m.getMessageType() == CONTACT_MESSAGE) {
                     m.setVcards(Arrays.asList(new String[] { Util.getUTF8String(rs, "vcard") }));
@@ -355,7 +356,7 @@ public class ExtractorAndroidNew extends Extractor {
                 m.setMediaSize(media_size);
                 m.setLatitude(rs.getDouble("latitude")); //$NON-NLS-1$
                 m.setLongitude(rs.getDouble("longitude")); //$NON-NLS-1$
-                m.setMessageType(decodeMessageType(type, -1, -1, caption, -1));
+                m.setMessageType(decodeMessageType(type, -1, -1, caption, -1, -1));
                 m.setMediaDuration(rs.getInt("media_duration")); //$NON-NLS-1$
                 if (m.getMessageType() == CONTACT_MESSAGE) {
                     m.setVcards(Arrays.asList(new String[] { Util.getUTF8String(rs, "vcard") }));
@@ -378,7 +379,7 @@ public class ExtractorAndroidNew extends Extractor {
     }
 
     protected Message.MessageType decodeMessageType(int messageType, int status, Integer edit_version, String caption,
-            int actionType) {
+            int actionType, int bizStateId) {
         Message.MessageType result = UNKNOWN_MESSAGE;
         switch (messageType) {
             case 0:
@@ -427,7 +428,11 @@ public class ExtractorAndroidNew extends Extractor {
                         result = BLOCKED_CONTACT;
                         break;
                     case 67:
-                        result = MESSAGES_ENCRYPTED;
+                        if (bizStateId == 10) {
+                            result = BUSINESS_META_SECURE_SERVICE;
+                        } else {
+                            result = MESSAGES_ENCRYPTED;
+                        }
                         break;
                     default:
                         break;
@@ -541,6 +546,13 @@ public class ExtractorAndroidNew extends Extractor {
             mhtTableJoin = " left join media_hash_thumbnail mht on mm.file_hash=mht.media_hash";
         }
 
+        String bizStateCol = "0";
+        String bizStateTableJoin = "";
+        if (SQLite3DBParser.containsTable("message_system_initial_privacy_provider", conn)) {
+            bizStateCol = "msipp.biz_state_id";
+            bizStateTableJoin = " left join message_system_initial_privacy_provider msipp on m._id=msipp.message_row_id";
+        }
+
         return "select m._id AS id,cv._id as chatId, cv.raw_string_jid "
                 + " as remoteId, jid.raw_string as remoteResource, status, mv.vcard, m.text_data, "
                 + " m.from_me as fromMe, m.timestamp as timestamp, message_url as mediaUrl,"
@@ -549,7 +561,8 @@ public class ExtractorAndroidNew extends Extractor {
                 + " as mediaCaption, mm.file_hash as mediaHash, mt.thumbnail as thumbData, m.key_id as uuid,"
                 + " ms.action_type as actionType, m.message_add_on_flags as hasAddOn,"
                 + " (m.origination_flags & 1) as forwarded, "
-                + " " + mhtCol + " as thumbData2"
+                + " " + mhtCol + " as thumbData2, "
+                + " " + bizStateCol + " as bizStateId "
                 + " from message m inner join chat_view cv on m.chat_row_id=cv._id"
                 + " left join message_media mm on mm.message_row_id=m._id"
                 + " left join jid on jid._id=m.sender_jid_row_id"
@@ -557,6 +570,7 @@ public class ExtractorAndroidNew extends Extractor {
                 + " left join message_system ms on m._id=ms.message_row_id"
                 + " left join message_vcard mv on m._id=mv.message_row_id"
                 + mhtTableJoin
+                + bizStateTableJoin
                 + " left join message_thumbnail mt on m._id=mt.message_row_id where status!=-1";
     }
 
