@@ -426,7 +426,7 @@ public class ExtractorAndroid extends Extractor {
                 }
             }
     
-            Collections.sort(messages, (a, b) -> a.getTimeStamp().compareTo(b.getTimeStamp()));
+            Collections.sort(messages);
         }
 
         //Find quote messages

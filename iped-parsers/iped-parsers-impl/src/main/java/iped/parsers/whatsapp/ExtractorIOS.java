@@ -339,7 +339,7 @@ public class ExtractorIOS extends Extractor {
                 }
             }
 
-            Collections.sort(chat.getMessages(), (a, b) -> a.getTimeStamp().compareTo(b.getTimeStamp()));
+            Collections.sort(chat.getMessages());
         }
     }
 

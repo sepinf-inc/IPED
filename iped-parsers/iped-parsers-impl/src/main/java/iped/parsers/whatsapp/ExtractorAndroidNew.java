@@ -55,6 +55,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -98,7 +99,7 @@ public class ExtractorAndroidNew extends Extractor {
                 extractCalls(conn, idToChat);
 
                 for (Chat c : list) {
-                    c.getMessages().sort((o1, o2) -> o1.getTimeStamp().compareTo(o2.getTimeStamp()));
+                    Collections.sort(c.getMessages());
                     if (c.isGroupChat()) {
                         setGroupMembers(c, conn, SELECT_GROUP_MEMBERS);
                     }
