@@ -130,8 +130,59 @@ public class ReportGenerator {
 
         // Keep line breaks present in the content, converting to an HTML <br>
         ret = ret.replaceAll("\n", "<br>\n");
+        
+        // Apply Bold, Italic, Strikethrough and Monospaced styles
+        ret = convertWhatsAppTagsToHTML(ret);
 
         return ret;
+    }
+
+    private static final String[] tagsWA = { "```", "*", "_", "~" };
+    private static final String[] tagsHTML = { "tt", "b", "i", "s" };
+
+    private static final String convertWhatsAppTagsToHTML(String s) {
+        int start = 0;
+        while (start < s.length()) {
+            int min = s.length();
+            int idx = -1;
+            for (int i = 0; i < tagsWA.length; i++) {
+                int p0 = s.indexOf(tagsWA[i], start);
+                if (p0 >= 0 && p0 < min) {
+                    min = p0;
+                    idx = i;
+                }
+            }
+            if (idx == -1) {
+                break;
+            }
+            start = min;
+            String ta = tagsWA[idx];
+            int p1 = s.indexOf(ta, start + ta.length());
+            if (p1 >= 0) {
+                String sub = s.substring(start + ta.length(), p1);
+                if (!sub.isBlank()) {
+                    String th = tagsHTML[idx];
+                    StringBuilder sb = new StringBuilder();
+                    sb.append(s, 0, start);
+                    sb.append('<');
+                    sb.append(th);
+                    sb.append('>');
+                    if (idx == 0) {
+                        // Monospaced -> no internal formatting
+                        sb.append(sub);
+                    } else {
+                        sb.append(convertWhatsAppTagsToHTML(sub));
+                    }
+                    sb.append("</");
+                    sb.append(th);
+                    sb.append('>');
+                    sb.append(convertWhatsAppTagsToHTML(s.substring(p1 + ta.length())));
+                    return sb.toString();
+                }
+            }
+            start += ta.length();
+        }
+        return s;
     }
 
     public byte[] generateNextChatHtml(Chat c, WAContactsDirectory contactsDirectory, WAAccount account, int frag, StringBuilder histFrag) {
