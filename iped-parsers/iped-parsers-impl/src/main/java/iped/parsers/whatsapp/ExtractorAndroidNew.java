@@ -539,6 +539,7 @@ public class ExtractorAndroidNew extends Extractor {
                 break;
             case 25:
             case 27:
+            case 28:
                 result = TEMPLATE_MESSAGE;
                 break;
             case 42:
