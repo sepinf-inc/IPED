@@ -286,8 +286,11 @@ public class WhatsAppParser extends SQLite3DBParser {
             int firstMsg = 0;
             ReportGenerator reportGenerator = new ReportGenerator();
             reportGenerator.setMinChatSplitSize(this.minChatSplitSize);
-            byte[] bytes = reportGenerator.generateNextChatHtml(c, contacts, account);
+            StringBuilder histFrag = new StringBuilder ();
+            int histFragCount = 0;
+            byte[] bytes = reportGenerator.generateNextChatHtml(c, contacts, account,histFragCount,histFrag);
             while (bytes != null) {
+                histFragCount++;
                 Metadata chatMetadata = new Metadata();
                 int nextMsg = reportGenerator.getNextMsgNum();
 
@@ -299,7 +302,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                     storeLocations(msgSubset, chatMetadata);
                 }
                 firstMsg = nextMsg;
-                byte[] nextBytes = reportGenerator.generateNextChatHtml(c, contacts, account);
+                byte[] nextBytes = reportGenerator.generateNextChatHtml(c, contacts, account, histFragCount,histFrag);
 
                 String chatName = c.getTitle();
                 if (frag > 0 || nextBytes != null)

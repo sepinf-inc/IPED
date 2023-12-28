@@ -65,6 +65,11 @@ public class Message {
     private IItemReader mediaItem = null;
     private String mediaQuery = null;
     private List<MessageAddOn> addOns;
+    private long idQuote;
+    private Message messageQuote = null;
+    private boolean quoted = false;
+    private String uuid = null;
+    private String metaData = null;
 
     static {
         try {
@@ -462,6 +467,46 @@ public class Message {
 
     public void setCallId(String callId) {
         this.callId = callId;
+    }
+
+    public long getIdQuote() {
+        return idQuote;
+    }
+
+    public void setIdQuote(long idQuote) {
+        this.idQuote = idQuote;
+    }
+
+    public boolean isQuoted() {
+        return this.quoted;
+    }
+
+    public void setQuoted(boolean quoted) {
+        this.quoted = quoted;
+    }
+
+    public Message getMessageQuote(){
+        return this.messageQuote;
+    }
+
+    public void setMessageQuote(Message messageQuote){
+        this.messageQuote = messageQuote;
+    }
+
+    public String getUuid() {
+        return this.uuid;
+    }
+
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
+    }
+
+    public String getMetaData() {
+        return this.metaData;
+    }
+
+    public void setMetaData(String metaData) {
+        this.metaData = metaData;
     }
 
     public static enum MessageType {
