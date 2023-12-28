@@ -23,7 +23,7 @@ import iped.parsers.util.ChildPornHashLookup;
  *
  * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
  */
-public class Message {
+public class Message implements Comparable<Message> {
 
     private static File thumbsfile;
     private static FileChannel fileChannel;
@@ -533,5 +533,16 @@ public class Message {
 
     public static enum MessageStatus {
         MESSAGE_UNSENT, MESSAGE_SENT, MESSAGE_DELIVERED, MESSAGE_VIEWED
+    }
+
+    @Override
+    public int compareTo(Message o) {
+        if (getTimeStamp() != null && o.getTimeStamp() != null) {
+            int comp = getTimeStamp().compareTo(o.getTimeStamp());
+            if (comp != 0) {
+                return comp;
+            }
+        }
+        return Long.compare(getId(), o.getId());
     }
 }
