@@ -718,6 +718,7 @@ public class ReportGenerator {
                                     if (thumb != null) {
                                         out.println(Messages.getString("WhatsAppReport.Video") + ":<br>");
                                         out.print("<img class=\"thumb\" src=\""); //$NON-NLS-1$
+                                        out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
                                         out.println(" title=\"" + getTitle(message) + "\"/>"); //$NON-NLS-1$ //$NON-NLS-2$
                                     } else {
                                         out.println("<div class=\"videoImg\" title=\"Video\"></div>"); //$NON-NLS-1$
