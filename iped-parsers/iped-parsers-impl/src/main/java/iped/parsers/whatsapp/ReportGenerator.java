@@ -444,6 +444,12 @@ public class ReportGenerator {
                         if (message.getData() != null) {
                             out.print(format(message.getData()) + "<br/>"); //$NON-NLS-1$
                         }
+                        // Some (rare) text messages have thumbs
+                        thumb = message.getThumbData();
+                        if (thumb != null) {
+                            out.print("<img class=\"thumb\" src=\"");
+                            out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\"/>");
+                        }
                         break;
                     case UNKNOWN_MEDIA_MESSAGE:
                         if (message.getMediaCaption() != null) {
