@@ -27,6 +27,7 @@ import static iped.parsers.whatsapp.Message.MessageType.REFUSED_VOICE_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.SHARE_LOCATION_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.STICKER_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.SUBJECT_CHANGED;
+import static iped.parsers.whatsapp.Message.MessageType.TEMPLATE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.TEXT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.UNAVAILABLE_VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.UNAVAILABLE_VOICE_CALL;
@@ -196,8 +197,32 @@ public class ExtractorAndroidNew extends Extractor {
         }
     }
 
+    private void extractTemplateInfo(Connection conn, Message m) throws SQLException {
+        MessageTemplate t = null;
+        try (PreparedStatement stmt = conn.prepareStatement(SELECT_TEMPLATE)) {
+            stmt.setLong(1, m.getId());
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                t = new MessageTemplate(rs.getString("content"));
+            }
+        }
+
+        if (t != null) {
+            try (PreparedStatement stmt = conn.prepareStatement(SELECT_TEMPLATE_BUTTON)) {
+                stmt.setLong(1, m.getId());
+                ResultSet rs = stmt.executeQuery();
+                while (rs.next()) {
+                    t.addButton(new MessageTemplate.Button(rs.getString("text"), rs.getString("extra")));
+                }
+            }
+            m.setMessageTemplate(t);
+        }
+    }
+
     private void extractMessages(Connection conn, Map<Long, Chat> idToChat) throws SQLException {
         boolean hasReactionTable = SQLite3DBParser.containsTable("message_add_on_reaction", conn);
+        boolean hasTemplateTables = SQLite3DBParser.containsTable("message_template", conn)
+                && SQLite3DBParser.containsTable("message_template_button", conn);
 
         try (PreparedStatement stmt = conn.prepareStatement(getSelectMessagesQuery(conn))) {
             ResultSet rs = stmt.executeQuery();
@@ -285,7 +310,11 @@ public class ExtractorAndroidNew extends Extractor {
                 m.setForwarded(rs.getInt("forwarded") > 0);
                 m.setUuid(rs.getString("uuid")); 
                 m.setGroupInviteName(rs.getString("groupInviteName"));
-                
+
+                if (hasTemplateTables && m.getMessageType() == TEMPLATE_MESSAGE) {
+                    extractTemplateInfo(conn, m);
+                }
+
                 c.getMessages().add(m);
             }
         }
@@ -506,6 +535,10 @@ public class ExtractorAndroidNew extends Extractor {
             case 24:
                 result = GROUP_INVITE;
                 break;
+            case 25:
+            case 27:
+                result = TEMPLATE_MESSAGE;
+                break;
             case 42:
                 result = VIEW_ONCE_IMAGE_MESSAGE;
                 break;
@@ -537,6 +570,10 @@ public class ExtractorAndroidNew extends Extractor {
             + " left join jid on jid._id=m.sender_jid_row_id"
             + " left join message_add_on_reaction r on r.message_add_on_row_id=m._id"
             + " where parent_message_row_id=?";
+
+    private static final String SELECT_TEMPLATE = "SELECT content_text_data as content FROM message_template where message_row_id=?";
+
+    private static final String SELECT_TEMPLATE_BUTTON = "SELECT text_data as text, extra_data as extra FROM message_template_button where message_row_id=? order by _id";
 
     private static String getSelectMessagesQuery(Connection conn) throws SQLException {
         String captionCol = SQLite3DBParser.checkIfColumnExists(conn, "message_media", "media_caption")

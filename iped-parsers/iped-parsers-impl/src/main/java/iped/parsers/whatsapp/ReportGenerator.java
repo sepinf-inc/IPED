@@ -610,6 +610,33 @@ public class ReportGenerator {
                             out.println(format(message.getData()) + "<br/>");
                         }
                         break;
+                    case TEMPLATE_MESSAGE:
+                        thumb = message.getThumbData();
+                        if (thumb != null) {
+                            out.print("<img class=\"thumb\" src=\"");
+                            out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\"/><br/>");
+                        }
+                        if (message.getData() != null) {
+                            out.println(format(message.getData()) + "<br/>");
+                        }
+                        MessageTemplate t = message.getMessageTemplate();
+                        if (t != null) {
+                            String content = t.getContent();
+                            if (content != null && !content.isBlank()) {
+                                out.println(format(content) + "<br/>");
+                            }
+                            for (MessageTemplate.Button button : t.getButtons()) {
+                                String text = button.getText();
+                                if (text != null && !text.isBlank()) {
+                                    out.println("<b>[" + format(text) + "]</b><br/>");
+                                }
+                                String extra = button.getExtra();
+                                if (extra != null && !extra.isBlank() && !extra.equals(text)) {
+                                    out.println(format(extra) + "<br/>");
+                                }
+                            }
+                        }
+                        break;
                     case DELETED_MESSAGE:
                         out.println("<i>" + deletedIcon + Messages.getString("WhatsAppReport.MessageDeleted") + "</i><br/>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         break;
