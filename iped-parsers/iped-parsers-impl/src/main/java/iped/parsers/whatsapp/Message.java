@@ -72,6 +72,7 @@ public class Message implements Comparable<Message> {
     private String metaData = null;
     private String groupInviteName;
     private MessageTemplate messageTemplate;
+    private long sortId;
 
     static {
         try {
@@ -527,6 +528,14 @@ public class Message implements Comparable<Message> {
         this.messageTemplate = messageTemplate;
     }
 
+    public long getSortId() {
+        return sortId;
+    }
+
+    public void setSortId(long sortId) {
+        this.sortId = sortId;
+    }
+
     public static enum MessageType {
         TEXT_MESSAGE, IMAGE_MESSAGE, AUDIO_MESSAGE, VIDEO_MESSAGE, UNKNOWN_MEDIA_MESSAGE, CONTACT_MESSAGE, LOCATION_MESSAGE, SHARE_LOCATION_MESSAGE, VOICE_CALL, VIDEO_CALL, APP_MESSAGE, GIF_MESSAGE, BLOCKED_CONTACT, UNBLOCKED_CONTACT, BUSINESS_CHAT, BUSINESS_TO_STANDARD, MESSAGES_ENCRYPTED, MESSAGES_NOW_ENCRYPTED, ENCRYPTION_KEY_CHANGED, MISSED_VOICE_CALL, MISSED_VIDEO_CALL, DELETED_MESSAGE, DELETED_BY_ADMIN, DELETED_BY_SENDER, GROUP_CREATED, USER_JOINED_GROUP, USER_JOINED_GROUP_FROM_LINK, USERS_JOINED_GROUP, USER_LEFT_GROUP, USER_REMOVED_FROM_GROUP, URL_MESSAGE, GROUP_ICON_CHANGED, GROUP_ICON_DELETED, GROUP_DESCRIPTION_CHANGED, SUBJECT_CHANGED, YOU_ADMIN, WAITING_MESSAGE, STICKER_MESSAGE, REFUSED_VIDEO_CALL, REFUSED_VOICE_CALL, UNAVAILABLE_VIDEO_CALL, UNAVAILABLE_VOICE_CALL, UNKNOWN_VOICE_CALL, UNKNOWN_VIDEO_CALL, VIEW_ONCE_IMAGE_MESSAGE, VIEW_ONCE_VIDEO_MESSAGE, CALL_MESSAGE, BUSINESS_META_SECURE_SERVICE, GROUP_INVITE, TEMPLATE_MESSAGE, UNKNOWN_MESSAGE
     }
@@ -537,6 +546,12 @@ public class Message implements Comparable<Message> {
 
     @Override
     public int compareTo(Message o) {
+        if (getSortId() != 0 && o.getSortId() != 0) {
+            int comp = Long.compare(getSortId(), o.getSortId());
+            if (comp != 0) {
+                return comp;
+            }
+        }
         if (getTimeStamp() != null && o.getTimeStamp() != null) {
             int comp = getTimeStamp().compareTo(o.getTimeStamp());
             if (comp != 0) {
