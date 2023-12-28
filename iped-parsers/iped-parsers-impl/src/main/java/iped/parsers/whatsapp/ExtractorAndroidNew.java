@@ -37,6 +37,8 @@ import static iped.parsers.whatsapp.Message.MessageType.USER_LEFT_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.USER_REMOVED_FROM_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.VIDEO_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.VIEW_ONCE_IMAGE_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.VIEW_ONCE_VIDEO_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.VOICE_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.WAITING_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.YOU_ADMIN;
@@ -402,6 +404,12 @@ public class ExtractorAndroidNew extends Extractor {
                 break;
             case 20:
                 result = STICKER_MESSAGE;
+                break;
+            case 42:
+                result = VIEW_ONCE_IMAGE_MESSAGE;
+                break;
+            case 43:
+                result = VIEW_ONCE_VIDEO_MESSAGE;
                 break;
             case 64:
                 if (status == 0) {

@@ -43,6 +43,7 @@ public class ReportGenerator {
     private static final String lockedIcon = "<img class=\"lock\"/>";
     private static final String locationIcon = "<img class=\"location\"/>";
     private static final String forwardedIcon = "<img class=\"fwd\"/>";
+    private static final String viewOnceIcon = "<img class=\"vo\"/>";
 
     public ReportGenerator() {
     }
@@ -503,8 +504,10 @@ public class ReportGenerator {
                         break;
                     case AUDIO_MESSAGE:
                     case VIDEO_MESSAGE:
+                    case VIEW_ONCE_VIDEO_MESSAGE:
                     case GIF_MESSAGE:
                     case IMAGE_MESSAGE:
+                    case VIEW_ONCE_IMAGE_MESSAGE:
                     case APP_MESSAGE:
                     case STICKER_MESSAGE:
                         mediaItem = message.getMediaItem();
@@ -539,6 +542,7 @@ public class ReportGenerator {
 
                             if (message.getMessageType() == MessageType.AUDIO_MESSAGE
                                     || message.getMessageType() == MessageType.VIDEO_MESSAGE
+                                    || message.getMessageType() == MessageType.VIEW_ONCE_VIDEO_MESSAGE
                                     || message.getMessageType() == MessageType.GIF_MESSAGE) {
                                 String source = iped.parsers.util.Util.getSourceFileIfExists(mediaItem)
                                         .orElse("");
@@ -589,7 +593,8 @@ public class ReportGenerator {
                                     out.println(" title=\"" + getTitle(message) + "\"/>"); //$NON-NLS-1$ //$NON-NLS-2$
 
                                 } else {
-                                    if (message.getMessageType() == MessageType.IMAGE_MESSAGE) { // $NON-NLS-1$
+                                    if (message.getMessageType() == MessageType.IMAGE_MESSAGE
+                                            || message.getMessageType() == MessageType.VIEW_ONCE_IMAGE_MESSAGE) {
                                         out.println("<div class=\"imageImg\" title=\"Image\"></div>"); //$NON-NLS-1$
                                     } else
                                         out.println("Attachment:<br><div class=\"attachImg\" title=\"Doc\"></div>"); //$NON-NLS-1$
@@ -605,6 +610,7 @@ public class ReportGenerator {
                                     out.println("<div class=\"audioImg\" title=\"Audio\"></div>"); //$NON-NLS-1$
                                     break;
                                 case VIDEO_MESSAGE:
+                                case VIEW_ONCE_VIDEO_MESSAGE:
                                 case GIF_MESSAGE:
                                     if (thumb != null) {
                                         out.println(Messages.getString("WhatsAppReport.Video") + ":<br>");
@@ -616,6 +622,7 @@ public class ReportGenerator {
                                     break;
                                 case STICKER_MESSAGE:
                                 case IMAGE_MESSAGE:
+                                case VIEW_ONCE_IMAGE_MESSAGE:
                                 case APP_MESSAGE:
                                     if (thumb != null) {
                                         if (getTitle(message).equals("video")) //$NON-NLS-1$
@@ -717,22 +724,27 @@ public class ReportGenerator {
                     + format(message.getChildPornSets().toString()) + "</i></p>");
         }
 
-        out.println("<span class=\"time\">"); //$NON-NLS-1$
+        out.print("<span class=\"time\">"); //$NON-NLS-1$
 
-        out.println(timeFormat.format(message.getTimeStamp()) + " &nbsp;"); //$NON-NLS-1$
+        if (message.getMessageType() == MessageType.VIEW_ONCE_IMAGE_MESSAGE
+                || message.getMessageType() == MessageType.VIEW_ONCE_VIDEO_MESSAGE) {
+            out.print(viewOnceIcon);
+        }
+
+        out.print(timeFormat.format(message.getTimeStamp()) + " &nbsp;"); //$NON-NLS-1$
         if (message.isFromMe() && message.getMessageStatus() != null) {
             switch (message.getMessageStatus()) {
                 case MESSAGE_UNSENT:
-                    out.println("<div class=\"unsent\"></div>"); //$NON-NLS-1$
+                    out.print("<div class=\"unsent\"></div>"); //$NON-NLS-1$
                     break;
                 case MESSAGE_SENT:
-                    out.println("<div class=\"sent\"></div>"); //$NON-NLS-1$
+                    out.print("<div class=\"sent\"></div>"); //$NON-NLS-1$
                     break;
                 case MESSAGE_DELIVERED:
-                    out.println("<div class=\"delivered\"></div>"); //$NON-NLS-1$
+                    out.print("<div class=\"delivered\"></div>"); //$NON-NLS-1$
                     break;
                 case MESSAGE_VIEWED:
-                    out.println("<div class=\"viewed\"></div>"); //$NON-NLS-1$
+                    out.print("<div class=\"viewed\"></div>"); //$NON-NLS-1$
                     break;
             }
         }
