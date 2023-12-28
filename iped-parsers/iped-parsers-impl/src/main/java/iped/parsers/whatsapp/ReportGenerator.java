@@ -604,7 +604,7 @@ public class ReportGenerator {
                         }
                         out.println("<b><u>" + Messages.getString("WhatsAppReport.GroupInvite") + "</u></b><br/>");
                         if (message.getGroupInviteName() != null) {
-                            out.println("<b>" + message.getGroupInviteName() + "</b><br/>");
+                            out.println("<b>" + format(message.getGroupInviteName()) + "</b><br/>");
                         }
                         if (message.getData() != null) {
                             out.println(format(message.getData()) + "<br/>");
