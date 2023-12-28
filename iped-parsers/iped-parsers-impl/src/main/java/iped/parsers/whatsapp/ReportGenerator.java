@@ -154,7 +154,13 @@ public class ReportGenerator {
 
             String lastDate = null;
             while (currentMsg < c.getMessages().size()) {
-                Message m = c.getMessages().get(currentMsg);
+                Message m = c.getMessages().get(currentMsg++);
+                if (m.getMessageType() == MessageType.CALL_MESSAGE) {   
+                    // These messages are currently redundant with calls information already
+                    // extracted from other tables (these come from messages table). So, at least
+                    // for now, nothing should be included in the report.
+                    continue;
+                }
                 String thisDate = dateFormat.format(m.getTimeStamp());
                 if (lastDate == null || !lastDate.equals(thisDate)) {
                     out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
@@ -162,7 +168,6 @@ public class ReportGenerator {
                     lastDate = thisDate;
                 }
                 printMessage(out, m, c.isGroupChat(), contactsDirectory, account);
-                currentMsg += 1;
                 if (currentMsg != c.getMessages().size() && bout.size() >= minChatSplitSize) {
                     out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
                             + Messages.getString("WhatsAppReport.ChatContinues") + "</div></div>"); //$NON-NLS-1$ //$NON-NLS-2$

@@ -4,6 +4,7 @@ import static iped.parsers.whatsapp.Message.MessageType.APP_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.AUDIO_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.BLOCKED_CONTACT;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_CHAT;
+import static iped.parsers.whatsapp.Message.MessageType.CALL_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.CONTACT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_ADMIN;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_SENDER;
@@ -415,6 +416,10 @@ public class ExtractorAndroidNew extends Extractor {
                 if (status == 0) {
                     result = DELETED_BY_ADMIN;
                 }
+                break;
+            case 90:
+                // Newer databases also have entries to any call in messages table
+                result = CALL_MESSAGE;
                 break;
             default:
                 break;
