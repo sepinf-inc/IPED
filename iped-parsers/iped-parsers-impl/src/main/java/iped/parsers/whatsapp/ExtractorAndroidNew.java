@@ -301,7 +301,7 @@ public class ExtractorAndroidNew extends Extractor {
                     extractAddOns(conn, m, hasReactionTable);
                 }
 
-                if (hasPollOptionTable && rs.getInt("isPoll") != 0) {
+                if (hasPollOptionTable && m.getMessageType() == MessageType.POLL_MESSAGE) {
                     extractPollOptions(conn, m);
                 }
 
@@ -633,13 +633,6 @@ public class ExtractorAndroidNew extends Extractor {
             grpInvTableJoin = " left join message_group_invite mgi on m._id=mgi.message_row_id";
         }
 
-        String pollCol = "0";
-        String pollTableJoin = "";
-        if (SQLite3DBParser.containsTable("message_poll", conn)) {
-            pollCol = "mp.message_row_id";
-            pollTableJoin = " left join message_poll mp on m._id=mp.message_row_id";
-        }
-
         return "select m._id AS id,cv._id as chatId, cv.raw_string_jid "
                 + " as remoteId, jid.raw_string as remoteResource, status, mv.vcard, m.text_data,"
                 + " m.from_me as fromMe, m.timestamp as timestamp, message_url as mediaUrl,"
@@ -651,7 +644,6 @@ public class ExtractorAndroidNew extends Extractor {
                 + " " + mhtCol + " as thumbData2,"
                 + " " + bizStateCol + " as bizStateId,"
                 + " " + grpInvCol + " as groupInviteName,"
-                + " " + pollCol + " as isPoll,"
                 + " " + sortCol + " as sortId"
                 + " from message m inner join chat_view cv on m.chat_row_id=cv._id"
                 + " left join message_media mm on mm.message_row_id=m._id"
@@ -662,7 +654,6 @@ public class ExtractorAndroidNew extends Extractor {
                 + mhtTableJoin
                 + bizStateTableJoin
                 + grpInvTableJoin
-                + pollTableJoin
                 + " left join message_thumbnail mt on m._id=mt.message_row_id where status!=-1";
     }
 
