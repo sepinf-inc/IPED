@@ -13,6 +13,7 @@ import static iped.parsers.whatsapp.Message.MessageType.DELETED_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.ENCRYPTION_KEY_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_DURATION_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_ENABLED;
+import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_SAVE;
 import static iped.parsers.whatsapp.Message.MessageType.GIF_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CREATED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_DESCRIPTION_CHANGED;
@@ -499,6 +500,9 @@ public class ExtractorAndroidNew extends Extractor {
                     case 58:
                         result = BLOCKED_CONTACT;
                         break;
+                    case 59:
+                        result = EPHEMERAL_DURATION_CHANGED;
+                        break;
                     case 67:
                         if (bizStateId == 10) {
                             result = BUSINESS_META_SECURE_SERVICE;
@@ -508,6 +512,9 @@ public class ExtractorAndroidNew extends Extractor {
                         break;
                     case 68:
                         result = EPHEMERAL_ENABLED;
+                        break;
+                    case 80:
+                        result = EPHEMERAL_SAVE;
                         break;
                     default:
                         break;

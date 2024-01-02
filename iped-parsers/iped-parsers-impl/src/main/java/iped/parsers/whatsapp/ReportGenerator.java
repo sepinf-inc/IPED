@@ -292,6 +292,10 @@ public class ReportGenerator {
                 }
                 out.println(" " + duration + ".");
                 break;
+            case EPHEMERAL_SAVE:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.EphemeralSave"));
+                break;
             case BLOCKED_CONTACT:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
                 out.println(Messages.getString("WhatsAppReport.BlockedContact")); //$NON-NLS-1$
