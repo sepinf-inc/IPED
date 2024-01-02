@@ -271,36 +271,26 @@ public class ReportGenerator {
                 out.println("<i>" + Messages.getString("WhatsAppReport.UnknownMessage") + " [ID: " + message.getId() + "]</i>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 break;
             case ENCRYPTION_KEY_CHANGED:
-                out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
+                out.println("<div class=\"systemmessage\">");
                 out.print(lockedIcon);
-                out.println(format(message.getRemoteResource()) + " " //$NON-NLS-1$
-                        + Messages.getString("WhatsAppReport.SecurityChanged")); //$NON-NLS-1$
+                String user = getBestContactName(message, contactsDirectory, account);
+                out.println(user + " " + Messages.getString("WhatsAppReport.SecurityChanged"));
                 break;
+            case EPHEMERAL_ENABLED:
             case EPHEMERAL_DURATION_CHANGED:
                 int seconds = message.getMediaDuration();
                 int days = seconds / 86400;
                 String duration = days > 1 ? days + " " + Messages.getString("WhatsAppReport.Days")
                         : seconds / 3600 + " " + Messages.getString("WhatsAppReport.Hours");
                 out.println("<div class=\"systemmessage\">");
-                String user = "";
-                if (message.getRemoteResource() == null) {
-                    if (message.isFromMe()) {
-                        user = "[" + Messages.getString("WhatsAppReport.Owner") + "]";
-                    }
+                user = getBestContactName(message, contactsDirectory, account);
+                out.print(user + " ");
+                if (message.getMessageType() == MessageType.EPHEMERAL_ENABLED) {
+                    out.print(Messages.getString("WhatsAppReport.EphemeralEnabled"));
                 } else {
-                    user = format(message.getRemoteResource());
-                    if (user != null) {
-                        WAContact contact = contactsDirectory.getContact(user);
-                        if (contact != null) {
-                            user = contact.getName();
-                        }
-                        if (user.endsWith(waSuffix)) {
-                            user = user.substring(0, user.length() - waSuffix.length());
-                        }
-                    }
+                    out.print(Messages.getString("WhatsAppReport.EphemeralDurationChanged"));
                 }
-                out.println(
-                        user + " " + Messages.getString("WhatsAppReport.EphemeralDurationChanged") + " " + duration);
+                out.println(" " + duration + ".");
                 break;
             case BLOCKED_CONTACT:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
@@ -912,36 +902,8 @@ public class ReportGenerator {
                         aoDetails.append("<br>");
                     }
                     aoDetails.append(a.getReaction());
-
-                    String name = null;
-                    String number = null;
-                    if (a.isFromMe()) {
-                        if (account != null && !account.isUnknown()) {
-                            name = account.getName();
-                        } else {
-                            name = "[" + Messages.getString("WhatsAppReport.Owner") + "]";
-                        }
-                    } else {
-                        number = a.getRemoteResource();
-                        if (number != null) {
-                            WAContact contact = contactsDirectory.getContact(number);
-                            if (contact != null) {
-                                name = contact.getName();
-                            }
-                            if (number.endsWith(WAContact.waSuffix)) {
-                                number = number.substring(0, number.length() - WAContact.waSuffix.length());
-                            }
-                        }
-                    }
-                    name = name == null ? "" : name.trim();
-                    number = number == null ? "" : number.trim();
-                    if (!number.isEmpty()) {
-                        if (name.isEmpty()) {
-                            name = number;
-                        } else if (!number.equals(name)) {
-                            name += " (" + number + ")";
-                        }
-                    }
+                    
+                    String name = getBestContactName(a.isFromMe(), a.getRemoteResource(), contactsDirectory, account);
                     if (name != null) {
                         aoDetails.append(' ');
                         aoDetails.append(format(name));
@@ -1041,17 +1003,22 @@ public class ReportGenerator {
         }
     }
 
-    private String getBestContactName(Message a, WAContactsDirectory contactsDirectory,WAAccount account){
+    private String getBestContactName(Message message, WAContactsDirectory contactsDirectory, WAAccount account) {
+        return getBestContactName(message.getRemoteResource()==null && message.isFromMe(), message.getRemoteResource(), contactsDirectory, account);
+    }
+
+    private String getBestContactName(boolean isFromMe, String remoteResource, WAContactsDirectory contactsDirectory,
+            WAAccount account) {
         String name = null;
         String number = null;
-        if (a.isFromMe()) {
+        if (isFromMe) {
             if (account != null && !account.isUnknown()) {
                 name = account.getName();
             } else {
                 name = "[" + Messages.getString("WhatsAppReport.Owner") + "]";
             }
         } else {
-            number = a.getRemoteResource();
+            number = remoteResource;
             if (number != null) {
                 WAContact contact = contactsDirectory.getContact(number);
                 if (contact != null) {

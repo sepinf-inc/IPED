@@ -12,6 +12,7 @@ import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_SENDER;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.ENCRYPTION_KEY_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_DURATION_CHANGED;
+import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_ENABLED;
 import static iped.parsers.whatsapp.Message.MessageType.GIF_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CREATED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_DESCRIPTION_CHANGED;
@@ -65,6 +66,7 @@ import java.util.Map;
 
 import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.whatsapp.Message.MessageStatus;
+import iped.parsers.whatsapp.Message.MessageType;
 
 /**
  *
@@ -317,8 +319,9 @@ public class ExtractorAndroidNew extends Extractor {
                 if (hasPollOptionTable && m.getMessageType() == POLL_MESSAGE) {
                     extractPollOptions(conn, m);
                 }
-                
-                if (hasEphemeralSettingTable && m.getMessageType() == EPHEMERAL_DURATION_CHANGED) {
+
+                if (hasEphemeralSettingTable && (m.getMessageType() == EPHEMERAL_DURATION_CHANGED
+                        || m.getMessageType() == EPHEMERAL_ENABLED)) {
                     extractEphemeralDuration(conn, m);
                 }
 
@@ -502,6 +505,9 @@ public class ExtractorAndroidNew extends Extractor {
                         } else {
                             result = MESSAGES_ENCRYPTED;
                         }
+                        break;
+                    case 68:
+                        result = EPHEMERAL_ENABLED;
                         break;
                     default:
                         break;
