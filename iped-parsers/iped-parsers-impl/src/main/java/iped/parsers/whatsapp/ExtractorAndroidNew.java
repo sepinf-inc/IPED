@@ -63,6 +63,7 @@ import java.util.Map;
 
 import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.whatsapp.Message.MessageStatus;
+import iped.parsers.whatsapp.Message.MessageType;
 
 /**
  *
@@ -220,10 +221,23 @@ public class ExtractorAndroidNew extends Extractor {
         }
     }
 
+    private void extractPollOptions(Connection conn, Message m) throws SQLException {
+        try (PreparedStatement stmt = conn.prepareStatement(SELECT_POLL_OPTIONS)) {
+            stmt.setLong(1, m.getId());
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                String name = rs.getString("name");
+                int total = rs.getInt("total");
+                m.addPollOption(new PollOption(name, total));
+            }
+        }
+    }
+
     private void extractMessages(Connection conn, Map<Long, Chat> idToChat) throws SQLException {
         boolean hasReactionTable = SQLite3DBParser.containsTable("message_add_on_reaction", conn);
         boolean hasTemplateTables = SQLite3DBParser.containsTable("message_template", conn)
                 && SQLite3DBParser.containsTable("message_template_button", conn);
+        boolean hasPollOptionTable = SQLite3DBParser.containsTable("message_poll_option", conn);
 
         try (PreparedStatement stmt = conn.prepareStatement(getSelectMessagesQuery(conn))) {
             ResultSet rs = stmt.executeQuery();
@@ -285,6 +299,10 @@ public class ExtractorAndroidNew extends Extractor {
 
                 if (hasAddOn) {
                     extractAddOns(conn, m, hasReactionTable);
+                }
+
+                if (hasPollOptionTable && rs.getInt("isPoll") != 0) {
+                    extractPollOptions(conn, m);
                 }
 
                 if (m.getMessageType() == BLOCKED_CONTACT && isUnblocked(conn, m.getId())) {
@@ -555,6 +573,9 @@ public class ExtractorAndroidNew extends Extractor {
                     result = DELETED_BY_ADMIN;
                 }
                 break;
+            case 66:
+                result = MessageType.POLL_MESSAGE;
+                break;
             case 90:
                 // Newer databases also have entries to any call in messages table
                 result = CALL_MESSAGE;
@@ -578,6 +599,8 @@ public class ExtractorAndroidNew extends Extractor {
 
     private static final String SELECT_TEMPLATE = "SELECT content_text_data as content FROM message_template where message_row_id=?";
 
+    private static final String SELECT_POLL_OPTIONS = "SELECT option_name as name, vote_total as total FROM message_poll_option where message_row_id=? order by _id";
+    
     private static final String SELECT_TEMPLATE_BUTTON = "SELECT text_data as text, extra_data as extra FROM message_template_button where message_row_id=? order by _id";
 
     private static String getSelectMessagesQuery(Connection conn) throws SQLException {
@@ -610,6 +633,13 @@ public class ExtractorAndroidNew extends Extractor {
             grpInvTableJoin = " left join message_group_invite mgi on m._id=mgi.message_row_id";
         }
 
+        String pollCol = "0";
+        String pollTableJoin = "";
+        if (SQLite3DBParser.containsTable("message_poll", conn)) {
+            pollCol = "mp.message_row_id";
+            pollTableJoin = " left join message_poll mp on m._id=mp.message_row_id";
+        }
+
         return "select m._id AS id,cv._id as chatId, cv.raw_string_jid "
                 + " as remoteId, jid.raw_string as remoteResource, status, mv.vcard, m.text_data,"
                 + " m.from_me as fromMe, m.timestamp as timestamp, message_url as mediaUrl,"
@@ -621,6 +651,7 @@ public class ExtractorAndroidNew extends Extractor {
                 + " " + mhtCol + " as thumbData2,"
                 + " " + bizStateCol + " as bizStateId,"
                 + " " + grpInvCol + " as groupInviteName,"
+                + " " + pollCol + " as isPoll,"
                 + " " + sortCol + " as sortId"
                 + " from message m inner join chat_view cv on m.chat_row_id=cv._id"
                 + " left join message_media mm on mm.message_row_id=m._id"
@@ -631,6 +662,7 @@ public class ExtractorAndroidNew extends Extractor {
                 + mhtTableJoin
                 + bizStateTableJoin
                 + grpInvTableJoin
+                + pollTableJoin
                 + " left join message_thumbnail mt on m._id=mt.message_row_id where status!=-1";
     }
 

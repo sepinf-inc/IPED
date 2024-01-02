@@ -692,6 +692,32 @@ public class ReportGenerator {
                             }
                         }
                         break;
+                    case POLL_MESSAGE:
+                        thumb = message.getThumbData();
+                        if (thumb != null) {
+                            out.print("<img class=\"thumb\" src=\"");
+                            out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\"/><br/>");
+                        }
+                        out.println("<b><u>" + Messages.getString("WhatsAppReport.Poll") + "</u></b><br/>");
+                        if (message.getData() != null) {
+                            out.println(format(message.getData()) + "<br/>");
+                        }
+                        out.println("<ul>");
+                        List<PollOption> pollOptions = message.getPollOptions();
+                        for (PollOption opt : pollOptions) {
+                            if (opt.getName() != null) {
+                                out.print("<li>" + format(opt.getName()));
+                                int total = opt.getTotal();
+                                if (total == 1) {
+                                    out.print(" [1 " + Messages.getString("WhatsAppReport.Vote") + "]");
+                                } else if (total > 1) {
+                                    out.print(" [" + total + " " + Messages.getString("WhatsAppReport.Votes") + "]");
+                                }
+                                out.print("</li>");
+                            }
+                        }
+                        out.println("</ul>");
+                        break;
                     case DELETED_MESSAGE:
                         out.println("<i>" + deletedIcon + Messages.getString("WhatsAppReport.MessageDeleted") + "</i><br/>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         break;
