@@ -11,6 +11,7 @@ import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_ADMIN;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_SENDER;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.ENCRYPTION_KEY_CHANGED;
+import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_DURATION_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.GIF_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CREATED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_DESCRIPTION_CHANGED;
@@ -22,6 +23,7 @@ import static iped.parsers.whatsapp.Message.MessageType.MESSAGES_ENCRYPTED;
 import static iped.parsers.whatsapp.Message.MessageType.MESSAGES_NOW_ENCRYPTED;
 import static iped.parsers.whatsapp.Message.MessageType.MISSED_VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.MISSED_VOICE_CALL;
+import static iped.parsers.whatsapp.Message.MessageType.POLL_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.REFUSED_VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.REFUSED_VOICE_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.SHARE_LOCATION_MESSAGE;
@@ -63,7 +65,6 @@ import java.util.Map;
 
 import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.whatsapp.Message.MessageStatus;
-import iped.parsers.whatsapp.Message.MessageType;
 
 /**
  *
@@ -222,7 +223,7 @@ public class ExtractorAndroidNew extends Extractor {
     }
 
     private void extractPollOptions(Connection conn, Message m) throws SQLException {
-        try (PreparedStatement stmt = conn.prepareStatement(SELECT_POLL_OPTIONS)) {
+        try (PreparedStatement stmt = conn.prepareStatement(SELECT_POLL_OPTION)) {
             stmt.setLong(1, m.getId());
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
@@ -233,11 +234,23 @@ public class ExtractorAndroidNew extends Extractor {
         }
     }
 
+    private void extractEphemeralDuration(Connection conn, Message m) throws SQLException {
+        try (PreparedStatement stmt = conn.prepareStatement(SELECT_EPHEMERAL_SETTING)) {
+            stmt.setLong(1, m.getId());
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                // Use mediaDuration to avoid creating another field
+                m.setMediaDuration(rs.getInt("duration"));
+            }
+        }
+    }
+
     private void extractMessages(Connection conn, Map<Long, Chat> idToChat) throws SQLException {
         boolean hasReactionTable = SQLite3DBParser.containsTable("message_add_on_reaction", conn);
         boolean hasTemplateTables = SQLite3DBParser.containsTable("message_template", conn)
                 && SQLite3DBParser.containsTable("message_template_button", conn);
         boolean hasPollOptionTable = SQLite3DBParser.containsTable("message_poll_option", conn);
+        boolean hasEphemeralSettingTable = SQLite3DBParser.containsTable("message_ephemeral_setting", conn);
 
         try (PreparedStatement stmt = conn.prepareStatement(getSelectMessagesQuery(conn))) {
             ResultSet rs = stmt.executeQuery();
@@ -301,8 +314,12 @@ public class ExtractorAndroidNew extends Extractor {
                     extractAddOns(conn, m, hasReactionTable);
                 }
 
-                if (hasPollOptionTable && m.getMessageType() == MessageType.POLL_MESSAGE) {
+                if (hasPollOptionTable && m.getMessageType() == POLL_MESSAGE) {
                     extractPollOptions(conn, m);
+                }
+                
+                if (hasEphemeralSettingTable && m.getMessageType() == EPHEMERAL_DURATION_CHANGED) {
+                    extractEphemeralDuration(conn, m);
                 }
 
                 if (m.getMessageType() == BLOCKED_CONTACT && isUnblocked(conn, m.getId())) {
@@ -562,6 +579,9 @@ public class ExtractorAndroidNew extends Extractor {
             case 28:
                 result = TEMPLATE_MESSAGE;
                 break;
+            case 36:
+                result = EPHEMERAL_DURATION_CHANGED;
+                break;
             case 42:
                 result = VIEW_ONCE_IMAGE_MESSAGE;
                 break;
@@ -574,7 +594,7 @@ public class ExtractorAndroidNew extends Extractor {
                 }
                 break;
             case 66:
-                result = MessageType.POLL_MESSAGE;
+                result = POLL_MESSAGE;
                 break;
             case 90:
                 // Newer databases also have entries to any call in messages table
@@ -599,7 +619,9 @@ public class ExtractorAndroidNew extends Extractor {
 
     private static final String SELECT_TEMPLATE = "SELECT content_text_data as content FROM message_template where message_row_id=?";
 
-    private static final String SELECT_POLL_OPTIONS = "SELECT option_name as name, vote_total as total FROM message_poll_option where message_row_id=? order by _id";
+    private static final String SELECT_POLL_OPTION = "SELECT option_name as name, vote_total as total FROM message_poll_option where message_row_id=? order by _id";
+
+    private static final String SELECT_EPHEMERAL_SETTING = "SELECT setting_duration as duration FROM message_ephemeral_setting where message_row_id=?";
     
     private static final String SELECT_TEMPLATE_BUTTON = "SELECT text_data as text, extra_data as extra FROM message_template_button where message_row_id=? order by _id";
 

@@ -276,6 +276,32 @@ public class ReportGenerator {
                 out.println(format(message.getRemoteResource()) + " " //$NON-NLS-1$
                         + Messages.getString("WhatsAppReport.SecurityChanged")); //$NON-NLS-1$
                 break;
+            case EPHEMERAL_DURATION_CHANGED:
+                int seconds = message.getMediaDuration();
+                int days = seconds / 86400;
+                String duration = days > 1 ? days + " " + Messages.getString("WhatsAppReport.Days")
+                        : seconds / 3600 + " " + Messages.getString("WhatsAppReport.Hours");
+                out.println("<div class=\"systemmessage\">");
+                String user = "";
+                if (message.getRemoteResource() == null) {
+                    if (message.isFromMe()) {
+                        user = "[" + Messages.getString("WhatsAppReport.Owner") + "]";
+                    }
+                } else {
+                    user = format(message.getRemoteResource());
+                    if (user != null) {
+                        WAContact contact = contactsDirectory.getContact(user);
+                        if (contact != null) {
+                            user = contact.getName();
+                        }
+                        if (user.endsWith(waSuffix)) {
+                            user = user.substring(0, user.length() - waSuffix.length());
+                        }
+                    }
+                }
+                out.println(
+                        user + " " + Messages.getString("WhatsAppReport.EphemeralDurationChanged") + " " + duration);
+                break;
             case BLOCKED_CONTACT:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
                 out.println(Messages.getString("WhatsAppReport.BlockedContact")); //$NON-NLS-1$
