@@ -537,6 +537,7 @@ public class ExtractorAndroidNew extends Extractor {
                 result = LOCATION_MESSAGE;
                 break;
             case 8:
+                result = CALL_MESSAGE;
                 if (caption != null) {
                     if (caption.equals("video")) { //$NON-NLS-1$
                         result = VIDEO_CALL;
@@ -549,6 +550,7 @@ public class ExtractorAndroidNew extends Extractor {
                 result = APP_MESSAGE;
                 break;
             case 10:
+                result = CALL_MESSAGE;
                 if (caption != null) {
                     if (caption.equals("video")) { //$NON-NLS-1$
                         result = MISSED_VIDEO_CALL;
