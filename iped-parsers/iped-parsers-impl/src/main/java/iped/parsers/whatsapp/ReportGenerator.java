@@ -608,11 +608,7 @@ public class ReportGenerator {
                             out.print(format(message.getData()) + "<br/>"); //$NON-NLS-1$
                         }
                         // Some (rare) text messages have thumbs
-                        thumb = message.getThumbData();
-                        if (thumb != null) {
-                            out.print("<img class=\"thumb\" src=\"");
-                            out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\"/>");
-                        }
+                        printThumb(out, message);
                         break;
                     case UNKNOWN_MEDIA_MESSAGE:
                         if (message.getMediaCaption() != null) {
@@ -652,11 +648,7 @@ public class ReportGenerator {
                         }
                         break;
                     case GROUP_INVITE:
-                        thumb = message.getThumbData();
-                        if (thumb != null) {
-                            out.print("<img class=\"thumb\" src=\"");
-                            out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\"/><br/>");
-                        }
+                        printThumb(out, message);
                         out.println("<b><u>" + Messages.getString("WhatsAppReport.GroupInvite") + "</u></b><br/>");
                         if (message.getGroupInviteName() != null) {
                             out.println("<b>" + format(message.getGroupInviteName()) + "</b><br/>");
@@ -666,11 +658,7 @@ public class ReportGenerator {
                         }
                         break;
                     case TEMPLATE_MESSAGE:
-                        thumb = message.getThumbData();
-                        if (thumb != null) {
-                            out.print("<img class=\"thumb\" src=\"");
-                            out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\"/><br/>");
-                        }
+                        printThumb(out, message);
                         if (message.getData() != null) {
                             out.println(format(message.getData()) + "<br/>");
                         }
@@ -693,11 +681,7 @@ public class ReportGenerator {
                         }
                         break;
                     case POLL_MESSAGE:
-                        thumb = message.getThumbData();
-                        if (thumb != null) {
-                            out.print("<img class=\"thumb\" src=\"");
-                            out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\"/><br/>");
-                        }
+                        printThumb(out, message);
                         out.println("<b><u>" + Messages.getString("WhatsAppReport.Poll") + "</u></b><br/>");
                         if (message.getData() != null) {
                             out.println(format(message.getData()) + "<br/>");
@@ -1020,6 +1004,14 @@ public class ReportGenerator {
                 out.print("</span>");
             }
             out.println("</div><br>");
+        }
+    }
+    
+    private void printThumb(PrintWriter out, Message message) {
+        byte[] thumb = message.getThumbData();
+        if (thumb != null) {
+            out.print("<img class=\"thumb\" src=\"");
+            out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\"/><br/>");
         }
     }
 
