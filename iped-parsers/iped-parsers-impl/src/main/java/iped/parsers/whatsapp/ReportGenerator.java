@@ -467,9 +467,7 @@ public class ReportGenerator {
                 break;
             case GROUP_CREATED:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
-                out.println(
-                        Messages.getString("WhatsAppReport.GroupCreated") + " " + format(message.getRemoteResource()) //$NON-NLS-1$ //$NON-NLS-2$
-                        + "</br>"); //$NON-NLS-1$
+                out.println(Messages.getString("WhatsAppReport.GroupCreated") + " " + name + "</br>");
                 if (message.getData() != null && !message.getData().isEmpty()) {
                     out.print(format(message.getData()) + "<br/>"); //$NON-NLS-1$
                 }
@@ -477,12 +475,11 @@ public class ReportGenerator {
             case USER_JOINED_GROUP:
             case USERS_JOINED_GROUP:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
-                out.println(
-                        Messages.getString("WhatsAppReport.UserJoinedGroup") + format(message.getRemoteResource()) //$NON-NLS-1$
-                                + "</br>"); //$NON-NLS-1$
+                out.println(Messages.getString("WhatsAppReport.UserJoinedGroup") + name + "</br>");
                 if (message.getData() != null) {
                     out.print(format(message.getData()) + "<br/>"); //$NON-NLS-1$
                 }
+                //TODO: Fix who was added to the group VS who added
                 break;
             case USER_JOINED_GROUP_FROM_LINK:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
@@ -493,14 +490,13 @@ public class ReportGenerator {
                 break;
             case USER_LEFT_GROUP:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
-                out.println(Messages.getString("WhatsAppReport.UserLeftGroup") + format(message.getRemoteResource()) //$NON-NLS-1$
-                        + "</br>"); //$NON-NLS-1$
+                out.println(Messages.getString("WhatsAppReport.UserLeftGroup") + name + "</br>");
                 break;
             case USER_REMOVED_FROM_GROUP:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
                 out.println(
-                        Messages.getString("WhatsAppReport.UserRemovedGroup") + format(message.getRemoteResource()) //$NON-NLS-1$
-                                + "</br>"); //$NON-NLS-1$
+                        Messages.getString("WhatsAppReport.UserRemovedGroup") + name + "</br>");
+                //TODO: Fix who was removed from the group VS who removed
                 break;
             case GROUP_ICON_CHANGED:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
