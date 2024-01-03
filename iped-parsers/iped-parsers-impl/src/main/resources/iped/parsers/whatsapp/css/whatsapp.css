@@ -198,6 +198,16 @@ div.deletedIcon {
     visibility: hidden;
 }
 
+.name {
+    font-family: Arial;
+    color: #B0C040;	
+}
+
+.name_call {
+    font-family: Arial;
+    color: #4040B0;	
+}
+
 /*Quotes*/
 html {
     scroll-padding-top: var(--scroll-padding-top);
