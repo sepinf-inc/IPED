@@ -1069,7 +1069,10 @@ public class ReportGenerator {
             if (number != null) {
                 WAContact contact = contactsDirectory.getContact(number);
                 if (contact != null) {
-                    name = contact.getName();
+                    name = contact.getDisplayName();
+                    if (name == null || name.isBlank()) {
+                        name = contact.getName();
+                    }
                 }
                 if (number.endsWith(waSuffix)) {
                     number = number.substring(0, number.length() - waSuffix.length());

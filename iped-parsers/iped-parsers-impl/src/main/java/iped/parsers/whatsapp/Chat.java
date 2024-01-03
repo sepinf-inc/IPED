@@ -97,9 +97,13 @@ public class Chat {
                 }
             } else {
                 title = "WhatsApp Chat"; //$NON-NLS-1$
-                if (remote != null && remote.getName() != null
-                        && (getPrintId() == null || !remote.getName().strip().equals(getPrintId().strip())))
+                if (remote != null && remote.getDisplayName() != null && !remote.getDisplayName().isBlank()
+                        && (getPrintId() == null || !remote.getDisplayName().strip().equals(getPrintId().strip()))) {
+                    title += " - " + remote.getDisplayName().strip();
+                } else if (remote != null && remote.getName() != null
+                        && (getPrintId() == null || !remote.getName().strip().equals(getPrintId().strip()))) {
                     title += " - " + remote.getName().strip(); //$NON-NLS-1$
+                }
             }
             if (getPrintId() != null && !getPrintId().isBlank()) {
                 title += " - " + getPrintId().strip();
