@@ -544,6 +544,9 @@ public class ExtractorAndroidNew extends Extractor {
                     case 68:
                         result = EPHEMERAL_ENABLED;
                         break;
+                    case 69:
+                        result = BUSINESS_META_SECURE_SERVICE;
+                        break;
                     case 70:
                         result = CALL_MESSAGE;
                         break;
