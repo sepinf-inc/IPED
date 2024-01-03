@@ -490,7 +490,7 @@ public class ExtractorAndroid extends Extractor {
         m.setLatitude(rs.getDouble("latitude")); //$NON-NLS-1$
         m.setLongitude(rs.getDouble("longitude")); //$NON-NLS-1$
         m.setMessageType(decodeMessageType(type, status, edit_version, caption, (int) media_size));
-        m.setMediaDuration(SQLite3DBParser.getIntIfExists(rs, "media_duration")); //$NON-NLS-1$
+        m.setDuration(SQLite3DBParser.getIntIfExists(rs, "media_duration")); //$NON-NLS-1$
         if (m.getMessageType() == CONTACT_MESSAGE) {
             m.setVcards(Arrays.asList(new String[] { m.getData() }));
         }

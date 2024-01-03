@@ -285,7 +285,7 @@ public class ExtractorIOS extends Extractor {
                     Chat chat = idToChat.get(chatId);
                     if (chat != null && chat.isGroupChat() == isGroupChat) {
                         Message m = createMessageFromDB(rs, chat);
-                        chat.getMessages().add(m);
+                        chat.add(m);
                     }
                 }
             }
@@ -328,7 +328,7 @@ public class ExtractorIOS extends Extractor {
                                 if (m.getUuid() != null && !m.getUuid().isEmpty()) {
                                     messagesMap.put(m.getUuid(), m);
                                 }
-                                chat.getMessages().add(m);
+                                chat.add(m);
                             }
                         }
                     }

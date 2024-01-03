@@ -278,7 +278,7 @@ public class ReportGenerator {
                 break;
             case EPHEMERAL_ENABLED:
             case EPHEMERAL_DURATION_CHANGED:
-                int seconds = message.getMediaDuration();
+                int seconds = message.getDuration();
                 int days = seconds / 86400;
                 String duration = days > 1 ? days + " " + Messages.getString("WhatsAppReport.Days")
                         : seconds / 3600 + " " + Messages.getString("WhatsAppReport.Hours");
@@ -419,9 +419,9 @@ public class ReportGenerator {
                     out.println(bubbleFromSpecial);
                 }
                 out.println(Messages.getString("WhatsAppReport.VideoCall")); //$NON-NLS-1$
-                if (message.getMediaDuration() > 0) {
+                if (message.getDuration() > 0) {
                     out.println("<br>" + Messages.getString("WhatsAppReport.Duration") + ": " //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                            + formatMMSS(message.getMediaDuration()));
+                            + formatMMSS(message.getDuration()));
                 }
                 break;
             case VOICE_CALL:
@@ -434,7 +434,7 @@ public class ReportGenerator {
                 }
                 out.println(Messages.getString("WhatsAppReport.VoiceCall") + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
                 out.println(
-                        Messages.getString("WhatsAppReport.Duration") + ": " + formatMMSS(message.getMediaDuration())); //$NON-NLS-1$ //$NON-NLS-2$
+                        Messages.getString("WhatsAppReport.Duration") + ": " + formatMMSS(message.getDuration())); //$NON-NLS-1$ //$NON-NLS-2$
                 break;
             case GROUP_CREATED:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
@@ -545,7 +545,7 @@ public class ReportGenerator {
                     String dataQuote = messageQuote.getData();
                     String quoteClick = "onclick=\"goToAnchorId("+messageQuote.getId()+");\"";
                     String quoteIcon = "";
-                    String quoteDuration = "("+formatMMSS(messageQuote.getMediaDuration())+")";
+                    String quoteDuration = "("+formatMMSS(messageQuote.getDuration())+")";
                     String quoteUser = getBestContactName(messageQuote,contactsDirectory,account);
                     byte[] thumbQuote = messageQuote.getThumbData();                               
 

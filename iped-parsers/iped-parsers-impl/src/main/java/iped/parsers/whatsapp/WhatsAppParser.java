@@ -966,7 +966,7 @@ public class WhatsAppParser extends SQLite3DBParser {
 
             if (m.isCall()) {
                 meta.set(StandardParser.INDEXER_CONTENT_TYPE, WHATSAPP_CALL.toString());
-                meta.set("duration", ReportGenerator.formatMMSS(m.getMediaDuration())); //$NON-NLS-1$
+                meta.set("duration", ReportGenerator.formatMMSS(m.getDuration())); //$NON-NLS-1$
             }
 
             if (meta.get(ExtraProperties.MESSAGE_BODY) == null) {

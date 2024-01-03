@@ -68,6 +68,10 @@ public class Chat {
         return messages;
     }
 
+    public void add(Message message) {
+        messages.add(message);
+    }
+    
     /**
      * @param messages
      *            the messages to set

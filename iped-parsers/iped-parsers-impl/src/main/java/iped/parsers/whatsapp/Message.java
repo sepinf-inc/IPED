@@ -58,7 +58,7 @@ public class Message implements Comparable<Message> {
     private List<String> vcards;
     private String url;
     private String thumbpath;
-    private int mediaDuration;
+    private int duration;
     private MessageStatus messageStatus;
     private String recoveredFrom = null;
     private List<String> childPornSets;
@@ -373,12 +373,12 @@ public class Message implements Comparable<Message> {
         this.thumbpath = thumbpath;
     }
 
-    public int getMediaDuration() {
-        return mediaDuration;
+    public int getDuration() {
+        return duration;
     }
 
-    public void setMediaDuration(int mediaDuration) {
-        this.mediaDuration = mediaDuration;
+    public void setDuration(int duration) {
+        this.duration = duration;
     }
 
     public MessageStatus getMessageStatus() {

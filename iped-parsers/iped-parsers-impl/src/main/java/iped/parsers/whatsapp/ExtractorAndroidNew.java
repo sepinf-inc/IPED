@@ -67,7 +67,6 @@ import java.util.Map;
 
 import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.whatsapp.Message.MessageStatus;
-import iped.parsers.whatsapp.Message.MessageType;
 
 /**
  *
@@ -194,10 +193,10 @@ public class ExtractorAndroidNew extends Extractor {
                     }
                 }
                 m.setFromMe(rs.getInt("from_me") == 1);
-                m.setMediaDuration(rs.getInt("duration"));
+                m.setDuration(rs.getInt("duration"));
                 m.setTimeStamp(new Date(rs.getLong("timestamp")));
 
-                c.getMessages().add(m);
+                c.add(m);
             }
 
         }
@@ -242,8 +241,7 @@ public class ExtractorAndroidNew extends Extractor {
             stmt.setLong(1, m.getId());
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
-                // Use mediaDuration to avoid creating another field
-                m.setMediaDuration(rs.getInt("duration"));
+                m.setDuration(rs.getInt("duration"));
             }
         }
     }
@@ -301,7 +299,7 @@ public class ExtractorAndroidNew extends Extractor {
                 m.setLongitude(rs.getDouble("longitude")); //$NON-NLS-1$
                 m.setMessageType(decodeMessageType(type, status, edit_version, caption, rs.getInt("actionType"),
                         rs.getInt("bizStateId")));
-                m.setMediaDuration(rs.getInt("media_duration")); //$NON-NLS-1$
+                m.setDuration(rs.getInt("media_duration")); //$NON-NLS-1$
                 if (m.getMessageType() == CONTACT_MESSAGE) {
                     m.setVcards(Arrays.asList(new String[] { Util.getUTF8String(rs, "vcard") }));
                 }
@@ -357,7 +355,7 @@ public class ExtractorAndroidNew extends Extractor {
                     extractTemplateInfo(conn, m);
                 }
 
-                c.getMessages().add(m);
+                c.add(m);
             }
         }
 
@@ -430,7 +428,7 @@ public class ExtractorAndroidNew extends Extractor {
                 m.setLatitude(rs.getDouble("latitude")); //$NON-NLS-1$
                 m.setLongitude(rs.getDouble("longitude")); //$NON-NLS-1$
                 m.setMessageType(decodeMessageType(type, -1, -1, caption, -1, -1));
-                m.setMediaDuration(rs.getInt("media_duration")); //$NON-NLS-1$
+                m.setDuration(rs.getInt("media_duration")); //$NON-NLS-1$
                 if (m.getMessageType() == CONTACT_MESSAGE) {
                     m.setVcards(Arrays.asList(new String[] { Util.getUTF8String(rs, "vcard") }));
                 }
@@ -512,6 +510,9 @@ public class ExtractorAndroidNew extends Extractor {
                         break;
                     case 68:
                         result = EPHEMERAL_ENABLED;
+                        break;
+                    case 70:
+                        result = CALL_MESSAGE;
                         break;
                     case 80:
                         result = EPHEMERAL_SAVE;
