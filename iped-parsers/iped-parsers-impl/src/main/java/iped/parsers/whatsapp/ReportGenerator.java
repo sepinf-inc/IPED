@@ -619,6 +619,12 @@ public class ReportGenerator {
                                 out.println("<div class=\"attachImg\" style=\"width:33px;height:33px;display:table-cell\" title=\"Doc\"></div>");
                             }
                             break;                            
+                        case TEMPLATE_MESSAGE:
+                            out.print("<div class=\"" + quoteClass + "\" " + quoteClick
+                                    + "><div style=\"display:table-cell;\"><span class=\"quote_user\">" + quoteUser
+                                    + "</span><br><span class=\"quote_msg\">" + formatTemplate(messageQuote)
+                                    + "</span></div>");
+                            break;
                         default:
                             out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div style=\"display:table-cell;\"><span class=\"quote_user\">"+quoteUser+
                             "</span><br><span class=\"quote_msg\">"+ format(dataQuote) + "</span></div>");
@@ -639,10 +645,11 @@ public class ReportGenerator {
 
                 switch (message.getMessageType()) {
                     case TEXT_MESSAGE:
+                    case TEMPLATE_QUOTE:
                         if (message.getData() != null && !message.getData().isBlank()) {
                             out.print(format(message.getData()) + "<br>"); //$NON-NLS-1$
                         }
-                        // Some (rare) text messages have thumbs
+                        // Some textual messages may have thumbs
                         printThumb(out, message);
                         break;
                     case UNKNOWN_MEDIA_MESSAGE:
@@ -694,26 +701,7 @@ public class ReportGenerator {
                         break;
                     case TEMPLATE_MESSAGE:
                         printThumb(out, message);
-                        if (message.getData() != null && !message.getData().isBlank()) {
-                            out.println(format(message.getData()) + "<br>");
-                        }
-                        MessageTemplate t = message.getMessageTemplate();
-                        if (t != null) {
-                            String content = t.getContent();
-                            if (content != null && !content.isBlank()) {
-                                out.println(format(content) + "<br>");
-                            }
-                            for (MessageTemplate.Button button : t.getButtons()) {
-                                String text = button.getText();
-                                if (text != null && !text.isBlank()) {
-                                    out.println("<b>[" + format(text) + "]</b><br>");
-                                }
-                                String extra = button.getExtra();
-                                if (extra != null && !extra.isBlank() && !extra.equals(text)) {
-                                    out.println(format(extra) + "<br>");
-                                }
-                            }
-                        }
+                        out.println(formatTemplate(message));
                         break;
                     case POLL_MESSAGE:
                         printThumb(out, message);
@@ -1018,6 +1006,31 @@ public class ReportGenerator {
             out.print("<img class=\"thumb\" src=\"");
             out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\"/><br>");
         }
+    }
+
+    private String formatTemplate(Message message) {
+        StringBuilder sb = new StringBuilder();
+        if (message.getData() != null && !message.getData().isBlank()) {
+            sb.append(format(message.getData())).append("<br>");
+        }
+        MessageTemplate t = message.getMessageTemplate();
+        if (t != null) {
+            String content = t.getContent();
+            if (content != null && !content.isBlank()) {
+                sb.append(format(content)).append("<br>");
+            }
+            for (MessageTemplate.Button button : t.getButtons()) {
+                String text = button.getText();
+                if (text != null && !text.isBlank()) {
+                    sb.append("<b>[").append(format(text)).append("]</b><br>");
+                }
+                String extra = button.getExtra();
+                if (extra != null && !extra.isBlank() && !extra.equals(text)) {
+                    sb.append(format(extra)).append("<br>");
+                }
+            }
+        }
+        return sb.toString();
     }
 
     private String getBestContactName(Message message, WAContactsDirectory contactsDirectory, WAAccount account) {

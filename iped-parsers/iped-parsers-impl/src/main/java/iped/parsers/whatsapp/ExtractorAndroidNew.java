@@ -34,6 +34,7 @@ import static iped.parsers.whatsapp.Message.MessageType.SHARE_LOCATION_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.STICKER_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.SUBJECT_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.TEMPLATE_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.TEMPLATE_QUOTE;
 import static iped.parsers.whatsapp.Message.MessageType.TEXT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.UNAVAILABLE_VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.UNAVAILABLE_VOICE_CALL;
@@ -638,6 +639,9 @@ public class ExtractorAndroidNew extends Extractor {
             case 27:
             case 28:
                 result = TEMPLATE_MESSAGE;
+                break;
+            case 32:
+                result = TEMPLATE_QUOTE;
                 break;
             case 36:
                 result = EPHEMERAL_DURATION_CHANGED;
