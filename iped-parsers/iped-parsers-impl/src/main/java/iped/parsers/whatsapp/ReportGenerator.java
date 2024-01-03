@@ -474,12 +474,17 @@ public class ReportGenerator {
                 break;
             case USER_JOINED_GROUP:
             case USERS_JOINED_GROUP:
+                List<String> users = message.getUsersGroupAction();
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
-                out.println(Messages.getString("WhatsAppReport.UserJoinedGroup") + name + "</br>");
+                out.print(name + " " + Messages.getString("WhatsAppReport.UserJoinedGroup"));
+                for (int i = 0; i < users.size(); i++) {
+                    out.print(i == 0 ? ": " : ", ");
+                    out.print(getBestContactName(false, users.get(i), contactsDirectory, account));
+                }
+                out.println(".<br>");
                 if (message.getData() != null) {
                     out.print(format(message.getData()) + "<br/>"); //$NON-NLS-1$
                 }
-                //TODO: Fix who was added to the group VS who added
                 break;
             case USER_JOINED_GROUP_FROM_LINK:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
@@ -490,13 +495,17 @@ public class ReportGenerator {
                 break;
             case USER_LEFT_GROUP:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
-                out.println(Messages.getString("WhatsAppReport.UserLeftGroup") + name + "</br>");
+                out.println(Messages.getString("WhatsAppReport.UserLeftGroup") + ": " + name + "</br>");
                 break;
             case USER_REMOVED_FROM_GROUP:
+                users = message.getUsersGroupAction();
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
-                out.println(
-                        Messages.getString("WhatsAppReport.UserRemovedGroup") + name + "</br>");
-                //TODO: Fix who was removed from the group VS who removed
+                out.print(name + " " + Messages.getString("WhatsAppReport.UserRemovedGroup"));
+                for (int i = 0; i < users.size(); i++) {
+                    out.print(i == 0 ? ": " : ", ");
+                    out.print(getBestContactName(false, users.get(i), contactsDirectory, account));
+                }
+                out.println(".<br>");
                 break;
             case GROUP_ICON_CHANGED:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
@@ -1012,8 +1021,7 @@ public class ReportGenerator {
     }
 
     private String getBestContactName(Message message, WAContactsDirectory contactsDirectory, WAAccount account) {
-        return getBestContactName(message.getRemoteResource() == null && message.isFromMe(),
-                message.getRemoteResource(), contactsDirectory, account);
+        return getBestContactName(message.isFromMe(), message.getRemoteResource(), contactsDirectory, account);
     }
 
     private String getBestContactName(boolean isFromMe, String remoteResource, WAContactsDirectory contactsDirectory,

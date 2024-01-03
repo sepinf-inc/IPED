@@ -239,6 +239,17 @@ public class ExtractorAndroidNew extends Extractor {
         }
     }
 
+    private void extractUsersGroupAction(Connection conn, Message m) throws SQLException {
+        try (PreparedStatement stmt = conn.prepareStatement(SELECT_USERS_GROUP_ACTION)) {
+            stmt.setLong(1, m.getId());
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                String name = rs.getString("raw_string");
+                m.addUserGroupAction(name);
+            }
+        }
+    }
+
     private void extractEphemeralDuration(Connection conn, Message m) throws SQLException {
         try (PreparedStatement stmt = conn.prepareStatement(SELECT_EPHEMERAL_SETTING)) {
             stmt.setLong(1, m.getId());
@@ -255,6 +266,7 @@ public class ExtractorAndroidNew extends Extractor {
                 && SQLite3DBParser.containsTable("message_template_button", conn);
         boolean hasPollOptionTable = SQLite3DBParser.containsTable("message_poll_option", conn);
         boolean hasEphemeralSettingTable = SQLite3DBParser.containsTable("message_ephemeral_setting", conn);
+        boolean hasSystemChat = SQLite3DBParser.containsTable("message_system_chat_participant", conn);
 
         try (PreparedStatement stmt = conn.prepareStatement(getSelectMessagesQuery(conn))) {
             ResultSet rs = stmt.executeQuery();
@@ -290,7 +302,7 @@ public class ExtractorAndroidNew extends Extractor {
                 if (caption == null || caption.isBlank()) {
                     caption = m.getData();
                 }
-                m.setFromMe(rs.getInt("fromMe") == 1); //$NON-NLS-1$
+                m.setFromMe(rs.getInt("fromMe") == 1 && type != 7); //$NON-NLS-1$
                 m.setTimeStamp(new Date(rs.getLong("timestamp"))); //$NON-NLS-1$
                 m.setMediaUrl(rs.getString("mediaUrl")); //$NON-NLS-1$
                 m.setMediaMime(rs.getString("mediaMime")); //$NON-NLS-1$
@@ -356,6 +368,11 @@ public class ExtractorAndroidNew extends Extractor {
 
                 if (hasTemplateTables && m.getMessageType() == TEMPLATE_MESSAGE) {
                     extractTemplateInfo(conn, m);
+                }
+
+                if (hasSystemChat
+                        && (m.getMessageType() == USER_JOINED_GROUP || m.getMessageType() == USER_REMOVED_FROM_GROUP)) {
+                    extractUsersGroupAction(conn, m);
                 }
 
                 c.add(m);
@@ -637,6 +654,8 @@ public class ExtractorAndroidNew extends Extractor {
             + " where parent_message_row_id=?";
 
     private static final String SELECT_TEMPLATE = "SELECT content_text_data as content FROM message_template where message_row_id=?";
+
+    private static final String SELECT_USERS_GROUP_ACTION = "select raw_string from message_system_chat_participant inner join jid on user_jid_row_id = jid._id where message_row_id=? order by _id";
 
     private static final String SELECT_POLL_OPTION = "SELECT option_name as name, vote_total as total FROM message_poll_option where message_row_id=? order by _id";
 
