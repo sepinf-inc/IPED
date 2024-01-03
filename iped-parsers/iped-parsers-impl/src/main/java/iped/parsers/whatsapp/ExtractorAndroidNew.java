@@ -33,6 +33,7 @@ import static iped.parsers.whatsapp.Message.MessageType.POLL_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.REFUSED_VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.REFUSED_VOICE_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.SHARE_LOCATION_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.STANDARD_CHAT;
 import static iped.parsers.whatsapp.Message.MessageType.STICKER_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.SUBJECT_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.TEMPLATE_MESSAGE;
@@ -561,6 +562,9 @@ public class ExtractorAndroidNew extends Extractor {
                         break;
                     case 46:
                         result = BUSINESS_CHAT;
+                        break;
+                    case 50:
+                        result = STANDARD_CHAT;
                         break;
                     case 58:
                         result = BLOCKED_CONTACT;
