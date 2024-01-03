@@ -236,11 +236,13 @@ div:target{
 
 .quote_user {
     font-family: Arial;
+    font-size: 90%;
     color: #01A280;	
 }
 
 .quote_msg {
     font-family: Arial;
+    font-size: 90%;
     color: #67747D;	
 }
 
