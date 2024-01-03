@@ -15,10 +15,12 @@ import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_DURATION_CHANG
 import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_ENABLED;
 import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_SAVE;
 import static iped.parsers.whatsapp.Message.MessageType.GIF_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.GROUP_ALL_MEMBERS_CAN_SEND;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CREATED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_DESCRIPTION_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_ICON_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_INVITE;
+import static iped.parsers.whatsapp.Message.MessageType.GROUP_ONLY_ADMINS_CAN_SEND;
 import static iped.parsers.whatsapp.Message.MessageType.IMAGE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.LOCATION_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.MESSAGES_ENCRYPTED;
@@ -524,6 +526,12 @@ public class ExtractorAndroidNew extends Extractor {
                         break;
                     case 27:
                         result = GROUP_DESCRIPTION_CHANGED;
+                        break;
+                    case 31:
+                        result = GROUP_ONLY_ADMINS_CAN_SEND;
+                        break;
+                    case 32:
+                        result = GROUP_ALL_MEMBERS_CAN_SEND;
                         break;
                     case 46:
                         result = BUSINESS_CHAT;

@@ -519,6 +519,14 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
                 out.println(Messages.getString("WhatsAppReport.YouAdmin")); //$NON-NLS-1$
                 break;
+            case GROUP_ALL_MEMBERS_CAN_SEND:
+                out.println("<div class=\"systemmessage\">");
+                out.println(name + " " + Messages.getString("WhatsAppReport.GroupAllMembersCanSend") + "<br>");
+                break;
+            case GROUP_ONLY_ADMINS_CAN_SEND:
+                out.println("<div class=\"systemmessage\">");
+                out.println(name + " " + Messages.getString("WhatsAppReport.GroupOnlyAdminsCanSend") + "<br>");
+                break;
 
             default:
                 IItemReader mediaItem = null;
