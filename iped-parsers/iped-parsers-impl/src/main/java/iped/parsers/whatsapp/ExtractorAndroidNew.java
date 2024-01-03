@@ -6,6 +6,7 @@ import static iped.parsers.whatsapp.Message.MessageType.BLOCKED_CONTACT;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_CHAT;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_META_SECURE_SERVICE;
 import static iped.parsers.whatsapp.Message.MessageType.CALL_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.CHANGED_NUMBER;
 import static iped.parsers.whatsapp.Message.MessageType.CONTACT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_ADMIN;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_SENDER;
@@ -258,6 +259,17 @@ public class ExtractorAndroidNew extends Extractor {
         }
     }
 
+    private void extractChangedNumber(Connection conn, Message m) throws SQLException {
+        try (PreparedStatement stmt = conn.prepareStatement(SELECT_SYSTEM_NUMBER_CHANGE)) {
+            stmt.setLong(1, m.getId());
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                m.addUserGroupAction(rs.getString("oldUser"));
+                m.addUserGroupAction(rs.getString("newUser"));
+            }
+        }
+    }
+
     private void extractEphemeralDuration(Connection conn, Message m) throws SQLException {
         try (PreparedStatement stmt = conn.prepareStatement(SELECT_EPHEMERAL_SETTING)) {
             stmt.setLong(1, m.getId());
@@ -275,6 +287,7 @@ public class ExtractorAndroidNew extends Extractor {
         boolean hasPollOptionTable = SQLite3DBParser.containsTable("message_poll_option", conn);
         boolean hasEphemeralSettingTable = SQLite3DBParser.containsTable("message_ephemeral_setting", conn);
         boolean hasSystemChat = SQLite3DBParser.containsTable("message_system_chat_participant", conn);
+        boolean hasSystemNumberChangeTable = SQLite3DBParser.containsTable("message_system_number_change", conn);
 
         try (PreparedStatement stmt = conn.prepareStatement(getSelectMessagesQuery(conn))) {
             ResultSet rs = stmt.executeQuery();
@@ -389,6 +402,10 @@ public class ExtractorAndroidNew extends Extractor {
 
                 if (actionType == 13 && !m.getUsersGroupAction().isEmpty()) {
                     m.setRemoteResource(m.getUsersGroupAction().get(0));
+                }
+
+                if (hasSystemNumberChangeTable && m.getMessageType() == CHANGED_NUMBER) {
+                    extractChangedNumber(conn, m);
                 }
 
                 c.add(m);
@@ -510,6 +527,10 @@ public class ExtractorAndroidNew extends Extractor {
                     case 7:
                     case 14:
                         result = USER_REMOVED_FROM_GROUP;
+                        break;
+                    case 10:
+                    case 28:
+                        result = CHANGED_NUMBER;
                         break;
                     case 11:
                         result = GROUP_CREATED;
@@ -691,6 +712,8 @@ public class ExtractorAndroidNew extends Extractor {
     private static final String SELECT_TEMPLATE = "SELECT content_text_data as content FROM message_template where message_row_id=?";
 
     private static final String SELECT_USERS_GROUP_ACTION = "select raw_string from message_system_chat_participant inner join jid on user_jid_row_id = jid._id where message_row_id=? order by _id";
+    
+    private static final String SELECT_SYSTEM_NUMBER_CHANGE = "select old.raw_string as oldUser, new.raw_string as newUser from message_system_number_change left join jid old on old_jid_row_id = old._id left join jid new on new_jid_row_id = new._id where message_row_id=?";
 
     private static final String SELECT_POLL_OPTION = "SELECT option_name as name, vote_total as total FROM message_poll_option where message_row_id=? order by _id";
 

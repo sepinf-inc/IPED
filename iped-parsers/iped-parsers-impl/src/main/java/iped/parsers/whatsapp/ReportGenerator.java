@@ -531,6 +531,15 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.GroupOnlyAdminsCanSend") + "<br>");
                 break;
+            case CHANGED_NUMBER:
+                out.println("<div class=\"systemmessage\">");
+                users = message.getUsersGroupAction();
+                if (users.size() >= 2) {
+                    out.println(getBestContactName(false, users.get(0), contactsDirectory, account) + " "
+                            + Messages.getString("WhatsAppReport.ChangedNumber") + " "
+                            + getBestContactName(false, users.get(1), contactsDirectory, account) + ".<br>");
+                }
+                break;
 
             default:
                 IItemReader mediaItem = null;
