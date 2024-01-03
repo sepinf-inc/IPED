@@ -156,7 +156,10 @@ public class ExtractorAndroidNew extends Extractor {
         try (PreparedStatement stmt = conn.prepareStatement(SELECT_CALLS)) {
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                long chatId = rs.getLong("chatId");
+                long chatId = rs.getLong("groupChatId");
+                if (chatId == 0) {
+                    chatId = rs.getLong("chatId");
+                }
                 Chat c = idToChat.get(chatId);
                 if (c == null) {
                     continue;
@@ -721,9 +724,15 @@ public class ExtractorAndroidNew extends Extractor {
         return "select is_blocked as isBlocked from message_system_block_contact where message_row_id=?";
     }
 
-    private static final String SELECT_CALLS = "select c_l._id as id, c_l.call_id, c_l.video_call, c_l.duration,"
-            + " c_l.timestamp, c_l.call_result, c_l.from_me, cv._id as chatId, cv.raw_string_jid as remoteId"
-            + " from call_log c_l inner join chat c on c_l.jid_row_id=c.jid_row_id inner join chat_view cv on cv._id=c._id";
+    private static final String SELECT_CALLS = "select log._id as id, log.call_id, log.video_call, log.duration,"
+            + " log.timestamp, log.call_result, log.from_me,"
+            + " jid.raw_string as remoteId,"
+            + " chat1._id as chatId,"
+            + " chat2._id as groupChatId"
+            + " from call_log log"
+            + " left join jid on jid._id = log.jid_row_id"
+            + " left join chat chat1 on chat1.jid_row_id = log.jid_row_id"
+            + " left join chat chat2 on chat2.jid_row_id = log.group_jid_row_id";
 
     private static final String SELECT_GROUP_MEMBERS = "select g._id as group_id, g.raw_string as group_name, u._id as user_id, u.raw_string as member "
             + "FROM group_participant_user gp inner join jid g on g._id=gp.group_jid_row_id inner join jid u on u._id=gp.user_jid_row_id where u.server='s.whatsapp.net' and u.type=0 and group_name=?"; //$NON-NLS-1$
