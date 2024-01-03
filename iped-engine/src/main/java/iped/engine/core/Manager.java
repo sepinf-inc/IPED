@@ -227,8 +227,6 @@ public class Manager {
 
         stats.printSystemInfo();
 
-        Files.deleteIfExists(getFinishedFileFlag(output).toPath());
-
         output = output.getCanonicalFile();
 
         args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
@@ -851,6 +849,10 @@ public class Manager {
         if (!output.exists() && !output.mkdirs()) {
             throw new IOException("Fail to create folder " + output.getAbsolutePath()); //$NON-NLS-1$
         }
+
+        // The finished file flag should be reset after basic checks (like already
+        // existing output) were done (see issue #2041).
+        Files.deleteIfExists(getFinishedFileFlag(output).toPath());
 
         if (!args.isAppendIndex() && !args.isContinue() && !args.isRestart() && args.getEvidenceToRemove() == null) {
             IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "lib"), new File(output, "lib"), true); //$NON-NLS-1$ //$NON-NLS-2$
