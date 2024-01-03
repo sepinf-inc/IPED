@@ -140,7 +140,11 @@ public class ExtractorAndroidNew extends Extractor {
             while (rs.next()) {
                 MessageAddOn addOn = new MessageAddOn();
                 addOn.setFromMe(rs.getInt("fromMe") == 1);
-                addOn.setRemoteResource(rs.getString("remoteResource"));
+                String remoteResource = rs.getString("remoteResource");
+                if (hasReactionTable && remoteResource == null) {
+                    remoteResource = rs.getString("remoteResource2");
+                }
+                addOn.setRemoteResource(remoteResource);
                 addOn.setTimeStamp(new Date(rs.getLong("timestamp")));
                 addOn.setStatus(rs.getInt("status"));
                 addOn.setType(rs.getInt("type"));
@@ -647,9 +651,12 @@ public class ExtractorAndroidNew extends Extractor {
 
     private static final String SELECT_ADD_ONS = "SELECT message_add_on_type as type,timestamp, status,jid.raw_string as remoteResource,from_me as fromMe FROM message_add_on m left join jid on jid._id=m.sender_jid_row_id where parent_message_row_id=?";
 
-    private static final String SELECT_ADD_ONS_REACTIONS = "SELECT message_add_on_type as type,timestamp, status,jid.raw_string as remoteResource,from_me as fromMe, r.reaction as reaction"
+    private static final String SELECT_ADD_ONS_REACTIONS = "SELECT message_add_on_type as type, timestamp, status,"
+            + " jid.raw_string as remoteResource, jid2.raw_string as remoteResource2, from_me as fromMe, r.reaction as reaction"
             + " FROM message_add_on m"
             + " left join jid on jid._id=m.sender_jid_row_id"
+            + " left join chat on chat._id=m.chat_row_id"
+            + " left join jid jid2 on jid2._id=chat.jid_row_id"
             + " left join message_add_on_reaction r on r.message_add_on_row_id=m._id"
             + " where parent_message_row_id=?";
 
