@@ -316,8 +316,10 @@ public class ExtractorAndroidNew extends Extractor {
                 m.setMediaSize(media_size);
                 m.setLatitude(rs.getDouble("latitude")); //$NON-NLS-1$
                 m.setLongitude(rs.getDouble("longitude")); //$NON-NLS-1$
-                m.setMessageType(decodeMessageType(type, status, edit_version, caption, rs.getInt("actionType"),
-                        rs.getInt("bizStateId")));
+                
+                int actionType = rs.getInt("actionType");
+                m.setMessageType(
+                        decodeMessageType(type, status, edit_version, caption, actionType, rs.getInt("bizStateId")));
                 m.setDuration(rs.getInt("media_duration")); //$NON-NLS-1$
                 if (m.getMessageType() == CONTACT_MESSAGE) {
                     m.setVcards(Arrays.asList(new String[] { Util.getUTF8String(rs, "vcard") }));
@@ -376,8 +378,13 @@ public class ExtractorAndroidNew extends Extractor {
 
                 if (hasSystemChat
                         && (m.getMessageType() == USER_JOINED_GROUP || m.getMessageType() == USER_REMOVED_FROM_GROUP
-                                || m.getMessageType() == USER_JOINED_GROUP_FROM_LINK)) {
+                                || m.getMessageType() == USER_JOINED_GROUP_FROM_LINK
+                                || m.getMessageType() == USER_LEFT_GROUP)) {
                     extractUsersGroupAction(conn, m);
+                }
+
+                if (actionType == 13 && !m.getUsersGroupAction().isEmpty()) {
+                    m.setRemoteResource(m.getUsersGroupAction().get(0));
                 }
 
                 c.add(m);
@@ -490,6 +497,7 @@ public class ExtractorAndroidNew extends Extractor {
                         result = USER_JOINED_GROUP;
                         break;
                     case 5:
+                    case 13:
                         result = USER_LEFT_GROUP;
                         break;
                     case 6:
