@@ -32,6 +32,7 @@ import static iped.parsers.whatsapp.Message.MessageType.MISSED_VOICE_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.POLL_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.REFUSED_VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.REFUSED_VOICE_CALL;
+import static iped.parsers.whatsapp.Message.MessageType.SENDER_IN_CONTACTS;
 import static iped.parsers.whatsapp.Message.MessageType.SHARE_LOCATION_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.STANDARD_CHAT;
 import static iped.parsers.whatsapp.Message.MessageType.STICKER_MESSAGE;
@@ -590,6 +591,9 @@ public class ExtractorAndroidNew extends Extractor {
                         break;
                     case 80:
                         result = EPHEMERAL_SAVE;
+                        break;
+                    case 129:
+                        result = SENDER_IN_CONTACTS;
                         break;
                     default:
                         break;

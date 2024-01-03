@@ -276,6 +276,10 @@ public class ReportGenerator {
                 out.print(lockedIcon);
                 out.println(name + " " + Messages.getString("WhatsAppReport.SecurityChanged"));
                 break;
+            case SENDER_IN_CONTACTS:
+                out.println("<div class=\"systemmessage\">");
+                out.println(name + " " + Messages.getString("WhatsAppReport.SenderInContacts"));
+                break;
             case EPHEMERAL_ENABLED:
             case EPHEMERAL_DURATION_CHANGED:
                 int seconds = message.getDuration();
