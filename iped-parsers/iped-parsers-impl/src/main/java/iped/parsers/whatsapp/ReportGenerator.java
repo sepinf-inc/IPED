@@ -631,7 +631,7 @@ public class ReportGenerator {
 
                 switch (message.getMessageType()) {
                     case TEXT_MESSAGE:
-                        if (message.getData() != null) {
+                        if (message.getData() != null && !message.getData().isBlank()) {
                             out.print(format(message.getData()) + "<br>"); //$NON-NLS-1$
                         }
                         // Some (rare) text messages have thumbs
@@ -646,7 +646,7 @@ public class ReportGenerator {
                     case URL_MESSAGE:
                         out.println("<a href=\"" + format(message.getUrl()) + "\">" + format(message.getUrl()) //$NON-NLS-1$ //$NON-NLS-2$
                                 + "</a><br>"); //$NON-NLS-1$
-                        if (message.getData() != null) {
+                        if (message.getData() != null && !message.getData().isBlank()) {
                             out.print(format(message.getData()) + "<br>"); //$NON-NLS-1$
                         }
                         break;
@@ -654,7 +654,7 @@ public class ReportGenerator {
                         out.println("<b><u>" + locationIcon + Messages.getString("WhatsAppReport.LocationMessage") + "</u></b><br>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         out.println("Latitude: " + message.getLatitude() + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
                         out.println("Longitude: " + message.getLongitude() + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
-                        if (message.getData() != null) {
+                        if (message.getData() != null && !message.getData().isBlank()) {
                             out.print(format(message.getData()) + "<br>"); //$NON-NLS-1$
                         }
                         break;
@@ -662,7 +662,7 @@ public class ReportGenerator {
                         out.println("<b><u>" + locationIcon + Messages.getString("WhatsAppReport.SharedLocationMessage") + "</u></b><br>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         out.println("Latitude: " + message.getLatitude() + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
                         out.println("Longitude: " + message.getLongitude() + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
-                        if (message.getData() != null) {
+                        if (message.getData() != null && !message.getData().isBlank()) {
                             out.print(format(message.getData()) + "<br>"); //$NON-NLS-1$
                         }
                         break;
@@ -680,13 +680,13 @@ public class ReportGenerator {
                         if (message.getGroupInviteName() != null) {
                             out.println("<b>" + format(message.getGroupInviteName()) + "</b><br>");
                         }
-                        if (message.getData() != null) {
+                        if (message.getData() != null && !message.getData().isBlank()) {
                             out.println(format(message.getData()) + "<br>");
                         }
                         break;
                     case TEMPLATE_MESSAGE:
                         printThumb(out, message);
-                        if (message.getData() != null) {
+                        if (message.getData() != null && !message.getData().isBlank()) {
                             out.println(format(message.getData()) + "<br>");
                         }
                         MessageTemplate t = message.getMessageTemplate();
@@ -710,7 +710,7 @@ public class ReportGenerator {
                     case POLL_MESSAGE:
                         printThumb(out, message);
                         out.println("<b><u>" + Messages.getString("WhatsAppReport.Poll") + "</u></b><br>");
-                        if (message.getData() != null) {
+                        if (message.getData() != null && !message.getData().isBlank()) {
                             out.println(format(message.getData()) + "<br>");
                         }
                         out.println("<ul>");
