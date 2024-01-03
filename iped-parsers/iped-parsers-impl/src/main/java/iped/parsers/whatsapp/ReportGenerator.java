@@ -468,7 +468,7 @@ public class ReportGenerator {
             case GROUP_CREATED:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
                 out.println(Messages.getString("WhatsAppReport.GroupCreated") + " " + name + "</br>");
-                if (message.getData() != null && !message.getData().isEmpty()) {
+                if (message.getData() != null && !message.getData().isBlank()) {
                     out.print(format(message.getData()) + "<br/>"); //$NON-NLS-1$
                 }
                 break;
@@ -482,7 +482,7 @@ public class ReportGenerator {
                     out.print(getBestContactName(false, users.get(i), contactsDirectory, account));
                 }
                 out.println(".<br>");
-                if (message.getData() != null) {
+                if (message.getData() != null && !message.getData().isBlank()) {
                     out.print(format(message.getData()) + "<br/>"); //$NON-NLS-1$
                 }
                 break;
