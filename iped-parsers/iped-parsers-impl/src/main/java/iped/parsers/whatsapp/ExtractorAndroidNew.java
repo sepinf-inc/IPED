@@ -606,6 +606,7 @@ public class ExtractorAndroidNew extends Extractor {
                 result = VIDEO_MESSAGE;
                 break;
             case 4:
+            case 14:
                 result = CONTACT_MESSAGE;
                 break;
             case 5:
