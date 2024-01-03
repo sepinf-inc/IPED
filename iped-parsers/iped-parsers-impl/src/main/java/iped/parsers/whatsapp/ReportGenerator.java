@@ -484,6 +484,14 @@ public class ReportGenerator {
                     out.print(format(message.getData()) + "<br>"); //$NON-NLS-1$
                 }
                 break;
+            case GROUP_ADDED_TO_COMMUNITY:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.GroupAddedToCommunity") + "<br>");
+                break;
+            case COMMUNITY_MANAGEMENT_ACTION:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.CommunityManagementAction") + "<br>");
+                break;
             case USER_JOINED_GROUP:
             case USERS_JOINED_GROUP:
             case USER_JOINED_GROUP_FROM_LINK:

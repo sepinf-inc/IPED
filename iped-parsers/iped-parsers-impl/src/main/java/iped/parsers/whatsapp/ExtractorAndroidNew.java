@@ -8,6 +8,7 @@ import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_META_SECURE_SER
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_OFFICIAL;
 import static iped.parsers.whatsapp.Message.MessageType.CALL_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.CHANGED_NUMBER;
+import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_MANAGEMENT_ACTION;
 import static iped.parsers.whatsapp.Message.MessageType.CONTACT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_ADMIN;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_SENDER;
@@ -17,6 +18,7 @@ import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_DURATION_CHANG
 import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_ENABLED;
 import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_SAVE;
 import static iped.parsers.whatsapp.Message.MessageType.GIF_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.GROUP_ADDED_TO_COMMUNITY;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_SEND;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ONLY_ADMINS_CAN_SEND;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CREATED;
@@ -593,8 +595,16 @@ public class ExtractorAndroidNew extends Extractor {
                     case 70:
                         result = CALL_MESSAGE;
                         break;
+                    case 75:
+                    case 108:
+                        result = GROUP_ADDED_TO_COMMUNITY;
+                        break;
                     case 80:
                         result = EPHEMERAL_SAVE;
+                        break;
+                    case 88:
+                    case 110:
+                        result = COMMUNITY_MANAGEMENT_ACTION;
                         break;
                     case 129:
                         result = SENDER_IN_CONTACTS;
