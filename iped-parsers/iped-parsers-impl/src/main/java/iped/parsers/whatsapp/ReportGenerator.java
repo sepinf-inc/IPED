@@ -264,6 +264,7 @@ public class ReportGenerator {
         String bubbleToSpecial = "<div class=\"bbrs\"><div class=\"specialmessage to\">";
 
         out.println("<div class=\"linha\" id=\"" + message.getUniqueId() + "\">"); //$NON-NLS-1$
+        String name = getBestContactName(message, contactsDirectory, account);
 
         switch (message.getMessageType()) {
             case UNKNOWN_MESSAGE:
@@ -273,8 +274,7 @@ public class ReportGenerator {
             case ENCRYPTION_KEY_CHANGED:
                 out.println("<div class=\"systemmessage\">");
                 out.print(lockedIcon);
-                String user = getBestContactName(message, contactsDirectory, account);
-                out.println(user + " " + Messages.getString("WhatsAppReport.SecurityChanged"));
+                out.println(name + " " + Messages.getString("WhatsAppReport.SecurityChanged"));
                 break;
             case EPHEMERAL_ENABLED:
             case EPHEMERAL_DURATION_CHANGED:
@@ -283,8 +283,7 @@ public class ReportGenerator {
                 String duration = days > 1 ? days + " " + Messages.getString("WhatsAppReport.Days")
                         : seconds / 3600 + " " + Messages.getString("WhatsAppReport.Hours");
                 out.println("<div class=\"systemmessage\">");
-                user = getBestContactName(message, contactsDirectory, account);
-                out.print(user + " ");
+                out.print(name + " ");
                 if (message.getMessageType() == MessageType.EPHEMERAL_ENABLED) {
                     out.print(Messages.getString("WhatsAppReport.EphemeralEnabled"));
                 } else {
@@ -337,6 +336,9 @@ public class ReportGenerator {
                 } else {
                     isFromSpecial = true;
                     out.println(bubbleFromSpecial);
+                    if (!name.isEmpty() && group) {
+                        out.println("<span class=\"name_call\">" + name + "</span><br/>");
+                    }
                 }
                 out.println(Messages.getString("WhatsAppReport.MissedVideoCall")); //$NON-NLS-1$
                 break;
@@ -347,6 +349,9 @@ public class ReportGenerator {
                 } else {
                     isFromSpecial = true;
                     out.println(bubbleFromSpecial);
+                    if (!name.isEmpty() && group) {
+                        out.println("<span class=\"name_call\">" + name + "</span><br/>");
+                    }
                 }
                 out.println(Messages.getString("WhatsAppReport.MissedVoiceCall")); //$NON-NLS-1$
                 break;
@@ -357,6 +362,9 @@ public class ReportGenerator {
                 } else {
                     isFromSpecial = true;
                     out.println(bubbleFromSpecial);
+                    if (!name.isEmpty() && group) {
+                        out.println("<span class=\"name_call\">" + name + "</span><br/>");
+                    }
                 }
                 out.println(Messages.getString("WhatsAppReport.RefusedVoiceCall")); //$NON-NLS-1$
                 break;
@@ -367,6 +375,9 @@ public class ReportGenerator {
                 } else {
                     isFromSpecial = true;
                     out.println(bubbleFromSpecial);
+                    if (!name.isEmpty() && group) {
+                        out.println("<span class=\"name_call\">" + name + "</span><br/>");
+                    }
                 }
                 out.println(Messages.getString("WhatsAppReport.RefusedVideoCall")); //$NON-NLS-1$
                 break;
@@ -377,6 +388,9 @@ public class ReportGenerator {
                 } else {
                     isFromSpecial = true;
                     out.println(bubbleFromSpecial);
+                    if (!name.isEmpty() && group) {
+                        out.println("<span class=\"name_call\">" + name + "</span><br/>");
+                    }
                 }
                 out.println(Messages.getString("WhatsAppReport.UnavailableVoiceCall")); //$NON-NLS-1$
                 break;
@@ -387,6 +401,9 @@ public class ReportGenerator {
                 } else {
                     isFromSpecial = true;
                     out.println(bubbleFromSpecial);
+                    if (!name.isEmpty() && group) {
+                        out.println("<span class=\"name_call\">" + name + "</span><br/>");
+                    }
                 }
                 out.println(Messages.getString("WhatsAppReport.UnavailableVideoCall")); //$NON-NLS-1$
                 break;
@@ -397,6 +414,9 @@ public class ReportGenerator {
                 } else {
                     isFromSpecial = true;
                     out.println(bubbleFromSpecial);
+                    if (!name.isEmpty() && group) {
+                        out.println("<span class=\"name_call\">" + name + "</span><br/>");
+                    }
                 }
                 out.println(Messages.getString("WhatsAppReport.UnknownVoiceCall")); //$NON-NLS-1$
                 break;
@@ -407,6 +427,9 @@ public class ReportGenerator {
                 } else {
                     isFromSpecial = true;
                     out.println(bubbleFromSpecial);
+                    if (!name.isEmpty() && group) {
+                        out.println("<span class=\"name_call\">" + name + "</span><br/>");
+                    }
                 }
                 out.println(Messages.getString("WhatsAppReport.UnknownVideoCall")); //$NON-NLS-1$
                 break;
@@ -417,6 +440,9 @@ public class ReportGenerator {
                 } else {
                     isFromSpecial = true;
                     out.println(bubbleFromSpecial);
+                    if (!name.isEmpty() && group) {
+                        out.println("<span class=\"name_call\">" + name + "</span><br/>");
+                    }
                 }
                 out.println(Messages.getString("WhatsAppReport.VideoCall")); //$NON-NLS-1$
                 if (message.getDuration() > 0) {
@@ -431,6 +457,9 @@ public class ReportGenerator {
                 } else {
                     isFromSpecial = true;
                     out.println(bubbleFromSpecial);
+                    if (!name.isEmpty() && group) {
+                        out.println("<span class=\"name_call\">" + name + "</span><br/>");
+                    }
                 }
                 out.println(Messages.getString("WhatsAppReport.VoiceCall") + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
                 out.println(
@@ -497,38 +526,19 @@ public class ReportGenerator {
             default:
                 IItemReader mediaItem = null;
                 byte[] thumb = null;
-                String name = null, number = null;
                 String query = null;
                 String exportPath = null;
 
                 if (message.isFromMe()) {
                     out.println(bubbleTo);
                     isTo = true;
-                    if (account != null && !account.isUnknown()) {
-                        name = account.getName();
-                        number = message.getLocalResource();
-                    }
                 } else {
                     out.println(bubbleFrom);
                     isFrom = true;
-                    number = message.getRemoteResource();
-                    if (number != null) {
-                        WAContact contact = contactsDirectory.getContact(number);
-                        name = contact == null ? null : contact.getName();
-                    }
                 }
-                name = name == null ? "" : name.trim();
-                number = number == null ? "" : number.trim();
-                if (!number.isEmpty()) {
-                    if (name.isEmpty()) {
-                        name = number;
-                    } else if (!number.equals(name) && !number.equals(name + WAContact.waSuffix)) {
-                        name += " (" + number + ")"; //$NON-NLS-1$ //$NON-NLS-2$
-                    }
-                }
+
                 if (!name.isEmpty()) {
-                    out.println("<span style=\"font-family: Arial; color: #b4c74b;\">" //$NON-NLS-1$
-                            + format(name) + "</span><br/>"); //$NON-NLS-1$
+                    out.println("<span class=\"name\">" + name + "</span><br/>");
                 }
 
                 //Messages.getString("WhatsAppReport.Forwarded")
@@ -907,11 +917,9 @@ public class ReportGenerator {
                     }
                     aoDetails.append(a.getReaction());
                     
-                    String name = getBestContactName(a.isFromMe(), a.getRemoteResource(), contactsDirectory, account);
-                    if (name != null) {
-                        aoDetails.append(' ');
-                        aoDetails.append(format(name));
-                    }
+                    String reactionName = getBestContactName(a.isFromMe(), a.getRemoteResource(), contactsDirectory, account);
+                    aoDetails.append(' ');
+                    aoDetails.append(reactionName);
 
                     if (a.getTimeStamp() != null) {
                         aoDetails.append(" [");
@@ -1008,7 +1016,8 @@ public class ReportGenerator {
     }
 
     private String getBestContactName(Message message, WAContactsDirectory contactsDirectory, WAAccount account) {
-        return getBestContactName(message.getRemoteResource()==null && message.isFromMe(), message.getRemoteResource(), contactsDirectory, account);
+        return getBestContactName(message.getRemoteResource() == null && message.isFromMe(),
+                message.getRemoteResource(), contactsDirectory, account);
     }
 
     private String getBestContactName(boolean isFromMe, String remoteResource, WAContactsDirectory contactsDirectory,
@@ -1042,10 +1051,7 @@ public class ReportGenerator {
                 name += " (" + number + ")";
             }
         }
-        if (name != null) {
-            return format(name);
-        }
-        return "User Unknown";
+        return format(name);
     }
 
     public static String formatMMSS(int duration) {
