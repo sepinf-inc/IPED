@@ -659,8 +659,16 @@ public class ReportGenerator {
                                     + "</span></div>");
                             break;
                         default:
-                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div style=\"display:table-cell;\"><span class=\"quote_user\">"+quoteUser+
-                            "</span><br><span class=\"quote_msg\">"+ format(dataQuote) + "</span></div>");
+                            out.print("<div class=\"" + quoteClass + "\" " + quoteClick
+                                    + "><div style=\"display:table-cell;\"><span class=\"quote_user\">" + quoteUser
+                                    + "</span><br><span class=\"quote_msg\">" + format(dataQuote));
+                            if (messageQuote.getUiElements() != null && !messageQuote.getUiElements().isBlank()) {
+                                if (dataQuote != null && !dataQuote.isBlank()) {
+                                    out.println("<br>");
+                                }
+                                out.print(formatUiElements(messageQuote.getUiElements()));
+                            }
+                            out.println("</span></div>");
                             break;
                     }
                     if (messageQuote.isDeleted()) {
@@ -679,11 +687,16 @@ public class ReportGenerator {
                 switch (message.getMessageType()) {
                     case TEXT_MESSAGE:
                     case TEMPLATE_QUOTE:
+                    case UI_ELEMENTS_QUOTE:
+                    case UI_ELEMENTS:
+                        // Some textual messages may have thumbs
+                        printThumb(out, message);
                         if (message.getData() != null && !message.getData().isBlank()) {
                             out.print(format(message.getData()) + "<br>"); //$NON-NLS-1$
                         }
-                        // Some textual messages may have thumbs
-                        printThumb(out, message);
+                        if (message.getUiElements() != null && !message.getUiElements().isBlank()) {
+                            out.print(formatUiElements(message.getUiElements()));
+                        }
                         break;
                     case UNKNOWN_MEDIA_MESSAGE:
                         if (message.getMediaCaption() != null) {
@@ -1041,6 +1054,63 @@ public class ReportGenerator {
         }
     }
 
+    private static String formatUiElements(String s) {
+        StringBuilder sb = new StringBuilder();
+        String[] keys = { "title", "content", "description", "footerText", "footer" };
+        for (String key : keys) {
+            key = '"' + key + '"';
+            int p1 = s.indexOf(key);
+            if (p1 >= 0) {
+                p1 += key.length();
+                p1 = s.indexOf("\"", p1);
+                if (p1 >= 0) {
+                    p1++;
+                    int p2 = s.indexOf("\"", p1);
+                    if (p2 > 0 && p2 > p1 + 1) {
+                        if (sb.length() > 0) {
+                            sb.append("<br>\n");
+                        }
+                        sb.append(format(s.substring(p1, p2).replaceAll("\\\\n", "\n")));
+                    }
+                }
+            }
+        }
+        keys = new String[] { "displayText", "title", "description" };
+        int p0 = s.indexOf("\"id\"");
+        while (p0 > 0 && p0 < s.length()) {
+            StringBuilder opt = new StringBuilder();
+            int p3 = p0;
+            for (String key : keys) {
+                key = '"' + key + '"';
+                int p1 = s.indexOf(key, p0);
+                if (p1 >= 0) {
+                    p1 += key.length();
+                    p1 = s.indexOf("\"", p1);
+                    if (p1 >= 0) {
+                        p1++;
+                        int p2 = s.indexOf("\"", p1);
+                        if (p2 > 0 && p2 > p1 + 1) {
+                            if (opt.length() > 0) {
+                                opt.append(" - ");
+                            }
+                            opt.append(format(s.substring(p1, p2).replaceAll("\\\\n", "\n")));
+                            p3 = Math.max(p3, p2 + 1);
+                        }
+                    }
+                }
+            }
+            if (opt.length() == 0) {
+                break;
+            }
+            if (sb.length() > 0) {
+                sb.append("<br>\n");
+            }
+            sb.append("[<b>").append(opt).append("</b>]");
+            p0 = p3 + 1;
+        }
+        return sb.toString();
+    }
+    
     private String formatTemplate(Message message) {
         StringBuilder sb = new StringBuilder();
         if (message.getData() != null && !message.getData().isBlank()) {

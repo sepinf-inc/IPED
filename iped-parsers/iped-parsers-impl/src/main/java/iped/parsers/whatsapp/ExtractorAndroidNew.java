@@ -43,6 +43,8 @@ import static iped.parsers.whatsapp.Message.MessageType.SUBJECT_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.TEMPLATE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.TEMPLATE_QUOTE;
 import static iped.parsers.whatsapp.Message.MessageType.TEXT_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.UI_ELEMENTS;
+import static iped.parsers.whatsapp.Message.MessageType.UI_ELEMENTS_QUOTE;
 import static iped.parsers.whatsapp.Message.MessageType.UNAVAILABLE_VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.UNAVAILABLE_VOICE_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.UNBLOCKED_CONTACT;
@@ -393,6 +395,7 @@ public class ExtractorAndroidNew extends Extractor {
                 m.setUuid(rs.getString("uuid"));
                 m.setGroupInviteName(rs.getString("groupInviteName"));
                 m.setSortId(rs.getLong("sortId"));
+                m.setUiElements(rs.getString("uiElem"));
 
                 if (hasTemplateTables && m.getMessageType() == TEMPLATE_MESSAGE) {
                     extractTemplateInfo(conn, m);
@@ -700,6 +703,13 @@ public class ExtractorAndroidNew extends Extractor {
             case 43:
                 result = VIEW_ONCE_VIDEO_MESSAGE;
                 break;
+            case 45:
+                result = UI_ELEMENTS;
+                break;
+            case 46:
+            case 49:
+                result = UI_ELEMENTS_QUOTE;
+                break;
             case 64:
                 if (status == 0) {
                     result = DELETED_BY_ADMIN;
@@ -774,6 +784,13 @@ public class ExtractorAndroidNew extends Extractor {
             grpInvTableJoin = " left join message_group_invite mgi on m._id=mgi.message_row_id";
         }
 
+        String uiElemCol = "null";
+        String uiElemTableJoin = "";
+        if (SQLite3DBParser.containsTable("message_ui_elements", conn)) {
+            uiElemCol = "mue.element_content";
+            uiElemTableJoin = " left join message_ui_elements mue on m._id=mue.message_row_id";
+        }
+
         return "select m._id AS id,m.chat_row_id as chatId, chatJid.raw_string as remoteId,"
                 + " jid.raw_string as remoteResource, status, mv.vcard, m.text_data,"
                 + " m.from_me as fromMe, m.timestamp as timestamp, message_url as mediaUrl,"
@@ -785,7 +802,8 @@ public class ExtractorAndroidNew extends Extractor {
                 + " " + mhtCol + " as thumbData2,"
                 + " " + bizStateCol + " as bizStateId,"
                 + " " + grpInvCol + " as groupInviteName,"
-                + " " + sortCol + " as sortId"
+                + " " + sortCol + " as sortId,"
+                + " " + uiElemCol + " as uiElem"
                 + " from message m"
                 + " left join chat on m.chat_row_id=chat._id"
                 + " left join jid chatJid on chatJid._id=chat.jid_row_id"
@@ -797,6 +815,7 @@ public class ExtractorAndroidNew extends Extractor {
                 + mhtTableJoin
                 + bizStateTableJoin
                 + grpInvTableJoin
+                + uiElemTableJoin
                 + " left join message_thumbnail mt on m._id=mt.message_row_id where status!=-1";
     }
 
