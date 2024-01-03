@@ -337,7 +337,7 @@ public class ReportGenerator {
                     isFromSpecial = true;
                     out.println(bubbleFromSpecial);
                     if (!name.isEmpty() && group) {
-                        out.println("<span class=\"name_call\">" + name + "</span><br/>");
+                        out.println("<span class=\"name_call\">" + name + "</span><br>");
                     }
                 }
                 out.println(Messages.getString("WhatsAppReport.MissedVideoCall")); //$NON-NLS-1$
@@ -350,7 +350,7 @@ public class ReportGenerator {
                     isFromSpecial = true;
                     out.println(bubbleFromSpecial);
                     if (!name.isEmpty() && group) {
-                        out.println("<span class=\"name_call\">" + name + "</span><br/>");
+                        out.println("<span class=\"name_call\">" + name + "</span><br>");
                     }
                 }
                 out.println(Messages.getString("WhatsAppReport.MissedVoiceCall")); //$NON-NLS-1$
@@ -363,7 +363,7 @@ public class ReportGenerator {
                     isFromSpecial = true;
                     out.println(bubbleFromSpecial);
                     if (!name.isEmpty() && group) {
-                        out.println("<span class=\"name_call\">" + name + "</span><br/>");
+                        out.println("<span class=\"name_call\">" + name + "</span><br>");
                     }
                 }
                 out.println(Messages.getString("WhatsAppReport.RefusedVoiceCall")); //$NON-NLS-1$
@@ -376,7 +376,7 @@ public class ReportGenerator {
                     isFromSpecial = true;
                     out.println(bubbleFromSpecial);
                     if (!name.isEmpty() && group) {
-                        out.println("<span class=\"name_call\">" + name + "</span><br/>");
+                        out.println("<span class=\"name_call\">" + name + "</span><br>");
                     }
                 }
                 out.println(Messages.getString("WhatsAppReport.RefusedVideoCall")); //$NON-NLS-1$
@@ -389,7 +389,7 @@ public class ReportGenerator {
                     isFromSpecial = true;
                     out.println(bubbleFromSpecial);
                     if (!name.isEmpty() && group) {
-                        out.println("<span class=\"name_call\">" + name + "</span><br/>");
+                        out.println("<span class=\"name_call\">" + name + "</span><br>");
                     }
                 }
                 out.println(Messages.getString("WhatsAppReport.UnavailableVoiceCall")); //$NON-NLS-1$
@@ -402,7 +402,7 @@ public class ReportGenerator {
                     isFromSpecial = true;
                     out.println(bubbleFromSpecial);
                     if (!name.isEmpty() && group) {
-                        out.println("<span class=\"name_call\">" + name + "</span><br/>");
+                        out.println("<span class=\"name_call\">" + name + "</span><br>");
                     }
                 }
                 out.println(Messages.getString("WhatsAppReport.UnavailableVideoCall")); //$NON-NLS-1$
@@ -415,7 +415,7 @@ public class ReportGenerator {
                     isFromSpecial = true;
                     out.println(bubbleFromSpecial);
                     if (!name.isEmpty() && group) {
-                        out.println("<span class=\"name_call\">" + name + "</span><br/>");
+                        out.println("<span class=\"name_call\">" + name + "</span><br>");
                     }
                 }
                 out.println(Messages.getString("WhatsAppReport.UnknownVoiceCall")); //$NON-NLS-1$
@@ -428,7 +428,7 @@ public class ReportGenerator {
                     isFromSpecial = true;
                     out.println(bubbleFromSpecial);
                     if (!name.isEmpty() && group) {
-                        out.println("<span class=\"name_call\">" + name + "</span><br/>");
+                        out.println("<span class=\"name_call\">" + name + "</span><br>");
                     }
                 }
                 out.println(Messages.getString("WhatsAppReport.UnknownVideoCall")); //$NON-NLS-1$
@@ -441,7 +441,7 @@ public class ReportGenerator {
                     isFromSpecial = true;
                     out.println(bubbleFromSpecial);
                     if (!name.isEmpty() && group) {
-                        out.println("<span class=\"name_call\">" + name + "</span><br/>");
+                        out.println("<span class=\"name_call\">" + name + "</span><br>");
                     }
                 }
                 out.println(Messages.getString("WhatsAppReport.VideoCall")); //$NON-NLS-1$
@@ -458,7 +458,7 @@ public class ReportGenerator {
                     isFromSpecial = true;
                     out.println(bubbleFromSpecial);
                     if (!name.isEmpty() && group) {
-                        out.println("<span class=\"name_call\">" + name + "</span><br/>");
+                        out.println("<span class=\"name_call\">" + name + "</span><br>");
                     }
                 }
                 out.println(Messages.getString("WhatsAppReport.VoiceCall") + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -467,9 +467,9 @@ public class ReportGenerator {
                 break;
             case GROUP_CREATED:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
-                out.println(Messages.getString("WhatsAppReport.GroupCreated") + " " + name + "</br>");
+                out.println(Messages.getString("WhatsAppReport.GroupCreated") + " " + name + "<br>");
                 if (message.getData() != null && !message.getData().isBlank()) {
-                    out.print(format(message.getData()) + "<br/>"); //$NON-NLS-1$
+                    out.print(format(message.getData()) + "<br>"); //$NON-NLS-1$
                 }
                 break;
             case USER_JOINED_GROUP:
@@ -492,12 +492,12 @@ public class ReportGenerator {
                 }
                 out.println(".<br>");
                 if (message.getData() != null && !message.getData().isBlank()) {
-                    out.print(format(message.getData()) + "<br/>"); //$NON-NLS-1$
+                    out.print(format(message.getData()) + "<br>"); //$NON-NLS-1$
                 }
                 break;
             case USER_LEFT_GROUP:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
-                out.println(Messages.getString("WhatsAppReport.UserLeftGroup") + ": " + name + "</br>");
+                out.println(Messages.getString("WhatsAppReport.UserLeftGroup") + ": " + name + "<br>");
                 break;
             case GROUP_ICON_CHANGED:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
@@ -535,13 +535,13 @@ public class ReportGenerator {
                 }
 
                 if (!name.isEmpty()) {
-                    out.println("<span class=\"name\">" + name + "</span><br/>");
+                    out.println("<span class=\"name\">" + name + "</span><br>");
                 }
 
                 //Messages.getString("WhatsAppReport.Forwarded")
                 if (message.isForwarded()) {
                     out.println(forwardedIcon + "<span class=\"fwd\">"
-                            + Messages.getString("WhatsAppReport.Forwarded") + "</span><br/>");
+                            + Messages.getString("WhatsAppReport.Forwarded") + "</span><br>");
                 }
 
                 String quoteClass = (message.isFromMe())?"quote_to":"quote_from";                
@@ -563,7 +563,7 @@ public class ReportGenerator {
                             }
                             quoteIcon = "\uD83C\uDFA7";
                             out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div style=\"display:table-cell;\"><span class=\"quote_user\">"+quoteUser+
-                            "</span></br><span class=\"quote_msg\">"+quoteIcon +
+                            "</span><br><span class=\"quote_msg\">"+quoteIcon +
                                 " "+ format(dataQuote) + " "+  quoteDuration + "</span></div>");                                    
                             break;
                         case VIDEO_MESSAGE:     
@@ -573,7 +573,7 @@ public class ReportGenerator {
                                 dataQuote = Messages.getString("WhatsAppReport.Video");
                             }
                             out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div style=\"display:table-cell;vertical-align:top;border-right: 10px solid transparent;\"><span class=\"quote_user\">"+quoteUser+
-                            "</span></br><span class=\"quote_msg\">"+quoteIcon +
+                            "</span><br><span class=\"quote_msg\">"+quoteIcon +
                                 " "+ format(dataQuote) + " "+  quoteDuration + "</span></div>");
                             if (thumbQuote != null) {
                                 out.print("<div><img style=\"width:33px;height:33px;display:table-cell\" src=\"");
@@ -589,7 +589,7 @@ public class ReportGenerator {
                                 dataQuote = Messages.getString("WhatsAppReport.Photo");
                             }
                             out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div style=\"display:table-cell;vertical-align:top;border-right: 10px solid transparent;\"><span class=\"quote_user\">"+quoteUser+
-                                "</span></br><span class=\"quote_msg\">"+quoteIcon +" "+ format(dataQuote) + " </span></div>");                                    
+                                "</span><br><span class=\"quote_msg\">"+quoteIcon +" "+ format(dataQuote) + " </span></div>");                                    
                             if (thumbQuote != null) {
                                 out.print("<div><img style=\"width:33px;height:33px;display:table-cell\" src=\"");
                                 out.print("data:image/jpg;base64," + Util.encodeBase64(thumbQuote) + "\"></div>");
@@ -603,7 +603,7 @@ public class ReportGenerator {
                                 dataQuote = Messages.getString("WhatsAppReport.Document");
                             }
                             out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div style=\"display:table-cell;vertical-align:top;border-right: 10px solid transparent;\"><span class=\"quote_user\">"+quoteUser+
-                                "</span></br><span class=\"quote_msg\">"+quoteIcon +" "+ format(dataQuote) + " </span></div>");                                    
+                                "</span><br><span class=\"quote_msg\">"+quoteIcon +" "+ format(dataQuote) + " </span></div>");                                    
                             if (thumbQuote != null) {
                                 out.print("<div><img style=\"width:33px;height:33px;display:table-cell\" src=\"");
                                 out.print("data:image/jpg;base64," + Util.encodeBase64(thumbQuote) + "\"></div>");
@@ -613,11 +613,11 @@ public class ReportGenerator {
                             break;                            
                         default:
                             out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div style=\"display:table-cell;\"><span class=\"quote_user\">"+quoteUser+
-                            "</span></br><span class=\"quote_msg\">"+ format(dataQuote) + "</span></div>");
+                            "</span><br><span class=\"quote_msg\">"+ format(dataQuote) + "</span></div>");
                             break;
                     }
                     if (messageQuote.isDeleted()) {
-                        out.println("<div style=\"display:table-footer-group\"><br/><span style=\"float:none\" class=\"recovered\">");
+                        out.println("<div style=\"display:table-footer-group\"><br><span style=\"float:none\" class=\"recovered\">");
                         out.println("<div class=\"deletedIcon\"></div>");
                         out.println("<i>" + Messages.getString("WhatsAppReport.Recovered") + "</i>");
                         out.println("</span></div>");
@@ -626,48 +626,48 @@ public class ReportGenerator {
                     
                 } else if (message.isQuoted() && messageQuote == null){ //Reference not found
                     out.print("<div class=\""+quoteClass+"\"><span class=\"quote_user\">"+
-                    Messages.getString("WhatsAppReport.ReferenceNotFound")+"</span></br><span class=\"quote_msg\">"+format("") + "</span></div>");
+                    Messages.getString("WhatsAppReport.ReferenceNotFound")+"</span><br><span class=\"quote_msg\">"+format("") + "</span></div>");
                 }
 
                 switch (message.getMessageType()) {
                     case TEXT_MESSAGE:
                         if (message.getData() != null) {
-                            out.print(format(message.getData()) + "<br/>"); //$NON-NLS-1$
+                            out.print(format(message.getData()) + "<br>"); //$NON-NLS-1$
                         }
                         // Some (rare) text messages have thumbs
                         printThumb(out, message);
                         break;
                     case UNKNOWN_MEDIA_MESSAGE:
                         if (message.getMediaCaption() != null) {
-                            out.println("<i>" + Messages.getString("WhatsAppReport.UnknownMediaMessage") + "</i><br/>");
-                            out.print(format(message.getMediaCaption()) + "<br/>"); //$NON-NLS-1$
+                            out.println("<i>" + Messages.getString("WhatsAppReport.UnknownMediaMessage") + "</i><br>");
+                            out.print(format(message.getMediaCaption()) + "<br>"); //$NON-NLS-1$
                         }
                         break;
                     case URL_MESSAGE:
                         out.println("<a href=\"" + format(message.getUrl()) + "\">" + format(message.getUrl()) //$NON-NLS-1$ //$NON-NLS-2$
-                                + "</a><br/>"); //$NON-NLS-1$
+                                + "</a><br>"); //$NON-NLS-1$
                         if (message.getData() != null) {
-                            out.print(format(message.getData()) + "<br/>"); //$NON-NLS-1$
+                            out.print(format(message.getData()) + "<br>"); //$NON-NLS-1$
                         }
                         break;
                     case LOCATION_MESSAGE:
-                        out.println("<b><u>" + locationIcon + Messages.getString("WhatsAppReport.LocationMessage") + "</u></b><br/>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                        out.println("Latitude: " + message.getLatitude() + "<br/>"); //$NON-NLS-1$ //$NON-NLS-2$
-                        out.println("Longitude: " + message.getLongitude() + "<br/>"); //$NON-NLS-1$ //$NON-NLS-2$
+                        out.println("<b><u>" + locationIcon + Messages.getString("WhatsAppReport.LocationMessage") + "</u></b><br>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                        out.println("Latitude: " + message.getLatitude() + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
+                        out.println("Longitude: " + message.getLongitude() + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
                         if (message.getData() != null) {
-                            out.print(format(message.getData()) + "<br/>"); //$NON-NLS-1$
+                            out.print(format(message.getData()) + "<br>"); //$NON-NLS-1$
                         }
                         break;
                     case SHARE_LOCATION_MESSAGE:
-                        out.println("<b><u>" + locationIcon + Messages.getString("WhatsAppReport.SharedLocationMessage") + "</u></b><br/>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                        out.println("Latitude: " + message.getLatitude() + "<br/>"); //$NON-NLS-1$ //$NON-NLS-2$
-                        out.println("Longitude: " + message.getLongitude() + "<br/>"); //$NON-NLS-1$ //$NON-NLS-2$
+                        out.println("<b><u>" + locationIcon + Messages.getString("WhatsAppReport.SharedLocationMessage") + "</u></b><br>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                        out.println("Latitude: " + message.getLatitude() + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
+                        out.println("Longitude: " + message.getLongitude() + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
                         if (message.getData() != null) {
-                            out.print(format(message.getData()) + "<br/>"); //$NON-NLS-1$
+                            out.print(format(message.getData()) + "<br>"); //$NON-NLS-1$
                         }
                         break;
                     case CONTACT_MESSAGE:
-                        out.println("<b>" + Messages.getString("WhatsAppReport.Contact") + "</b><br/>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                        out.println("<b>" + Messages.getString("WhatsAppReport.Contact") + "</b><br>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         for (String c : message.getVcards()) {
                             if (c != null) {
                                 VCardParser.printHtmlFromString(out, c);
@@ -676,42 +676,42 @@ public class ReportGenerator {
                         break;
                     case GROUP_INVITE:
                         printThumb(out, message);
-                        out.println("<b><u>" + Messages.getString("WhatsAppReport.GroupInvite") + "</u></b><br/>");
+                        out.println("<b><u>" + Messages.getString("WhatsAppReport.GroupInvite") + "</u></b><br>");
                         if (message.getGroupInviteName() != null) {
-                            out.println("<b>" + format(message.getGroupInviteName()) + "</b><br/>");
+                            out.println("<b>" + format(message.getGroupInviteName()) + "</b><br>");
                         }
                         if (message.getData() != null) {
-                            out.println(format(message.getData()) + "<br/>");
+                            out.println(format(message.getData()) + "<br>");
                         }
                         break;
                     case TEMPLATE_MESSAGE:
                         printThumb(out, message);
                         if (message.getData() != null) {
-                            out.println(format(message.getData()) + "<br/>");
+                            out.println(format(message.getData()) + "<br>");
                         }
                         MessageTemplate t = message.getMessageTemplate();
                         if (t != null) {
                             String content = t.getContent();
                             if (content != null && !content.isBlank()) {
-                                out.println(format(content) + "<br/>");
+                                out.println(format(content) + "<br>");
                             }
                             for (MessageTemplate.Button button : t.getButtons()) {
                                 String text = button.getText();
                                 if (text != null && !text.isBlank()) {
-                                    out.println("<b>[" + format(text) + "]</b><br/>");
+                                    out.println("<b>[" + format(text) + "]</b><br>");
                                 }
                                 String extra = button.getExtra();
                                 if (extra != null && !extra.isBlank() && !extra.equals(text)) {
-                                    out.println(format(extra) + "<br/>");
+                                    out.println(format(extra) + "<br>");
                                 }
                             }
                         }
                         break;
                     case POLL_MESSAGE:
                         printThumb(out, message);
-                        out.println("<b><u>" + Messages.getString("WhatsAppReport.Poll") + "</u></b><br/>");
+                        out.println("<b><u>" + Messages.getString("WhatsAppReport.Poll") + "</u></b><br>");
                         if (message.getData() != null) {
-                            out.println(format(message.getData()) + "<br/>");
+                            out.println(format(message.getData()) + "<br>");
                         }
                         out.println("<ul>");
                         List<PollOption> pollOptions = message.getPollOptions();
@@ -730,17 +730,17 @@ public class ReportGenerator {
                         out.println("</ul>");
                         break;
                     case DELETED_MESSAGE:
-                        out.println("<i>" + deletedIcon + Messages.getString("WhatsAppReport.MessageDeleted") + "</i><br/>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                        out.println("<i>" + deletedIcon + Messages.getString("WhatsAppReport.MessageDeleted") + "</i><br>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         break;
                     case DELETED_BY_ADMIN:
-                        out.println("<i>" + deletedIcon + Messages.getString("WhatsAppReport.MessageDeletedByAdmin") + "</i><br/>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                        out.println("<i>" + deletedIcon + Messages.getString("WhatsAppReport.MessageDeletedByAdmin") + "</i><br>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         break;
                     case DELETED_BY_SENDER:
                         out.println("<i>" + deletedIcon + Messages.getString("WhatsAppReport.MessageDeletedBySender") //$NON-NLS-1$ //$NON-NLS-2$
-                                + "</i><br/>"); //$NON-NLS-1$
+                                + "</i><br>"); //$NON-NLS-1$
                         break;
                     case WAITING_MESSAGE:
-                        out.println("<i>" + Messages.getString("WhatsAppReport.WaitingMessage") + "</i><br/>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                        out.println("<i>" + Messages.getString("WhatsAppReport.WaitingMessage") + "</i><br>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         break;
                     case AUDIO_MESSAGE:
                     case VIDEO_MESSAGE:
@@ -810,7 +810,7 @@ public class ReportGenerator {
                                     out.println("</a><br>"); //$NON-NLS-1$
                                 }
                                 if (mediaItem.getMetadata().get(ExtraProperties.DOWNLOADED_DATA) != null) {
-                                    out.println("<b>" + Messages.getString("ReportGenerator.DownloadedFile") + "</b><br/>");
+                                    out.println("<b>" + Messages.getString("ReportGenerator.DownloadedFile") + "</b><br>");
                                 }
                                 String transcription = mediaItem.getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR);
                                 if (transcription != null) {
@@ -822,7 +822,7 @@ public class ReportGenerator {
                                     }
                                     out.println(": <i>"); //$NON-NLS-1$
                                     out.println(format(transcription));
-                                    out.println("</i><br/>"); //$NON-NLS-1$
+                                    out.println("</i><br>"); //$NON-NLS-1$
                                 }
                             } else {
                                 if (thumb != null) {
@@ -841,7 +841,7 @@ public class ReportGenerator {
                                 }
                                 out.println("</a><br>"); //$NON-NLS-1$
                                 if (mediaItem.getMetadata().get(ExtraProperties.DOWNLOADED_DATA) != null) {
-                                    out.println("<b>" + Messages.getString("ReportGenerator.DownloadedFile") + "</b><br/>");
+                                    out.println("<b>" + Messages.getString("ReportGenerator.DownloadedFile") + "</b><br>");
                                 }
                             }
                         } else { // mediaItem is null (media file not found)
@@ -961,14 +961,14 @@ public class ReportGenerator {
         }
         out.println("</span>"); //$NON-NLS-1$
         if (message.isDeleted()) {
-            out.println("<br/><span class=\"recovered\">"); //$NON-NLS-1$
+            out.println("<br><span class=\"recovered\">"); //$NON-NLS-1$
             out.println("<i>" + Messages.getString("WhatsAppReport.MessageDeletedRecovered") + "</i>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             out.println("<div class=\"deletedIcon\"></div>"); //$NON-NLS-1$
             out.println("</span>"); //$NON-NLS-1$
         }
 
         if (message.getRecoveredFrom() != null) {
-            out.println("<br/><span class=\"recovered\">"); //$NON-NLS-1$
+            out.println("<br><span class=\"recovered\">"); //$NON-NLS-1$
             out.print(Messages.getString("WhatsAppReport.RecoveredFrom") + " " + format(message.getRecoveredFrom()));
             out.println("</span>"); //$NON-NLS-1$
 
@@ -1008,7 +1008,7 @@ public class ReportGenerator {
         byte[] thumb = message.getThumbData();
         if (thumb != null) {
             out.print("<img class=\"thumb\" src=\"");
-            out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\"/><br/>");
+            out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\"/><br>");
         }
     }
 
