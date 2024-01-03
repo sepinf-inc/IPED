@@ -474,9 +474,18 @@ public class ReportGenerator {
                 break;
             case USER_JOINED_GROUP:
             case USERS_JOINED_GROUP:
+            case USER_JOINED_GROUP_FROM_LINK:
+            case USER_REMOVED_FROM_GROUP:
                 List<String> users = message.getUsersGroupAction();
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
-                out.print(name + " " + Messages.getString("WhatsAppReport.UserJoinedGroup"));
+                out.print(name + " ");
+                if (message.getMessageType() == MessageType.USER_REMOVED_FROM_GROUP) {
+                    out.print(Messages.getString("WhatsAppReport.UserRemovedGroup"));
+                } else if (message.getMessageType() == MessageType.USER_JOINED_GROUP_FROM_LINK) {
+                    out.print(Messages.getString("WhatsAppReport.UserJoinedGroupLink"));
+                } else {
+                    out.print(Messages.getString("WhatsAppReport.UserJoinedGroup"));
+                }
                 for (int i = 0; i < users.size(); i++) {
                     out.print(i == 0 ? ": " : ", ");
                     out.print(getBestContactName(false, users.get(i), contactsDirectory, account));
@@ -486,26 +495,9 @@ public class ReportGenerator {
                     out.print(format(message.getData()) + "<br/>"); //$NON-NLS-1$
                 }
                 break;
-            case USER_JOINED_GROUP_FROM_LINK:
-                out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
-                out.println(Messages.getString("WhatsAppReport.UserJoinedGroupLink")); //$NON-NLS-1$
-                if (message.getData() != null) {
-                    out.print(format(message.getData()) + "<br/>"); //$NON-NLS-1$
-                }
-                break;
             case USER_LEFT_GROUP:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
                 out.println(Messages.getString("WhatsAppReport.UserLeftGroup") + ": " + name + "</br>");
-                break;
-            case USER_REMOVED_FROM_GROUP:
-                users = message.getUsersGroupAction();
-                out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
-                out.print(name + " " + Messages.getString("WhatsAppReport.UserRemovedGroup"));
-                for (int i = 0; i < users.size(); i++) {
-                    out.print(i == 0 ? ": " : ", ");
-                    out.print(getBestContactName(false, users.get(i), contactsDirectory, account));
-                }
-                out.println(".<br>");
                 break;
             case GROUP_ICON_CHANGED:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$

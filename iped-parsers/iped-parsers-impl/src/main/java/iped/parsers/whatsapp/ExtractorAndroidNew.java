@@ -375,7 +375,8 @@ public class ExtractorAndroidNew extends Extractor {
                 }
 
                 if (hasSystemChat
-                        && (m.getMessageType() == USER_JOINED_GROUP || m.getMessageType() == USER_REMOVED_FROM_GROUP)) {
+                        && (m.getMessageType() == USER_JOINED_GROUP || m.getMessageType() == USER_REMOVED_FROM_GROUP
+                                || m.getMessageType() == USER_JOINED_GROUP_FROM_LINK)) {
                     extractUsersGroupAction(conn, m);
                 }
 
