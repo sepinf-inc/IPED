@@ -311,6 +311,10 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
                 out.println(Messages.getString("WhatsAppReport.ChatBusiness")); //$NON-NLS-1$
                 break;
+            case BUSINESS_OFFICIAL:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.ChatBusinessOfficial"));
+                break;
             case STANDARD_CHAT:
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.ChatStandard"));

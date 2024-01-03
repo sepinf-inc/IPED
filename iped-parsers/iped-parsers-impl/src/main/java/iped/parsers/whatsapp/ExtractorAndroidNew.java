@@ -5,6 +5,7 @@ import static iped.parsers.whatsapp.Message.MessageType.AUDIO_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.BLOCKED_CONTACT;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_CHAT;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_META_SECURE_SERVICE;
+import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_OFFICIAL;
 import static iped.parsers.whatsapp.Message.MessageType.CALL_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.CHANGED_NUMBER;
 import static iped.parsers.whatsapp.Message.MessageType.CONTACT_MESSAGE;
@@ -563,6 +564,9 @@ public class ExtractorAndroidNew extends Extractor {
                         break;
                     case 46:
                         result = BUSINESS_CHAT;
+                        break;
+                    case 47:
+                        result = BUSINESS_OFFICIAL;
                         break;
                     case 50:
                         result = STANDARD_CHAT;
