@@ -641,6 +641,7 @@ public class ExtractorAndroidNew extends Extractor {
                         break;
                     case 87:
                     case 88:
+                    case 90:
                     case 95:
                     case 110:
                         result = COMMUNITY_MANAGEMENT_ACTION;
