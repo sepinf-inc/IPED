@@ -8,6 +8,8 @@ import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_META_SECURE_SER
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_OFFICIAL;
 import static iped.parsers.whatsapp.Message.MessageType.CALL_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.CHANGED_NUMBER;
+import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_ADDED_PRIVACY;
+import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_CREATED;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_MANAGEMENT_ACTION;
 import static iped.parsers.whatsapp.Message.MessageType.CONTACT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_ADMIN;
@@ -642,6 +644,12 @@ public class ExtractorAndroidNew extends Extractor {
                         break;
                     case 129:
                         result = SENDER_IN_CONTACTS;
+                        break;
+                    case 132:
+                        result = CHANNEL_CREATED;
+                        break;
+                    case 134:
+                        result = CHANNEL_ADDED_PRIVACY;
                         break;
                     default:
                         break;

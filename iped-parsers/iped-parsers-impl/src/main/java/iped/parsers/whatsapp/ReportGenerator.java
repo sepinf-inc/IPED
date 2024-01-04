@@ -579,6 +579,14 @@ public class ReportGenerator {
                             + getBestContactName(false, users.get(1), contactsDirectory, account) + ".<br>");
                 }
                 break;
+            case CHANNEL_ADDED_PRIVACY:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.ChannelAddedPrivacy") + "<br>");
+                break;
+            case CHANNEL_CREATED:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.ChannelCreated") + "<br>");
+                break;
 
             default:
                 IItemReader mediaItem = null;
