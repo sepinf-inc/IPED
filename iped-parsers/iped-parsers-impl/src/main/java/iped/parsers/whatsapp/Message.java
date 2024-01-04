@@ -74,7 +74,7 @@ public class Message implements Comparable<Message> {
     private MessageTemplate messageTemplate;
     private long sortId;
     private List<PollOption> pollOptions;
-    private List<String> usersGroupAction;
+    private List<String> usersAction;
     private String uiElements;
 
     static {
@@ -478,15 +478,15 @@ public class Message implements Comparable<Message> {
         return pollOptions == null ? Collections.emptyList() : pollOptions;
     }
     
-    public boolean addUserGroupAction(String user) {
-        if (usersGroupAction == null) {
-            usersGroupAction = new ArrayList<String>(1);
+    public boolean addUserAction(String user) {
+        if (usersAction == null) {
+            usersAction = new ArrayList<String>(1);
         }
-        return usersGroupAction.add(user);
+        return usersAction.add(user);
     }
 
-    public List<String> getUsersGroupAction() {
-        return usersGroupAction == null ? Collections.emptyList() : usersGroupAction;
+    public List<String> getUsersAction() {
+        return usersAction == null ? Collections.emptyList() : usersAction;
     }
 
     public String getCallId() {

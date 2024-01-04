@@ -265,7 +265,7 @@ public class ExtractorAndroidNew extends Extractor {
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 String name = rs.getString("raw_string");
-                m.addUserGroupAction(name);
+                m.addUserAction(name);
             }
         }
     }
@@ -275,8 +275,18 @@ public class ExtractorAndroidNew extends Extractor {
             stmt.setLong(1, m.getId());
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
-                m.addUserGroupAction(rs.getString("oldUser"));
-                m.addUserGroupAction(rs.getString("newUser"));
+                m.addUserAction(rs.getString("oldUser"));
+                m.addUserAction(rs.getString("newUser"));
+            }
+        }
+    }
+
+    private void extractRevokedInfo(Connection conn, Message m) throws SQLException {
+        try (PreparedStatement stmt = conn.prepareStatement(SELECT_REVOKED)) {
+            stmt.setLong(1, m.getId());
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                m.addUserAction(rs.getString("admin"));
             }
         }
     }
@@ -299,6 +309,7 @@ public class ExtractorAndroidNew extends Extractor {
         boolean hasEphemeralSettingTable = SQLite3DBParser.containsTable("message_ephemeral_setting", conn);
         boolean hasSystemChat = SQLite3DBParser.containsTable("message_system_chat_participant", conn);
         boolean hasSystemNumberChangeTable = SQLite3DBParser.containsTable("message_system_number_change", conn);
+        boolean hasRevokedTable = SQLite3DBParser.containsTable("message_revoked", conn);
 
         try (PreparedStatement stmt = conn.prepareStatement(getSelectMessagesQuery(conn))) {
             ResultSet rs = stmt.executeQuery();
@@ -412,12 +423,16 @@ public class ExtractorAndroidNew extends Extractor {
                     extractUsersGroupAction(conn, m);
                 }
 
-                if (actionType == 13 && !m.getUsersGroupAction().isEmpty()) {
-                    m.setRemoteResource(m.getUsersGroupAction().get(0));
+                if (actionType == 13 && !m.getUsersAction().isEmpty()) {
+                    m.setRemoteResource(m.getUsersAction().get(0));
                 }
 
                 if (hasSystemNumberChangeTable && m.getMessageType() == CHANGED_NUMBER) {
                     extractChangedNumber(conn, m);
+                }
+
+                if (hasRevokedTable && m.getMessageType() == DELETED_BY_ADMIN) {
+                    extractRevokedInfo(conn, m);
                 }
 
                 c.add(m);
@@ -728,7 +743,7 @@ public class ExtractorAndroidNew extends Extractor {
                 result = UI_ELEMENTS_QUOTE;
                 break;
             case 64:
-                if (status == 0) {
+                if (status == 0 || status == 4) {
                     result = DELETED_BY_ADMIN;
                 }
                 break;
@@ -764,6 +779,8 @@ public class ExtractorAndroidNew extends Extractor {
     private static final String SELECT_USERS_GROUP_ACTION = "select raw_string from message_system_chat_participant inner join jid on user_jid_row_id = jid._id where message_row_id=? order by _id";
     
     private static final String SELECT_SYSTEM_NUMBER_CHANGE = "select old.raw_string as oldUser, new.raw_string as newUser from message_system_number_change left join jid old on old_jid_row_id = old._id left join jid new on new_jid_row_id = new._id where message_row_id=?";
+
+    private static final String SELECT_REVOKED = "select raw_string as admin from message_revoked left join jid on admin_jid_row_id = jid._id where message_row_id=?";
 
     private static final String SELECT_POLL_OPTION = "SELECT option_name as name, vote_total as total FROM message_poll_option where message_row_id=? order by _id";
 

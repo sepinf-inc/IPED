@@ -503,7 +503,7 @@ public class ReportGenerator {
             case USERS_JOINED_GROUP:
             case USER_JOINED_GROUP_FROM_LINK:
             case USER_REMOVED_FROM_GROUP:
-                List<String> users = message.getUsersGroupAction();
+                List<String> users = message.getUsersAction();
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
                 out.print(name + " ");
                 if (message.getMessageType() == MessageType.USER_REMOVED_FROM_GROUP) {
@@ -572,7 +572,7 @@ public class ReportGenerator {
                 break;
             case CHANGED_NUMBER:
                 out.println("<div class=\"systemmessage\">");
-                users = message.getUsersGroupAction();
+                users = message.getUsersAction();
                 if (users.size() >= 2) {
                     out.println(getBestContactName(false, users.get(0), contactsDirectory, account) + " "
                             + Messages.getString("WhatsAppReport.ChangedNumber") + " "
@@ -794,7 +794,12 @@ public class ReportGenerator {
                         out.println("<i>" + deletedIcon + Messages.getString("WhatsAppReport.MessageDeleted") + "</i><br>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         break;
                     case DELETED_BY_ADMIN:
-                        out.println("<i>" + deletedIcon + Messages.getString("WhatsAppReport.MessageDeletedByAdmin") + "</i><br>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                        out.print("<i>" + deletedIcon + Messages.getString("WhatsAppReport.MessageDeletedByAdmin"));
+                        if (!message.getUsersAction().isEmpty()) {
+                            out.print(" (" + getBestContactName(false, message.getUsersAction().get(0),
+                                    contactsDirectory, account) +")");
+                        }
+                        out.println("</i><br>");
                         break;
                     case DELETED_BY_SENDER:
                         out.println("<i>" + deletedIcon + Messages.getString("WhatsAppReport.MessageDeletedBySender") //$NON-NLS-1$ //$NON-NLS-2$
