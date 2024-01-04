@@ -639,7 +639,9 @@ public class ExtractorAndroidNew extends Extractor {
                     case 80:
                         result = EPHEMERAL_SAVE;
                         break;
+                    case 87:
                     case 88:
+                    case 95:
                     case 110:
                         result = COMMUNITY_MANAGEMENT_ACTION;
                         break;
