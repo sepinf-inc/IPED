@@ -361,7 +361,7 @@ public class ExtractorAndroidNew extends Extractor {
                 
                 int actionType = rs.getInt("actionType");
                 m.setMessageType(
-                        decodeMessageType(type, status, edit_version, caption, actionType, rs.getInt("bizStateId")));
+                        decodeMessageType(type, status, edit_version, caption, actionType, rs.getInt("bizStateId"), m.getMediaMime()));
                 m.setDuration(rs.getInt("media_duration")); //$NON-NLS-1$
                 if (m.getMessageType() == CONTACT_MESSAGE) {
                     m.setVcards(Arrays.asList(new String[] { Util.getUTF8String(rs, "vcard") }));
@@ -510,7 +510,7 @@ public class ExtractorAndroidNew extends Extractor {
                 m.setMediaSize(media_size);
                 m.setLatitude(rs.getDouble("latitude")); //$NON-NLS-1$
                 m.setLongitude(rs.getDouble("longitude")); //$NON-NLS-1$
-                m.setMessageType(decodeMessageType(type, -1, -1, caption, -1, -1));
+                m.setMessageType(decodeMessageType(type, -1, -1, caption, -1, -1, m.getMediaMime()));
                 m.setDuration(rs.getInt("media_duration")); //$NON-NLS-1$
                 if (m.getMessageType() == CONTACT_MESSAGE) {
                     m.setVcards(Arrays.asList(new String[] { Util.getUTF8String(rs, "vcard") }));
@@ -533,7 +533,7 @@ public class ExtractorAndroidNew extends Extractor {
     }
 
     protected Message.MessageType decodeMessageType(int messageType, int status, Integer edit_version, String caption,
-            int actionType, int bizStateId) {
+            int actionType, int bizStateId, String mediaMime) {
         Message.MessageType result = UNKNOWN_MESSAGE;
         switch (messageType) {
             case 0:
@@ -760,6 +760,20 @@ public class ExtractorAndroidNew extends Extractor {
                 break;
             case 66:
                 result = POLL_MESSAGE;
+                break;
+            case 81:
+                // Quote with media
+                result = TEXT_MESSAGE;
+                if (mediaMime != null && !mediaMime.isBlank()) {
+                    mediaMime = mediaMime.toLowerCase();
+                    if (mediaMime.contains("video")) {
+                        result = VIDEO_MESSAGE;
+                    } else if (mediaMime.contains("audio")) {
+                        result = AUDIO_MESSAGE;
+                    } else if (mediaMime.contains("image")) {
+                        result = IMAGE_MESSAGE;
+                    }
+                }
                 break;
             case 90:
                 // Newer databases also have entries to any call in messages table
