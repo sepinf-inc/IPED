@@ -325,7 +325,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                     chatMetadata.add(ExtraProperties.PARTICIPANTS, local);
                 }
                 if (c.isGroupChat()) {
-                    for (WAContact member : c.getGroupmembers()) {
+                    for (WAContact member : c.getGroupMembers()) {
                         chatMetadata.add(ExtraProperties.PARTICIPANTS, formatContact(member, cache));
                     }
                     // string formatted as {creator's phone number}-{creation time}@g.us
@@ -884,7 +884,7 @@ public class WhatsAppParser extends SQLite3DBParser {
     }
 
     private void fillGroupRecipients(Metadata meta, Chat c, String from, Map<String, String> cache) {
-        for (WAContact member : c.getGroupmembers()) {
+        for (WAContact member : c.getGroupMembers()) {
             String gmb = formatContact(member, cache);
             if (!gmb.equals(from)) {
                 meta.add(org.apache.tika.metadata.Message.MESSAGE_TO, gmb);

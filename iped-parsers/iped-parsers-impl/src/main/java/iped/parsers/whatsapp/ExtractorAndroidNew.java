@@ -110,7 +110,8 @@ public class ExtractorAndroidNew extends Extractor {
                     Chat c = new Chat(remote);
                     c.setId(rs.getLong("id"));
                     c.setSubject(Util.getUTF8String(rs, "subject")); //$NON-NLS-1$
-                    c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
+                    c.setGroupChat(contactId.endsWith("@g.us"));
+                    c.setChannelChat(contactId.endsWith("@newsletter"));
                     if (!(contactId.endsWith("@status") || contactId.endsWith("@broadcast"))) { //$NON-NLS-1$ //$NON-NLS-2$
                         list.add(c);
                         idToChat.put(c.getId(), c);
@@ -337,7 +338,7 @@ public class ExtractorAndroidNew extends Extractor {
 
                 m.setId(rs.getLong("id")); //$NON-NLS-1$
                 String remoteResource = rs.getString("remoteResource");
-                if (remoteResource == null || remoteResource.isEmpty() || !c.isGroupChat()) {
+                if (remoteResource == null || remoteResource.isEmpty() || !c.isGroupOrChannelChat()) {
                     remoteResource = c.getRemote().getFullId();
                 }
                 m.setRemoteResource(remoteResource); // $NON-NLS-1$
@@ -491,7 +492,7 @@ public class ExtractorAndroidNew extends Extractor {
 
                 m.setId(rs.getLong("id")); //$NON-NLS-1$
                 String remoteResource = rs.getString("remoteResource");
-                if (remoteResource == null || remoteResource.isEmpty() || !c.isGroupChat()) {
+                if (remoteResource == null || remoteResource.isEmpty() || !c.isGroupOrChannelChat()) {
                     remoteResource = c.getRemote().getFullId();
                 }
                 m.setRemoteResource(remoteResource); // $NON-NLS-1$

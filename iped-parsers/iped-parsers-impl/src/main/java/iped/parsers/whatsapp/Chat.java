@@ -15,13 +15,14 @@ public class Chat {
     private final WAContact remote;
     private String subject;
     private List<Message> messages = new ArrayList<>();
-    private String title = null;
-    private boolean groupChat = false;
-    private boolean deleted = false;
+    private String title;
+    private boolean isGroupChat;
+    private boolean isChannelChat;
+    private boolean isDeleted;
 
-    private String recoveredFrom = null;
+    private String recoveredFrom;
 
-    private Set<WAContact> groupmembers = new HashSet<>();
+    private Set<WAContact> groupMembers = new HashSet<>();
 
     public Chat(WAContact remote) {
         this.remote = remote;
@@ -81,19 +82,36 @@ public class Chat {
     }
 
     public boolean isGroupChat() {
-        return groupChat;
+        return isGroupChat;
     }
 
-    public void setGroupChat(boolean groupChat) {
-        this.groupChat = groupChat;
+    public void setGroupChat(boolean isGroupChat) {
+        this.isGroupChat = isGroupChat;
     }
 
+    public boolean isChannelChat() {
+        return isChannelChat;
+    }
+
+    public void setChannelChat(boolean isChannelChat) {
+        this.isChannelChat = isChannelChat;
+    }
+
+    public boolean isGroupOrChannelChat() {
+        return isGroupChat || isChannelChat;
+    }
+    
     public String getTitle() {
         if (title == null) {
-            if (isGroupChat()) {
-                title = "WhatsApp Group"; //$NON-NLS-1$ //$NON-NLS-2$
+            if (isChannelChat()) {
+                title = "WhatsApp Channel";
                 if (getSubject() != null && !getSubject().isBlank()) {
-                    title += " - " + getSubject().strip(); //$NON-NLS-1$
+                    title += " - " + getSubject().strip();
+                }
+            } else if (isGroupChat()) {
+                title = "WhatsApp Group";
+                if (getSubject() != null && !getSubject().isBlank()) {
+                    title += " - " + getSubject().strip();
                 }
             } else {
                 title = "WhatsApp Chat"; //$NON-NLS-1$
@@ -124,19 +142,19 @@ public class Chat {
         this.recoveredFrom = recoveredFrom;
     }
 
-    public Set<WAContact> getGroupmembers() {
-        return groupmembers;
+    public Set<WAContact> getGroupMembers() {
+        return groupMembers;
     }
 
-    public void setGroupmembers(Set<WAContact> groupmembers) {
-        this.groupmembers = groupmembers;
+    public void setGroupMembers(Set<WAContact> groupmembers) {
+        this.groupMembers = groupmembers;
     }
     
-    public void setDeleted(boolean deleted) {
-        this.deleted = deleted;
+    public void setDeleted(boolean isDeleted) {
+        this.isDeleted = isDeleted;
     }
     
     public boolean isDeleted() {
-        return deleted;
+        return isDeleted;
     }
 }

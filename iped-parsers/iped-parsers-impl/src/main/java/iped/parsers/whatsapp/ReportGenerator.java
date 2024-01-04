@@ -224,7 +224,7 @@ public class ReportGenerator {
                             + thisDate + "</div></div>"); //$NON-NLS-1$
                     lastDate = thisDate;
                 }
-                printMessage(out, m, c.isGroupChat(), contactsDirectory, account);
+                printMessage(out, m, c.isGroupOrChannelChat(), contactsDirectory, account);
                 lastId = m.getUniqueId();
                 if (currentMsg != c.getMessages().size() && bout.size() >= minChatSplitSize) {
                     out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
@@ -250,7 +250,7 @@ public class ReportGenerator {
         return EmojiUtil.replaceByImages(chatBytes.toByteArray());
     }
 
-    private synchronized void printMessage(PrintWriter out, Message message, boolean group,
+    private synchronized void printMessage(PrintWriter out, Message message, boolean isGroupOrChannel,
             WAContactsDirectory contactsDirectory,
             WAAccount account) {
 
@@ -342,7 +342,7 @@ public class ReportGenerator {
             case MESSAGES_NOW_ENCRYPTED:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
                 out.print(lockedIcon);
-                if (group) {
+                if (isGroupOrChannel) {
                     out.println(Messages.getString("WhatsAppReport.GroupNowEncrypted")); //$NON-NLS-1$
                 } else {
                     out.println(Messages.getString("WhatsAppReport.ChatNowEncrypted")); //$NON-NLS-1$
@@ -355,7 +355,7 @@ public class ReportGenerator {
                 } else {
                     isFromSpecial = true;
                     out.println(bubbleFromSpecial);
-                    if (!name.isEmpty() && group) {
+                    if (!name.isEmpty() && isGroupOrChannel) {
                         out.println("<span class=\"name_call\">" + name + "</span><br>");
                     }
                 }
@@ -368,7 +368,7 @@ public class ReportGenerator {
                 } else {
                     isFromSpecial = true;
                     out.println(bubbleFromSpecial);
-                    if (!name.isEmpty() && group) {
+                    if (!name.isEmpty() && isGroupOrChannel) {
                         out.println("<span class=\"name_call\">" + name + "</span><br>");
                     }
                 }
@@ -381,7 +381,7 @@ public class ReportGenerator {
                 } else {
                     isFromSpecial = true;
                     out.println(bubbleFromSpecial);
-                    if (!name.isEmpty() && group) {
+                    if (!name.isEmpty() && isGroupOrChannel) {
                         out.println("<span class=\"name_call\">" + name + "</span><br>");
                     }
                 }
@@ -394,7 +394,7 @@ public class ReportGenerator {
                 } else {
                     isFromSpecial = true;
                     out.println(bubbleFromSpecial);
-                    if (!name.isEmpty() && group) {
+                    if (!name.isEmpty() && isGroupOrChannel) {
                         out.println("<span class=\"name_call\">" + name + "</span><br>");
                     }
                 }
@@ -407,7 +407,7 @@ public class ReportGenerator {
                 } else {
                     isFromSpecial = true;
                     out.println(bubbleFromSpecial);
-                    if (!name.isEmpty() && group) {
+                    if (!name.isEmpty() && isGroupOrChannel) {
                         out.println("<span class=\"name_call\">" + name + "</span><br>");
                     }
                 }
@@ -420,7 +420,7 @@ public class ReportGenerator {
                 } else {
                     isFromSpecial = true;
                     out.println(bubbleFromSpecial);
-                    if (!name.isEmpty() && group) {
+                    if (!name.isEmpty() && isGroupOrChannel) {
                         out.println("<span class=\"name_call\">" + name + "</span><br>");
                     }
                 }
@@ -433,7 +433,7 @@ public class ReportGenerator {
                 } else {
                     isFromSpecial = true;
                     out.println(bubbleFromSpecial);
-                    if (!name.isEmpty() && group) {
+                    if (!name.isEmpty() && isGroupOrChannel) {
                         out.println("<span class=\"name_call\">" + name + "</span><br>");
                     }
                 }
@@ -446,7 +446,7 @@ public class ReportGenerator {
                 } else {
                     isFromSpecial = true;
                     out.println(bubbleFromSpecial);
-                    if (!name.isEmpty() && group) {
+                    if (!name.isEmpty() && isGroupOrChannel) {
                         out.println("<span class=\"name_call\">" + name + "</span><br>");
                     }
                 }
@@ -459,7 +459,7 @@ public class ReportGenerator {
                 } else {
                     isFromSpecial = true;
                     out.println(bubbleFromSpecial);
-                    if (!name.isEmpty() && group) {
+                    if (!name.isEmpty() && isGroupOrChannel) {
                         out.println("<span class=\"name_call\">" + name + "</span><br>");
                     }
                 }
@@ -476,7 +476,7 @@ public class ReportGenerator {
                 } else {
                     isFromSpecial = true;
                     out.println(bubbleFromSpecial);
-                    if (!name.isEmpty() && group) {
+                    if (!name.isEmpty() && isGroupOrChannel) {
                         out.println("<span class=\"name_call\">" + name + "</span><br>");
                     }
                 }
