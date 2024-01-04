@@ -280,20 +280,27 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">");
                 out.println(name + " " + Messages.getString("WhatsAppReport.SenderInContacts"));
                 break;
-            case EPHEMERAL_ENABLED:
+            case EPHEMERAL_CHANGED:
+            case EPHEMERAL_DEFAULT:
             case EPHEMERAL_DURATION_CHANGED:
-                int seconds = message.getDuration();
-                int days = seconds / 86400;
-                String duration = days > 1 ? days + " " + Messages.getString("WhatsAppReport.Days")
-                        : seconds / 3600 + " " + Messages.getString("WhatsAppReport.Hours");
                 out.println("<div class=\"systemmessage\">");
                 out.print(name + " ");
-                if (message.getMessageType() == MessageType.EPHEMERAL_ENABLED) {
-                    out.print(Messages.getString("WhatsAppReport.EphemeralEnabled"));
+                int seconds = message.getDuration();
+                if (seconds == 0) {
+                    out.print(Messages.getString("WhatsAppReport.EphemeralOff"));
                 } else {
-                    out.print(Messages.getString("WhatsAppReport.EphemeralDurationChanged"));
+                    int days = seconds / 86400;
+                    String duration = days > 1 ? days + " " + Messages.getString("WhatsAppReport.Days")
+                            : seconds / 3600 + " " + Messages.getString("WhatsAppReport.Hours");
+                    if (message.getMessageType() == MessageType.EPHEMERAL_CHANGED) {
+                        out.print(Messages.getString("WhatsAppReport.EphemeralOn"));
+                    } else if (message.getMessageType() == MessageType.EPHEMERAL_DEFAULT) {
+                        out.print(Messages.getString("WhatsAppReport.EphemeralDefault"));
+                    } else {
+                        out.print(Messages.getString("WhatsAppReport.EphemeralDurationChanged"));
+                    }
+                    out.println(" " + duration + ".");
                 }
-                out.println(" " + duration + ".");
                 break;
             case EPHEMERAL_SAVE:
                 out.println("<div class=\"systemmessage\">");

@@ -14,8 +14,9 @@ import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_ADMIN;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_SENDER;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.ENCRYPTION_KEY_CHANGED;
+import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_CHANGED;
+import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_DEFAULT;
 import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_DURATION_CHANGED;
-import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_ENABLED;
 import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_SAVE;
 import static iped.parsers.whatsapp.Message.MessageType.GIF_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_ADDED_TO_COMMUNITY;
@@ -368,7 +369,7 @@ public class ExtractorAndroidNew extends Extractor {
                 }
 
                 if (hasEphemeralSettingTable && (m.getMessageType() == EPHEMERAL_DURATION_CHANGED
-                        || m.getMessageType() == EPHEMERAL_ENABLED)) {
+                        || m.getMessageType() == EPHEMERAL_DEFAULT || m.getMessageType() == EPHEMERAL_CHANGED)) {
                     extractEphemeralDuration(conn, m);
                 }
 
@@ -588,6 +589,9 @@ public class ExtractorAndroidNew extends Extractor {
                     case 50:
                         result = STANDARD_CHAT;
                         break;
+                    case 56:
+                        result = EPHEMERAL_CHANGED;
+                        break;
                     case 58:
                         result = BLOCKED_CONTACT;
                         break;
@@ -602,7 +606,7 @@ public class ExtractorAndroidNew extends Extractor {
                         }
                         break;
                     case 68:
-                        result = EPHEMERAL_ENABLED;
+                        result = EPHEMERAL_DEFAULT;
                         break;
                     case 69:
                         result = BUSINESS_META_SECURE_SERVICE;
@@ -707,6 +711,7 @@ public class ExtractorAndroidNew extends Extractor {
                 result = TEMPLATE_QUOTE;
                 break;
             case 36:
+            case 56:
                 result = EPHEMERAL_DURATION_CHANGED;
                 break;
             case 42:
