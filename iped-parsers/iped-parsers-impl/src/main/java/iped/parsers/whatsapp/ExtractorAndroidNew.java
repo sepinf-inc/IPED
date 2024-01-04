@@ -62,6 +62,7 @@ import static iped.parsers.whatsapp.Message.MessageType.VIEW_ONCE_VIDEO_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.VOICE_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.WAITING_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.YOU_ADMIN;
+import static iped.parsers.whatsapp.Message.MessageType.YOU_NOT_ADMIN;
 
 import java.io.File;
 import java.sql.Connection;
@@ -545,6 +546,9 @@ public class ExtractorAndroidNew extends Extractor {
                         break;
                     case 15:
                         result = YOU_ADMIN;
+                        break;
+                    case 16:
+                        result = YOU_NOT_ADMIN;
                         break;
                     case 18:
                         result = ENCRYPTION_KEY_CHANGED;
