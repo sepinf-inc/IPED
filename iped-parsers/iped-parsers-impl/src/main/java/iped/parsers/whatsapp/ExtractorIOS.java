@@ -439,7 +439,13 @@ public class ExtractorIOS extends Extractor {
         }
         m.setMediaName(rs.getString("mediaName")); //$NON-NLS-1$
         m.setMediaSize(rs.getLong("mediaSize")); //$NON-NLS-1$
-        m.setMediaCaption(rs.getString("mediaCaption")); //$NON-NLS-1$
+
+        String caption = rs.getString("mediaCaption");
+        if (caption == null || caption.isBlank()) {
+            caption = m.getData();
+        }
+        m.setMediaCaption(caption);
+
         m.setThumbpath(rs.getString("thumbpath")); //$NON-NLS-1$
         m.setUrl(rs.getString("url")); //$NON-NLS-1$
         m.setLatitude(rs.getDouble("latitude")); //$NON-NLS-1$
