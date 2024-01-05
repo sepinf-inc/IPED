@@ -554,7 +554,9 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             evidence.setHasChildren(true);
 
             // protection for future concurrent access, see #794
-            metadata = new SyncMetadata(metadata);
+            if (!(metadata instanceof SyncMetadata)) {
+                metadata = new SyncMetadata(metadata);
+            }
             subItem.setMetadata(metadata);
 
             boolean updateInputStream = false;
