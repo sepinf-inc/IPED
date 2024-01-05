@@ -8,6 +8,8 @@ import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_TO_STANDARD;
 import static iped.parsers.whatsapp.Message.MessageType.CONTACT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_SENDER;
 import static iped.parsers.whatsapp.Message.MessageType.ENCRYPTION_KEY_CHANGED;
+import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_DEFAULT;
+import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_SAVE;
 import static iped.parsers.whatsapp.Message.MessageType.GIF_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CREATED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_ICON_CHANGED;
@@ -32,6 +34,7 @@ import static iped.parsers.whatsapp.Message.MessageType.VIDEO_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.YOU_ADMIN;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -347,7 +350,7 @@ public class ExtractorIOS extends Extractor {
         long fakeIds = 2000000000L;
         for (Message m : messages) {
             if (m.isQuoted() && m.getMetaData() != null) {
-                String metadata = m.getMetaData();
+                byte[] metadata = m.getMetaData();
                 int size = getPositiveValueFromMetadata(metadata, 1);
                 int pos = 0;
                 if (size >= 0) {
@@ -357,10 +360,10 @@ public class ExtractorIOS extends Extractor {
                     if (messageQuote == null){ //TODO - get full carved quote messages from ZMETADATA
 
                         pos += size;
-                        int unknowflag = getPositiveValueFromMetadata(metadata, pos);
+                        //int unknowflag = getPositiveValueFromMetadata(metadata, pos);
 
                         pos += 1;
-                        size = getPositiveValueFromMetadata(metadata, pos); // Get size of contac name
+                        size = getPositiveValueFromMetadata(metadata, pos); // Get size of contact name
                         pos += 1;
                         String contact = getSubStringFromMetadata(metadata, pos, size);
 
@@ -450,34 +453,32 @@ public class ExtractorIOS extends Extractor {
         }
         m.setForwarded(rs.getInt("forwarded") > 0);
 
+        byte[] metadata = rs.getBytes("metadata");
         if (hasZSTANZAIDAndZMETADATAColumns){
-            m.setQuoted(getPositiveValueFromMetadata(rs.getString("metadata"),0)==0x2A);
+            m.setQuoted(getPositiveValueFromMetadata(metadata,0)==0x2A);
             m.setUuid(rs.getString("uuid"));        
-            m.setMetaData(rs.getString("metadata"));
+            m.setMetaData(metadata);
+        }
+
+        if (m.getMessageType() == EPHEMERAL_DEFAULT) {
+            m.setDuration(decodeEphemeralDuration(metadata));
         }
 
         return m;
     }
 
-    public int getPositiveValueFromMetadata(String metadata, int pos){
-        int ret = -1;
-        if (metadata != null){
-            byte [] metadataArray = metadata.getBytes();
-            if (metadataArray!= null && metadataArray.length >= pos+1){
-                return (int)metadataArray[pos];
-            }
-        }        
-        return ret;
+    public int getPositiveValueFromMetadata(byte[] metadata, int pos) {
+        if (metadata != null && metadata.length >= pos + 1) {
+            return (int) (metadata[pos] & 0xFF);
+        }
+        return -1;
     }
 
-    public String getSubStringFromMetadata(String metadata, int pos, int length){
-        String ret = null;
-        if (metadata != null){
-            if (metadata.length() >= pos + length){
-                return metadata.substring(pos,pos + length);
-            }                
-        }        
-        return ret;
+    public String getSubStringFromMetadata(byte[] metadata, int pos, int length) {
+        if (metadata != null && metadata.length >= pos + length) {
+            return new String(metadata, pos, length, StandardCharsets.UTF_8);
+        }
+        return null;
     }
 
     public boolean getHasQuoteFromMetadata(String metadata){
@@ -492,7 +493,24 @@ public class ExtractorIOS extends Extractor {
         }        
         return ret;
     }
-    
+
+    private int decodeEphemeralDuration(byte[] metadata) {
+        int days = 7; // default value
+        int v1 = getPositiveValueFromMetadata(metadata, 2);
+        if (v1 == 0) {
+            days = 0;
+        } else if (v1 == 0x80) {
+            int v2 = getPositiveValueFromMetadata(metadata, 3);
+            int v3 = getPositiveValueFromMetadata(metadata, 4);
+            if (v2 == 0xA3 && v3 == 0x05) {
+                days = 1;
+            } else if (v2 == 0xF5 && v3 == 0x24) {
+                days = 7;
+            }
+            // Codes for other values (like 30 or 90 days)?
+        }
+        return days * 86400;
+    }
 
     private Message createMessageFromUndeletedRecord(SqliteRow row, Chat chat, Map<Long, SqliteRow> mediaItems,
             Map<Long, SqliteRow> groupMemebers) throws SQLException {
@@ -743,6 +761,8 @@ public class ExtractorIOS extends Extractor {
                 } else if (gEventType == 40 || gEventType == 41) {
                     // Started a video call (group) 
                     result = VIDEO_CALL;
+                } else if (gEventType == 47) {
+                    result = EPHEMERAL_SAVE;
                 }
                 // 10 / 13 -> desconhecida (aparece algumas vezes depois de informado conversa
                 // segura com nome do interlocutor)
@@ -761,6 +781,9 @@ public class ExtractorIOS extends Extractor {
                 break;
             case 15:
                 result = STICKER_MESSAGE;
+                break;
+            case 28:
+                result = EPHEMERAL_DEFAULT;
                 break;
         }
         return result;
