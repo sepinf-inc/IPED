@@ -26,6 +26,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
@@ -63,11 +64,19 @@ public abstract class AbstractDBParser extends AbstractParser {
     protected Connection connection;
     int tableRowsPerItem = 100;
 
+    private boolean parseEmptyIncrementalRanges;
+
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
         return null;
     }
     
+    @Field
+    public void setParseEmptyIncrementalRanges(boolean value) {
+        this.parseEmptyIncrementalRanges = value;
+    }
+
+    @Field
     public void setTableRowsPerItem(int value) {
     	this.tableRowsPerItem = value;
     }
@@ -172,36 +181,39 @@ public abstract class AbstractDBParser extends AbstractParser {
 
                 xHandler.endElement("tr");
                 
-                try {
-                    StringBuffer sb = new StringBuffer(); 
-                    DatabaseMetaData dbmd = connection.getMetaData();
-                    ResultSet rs = dbmd.getColumns(null, null, tableName, "");
-                    while(rs.next()) {
-                    	String isAutoIncrement = rs.getString("IS_AUTOINCREMENT");
-                    	if(isAutoIncrement!=null && isAutoIncrement.equals("YES")) {
-                    		String columnName = rs.getString("COLUMN_NAME");
-                    		ResultSet rsGaps = reader.getSequentialGaps(columnName);
-                    		if(rs.next()) {
-                    			if(first) {
-                    				first=false;
-                            		sb.append("<h1>Tabelas com vãos em campos autoincrementais</h1>");                		
-                    			}
-                        		sb.append("<table>");                		
-                        		sb.append("<tr><th colspan=\"2\">Tabela:"+tableName+"</th></tr>");
-                        		sb.append("<tr><th colspan=\"2\">Coluna:"+columnName+"</th></tr>");
-                        		sb.append("<tr><th>Inicio</th><th>Fim</th></tr>");
-                    			do {
-                            		sb.append("<tr><td>"+rs.getString("start")+"</td><td>"+rs.getString("end")+"</td></tr>");
-                            		
-                    			}while(rs.next());
-                        		sb.append("</table>");                		
-                    		}
-                    	}
+                if (parseEmptyIncrementalRanges) {
+                    try {
+                        StringBuffer sb = new StringBuffer();
+                        DatabaseMetaData dbmd = connection.getMetaData();
+                        ResultSet rs = dbmd.getColumns(null, null, tableName, "");
+                        while (rs.next()) {
+                            String isAutoIncrement = rs.getString("IS_AUTOINCREMENT");
+                            if (isAutoIncrement != null && isAutoIncrement.equals("YES")) {
+                                String columnName = rs.getString("COLUMN_NAME");
+                                ResultSet rsGaps = reader.getSequentialGaps(columnName);
+                                if (rs.next()) {
+                                    if (first) {
+                                        first = false;
+                                        sb.append("<h1>Tabelas com vãos em campos autoincrementais</h1>");
+                                    }
+                                    sb.append("<table>");
+                                    sb.append("<tr><th colspan=\"2\">Tabela:" + tableName + "</th></tr>");
+                                    sb.append("<tr><th colspan=\"2\">Coluna:" + columnName + "</th></tr>");
+                                    sb.append("<tr><th>Inicio</th><th>Fim</th></tr>");
+                                    do {
+                                        sb.append("<tr><td>" + rs.getString("start") + "</td><td>" + rs.getString("end")
+                                                + "</td></tr>");
+
+                                    } while (rs.next());
+                                    sb.append("</table>");
+                                }
+                            }
+                        }
+                        sbfim.append(sb.toString());
+                    } catch (Exception e) {
+                        // ignores
                     }
-                    sbfim.append(sb.toString());
-                }catch (Exception e) {
-					// ignores
-				}
+                }
 
 
                 reader.closeReader();
