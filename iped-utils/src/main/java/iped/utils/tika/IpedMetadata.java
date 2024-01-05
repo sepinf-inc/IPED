@@ -65,15 +65,22 @@ public class IpedMetadata extends SyncMetadata {
         setMetadataWriteFilter(ipedFilter);
     }
 
-	public void set(String arg0, ArrayList<String> list) {
+    public void set(String arg0, ArrayList<String> list) {
         String[] arr = new String[list.size()];
-		int i=0;
-		for (Iterator iterator = list.iterator(); iterator.hasNext();) {
-			arr[i++]=(String) iterator.next();
-		}
+        int i = 0;
+        for (Iterator iterator = list.iterator(); iterator.hasNext();) {
+            arr[i++] = (String) iterator.next();
+        }
 
         ipedFilter.allocateSpace(list.size());
         super.set(arg0, arr);
-	}
+    }
+
+    public void add(String arg0, ArrayList<String> list) {
+        ipedFilter.allocateSpace(list.size());
+        for (String value : list) {
+            add(arg0, value);
+        }
+    }
 
 }
