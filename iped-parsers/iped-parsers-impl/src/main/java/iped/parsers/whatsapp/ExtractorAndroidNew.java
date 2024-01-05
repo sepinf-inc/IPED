@@ -7,7 +7,7 @@ import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_CHAT;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_META_SECURE_SERVICE;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_OFFICIAL;
 import static iped.parsers.whatsapp.Message.MessageType.CALL_MESSAGE;
-import static iped.parsers.whatsapp.Message.MessageType.CHANGED_NUMBER;
+import static iped.parsers.whatsapp.Message.MessageType.CHANGED_NUMBER_TO;
 import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_ADDED_PRIVACY;
 import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_CREATED;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_MANAGEMENT_ACTION;
@@ -443,7 +443,7 @@ public class ExtractorAndroidNew extends Extractor {
                     m.setRemoteResource(m.getUsersAction().get(0));
                 }
 
-                if (hasSystemNumberChangeTable && m.getMessageType() == CHANGED_NUMBER) {
+                if (hasSystemNumberChangeTable && m.getMessageType() == CHANGED_NUMBER_TO) {
                     extractChangedNumber(conn, m);
                 }
 
@@ -577,7 +577,7 @@ public class ExtractorAndroidNew extends Extractor {
                         break;
                     case 10:
                     case 28:
-                        result = CHANGED_NUMBER;
+                        result = CHANGED_NUMBER_TO;
                         break;
                     case 11:
                         result = GROUP_CREATED;

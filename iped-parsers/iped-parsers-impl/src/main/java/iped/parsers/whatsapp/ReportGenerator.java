@@ -572,14 +572,18 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.GroupOnlyAdminsCanSend") + "<br>");
                 break;
-            case CHANGED_NUMBER:
+            case CHANGED_NUMBER_TO:
                 out.println("<div class=\"systemmessage\">");
                 users = message.getUsersAction();
                 if (users.size() >= 2) {
                     out.println(getBestContactName(false, users.get(0), contactsDirectory, account) + " "
-                            + Messages.getString("WhatsAppReport.ChangedNumber") + " "
+                            + Messages.getString("WhatsAppReport.ChangedNumberTo") + " "
                             + getBestContactName(false, users.get(1), contactsDirectory, account) + ".<br>");
                 }
+                break;
+            case CHANGED_NUMBER_CHATTING_WITH_NEW:
+                out.println("<div class=\"systemmessage\">");
+                out.println(name + " " + Messages.getString("WhatsAppReport.ChangedNumberChattingWithNew") + "<br>");
                 break;
             case CHANNEL_ADDED_PRIVACY:
                 out.println("<div class=\"systemmessage\">");
