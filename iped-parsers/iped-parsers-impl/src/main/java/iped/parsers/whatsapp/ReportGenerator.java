@@ -585,6 +585,10 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">");
                 out.println(name + " " + Messages.getString("WhatsAppReport.ChangedNumberChattingWithNew") + "<br>");
                 break;
+            case CHANGED_NUMBER_CHATTING_WITH_OLD:
+                out.println("<div class=\"systemmessage\">");
+                out.println(name + " " + Messages.getString("WhatsAppReport.ChangedNumberChattingWithOld") + "<br>");
+                break;
             case CHANNEL_ADDED_PRIVACY:
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.ChannelAddedPrivacy") + "<br>");

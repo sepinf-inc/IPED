@@ -6,6 +6,7 @@ import static iped.parsers.whatsapp.Message.MessageType.BLOCKED_CONTACT;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_CHAT;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_TO_STANDARD;
 import static iped.parsers.whatsapp.Message.MessageType.CHANGED_NUMBER_CHATTING_WITH_NEW;
+import static iped.parsers.whatsapp.Message.MessageType.CHANGED_NUMBER_CHATTING_WITH_OLD;
 import static iped.parsers.whatsapp.Message.MessageType.CONTACT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_SENDER;
 import static iped.parsers.whatsapp.Message.MessageType.ENCRYPTION_KEY_CHANGED;
@@ -749,6 +750,8 @@ public class ExtractorIOS extends Extractor {
                     result = ENCRYPTION_KEY_CHANGED;
                 } else if (gEventType == 4) {
                     result = MISSED_VIDEO_CALL;
+                } else if (gEventType == 5) {
+                    result = CHANGED_NUMBER_CHATTING_WITH_OLD;
                 } else if (gEventType == 6) {
                     result = CHANGED_NUMBER_CHATTING_WITH_NEW;
                 } else if (gEventType == 22) {
