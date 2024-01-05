@@ -1,9 +1,7 @@
 package iped.utils.tika;
 
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.Properties;
 
 import org.apache.tika.metadata.Metadata;
@@ -16,7 +14,7 @@ import org.apache.tika.metadata.Property;
  * @author Nassif
  *
  */
-public class SyncMetadata extends IpedMetadata {
+public class SyncMetadata extends Metadata {
 
     /**
      * 
