@@ -1,4 +1,4 @@
-package iped.engine.tika;
+package iped.utils.tika;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -174,7 +174,6 @@ public class SyncMetadata extends Metadata {
     @Override
     public synchronized void set(Property property, Calendar date) {
         checkReadOnly();
-        date.get(Calendar.HOUR_OF_DAY);
         super.set(property, date);
     }
 
@@ -203,5 +202,4 @@ public class SyncMetadata extends Metadata {
     public synchronized String toString() {
         return super.toString();
     }
-
 }
