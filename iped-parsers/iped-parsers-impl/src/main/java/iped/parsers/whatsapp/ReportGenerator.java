@@ -282,6 +282,10 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">");
                 out.println(name + " " + Messages.getString("WhatsAppReport.SenderInContacts"));
                 break;
+            case SENDER_ADDED_TO_CONTACTS:
+                out.println("<div class=\"systemmessage\">");
+                out.println(name + " " + Messages.getString("WhatsAppReport.SenderAddedToContacts"));
+                break;
             case EPHEMERAL_CHANGED:
             case EPHEMERAL_DEFAULT:
             case EPHEMERAL_DURATION_CHANGED:

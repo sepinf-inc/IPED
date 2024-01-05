@@ -21,6 +21,7 @@ import static iped.parsers.whatsapp.Message.MessageType.LOCATION_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.MESSAGES_NOW_ENCRYPTED;
 import static iped.parsers.whatsapp.Message.MessageType.MISSED_VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.MISSED_VOICE_CALL;
+import static iped.parsers.whatsapp.Message.MessageType.SENDER_ADDED_TO_CONTACTS;
 import static iped.parsers.whatsapp.Message.MessageType.STICKER_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.TEXT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.UNBLOCKED_CONTACT;
@@ -770,6 +771,8 @@ public class ExtractorIOS extends Extractor {
                     result = VIDEO_CALL;
                 } else if (gEventType == 47) {
                     result = EPHEMERAL_SAVE;
+                } else if (gEventType == 56) {
+                    result = SENDER_ADDED_TO_CONTACTS;
                 }
                 // 10 / 13 -> desconhecida (aparece algumas vezes depois de informado conversa
                 // segura com nome do interlocutor)
