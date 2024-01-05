@@ -5,6 +5,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.List;
@@ -22,6 +23,7 @@ import iped.parsers.vcard.VCardParser;
 import iped.parsers.whatsapp.Message.MessageType;
 import iped.properties.ExtraProperties;
 import iped.utils.EmojiUtil;
+import iped.utils.LocalizedFormat;
 import iped.utils.SimpleHTMLEncoder;
 
 /**
@@ -725,6 +727,17 @@ public class ReportGenerator {
                             out.print(formatUiElements(message.getUiElements()));
                         }
                         break;
+                    case ORDER_MESSAGE:
+                        printThumb(out, message);
+                        if (message.getData() != null && !message.getData().isBlank()) {
+                            out.print(format(message.getData()) + "<br>");
+                        }
+                        MessageOrder order = message.getOrder();
+                        if (order != null) {
+                            String seller = getBestContactName(false, order.getSeller(), contactsDirectory, account);
+                            out.print(formatOrder(order, seller));
+                        }
+                        break;
                     case UNKNOWN_MEDIA_MESSAGE:
                         if (message.getMediaCaption() != null) {
                             out.println("<i>" + Messages.getString("WhatsAppReport.UnknownMediaMessage") + "</i><br>");
@@ -1084,6 +1097,31 @@ public class ReportGenerator {
             out.print("<img class=\"thumb\" src=\"");
             out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\"/><br>");
         }
+    }
+
+    private String formatOrder(MessageOrder order, String seller) {
+        StringBuilder sb = new StringBuilder();
+        if (order.getTitle() != null && !order.getTitle().isBlank()) {
+            sb.append("<b>").append(Messages.getString("WhatsAppReport.OrderTitle")).append(": </b>");
+            sb.append(format(order.getTitle())).append("<br>");
+        }
+        if (seller != null && !seller.isBlank()) {
+            sb.append("<b>").append(Messages.getString("WhatsAppReport.OrderSeller")).append(": </b>");
+            sb.append(format(seller)).append("<br>");
+        }
+        if (order.getCount() != 0) {
+            sb.append("<b>").append(Messages.getString("WhatsAppReport.OrderCount")).append(": </b>");
+            sb.append(order.getCount()).append("<br>");
+        }
+        if (order.getAmount() > 0) {
+            sb.append("<b>").append(Messages.getString("WhatsAppReport.OrderAmount")).append(": </b>");
+            if (order.getCurrency() != null && !order.getCurrency().isBlank()) {
+                sb.append(order.getCurrency()).append(' ');
+            }
+            DecimalFormat nf = LocalizedFormat.getDecimalInstance("#,##0.00");
+            sb.append(nf.format(order.getAmount() / 1000.0)).append("<br>");
+        }
+        return sb.toString();
     }
 
     private static String formatUiElements(String s) {

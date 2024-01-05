@@ -37,6 +37,7 @@ import static iped.parsers.whatsapp.Message.MessageType.MESSAGES_ENCRYPTED;
 import static iped.parsers.whatsapp.Message.MessageType.MESSAGES_NOW_ENCRYPTED;
 import static iped.parsers.whatsapp.Message.MessageType.MISSED_VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.MISSED_VOICE_CALL;
+import static iped.parsers.whatsapp.Message.MessageType.ORDER_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.POLL_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.REFUSED_VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.REFUSED_VOICE_CALL;
@@ -294,6 +295,17 @@ public class ExtractorAndroidNew extends Extractor {
         }
     }
 
+    private void extractOrderInfo(Connection conn, Message m) throws SQLException {
+        try (PreparedStatement stmt = conn.prepareStatement(SELECT_ORDER)) {
+            stmt.setLong(1, m.getId());
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                m.setOrder(new MessageOrder(rs.getString("title"), rs.getString("seller"), rs.getInt("count"),
+                        rs.getString("currency"), rs.getInt("amount")));
+            }
+        }
+    }
+
     private void extractEphemeralDuration(Connection conn, Message m) throws SQLException {
         try (PreparedStatement stmt = conn.prepareStatement(SELECT_EPHEMERAL_SETTING)) {
             stmt.setLong(1, m.getId());
@@ -313,6 +325,7 @@ public class ExtractorAndroidNew extends Extractor {
         boolean hasSystemChat = SQLite3DBParser.containsTable("message_system_chat_participant", conn);
         boolean hasSystemNumberChangeTable = SQLite3DBParser.containsTable("message_system_number_change", conn);
         boolean hasRevokedTable = SQLite3DBParser.containsTable("message_revoked", conn);
+        boolean hasOrderTable = SQLite3DBParser.containsTable("message_order", conn);
 
         try (PreparedStatement stmt = conn.prepareStatement(getSelectMessagesQuery(conn))) {
             ResultSet rs = stmt.executeQuery();
@@ -436,6 +449,10 @@ public class ExtractorAndroidNew extends Extractor {
 
                 if (hasRevokedTable && m.getMessageType() == DELETED_BY_ADMIN) {
                     extractRevokedInfo(conn, m);
+                }
+
+                if (hasOrderTable && m.getMessageType() == ORDER_MESSAGE) {
+                    extractOrderInfo(conn, m);
                 }
 
                 c.add(m);
@@ -747,6 +764,9 @@ public class ExtractorAndroidNew extends Extractor {
             case 43:
                 result = VIEW_ONCE_VIDEO_MESSAGE;
                 break;
+            case 44:
+                result = ORDER_MESSAGE;
+                break;
             case 45:
                 result = UI_ELEMENTS;
                 break;
@@ -808,6 +828,10 @@ public class ExtractorAndroidNew extends Extractor {
 
     private static final String SELECT_REVOKED = "select raw_string as admin from message_revoked left join jid on admin_jid_row_id = jid._id where message_row_id=?";
 
+    private static final String SELECT_ORDER = "select raw_string as seller, order_title as title,"
+            + " item_count as count, currency_code as currency, total_amount_1000 as amount"
+            + " from message_order left join jid on seller_jid = jid._id where message_row_id=?";
+    
     private static final String SELECT_POLL_OPTION = "SELECT option_name as name, vote_total as total FROM message_poll_option where message_row_id=? order by _id";
 
     private static final String SELECT_EPHEMERAL_SETTING = "SELECT setting_duration as duration FROM message_ephemeral_setting where message_row_id=?";
