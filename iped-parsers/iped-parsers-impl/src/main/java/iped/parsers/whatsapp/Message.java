@@ -77,6 +77,7 @@ public class Message implements Comparable<Message> {
     private List<String> usersAction;
     private String uiElements;
     private MessageOrder order;
+    private Date editTimeStamp;
 
     static {
         try {
@@ -576,6 +577,14 @@ public class Message implements Comparable<Message> {
 
     public void setOrder(MessageOrder order) {
         this.order = order;
+    }
+
+    public Date getEditTimeStamp() {
+        return editTimeStamp;
+    }
+
+    public void setEditTimeStamp(Date editTimeStamp) {
+        this.editTimeStamp = editTimeStamp;
     }
 
     public static enum MessageType {

@@ -222,7 +222,7 @@ public class ExtractorAndroidNew extends Extractor {
                 m.setFromMe(rs.getInt("from_me") == 1);
                 m.setDuration(rs.getInt("duration"));
                 m.setTimeStamp(new Date(rs.getLong("timestamp")));
-
+                
                 c.add(m);
             }
 
@@ -455,6 +455,11 @@ public class ExtractorAndroidNew extends Extractor {
                     extractOrderInfo(conn, m);
                 }
 
+                long edit = rs.getLong("editTimestamp");
+                if (edit != 0) {
+                    m.setEditTimeStamp(new Date(edit));
+                }
+                
                 c.add(m);
             }
         }
@@ -875,6 +880,13 @@ public class ExtractorAndroidNew extends Extractor {
             uiElemTableJoin = " left join message_ui_elements mue on m._id=mue.message_row_id";
         }
 
+        String editCol = "0";
+        String editTableJoin = "";
+        if (SQLite3DBParser.containsTable("message_edit_info", conn)) {
+            editCol = "mei.edited_timestamp";
+            editTableJoin = " left join message_edit_info mei on m._id=mei.message_row_id";
+        }
+
         return "select m._id AS id,m.chat_row_id as chatId, chatJid.raw_string as remoteId,"
                 + " jid.raw_string as remoteResource, status, mv.vcard, m.text_data,"
                 + " m.from_me as fromMe, m.timestamp as timestamp, message_url as mediaUrl,"
@@ -887,7 +899,8 @@ public class ExtractorAndroidNew extends Extractor {
                 + " " + bizStateCol + " as bizStateId,"
                 + " " + grpInvCol + " as groupInviteName,"
                 + " " + sortCol + " as sortId,"
-                + " " + uiElemCol + " as uiElem"
+                + " " + uiElemCol + " as uiElem,"
+                + " " + editCol + " as editTimestamp"
                 + " from message m"
                 + " left join chat on m.chat_row_id=chat._id"
                 + " left join jid chatJid on chatJid._id=chat.jid_row_id"
@@ -900,6 +913,7 @@ public class ExtractorAndroidNew extends Extractor {
                 + bizStateTableJoin
                 + grpInvTableJoin
                 + uiElemTableJoin
+                + editTableJoin
                 + " left join message_thumbnail mt on m._id=mt.message_row_id where status!=-1";
     }
 

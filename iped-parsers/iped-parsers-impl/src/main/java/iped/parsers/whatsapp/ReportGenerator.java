@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -1041,21 +1042,33 @@ public class ReportGenerator {
             out.print(viewOnceIcon);
         }
 
-        out.print(timeFormat.format(message.getTimeStamp()) + " &nbsp;"); //$NON-NLS-1$
+        out.print(timeFormat.format(message.getTimeStamp()));
+        boolean hasStatus = false; 
         if (message.isFromMe() && message.getMessageStatus() != null) {
             switch (message.getMessageStatus()) {
                 case MESSAGE_UNSENT:
                     out.print("<div class=\"unsent\"></div>"); //$NON-NLS-1$
+                    hasStatus = true;
                     break;
                 case MESSAGE_SENT:
                     out.print("<div class=\"sent\"></div>"); //$NON-NLS-1$
+                    hasStatus = true;
                     break;
                 case MESSAGE_DELIVERED:
                     out.print("<div class=\"delivered\"></div>"); //$NON-NLS-1$
+                    hasStatus = true;
                     break;
                 case MESSAGE_VIEWED:
                     out.print("<div class=\"viewed\"></div>"); //$NON-NLS-1$
+                    hasStatus = true;
                     break;
+            }
+        }
+        Date edit = message.getEditTimeStamp();
+        if (edit != null) {
+            out.print("<br>" + Messages.getString("WhatsAppReport.EditedOn") + " " + timeFormat.format(edit));
+            if (hasStatus) {
+                out.print("<div class=\"edit\"></div>");
             }
         }
         out.println("</span>"); //$NON-NLS-1$
