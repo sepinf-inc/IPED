@@ -42,11 +42,11 @@ public class ReportGenerator {
     private static final String js = Util.readResourceAsString("js/whatsapp.js");
     private boolean firstFragment = true;
     private int currentMsg = 0;
-    private static final String deletedIcon = "<img class=\"del\"/>";
-    private static final String lockedIcon = "<img class=\"lock\"/>";
-    private static final String locationIcon = "<img class=\"location\"/>";
-    private static final String forwardedIcon = "<img class=\"fwd\"/>";
-    private static final String viewOnceIcon = "<img class=\"vo\"/>";
+    private static final String deletedIcon = "<img class=\"del\">";
+    private static final String lockedIcon = "<img class=\"lock\">";
+    private static final String locationIcon = "<img class=\"location\">";
+    private static final String forwardedIcon = "<img class=\"fwd\">";
+    private static final String viewOnceIcon = "<img class=\"vo\">";
     private static final String waSuffix = "@s.whatsapp.net";
 
     public ReportGenerator() {
@@ -68,7 +68,7 @@ public class ReportGenerator {
                 + "<html>\n" //$NON-NLS-1$
                 + "<head>\n" //$NON-NLS-1$
                 + " <title>" + format(contact.getId()) + "</title>\n" //$NON-NLS-1$ //$NON-NLS-2$
-                + " <meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n" //$NON-NLS-1$
+                + " <meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">\n" //$NON-NLS-1$
                 + "<style>\n" //$NON-NLS-1$
                 + "</style>\n" //$NON-NLS-1$
                 + "</head>\n" //$NON-NLS-1$
@@ -76,7 +76,7 @@ public class ReportGenerator {
 
         if (contact.getAvatar() != null)
             out.println("<img src=\"data:image/jpg;base64," + Util.encodeBase64(contact.getAvatar()) //$NON-NLS-1$
-                    + "\" width=\"112\"/><br>"); //$NON-NLS-1$
+                    + "\" width=\"112\"><br>"); //$NON-NLS-1$
         out.println(Messages.getString("WhatsAppReport.ContactID") + format(contact.getId())); //$NON-NLS-1$
         out.println("<br>" + Messages.getString("WhatsAppReport.DisplayName") + format(contact.getDisplayName())); //$NON-NLS-1$ //$NON-NLS-2$
         out.println("<br>" + Messages.getString("WhatsAppReport.WAName") + format(contact.getWaName())); //$NON-NLS-1$ //$NON-NLS-2$
@@ -104,7 +104,7 @@ public class ReportGenerator {
                 + "<html>\n" //$NON-NLS-1$
                 + "<head>\n" //$NON-NLS-1$
                 + " <title>" + format(account.getId()) + "</title>\n" //$NON-NLS-1$ //$NON-NLS-2$
-                + " <meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n" //$NON-NLS-1$
+                + " <meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">\n" //$NON-NLS-1$
                 + "<style>\n" //$NON-NLS-1$
                 + "</style>\n" //$NON-NLS-1$
                 + "</head>\n" //$NON-NLS-1$
@@ -112,7 +112,7 @@ public class ReportGenerator {
 
         if (account.getAvatar() != null)
             out.println("<img src=\"data:image/jpg;base64," + Util.encodeBase64(account.getAvatar()) //$NON-NLS-1$
-                    + "\" width=\"112\"/><br>"); //$NON-NLS-1$
+                    + "\" width=\"112\"><br>"); //$NON-NLS-1$
         out.println(Messages.getString("WhatsAppReport.AccountID") + format(account.getId())); //$NON-NLS-1$
         out.println("<br>" + Messages.getString("WhatsAppReport.WAName") + format(account.getWaName())); //$NON-NLS-1$ //$NON-NLS-2$
         out.println("<br>" + Messages.getString("WhatsAppReport.Status") + format(account.getStatus())); //$NON-NLS-1$ //$NON-NLS-2$
@@ -930,7 +930,7 @@ public class ReportGenerator {
                                         out.println(Messages.getString("WhatsAppReport.Video") + ":<br>"); //$NON-NLS-1$ //$NON-NLS-2$
                                     out.print("<img class=\"thumb\" src=\""); //$NON-NLS-1$
                                     out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
-                                    out.println(" title=\"" + getTitle(message) + "\"/>"); //$NON-NLS-1$ //$NON-NLS-2$
+                                    out.println(" title=\"" + getTitle(message) + "\">"); //$NON-NLS-1$ //$NON-NLS-2$
 
                                 } else {
                                     if (message.getMessageType() == MessageType.IMAGE_MESSAGE
@@ -956,7 +956,7 @@ public class ReportGenerator {
                                         out.println(Messages.getString("WhatsAppReport.Video") + ":<br>");
                                         out.print("<img class=\"thumb\" src=\""); //$NON-NLS-1$
                                         out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
-                                        out.println(" title=\"" + getTitle(message) + "\"/>"); //$NON-NLS-1$ //$NON-NLS-2$
+                                        out.println(" title=\"" + getTitle(message) + "\">"); //$NON-NLS-1$ //$NON-NLS-2$
                                     } else {
                                         out.println("<div class=\"videoImg\" title=\"Video\"></div>"); //$NON-NLS-1$
                                     }
@@ -970,7 +970,7 @@ public class ReportGenerator {
                                             out.println(Messages.getString("WhatsAppReport.Video") + ":<br>"); //$NON-NLS-1$ //$NON-NLS-2$
                                         out.print("<img class=\"thumb\" src=\""); //$NON-NLS-1$
                                         out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
-                                        out.println(" title=\"" + getTitle(message) + "\"/>"); //$NON-NLS-1$ //$NON-NLS-2$
+                                        out.println(" title=\"" + getTitle(message) + "\">"); //$NON-NLS-1$ //$NON-NLS-2$
 
                                     } else if (message.getMessageType() == MessageType.APP_MESSAGE) {
                                         out.println("Attachment:<br><div class=\"attachImg\" title=\"Doc\"></div>"); //$NON-NLS-1$
@@ -1120,7 +1120,7 @@ public class ReportGenerator {
         byte[] thumb = message.getThumbData();
         if (thumb != null) {
             out.print("<img class=\"thumb\" src=\"");
-            out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\"/><br>");
+            out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\"><br>");
         }
     }
 

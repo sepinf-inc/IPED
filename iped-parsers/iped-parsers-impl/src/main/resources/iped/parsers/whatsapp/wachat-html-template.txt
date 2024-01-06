@@ -2,10 +2,10 @@
 <html>
     <head>
         <title>${id}</title>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-        <meta name="viewport" content="width=device-width" />
-        <meta charset="UTF-8" />
-        <link rel="shortcut icon" href="${favicon}"" />
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <meta charset="UTF-8">
+        <link rel="shortcut icon" href="${favicon}"">
         <style>
             ${css}
             .tab {display: inline-block; border-collapse: collapse; border: 1px solid black;}
@@ -20,7 +20,7 @@
     <body>
         <div id="topbar">
           <span class="left">
-            <img src="${avatar}" width="64" height="64" />
+            <img src="${avatar}" width="64" height="64">
             ${title}
           </span>
         </div>
