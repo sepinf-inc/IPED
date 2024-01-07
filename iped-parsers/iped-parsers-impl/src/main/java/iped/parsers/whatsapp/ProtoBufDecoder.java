@@ -55,6 +55,7 @@ public class ProtoBufDecoder {
             skipHeader();
             List<Part> l = new ArrayList<Part>();
             while (left() > 0) {
+                int okPos = pos;
                 int idxType = Integer.parseInt(readVarInt());
                 int type = idxType & 0b111;
                 int idx = idxType >> 3;
@@ -70,11 +71,16 @@ public class ProtoBufDecoder {
                     long v1 = readInt32LE();
                     long v2 = readInt32LE();
                     value = v1 | (v2 << 32);
+                } else {
+                    pos = okPos;
+                    break;
                 }
                 Part part = new Part(idx, type, value);
                 l.add(part);
             }
-            return l;
+            if (left() == 0) {
+                return l;
+            }
         } catch (Exception e) {
         }
         return null;
@@ -91,7 +97,11 @@ public class ProtoBufDecoder {
             }
         } catch (Exception e) {
         }
-        return new String(res, StandardCharsets.UTF_8);
+        try {
+            return new String(res, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+        }
+        return res;
     }
 
     private int readInt32BE() {

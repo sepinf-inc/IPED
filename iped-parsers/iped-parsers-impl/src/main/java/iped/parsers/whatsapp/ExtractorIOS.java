@@ -21,6 +21,7 @@ import static iped.parsers.whatsapp.Message.MessageType.LOCATION_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.MESSAGES_NOW_ENCRYPTED;
 import static iped.parsers.whatsapp.Message.MessageType.MISSED_VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.MISSED_VOICE_CALL;
+import static iped.parsers.whatsapp.Message.MessageType.POLL_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.SENDER_ADDED_TO_CONTACTS;
 import static iped.parsers.whatsapp.Message.MessageType.STICKER_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.TEXT_MESSAGE;
@@ -481,14 +482,14 @@ public class ExtractorIOS extends Extractor {
         return m;
     }
 
-    public int getPositiveValueFromMetadata(byte[] metadata, int pos) {
+    private static int getPositiveValueFromMetadata(byte[] metadata, int pos) {
         if (metadata != null && metadata.length >= pos + 1) {
             return (int) (metadata[pos] & 0xFF);
         }
         return -1;
     }
 
-    public String getSubStringFromMetadata(byte[] metadata, int pos, int length) {
+    private static String getSubStringFromMetadata(byte[] metadata, int pos, int length) {
         if (metadata != null && metadata.length >= pos + length) {
             return new String(metadata, pos, length, StandardCharsets.UTF_8);
         }
@@ -684,6 +685,34 @@ public class ExtractorIOS extends Extractor {
                     }
                 }
             }
+            if (p1.getIdx() == 8 && m.getMessageType() == POLL_MESSAGE) {
+                List<Part> parts2 = p1.getChilds();
+                if (parts2 != null) {
+                    for (Part p2 : parts2) {
+                        if (p2.getIdx() == 2 && p2.getValue() instanceof String) {
+                            String s2 = (String) p2.getValue();
+                            if (s2 != null && !s2.isBlank()) {
+                                // Poll question
+                                m.setData(s2);
+                            }
+                        }
+                        if (p2.getIdx() == 3) {
+                            List<Part> parts3 = p2.getChilds();
+                            if (parts3 != null) {
+                                for (Part p3 : parts3) {
+                                    if (p3.getIdx() == 1 && p3.getValue() instanceof String) {
+                                        String s3 = (String) p3.getValue();
+                                        if (s3 != null && !s3.isBlank()) {
+                                            // Poll option
+                                            m.addPollOption(new PollOption(s3, 0));
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -813,6 +842,9 @@ public class ExtractorIOS extends Extractor {
             case 39:
                 result = VIEW_ONCE_VIDEO_MESSAGE;
                 break;
+            case 46:
+                result = POLL_MESSAGE;
+                break;                
         }
         return result;
     }
