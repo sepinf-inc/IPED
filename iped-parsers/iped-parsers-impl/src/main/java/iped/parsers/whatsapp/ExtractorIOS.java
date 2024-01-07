@@ -430,7 +430,9 @@ public class ExtractorIOS extends Extractor {
         int messageType = rs.getInt("messageType"); //$NON-NLS-1$
         m.setMessageType(decodeMessageType(messageType, gEventType));
         if (m.getMessageType() != CONTACT_MESSAGE) {
-            m.setMediaMime(rs.getString("vCardString")); //$NON-NLS-1$
+            if (m.getMessageType() != LOCATION_MESSAGE && m.getMessageType() != DELETED_BY_SENDER) {
+                m.setMediaMime(rs.getString("vCardString"));
+            }
         } else {
             String vcards = rs.getString("vCardString"); //$NON-NLS-1$
             if (vcards != null) {
@@ -574,7 +576,9 @@ public class ExtractorIOS extends Extractor {
         if (mediaItem != null) {
             try {
                 if (m.getMessageType() != CONTACT_MESSAGE) {
-                    m.setMediaMime(mediaItem.getTextValue("ZVCARDSTRING")); //$NON-NLS-1$
+                    if (m.getMessageType() != LOCATION_MESSAGE && m.getMessageType() != DELETED_BY_SENDER) {
+                        m.setMediaMime(mediaItem.getTextValue("ZVCARDSTRING"));
+                    }
                 } else {
                     String vcards = mediaItem.getTextValue("ZVCARDSTRING"); //$NON-NLS-1$
                     if (vcards != null) {
