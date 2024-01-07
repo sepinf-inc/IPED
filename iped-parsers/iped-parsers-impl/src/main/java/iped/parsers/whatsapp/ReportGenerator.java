@@ -494,7 +494,7 @@ public class ReportGenerator {
             case GROUP_CREATED:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
                 out.println(Messages.getString("WhatsAppReport.GroupCreated") + " " + name + "<br>");
-                if (message.getData() != null && !message.getData().isBlank()) {
+                if (notNullNorBlank(message.getData())) {
                     out.print(format(message.getData()) + "<br>"); //$NON-NLS-1$
                 }
                 break;
@@ -525,7 +525,7 @@ public class ReportGenerator {
                     out.print(getBestContactName(false, users.get(i), contactsDirectory, account));
                 }
                 out.println(".<br>");
-                if (message.getData() != null && !message.getData().isBlank()) {
+                if (notNullNorBlank(message.getData())) {
                     out.print(format(message.getData()) + "<br>"); //$NON-NLS-1$
                 }
                 break;
@@ -712,8 +712,8 @@ public class ReportGenerator {
                             out.print("<div class=\"" + quoteClass + "\" " + quoteClick
                                     + "><div style=\"display:table-cell;\"><span class=\"quote_user\">" + quoteUser
                                     + "</span><br><span class=\"quote_msg\">" + format(dataQuote));
-                            if (messageQuote.getUiElements() != null && !messageQuote.getUiElements().isBlank()) {
-                                if (dataQuote != null && !dataQuote.isBlank()) {
+                            if (notNullNorBlank(messageQuote.getUiElements())) {
+                                if (notNullNorBlank(dataQuote)) {
                                     out.println("<br>");
                                 }
                                 out.print(formatUiElements(messageQuote.getUiElements()));
@@ -741,16 +741,16 @@ public class ReportGenerator {
                     case UI_ELEMENTS:
                         // Some textual messages may have thumbs
                         printThumb(out, message);
-                        if (message.getData() != null && !message.getData().isBlank()) {
+                        if (notNullNorBlank(message.getData())) {
                             out.print(format(message.getData()) + "<br>"); //$NON-NLS-1$
                         }
-                        if (message.getUiElements() != null && !message.getUiElements().isBlank()) {
+                        if (notNullNorBlank(message.getUiElements())) {
                             out.print(formatUiElements(message.getUiElements()));
                         }
                         break;
                     case ORDER_MESSAGE:
                         printThumb(out, message);
-                        if (message.getData() != null && !message.getData().isBlank()) {
+                        if (notNullNorBlank(message.getData())) {
                             out.print(format(message.getData()) + "<br>");
                         }
                         MessageOrder order = message.getOrder();
@@ -768,7 +768,7 @@ public class ReportGenerator {
                     case URL_MESSAGE:
                         out.println("<a href=\"" + format(message.getUrl()) + "\">" + format(message.getUrl()) //$NON-NLS-1$ //$NON-NLS-2$
                                 + "</a><br>"); //$NON-NLS-1$
-                        if (message.getData() != null && !message.getData().isBlank()) {
+                        if (notNullNorBlank(message.getData())) {
                             out.print(format(message.getData()) + "<br>"); //$NON-NLS-1$
                         }
                         break;
@@ -776,7 +776,7 @@ public class ReportGenerator {
                         out.println("<b><u>" + locationIcon + Messages.getString("WhatsAppReport.LocationMessage") + "</u></b><br>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         out.println("Latitude: " + message.getLatitude() + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
                         out.println("Longitude: " + message.getLongitude() + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
-                        if (message.getData() != null && !message.getData().isBlank()) {
+                        if (notNullNorBlank(message.getData())) {
                             out.print(format(message.getData()) + "<br>"); //$NON-NLS-1$
                         }
                         break;
@@ -784,7 +784,7 @@ public class ReportGenerator {
                         out.println("<b><u>" + locationIcon + Messages.getString("WhatsAppReport.SharedLocationMessage") + "</u></b><br>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         out.println("Latitude: " + message.getLatitude() + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
                         out.println("Longitude: " + message.getLongitude() + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
-                        if (message.getData() != null && !message.getData().isBlank()) {
+                        if (notNullNorBlank(message.getData())) {
                             out.print(format(message.getData()) + "<br>"); //$NON-NLS-1$
                         }
                         break;
@@ -802,7 +802,7 @@ public class ReportGenerator {
                         if (message.getGroupInviteName() != null) {
                             out.println("<b>" + format(message.getGroupInviteName()) + "</b><br>");
                         }
-                        if (message.getData() != null && !message.getData().isBlank()) {
+                        if (notNullNorBlank(message.getData())) {
                             out.println(format(message.getData()) + "<br>");
                         }
                         break;
@@ -813,7 +813,7 @@ public class ReportGenerator {
                     case POLL_MESSAGE:
                         printThumb(out, message);
                         out.println("<b><u>" + Messages.getString("WhatsAppReport.Poll") + "</u></b><br>");
-                        if (message.getData() != null && !message.getData().isBlank()) {
+                        if (notNullNorBlank(message.getData())) {
                             out.println(format(message.getData()) + "<br>");
                         }
                         out.println("<ul>");
@@ -1141,11 +1141,11 @@ public class ReportGenerator {
 
     private String formatOrder(MessageOrder order, String seller) {
         StringBuilder sb = new StringBuilder();
-        if (order.getTitle() != null && !order.getTitle().isBlank()) {
+        if (notNullNorBlank(order.getTitle())) {
             sb.append("<b>").append(Messages.getString("WhatsAppReport.OrderTitle")).append(": </b>");
             sb.append(format(order.getTitle())).append("<br>");
         }
-        if (seller != null && !seller.isBlank()) {
+        if (notNullNorBlank(seller)) {
             sb.append("<b>").append(Messages.getString("WhatsAppReport.OrderSeller")).append(": </b>");
             sb.append(format(seller)).append("<br>");
         }
@@ -1155,7 +1155,7 @@ public class ReportGenerator {
         }
         if (order.getAmount() > 0) {
             sb.append("<b>").append(Messages.getString("WhatsAppReport.OrderAmount")).append(": </b>");
-            if (order.getCurrency() != null && !order.getCurrency().isBlank()) {
+            if (notNullNorBlank(order.getCurrency())) {
                 sb.append(order.getCurrency()).append(' ');
             }
             DecimalFormat nf = LocalizedFormat.getDecimalInstance("#,##0.00");
@@ -1223,22 +1223,22 @@ public class ReportGenerator {
     
     private String formatTemplate(Message message) {
         StringBuilder sb = new StringBuilder();
-        if (message.getData() != null && !message.getData().isBlank()) {
+        if (notNullNorBlank(message.getData())) {
             sb.append(format(message.getData())).append("<br>");
         }
         MessageTemplate t = message.getMessageTemplate();
         if (t != null) {
             String content = t.getContent();
-            if (content != null && !content.isBlank()) {
+            if (notNullNorBlank(content)) {
                 sb.append(format(content)).append("<br>");
             }
             for (MessageTemplate.Button button : t.getButtons()) {
                 String text = button.getText();
-                if (text != null && !text.isBlank()) {
+                if (notNullNorBlank(text)) {
                     sb.append("<b>[").append(format(text)).append("]</b><br>");
                 }
                 String extra = button.getExtra();
-                if (extra != null && !extra.isBlank() && !extra.equals(text)) {
+                if (notNullNorBlank(extra) && !extra.equals(text)) {
                     sb.append(format(extra)).append("<br>");
                 }
             }
@@ -1337,5 +1337,9 @@ public class ReportGenerator {
             }
         });
         out.println(interpolator.replace(template));
+    }
+
+    private static boolean notNullNorBlank(String s) {
+        return s != null && !s.isBlank();
     }
 }
