@@ -807,6 +807,8 @@ public class ExtractorIOS extends Extractor {
                     result = BLOCKED_CONTACT;
                 } else if (gEventType == 35) {
                     result = UNBLOCKED_CONTACT;
+                } else if (gEventType == 38) {
+                    result = MessageType.BUSINESS_OFFICIAL;
                 } else if (gEventType == 40 || gEventType == 41) {
                     // Started a video call (group) 
                     result = VIDEO_CALL;
