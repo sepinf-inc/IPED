@@ -638,6 +638,14 @@ public class ReportGenerator {
                     String quoteDuration = "("+formatMMSS(messageQuote.getDuration())+")";
                     String quoteUser = getBestContactName(messageQuote,contactsDirectory,account);
                     byte[] thumbQuote = messageQuote.getThumbData();                               
+                    
+                    IItemReader mediaItemQuote = messageQuote.getMediaItem();
+                    if (mediaItemQuote != null) {
+                        byte[] generatedThumbQuote = mediaItemQuote.getThumb();
+                        if (generatedThumbQuote != null) {
+                            thumbQuote = generatedThumbQuote;
+                        }
+                    }
 
                     switch (messageQuote.getMessageType()) {
                         case AUDIO_MESSAGE:
@@ -1118,6 +1126,13 @@ public class ReportGenerator {
     
     private void printThumb(PrintWriter out, Message message) {
         byte[] thumb = message.getThumbData();
+        IItemReader mediaItem = message.getMediaItem();
+        if (mediaItem != null) {
+            byte[] generatedThumb = mediaItem.getThumb();
+            if (generatedThumb != null) {
+                thumb = generatedThumb;
+            }
+        }
         if (thumb != null) {
             out.print("<img class=\"thumb\" src=\"");
             out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\"><br>");
