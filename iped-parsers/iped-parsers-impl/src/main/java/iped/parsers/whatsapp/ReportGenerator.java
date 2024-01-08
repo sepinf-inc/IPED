@@ -748,15 +748,16 @@ public class ReportGenerator {
                             out.print(formatUiElements(message.getUiElements()));
                         }
                         break;
+                    case PRODUCT_MESSAGE:
                     case ORDER_MESSAGE:
                         printThumb(out, message);
                         if (notNullNorBlank(message.getData())) {
                             out.print(format(message.getData()) + "<br>");
                         }
-                        MessageOrder order = message.getOrder();
-                        if (order != null) {
-                            String seller = getBestContactName(false, order.getSeller(), contactsDirectory, account);
-                            out.print(formatOrder(order, seller));
+                        MessageProduct product = message.getProduct();
+                        if (product != null) {
+                            String seller = getBestContactName(false, product.getSeller(), contactsDirectory, account);
+                            out.print(formatProduct(product, seller));
                         }
                         break;
                     case UNKNOWN_MEDIA_MESSAGE:
@@ -1139,27 +1140,30 @@ public class ReportGenerator {
         }
     }
 
-    private String formatOrder(MessageOrder order, String seller) {
+    private String formatProduct(MessageProduct product, String seller) {
         StringBuilder sb = new StringBuilder();
-        if (notNullNorBlank(order.getTitle())) {
-            sb.append("<b>").append(Messages.getString("WhatsAppReport.OrderTitle")).append(": </b>");
-            sb.append(format(order.getTitle())).append("<br>");
+        if (notNullNorBlank(product.getTitle())) {
+            sb.append("<b>").append(Messages.getString("WhatsAppReport.ProductTitle")).append(": </b>");
+            sb.append(format(product.getTitle())).append("<br>");
         }
         if (notNullNorBlank(seller)) {
-            sb.append("<b>").append(Messages.getString("WhatsAppReport.OrderSeller")).append(": </b>");
+            sb.append("<b>").append(Messages.getString("WhatsAppReport.ProductSeller")).append(": </b>");
             sb.append(format(seller)).append("<br>");
         }
-        if (order.getCount() != 0) {
-            sb.append("<b>").append(Messages.getString("WhatsAppReport.OrderCount")).append(": </b>");
-            sb.append(order.getCount()).append("<br>");
+        if (product instanceof MessageOrder) {
+            MessageOrder order = (MessageOrder) product;
+            if (order.getCount() != 0) {
+                sb.append("<b>").append(Messages.getString("WhatsAppReport.OrderCount")).append(": </b>");
+                sb.append(order.getCount()).append("<br>");
+            }
         }
-        if (order.getAmount() > 0) {
-            sb.append("<b>").append(Messages.getString("WhatsAppReport.OrderAmount")).append(": </b>");
-            if (notNullNorBlank(order.getCurrency())) {
-                sb.append(order.getCurrency()).append(' ');
+        if (product.getAmount() > 0) {
+            sb.append("<b>").append(Messages.getString("WhatsAppReport.ProductAmount")).append(": </b>");
+            if (notNullNorBlank(product.getCurrency())) {
+                sb.append(product.getCurrency()).append(' ');
             }
             DecimalFormat nf = LocalizedFormat.getDecimalInstance("#,##0.00");
-            sb.append(nf.format(order.getAmount() / 1000.0)).append("<br>");
+            sb.append(nf.format(product.getAmount() / 1000.0)).append("<br>");
         }
         return sb.toString();
     }

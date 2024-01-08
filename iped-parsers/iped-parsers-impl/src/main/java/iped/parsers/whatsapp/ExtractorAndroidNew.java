@@ -39,6 +39,7 @@ import static iped.parsers.whatsapp.Message.MessageType.MISSED_VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.MISSED_VOICE_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.ORDER_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.POLL_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.PRODUCT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.REFUSED_VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.REFUSED_VOICE_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.SENDER_IN_CONTACTS;
@@ -300,8 +301,19 @@ public class ExtractorAndroidNew extends Extractor {
             stmt.setLong(1, m.getId());
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
-                m.setOrder(new MessageOrder(rs.getString("title"), rs.getString("seller"), rs.getInt("count"),
+                m.setProduct(new MessageOrder(rs.getString("title"), rs.getString("seller"), rs.getInt("count"),
                         rs.getString("currency"), rs.getInt("amount")));
+            }
+        }
+    }
+
+    private void extractProductInfo(Connection conn, Message m) throws SQLException {
+        try (PreparedStatement stmt = conn.prepareStatement(SELECT_PRODUCT)) {
+            stmt.setLong(1, m.getId());
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                m.setProduct(new MessageProduct(rs.getString("title"), rs.getString("seller"), rs.getString("currency"),
+                        rs.getInt("amount")));
             }
         }
     }
@@ -326,6 +338,7 @@ public class ExtractorAndroidNew extends Extractor {
         boolean hasSystemNumberChangeTable = SQLite3DBParser.containsTable("message_system_number_change", conn);
         boolean hasRevokedTable = SQLite3DBParser.containsTable("message_revoked", conn);
         boolean hasOrderTable = SQLite3DBParser.containsTable("message_order", conn);
+        boolean hasProductTable = SQLite3DBParser.containsTable("message_product", conn);
 
         try (PreparedStatement stmt = conn.prepareStatement(getSelectMessagesQuery(conn))) {
             ResultSet rs = stmt.executeQuery();
@@ -455,6 +468,10 @@ public class ExtractorAndroidNew extends Extractor {
                     extractOrderInfo(conn, m);
                 }
 
+                if (hasProductTable && m.getMessageType() == PRODUCT_MESSAGE) {
+                    extractProductInfo(conn, m);
+                }
+                
                 long edit = rs.getLong("editTimestamp");
                 if (edit != 0) {
                     m.setEditTimeStamp(new Date(edit));
@@ -748,6 +765,9 @@ public class ExtractorAndroidNew extends Extractor {
             case 20:
                 result = STICKER_MESSAGE;
                 break;
+            case 23:
+                result = PRODUCT_MESSAGE;
+                break;
             case 24:
                 result = GROUP_INVITE;
                 break;
@@ -836,6 +856,10 @@ public class ExtractorAndroidNew extends Extractor {
     private static final String SELECT_ORDER = "select raw_string as seller, order_title as title,"
             + " item_count as count, currency_code as currency, total_amount_1000 as amount"
             + " from message_order left join jid on seller_jid = jid._id where message_row_id=?";
+    
+    private static final String SELECT_PRODUCT = "select raw_string as seller, title as title,"
+            + " currency_code as currency, amount_1000 as amount"
+            + " from message_product left join jid on business_owner_jid = jid._id where message_row_id=?";
     
     private static final String SELECT_POLL_OPTION = "SELECT option_name as name, vote_total as total FROM message_poll_option where message_row_id=? order by _id";
 
