@@ -65,6 +65,10 @@ public class IpedMetadata extends SyncMetadata {
         setMetadataWriteFilter(ipedFilter);
     }
 
+    public void allocateSpace(int count) {
+        ipedFilter.allocateSpace(count);
+    }
+
     public void set(String arg0, ArrayList<String> list) {
         String[] arr = new String[list.size()];
         int i = 0;

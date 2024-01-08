@@ -13,9 +13,10 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map.Entry;
 
 import org.apache.tika.io.TemporaryResources;
-import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
@@ -24,7 +25,6 @@ import iped.parsers.util.Messages;
 import iped.properties.ExtraProperties;
 import iped.utils.SimpleHTMLEncoder;
 import iped.utils.tika.IpedMetadata;
-import iped.utils.tika.SyncMetadata;
 
 public class TableReportGenerator {
 
@@ -118,6 +118,7 @@ public class TableReportGenerator {
             
             LngColumnExtractor lngExtractor = new LngColumnExtractor();
             LatColumnExtractor latExtractor = new LatColumnExtractor();
+            HashMap<String, ArrayList<String>> dates = new HashMap<String, ArrayList<String>>();
 
             if (hasNext) {
                 do {
@@ -136,7 +137,14 @@ public class TableReportGenerator {
                                 if(datePos!=-1) {
                                 	String datetext = text.substring(datePos+AbstractDBParser.DATETIME_MARKUP_START.length());
                                 	datetext = datetext.substring(0,datetext.indexOf("\">"));
-                                	tableM.add(AbstractDBParser.DATABASEDATECOLUMN_PREFIX+rsmd.getTableName(i)+":"+rsmd.getColumnName(i), datetext);
+                                	String colName = AbstractDBParser.DATABASEDATECOLUMN_PREFIX + rsmd.getTableName(i) + ":"
+                                            + rsmd.getColumnName(i);
+                                	ArrayList<String> valueList = dates.get(colName);
+                                	if(valueList==null) {
+                                        valueList = new ArrayList<>();
+                                        dates.put(colName, valueList);
+                                	}
+                                    valueList.add(datetext);
                                 	isTime=true;
                                 }
                             }catch(Exception e) {
@@ -175,6 +183,12 @@ public class TableReportGenerator {
                     }
                     
                 } while (next() && rows < maxRows);
+            }
+
+            if (!dates.isEmpty()) {
+                for (Entry<String, ArrayList<String>> entry : dates.entrySet()) {
+                    tableM.set(entry.getKey(), entry.getValue());
+                }
             }
 
             if(locations.size()>0) {
