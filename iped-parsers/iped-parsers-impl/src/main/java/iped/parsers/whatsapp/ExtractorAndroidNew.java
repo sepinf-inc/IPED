@@ -663,6 +663,10 @@ public class ExtractorAndroidNew extends Extractor {
                     case 59:
                         result = EPHEMERAL_DURATION_CHANGED;
                         break;
+                    // TODO: Handle business related notification (no extra tables/fields)     
+                    //case 63:
+                    //    result = ???;
+                    //    break;
                     case 67:
                         if (bizStateId == 10) {
                             result = BUSINESS_META_SECURE_SERVICE;
