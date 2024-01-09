@@ -341,28 +341,32 @@ public class OFCParser extends AbstractParser {
     public Charset findCharset(File file) throws IOException {
         /* discover charset */
         FileInputStream inputStream = new FileInputStream(file);
-        Reader reader = new InputStreamReader(inputStream);
-        BufferedReader rd = new BufferedReader(reader);
-        Pattern pattern = Pattern.compile("\\<CPAGE\\>(.*)\\<\\/CPAGE\\>");
-        Matcher matcher = pattern.matcher("\\D");
-
         Charset result = Charset.defaultCharset();
+        try {
+            Reader reader = new InputStreamReader(inputStream);
+            BufferedReader rd = new BufferedReader(reader);
+            Pattern pattern = Pattern.compile("\\<CPAGE\\>(.*)\\<\\/CPAGE\\>");
+            Matcher matcher = pattern.matcher("\\D");
 
-        String line = null;
-        while ((line = rd.readLine()) != null) {
-            matcher.reset(line);
-            if (matcher.find()) {
-                String cpage = matcher.group(1);
-                try {
-                    return Charset.forName(cpage);
-                } catch (Exception e) {
+
+            String line = null;
+            while ((line = rd.readLine()) != null) {
+                matcher.reset(line);
+                if (matcher.find()) {
+                    String cpage = matcher.group(1);
                     try {
-                        return Charset.forName("windows-" + cpage);
-                    } catch (Exception e2) {
-                        // TODO: handle exception
+                        return Charset.forName(cpage);
+                    } catch (Exception e) {
+                        try {
+                            return Charset.forName("windows-" + cpage);
+                        } catch (Exception e2) {
+                            // TODO: handle exception
+                        }
                     }
                 }
             }
+        } finally {
+            inputStream.close();
         }
 
         return result;
