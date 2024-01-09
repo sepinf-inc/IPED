@@ -577,6 +577,10 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.GroupOnlyAdminsCanSend") + "<br>");
                 break;
+            case CHANGED_DEVICE:
+                out.println("<div class=\"systemmessage\">");
+                out.println(name + " " + Messages.getString("WhatsAppReport.ChangedDevice") + "<br>");
+                break;
             case CHANGED_NUMBER_TO:
                 out.println("<div class=\"systemmessage\">");
                 users = message.getUsersAction();
