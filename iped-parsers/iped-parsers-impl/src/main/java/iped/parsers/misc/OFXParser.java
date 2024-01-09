@@ -1,29 +1,30 @@
 package iped.parsers.misc;
 
-import java.io.File;
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.util.Set;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.math.BigInteger;
+import java.nio.charset.Charset;
+import java.util.Date;
 import java.util.List;
+import java.util.Set;
+import java.util.TimeZone;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import org.apache.poi.hpsf.Property;
-import org.apache.poi.hpsf.PropertySet;
-import org.apache.poi.hpsf.Section;
-import org.apache.poi.poifs.filesystem.DirectoryEntry;
-import org.apache.poi.poifs.filesystem.DocumentEntry;
-import org.apache.poi.poifs.filesystem.DocumentInputStream;
-import org.apache.poi.poifs.filesystem.Entry;
-import org.apache.poi.poifs.filesystem.POIFSFileSystem;
+import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.hssf.usermodel.HSSFRow;
-import org.apache.poi.hssf.usermodel.*;
-import org.apache.poi.ss.usermodel.*;
-
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.CreationHelper;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
@@ -34,59 +35,42 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.sax.XHTMLContentHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import com.webcohesion.ofx4j.domain.data.MessageSetType;
 import com.webcohesion.ofx4j.domain.data.ResponseEnvelope;
 import com.webcohesion.ofx4j.domain.data.ResponseMessageSet;
+import com.webcohesion.ofx4j.domain.data.banking.BankAccountDetails;
 import com.webcohesion.ofx4j.domain.data.banking.BankStatementResponse;
 import com.webcohesion.ofx4j.domain.data.banking.BankStatementResponseTransaction;
 import com.webcohesion.ofx4j.domain.data.banking.BankingResponseMessageSet;
-import com.webcohesion.ofx4j.domain.data.banking.BankAccountDetails;
+import com.webcohesion.ofx4j.domain.data.common.BalanceInfo;
+import com.webcohesion.ofx4j.domain.data.common.Status;
+import com.webcohesion.ofx4j.domain.data.common.Transaction;
+import com.webcohesion.ofx4j.domain.data.common.TransactionList;
+import com.webcohesion.ofx4j.domain.data.creditcard.CreditCardAccountDetails;
+import com.webcohesion.ofx4j.domain.data.creditcard.CreditCardResponseMessageSet;
 import com.webcohesion.ofx4j.domain.data.creditcard.CreditCardStatementResponse;
 import com.webcohesion.ofx4j.domain.data.creditcard.CreditCardStatementResponseTransaction;
-import com.webcohesion.ofx4j.domain.data.creditcard.CreditCardResponseMessageSet;
-import com.webcohesion.ofx4j.domain.data.creditcard.CreditCardAccountDetails;
-import com.webcohesion.ofx4j.domain.data.investment.transactions.*;
-import com.webcohesion.ofx4j.domain.data.investment.statements.*;
-import com.webcohesion.ofx4j.domain.data.investment.positions.*;
-import com.webcohesion.ofx4j.domain.data.investment.inv401k.*;
-import com.webcohesion.ofx4j.domain.data.investment.accounts.*;
-import com.webcohesion.ofx4j.domain.data.common.BalanceInfo;
-import com.webcohesion.ofx4j.domain.data.common.TransactionList;
-import com.webcohesion.ofx4j.domain.data.signon.SignonResponse;
-import com.webcohesion.ofx4j.domain.data.common.Transaction;
-import com.webcohesion.ofx4j.domain.data.signon.SignonResponse;
+import com.webcohesion.ofx4j.domain.data.investment.accounts.InvestmentAccountDetails;
+import com.webcohesion.ofx4j.domain.data.investment.statements.InvestmentStatementResponse;
+import com.webcohesion.ofx4j.domain.data.investment.statements.InvestmentStatementResponseMessageSet;
+import com.webcohesion.ofx4j.domain.data.investment.statements.InvestmentStatementResponseTransaction;
+import com.webcohesion.ofx4j.domain.data.investment.transactions.BaseInvestmentTransaction;
+import com.webcohesion.ofx4j.domain.data.investment.transactions.InvestmentBankTransaction;
+import com.webcohesion.ofx4j.domain.data.investment.transactions.InvestmentTransaction;
+import com.webcohesion.ofx4j.domain.data.investment.transactions.InvestmentTransactionList;
 import com.webcohesion.ofx4j.domain.data.signon.FinancialInstitution;
-import com.webcohesion.ofx4j.domain.data.common.Status;
-import com.webcohesion.ofx4j.io.DefaultStringConversion;
+import com.webcohesion.ofx4j.domain.data.signon.SignonResponse;
 import com.webcohesion.ofx4j.io.AggregateUnmarshaller;
-import com.webcohesion.ofx4j.io.OFXParseException;
+import com.webcohesion.ofx4j.io.DefaultStringConversion;
 
-import iped.parsers.standard.RawStringParser;
 import iped.parsers.standard.StandardParser;
-import iped.utils.IOUtil;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
-
-import org.apache.tika.parser.microsoft.OfficeParser;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.io.FileOutputStream;
-import java.io.Reader;
-import java.io.InputStreamReader;
-import java.nio.charset.Charset;
-
-import java.util.Date;
-import java.util.TimeZone;
-
-import java.math.BigInteger;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 
 /**
  * Extract OFX info to xls file
@@ -174,8 +158,8 @@ public class OFXParser extends AbstractParser {
 
         if (cell != null){
             if (value != null){
-                cell.setCellType(CellType.STRING);    
-                cell.setCellValue(value.toString());            
+                cell.setCellType(CellType.STRING);
+                cell.setCellValue(value.toString());
             }else{
                 cell.setCellType(CellType.STRING);    
                 cell.setCellValue("");
@@ -1091,6 +1075,36 @@ public class OFXParser extends AbstractParser {
 
     }
 
+    public Charset findCharset(File file) throws IOException {
+        /* discover charset */
+        FileInputStream inputStream = new FileInputStream(file);
+        Reader reader = new InputStreamReader(inputStream);
+        BufferedReader rd = new BufferedReader(reader);
+        Pattern pattern = Pattern.compile("^CHARSET\\:(.*)");
+        Matcher matcher = pattern.matcher("\\D");
+
+        Charset result = Charset.defaultCharset();
+
+        String line = null;
+        while ((line = rd.readLine()) != null) {
+            matcher.reset(line);
+            if (matcher.find()) {
+                String cpage = matcher.group(1);
+                try {
+                    return Charset.forName(cpage);
+                } catch (Exception e) {
+                    try {
+                        return Charset.forName("windows-" + cpage);
+                    } catch (Exception e2) {
+                        // TODO: handle exception
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
 
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
@@ -1099,18 +1113,17 @@ public class OFXParser extends AbstractParser {
         TemporaryResources tmp = null;
 
         try{
-
             tmp = new TemporaryResources();
             TikaInputStream tis = TikaInputStream.get(stream, tmp);
             File file = tis.getFile();
 
             FileInputStream inputStream = new FileInputStream(file);                            
-            Reader reader = new InputStreamReader(inputStream);
-
+            Reader reader = new InputStreamReader(inputStream, findCharset(file));
             AggregateUnmarshaller aggregate = new AggregateUnmarshaller(ResponseEnvelope.class);
 
-            //Fix Timezone to the current system settings instead of GMT defalt
+            // Fix Timezone to the current system settings instead of GMT defalt
             DefaultStringConversion  conv = new DefaultStringConversion (TimeZone.getDefault().getID()); 
+
              aggregate.setConversion(conv);
 
             ResponseEnvelope re = (ResponseEnvelope) aggregate.unmarshal(reader);

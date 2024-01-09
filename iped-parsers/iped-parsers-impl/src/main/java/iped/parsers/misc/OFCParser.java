@@ -343,7 +343,7 @@ public class OFCParser extends AbstractParser {
         FileInputStream inputStream = new FileInputStream(file);
         Reader reader = new InputStreamReader(inputStream);
         BufferedReader rd = new BufferedReader(reader);
-        Pattern pattern = Pattern.compile("(\\<CPAGE\\>(.*)\\<\\/CPAGE\\>)|(CHARSET)");
+        Pattern pattern = Pattern.compile("\\<CPAGE\\>(.*)\\<\\/CPAGE\\>");
         Matcher matcher = pattern.matcher("\\D");
 
         Charset result = Charset.defaultCharset();
