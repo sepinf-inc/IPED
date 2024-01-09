@@ -1,34 +1,39 @@
 
 package iped.parsers.misc;
 
-import java.io.File;
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.util.Set;
-import java.util.List;
-import java.util.Vector;
-
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.Serializable;
+import java.math.BigInteger;
+import java.nio.charset.Charset;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Set;
+import java.util.Vector;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import org.apache.poi.hpsf.Property;
-import org.apache.poi.hpsf.PropertySet;
-import org.apache.poi.hpsf.Section;
-import org.apache.poi.poifs.filesystem.DirectoryEntry;
-import org.apache.poi.poifs.filesystem.DocumentEntry;
-import org.apache.poi.poifs.filesystem.DocumentInputStream;
-import org.apache.poi.poifs.filesystem.Entry;
-import org.apache.poi.poifs.filesystem.POIFSFileSystem;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Unmarshaller;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
+
+import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.hssf.usermodel.HSSFRow;
-import org.apache.poi.hssf.usermodel.*;
-import org.apache.poi.ss.usermodel.*;
-
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.CreationHelper;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
@@ -39,45 +44,14 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.sax.XHTMLContentHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.parsers.standard.RawStringParser;
 import iped.parsers.standard.StandardParser;
-import iped.utils.IOUtil;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
-
-import org.apache.tika.parser.microsoft.OfficeParser;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.io.FileOutputStream;
-import java.nio.charset.Charset;
-
-import java.util.Date;
-import java.util.TimeZone;
-
-import java.math.BigInteger;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
-
-import java.io.Serializable;
-import javax.xml.bind.Marshaller;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.*;
-
-
-import java.text.SimpleDateFormat;
-import java.text.ParseException;
 
 
 /**
@@ -99,6 +73,7 @@ public class OFCParser extends AbstractParser {
     private static Logger LOGGER = LoggerFactory.getLogger(OFCParser.class);
 
     public final String dateStringDefault = "yyyy/MM/dd hh:mm:ss";
+    Charset cs;
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -167,8 +142,9 @@ public class OFCParser extends AbstractParser {
 
         if (cell != null){
             if (value != null){
-                cell.setCellType(CellType.STRING);    
-                cell.setCellValue(value.toString());            
+                cell.setCellType(CellType.STRING);
+                String decodedValue;
+                cell.setCellValue(value.toString());
             }else{
                 cell.setCellType(CellType.STRING);    
                 cell.setCellValue("");
@@ -177,7 +153,7 @@ public class OFCParser extends AbstractParser {
 
     }    
 
-    public void setDateCellValue(HSSFCell cell, String value, CellStyle cellStyle)throws Exception{
+    public void setDateCellValue(HSSFCell cell, String value, CellStyle cellStyle) throws Exception {
 
         Date date = null;
         if (cell != null){
@@ -244,7 +220,7 @@ public class OFCParser extends AbstractParser {
         setStringCellValue(cell,ofc.DTD);                
 
         cell = rowBank.createCell(cnb++);
-        setStringCellValue(cell,ofc.CPAGE);                
+        setStringCellValue(cell, ofc.CPAGE);
 
         for (ACCTSTMT as : ofc.ACCTSTMT) {
 
@@ -362,6 +338,35 @@ public class OFCParser extends AbstractParser {
 
     }
 
+    public Charset findCharset(File file) throws IOException {
+        /* discover charset */
+        FileInputStream inputStream = new FileInputStream(file);
+        Reader reader = new InputStreamReader(inputStream);
+        BufferedReader rd = new BufferedReader(reader);
+        Pattern pattern = Pattern.compile("(\\<CPAGE\\>(.*)\\<\\/CPAGE\\>)|(CHARSET)");
+        Matcher matcher = pattern.matcher("\\D");
+
+        Charset result = Charset.defaultCharset();
+
+        String line = null;
+        while ((line = rd.readLine()) != null) {
+            matcher.reset(line);
+            if (matcher.find()) {
+                String cpage = matcher.group(1);
+                try {
+                    return Charset.forName(cpage);
+                } catch (Exception e) {
+                    try {
+                        return Charset.forName("windows-" + cpage);
+                    } catch (Exception e2) {
+                        // TODO: handle exception
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
 
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
@@ -376,8 +381,9 @@ public class OFCParser extends AbstractParser {
             TikaInputStream tis = TikaInputStream.get(stream, tmp);
             File file = tis.getFile();
 
+
             FileInputStream inputStream = new FileInputStream(file);                            
-            Reader reader = new InputStreamReader(inputStream);
+            Reader reader = new InputStreamReader(inputStream, findCharset(file));
 
             JAXBContext jaxbContext = JAXBContext.newInstance(OFC.class);
             Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
@@ -396,6 +402,12 @@ public class OFCParser extends AbstractParser {
             HSSFWorkbook workbook = new HSSFWorkbook();
 
             if ( OFC != null){
+                try {
+                    Integer.parseInt(OFC.CPAGE);
+                    this.cs = Charset.forName("windows-" + OFC.CPAGE);
+                } catch (Exception e) {
+                    // TODO: ignore
+                }
                 decodeBank(OFC, workbook);
             }
 
