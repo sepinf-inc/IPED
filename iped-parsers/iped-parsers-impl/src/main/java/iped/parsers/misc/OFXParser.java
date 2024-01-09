@@ -1082,15 +1082,18 @@ public class OFXParser extends AbstractParser {
         try{
             Reader reader = new InputStreamReader(inputStream);
             BufferedReader rd = new BufferedReader(reader);
-            Pattern pattern = Pattern.compile("^CHARSET\\:(.*)");
-            Matcher matcher = pattern.matcher("\\D");
-
+            Pattern patternV1 = Pattern.compile("^CHARSET\\:(.*)");
+            Matcher matcherV1 = patternV1.matcher("\\D");
+            Pattern patternV2 = Pattern.compile("encoding=\"(.*)\"");
+            Matcher matcherV2 = patternV2.matcher("\\D");
+            String cpage = "";
 
             String line = null;
             while ((line = rd.readLine()) != null) {
-                matcher.reset(line);
-                if (matcher.find()) {
-                    String cpage = matcher.group(1);
+                matcherV1.reset(line);
+                matcherV2.reset(line);
+                if (matcherV1.find()) {
+                    cpage = matcherV1.group(1);
                     try {
                         return Charset.forName(cpage);
                     } catch (Exception e) {
@@ -1100,6 +1103,13 @@ public class OFXParser extends AbstractParser {
                             // TODO: handle exception
                         }
                     }
+                }else if(matcherV2.find()){
+                    cpage = matcherV2.group(1);
+                    try {
+                        return Charset.forName(cpage);
+                    } catch (Exception e) {
+                        // TODO: handle exception
+                    }                    
                 }
             }
         }finally {
