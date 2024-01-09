@@ -3,6 +3,7 @@ body {
     background-size: 642px;
     background-repeat: repeat-y;
     margin: 0 auto;
+    font-family: Arial, "Microsoft Tai Le";
 }
 
 video {
@@ -138,7 +139,6 @@ div.deletedIcon {
     display: block;
     margin: 0.5em;
     color: #ffffff;
-    font-family: Arial;
 }
 
 #topbar .right {
@@ -153,7 +153,6 @@ div.deletedIcon {
 
 #chatlist {
     width: 640px;
-    font-family: Arial;
 }
 
 #chatlist .contact {
@@ -181,7 +180,6 @@ div.deletedIcon {
     display: block;
     margin: 0.5em;
     color: #666666;
-    font-family: Arial;
 }
 
 /**************************
@@ -190,7 +188,6 @@ div.deletedIcon {
 
 #conversation {
     width: 640px;
-    font-family: Arial;
     color: #000000;
 }
 
@@ -207,12 +204,10 @@ div.deletedIcon {
 }
 
 .name {
-    font-family: Arial;
     color: #B0C040;	
 }
 
 .name_call {
-    font-family: Arial;
     color: #4040B0;	
 }
 
@@ -253,13 +248,11 @@ div:target{
 }
 
 .quote_user {
-    font-family: Arial;
     font-size: 90%;
     color: #01A280;	
 }
 
 .quote_msg {
-    font-family: Arial;
     font-size: 90%;
     color: #67747D;	
 }
