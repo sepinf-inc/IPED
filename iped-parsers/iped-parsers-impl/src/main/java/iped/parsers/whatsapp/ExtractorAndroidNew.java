@@ -637,6 +637,10 @@ public class ExtractorAndroidNew extends Extractor {
                     case 33:
                         result = GROUP_ONLY_ADMINS_CAN_SEND;
                         break;
+                    // TODO: Handle payments notification system messages     
+                    //case 39:
+                    //    result = PAYMENT_NOTIFICATION;
+                    //    break;
                     case 46:
                         result = BUSINESS_CHAT;
                         break;
