@@ -69,6 +69,7 @@ import com.webcohesion.ofx4j.io.AggregateUnmarshaller;
 import com.webcohesion.ofx4j.io.DefaultStringConversion;
 
 import iped.parsers.standard.StandardParser;
+import iped.parsers.util.ItemInfo;
 import iped.parsers.util.Messages;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
@@ -1245,7 +1246,11 @@ public class OFXParser extends AbstractParser {
             }
 
         } catch (Exception ex) {
-            LOGGER.error("Error parsing OFX file {}", ex.toString());
+            String fileName = metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY);
+            ItemInfo itemInfo = context.get(ItemInfo.class);
+            if (itemInfo != null)
+                fileName = itemInfo.getPath();
+            LOGGER.error("Error parsing OFX file {}: {}", fileName, ex.toString());
         } finally {
             if (tmp != null)
                 tmp.close();

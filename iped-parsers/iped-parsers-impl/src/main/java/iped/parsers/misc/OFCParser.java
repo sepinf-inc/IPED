@@ -50,6 +50,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import iped.parsers.standard.StandardParser;
+import iped.parsers.util.ItemInfo;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 
@@ -427,7 +428,11 @@ public class OFCParser extends AbstractParser {
             }
 
         } catch (Exception ex) {
-            LOGGER.error("Error parsing OFC file {}", ex.toString());
+            String fileName = metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY);
+            ItemInfo itemInfo = context.get(ItemInfo.class);
+            if (itemInfo != null)
+                fileName = itemInfo.getPath();
+            LOGGER.error("Error parsing OFC file {}: {}", fileName, ex.toString());
         } finally {
             if (tmp != null)
                 tmp.close();
