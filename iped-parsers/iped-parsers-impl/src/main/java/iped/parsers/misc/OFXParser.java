@@ -69,6 +69,7 @@ import com.webcohesion.ofx4j.io.AggregateUnmarshaller;
 import com.webcohesion.ofx4j.io.DefaultStringConversion;
 
 import iped.parsers.standard.StandardParser;
+import iped.parsers.util.Messages;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 
@@ -197,21 +198,22 @@ public class OFXParser extends AbstractParser {
 
             short cnb = 0;
             short rnb = 0;
-            HSSFSheet sheetSig = workbook.createSheet("Signon");
+            HSSFSheet sheetSig = workbook.createSheet(Messages.getString("OFXParser.Signon"));
 
             HSSFRow rowheadSig = sheetSig.createRow(rnb++);
-            rowheadSig.createCell(cnb++).setCellValue("Status Code");
-            rowheadSig.createCell(cnb++).setCellValue("Status Serverity");
-            rowheadSig.createCell(cnb++).setCellValue("Language");
-            rowheadSig.createCell(cnb++).setCellValue("Financial Institution Id");
-            rowheadSig.createCell(cnb++).setCellValue("Financial Institution Organization");
-            rowheadSig.createCell(cnb++).setCellValue("Timestamp Response");
-            rowheadSig.createCell(cnb++).setCellValue("User Key");
-            rowheadSig.createCell(cnb++).setCellValue("Expiration User Key");
-            rowheadSig.createCell(cnb++).setCellValue("Profile Last Update");
-            rowheadSig.createCell(cnb++).setCellValue("Account Last Update");
-            rowheadSig.createCell(cnb++).setCellValue("Session Id");
-            rowheadSig.createCell(cnb++).setCellValue("Access Key");
+            rowheadSig.createCell(cnb++).setCellValue(Messages.getString("OFXParser.StatusCode"));
+            rowheadSig.createCell(cnb++).setCellValue(Messages.getString("OFXParser.StatusSeverity"));
+            rowheadSig.createCell(cnb++).setCellValue(Messages.getString("OFXParser.Language"));
+            rowheadSig.createCell(cnb++).setCellValue(Messages.getString("OFXParser.FinancialInstitutionId"));
+            rowheadSig.createCell(cnb++)
+                    .setCellValue(Messages.getString("OFXParser.FinancialInstitutionOrganization"));
+            rowheadSig.createCell(cnb++).setCellValue(Messages.getString("OFXParser.TimestampResponse"));
+            rowheadSig.createCell(cnb++).setCellValue(Messages.getString("OFXParser.UserKey"));
+            rowheadSig.createCell(cnb++).setCellValue(Messages.getString("OFXParser.ExpirationUserKey"));
+            rowheadSig.createCell(cnb++).setCellValue(Messages.getString("OFXParser.ProfileLastUpdate"));
+            rowheadSig.createCell(cnb++).setCellValue(Messages.getString("OFXParser.AccountLastUpdate"));
+            rowheadSig.createCell(cnb++).setCellValue(Messages.getString("OFXParser.SessionId"));
+            rowheadSig.createCell(cnb++).setCellValue(Messages.getString("OFXParser.AccessKey"));
             
             
             cnb = 0;
@@ -308,21 +310,22 @@ public class OFXParser extends AbstractParser {
                     short rnb = 0;
                     BankStatementResponse bsr = b.getMessage();
 
-                    HSSFSheet sheetBank = workbook.createSheet("Bank_"+bankCount);
+                    HSSFSheet sheetBank = workbook.createSheet(Messages.getString("OFXParser.Bank") + "_" + bankCount);
 
                     HSSFRow rowheadBank = sheetBank.createRow(rnb++);
-                    rowheadBank.createCell(cnb++).setCellValue("Bank Id");
-                    rowheadBank.createCell(cnb++).setCellValue("Account Number");
-                    rowheadBank.createCell(cnb++).setCellValue("Branch Id");
-                    rowheadBank.createCell(cnb++).setCellValue("Account Type");    
-                    rowheadBank.createCell(cnb++).setCellValue("Account Key");    
-                    rowheadBank.createCell(cnb++).setCellValue("Currency Code");                          
-                    rowheadBank.createCell(cnb++).setCellValue("Ledger Balance Amount");
-                    rowheadBank.createCell(cnb++).setCellValue("Ledger Balance Date");                          
-                    rowheadBank.createCell(cnb++).setCellValue("Available Balance Amount");
-                    rowheadBank.createCell(cnb++).setCellValue("Available Balance Date");
-                    rowheadBank.createCell(cnb++).setCellValue("Transaction Start Date");
-                    rowheadBank.createCell(cnb++).setCellValue("Transaction End Date");
+                    rowheadBank.createCell(cnb++).setCellValue(Messages.getString("OFXParser.BankId"));
+                    rowheadBank.createCell(cnb++).setCellValue(Messages.getString("OFXParser.AccountNumber"));
+                    rowheadBank.createCell(cnb++).setCellValue(Messages.getString("OFXParser.BranchId"));
+                    rowheadBank.createCell(cnb++).setCellValue(Messages.getString("OFXParser.AccountType"));
+                    rowheadBank.createCell(cnb++).setCellValue(Messages.getString("OFXParser.AccountKey"));
+                    rowheadBank.createCell(cnb++).setCellValue(Messages.getString("OFXParser.CurrencyCode"));
+                    rowheadBank.createCell(cnb++).setCellValue(Messages.getString("OFXParser.LedgerBalanceAmount"));
+                    rowheadBank.createCell(cnb++).setCellValue(Messages.getString("OFXParser.LedgerBalanceDate"));
+                    rowheadBank.createCell(cnb++)
+                            .setCellValue(Messages.getString("OFXParser.AvailableBalanceAmount"));
+                    rowheadBank.createCell(cnb++).setCellValue(Messages.getString("OFXParser.AvailableBalanceDate"));
+                    rowheadBank.createCell(cnb++).setCellValue(Messages.getString("OFXParser.TransactionStartDate"));
+                    rowheadBank.createCell(cnb++).setCellValue(Messages.getString("OFXParser.TransactionEndDate"));
                 
                     if (bsr != null ){
 
@@ -423,28 +426,36 @@ public class OFXParser extends AbstractParser {
                             short cnt = 0;
                             short rnt = 0;
                        
-                            HSSFSheet sheetTrans = workbook.createSheet("Bank_"+bankCount+" Transactions");
+                            HSSFSheet sheetTrans = workbook
+                                    .createSheet(Messages.getString("OFXParser.Bank") + "_" + bankCount
+                                            + Messages.getString("OFXParser.Transactions"));
 
                             HSSFRow rowheadTrans = sheetTrans.createRow(rnt++);
-                            rowheadTrans.createCell(cnt++).setCellValue("Type");
-                            rowheadTrans.createCell(cnt++).setCellValue("Id");
-                            rowheadTrans.createCell(cnt++).setCellValue("Date Posted");
-                            rowheadTrans.createCell(cnt++).setCellValue("Ammount");           
-                            rowheadTrans.createCell(cnt++).setCellValue("Memo");        
-                            rowheadTrans.createCell(cnt++).setCellValue("Check Number");    
-                            rowheadTrans.createCell(cnt++).setCellValue("Date Initiated");           
-                            rowheadTrans.createCell(cnt++).setCellValue("Date Available");           
-                            rowheadTrans.createCell(cnt++).setCellValue("Correction Id");    
-                            rowheadTrans.createCell(cnt++).setCellValue("Server-Assigned Temporary Id");    
-                            rowheadTrans.createCell(cnt++).setCellValue("Reference Number");    
-                            rowheadTrans.createCell(cnt++).setCellValue("Standard Industrial Code");
-                            rowheadTrans.createCell(cnt++).setCellValue("Payee Id");
-                            rowheadTrans.createCell(cnt++).setCellValue("Name");                            
-                            rowheadTrans.createCell(cnt++).setCellValue("Payee"); 
-                            rowheadTrans.createCell(cnt++).setCellValue("Currency Code"); 
-                            rowheadTrans.createCell(cnt++).setCellValue("Currency Exchange Rate"); 
-                            rowheadTrans.createCell(cnt++).setCellValue("Original Currency Code"); 
-                            rowheadTrans.createCell(cnt++).setCellValue("Original Currency Exchange Rate"); 
+                            rowheadTrans.createCell(cnt++).setCellValue(Messages.getString("OFXParser.Type"));
+                            rowheadTrans.createCell(cnt++).setCellValue(Messages.getString("OFXParser.Id"));
+                            rowheadTrans.createCell(cnt++).setCellValue(Messages.getString("OFXParser.DatePosted"));
+                            rowheadTrans.createCell(cnt++).setCellValue(Messages.getString("OFXParser.Amount"));
+                            rowheadTrans.createCell(cnt++).setCellValue(Messages.getString("OFXParser.Memo"));
+                            rowheadTrans.createCell(cnt++).setCellValue(Messages.getString("OFXParser.CheckNumber"));
+                            rowheadTrans.createCell(cnt++).setCellValue(Messages.getString("OFXParser.DateInitiated"));
+                            rowheadTrans.createCell(cnt++).setCellValue(Messages.getString("OFXParser.DateAvailable"));
+                            rowheadTrans.createCell(cnt++).setCellValue(Messages.getString("OFXParser.CorrectionId"));
+                            rowheadTrans.createCell(cnt++)
+                                    .setCellValue(Messages.getString("OFXParser.ServerAssignedTemporaryId"));
+                            rowheadTrans.createCell(cnt++)
+                                    .setCellValue(Messages.getString("OFXParser.ReferenceNumber"));
+                            rowheadTrans.createCell(cnt++)
+                                    .setCellValue(Messages.getString("OFXParser.StandardIndustrialCode"));
+                            rowheadTrans.createCell(cnt++).setCellValue(Messages.getString("OFXParser.PayeeId"));
+                            rowheadTrans.createCell(cnt++).setCellValue(Messages.getString("OFXParser.Name"));
+                            rowheadTrans.createCell(cnt++).setCellValue(Messages.getString("OFXParser.Payee"));
+                            rowheadTrans.createCell(cnt++).setCellValue(Messages.getString("OFXParser.CurrencyCode"));
+                            rowheadTrans.createCell(cnt++)
+                                    .setCellValue(Messages.getString("OFXParser.CurrencyExchangeRate"));
+                            rowheadTrans.createCell(cnt++)
+                                    .setCellValue(Messages.getString("OFXParser.OriginalCurrencyCode"));
+                            rowheadTrans.createCell(cnt++)
+                                    .setCellValue(Messages.getString("OFXParser.OriginalCurrencyExchangeRate"));
                        
                             for (Transaction transaction : list) {
                                 
@@ -564,18 +575,20 @@ public class OFXParser extends AbstractParser {
                     short rnb = 0;
                     CreditCardStatementResponse bsr = b.getMessage();
 
-                    HSSFSheet sheetType = workbook.createSheet("CreditCard_"+TypeCount);
+                    HSSFSheet sheetType = workbook
+                            .createSheet(Messages.getString("OFXParser.CreditCard") + "_" + TypeCount);
 
                     HSSFRow rowheadType = sheetType.createRow(rnb++);
-                    rowheadType.createCell(cnb++).setCellValue("Account Number");
-                    rowheadType.createCell(cnb++).setCellValue("Account Key");    
-                    rowheadType.createCell(cnb++).setCellValue("Currency Code");                          
-                    rowheadType.createCell(cnb++).setCellValue("Ledger Balance Amount");
-                    rowheadType.createCell(cnb++).setCellValue("Ledger Balance Date");                          
-                    rowheadType.createCell(cnb++).setCellValue("Available Balance Amount");
-                    rowheadType.createCell(cnb++).setCellValue("Available Balance Date");
-                    rowheadType.createCell(cnb++).setCellValue("Transaction Start Date");
-                    rowheadType.createCell(cnb++).setCellValue("Transaction End Date");
+                    rowheadType.createCell(cnb++).setCellValue(Messages.getString("OFXParser.AccountNumber"));
+                    rowheadType.createCell(cnb++).setCellValue(Messages.getString("OFXParser.AccountKey"));
+                    rowheadType.createCell(cnb++).setCellValue(Messages.getString("OFXParser.CurrencyCode"));
+                    rowheadType.createCell(cnb++).setCellValue(Messages.getString("OFXParser.LedgerBalanceAmount"));
+                    rowheadType.createCell(cnb++).setCellValue(Messages.getString("OFXParser.LedgerBalanceDate"));
+                    rowheadType.createCell(cnb++)
+                            .setCellValue(Messages.getString("OFXParser.AvailableBalanceAmount"));
+                    rowheadType.createCell(cnb++).setCellValue(Messages.getString("OFXParser.AvailableBalanceDate"));
+                    rowheadType.createCell(cnb++).setCellValue(Messages.getString("OFXParser.TransactionStartDate"));
+                    rowheadType.createCell(cnb++).setCellValue(Messages.getString("OFXParser.TransactionEndDate"));
                 
                     if (bsr != null ){
 
@@ -667,28 +680,36 @@ public class OFXParser extends AbstractParser {
                             short cnt = 0;
                             short rnt = 0;
                        
-                            HSSFSheet sheetTrans = workbook.createSheet("CreditCard_"+TypeCount+" Transactions");
+                            HSSFSheet sheetTrans = workbook.createSheet(
+                                    Messages.getString("OFXParser.CreditCard") + "_" + TypeCount
+                                            + Messages.getString("OFXParser.Transactions"));
 
                             HSSFRow rowheadTrans = sheetTrans.createRow(rnt++);
-                            rowheadTrans.createCell(cnt++).setCellValue("Type");
-                            rowheadTrans.createCell(cnt++).setCellValue("Id");
-                            rowheadTrans.createCell(cnt++).setCellValue("Date Posted");
-                            rowheadTrans.createCell(cnt++).setCellValue("Ammount");           
-                            rowheadTrans.createCell(cnt++).setCellValue("Memo");        
-                            rowheadTrans.createCell(cnt++).setCellValue("Check Number");    
-                            rowheadTrans.createCell(cnt++).setCellValue("Date Initiated");           
-                            rowheadTrans.createCell(cnt++).setCellValue("Date Available");           
-                            rowheadTrans.createCell(cnt++).setCellValue("Correction Id");    
-                            rowheadTrans.createCell(cnt++).setCellValue("Server-Assigned Temporary Id");    
-                            rowheadTrans.createCell(cnt++).setCellValue("Reference Number");    
-                            rowheadTrans.createCell(cnt++).setCellValue("Standard Industrial Code");
-                            rowheadTrans.createCell(cnt++).setCellValue("Payee Id");
-                            rowheadTrans.createCell(cnt++).setCellValue("Name");                            
-                            rowheadTrans.createCell(cnt++).setCellValue("Payee"); 
-                            rowheadTrans.createCell(cnt++).setCellValue("Currency Code"); 
-                            rowheadTrans.createCell(cnt++).setCellValue("Currency Exchange Rate"); 
-                            rowheadTrans.createCell(cnt++).setCellValue("Original Currency Code"); 
-                            rowheadTrans.createCell(cnt++).setCellValue("Original Currency Exchange Rate"); 
+                            rowheadTrans.createCell(cnt++).setCellValue(Messages.getString("OFXParser.Type"));
+                            rowheadTrans.createCell(cnt++).setCellValue(Messages.getString("OFXParser.Id"));
+                            rowheadTrans.createCell(cnt++).setCellValue(Messages.getString("OFXParser.DatePosted"));
+                            rowheadTrans.createCell(cnt++).setCellValue(Messages.getString("OFXParser.Amount"));
+                            rowheadTrans.createCell(cnt++).setCellValue(Messages.getString("OFXParser.Memo"));
+                            rowheadTrans.createCell(cnt++).setCellValue(Messages.getString("OFXParser.CheckNumber"));
+                            rowheadTrans.createCell(cnt++).setCellValue(Messages.getString("OFXParser.DateInitiated"));
+                            rowheadTrans.createCell(cnt++).setCellValue(Messages.getString("OFXParser.DateAvailable"));
+                            rowheadTrans.createCell(cnt++).setCellValue(Messages.getString("OFXParser.CorrectionId"));
+                            rowheadTrans.createCell(cnt++)
+                                    .setCellValue(Messages.getString("OFXParser.ServerAssignedTemporaryId"));
+                            rowheadTrans.createCell(cnt++)
+                                    .setCellValue(Messages.getString("OFXParser.ReferenceNumber"));
+                            rowheadTrans.createCell(cnt++)
+                                    .setCellValue(Messages.getString("OFXParser.StandardIndustrialCode"));
+                            rowheadTrans.createCell(cnt++).setCellValue(Messages.getString("OFXParser.PayeeId"));
+                            rowheadTrans.createCell(cnt++).setCellValue(Messages.getString("OFXParser.Name"));
+                            rowheadTrans.createCell(cnt++).setCellValue(Messages.getString("OFXParser.Payee"));
+                            rowheadTrans.createCell(cnt++).setCellValue(Messages.getString("OFXParser.CurrencyCode"));
+                            rowheadTrans.createCell(cnt++)
+                                    .setCellValue(Messages.getString("OFXParser.CurrencyExchangeRate"));
+                            rowheadTrans.createCell(cnt++)
+                                    .setCellValue(Messages.getString("OFXParser.OriginalCurrencyCode"));
+                            rowheadTrans.createCell(cnt++)
+                                    .setCellValue(Messages.getString("OFXParser.OriginalCurrencyExchangeRate"));
                        
                             for (Transaction transaction : list) {
                                 
@@ -811,7 +832,7 @@ public class OFXParser extends AbstractParser {
         }
 
         if (investmentExists) {
-            HSSFSheet sheetType = workbook.createSheet("Investments");
+            HSSFSheet sheetType = workbook.createSheet(Messages.getString("OFXParser.Investments"));
 
             HSSFRow rowheadType = sheetType.createRow(0);
             rowheadType.createCell(0).setCellValue(
@@ -843,15 +864,15 @@ public class OFXParser extends AbstractParser {
                     short rnb = 0;
                     InvestmentStatementResponse bsr = b.getMessage();
 
-                    HSSFSheet sheetType = workbook.createSheet("Investment_"+TypeCount);
+                    HSSFSheet sheetType = workbook.createSheet(Messages.getString("OFXParser.Investment_") + TypeCount);
 
                     HSSFRow rowheadType = sheetType.createRow(rnb++);
-                    rowheadType.createCell(cnb++).setCellValue("Date Of Statement");
-                    rowheadType.createCell(cnb++).setCellValue("Broker Id");
-                    rowheadType.createCell(cnb++).setCellValue("Account Number");
-                    rowheadType.createCell(cnb++).setCellValue("Account Key");    
-                    rowheadType.createCell(cnb++).setCellValue("Transaction Start Date");
-                    rowheadType.createCell(cnb++).setCellValue("Transaction End Date");
+                    rowheadType.createCell(cnb++).setCellValue(Messages.getString("OFXParser.DateOfStatement"));
+                    rowheadType.createCell(cnb++).setCellValue(Messages.getString("OFXParser.BrokerId"));
+                    rowheadType.createCell(cnb++).setCellValue(Messages.getString("OFXParser.AccountNumber"));
+                    rowheadType.createCell(cnb++).setCellValue(Messages.getString("OFXParser.AccountKey"));
+                    rowheadType.createCell(cnb++).setCellValue(Messages.getString("OFXParser.TransactionStartDate"));
+                    rowheadType.createCell(cnb++).setCellValue(Messages.getString("OFXParser.TransactionEndDate"));
                 
                     if (bsr != null ){
 
@@ -929,29 +950,44 @@ public class OFXParser extends AbstractParser {
                                 short cnt = 0;
                                 short rnt = 0;
                         
-                                HSSFSheet sheetTrans = workbook.createSheet("Investment_"+TypeCount+" BankTransactions");
+                                HSSFSheet sheetTrans = workbook.createSheet(Messages.getString("OFXParser.Investment")
+                                        + "_" + TypeCount + " "
+                                                + Messages.getString("OFXParser.BankTransactions"));
 
                                 HSSFRow rowheadTrans = sheetTrans.createRow(rnt++);
-                                rowheadTrans.createCell(cnt++).setCellValue("Sub Account Fund");
-                                rowheadTrans.createCell(cnt++).setCellValue("Type");
-                                rowheadTrans.createCell(cnt++).setCellValue("Id");
-                                rowheadTrans.createCell(cnt++).setCellValue("Date Posted");
-                                rowheadTrans.createCell(cnt++).setCellValue("Ammount");           
-                                rowheadTrans.createCell(cnt++).setCellValue("Memo");        
-                                rowheadTrans.createCell(cnt++).setCellValue("Check Number");    
-                                rowheadTrans.createCell(cnt++).setCellValue("Date Initiated");           
-                                rowheadTrans.createCell(cnt++).setCellValue("Date Available");           
-                                rowheadTrans.createCell(cnt++).setCellValue("Correction Id");    
-                                rowheadTrans.createCell(cnt++).setCellValue("Server-Assigned Temporary Id");    
-                                rowheadTrans.createCell(cnt++).setCellValue("Reference Number");    
-                                rowheadTrans.createCell(cnt++).setCellValue("Standard Industrial Code");
-                                rowheadTrans.createCell(cnt++).setCellValue("Payee Id");
-                                rowheadTrans.createCell(cnt++).setCellValue("Name");                            
-                                rowheadTrans.createCell(cnt++).setCellValue("Payee"); 
-                                rowheadTrans.createCell(cnt++).setCellValue("Currency Code"); 
-                                rowheadTrans.createCell(cnt++).setCellValue("Currency Exchange Rate"); 
-                                rowheadTrans.createCell(cnt++).setCellValue("Original Currency Code"); 
-                                rowheadTrans.createCell(cnt++).setCellValue("Original Currency Exchange Rate"); 
+                                rowheadTrans.createCell(cnt++)
+                                        .setCellValue(Messages.getString("OFXParser.SubAccountFund"));
+                                rowheadTrans.createCell(cnt++).setCellValue(Messages.getString("OFXParser.Type"));
+                                rowheadTrans.createCell(cnt++).setCellValue(Messages.getString("OFXParser.Id"));
+                                rowheadTrans.createCell(cnt++)
+                                        .setCellValue(Messages.getString("OFXParser.DatePosted"));
+                                rowheadTrans.createCell(cnt++).setCellValue(Messages.getString("OFXParser.Amount"));
+                                rowheadTrans.createCell(cnt++).setCellValue(Messages.getString("OFXParser.Memo"));
+                                rowheadTrans.createCell(cnt++)
+                                        .setCellValue(Messages.getString("OFXParser.CheckNumber"));
+                                rowheadTrans.createCell(cnt++)
+                                        .setCellValue(Messages.getString("OFXParser.DateInitiated"));
+                                rowheadTrans.createCell(cnt++)
+                                        .setCellValue(Messages.getString("OFXParser.DateAvailable"));
+                                rowheadTrans.createCell(cnt++)
+                                        .setCellValue(Messages.getString("OFXParser.CorrectionId"));
+                                rowheadTrans.createCell(cnt++)
+                                        .setCellValue(Messages.getString("OFXParser.ServerAssignedTemporaryId"));
+                                rowheadTrans.createCell(cnt++)
+                                        .setCellValue(Messages.getString("OFXParser.ReferenceNumber"));
+                                rowheadTrans.createCell(cnt++)
+                                        .setCellValue(Messages.getString("OFXParser.StandardIndustrialCode"));
+                                rowheadTrans.createCell(cnt++).setCellValue(Messages.getString("OFXParser.PayeeId"));
+                                rowheadTrans.createCell(cnt++).setCellValue(Messages.getString("OFXParser.Name"));
+                                rowheadTrans.createCell(cnt++).setCellValue(Messages.getString("OFXParser.Payee"));
+                                rowheadTrans.createCell(cnt++)
+                                        .setCellValue(Messages.getString("OFXParser.CurrencyCode"));
+                                rowheadTrans.createCell(cnt++)
+                                        .setCellValue(Messages.getString("OFXParser.CurrencyExchangeRate"));
+                                rowheadTrans.createCell(cnt++)
+                                        .setCellValue(Messages.getString("OFXParser.OriginalCurrencyCode"));
+                                rowheadTrans.createCell(cnt++)
+                                        .setCellValue(Messages.getString("OFXParser.OriginalCurrencyExchangeRate"));
 
                                 for (InvestmentBankTransaction list : listTrans){
 
@@ -1048,16 +1084,20 @@ public class OFXParser extends AbstractParser {
                                 short cnt = 0;
                                 short rnt = 0;
                         
-                                HSSFSheet sheetTrans = workbook.createSheet("Investment_"+TypeCount+" BaseInvestment");
+                                HSSFSheet sheetTrans = workbook.createSheet(
+                                        Messages.getString("OFXParser.Investment_" + TypeCount + " BaseInvestment"));
 
                                 HSSFRow rowheadTrans = sheetTrans.createRow(rnt++);
-                                rowheadTrans.createCell(cnt++).setCellValue("Type");
-                                rowheadTrans.createCell(cnt++).setCellValue("Transaction Id");
-                                rowheadTrans.createCell(cnt++).setCellValue("Server Id");
-                                rowheadTrans.createCell(cnt++).setCellValue("Trade Date");           
-                                rowheadTrans.createCell(cnt++).setCellValue("Settlement Date");        
-                                rowheadTrans.createCell(cnt++).setCellValue("Reversal Id");    
-                                rowheadTrans.createCell(cnt++).setCellValue("Memo");           
+                                rowheadTrans.createCell(cnt++).setCellValue(Messages.getString("OFXParser.Type"));
+                                rowheadTrans.createCell(cnt++)
+                                        .setCellValue(Messages.getString("OFXParser.TransactionId"));
+                                rowheadTrans.createCell(cnt++).setCellValue(Messages.getString("OFXParser.ServerId"));
+                                rowheadTrans.createCell(cnt++).setCellValue(Messages.getString("OFXParser.TradeDate"));
+                                rowheadTrans.createCell(cnt++)
+                                        .setCellValue(Messages.getString("OFXParser.SettlementDate"));
+                                rowheadTrans.createCell(cnt++)
+                                        .setCellValue(Messages.getString("OFXParser.ReversalId"));
+                                rowheadTrans.createCell(cnt++).setCellValue(Messages.getString("OFXParser.Memo"));
 
                                 for (BaseInvestmentTransaction list : listTransBase){
 
@@ -1179,7 +1219,7 @@ public class OFXParser extends AbstractParser {
             Metadata meta = new Metadata();
             meta.set(StandardParser.INDEXER_CONTENT_TYPE, MediaType.parse("application/vnd.ms-excel").toString());
             meta.set(TikaCoreProperties.RESOURCE_NAME_KEY, getBaseName(file.getName()) + ".xls");
-            meta.set(TikaCoreProperties.TITLE, getBaseName(file.getName()) + " XLS Parserd");
+            meta.set(TikaCoreProperties.TITLE, getBaseName(file.getName()) + " XLS Parsed");
             meta.set(BasicProps.LENGTH, "");
             meta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
                    
