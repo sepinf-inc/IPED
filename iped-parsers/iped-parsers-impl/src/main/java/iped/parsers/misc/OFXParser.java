@@ -785,14 +785,14 @@ public class OFXParser extends AbstractParser {
     }
 
     //TODO - Finish implementing
-    public void decodeInvestiment(ResponseEnvelope re, HSSFWorkbook workbook) throws Exception{
-
-        
+    public void decodeInvestimentWarn(ResponseEnvelope re, HSSFWorkbook workbook) throws Exception {
         HSSFCell cell;
 
         CellStyle cellStyle = workbook.createCellStyle();
         CreationHelper createHelper = workbook.getCreationHelper();
         cellStyle.setDataFormat(createHelper.createDataFormat().getFormat(dateStringDefault));
+
+        boolean investmentExists = false;
 
 
         ResponseMessageSet message = re.getMessageSet(MessageSetType.investment);
@@ -801,6 +801,40 @@ public class OFXParser extends AbstractParser {
             List<InvestmentStatementResponseTransaction> cc = ((InvestmentStatementResponseMessageSet) message).getStatementResponses();
 
             if (cc != null){
+
+                short TypeCount = 1;
+                for (InvestmentStatementResponseTransaction b : cc) {
+                    investmentExists = true;
+                    break;
+                }
+            }
+        }
+
+        if (investmentExists) {
+            HSSFSheet sheetType = workbook.createSheet("Investments");
+
+            HSSFRow rowheadType = sheetType.createRow(0);
+            rowheadType.createCell(0).setCellValue(
+                    "WARN: There are investment informations in this OFX, but this version of IPED does not parses it yet.");
+        }
+    }
+
+    // TODO - Finish implementing
+    public void decodeInvestiment(ResponseEnvelope re, HSSFWorkbook workbook) throws Exception {
+
+        HSSFCell cell;
+
+        CellStyle cellStyle = workbook.createCellStyle();
+        CreationHelper createHelper = workbook.getCreationHelper();
+        cellStyle.setDataFormat(createHelper.createDataFormat().getFormat(dateStringDefault));
+
+        ResponseMessageSet message = re.getMessageSet(MessageSetType.investment);
+        if (message != null) {
+
+            List<InvestmentStatementResponseTransaction> cc = ((InvestmentStatementResponseMessageSet) message)
+                    .getStatementResponses();
+
+            if (cc != null) {
 
                 short TypeCount = 1;
                 for (InvestmentStatementResponseTransaction b : cc) {
@@ -1155,7 +1189,7 @@ public class OFXParser extends AbstractParser {
                 decodeSignon(re, workbook);
                 decodeBank(re, workbook);
                 decodeCreditCard(re, workbook);
-                //decodeInvestiment(re, workbook);     //TODO - Finish implementing
+                decodeInvestimentWarn(re, workbook); // TODO - Finish implementing
             }
 
 
