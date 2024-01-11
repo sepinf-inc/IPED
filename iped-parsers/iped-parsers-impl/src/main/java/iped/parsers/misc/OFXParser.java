@@ -1206,7 +1206,8 @@ public class OFXParser extends AbstractParser {
             TikaInputStream tis = TikaInputStream.get(stream, tmp);
             File file = tis.getFile();
 
-            FileInputStream inputStream = new FileInputStream(file);                            
+            FileInputStream inputStream = new FileInputStream(file);
+            tmp.addResource(inputStream);// adds this resource to be closed when tmp is closed
             Reader reader = new InputStreamReader(inputStream, findCharset(file));
             AggregateUnmarshaller aggregate = new AggregateUnmarshaller(ResponseEnvelope.class);
 
