@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -113,25 +114,22 @@ public class UFEDChatParser extends AbstractParser {
             List<UfedMessage> messages = new ArrayList<>();
 
             for (IItemReader msg : searcher.searchIterable(query)) {
-                List<IItemReader> subItems = null;
+                Iterator<IItemReader> subItems = null;
                 String[] attachRefs = msg.getMetadata().getValues(ExtraProperties.LINKED_ITEMS);
                 if (attachRefs.length > 0) {
                     String attachQuery = Arrays.asList(attachRefs).stream().collect(Collectors.joining(" ")); //$NON-NLS-1$
-                    subItems = searcher.search(attachQuery);
+                    subItems = searcher.searchIterable(attachQuery).iterator();
                 } else if (msg.hasChildren()) {
                     String contactQuery = BasicProps.PARENTID + ":" + msg.getId() + " && " + BasicProps.CONTENTTYPE
                             + ":\"" + MediaTypes.UFED_CONTACT_MIME.toString() + "\"";
-                    subItems = searcher.search(contactQuery);
+                    subItems = searcher.searchIterable(contactQuery).iterator();
                 }
-                if (subItems == null || subItems.isEmpty()) {
+                if (subItems == null || !subItems.hasNext()) {
                     UfedMessage m = createMessage(msg);
-                    messages.add(m);
-                } else if (subItems.size() == 1) {
-                    UfedMessage m = createMessage(msg, subItems.get(0));
                     messages.add(m);
                 } else {
                     HashSet<String> uuids = new HashSet<>();
-                    for (IItemReader subitem : subItems) {
+                    for (IItemReader subitem = subItems.next(); subItems.hasNext();) {
                         if (uuids.add(subitem.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "id"))) {
                             UfedMessage m = createMessage(msg, subitem);
                             messages.add(m);
