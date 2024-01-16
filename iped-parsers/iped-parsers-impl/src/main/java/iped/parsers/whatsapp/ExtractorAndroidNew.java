@@ -483,44 +483,57 @@ public class ExtractorAndroidNew extends Extractor {
         }
 
         long fakeIds = 2000000000L;
-        for (Chat c : idToChat.values()) {
-            HashMap<Long, Message> messagesMap = new HashMap<Long, Message>();
-            HashMap<String, Message> messagesMapUuid = new HashMap<String, Message>();
-            for (Message m : c.getMessages()) {
-                messagesMap.put(m.getId(), m);
-                if (m.getUuid() != null && !m.getUuid().isEmpty()) {
-                    messagesMapUuid.put(m.getUuid(), m);
-                }
-            }
-            // Find quote messages
-            List<Message> messagesQuotes = extractQuoteMessages(conn, c);
-            for (Message mq : messagesQuotes) {
-                Message m = messagesMap.get(mq.getId());
-                if (m != null) {// Has quote
-                    Message original = messagesMapUuid.get(mq.getUuid());// Try to find original message in messages
-                    if (original != null) {// has found original message reference, more complete
-                        m.setMessageQuote(original);
-                    } else {// not found original message reference, get info from message_quotes table,
-                            // less complete
-                        mq.setDeleted(true);
-                        mq.setId(fakeIds--);
-                        m.setMessageQuote(mq);
+        Map<Long, List<Message>> messagesQuotesPerChatId = extractQuoteMessages(conn);
+        HashMap<Long, Message> messagesMap = new HashMap<Long, Message>();
+        HashMap<String, Message> messagesMapUuid = new HashMap<String, Message>();
+        for (long chatId : idToChat.keySet()) {
+            List<Message> messagesQuotes = messagesQuotesPerChatId.get(chatId);
+            if (messagesQuotes != null) {
+                Chat c = idToChat.get(chatId);
+                for (Message m : c.getMessages()) {
+                    messagesMap.put(m.getId(), m);
+                    if (m.getUuid() != null && !m.getUuid().isEmpty()) {
+                        messagesMapUuid.put(m.getUuid(), m);
                     }
-                    m.setQuoted(true);
                 }
-            }
-            messagesMap.clear();
-            messagesMapUuid.clear();
-        }
 
+                // Find quote messages
+                for (Message mq : messagesQuotes) {
+                    Message m = messagesMap.get(mq.getId());
+                    if (m != null) {
+                        // Has quote
+
+                        // Try to find original message in messages
+                        Message original = messagesMapUuid.get(mq.getUuid());
+                        if (original != null) {
+                            // has found original message reference, more complete
+                            m.setMessageQuote(original);
+                        } else {
+                            // not found original message reference, get info from message_quotes table,
+                            // less complete
+                            mq.setDeleted(true);
+                            mq.setId(fakeIds--);
+                            m.setMessageQuote(mq);
+                        }
+                        m.setQuoted(true);
+
+                        if (mq.getRemoteResource() == null || mq.getRemoteResource().isBlank()
+                                || !c.isGroupOrChannelChat()) {
+                            mq.setRemoteResource(c.getRemote().getFullId());
+                        }
+                    }
+                }
+                messagesMap.clear();
+                messagesMapUuid.clear();
+            }
+        }
     }
 
-    private List<Message> extractQuoteMessages(Connection conn, Chat c) throws SQLException {
+    private Map<Long, List<Message>> extractQuoteMessages(Connection conn) throws SQLException {
 
-        List<Message> messages = new ArrayList<>();
+        Map<Long, List<Message>> messagesPerChatId = new HashMap<Long, List<Message>>();
         String query = getSelectMessagesQuotesQuery(conn);
         try (PreparedStatement stmt = conn.prepareStatement(query)) {
-            stmt.setLong(1, c.getId());
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
 
@@ -531,11 +544,7 @@ public class ExtractorAndroidNew extends Extractor {
                 long media_size = rs.getLong("mediaSize"); //$NON-NLS-1$
 
                 m.setId(rs.getLong("id")); //$NON-NLS-1$
-                String remoteResource = rs.getString("remoteResource");
-                if (remoteResource == null || remoteResource.isEmpty() || !c.isGroupOrChannelChat()) {
-                    remoteResource = c.getRemote().getFullId();
-                }
-                m.setRemoteResource(remoteResource); // $NON-NLS-1$
+                m.setRemoteResource(rs.getString("remoteResource")); // $NON-NLS-1$
                 m.setData(Util.getUTF8String(rs, "text_data")); //$NON-NLS-1$
                 String caption = rs.getString("mediaCaption"); //$NON-NLS-1$
                 if (caption == null || caption.isBlank()) {
@@ -565,11 +574,16 @@ public class ExtractorAndroidNew extends Extractor {
 
                 m.setUuid(rs.getString("uuid"));
 
+                long chatId = rs.getLong("chatId");
+                List<Message> messages = messagesPerChatId.get(chatId);
+                if (messages == null) {
+                    messagesPerChatId.put(chatId, messages = new ArrayList<Message>());
+                }
                 messages.add(m);
             }
         }
 
-        return messages;
+        return messagesPerChatId;
     }
 
     protected Message.MessageType decodeMessageType(int messageType, int status, Integer edit_version, String caption,
@@ -970,8 +984,7 @@ public class ExtractorAndroidNew extends Extractor {
                 + " left join message_quoted_media mm on mm.message_row_id=mq.message_row_id"
                 + " left join jid on jid._id=mq.sender_jid_row_id"
                 + " left join message_quoted_location ml on mq.message_row_id=ml.message_row_id"
-                + " left join message_quoted_vcard mv on mq.message_row_id=mv.message_row_id"
-                + " where chatId=?";
+                + " left join message_quoted_vcard mv on mq.message_row_id=mv.message_row_id";
     }
 
     private static String getSelectBlockedQuery(Connection conn) throws SQLException {
