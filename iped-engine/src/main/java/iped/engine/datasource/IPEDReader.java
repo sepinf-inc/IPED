@@ -233,9 +233,13 @@ public class IPEDReader extends DataSourceReader {
             return;
 
         int lastId = -1;
+        int totalItems = 0;
         for (int i = 0; i < oldToNewIdMap.length; i++) {
             if (oldToNewIdMap[i] > lastId) {
                 lastId = oldToNewIdMap[i];
+            }
+            if (oldToNewIdMap[i] != -1) {
+                totalItems++;
             }
         }
         if (lastId == -1) {
@@ -244,7 +248,7 @@ public class IPEDReader extends DataSourceReader {
             return;
         }
 
-        IBookmarks reportState = new Bookmarks(lastId - 1, lastId, output);
+        IBookmarks reportState = new Bookmarks(totalItems, lastId, output);
         reportState.loadState();
 
         int added = 0;
