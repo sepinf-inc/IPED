@@ -6,7 +6,7 @@ jobs:
 
   build-java11:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
     - uses: actions/checkout@v1
@@ -64,7 +64,7 @@ jobs:
 
   build-java14:
     
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
     - uses: actions/checkout@v1
