@@ -1,6 +1,6 @@
 /*
  * Copyright 2012-2014, Luis Filipe da Cruz Nassif
- * 
+ *
  * This file is part of Indexador e Processador de Evidências Digitais (IPED).
  *
  * IPED is free software: you can redistribute it and/or modify
@@ -34,7 +34,7 @@ import iped.utils.QualityIcon;
 
 /**
  * Load icons to memory
- * 
+ *
  * @author guilherme.dutra
  *
  */
@@ -191,6 +191,7 @@ public class IconManager {
         if (icon != null) {
             mimeIconMap.put("application/x-shareaza-searches-dat", icon);
             mimeIconMap.put("application/x-shareaza-library-dat", icon);
+            mimeIconMap.put("application/x-shareaza-download", icon);
         }
 
         icon = availableIconsMap.get("torrent");
@@ -225,6 +226,13 @@ public class IconManager {
             mimeIconMap.put("application/x-whatsapp-chat", icon);
             mimeIconMap.put("application/x-ufed-chat-whatsapp", icon);
             mimeIconMap.put("application/x-ufed-chat-preview-whatsapp", icon);
+        }
+
+        icon = availableIconsMap.get("threema");
+        if (icon != null) {
+            mimeIconMap.put("application/x-threema-chat", icon);
+            mimeIconMap.put("application/x-threema-user-plist", icon);
+            mimeIconMap.put("application/x-threema-chatstorage", icon);
         }
 
         icon = availableIconsMap.get("facebook");
@@ -316,6 +324,7 @@ public class IconManager {
             mimeIconMap.put("application/x-ufed-call", icon);
             mimeIconMap.put("call/x-whatsapp-call", icon);
             mimeIconMap.put("call/x-telegram-call", icon);
+            mimeIconMap.put("call/x-threema-call", icon);
             mimeIconMap.put("application/x-ios-calllog-db", icon);
             mimeIconMap.put("application/x-ios8-calllog-db", icon);
             mimeIconMap.put("call/x-discord-call", icon);
@@ -378,6 +387,12 @@ public class IconManager {
         if (icon != null) {
             mimeIconMap.put("message/x-whatsapp-message", icon);
             mimeIconMap.put("message/x-whatsapp-attachment", icon);
+        }
+
+        icon = availableIconsMap.get("message-threema");
+        if (icon != null) {
+            mimeIconMap.put("message/x-threema-message", icon);
+            mimeIconMap.put("message/x-threema-attachment", icon);
         }
 
         icon = availableIconsMap.get("message-telegram");
@@ -579,12 +594,12 @@ public class IconManager {
         if (icon != null) {
             mimeIconMap.put("application/irpf", icon);
         }
-        
+
         icon = availableIconsMap.get("usnjournal");
         if (icon != null) {
             mimeIconMap.put("application/x-usnjournal-$j", icon);
         }
-        
+
         return mimeIconMap;
     }
 

@@ -28,6 +28,7 @@ import iped.parsers.eventtranscript.EventTranscriptParser;
 import iped.parsers.gdrive.GDriveMainParser;
 import iped.parsers.skype.SkypeParser;
 import iped.parsers.telegram.TelegramParser;
+import iped.parsers.threema.ThreemaParser;
 import iped.parsers.whatsapp.WhatsAppParser;
 import iped.parsers.winx.WinXTimelineParser;
 import iped.utils.IOUtil;
@@ -261,6 +262,10 @@ public class SQLiteContainerDetector implements Detector {
             if (cols.contains("Latitude") && cols.contains("Longitude")) {
                 return MediaType.application("x-ios-locations-db");
             }
+        }
+        
+        if (tableNames.contains("ZCONVERSATION") && tableNames.contains("ZMESSAGE") && tableNames.contains("ZCONTACT") && tableNames.contains("ZFILEDATA") && tableNames.contains("ZIMAGEDATA")) {
+            return ThreemaParser.CHAT_STORAGE;
         }
 
         return SQLITE_MIME;

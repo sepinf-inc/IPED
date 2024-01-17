@@ -49,6 +49,8 @@
         <parser class="org.apache.tika.parser.image.HeifParser"></parser>
         <parser class="org.apache.tika.parser.iptc.IptcAnpaParser"></parser-->
         <parser class="org.apache.tika.parser.iwork.IWorkPackageParser"></parser>
+        <parser class="org.apache.tika.parser.iwork.iwana.IWork13PackageParser"></parser>
+		<parser class="org.apache.tika.parser.iwork.iwana.IWork18PackageParser"></parser>
         <!--parser class="org.apache.tika.parser.image.JpegParser"></parser-->
         <!--We have our own impls
         <parser class="org.apache.tika.parser.mail.RFC822Parser"></parser>
@@ -138,8 +140,9 @@
         <parser class="org.apache.tika.parser.EmptyParser">
             <mime>application/vnd.rn-realmedia</mime>
             <mime>application/java-archive</mime>
+            <mime>audio/ilbc</mime>
             <mime>application/x-tika-unix-dump</mime>
-			<mime>application/x-cpio</mime>
+            <mime>application/x-cpio</mime>
         </parser>
         
         <!--parser class="org.gagravarr.tika.FlacParser"></parser>
@@ -265,6 +268,7 @@
         <parser class="iped.parsers.browsers.ie.IndexDatParser"></parser-->
         <parser class="iped.parsers.compress.PackageParser"></parser>
         <parser class="iped.parsers.compress.SevenZipParser"></parser>
+        <parser class="iped.parsers.compress.LZFSEParser"></parser>
         <parser class="iped.parsers.misc.XMLParser">
             <mime-exclude>image/svg+xml</mime-exclude>
         </parser>
@@ -291,6 +295,7 @@
         <parser class="iped.parsers.telegram.TelegramParser">
             <params>
                 <param name="enabledForUfdr" type="bool">true</param>
+                <param name="minChatSplitSize" type="int">6000000</param>
             </params>
         </parser>
         <parser class="iped.parsers.skype.SkypeParser"></parser>
@@ -303,16 +308,27 @@
                 <param name="linkMediasByNameAndApproxSizeFallback" type="bool">true</param>
                 <param name="downloadConnectionTimeout" type="int">500</param>
                 <param name="downloadReadTimeout" type="int">1000</param>
+                <param name="minChatSplitSize" type="int">6000000</param>
+            </params>
+        </parser>
+        <parser class="iped.parsers.threema.ThreemaParser">
+            <params>
+                <param name="extractMessages" type="bool">false</param>
+                <param name="extractMediasAsFiles" type="bool">false</param>
             </params>
         </parser>
         <parser class="iped.parsers.ufed.UFEDChatParser">
             <!--<mime-exclude>application/x-ufed-chat-whatsapp</mime-exclude>-->
+            <params>
+                <param name="minChatSplitSize" type="int">6000000</param>
+            </params>             
         </parser>
         
         <parser class="iped.parsers.emule.KnownMetParser"></parser>
         <parser class="iped.parsers.emule.PartMetParser"></parser>
         <parser class="iped.parsers.emule.PreferencesDatParser"></parser>
         <parser class="iped.parsers.ares.AresParser"></parser>
+        <parser class="iped.parsers.shareaza.ShareazaDownloadParser"></parser>
         <parser class="iped.parsers.shareaza.ShareazaSearchesDatParser"></parser>
         <parser class="iped.parsers.shareaza.ShareazaLibraryDatParser"></parser>
         <parser class="iped.parsers.bittorrent.BitTorrentResumeDatParser"></parser>
@@ -339,6 +355,7 @@
         <!-- parser class="iped.parsers.python.PythonParser"></parser-->
         <parser class="iped.parsers.mail.win10.Win10MailParser"></parser>
         <parser class="iped.parsers.discord.DiscordParser"></parser>
+        <!--parser class="iped.parsers.apk.APKParser"></parser-->
 
     </parsers>
 

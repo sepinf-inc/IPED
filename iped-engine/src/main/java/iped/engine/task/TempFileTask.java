@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import iped.configuration.Configurable;
 import iped.data.IItem;
+import iped.engine.CmdLineArgs;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.LocalConfig;
 import iped.engine.data.Item;
@@ -30,10 +31,11 @@ public class TempFileTask extends AbstractTask {
     private static Logger LOGGER = LoggerFactory.getLogger(TempFileTask.class);
     private static int MAX_TEMPFILE_LEN = 1024 * 1024 * 1024;
     private boolean indexTempOnSSD = false;
+    private boolean isEnabled = true;
 
     @Override
     public boolean isEnabled() {
-        return indexTempOnSSD;
+        return isEnabled;
     }
 
     @Override
@@ -45,7 +47,8 @@ public class TempFileTask extends AbstractTask {
     public void init(ConfigurationManager configurationManager) throws Exception {
         LocalConfig config = configurationManager.findObject(LocalConfig.class);
         indexTempOnSSD = config.isIndexTempOnSSD();
-
+        CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+        isEnabled = !"fastmode".equals(args.getProfile()) && !"triage".equals(args.getProfile());
     }
 
     @Override
@@ -56,14 +59,25 @@ public class TempFileTask extends AbstractTask {
     @Override
     protected void process(IItem evidence) throws Exception {
 
+
+        if (evidence instanceof Item) {
+            if (((Item) evidence).cacheDataInMemory()) {
+                return;
+            }
+        }
+
+        if (!indexTempOnSSD) {
+            return;
+        }
+
         Long len = evidence.getLength();
-        if (indexTempOnSSD && len != null
-                && len <= MAX_TEMPFILE_LEN /* && evidence.getPath().toLowerCase().contains(".e01/vol_vol") */) {
+        if (len != null && len <= MAX_TEMPFILE_LEN) {
             try {
-                if (!IOUtil.hasFile(evidence) && !evidence.isSubItem()
-                // skip carved items pointing to parent temp file
-                        && (!(evidence instanceof Item) || !((Item) evidence).hasParentTmpFile())) {
-                    evidence.getTempFile();
+                // skip items with File refs && carved items pointing to parent temp file
+                if (!IOUtil.hasFile(evidence) && (!(evidence instanceof Item) || !((Item) evidence).hasParentTmpFile())) {
+                    if (!evidence.isSubItem()) { // should we create temp files for subitems compressed into the sqlite storages?
+                        evidence.getTempFile();
+                    }
                 }
             } catch (IOException e) {
                 LOGGER.warn("{} Error creating temp file {} {}", Thread.currentThread().getName(), evidence.getPath(), //$NON-NLS-1$

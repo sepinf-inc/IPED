@@ -115,6 +115,8 @@ import bibliothek.gui.dock.themes.basic.action.BasicTitleViewItem;
 import iped.app.config.LogConfiguration;
 import iped.app.config.XMLResultSetViewerConfiguration;
 import iped.app.graph.AppGraphAnalytics;
+import iped.app.ui.bookmarks.BookmarkIcon;
+import iped.app.ui.bookmarks.BookmarkTreeCellRenderer;
 import iped.app.ui.controls.CSelButton;
 import iped.app.ui.controls.CustomButton;
 import iped.app.ui.themes.ThemeManager;
@@ -514,7 +516,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         resultsTable.setShowGrid(false);
         resultsTable.setAutoscrolls(false);
         ((JComponent) resultsTable.getDefaultRenderer(Boolean.class)).setOpaque(true);
-        
+
         InputMap inputMap = resultsTable.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         inputMap.put(KeyStroke.getKeyStroke("SPACE"), "none"); //$NON-NLS-1$ //$NON-NLS-2$
         inputMap.put(KeyStroke.getKeyStroke("ctrl SPACE"), "none"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -555,8 +557,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             }
         });
 
-        int largeColWidth = 4096;
-
         appGraphAnalytics = new AppGraphAnalytics();
 
         viewerController = new ViewerController();
@@ -564,49 +564,29 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         hitsTable = new HitsTable(new HitsTableModel(viewerController.getTextViewer()));
         hitsScroll = new JScrollPane(hitsTable);
         hitsTable.getColumnModel().getColumn(0).setPreferredWidth(50);
-        hitsTable.getColumnModel().getColumn(1).setPreferredWidth(largeColWidth);
+        hitsTable.getColumnModel().getColumn(1).setPreferredWidth(4096);
 
         viewerController.setHitsTableInTextViewer(hitsTable);
 
         subItemTable = new HitsTable(subItemModel);
         subItemScroll = new JScrollPane(subItemTable);
-        subItemTable.getColumnModel().getColumn(0).setPreferredWidth(40);
-        subItemTable.getColumnModel().getColumn(1).setPreferredWidth(20);
-        subItemTable.getColumnModel().getColumn(2).setPreferredWidth(largeColWidth);
-        subItemTable.setDefaultRenderer(String.class, new TableCellRenderer());
-        subItemTable.addKeyListener(new SpaceKeyListener());
+        setupItemTable(subItemTable);
 
         duplicatesTable = new HitsTable(duplicatesModel);
         duplicatesScroll = new JScrollPane(duplicatesTable);
-        duplicatesTable.getColumnModel().getColumn(0).setPreferredWidth(40);
-        duplicatesTable.getColumnModel().getColumn(1).setPreferredWidth(20);
-        duplicatesTable.getColumnModel().getColumn(2).setPreferredWidth(largeColWidth);
-        duplicatesTable.setDefaultRenderer(String.class, new TableCellRenderer());
-        duplicatesTable.addKeyListener(new SpaceKeyListener());
+        setupItemTable(duplicatesTable);
 
         parentItemTable = new HitsTable(parentItemModel);
         parentItemScroll = new JScrollPane(parentItemTable);
-        parentItemTable.getColumnModel().getColumn(0).setPreferredWidth(40);
-        parentItemTable.getColumnModel().getColumn(1).setPreferredWidth(20);
-        parentItemTable.getColumnModel().getColumn(2).setPreferredWidth(largeColWidth);
-        parentItemTable.setDefaultRenderer(String.class, new TableCellRenderer());
-        parentItemTable.addKeyListener(new SpaceKeyListener());
+        setupItemTable(parentItemTable);
 
         referencesTable = new HitsTable(referencesModel);
-        referencesTable.getColumnModel().getColumn(0).setPreferredWidth(40);
-        referencesTable.getColumnModel().getColumn(1).setPreferredWidth(20);
-        referencesTable.getColumnModel().getColumn(2).setPreferredWidth(largeColWidth);
-        referencesTable.setDefaultRenderer(String.class, new TableCellRenderer());
-        referencesTable.addKeyListener(new SpaceKeyListener());
         referencesScroll = new JScrollPane(referencesTable);
+        setupItemTable(referencesTable);
 
         referencedByTable = new HitsTable(referencedByModel);
-        referencedByTable.getColumnModel().getColumn(0).setPreferredWidth(40);
-        referencedByTable.getColumnModel().getColumn(1).setPreferredWidth(20);
-        referencedByTable.getColumnModel().getColumn(2).setPreferredWidth(largeColWidth);
-        referencedByTable.setDefaultRenderer(String.class, new TableCellRenderer());
-        referencedByTable.addKeyListener(new SpaceKeyListener());
         referencedByScroll = new JScrollPane(referencedByTable);
+        setupItemTable(referencedByTable);
 
         categoryTree = new JTree(new Object[0]);
         categoryTree.setCellRenderer(new CategoryTreeCellRenderer());
@@ -708,11 +688,12 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         defaultSelectedColor = dockingControl.getController().getColors()
                 .get(ColorMap.COLOR_KEY_TAB_BACKGROUND_SELECTED);
 
-        timelineButton = new CCheckBox(Messages.get("App.ToggleTimelineView"), IconUtil.getToolbarIcon("time", resPath)) {
+        timelineButton = new CCheckBox(Messages.get("App.ToggleTimelineView"),
+                IconUtil.getToolbarIcon("time", resPath)) {
             protected void changed() {
                 if (timelineListener != null)
-                    timelineListener.setTimelineTableView(isSelected());                
-            }            
+                    timelineListener.setTimelineTableView(isSelected());
+            }
         };
         timelineListener = new TimelineListener(timelineButton, IconUtil.getToolbarIcon("timeon", resPath));
 
@@ -789,9 +770,17 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         LOGGER.info("UI created"); //$NON-NLS-1$
     }
 
+    private void setupItemTable(HitsTable itemTable) {
+        itemTable.getColumnModel().getColumn(0).setPreferredWidth(40);
+        itemTable.getColumnModel().getColumn(1).setPreferredWidth(18);
+        itemTable.getColumnModel().getColumn(3).setPreferredWidth(4096);
+        itemTable.setDefaultRenderer(String.class, new TableCellRenderer());
+        itemTable.addKeyListener(new SpaceKeyListener());
+    }
+
     /**
-     * Setup application global keyboard shortcuts. TODO update existing keyboard
-     * shortcut handling code to use this.
+     * Setup application global keyboard shortcuts. TODO: Check if other existing
+     * keyboard shortcuts may be handled globally.
      */
     private void setupKeyboardShortcuts() {
         KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
@@ -811,6 +800,13 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                             toggleGlobalGrayScale();
                         }
                         // avoid being used as different shortcut (e.g. bookmark key)
+                        return true;
+                    }
+                    if (e.getKeyCode() == KeyEvent.VK_B) {
+                        if (e.getID() == KeyEvent.KEY_RELEASED) {
+                            // Shortcut to BookmarkManager Window
+                            BookmarksManager.setVisible();
+                        }
                         return true;
                     }
                 }
@@ -1406,12 +1402,14 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     public TreeListener getTreeListener() {
         return treeListener;
     }
-    
+
     public void updateIconContainersUI(int size, boolean updateUI) {
         updateIconContainerUI(tree, size, updateUI);
         updateIconContainerUI(bookmarksTree, size, updateUI);
 
         updateIconContainerUI(resultsTable, size, updateUI);
+        updateIconContainerUI(gallery, size, updateUI);
+
         updateIconContainerUI(subItemTable, size, updateUI);
         updateIconContainerUI(parentItemTable, size, updateUI);
         updateIconContainerUI(duplicatesTable, size, updateUI);
@@ -1420,14 +1418,22 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     }
 
     private void updateIconContainerUI(JComponent comp, int size, boolean updateUI) {
-        if (comp instanceof JTable) {
-            ((JTable) comp).setRowHeight(size);
+        if (comp instanceof JTable && comp != gallery) {
+            JTable table = (JTable) comp;
+            table.setRowHeight(size);
+
+            // Set bookmark icons column width based on current icon size
+            for (int i = 0; i < table.getColumnCount(); i++) {
+                if (table.getColumnName(i).equals(BookmarkIcon.columnName)) {
+                    table.getColumnModel().getColumn(i).setPreferredWidth(size + 4);
+                }
+            }
         }
         if (updateUI) {
             comp.updateUI();
         }
     }
-    
+
     @Override
     public String getSortColumn() {
         SortKey ordem = resultsTable.getRowSorter().getSortKeys().get(0);

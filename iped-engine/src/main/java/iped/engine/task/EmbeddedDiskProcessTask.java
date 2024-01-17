@@ -61,9 +61,13 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
     
     private static Object lock = new Object();
 
-    private boolean enabled = true;
+    private static boolean enabled = true;
 
     private ArrayList<IItem> deletedDisks = new ArrayList<>();
+
+    public static void setEnabled(boolean value) {
+        enabled = value;
+    }
 
     @Override
     public boolean isEnabled() {

@@ -8,11 +8,9 @@ import java.nio.channels.FileChannel;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -63,10 +61,15 @@ public class Message {
     private int mediaDuration;
     private MessageStatus messageStatus;
     private String recoveredFrom = null;
-    private Set<String> childPornSets = new HashSet<>();
+    private List<String> childPornSets;
     private IItemReader mediaItem = null;
     private String mediaQuery = null;
-    private List<MessageAddOn> addOns = new ArrayList<>();
+    private List<MessageAddOn> addOns;
+    private long idQuote;
+    private Message messageQuote = null;
+    private boolean quoted = false;
+    private String uuid = null;
+    private String metaData = null;
 
     static {
         try {
@@ -99,7 +102,6 @@ public class Message {
 
     public Message() {
         messageType = MessageType.TEXT_MESSAGE;
-        vcards = new ArrayList<>();
     }
 
     public long getId() {
@@ -219,7 +221,7 @@ public class Message {
         } else {
             this.mediaHash = mediaHash;
         }
-        childPornSets.addAll(ChildPornHashLookup.lookupHash(this.mediaHash));
+        childPornSets = ChildPornHashLookup.lookupHashAndMerge(this.mediaHash, childPornSets);
     }
 
     public byte[] getThumbData() {
@@ -320,7 +322,7 @@ public class Message {
     }
 
     public List<String> getVcards() {
-        return vcards;
+        return vcards == null ? Collections.emptyList() : vcards;
     }
 
     public void setVcards(List<String> vcards) {
@@ -424,12 +426,12 @@ public class Message {
         this.recoveredFrom = recoveredFrom;
     }
 
-    public Set<String> getChildPornSets() {
-        return childPornSets;
+    public List<String> getChildPornSets() {
+        return childPornSets == null ? Collections.emptyList() : childPornSets;
     }
 
-    public void addChildPornSets(Collection<String> sets) {
-        this.childPornSets.addAll(sets);
+    public void lookupAndAddChildPornSets(String hash) {
+        childPornSets = ChildPornHashLookup.lookupHashAndMerge(hash, childPornSets);
     }
     
     public IItemReader getMediaItem() {
@@ -449,11 +451,14 @@ public class Message {
     }
 
     public boolean addMessageAddOn(MessageAddOn m) {
+        if (addOns == null) {
+            addOns = new ArrayList<MessageAddOn>(1);
+        }
         return addOns.add(m);
     }
 
     public List<MessageAddOn> getAddOns() {
-        return addOns;
+        return addOns == null ? Collections.emptyList() : addOns;
     }
 
     public String getCallId() {
@@ -462,6 +467,46 @@ public class Message {
 
     public void setCallId(String callId) {
         this.callId = callId;
+    }
+
+    public long getIdQuote() {
+        return idQuote;
+    }
+
+    public void setIdQuote(long idQuote) {
+        this.idQuote = idQuote;
+    }
+
+    public boolean isQuoted() {
+        return this.quoted;
+    }
+
+    public void setQuoted(boolean quoted) {
+        this.quoted = quoted;
+    }
+
+    public Message getMessageQuote(){
+        return this.messageQuote;
+    }
+
+    public void setMessageQuote(Message messageQuote){
+        this.messageQuote = messageQuote;
+    }
+
+    public String getUuid() {
+        return this.uuid;
+    }
+
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
+    }
+
+    public String getMetaData() {
+        return this.metaData;
+    }
+
+    public void setMetaData(String metaData) {
+        this.metaData = metaData;
     }
 
     public static enum MessageType {

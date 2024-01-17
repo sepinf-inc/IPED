@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.data.IItem;
 import iped.data.IItemReader;
 import iped.parsers.standard.RawStringParser;
 import iped.parsers.standard.StandardParser;
@@ -279,16 +280,27 @@ public class Util {
         return sb.toString();
     }
 
-    public static String getReportHref(String hash, String ext, String originalPath) {
-        String exportPath = getExportPath(hash, ext);
-        String path = getSourceFileIfExists(originalPath);
-        return "javascript:openIfExists('" + exportPath + "','" + path + "')";
-    }
-
     public static String getReportHref(IItemReader item) {
         String exportPath = getExportPath(item);
         String originalPath = getSourceFileIfExists(item).orElse("");
-        return "javascript:openIfExists('" + exportPath + "','" + originalPath + "')";
+        StringBuilder sb = new StringBuilder();
+        sb.append("javascript:open");
+        String type = item.getMediaType().getType();
+        if (type.equals("image")) {
+            sb.append("Image");
+        } else if (type.equals("audio")) {
+            sb.append("Audio");
+        } else if (type.equals("video")) {
+            sb.append("Video");
+        } else {
+            sb.append("Other");
+        }
+        sb.append("('");
+        sb.append(exportPath);
+        sb.append("','");
+        sb.append(originalPath);
+        sb.append("')");
+        return sb.toString();
     }
 
     public static String getSourceFileIfExists(String originalPath) {
@@ -449,5 +461,27 @@ public class Util {
         return file;
     }
 
+    public static File getFileWithRightExt(IItem item) throws IOException {
+        File file = item.getTempFile();
+        String ext = item.getType();
+        boolean isTmpFile = IOUtil.isTemporaryFile(file);
+        boolean badExt = !ext.isEmpty() && !file.getName().endsWith("." + ext);
+        if (!isTmpFile && badExt) {
+            File tmp = File.createTempFile("iped", "." + ext);
+            tmp.deleteOnExit();
+            IOUtil.copyFile(file, tmp);
+            return tmp;
+        } else {
+            if (isTmpFile) {
+                file.deleteOnExit();
+                if (badExt) {
+                    file = Util.getFileRenamedToExt(file, ext);
+                }
+            } else {
+                file.setReadOnly();
+            }
+            return file;
+        }
+    }
 
 }

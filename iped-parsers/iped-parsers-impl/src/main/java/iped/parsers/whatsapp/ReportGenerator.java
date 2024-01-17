@@ -17,7 +17,6 @@ import org.apache.commons.text.lookup.StringLookup;
 import org.apache.commons.text.lookup.StringLookupFactory;
 
 import iped.data.IItemReader;
-import iped.parsers.util.ChildPornHashLookup;
 import iped.parsers.util.Messages;
 import iped.parsers.vcard.VCardParser;
 import iped.parsers.whatsapp.Message.MessageType;
@@ -31,7 +30,7 @@ import iped.utils.SimpleHTMLEncoder;
  */
 public class ReportGenerator {
 
-    private static final int MIN_SIZE_TO_SPLIT_CHAT = 5000000;
+    private int minChatSplitSize = 6000000;
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd"); //$NON-NLS-1$
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX"); //$NON-NLS-1$
@@ -51,6 +50,10 @@ public class ReportGenerator {
 
     public int getNextMsgNum() {
         return currentMsg;
+    }
+
+    public void setMinChatSplitSize(int minChatSplitSize) {
+        this.minChatSplitSize = minChatSplitSize;
     }
 
     public byte[] genarateContactHtml(WAContact contact) throws UnsupportedEncodingException {
@@ -126,7 +129,7 @@ public class ReportGenerator {
 
     }
 
-    public byte[] generateNextChatHtml(Chat c, WAContactsDirectory contactsDirectory, WAAccount account) {
+    public byte[] generateNextChatHtml(Chat c, WAContactsDirectory contactsDirectory, WAAccount account, int frag, StringBuilder histFrag) {
 
         if ((!firstFragment && currentMsg == 0) || (currentMsg > 0 && currentMsg == c.getMessages().size()))
             return null;
@@ -150,6 +153,7 @@ public class ReportGenerator {
                         + Messages.getString("WhatsAppReport.ChatContinuation") + "</div></div>"); //$NON-NLS-1$ //$NON-NLS-2$
 
             String lastDate = null;
+            String lastId = "1000000000";
             while (currentMsg < c.getMessages().size()) {
                 Message m = c.getMessages().get(currentMsg);
                 String thisDate = dateFormat.format(m.getTimeStamp());
@@ -159,13 +163,23 @@ public class ReportGenerator {
                     lastDate = thisDate;
                 }
                 printMessage(out, m, c.isGroupChat(), contactsDirectory, account);
+                lastId = m.getUniqueId();
                 currentMsg += 1;
-                if (currentMsg != c.getMessages().size() && bout.size() >= MIN_SIZE_TO_SPLIT_CHAT) {
+                if (currentMsg != c.getMessages().size() && bout.size() >= minChatSplitSize) {
                     out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
                             + Messages.getString("WhatsAppReport.ChatContinues") + "</div></div>"); //$NON-NLS-1$ //$NON-NLS-2$
                     break;
                 }
             }
+
+            if (histFrag.length()==0){
+                histFrag.append("<input type=\"hidden\" id=\"fragMessageChat\" value=\""+Messages.getString("WhatsAppReport.ChatFragment")+"\"/>");
+                histFrag.append("<input type=\"hidden\" id=\"fragMessageId\" value=\""+Messages.getString("WhatsAppReport.ReferenceId")+"\"/>");
+                histFrag.append("<input type=\"hidden\" id=\"fragMessageClose\" value=\""+Messages.getString("WhatsAppReport.Close")+"\"/>");
+            }
+
+            histFrag.append("<input type=\"hidden\" id=\"frag"+ frag +"\" value=\""+lastId+"\"/>");
+            out.println(histFrag);
             out.flush();
             return new String(bout.toByteArray(), StandardCharsets.UTF_8);
         });
@@ -178,6 +192,15 @@ public class ReportGenerator {
     private synchronized void printMessage(PrintWriter out, Message message, boolean group,
             WAContactsDirectory contactsDirectory,
             WAAccount account) {
+
+        boolean isFrom = false;
+        boolean isTo = false;
+        boolean isFromSpecial = false;
+        boolean isToSpecial = false;
+        String bubbleFrom = "<div class=\"bbl\"><div class=\"aw\"><div class=\"awl\"></div></div><div class=\"incoming from\">";
+        String bubbleTo = "<div class=\"bbr\"><div class=\"outgoing to\">";
+        String bubbleFromSpecial = "<div class=\"bbls\"><div class=\"aw\"><div class=\"awls\"></div></div><div class=\"specialmessage from\">";
+        String bubbleToSpecial = "<div class=\"bbrs\"><div class=\"specialmessage to\">";
 
         out.println("<div class=\"linha\" id=\"" + message.getUniqueId() + "\">"); //$NON-NLS-1$
 
@@ -224,73 +247,91 @@ public class ReportGenerator {
                 break;
             case MISSED_VIDEO_CALL:
                 if (message.isFromMe()) {
-                    out.println("<div class=\"specialmessage to\">"); //$NON-NLS-1$
+                    isToSpecial = true;
+                    out.println(bubbleToSpecial);
                 } else {
-                    out.println("<div class=\"specialmessage from\">"); //$NON-NLS-1$
+                    isFromSpecial = true;
+                    out.println(bubbleFromSpecial);
                 }
                 out.println(Messages.getString("WhatsAppReport.MissedVideoCall")); //$NON-NLS-1$
                 break;
             case MISSED_VOICE_CALL:
                 if (message.isFromMe()) {
-                    out.println("<div class=\"specialmessage to\">"); //$NON-NLS-1$
+                    isToSpecial = true;
+                    out.println(bubbleToSpecial);
                 } else {
-                    out.println("<div class=\"specialmessage from\">"); //$NON-NLS-1$
+                    isFromSpecial = true;
+                    out.println(bubbleFromSpecial);
                 }
                 out.println(Messages.getString("WhatsAppReport.MissedVoiceCall")); //$NON-NLS-1$
                 break;
             case REFUSED_VOICE_CALL:
                 if (message.isFromMe()) {
-                    out.println("<div class=\"specialmessage to\">"); //$NON-NLS-1$
+                    isToSpecial = true;
+                    out.println(bubbleToSpecial);
                 } else {
-                    out.println("<div class=\"specialmessage from\">"); //$NON-NLS-1$
+                    isFromSpecial = true;
+                    out.println(bubbleFromSpecial);
                 }
                 out.println(Messages.getString("WhatsAppReport.RefusedVoiceCall")); //$NON-NLS-1$
                 break;
             case REFUSED_VIDEO_CALL:
                 if (message.isFromMe()) {
-                    out.println("<div class=\"specialmessage to\">"); //$NON-NLS-1$
+                    isToSpecial = true;
+                    out.println(bubbleToSpecial);
                 } else {
-                    out.println("<div class=\"specialmessage from\">"); //$NON-NLS-1$
+                    isFromSpecial = true;
+                    out.println(bubbleFromSpecial);
                 }
                 out.println(Messages.getString("WhatsAppReport.RefusedVideoCall")); //$NON-NLS-1$
                 break;
             case UNAVAILABLE_VOICE_CALL:
                 if (message.isFromMe()) {
-                    out.println("<div class=\"specialmessage to\">"); //$NON-NLS-1$
+                    isToSpecial = true;
+                    out.println(bubbleToSpecial);
                 } else {
-                    out.println("<div class=\"specialmessage from\">"); //$NON-NLS-1$
+                    isFromSpecial = true;
+                    out.println(bubbleFromSpecial);
                 }
                 out.println(Messages.getString("WhatsAppReport.UnavailableVoiceCall")); //$NON-NLS-1$
                 break;
             case UNAVAILABLE_VIDEO_CALL:
                 if (message.isFromMe()) {
-                    out.println("<div class=\"specialmessage to\">"); //$NON-NLS-1$
+                    isToSpecial = true;
+                    out.println(bubbleToSpecial);
                 } else {
-                    out.println("<div class=\"specialmessage from\">"); //$NON-NLS-1$
+                    isFromSpecial = true;
+                    out.println(bubbleFromSpecial);
                 }
                 out.println(Messages.getString("WhatsAppReport.UnavailableVideoCall")); //$NON-NLS-1$
                 break;
             case UNKNOWN_VOICE_CALL:
                 if (message.isFromMe()) {
-                    out.println("<div class=\"specialmessage to\">"); //$NON-NLS-1$
+                    isToSpecial = true;
+                    out.println(bubbleToSpecial);
                 } else {
-                    out.println("<div class=\"specialmessage from\">"); //$NON-NLS-1$
+                    isFromSpecial = true;
+                    out.println(bubbleFromSpecial);
                 }
                 out.println(Messages.getString("WhatsAppReport.UnknownVoiceCall")); //$NON-NLS-1$
                 break;
             case UNKNOWN_VIDEO_CALL:
                 if (message.isFromMe()) {
-                    out.println("<div class=\"specialmessage to\">"); //$NON-NLS-1$
+                    isToSpecial = true;
+                    out.println(bubbleToSpecial);
                 } else {
-                    out.println("<div class=\"specialmessage from\">"); //$NON-NLS-1$
+                    isFromSpecial = true;
+                    out.println(bubbleFromSpecial);
                 }
                 out.println(Messages.getString("WhatsAppReport.UnknownVideoCall")); //$NON-NLS-1$
                 break;
             case VIDEO_CALL:
                 if (message.isFromMe()) {
-                    out.println("<div class=\"specialmessage to\">"); //$NON-NLS-1$
+                    isToSpecial = true;
+                    out.println(bubbleToSpecial);
                 } else {
-                    out.println("<div class=\"specialmessage from\">"); //$NON-NLS-1$
+                    isFromSpecial = true;
+                    out.println(bubbleFromSpecial);
                 }
                 out.println(Messages.getString("WhatsAppReport.VideoCall")); //$NON-NLS-1$
                 if (message.getMediaDuration() > 0) {
@@ -300,9 +341,11 @@ public class ReportGenerator {
                 break;
             case VOICE_CALL:
                 if (message.isFromMe()) {
-                    out.println("<div class=\"specialmessage to\">"); //$NON-NLS-1$
+                    isToSpecial = true;
+                    out.println(bubbleToSpecial);
                 } else {
-                    out.println("<div class=\"specialmessage from\">"); //$NON-NLS-1$
+                    isFromSpecial = true;
+                    out.println(bubbleFromSpecial);
                 }
                 out.println(Messages.getString("WhatsAppReport.VoiceCall") + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
                 out.println(
@@ -374,13 +417,15 @@ public class ReportGenerator {
                 String exportPath = null;
 
                 if (message.isFromMe()) {
-                    out.println("<div class=\"outgoing to\">"); //$NON-NLS-1$
+                    out.println(bubbleTo);
+                    isTo = true;
                     if (account != null && !account.isUnknown()) {
                         name = account.getName();
                         number = message.getLocalResource();
                     }
                 } else {
-                    out.println("<div class=\"incoming from\">"); //$NON-NLS-1$
+                    out.println(bubbleFrom);
+                    isFrom = true;
                     number = message.getRemoteResource();
                     if (number != null) {
                         WAContact contact = contactsDirectory.getContact(number);
@@ -392,7 +437,7 @@ public class ReportGenerator {
                 if (!number.isEmpty()) {
                     if (name.isEmpty()) {
                         name = number;
-                    } else if (!number.equals(name) && !number.equals(name + waSuffix)) {
+                    } else if (!number.equals(name) && !number.equals(name + WAContact.waSuffix)) {
                         name += " (" + number + ")"; //$NON-NLS-1$ //$NON-NLS-2$
                     }
                 }
@@ -406,6 +451,92 @@ public class ReportGenerator {
                     out.println(forwardedIcon + "<span class=\"fwd\">"
                             + Messages.getString("WhatsAppReport.Forwarded") + "</span><br/>");
                 }
+
+                String quoteClass = (message.isFromMe())?"quote_to":"quote_from";                
+                Message messageQuote = message.getMessageQuote();
+
+                if (message.isQuoted() && messageQuote != null){
+
+                    String dataQuote = messageQuote.getData();
+                    String quoteClick = "onclick=\"goToAnchorId("+messageQuote.getId()+");\"";
+                    String quoteIcon = "";
+                    String quoteDuration = "("+formatMMSS(messageQuote.getMediaDuration())+")";
+                    String quoteUser = getBestContactName(messageQuote,contactsDirectory,account);
+                    byte[] thumbQuote = messageQuote.getThumbData();                               
+
+                    switch (messageQuote.getMessageType()) {
+                        case AUDIO_MESSAGE:
+                            if (dataQuote == null || dataQuote.isEmpty()){
+                                dataQuote = Messages.getString("WhatsAppReport.Audio");
+                            }
+                            quoteIcon = "\uD83C\uDFA7";
+                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div style=\"display:table-cell;\"><span class=\"quote_user\">"+quoteUser+
+                            "</span></br><span class=\"quote_msg\">"+quoteIcon +
+                                " "+ format(dataQuote) + " "+  quoteDuration + "</span></div>");                                    
+                            break;
+                        case VIDEO_MESSAGE:     
+                        case GIF_MESSAGE:                           
+                            quoteIcon = "\uD83D\uDCF9";
+                            if (dataQuote == null || dataQuote.isEmpty()){
+                                dataQuote = Messages.getString("WhatsAppReport.Video");
+                            }
+                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div style=\"display:table-cell;vertical-align:top;border-right: 10px solid transparent;\"><span class=\"quote_user\">"+quoteUser+
+                            "</span></br><span class=\"quote_msg\">"+quoteIcon +
+                                " "+ format(dataQuote) + " "+  quoteDuration + "</span></div>");
+                            if (thumbQuote != null) {
+                                out.print("<div><img style=\"width:33px;height:33px;display:table-cell\" src=\"");
+                                out.print("data:image/jpg;base64," + Util.encodeBase64(thumbQuote) + "\"></div>");
+                            } else {
+                                out.println("<div class=\"videoImg\" style=\"width:33px;height:33px;display:table-cell\" title=\"Video\"></div>");
+                            }
+                            break;                        
+                        case STICKER_MESSAGE:
+                        case IMAGE_MESSAGE:
+                            quoteIcon = "\uD83D\uDDBC";
+                            if (dataQuote == null || dataQuote.isEmpty()){
+                                dataQuote = Messages.getString("WhatsAppReport.Photo");
+                            }
+                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div style=\"display:table-cell;vertical-align:top;border-right: 10px solid transparent;\"><span class=\"quote_user\">"+quoteUser+
+                                "</span></br><span class=\"quote_msg\">"+quoteIcon +" "+ format(dataQuote) + " </span></div>");                                    
+                            if (thumbQuote != null) {
+                                out.print("<div><img style=\"width:33px;height:33px;display:table-cell\" src=\"");
+                                out.print("data:image/jpg;base64," + Util.encodeBase64(thumbQuote) + "\"></div>");
+                            } else {
+                                out.println("<div class=\"imageImg\" style=\"width:33px;height:33px;display:table-cell\" title=\"Image\"></div>");
+                            }
+                            break;                        
+                        case APP_MESSAGE:
+                            quoteIcon = "\uD83D\uDCC4";
+                            if (dataQuote == null || dataQuote.isEmpty()){
+                                dataQuote = Messages.getString("WhatsAppReport.Document");
+                            }
+                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div style=\"display:table-cell;vertical-align:top;border-right: 10px solid transparent;\"><span class=\"quote_user\">"+quoteUser+
+                                "</span></br><span class=\"quote_msg\">"+quoteIcon +" "+ format(dataQuote) + " </span></div>");                                    
+                            if (thumbQuote != null) {
+                                out.print("<div><img style=\"width:33px;height:33px;display:table-cell\" src=\"");
+                                out.print("data:image/jpg;base64," + Util.encodeBase64(thumbQuote) + "\"></div>");
+                            } else {
+                                out.println("<div class=\"attachImg\" style=\"width:33px;height:33px;display:table-cell\" title=\"Doc\"></div>");
+                            }
+                            break;                            
+                        default:
+                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div style=\"display:table-cell;\"><span class=\"quote_user\">"+quoteUser+
+                            "</span></br><span class=\"quote_msg\">"+ format(dataQuote) + "</span></div>");
+                            break;
+                    }
+                    if (messageQuote.isDeleted()) {
+                        out.println("<div style=\"display:table-footer-group\"><br/><span style=\"float:none\" class=\"recovered\">");
+                        out.println("<div class=\"deletedIcon\"></div>");
+                        out.println("<i>" + Messages.getString("WhatsAppReport.Recovered") + "</i>");
+                        out.println("</span></div>");
+                    }                    
+                    out.print("</div>");
+                    
+                } else if (message.isQuoted() && messageQuote == null){ //Reference not found
+                    out.print("<div class=\""+quoteClass+"\"><span class=\"quote_user\">"+
+                    Messages.getString("WhatsAppReport.ReferenceNotFound")+"</span></br><span class=\"quote_msg\">"+format("") + "</span></div>");
+                }
+
                 switch (message.getMessageType()) {
                     case TEXT_MESSAGE:
                         if (message.getData() != null) {
@@ -504,14 +635,14 @@ public class ReportGenerator {
                                 String source = iped.parsers.util.Util.getSourceFileIfExists(mediaItem)
                                         .orElse("");
                                 if (message.getMessageType() == MessageType.AUDIO_MESSAGE) {
-                                    out.println(Messages.getString("WhatsAppReport.AudioMessageTitle")); //$NON-NLS-1$
+                                    out.println(Messages.getString("WhatsAppReport.AudioMessageTitle") + "<br>"); //$NON-NLS-1$
                                     out.println("<div class=\"audioImg iped-audio\" " //$NON-NLS-1$
                                             + " title=\"Audio\" " + "data-src1=\"" + format(exportPath) + "\" "
                                             + "data-src2=\"" //$NON-NLS-1$
                                             + format(source) + "\" ></div>");
                                     out.println("</a><br>"); //$NON-NLS-1$
                                 } else {
-                                    out.println(Messages.getString("WhatsAppReport.VideoMessageTitle")); //$NON-NLS-1$
+                                    out.println(Messages.getString("WhatsAppReport.VideoMessageTitle") + "<br>"); //$NON-NLS-1$
                                     if (thumb != null) {
                                         out.print("<img class=\"thumb iped-video\" src=\""); //$NON-NLS-1$
                                         out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
@@ -607,7 +738,7 @@ public class ReportGenerator {
                         break;
                 }
                 if (mediaItem != null) {
-                    message.addChildPornSets(ChildPornHashLookup.lookupHash(mediaItem.getHash()));
+                    message.lookupAndAddChildPornSets(mediaItem.getHash());
                 }
                 break;
         }
@@ -640,8 +771,8 @@ public class ReportGenerator {
                             if (contact != null) {
                                 name = contact.getName();
                             }
-                            if (number.endsWith(waSuffix)) {
-                                number = number.substring(0, number.length() - waSuffix.length());
+                            if (number.endsWith(WAContact.waSuffix)) {
+                                number = number.substring(0, number.length() - WAContact.waSuffix.length());
                             }
                         }
                     }
@@ -710,6 +841,15 @@ public class ReportGenerator {
 
         }
 
+        if (isTo)
+            out.println("</div><div class=\"aw\"><div class=\"awr\"></div></div>");
+        if (isFrom)
+            out.println("</div>");
+        if (isToSpecial)
+            out.println("</div><div class=\"aw\"><div class=\"awrs\"></div></div>");
+        if (isFromSpecial)
+            out.println("</div>");
+
         out.println("</div></div>"); //$NON-NLS-1$
 
         if (reactionsCount > 0) {
@@ -729,6 +869,42 @@ public class ReportGenerator {
             }
             out.println("</div><br>");
         }
+    }
+
+    private String getBestContactName(Message a, WAContactsDirectory contactsDirectory,WAAccount account){
+        String name = null;
+        String number = null;
+        if (a.isFromMe()) {
+            if (account != null && !account.isUnknown()) {
+                name = account.getName();
+            } else {
+                name = "[" + Messages.getString("WhatsAppReport.Owner") + "]";
+            }
+        } else {
+            number = a.getRemoteResource();
+            if (number != null) {
+                WAContact contact = contactsDirectory.getContact(number);
+                if (contact != null) {
+                    name = contact.getName();
+                }
+                if (number.endsWith(waSuffix)) {
+                    number = number.substring(0, number.length() - waSuffix.length());
+                }
+            }
+        }
+        name = name == null ? "" : name.trim();
+        number = number == null ? "" : number.trim();
+        if (!number.isEmpty()) {
+            if (name.isEmpty()) {
+                name = number;
+            } else if (!number.equals(name)) {
+                name += " (" + number + ")";
+            }
+        }
+        if (name != null) {
+            return format(name);
+        }
+        return "User Unknown";
     }
 
     public static String formatMMSS(int duration) {

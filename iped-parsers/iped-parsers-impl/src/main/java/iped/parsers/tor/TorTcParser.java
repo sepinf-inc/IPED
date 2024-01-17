@@ -35,7 +35,15 @@ public class TorTcParser extends AbstractParser {
     private static final long serialVersionUID = 1L;
     private static final MediaType TOR_TC_MIME = MediaType.application("x-tor-tc-fragment");
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(TOR_TC_MIME);
-    private static final String TORTC_PREFIX = "TORTC:";
+    public static final String TORTC_PREFIX = "TORTC:";
+    public static final String TORTC_BUILD_FLAGS = TORTC_PREFIX + "BUILD_FLAGS";
+	public static final String TORTC_PURPOSE = TORTC_PREFIX + "PURPOSE";
+	public static final String TORTC_REND_QUERY = TORTC_PREFIX + "REND_QUERY";
+	public static final String TORTC_TIME_CREATED = TORTC_PREFIX + "TIME_CREATED";
+	public static final String TORTC_SOCKS_USERNAME = TORTC_PREFIX + "SOCKS_USERNAME";
+	public static final String TORTC_SOCKS_PASSWORD = TORTC_PREFIX + "SOCKS_PASSWORD";
+	public static final String TORTC_CIRCUIT_STATUS = TORTC_PREFIX + "CircuitStatus";
+	public static final String TORTC_CIRCUIT_ID = TORTC_PREFIX + "CircuitId";
     private static final int MAX_BUFFER_SIZE = 1 << 24;
     private static final List<String> dateMetadatas = Arrays.asList("TIME_CREATED");
 
@@ -78,9 +86,11 @@ public class TorTcParser extends AbstractParser {
         String itemText = readInputStream(stream);
 
         if (itemText != null) {
-            if (itemText.indexOf("\r\n") > 2) {
-                itemText = itemText.substring(0, itemText.indexOf("\r\n"));
+            int idx = itemText.indexOf("\n");
+            if (idx > 2) {
+                itemText = itemText.substring(0, idx);
             }
+            itemText = itemText.stripTrailing();
 
             if (!(itemText.contains("BUILD_FLAGS") || itemText.contains("SOCKS") || itemText.contains("HS_STATE"))) {
                 throw new TikaException("Invalid or incomplete TOR TC carved fragment");
@@ -88,7 +98,7 @@ public class TorTcParser extends AbstractParser {
 
             int nextSpace = itemText.indexOf(" ");
             if (nextSpace != -1) {
-                metadata.add(TORTC_PREFIX + "CircuitStatus", itemText.substring(0, nextSpace));
+                metadata.add(TORTC_CIRCUIT_STATUS, itemText.substring(0, nextSpace));
                 itemText = itemText.substring(nextSpace + 1);
             }
 
@@ -96,7 +106,7 @@ public class TorTcParser extends AbstractParser {
             if (nextSpace != -1) {
                 String circuitId = itemText.substring(0, nextSpace);
                 if (circuitId.indexOf("BUILD_FLAGS") > 2) {
-                    metadata.add(TORTC_PREFIX + "CircuitId", circuitId);
+                    metadata.add(TORTC_CIRCUIT_ID, circuitId);
                 }
             }
 
