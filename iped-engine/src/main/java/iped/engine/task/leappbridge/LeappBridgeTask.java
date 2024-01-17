@@ -56,12 +56,13 @@ public class LeappBridgeTask extends AbstractPythonTask {
 
     private static final String DEVICE_DETAILS_HTML = "DeviceDetails.html";
 
-    private static final String ALEAPP_PLUGIN = "ALEAPP:PLUGIN";
+    public static final String ALEAPP_METADATA_PREFIX = "ALEAPP";
+    public static final String ALEAPP_PLUGIN = ALEAPP_METADATA_PREFIX + ":PLUGIN";
 
     static final String REPORT_EVIDENCE_NAME = "LEAPP_Reports";
     static final String REPORT_FOLDER_NAME = "LEAPP_Reports_";
 
-    private static final String ALEAPP_DEVICE_DETAILS = "ALEAPP:DEVICE_DETAILS";
+    private static final String ALEAPP_DEVICE_DETAILS = ALEAPP_METADATA_PREFIX + "DEVICE_DETAILS";
 
     private static final String PLUGIN_EXECUTION_MESSAGE = "ALeapp plugin execution";
 

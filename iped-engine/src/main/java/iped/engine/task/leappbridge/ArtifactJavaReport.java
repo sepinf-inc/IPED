@@ -158,6 +158,8 @@ public class ArtifactJavaReport {
                 m.add(ExtraProperties.LINKED_ITEMS, "path:\"*" + filel + "\" && name:\"" + filename + "\"");
             }
 
+            m.add(LeappBridgeTask.ALEAPP_PLUGIN, this.pluginName);
+
             int i = 0;
             Object[] data = ((Collection) data_fields).toArray();
             if (data != null) {
@@ -286,15 +288,16 @@ public class ArtifactJavaReport {
                 } else {
                     eventType = pluginName;
                 }
-                p = Property.internalDate("aleapp:" + eventType + "_" + lastKeyValue);
+                p = Property
+                        .internalDate(LeappBridgeTask.ALEAPP_METADATA_PREFIX + ":" + eventType + "_" + lastKeyValue);
             } else {
-                p = Property.internalDate("aleapp:" + pluginName + "_ts");
+                p = Property.internalDate(LeappBridgeTask.ALEAPP_METADATA_PREFIX + ":" + pluginName + "_ts");
             }
             m.set(p, d);
             return;
         }
 
-        m.add("aleapp:" + property, value);
+        m.add(LeappBridgeTask.ALEAPP_METADATA_PREFIX + ":" + property, value);
     }
 
     private void addLinkMetadata(Metadata m, String filel) throws IOException {
@@ -305,7 +308,7 @@ public class ArtifactJavaReport {
 
     private void addLinkMetadata(Metadata m, String property, String filel) throws IOException {
         addLinkMetadata(m, filel);
-        m.add("aleapp:" + property, filel);
+        m.add(LeappBridgeTask.ALEAPP_METADATA_PREFIX + ":" + property, filel);
     }
 
     public void add_section_heading(String heading, int size) {
