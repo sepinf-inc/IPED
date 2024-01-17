@@ -234,11 +234,7 @@ public class Message {
             return bb.array();
         } catch (ClosedChannelException e) {
             reOpenChannel();
-            if (fileChannel.isOpen()) {
-                return getThumbData();
-            } else {
-                throw new RuntimeException(e);
-            }
+            return getThumbData();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -255,11 +251,7 @@ public class Message {
             fileChannel.write(ByteBuffer.wrap(rawData), thumbOffset);
         } catch (ClosedChannelException e) {
             reOpenChannel();
-            if (fileChannel.isOpen()) {
-                setThumbData(rawData);
-            } else {
-                throw new RuntimeException(e);
-            }
+            setThumbData(rawData);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
