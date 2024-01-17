@@ -1,0 +1,41 @@
+Metadata-Version: 2.1
+Name: geographiclib
+Version: 2.0
+Summary: The geodesic routines from GeographicLib
+Home-page: https://geographiclib.sourceforge.io/Python/2.0
+Author: Charles Karney
+Author-email: charles@karney.com
+License: MIT
+Keywords: gis geographical earth distance geodesic
+Platform: UNKNOWN
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Topic :: Scientific/Engineering :: GIS
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+License-File: LICENSE
+
+# Python implementation of the geodesic routines in GeographicLib
+
+This is a library to solve geodesic problems on an ellipsoid model of
+the earth.
+
+Licensed under the MIT/X11 License; see
+[LICENSE.txt](https://geographiclib.sourceforge.io/LICENSE.txt).
+
+The algorithms are documented in
+
+* C. F. F. Karney,
+  [Algorithms for geodesics](https://doi.org/10.1007/s00190-012-0578-z),
+  J. Geodesy **87**(1), 43–55 (2013);
+  [Addenda](https://geographiclib.sourceforge.io/geod-addenda.html).
+
+The documentation for this package is in
+https://geographiclib.sourceforge.io/Python/doc
+
+

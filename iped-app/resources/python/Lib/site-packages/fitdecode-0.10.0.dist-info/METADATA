@@ -1,0 +1,315 @@
+Metadata-Version: 2.1
+Name: fitdecode
+Version: 0.10.0
+Summary: FIT file parser and decoder
+Home-page: https://github.com/polyvertex/fitdecode
+Author: Jean-Charles Lefebvre
+Author-email: polyvertex@gmail.com
+License: MIT
+Keywords: fit,ant,file,parse,parser,decode,decoder
+Platform: UNKNOWN
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Natural Language :: English
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.6
+Requires-Python: >=3.6
+Provides-Extra: docs
+Requires-Dist: sphinx ; extra == 'docs'
+Requires-Dist: sphinx-rtd-theme ; extra == 'docs'
+
+=========
+fitdecode
+=========
+
+.. image:: https://readthedocs.org/projects/fitdecode/badge/?version=latest
+    :target: https://fitdecode.readthedocs.io/
+    :alt: Latest Docs
+
+.. image:: https://api.travis-ci.com/polyvertex/fitdecode.svg
+    :target: https://app.travis-ci.com/github/polyvertex/fitdecode
+
+
+A `FIT <https://developer.garmin.com/fit/overview/>`_ file parsing and decoding
+library written in `Python3 <https://www.python.org/>`_ (``>= 3.6``).
+
+
+Usage Example
+=============
+
+Read a FIT file, frame by frame:
+
+.. code:: python
+
+    import fitdecode
+
+    with fitdecode.FitReader('file.fit') as fit:
+        for frame in fit:
+            # The yielded frame object is of one of the following types:
+            # * fitdecode.FitHeader (FIT_FRAME_HEADER)
+            # * fitdecode.FitDefinitionMessage (FIT_FRAME_DEFINITION)
+            # * fitdecode.FitDataMessage (FIT_FRAME_DATA)
+            # * fitdecode.FitCRC (FIT_FRAME_CRC)
+
+            if frame.frame_type == fitdecode.FIT_FRAME_DATA:
+                # Here, frame is a FitDataMessage object.
+                # A FitDataMessage object contains decoded values that
+                # are directly usable in your script logic.
+                print(frame.name)
+
+
+Command line utilities
+----------------------
+
+``fitjson`` exports JSON:
+
+::
+
+    $ fitjson --pretty -o out_file.json in_file.fit
+
+To ease the introspection or your FIT files, ``fittxt`` exports to a dedicated
+TXT format::
+
+    $ fittxt -o out_file.txt in_file.fit
+
+Both commands accept a ``--filter`` option (or ``-f``) which can be specified
+multiples times::
+
+    $ # include only RECORD messages:
+    $ fitjson -f=record -o out_file.json in_file.fit
+
+    $ # exclude FILE_ID and EVENT messages:
+    $ fitjson -f=-file_id -f=-event -o out_file.json in_file.fit
+
+
+Installation
+============
+
+fitdecode is available on `PyPI <https://pypi.org/project/fitdecode/>`_::
+
+    $ pip install fitdecode
+
+
+Or, to get the latest working version, you can clone fitdecode's `source code
+repository <https://github.com/polyvertex/fitdecode>`_ before installing it::
+
+    $ git clone git@github.com:polyvertex/fitdecode.git
+    $ cd fitdecode
+    $ python setup.py test     # optional step to run unit tests
+    $ python setup.py install
+
+
+Note that for convenience, the ``cmd`` directory located at the root of the
+source code tree can safely be added to your ``PATH``, so that fitdecode
+commands can be called without the package to be installed.
+
+
+Overview
+========
+
+fitdecode is a non offensive and incompatible rewrite of the fitparse_ library,
+with some improvements and additional features, as well as efforts made to
+optimize both speed and memory usage.
+
+Main differences between fitdecode and fitparse:
+
+* fitdecode's API is not compatible with fitparse's
+
+* fitdecode requires Python version 3.6 or greater
+
+* fitdecode is faster
+
+* fitdecode allows concurrent reading of multiple files by being thread-safe, in
+  the sense that fitdecode's objects keep their state stored locally
+
+* fitdecode does not discard the FIT header and the CRC footer while iterating
+  a file, which allow to get a complete 1:1 representation of the file that is
+  being read
+
+* This also allows the client to easily deal with so-called chained FIT files,
+  as per FIT SDK definition (i.e. concatenated FIT files)
+
+* CRC computation and matching are both optional. CRC can be either matched, or
+  only computed, or just ignored for faster reading.
+
+* fitdecode offers optional access to records, headers and footers in their
+  binary form, to allow FIT file cutting, stitching and filtering at binary
+  level
+
+
+Why a new library?
+==================
+
+A new library has been created instead of just offering to patch fitparse_
+because many changes and adds in fitdecode break fitparse's backward
+compatibilty and because it allowed more freedom during the development of
+fitdecode.
+
+
+Documentation
+=============
+
+Documentation is available at `<https://fitdecode.readthedocs.io/>`_
+
+
+License
+=======
+
+This project is distributed under the terms of the MIT license.
+See the `LICENSE.txt <LICENSE.txt>`_ file for details.
+
+
+Credits
+=======
+
+fitdecode is largely based on the generic approach adopted by fitparse_ to
+define FIT types and to decode raw values. That includes the module
+``profile.py`` and all the classes it refers to, as well as the script
+``generate_profile.py``.
+
+
+
+.. _fitparse: https://github.com/dtcooper/python-fitparse
+
+
+.. :changelog:
+
+==========
+Change Log
+==========
+
+
+v0.10.0 (2021-09-12)
+====================
+
+* ``fitjson``: added ``--pretty`` option
+* ``fitjson``: added ``--nounk`` option to filter-out *unknown* messages
+* ``fitjson``: ``--filter`` option also allows to filter-out messages
+* ``fittxt``: ``--filter`` option also allows to filter-out messages
+* ``fittxt``: added ``--nounk`` option to filter-out *unknown* messages
+* Fixed: `FitReader` does not close a file-like object owned by the user
+* Fixed: `FitReader.file_id` gets reset upon FIT footer (CRC frame)
+* Fixed: `utils.get_mesg_num()` return value
+* Fixed: `utils.get_mesg_field_num()` return value
+* Minor corrections, improvements and code cleanup
+
+
+v0.9.0 (2021-09-10)
+===================
+
+* `FitReader` gets new properties ``fit_file_index`` and ``fit_files_count``
+* New ``CrcCheck`` policy: ``WARN``
+* **BREAKING CHANGE:** ``CrcCheck`` default policy from ``RAISE`` to ``WARN``
+* `FitHeaderError` exception messages a bit more helpful
+* Minor corrections and code cleanup
+
+
+v0.8.0 (2021-09-09)
+===================
+
+* `FitReader` gets the ``error_handling`` argument to be less strict on
+  malformed files (issues #13, #16, #18)
+* FIT SDK profile upgraded to v21.60
+* Minor corrections, improvements and cleanup on code and documentation
+
+
+v0.7.0 (2020-10-04)
+===================
+
+* Compatibility with Apple Watch improved (issue #10)
+* FIT SDK profile upgraded to v21.38
+* ``generate_profile`` utility now supports recent SDK file structure
+* Minor improvements and cleanup on code and documentation
+
+
+v0.6.0 (2019-11-02)
+===================
+
+* Added `FitReader.last_timestamp` property
+* Fixed: `FitReader` was raising `KeyError` instead of `FitParseError` when a
+  dev_type was not found
+* `FitParseError` message contains more details upon malformed file in some
+  cases
+* FIT SDK profile upgraded to v21.16
+* README's usage example slightly improved
+
+
+v0.5.0 (2019-04-11)
+===================
+
+* Added `fitdecode.DataProcessorBase` class
+* ``check_crc`` - the parameter to `fitdecode.FitReader`'s constructor - can now
+  be either "enabled", "read-only" or "disabled" (issue #1)
+* Minor speed improvements
+
+
+v0.4.0 (2019-04-10)
+===================
+
+* Added `fitdecode.FitDataMessage.has_field`
+* `fitdecode.FitDataMessage.get_fields` is now a generator
+* `fitdecode.FitDataMessage.get_values` is now a generator
+* `fitdecode.DefaultDataProcessor` now converts ``hr.event_timestamp`` values
+  that were populated from ``hr.event_timestamp_12`` components to
+  `datetime.datetime` objects for convenience
+* ``fitjson`` and ``fittxt`` utilities:
+  * Added support for input files with Unicode characters
+  * Still write output file even if an error occurred while parsing FIT file
+* Fixed handling of some FIT fields that are both scaled and components.
+  See https://github.com/dtcooper/python-fitparse/issues/84
+* Improved support for malformed FIT files.
+  See https://github.com/dtcooper/python-fitparse/issues/62
+* ``generate_profile`` utility slightly improved
+* Added some unit tests
+* Minor improvements and corrections
+
+
+v0.3.0 (2018-07-27)
+===================
+
+* Added `fitdecode.utils.get_mesg_field`
+* Added `fitdecode.utils.get_mesg_field_num`
+* Minor improvements and corrections
+
+
+v0.2.0 (2018-07-16)
+===================
+
+* Added `FieldData.name_or_num`
+* Added `FitDataMessage.get_fields`
+* Added `FitDataMessage.get_values`
+* Improved `FitDataMessage.get_field` (*idx* arg)
+* Improved `FitDataMessage.get_value` (*idx* arg)
+* Completed documentation of `FitDataMessage`
+* Improved documentation of `FieldData`
+* `FitReader`'s internal state is reset as well after a `FitCRC` has been
+  yielded (i.e. not only when a FIT header is about to be read), in order to
+  avoid incorrect behavior due to malformed FIT stream
+
+
+v0.1.0 (2018-07-14)
+===================
+
+* Added class property ``frame_type`` (read-only) to `FitHeader`, `FitCRC`,
+  `FitDefinitionMessage` and `FitDataMessage` (``records`` module) to ease and
+  speed up type checking
+* Added `FitDataMessage.get_value` method
+* ``string`` values with no null byte are still decoded (in full length)
+* ``cmd`` directory added to the source code tree for convenience
+
+
+v0.0.1 (2018-07-08)
+===================
+
+* First release
+
+
+v0.0.0 (2018-05-31)
+===================
+
+* Birth!
+
+

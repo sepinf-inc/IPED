@@ -1,0 +1,14 @@
+magic/__init__.py,sha256=5xIBZQs1w0pqTfvmbNb2YZbs-7MJrMusVsNQJzJ8Wi8,44
+magic/__pycache__/__init__.cpython-39.pyc,,
+magic/__pycache__/magic.cpython-39.pyc,,
+magic/libmagic/libmagic.dll,sha256=YBtwkZL69UNj_9B--YssNS1hWsikg0LULWXU4EAj_Ng,347136
+magic/libmagic/magic.mgc,sha256=hCIRE02GVEPBmz4_4_O7MiciydyRSnUcoJeZT-VKe50,4917824
+magic/magic.py,sha256=oRQjhT0nS_9jEXgNufbeKaNshZYDTP3WNr9rRvD87Yg,9840
+python_magic_bin-0.4.14.dist-info/DESCRIPTION.rst,sha256=2H9w1GmjEQwz_ESI5a0VRqBRvC-LirY6FEBCECsIH7g,173
+python_magic_bin-0.4.14.dist-info/INSTALLER,sha256=zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg,4
+python_magic_bin-0.4.14.dist-info/METADATA,sha256=1qlzHr6tVA2afJ84sIIxhGULr46qa4ZvX7zQi3s7QDI,710
+python_magic_bin-0.4.14.dist-info/RECORD,,
+python_magic_bin-0.4.14.dist-info/REQUESTED,sha256=47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU,0
+python_magic_bin-0.4.14.dist-info/WHEEL,sha256=xuJ2w_RR4DNgd4FmUhs0bHIe8YWrQzuvfyVHf4AJHeg,122
+python_magic_bin-0.4.14.dist-info/metadata.json,sha256=9mcCMxyFTlq6sImIe_zm3FwCs3SCtZnoY9hQNgYM8Vk,711
+python_magic_bin-0.4.14.dist-info/top_level.txt,sha256=MDDOZCPmPBiPXW10LHC6RzAJaGX08WaDj_oOOo7sQRc,6

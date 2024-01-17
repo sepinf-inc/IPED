@@ -1,0 +1,31 @@
+Metadata-Version: 2.1
+Name: branca
+Version: 0.7.0
+Summary: Generate complex HTML+JS pages with Python
+Home-page: https://github.com/python-visualization/branca
+Author: Martin Journois
+License: MIT
+Keywords: data visualization
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Development Status :: 5 - Production/Stable
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+License-File: LICENSE.txt
+Requires-Dist: jinja2
+
+[![PyPI Package](https://img.shields.io/pypi/v/branca.svg)](https://pypi.python.org/pypi/branca)
+[![Build Status](https://github.com/python-visualization/branca/actions/workflows/test_code.yml/badge.svg?branch=main)](https://github.com/python-visualization/branca/actions/workflows/test_code.yml)
+[![Gitter](https://badges.gitter.im/python-visualization/folium.svg)](https://gitter.im/python-visualization/folium)
+
+# Branca
+
+This library is a spinoff from [folium](https://github.com/python-visualization/folium). It can be used to generate HTML + JS. It is based on Jinja2.
+
+- Documentation: https://python-visualization.github.io/branca/
+- Examples: https://nbviewer.org/github/python-visualization/branca/tree/main/examples/
