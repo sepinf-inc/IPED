@@ -100,8 +100,8 @@ public class MenuListener implements ActionListener {
         if (fileChooserImportKeywords != null)
             return;
 
-        checkBookMarkList = new JCheckBox(Messages.getString("MenuListener.CheckAddBoomarkList"));
-        checkBookMarkWords = new JCheckBox(Messages.getString("MenuListener.CheckAddBookmarkWords"));
+        checkBookMarkList = new JCheckBox(Messages.getString("MenuListener.CheckAddKeywordsAsSingleBookmark"));
+        checkBookMarkWords = new JCheckBox(Messages.getString("MenuListener.CheckAddKeywordsAsMultipleBookmarks"));
 
         fileChooserImportKeywords = new JFileChooser();
         defaultFilter = fileChooserImportKeywords.getFileFilter();
