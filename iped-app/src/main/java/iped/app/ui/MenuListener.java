@@ -21,7 +21,6 @@ package iped.app.ui;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -31,6 +30,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.BorderFactory;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
@@ -117,11 +117,12 @@ public class MenuListener implements ActionListener {
         fileChooserImportKeywords.setFileSelectionMode(JFileChooser.FILES_ONLY);
 
         JComponent panel = new JPanel();
+        panel.setLayout(new BorderLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
         checkBookMarkList.setSelected(false);
-        panel.add(checkBookMarkList);
+        panel.add(checkBookMarkList, BorderLayout.NORTH);
         checkBookMarkWords.setSelected(false);
-        panel.add(checkBookMarkWords);
-        panel.setLayout(new FlowLayout(FlowLayout.LEFT));
+        panel.add(checkBookMarkWords, BorderLayout.SOUTH);
 
         int width = (int) fileChooserImportKeywords.getPreferredSize().getWidth();
         int height = (int) fileChooserImportKeywords.getPreferredSize().getHeight();
