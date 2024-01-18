@@ -39,6 +39,7 @@ import static iped.parsers.whatsapp.Message.MessageType.VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.VIDEO_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.VIEW_ONCE_IMAGE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.VIEW_ONCE_VIDEO_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.WAITING_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.YOU_ADMIN;
 
 import java.io.File;
@@ -831,7 +832,7 @@ public class ExtractorIOS extends Extractor {
                 result = GIF_MESSAGE;
                 break;
             case 12:
-                // mensagem de sistema desconhecida
+                result = WAITING_MESSAGE;
                 break;
             case 14:
                 result = DELETED_BY_SENDER;
