@@ -4,6 +4,7 @@ import static iped.parsers.whatsapp.Message.MessageType.APP_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.AUDIO_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.BLOCKED_CONTACT;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_CHAT;
+import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_OFFICIAL;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_TO_STANDARD;
 import static iped.parsers.whatsapp.Message.MessageType.CHANGED_NUMBER_CHATTING_WITH_NEW;
 import static iped.parsers.whatsapp.Message.MessageType.CHANGED_NUMBER_CHATTING_WITH_OLD;
@@ -807,8 +808,8 @@ public class ExtractorIOS extends Extractor {
                     result = BLOCKED_CONTACT;
                 } else if (gEventType == 35) {
                     result = UNBLOCKED_CONTACT;
-                } else if (gEventType == 38) {
-                    result = MessageType.BUSINESS_OFFICIAL;
+                } else if (gEventType == 25 || gEventType == 38) {
+                    result = BUSINESS_OFFICIAL;
                 } else if (gEventType == 40 || gEventType == 41) {
                     // Started a video call (group) 
                     result = VIDEO_CALL;
