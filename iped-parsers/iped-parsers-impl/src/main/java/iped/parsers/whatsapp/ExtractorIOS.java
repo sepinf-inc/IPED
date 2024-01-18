@@ -18,6 +18,7 @@ import static iped.parsers.whatsapp.Message.MessageType.GIF_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CREATED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_ICON_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_ICON_DELETED;
+import static iped.parsers.whatsapp.Message.MessageType.GROUP_INVITE;
 import static iped.parsers.whatsapp.Message.MessageType.IMAGE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.LOCATION_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.MESSAGES_NOW_ENCRYPTED;
@@ -487,6 +488,10 @@ public class ExtractorIOS extends Extractor {
             m.setMessageTemplate(decodeTemplate(metadata));
         }
 
+        if (m.getMessageType() == GROUP_INVITE) {
+            m.setGroupInviteName(decodeGroupInvite(metadata));
+        }
+
         return m;
     }
 
@@ -515,6 +520,17 @@ public class ExtractorIOS extends Extractor {
             }
         }        
         return ret;
+    }
+
+    private String decodeGroupInvite(byte[] metadata) {
+        Part p1 = new ProtoBufDecoder(metadata).decode(28);
+        if (p1 != null) {
+            Part p2 = p1.getChild(4);
+            if (p2 != null && p2.getValue() instanceof String) {
+                return (String) p2.getValue();
+            }
+        }
+        return null;
     }
 
     private MessageTemplate decodeTemplate(byte[] metadata) {
@@ -891,6 +907,9 @@ public class ExtractorIOS extends Extractor {
                 break;
             case 19:
                 result = TEMPLATE_MESSAGE;
+                break;
+            case 27:
+                result = GROUP_INVITE;
                 break;
             case 28:
                 result = EPHEMERAL_DEFAULT;
