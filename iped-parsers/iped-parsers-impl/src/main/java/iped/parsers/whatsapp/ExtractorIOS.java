@@ -3,6 +3,7 @@ package iped.parsers.whatsapp;
 import static iped.parsers.whatsapp.Message.MessageType.APP_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.AUDIO_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.BLOCKED_CONTACT;
+import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_CHANGED_NAME;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_CHAT;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_OFFICIAL;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_TO_STANDARD;
@@ -802,6 +803,8 @@ public class ExtractorIOS extends Extractor {
                     result = MISSED_VIDEO_CALL;
                 } else if (gEventType == 26) {
                     result = BUSINESS_CHAT;
+                } else if (gEventType == 29) {
+                    result = BUSINESS_CHANGED_NAME;
                 } else if (gEventType == 30) {
                     result = BUSINESS_TO_STANDARD;
                 } else if (gEventType == 34) {

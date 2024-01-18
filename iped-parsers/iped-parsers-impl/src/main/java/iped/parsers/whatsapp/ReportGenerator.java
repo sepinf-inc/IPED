@@ -329,6 +329,10 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.ChatBusinessOfficial"));
                 break;
+            case BUSINESS_CHANGED_NAME:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.BusinessChangedName"));
+                break;
             case STANDARD_CHAT:
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.ChatStandard"));
