@@ -838,7 +838,7 @@ public class ExtractorIOS extends Extractor {
             case 10:
                 if (gEventType == 2) {
                     result = MESSAGES_NOW_ENCRYPTED;
-                } else if (gEventType == 1) {
+                } else if (gEventType == 1 || gEventType == 45) {
                     result = MISSED_VOICE_CALL;
                 } else if (gEventType == 3) {
                     result = ENCRYPTION_KEY_CHANGED;
