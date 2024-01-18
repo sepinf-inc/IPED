@@ -914,6 +914,10 @@ public class ExtractorIOS extends Extractor {
             case 28:
                 result = EPHEMERAL_DEFAULT;
                 break;
+            case 32:
+                // Forwarded template message. Handle as TEXT seems enough to show its content.
+                result = TEXT_MESSAGE;
+                break;
             case 38:
                 result = VIEW_ONCE_IMAGE_MESSAGE;
                 break;
