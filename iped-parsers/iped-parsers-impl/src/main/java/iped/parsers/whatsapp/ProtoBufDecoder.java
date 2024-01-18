@@ -99,9 +99,11 @@ public class ProtoBufDecoder {
 
     public Part decode(int idx) {
         List<Part> l = decode();
-        for (Part p : l) {
-            if (p.getIdx() == idx) {
-                return p;
+        if (l != null) {
+            for (Part p : l) {
+                if (p.getIdx() == idx) {
+                    return p;
+                }
             }
         }
         return null;
