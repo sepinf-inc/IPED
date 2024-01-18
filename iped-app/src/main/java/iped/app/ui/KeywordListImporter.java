@@ -17,6 +17,8 @@ import iped.viewers.util.ProgressDialog;
 
 public class KeywordListImporter extends CancelableWorker {
 
+    private static String PREFIX = Messages.getString("KeywordListImporter.BookmarkPrefix");
+
     ProgressDialog progress;
     ArrayList<String> keywords, result = new ArrayList<String>(), errors = new ArrayList<String>();
     boolean addBookMarkList = false;
@@ -40,6 +42,8 @@ public class KeywordListImporter extends CancelableWorker {
     @Override
     protected Object doInBackground() {
 
+        String singleBookmarkName = PREFIX + " " + fileName;
+
         int i = 0;
         for (String keyword : keywords) {
             if (this.isCancelled()) {
@@ -60,10 +64,14 @@ public class KeywordListImporter extends CancelableWorker {
                             uniqueSelectedIds.add(item);
                         }
 
-                        if (addBookMarkList)
-                            App.get().appCase.getMultiBookmarks().addBookmark(uniqueSelectedIds, fileName);
-                        if (addBookMarkWords)
-                            App.get().appCase.getMultiBookmarks().addBookmark(uniqueSelectedIds, keyword);
+                        if (addBookMarkList) {
+                            App.get().appCase.getMultiBookmarks().addBookmark(uniqueSelectedIds, singleBookmarkName);
+                        }
+                        if (addBookMarkWords) {
+                            String bookmarkName = PREFIX + " " + keyword;
+                            App.get().appCase.getMultiBookmarks().addBookmark(uniqueSelectedIds, bookmarkName);
+                            App.get().appCase.getMultiBookmarks().setBookmarkComment(bookmarkName, bookmarkName);
+                        }
                         uniqueSelectedIds.clear();
                         uniqueSelectedIds = null;
                     }
@@ -84,6 +92,10 @@ public class KeywordListImporter extends CancelableWorker {
                 errors.add(keyword);
             }
 
+        }
+
+        if (addBookMarkList && !result.isEmpty()) {
+            App.get().appCase.getMultiBookmarks().setBookmarkComment(singleBookmarkName, PREFIX + " " + result.toString());
         }
 
         return null;
