@@ -8,12 +8,12 @@ import java.util.ArrayList;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
+import iped.data.IItemId;
 import iped.engine.search.IPEDSearcher;
+import iped.engine.search.MultiSearchResult;
 import iped.engine.util.Util;
 import iped.viewers.api.CancelableWorker;
 import iped.viewers.util.ProgressDialog;
-import iped.engine.search.MultiSearchResult;
-import iped.data.IItemId;
 
 public class KeywordListImporter extends CancelableWorker {
 
@@ -51,23 +51,23 @@ public class KeywordListImporter extends CancelableWorker {
                 MultiSearchResult searchResults = task.multiSearch();
                 if (searchResults.getLength() > 0) {
                     result.add(keyword);
-                    
-                    if (addBookMarkList || addBookMarkWords){
-                    
+
+                    if (addBookMarkList || addBookMarkWords) {
+
                         ArrayList<IItemId> uniqueSelectedIds = new ArrayList<IItemId>();
-                                    
+
                         for (IItemId item : searchResults.getIterator()) {
                             uniqueSelectedIds.add(item);
-                        }                
+                        }
 
                         if (addBookMarkList)
-                            App.get().appCase.getMultiBookmarks().addBookmark(uniqueSelectedIds, fileName);                            
+                            App.get().appCase.getMultiBookmarks().addBookmark(uniqueSelectedIds, fileName);
                         if (addBookMarkWords)
-                            App.get().appCase.getMultiBookmarks().addBookmark(uniqueSelectedIds, keyword);                            
+                            App.get().appCase.getMultiBookmarks().addBookmark(uniqueSelectedIds, keyword);
                         uniqueSelectedIds.clear();
                         uniqueSelectedIds = null;
-                    }                    
-                    
+                    }
+
                 }
                 searchResults = null;
                 task = null;
@@ -100,7 +100,7 @@ public class KeywordListImporter extends CancelableWorker {
         App.get().appCase.getMultiBookmarks().saveState();
 
         BookmarksController.get().updateUIandHistory();
-        BookmarksManager.get().updateList();        
+        BookmarksManager.get().updateList();
 
         if (errors.size() > 0) {
             StringBuilder errorTerms = new StringBuilder();

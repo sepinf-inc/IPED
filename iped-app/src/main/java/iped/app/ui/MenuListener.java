@@ -18,31 +18,31 @@
  */
 package iped.app.ui;
 
+import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.FlowLayout;
-import java.awt.BorderLayout;
-import java.awt.Dimension;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
-import javax.swing.JCheckBox;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.tree.TreePath;
-import javax.swing.JComponent;
 
 import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 import org.apache.lucene.search.Query;
@@ -99,10 +99,10 @@ public class MenuListener implements ActionListener {
     private void setupFileChooserImportKeywords() {
         if (fileChooserImportKeywords != null)
             return;
-        
-        checkBookMarkList = new JCheckBox(Messages.getString("MenuListener.CheckAddBoomarkList"));  
+
+        checkBookMarkList = new JCheckBox(Messages.getString("MenuListener.CheckAddBoomarkList"));
         checkBookMarkWords = new JCheckBox(Messages.getString("MenuListener.CheckAddBookmarkWords"));
-    
+
         fileChooserImportKeywords = new JFileChooser();
         defaultFilter = fileChooserImportKeywords.getFileFilter();
         File moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir();
@@ -112,23 +112,23 @@ public class MenuListener implements ActionListener {
         if (dirDadosExportados.exists()) {
             fileChooserImportKeywords.setCurrentDirectory(dirDadosExportados);
         }
-        
+
         fileChooserImportKeywords.setFileFilter(defaultFilter);
         fileChooserImportKeywords.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        
+
         JComponent panel = new JPanel();
         checkBookMarkList.setSelected(false);
         panel.add(checkBookMarkList);
         checkBookMarkWords.setSelected(false);
-        panel.add(checkBookMarkWords);    
+        panel.add(checkBookMarkWords);
         panel.setLayout(new FlowLayout(FlowLayout.LEFT));
 
-        int width = (int)fileChooserImportKeywords.getPreferredSize().getWidth();
-        int height = (int)fileChooserImportKeywords.getPreferredSize().getHeight();
-        height += (int)panel.getPreferredSize().getHeight();
-        
+        int width = (int) fileChooserImportKeywords.getPreferredSize().getWidth();
+        int height = (int) fileChooserImportKeywords.getPreferredSize().getHeight();
+        height += (int) panel.getPreferredSize().getHeight();
+
         fileChooserImportKeywords.setPreferredSize(new Dimension(width, height));
-        
+
         fileChooserImportKeywords.setAccessory(panel);
         JComponent center = null;
         BorderLayout layout = (BorderLayout) fileChooserImportKeywords.getLayout();
