@@ -156,12 +156,13 @@
                                     <artifactId>python-jep-dlib</artifactId>
                                     <version>3.9.12-4.0.3-19.23.1</version>
                                     <type>zip</type>
-                                    <overWrite>false</overWrite>
+                                    <overWrite>true</overWrite>
                                     <outputDirectory>${release.dir}</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
                     </execution>
+                    
                     <execution>
                         <id>unpack-esedbexport</id>
                         <phase>package</phase>
@@ -617,6 +618,60 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.6.0</version>
+                <executions>
+                    <execution>
+                        <id>pip-get</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>python</executable>
+                            <workingDirectory>${release.dir}/python</workingDirectory>
+                            <arguments>
+                                <argument>get-pip.py</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>pip-install-aleapp-dependencies</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>pip</executable>
+                            <workingDirectory>${release.dir}/python</workingDirectory>
+                            <arguments>
+                                <argument>install</argument>
+                                <argument>--target=${release.dir}/python/Lib/site-packages</argument>
+                                <argument>bcrypt==3.2.0</argument>
+                                <argument>beautifulsoup4==4.8.2</argument>
+                                <argument>bencoding</argument>
+                                <argument>blackboxprotobuf</argument>
+                                <argument>fitdecode==0.10.0</argument>
+                                <argument>folium==0.14.0</argument>
+                                <argument>geopy==2.3.0</argument>
+                                <argument>packaging==20.1</argument>
+                                <argument>pillow</argument>
+                                <argument>polyline==2.0.0</argument>
+                                <argument>protobuf==3.10.0</argument>
+                                <argument>PyCryptodome</argument>
+                                <argument>PySimpleGUI</argument>
+                                <argument>pytz</argument>
+                                <argument>simplekml</argument>
+                                <argument>wheel</argument>
+                                <argument>xlsxwriter==3.1.1</argument>
+                                <argument>xmltodict</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>                    
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
