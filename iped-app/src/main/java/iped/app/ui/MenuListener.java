@@ -122,6 +122,7 @@ public class MenuListener implements ActionListener {
         checkBookMarkList.setSelected(false);
         panel.add(checkBookMarkList, BorderLayout.NORTH);
         checkBookMarkWords.setSelected(false);
+        checkBookMarkWords.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
         panel.add(checkBookMarkWords, BorderLayout.SOUTH);
 
         int width = (int) fileChooserImportKeywords.getPreferredSize().getWidth();
