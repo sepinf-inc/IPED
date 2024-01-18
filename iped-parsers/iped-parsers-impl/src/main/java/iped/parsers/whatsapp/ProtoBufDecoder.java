@@ -36,6 +36,17 @@ public class ProtoBufDecoder {
             return null;
         }
 
+        @SuppressWarnings("unchecked")
+        public Part getChild(int idx) {
+            if (value instanceof List<?>) {
+                List<Part> l = (List<Part>) value;
+                for(Part p: l) {
+                    if (p.getIdx() == idx) return p;
+                }
+            }
+            return null;
+        }
+
         @Override
         public String toString() {
             return "[idx=" + idx + ", type=" + type + ", value=" + value + "]";
@@ -82,6 +93,16 @@ public class ProtoBufDecoder {
                 return l;
             }
         } catch (Exception e) {
+        }
+        return null;
+    }
+
+    public Part decode(int idx) {
+        List<Part> l = decode();
+        for (Part p : l) {
+            if (p.getIdx() == idx) {
+                return p;
+            }
         }
         return null;
     }

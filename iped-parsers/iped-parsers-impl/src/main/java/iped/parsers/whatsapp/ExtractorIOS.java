@@ -26,6 +26,7 @@ import static iped.parsers.whatsapp.Message.MessageType.MISSED_VOICE_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.POLL_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.SENDER_ADDED_TO_CONTACTS;
 import static iped.parsers.whatsapp.Message.MessageType.STICKER_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.TEMPLATE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.TEXT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.UNBLOCKED_CONTACT;
 import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_MEDIA_MESSAGE;
@@ -482,6 +483,10 @@ public class ExtractorIOS extends Extractor {
             m.setDuration(decodeEphemeralDuration(metadata));
         }
 
+        if (m.getMessageType() == TEMPLATE_MESSAGE) {
+            m.setMessageTemplate(decodeTemplate(metadata));
+        }
+
         return m;
     }
 
@@ -510,6 +515,50 @@ public class ExtractorIOS extends Extractor {
             }
         }        
         return ret;
+    }
+
+    private MessageTemplate decodeTemplate(byte[] metadata) {
+        MessageTemplate t = null;
+        Part p1 = new ProtoBufDecoder(metadata).decode(24);
+        if (p1 != null) {
+            Part p2 = p1.getChild(1);
+            if (p2 != null) {
+                StringBuilder content = new StringBuilder();
+                for (int idx : new int[] { 2, 6, 7 }) {
+                    Part p3 = p2.getChild(idx);
+                    if (p3 != null && p3.getValue() instanceof String) {
+                        String s = (String) p3.getValue();
+                        if (s != null && !s.isBlank()) {
+                            if (content.length() > 0) {
+                                content.append("\n");
+                            }
+                            content.append(s);
+                        }
+                    }
+                }
+                if (content.length() > 0) {
+                    t = new MessageTemplate(content.toString());
+                    Part p3 = p2.getChild(8);
+                    if (p3 != null) {
+                        Part p4 = p3.getChild(2);
+                        if (p4 != null) {
+                            Part p5 = p4.getChild(1);
+                            String text = "";
+                            if (p5 != null && p5.getValue() instanceof String) {
+                                text = (String) p5.getValue();
+                            }
+                            p5 = p4.getChild(2);
+                            String extra = "";
+                            if (p5 != null && p5.getValue() instanceof String) {
+                                extra = (String) p5.getValue();
+                            }
+                            t.addButton(new MessageTemplate.Button(text, extra));
+                        }
+                    }
+                }
+            }
+        }
+        return t;
     }
 
     private int decodeEphemeralDuration(byte[] metadata) {
@@ -839,6 +888,9 @@ public class ExtractorIOS extends Extractor {
                 break;
             case 15:
                 result = STICKER_MESSAGE;
+                break;
+            case 19:
+                result = TEMPLATE_MESSAGE;
                 break;
             case 28:
                 result = EPHEMERAL_DEFAULT;
