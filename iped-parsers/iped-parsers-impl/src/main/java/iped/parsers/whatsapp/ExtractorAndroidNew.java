@@ -193,6 +193,7 @@ public class ExtractorAndroidNew extends Extractor {
 
     private void extractMessages(Connection conn, Map<Long, Chat> idToChat) throws SQLException {
         boolean hasReactionTable = SQLite3DBParser.containsTable("message_add_on_reaction", conn);
+
         try (PreparedStatement stmt = conn.prepareStatement(getSelectMessagesQuery(conn))) {
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
@@ -274,10 +275,100 @@ public class ExtractorAndroidNew extends Extractor {
                     }
                 }
                 m.setForwarded(rs.getInt("forwarded") > 0);
-                c.getMessages().add(m);
 
+                m.setUuid(rs.getString("uuid")); 
+
+                c.getMessages().add(m);
             }
         }
+        
+        long fakeIds = 2000000000L;
+        for (Chat c : idToChat.values()) {
+            HashMap<Long, Message> messagesMap = new HashMap<Long, Message>();
+            HashMap<String, Message> messagesMapUuid = new HashMap<String, Message>();
+            for (Message m : c.getMessages()) {
+                messagesMap.put(m.getId(), m);
+                if (m.getUuid() != null && !m.getUuid().isEmpty()) {
+                    messagesMapUuid.put(m.getUuid(), m);
+                }
+            }
+            // Find quote messages
+            List<Message> messagesQuotes = extractQuoteMessages(conn, c);
+            for (Message mq: messagesQuotes){
+                Message m = messagesMap.get(mq.getId());
+                if (m != null){// Has quote
+                    Message original = messagesMapUuid.get(mq.getUuid());//Try to find orginal message in messages
+                    if (original != null){// has found original message reference, more complete
+                        m.setMessageQuote(original);
+                    }else{// not found original message reference, get info from message_quotes table, less complete
+                        mq.setDeleted(true);
+                        mq.setId(fakeIds--);
+                        m.setMessageQuote(mq);
+                    }
+                    m.setQuoted(true);
+                }
+            }
+            messagesMap.clear();
+            messagesMapUuid.clear();
+        }
+
+    }
+
+    private List<Message> extractQuoteMessages(Connection conn, Chat c) throws SQLException {
+
+        List<Message> messages = new ArrayList<>();
+        String query = getSelectMessagesQuotesQuery(conn);
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setLong(1, c.getId());
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+
+                Message m = new Message();
+                if (account != null)
+                    m.setLocalResource(account.getId());
+                int type = rs.getInt("messageType"); //$NON-NLS-1$
+                long media_size = rs.getLong("mediaSize"); //$NON-NLS-1$
+
+                m.setId(rs.getLong("id")); //$NON-NLS-1$
+                String remoteResource = rs.getString("remoteResource");
+                if (remoteResource == null || remoteResource.isEmpty() || !c.isGroupChat()) {
+                    remoteResource = c.getRemote().getFullId();
+                }
+                m.setRemoteResource(remoteResource); // $NON-NLS-1$
+                m.setData(Util.getUTF8String(rs, "text_data")); //$NON-NLS-1$
+                String caption = rs.getString("mediaCaption"); //$NON-NLS-1$
+                if (caption == null || caption.isBlank()) {
+                    caption = m.getData();
+                }
+                m.setFromMe(rs.getInt("fromMe") == 1); //$NON-NLS-1$
+                m.setTimeStamp(new Date(rs.getLong("timestamp"))); //$NON-NLS-1$
+                m.setMediaUrl(rs.getString("mediaUrl")); //$NON-NLS-1$
+                m.setMediaMime(rs.getString("mediaMime")); //$NON-NLS-1$
+                m.setMediaName(rs.getString("mediaName")); //$NON-NLS-1$
+                m.setMediaHash(rs.getString("mediaHash"), true); //$NON-NLS-1$
+                m.setMediaSize(media_size);
+                m.setLatitude(rs.getDouble("latitude")); //$NON-NLS-1$
+                m.setLongitude(rs.getDouble("longitude")); //$NON-NLS-1$
+                m.setMessageType(decodeMessageType(type, -1, -1, caption, -1));
+                m.setMediaDuration(rs.getInt("media_duration")); //$NON-NLS-1$
+                if (m.getMessageType() == CONTACT_MESSAGE) {
+                    m.setVcards(Arrays.asList(new String[] { Util.getUTF8String(rs, "vcard") }));
+                }
+                
+                byte[] thumbData = rs.getBytes("thumbData"); //$NON-NLS-1$
+
+                if (m.getMessageType() == BLOCKED_CONTACT && isUnblocked(conn, m.getId())) {
+                    m.setMessageType(UNBLOCKED_CONTACT);
+                }
+                m.setThumbData(thumbData);
+
+                m.setUuid(rs.getString("uuid")); 
+
+                messages.add(m);
+            }
+        }
+
+        return messages;
     }
 
     protected Message.MessageType decodeMessageType(int messageType, int status, Integer edit_version, String caption,
@@ -431,7 +522,7 @@ public class ExtractorAndroidNew extends Extractor {
                 + " m.from_me as fromMe, m.timestamp as timestamp, message_url as mediaUrl,"
                 + " mm.mime_type as mediaMime, mm.file_length as mediaSize, media_name as mediaName, "
                 + " m.message_type as messageType, latitude, longitude, mm.media_duration, " + captionCol
-                + " as mediaCaption, mm.file_hash as mediaHash, thumbnail as thumbData,"
+                + " as mediaCaption, mm.file_hash as mediaHash, thumbnail as thumbData, m.key_id as uuid,"
                 + " ms.action_type as actionType, m.message_add_on_flags as hasAddOn,"
                 + " (m.origination_flags & 1) as forwarded"
                 + " from message m inner join chat_view cv on m.chat_row_id=cv._id"
@@ -441,6 +532,25 @@ public class ExtractorAndroidNew extends Extractor {
                 + " left join message_system ms on m._id=ms.message_row_id"
                 + " left join message_vcard mv on m._id=mv.message_row_id"
                 + " left join message_thumbnail mt on m._id=mt.message_row_id where status!=-1";
+    }
+
+    private static String getSelectMessagesQuotesQuery(Connection conn) throws SQLException {
+        String captionCol = SQLite3DBParser.checkIfColumnExists(conn, "message_quoted_media", "media_caption")
+                ? "mm.media_caption"
+                : "null";
+        return "select mq.message_row_id as id,cv._id as chatId, cv.raw_string_jid as remoteId,"
+                +" jid.raw_string as remoteResource, mv.vcard, mq.text_data,"
+                +" mq.from_me as fromMe, mq.timestamp as timestamp, message_url as mediaUrl,"
+                +" mm.mime_type as mediaMime, mm.file_length as mediaSize, media_name as mediaName,"
+                +" mq.message_type as messageType, latitude, longitude, mm.media_duration, " + captionCol
+                +" as mediaCaption, mm.file_hash as mediaHash, mm.thumbnail as thumbData,"
+				+" mq.key_id as uuid"
+                +" from message_quoted mq inner join chat_view cv on mq.chat_row_id=cv._id"
+                +" left join message_quoted_media mm on mm.message_row_id=mq.message_row_id"
+                +" left join jid on jid._id=mq.sender_jid_row_id"
+                +" left join message_quoted_location ml on mq.message_row_id=ml.message_row_id"
+                +" left join message_quoted_vcard mv on mq.message_row_id=mv.message_row_id"
+                +" where chatId=?";
     }
 
     private static String getSelectBlockedQuery(Connection conn) throws SQLException {
