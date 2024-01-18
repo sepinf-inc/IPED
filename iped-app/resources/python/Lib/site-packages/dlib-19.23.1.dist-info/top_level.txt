@@ -1,2 +1,0 @@
-_dlib_pybind11
-dlib

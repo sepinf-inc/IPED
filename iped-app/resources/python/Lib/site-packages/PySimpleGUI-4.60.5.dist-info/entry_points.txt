@@ -1,8 +1,0 @@
-[gui_scripts]
-psghelp = PySimpleGUI.PySimpleGUI:main_sdk_help
-psgissue = PySimpleGUI.PySimpleGUI:main_open_github_issue
-psgmain = PySimpleGUI.PySimpleGUI:_main_entry_point
-psgsettings = PySimpleGUI.PySimpleGUI:main_global_pysimplegui_settings
-psgupgrade = PySimpleGUI.PySimpleGUI:_upgrade_entry_point
-psgver = PySimpleGUI.PySimpleGUI:main_get_debug_data
-

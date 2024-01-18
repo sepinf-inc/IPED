@@ -1,4 +1,0 @@
-[console_scripts]
-fitjson = fitdecode.cmd.fitjson:main
-fittxt = fitdecode.cmd.fittxt:main
-
