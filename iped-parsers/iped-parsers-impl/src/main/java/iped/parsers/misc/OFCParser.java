@@ -50,7 +50,6 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import iped.parsers.standard.StandardParser;
-import iped.parsers.util.ItemInfo;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 
@@ -102,7 +101,7 @@ public class OFCParser extends AbstractParser {
         return true;
     }
 
-    public void setNumericCellValue(HSSFCell cell, Object number) throws Exception {
+    public void setNumericCellValue(HSSFCell cell, Object number) {
 
         if (cell != null) {
 
@@ -135,12 +134,11 @@ public class OFCParser extends AbstractParser {
 
     }
 
-    public void setStringCellValue(HSSFCell cell, Object value) throws Exception {
+    public void setStringCellValue(HSSFCell cell, Object value) {
 
         if (cell != null) {
             if (value != null) {
                 cell.setCellType(CellType.STRING);
-                String decodedValue;
                 cell.setCellValue(value.toString());
             } else {
                 cell.setCellType(CellType.STRING);
@@ -150,7 +148,7 @@ public class OFCParser extends AbstractParser {
 
     }
 
-    public void setDateCellValue(HSSFCell cell, String value, CellStyle cellStyle) throws Exception {
+    public void setDateCellValue(HSSFCell cell, String value, CellStyle cellStyle) throws ParseException {
 
         Date date = null;
         if (cell != null) {
@@ -180,7 +178,7 @@ public class OFCParser extends AbstractParser {
 
     }
 
-    public void decodeBank(OFC ofc, HSSFWorkbook workbook) throws Exception {
+    public void decodeBank(OFC ofc, HSSFWorkbook workbook) throws ParseException {
 
         HSSFCell cell;
 
@@ -349,7 +347,7 @@ public class OFCParser extends AbstractParser {
                         try {
                             return Charset.forName("windows-" + cpage);
                         } catch (Exception e2) {
-                            // TODO: handle exception
+                            e.printStackTrace();
                         }
                     }
                 }
@@ -413,12 +411,10 @@ public class OFCParser extends AbstractParser {
                 extractor.parseEmbedded(is1, handler, meta, true);
             }
 
-        } catch (Exception ex) {
-            String fileName = metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY);
-            ItemInfo itemInfo = context.get(ItemInfo.class);
-            if (itemInfo != null)
-                fileName = itemInfo.getPath();
-            LOGGER.error("Error parsing OFC file {}: {}", fileName, ex.toString());
+        } catch (IOException | SAXException ex) {
+            throw ex;
+        } catch (Exception e) {
+            throw new TikaException("Fail do decode OFC financial data", e);
         } finally {
             if (tmp != null)
                 tmp.close();
