@@ -48,6 +48,7 @@ import com.webcohesion.ofx4j.domain.data.banking.BankStatementResponse;
 import com.webcohesion.ofx4j.domain.data.banking.BankStatementResponseTransaction;
 import com.webcohesion.ofx4j.domain.data.banking.BankingResponseMessageSet;
 import com.webcohesion.ofx4j.domain.data.common.BalanceInfo;
+import com.webcohesion.ofx4j.domain.data.common.Status;
 import com.webcohesion.ofx4j.domain.data.common.Transaction;
 import com.webcohesion.ofx4j.domain.data.common.TransactionList;
 import com.webcohesion.ofx4j.domain.data.creditcard.CreditCardAccountDetails;
