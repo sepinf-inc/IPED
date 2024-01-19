@@ -13,6 +13,7 @@ import java.io.Reader;
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -324,9 +325,8 @@ public class OFCParser extends AbstractParser {
     public Charset findCharset(File file) throws IOException {
         /* discover charset */
         FileInputStream inputStream = new FileInputStream(file);
-        Charset result = Charset.defaultCharset();
         try {
-            Reader reader = new InputStreamReader(inputStream);
+            Reader reader = new InputStreamReader(inputStream, StandardCharsets.ISO_8859_1);
             BufferedReader rd = new BufferedReader(reader);
             Pattern pattern = Pattern.compile("\\<CPAGE\\>(.*)\\<\\/CPAGE\\>");
             Matcher matcher = pattern.matcher("\\D");
@@ -350,8 +350,7 @@ public class OFCParser extends AbstractParser {
         } finally {
             inputStream.close();
         }
-
-        return result;
+        return StandardCharsets.ISO_8859_1;
     }
 
     @Override
