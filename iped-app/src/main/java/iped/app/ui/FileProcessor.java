@@ -180,17 +180,17 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
         App.get().getViewerController().loadFile(item, viewItem, contentType, highlights);
 
         if (listRelated) {
-            App.get().subItemModel.listSubItems(doc);
+            App.get().subItemModel.listItems(doc);
             if (Thread.currentThread().isInterrupted()) {
                 return;
             }
-            App.get().parentItemModel.listParents(doc);
+            App.get().parentItemModel.listItems(doc);
 
-            App.get().duplicatesModel.listDuplicates(doc);
+            App.get().duplicatesModel.listItems(doc);
 
-            App.get().referencedByModel.listReferencingItems(doc);
+            App.get().referencedByModel.listItems(doc);
 
-            App.get().referencesModel.listReferencingItems(doc);
+            App.get().referencesModel.listItems(doc);
         }
     }
 

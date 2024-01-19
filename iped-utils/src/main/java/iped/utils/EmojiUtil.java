@@ -22,6 +22,12 @@ public class EmojiUtil {
     private static final Map<String, String> base64ImagesPerCode = new HashMap<String, String>();
     private static final AtomicBoolean init = new AtomicBoolean();
 
+    public static String replaceByImages(String inStr) {
+        byte[] inBytes = inStr.getBytes(StandardCharsets.UTF_8);
+        byte[] outBytes = replaceByImages(inBytes);
+        return new String(outBytes, StandardCharsets.UTF_8);
+    }
+
     public static byte[] replaceByImages(byte[] inBytes) {
         synchronized (init) {
             if (!init.get()) {
@@ -126,7 +132,7 @@ public class EmojiUtil {
                         }
                     } else if (!bodyFound) {
                         out.println(s);
-                        if (s.indexOf("<body>") >= 0) {
+                        if (s.indexOf("<body") >= 0) {
                             bodyFound = true;
                         }
                     } else {

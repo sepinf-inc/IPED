@@ -52,6 +52,8 @@ public class OCRConfig extends AbstractPropertiesConfigurable {
             } else if (enableOCR == null) {
                 enableOCR = false;
             }
+        } else if (enableOCR == null) {
+            enableOCR = false;
         }
 
         value = properties.getProperty("OCRLanguage"); //$NON-NLS-1$
