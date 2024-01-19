@@ -764,7 +764,6 @@ public class OFXParser extends AbstractParser {
 
     // TODO - Finish implementing
     public void decodeInvestimentWarn(ResponseEnvelope re, HSSFWorkbook workbook) throws Exception {
-        HSSFCell cell;
 
         CellStyle cellStyle = workbook.createCellStyle();
         CreationHelper createHelper = workbook.getCreationHelper();
@@ -774,17 +773,8 @@ public class OFXParser extends AbstractParser {
 
         ResponseMessageSet message = re.getMessageSet(MessageSetType.investment);
         if (message != null) {
-
             List<InvestmentStatementResponseTransaction> cc = ((InvestmentStatementResponseMessageSet) message).getStatementResponses();
-
-            if (cc != null) {
-
-                short TypeCount = 1;
-                for (InvestmentStatementResponseTransaction b : cc) {
-                    investmentExists = true;
-                    break;
-                }
-            }
+            investmentExists = cc != null && !cc.isEmpty();
         }
 
         if (investmentExists) {
