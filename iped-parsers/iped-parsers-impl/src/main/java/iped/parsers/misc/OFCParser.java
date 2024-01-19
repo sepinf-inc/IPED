@@ -44,8 +44,6 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
@@ -67,10 +65,7 @@ public class OFCParser extends AbstractParser {
     private static final long serialVersionUID = 1L;
     private static Set<MediaType> SUPPORTED_MIMES = MediaType.set("application/x-ofc");
 
-    private static Logger LOGGER = LoggerFactory.getLogger(OFCParser.class);
-
-    public final String dateStringDefault = "yyyy/MM/dd hh:mm:ss";
-    Charset cs;
+    private static final String dateStringDefault = "yyyy/MM/dd hh:mm:ss";
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -391,12 +386,6 @@ public class OFCParser extends AbstractParser {
             HSSFWorkbook workbook = new HSSFWorkbook();
 
             if (OFC != null) {
-                try {
-                    Integer.parseInt(OFC.CPAGE);
-                    this.cs = Charset.forName("windows-" + OFC.CPAGE);
-                } catch (Exception e) {
-                    // TODO: ignore
-                }
                 decodeBank(OFC, workbook);
             }
 
@@ -418,8 +407,6 @@ public class OFCParser extends AbstractParser {
         } finally {
             if (tmp != null)
                 tmp.close();
-            if (OFC != null)
-                OFC.clear();
         }
 
     }
@@ -456,15 +443,6 @@ class OFC implements Serializable {
         return ret;
     }
 
-    public void clear() {
-        if (ACCTSTMT != null) {
-            for (ACCTSTMT o : this.ACCTSTMT)
-                o.clear();
-            ACCTSTMT.clear();
-        }
-        ACCTSTMT = null;
-    }
-
 }
 
 class ACCTSTMT {
@@ -486,22 +464,6 @@ class ACCTSTMT {
             ret += o2.toString();
         }
         return ret;
-    }
-
-    public void clear() {
-        if (ACCTFROM != null) {
-            for (ACCTFROM o1 : this.ACCTFROM)
-                o1.clear();
-            ACCTFROM.clear();
-        }
-        ACCTFROM = null;
-        if (STMTRS != null) {
-            for (STMTRS o2 : this.STMTRS)
-                o2.clear();
-            STMTRS.clear();
-        }
-        STMTRS = null;
-
     }
 
 }
@@ -563,10 +525,6 @@ class ACCTFROM {
 
     }
 
-    public void clear() {
-
-    }
-
 }
 
 class STMTRS {
@@ -589,15 +547,6 @@ class STMTRS {
         }
         return ret;
 
-    }
-
-    public void clear() {
-        if (STMTTRN != null) {
-            for (STMTTRN o : this.STMTTRN)
-                o.clear();
-            STMTTRN.clear();
-        }
-        STMTTRN = null;
     }
 
 }
@@ -688,10 +637,6 @@ class STMTTRN {
         ret += tab + "MEMO:" + this.MEMO + "\n";
 
         return ret;
-
-    }
-
-    public void clear() {
 
     }
 
