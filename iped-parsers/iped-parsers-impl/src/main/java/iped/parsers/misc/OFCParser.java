@@ -367,7 +367,7 @@ public class OFCParser extends AbstractParser {
 
             FileInputStream inputStream = new FileInputStream(file);
             tmp.addResource(inputStream);// adds this resource to be closed when tmp is closed
-            Reader reader = new InputStreamReader(inputStream, findCharset(file));
+            Reader reader = new BufferedReader(new InputStreamReader(inputStream, findCharset(file)));
 
             JAXBContext jaxbContext = JAXBContext.newInstance(OFC.class);
             Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();

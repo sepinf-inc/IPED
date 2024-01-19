@@ -36,8 +36,6 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
@@ -88,9 +86,7 @@ public class OFXParser extends AbstractParser {
     private static final long serialVersionUID = 1L;
     private static Set<MediaType> SUPPORTED_MIMES = MediaType.set("application/x-ofx-v1", "application/x-ofx-v2");
 
-    private static Logger LOGGER = LoggerFactory.getLogger(OFXParser.class);
-
-    public final String dateStringDefault = "yyyy/MM/dd hh:mm:ss";
+    private static final String dateStringDefault = "yyyy/MM/dd hh:mm:ss";
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -1120,7 +1116,7 @@ public class OFXParser extends AbstractParser {
 
             FileInputStream inputStream = new FileInputStream(file);
             tmp.addResource(inputStream);// adds this resource to be closed when tmp is closed
-            Reader reader = new InputStreamReader(inputStream, findCharset(file));
+            Reader reader = new BufferedReader(new InputStreamReader(inputStream, findCharset(file)));
             AggregateUnmarshaller aggregate = new AggregateUnmarshaller(ResponseEnvelope.class);
 
             // Fix Timezone to the current system settings instead of GMT defalt
