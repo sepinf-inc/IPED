@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -50,6 +51,8 @@ import jep.JepException;
 
 public class LeappBridgeTask extends AbstractPythonTask {
 
+    AtomicInteger pluginTimeCounter = new AtomicInteger(0);
+
     public static Logger logger = LoggerFactory.getLogger(LeappBridgeTask.class);
 
     public static MediaType DEVICEDETAILS = MediaType.application("x-leapp-devicedetails");
@@ -57,6 +60,7 @@ public class LeappBridgeTask extends AbstractPythonTask {
     private static final String DEVICE_DETAILS_HTML = "DeviceDetails.html";
 
     public static final String ALEAPP_METADATA_PREFIX = "ALEAPP";
+    public static final String ALEAPP_ISPLUGIN = ALEAPP_METADATA_PREFIX + ":isPlugin";
     public static final String ALEAPP_PLUGIN = ALEAPP_METADATA_PREFIX + ":PLUGIN";
 
     static final String REPORT_EVIDENCE_NAME = "LEAPP_Reports";
@@ -66,7 +70,7 @@ public class LeappBridgeTask extends AbstractPythonTask {
 
     private static final String PLUGIN_EXECUTION_MESSAGE = "ALeapp plugin execution";
 
-    static AtomicInteger count = new AtomicInteger(0);
+    static AtomicInteger taskCount = new AtomicInteger(0);
 
     HashMap<String, Item> mappedEvidences = new HashMap<String, Item>();
 
@@ -89,13 +93,6 @@ public class LeappBridgeTask extends AbstractPythonTask {
     static private File tmp;
 
     static private int START_QUEUE_PRIORITY = 3;
-
-    @Override
-    public List<Configurable<?>> getConfigurables() {
-        ArrayList<Configurable<?>> c = new ArrayList<Configurable<?>>();
-        c.add(new ALeappConfig());
-        return c;
-    }
 
     public static void logfunc(String message) {
         logger.info(message);
@@ -139,12 +136,13 @@ public class LeappBridgeTask extends AbstractPythonTask {
 
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
-        int incremented = count.incrementAndGet();
+        int incremented = taskCount.incrementAndGet();
+
         moduleName = "JLeapp";
         if (incremented == 1) {
             super.init(configurationManager);
         }
-
+        
         Jep jep = super.getJep();
 
         File aleappPath = getAleappScriptsDir();
@@ -177,10 +175,15 @@ public class LeappBridgeTask extends AbstractPythonTask {
 
     @Override
     public void finish() throws Exception {
+        int decremented = taskCount.decrementAndGet();
+        if (decremented == 0) {
+            logger.warn("ALeapp total plugin execution time:" + pluginTimeCounter.get());
+        }
     }
 
     public void executePlugin(IItem evidence, LeapArtifactsPlugin p, List<String> filesFound, File reportDumpPath) {
         Jep jep = getJep();
+        Date plugginStart = new Date();
         try {
             // some plugins depend on a sorted list
             Collections.sort(filesFound);
@@ -239,6 +242,11 @@ public class LeappBridgeTask extends AbstractPythonTask {
             }
 
         } finally {
+            Date  plugginEnd = new Date();
+            long delta = plugginEnd.getTime() - plugginStart.getTime();
+            pluginTimeCounter.addAndGet((int) delta);
+            logger.warn("ALeapp plugin "+p.getName()+" execution time:"+delta);
+            
             // jep.close();
         }
     }
@@ -289,7 +297,7 @@ public class LeappBridgeTask extends AbstractPythonTask {
             subItem.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
             worker.processNewItem(subItem);
 
-            // creates on subitem for each plugin execution
+            // creates one subitem for each plugin execution
             for (LeapArtifactsPlugin p : pluginsManager.getPlugins()) {
                 Item psubItem = (Item) subItem.createChildItem();
                 ParentInfo pparentInfo = new ParentInfo(subItem);
@@ -300,6 +308,7 @@ public class LeappBridgeTask extends AbstractPythonTask {
                 psubItem.setSubItem(true);
                 psubItem.setSubitemId(1);
                 psubItem.getMetadata().set(ALEAPP_PLUGIN, moduleName);
+                psubItem.getMetadata().set(ALEAPP_ISPLUGIN, "true");
                 psubItem.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
                 worker.processNewItem(psubItem);
             }
@@ -316,13 +325,14 @@ public class LeappBridgeTask extends AbstractPythonTask {
             worker.processNewItem(devDetailsSubItem);
         }
 
-        String pluginName = evidence.getMetadata().get(ALEAPP_PLUGIN);
-        if (pluginName != null) {
+        String isPlugin = evidence.getMetadata().get(ALEAPP_ISPLUGIN);
+        if (isPlugin != null && isPlugin.equals("true")) {
             int priority = worker.manager.getProcessingQueues().getCurrentQueuePriority();
             if (priority < START_QUEUE_PRIORITY) {
                 reEnqueueItem(evidence, START_QUEUE_PRIORITY);
                 throw new ItemReEnqueuedException();
             } else {
+                String pluginName = evidence.getMetadata().get(ALEAPP_PLUGIN);
                 LeapArtifactsPlugin p = pluginsManager.getPlugin(pluginName);
                 processEvidence(evidence, p);
             }
@@ -580,6 +590,13 @@ public class LeappBridgeTask extends AbstractPythonTask {
         setGlobalVars(jep);
 
         jep.eval("import sys");
+    }
+
+    @Override
+    public List<Configurable<?>> getConfigurables() {
+        ArrayList<Configurable<?>> c = new ArrayList<Configurable<?>>();
+        c.add(new ALeappConfig());
+        return c;
     }
 
 }
