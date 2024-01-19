@@ -70,7 +70,6 @@ import com.webcohesion.ofx4j.io.AggregateUnmarshaller;
 import com.webcohesion.ofx4j.io.DefaultStringConversion;
 
 import iped.parsers.standard.StandardParser;
-import iped.parsers.util.ItemInfo;
 import iped.parsers.util.Messages;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
@@ -122,7 +121,7 @@ public class OFXParser extends AbstractParser {
         return true;
     }
 
-    public void setNumericCellValue(HSSFCell cell, Object number) throws Exception {
+    public void setNumericCellValue(HSSFCell cell, Object number) {
 
         if (cell != null) {
 
@@ -155,7 +154,7 @@ public class OFXParser extends AbstractParser {
 
     }
 
-    public void setStringCellValue(HSSFCell cell, Object value) throws Exception {
+    public void setStringCellValue(HSSFCell cell, Object value) {
 
         if (cell != null) {
             if (value != null) {
@@ -169,7 +168,7 @@ public class OFXParser extends AbstractParser {
 
     }
 
-    public void setDateCellValue(HSSFCell cell, Date value, CellStyle cellStyle) throws Exception {
+    public void setDateCellValue(HSSFCell cell, Date value, CellStyle cellStyle) {
 
         if (cell != null) {
             if (value != null) {
@@ -183,7 +182,7 @@ public class OFXParser extends AbstractParser {
 
     }
 
-    public void decodeSignon(ResponseEnvelope re, HSSFWorkbook workbook) throws Exception {
+    public void decodeSignon(ResponseEnvelope re, HSSFWorkbook workbook) {
 
         HSSFCell cell;
 
@@ -277,7 +276,7 @@ public class OFXParser extends AbstractParser {
 
     }
 
-    public void decodeBank(ResponseEnvelope re, HSSFWorkbook workbook) throws Exception {
+    public void decodeBank(ResponseEnvelope re, HSSFWorkbook workbook) {
 
         HSSFCell cell;
 
@@ -526,7 +525,7 @@ public class OFXParser extends AbstractParser {
 
     }
 
-    public void decodeCreditCard(ResponseEnvelope re, HSSFWorkbook workbook) throws Exception {
+    public void decodeCreditCard(ResponseEnvelope re, HSSFWorkbook workbook) {
 
         HSSFCell cell;
 
@@ -764,7 +763,7 @@ public class OFXParser extends AbstractParser {
     }
 
     // TODO - Finish implementing
-    public void decodeInvestimentWarn(ResponseEnvelope re, HSSFWorkbook workbook) throws Exception {
+    public void decodeInvestimentWarn(ResponseEnvelope re, HSSFWorkbook workbook) {
 
         CellStyle cellStyle = workbook.createCellStyle();
         CreationHelper createHelper = workbook.getCreationHelper();
@@ -787,7 +786,7 @@ public class OFXParser extends AbstractParser {
     }
 
     // TODO - Finish implementing
-    public void decodeInvestiment(ResponseEnvelope re, HSSFWorkbook workbook) throws Exception {
+    public void decodeInvestiment(ResponseEnvelope re, HSSFWorkbook workbook) {
 
         HSSFCell cell;
 
@@ -1159,12 +1158,10 @@ public class OFXParser extends AbstractParser {
                 extractor.parseEmbedded(is1, handler, meta, true);
             }
 
-        } catch (Exception ex) {
-            String fileName = metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY);
-            ItemInfo itemInfo = context.get(ItemInfo.class);
-            if (itemInfo != null)
-                fileName = itemInfo.getPath();
-            LOGGER.error("Error parsing OFX file {}: {}", fileName, ex.toString());
+        } catch (IOException | SAXException ex) {
+            throw ex;
+        } catch (Exception e) {
+            throw new TikaException("Error decoding financial data", e);
         } finally {
             if (tmp != null)
                 tmp.close();
