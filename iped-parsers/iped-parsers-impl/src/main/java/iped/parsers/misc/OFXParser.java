@@ -11,6 +11,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -1068,7 +1069,7 @@ public class OFXParser extends AbstractParser {
     public Charset findCharset(File file) throws IOException {
         /* discover charset */
         FileInputStream inputStream = new FileInputStream(file);
-        Charset result = Charset.defaultCharset();
+        Charset result = StandardCharsets.ISO_8859_1;
         try {
             Reader reader = new InputStreamReader(inputStream);
             BufferedReader rd = new BufferedReader(reader);
@@ -1090,7 +1091,7 @@ public class OFXParser extends AbstractParser {
                         try {
                             return Charset.forName("windows-" + cpage);
                         } catch (Exception e2) {
-                            // TODO: handle exception
+                            e2.printStackTrace();
                         }
                     }
                 } else if (matcherV2.find()) {
@@ -1098,7 +1099,7 @@ public class OFXParser extends AbstractParser {
                     try {
                         return Charset.forName(cpage);
                     } catch (Exception e) {
-                        // TODO: handle exception
+                        e.printStackTrace();
                     }
                 }
             }
