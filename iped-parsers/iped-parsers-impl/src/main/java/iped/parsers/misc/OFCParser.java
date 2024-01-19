@@ -54,17 +54,14 @@ import iped.parsers.util.ItemInfo;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 
-
 /**
  * Extract OFC info to xls file
  * 
  * @author guilherme.dutra
  * 
- * Reference:
- * http://moneymvps.org/downloads/files/moneyofc.doc
+ *         Reference: http://moneymvps.org/downloads/files/moneyofc.doc
  * 
-**/
-
+ **/
 
 public class OFCParser extends AbstractParser {
 
@@ -81,7 +78,7 @@ public class OFCParser extends AbstractParser {
         return SUPPORTED_MIMES;
     }
 
-    public String getBaseName(String fileName){
+    public String getBaseName(String fileName) {
 
         if (fileName.indexOf(".") > 0) {
             return fileName.substring(0, fileName.lastIndexOf("."));
@@ -105,89 +102,86 @@ public class OFCParser extends AbstractParser {
         return true;
     }
 
-    public void setNumericCellValue(HSSFCell cell, Object number)throws Exception{
+    public void setNumericCellValue(HSSFCell cell, Object number) throws Exception {
 
-        if (cell != null){
+        if (cell != null) {
 
-            if (number != null){
+            if (number != null) {
 
-                if (number instanceof Double){
-                    cell.setCellType(CellType.NUMERIC);    
-                    cell.setCellValue((double)number); 
-                }else if(number instanceof Float){
-                    cell.setCellType(CellType.NUMERIC);    
-                    cell.setCellValue((float)number);    
-                }else if(number instanceof Integer){
-                    cell.setCellType(CellType.NUMERIC);    
-                    cell.setCellValue((int)number);
-                }else{
+                if (number instanceof Double) {
+                    cell.setCellType(CellType.NUMERIC);
+                    cell.setCellValue((double) number);
+                } else if (number instanceof Float) {
+                    cell.setCellType(CellType.NUMERIC);
+                    cell.setCellValue((float) number);
+                } else if (number instanceof Integer) {
+                    cell.setCellType(CellType.NUMERIC);
+                    cell.setCellValue((int) number);
+                } else {
 
-                    if (isValidNumber(number.toString())){
-                        cell.setCellType(CellType.NUMERIC);    
-                        cell.setCellValue(number.toString());            
-                    }else{
-                        cell.setCellType(CellType.STRING);    
+                    if (isValidNumber(number.toString())) {
+                        cell.setCellType(CellType.NUMERIC);
+                        cell.setCellValue(number.toString());
+                    } else {
+                        cell.setCellType(CellType.STRING);
                         cell.setCellValue(number.toString());
                     }
                 }
-            }else{
-                cell.setCellType(CellType.STRING);    
-                cell.setCellValue("");            
-            }
-        }
-
-
-    }
-
-    public void setStringCellValue(HSSFCell cell, Object value)throws Exception{
-
-        if (cell != null){
-            if (value != null){
+            } else {
                 cell.setCellType(CellType.STRING);
-                String decodedValue;
-                cell.setCellValue(value.toString());
-            }else{
-                cell.setCellType(CellType.STRING);    
                 cell.setCellValue("");
             }
         }
 
-    }    
+    }
+
+    public void setStringCellValue(HSSFCell cell, Object value) throws Exception {
+
+        if (cell != null) {
+            if (value != null) {
+                cell.setCellType(CellType.STRING);
+                String decodedValue;
+                cell.setCellValue(value.toString());
+            } else {
+                cell.setCellType(CellType.STRING);
+                cell.setCellValue("");
+            }
+        }
+
+    }
 
     public void setDateCellValue(HSSFCell cell, String value, CellStyle cellStyle) throws Exception {
 
         Date date = null;
-        if (cell != null){
-            if (value != null){
+        if (cell != null) {
+            if (value != null) {
 
                 try {
-                    date=new SimpleDateFormat("yyyyMMddhhmmss").parse(value); 
-                }catch (ParseException pe1){
-                    try{
-                        date=new SimpleDateFormat("yyyyMMdd").parse(value);                         
-                    }catch(ParseException pe2){
+                    date = new SimpleDateFormat("yyyyMMddhhmmss").parse(value);
+                } catch (ParseException pe1) {
+                    try {
+                        date = new SimpleDateFormat("yyyyMMdd").parse(value);
+                    } catch (ParseException pe2) {
                         throw pe2;
                     }
                 }
-                if (date != null){
+                if (date != null) {
                     cell.setCellValue(date);
-                    cell.setCellStyle(cellStyle);              
-                }else{
-                    cell.setCellType(CellType.STRING);    
-                    cell.setCellValue("");                    
+                    cell.setCellStyle(cellStyle);
+                } else {
+                    cell.setCellType(CellType.STRING);
+                    cell.setCellValue("");
                 }
-            }else{
-                cell.setCellType(CellType.STRING);    
+            } else {
+                cell.setCellType(CellType.STRING);
                 cell.setCellValue("");
             }
         }
 
-    }    
+    }
 
+    public void decodeBank(OFC ofc, HSSFWorkbook workbook) throws Exception {
 
-    public void decodeBank(OFC ofc, HSSFWorkbook workbook) throws Exception{
-
-        
         HSSFCell cell;
 
         CellStyle cellStyle = workbook.createCellStyle();
@@ -195,7 +189,7 @@ public class OFCParser extends AbstractParser {
         cellStyle.setDataFormat(createHelper.createDataFormat().getFormat(dateStringDefault));
 
         short accountCount = 1;
-        HSSFSheet sheetBank = workbook.createSheet("Account_"+accountCount);
+        HSSFSheet sheetBank = workbook.createSheet("Account_" + accountCount);
 
         short cnb = 0;
         short rnb = 0;
@@ -218,7 +212,7 @@ public class OFCParser extends AbstractParser {
         HSSFRow rowBank = sheetBank.createRow(rnb++);
 
         cell = rowBank.createCell(cnb++);
-        setStringCellValue(cell,ofc.DTD);                
+        setStringCellValue(cell, ofc.DTD);
 
         cell = rowBank.createCell(cnb++);
         setStringCellValue(cell, ofc.CPAGE);
@@ -228,38 +222,35 @@ public class OFCParser extends AbstractParser {
             for (ACCTFROM af : as.ACCTFROM) {
 
                 cell = rowBank.createCell(cnb++);
-                setStringCellValue(cell,af.BANKID);
+                setStringCellValue(cell, af.BANKID);
 
                 cell = rowBank.createCell(cnb++);
-                setStringCellValue(cell,af.BRANCHID);
+                setStringCellValue(cell, af.BRANCHID);
 
                 cell = rowBank.createCell(cnb++);
-                setStringCellValue(cell,af.ACCTID);
+                setStringCellValue(cell, af.ACCTID);
 
                 cell = rowBank.createCell(cnb++);
-                setStringCellValue(cell,af.getACCTTYPEString());                                
+                setStringCellValue(cell, af.getACCTTYPEString());
 
             }
-           
 
             for (STMTRS strs : as.STMTRS) {
 
                 cell = rowBank.createCell(cnb++);
-                setDateCellValue(cell,strs.DTSTART,cellStyle);    
+                setDateCellValue(cell, strs.DTSTART, cellStyle);
 
                 cell = rowBank.createCell(cnb++);
-                setDateCellValue(cell,strs.DTEND,cellStyle);    
-                
+                setDateCellValue(cell, strs.DTEND, cellStyle);
 
                 cell = rowBank.createCell(cnb++);
-                setStringCellValue(cell,strs.LEDGER);     
+                setStringCellValue(cell, strs.LEDGER);
 
-                for (int i=0 ; i < cnb; i++){
-                    sheetBank.autoSizeColumn(i);               
-                }      
+                for (int i = 0; i < cnb; i++) {
+                    sheetBank.autoSizeColumn(i);
+                }
 
-
-                HSSFSheet sheetTrans = workbook.createSheet("Transactions_"+accountCount);
+                HSSFSheet sheetTrans = workbook.createSheet("Transactions_" + accountCount);
 
                 HSSFRow rowheadTrans = sheetTrans.createRow(rnt++);
                 rowheadTrans.createCell(cnt++).setCellValue("Type");
@@ -272,9 +263,9 @@ public class OFCParser extends AbstractParser {
                 rowheadTrans.createCell(cnt++).setCellValue("Server transaction ID");
                 rowheadTrans.createCell(cnt++).setCellValue("Standard Industrial Code");
                 rowheadTrans.createCell(cnt++).setCellValue("Payee ID");
-                rowheadTrans.createCell(cnt++).setCellValue("Name");                            
-                rowheadTrans.createCell(cnt++).setCellValue("Payee");                 
-                rowheadTrans.createCell(cnt++).setCellValue("Account to aggregate"); 
+                rowheadTrans.createCell(cnt++).setCellValue("Name");
+                rowheadTrans.createCell(cnt++).setCellValue("Payee");
+                rowheadTrans.createCell(cnt++).setCellValue("Account to aggregate");
 
                 for (STMTTRN strn : strs.STMTTRN) {
 
@@ -282,51 +273,49 @@ public class OFCParser extends AbstractParser {
                     HSSFRow rowTrans = sheetTrans.createRow(rnt++);
 
                     cell = rowTrans.createCell(cnt++);
-                    setStringCellValue(cell,strn.getTRNTYPEString());
+                    setStringCellValue(cell, strn.getTRNTYPEString());
 
                     cell = rowTrans.createCell(cnt++);
-                    setDateCellValue(cell,strn.DTPOSTED,cellStyle);    
+                    setDateCellValue(cell, strn.DTPOSTED, cellStyle);
 
                     cell = rowTrans.createCell(cnt++);
-                    setStringCellValue(cell,strn.TRNAMT);
+                    setStringCellValue(cell, strn.TRNAMT);
 
                     cell = rowTrans.createCell(cnt++);
-                    setStringCellValue(cell,strn.FITID);
+                    setStringCellValue(cell, strn.FITID);
 
                     cell = rowTrans.createCell(cnt++);
-                    setStringCellValue(cell,strn.CHKNUM);
+                    setStringCellValue(cell, strn.CHKNUM);
 
                     cell = rowTrans.createCell(cnt++);
-                    setStringCellValue(cell,strn.MEMO);                            
+                    setStringCellValue(cell, strn.MEMO);
 
                     cell = rowTrans.createCell(cnt++);
-                    setStringCellValue(cell,strn.CLTID);
+                    setStringCellValue(cell, strn.CLTID);
 
                     cell = rowTrans.createCell(cnt++);
-                    setStringCellValue(cell,strn.SRVRTID);
+                    setStringCellValue(cell, strn.SRVRTID);
 
                     cell = rowTrans.createCell(cnt++);
-                    setStringCellValue(cell,strn.SIC);
+                    setStringCellValue(cell, strn.SIC);
 
                     cell = rowTrans.createCell(cnt++);
-                    setStringCellValue(cell,strn.PAYEEID);
+                    setStringCellValue(cell, strn.PAYEEID);
 
                     cell = rowTrans.createCell(cnt++);
-                    setStringCellValue(cell,strn.NAME);
+                    setStringCellValue(cell, strn.NAME);
 
                     cell = rowTrans.createCell(cnt++);
-                    setStringCellValue(cell,strn.PAYEE);
+                    setStringCellValue(cell, strn.PAYEE);
 
                     cell = rowTrans.createCell(cnt++);
-                    setStringCellValue(cell,strn.ACCTTO);
+                    setStringCellValue(cell, strn.ACCTTO);
 
-                                                                                                                                                                                                                    
+                }
 
-                }                     
-
-                for (int i=0 ; i < cnt; i++){
-                    sheetTrans.autoSizeColumn(i);               
-                }                  
+                for (int i = 0; i < cnt; i++) {
+                    sheetTrans.autoSizeColumn(i);
+                }
 
             }
 
@@ -348,7 +337,6 @@ public class OFCParser extends AbstractParser {
             BufferedReader rd = new BufferedReader(reader);
             Pattern pattern = Pattern.compile("\\<CPAGE\\>(.*)\\<\\/CPAGE\\>");
             Matcher matcher = pattern.matcher("\\D");
-
 
             String line = null;
             while ((line = rd.readLine()) != null) {
@@ -376,16 +364,14 @@ public class OFCParser extends AbstractParser {
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
 
-
         TemporaryResources tmp = null;
         OFC OFC = null;
 
-        try{
+        try {
 
             tmp = new TemporaryResources();
             TikaInputStream tis = TikaInputStream.get(stream, tmp);
             File file = tis.getFile();
-
 
             FileInputStream inputStream = new FileInputStream(file);
             tmp.addResource(inputStream);// adds this resource to be closed when tmp is closed
@@ -396,18 +382,17 @@ public class OFCParser extends AbstractParser {
 
             OFC = (OFC) jaxbUnmarshaller.unmarshal(reader);
             reader.close();
-                
-          
+
             Metadata meta = new Metadata();
             meta.set(StandardParser.INDEXER_CONTENT_TYPE, MediaType.parse("application/vnd.ms-excel").toString());
             meta.set(TikaCoreProperties.RESOURCE_NAME_KEY, getBaseName(file.getName()) + ".xls");
             meta.set(TikaCoreProperties.TITLE, getBaseName(file.getName()) + " XLS Parserd");
             meta.set(BasicProps.LENGTH, "");
             meta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
-                   
+
             HSSFWorkbook workbook = new HSSFWorkbook();
 
-            if ( OFC != null){
+            if (OFC != null) {
                 try {
                     Integer.parseInt(OFC.CPAGE);
                     this.cs = Charset.forName("windows-" + OFC.CPAGE);
@@ -419,12 +404,12 @@ public class OFCParser extends AbstractParser {
 
             ByteArrayOutputStream bout = new ByteArrayOutputStream();
             workbook.write(bout);
-            workbook.close();                
+            workbook.close();
             ByteArrayInputStream is1 = new ByteArrayInputStream(bout.toByteArray());
 
-            EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,new ParsingEmbeddedDocumentExtractor(context));
+            EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
 
-            if (extractor.shouldParseEmbedded(meta)){
+            if (extractor.shouldParseEmbedded(meta)) {
                 extractor.parseEmbedded(is1, handler, meta, true);
             }
 
@@ -438,124 +423,118 @@ public class OFCParser extends AbstractParser {
             if (tmp != null)
                 tmp.close();
             if (OFC != null)
-                OFC.clear();                
-        } 
-
-
+                OFC.clear();
+        }
 
     }
-
-
 
 }
 
 @XmlRootElement(name = "OFC")
 @XmlAccessorType(XmlAccessType.FIELD)
 class OFC implements Serializable {
- 
-  private static final long serialVersionUID = 1L;
 
-  public String DTD;
-  public String CPAGE;
-  public Vector<ACCTSTMT> ACCTSTMT = new Vector<ACCTSTMT>();
-  
- 
-  public OFC() {
-    super();
-  }
-  
-  @Override
-  public String toString() {
-    
-    String tab = "\t";
-    String ret = "OFC" + "\n";
-    ret += tab+ "DTD:"+this.DTD+"\n";
-    ret += tab+ "CPAGE:"+this.CPAGE+"\n";
-    
-    for(ACCTSTMT o : this.ACCTSTMT){
-        ret += tab+ "ACCTSTMT"+"\n";    
-        ret += o.toString();
-    }      
-      
-    return ret;
-  }
+    private static final long serialVersionUID = 1L;
 
-    public void clear(){
-        if (ACCTSTMT != null){
-            for(ACCTSTMT o : this.ACCTSTMT)
-                o.clear();            
+    public String DTD;
+    public String CPAGE;
+    public Vector<ACCTSTMT> ACCTSTMT = new Vector<ACCTSTMT>();
+
+    public OFC() {
+        super();
+    }
+
+    @Override
+    public String toString() {
+
+        String tab = "\t";
+        String ret = "OFC" + "\n";
+        ret += tab + "DTD:" + this.DTD + "\n";
+        ret += tab + "CPAGE:" + this.CPAGE + "\n";
+
+        for (ACCTSTMT o : this.ACCTSTMT) {
+            ret += tab + "ACCTSTMT" + "\n";
+            ret += o.toString();
+        }
+
+        return ret;
+    }
+
+    public void clear() {
+        if (ACCTSTMT != null) {
+            for (ACCTSTMT o : this.ACCTSTMT)
+                o.clear();
             ACCTSTMT.clear();
         }
         ACCTSTMT = null;
     }
 
- 
 }
 
 class ACCTSTMT {
 
     public Vector<ACCTFROM> ACCTFROM = new Vector<ACCTFROM>();
     public Vector<STMTRS> STMTRS = new Vector<STMTRS>();
-    
+
     @Override
     public String toString() {
 
         String ret = "";
         String tab = "\t\t";
-        for(ACCTFROM o1 : this.ACCTFROM){
-            ret += tab + "ACCTFROM"+"\n";    
+        for (ACCTFROM o1 : this.ACCTFROM) {
+            ret += tab + "ACCTFROM" + "\n";
             ret += o1.toString();
         }
-        for(STMTRS o2 : this.STMTRS){
-            ret += tab + "STMTRS"+"\n";    
+        for (STMTRS o2 : this.STMTRS) {
+            ret += tab + "STMTRS" + "\n";
             ret += o2.toString();
         }
         return ret;
-    }        
+    }
 
-    public void clear(){
-        if (ACCTFROM != null){
-            for(ACCTFROM o1 : this.ACCTFROM)
+    public void clear() {
+        if (ACCTFROM != null) {
+            for (ACCTFROM o1 : this.ACCTFROM)
                 o1.clear();
             ACCTFROM.clear();
         }
         ACCTFROM = null;
-        if (STMTRS != null){
-            for(STMTRS o2 : this.STMTRS)
+        if (STMTRS != null) {
+            for (STMTRS o2 : this.STMTRS)
                 o2.clear();
             STMTRS.clear();
         }
         STMTRS = null;
 
     }
-    
+
 }
 
-class ACCTFROM {    
-    public String BANKID;    
-    public String BRANCHID;    
-    public String ACCTID;    
-    public Integer ACCTTYPE;        
-    
+class ACCTFROM {
+    public String BANKID;
+    public String BRANCHID;
+    public String ACCTID;
+    public Integer ACCTTYPE;
+
     @Override
     public String toString() {
 
         String ret = "";
         String tab = "\t\t\t";
-        ret += tab+ "BANKID:"+this.BANKID+"\n";
-        ret += tab+ "BRANCHID:"+this.BRANCHID+"\n";
-        ret += tab+ "ACCTID:"+this.ACCTID+"\n";
-        ret += tab+ "ACCTTYPE:"+this.ACCTTYPE+"\n";
+        ret += tab + "BANKID:" + this.BANKID + "\n";
+        ret += tab + "BRANCHID:" + this.BRANCHID + "\n";
+        ret += tab + "ACCTID:" + this.ACCTID + "\n";
+        ret += tab + "ACCTTYPE:" + this.ACCTTYPE + "\n";
 
-        return ret;    
+        return ret;
 
-    }    
+    }
 
-    public String getACCTTYPEString(){
+    public String getACCTTYPEString() {
 
         String ret = "UNKNOWN";
 
-        switch(this.ACCTTYPE){
+        switch (this.ACCTTYPE) {
 
             case 0:
                 ret = "Checking";
@@ -579,7 +558,7 @@ class ACCTFROM {
                 ret = "Interbank transfer payee";
                 break;
             case 7:
-                ret = "Other";                                                                                                
+                ret = "Other";
                 break;
 
         }
@@ -587,45 +566,46 @@ class ACCTFROM {
         return ret;
 
     }
-    
-    public void clear(){
 
-    }    
-    
+    public void clear() {
+
+    }
+
 }
-class STMTRS {    
+
+class STMTRS {
     public String DTSTART;
     public String DTEND;
     public String LEDGER;
     public Vector<STMTTRN> STMTTRN = new Vector<STMTTRN>();
-    
+
     @Override
     public String toString() {
 
         String ret = "";
         String tab = "\t\t\t";
-        ret += tab+ "DTSTART:"+this.DTSTART+"\n";
-        ret += tab+ "DTEND:"+this.DTEND+"\n";
-        ret += tab+ "LEDGER:"+this.LEDGER+"\n";
-        for(STMTTRN o : this.STMTTRN){
-            ret += tab + "STMTTRN"+"\n";    
+        ret += tab + "DTSTART:" + this.DTSTART + "\n";
+        ret += tab + "DTEND:" + this.DTEND + "\n";
+        ret += tab + "LEDGER:" + this.LEDGER + "\n";
+        for (STMTTRN o : this.STMTTRN) {
+            ret += tab + "STMTTRN" + "\n";
             ret += o.toString();
         }
         return ret;
-        
 
-    }    
-    
-    public void clear(){
-        if (STMTTRN != null){
-            for(STMTTRN o : this.STMTTRN)
+    }
+
+    public void clear() {
+        if (STMTTRN != null) {
+            for (STMTTRN o : this.STMTTRN)
                 o.clear();
             STMTTRN.clear();
         }
         STMTTRN = null;
     }
-    
+
 }
+
 class STMTTRN {
     public Integer TRNTYPE;
     public String DTPOSTED;
@@ -639,14 +619,13 @@ class STMTTRN {
     public String NAME;
     public String PAYEE;
     public String ACCTTO;
-    public String MEMO;    
+    public String MEMO;
 
-
-    public String getTRNTYPEString(){
+    public String getTRNTYPEString() {
 
         String ret = "UNKNOWN";
 
-        switch(this.TRNTYPE){
+        switch (this.TRNTYPE) {
 
             case 0:
                 ret = "Credit";
@@ -699,26 +678,25 @@ class STMTTRN {
 
         String ret = "";
         String tab = "\t\t\t\t";
-        ret += tab+ "TRNTYPE:"+this.TRNTYPE+"\n";
-        ret += tab+ "DTPOSTED:"+this.DTPOSTED+"\n";
-        ret += tab+ "TRNAMT:"+this.TRNAMT+"\n";
-        ret += tab+ "FITID:"+this.FITID+"\n";
-        ret += tab+ "SRVRTID:"+this.SRVRTID+"\n";
-        ret += tab+ "CHKNUM:"+this.CHKNUM+"\n";
-        ret += tab+ "SIC:"+this.SIC+"\n";
-        ret += tab+ "PAYEEID:"+this.PAYEEID+"\n";
-        ret += tab+ "NAME:"+this.NAME+"\n";
-        ret += tab+ "PAYEE:"+this.PAYEE+"\n";
-        ret += tab+ "ACCTTO:"+this.ACCTTO+"\n";
-        ret += tab+ "MEMO:"+this.MEMO+"\n";
-        
+        ret += tab + "TRNTYPE:" + this.TRNTYPE + "\n";
+        ret += tab + "DTPOSTED:" + this.DTPOSTED + "\n";
+        ret += tab + "TRNAMT:" + this.TRNAMT + "\n";
+        ret += tab + "FITID:" + this.FITID + "\n";
+        ret += tab + "SRVRTID:" + this.SRVRTID + "\n";
+        ret += tab + "CHKNUM:" + this.CHKNUM + "\n";
+        ret += tab + "SIC:" + this.SIC + "\n";
+        ret += tab + "PAYEEID:" + this.PAYEEID + "\n";
+        ret += tab + "NAME:" + this.NAME + "\n";
+        ret += tab + "PAYEE:" + this.PAYEE + "\n";
+        ret += tab + "ACCTTO:" + this.ACCTTO + "\n";
+        ret += tab + "MEMO:" + this.MEMO + "\n";
+
         return ret;
 
     }
-    
-    public void clear(){
-        
-    }
-    
-}
 
+    public void clear() {
+
+    }
+
+}
