@@ -174,7 +174,12 @@ public class ArtifactJavaReport {
             subItem.setExtraAttribute(IndexItem.CONTAINER_TRACK_ID, Util.getTrackID(pluginEvidence));
             subItem.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
 
+            Date d1 = new Date();
             worker.processNewItem(subItem);
+            Date d2 = new Date();
+            int delta = (int) (d2.getTime() - d1.getTime());
+            LeappBridgeTask.pluginTimeCounter.addAndGet(-delta);// removes from plugin time counter the time to process
+                                                                // the item
         } catch (Exception e) {
             e.printStackTrace();
         }
