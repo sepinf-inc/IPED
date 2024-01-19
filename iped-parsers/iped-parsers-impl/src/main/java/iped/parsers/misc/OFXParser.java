@@ -1068,9 +1068,8 @@ public class OFXParser extends AbstractParser {
     public Charset findCharset(File file) throws IOException {
         /* discover charset */
         FileInputStream inputStream = new FileInputStream(file);
-        Charset result = StandardCharsets.ISO_8859_1;
         try {
-            Reader reader = new InputStreamReader(inputStream);
+            Reader reader = new InputStreamReader(inputStream, StandardCharsets.ISO_8859_1);
             BufferedReader rd = new BufferedReader(reader);
             Pattern patternV1 = Pattern.compile("^CHARSET\\:(.*)");
             Matcher matcherV1 = patternV1.matcher("\\D");
@@ -1084,29 +1083,29 @@ public class OFXParser extends AbstractParser {
                 matcherV2.reset(line);
                 if (matcherV1.find()) {
                     cpage = matcherV1.group(1);
-                    try {
-                        return Charset.forName(cpage);
-                    } catch (Exception e) {
-                        try {
-                            return Charset.forName("windows-" + cpage);
-                        } catch (Exception e2) {
-                            e2.printStackTrace();
-                        }
-                    }
+                    return getCharsetFromCodePage(cpage);
                 } else if (matcherV2.find()) {
                     cpage = matcherV2.group(1);
-                    try {
-                        return Charset.forName(cpage);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+                    return getCharsetFromCodePage(cpage);
                 }
             }
         } finally {
             inputStream.close();
         }
+        return StandardCharsets.ISO_8859_1;
+    }
 
-        return result;
+    private static Charset getCharsetFromCodePage(String cpage) {
+        try {
+            return Charset.forName(cpage);
+        } catch (Exception e1) {
+            try {
+                return Charset.forName("Windows-" + cpage);
+            } catch (Exception e2) {
+                e1.printStackTrace();
+                return StandardCharsets.ISO_8859_1;
+            }
+        }
     }
 
     @Override
