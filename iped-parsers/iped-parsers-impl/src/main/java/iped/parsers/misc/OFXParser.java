@@ -12,6 +12,7 @@ import java.io.Reader;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -400,6 +401,9 @@ public class OFXParser extends AbstractParser {
                         if (tl != null) {
 
                             List<Transaction> list = tl.getTransactions();
+                            if (list == null) {
+                                list = Collections.emptyList();
+                            }
 
                             short cnt = 0;
                             short rnt = 0;
