@@ -243,12 +243,13 @@ public class ArtifactJavaReport {
         if (refpos >= 0) {
             String refFileStr = value.substring(refpos + sizeTag);// from end of "href=" till end
             String strDelimiter = refFileStr.substring(0, 1); // read used string delimiter (quote or double quote)
-            refFileStr = refFileStr.substring(1, refFileStr.indexOf(strDelimiter, 2)); // to end string delimiter
-            if (refFileStr.startsWith("." + File.pathSeparator)) {
-                refFileStr = reportDumpPath + File.pathSeparator + refFileStr.substring(1);
-            }
 
             try {
+                refFileStr = refFileStr.substring(1, refFileStr.indexOf(strDelimiter, 2)); // to end string delimiter
+                if (refFileStr.startsWith("." + File.pathSeparator)) {
+                    refFileStr = reportDumpPath + File.pathSeparator + refFileStr.substring(1);
+                }
+
                 File refFile = new File(refFileStr);
 
                 if (refFile.getCanonicalPath().startsWith(reportDumpPath.getCanonicalPath())) {
@@ -271,7 +272,7 @@ public class ArtifactJavaReport {
                     nope();
                 }
             } catch (IOException e) {
-                LeappBridgeTask.logger.warn("Error creation link to:" + refFileStr);
+                LeappBridgeTask.logger.warn("Error in link creation to:" + refFileStr);
                 e.printStackTrace();
             }
         }
