@@ -448,7 +448,9 @@ public class LeappBridgeTask extends AbstractPythonTask {
      * executing ALeapp plugins
      */
     private boolean isInsideRealDump(IItem reportEvidence) {
-        ipedCase = new IPEDSource(this.output.getParentFile(), worker.writer);
+        if(ipedCase==null){
+            ipedCase = new IPEDSource(this.output.getParentFile(), worker.writer);
+        }
 
         String checkFolder = "/data/data/com.android.providers.settings";
 
