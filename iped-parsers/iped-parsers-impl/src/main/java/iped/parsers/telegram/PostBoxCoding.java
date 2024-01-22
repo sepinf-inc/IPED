@@ -22,6 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -277,12 +278,40 @@ public class PostBoxCoding {
         }
         return 0;
     }
+    
+    private byte[] decodeThumb(byte[] thumb) {
+    	//see https://github.com/TelegramMessenger/Telegram-iOS/blob/master/submodules/TinyThumbnail/Sources/TinyThumbnail.swift
+    	byte header[]=Base64.getDecoder().decode("/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDACgcHiMeGSgjISMtKygwPGRBPDc3PHtYXUlkkYCZlo+AjIqgtObDoKrarYqMyP/L2u71////m8H////6/+b9//j/2wBDASstLTw1PHZBQXb4pYyl+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj/wAARCAAAAAADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwA=");
+    	byte thumbImg[]=new byte[header.length+thumb.length-1];
+    	System.arraycopy(header, 0, thumbImg, 0, header.length);
+    	
+    	byte width=thumb[1];
+    	byte height=thumb[2];
+    	for(int i=3;i<thumb.length;i++) {
+    		thumbImg[header.length+i-3]=thumb[i];
+    	}
+    	thumbImg[164]= width;
+    	thumbImg[166]= height;
+    	thumbImg[thumbImg.length-2]=(byte)0xFF;
+    	thumbImg[thumbImg.length-1]=(byte)0xD9;
+    	return thumbImg;
+    }
+    
+    private void loadThumb(PostBoxObject obj,Message m) {
+    	if(obj.getBytes("itd")!=null && obj.getBytes("itd").length>0) {
+    		byte thumb[]=decodeThumb(obj.getBytes("itd"));
+    		if(m.getThumb()==null ||thumb.length>m.getThumb().length) {
+    			m.setThumb(thumb);
+    		}	
+    	}
+    }
 
     private void readMedia(Message m) {
         PostBoxObject obj = readPostBoxObject(true);
         PostBoxObject media = obj.getPostBoxObject("_");
 
         if (media != null) {
+        	loadThumb(media,m);
             String phone = media.getString("pn");
             if (phone != null) {
                 String aux = m.getData();
@@ -312,6 +341,7 @@ public class PostBoxCoding {
             if (im != null && url != null) {
                 // link with image
                 PostBoxObject[] sizes = im.getPostBoxObjectArray("r");
+                loadThumb(im,m);
                 if (sizes != null && sizes.length > 0) {
                     mimeType = "link/image";
                     logger.debug("url: {}", url);
@@ -328,6 +358,7 @@ public class PostBoxCoding {
                     // other documents
                     PostBoxObject data = media.getPostBoxObject("r");
                     if (data != null) {
+                    	loadThumb(data,m);
                         long id = data.getLong("i");
                         if (id == 0) {
                             // case id = fileId
