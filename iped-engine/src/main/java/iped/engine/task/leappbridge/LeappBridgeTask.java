@@ -51,7 +51,7 @@ import jep.JepException;
 
 public class LeappBridgeTask extends AbstractPythonTask {
 
-    AtomicInteger pluginTimeCounter = new AtomicInteger(0);
+    public static AtomicInteger pluginTimeCounter = new AtomicInteger(0);
 
     public static Logger logger = LoggerFactory.getLogger(LeappBridgeTask.class);
 
@@ -60,6 +60,7 @@ public class LeappBridgeTask extends AbstractPythonTask {
     private static final String DEVICE_DETAILS_HTML = "DeviceDetails.html";
 
     public static final String ALEAPP_METADATA_PREFIX = "ALEAPP";
+    public static final String ALEAPP_ISREPORT = ALEAPP_METADATA_PREFIX + ":isReport";
     public static final String ALEAPP_ISPLUGIN = ALEAPP_METADATA_PREFIX + ":isPlugin";
     public static final String ALEAPP_PLUGIN = ALEAPP_METADATA_PREFIX + ":PLUGIN";
 
@@ -92,7 +93,7 @@ public class LeappBridgeTask extends AbstractPythonTask {
 
     static private File tmp;
 
-    static private int START_QUEUE_PRIORITY = 3;
+    static private int START_QUEUE_PRIORITY = 2;
 
     public static void logfunc(String message) {
         logger.info(message);
@@ -284,7 +285,9 @@ public class LeappBridgeTask extends AbstractPythonTask {
 
     @Override
     public void process(IItem evidence) throws Exception {
+        // first rule to check a supposed android Dump folder
         if (dumpStartFolderNames.contains(evidence.getName())) {
+            // if true, creates a subitem to represent the ALeapp report
             Item subItem = (Item) evidence.createChildItem();
             ParentInfo parentInfo = new ParentInfo(evidence);
 
@@ -294,42 +297,68 @@ public class LeappBridgeTask extends AbstractPythonTask {
             subItem.setSubItem(true);
             subItem.setSubitemId(1);
             subItem.setHasChildren(true);
+            subItem.getMetadata().set(ALEAPP_ISREPORT, "true");
             subItem.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
             worker.processNewItem(subItem);
-
-            // creates one subitem for each plugin execution
-            for (LeapArtifactsPlugin p : pluginsManager.getPlugins()) {
-                Item psubItem = (Item) subItem.createChildItem();
-                ParentInfo pparentInfo = new ParentInfo(subItem);
-
-                String moduleName = p.moduleName;
-                psubItem.setName(moduleName);
-                psubItem.setPath(parentInfo.getPath() + "/" + moduleName);
-                psubItem.setSubItem(true);
-                psubItem.setSubitemId(1);
-                psubItem.getMetadata().set(ALEAPP_PLUGIN, moduleName);
-                psubItem.getMetadata().set(ALEAPP_ISPLUGIN, "true");
-                psubItem.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
-                worker.processNewItem(psubItem);
-            }
-
-            // creates subitem to hold device info collected
-            Item devDetailsSubItem = (Item) subItem.createChildItem();
-            ParentInfo pparentInfo = new ParentInfo(subItem);
-            devDetailsSubItem.setName(DEVICE_DETAILS_HTML);
-            devDetailsSubItem.setMediaType(DEVICEDETAILS);
-            devDetailsSubItem.setPath(parentInfo.getPath() + "/" + DEVICE_DETAILS_HTML);
-            devDetailsSubItem.setSubItem(true);
-            devDetailsSubItem.setSubitemId(1);
-            devDetailsSubItem.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
-            worker.processNewItem(devDetailsSubItem);
         }
 
-        String isPlugin = evidence.getMetadata().get(ALEAPP_ISPLUGIN);
-        if (isPlugin != null && isPlugin.equals("true")) {
+        // if the item is a supposed ALeapp report, checks if the current queue
+        // priority is the correct to process the report
+        String isReportStr = evidence.getMetadata().get(ALEAPP_ISREPORT);
+        boolean isReport = (isReportStr != null && isReportStr.equals("true"));
+        if (isReport) {
             int priority = worker.manager.getProcessingQueues().getCurrentQueuePriority();
             if (priority < START_QUEUE_PRIORITY) {
                 reEnqueueItem(evidence, START_QUEUE_PRIORITY);
+                throw new ItemReEnqueuedException();
+            }
+        }
+
+        if (isReport) {
+            // check additional rules to confirm that the item is inside an Android Dump
+            // Folder
+            if (isInsideRealDump(evidence)) {
+                ParentInfo parentInfo = new ParentInfo(evidence);
+
+                // creates one subitem for each plugin execution
+                for (LeapArtifactsPlugin p : pluginsManager.getPlugins()) {
+                    Item psubItem = (Item) evidence.createChildItem();
+
+                    String moduleName = p.moduleName;
+                    psubItem.setName(moduleName);
+                    psubItem.setPath(parentInfo.getPath() + "/" + moduleName);
+                    psubItem.setSubItem(true);
+                    psubItem.setSubitemId(1);
+                    psubItem.getMetadata().set(ALEAPP_PLUGIN, moduleName);
+                    psubItem.getMetadata().set(ALEAPP_ISPLUGIN, "true");
+                    psubItem.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
+                    worker.processNewItem(psubItem);
+                }
+
+                // creates subitem to hold device info collected
+                Item devDetailsSubItem = (Item) evidence.createChildItem();
+                ParentInfo pparentInfo = new ParentInfo(evidence);
+                devDetailsSubItem.setName(DEVICE_DETAILS_HTML);
+                devDetailsSubItem.setMediaType(DEVICEDETAILS);
+                devDetailsSubItem.setPath(parentInfo.getPath() + "/" + DEVICE_DETAILS_HTML);
+                devDetailsSubItem.setSubItem(true);
+                devDetailsSubItem.setSubitemId(1);
+                devDetailsSubItem.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
+                worker.processNewItem(devDetailsSubItem);
+            } else {
+                // ignores the item create to represent ALeapp report, as it wasn't confirmed
+                // that it was created inside an Android Dump Folder
+                evidence.setToIgnore(true);
+            }
+        }
+
+        // if item is an plugin, checks if the current queue priority
+        // is the correct to process the plugin
+        String isPlugin = evidence.getMetadata().get(ALEAPP_ISPLUGIN);
+        if (isPlugin != null && isPlugin.equals("true")) {
+            int priority = worker.manager.getProcessingQueues().getCurrentQueuePriority();
+            if (priority < START_QUEUE_PRIORITY + 1) {
+                reEnqueueItem(evidence, START_QUEUE_PRIORITY + 1);
                 throw new ItemReEnqueuedException();
             } else {
                 String pluginName = evidence.getMetadata().get(ALEAPP_PLUGIN);
@@ -343,8 +372,8 @@ public class LeappBridgeTask extends AbstractPythonTask {
         MediaType mt = evidence.getMediaType();
         if (mt != null && mt.equals(DEVICEDETAILS)) {
             int priority = worker.manager.getProcessingQueues().getCurrentQueuePriority();
-            if (priority < START_QUEUE_PRIORITY + 1) {
-                reEnqueueItem(evidence, START_QUEUE_PRIORITY + 1);
+            if (priority < START_QUEUE_PRIORITY + 2) {
+                reEnqueueItem(evidence, START_QUEUE_PRIORITY + 2);
                 throw new ItemReEnqueuedException();
             } else {
                 processDeviceDetails(evidence);
@@ -412,6 +441,37 @@ public class LeappBridgeTask extends AbstractPythonTask {
             // separator avoiding unnecessary CPU usage
             return path;
         }
+    }
+
+    /*
+     * Rules to check if evidence corresponds to an android Dump from where to start
+     * executing ALeapp plugins
+     */
+    private boolean isInsideRealDump(IItem reportEvidence) {
+        ipedCase = new IPEDSource(this.output.getParentFile(), worker.writer);
+
+        String checkFolder = "/data/data/com.android.providers.settings";
+
+        String parentPath = reportEvidence.getPath();
+        parentPath = parentPath.substring(0, parentPath.length() - (REPORT_EVIDENCE_NAME.length() + 1));
+
+        IPEDSearcher filesSearcher = new IPEDSearcher(ipedCase);
+        String query = "path:\"" + parentPath + checkFolder + "\"";
+
+        filesSearcher.setQuery(query);
+        try {
+            SearchResult filesResult = filesSearcher.search();
+            if (filesResult.getLength() > 0) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (IOException e) {
+            // ignores
+        }
+
+        return false;
+
     }
 
     private void processPlugin(LeapArtifactsPlugin p, IItem evidence, IItem dumpEvidence, String dumpPath,
