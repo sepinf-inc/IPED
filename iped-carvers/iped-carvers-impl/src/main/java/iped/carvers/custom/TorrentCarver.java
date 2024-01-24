@@ -22,8 +22,8 @@ public class TorrentCarver extends DefaultCarver {
     public long getLengthFromHit(IItem parentEvidence, Hit header) throws IOException {
         SeekableInputStream is = null;
         BencodeInputStream bis = null;
+        long off = header.getOffset();
         try {
-            long off = header.getOffset();
             is = parentEvidence.getSeekableInputStream();
             is.seek(header.getOffset());
             bis = new BencodeInputStream(is, StandardCharsets.UTF_8, true);
@@ -43,7 +43,8 @@ public class TorrentCarver extends DefaultCarver {
                 return -1;
             }
         } catch (IOException e) {
-            return -1;
+            long len = is.position() - off;
+            return len;
         } finally {
             IOUtil.closeQuietly(bis);
             IOUtil.closeQuietly(is);
