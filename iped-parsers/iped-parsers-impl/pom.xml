@@ -240,7 +240,7 @@
         <dependency>
           <groupId>com.webcohesion.ofx4j</groupId>
           <artifactId>ofx4j</artifactId>
-          <version>1.34</version>
+          <version>1.36</version>
         </dependency>
     </dependencies>
     
