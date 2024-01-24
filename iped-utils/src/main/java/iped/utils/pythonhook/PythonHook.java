@@ -8,8 +8,6 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import jep.Jep;
-import jep.JepConfig;
-import jep.SharedInterpreter;
 
 public class PythonHook {
 
@@ -94,21 +92,6 @@ public class PythonHook {
 
         jep.eval("sys.meta_path.insert(0, ImphookFileLoader())");
         jep.eval("sys.path_importer_cache.clear()");
-    }
-
-    public static void main(String args[]) {
-        JepConfig config = new JepConfig();
-        config.redirectStdErr(System.err);
-        config.redirectStdout(System.out);
-        config.setClassLoader(ClassLoader.getSystemClassLoader());
-
-        SharedInterpreter.setConfig(config);
-
-        Jep jep = new SharedInterpreter();
-
-        PythonHook p = new PythonHook(jep);
-        jep.eval("import os");
-
     }
 
     private static String installHookClass = "class ImphookFileLoader(object):\n"
@@ -232,4 +215,3 @@ public class PythonHook {
             + "            return newfunc\n" + "        else:\n" + "            return attr\n" + "";
 
 }
-
