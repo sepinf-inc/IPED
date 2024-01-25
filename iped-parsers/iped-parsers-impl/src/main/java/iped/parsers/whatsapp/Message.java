@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -87,6 +88,9 @@ public class Message {
         }
         try {
             fileChannel = FileChannel.open(thumbsfile.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE);
+        } catch (NoSuchFileException e) {
+            // fix for https://github.com/sepinf-inc/IPED/issues/2051
+            throw new RuntimeException(e);
         } catch (IOException e) {
             e.printStackTrace();
         }

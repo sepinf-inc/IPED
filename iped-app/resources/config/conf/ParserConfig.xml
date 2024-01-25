@@ -352,6 +352,8 @@
         <parser class="iped.parsers.bittorrent.TorrentFileParser"></parser>
         <parser class="iped.parsers.lnk.LNKShortcutParser"></parser>
         <parser class="iped.parsers.misc.GenericOLEParser"></parser>
+        <parser class="iped.parsers.misc.OFXParser"></parser>
+        <parser class="iped.parsers.misc.OFCParser"></parser>
         <parser class="iped.parsers.misc.PDFTextParser"></parser>
         <parser class="iped.parsers.video.FLVParserWrapper"></parser>
         <parser class="iped.parsers.video.EmptyVideoParser"></parser>

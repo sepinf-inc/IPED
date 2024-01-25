@@ -16,6 +16,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.text.DateFormat;
+import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -88,6 +89,7 @@ import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
 import iped.utils.FileInputStreamFactory;
 import iped.utils.IOUtil;
+import iped.utils.LocalizedFormat;
 import iped.utils.SimpleHTMLEncoder;
 
 public class UfedXmlReader extends DataSourceReader {
@@ -362,6 +364,8 @@ public class UfedXmlReader extends DataSourceReader {
 
         DateFormat out = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
+        private final DecimalFormat currencyFormat = LocalizedFormat.getDecimalInstance("#,##0.00");
+        
         ArrayList<XmlNode> nodeSeq = new ArrayList<>();
         ArrayList<Item> itemSeq = new ArrayList<>();
 
@@ -426,7 +430,8 @@ public class UfedXmlReader extends DataSourceReader {
                 "MessageLabel", //$NON-NLS-1$
                 "ProfilePicture", //$NON-NLS-1$
                 "WebAddress", //$NON-NLS-1$
-                "Reaction" //$NON-NLS-1$
+                "Reaction", //$NON-NLS-1$
+                "Price"
         ));
 
         @Override
@@ -1012,6 +1017,29 @@ public class UfedXmlReader extends DataSourceReader {
                         String reaction = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "ReactionType");
                         if (reaction != null) {
                             parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + "Reaction", reaction);
+                        }
+                    } else if ("Price".equals(type)) {
+                        String prop = ExtraProperties.UFED_META_PREFIX + "Amount";
+                        String amount = item.getMetadata().get(prop);
+                        if (amount != null) {
+                            try {
+                                double v = Double.parseDouble(amount);
+                                if (v > 922337203685477.0) {
+                                    // Undefined values
+                                    amount = null;
+                                } else {
+                                    amount = currencyFormat.format(v);
+                                }
+                            } catch (Exception e) {
+                            }
+                            if (amount != null) {
+                                parentItem.getMetadata().add(prop, amount);
+                            }
+                        }
+                        prop = ExtraProperties.UFED_META_PREFIX + "Currency";
+                        String currency = item.getMetadata().get(prop);
+                        if (currency != null) {
+                            parentItem.getMetadata().add(prop, currency);
                         }
                     }
                 } else {
