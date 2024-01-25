@@ -62,7 +62,7 @@ public class BitTorrentResumeDatParser extends AbstractParser {
         metadata.set(HttpHeaders.CONTENT_TYPE, RESUME_DAT_MIME_TYPE);
         metadata.remove(TikaCoreProperties.RESOURCE_NAME_KEY);
 
-        BencodedDict dict = new BencodedDict(stream, df);
+        BencodedDict dict = new BencodedDict(stream, df, true);
 
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
         xhtml.startDocument();

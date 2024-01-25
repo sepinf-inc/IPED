@@ -30,7 +30,15 @@ public class BencodedDict {
     private DateFormat df;
 
     public BencodedDict(InputStream is, DateFormat df) throws IOException {
-        dict = new BencodeInputStream(is, StandardCharsets.UTF_8, true).readDictionary();
+        this(is, df, false);
+    }
+
+    public BencodedDict(InputStream is, DateFormat df, boolean canBeIncomplete) throws IOException {
+        if (canBeIncomplete) {
+            dict = new BencodedIncompleteInputStream(is, StandardCharsets.UTF_8, true).readDictionary();
+        } else {
+            dict = new BencodeInputStream(is, StandardCharsets.UTF_8, true).readDictionary();
+        }
         this.df = df;
     }
 
@@ -194,5 +202,9 @@ public class BencodedDict {
     @Override
     public String toString() {
         return dict.toString();
+    }
+
+    public boolean isIncomplete() {
+        return (dict instanceof BencodedIncompleteInputStream) && ((BencodedIncompleteInputStream) dict).isIncomplete();
     }
 }
