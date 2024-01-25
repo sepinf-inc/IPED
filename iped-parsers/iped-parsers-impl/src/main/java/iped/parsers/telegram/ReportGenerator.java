@@ -63,7 +63,12 @@ public class ReportGenerator {
         if (s == null || s.isEmpty()) {
             return "-";
         }
-        return SimpleHTMLEncoder.htmlEncode(s.trim());
+        String ret = SimpleHTMLEncoder.htmlEncode(s.trim());
+
+        // Keep line breaks present in the content, converting to an HTML <br>
+        ret = ret.replaceAll("\n", "<br>\n");
+
+        return ret;
     }
 
     public byte[] genarateContactHtml(Contact contact) {
