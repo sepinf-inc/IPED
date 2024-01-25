@@ -232,7 +232,7 @@ public class TorrentFileParser extends AbstractParser {
                     if (file.md5.length() > 0) {
                         metadata.add(ExtraProperties.LINKED_ITEMS, "md5:" + file.md5);
                     }
-                    file.sha1 = fileDict.getHexEncodedBytes("sha1"); //$NON-NLS-1$
+                    file.sha1 = fileDict.getString("sha1"); //$NON-NLS-1$
                     if (file.sha1.length() > 0) {
                         metadata.add(ExtraProperties.LINKED_ITEMS, "sha-1:" + file.sha1);
                     }
@@ -249,7 +249,7 @@ public class TorrentFileParser extends AbstractParser {
                 if (file.md5.length() > 0) {
                     metadata.add(ExtraProperties.LINKED_ITEMS, "md5:" + file.md5);
                 }
-                file.sha1 = info.getHexEncodedBytes("sha1"); //$NON-NLS-1$
+                file.sha1 = info.getString("sha1"); //$NON-NLS-1$
                 if (file.sha1.length() > 0) {
                     metadata.add(ExtraProperties.LINKED_ITEMS, "sha-1:" + file.sha1);
                 }
