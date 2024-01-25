@@ -79,7 +79,7 @@ public class BitTorrentResumeDatParser extends AbstractParser {
         xhtml.newline();
         try {
             if (dict.isIncomplete()) {
-                xhtml.characters("* Incomplete file. Some of the parse information may be wrong. Please verify.");
+                xhtml.characters("* " + Messages.getString("TorrentFileDatParser.IncompleteWarning"));
                 metadata.set("incompleteTorrent", "true");
             }
             xhtml.startElement("table", "class", "dt"); //$NON-NLS-1$ $NON-NLS-2$ $NON-NLS-3$

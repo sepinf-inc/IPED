@@ -94,7 +94,8 @@ public class TorrentFileParser extends AbstractParser {
         xhtml.newline();
 
         if (dict.isIncomplete()) {
-            xhtml.characters("* Incomplete file. Some of the parse information may be wrong. Please verify.");
+            xhtml.characters("* "
+                    + Messages.getString("TorrentFileDatParser.IncompleteWarning"));
             metadata.set("incompleteTorrent", "true");
         }
 
