@@ -4,9 +4,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
@@ -25,7 +27,9 @@ import org.xml.sax.SAXException;
 
 import iped.parsers.util.IgnoreCorruptedCarved;
 import iped.parsers.util.Messages;
+import iped.parsers.util.MetadataUtil;
 import iped.properties.ExtraProperties;
+import iped.utils.DateUtil;
 import iped.utils.LocalizedFormat;
 
 /**
@@ -35,6 +39,7 @@ import iped.utils.LocalizedFormat;
  */
 public class TorrentFileParser extends AbstractParser {
 
+    private static final String TORRENT_CREATION_DATE = "torrentCreationDate";
     private static final long serialVersionUID = 3238363426940179831L;
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.application("x-bittorrent")); //$NON-NLS-1$
     public static final String TORRENT_FILE_MIME_TYPE = "application/x-bittorrent"; //$NON-NLS-1$
@@ -113,6 +118,17 @@ public class TorrentFileParser extends AbstractParser {
         outputInfo(xhtml, Messages.getString("TorrentFileDatParser.Comment"), info.comment);
         outputInfo(xhtml, Messages.getString("TorrentFileDatParser.CreatedBy"), info.createdBy);
         outputInfo(xhtml, Messages.getString("TorrentFileDatParser.CreationDate"), info.creationDate);
+
+        MetadataUtil.setMetadataType(TORRENT_CREATION_DATE, Date.class);
+        if (!info.creationDate.isEmpty()) {
+            try {
+                metadata.set(TORRENT_CREATION_DATE, DateUtil.dateToString(df.parse(info.creationDate)));
+            } catch (ParseException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            }
+        }
+
         xhtml.endElement("table");
 
         // Files Table
