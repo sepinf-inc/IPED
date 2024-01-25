@@ -1560,6 +1560,13 @@
         <glob pattern="*.webm" />
     </mime-type>
 
+    <mime-type type="video/x-dav">
+        <magic priority="60">
+            <match value="DAHUA\x22" type="string" offset="0"/>
+        </magic>
+        <glob pattern="*.dav" />
+    </mime-type>
+
     <mime-type type="audio/ilbc">
         <magic priority="60">
             <match value="0x2321694C424333300A" type="string" offset="0"/>
@@ -1579,5 +1586,25 @@
         <glob pattern="*.lzfse"/>
     </mime-type>
 
-</mime-info>
+    <mime-type type="application/x-ofx-v1">
+        <magic priority="50">
+            <match value="OFXHEADER:100" type="string" offset="0"/>
+        </magic>
+        <glob pattern="*.ofx"/>
+    </mime-type>
 
+    <mime-type type="application/x-ofx-v2">
+        <sub-class-of type="application/x-ofx-v1"/>
+        <magic priority="50">
+            <match value="OFX OFXHEADER=&quot;200&quot;" type="string" offset="0:8192"/>
+        </magic>
+    </mime-type>
+
+    <mime-type type="application/x-ofc">
+        <magic priority="50">
+            <match value="&lt;OFC&gt;" type="string" offset="0"/>
+        </magic>
+        <glob pattern="*.ofc"/>
+    </mime-type>
+
+</mime-info>
