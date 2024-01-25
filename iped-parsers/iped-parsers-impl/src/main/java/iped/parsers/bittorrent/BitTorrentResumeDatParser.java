@@ -19,6 +19,7 @@ import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.parsers.util.IgnoreCorruptedCarved;
 import iped.parsers.util.Messages;
 import iped.utils.LocalizedFormat;
 
@@ -62,7 +63,7 @@ public class BitTorrentResumeDatParser extends AbstractParser {
         metadata.set(HttpHeaders.CONTENT_TYPE, RESUME_DAT_MIME_TYPE);
         metadata.remove(TikaCoreProperties.RESOURCE_NAME_KEY);
 
-        BencodedDict dict = new BencodedDict(stream, df, true);
+        BencodedDict dict = new BencodedDict(stream, df, (context.get(IgnoreCorruptedCarved.class) == null));
 
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
         xhtml.startDocument();
@@ -77,6 +78,10 @@ public class BitTorrentResumeDatParser extends AbstractParser {
         xhtml.endElement("style"); //$NON-NLS-1$
         xhtml.newline();
         try {
+            if (dict.isIncomplete()) {
+                xhtml.characters("* Incomplete file. Some of the parse information may be wrong. Please verify.");
+                metadata.set("incompleteTorrent", "true");
+            }
             xhtml.startElement("table", "class", "dt"); //$NON-NLS-1$ $NON-NLS-2$ $NON-NLS-3$
             xhtml.startElement("tr", "class", "rh"); //$NON-NLS-1$ $NON-NLS-2$ $NON-NLS-3$
             for (String h : header) {

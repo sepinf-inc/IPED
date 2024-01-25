@@ -23,6 +23,7 @@ import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.parsers.util.IgnoreCorruptedCarved;
 import iped.parsers.util.Messages;
 import iped.utils.LocalizedFormat;
 
@@ -58,7 +59,7 @@ public class TorrentFileParser extends AbstractParser {
 
         BencodedDict dict;
         try {
-            dict = new BencodedDict(stream, df);
+            dict = new BencodedDict(stream, df, (context.get(IgnoreCorruptedCarved.class) == null));
         } catch (IOException e) {
             throw new TikaException("Error parsing torrent file", e); //$NON-NLS-1$
         }
@@ -91,6 +92,11 @@ public class TorrentFileParser extends AbstractParser {
                         + ".h { font-weight: bold; border: solid; border-width: thin; padding: 3px; text-align: left; vertical-align: middle; white-space: nowrap; font-family: monospace; } ");
         xhtml.endElement("style"); //$NON-NLS-1$
         xhtml.newline();
+
+        if (dict.isIncomplete()) {
+            xhtml.characters("* Incomplete file. Some of the parse information may be wrong. Please verify.");
+            metadata.set("incompleteTorrent", "true");
+        }
 
         // Torrent General Info Table
         xhtml.startElement("table", "class", "dt");

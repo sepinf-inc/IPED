@@ -28,6 +28,7 @@ public class BencodedDict {
 
     private Map<String, Object> dict;
     private DateFormat df;
+    private boolean incomplete;
 
     public BencodedDict(InputStream is, DateFormat df) throws IOException {
         this(is, df, false);
@@ -35,7 +36,9 @@ public class BencodedDict {
 
     public BencodedDict(InputStream is, DateFormat df, boolean canBeIncomplete) throws IOException {
         if (canBeIncomplete) {
-            dict = new BencodedIncompleteInputStream(is, StandardCharsets.UTF_8, true).readDictionary();
+            BencodedIncompleteInputStream bis = new BencodedIncompleteInputStream(is, StandardCharsets.UTF_8, true);
+            dict = bis.readDictionary();
+            this.incomplete = bis.isIncomplete();
         } else {
             dict = new BencodeInputStream(is, StandardCharsets.UTF_8, true).readDictionary();
         }
@@ -205,6 +208,6 @@ public class BencodedDict {
     }
 
     public boolean isIncomplete() {
-        return (dict instanceof BencodedIncompleteInputStream) && ((BencodedIncompleteInputStream) dict).isIncomplete();
+        return incomplete;
     }
 }
