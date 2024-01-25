@@ -25,6 +25,7 @@ import org.xml.sax.SAXException;
 
 import iped.parsers.util.IgnoreCorruptedCarved;
 import iped.parsers.util.Messages;
+import iped.properties.ExtraProperties;
 import iped.utils.LocalizedFormat;
 
 /**
@@ -64,7 +65,7 @@ public class TorrentFileParser extends AbstractParser {
             throw new TikaException("Error parsing torrent file", e); //$NON-NLS-1$
         }
 
-        List<FileInTorrent> files = extractFileList(dict);
+        List<FileInTorrent> files = extractFileList(dict, metadata);
 
         char[] colClass = { 'a', 'c', 'h', 'h', 'h' };
         boolean[] include = { true, true, false, false, false };
@@ -103,6 +104,7 @@ public class TorrentFileParser extends AbstractParser {
         xhtml.startElement("table", "class", "dt");
         TorrentInfo info = extractTorrentInfo(dict);
         outputInfo(xhtml, Messages.getString("TorrentFileDatParser.Name"), info.name);
+
         outputInfo(xhtml, Messages.getString("TorrentFileDatParser.InfoHash"), info.infoHash, true);
         outputInfo(xhtml, Messages.getString("TorrentFileDatParser.PieceLength"), info.pieceLength);
         outputInfo(xhtml, Messages.getString("TorrentFileDatParser.NumberOfPieces"), info.numPieces);
@@ -200,7 +202,7 @@ public class TorrentFileParser extends AbstractParser {
         }
     }
 
-    private static List<FileInTorrent> extractFileList(BencodedDict dict) throws TikaException {
+    private static List<FileInTorrent> extractFileList(BencodedDict dict, Metadata metadata) throws TikaException {
         BencodedDict info = dict.getDict("info"); //$NON-NLS-1$
         List<FileInTorrent> files;
 
@@ -227,7 +229,13 @@ public class TorrentFileParser extends AbstractParser {
                     file.fullPath = fullPathBuilder.toString();
                     file.length = fileDict.getLong("length"); //$NON-NLS-1$
                     file.md5 = fileDict.getString("md5sum"); //$NON-NLS-1$
+                    if (file.md5.length() > 0) {
+                        metadata.add(ExtraProperties.LINKED_ITEMS, "md5:" + file.md5);
+                    }
                     file.sha1 = fileDict.getHexEncodedBytes("sha1"); //$NON-NLS-1$
+                    if (file.sha1.length() > 0) {
+                        metadata.add(ExtraProperties.LINKED_ITEMS, "sha-1:" + file.sha1);
+                    }
                     file.ed2k = fileDict.getHexEncodedBytes("ed2k"); //$NON-NLS-1$
                     files.add(file);
                 }
@@ -238,7 +246,13 @@ public class TorrentFileParser extends AbstractParser {
                 file.fullPath = info.getString("name"); //$NON-NLS-1$
                 file.length = info.getLong("length"); //$NON-NLS-1$
                 file.md5 = info.getString("md5sum"); //$NON-NLS-1$
+                if (file.md5.length() > 0) {
+                    metadata.add(ExtraProperties.LINKED_ITEMS, "md5:" + file.md5);
+                }
                 file.sha1 = info.getHexEncodedBytes("sha1"); //$NON-NLS-1$
+                if (file.sha1.length() > 0) {
+                    metadata.add(ExtraProperties.LINKED_ITEMS, "sha-1:" + file.sha1);
+                }
                 file.ed2k = info.getHexEncodedBytes("ed2k"); //$NON-NLS-1$
                 files = Collections.singletonList(file);
             }
