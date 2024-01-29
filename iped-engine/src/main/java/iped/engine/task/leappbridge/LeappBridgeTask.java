@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -44,6 +45,7 @@ import iped.parsers.python.PythonParser;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.SearchResult;
+import iped.utils.DateUtil;
 import iped.utils.pythonhook.FileHook;
 import iped.utils.pythonhook.PythonHook;
 import jep.Jep;
@@ -88,6 +90,9 @@ public class LeappBridgeTask extends AbstractPythonTask {
     private Future<Jep> fjep;
 
     private ExecutorService service;
+
+    //map between filesFound paths and correspondent Lucene Documents
+    private HashMap<String, Document> filesFoundDocuments;
 
     static private File aleappDir;
 
@@ -182,6 +187,17 @@ public class LeappBridgeTask extends AbstractPythonTask {
         }
     }
 
+    //gets modified time from lucene document properties
+    public double getmtime(String file) {
+        Document doc = filesFoundDocuments.get(file);
+        String mtime = doc.get(BasicProps.MODIFIED);
+        try {
+            return DateUtil.stringToDate(mtime).getTime() / 1000;
+        } catch (ParseException e) {
+            return 0;
+        }
+    }
+
     public void executePlugin(IItem evidence, LeapArtifactsPlugin p, List<String> filesFound, File reportDumpPath) {
         Jep jep = getJep();
         Date plugginStart = new Date();
@@ -211,6 +227,7 @@ public class LeappBridgeTask extends AbstractPythonTask {
                 jep.eval("import sys");
                 jep.eval("from java.lang import System");
                 jep.eval("from iped.engine.task.leappbridge import ArtifactJavaReport");
+
                 if (p.getMethodName().contains("lambda")) {
                     jep.eval("from " + p.getModuleName() + " import *");
                     jep.set("parse", p.getMethod());
@@ -229,6 +246,11 @@ public class LeappBridgeTask extends AbstractPythonTask {
                 jep.set("reportDumpPath", reportDumpPath);
                 jep.set("reportPath", reportPath);
                 jep.set("leappTask", this);
+
+                //overrides getmtime to get modified tipe from lucene document
+                jep.eval("os.path.getmtime = leappTask.getmtime"); // overrides getmtime to get last modified time from
+                                                                   // processed item evidence
+
                 jep.set("moduleDir", this.output);
                 jep.set("pluginName", p.getModuleName());
 
@@ -481,6 +503,8 @@ public class LeappBridgeTask extends AbstractPythonTask {
         try {
             boolean temporaryReportDumpPath = false;
 
+            filesFoundDocuments = new HashMap<String, Document>();
+
             // find files on dump that is needed by the plugin and exports them
             // to tmp folder if needed. ALeapp plugins will work on
             // these tmp copies of the files.
@@ -523,9 +547,9 @@ public class LeappBridgeTask extends AbstractPythonTask {
                             if (tmp.getCanonicalPath().startsWith(sourcePath)) {
                                 reportDumpPath = new File(sourcePath);
                                 // the file returned by getTempFile() is the file itself
-                                String fileStr = tmp.getCanonicalPath();
-                                filesFound.add(preparePythonLiteralPath(fileStr));
-                                // mappedEvidences.put(tmp.getCanonicalPath(), (Item) item);
+                                String fileStr = preparePythonLiteralPath(tmp.getCanonicalPath());
+                                filesFound.add(fileStr);
+                                filesFoundDocuments.put(fileStr, artdoc);
                             } else {
                                 // the file returned by getTempFile() is a copy to the file in a temp folder
                                 // so recreate the path structure inside the temp folder
@@ -549,8 +573,9 @@ public class LeappBridgeTask extends AbstractPythonTask {
                                             moveDir(tmp, file_found);
                                         }
                                     }
-                                    String fileStr = file_found.getCanonicalPath();
-                                    filesFound.add(preparePythonLiteralPath(fileStr));
+                                    String fileStr = preparePythonLiteralPath(file_found.getCanonicalPath());
+                                    filesFound.add(fileStr);
+                                    filesFoundDocuments.put(fileStr, artdoc);
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }
@@ -571,6 +596,7 @@ public class LeappBridgeTask extends AbstractPythonTask {
                     filel = prepareIPEDLiteralPath(filel);
                     String filename = filel.substring(filel.lastIndexOf("/") + 1);
                     m.add(ExtraProperties.LINKED_ITEMS, "path:\"*" + filel + "\" && name:\"" + filename + "\"");
+
                 }
                 executePlugin(evidence, p, filesFound, reportDumpPath);
             }
