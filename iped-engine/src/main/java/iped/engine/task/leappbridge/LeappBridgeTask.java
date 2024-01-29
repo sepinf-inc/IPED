@@ -248,16 +248,24 @@ public class LeappBridgeTask extends AbstractPythonTask {
                 jep.set("leappTask", this);
 
                 //overrides getmtime to get modified tipe from lucene document
-                jep.eval("os.path.getmtime = leappTask.getmtime"); // overrides getmtime to get last modified time from
-                                                                   // processed item evidence
+                jep.eval("os.path.old_iped_getmtime = os.path.getmtime");
+                try {
+                    jep.eval("os.path.getmtime = leappTask.getmtime"); // overrides getmtime to get last modified time
+                                                                       // from
+                    // processed item evidence
 
-                jep.set("moduleDir", this.output);
-                jep.set("pluginName", p.getModuleName());
+                    jep.set("moduleDir", this.output);
+                    jep.set("pluginName", p.getModuleName());
 
-                jep.set("mappedEvidences", mappedEvidences);
+                    jep.set("mappedEvidences", mappedEvidences);
 
-                jep.eval("logfunc('" + PLUGIN_EXECUTION_MESSAGE + ":" + p.getModuleName() + "')");
-                jep.eval("parse(" + lists + ",'" + reportPath.getCanonicalPath().replace("\\", "\\\\") + "',dumb,True)");
+                    jep.eval("logfunc('" + PLUGIN_EXECUTION_MESSAGE + ":" + p.getModuleName() + "')");
+                    jep.eval("parse(" + lists + ",'" + reportPath.getCanonicalPath().replace("\\", "\\\\")
+                            + "',dumb,True)");
+                } finally {
+                    // restore overriden method
+                    jep.eval("os.path.getmtime = os.path.old_iped_getmtime");
+                }
 
             } catch (Exception e) {
                 e.printStackTrace();
