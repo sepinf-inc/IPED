@@ -537,12 +537,12 @@ public class LeappBridgeTask extends AbstractPythonTask {
                         // only raw files are expected by ALeapp plugin (not iped extracted items)
                         String artpath = artdoc.get(BasicProps.PATH).substring(dumpPath.length());
 
-                        artpath = replaceSpecialChars(artpath);
-
                         if (artpath.contains(">>")) {
                             // item is a decoded data, so it is not the source of the informations
                             continue;
                         }
+
+                        artpath = replaceSpecialChars(artpath);
 
                         if (pluginsManager.hasPatternMatch(artpath, p)) {
                             IItem item = ipedCase.getItemByLuceneID(artLuceneId);
