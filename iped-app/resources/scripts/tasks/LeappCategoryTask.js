@@ -55,6 +55,9 @@ function process(e){
             if(mime.contains("contacts")){
                 e.setCategory("Contacts");
             }
+            if(mime.contains("userid")){
+                e.setCategory("User Accounts");
+            }
             if(mime.contains("chats")){
                 e.setCategory("Instant Messages");
             }
