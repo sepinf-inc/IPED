@@ -39,7 +39,7 @@ function process(e){
         case "accounts_ce_authtokens":
             e.setCategory("Passwords");
             break;
-        case "sim_info":
+        case "siminfo":
             e.setCategory("SIM Data");
             break;
         case "Cello":
