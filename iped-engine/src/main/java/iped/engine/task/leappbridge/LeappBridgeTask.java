@@ -482,7 +482,7 @@ public class LeappBridgeTask extends AbstractPythonTask {
             ipedCase = new IPEDSource(this.output.getParentFile(), worker.writer);
         }
 
-        String checkFolder = "/data/data/com.android.providers.settings";
+        String checkFolder = "/data/data/com.android.vending";
 
         String parentPath = reportEvidence.getPath();
         parentPath = parentPath.substring(0, parentPath.length() - (REPORT_EVIDENCE_NAME.length() + 1));
