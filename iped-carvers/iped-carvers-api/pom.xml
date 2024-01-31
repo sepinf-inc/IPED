@@ -30,6 +30,11 @@
         	<version>${tika.core.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.dampcake</groupId>
+            <artifactId>bencode</artifactId>
+            <version>${bencode.version}</version>
+        </dependency>
+        <dependency>
         	<groupId>iped</groupId>
         	<artifactId>iped-ahocorasick</artifactId>
         	<version>1.1</version>

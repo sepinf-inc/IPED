@@ -40,7 +40,8 @@ public class ReportGenerator {
     private IItemSearcher searcher;
     private boolean firstFragment = true;
     private int currentMsg = 0;
-
+    
+    private static final String emptyMD5 = "d41d8cd98f00b204e9800998ecf8427e";
 
     private String creatSpanTag(String text) {
         return "<span class=\"tooltiptext\">" + SimpleHTMLEncoder.htmlEncode(text) + "</span>";
@@ -62,7 +63,12 @@ public class ReportGenerator {
         if (s == null || s.isEmpty()) {
             return "-";
         }
-        return SimpleHTMLEncoder.htmlEncode(s.trim());
+        String ret = SimpleHTMLEncoder.htmlEncode(s.trim());
+
+        // Keep line breaks present in the content, converting to an HTML <br>
+        ret = ret.replaceAll("\n", "<br>\n");
+
+        return ret;
     }
 
     public byte[] genarateContactHtml(Contact contact) {
@@ -81,11 +87,14 @@ public class ReportGenerator {
             out.println("<img src=\"data:image/jpg;base64," //$NON-NLS-1$
                     + iped.parsers.whatsapp.Util.encodeBase64(contact.getAvatar())
                     + "\" width=\"112\"/><br>"); //$NON-NLS-1$
-        out.println(Messages.getString("TelegramContact.ContactID") + contact.getId());
-        out.println("<br>" + Messages.getString("TelegramContact.FirstName") + format(contact.getName()));
-        out.println("<br>" + Messages.getString("TelegramContact.LastName") + format(contact.getLastName()));
-        out.println("<br>" + Messages.getString("TelegramContact.Username") + format(contact.getUsername()));
-        out.println("<br>" + Messages.getString("TelegramContact.Phone") + format(contact.getPhone()));
+        out.println(Messages.getString("TelegramContact.ContactID") + " " + contact.getId());
+        out.println("<br>" + Messages.getString("TelegramContact.FirstName") + " " + format(contact.getName()));
+        out.println("<br>" + Messages.getString("TelegramContact.LastName") + " " + format(contact.getLastName()));
+        out.println("<br>" + Messages.getString("TelegramContact.Username") + " " + format(contact.getUsername()));
+        out.println("<br>" + Messages.getString("TelegramContact.Phone") + " " + format(contact.getPhone()));
+        if (contact.isGroup()) {
+            out.println("<br>[" + Messages.getString("TelegramContact.Group") + "]");
+        }
         out.println("</body>\n</html>"); //$NON-NLS-1$
 
         out.flush();
@@ -148,12 +157,12 @@ public class ReportGenerator {
     private TagHtml getThumbTag(Message m, String classnotfound) {
         byte thumb[] = m.getThumb();
 
-        if (thumb == null && m.getMediaHash() != null) {
-            List<IItemReader> result = null;
-            if (searcher != null)
-                result = iped.parsers.util.Util.getItems("hash:" + m.getMediaHash(), searcher);
-            if (result != null && !result.isEmpty()) {
-                thumb = result.get(0).getThumb();
+        if (searcher != null && thumb == null && m.getMediaHash() != null && !m.getMediaHash().isBlank()) {
+            if (!m.getMediaHash().equalsIgnoreCase(emptyMD5)) {
+                List<IItemReader> result = iped.parsers.util.Util.getItems("md5:" + m.getMediaHash(), searcher);
+                if (result != null && !result.isEmpty()) {
+                    thumb = result.get(0).getThumb();
+                }
             }
         }
 
@@ -261,7 +270,14 @@ public class ReportGenerator {
 
     private void printImage(PrintWriter out, Message message, boolean isLink) {
         if (isLink) {
-            out.print("Link:<br/>");
+            out.print("<b>" + Messages.getString("TelegramReport.Link") + "</b><br/>");
+            if (message.getUrl() != null) {
+                out.print(Messages.getString("TelegramReport.LinkURL") + ": " + format(message.getUrl()) + "<br/>");
+            }
+            if (message.getLinkTitle() != null) {
+                out.print(Messages.getString("TelegramReport.LinkTitle") + ": " + format(message.getLinkTitle())
+                        + "<br/>");
+            }
         }
         if (message.getMediaHash() != null) {
 
@@ -374,6 +390,17 @@ public class ReportGenerator {
             }
 
         }
+
+        PoolData poolData = message.getPoolData();
+        if (poolData != null) {
+            out.println("<b>" + Messages.getString("TelegramReport.Pool") + "</b><br/>" + format(poolData.getTitle()));
+            out.println("<ul>");
+            for (String opt : poolData.getOptions()) {
+                out.println("<li>" + format(opt) + "</li>");
+            }
+            out.println("</ul>");
+        }
+
         if (message.getData() != null) {
             out.print(format(message.getData()));
         }

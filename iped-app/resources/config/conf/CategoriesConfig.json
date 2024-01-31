@@ -89,6 +89,7 @@
         {"name": "Chat Activities", "mimes": ["application/x-ufed-chatactivity"]},
         {"name": "Others Chats", "mimes":["application/x-ufed-html-chats", "application/x-ufed-chats-txt", "application/x-ufed-chat", "application/x-ufed-chat-preview"]}
     ]},
+    {"name": "Open Financial Exchange", "mimes": ["application/x-ofx-v1","application/x-ofx-v2","application/x-ofc"]},
     {"name": "USN Journal", "mimes": ["application/x-usnjournal-$J", "application/x-usnjournal-report-html", "application/x-usnjournal-report-csv", "application/x-usnjournal-registry"]},
     {"name": "Programs and Libraries", 
         "mimes": ["application/java-archive", "application/x-dosexec", "application/x-msdownload", "application/x-bat", "application/vnd.ms-cab-compressed", "application/x-font-ttf", "application/pkcs7-signature", "application/vnd.ms-htmlhelp", "application/java-vm", "application/vnd.ms-pki.seccat", "application/x-ms-installer", "application/x-ufed-html-apps", "application/x-ufed-installedapplication"],
@@ -182,6 +183,7 @@
     {"name": "File Downloads", "mimes": ["application/x-ufed-filedownload"]},
     {"name": "File Uploads", "mimes": ["application/x-ufed-fileupload"]},
     {"name": "Financial Accounts", "mimes": ["application/x-ufed-financialaccount"]},
+    {"name": "Transfers of Funds", "mimes": ["application/x-ufed-transferoffunds"]},
     {"name": "Fuzzy Data", "mimes": ["application/x-ufed-fuzzyentitymodel", "application/x-ufed-fuzzytimelinemodel"]},
     {"name": "Journeys", "mimes": ["application/x-ufed-journey"]},
     {"name": "Networks Usage", "mimes": ["application/x-ufed-networkusage"]},
