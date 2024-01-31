@@ -247,7 +247,32 @@
             <mediaType>application/x-shareaza-download</mediaType>
             <stopOnNextHeader>true</stopOnNextHeader>
         </carverType>
-        
+
+        <carverType>
+            <name>TORRENT</name>
+            <signatures>
+                <headerSignature>d8:announce</headerSignature>
+                <headerSignature>d4:info</headerSignature>
+                <headerSignature>d10:created by</headerSignature>
+                <headerSignature>d8:encoding</headerSignature>
+            </signatures>
+            <carverClass>iped.carvers.custom.TorrentCarver</carverClass>
+            <minLength>128</minLength>
+            <maxLength>262144</maxLength>
+            <mediaType>application/x-bittorrent</mediaType>
+        </carverType>
+
+        <carverType>
+            <name>RESUME.DAT</name>
+            <signatures>
+                <headerSignature>d10:.fileguard</headerSignature>
+            </signatures>
+            <carverClass>iped.carvers.custom.ResumeDatCarver</carverClass>
+            <minLength>1024</minLength>
+            <maxLength>104857600</maxLength>
+            <mediaType>application/x-bittorrent-resume-dat</mediaType>
+        </carverType>
+
         <!--carverType>
             <name>PLIST</name>
             <signatures>
