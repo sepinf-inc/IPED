@@ -509,8 +509,10 @@ public class LeappBridgeTask extends AbstractPythonTask {
 
     }
 
-    private void processPlugin(LeapArtifactsPlugin p, IItem evidence, IItem dumpEvidence, String dumpPath,
-            File reportDumpPath) throws IOException {
+    protected List<String> findAndExportTemporaryPluginRelatedFiles(LeapArtifactsPlugin p, IItem dumpEvidence, String dumpPath,
+            File reportDumpPath) {
+        List<String> filesFound = new ArrayList<String>();
+
         try {
             boolean temporaryReportDumpPath = false;
 
@@ -519,7 +521,6 @@ public class LeappBridgeTask extends AbstractPythonTask {
             // find files on dump that is needed by the plugin and exports them
             // to tmp folder if needed. ALeapp plugins will work on
             // these tmp copies of the files.
-            List<String> filesFound = new ArrayList<String>();
             for (String pattern : p.patterns) {
                 IPEDSearcher filesSearcher = new IPEDSearcher(ipedCase);
                 String query = "path:\"" + dumpEvidence.getPath() + "\"";
@@ -596,25 +597,34 @@ public class LeappBridgeTask extends AbstractPythonTask {
                     }
                 }
             }
-
-            if (filesFound.size() <= 0) {
-                evidence.setToIgnore(true);
-                return;
-            } else {
-                Metadata m = evidence.getMetadata();
-                for (String file : filesFound) {
-                    String filel = file.substring(preparePythonLiteralPath(reportDumpPath.getCanonicalPath()).length());
-                    filel = prepareIPEDLiteralPath(filel);
-                    String filename = filel.substring(filel.lastIndexOf("/") + 1);
-                    m.add(ExtraProperties.LINKED_ITEMS, "path:\"*" + filel + "\" && name:\"" + filename + "\"");
-
-                }
-                executePlugin(evidence, p, filesFound, reportDumpPath);
-            }
-
+        } catch (Exception e) {
+            e.printStackTrace();
         } finally {
+
         }
 
+
+        return filesFound;
+    }
+    
+    private void processPlugin(LeapArtifactsPlugin p, IItem evidence, IItem dumpEvidence, String dumpPath,
+            File reportDumpPath) throws IOException {
+        List<String> filesFound = findAndExportTemporaryPluginRelatedFiles(p, dumpEvidence, dumpPath, reportDumpPath);
+
+        if (filesFound.size() <= 0) {
+            evidence.setToIgnore(true);
+            return;
+        } else {
+            Metadata m = evidence.getMetadata();
+            for (String file : filesFound) {
+                String filel = file.substring(preparePythonLiteralPath(reportDumpPath.getCanonicalPath()).length());
+                filel = prepareIPEDLiteralPath(filel);
+                String filename = filel.substring(filel.lastIndexOf("/") + 1);
+                m.add(ExtraProperties.LINKED_ITEMS, "path:\"*" + filel + "\" && name:\"" + filename + "\"");
+
+            }
+            executePlugin(evidence, p, filesFound, reportDumpPath);
+        }
     }
 
     private String prepareIPEDLiteralPath(String filel) {
