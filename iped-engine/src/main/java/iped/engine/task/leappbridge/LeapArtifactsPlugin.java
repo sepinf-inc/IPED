@@ -6,6 +6,12 @@ import java.util.HashSet;
 
 import jep.python.PyCallable;
 
+/**
+ * @author Patrick Dalla Bernardina <patrick.dalla@gmail.com>
+ * 
+ *         Class that represents a identified and loaded ALeapp plugin
+ */
+
 public class LeapArtifactsPlugin {
     String moduleName;
     String methodName;

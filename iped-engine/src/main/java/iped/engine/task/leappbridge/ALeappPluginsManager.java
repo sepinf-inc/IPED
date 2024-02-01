@@ -17,6 +17,12 @@ import iped.properties.BasicProps;
 import jep.Jep;
 import jep.python.PyCallable;
 
+/**
+ * @author Patrick Dalla Bernardina <patrick.dalla@gmail.com>
+ * 
+ *         Class that implements ALeapp plugin identification, loading and
+ *         management.
+ */
 public class ALeappPluginsManager {
 
     Boolean initialized = false;

@@ -27,6 +27,14 @@ import iped.properties.ExtraProperties;
 import iped.utils.DateUtil;
 import jep.Jep;
 
+/**
+ * @author Patrick Dalla Bernardina <patrick.dalla@gmail.com>
+ * 
+ *         Class that will be injected to replace ArtifactHtmlReport of
+ *         scripts.artifact_report module in ALeapp plugin execution so results
+ *         can be extracted by java code and inserted as IPED items.
+ */
+
 public class ArtifactJavaReport {
     Jep jep;
     IItem pluginEvidence;

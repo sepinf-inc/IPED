@@ -50,6 +50,13 @@ import iped.utils.pythonhook.PythonHook;
 import jep.Jep;
 import jep.JepException;
 
+/**
+ * @author Patrick Dalla Bernardina <patrick.dalla@gmail.com>
+ * 
+ *         Class that implement a IPED task that will call ALeapp python plugins
+ *         to be executed against IPED processed found evidences. The artifacts
+ *         found by ALeapp will be extracted.
+ */
 public class LeappBridgeTask extends AbstractPythonTask {
 
     public static AtomicInteger pluginTimeCounter = new AtomicInteger(0);
@@ -509,6 +516,19 @@ public class LeappBridgeTask extends AbstractPythonTask {
 
     }
 
+    /**
+     * Find the evidence files that matches the plugin's patterns.
+     * <p>
+     * Find the evidence files that matches the plugin's patterns and export them
+     * to temp folder if needed so plugin execution can find them.
+     * <p>
+     *
+     * @param  p Plugin for which the related patterns will be searched.
+     * @param  dumpEvidence Dump evidence root, so the query will apply only to its children.
+     * @param  dumpPath Complete path to the dump folder.
+     * @param  reportDumpPath Complete path to the dump report folder.
+     * @return Description text text text.
+     */    
     protected List<String> findAndExportTemporaryPluginRelatedFiles(LeapArtifactsPlugin p, IItem dumpEvidence, String dumpPath,
             File reportDumpPath) {
         List<String> filesFound = new ArrayList<String>();
