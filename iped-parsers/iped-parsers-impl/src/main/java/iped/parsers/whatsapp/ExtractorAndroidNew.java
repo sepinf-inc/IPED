@@ -39,6 +39,7 @@ import static iped.parsers.whatsapp.Message.MessageType.MESSAGES_NOW_ENCRYPTED;
 import static iped.parsers.whatsapp.Message.MessageType.MISSED_VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.MISSED_VOICE_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.ORDER_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.PINNED_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.POLL_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.PRODUCT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.REFUSED_VIDEO_CALL;
@@ -711,6 +712,9 @@ public class ExtractorAndroidNew extends Extractor {
                     case 95:
                     case 110:
                         result = COMMUNITY_MANAGEMENT_ACTION;
+                        break;
+                    case 118:
+                        result = PINNED_MESSAGE;
                         break;
                     case 129:
                         result = SENDER_IN_CONTACTS;
