@@ -79,6 +79,7 @@ public class Message implements Comparable<Message> {
     private String uiElements;
     private MessageProduct product;
     private Date editTimeStamp;
+    private String address;
 
     static {
         try {
@@ -589,6 +590,14 @@ public class Message implements Comparable<Message> {
 
     public void setEditTimeStamp(Date editTimeStamp) {
         this.editTimeStamp = editTimeStamp;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
     }
 
     public static enum MessageType {

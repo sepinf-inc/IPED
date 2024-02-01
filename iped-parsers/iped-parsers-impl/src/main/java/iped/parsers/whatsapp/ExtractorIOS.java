@@ -487,24 +487,34 @@ public class ExtractorIOS extends Extractor {
             m.setMetaData(metadata);
         }
 
-        if (m.getMessageType() == EPHEMERAL_DEFAULT) {
-            m.setDuration(decodeEphemeralDuration(metadata));
-        }
+        switch (m.getMessageType()) {
+            case EPHEMERAL_DEFAULT:
+                m.setDuration(decodeEphemeralDuration(metadata));
+                break;
 
-        if (m.getMessageType() == TEMPLATE_MESSAGE) {
-            m.setMessageTemplate(decodeTemplate(metadata));
-        }
+            case TEMPLATE_MESSAGE:
+                m.setMessageTemplate(decodeTemplate(metadata));
+                break;
 
-        if (m.getMessageType() == GROUP_INVITE) {
-            m.setGroupInviteName(decodeGroupInvite(metadata));
-        }
+            case GROUP_INVITE:
+                m.setGroupInviteName(decodeGroupInvite(metadata));
+                break;
 
-        if (m.getMessageType() == PRODUCT_MESSAGE) {
-            m.setProduct(decodeProductInfo(metadata, m));
-        }
-        
-        if (m.getMessageType() == URL_MESSAGE) {
-            decodeURLInfo(metadata, m);
+            case PRODUCT_MESSAGE:
+                m.setProduct(decodeProductInfo(metadata, m));
+                break;
+
+            case URL_MESSAGE:
+                decodeURLInfo(metadata, m);
+                break;
+
+            case LOCATION_MESSAGE:
+            case SHARE_LOCATION_MESSAGE:
+                m.setAddress(rs.getString("mediaHash"));
+                break;
+
+            default:
+                break;
         }
 
         return m;

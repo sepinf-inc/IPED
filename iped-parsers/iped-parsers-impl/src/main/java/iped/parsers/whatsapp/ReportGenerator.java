@@ -804,6 +804,9 @@ public class ReportGenerator {
                                 Messages.getString("WhatsAppReport.Latitude") + ": " + message.getLatitude() + "<br>");
                         out.println(Messages.getString("WhatsAppReport.Longitude") + ": " + message.getLongitude()
                                 + "<br>");
+                        if (notNullNorBlank(message.getAddress())) {
+                            out.print(format(message.getAddress()) + "<br>");
+                        }
                         if (notNullNorBlank(message.getData())) {
                             out.print(format(message.getData()) + "<br>");
                         }
