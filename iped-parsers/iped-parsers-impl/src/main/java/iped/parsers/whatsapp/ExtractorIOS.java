@@ -392,6 +392,12 @@ public class ExtractorIOS extends Extractor {
                         messageQuote.setMessageType(decodeMessageType(0, -1));
                         messageQuote.setDeleted(true);
                     }
+                    if (messageQuote.getThumbData() == null) {
+                        byte[] thumbData = decodeThumbData(metadata);
+                        if (thumbData != null) {
+                            messageQuote.setThumbData(thumbData);
+                        }
+                    }
                     m.setMessageQuote(messageQuote);
                 }
             }
@@ -527,21 +533,41 @@ public class ExtractorIOS extends Extractor {
         return ret;
     }
 
+    private byte[] decodeThumbData(byte[] metadata) {
+        byte[] ret = null; 
+        Part p1 = new ProtoBufDecoder(metadata).decode(19);
+        if (p1 != null) {
+            List<Part> c1 = p1.getChilds();
+            if (c1 != null) {
+                for (Part p2 : c1) {
+                    Part p3 = p2.getChild(16);
+                    if (p3 != null) {
+                        byte[] bytes = p3.getBytes();
+                        if (bytes != null && (ret == null || ret.length < bytes.length)) {
+                            ret = bytes;
+                        }
+                    }
+                }
+            }
+        }
+        return ret;
+    }
+
     private MessageProduct decodeProductInfo(byte[] metadata, Message m) {
-        ProtoBufDecoder.Part p1 = new ProtoBufDecoder(metadata).decode(26);
+        Part p1 = new ProtoBufDecoder(metadata).decode(26);
         String title = null;
         String observation = null;
         String currency = null;
         String seller = null;
         int amount = 0;
         if (p1 != null) {
-            ProtoBufDecoder.Part p2 = p1.getChild(1);
+            Part p2 = p1.getChild(1);
             if (p2 != null) {
-                ProtoBufDecoder.Part p3 = p2.getChild(1);
+                Part p3 = p2.getChild(1);
                 if (p3 != null) {
-                    ProtoBufDecoder.Part p4 = p3.getChild(1);
+                    Part p4 = p3.getChild(1);
                     if (p4 != null) {
-                        ProtoBufDecoder.Part p5 = p4.getChild(16);
+                        Part p5 = p4.getChild(16);
                         if (p5 != null) {
                             byte[] bytes = p5.getBytes();
                             if (bytes != null) {
