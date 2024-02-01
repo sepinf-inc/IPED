@@ -799,8 +799,7 @@ public class ReportGenerator {
                     case SHARE_LOCATION_MESSAGE:
                         String key = message.getMessageType() == MessageType.LOCATION_MESSAGE ? "LocationMessage"
                                 : "SharedLocationMessage";
-                        out.println(
-                                "<b><u>" + locationIcon + Messages.getString("WhatsAppReport." + key) + "</u></b><br>");
+                        out.println("<b>" + locationIcon + Messages.getString("WhatsAppReport." + key) + "</b><br>");
                         out.println(
                                 Messages.getString("WhatsAppReport.Latitude") + ": " + message.getLatitude() + "<br>");
                         out.println(Messages.getString("WhatsAppReport.Longitude") + ": " + message.getLongitude()
@@ -819,7 +818,7 @@ public class ReportGenerator {
                         break;
                     case GROUP_INVITE:
                         printThumb(out, message);
-                        out.println("<b><u>" + Messages.getString("WhatsAppReport.GroupInvite") + "</u></b><br>");
+                        out.println("<b>" + Messages.getString("WhatsAppReport.GroupInvite") + "</b><br>");
                         if (message.getGroupInviteName() != null) {
                             out.println("<b>" + format(message.getGroupInviteName()) + "</b><br>");
                         }
@@ -833,7 +832,7 @@ public class ReportGenerator {
                         break;
                     case POLL_MESSAGE:
                         printThumb(out, message);
-                        out.println("<b><u>" + Messages.getString("WhatsAppReport.Poll") + "</u></b><br>");
+                        out.println("<b>" + Messages.getString("WhatsAppReport.Poll") + "</b><br>");
                         if (notNullNorBlank(message.getData())) {
                             out.println(format(message.getData()) + "<br>");
                         }
