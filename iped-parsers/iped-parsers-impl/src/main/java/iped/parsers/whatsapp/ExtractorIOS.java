@@ -640,21 +640,18 @@ public class ExtractorIOS extends Extractor {
     }
 
     private int decodeEphemeralDuration(byte[] metadata) {
-        int days = 7; // default value
-        int v1 = getPositiveValueFromMetadata(metadata, 2);
-        if (v1 == 0) {
-            days = 0;
-        } else if (v1 == 0x80) {
-            int v2 = getPositiveValueFromMetadata(metadata, 3);
-            int v3 = getPositiveValueFromMetadata(metadata, 4);
-            if (v2 == 0xA3 && v3 == 0x05) {
-                days = 1;
-            } else if (v2 == 0xF5 && v3 == 0x24) {
-                days = 7;
+        int seconds = 0;
+        Part p1 = new ProtoBufDecoder(metadata).decode(36);
+        if (p1 != null) {
+            String s = p1.getString();
+            if (s != null && !s.isBlank()) {
+                try {
+                    seconds = Integer.parseInt(s);
+                } catch (NumberFormatException e) {
+                }
             }
-            // Codes for other values (like 30 or 90 days)?
         }
-        return days * 86400;
+        return seconds;
     }
 
     private Message createMessageFromUndeletedRecord(SqliteRow row, Chat chat, Map<Long, SqliteRow> mediaItems,
