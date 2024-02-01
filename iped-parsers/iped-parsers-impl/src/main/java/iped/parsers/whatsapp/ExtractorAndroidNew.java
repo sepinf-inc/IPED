@@ -61,6 +61,7 @@ import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_VOICE_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP_FROM_LINK;
+import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_WHATSAPP;
 import static iped.parsers.whatsapp.Message.MessageType.USER_LEFT_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.USER_REMOVED_FROM_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.VIDEO_CALL;
@@ -719,6 +720,9 @@ public class ExtractorAndroidNew extends Extractor {
                         break;
                     case 134:
                         result = CHANNEL_ADDED_PRIVACY;
+                        break;
+                    case 136:
+                        result = USER_JOINED_WHATSAPP;
                         break;
                     default:
                         break;
