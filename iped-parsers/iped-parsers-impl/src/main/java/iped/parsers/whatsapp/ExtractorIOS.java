@@ -502,6 +502,10 @@ public class ExtractorIOS extends Extractor {
         if (m.getMessageType() == PRODUCT_MESSAGE) {
             m.setProduct(decodeProductInfo(metadata, m));
         }
+        
+        if (m.getMessageType() == URL_MESSAGE) {
+            decodeURLInfo(metadata, m);
+        }
 
         return m;
     }
@@ -518,19 +522,6 @@ public class ExtractorIOS extends Extractor {
             return new String(metadata, pos, length, StandardCharsets.UTF_8);
         }
         return null;
-    }
-
-    public boolean getHasQuoteFromMetadata(String metadata){
-        boolean ret = false;
-        if (metadata != null){
-            byte [] metadataArray = metadata.getBytes();
-            if (metadataArray!= null && metadataArray.length >= 1){
-                if (metadataArray[0] == 0x2A){
-                    return true;
-                }
-            }
-        }        
-        return ret;
     }
 
     private byte[] decodeThumbData(byte[] metadata) {
@@ -551,6 +542,38 @@ public class ExtractorIOS extends Extractor {
             }
         }
         return ret;
+    }
+
+    private void decodeURLInfo(byte[] metadata, Message m) {
+        List<Part> parts1 = new ProtoBufDecoder(metadata).decode();
+        if (parts1 != null) {
+            for (Part p1 : parts1) {
+                if (p1.getIdx() == 3) {
+                    String description = p1.getString();
+                    if (description != null && !description.isBlank()) {
+                        m.setData(description);
+                    }
+                } else if (p1.getIdx() == 19) {
+                    Part p2 = p1.getChild(3);
+                    if (p2 != null) {
+                        Part p3 = p2.getChild(3);
+                        if (p3 != null) {
+                            String s = p3.getString();
+                            if (s != null && !s.isBlank()) {
+                                m.setMediaCaption(s);
+                            }
+                        }
+                        p3 = p2.getChild(16);
+                        if (p3 != null) {
+                            byte[] bytes = p3.getBytes();
+                            if (bytes != null) {
+                                m.setThumbData(bytes);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private MessageProduct decodeProductInfo(byte[] metadata, Message m) {
@@ -929,8 +952,10 @@ public class ExtractorIOS extends Extractor {
                 }
                 // 6 / 14 (provavelmente : você foi removido do grupo)
                 // 6 / 9 (pode ser autorizacao de adm de grupo)
+                break;
             case 7:
                 result = URL_MESSAGE;
+                break;
             case 8:
                 result = APP_MESSAGE;
                 break;
@@ -975,7 +1000,6 @@ public class ExtractorIOS extends Extractor {
                 // 10 / (9, 10, 14 ou 16) -> desconhecida (aparece algumas vezes depois de
                 // mudança de código com nome do interlocutor)
                 break;
-
             case 11:
                 result = GIF_MESSAGE;
                 break;

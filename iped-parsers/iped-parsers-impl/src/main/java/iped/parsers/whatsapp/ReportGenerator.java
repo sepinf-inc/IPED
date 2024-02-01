@@ -783,10 +783,16 @@ public class ReportGenerator {
                         }
                         break;
                     case URL_MESSAGE:
-                        out.println("<a href=\"" + format(message.getUrl()) + "\">" + format(message.getUrl()) //$NON-NLS-1$ //$NON-NLS-2$
-                                + "</a><br>"); //$NON-NLS-1$
+                        printThumb(out, message);
+                        if (notNullNorBlank(message.getUrl())) {
+                            out.println("<b>" + format(message.getUrl()) + "</b><br>");
+                        }
+                        if (notNullNorBlank(message.getMediaCaption())
+                                && !message.getMediaCaption().equals(message.getData())) {
+                            out.print("[" + message.getMediaCaption() + "]<br>");
+                        }
                         if (notNullNorBlank(message.getData())) {
-                            out.print(format(message.getData()) + "<br>"); //$NON-NLS-1$
+                            out.print(format(message.getData()) + "<br>");
                         }
                         break;
                     case LOCATION_MESSAGE:
