@@ -1162,6 +1162,9 @@ public class ReportGenerator {
             sb.append("<b>").append(Messages.getString("WhatsAppReport.ProductTitle")).append(": </b>");
             sb.append(format(product.getTitle())).append("<br>");
         }
+        if (notNullNorBlank(product.getDescription())) {
+            sb.append(format(product.getDescription())).append("<br>");
+        }
         if (notNullNorBlank(seller)) {
             sb.append("<b>").append(Messages.getString("WhatsAppReport.ProductSeller")).append(": </b>");
             sb.append(format(seller)).append("<br>");
@@ -1176,7 +1179,7 @@ public class ReportGenerator {
         if (product.getAmount() > 0) {
             sb.append("<b>").append(Messages.getString("WhatsAppReport.ProductAmount")).append(": </b>");
             if (notNullNorBlank(product.getCurrency())) {
-                sb.append(product.getCurrency()).append(' ');
+                sb.append(format(product.getCurrency())).append(' ');
             }
             DecimalFormat nf = LocalizedFormat.getDecimalInstance("#,##0.00");
             sb.append(nf.format(product.getAmount() / 1000.0)).append("<br>");

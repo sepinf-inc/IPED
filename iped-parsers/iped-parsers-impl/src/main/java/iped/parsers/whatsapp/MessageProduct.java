@@ -5,12 +5,14 @@ public class MessageProduct {
     protected final String title;
     protected final String currency;
     protected final int amount;
+    protected final String description;
 
-    public MessageProduct(String title, String seller, String currency, int amount) {
+    public MessageProduct(String title, String seller, String currency, int amount, String description) {
         this.title = title;
         this.seller = seller;
         this.currency = currency;
         this.amount = amount;
+        this.description = description;
     }
 
     public String getSeller() {
@@ -27,5 +29,9 @@ public class MessageProduct {
 
     public int getAmount() {
         return amount;
+    }
+
+    public String getDescription() {
+        return description;
     }
 }

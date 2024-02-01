@@ -305,7 +305,7 @@ public class ExtractorAndroidNew extends Extractor {
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 m.setProduct(new MessageOrder(rs.getString("title"), rs.getString("seller"), rs.getInt("count"),
-                        rs.getString("currency"), rs.getInt("amount")));
+                        rs.getString("currency"), rs.getInt("amount"), rs.getString("description")));
             }
         }
     }
@@ -316,7 +316,7 @@ public class ExtractorAndroidNew extends Extractor {
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 m.setProduct(new MessageProduct(rs.getString("title"), rs.getString("seller"), rs.getString("currency"),
-                        rs.getInt("amount")));
+                        rs.getInt("amount"), rs.getString("description")));
             }
         }
     }
@@ -888,11 +888,11 @@ public class ExtractorAndroidNew extends Extractor {
     private static final String SELECT_REVOKED = "select raw_string as admin from message_revoked left join jid on admin_jid_row_id = jid._id where message_row_id=?";
 
     private static final String SELECT_ORDER = "select raw_string as seller, order_title as title,"
-            + " item_count as count, currency_code as currency, total_amount_1000 as amount"
+            + " item_count as count, currency_code as currency, total_amount_1000 as amount, message as description"
             + " from message_order left join jid on seller_jid = jid._id where message_row_id=?";
     
-    private static final String SELECT_PRODUCT = "select raw_string as seller, title as title,"
-            + " currency_code as currency, amount_1000 as amount"
+    private static final String SELECT_PRODUCT = "select raw_string as seller, title,"
+            + " currency_code as currency, amount_1000 as amount, description"
             + " from message_product left join jid on business_owner_jid = jid._id where message_row_id=?";
     
     private static final String SELECT_POLL_OPTION = "SELECT option_name as name, vote_total as total FROM message_poll_option where message_row_id=? order by _id";

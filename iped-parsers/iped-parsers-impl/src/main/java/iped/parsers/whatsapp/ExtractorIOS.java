@@ -493,6 +493,10 @@ public class ExtractorIOS extends Extractor {
             m.setGroupInviteName(decodeGroupInvite(metadata));
         }
 
+        if (m.getMessageType() == PRODUCT_MESSAGE) {
+            m.setProduct(decodeProductInfo(metadata, m));
+        }
+
         return m;
     }
 
@@ -521,6 +525,63 @@ public class ExtractorIOS extends Extractor {
             }
         }        
         return ret;
+    }
+
+    private MessageProduct decodeProductInfo(byte[] metadata, Message m) {
+        ProtoBufDecoder.Part p1 = new ProtoBufDecoder(metadata).decode(26);
+        String title = null;
+        String observation = null;
+        String currency = null;
+        String seller = null;
+        int amount = 0;
+        if (p1 != null) {
+            ProtoBufDecoder.Part p2 = p1.getChild(1);
+            if (p2 != null) {
+                ProtoBufDecoder.Part p3 = p2.getChild(1);
+                if (p3 != null) {
+                    ProtoBufDecoder.Part p4 = p3.getChild(1);
+                    if (p4 != null) {
+                        ProtoBufDecoder.Part p5 = p4.getChild(16);
+                        if (p5 != null) {
+                            byte[] bytes = p5.getBytes();
+                            if (bytes != null) {
+                                m.setThumbData(bytes);
+                            }
+                        }
+                    }
+                    p4 = p3.getChild(3);
+                    if (p4 != null) {
+                        title = p4.getString();
+                    }
+                    p4 = p3.getChild(4);
+                    if (p4 != null) {
+                        observation = p4.getString();
+                    }
+                    p4 = p3.getChild(5);
+                    if (p4 != null) {
+                        currency = p4.getString();
+                    }
+                    p4 = p3.getChild(6);
+                    if (p4 != null) {
+                        String v = p4.getString();
+                        if (v != null && !v.isBlank()) {
+                            try {
+                                amount = Integer.parseInt(v);
+                            } catch (NumberFormatException e) {
+                            }
+                        }
+                    }
+                    p3 = p2.getChild(2);
+                    if (p3 != null) {
+                        seller = p3.getString();
+                    }
+                }
+            }
+        }
+        if (title != null || currency != null || amount != 0 || seller != null) {
+            return new MessageProduct(title, seller, currency, amount, observation);
+        }
+        return null;
     }
 
     private String decodeGroupInvite(byte[] metadata) {

@@ -3,6 +3,7 @@ package iped.parsers.whatsapp;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class ProtoBufDecoder {
@@ -40,16 +41,33 @@ public class ProtoBufDecoder {
         public Part getChild(int idx) {
             if (value instanceof List<?>) {
                 List<Part> l = (List<Part>) value;
-                for(Part p: l) {
-                    if (p.getIdx() == idx) return p;
+                for (Part p : l) {
+                    if (p.getIdx() == idx) {
+                        return p;
+                    }
                 }
+            }
+            return null;
+        }
+
+        public byte[] getBytes() {
+            if (value instanceof byte[]) {
+                return (byte[]) value;
+            }
+            return null;
+        }
+
+        public String getString() {
+            if (value instanceof String) {
+                return (String) value;
             }
             return null;
         }
 
         @Override
         public String toString() {
-            return "[idx=" + idx + ", type=" + type + ", value=" + value + "]";
+            String v = value instanceof byte[] ? Arrays.toString((byte[]) value) : value.toString();
+            return "\n[idx=" + idx + ", type=" + type + ", value=" + v + "]";
         }
     }
 
@@ -121,7 +139,11 @@ public class ProtoBufDecoder {
         } catch (Exception e) {
         }
         try {
-            return new String(res, StandardCharsets.UTF_8);
+            String s = new String(res, StandardCharsets.UTF_8);
+            byte[] b = s.getBytes(StandardCharsets.UTF_8);
+            if (Arrays.equals(b, res)) {
+                return s;
+            }
         } catch (Exception e) {
         }
         return res;
