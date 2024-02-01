@@ -52,7 +52,6 @@
     <task class="iped.engine.task.MinIOTask"></task>
     
     <task class="iped.engine.task.leappbridge.LeappBridgeTask"></task>
-    <task script="LeappCategoryTask.js"></task>
     
     <task class="iped.engine.task.index.ElasticSearchIndexTask"></task>
     <task class="iped.engine.task.index.IndexTask"></task>
