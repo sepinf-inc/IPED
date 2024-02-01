@@ -588,8 +588,8 @@ public class ExtractorIOS extends Extractor {
         Part p1 = new ProtoBufDecoder(metadata).decode(28);
         if (p1 != null) {
             Part p2 = p1.getChild(4);
-            if (p2 != null && p2.getValue() instanceof String) {
-                return (String) p2.getValue();
+            if (p2 != null) {
+                return p2.getString();
             }
         }
         return null;
@@ -604,8 +604,8 @@ public class ExtractorIOS extends Extractor {
                 StringBuilder content = new StringBuilder();
                 for (int idx : new int[] { 2, 6, 7 }) {
                     Part p3 = p2.getChild(idx);
-                    if (p3 != null && p3.getValue() instanceof String) {
-                        String s = (String) p3.getValue();
+                    if (p3 != null) {
+                        String s = p3.getString();
                         if (s != null && !s.isBlank()) {
                             if (content.length() > 0) {
                                 content.append("\n");
@@ -622,13 +622,13 @@ public class ExtractorIOS extends Extractor {
                         if (p4 != null) {
                             Part p5 = p4.getChild(1);
                             String text = "";
-                            if (p5 != null && p5.getValue() instanceof String) {
-                                text = (String) p5.getValue();
+                            if (p5 != null) {
+                                text = p5.getString();
                             }
                             p5 = p4.getChild(2);
                             String extra = "";
-                            if (p5 != null && p5.getValue() instanceof String) {
-                                extra = (String) p5.getValue();
+                            if (p5 != null) {
+                                extra = p5.getString();
                             }
                             t.addButton(new MessageTemplate.Button(text, extra));
                         }
@@ -778,9 +778,8 @@ public class ExtractorIOS extends Extractor {
                             if (parts3 != null) {
                                 MessageAddOn a = new MessageAddOn();
                                 for (Part p3 : parts3) {
-                                    Object v3 = p3.getValue();
-                                    if (v3 != null && v3 instanceof String) {
-                                        String s3 = (String) v3;
+                                    String s3 = p3.getString();
+                                    if (s3 != null) {
                                         if (p3.getIdx() == 2) {
                                             a.setRemoteResource(s3);
                                         } else if (p3.getIdx() == 3) {
@@ -799,9 +798,8 @@ public class ExtractorIOS extends Extractor {
                                 MessageAddOn a = new MessageAddOn();
                                 a.setFromMe(true);
                                 for (Part p3 : parts3) {
-                                    Object v3 = p3.getValue();
-                                    if (v3 != null && v3 instanceof String) {
-                                        String s3 = (String) v3;
+                                    String s3 = p3.getString();
+                                    if (s3 != null) {
                                         if (p3.getIdx() == 2) {
                                             a.setReaction(s3);
                                         } else if (p3.getIdx() == 3) {
@@ -819,8 +817,8 @@ public class ExtractorIOS extends Extractor {
                 List<Part> parts2 = p1.getChilds();
                 if (parts2 != null) {
                     for (Part p2 : parts2) {
-                        if (p2.getIdx() == 2 && p2.getValue() instanceof String) {
-                            String s2 = (String) p2.getValue();
+                        if (p2.getIdx() == 2) {
+                            String s2 = p2.getString();
                             if (s2 != null && !s2.isBlank()) {
                                 // Poll question
                                 m.setData(s2);
@@ -830,8 +828,8 @@ public class ExtractorIOS extends Extractor {
                             List<Part> parts3 = p2.getChilds();
                             if (parts3 != null) {
                                 for (Part p3 : parts3) {
-                                    if (p3.getIdx() == 1 && p3.getValue() instanceof String) {
-                                        String s3 = (String) p3.getValue();
+                                    if (p3.getIdx() == 1) {
+                                        String s3 = p3.getString();
                                         if (s3 != null && !s3.isBlank()) {
                                             // Poll option
                                             m.addPollOption(new PollOption(s3, 0));
