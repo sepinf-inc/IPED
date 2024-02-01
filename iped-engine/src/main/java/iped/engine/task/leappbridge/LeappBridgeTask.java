@@ -517,26 +517,31 @@ public class LeappBridgeTask extends AbstractPythonTask {
     }
 
     /**
-     * Find the evidence files that matches the plugin's patterns.
-     * <p>
-     * Find the evidence files that matches the plugin's patterns and export them
-     * to temp folder if needed so plugin execution can find them.
-     * <p>
-     *
-     * @param  p Plugin for which the related patterns will be searched.
-     * @param  dumpEvidence Dump evidence root, so the query will apply only to its children.
-     * @param  dumpPath Complete path to the dump folder.
-     * @param  reportDumpPath Complete path to the dump report folder.
-     * @return Description text text text.
-     */    
-    protected List<String> findAndExportTemporaryPluginRelatedFiles(LeapArtifactsPlugin p, IItem dumpEvidence, String dumpPath,
-            File reportDumpPath) {
+     * Find the evidence files that matches the plugin's patterns and calls plugin
+     * execution.
+     * 
+     * @param p
+     *            Plugin to execute
+     * @param evidence
+     *            Plugin evidence item.
+     * @param dumpEvidence
+     *            Dump evidence root, so the query will apply only to its children.
+     * @param reportDumpPath
+     *            Complete path to the effective source report dump folder. If IPED
+     *            processing is against a Folder the path will be this folder.
+     *            Otherwise, if IPED processing is against a ZIP, E01, or any
+     *            container, this parameter must contain a path to
+     */
+    private void processPlugin(LeapArtifactsPlugin p, IItem evidence, IItem dumpEvidence, File reportDumpPath)
+            throws IOException {
         List<String> filesFound = new ArrayList<String>();
 
         try {
             boolean temporaryReportDumpPath = false;
 
             filesFoundDocuments = new HashMap<String, Document>();
+
+            String dumpPath = dumpEvidence.getPath();
 
             // find files on dump that is needed by the plugin and exports them
             // to tmp folder if needed. ALeapp plugins will work on
@@ -617,33 +622,25 @@ public class LeappBridgeTask extends AbstractPythonTask {
                     }
                 }
             }
+
+            if (filesFound.size() <= 0) {
+                evidence.setToIgnore(true);
+                return;
+            } else {
+                Metadata m = evidence.getMetadata();
+                for (String file : filesFound) {
+                    String filel = file.substring(preparePythonLiteralPath(reportDumpPath.getCanonicalPath()).length());
+                    filel = prepareIPEDLiteralPath(filel);
+                    String filename = filel.substring(filel.lastIndexOf("/") + 1);
+                    m.add(ExtraProperties.LINKED_ITEMS, "path:\"*" + filel + "\" && name:\"" + filename + "\"");
+
+                }
+                executePlugin(evidence, p, filesFound, reportDumpPath);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
 
-        }
-
-
-        return filesFound;
-    }
-    
-    private void processPlugin(LeapArtifactsPlugin p, IItem evidence, IItem dumpEvidence, String dumpPath,
-            File reportDumpPath) throws IOException {
-        List<String> filesFound = findAndExportTemporaryPluginRelatedFiles(p, dumpEvidence, dumpPath, reportDumpPath);
-
-        if (filesFound.size() <= 0) {
-            evidence.setToIgnore(true);
-            return;
-        } else {
-            Metadata m = evidence.getMetadata();
-            for (String file : filesFound) {
-                String filel = file.substring(preparePythonLiteralPath(reportDumpPath.getCanonicalPath()).length());
-                filel = prepareIPEDLiteralPath(filel);
-                String filename = filel.substring(filel.lastIndexOf("/") + 1);
-                m.add(ExtraProperties.LINKED_ITEMS, "path:\"*" + filel + "\" && name:\"" + filename + "\"");
-
-            }
-            executePlugin(evidence, p, filesFound, reportDumpPath);
         }
     }
 
@@ -696,9 +693,8 @@ public class LeappBridgeTask extends AbstractPythonTask {
 
             IItem leappRepEvidence = ipedCase.getItemByID(evidence.getParentId());
             IItem dumpEvidence = ipedCase.getItemByID(leappRepEvidence.getParentId());
-            String dumpPath = dumpEvidence.getPath();
 
-            processPlugin(p, evidence, dumpEvidence, dumpPath, reportDumpPath);
+            processPlugin(p, evidence, dumpEvidence, reportDumpPath);
 
             if (!evidence.hasChildren()) {
                 evidence.setToIgnore(true);
