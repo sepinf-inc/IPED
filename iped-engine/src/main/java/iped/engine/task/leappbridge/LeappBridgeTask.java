@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang.SystemUtils;
@@ -65,6 +64,7 @@ public class LeappBridgeTask extends AbstractPythonTask {
     public static final String ALEAPP_ISREPORT = ALEAPP_METADATA_PREFIX + ":isReport";
     public static final String ALEAPP_ISPLUGIN = ALEAPP_METADATA_PREFIX + ":isPlugin";
     public static final String ALEAPP_PLUGIN = ALEAPP_METADATA_PREFIX + ":PLUGIN";
+    public static final String ALEAPP_ISARTIFACT = ALEAPP_METADATA_PREFIX + ":isArtifact";
 
     static final String REPORT_EVIDENCE_NAME = "LEAPP_Reports";
     static final String REPORT_FOLDER_NAME = "LEAPP_Reports_";
@@ -86,8 +86,6 @@ public class LeappBridgeTask extends AbstractPythonTask {
 
     private File tmpFileRef;
     private File reportPath;
-
-    private Future<Jep> fjep;
 
     private ExecutorService service;
 
@@ -409,6 +407,11 @@ public class LeappBridgeTask extends AbstractPythonTask {
                 processDeviceDetails(evidence);
             }
         }
+
+        String isArtifact = evidence.getMetadata().get(ALEAPP_ISARTIFACT);
+        if (isArtifact != null && isArtifact.equals("true")) {
+            processClassificationAndMappings(evidence);
+        }
     }
 
     private void processDeviceDetails(IItem evidence) {
@@ -695,4 +698,71 @@ public class LeappBridgeTask extends AbstractPythonTask {
         return c;
     }
 
+    private void processClassificationAndMappings(IItem e) {
+        Metadata m = e.getMetadata();
+        String pluginName = m.get(ALEAPP_PLUGIN);
+
+        if (pluginName.equals("accounts_ce") || pluginName.equals("accounts_de")) {
+            e.setCategory("User Accounts");
+            return;
+        }
+        if (pluginName.equals("accounts_ce_authtokens")) {
+            e.setCategory("Passwords");
+            return;
+        }
+        if (pluginName.equals("siminfo")) {
+            e.setCategory("SIM Data");
+            return;
+        }
+        if (pluginName.equals("Cello")) {
+            e.setCategory("GDrive File Entries");
+            return;
+        }
+        if (pluginName.equals("roles")) {
+            e.setCategory("AppRoles");
+            return;
+        }
+        if (pluginName.equals("frosting")) {
+            e.setCategory("Update information");
+            return;
+        }
+        String mime = e.getMediaType().toString();
+        if (pluginName.equals("gmailEmails")) {
+            if (mime.contains("appemails")) {
+                e.setCategory("Emails");
+                m.add("Communitactions:TO", m.get("ALEAPP:To"));
+            }
+            return;
+        }
+        if (pluginName.equals("FacebookMessenger")) {
+            if (mime.contains("contacts")) {
+                e.setCategory("Contacts");
+            }
+            if (mime.contains("userid")) {
+                e.setCategory("User Accounts");
+            }
+            if (mime.contains("chats")) {
+                e.setCategory("Instant Messages");
+                var linked = m.get("linkedItems");
+                var start = linked.indexOf("msys_database_") + 14;
+                var uid = linked.substring(start, linked.indexOf("\"", start));
+                if (m.get("ALEAPP:Sender ID").equals(uid)) {
+                    m.add(ExtraProperties.COMMUNICATION_FROM, uid);
+                    m.add(ExtraProperties.COMMUNICATION_TO, m.get("ALEAPP:Thread Key"));
+                } else {
+                    m.add(ExtraProperties.COMMUNICATION_FROM, m.get("ALEAPP:Sender ID"));
+                    m.add(ExtraProperties.COMMUNICATION_TO, uid);
+                }
+            }
+            return;
+        }
+        if (pluginName.equals("settingsSecure")) {
+            String name = m.get("ALEAPP:Name");
+            String value = m.get("ALEAPP:Value");
+            if ((name == "bluetooth_address") || (name == "bluetooth_name")) {
+                e.setCategory("Bluetooth Devices");
+            }
+            return;
+        }
+    }
 }
