@@ -83,9 +83,13 @@ public class ArtifactJavaReport {
     }
 
     public void start_artifact_report(String repFolder, String repName, String artifact_description) {
-        this.repName = repName;
-        currentReportMediaType = MediaType
-                .application("aleapp-" + repName.replaceAll(" ", "").replace("(", "-").replace(")", "").toLowerCase());
+        try {
+            this.repName = repName;
+            currentReportMediaType = MediaType.application(
+                    "aleapp-" + repName.replaceAll(" ", "").replace("(", "-").replace(")", "").toLowerCase());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
     }
 
@@ -136,7 +140,6 @@ public class ArtifactJavaReport {
                 currentReportEvidence = (Item) pluginEvidence;
             }
             Item subItem = (Item) currentReportEvidence.createChildItem();
-            // Item fileEvidence = mappedEvidences.get(file.toString());
             ParentInfo parentInfo = new ParentInfo(currentReportEvidence);
 
             count++;
@@ -151,14 +154,25 @@ public class ArtifactJavaReport {
             Metadata m = subItem.getMetadata();
 
             // if file parameters corresponds to a dump path, add a link to it
+            String linkFile = null;
             if (file.startsWith(reportDumpPath.getCanonicalPath())) {
-                String filel = file.substring(reportDumpPath.getCanonicalPath().length());
-                filel = LeappBridgeTask.revertSpecialChars(filel).replace("/", "//");
-                String filename = filel.substring(filel.lastIndexOf("/") + 1);
-                m.add(ExtraProperties.LINKED_ITEMS, "path:\"*" + filel + "\" && name:\"" + filename + "\"");
+                linkFile = file.substring(reportDumpPath.getCanonicalPath().length());
+            } else {
+                String dumpRelativePath = reportDumpPath.getCanonicalPath()
+                        .substring(reportPath.getCanonicalPath().length());
+                if (file.startsWith(dumpRelativePath)) {
+                    linkFile = file.substring(dumpRelativePath.length());
+                }
+            }
+
+            if (linkFile != null) {
+                linkFile = LeappBridgeTask.revertSpecialChars(linkFile).replace("/", "//");
+                String filename = linkFile.substring(linkFile.lastIndexOf("/") + 1);
+                m.add(ExtraProperties.LINKED_ITEMS, "path:\"*" + linkFile + "\" && name:\"" + filename + "\"");
             }
 
             m.add(LeappBridgeTask.ALEAPP_PLUGIN, this.pluginName);
+            m.add(LeappBridgeTask.ALEAPP_ISARTIFACT, "true");
 
             int i = 0;
             Object[] data = ((Collection) data_fields).toArray();
