@@ -610,6 +610,10 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.ChannelCreated") + "<br>");
                 break;
+            case USER_JOINED_WHATSAPP:
+                out.println("<div class=\"systemmessage\">");
+                out.println(name + " " + Messages.getString("WhatsAppReport.UserJoinedWhatsApp") + ".<br>");
+                break;
 
             default:
                 IItemReader mediaItem = null;
