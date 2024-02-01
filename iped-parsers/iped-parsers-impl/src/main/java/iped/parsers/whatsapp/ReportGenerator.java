@@ -801,8 +801,10 @@ public class ReportGenerator {
                                 : "SharedLocationMessage";
                         out.println(
                                 "<b><u>" + locationIcon + Messages.getString("WhatsAppReport." + key) + "</u></b><br>");
-                        out.println("Latitude: " + message.getLatitude() + "<br>");
-                        out.println("Longitude: " + message.getLongitude() + "<br>");
+                        out.println(
+                                Messages.getString("WhatsAppReport.Latitude") + ": " + message.getLatitude() + "<br>");
+                        out.println(Messages.getString("WhatsAppReport.Longitude") + ": " + message.getLongitude()
+                                + "<br>");
                         if (notNullNorBlank(message.getData())) {
                             out.print(format(message.getData()) + "<br>");
                         }
@@ -963,8 +965,10 @@ public class ReportGenerator {
                                     if (message.getMessageType() == MessageType.IMAGE_MESSAGE
                                             || message.getMessageType() == MessageType.VIEW_ONCE_IMAGE_MESSAGE) {
                                         out.println("<div class=\"imageImg\" title=\"Image\"></div>"); //$NON-NLS-1$
-                                    } else
-                                        out.println("Attachment:<br><div class=\"attachImg\" title=\"Doc\"></div>"); //$NON-NLS-1$
+                                    } else {
+                                        out.print(Messages.getString("WhatsAppReport.Attachment"));
+                                        out.println("<br><div class=\"attachImg\" title=\"Doc\"></div>"); //$NON-NLS-1$
+                                    }
                                 }
                                 out.println("</a><br>"); //$NON-NLS-1$
                                 if (mediaItem.getMetadata().get(ExtraProperties.DOWNLOADED_DATA) != null) {
@@ -1000,7 +1004,8 @@ public class ReportGenerator {
                                         out.println(" title=\"" + getTitle(message) + "\">"); //$NON-NLS-1$ //$NON-NLS-2$
 
                                     } else if (message.getMessageType() == MessageType.APP_MESSAGE) {
-                                        out.println("Attachment:<br><div class=\"attachImg\" title=\"Doc\"></div>"); //$NON-NLS-1$
+                                        out.print(Messages.getString("WhatsAppReport.Attachment"));
+                                        out.println("<br><div class=\"attachImg\" title=\"Doc\"></div>"); //$NON-NLS-1$
                                     } else {
                                         out.println("<div class=\"imageImg\" title=\"Image\"></div>"); //$NON-NLS-1$
                                     }
