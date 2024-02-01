@@ -796,19 +796,15 @@ public class ReportGenerator {
                         }
                         break;
                     case LOCATION_MESSAGE:
-                        out.println("<b><u>" + locationIcon + Messages.getString("WhatsAppReport.LocationMessage") + "</u></b><br>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                        out.println("Latitude: " + message.getLatitude() + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
-                        out.println("Longitude: " + message.getLongitude() + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
-                        if (notNullNorBlank(message.getData())) {
-                            out.print(format(message.getData()) + "<br>"); //$NON-NLS-1$
-                        }
-                        break;
                     case SHARE_LOCATION_MESSAGE:
-                        out.println("<b><u>" + locationIcon + Messages.getString("WhatsAppReport.SharedLocationMessage") + "</u></b><br>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                        out.println("Latitude: " + message.getLatitude() + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
-                        out.println("Longitude: " + message.getLongitude() + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
+                        String key = message.getMessageType() == MessageType.LOCATION_MESSAGE ? "LocationMessage"
+                                : "SharedLocationMessage";
+                        out.println(
+                                "<b><u>" + locationIcon + Messages.getString("WhatsAppReport." + key) + "</u></b><br>");
+                        out.println("Latitude: " + message.getLatitude() + "<br>");
+                        out.println("Longitude: " + message.getLongitude() + "<br>");
                         if (notNullNorBlank(message.getData())) {
-                            out.print(format(message.getData()) + "<br>"); //$NON-NLS-1$
+                            out.print(format(message.getData()) + "<br>");
                         }
                         break;
                     case CONTACT_MESSAGE:
