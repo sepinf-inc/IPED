@@ -859,7 +859,7 @@ public class ExtractorIOS extends Extractor {
                     result = MISSED_VOICE_CALL;
                 } else if (gEventType == 3) {
                     result = ENCRYPTION_KEY_CHANGED;
-                } else if (gEventType == 4) {
+                } else if (gEventType == 4 || gEventType == 46) {
                     result = MISSED_VIDEO_CALL;
                 } else if (gEventType == 5) {
                     result = CHANGED_NUMBER_CHATTING_WITH_OLD;
