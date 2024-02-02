@@ -683,10 +683,10 @@ public class ReportGenerator {
                             "</span><br><span class=\"quote_msg\">"+quoteIcon +
                                 " "+ format(dataQuote) + " "+  quoteDuration + "</span></div>");
                             if (thumbQuote != null) {
-                                out.print("<div><img style=\"width:33px;height:33px;display:table-cell\" src=\"");
+                                out.print("<div><img class=\"quoteImg\" src=\"");
                                 out.print("data:image/jpg;base64," + Util.encodeBase64(thumbQuote) + "\"></div>");
                             } else {
-                                out.println("<div class=\"videoImg\" style=\"width:33px;height:33px;display:table-cell\" title=\"Video\"></div>");
+                                out.println("<div class=\"videoImg quoteImg\" title=\"Video\"></div>");
                             }
                             break;                        
                         case STICKER_MESSAGE:
@@ -698,10 +698,10 @@ public class ReportGenerator {
                             out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div style=\"display:table-cell;vertical-align:top;border-right: 10px solid transparent;\"><span class=\"quote_user\">"+quoteUser+
                                 "</span><br><span class=\"quote_msg\">"+quoteIcon +" "+ format(dataQuote) + " </span></div>");                                    
                             if (thumbQuote != null) {
-                                out.print("<div><img style=\"width:33px;height:33px;display:table-cell\" src=\"");
+                                out.print("<div><img class=\"quoteImg\" src=\"");
                                 out.print("data:image/jpg;base64," + Util.encodeBase64(thumbQuote) + "\"></div>");
                             } else {
-                                out.println("<div class=\"imageImg\" style=\"width:33px;height:33px;display:table-cell\" title=\"Image\"></div>");
+                                out.println("<div class=\"imageImg quoteImg\" title=\"Image\"></div>");
                             }
                             break;                        
                         case APP_MESSAGE:
@@ -712,10 +712,10 @@ public class ReportGenerator {
                             out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div style=\"display:table-cell;vertical-align:top;border-right: 10px solid transparent;\"><span class=\"quote_user\">"+quoteUser+
                                 "</span><br><span class=\"quote_msg\">"+quoteIcon +" "+ format(dataQuote) + " </span></div>");                                    
                             if (thumbQuote != null) {
-                                out.print("<div><img style=\"width:33px;height:33px;display:table-cell\" src=\"");
+                                out.print("<div><img class=\"quoteImg\" src=\"");
                                 out.print("data:image/jpg;base64," + Util.encodeBase64(thumbQuote) + "\"></div>");
                             } else {
-                                out.println("<div class=\"attachImg\" style=\"width:33px;height:33px;display:table-cell\" title=\"Doc\"></div>");
+                                out.println("<div class=\"attachImg quoteImg\" title=\"Doc\"></div>");
                             }
                             break;                            
                         case TEMPLATE_MESSAGE:

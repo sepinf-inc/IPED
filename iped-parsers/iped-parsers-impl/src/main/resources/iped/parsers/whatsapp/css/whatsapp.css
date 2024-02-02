@@ -257,6 +257,12 @@ div:target{
     color: #67747D;	
 }
 
+.quoteImg {
+    width: 33px;
+    height: 33px;
+    display: table-cell;
+}
+
 @keyframes div-animate {
     0% {background: rgba(175, 211, 240,1);}
     100% {background: rgba(175, 211, 240,0);}
