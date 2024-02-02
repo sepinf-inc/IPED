@@ -513,21 +513,6 @@ public class ExtractorIOS extends Extractor {
                 m.setAddress(rs.getString("mediaHash"));
                 break;
 
-            case APP_MESSAGE:
-            case AUDIO_MESSAGE:
-            case CONTACT_MESSAGE:
-            case GIF_MESSAGE:
-            case IMAGE_MESSAGE:
-            case STICKER_MESSAGE:
-            case VIDEO_MESSAGE:
-            case VIEW_ONCE_IMAGE_MESSAGE:
-            case VIEW_ONCE_VIDEO_MESSAGE:
-                byte[] thumbData = decodeThumbData(metadata);
-                if (thumbData != null) {
-                    m.setThumbData(thumbData);
-                }
-                break;
-
             default:
                 break;
         }
