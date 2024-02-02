@@ -679,7 +679,7 @@ public class ReportGenerator {
                             if (dataQuote == null || dataQuote.isEmpty()){
                                 dataQuote = Messages.getString("WhatsAppReport.Video");
                             }
-                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div style=\"display:table-cell;vertical-align:top;border-right: 10px solid transparent;\"><span class=\"quoteUser\">"+quoteUser+
+                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div class=\"quoteTop\"><span class=\"quoteUser\">"+quoteUser+
                             "</span><br><span class=\"quoteMsg\">"+quoteIcon +
                                 " "+ format(dataQuote) + " "+  quoteDuration + "</span></div>");
                             if (thumbQuote != null) {
@@ -695,7 +695,7 @@ public class ReportGenerator {
                             if (dataQuote == null || dataQuote.isEmpty()){
                                 dataQuote = Messages.getString("WhatsAppReport.Photo");
                             }
-                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div style=\"display:table-cell;vertical-align:top;border-right: 10px solid transparent;\"><span class=\"quoteUser\">"+quoteUser+
+                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div class=\"quoteTop\"><span class=\"quoteUser\">"+quoteUser+
                                 "</span><br><span class=\"quoteMsg\">"+quoteIcon +" "+ format(dataQuote) + " </span></div>");                                    
                             if (thumbQuote != null) {
                                 out.print("<div><img class=\"quoteImg\" src=\"");
@@ -709,7 +709,7 @@ public class ReportGenerator {
                             if (dataQuote == null || dataQuote.isEmpty()){
                                 dataQuote = Messages.getString("WhatsAppReport.Document");
                             }
-                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div style=\"display:table-cell;vertical-align:top;border-right: 10px solid transparent;\"><span class=\"quoteUser\">"+quoteUser+
+                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div class=\"quoteTop\"><span class=\"quoteUser\">"+quoteUser+
                                 "</span><br><span class=\"quoteMsg\">"+quoteIcon +" "+ format(dataQuote) + " </span></div>");                                    
                             if (thumbQuote != null) {
                                 out.print("<div><img class=\"quoteImg\" src=\"");
