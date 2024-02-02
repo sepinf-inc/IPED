@@ -643,7 +643,7 @@ public class ReportGenerator {
                             + Messages.getString("WhatsAppReport.Forwarded") + "</span><br>");
                 }
 
-                String quoteClass = (message.isFromMe())?"quote_to":"quote_from";                
+                String quoteClass = (message.isFromMe())?"quoteTo":"quoteFrom";                
                 Message messageQuote = message.getMessageQuote();
 
                 if (message.isQuoted() && messageQuote != null){
@@ -669,8 +669,8 @@ public class ReportGenerator {
                                 dataQuote = Messages.getString("WhatsAppReport.Audio");
                             }
                             quoteIcon = "\uD83C\uDFA7";
-                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div style=\"display:table-cell;\"><span class=\"quote_user\">"+quoteUser+
-                            "</span><br><span class=\"quote_msg\">"+quoteIcon +
+                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div style=\"display:table-cell;\"><span class=\"quoteUser\">"+quoteUser+
+                            "</span><br><span class=\"quoteMsg\">"+quoteIcon +
                                 " "+ format(dataQuote) + " "+  quoteDuration + "</span></div>");                                    
                             break;
                         case VIDEO_MESSAGE:     
@@ -679,8 +679,8 @@ public class ReportGenerator {
                             if (dataQuote == null || dataQuote.isEmpty()){
                                 dataQuote = Messages.getString("WhatsAppReport.Video");
                             }
-                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div style=\"display:table-cell;vertical-align:top;border-right: 10px solid transparent;\"><span class=\"quote_user\">"+quoteUser+
-                            "</span><br><span class=\"quote_msg\">"+quoteIcon +
+                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div style=\"display:table-cell;vertical-align:top;border-right: 10px solid transparent;\"><span class=\"quoteUser\">"+quoteUser+
+                            "</span><br><span class=\"quoteMsg\">"+quoteIcon +
                                 " "+ format(dataQuote) + " "+  quoteDuration + "</span></div>");
                             if (thumbQuote != null) {
                                 out.print("<div><img class=\"quoteImg\" src=\"");
@@ -695,8 +695,8 @@ public class ReportGenerator {
                             if (dataQuote == null || dataQuote.isEmpty()){
                                 dataQuote = Messages.getString("WhatsAppReport.Photo");
                             }
-                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div style=\"display:table-cell;vertical-align:top;border-right: 10px solid transparent;\"><span class=\"quote_user\">"+quoteUser+
-                                "</span><br><span class=\"quote_msg\">"+quoteIcon +" "+ format(dataQuote) + " </span></div>");                                    
+                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div style=\"display:table-cell;vertical-align:top;border-right: 10px solid transparent;\"><span class=\"quoteUser\">"+quoteUser+
+                                "</span><br><span class=\"quoteMsg\">"+quoteIcon +" "+ format(dataQuote) + " </span></div>");                                    
                             if (thumbQuote != null) {
                                 out.print("<div><img class=\"quoteImg\" src=\"");
                                 out.print("data:image/jpg;base64," + Util.encodeBase64(thumbQuote) + "\"></div>");
@@ -709,8 +709,8 @@ public class ReportGenerator {
                             if (dataQuote == null || dataQuote.isEmpty()){
                                 dataQuote = Messages.getString("WhatsAppReport.Document");
                             }
-                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div style=\"display:table-cell;vertical-align:top;border-right: 10px solid transparent;\"><span class=\"quote_user\">"+quoteUser+
-                                "</span><br><span class=\"quote_msg\">"+quoteIcon +" "+ format(dataQuote) + " </span></div>");                                    
+                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div style=\"display:table-cell;vertical-align:top;border-right: 10px solid transparent;\"><span class=\"quoteUser\">"+quoteUser+
+                                "</span><br><span class=\"quoteMsg\">"+quoteIcon +" "+ format(dataQuote) + " </span></div>");                                    
                             if (thumbQuote != null) {
                                 out.print("<div><img class=\"quoteImg\" src=\"");
                                 out.print("data:image/jpg;base64," + Util.encodeBase64(thumbQuote) + "\"></div>");
@@ -720,14 +720,14 @@ public class ReportGenerator {
                             break;                            
                         case TEMPLATE_MESSAGE:
                             out.print("<div class=\"" + quoteClass + "\" " + quoteClick
-                                    + "><div style=\"display:table-cell;\"><span class=\"quote_user\">" + quoteUser
-                                    + "</span><br><span class=\"quote_msg\">" + formatTemplate(messageQuote)
+                                    + "><div style=\"display:table-cell;\"><span class=\"quoteUser\">" + quoteUser
+                                    + "</span><br><span class=\"quoteMsg\">" + formatTemplate(messageQuote)
                                     + "</span></div>");
                             break;
                         default:
                             out.print("<div class=\"" + quoteClass + "\" " + quoteClick
-                                    + "><div style=\"display:table-cell;\"><span class=\"quote_user\">" + quoteUser
-                                    + "</span><br><span class=\"quote_msg\">" + format(dataQuote));
+                                    + "><div style=\"display:table-cell;\"><span class=\"quoteUser\">" + quoteUser
+                                    + "</span><br><span class=\"quoteMsg\">" + format(dataQuote));
                             if (notNullNorBlank(messageQuote.getUiElements())) {
                                 if (notNullNorBlank(dataQuote)) {
                                     out.println("<br>");
@@ -746,8 +746,8 @@ public class ReportGenerator {
                     out.print("</div>");
                     
                 } else if (message.isQuoted() && messageQuote == null){ //Reference not found
-                    out.print("<div class=\""+quoteClass+"\"><span class=\"quote_user\">"+
-                    Messages.getString("WhatsAppReport.ReferenceNotFound")+"</span><br><span class=\"quote_msg\">"+format("") + "</span></div>");
+                    out.print("<div class=\""+quoteClass+"\"><span class=\"quoteUser\">"+
+                    Messages.getString("WhatsAppReport.ReferenceNotFound")+"</span><br><span class=\"quoteMsg\">"+format("") + "</span></div>");
                 }
 
                 switch (message.getMessageType()) {
