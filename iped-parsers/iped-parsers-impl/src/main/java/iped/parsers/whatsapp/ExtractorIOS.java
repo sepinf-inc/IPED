@@ -513,6 +513,21 @@ public class ExtractorIOS extends Extractor {
                 m.setAddress(rs.getString("mediaHash"));
                 break;
 
+            case APP_MESSAGE:
+            case AUDIO_MESSAGE:
+            case CONTACT_MESSAGE:
+            case GIF_MESSAGE:
+            case IMAGE_MESSAGE:
+            case STICKER_MESSAGE:
+            case VIDEO_MESSAGE:
+            case VIEW_ONCE_IMAGE_MESSAGE:
+            case VIEW_ONCE_VIDEO_MESSAGE:
+                byte[] thumbData = decodeThumbData(metadata);
+                if (thumbData != null) {
+                    m.setThumbData(thumbData);
+                }
+                break;
+
             default:
                 break;
         }
@@ -1064,16 +1079,6 @@ public class ExtractorIOS extends Extractor {
             + "ZPARTNERNAME as subject, ZLASTMESSAGEDATE, NULL as avatarPath, 0 as ZREMOVED " //$NON-NLS-1$
             + "FROM ZWACHATSESSION " //$NON-NLS-1$
             + "ORDER BY ZLASTMESSAGEDATE DESC"; //$NON-NLS-1$
-    /*
-     * Filtragem por status da mensagem (ZMESSAGESTATUS):
-     * 
-     * 0 - Mensagens de sistema. TODO: decodificar estas mensagens. Possiveis campos
-     * para realizar decodificacao: Z_OPT, ZGROUPEVENTTYPE, ZMESSAGETYPE,
-     * ZSPOTLIGHTSTATUS atualmente mensagens de sistema ignoradas
-     * 
-     * 1 - mensagens enviadas 3 - mensagens enviadas 5 - mensagens com mídia
-     * associada 6 - mensagens 8 - mensagens
-     */
 
     private static final String SELECT_GROUP_MEMBERS = "select CS.ZCONTACTJID as `group`, ZMEMBERJID as member from ZWAGROUPMEMBER GM "
             + "inner join ZWACHATSESSION CS on GM.ZCHATSESSION=CS.Z_PK where `group`=?";

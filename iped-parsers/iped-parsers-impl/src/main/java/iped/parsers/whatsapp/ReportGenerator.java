@@ -1019,11 +1019,10 @@ public class ReportGenerator {
                                 out.println("</a><br>"); //$NON-NLS-1$
                             }
                         }
-
-                        if (message.getMediaCaption() != null)
-                            out.println("<br>" + format(message.getMediaCaption()) + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
-                        else
-                            out.println("<br>");
+                        if (notNullNorBlank(message.getMediaCaption())) {
+                            out.print("<br>" + format(message.getMediaCaption()));
+                        }
+                        out.println("<br>");
                         break;
 
                     default:

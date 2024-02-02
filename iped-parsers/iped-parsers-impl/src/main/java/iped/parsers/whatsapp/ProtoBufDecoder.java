@@ -79,6 +79,9 @@ public class ProtoBufDecoder {
     }
 
     public List<Part> decode() {
+        if (bytes == null) {
+            return null;
+        }
         try {
             pos = 0;
             skipHeader();
