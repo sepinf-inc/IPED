@@ -103,6 +103,8 @@ public class ExtractorIOS extends Extractor {
 
     @Override
     protected List<Chat> extractChatList() throws WAExtractorException {
+        extractPushNames();
+        
         List<Chat> list;
 
         Map<String, SQLiteUndeleteTable> undeleteTables = null;
@@ -1195,6 +1197,42 @@ public class ExtractorIOS extends Extractor {
         return result;
     }
 
+    public void extractPushNames() {
+        // Extract names associated to numbers (jid), for contacts not in contacts list.
+        Exception ex = null;
+        try (Connection conn = getConnection()) {
+            boolean hasPushNameTable = false;
+            try {
+                if (SQLite3DBParser.containsTable("ZWAPROFILEPUSHNAME", conn)) {
+                    hasPushNameTable = true;
+                }
+                if (hasPushNameTable) {
+                    try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(SELECT_PUSH_NAMES)) {
+                        while (rs.next()) {
+                            String jid = rs.getString("jid");
+                            if (!contacts.hasContact(Util.getNameFromId(jid))) {
+                                String name = rs.getString("pushname");
+                                if (name != null && !name.isBlank()) {
+                                    WAContact c = contacts.getContact(jid);
+                                    c.setDisplayName("~" + name);
+                                }
+                            }
+                        }
+                    } catch (SQLException e) {
+                        ex = e;
+                    }
+                }
+            } catch (Exception e) {
+                ex = e;
+            }
+        } catch (SQLException e) {
+            ex = e;
+        }
+        if (ex != null) {
+            logger.warn("Error reading push names from WhatsApp iOS database " + itemPath, ex);
+        }
+    }
+
     /**
      * Static query strings
      */
@@ -1209,6 +1247,8 @@ public class ExtractorIOS extends Extractor {
             + "FROM ZWACHATSESSION " //$NON-NLS-1$
             + "ORDER BY ZLASTMESSAGEDATE DESC"; //$NON-NLS-1$
 
+    private static final String SELECT_PUSH_NAMES = "select ZJID as jid, ZPUSHNAME as pushname from ZWAPROFILEPUSHNAME";
+    
     private static final String SELECT_GROUP_MEMBERS = "select CS.ZCONTACTJID as `group`, ZMEMBERJID as member from ZWAGROUPMEMBER GM "
             + "inner join ZWACHATSESSION CS on GM.ZCHATSESSION=CS.Z_PK where `group`=?";
 
