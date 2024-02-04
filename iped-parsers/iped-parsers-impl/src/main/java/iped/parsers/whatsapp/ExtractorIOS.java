@@ -816,21 +816,24 @@ public class ExtractorIOS extends Extractor {
                 }
                 if (content.length() > 0) {
                     t = new MessageTemplate(content.toString());
-                    Part p3 = p2.getChild(8);
-                    if (p3 != null) {
-                        Part p4 = p3.getChild(2);
-                        if (p4 != null) {
-                            Part p5 = p4.getChild(1);
-                            String text = "";
-                            if (p5 != null) {
-                                text = p5.getString();
+                    for (Part p3 : p2.getChilds()) {
+                        if (p3.getIdx() == 8) {
+                            Part p4 = p3.getChild(2);
+                            if (p4 != null) {
+                                Part p5 = p4.getChild(1);
+                                String text = "";
+                                if (p5 != null) {
+                                    text = p5.getString();
+                                }
+                                p5 = p4.getChild(2);
+                                String extra = "";
+                                if (p5 != null) {
+                                    extra = p5.getString();
+                                }
+                                if (!text.isBlank() || !extra.isBlank()) {
+                                    t.addButton(new MessageTemplate.Button(text, extra));
+                                }
                             }
-                            p5 = p4.getChild(2);
-                            String extra = "";
-                            if (p5 != null) {
-                                extra = p5.getString();
-                            }
-                            t.addButton(new MessageTemplate.Button(text, extra));
                         }
                     }
                 }

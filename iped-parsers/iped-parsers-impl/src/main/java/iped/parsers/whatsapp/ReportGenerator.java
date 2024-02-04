@@ -911,7 +911,7 @@ public class ReportGenerator {
                             out.print("<br>");    
                         }
                         if (notNullNorBlank(message.getMediaCaption())) {
-                            out.print(format(message.getMediaCaption()));
+                            out.print(format(message.getMediaCaption()) + "<br>");
                         }
                         out.println();
                         break;
@@ -1378,7 +1378,7 @@ public class ReportGenerator {
                     sb.append("<b>[").append(format(text)).append("]</b>");
                 }
                 String extra = button.getExtra();
-                if (notNullNorBlank(extra) && !extra.equals(text)) {
+                if (notNullNorBlank(extra) && !extra.equals(text) && !extra.startsWith("{\"")) {
                     if (sb.length() > 0) {
                         sb.append("<br>");
                     }
