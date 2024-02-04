@@ -211,6 +211,11 @@ div.deletedIcon {
     color: #4040B0;	
 }
 
+.duration {
+    font-size: 80%;
+    color: #EEEEEE;
+}
+
 /*Quotes*/
 html {
     scroll-padding-top: var(--scroll-padding-top);

@@ -796,11 +796,14 @@ public class ReportGenerator {
                                 String source = iped.parsers.util.Util.getSourceFileIfExists(mediaItem).orElse("");
                                 if (message.getMessageType() == MessageType.AUDIO_MESSAGE) {
                                     out.println(Messages.getString("WhatsAppReport.AudioMessageTitle") + "<br>"); //$NON-NLS-1$
-                                    out.println("<div class=\"audioImg iped-audio\" " //$NON-NLS-1$
+                                    out.println("<div class=\"audioImg iped-audio\" "
                                             + " title=\"Audio\" " + "data-src1=\"" + format(exportPath) + "\" "
-                                            + "data-src2=\"" //$NON-NLS-1$
-                                            + format(source) + "\" ></div>");
-                                    out.println("</a><br>"); //$NON-NLS-1$
+                                            + "data-src2=\""
+                                            + format(source) + "\" >");
+                                    out.print("<span class=\"duration\"> " + formatDuration(message.getDuration())
+                                            + "</span>");
+                                    out.print("</div>");
+                                    out.println("</a><br>");
                                 } else {
                                     out.println(Messages.getString("WhatsAppReport.VideoMessageTitle") + "<br>"); //$NON-NLS-1$
                                     if (thumb != null) {
@@ -859,7 +862,10 @@ public class ReportGenerator {
                         } else { // mediaItem is null (media file not found)
                             switch (message.getMessageType()) {
                                 case AUDIO_MESSAGE:
-                                    out.println("<div class=\"audioImg\" title=\"Audio\"></div>"); //$NON-NLS-1$
+                                    out.println("<div class=\"audioImg\" title=\"Audio\">");
+                                    out.print("<span class=\"duration\"> " + formatDuration(message.getDuration())
+                                            + "</span>");
+                                    out.println("</div>");
                                     break;
                                 case VIDEO_MESSAGE:
                                 case VIEW_ONCE_VIDEO_MESSAGE:
@@ -868,9 +874,12 @@ public class ReportGenerator {
                                         out.println(Messages.getString("WhatsAppReport.Video") + ":<br>");
                                         out.print("<img class=\"thumb\" src=\""); //$NON-NLS-1$
                                         out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
-                                        out.println(" title=\"" + getTitle(message) + "\">"); //$NON-NLS-1$ //$NON-NLS-2$
+                                        out.print(" title=\"" + getTitle(message) + "\">"); //$NON-NLS-1$ //$NON-NLS-2$
                                     } else {
-                                        out.println("<div class=\"videoImg\" title=\"Video\"></div>"); //$NON-NLS-1$
+                                        out.println("<div class=\"videoImg\" title=\"Video\">");
+                                        out.print("<span class=\"duration\"> " + formatDuration(message.getDuration())
+                                                + "</span>");
+                                        out.println("</div>");
                                     }
                                     break;
                                 case STICKER_MESSAGE:
@@ -898,10 +907,13 @@ public class ReportGenerator {
                                 out.println("</a><br>"); //$NON-NLS-1$
                             }
                         }
-                        if (notNullNorBlank(message.getMediaCaption())) {
-                            out.print("<br>" + format(message.getMediaCaption()));
+                        if (thumb != null) {
+                            out.print("<br>");    
                         }
-                        out.println("<br>");
+                        if (notNullNorBlank(message.getMediaCaption())) {
+                            out.print(format(message.getMediaCaption()));
+                        }
+                        out.println();
                         break;
 
                     default:
@@ -1096,10 +1108,7 @@ public class ReportGenerator {
             String quoteData = messageQuote.getData();
             String quoteClick = "onclick=\"goToAnchorId(" + messageQuote.getId() + ");\"";
             String quoteIcon = "";
-            String quoteDuration = "";
-            if (messageQuote.getDuration() > 0) {
-                quoteDuration = "(" + formatMMSS(messageQuote.getDuration()) + ")";
-            }
+            String quoteDuration = formatDuration(messageQuote.getDuration());
             String quoteUser = getBestContactName(messageQuote, contactsDirectory, account);
             byte[] quoteThumb = messageQuote.getThumbData();
 
@@ -1422,7 +1431,14 @@ public class ReportGenerator {
     }
 
     public static String formatMMSS(int duration) {
-        return String.format("%02d:%02d", duration / 60, duration % 60); //$NON-NLS-1$
+        return String.format("%02d:%02d", duration / 60, duration % 60);
+    }
+
+    private static String formatDuration(int duration) {
+        if (duration == 0) {
+            return "";
+        }
+        return "(" + formatMMSS(duration) + ")";
     }
 
     private static String getTitle(Message message) {
