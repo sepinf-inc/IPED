@@ -128,12 +128,12 @@ public class ReportGenerator {
     private static final String format(String s) {
         if (s == null || s.trim().isEmpty())
             return "-"; //$NON-NLS-1$
-        
+
         String ret = SimpleHTMLEncoder.htmlEncode(s.trim());
 
         // Keep line breaks present in the content, converting to an HTML <br>
         ret = ret.replaceAll("\n", "<br>\n");
-        
+
         // Apply Bold, Italic, Strikethrough and Monospaced styles
         ret = convertWhatsAppTagsToHTML(ret);
 
@@ -188,7 +188,8 @@ public class ReportGenerator {
         return s;
     }
 
-    public byte[] generateNextChatHtml(Chat c, WAContactsDirectory contactsDirectory, WAAccount account, int frag, StringBuilder histFrag) {
+    public byte[] generateNextChatHtml(Chat c, WAContactsDirectory contactsDirectory, WAAccount account, int frag,
+            StringBuilder histFrag) {
 
         if ((!firstFragment && currentMsg == 0) || (currentMsg > 0 && currentMsg == c.getMessages().size()))
             return null;
@@ -198,8 +199,7 @@ public class ReportGenerator {
         ByteArrayOutputStream chatBytes = new ByteArrayOutputStream();
         PrintWriter printWriter = new PrintWriter(new OutputStreamWriter(chatBytes, StandardCharsets.UTF_8)); // $NON-NLS-1$
 
-        printMessageFile(printWriter, c.getTitle(), c.getPrintId(), c.getRemote().getAvatar(), c.isDeleted(),
-                () -> {
+        printMessageFile(printWriter, c.getTitle(), c.getPrintId(), c.getRemote().getAvatar(), c.isDeleted(), () -> {
             ByteArrayOutputStream bout = new ByteArrayOutputStream();
             PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, StandardCharsets.UTF_8)); // $NON-NLS-1$
             if (c.getRecoveredFrom() != null) {
@@ -215,7 +215,7 @@ public class ReportGenerator {
             String lastId = "1000000000";
             while (currentMsg < c.getMessages().size()) {
                 Message m = c.getMessages().get(currentMsg++);
-                if (m.getMessageType() == MessageType.CALL_MESSAGE) {   
+                if (m.getMessageType() == MessageType.CALL_MESSAGE) {
                     // These messages are currently redundant with calls information already
                     // extracted from other tables (these come from messages table). So, at least
                     // for now, nothing should be included in the report.
@@ -236,13 +236,16 @@ public class ReportGenerator {
                 }
             }
 
-            if (histFrag.length()==0){
-                histFrag.append("<input type=\"hidden\" id=\"fragMessageChat\" value=\""+Messages.getString("WhatsAppReport.ChatFragment")+"\">");
-                histFrag.append("<input type=\"hidden\" id=\"fragMessageId\" value=\""+Messages.getString("WhatsAppReport.ReferenceId")+"\">");
-                histFrag.append("<input type=\"hidden\" id=\"fragMessageClose\" value=\""+Messages.getString("WhatsAppReport.Close")+"\">");
+            if (histFrag.length() == 0) {
+                histFrag.append("<input type=\"hidden\" id=\"fragMessageChat\" value=\""
+                        + Messages.getString("WhatsAppReport.ChatFragment") + "\">");
+                histFrag.append("<input type=\"hidden\" id=\"fragMessageId\" value=\""
+                        + Messages.getString("WhatsAppReport.ReferenceId") + "\">");
+                histFrag.append("<input type=\"hidden\" id=\"fragMessageClose\" value=\""
+                        + Messages.getString("WhatsAppReport.Close") + "\">");
             }
 
-            histFrag.append("<input type=\"hidden\" id=\"frag"+ frag +"\" value=\""+lastId+"\">");
+            histFrag.append("<input type=\"hidden\" id=\"frag" + frag + "\" value=\"" + lastId + "\">");
             out.println(histFrag);
             out.flush();
             return new String(bout.toByteArray(), StandardCharsets.UTF_8);
@@ -254,8 +257,7 @@ public class ReportGenerator {
     }
 
     private synchronized void printMessage(PrintWriter out, Message message, boolean isGroupOrChannel,
-            WAContactsDirectory contactsDirectory,
-            WAAccount account) {
+            WAContactsDirectory contactsDirectory, WAAccount account) {
 
         boolean isFrom = false;
         boolean isTo = false;
@@ -272,7 +274,8 @@ public class ReportGenerator {
         switch (message.getMessageType()) {
             case UNKNOWN_MESSAGE:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
-                out.println("<i>" + Messages.getString("WhatsAppReport.UnknownMessage") + " [ID: " + message.getId() + "]</i>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                out.println("<i>" + Messages.getString("WhatsAppReport.UnknownMessage") + " [ID: " + message.getId() //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                        + "]</i>");
                 break;
             case ENCRYPTION_KEY_CHANGED:
                 out.println("<div class=\"systemmessage\">");
@@ -492,8 +495,7 @@ public class ReportGenerator {
                     }
                 }
                 out.println(Messages.getString("WhatsAppReport.VoiceCall") + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
-                out.println(
-                        Messages.getString("WhatsAppReport.Duration") + ": " + formatMMSS(message.getDuration())); //$NON-NLS-1$ //$NON-NLS-2$
+                out.println(Messages.getString("WhatsAppReport.Duration") + ": " + formatMMSS(message.getDuration())); //$NON-NLS-1$ //$NON-NLS-2$
                 break;
             case GROUP_CREATED:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
@@ -732,13 +734,14 @@ public class ReportGenerator {
                         out.println("</ul>");
                         break;
                     case DELETED_MESSAGE:
-                        out.println("<i>" + deletedIcon + Messages.getString("WhatsAppReport.MessageDeleted") + "</i><br>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                        out.println(
+                                "<i>" + deletedIcon + Messages.getString("WhatsAppReport.MessageDeleted") + "</i><br>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         break;
                     case DELETED_BY_ADMIN:
                         out.print("<i>" + deletedIcon + Messages.getString("WhatsAppReport.MessageDeletedByAdmin"));
                         if (!message.getUsersAction().isEmpty()) {
                             out.print(" (" + getBestContactName(false, message.getUsersAction().get(0),
-                                    contactsDirectory, account) +")");
+                                    contactsDirectory, account) + ")");
                         }
                         out.println("</i><br>");
                         break;
@@ -767,9 +770,8 @@ public class ReportGenerator {
 
                         if (query != null) {
                             if (mediaItem != null) {
-                                out.println(
-                                        "<input class=\"check\" type=\"checkbox\" onclick=\"app.check(" + query
-                                                + ",this.checked)\"" + " name=\"" + mediaItem.getHash() + "\">");
+                                out.println("<input class=\"check\" type=\"checkbox\" onclick=\"app.check(" + query
+                                        + ",this.checked)\"" + " name=\"" + mediaItem.getHash() + "\">");
                             }
                             out.println("<a onclick=\"app.open(" + query + ")\" "); //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -791,8 +793,7 @@ public class ReportGenerator {
                                     || message.getMessageType() == MessageType.VIDEO_MESSAGE
                                     || message.getMessageType() == MessageType.VIEW_ONCE_VIDEO_MESSAGE
                                     || message.getMessageType() == MessageType.GIF_MESSAGE) {
-                                String source = iped.parsers.util.Util.getSourceFileIfExists(mediaItem)
-                                        .orElse("");
+                                String source = iped.parsers.util.Util.getSourceFileIfExists(mediaItem).orElse("");
                                 if (message.getMessageType() == MessageType.AUDIO_MESSAGE) {
                                     out.println(Messages.getString("WhatsAppReport.AudioMessageTitle") + "<br>"); //$NON-NLS-1$
                                     out.println("<div class=\"audioImg iped-audio\" " //$NON-NLS-1$
@@ -817,7 +818,8 @@ public class ReportGenerator {
                                     out.println("</a><br>"); //$NON-NLS-1$
                                 }
                                 if (mediaItem.getMetadata().get(ExtraProperties.DOWNLOADED_DATA) != null) {
-                                    out.println("<b>" + Messages.getString("ReportGenerator.DownloadedFile") + "</b><br>");
+                                    out.println(
+                                            "<b>" + Messages.getString("ReportGenerator.DownloadedFile") + "</b><br>");
                                 }
                                 String transcription = mediaItem.getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR);
                                 if (transcription != null) {
@@ -850,7 +852,8 @@ public class ReportGenerator {
                                 }
                                 out.println("</a><br>"); //$NON-NLS-1$
                                 if (mediaItem.getMetadata().get(ExtraProperties.DOWNLOADED_DATA) != null) {
-                                    out.println("<b>" + Messages.getString("ReportGenerator.DownloadedFile") + "</b><br>");
+                                    out.println(
+                                            "<b>" + Messages.getString("ReportGenerator.DownloadedFile") + "</b><br>");
                                 }
                             }
                         } else { // mediaItem is null (media file not found)
@@ -909,7 +912,7 @@ public class ReportGenerator {
                 }
                 break;
         }
-        
+
         Set<String> reactions = new TreeSet<String>();
         int reactionsCount = 0;
         List<MessageAddOn> mao = message.getAddOns();
@@ -922,8 +925,9 @@ public class ReportGenerator {
                         aoDetails.append("<br>");
                     }
                     aoDetails.append(a.getReaction());
-                    
-                    String reactionName = getBestContactName(a.isFromMe(), a.getRemoteResource(), contactsDirectory, account);
+
+                    String reactionName = getBestContactName(a.isFromMe(), a.getRemoteResource(), contactsDirectory,
+                            account);
                     aoDetails.append(' ');
                     aoDetails.append(reactionName);
 
@@ -952,7 +956,7 @@ public class ReportGenerator {
         }
 
         out.print(timeFormat.format(message.getTimeStamp()));
-        boolean hasStatus = false; 
+        boolean hasStatus = false;
         if (message.isFromMe() && message.getMessageStatus() != null) {
             switch (message.getMessageStatus()) {
                 case MESSAGE_UNSENT:
@@ -1024,7 +1028,7 @@ public class ReportGenerator {
             out.println("</div><br>");
         }
     }
-    
+
     private void printThumb(PrintWriter out, Message message) {
         byte[] thumb = message.getThumbData();
         IItemReader mediaItem = message.getMediaItem();
@@ -1428,7 +1432,8 @@ public class ReportGenerator {
             return "File"; //$NON-NLS-1$
     }
 
-    private void printMessageFile(PrintWriter out, String title, String id, byte[] avatar, boolean isDeleted, Supplier<String> messages) {
+    private void printMessageFile(PrintWriter out, String title, String id, byte[] avatar, boolean isDeleted,
+            Supplier<String> messages) {
         String strAvatar;
         if (avatar == null || avatar.length == 0) {
             strAvatar = Util.getImageResourceAsEmbedded("img/avatar.png");
@@ -1438,8 +1443,7 @@ public class ReportGenerator {
         String deletedDiv;
         if (isDeleted) {
             deletedDiv = "<div class=\"linha\"><div class=\"recoveredChat\">"
-                    + Messages.getString("WhatsAppReport.RecoveredChat")
-                    + "</div></div>";
+                    + Messages.getString("WhatsAppReport.RecoveredChat") + "</div></div>";
         } else {
             deletedDiv = "";
         }

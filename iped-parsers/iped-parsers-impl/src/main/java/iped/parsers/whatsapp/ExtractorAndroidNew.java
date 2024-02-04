@@ -226,7 +226,7 @@ public class ExtractorAndroidNew extends Extractor {
                 m.setFromMe(rs.getInt("from_me") == 1);
                 m.setDuration(rs.getInt("duration"));
                 m.setTimeStamp(new Date(rs.getLong("timestamp")));
-                
+
                 c.add(m);
             }
 
@@ -387,10 +387,10 @@ public class ExtractorAndroidNew extends Extractor {
                 m.setMediaSize(media_size);
                 m.setLatitude(rs.getDouble("latitude")); //$NON-NLS-1$
                 m.setLongitude(rs.getDouble("longitude")); //$NON-NLS-1$
-                
+
                 int actionType = rs.getInt("actionType");
-                m.setMessageType(
-                        decodeMessageType(type, status, edit_version, caption, actionType, rs.getInt("bizStateId"), m.getMediaMime()));
+                m.setMessageType(decodeMessageType(type, status, edit_version, caption, actionType,
+                        rs.getInt("bizStateId"), m.getMediaMime()));
                 m.setDuration(rs.getInt("media_duration")); //$NON-NLS-1$
                 if (m.getMessageType() == CONTACT_MESSAGE) {
                     m.setVcards(Arrays.asList(new String[] { Util.getUTF8String(rs, "vcard") }));
@@ -474,12 +474,12 @@ public class ExtractorAndroidNew extends Extractor {
                 if (hasProductTable && m.getMessageType() == PRODUCT_MESSAGE) {
                     extractProductInfo(conn, m);
                 }
-                
+
                 long edit = rs.getLong("editTimestamp");
                 if (edit != 0) {
                     m.setEditTimeStamp(new Date(edit));
                 }
-                
+
                 c.add(m);
             }
         }
@@ -654,10 +654,10 @@ public class ExtractorAndroidNew extends Extractor {
                     case 33:
                         result = GROUP_ONLY_ADMINS_CAN_SEND;
                         break;
-                    // TODO: Handle payments notification system messages     
-                    //case 39:
-                    //    result = PAYMENT_NOTIFICATION;
-                    //    break;
+                    // TODO: Handle payments notification system messages
+                    // case 39:
+                    // result = PAYMENT_NOTIFICATION;
+                    // break;
                     case 46:
                         result = BUSINESS_CHAT;
                         break;
@@ -679,10 +679,10 @@ public class ExtractorAndroidNew extends Extractor {
                     case 59:
                         result = EPHEMERAL_DURATION_CHANGED;
                         break;
-                    // TODO: Handle business related notification (no extra tables/fields)     
-                    //case 63:
-                    //    result = ???;
-                    //    break;
+                    // TODO: Handle business related notification (no extra tables/fields)
+                    // case 63:
+                    // result = ???;
+                    // break;
                     case 67:
                         if (bizStateId == 10) {
                             result = BUSINESS_META_SECURE_SERVICE;

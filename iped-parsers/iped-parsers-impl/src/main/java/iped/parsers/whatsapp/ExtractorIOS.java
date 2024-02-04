@@ -88,13 +88,14 @@ public class ExtractorIOS extends Extractor {
     private static Logger logger = LoggerFactory.getLogger(ExtractorIOS.class);
 
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); //$NON-NLS-1$
-    
+
     private boolean hasProfilePictureItemTable = false;
     private boolean hasZTitleColumn = false;
-    private boolean hasZSTANZAIDAndZMETADATAColumns = false; 
+    private boolean hasZSTANZAIDAndZMETADATAColumns = false;
     private SQLException parsingException = null;
 
-    public ExtractorIOS(String itemPath, File databaseFile, WAContactsDirectory contacts, WAAccount account, boolean recoverDeletedRecords) {
+    public ExtractorIOS(String itemPath, File databaseFile, WAContactsDirectory contacts, WAAccount account,
+            boolean recoverDeletedRecords) {
         super(itemPath, databaseFile, contacts, account, recoverDeletedRecords);
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT")); //$NON-NLS-1$
     }
@@ -102,13 +103,13 @@ public class ExtractorIOS extends Extractor {
     @Override
     protected List<Chat> extractChatList() throws WAExtractorException {
         List<Chat> list;
-        
+
         Map<String, SQLiteUndeleteTable> undeleteTables = null;
         SQLiteUndeleteTable messagesUndeletedTable = null;
         SQLiteUndeleteTable mediaItemUndeletedTable = null;
         SQLiteUndeleteTable groupMembersUndeletedTable = null;
         SQLiteUndeleteTable chatSessionUndeleteTable = null;
-        
+
         // control retry parsing database in case of corrupted db
         // if database is corrupted, maybe recovering deleted data can
         // retrieve partial data
@@ -146,8 +147,7 @@ public class ExtractorIOS extends Extractor {
         Map<Long, SqliteRow> groupMembers = groupMembersUndeletedTable == null ? Collections.emptyMap()
                 : groupMembersUndeletedTable.getRowsMappedByLongPrimaryKey("Z_PK");
 
-        List<Chat> undeletedChats = recoverDeletedRecords ?
-                undeleteChats(chatSessionUndeleteTable, contacts)
+        List<Chat> undeletedChats = recoverDeletedRecords ? undeleteChats(chatSessionUndeleteTable, contacts)
                 : Collections.emptyList();
 
         Set<Long> activeChats = new HashSet<>();
@@ -163,8 +163,8 @@ public class ExtractorIOS extends Extractor {
                 try {
                     hasProfilePictureItemTable = SQLite3DBParser.containsTable("ZWAPROFILEPICTUREITEM", conn);
                     hasZTitleColumn = SQLite3DBParser.checkIfColumnExists(conn, "ZWAMEDIAITEM", "ZTITLE");
-                    hasZSTANZAIDAndZMETADATAColumns = SQLite3DBParser.checkIfColumnExists(conn, "ZWAMESSAGE", "ZSTANZAID")
-                    && SQLite3DBParser.checkIfColumnExists(conn, "ZWAMEDIAITEM", "ZMETADATA");
+                    hasZSTANZAIDAndZMETADATAColumns = SQLite3DBParser.checkIfColumnExists(conn, "ZWAMESSAGE",
+                            "ZSTANZAID") && SQLite3DBParser.checkIfColumnExists(conn, "ZWAMEDIAITEM", "ZMETADATA");
                 } catch (SQLException e) {
                     if (firstTry || !isSqliteCorruptException(e)) {
                         throw e;
@@ -205,8 +205,8 @@ public class ExtractorIOS extends Extractor {
                         list.add(c);
                         if (firstTry && c.isDeleted()) {
                             logger.info("Recovered deleted chat for database " + itemPath //$NON-NLS-1$
-                                        + " :" + c.getSubject() + " (" //$NON-NLS-1$ //$NON-NLS-2$
-                                        + c.getRemote().getFullId() + ")"); //$NON-NLS-1$
+                                    + " :" + c.getSubject() + " (" //$NON-NLS-1$ //$NON-NLS-2$
+                                    + c.getRemote().getFullId() + ")"); //$NON-NLS-1$
                         }
                     }
                 }
@@ -261,7 +261,8 @@ public class ExtractorIOS extends Extractor {
 
             } catch (SQLException ex) {
                 if (firstTry && recoverDeletedRecords) {
-                    // if recovery of deleted records is enabled and failed with SQLITE_CORRUPT on first try,
+                    // if recovery of deleted records is enabled and failed with SQLITE_CORRUPT on
+                    // first try,
                     // try again, ignoring error and recovering deleted records
                     if (isSqliteCorruptException(ex)) {
                         tryAgain = true;
@@ -280,7 +281,7 @@ public class ExtractorIOS extends Extractor {
 
     private void extractMessages(Connection conn, Map<Long, Chat> idToChat, boolean firstTry, boolean isGroupChat)
             throws SQLException {
-        
+
         String sql;
         if (hasZTitleColumn) {
             sql = isGroupChat ? SELECT_MESSAGES_GROUP : SELECT_MESSAGES_USER;
@@ -288,7 +289,7 @@ public class ExtractorIOS extends Extractor {
             sql = isGroupChat ? SELECT_MESSAGES_GROUP_NOZTITLE : SELECT_MESSAGES_USER_NOZTITLE;
         }
 
-        if (!hasZSTANZAIDAndZMETADATAColumns){
+        if (!hasZSTANZAIDAndZMETADATAColumns) {
             sql = sql.replace("ZWAMESSAGE.ZSTANZAID as uuid, ZWAMEDIAITEM.ZMETADATA as metadata, ", "");
         }
 
@@ -313,9 +314,10 @@ public class ExtractorIOS extends Extractor {
             }
         }
     }
-    
-    private void mergeUndeletedMessages(Chat chat, Map<String, Message> messagesMap, Map<Long, List<SqliteRow>> undeletedMessages,
-            Map<Long, SqliteRow> mediaItems, Map<Long, SqliteRow> groupMembers, boolean firstTry) throws SQLException {
+
+    private void mergeUndeletedMessages(Chat chat, Map<String, Message> messagesMap,
+            Map<Long, List<SqliteRow>> undeletedMessages, Map<Long, SqliteRow> mediaItems,
+            Map<Long, SqliteRow> groupMembers, boolean firstTry) throws SQLException {
 
         // Get deleted messages for this Chat
         List<SqliteRow> undeletedRows = undeletedMessages.get(chat.getId());
@@ -646,7 +648,7 @@ public class ExtractorIOS extends Extractor {
 
         byte[] metadata = rs.getBytes("metadata");
         if (hasZSTANZAIDAndZMETADATAColumns) {
-            m.setUuid(rs.getString("uuid"));        
+            m.setUuid(rs.getString("uuid"));
             m.setMetaData(metadata);
         }
 
@@ -1127,7 +1129,7 @@ public class ExtractorIOS extends Extractor {
                 } else if (gEventType == 25 || gEventType == 38) {
                     result = BUSINESS_OFFICIAL;
                 } else if (gEventType == 40 || gEventType == 41) {
-                    // Started a video call (group) 
+                    // Started a video call (group)
                     result = VIDEO_CALL;
                 } else if (gEventType == 47) {
                     result = EPHEMERAL_SAVE;
@@ -1175,13 +1177,13 @@ public class ExtractorIOS extends Extractor {
                 break;
             case 46:
                 result = POLL_MESSAGE;
-                break;                
+                break;
         }
         return result;
     }
 
     /**
-     * ** static strings ***
+     * Static query strings
      */
     private static final String SELECT_CHAT_LIST = "SELECT ZWACHATSESSION.Z_PK as id, ZCONTACTJID AS contact, " //$NON-NLS-1$
             + "ZPARTNERNAME as subject, ZLASTMESSAGEDATE, ZPATH as avatarPath, ZREMOVED " //$NON-NLS-1$
