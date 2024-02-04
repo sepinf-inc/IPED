@@ -92,6 +92,7 @@ public class ExtractorIOS extends Extractor {
     private boolean hasProfilePictureItemTable = false;
     private boolean hasZTitleColumn = false;
     private boolean hasZSTANZAIDAndZMETADATAColumns = false;
+    private boolean hasZMOVIEDURATIONColumn;
     private SQLException parsingException = null;
 
     public ExtractorIOS(String itemPath, File databaseFile, WAContactsDirectory contacts, WAAccount account,
@@ -165,6 +166,7 @@ public class ExtractorIOS extends Extractor {
                     hasZTitleColumn = SQLite3DBParser.checkIfColumnExists(conn, "ZWAMEDIAITEM", "ZTITLE");
                     hasZSTANZAIDAndZMETADATAColumns = SQLite3DBParser.checkIfColumnExists(conn, "ZWAMESSAGE",
                             "ZSTANZAID") && SQLite3DBParser.checkIfColumnExists(conn, "ZWAMEDIAITEM", "ZMETADATA");
+                    hasZMOVIEDURATIONColumn = SQLite3DBParser.checkIfColumnExists(conn, "ZWAMEDIAITEM", "ZMOVIEDURATION");
                 } catch (SQLException e) {
                     if (firstTry || !isSqliteCorruptException(e)) {
                         throw e;
@@ -291,6 +293,10 @@ public class ExtractorIOS extends Extractor {
 
         if (!hasZSTANZAIDAndZMETADATAColumns) {
             sql = sql.replace("ZWAMESSAGE.ZSTANZAID as uuid, ZWAMEDIAITEM.ZMETADATA as metadata, ", "");
+        }
+
+        if (!hasZMOVIEDURATIONColumn) {
+            sql = sql.replace("ZWAMEDIAITEM.ZMOVIEDURATION as duration, ", "");
         }
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -650,6 +656,10 @@ public class ExtractorIOS extends Extractor {
         if (hasZSTANZAIDAndZMETADATAColumns) {
             m.setUuid(rs.getString("uuid"));
             m.setMetaData(metadata);
+        }
+
+        if (hasZMOVIEDURATIONColumn) {
+            m.setDuration(rs.getInt("duration"));
         }
 
         switch (m.getMessageType()) {
@@ -1208,6 +1218,7 @@ public class ExtractorIOS extends Extractor {
             + "INFO.ZRECEIPTINFO as receiptInfo, " //$NON-NLS-1$
             + "(1 << 7 & ZFLAGS) as forwarded, " //$NON-NLS-1$
             + "ZWAMESSAGE.ZSTANZAID as uuid, ZWAMEDIAITEM.ZMETADATA as metadata, " //$NON-NLS-1$
+            + "ZWAMEDIAITEM.ZMOVIEDURATION as duration, "
             + "ZGROUPEVENTTYPE as gEventType, ZMESSAGETYPE as messageType, ZSORT FROM ZWAMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAMEDIAITEM ON ZWAMESSAGE.Z_PK = ZWAMEDIAITEM.ZMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAMESSAGEINFO INFO ON INFO.Z_PK = ZWAMESSAGE.ZMESSAGEINFO " //$NON-NLS-1$
@@ -1222,6 +1233,7 @@ public class ExtractorIOS extends Extractor {
             + "INFO.ZRECEIPTINFO as receiptInfo, " //$NON-NLS-1$
             + "(1 << 7 & ZFLAGS) as forwarded, " //$NON-NLS-1$
             + "ZWAMESSAGE.ZSTANZAID as uuid, ZWAMEDIAITEM.ZMETADATA as metadata, " //$NON-NLS-1$
+            + "ZWAMEDIAITEM.ZMOVIEDURATION as duration, "
             + "ZGROUPEVENTTYPE as gEventType, ZMESSAGETYPE as messageType, ZSORT FROM ZWAMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAMEDIAITEM ON ZWAMESSAGE.Z_PK = ZWAMEDIAITEM.ZMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAMESSAGEINFO INFO ON INFO.Z_PK = ZWAMESSAGE.ZMESSAGEINFO " //$NON-NLS-1$
@@ -1237,6 +1249,7 @@ public class ExtractorIOS extends Extractor {
             + "INFO.ZRECEIPTINFO as receiptInfo, " //$NON-NLS-1$
             + "(1 << 7 & ZFLAGS) as forwarded, " //$NON-NLS-1$
             + "ZWAMESSAGE.ZSTANZAID as uuid, ZWAMEDIAITEM.ZMETADATA as metadata, " //$NON-NLS-1$           
+            + "ZWAMEDIAITEM.ZMOVIEDURATION as duration, "
             + "ZGROUPEVENTTYPE as gEventType, ZMESSAGETYPE as messageType, ZSORT FROM ZWAMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAMEDIAITEM ON ZWAMESSAGE.Z_PK = ZWAMEDIAITEM.ZMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAMESSAGEINFO INFO ON INFO.Z_PK = ZWAMESSAGE.ZMESSAGEINFO " //$NON-NLS-1$
@@ -1251,6 +1264,7 @@ public class ExtractorIOS extends Extractor {
             + "INFO.ZRECEIPTINFO as receiptInfo, " //$NON-NLS-1$
             + "(1 << 7 & ZFLAGS) as forwarded, " //$NON-NLS-1$
             + "ZWAMESSAGE.ZSTANZAID as uuid, ZWAMEDIAITEM.ZMETADATA as metadata, " //$NON-NLS-1$          
+            + "ZWAMEDIAITEM.ZMOVIEDURATION as duration, "
             + "ZGROUPEVENTTYPE as gEventType, ZMESSAGETYPE as messageType, ZSORT FROM ZWAMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAMEDIAITEM ON ZWAMESSAGE.Z_PK = ZWAMEDIAITEM.ZMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAGROUPMEMBER ON ZWAGROUPMEMBER.ZCHATSESSION = chatId AND ZWAGROUPMEMBER.Z_PK = ZGROUPMEMBER " //$NON-NLS-1$
