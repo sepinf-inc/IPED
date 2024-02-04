@@ -1,6 +1,5 @@
 package iped.parsers.whatsapp;
 
-import static iped.parsers.whatsapp.Message.MessageType.APP_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.AUDIO_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.BLOCKED_CONTACT;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_CHAT;
@@ -16,6 +15,7 @@ import static iped.parsers.whatsapp.Message.MessageType.CONTACT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_ADMIN;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_SENDER;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.DOC_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.ENCRYPTION_KEY_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_DEFAULT;
@@ -760,7 +760,7 @@ public class ExtractorAndroidNew extends Extractor {
                 }
                 break;
             case 9:
-                result = APP_MESSAGE;
+                result = DOC_MESSAGE;
                 break;
             case 10:
                 result = CALL_MESSAGE;

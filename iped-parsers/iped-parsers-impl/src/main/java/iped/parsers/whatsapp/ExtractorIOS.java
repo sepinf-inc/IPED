@@ -1,6 +1,5 @@
 package iped.parsers.whatsapp;
 
-import static iped.parsers.whatsapp.Message.MessageType.APP_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.AUDIO_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.BLOCKED_CONTACT;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_CHANGED_NAME;
@@ -11,6 +10,7 @@ import static iped.parsers.whatsapp.Message.MessageType.CHANGED_NUMBER_CHATTING_
 import static iped.parsers.whatsapp.Message.MessageType.CHANGED_NUMBER_CHATTING_WITH_OLD;
 import static iped.parsers.whatsapp.Message.MessageType.CONTACT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_SENDER;
+import static iped.parsers.whatsapp.Message.MessageType.DOC_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.ENCRYPTION_KEY_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_DEFAULT;
 import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_SAVE;
@@ -34,10 +34,10 @@ import static iped.parsers.whatsapp.Message.MessageType.UNBLOCKED_CONTACT;
 import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_MEDIA_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.URL_MESSAGE;
-import static iped.parsers.whatsapp.Message.MessageType.USERS_JOINED_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.USER_LEFT_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.USER_REMOVED_FROM_GROUP;
+import static iped.parsers.whatsapp.Message.MessageType.USERS_JOINED_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.VIDEO_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.VIEW_ONCE_IMAGE_MESSAGE;
@@ -499,7 +499,7 @@ public class ExtractorIOS extends Extractor {
                                         break;
 
                                     case 7:
-                                        type = MessageType.APP_MESSAGE;
+                                        type = MessageType.DOC_MESSAGE;
                                         p = c.getChild(8);
                                         if (p != null) {
                                             String caption = p.getString();
@@ -924,7 +924,7 @@ public class ExtractorIOS extends Extractor {
                         } else if (mediaMime.startsWith("video")) {
                             m.setMessageType(VIDEO_MESSAGE);
                         } else if (mediaMime.startsWith("application")) {
-                            m.setMessageType(APP_MESSAGE);
+                            m.setMessageType(DOC_MESSAGE);
                         } else if (mediaMime.startsWith("audio")) {
                             m.setMessageType(AUDIO_MESSAGE);
                         } else if (m.getMediaCaption() != null) {
@@ -1096,7 +1096,7 @@ public class ExtractorIOS extends Extractor {
                 result = URL_MESSAGE;
                 break;
             case 8:
-                result = APP_MESSAGE;
+                result = DOC_MESSAGE;
                 break;
             case 10:
                 if (gEventType == 2) {
@@ -1258,7 +1258,7 @@ public class ExtractorIOS extends Extractor {
     private static final String VCARD_SEPARATOR = "_$!<VCard-Separator>!$_"; //$NON-NLS-1$
 
     private static final Set<MessageType> MEDIA_MESSAGES = ImmutableSet.of(AUDIO_MESSAGE, VIDEO_MESSAGE, GIF_MESSAGE,
-            APP_MESSAGE, IMAGE_MESSAGE);
+            DOC_MESSAGE, IMAGE_MESSAGE);
 
     private static class WAIOSMessageValidator implements SQLiteRecordValidator {
 

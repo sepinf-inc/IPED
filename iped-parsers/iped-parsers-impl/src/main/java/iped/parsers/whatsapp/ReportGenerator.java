@@ -755,7 +755,7 @@ public class ReportGenerator {
                     case GIF_MESSAGE:
                     case IMAGE_MESSAGE:
                     case VIEW_ONCE_IMAGE_MESSAGE:
-                    case APP_MESSAGE:
+                    case DOC_MESSAGE:
                     case STICKER_MESSAGE:
                         mediaItem = message.getMediaItem();
                         // query is already html escaped
@@ -873,7 +873,7 @@ public class ReportGenerator {
                                 case STICKER_MESSAGE:
                                 case IMAGE_MESSAGE:
                                 case VIEW_ONCE_IMAGE_MESSAGE:
-                                case APP_MESSAGE:
+                                case DOC_MESSAGE:
                                     if (thumb != null) {
                                         if (getTitle(message).equals("video")) //$NON-NLS-1$
                                             out.println(Messages.getString("WhatsAppReport.Video") + ":<br>"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -881,7 +881,7 @@ public class ReportGenerator {
                                         out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
                                         out.println(" title=\"" + getTitle(message) + "\">"); //$NON-NLS-1$ //$NON-NLS-2$
 
-                                    } else if (message.getMessageType() == MessageType.APP_MESSAGE) {
+                                    } else if (message.getMessageType() == MessageType.DOC_MESSAGE) {
                                         out.print(Messages.getString("WhatsAppReport.Attachment"));
                                         out.println("<br><div class=\"attachImg\" title=\"Doc\"></div>"); //$NON-NLS-1$
                                     } else {
@@ -1171,7 +1171,7 @@ public class ReportGenerator {
                     }
                     break;
 
-                case APP_MESSAGE:
+                case DOC_MESSAGE:
                     quoteIcon = "\uD83D\uDCC4";
                     if (quoteData == null || quoteData.isEmpty()) {
                         quoteData = Messages.getString("WhatsAppReport.Document");

@@ -1,12 +1,12 @@
 package iped.parsers.whatsapp;
 
-import static iped.parsers.whatsapp.Message.MessageType.APP_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.AUDIO_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_CHAT;
 import static iped.parsers.whatsapp.Message.MessageType.CONTACT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_ADMIN;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_SENDER;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.DOC_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.ENCRYPTION_KEY_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.GIF_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CREATED;
@@ -536,7 +536,7 @@ public class ExtractorAndroid extends Extractor {
                     } else if (mediaMime.startsWith("video")) {
                         m.setMessageType(VIDEO_MESSAGE);
                     } else if (mediaMime.startsWith("application")) {
-                        m.setMessageType(APP_MESSAGE);
+                        m.setMessageType(DOC_MESSAGE);
                     } else if (mediaMime.startsWith("audio")) {
                         m.setMessageType(AUDIO_MESSAGE);
                     } else if (m.getMediaCaption() != null) {
@@ -638,7 +638,7 @@ public class ExtractorAndroid extends Extractor {
                 }
                 break;
             case 9:
-                result = APP_MESSAGE;
+                result = DOC_MESSAGE;
                 break;
             case 10:
                 if (caption != null) {
