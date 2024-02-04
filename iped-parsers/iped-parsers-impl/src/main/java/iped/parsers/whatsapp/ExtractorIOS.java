@@ -46,7 +46,6 @@ import static iped.parsers.whatsapp.Message.MessageType.WAITING_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.YOU_ADMIN;
 
 import java.io.File;
-import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -361,39 +360,204 @@ public class ExtractorIOS extends Extractor {
     private void findQuotedMessages(List<Message> messages, Map<String, Message> messagesMap) {
         long fakeIds = 2000000000L;
         for (Message m : messages) {
-            if (m.isQuoted() && m.getMetaData() != null) {
-                byte[] metadata = m.getMetaData();
-                int size = getPositiveValueFromMetadata(metadata, 1);
-                int pos = 0;
-                if (size >= 0) {
-                    pos = 2;
-                    String uuidQuote = getSubStringFromMetadata(metadata, pos, size);
+            byte[] metadata = m.getMetaData();
+            if (metadata != null) {
+                List<Part> main = new ProtoBufDecoder(metadata).decode();
+                String uuidQuote = ProtoBufDecoder.findString(main, 5);
+                if (uuidQuote != null) {
+                    m.setQuoted(true);
+
+                    // Decode field 19 which contain referenced message information
+                    List<Part> childs = ProtoBufDecoder.findChilds(main, 19);
+
                     Message messageQuote = messagesMap.get(uuidQuote);
-                    if (messageQuote == null){ //TODO - get full carved quote messages from ZMETADATA
-
-                        pos += size;
-                        //int unknowflag = getPositiveValueFromMetadata(metadata, pos);
-
-                        pos += 1;
-                        size = getPositiveValueFromMetadata(metadata, pos); // Get size of contact name
-                        pos += 1;
-                        String contact = getSubStringFromMetadata(metadata, pos, size);
-
-                        // pos += size + 2;
-                        // size = getPositiveValueFromMetadata(metadata,pos);
-                        // pos += 1;
-                        // String dataQuote = getSubStringFromMetadata(metadata, pos, size);
-
+                    if (messageQuote == null) {
+                        // Referenced message was deleted, so create a new message and fill with data
+                        // extracted from referencing message metadata.
                         messageQuote = new Message();
                         messageQuote.setId(fakeIds--);
-                        messageQuote.setData("[Not Implemented]");
-                        // messageQuote.setFromMe(0);
-                        messageQuote.setRemoteResource(contact); // $NON-NLS-1$
-                        messageQuote.setMessageType(decodeMessageType(0, -1));
+                        String contact = ProtoBufDecoder.findString(main, 6);
+                        if (contact == null) {
+                            messageQuote.setFromMe(true);
+                        } else {
+                            messageQuote.setRemoteResource(contact);
+                        }
+
+                        MessageType type = MessageType.TEXT_MESSAGE;
+                        if (childs != null) {
+                            for (Part c : childs) {
+                                switch (c.getIdx()) {
+                                    case 1:
+                                        String text = c.getString();
+                                        if (text != null) {
+                                            messageQuote.setData(text);
+                                        }
+                                        break;
+
+                                    case 3:
+                                        type = MessageType.IMAGE_MESSAGE;
+                                        Part p = c.getChild(3);
+                                        if (p != null) {
+                                            String caption = p.getString();
+                                            if (caption != null) {
+                                                messageQuote.setMediaCaption(caption);
+                                            }
+                                        }
+                                        break;
+
+                                    case 4:
+                                        type = MessageType.CONTACT_MESSAGE;
+                                        p = c.getChild(16);
+                                        if (p != null) {
+                                            String vcards = p.getString(true);
+                                            if (vcards != null) {
+                                                messageQuote.setVcards(
+                                                        Arrays.asList(vcards.split(Pattern.quote(VCARD_SEPARATOR))));
+                                            }
+                                        }
+                                        break;
+
+                                    case 5:
+                                        type = MessageType.LOCATION_MESSAGE;
+                                        p = c.getChild(1);
+                                        if (p != null) {
+                                            Double latitude = p.getDouble();
+                                            if (latitude != null) {
+                                                messageQuote.setLatitude(latitude);
+                                            }
+                                        }
+                                        p = c.getChild(2);
+                                        if (p != null) {
+                                            Double longitude = p.getDouble();
+                                            if (longitude != null) {
+                                                messageQuote.setLongitude(longitude);
+                                            }
+                                        }
+                                        p = c.getChild(3);
+                                        if (p != null) {
+                                            text = p.getString();
+                                            if (text != null) {
+                                                messageQuote.setData(text);
+                                            }
+                                        }
+                                        p = c.getChild(4);
+                                        if (p != null) {
+                                            String address = p.getString();
+                                            if (address != null) {
+                                                messageQuote.setAddress(address);
+                                            }
+                                        }
+                                        break;
+
+                                    case 6:
+                                        p = c.getChild(2);
+                                        String url = null;
+                                        if (p != null) {
+                                            url = p.getString();
+                                            if (url != null) {
+                                                messageQuote.setUrl(url);
+                                            }
+                                        }
+                                        if (url != null) {
+                                            type = MessageType.URL_MESSAGE;
+                                            p = c.getChild(6);
+                                            String caption = null;
+                                            if (p != null) {
+                                                caption = p.getString();
+                                                if (caption != null) {
+                                                    messageQuote.setMediaCaption(caption);
+                                                }
+                                            }
+                                            p = c.getChild(1);
+                                            if (p != null) {
+                                                text = p.getString();
+                                                if (text != null && !text.equals(url) && !text.equals(caption)) {
+                                                    messageQuote.setData(text);
+                                                }
+                                            }
+                                            p = c.getChild(5);
+                                            if (p != null) {
+                                                text = p.getString();
+                                                String prev = messageQuote.getData();
+                                                if (text != null && !text.isBlank() && !text.equals(url)
+                                                        && !text.equals(caption) && !text.equals(prev)) {
+                                                    if (prev != null && !prev.isBlank()) {
+                                                        text = prev + "\n" + text;
+                                                    }
+                                                    messageQuote.setData(text);
+                                                }
+                                            }
+                                        } else {
+                                            p = c.getChild(1);
+                                            if (p != null) {
+                                                text = p.getString();
+                                                if (text != null) {
+                                                    messageQuote.setData(text);
+                                                }
+                                            }
+                                        }
+                                        break;
+
+                                    case 7:
+                                        type = MessageType.APP_MESSAGE;
+                                        p = c.getChild(8);
+                                        if (p != null) {
+                                            String caption = p.getString();
+                                            if (caption != null) {
+                                                messageQuote.setMediaCaption(caption);
+                                            }
+                                        }
+                                        break;
+
+                                    case 8:
+                                        type = MessageType.AUDIO_MESSAGE;
+                                        p = c.getChild(5);
+                                        if (p != null) {
+                                            Integer duration = p.getInteger();
+                                            if (duration != null) {
+                                                messageQuote.setDuration(duration);
+                                            }
+                                        }
+                                        break;
+
+                                    case 9:
+                                        type = MessageType.VIDEO_MESSAGE;
+                                        p = c.getChild(5);
+                                        if (p != null) {
+                                            Integer duration = p.getInteger();
+                                            if (duration != null) {
+                                                messageQuote.setDuration(duration);
+                                            }
+                                        }
+                                        p = c.getChild(7);
+                                        if (p != null) {
+                                            String caption = p.getString();
+                                            if (caption != null) {
+                                                messageQuote.setMediaCaption(caption);
+                                            }
+                                        }
+                                        break;
+
+                                    default:
+                                        break;
+                                }
+                            }
+                        }
+
+                        messageQuote.setMessageType(type);
                         messageQuote.setDeleted(true);
                     }
-                    if (messageQuote.getThumbData() == null) {
-                        byte[] thumbData = decodeThumbData(metadata);
+                    if (messageQuote.getThumbData() == null && childs != null) {
+                        byte[] thumbData = null;
+                        for (Part c : childs) {
+                            Part p = c.getChild(16);
+                            if (p != null) {
+                                byte[] bytes = p.getBytes(true);
+                                if (bytes != null && (thumbData == null || thumbData.length < bytes.length)) {
+                                    thumbData = bytes;
+                                }
+                            }
+                        }
                         if (thumbData != null) {
                             messageQuote.setThumbData(thumbData);
                         }
@@ -481,8 +645,7 @@ public class ExtractorIOS extends Extractor {
         m.setForwarded(rs.getInt("forwarded") > 0);
 
         byte[] metadata = rs.getBytes("metadata");
-        if (hasZSTANZAIDAndZMETADATAColumns){
-            m.setQuoted(getPositiveValueFromMetadata(metadata,0)==0x2A);
+        if (hasZSTANZAIDAndZMETADATAColumns) {
             m.setUuid(rs.getString("uuid"));        
             m.setMetaData(metadata);
         }
@@ -518,40 +681,6 @@ public class ExtractorIOS extends Extractor {
         }
 
         return m;
-    }
-
-    private static int getPositiveValueFromMetadata(byte[] metadata, int pos) {
-        if (metadata != null && metadata.length >= pos + 1) {
-            return (int) (metadata[pos] & 0xFF);
-        }
-        return -1;
-    }
-
-    private static String getSubStringFromMetadata(byte[] metadata, int pos, int length) {
-        if (metadata != null && metadata.length >= pos + length) {
-            return new String(metadata, pos, length, StandardCharsets.UTF_8);
-        }
-        return null;
-    }
-
-    private byte[] decodeThumbData(byte[] metadata) {
-        byte[] ret = null; 
-        Part p1 = new ProtoBufDecoder(metadata).decode(19);
-        if (p1 != null) {
-            List<Part> c1 = p1.getChilds();
-            if (c1 != null) {
-                for (Part p2 : c1) {
-                    Part p3 = p2.getChild(16);
-                    if (p3 != null) {
-                        byte[] bytes = p3.getBytes();
-                        if (bytes != null && (ret == null || ret.length < bytes.length)) {
-                            ret = bytes;
-                        }
-                    }
-                }
-            }
-        }
-        return ret;
     }
 
     private void decodeURLInfo(byte[] metadata, Message m) {

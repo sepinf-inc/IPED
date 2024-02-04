@@ -237,12 +237,12 @@ public class ReportGenerator {
             }
 
             if (histFrag.length()==0){
-                histFrag.append("<input type=\"hidden\" id=\"fragMessageChat\" value=\""+Messages.getString("WhatsAppReport.ChatFragment")+"\"/>");
-                histFrag.append("<input type=\"hidden\" id=\"fragMessageId\" value=\""+Messages.getString("WhatsAppReport.ReferenceId")+"\"/>");
-                histFrag.append("<input type=\"hidden\" id=\"fragMessageClose\" value=\""+Messages.getString("WhatsAppReport.Close")+"\"/>");
+                histFrag.append("<input type=\"hidden\" id=\"fragMessageChat\" value=\""+Messages.getString("WhatsAppReport.ChatFragment")+"\">");
+                histFrag.append("<input type=\"hidden\" id=\"fragMessageId\" value=\""+Messages.getString("WhatsAppReport.ReferenceId")+"\">");
+                histFrag.append("<input type=\"hidden\" id=\"fragMessageClose\" value=\""+Messages.getString("WhatsAppReport.Close")+"\">");
             }
 
-            histFrag.append("<input type=\"hidden\" id=\"frag"+ frag +"\" value=\""+lastId+"\"/>");
+            histFrag.append("<input type=\"hidden\" id=\"frag"+ frag +"\" value=\""+lastId+"\">");
             out.println(histFrag);
             out.flush();
             return new String(bout.toByteArray(), StandardCharsets.UTF_8);
@@ -637,117 +637,13 @@ public class ReportGenerator {
                     out.println("<span class=\"name\">" + name + "</span><br>");
                 }
 
-                //Messages.getString("WhatsAppReport.Forwarded")
                 if (message.isForwarded()) {
-                    out.println(forwardedIcon + "<span class=\"fwd\">"
-                            + Messages.getString("WhatsAppReport.Forwarded") + "</span><br>");
+                    out.println(forwardedIcon + "<span class=\"fwd\">" + Messages.getString("WhatsAppReport.Forwarded")
+                            + "</span><br>");
                 }
 
-                String quoteClass = (message.isFromMe())?"quoteTo":"quoteFrom";                
-                Message messageQuote = message.getMessageQuote();
-
-                if (message.isQuoted() && messageQuote != null){
-
-                    String dataQuote = messageQuote.getData();
-                    String quoteClick = "onclick=\"goToAnchorId("+messageQuote.getId()+");\"";
-                    String quoteIcon = "";
-                    String quoteDuration = "("+formatMMSS(messageQuote.getDuration())+")";
-                    String quoteUser = getBestContactName(messageQuote,contactsDirectory,account);
-                    byte[] thumbQuote = messageQuote.getThumbData();                               
-                    
-                    IItemReader mediaItemQuote = messageQuote.getMediaItem();
-                    if (mediaItemQuote != null) {
-                        byte[] generatedThumbQuote = mediaItemQuote.getThumb();
-                        if (generatedThumbQuote != null) {
-                            thumbQuote = generatedThumbQuote;
-                        }
-                    }
-
-                    switch (messageQuote.getMessageType()) {
-                        case AUDIO_MESSAGE:
-                            if (dataQuote == null || dataQuote.isEmpty()){
-                                dataQuote = Messages.getString("WhatsAppReport.Audio");
-                            }
-                            quoteIcon = "\uD83C\uDFA7";
-                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div style=\"display:table-cell;\"><span class=\"quoteUser\">"+quoteUser+
-                            "</span><br><span class=\"quoteMsg\">"+quoteIcon +
-                                " "+ format(dataQuote) + " "+  quoteDuration + "</span></div>");                                    
-                            break;
-                        case VIDEO_MESSAGE:     
-                        case GIF_MESSAGE:                           
-                            quoteIcon = "\uD83D\uDCF9";
-                            if (dataQuote == null || dataQuote.isEmpty()){
-                                dataQuote = Messages.getString("WhatsAppReport.Video");
-                            }
-                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div class=\"quoteTop\"><span class=\"quoteUser\">"+quoteUser+
-                            "</span><br><span class=\"quoteMsg\">"+quoteIcon +
-                                " "+ format(dataQuote) + " "+  quoteDuration + "</span></div>");
-                            if (thumbQuote != null) {
-                                out.print("<div><img class=\"quoteImg\" src=\"");
-                                out.print("data:image/jpg;base64," + Util.encodeBase64(thumbQuote) + "\"></div>");
-                            } else {
-                                out.println("<div class=\"videoImg quoteImg\" title=\"Video\"></div>");
-                            }
-                            break;                        
-                        case STICKER_MESSAGE:
-                        case IMAGE_MESSAGE:
-                            quoteIcon = "\uD83D\uDDBC";
-                            if (dataQuote == null || dataQuote.isEmpty()){
-                                dataQuote = Messages.getString("WhatsAppReport.Photo");
-                            }
-                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div class=\"quoteTop\"><span class=\"quoteUser\">"+quoteUser+
-                                "</span><br><span class=\"quoteMsg\">"+quoteIcon +" "+ format(dataQuote) + " </span></div>");                                    
-                            if (thumbQuote != null) {
-                                out.print("<div><img class=\"quoteImg\" src=\"");
-                                out.print("data:image/jpg;base64," + Util.encodeBase64(thumbQuote) + "\"></div>");
-                            } else {
-                                out.println("<div class=\"imageImg quoteImg\" title=\"Image\"></div>");
-                            }
-                            break;                        
-                        case APP_MESSAGE:
-                            quoteIcon = "\uD83D\uDCC4";
-                            if (dataQuote == null || dataQuote.isEmpty()){
-                                dataQuote = Messages.getString("WhatsAppReport.Document");
-                            }
-                            out.print("<div class=\""+quoteClass+"\" "+quoteClick+"><div class=\"quoteTop\"><span class=\"quoteUser\">"+quoteUser+
-                                "</span><br><span class=\"quoteMsg\">"+quoteIcon +" "+ format(dataQuote) + " </span></div>");                                    
-                            if (thumbQuote != null) {
-                                out.print("<div><img class=\"quoteImg\" src=\"");
-                                out.print("data:image/jpg;base64," + Util.encodeBase64(thumbQuote) + "\"></div>");
-                            } else {
-                                out.println("<div class=\"attachImg quoteImg\" title=\"Doc\"></div>");
-                            }
-                            break;                            
-                        case TEMPLATE_MESSAGE:
-                            out.print("<div class=\"" + quoteClass + "\" " + quoteClick
-                                    + "><div style=\"display:table-cell;\"><span class=\"quoteUser\">" + quoteUser
-                                    + "</span><br><span class=\"quoteMsg\">" + formatTemplate(messageQuote)
-                                    + "</span></div>");
-                            break;
-                        default:
-                            out.print("<div class=\"" + quoteClass + "\" " + quoteClick
-                                    + "><div style=\"display:table-cell;\"><span class=\"quoteUser\">" + quoteUser
-                                    + "</span><br><span class=\"quoteMsg\">" + format(dataQuote));
-                            if (notNullNorBlank(messageQuote.getUiElements())) {
-                                if (notNullNorBlank(dataQuote)) {
-                                    out.println("<br>");
-                                }
-                                out.print(formatUiElements(messageQuote.getUiElements()));
-                            }
-                            out.println("</span></div>");
-                            break;
-                    }
-                    if (messageQuote.isDeleted()) {
-                        out.println("<div style=\"display:table-footer-group\"><br><span style=\"float:none\" class=\"recovered\">");
-                        out.println("<div class=\"deletedIcon\"></div>");
-                        out.println("<i>" + Messages.getString("WhatsAppReport.Recovered") + "</i>");
-                        out.println("</span></div>");
-                    }                    
-                    out.print("</div>");
-                    
-                } else if (message.isQuoted() && messageQuote == null){ //Reference not found
-                    out.print("<div class=\""+quoteClass+"\"><span class=\"quoteUser\">"+
-                    Messages.getString("WhatsAppReport.ReferenceNotFound")+"</span><br><span class=\"quoteMsg\">"+format("") + "</span></div>");
+                if (message.isQuoted()) {
+                    printQuote(out, message, contactsDirectory, account);
                 }
 
                 switch (message.getMessageType()) {
@@ -773,48 +669,28 @@ public class ReportGenerator {
                         MessageProduct product = message.getProduct();
                         if (product != null) {
                             String seller = getBestContactName(false, product.getSeller(), contactsDirectory, account);
-                            out.print(formatProduct(product, seller));
+                            out.println(formatProduct(product, seller));
                         }
                         break;
                     case UNKNOWN_MEDIA_MESSAGE:
                         if (message.getMediaCaption() != null) {
-                            out.println("<i>" + Messages.getString("WhatsAppReport.UnknownMediaMessage") + "</i><br>");
-                            out.print(format(message.getMediaCaption()) + "<br>"); //$NON-NLS-1$
+                            out.print("<i>" + Messages.getString("WhatsAppReport.UnknownMediaMessage") + "</i><br>");
+                            out.println(format(message.getMediaCaption()) + "<br>"); //$NON-NLS-1$
                         }
                         break;
                     case URL_MESSAGE:
                         printThumb(out, message);
-                        if (notNullNorBlank(message.getUrl())) {
-                            out.println("<b>" + format(message.getUrl()) + "</b><br>");
-                        }
-                        if (notNullNorBlank(message.getMediaCaption())
-                                && !message.getMediaCaption().equals(message.getData())) {
-                            out.print("[" + message.getMediaCaption() + "]<br>");
-                        }
-                        if (notNullNorBlank(message.getData())) {
-                            out.print(format(message.getData()) + "<br>");
-                        }
+                        out.println(formatURL(message) + "<br>");
                         break;
                     case LOCATION_MESSAGE:
                     case SHARE_LOCATION_MESSAGE:
-                        String key = message.getMessageType() == MessageType.LOCATION_MESSAGE ? "LocationMessage"
-                                : "SharedLocationMessage";
-                        out.println("<b>" + locationIcon + Messages.getString("WhatsAppReport." + key) + "</b><br>");
-                        out.println(
-                                Messages.getString("WhatsAppReport.Latitude") + ": " + message.getLatitude() + "<br>");
-                        out.println(Messages.getString("WhatsAppReport.Longitude") + ": " + message.getLongitude()
-                                + "<br>");
-                        if (notNullNorBlank(message.getAddress())) {
-                            out.print(format(message.getAddress()) + "<br>");
-                        }
-                        if (notNullNorBlank(message.getData())) {
-                            out.print(format(message.getData()) + "<br>");
-                        }
+                        printThumb(out, message);
+                        out.println(formatLocation(message) + "<br>");
                         break;
                     case CONTACT_MESSAGE:
-                        out.println("<b>" + Messages.getString("WhatsAppReport.Contact") + "</b><br>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                        out.println("<b>" + Messages.getString("WhatsAppReport.Contact") + "</b><br>");
                         for (String c : message.getVcards()) {
-                            if (c != null) {
+                            if (notNullNorBlank(c)) {
                                 VCardParser.printHtmlFromString(out, c);
                             }
                         }
@@ -831,7 +707,7 @@ public class ReportGenerator {
                         break;
                     case TEMPLATE_MESSAGE:
                         printThumb(out, message);
-                        out.println(formatTemplate(message));
+                        out.println(formatTemplate(message) + "<br>");
                         break;
                     case POLL_MESSAGE:
                         printThumb(out, message);
@@ -893,7 +769,7 @@ public class ReportGenerator {
                             if (mediaItem != null) {
                                 out.println(
                                         "<input class=\"check\" type=\"checkbox\" onclick=\"app.check(" + query
-                                                + ",this.checked)\"" + " name=\"" + mediaItem.getHash() + "\"/>");
+                                                + ",this.checked)\"" + " name=\"" + mediaItem.getHash() + "\">");
                             }
                             out.println("<a onclick=\"app.open(" + query + ")\" "); //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -931,7 +807,7 @@ public class ReportGenerator {
                                         out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
                                         out.print(" data-src1=\"" + format(exportPath) + "\"");
                                         out.print(" data-src2=\"" + format(source) + "\"");
-                                        out.println(" title=\"" + getTitle(message) + "\"/>"); //$NON-NLS-1$ //$NON-NLS-2$
+                                        out.println(" title=\"" + getTitle(message) + "\">"); //$NON-NLS-1$ //$NON-NLS-2$
 
                                     } else {
                                         out.println("<div class=\"videoImg iped-video\" title=\"Video\""); //$NON-NLS-1$
@@ -1164,6 +1040,220 @@ public class ReportGenerator {
         }
     }
 
+    private String formatURL(Message message) {
+        StringBuilder sb = new StringBuilder();
+        if (notNullNorBlank(message.getUrl())) {
+            sb.append("<b>").append(format(message.getUrl())).append("</b>");
+        }
+        if (notNullNorBlank(message.getMediaCaption()) && !message.getMediaCaption().equals(message.getData())
+                && !message.getMediaCaption().equals(message.getUrl())) {
+            if (sb.length() > 0) {
+                sb.append("<br>");
+            }
+            sb.append("[").append(format(message.getMediaCaption())).append("]");
+        }
+        if (notNullNorBlank(message.getData()) && !message.getData().equals(message.getUrl())) {
+            if (sb.length() > 0) {
+                sb.append("<br>");
+            }
+            sb.append(format(message.getData()));
+        }
+        return sb.toString();
+    }
+
+    private String formatLocation(Message message) {
+        StringBuilder sb = new StringBuilder();
+
+        String key = message.getMessageType() == MessageType.LOCATION_MESSAGE ? "LocationMessage"
+                : "SharedLocationMessage";
+        sb.append("<b>").append(locationIcon).append(Messages.getString("WhatsAppReport." + key)).append("</b><br>");
+
+        sb.append(Messages.getString("WhatsAppReport.Latitude")).append(": ");
+        sb.append(message.getLatitude()).append("<br>");
+
+        sb.append(Messages.getString("WhatsAppReport.Longitude")).append(": ");
+        sb.append(message.getLongitude());
+
+        if (notNullNorBlank(message.getAddress())) {
+            sb.append("<br>").append(format(message.getAddress()));
+        }
+        if (notNullNorBlank(message.getData())) {
+            sb.append("<br>").append(format(message.getData()));
+        }
+        return sb.toString();
+    }
+
+    private void printQuote(PrintWriter out, Message message, WAContactsDirectory contactsDirectory,
+            WAAccount account) {
+        String quoteClass = message.isFromMe() ? "quoteTo" : "quoteFrom";
+        Message messageQuote = message.getMessageQuote();
+
+        if (messageQuote != null) {
+            String quoteData = messageQuote.getData();
+            String quoteClick = "onclick=\"goToAnchorId(" + messageQuote.getId() + ");\"";
+            String quoteIcon = "";
+            String quoteDuration = "";
+            if (messageQuote.getDuration() > 0) {
+                quoteDuration = "(" + formatMMSS(messageQuote.getDuration()) + ")";
+            }
+            String quoteUser = getBestContactName(messageQuote, contactsDirectory, account);
+            byte[] quoteThumb = messageQuote.getThumbData();
+
+            IItemReader quoteMediaItem = messageQuote.getMediaItem();
+            if (quoteMediaItem != null) {
+                byte[] quoteGeneratedThumb = quoteMediaItem.getThumb();
+                if (quoteGeneratedThumb != null) {
+                    quoteThumb = quoteGeneratedThumb;
+                }
+            }
+
+            String quoteMsg = "";
+            if (notNullNorBlank(messageQuote.getMediaCaption())) {
+                quoteMsg += format(messageQuote.getMediaCaption());
+            }
+            if (notNullNorBlank(quoteData) && !quoteMsg.equals(quoteData)) {
+                if (!quoteMsg.isEmpty()) {
+                    quoteMsg += "<br>";
+                }
+                quoteMsg += format(quoteData);
+            }
+
+            String quoteEnd = "</span></div>";
+            if (messageQuote.isDeleted()) {
+                quoteEnd = "</span><br><span style=\"float:none\" class=\"recovered\"><div class=\"deletedIcon\"></div><i>"
+                        + Messages.getString("WhatsAppReport.QuoteDeleted") + "</i>" + quoteEnd;
+            }
+
+            switch (messageQuote.getMessageType()) {
+                case AUDIO_MESSAGE:
+                    if (quoteData == null || quoteData.isEmpty()) {
+                        quoteData = Messages.getString("WhatsAppReport.Audio");
+                    }
+                    quoteIcon = "\uD83C\uDFA7";
+                    out.print("<div class=\"" + quoteClass + "\" " + quoteClick
+                            + "><div style=\"display:table-cell;\"><span class=\"quoteUser\">" + quoteUser
+                            + "</span><br><span class=\"quoteMsg\">" + quoteIcon + " " + quoteMsg + " " + quoteDuration
+                            + quoteEnd);
+                    break;
+
+                case VIDEO_MESSAGE:
+                case GIF_MESSAGE:
+                    quoteIcon = "\uD83D\uDCF9";
+                    if (quoteData == null || quoteData.isEmpty()) {
+                        quoteData = Messages.getString("WhatsAppReport.Video");
+                    }
+                    out.print("<div class=\"" + quoteClass + "\" " + quoteClick
+                            + "><div class=\"quoteTop\"><span class=\"quoteUser\">" + quoteUser
+                            + "</span><br><span class=\"quoteMsg\">" + quoteIcon + " " + quoteMsg + " " + quoteDuration
+                            + quoteEnd);
+                    if (quoteThumb != null) {
+                        out.print("<div><img class=\"quoteImg\" src=\"");
+                        out.print("data:image/jpg;base64," + Util.encodeBase64(quoteThumb) + "\"></div>");
+                    } else {
+                        out.print("<div class=\"videoImg quoteImg\" title=\"Video\"></div>");
+                    }
+                    break;
+
+                case STICKER_MESSAGE:
+                case IMAGE_MESSAGE:
+                    quoteIcon = "\uD83D\uDDBC";
+                    if (quoteData == null || quoteData.isEmpty()) {
+                        quoteData = Messages.getString("WhatsAppReport.Photo");
+                    }
+                    out.print("<div class=\"" + quoteClass + "\" " + quoteClick
+                            + "><div class=\"quoteTop\"><span class=\"quoteUser\">" + quoteUser
+                            + "</span><br><span class=\"quoteMsg\">" + quoteIcon + " " + quoteMsg + quoteEnd);
+                    if (quoteThumb != null) {
+                        out.print("<div><img class=\"quoteImg\" src=\"");
+                        out.print("data:image/jpg;base64," + Util.encodeBase64(quoteThumb) + "\"></div>");
+                    } else {
+                        out.print("<div class=\"imageImg quoteImg\" title=\"Image\"></div>");
+                    }
+                    break;
+
+                case APP_MESSAGE:
+                    quoteIcon = "\uD83D\uDCC4";
+                    if (quoteData == null || quoteData.isEmpty()) {
+                        quoteData = Messages.getString("WhatsAppReport.Document");
+                    }
+                    out.print("<div class=\"" + quoteClass + "\" " + quoteClick
+                            + "><div class=\"quoteTop\"><span class=\"quoteUser\">" + quoteUser
+                            + "</span><br><span class=\"quoteMsg\">" + quoteIcon + " " + quoteMsg + quoteEnd);
+                    if (quoteThumb != null) {
+                        out.print("<div><img class=\"quoteImg\" src=\"");
+                        out.print("data:image/jpg;base64," + Util.encodeBase64(quoteThumb) + "\"></div>");
+                    } else {
+                        out.print("<div class=\"attachImg quoteImg\" title=\"Doc\"></div>");
+                    }
+                    break;
+
+                case TEMPLATE_MESSAGE:
+                    out.print("<div class=\"" + quoteClass + "\" " + quoteClick
+                            + "><div style=\"display:table-cell;\"><span class=\"quoteUser\">" + quoteUser
+                            + "</span><br><span class=\"quoteMsg\">" + formatTemplate(messageQuote) + quoteEnd);
+                    break;
+
+                case URL_MESSAGE:
+                    out.print("<div class=\"" + quoteClass + "\" " + quoteClick
+                            + "><div class=\"quoteTop\"><span class=\"quoteUser\">" + quoteUser
+                            + "</span><br><span class=\"quoteMsg\">" + formatURL(messageQuote) + quoteEnd);
+                    if (quoteThumb != null) {
+                        out.print("<div><img class=\"quoteImg\" src=\"");
+                        out.print("data:image/jpg;base64," + Util.encodeBase64(quoteThumb) + "\"></div>");
+                    }
+                    break;
+
+                case LOCATION_MESSAGE:
+                    out.print("<div class=\"" + quoteClass + "\" " + quoteClick
+                            + "><div class=\"quoteTop\"><span class=\"quoteUser\">" + quoteUser
+                            + "</span><br><span class=\"quoteMsg\">" + formatLocation(messageQuote) + quoteEnd);
+                    if (quoteThumb != null) {
+                        out.print("<div><img class=\"quoteImg\" src=\"");
+                        out.print("data:image/jpg;base64," + Util.encodeBase64(quoteThumb) + "\"></div>");
+                    }
+                    break;
+
+                case CONTACT_MESSAGE:
+                    out.print("<div class=\"" + quoteClass + "\" " + quoteClick
+                            + "><div class=\"quoteTop\"><span class=\"quoteUser\">" + quoteUser
+                            + "</span><br><span class=\"quoteMsg\">");
+                    out.println("<b>" + Messages.getString("WhatsAppReport.Contact") + "</b><br>");
+                    for (String c : messageQuote.getVcards()) {
+                        if (notNullNorBlank(c)) {
+                            VCardParser.printHtmlFromString(out, c);
+                        }
+                    }
+                    out.print(quoteEnd);
+                    break;
+
+                default:
+                    out.print("<div class=\"" + quoteClass + "\" " + quoteClick
+                            + "><div style=\"display:table-cell;\"><span class=\"quoteUser\">" + quoteUser
+                            + "</span><br><span class=\"quoteMsg\">");
+                    StringBuilder sb = new StringBuilder();
+                    if (notNullNorBlank(quoteData)) {
+                        sb.append(format(quoteData));
+                    }
+                    if (notNullNorBlank(messageQuote.getUiElements())) {
+                        if (sb.length() > 0) {
+                            sb.append("<br>");
+                        }
+                        sb.append(formatUiElements(messageQuote.getUiElements()));
+                    }
+                    out.print(sb);
+                    out.print(quoteEnd);
+                    break;
+            }
+            out.println("</div>");
+
+        } else {
+            // Reference not found
+            out.println("<div class=\"" + quoteClass + "\"><span class=\"quoteUser\">"
+                    + Messages.getString("WhatsAppReport.QuoteNotFound") + "</span><br><span class=\"quoteMsg\">"
+                    + format("") + "</span></div>");
+        }
+    }
+
     private String formatProduct(MessageProduct product, String seller) {
         StringBuilder sb = new StringBuilder();
         if (notNullNorBlank(product.getTitle())) {
@@ -1251,26 +1341,35 @@ public class ReportGenerator {
         }
         return sb.toString();
     }
-    
+
     private String formatTemplate(Message message) {
         StringBuilder sb = new StringBuilder();
         if (notNullNorBlank(message.getData())) {
-            sb.append(format(message.getData())).append("<br>");
+            sb.append(format(message.getData()));
         }
         MessageTemplate t = message.getMessageTemplate();
         if (t != null) {
             String content = t.getContent();
             if (notNullNorBlank(content)) {
-                sb.append(format(content)).append("<br>");
+                if (sb.length() > 0) {
+                    sb.append("<br>");
+                }
+                sb.append(format(content));
             }
             for (MessageTemplate.Button button : t.getButtons()) {
                 String text = button.getText();
                 if (notNullNorBlank(text)) {
-                    sb.append("<b>[").append(format(text)).append("]</b><br>");
+                    if (sb.length() > 0) {
+                        sb.append("<br>");
+                    }
+                    sb.append("<b>[").append(format(text)).append("]</b>");
                 }
                 String extra = button.getExtra();
                 if (notNullNorBlank(extra) && !extra.equals(text)) {
-                    sb.append(format(extra)).append("<br>");
+                    if (sb.length() > 0) {
+                        sb.append("<br>");
+                    }
+                    sb.append(format(extra));
                 }
             }
         }
