@@ -53,9 +53,9 @@ import jep.JepException;
 /**
  * @author Patrick Dalla Bernardina <patrick.dalla@gmail.com>
  * 
- *         Class that implement a IPED task that will call ALeapp python plugins
- *         to be executed against IPED processed found evidences. The artifacts
- *         found by ALeapp will be extracted.
+ *         Class that implement an IPED task that will call ALeapp python
+ *         plugins to be executed against IPED processed found evidences. The
+ *         artifacts found by ALeapp will be extracted.
  */
 public class LeappBridgeTask extends AbstractPythonTask {
 
@@ -98,6 +98,8 @@ public class LeappBridgeTask extends AbstractPythonTask {
 
     //map between filesFound paths and correspondent Lucene Documents
     private HashMap<String, Document> filesFoundDocuments;
+
+    private ALeappConfig config;
 
     static private File aleappDir;
 
@@ -148,6 +150,8 @@ public class LeappBridgeTask extends AbstractPythonTask {
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
         int incremented = taskCount.incrementAndGet();
+
+        config = (ALeappConfig) configurationManager.findObject(ALeappConfig.class);
 
         moduleName = "JLeapp";
         if (incremented == 1) {
@@ -288,22 +292,19 @@ public class LeappBridgeTask extends AbstractPythonTask {
     }
 
     private File getAleappScriptsDir() {
-        if (aleappDir == null) {
-            ALeappConfig config = (ALeappConfig) getConfigurables().get(0);
-
-            if (config.getAleapScriptsDir() != null) {
-                aleappDir = new File(config.getAleapScriptsDir());
-            } else {
-                File pythonDir = new File(Configuration.getInstance().appRoot, "tools");
-                aleappDir = new File(pythonDir, "ALEAPP");
-            }
-
-            try {
-                logger.info("ALeapp scripts dir:" + aleappDir.getCanonicalPath());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        if (config.getAleapScriptsDir() != null) {
+            aleappDir = new File(config.getAleapScriptsDir());
+        } else {
+            File pythonDir = new File(Configuration.getInstance().appRoot, "tools");
+            aleappDir = new File(pythonDir, "ALEAPP");
         }
+
+        try {
+            logger.info("ALeapp scripts dir:" + aleappDir.getCanonicalPath());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         return aleappDir;
     }
 
@@ -357,17 +358,19 @@ public class LeappBridgeTask extends AbstractPythonTask {
 
                 // creates one subitem for each plugin execution
                 for (LeapArtifactsPlugin p : pluginsManager.getPlugins()) {
-                    Item psubItem = (Item) evidence.createChildItem();
+                    if (config.isPluginIncluded(p.getModuleName())) {
+                        Item psubItem = (Item) evidence.createChildItem();
 
-                    String moduleName = p.moduleName;
-                    psubItem.setName(moduleName);
-                    psubItem.setPath(parentInfo.getPath() + "/" + moduleName);
-                    psubItem.setSubItem(true);
-                    psubItem.setSubitemId(1);
-                    psubItem.getMetadata().set(ALEAPP_PLUGIN, moduleName);
-                    psubItem.getMetadata().set(ALEAPP_ISPLUGIN, "true");
-                    psubItem.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
-                    worker.processNewItem(psubItem);
+                        String moduleName = p.moduleName;
+                        psubItem.setName(moduleName);
+                        psubItem.setPath(parentInfo.getPath() + "/" + moduleName);
+                        psubItem.setSubItem(true);
+                        psubItem.setSubitemId(1);
+                        psubItem.getMetadata().set(ALEAPP_PLUGIN, moduleName);
+                        psubItem.getMetadata().set(ALEAPP_ISPLUGIN, "true");
+                        psubItem.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
+                        worker.processNewItem(psubItem);
+                    }
                 }
 
                 // creates subitem to hold device info collected

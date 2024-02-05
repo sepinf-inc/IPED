@@ -1,2 +1,5 @@
 #aleapFolder specifies the folder where ALEAPP scripts are installed. It defaults to tools dir, in case ommited.
 #aleapFolder=/home/patrick.pdb/multicase/indices/ALEAPP
+
+#List of ALeapp plugins names not to be called (because there may already exist a correspondent IPED parser) 
+excludePlugins=WhatsApp
