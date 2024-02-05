@@ -1146,7 +1146,7 @@ public class ReportGenerator {
             String quoteEnd = "</span></div>";
             if (messageQuote.isDeleted()) {
                 quoteEnd = "</span><br><span style=\"float:none\" class=\"recovered\"><div class=\"deletedIcon\"></div><i>"
-                        + Messages.getString("WhatsAppReport.QuoteDeleted") + "</i>" + quoteEnd;
+                        + Messages.getString("WhatsAppReport.QuoteNotFound") + "</i>" + quoteEnd;
             }
 
             switch (messageQuote.getMessageType()) {
