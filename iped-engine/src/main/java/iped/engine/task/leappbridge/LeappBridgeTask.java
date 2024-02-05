@@ -265,8 +265,8 @@ public class LeappBridgeTask extends AbstractPythonTask {
                     jep.set("mappedEvidences", mappedEvidences);
 
                     jep.eval("logfunc('" + PLUGIN_EXECUTION_MESSAGE + ":" + p.getModuleName() + "')");
-                    jep.eval("parse(" + lists + ",'" + reportPath.getCanonicalPath().replace("\\", "\\\\")
-                            + "',dumb,True)");
+                    jep.eval("parse(" + lists + ",'"
+                            + reportPath.getCanonicalPath().replace("\\", "\\\\") + "',dumb,True,'UTC')");
                 } finally {
                     // restore overriden method
                     jep.eval("os.path.getmtime = os.path.old_iped_getmtime");
