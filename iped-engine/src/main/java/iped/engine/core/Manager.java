@@ -571,9 +571,7 @@ public class Manager {
                 UIPropertyListenerProvider.getInstance().firePropertyChange("decodingDir", 0, //$NON-NLS-1$
                         Messages.getString("Manager.Adding") + currentDir.trim() + "\""); //$NON-NLS-1$ //$NON-NLS-2$
             }
-            UIPropertyListenerProvider.getInstance().firePropertyChange("discovered", 0, caseData.getDiscoveredEvidences()); //$NON-NLS-1$
-            UIPropertyListenerProvider.getInstance().firePropertyChange("processed", -1, stats.getProcessed()); //$NON-NLS-1$
-            UIPropertyListenerProvider.getInstance().firePropertyChange("progresso", 0, (int) (stats.getVolume() / 1000000)); //$NON-NLS-1$
+            UIPropertyListenerProvider.getInstance().firePropertyChange("update", 0, 0);
 
             boolean changeToNextQueue = !producer.isAlive();
             for (int k = 0; k < workers.length; k++) {
