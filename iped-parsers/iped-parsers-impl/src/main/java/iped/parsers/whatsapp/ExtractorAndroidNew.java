@@ -239,7 +239,16 @@ public class ExtractorAndroidNew extends Extractor {
             stmt.setLong(1, m.getId());
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
-                t = new MessageTemplate(rs.getString("content"));
+                String content = rs.getString("content");
+                String footer = rs.getString("footer");
+                if (footer != null && !footer.isBlank()) {
+                    if (content == null || content.isBlank()) {
+                        content = footer;
+                    } else {
+                        content += "\n" + footer;
+                    }
+                }
+                t = new MessageTemplate(content);
             }
         }
 
@@ -879,7 +888,7 @@ public class ExtractorAndroidNew extends Extractor {
             + " left join message_add_on_reaction r on r.message_add_on_row_id=m._id"
             + " where parent_message_row_id=?";
 
-    private static final String SELECT_TEMPLATE = "SELECT content_text_data as content FROM message_template where message_row_id=?";
+    private static final String SELECT_TEMPLATE = "SELECT content_text_data as content, footer_text_data as footer FROM message_template where message_row_id=?";
 
     private static final String SELECT_USERS_GROUP_ACTION = "select raw_string from message_system_chat_participant inner join jid on user_jid_row_id = jid._id where message_row_id=? order by _id";
     
