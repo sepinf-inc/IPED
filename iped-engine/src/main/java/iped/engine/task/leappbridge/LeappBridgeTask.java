@@ -757,6 +757,11 @@ public class LeappBridgeTask extends AbstractPythonTask {
             if (mime.contains("appemails")) {
                 e.setCategory("Emails");
                 m.add("Communitactions:TO", m.get("ALEAPP:To"));
+                String from = m.get("ALEAPP:FROM");
+                if (from == null || from.isBlank()) {
+                    from = m.get("ALEAPP:Reply To");
+                }
+                m.add("Communitactions:FROM", from);
             }
             return;
         }
