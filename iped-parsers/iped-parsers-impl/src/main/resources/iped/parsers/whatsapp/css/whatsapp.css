@@ -213,9 +213,11 @@ div.deletedIcon {
     color: #4040B0;	
 }
 
-.duration {
+span.duration {
     font-size: 70%;
     color: #EEEEEEBB;
+    display: inline-block;
+    text-decoration: none;
 }
 
 /*Quotes*/
