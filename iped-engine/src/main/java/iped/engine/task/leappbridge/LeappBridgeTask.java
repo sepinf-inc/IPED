@@ -755,6 +755,20 @@ public class LeappBridgeTask extends AbstractPythonTask {
             e.setCategory("Update information");
             return;
         }
+        if (pluginName.equals("smsmms")) {
+            String type = m.get("ALEAPP:Type");
+            String thisPhone = "This phone";
+            if (type.equals("Received")) {
+                m.add("Communitactions:TO", thisPhone);
+                m.add("Communitactions:FROM", m.get("ALEAPP:Address"));
+            } else {
+                if (type.equals("Sent")) {
+                    m.add("Communitactions:TO", m.get("ALEAPP:Address"));
+                    m.add("Communitactions:FROM", thisPhone);
+                }
+                // other types are DRAFT, OUTBOX, QUEUED and Failed
+            }
+        }
         String mime = e.getMediaType().toString();
         if (pluginName.equals("gmailEmails")) {
             if (mime.contains("appemails")) {
