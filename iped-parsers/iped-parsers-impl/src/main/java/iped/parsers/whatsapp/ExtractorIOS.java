@@ -12,13 +12,19 @@ import static iped.parsers.whatsapp.Message.MessageType.CONTACT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_SENDER;
 import static iped.parsers.whatsapp.Message.MessageType.DOC_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.ENCRYPTION_KEY_CHANGED;
+import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_DEFAULT;
 import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_SAVE;
 import static iped.parsers.whatsapp.Message.MessageType.GIF_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_SEND;
+import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ONLY_ADMINS_CAN_SEND;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CREATED;
+import static iped.parsers.whatsapp.Message.MessageType.GROUP_DESCRIPTION_CHANGED;
+import static iped.parsers.whatsapp.Message.MessageType.GROUP_DESCRIPTION_DELETED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_ICON_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_ICON_DELETED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_INVITE;
+import static iped.parsers.whatsapp.Message.MessageType.GROUP_NAME_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.IMAGE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.LOCATION_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.MESSAGES_NOW_ENCRYPTED;
@@ -34,16 +40,17 @@ import static iped.parsers.whatsapp.Message.MessageType.UNBLOCKED_CONTACT;
 import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_MEDIA_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.URL_MESSAGE;
-import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP;
+import static iped.parsers.whatsapp.Message.MessageType.USER_ADDED_TO_GROUP;
+import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP_FROM_LINK;
 import static iped.parsers.whatsapp.Message.MessageType.USER_LEFT_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.USER_REMOVED_FROM_GROUP;
-import static iped.parsers.whatsapp.Message.MessageType.USERS_JOINED_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.VIDEO_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.VIEW_ONCE_IMAGE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.VIEW_ONCE_VIDEO_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.WAITING_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.YOU_ADMIN;
+import static iped.parsers.whatsapp.Message.MessageType.YOU_NOT_ADMIN;
 
 import java.io.File;
 import java.sql.Connection;
@@ -663,8 +670,38 @@ public class ExtractorIOS extends Extractor {
         if (hasZMOVIEDURATIONColumn) {
             m.setDuration(rs.getInt("duration"));
         }
-
+        
         switch (m.getMessageType()) {
+            case USER_ADDED_TO_GROUP:
+                String s0 = m.getData();
+                if (s0 != null && !s0.isBlank()) {
+                    if (s0.indexOf(";") >= 0) {
+                        String[] s1 = s0.split(";", 2);
+                        m.setRemoteResource(s1[0]);
+                        String[] s2 = s1[1].split(",");
+                        for (String s3 : s2) {
+                            m.addUserAction(s3);
+                        }
+                    } else {
+                        m.setRemoteResource(s0);
+                        m.addUserAction(rs.getString("remoteResource"));
+                    }
+                }
+                break;
+
+            case EPHEMERAL_CHANGED:
+                int duration = 0;
+                String s = m.getData();
+                if (s != null && !s.isBlank()) {
+                    try {
+                        duration = Integer.parseInt(s);
+                    } catch (Exception e) {
+                    }
+                }
+                m.setDuration(duration);
+                m.setData("");
+                break;
+                
             case EPHEMERAL_DEFAULT:
                 m.setDuration(decodeEphemeralDuration(metadata));
                 break;
@@ -860,7 +897,7 @@ public class ExtractorIOS extends Extractor {
     }
 
     private Message createMessageFromUndeletedRecord(SqliteRow row, Chat chat, Map<Long, SqliteRow> mediaItems,
-            Map<Long, SqliteRow> groupMemebers) throws SQLException {
+            Map<Long, SqliteRow> groupMembers) throws SQLException {
         Message m = new Message();
         if (account != null)
             m.setLocalResource(account.getId());
@@ -868,7 +905,7 @@ public class ExtractorIOS extends Extractor {
         String remoteResource = null;
         if (chat.isGroupChat()) {
             long groupMemberID = row.getIntValue("ZGROUPMEMBER"); //$NON-NLS-1$
-            SqliteRow groupMemberRow = groupMemebers.get(groupMemberID);
+            SqliteRow groupMemberRow = groupMembers.get(groupMemberID);
             if (groupMemberRow != null) {
                 remoteResource = groupMemberRow.getTextValue("ZMEMBERJID"); //$NON-NLS-1$
             }
@@ -1089,25 +1126,44 @@ public class ExtractorIOS extends Extractor {
                 result = LOCATION_MESSAGE;
                 break;
             case 6:
-                if (gEventType == 12) {
-                    result = GROUP_CREATED;
+                if (gEventType == 1) {
+                    // "data" contains the new group name
+                    result = GROUP_NAME_CHANGED;
                 } else if (gEventType == 2) {
-                    result = USER_JOINED_GROUP;
+                    result = USER_ADDED_TO_GROUP;
                 } else if (gEventType == 3) {
                     result = USER_LEFT_GROUP;
-                } else if (gEventType == 7) {
-                    result = USER_REMOVED_FROM_GROUP; // sender o removido, data quem removeu
-                } else if (gEventType == 50) {
-                    result = USERS_JOINED_GROUP;
                 } else if (gEventType == 4) {
                     result = GROUP_ICON_CHANGED;
                 } else if (gEventType == 5) {
                     result = GROUP_ICON_DELETED;
+                } else if (gEventType == 7) {
+                    // "sender" user was removed by "data" user
+                    result = USER_REMOVED_FROM_GROUP;
+                } else if (gEventType == 9) {
+                    result = CHANGED_NUMBER_CHATTING_WITH_OLD;
                 } else if (gEventType == 10) {
                     result = YOU_ADMIN;
+                } else if (gEventType == 11) {
+                    result = YOU_NOT_ADMIN;
+                } else if (gEventType == 12) {
+                    result = GROUP_CREATED;
+                } else if (gEventType == 15) {
+                    result = USER_JOINED_GROUP_FROM_LINK;
+                } else if (gEventType == 17) {
+                    result = GROUP_DESCRIPTION_CHANGED;
+                } else if (gEventType == 20) {
+                    result = GROUP_CHANGED_ONLY_ADMINS_CAN_SEND;
+                } else if (gEventType == 21) {
+                    result = GROUP_CHANGED_ALL_MEMBERS_CAN_SEND;
+                } else if (gEventType == 22) {
+                    result = GROUP_DESCRIPTION_DELETED;
+                } else if (gEventType == 26) {
+                    result = EPHEMERAL_CHANGED;
+                } else if (gEventType == 50) {
+                    // multiple users added to group
+                    result = USER_ADDED_TO_GROUP;
                 }
-                // 6 / 14 (provavelmente : você foi removido do grupo)
-                // 6 / 9 (pode ser autorizacao de adm de grupo)
                 break;
             case 7:
                 result = URL_MESSAGE;

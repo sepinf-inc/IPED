@@ -24,7 +24,7 @@ import static iped.parsers.whatsapp.Message.MessageType.SUBJECT_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.TEXT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_MEDIA_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_MESSAGE;
-import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP;
+import static iped.parsers.whatsapp.Message.MessageType.USER_ADDED_TO_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP_FROM_LINK;
 import static iped.parsers.whatsapp.Message.MessageType.USER_LEFT_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.USER_REMOVED_FROM_GROUP;
@@ -570,7 +570,7 @@ public class ExtractorAndroid extends Extractor {
                             break;
                         case 4:
                         case 12:
-                            result = USER_JOINED_GROUP;
+                            result = USER_ADDED_TO_GROUP;
                             break;
                         case 5:
                             result = USER_LEFT_GROUP;

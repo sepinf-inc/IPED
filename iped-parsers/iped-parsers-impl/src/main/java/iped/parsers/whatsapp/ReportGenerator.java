@@ -314,52 +314,52 @@ public class ReportGenerator {
                 break;
             case EPHEMERAL_SAVE:
                 out.println("<div class=\"systemmessage\">");
-                out.println(Messages.getString("WhatsAppReport.EphemeralSave"));
+                out.println(Messages.getString("WhatsAppReport.EphemeralSave") + "<br>");
                 break;
             case BLOCKED_CONTACT:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
-                out.println(Messages.getString("WhatsAppReport.BlockedContact")); //$NON-NLS-1$
+                out.println(Messages.getString("WhatsAppReport.BlockedContact") + "<br>"); //$NON-NLS-1$
                 break;
             case UNBLOCKED_CONTACT:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
-                out.println(Messages.getString("WhatsAppReport.UnblockedContact")); //$NON-NLS-1$
+                out.println(Messages.getString("WhatsAppReport.UnblockedContact") + "<br>"); //$NON-NLS-1$
                 break;
             case BUSINESS_CHAT:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
-                out.println(Messages.getString("WhatsAppReport.ChatBusiness")); //$NON-NLS-1$
+                out.println(Messages.getString("WhatsAppReport.ChatBusiness") + "<br>"); //$NON-NLS-1$
                 break;
             case BUSINESS_OFFICIAL:
                 out.println("<div class=\"systemmessage\">");
-                out.println(Messages.getString("WhatsAppReport.ChatBusinessOfficial"));
+                out.println(Messages.getString("WhatsAppReport.ChatBusinessOfficial") + "<br>");
                 break;
             case BUSINESS_CHANGED_NAME:
                 out.println("<div class=\"systemmessage\">");
-                out.println(Messages.getString("WhatsAppReport.BusinessChangedName"));
+                out.println(Messages.getString("WhatsAppReport.BusinessChangedName") + "<br>");
                 break;
             case STANDARD_CHAT:
                 out.println("<div class=\"systemmessage\">");
-                out.println(Messages.getString("WhatsAppReport.ChatStandard"));
+                out.println(Messages.getString("WhatsAppReport.ChatStandard") + "<br>");
                 break;
             case BUSINESS_META_SECURE_SERVICE:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
-                out.println(Messages.getString("WhatsAppReport.BusinessSecureService")); //$NON-NLS-1$
+                out.println(Messages.getString("WhatsAppReport.BusinessSecureService") + "<br>"); //$NON-NLS-1$
                 break;
             case BUSINESS_TO_STANDARD:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
-                out.println(Messages.getString("WhatsAppReport.BusinessToStandard")); //$NON-NLS-1$
+                out.println(Messages.getString("WhatsAppReport.BusinessToStandard") + "<br>"); //$NON-NLS-1$
                 break;
             case MESSAGES_ENCRYPTED:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
                 out.print(lockedIcon);
-                out.println(Messages.getString("WhatsAppReport.ChatEncrypted")); //$NON-NLS-1$
+                out.println(Messages.getString("WhatsAppReport.ChatEncrypted") + "<br>"); //$NON-NLS-1$
                 break;
             case MESSAGES_NOW_ENCRYPTED:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
                 out.print(lockedIcon);
                 if (isGroupOrChannel) {
-                    out.println(Messages.getString("WhatsAppReport.GroupNowEncrypted")); //$NON-NLS-1$
+                    out.println(Messages.getString("WhatsAppReport.GroupNowEncrypted") + "<br>"); //$NON-NLS-1$
                 } else {
-                    out.println(Messages.getString("WhatsAppReport.ChatNowEncrypted")); //$NON-NLS-1$
+                    out.println(Messages.getString("WhatsAppReport.ChatNowEncrypted") + "<br>"); //$NON-NLS-1$
                 }
                 break;
             case MISSED_VIDEO_CALL:
@@ -498,10 +498,10 @@ public class ReportGenerator {
                 out.println(Messages.getString("WhatsAppReport.Duration") + ": " + formatMMSS(message.getDuration())); //$NON-NLS-1$ //$NON-NLS-2$
                 break;
             case GROUP_CREATED:
-                out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
+                out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.GroupCreated") + " " + name + "<br>");
                 if (notNullNorBlank(message.getData())) {
-                    out.print(format(message.getData()) + "<br>"); //$NON-NLS-1$
+                    out.print("\"" + format(message.getData()) + "\"<br>");
                 }
                 break;
             case GROUP_ADDED_TO_COMMUNITY:
@@ -512,28 +512,29 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.CommunityManagementAction") + "<br>");
                 break;
-            case USER_JOINED_GROUP:
-            case USERS_JOINED_GROUP:
+            case USER_ADDED_TO_GROUP:
             case USER_JOINED_GROUP_FROM_LINK:
             case USER_REMOVED_FROM_GROUP:
                 List<String> users = message.getUsersAction();
-                out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
+                out.println("<div class=\"systemmessage\">");
                 out.print(name + " ");
                 if (message.getMessageType() == MessageType.USER_REMOVED_FROM_GROUP) {
                     out.print(Messages.getString("WhatsAppReport.UserRemovedGroup"));
                 } else if (message.getMessageType() == MessageType.USER_JOINED_GROUP_FROM_LINK) {
                     out.print(Messages.getString("WhatsAppReport.UserJoinedGroupLink"));
                 } else {
-                    out.print(Messages.getString("WhatsAppReport.UserJoinedGroup"));
+                    out.print(Messages.getString("WhatsAppReport.UserAddedToGroup"));
                 }
                 for (int i = 0; i < users.size(); i++) {
                     out.print(i == 0 ? ": " : ", ");
-                    out.print(getBestContactName(false, users.get(i), contactsDirectory, account));
+                    String user = users.get(i);
+                    out.print(getBestContactName(user == null || user.isBlank(), user, contactsDirectory, account));
                 }
-                out.println(".<br>");
+                out.print(".<br>");
                 if (notNullNorBlank(message.getData())) {
-                    out.print(format(message.getData()) + "<br>"); //$NON-NLS-1$
+                    out.print(format(message.getData()) + "<br>");
                 }
+                out.println();
                 break;
             case USER_LEFT_GROUP:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
@@ -541,27 +542,38 @@ public class ReportGenerator {
                 break;
             case GROUP_ICON_CHANGED:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
-                out.println(Messages.getString("WhatsAppReport.GroupIconChanged")); //$NON-NLS-1$
+                out.println(Messages.getString("WhatsAppReport.GroupIconChanged") + "<br>"); //$NON-NLS-1$
                 break;
             case GROUP_ICON_DELETED:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
-                out.println(Messages.getString("WhatsAppReport.GroupIconDeleted")); //$NON-NLS-1$
+                out.println(Messages.getString("WhatsAppReport.GroupIconDeleted") + "<br>"); //$NON-NLS-1$
                 break;
             case GROUP_DESCRIPTION_CHANGED:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
-                out.println(Messages.getString("WhatsAppReport.GroupDescriptionChanged")); //$NON-NLS-1$
+                out.println(Messages.getString("WhatsAppReport.GroupDescriptionChanged") + "<br>"); //$NON-NLS-1$
+                break;
+            case GROUP_DESCRIPTION_DELETED:
+                out.println("<div class=\"systemmessage\">");
+                out.print(name + " ");
+                out.println(Messages.getString("WhatsAppReport.GroupDescriptionDeleted") + "<br>");
+                break;
+            case GROUP_NAME_CHANGED:
+                out.println("<div class=\"systemmessage\">");
+                out.print(name + " ");
+                out.print(Messages.getString("WhatsAppReport.GroupNameChanged"));
+                out.println(" \"" + format(message.getData()) + "\"<br>");
                 break;
             case SUBJECT_CHANGED:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
-                out.println(Messages.getString("WhatsAppReport.SubjectChanged")); //$NON-NLS-1$
+                out.println(Messages.getString("WhatsAppReport.SubjectChanged") + "<br>"); //$NON-NLS-1$
                 break;
             case YOU_ADMIN:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
-                out.println(Messages.getString("WhatsAppReport.YouAdmin")); //$NON-NLS-1$
+                out.println(Messages.getString("WhatsAppReport.YouAdmin") + "<br>"); //$NON-NLS-1$
                 break;
             case YOU_NOT_ADMIN:
                 out.println("<div class=\"systemmessage\">");
-                out.println(Messages.getString("WhatsAppReport.YouNotAdmin"));
+                out.println(Messages.getString("WhatsAppReport.YouNotAdmin") + "<br>");
                 break;
             case GROUP_CHANGED_ALL_MEMBERS_CAN_SEND:
                 out.println("<div class=\"systemmessage\">");

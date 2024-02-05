@@ -60,7 +60,7 @@ import static iped.parsers.whatsapp.Message.MessageType.UNBLOCKED_CONTACT;
 import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_VOICE_CALL;
-import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP;
+import static iped.parsers.whatsapp.Message.MessageType.USER_ADDED_TO_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP_FROM_LINK;
 import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_WHATSAPP;
 import static iped.parsers.whatsapp.Message.MessageType.USER_LEFT_GROUP;
@@ -449,7 +449,7 @@ public class ExtractorAndroidNew extends Extractor {
                 }
 
                 if (hasSystemChat
-                        && (m.getMessageType() == USER_JOINED_GROUP || m.getMessageType() == USER_REMOVED_FROM_GROUP
+                        && (m.getMessageType() == USER_ADDED_TO_GROUP || m.getMessageType() == USER_REMOVED_FROM_GROUP
                                 || m.getMessageType() == USER_JOINED_GROUP_FROM_LINK
                                 || m.getMessageType() == USER_LEFT_GROUP)) {
                     extractUsersGroupAction(conn, m);
@@ -601,7 +601,7 @@ public class ExtractorAndroidNew extends Extractor {
                         break;
                     case 4:
                     case 12:
-                        result = USER_JOINED_GROUP;
+                        result = USER_ADDED_TO_GROUP;
                         break;
                     case 5:
                     case 13:
