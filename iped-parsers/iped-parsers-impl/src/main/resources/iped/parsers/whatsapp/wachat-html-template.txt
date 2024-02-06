@@ -19,10 +19,14 @@
     </head>
     <body>
         <div id="topbar">
-          <span class="left">
-            <img src="${avatar}" width="64" height="64">
-            ${title}
-          </span>
+            <div style="display: inline-block; padding: 6px 0px 2px 6px;">
+                <img src="${avatar}" width="72" height="72">
+            </div>
+            <div style="display: inline-block; width: 555px; vertical-align: bottom;">
+                <span class="left">
+                    ${title}
+                </span>
+            </div>
         </div>
         <div id="conversation"><br><br><br><br><br>
         ${deleted}
