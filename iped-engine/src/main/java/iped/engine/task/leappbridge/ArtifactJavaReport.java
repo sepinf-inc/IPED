@@ -265,9 +265,13 @@ public class ArtifactJavaReport {
         if (refpos >= 0) {
             String refFileStr = value.substring(refpos + sizeTag);// from end of "href=" till end
             String strDelimiter = refFileStr.substring(0, 1); // read used string delimiter (quote or double quote)
+            int end = refFileStr.length();
+            if (strDelimiter.equals("'") || strDelimiter.equals("\"")) {
+                end = refFileStr.indexOf(strDelimiter, 2);
+            }
 
             try {
-                refFileStr = refFileStr.substring(1, refFileStr.indexOf(strDelimiter, 2)); // to end string delimiter
+                refFileStr = refFileStr.substring(1, end); // to end string delimiter
                 if (refFileStr.startsWith("." + File.pathSeparator)) {
                     refFileStr = reportDumpPath + File.pathSeparator + refFileStr.substring(1);
                 }
