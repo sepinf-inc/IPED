@@ -1328,9 +1328,9 @@ public class ExtractorIOS extends Extractor {
                     try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(SELECT_PUSH_NAMES)) {
                         while (rs.next()) {
                             String jid = rs.getString("jid");
-                            if (!contacts.hasContact(Util.getNameFromId(jid))) {
+                            if (jid != null && !jid.isBlank() && !contacts.hasContact(Util.getNameFromId(jid))) {
                                 String name = rs.getString("pushname");
-                                if (name != null && !name.isBlank()) {
+                                if (name != null && !name.isBlank() && !jid.startsWith(name)) {
                                     WAContact c = contacts.getContact(jid);
                                     c.setDisplayName("~" + name);
                                 }
