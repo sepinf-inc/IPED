@@ -665,10 +665,13 @@ public class ReportGenerator {
                     case TEMPLATE_QUOTE:
                     case UI_ELEMENTS_QUOTE:
                     case UI_ELEMENTS:
-                        // Some textual messages may have thumbs
+                        // Some textual messages may have thumbs, URL and UIElements
                         printThumb(out, message);
+                        if (notNullNorBlank(message.getUrl())) {
+                            out.print(format(message.getUrl()) + "<br>");
+                        }
                         if (notNullNorBlank(message.getData())) {
-                            out.print(format(message.getData()) + "<br>"); //$NON-NLS-1$
+                            out.print(format(message.getData()) + "<br>");
                         }
                         if (notNullNorBlank(message.getUiElements())) {
                             out.print(formatUiElements(message.getUiElements()));
