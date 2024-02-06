@@ -1169,145 +1169,232 @@ public class ExtractorIOS extends Extractor {
             case 0:
                 result = TEXT_MESSAGE;
                 break;
+
             case 1:
                 result = IMAGE_MESSAGE;
                 break;
+
             case 2:
                 result = VIDEO_MESSAGE;
                 break;
+
             case 3:
                 result = AUDIO_MESSAGE;
                 break;
+
             case 4:
                 result = CONTACT_MESSAGE;
                 break;
+
             case 5:
                 result = LOCATION_MESSAGE;
                 break;
+
             case 6:
-                if (gEventType == 1) {
-                    // "data" contains the new group name
-                    result = GROUP_NAME_CHANGED;
-                } else if (gEventType == 2) {
-                    result = USER_ADDED_TO_GROUP;
-                } else if (gEventType == 3) {
-                    result = USER_LEFT_GROUP;
-                } else if (gEventType == 4) {
-                    result = GROUP_ICON_CHANGED;
-                } else if (gEventType == 5) {
-                    result = GROUP_ICON_DELETED;
-                } else if (gEventType == 7) {
-                    // "sender" user was removed by "data" user
-                    result = USER_REMOVED_FROM_GROUP;
-                } else if (gEventType == 9) {
-                    result = CHANGED_NUMBER_CHATTING_WITH_OLD;
-                } else if (gEventType == 10) {
-                    result = YOU_ADMIN;
-                } else if (gEventType == 11) {
-                    result = YOU_NOT_ADMIN;
-                } else if (gEventType == 12) {
-                    result = GROUP_CREATED;
-                } else if (gEventType == 15) {
-                    result = USER_JOINED_GROUP_FROM_LINK;
-                } else if (gEventType == 17) {
-                    result = GROUP_DESCRIPTION_CHANGED;
-                } else if (gEventType == 20) {
-                    result = GROUP_CHANGED_ONLY_ADMINS_CAN_SEND;
-                } else if (gEventType == 21) {
-                    result = GROUP_CHANGED_ALL_MEMBERS_CAN_SEND;
-                } else if (gEventType == 22) {
-                    result = GROUP_DESCRIPTION_DELETED;
-                } else if (gEventType == 26) {
-                    result = EPHEMERAL_CHANGED;
-                } else if (gEventType == 50) {
-                    // multiple users added to group
-                    result = USER_ADDED_TO_GROUP;
+                switch (gEventType) {
+                    case 1:
+                        // "data" contains the new group name
+                        result = GROUP_NAME_CHANGED;
+                        break;
+
+                    case 2:
+                        result = USER_ADDED_TO_GROUP;
+                        break;
+
+                    case 3:
+                        result = USER_LEFT_GROUP;
+                        break;
+
+                    case 4:
+                        result = GROUP_ICON_CHANGED;
+                        break;
+
+                    case 5:
+                        result = GROUP_ICON_DELETED;
+                        break;
+
+                    case 7:
+                        // "sender" user was removed by "data" user
+                        result = USER_REMOVED_FROM_GROUP;
+                        break;
+
+                    case 9:
+                        result = CHANGED_NUMBER_CHATTING_WITH_OLD;
+                        break;
+
+                    case 10:
+                        result = YOU_ADMIN;
+                        break;
+
+                    case 11:
+                        result = YOU_NOT_ADMIN;
+                        break;
+
+                    case 12:
+                        result = GROUP_CREATED;
+                        break;
+
+                    case 15:
+                        result = USER_JOINED_GROUP_FROM_LINK;
+                        break;
+
+                    case 17:
+                        result = GROUP_DESCRIPTION_CHANGED;
+                        break;
+
+                    case 20:
+                        result = GROUP_CHANGED_ONLY_ADMINS_CAN_SEND;
+                        break;
+
+                    case 21:
+                        result = GROUP_CHANGED_ALL_MEMBERS_CAN_SEND;
+                        break;
+
+                    case 22:
+                        result = GROUP_DESCRIPTION_DELETED;
+                        break;
+
+                    case 26:
+                        result = EPHEMERAL_CHANGED;
+                        break;
+
+                    case 50:
+                        // multiple users added to group
+                        result = USER_ADDED_TO_GROUP;
+                        break;
                 }
                 break;
+
             case 7:
                 result = URL_MESSAGE;
                 break;
+
             case 8:
                 result = DOC_MESSAGE;
                 break;
+
             case 10:
-                if (gEventType == 2) {
-                    result = MESSAGES_NOW_ENCRYPTED;
-                } else if (gEventType == 1 || gEventType == 45) {
-                    result = MISSED_VOICE_CALL;
-                } else if (gEventType == 3) {
-                    result = ENCRYPTION_KEY_CHANGED;
-                } else if (gEventType == 4 || gEventType == 46) {
-                    result = MISSED_VIDEO_CALL;
-                } else if (gEventType == 5) {
-                    result = CHANGED_NUMBER_CHATTING_WITH_OLD;
-                } else if (gEventType == 6) {
-                    result = CHANGED_NUMBER_CHATTING_WITH_NEW;
-                } else if (gEventType == 22) {
-                    // Missed *group* video call
-                    result = MISSED_VIDEO_CALL;
-                } else if (gEventType == 26) {
-                    result = BUSINESS_CHAT;
-                } else if (gEventType == 29) {
-                    result = BUSINESS_CHANGED_NAME;
-                } else if (gEventType == 30) {
-                    result = BUSINESS_TO_STANDARD;
-                } else if (gEventType == 34) {
-                    result = BLOCKED_CONTACT;
-                } else if (gEventType == 35) {
-                    result = UNBLOCKED_CONTACT;
-                } else if (gEventType == 25 || gEventType == 38) {
-                    result = BUSINESS_OFFICIAL;
-                } else if (gEventType == 40 || gEventType == 41) {
-                    // Started a video call (group)
-                    result = VIDEO_CALL;
-                } else if (gEventType == 47) {
-                    result = EPHEMERAL_SAVE;
-                } else if (gEventType == 56) {
-                    result = SENDER_ADDED_TO_CONTACTS;
+                switch (gEventType) {
+                    case 2:
+                        result = MESSAGES_NOW_ENCRYPTED;
+                        break;
+
+                    case 1:
+                    case 45:
+                        result = MISSED_VOICE_CALL;
+                        break;
+
+                    case 3:
+                        result = ENCRYPTION_KEY_CHANGED;
+                        break;
+
+                    case 4:
+                    case 46:
+                        result = MISSED_VIDEO_CALL;
+                        break;
+
+                    case 5:
+                        result = CHANGED_NUMBER_CHATTING_WITH_OLD;
+                        break;
+
+                    case 6:
+                        result = CHANGED_NUMBER_CHATTING_WITH_NEW;
+                        break;
+
+                    case 22:
+                        // Missed video call (group)
+                        result = MISSED_VIDEO_CALL;
+                        break;
+
+                    case 26:
+                        result = BUSINESS_CHAT;
+                        break;
+
+                    case 29:
+                        result = BUSINESS_CHANGED_NAME;
+                        break;
+
+                    case 30:
+                        result = BUSINESS_TO_STANDARD;
+                        break;
+
+                    case 34:
+                        result = BLOCKED_CONTACT;
+                        break;
+
+                    case 35:
+                        result = UNBLOCKED_CONTACT;
+                        break;
+
+                    case 25:
+                    case 38:
+                        result = BUSINESS_OFFICIAL;
+                        break;
+
+                    case 40:
+                    case 41:
+                        // Started a video call (group)
+                        result = VIDEO_CALL;
+                        break;
+
+                    case 47:
+                        result = EPHEMERAL_SAVE;
+                        break;
+
+                    case 56:
+                        result = SENDER_ADDED_TO_CONTACTS;
+                        break;
                 }
-                // 10 / 13 -> desconhecida (aparece algumas vezes depois de informado conversa
-                // segura com nome do interlocutor)
-                // 10 / (9, 10, 14 ou 16) -> desconhecida (aparece algumas vezes depois de
-                // mudança de código com nome do interlocutor)
                 break;
+
             case 11:
                 result = GIF_MESSAGE;
                 break;
+
             case 12:
                 result = WAITING_MESSAGE;
                 break;
+
             case 14:
                 result = DELETED_BY_SENDER;
                 break;
+
             case 15:
                 result = STICKER_MESSAGE;
                 break;
+
             case 19:
             case 30:
             case 32:
                 result = TEMPLATE_MESSAGE;
                 break;
+
             case 26:
                 result = PRODUCT_MESSAGE;
                 break;
+
             case 27:
                 result = GROUP_INVITE;
                 break;
+
             case 28:
                 result = EPHEMERAL_DEFAULT;
                 break;
+
             case 31:
             case 34:
                 // Quote of a template
                 result = TEXT_MESSAGE;
                 break;
+
             case 38:
                 result = VIEW_ONCE_IMAGE_MESSAGE;
                 break;
+
             case 39:
                 result = VIEW_ONCE_VIDEO_MESSAGE;
                 break;
+
             case 46:
                 result = POLL_MESSAGE;
                 break;
