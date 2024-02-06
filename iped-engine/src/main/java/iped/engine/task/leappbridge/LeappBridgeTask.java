@@ -292,17 +292,19 @@ public class LeappBridgeTask extends AbstractPythonTask {
     }
 
     private File getAleappScriptsDir() {
-        if (config.getAleapScriptsDir() != null) {
-            aleappDir = new File(config.getAleapScriptsDir());
-        } else {
-            File pythonDir = new File(Configuration.getInstance().appRoot, "tools");
-            aleappDir = new File(pythonDir, "ALEAPP");
-        }
+        if (aleappDir == null) {
+            if (config.getAleapScriptsDir() != null) {
+                aleappDir = new File(config.getAleapScriptsDir());
+            } else {
+                File pythonDir = new File(Configuration.getInstance().appRoot, "tools");
+                aleappDir = new File(pythonDir, "ALEAPP");
+            }
 
-        try {
-            logger.info("ALeapp scripts dir:" + aleappDir.getCanonicalPath());
-        } catch (IOException e) {
-            e.printStackTrace();
+            try {
+                logger.info("ALeapp scripts dir:" + aleappDir.getCanonicalPath());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         return aleappDir;
