@@ -814,5 +814,8 @@ public class LeappBridgeTask extends AbstractPythonTask {
             }
             return;
         }
+        if (pluginName.equals("chromeCookies")) {
+            e.setCategory("Cookies");
+        }
     }
 }
