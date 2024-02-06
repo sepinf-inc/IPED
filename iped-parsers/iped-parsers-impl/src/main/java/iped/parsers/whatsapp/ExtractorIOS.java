@@ -672,6 +672,16 @@ public class ExtractorIOS extends Extractor {
         }
         
         switch (m.getMessageType()) {
+            case TEXT_MESSAGE:
+                try {
+                if (metadata != null) {
+                    m.setUrl(decodeUrl(metadata));
+                }
+                }catch (Exception e) {
+                    e.printStackTrace();
+                }
+                break;
+                
             case USER_ADDED_TO_GROUP:
                 String s0 = m.getData();
                 if (s0 != null && !s0.isBlank()) {
@@ -708,6 +718,9 @@ public class ExtractorIOS extends Extractor {
 
             case TEMPLATE_MESSAGE:
                 m.setMessageTemplate(decodeTemplate(metadata));
+                if (m.getMessageTemplate() != null && m.getMessageTemplate().getContent().equals(m.getData())) {
+                    m.setData("");
+                }
                 break;
 
             case GROUP_INVITE:
@@ -834,43 +847,89 @@ public class ExtractorIOS extends Extractor {
         return null;
     }
 
-    private MessageTemplate decodeTemplate(byte[] metadata) {
-        MessageTemplate t = null;
-        Part p1 = new ProtoBufDecoder(metadata).decode(24);
+    private String decodeUrl(byte[] metadata) {
+        Part p1 = new ProtoBufDecoder(metadata).decode(42);
         if (p1 != null) {
             Part p2 = p1.getChild(1);
             if (p2 != null) {
-                StringBuilder content = new StringBuilder();
-                for (int idx : new int[] { 2, 6, 7 }) {
-                    Part p3 = p2.getChild(idx);
-                    if (p3 != null) {
-                        String s = p3.getString();
-                        if (s != null && !s.isBlank()) {
-                            if (content.length() > 0) {
-                                content.append("\n");
-                            }
-                            content.append(s);
-                        }
+                Part p3 = p2.getChild(9);
+                if (p3 != null) {
+                    String s = p3.getString();
+                    if (s != null && !s.isBlank()) {
+                        return s;
                     }
                 }
-                if (content.length() > 0) {
-                    t = new MessageTemplate(content.toString());
-                    for (Part p3 : p2.getChilds()) {
-                        if (p3.getIdx() == 8) {
-                            Part p4 = p3.getChild(2);
-                            if (p4 != null) {
-                                Part p5 = p4.getChild(1);
-                                String text = "";
-                                if (p5 != null) {
-                                    text = p5.getString();
+            }
+        }
+        return null;
+    }
+
+    private MessageTemplate decodeTemplate(byte[] metadata) {
+        MessageTemplate t = null;
+        List<Part> childs = new ProtoBufDecoder(metadata).decode();
+        if (childs != null) {
+            for (Part p1 : childs) {
+                if (p1.getIdx() == 24 || p1.getIdx() == 43 || p1.getIdx() == 51) {
+                    Part p2 = p1.getChild(1);
+                    if (p2 != null) {
+                        StringBuilder content = new StringBuilder();
+                        for (int idx : new int[] { 2, 6, 7 }) {
+                            Part p3 = p2.getChild(idx);
+                            if (p3 != null) {
+                                String s = p3.getString();
+                                if (s != null && !s.isBlank()) {
+                                    if (content.length() > 0) {
+                                        content.append("\n");
+                                    }
+                                    content.append(s);
                                 }
-                                p5 = p4.getChild(2);
-                                String extra = "";
-                                if (p5 != null) {
-                                    extra = p5.getString();
-                                }
-                                if (!text.isBlank() || !extra.isBlank()) {
-                                    t.addButton(new MessageTemplate.Button(text, extra));
+                            }
+                        }
+                        if (content.length() > 0) {
+                            t = new MessageTemplate(content.toString());
+                            List<Part> c2 = p2.getChilds();
+                            if (c2 != null) {
+                                for (Part p3 : c2) {
+                                    if (p1.getIdx() == 24 && p3.getIdx() == 8) {
+                                        Part p4 = p3.getChild(2);
+                                        if (p4 != null) {
+                                            Part p5 = p4.getChild(1);
+                                            String text = "";
+                                            if (p5 != null) {
+                                                String s = p5.getString();
+                                                if (s != null) {
+                                                    text = s;
+                                                }
+                                            }
+                                            p5 = p4.getChild(2);
+                                            String extra = "";
+                                            if (p5 != null) {
+                                                String s = p5.getString();
+                                                if (s != null) {
+                                                    extra = s;
+                                                }
+                                            }
+                                            if (!text.isBlank() || !extra.isBlank()) {
+                                                t.addButton(new MessageTemplate.Button(text, extra));
+                                            }
+                                        }
+                                    } else if ((p1.getIdx() == 51 && p3.getIdx() == 9)
+                                            || (p1.getIdx() == 43 && p3.getIdx() == 5)) {
+                                        List<Part> c3 = p3.getChilds();
+                                        if (c3 != null) {
+                                            for (Part p4 : c3) {
+                                                if (p4.getIdx() == 2) {
+                                                    Part p5 = p4.getChild(1);
+                                                    if (p5 != null) {
+                                                        String text = p5.getString();
+                                                        if (text != null && !text.isBlank()) {
+                                                            t.addButton(new MessageTemplate.Button(text, ""));
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -1225,6 +1284,8 @@ public class ExtractorIOS extends Extractor {
                 result = STICKER_MESSAGE;
                 break;
             case 19:
+            case 30:
+            case 32:
                 result = TEMPLATE_MESSAGE;
                 break;
             case 26:
@@ -1236,8 +1297,9 @@ public class ExtractorIOS extends Extractor {
             case 28:
                 result = EPHEMERAL_DEFAULT;
                 break;
-            case 32:
-                // Forwarded template message. Handle as TEXT seems enough to show its content.
+            case 31:
+            case 34:
+                // Quote of a template
                 result = TEXT_MESSAGE;
                 break;
             case 38:
