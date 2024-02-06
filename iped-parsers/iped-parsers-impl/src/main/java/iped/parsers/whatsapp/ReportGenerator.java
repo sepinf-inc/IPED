@@ -60,7 +60,7 @@ public class ReportGenerator {
         this.minChatSplitSize = minChatSplitSize;
     }
 
-    public byte[] genarateContactHtml(WAContact contact) throws UnsupportedEncodingException {
+    public byte[] generateContactHtml(WAContact contact) throws UnsupportedEncodingException {
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, "UTF-8")); //$NON-NLS-1$
 

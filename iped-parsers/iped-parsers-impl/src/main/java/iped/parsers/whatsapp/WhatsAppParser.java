@@ -1185,7 +1185,7 @@ public class WhatsAppParser extends SQLite3DBParser {
 
                     if (extractor.shouldParseEmbedded(cMetadata)) {
                         ByteArrayInputStream chatStream = new ByteArrayInputStream(
-                                reportGenerator.genarateContactHtml(c));
+                                reportGenerator.generateContactHtml(c));
                         extractor.parseEmbedded(chatStream, handler, cMetadata, false);
                     }
                 }
