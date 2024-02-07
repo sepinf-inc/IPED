@@ -682,7 +682,16 @@ public class ExtractorIOS extends Extractor {
                 }
                 break;
                 
+            case GROUP_CREATED:
+                String user = rs.getString("remoteResource");
+                if (user == null) {
+                    m.setFromMe(true);
+                    m.setRemoteResource(null);
+                }
+                break;
+
             case USER_ADDED_TO_GROUP:
+            case USER_REMOVED_FROM_GROUP:
                 String s0 = m.getData();
                 if (s0 != null && !s0.isBlank()) {
                     if (s0.indexOf(";") >= 0) {
@@ -696,6 +705,11 @@ public class ExtractorIOS extends Extractor {
                         m.setRemoteResource(s0);
                         m.addUserAction(rs.getString("remoteResource"));
                     }
+                    m.setData(null);
+                } else {
+                    m.setFromMe(true);
+                    m.setRemoteResource(null);
+                    m.addUserAction(rs.getString("remoteResource"));
                 }
                 break;
 
