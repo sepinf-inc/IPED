@@ -1443,6 +1443,12 @@
         <sub-class-of type="message/x-chat-message"/>
     </mime-type>
 
+    <mime-type type="application/x-android-backup">
+       <magic priority="50">
+            <match value="ANDROID BACKUP\n" offset="0"/>
+       </magic>
+    </mime-type>
+
     <mime-type type="application/x-ios-backup-manifest-db">
         <sub-class-of type="application/x-sqlite3"/>
     </mime-type>
