@@ -23,6 +23,7 @@ import iped.engine.task.index.IndexItem;
 import iped.engine.util.ParentInfo;
 import iped.engine.util.Util;
 import iped.parsers.python.PythonParser;
+import iped.parsers.util.MetadataUtil;
 import iped.properties.ExtraProperties;
 import iped.utils.DateUtil;
 import jep.Jep;
@@ -320,10 +321,14 @@ public class ArtifactJavaReport {
                 } else {
                     eventType = pluginName;
                 }
+                MetadataUtil.setMetadataType(
+                        LeappBridgeTask.ALEAPP_METADATA_PREFIX + ":" + eventType + "_" + lastKeyValue, Date.class);
                 p = Property
                         .internalDate(LeappBridgeTask.ALEAPP_METADATA_PREFIX + ":" + eventType + "_" + lastKeyValue);
             } else {
-                p = Property.internalDate(LeappBridgeTask.ALEAPP_METADATA_PREFIX + ":" + pluginName + "_ts");
+                MetadataUtil.setMetadataType(LeappBridgeTask.ALEAPP_METADATA_PREFIX + ":" + pluginName + "_" + property,
+                        Date.class);
+                p = Property.internalDate(LeappBridgeTask.ALEAPP_METADATA_PREFIX + ":" + pluginName + "_" + property);
             }
             m.set(p, d);
             return;
