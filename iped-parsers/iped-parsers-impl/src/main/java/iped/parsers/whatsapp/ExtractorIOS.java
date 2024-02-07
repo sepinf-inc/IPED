@@ -717,7 +717,7 @@ public class ExtractorIOS extends Extractor {
                 break;
 
             case TEMPLATE_MESSAGE:
-                m.setMessageTemplate(decodeTemplate(metadata));
+                m.setMessageTemplate(decodeTemplate(metadata, m));
                 if (m.getMessageTemplate() != null && m.getMessageTemplate().getContent().equals(m.getData())) {
                     m.setData("");
                 }
@@ -864,7 +864,7 @@ public class ExtractorIOS extends Extractor {
         return null;
     }
 
-    private MessageTemplate decodeTemplate(byte[] metadata) {
+    private MessageTemplate decodeTemplate(byte[] metadata, Message m) {
         MessageTemplate t = null;
         List<Part> childs = new ProtoBufDecoder(metadata).decode();
         if (childs != null) {
@@ -928,6 +928,13 @@ public class ExtractorIOS extends Extractor {
                                                     }
                                                 }
                                             }
+                                        }
+                                    }
+                                    Part p4 = p3.getChild(16);
+                                    if (p4 != null) {
+                                        byte[] bytes = p4.getBytes(true);
+                                        if (bytes != null) {
+                                            m.setThumbData(bytes);
                                         }
                                     }
                                 }
@@ -1364,6 +1371,8 @@ public class ExtractorIOS extends Extractor {
                 break;
 
             case 19:
+            case 20:
+            case 23:
             case 30:
             case 32:
                 result = TEMPLATE_MESSAGE;
@@ -1381,6 +1390,7 @@ public class ExtractorIOS extends Extractor {
                 result = EPHEMERAL_DEFAULT;
                 break;
 
+            case 25:
             case 31:
             case 34:
                 // Quote of a template
