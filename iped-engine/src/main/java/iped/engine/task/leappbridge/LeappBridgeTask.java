@@ -40,6 +40,7 @@ import iped.engine.task.AbstractPythonTask;
 import iped.engine.task.ExportFileTask;
 import iped.engine.task.index.IndexItem;
 import iped.engine.util.ParentInfo;
+import iped.parsers.android.backup.AndroidBackupParser;
 import iped.parsers.python.PythonParser;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
@@ -66,6 +67,10 @@ public class LeappBridgeTask extends AbstractPythonTask {
     public static MediaType DEVICEDETAILS = MediaType.application("x-leapp-devicedetails");
 
     private static final String DEVICE_DETAILS_HTML = "DeviceDetails.html";
+
+    public static final MediaType ALEAPP_DUMP_REPORT_MEDIATYPE = MediaType.application("x-aleapp-dump-report");
+    public static final MediaType ALEAPP_ANDROID_BACKUP_REPORT_MEDIATYPE = MediaType
+            .application("x-aleapp-android-backup-report");
 
     public static final String ALEAPP_METADATA_PREFIX = "ALEAPP";
     public static final String ALEAPP_ISREPORT = ALEAPP_METADATA_PREFIX + ":isReport";
@@ -323,8 +328,9 @@ public class LeappBridgeTask extends AbstractPythonTask {
 
     @Override
     public void process(IItem evidence) throws Exception {
-        // first rule to check a supposed android Dump folder
-        if (dumpStartFolderNames.contains(evidence.getName())) {
+        // first rule to check a supposed android Dump folder or android backup
+        if (dumpStartFolderNames.contains(evidence.getName())
+                || AndroidBackupParser.SUPPORTED_TYPES.contains(evidence.getMediaType())) {
             // if true, creates a subitem to represent the ALeapp report
             Item subItem = (Item) evidence.createChildItem();
             ParentInfo parentInfo = new ParentInfo(evidence);
@@ -337,6 +343,13 @@ public class LeappBridgeTask extends AbstractPythonTask {
             subItem.setHasChildren(true);
             subItem.getMetadata().set(ALEAPP_ISREPORT, "true");
             subItem.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
+
+            if (AndroidBackupParser.SUPPORTED_TYPES.contains(evidence.getMediaType())) {
+                subItem.setMediaType(ALEAPP_ANDROID_BACKUP_REPORT_MEDIATYPE);
+            } else if (dumpStartFolderNames.contains(evidence.getName())) {
+                subItem.setMediaType(ALEAPP_DUMP_REPORT_MEDIATYPE);
+            }
+
             worker.processNewItem(subItem);
         }
 
@@ -355,7 +368,7 @@ public class LeappBridgeTask extends AbstractPythonTask {
         if (isReport) {
             // check additional rules to confirm that the item is inside an Android Dump
             // Folder
-            if (isInsideRealDump(evidence)) {
+            if (ALEAPP_ANDROID_BACKUP_REPORT_MEDIATYPE.equals(evidence.getMediaType()) || isInsideRealDump(evidence)) {
                 ParentInfo parentInfo = new ParentInfo(evidence);
 
                 // creates one subitem for each plugin execution
@@ -571,7 +584,7 @@ public class LeappBridgeTask extends AbstractPythonTask {
                         // only raw files are expected by ALeapp plugin (not iped extracted items)
                         String artpath = artdoc.get(BasicProps.PATH).substring(dumpPath.length());
 
-                        if (artpath.contains(">>")) {
+                        if (!artpath.startsWith(">>") && artpath.contains(">>")) {
                             // item is a decoded data, so it is not the source of the informations
                             continue;
                         }
