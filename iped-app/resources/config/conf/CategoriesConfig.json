@@ -96,8 +96,8 @@
             {"name": "AppRoles"},
             {"name":"Installed via PlayStore", "mimes":["application/aleapp-installedapps-vending"]},
             {"name":"Update information", "mimes":["application/aleapp-installedapps-gms"]},
-            {"name":"Google User Linked Apps", "mimes":["application/aleapp-installedapps-library"],
-            {"name": "Android Applications", "mimes": ["application/vnd.android.package-archive"]}}
+            {"name":"Google User Linked Apps", "mimes":["application/aleapp-installedapps-library"]},
+            {"name": "Android Applications", "mimes": ["application/vnd.android.package-archive"]}
     ]},
     {"name": "Unallocated", "mimes": ["application/x-unallocated"]},
     {"name": "File Slacks", "mimes": ["application/x-fileslack"]},
