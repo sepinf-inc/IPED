@@ -43,9 +43,9 @@ import iped.parsers.compress.PackageParser;
  * 
  */
 public class AndroidBackupParser extends PackageParser {
-    private static final MediaType apkMimeType = MediaType.application("x-android-backup");
+    private static final MediaType AB_MIMETYPE = MediaType.application("x-android-backup");
 
-    public static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(apkMimeType);
+    public static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(AB_MIMETYPE);
 
     private static final Object MAGIC = "ANDROID BACKUP";
 
@@ -106,8 +106,12 @@ public class AndroidBackupParser extends PackageParser {
                 inflater = new Inflater();
                 in = new InflaterInputStream(in, inflater);
             }
+            
+            try {
+                super.parse(in, handler, metadata, context);
+            }finally {
+            }
 
-            super.parse(in, handler, metadata, context);
 
         } catch (TikaException te) {
             throw te;
