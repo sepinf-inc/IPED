@@ -210,6 +210,21 @@ public class ArtifactJavaReport {
 
     StringBuffer location;
 
+    private void checkAndAddLocation(Metadata m, String locationStr) {
+        try {
+            String[] coords = locationStr.toString().split(";");
+            double lat = Double.valueOf(coords[0].trim());
+            double lon = Double.valueOf(coords[1].trim());
+
+            // if whel formatted, no exception will be throw, so add the location
+            m.add(ExtraProperties.LOCATIONS, locationStr);
+        } catch (Exception e) {
+            m.add(LeappBridgeTask.ALEAPP_METADATA_PREFIX + ":" + "location", locationStr);
+        } finally {
+            location = null;
+        }
+    }
+
     /*
      * Properly maps, format and add leap html columns as IPED item metadata
      */
@@ -228,8 +243,7 @@ public class ArtifactJavaReport {
                 location.insert(0, value);
             }
             if (location.indexOf(";") > 0) {
-                m.add(ExtraProperties.LOCATIONS, location.toString());
-                location = null;
+                checkAndAddLocation(m, location.toString());
             }
         }
         if (property.contains("Longitude")) {
@@ -240,8 +254,7 @@ public class ArtifactJavaReport {
             }
             location.append(value);
             if (location.indexOf(";") > 0) {
-                m.add(ExtraProperties.LOCATIONS, location.toString());
-                location = null;
+                checkAndAddLocation(m, location.toString());
             }
         }
 
