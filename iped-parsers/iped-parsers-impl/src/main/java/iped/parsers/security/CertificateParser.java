@@ -41,6 +41,7 @@ import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.ASN1String;
 import org.bouncycastle.asn1.ASN1TaggedObject;
 import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.cms.CMSException;
 import org.bouncycastle.cms.CMSSignedDataParser;
 import org.bouncycastle.cms.SignerInformation;
 import org.bouncycastle.cms.SignerInformationStore;
@@ -140,7 +141,7 @@ public class CertificateParser extends AbstractParser {
                 try (InputStream certStream = new FileInputStream(file)) {
                     DigestCalculatorProvider digestCalculatorProvider = new JcaDigestCalculatorProviderBuilder()
                             .setProvider("BC").build();
-                    CMSSignedDataParser sp = new CMSSignedDataParser(digestCalculatorProvider, stream);
+                    CMSSignedDataParser sp = new CMSSignedDataParser(digestCalculatorProvider, certStream);
                     // extracts certificates
                     Store certStore = sp.getCertificates();
                     SignerInformationStore signers = sp.getSignerInfos();
@@ -159,6 +160,9 @@ public class CertificateParser extends AbstractParser {
                         metadata.add(SIGNERS,
                                 certHolder.getSubject().toString());
                     }
+                } catch (CMSException e) {
+                    // ignores as this content does not seem to hold any data (as is the case with
+                    // certificates with full certification path
                 }
             } else {
                 InputStream certStream = null;
@@ -199,6 +203,7 @@ public class CertificateParser extends AbstractParser {
 
 
         } catch (Exception e) {
+            e.printStackTrace();
             throw new TikaException("Invalid or unkown certificate format.", e);
         } finally {
             tis.close();
