@@ -14,6 +14,7 @@ import javax.swing.event.TableModelListener;
 
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
 import iped.data.IItemId;
+import iped.geo.js.GetResultsJSWorker;
 import iped.geo.localization.Messages;
 import iped.search.IMultiSearchResult;
 import iped.viewers.api.GUIProvider;
@@ -172,7 +173,7 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
                 Entry<IItemId, Boolean> entry = (Entry<IItemId, Boolean>) iterator.next();
                 IItemId item = entry.getKey();
                 if (mapaPanel.hasItem(item)) {
-                    String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
+                    String gid = GetResultsJSWorker.MARKER_PREFIX + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
                     checked.put(gid, entry.getValue());
                 }
             }
@@ -188,7 +189,7 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
             if (resultTableLeadSelIdx != -1) {
                 int rowModel = resultsTable.convertRowIndexToModel(resultTableLeadSelIdx);
                 IItemId item = resultsProvider.getResults().getItem(rowModel);
-                String gid = "marker_" + item.getSourceId() + "_" + item.getId();
+                String gid = GetResultsJSWorker.MARKER_PREFIX + item.getSourceId() + "_" + item.getId();
                 mapaPanel.browserCanvas.sendLeadSelection(gid);
             }
         } catch (Exception ex) {
@@ -212,12 +213,11 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
                     ListSelectionModel lsm = (ListSelectionModel) e.getSource();
                     for (int i = e.getFirstIndex(); i <= e.getLastIndex(); i++) {
                         boolean selected = lsm.isSelectedIndex(i);
-
                         try {
                             int rowModel = resultsTable.convertRowIndexToModel(i);
 
                             IItemId item = results.getItem(rowModel);
-                            mapaPanel.addSelection(selecoes, item);
+                            mapaPanel.addSelection(selecoes, item, selected);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
