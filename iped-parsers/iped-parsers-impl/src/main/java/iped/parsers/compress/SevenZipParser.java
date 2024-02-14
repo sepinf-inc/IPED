@@ -149,12 +149,10 @@ public class SevenZipParser extends AbstractParser {
                 else
                     itemsToExtract.add(i);
             }
-            // Processa as pastas na ordem (em profundidade)
             MyExtractCallback extractCallback = new MyExtractCallback(simpleInArchive, context, xhtml, extractor, tmp);
-            for (int i : folderMap.values()) {
-                inArchive.extractSlow(i, extractCallback.getStream(i, null));
-                extractCallback.setOperationResult(null);
-            }
+            // Processa as pastas na ordem (em profundidade)
+            int[] folders = ArrayUtils.toPrimitive(folderMap.values().toArray(new Integer[0]));
+            inArchive.extract(folders, false, extractCallback);
             folderMap.clear();
             // Processa os arquivos
             int[] items = ArrayUtils.toPrimitive(itemsToExtract.toArray(new Integer[0]));
