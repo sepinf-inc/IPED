@@ -61,6 +61,7 @@ import jep.JepException;
 public class LeappBridgeTask extends AbstractPythonTask {
 
     public static AtomicInteger pluginTimeCounter = new AtomicInteger(0);
+    public static AtomicInteger pluginSearchCounter = new AtomicInteger(0);
 
     public static Logger logger = LoggerFactory.getLogger(LeappBridgeTask.class);
 
@@ -197,6 +198,7 @@ public class LeappBridgeTask extends AbstractPythonTask {
     public void finish() throws Exception {
         int decremented = taskCount.decrementAndGet();
         if (decremented == 0) {
+            logger.warn("ALeapp total plugin files search time:" + pluginSearchCounter.get());
             logger.warn("ALeapp total plugin execution time:" + pluginTimeCounter.get());
         }
     }
@@ -559,87 +561,98 @@ public class LeappBridgeTask extends AbstractPythonTask {
 
             filesFoundDocuments = new HashMap<String, Document>();
 
-            String dumpPath = dumpEvidence.getPath();
+            Date plugginFileSearchStart = new Date();
 
-            // find files on dump that is needed by the plugin and exports them
-            // to tmp folder if needed. ALeapp plugins will work on
-            // these tmp copies of the files.
-            for (String pattern : p.patterns) {
-                IPEDSearcher filesSearcher = new IPEDSearcher(ipedCase);
-                String query = "path:\"" + dumpEvidence.getPath() + "\"";
+            try {
+                String dumpPath = dumpEvidence.getPath();
 
-                StringTokenizer st = new StringTokenizer(pattern, "*/");
-                while (st.hasMoreTokens()) {
-                    String token = st.nextToken();
-                    query += " && path:\"" + token + "\"";
-                }
+                // find files on dump that is needed by the plugin and exports them
+                // to tmp folder if needed. ALeapp plugins will work on
+                // these tmp copies of the files.
+                for (String pattern : p.patterns) {
+                    IPEDSearcher filesSearcher = new IPEDSearcher(ipedCase);
+                    String query = "path:\"" + dumpEvidence.getPath() + "\"";
 
-                filesSearcher.setQuery(query);
-                SearchResult filesResult = filesSearcher.search();
-                for (int j = 0; j < filesResult.getLength(); j++) {
-                    int artLuceneId = ipedCase.getLuceneId(filesResult.getId(j));
-                    Document artdoc = ipedCase.getReader().document(artLuceneId);
-                    String decoded = artdoc.get(iped.properties.ExtraProperties.DECODED_DATA);
-                    if (decoded == null || !decoded.equals("true")) {
-                        // only raw files are expected by ALeapp plugin (not iped extracted items)
-                        String artpath = artdoc.get(BasicProps.PATH).substring(dumpPath.length());
+                    StringTokenizer st = new StringTokenizer(pattern, "*/");
+                    while (st.hasMoreTokens()) {
+                        String token = st.nextToken();
+                        query += " && path:\"" + token + "\"";
+                    }
 
-                        if (!artpath.startsWith(">>") && artpath.contains(">>")) {
-                            // item is a decoded data, so it is not the source of the informations
-                            continue;
-                        }
+                    filesSearcher.setQuery(query);
+                    SearchResult filesResult = filesSearcher.search();
+                    for (int j = 0; j < filesResult.getLength(); j++) {
+                        int artLuceneId = ipedCase.getLuceneId(filesResult.getId(j));
+                        Document artdoc = ipedCase.getReader().document(artLuceneId);
+                        String decoded = artdoc.get(iped.properties.ExtraProperties.DECODED_DATA);
+                        if (decoded == null || !decoded.equals("true")) {
+                            // only raw files are expected by ALeapp plugin (not iped extracted items)
+                            String artpath = artdoc.get(BasicProps.PATH).substring(dumpPath.length());
 
-                        artpath = replaceSpecialChars(artpath);
-
-                        if (pluginsManager.hasPatternMatch(artpath, p)) {
-                            IItem item = ipedCase.getItemByLuceneID(artLuceneId);
-                            File tmp = item.getTempFile();
-
-                            String sourcePath = new File(
-                                    ipedCase.getCaseDir() + "/" + artdoc.get(IndexItem.SOURCE_PATH)).getCanonicalPath();
-
-
-                            if (tmp.getCanonicalPath().startsWith(sourcePath)) {
-                                reportDumpPath = new File(sourcePath);
-                                // the file returned by getTempFile() is the file itself
-                                String fileStr = preparePythonLiteralPath(tmp.getCanonicalPath());
-                                filesFound.add(fileStr);
-                                filesFoundDocuments.put(fileStr, artdoc);
-                            } else {
-                                // the file returned by getTempFile() is a copy to the file in a temp folder
-                                // so recreate the path structure inside the temp folder
-                                // and move it accordingly to be recognizable by
-                                // ALeapp scripts
-                                String artParentPath = artpath.substring(0, artpath.lastIndexOf("/"));
-                                String artname = artpath.substring(artParentPath.length());
-                                File artfolder = new File(reportDumpPath, artParentPath);
-                                artfolder.mkdirs();
-
-                                try {
-                                    File file_found = new File(artfolder, artname);
-                                    if (!file_found.exists()) {
-                                        // if the file wasn't already placed by prior iterations, move it
-
-                                        file_found.getParentFile().mkdirs();
-                                        // try to move if exception is thrown on symbolic link creation
-                                        if (!tmp.isDirectory()) {
-                                            Files.move(tmp.toPath(), file_found.toPath());
-                                        } else {
-                                            moveDir(tmp, file_found);
-                                        }
-                                    }
-                                    String fileStr = preparePythonLiteralPath(file_found.getCanonicalPath());
-                                    filesFound.add(fileStr);
-                                    filesFoundDocuments.put(fileStr, artdoc);
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
+                            if (!artpath.startsWith(">>") && artpath.contains(">>")) {
+                                // item is a decoded data, so it is not the source of the informations
+                                continue;
                             }
 
+                            artpath = replaceSpecialChars(artpath);
+
+                            if (pluginsManager.hasPatternMatch(artpath, p)) {
+                                IItem item = ipedCase.getItemByLuceneID(artLuceneId);
+                                File tmp = item.getTempFile();
+
+                                String sourcePath = new File(
+                                        ipedCase.getCaseDir() + "/" + artdoc.get(IndexItem.SOURCE_PATH))
+                                                .getCanonicalPath();
+
+
+                                if (tmp.getCanonicalPath().startsWith(sourcePath)) {
+                                    reportDumpPath = new File(sourcePath);
+                                    // the file returned by getTempFile() is the file itself
+                                    String fileStr = preparePythonLiteralPath(tmp.getCanonicalPath());
+                                    filesFound.add(fileStr);
+                                    filesFoundDocuments.put(fileStr, artdoc);
+                                } else {
+                                    // the file returned by getTempFile() is a copy to the file in a temp folder
+                                    // so recreate the path structure inside the temp folder
+                                    // and move it accordingly to be recognizable by
+                                    // ALeapp scripts
+                                    String artParentPath = artpath.substring(0, artpath.lastIndexOf("/"));
+                                    String artname = artpath.substring(artParentPath.length());
+                                    File artfolder = new File(reportDumpPath, artParentPath);
+                                    artfolder.mkdirs();
+
+                                    try {
+                                        File file_found = new File(artfolder, artname);
+                                        if (!file_found.exists()) {
+                                            // if the file wasn't already placed by prior iterations, move it
+
+                                            file_found.getParentFile().mkdirs();
+                                            // try to move if exception is thrown on symbolic link creation
+                                            if (!tmp.isDirectory()) {
+                                                Files.move(tmp.toPath(), file_found.toPath());
+                                            } else {
+                                                moveDir(tmp, file_found);
+                                            }
+                                        }
+                                        String fileStr = preparePythonLiteralPath(file_found.getCanonicalPath());
+                                        filesFound.add(fileStr);
+                                        filesFoundDocuments.put(fileStr, artdoc);
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+
+                            }
                         }
                     }
                 }
+            } finally {
+                Date plugginFileSearchEnd = new Date();
+                long delta = plugginFileSearchEnd.getTime() - plugginFileSearchStart.getTime();
+                pluginSearchCounter.addAndGet((int) delta);
+                logger.warn("ALeapp plugin " + p.getName() + " files search time:" + delta);
             }
+
 
             if (filesFound.size() <= 0) {
                 evidence.setToIgnore(true);
@@ -743,92 +756,97 @@ public class LeappBridgeTask extends AbstractPythonTask {
     }
 
     private void processClassificationAndMappings(IItem e) {
-        Metadata m = e.getMetadata();
-        String pluginName = m.get(ALEAPP_PLUGIN);
+        try {
+            Metadata m = e.getMetadata();
+            String pluginName = m.get(ALEAPP_PLUGIN);
 
-        if (pluginName.equals("accounts_ce") || pluginName.equals("accounts_de")) {
-            e.setCategory("User Accounts");
-            return;
-        }
-        if (pluginName.equals("accounts_ce_authtokens")) {
-            e.setCategory("Passwords");
-            return;
-        }
-        if (pluginName.equals("siminfo")) {
-            e.setCategory("SIM Data");
-            return;
-        }
-        if (pluginName.equals("Cello")) {
-            e.setCategory("GDrive File Entries");
-            return;
-        }
-        if (pluginName.equals("roles")) {
-            e.setCategory("AppRoles");
-            return;
-        }
-        if (pluginName.equals("frosting")) {
-            e.setCategory("Update information");
-            return;
-        }
-        if (pluginName.equals("smsmms")) {
-            String type = m.get("ALEAPP:Type");
-            String thisPhone = "This phone";
-            if (type.equals("Received")) {
-                m.add("Communitactions:TO", thisPhone);
-                m.add("Communitactions:FROM", m.get("ALEAPP:Address"));
-            } else {
-                if (type.equals("Sent")) {
-                    m.add("Communitactions:TO", m.get("ALEAPP:Address"));
-                    m.add("Communitactions:FROM", thisPhone);
-                }
-                // other types are DRAFT, OUTBOX, QUEUED and Failed
-            }
-        }
-        String mime = e.getMediaType().toString();
-        if (pluginName.equals("gmailEmails")) {
-            if (mime.contains("appemails")) {
-                e.setCategory("Emails");
-                m.add("Communitactions:TO", m.get("ALEAPP:To"));
-                String from = m.get("ALEAPP:FROM");
-                if (from == null || from.isBlank()) {
-                    from = m.get("ALEAPP:Reply To");
-                }
-                m.add("Communitactions:FROM", from);
-            }
-            return;
-        }
-        if (pluginName.equals("FacebookMessenger")) {
-            if (mime.contains("contacts")) {
-                e.setCategory("Contacts");
-            }
-            if (mime.contains("userid")) {
+            if (pluginName.equals("accounts_ce") || pluginName.equals("accounts_de")) {
                 e.setCategory("User Accounts");
+                return;
             }
-            if (mime.contains("chats")) {
-                e.setCategory("Instant Messages");
-                var linked = m.get("linkedItems");
-                var start = linked.indexOf("msys_database_") + 14;
-                var uid = linked.substring(start, linked.indexOf("\"", start));
-                if (m.get("ALEAPP:Sender ID").equals(uid)) {
-                    m.add(ExtraProperties.COMMUNICATION_FROM, uid);
-                    m.add(ExtraProperties.COMMUNICATION_TO, m.get("ALEAPP:Thread Key"));
+            if (pluginName.equals("accounts_ce_authtokens")) {
+                e.setCategory("Passwords");
+                return;
+            }
+            if (pluginName.equals("siminfo")) {
+                e.setCategory("SIM Data");
+                return;
+            }
+            if (pluginName.equals("Cello")) {
+                e.setCategory("GDrive File Entries");
+                return;
+            }
+            if (pluginName.equals("roles")) {
+                e.setCategory("AppRoles");
+                return;
+            }
+            if (pluginName.equals("frosting")) {
+                e.setCategory("Update information");
+                return;
+            }
+            if (pluginName.equals("smsmms")) {
+                String type = m.get("ALEAPP:Type");
+                String thisPhone = "This phone";
+                if (type != null && type.equals("Received")) {
+                    m.add("Communitactions:TO", thisPhone);
+                    m.add("Communitactions:FROM", m.get("ALEAPP:Address"));
                 } else {
-                    m.add(ExtraProperties.COMMUNICATION_FROM, m.get("ALEAPP:Sender ID"));
-                    m.add(ExtraProperties.COMMUNICATION_TO, uid);
+                    if (type != null && type.equals("Sent")) {
+                        m.add("Communitactions:TO", m.get("ALEAPP:Address"));
+                        m.add("Communitactions:FROM", thisPhone);
+                    }
+                    // other types are DRAFT, OUTBOX, QUEUED and Failed
                 }
             }
-            return;
-        }
-        if (pluginName.equals("settingsSecure")) {
-            String name = m.get("ALEAPP:Name");
-            String value = m.get("ALEAPP:Value");
-            if ((name == "bluetooth_address") || (name == "bluetooth_name")) {
-                e.setCategory("Bluetooth Devices");
+            String mime = e.getMediaType().toString();
+            if (pluginName.equals("gmailEmails")) {
+                if (mime.contains("appemails")) {
+                    e.setCategory("Emails");
+                    m.add("Communitactions:TO", m.get("ALEAPP:To"));
+                    String from = m.get("ALEAPP:FROM");
+                    if (from == null || from.isBlank()) {
+                        from = m.get("ALEAPP:Reply To");
+                    }
+                    m.add("Communitactions:FROM", from);
+                }
+                return;
             }
-            return;
-        }
-        if (pluginName.equals("chromeCookies")) {
-            e.setCategory("Cookies");
+            if (pluginName.equals("FacebookMessenger")) {
+                if (mime.contains("contacts")) {
+                    e.setCategory("Contacts");
+                }
+                if (mime.contains("userid")) {
+                    e.setCategory("User Accounts");
+                }
+                if (mime.contains("chats")) {
+                    e.setCategory("Instant Messages");
+                    var linked = m.get("linkedItems");
+                    var start = linked.indexOf("msys_database_") + 14;
+                    var uid = linked.substring(start, linked.indexOf("\"", start));
+                    if (m.get("ALEAPP:Sender ID").equals(uid)) {
+                        m.add(ExtraProperties.COMMUNICATION_FROM, uid);
+                        m.add(ExtraProperties.COMMUNICATION_TO, m.get("ALEAPP:Thread Key"));
+                    } else {
+                        m.add(ExtraProperties.COMMUNICATION_FROM, m.get("ALEAPP:Sender ID"));
+                        m.add(ExtraProperties.COMMUNICATION_TO, uid);
+                    }
+                }
+                return;
+            }
+            if (pluginName.equals("settingsSecure")) {
+                String name = m.get("ALEAPP:Name");
+                String value = m.get("ALEAPP:Value");
+                if ((name == "bluetooth_address") || (name == "bluetooth_name")) {
+                    e.setCategory("Bluetooth Devices");
+                }
+                return;
+            }
+            if (pluginName.equals("chromeCookies")) {
+                e.setCategory("Cookies");
+            }
+        } catch (Exception ex) {
+            logger.debug("Exception while trying to classify evidence:" + e.getName());
+            ex.printStackTrace();
         }
     }
 }
