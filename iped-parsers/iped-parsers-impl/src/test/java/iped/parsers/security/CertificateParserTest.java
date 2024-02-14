@@ -22,6 +22,7 @@ import org.xml.sax.SAXException;
 import com.google.common.net.HttpHeaders;
 
 import iped.parsers.standard.StandardParser;
+import iped.parsers.util.Messages;
 import junit.framework.TestCase;
 
 public class CertificateParserTest extends TestCase {
@@ -55,34 +56,33 @@ public class CertificateParserTest extends TestCase {
         try (InputStream stream = getStream("test-files/test_serverCert.der")) {
             parser.parse(stream, handler, metadata, context);
             String hts = handler.toString();
-            assertTrue(hts.contains("Propriedade"));
-            assertTrue(hts.contains("Valor"));
-            assertTrue(hts.contains("Subject"));
+            assertTrue(hts.contains(Messages.getString("CertificateParser.Subject")));
             assertTrue(hts.contains(
                     "1.2.840.113549.1.9.1=#161b6775696c6865726d65616e64726575636540676d61696c2e636f6d,CN=pf.gov.br,OU=PF,O=Polícia Federal,L=Asa Sul,ST=Brasília,C=BR"));
-            assertTrue(hts.contains("Version"));
+            assertTrue(hts.contains(Messages.getString("CertificateParser.Version")));
             assertTrue(hts.contains("3"));
-            assertTrue(hts.contains("Serial Number"));
+            assertTrue(hts.contains(Messages.getString("CertificateParser.SerialNumber")));
             assertTrue(hts.contains("12677675471164634689"));
-            assertTrue(hts.contains("Signature Algorithm"));
+            assertTrue(hts.contains(Messages.getString("CertificateParser.SignatureAlgorithm")));
             assertTrue(hts.contains("SHA1withRSA"));
-            assertTrue(hts.contains("Issuer"));
+            assertTrue(hts.contains(Messages.getString("CertificateParser.Issuer")));
             assertTrue(hts.contains(
                     "1.2.840.113549.1.9.1=#161b6775696c6865726d65616e64726575636540676d61696c2e636f6d,CN=pf.gov.br,OU=PF,O=Polícia Federal,L=Asa Sul,ST=Brasília,C=BR"));
-            assertTrue(hts.contains("Valid from"));
+            assertTrue(hts.contains(Messages.getString("CertificateParser.ValidFrom")));
             DateFormat df = DateFormat.getDateTimeInstance();
             assertTrue(hts.contains(df.format(new Date(1622568518000L))));
-            assertTrue(hts.contains("Valid to"));
+            assertTrue(hts.contains(Messages.getString("CertificateParser.ValidTo")));
             assertTrue(hts.contains(df.format(new Date(1625160518000L))));
-            assertTrue(hts.contains("Alternative Names:"));
-            assertTrue(hts.contains("This certificate has no alternative names."));
+            assertTrue(hts.contains(Messages.getString("CertificateParser.AlternativeNames")));
+            assertTrue(hts.contains(Messages.getString("CertificateParser.NOALTNAMES")));
 
             assertEquals(
                     "1.2.840.113549.1.9.1=#161b6775696c6865726d65616e64726575636540676d61696c2e636f6d,CN=pf.gov.br,OU=PF,O=Polícia Federal,L=Asa Sul,ST=Brasília,C=BR",
                     metadata.get(CertificateParser.X500_SUBJECT));
             assertEquals("2021-07-01", metadata.get(CertificateParser.NOTAFTER).substring(0, 10));
             assertEquals(
-                    "Certificado:1.2.840.113549.1.9.1=#161b6775696c6865726d65616e64726575636540676d61696c2e636f6d,CN=pf.gov.br,OU=PF,O=Polícia Federal,L=Asa Sul,ST=Brasília,C=BR",
+                    Messages.getString("CertificateParser.Certificate")
+                            + ":1.2.840.113549.1.9.1=#161b6775696c6865726d65616e64726575636540676d61696c2e636f6d,CN=pf.gov.br,OU=PF,O=Polícia Federal,L=Asa Sul,ST=Brasília,C=BR",
                     metadata.get(TikaCoreProperties.TITLE));
             assertEquals(CertificateParser.DER_MIME.toString(), metadata.get(StandardParser.INDEXER_CONTENT_TYPE));
             assertEquals("true", metadata.get(CertificateParser.ISSUBJECTAUTHORITY));
@@ -109,34 +109,33 @@ public class CertificateParserTest extends TestCase {
             parser.parse(stream, handler, metadata, context);
             String hts = handler.toString();
 
-            assertTrue(hts.contains("Propriedade"));
-            assertTrue(hts.contains("Valor"));
-            assertTrue(hts.contains("Subject"));
+            assertTrue(hts.contains(Messages.getString("CertificateParser.Subject")));
             assertTrue(hts.contains(
                     "1.2.840.113549.1.9.1=#161b6775696c6865726d65616e64726575636540676d61696c2e636f6d,CN=pf.gov.br,OU=PF,O=Polícia Federal,L=Asa Sul,ST=Brasília,C=BR"));
-            assertTrue(hts.contains("Version"));
+            assertTrue(hts.contains(Messages.getString("CertificateParser.Version")));
             assertTrue(hts.contains("3"));
-            assertTrue(hts.contains("Serial Number"));
+            assertTrue(hts.contains(Messages.getString("CertificateParser.SerialNumber")));
             assertTrue(hts.contains("12677675471164634689"));
-            assertTrue(hts.contains("Signature Algorithm"));
+            assertTrue(hts.contains(Messages.getString("CertificateParser.SignatureAlgorithm")));
             assertTrue(hts.contains("SHA1withRSA"));
-            assertTrue(hts.contains("Issuer"));
+            assertTrue(hts.contains(Messages.getString("CertificateParser.Issuer")));
             assertTrue(hts.contains(
                     "1.2.840.113549.1.9.1=#161b6775696c6865726d65616e64726575636540676d61696c2e636f6d,CN=pf.gov.br,OU=PF,O=Polícia Federal,L=Asa Sul,ST=Brasília,C=BR"));
-            assertTrue(hts.contains("Valid from"));
+            assertTrue(hts.contains(Messages.getString("CertificateParser.ValidFrom")));
             DateFormat df = DateFormat.getDateTimeInstance();
             assertTrue(hts.contains(df.format(new Date(1622568518000L))));
-            assertTrue(hts.contains("Valid to"));
+            assertTrue(hts.contains(Messages.getString("CertificateParser.ValidTo")));
             assertTrue(hts.contains(df.format(new Date(1625160518000L))));
-            assertTrue(hts.contains("Alternative Names:"));
-            assertTrue(hts.contains("This certificate has no alternative names."));
+            assertTrue(hts.contains(Messages.getString("CertificateParser.AlternativeNames")));
+            assertTrue(hts.contains(Messages.getString("CertificateParser.NOALTNAMES")));
 
             assertEquals(
                     "1.2.840.113549.1.9.1=#161b6775696c6865726d65616e64726575636540676d61696c2e636f6d,CN=pf.gov.br,OU=PF,O=Polícia Federal,L=Asa Sul,ST=Brasília,C=BR",
                     metadata.get(CertificateParser.X500_SUBJECT));
             assertEquals("2021-07-01", metadata.get(CertificateParser.NOTAFTER).substring(0, 10));
             assertEquals(
-                    "Certificado:1.2.840.113549.1.9.1=#161b6775696c6865726d65616e64726575636540676d61696c2e636f6d,CN=pf.gov.br,OU=PF,O=Polícia Federal,L=Asa Sul,ST=Brasília,C=BR",
+                    Messages.getString("CertificateParser.Certificate")
+                            + ":1.2.840.113549.1.9.1=#161b6775696c6865726d65616e64726575636540676d61696c2e636f6d,CN=pf.gov.br,OU=PF,O=Polícia Federal,L=Asa Sul,ST=Brasília,C=BR",
                     metadata.get(TikaCoreProperties.TITLE));
             assertEquals(CertificateParser.PEM_MIME.toString(), metadata.get(StandardParser.INDEXER_CONTENT_TYPE));
             assertEquals("true", metadata.get(CertificateParser.ISSUBJECTAUTHORITY));

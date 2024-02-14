@@ -193,7 +193,8 @@ public class CertificateParser extends AbstractParser {
                     metadata.set(ISSUBJECTAUTHORITY, Boolean.TRUE.toString());
                 }
                 metadata.set(HttpHeaders.CONTENT_TYPE, "text/plain");
-                metadata.set(TikaCoreProperties.TITLE, "Certificado:" + cert.getSubjectX500Principal().getName());
+                metadata.set(TikaCoreProperties.TITLE, Messages.getString("CertificateParser.Certificate") + ":"
+                        + cert.getSubjectX500Principal().getName());
             }
 
 
@@ -364,7 +365,7 @@ public class CertificateParser extends AbstractParser {
               }
             }
             if (altNamesStrs.size() == 0) {
-                altNamesStrs.add(NOALTNAMES);
+                altNamesStrs.add(Messages.getString("CertificateParser.NOALTNAMES"));
             }
         } catch (IOException | CertificateParsingException e) {
             // ignore error.
