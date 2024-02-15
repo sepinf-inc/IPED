@@ -518,17 +518,33 @@ public class ReportGenerator {
                 List<String> users = message.getUsersAction();
                 out.println("<div class=\"systemmessage\">");
                 out.print(name + " ");
-                if (message.getMessageType() == MessageType.USER_REMOVED_FROM_GROUP) {
-                    out.print(Messages.getString("WhatsAppReport.UserRemovedGroup"));
-                } else if (message.getMessageType() == MessageType.USER_JOINED_GROUP_FROM_LINK) {
-                    out.print(Messages.getString("WhatsAppReport.UserJoinedGroupLink"));
-                } else {
-                    out.print(Messages.getString("WhatsAppReport.UserAddedToGroup"));
+                boolean selfAction = false;
+                if (users.size() == 1) {
+                    String user = users.get(0);
+                    user = getBestContactName(user == null || user.isBlank(), user, contactsDirectory, account);
+                    if (user != null && user.equals(name)) {
+                        if (message.getMessageType() == MessageType.USER_REMOVED_FROM_GROUP) {
+                            out.print(Messages.getString("WhatsAppReport.RemovedGroup"));
+                            selfAction = true;
+                        } else if (message.getMessageType() == MessageType.USER_ADDED_TO_GROUP) {
+                            out.print(Messages.getString("WhatsAppReport.AddedToGroup"));
+                            selfAction = true;
+                        }
+                    }
                 }
-                for (int i = 0; i < users.size(); i++) {
-                    out.print(i == 0 ? ": " : ", ");
-                    String user = users.get(i);
-                    out.print(getBestContactName(user == null || user.isBlank(), user, contactsDirectory, account));
+                if (!selfAction) {
+                    if (message.getMessageType() == MessageType.USER_REMOVED_FROM_GROUP) {
+                        out.print(Messages.getString("WhatsAppReport.UserRemovedGroup"));
+                    } else if (message.getMessageType() == MessageType.USER_JOINED_GROUP_FROM_LINK) {
+                        out.print(Messages.getString("WhatsAppReport.UserJoinedGroupLink"));
+                    } else {
+                        out.print(Messages.getString("WhatsAppReport.UserAddedToGroup"));
+                    }
+                    for (int i = 0; i < users.size(); i++) {
+                        out.print(i == 0 ? ": " : ", ");
+                        String user = users.get(i);
+                        out.print(getBestContactName(user == null || user.isBlank(), user, contactsDirectory, account));
+                    }
                 }
                 out.print(".<br>");
                 if (notNullNorBlank(message.getData())) {
