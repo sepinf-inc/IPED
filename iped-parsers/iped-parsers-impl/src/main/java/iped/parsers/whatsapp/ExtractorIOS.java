@@ -1545,7 +1545,7 @@ public class ExtractorIOS extends Extractor {
                 break;
 
             case 54:
-                // Another type of video message (found in communities)
+                // Instant video message (circle shaped video)
                 result = VIDEO_MESSAGE;
                 break;
 
