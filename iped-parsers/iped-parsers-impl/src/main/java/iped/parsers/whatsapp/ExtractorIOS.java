@@ -1409,6 +1409,10 @@ public class ExtractorIOS extends Extractor {
                     case 56:
                         result = SENDER_ADDED_TO_CONTACTS;
                         break;
+
+                    case 60:
+                        result = MessageType.COMMUNITY_WELCOME;
+                        break;
                 }
                 break;
 
