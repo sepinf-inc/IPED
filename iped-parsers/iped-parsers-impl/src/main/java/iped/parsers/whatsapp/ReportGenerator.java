@@ -595,6 +595,11 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.YouNotAdmin") + "<br>");
                 break;
+            case USER_ADMIN:
+                out.println("<div class=\"systemmessage\">");
+                out.print(name + " ");
+                out.println(Messages.getString("WhatsAppReport.UserAdmin") + "<br>");
+                break;
             case GROUP_CHANGED_ALL_MEMBERS_CAN_SEND:
                 out.println("<div class=\"systemmessage\">");
                 out.println(name + " " + Messages.getString("WhatsAppReport.GroupChangedAllMembersCanSend") + "<br>");

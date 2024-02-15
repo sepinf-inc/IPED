@@ -53,6 +53,7 @@ import static iped.parsers.whatsapp.Message.MessageType.VIEW_ONCE_AUDIO_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.VIEW_ONCE_IMAGE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.VIEW_ONCE_VIDEO_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.VOICE_CALL;
+import static iped.parsers.whatsapp.Message.MessageType.USER_ADMIN;
 import static iped.parsers.whatsapp.Message.MessageType.WAITING_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.YOU_ADMIN;
 import static iped.parsers.whatsapp.Message.MessageType.YOU_NOT_ADMIN;
@@ -1332,6 +1333,10 @@ public class ExtractorIOS extends Extractor {
 
                     case 26:
                         result = EPHEMERAL_CHANGED;
+                        break;
+
+                    case 39:
+                        result = USER_ADMIN;
                         break;
 
                     case 50:
