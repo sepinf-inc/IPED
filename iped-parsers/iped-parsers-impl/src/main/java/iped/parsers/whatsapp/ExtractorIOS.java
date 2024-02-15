@@ -19,6 +19,7 @@ import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_DEFAULT;
 import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_SAVE;
 import static iped.parsers.whatsapp.Message.MessageType.GIF_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.GROUP_ADDED_TO_COMMUNITY;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_SEND;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ONLY_ADMINS_CAN_SEND;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CREATED;
@@ -720,6 +721,39 @@ public class ExtractorIOS extends Extractor {
                 }
                 break;
 
+            case GROUP_ADDED_TO_COMMUNITY:
+                s0 = m.getData();
+                if (s0 != null && !s0.isBlank()) {
+                    String key = "linked_groups";
+                    int p0 = s0.indexOf(key);
+                    if (p0 >= 0) {
+                        int p1 = s0.indexOf(":", p0);
+                        if (p1 > 0) {
+                            int p2 = s0.indexOf("{", p1);
+                            if (p2 > 0) {
+                                int p3 = s0.indexOf("}", p2 + 1);
+                                if (p3 > 0) {
+                                    String[] groups = s0.substring(p2 + 1, p3).trim().split(",");
+                                    StringBuilder sb = new StringBuilder();
+                                    for (String s1 : groups) {
+                                        String[] s2 = s1.split(":", 2);
+                                        if (s2.length >= 2) {
+                                            if (sb.length() > 0) {
+                                                sb.append(", ");
+                                            }
+                                            sb.append(s2[1]);
+                                        }
+                                    }
+                                    if (sb.length() > 0) {
+                                        m.setData(sb.toString());
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                break;
+
             case GROUP_NAME_CHANGED:
                 s0 = m.getData();
                 if (s0 != null && !s0.isBlank()) {
@@ -1333,6 +1367,10 @@ public class ExtractorIOS extends Extractor {
 
                     case 26:
                         result = EPHEMERAL_CHANGED;
+                        break;
+
+                    case 31:
+                        result = GROUP_ADDED_TO_COMMUNITY;
                         break;
 
                     case 39:
