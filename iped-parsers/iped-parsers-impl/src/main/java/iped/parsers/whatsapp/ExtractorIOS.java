@@ -6,6 +6,7 @@ import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_CHANGED_NAME;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_CHAT;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_OFFICIAL;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_TO_STANDARD;
+import static iped.parsers.whatsapp.Message.MessageType.CHAT_ADDED_PRIVACY;
 import static iped.parsers.whatsapp.Message.MessageType.CHANGED_NUMBER_CHATTING_WITH_NEW;
 import static iped.parsers.whatsapp.Message.MessageType.CHANGED_NUMBER_CHATTING_WITH_OLD;
 import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_CREATED;                        
@@ -1399,6 +1400,10 @@ public class ExtractorIOS extends Extractor {
 
                     case 47:
                         result = EPHEMERAL_SAVE;
+                        break;
+
+                    case 51:
+                        result = CHAT_ADDED_PRIVACY;
                         break;
 
                     case 56:
