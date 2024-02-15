@@ -48,6 +48,7 @@ import static iped.parsers.whatsapp.Message.MessageType.VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.VIDEO_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.VIEW_ONCE_IMAGE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.VIEW_ONCE_VIDEO_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.VOICE_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.WAITING_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.YOU_ADMIN;
 import static iped.parsers.whatsapp.Message.MessageType.YOU_NOT_ADMIN;
@@ -754,6 +755,14 @@ public class ExtractorIOS extends Extractor {
                 m.setAddress(rs.getString("mediaHash"));
                 break;
 
+            case VOICE_CALL:
+                duration = decodeCallDuration(metadata);
+                m.setDuration(duration);
+                if (duration == 0) {
+                    m.setMessageType(MISSED_VOICE_CALL);
+                }
+                break;
+
             default:
                 break;
         }
@@ -970,6 +979,27 @@ public class ExtractorIOS extends Extractor {
                 try {
                     seconds = Integer.parseInt(s);
                 } catch (NumberFormatException e) {
+                }
+            }
+        }
+        return seconds;
+    }
+
+    private int decodeCallDuration(byte[] metadata) {
+        int seconds = 0;
+        Part p1 = new ProtoBufDecoder(metadata).decode(87);
+        if (p1 != null) {
+            Part p2 = p1.getChild(1);
+            if (p2 != null) {
+                Part p3 = p2.getChild(3);
+                if (p3 != null) {
+                    String s = p3.getString();
+                    if (s != null && !s.isBlank()) {
+                        try {
+                            seconds = Integer.parseInt(s);
+                        } catch (NumberFormatException e) {
+                        }
+                    }
                 }
             }
         }
@@ -1421,6 +1451,10 @@ public class ExtractorIOS extends Extractor {
 
             case 46:
                 result = POLL_MESSAGE;
+                break;
+
+            case 59:
+                result = VOICE_CALL;
                 break;
         }
         return result;
