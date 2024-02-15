@@ -151,7 +151,7 @@ public class SevenZipParser extends AbstractParser {
                 else
                     itemsToExtract.add(i);
             }
-            MyExtractCallback extractCallback = new MyExtractCallback(simpleInArchive, context, xhtml, extractor, tmp);
+            MyExtractCallback extractCallback = new MyExtractCallback(simpleInArchive, xhtml, extractor, tmp);
             // Processa as pastas na ordem (em profundidade)
             int[] folders = ArrayUtils.toPrimitive(folderList.toArray(new Integer[0]));
             inArchive.extract(folders, false, extractCallback);
@@ -194,7 +194,6 @@ public class SevenZipParser extends AbstractParser {
     private static class MyExtractCallback implements IArchiveExtractCallback {
 
         ISimpleInArchive simpleInArchive;
-        ParseContext context;
         ContentHandler handler;
         EmbeddedDocumentExtractor extractor;
         TemporaryResources tmp;
@@ -207,10 +206,9 @@ public class SevenZipParser extends AbstractParser {
         int bufPos = 0;
         File tmpFile;
 
-        public MyExtractCallback(ISimpleInArchive simpleInArchive, ParseContext context, ContentHandler handler,
+        public MyExtractCallback(ISimpleInArchive simpleInArchive, ContentHandler handler,
                 EmbeddedDocumentExtractor extractor, TemporaryResources tmp) {
             this.simpleInArchive = simpleInArchive;
-            this.context = context;
             this.handler = handler;
             this.extractor = extractor;
             this.tmp = tmp;
