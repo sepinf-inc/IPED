@@ -22,6 +22,7 @@ import static iped.parsers.whatsapp.Message.MessageType.GIF_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_ADDED_TO_COMMUNITY;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_SEND;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ONLY_ADMINS_CAN_SEND;
+import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ONLY_ADMINS_CAN_EDIT;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CREATED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_DESCRIPTION_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_DESCRIPTION_DELETED;
@@ -1353,6 +1354,10 @@ public class ExtractorIOS extends Extractor {
 
                     case 17:
                         result = GROUP_DESCRIPTION_CHANGED;
+                        break;
+
+                    case 18:
+                        result = GROUP_CHANGED_ONLY_ADMINS_CAN_EDIT;
                         break;
 
                     case 20:
