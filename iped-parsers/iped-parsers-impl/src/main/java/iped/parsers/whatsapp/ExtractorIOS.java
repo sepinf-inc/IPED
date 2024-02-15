@@ -1352,6 +1352,11 @@ public class ExtractorIOS extends Extractor {
                         result = CHANGED_NUMBER_CHATTING_WITH_NEW;
                         break;
 
+                    case 21:
+                        // Missed voice call (group)
+                        result = MISSED_VOICE_CALL;
+                        break;
+
                     case 22:
                         // Missed video call (group)
                         result = MISSED_VIDEO_CALL;
