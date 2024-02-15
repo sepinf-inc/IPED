@@ -19,7 +19,6 @@ package iped.parsers.sqlite;
 import java.io.IOException;
 import java.sql.Blob;
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -276,7 +275,8 @@ class SQLite3TableReader extends JDBCTableReader {
         // the
         // value is a string representing a Long.
 		String datetext="";
-        if (rsmd.getColumnTypeName(col).equals("TIMESTAMP")) { //$NON-NLS-1$
+        if (rsmd.getColumnTypeName(col).equals("TIMESTAMP") //$NON-NLS-1$
+                || rsmd.getColumnName(col).toLowerCase().contains("timestamp")) {
         	long longValue = rs.getLong(col);
         	if(rs.wasNull()) {
         		text = null;

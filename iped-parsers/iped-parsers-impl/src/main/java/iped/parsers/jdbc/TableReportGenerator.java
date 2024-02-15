@@ -13,6 +13,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
@@ -22,6 +23,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import iped.parsers.util.Messages;
+import iped.parsers.util.MetadataUtil;
 import iped.properties.ExtraProperties;
 import iped.utils.SimpleHTMLEncoder;
 import iped.utils.tika.IpedMetadata;
@@ -189,6 +191,7 @@ public class TableReportGenerator {
 
             if (!dates.isEmpty()) {
                 for (Entry<String, ArrayList<String>> entry : dates.entrySet()) {
+                    MetadataUtil.setMetadataType(entry.getKey(), Date.class);
                     tableM.set(entry.getKey(), entry.getValue());
                 }
             }
