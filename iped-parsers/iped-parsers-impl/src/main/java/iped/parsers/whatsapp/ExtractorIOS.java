@@ -8,6 +8,8 @@ import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_OFFICIAL;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_TO_STANDARD;
 import static iped.parsers.whatsapp.Message.MessageType.CHANGED_NUMBER_CHATTING_WITH_NEW;
 import static iped.parsers.whatsapp.Message.MessageType.CHANGED_NUMBER_CHATTING_WITH_OLD;
+import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_CREATED;                        
+import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_ADDED_PRIVACY;                        
 import static iped.parsers.whatsapp.Message.MessageType.CONTACT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_SENDER;
 import static iped.parsers.whatsapp.Message.MessageType.DOC_MESSAGE;
@@ -196,6 +198,7 @@ public class ExtractorIOS extends Extractor {
                             c.setId(rs.getLong("id")); //$NON-NLS-1$
                             c.setSubject(Util.getUTF8String(rs, "subject")); //$NON-NLS-1$
                             c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
+                            c.setChannelChat(contactId.endsWith("newsletter"));
                             c.setDeleted(rs.getInt("ZREMOVED") != 0);
                             remote.setAvatarPath(rs.getString("avatarPath")); //$NON-NLS-1$
                             if (recoverDeletedRecords) {
@@ -592,7 +595,7 @@ public class ExtractorIOS extends Extractor {
             m.setLocalResource(account.getId());
         m.setId(rs.getLong("id")); //$NON-NLS-1$
         String remoteResource = rs.getString("remoteResource");
-        if (remoteResource == null || remoteResource.isEmpty() || !chat.isGroupChat()) {
+        if (remoteResource == null || remoteResource.isEmpty() || !chat.isGroupOrChannelChat()) {
             remoteResource = chat.getRemote().getFullId();
         }
         m.setRemoteResource(remoteResource); // $NON-NLS-1$
@@ -1458,6 +1461,18 @@ public class ExtractorIOS extends Extractor {
                 result = POLL_MESSAGE;
                 break;
 
+            case 55:
+                switch (gEventType) {
+                    case 1:
+                        result = CHANNEL_CREATED;                        
+                        break;
+                    
+                    case 4:
+                        result = CHANNEL_ADDED_PRIVACY;                        
+                        break;
+                }
+                break;
+                
             case 59:
                 result = VOICE_CALL;
                 break;
