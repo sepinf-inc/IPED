@@ -505,8 +505,13 @@ public class ReportGenerator {
                 }
                 break;
             case GROUP_ADDED_TO_COMMUNITY:
+            case GROUP_REMOVED_FROM_COMMUNITY:
                 out.println("<div class=\"systemmessage\">");
-                out.print(Messages.getString("WhatsAppReport.GroupAddedToCommunity"));
+                if (message.getMessageType() == MessageType.GROUP_ADDED_TO_COMMUNITY) {
+                    out.print(Messages.getString("WhatsAppReport.GroupAddedToCommunity"));
+                } else {
+                    out.print(Messages.getString("WhatsAppReport.GroupRemovedFromCommunity"));
+                }
                 if (notNullNorBlank(message.getData())) {
                     out.print(":<br>" + format(message.getData()));
                 } else {

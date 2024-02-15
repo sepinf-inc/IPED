@@ -29,6 +29,7 @@ import static iped.parsers.whatsapp.Message.MessageType.GROUP_ICON_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_ICON_DELETED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_INVITE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_NAME_CHANGED;
+import static iped.parsers.whatsapp.Message.MessageType.GROUP_REMOVED_FROM_COMMUNITY;
 import static iped.parsers.whatsapp.Message.MessageType.IMAGE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.LOCATION_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.MESSAGES_NOW_ENCRYPTED;
@@ -722,6 +723,7 @@ public class ExtractorIOS extends Extractor {
                 break;
 
             case GROUP_ADDED_TO_COMMUNITY:
+            case GROUP_REMOVED_FROM_COMMUNITY:
                 s0 = m.getData();
                 if (s0 != null && !s0.isBlank()) {
                     String key = "linked_groups";
@@ -1371,6 +1373,10 @@ public class ExtractorIOS extends Extractor {
 
                     case 31:
                         result = GROUP_ADDED_TO_COMMUNITY;
+                        break;
+
+                    case 33:
+                        result = GROUP_REMOVED_FROM_COMMUNITY;
                         break;
 
                     case 39:
