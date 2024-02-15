@@ -719,6 +719,26 @@ public class ExtractorIOS extends Extractor {
                 }
                 break;
 
+            case GROUP_NAME_CHANGED:
+                s0 = m.getData();
+                if (s0 != null && !s0.isBlank()) {
+                    String key = "new_subject";
+                    int p0 = s0.indexOf(key);
+                    if (p0 >= 0) {
+                        int p1 = s0.indexOf(":", p0);
+                        if (p1 > 0) {
+                            int p2 = s0.indexOf("\"", p1);
+                            if (p2 > 0) {
+                                int p3 = s0.indexOf("\"", p2 + 1);
+                                if (p3 > 0) {
+                                    m.setData(s0.substring(p2 + 1, p3).trim());
+                                }
+                            }
+                        }
+                    }
+                }
+                break;
+
             case EPHEMERAL_CHANGED:
                 int duration = 0;
                 String s = m.getData();
@@ -1319,6 +1339,12 @@ public class ExtractorIOS extends Extractor {
                         result = USER_ADDED_TO_GROUP;
                         break;
 
+                    case 56:
+                        // new group name change, 
+                        // DATA is {"previous_subject":"Old Name","new_subject":"New Name"}
+                        result = GROUP_NAME_CHANGED;
+                        break;
+                        
                     case 60:
                         result = MessageType.COMMUNITY_WELCOME;
                         break;
