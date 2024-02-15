@@ -784,6 +784,7 @@ public class ReportGenerator {
                         out.println("<i>" + Messages.getString("WhatsAppReport.WaitingMessage") + "</i><br>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         break;
                     case AUDIO_MESSAGE:
+                    case VIEW_ONCE_AUDIO_MESSAGE:
                     case VIDEO_MESSAGE:
                     case VIEW_ONCE_VIDEO_MESSAGE:
                     case GIF_MESSAGE:
@@ -821,11 +822,13 @@ public class ReportGenerator {
                                 thumb = generatedThumb;
 
                             if (message.getMessageType() == MessageType.AUDIO_MESSAGE
+                                    || message.getMessageType() == MessageType.VIEW_ONCE_AUDIO_MESSAGE
                                     || message.getMessageType() == MessageType.VIDEO_MESSAGE
                                     || message.getMessageType() == MessageType.VIEW_ONCE_VIDEO_MESSAGE
                                     || message.getMessageType() == MessageType.GIF_MESSAGE) {
                                 String source = iped.parsers.util.Util.getSourceFileIfExists(mediaItem).orElse("");
-                                if (message.getMessageType() == MessageType.AUDIO_MESSAGE) {
+                                if (message.getMessageType() == MessageType.AUDIO_MESSAGE
+                                        || message.getMessageType() == MessageType.VIEW_ONCE_AUDIO_MESSAGE) {
                                     out.println(Messages.getString("WhatsAppReport.AudioMessageTitle") + "<br>"); //$NON-NLS-1$
                                     out.println("<div class=\"audioImg iped-audio\" "
                                             + " title=\"Audio\" " + "data-src1=\"" + format(exportPath) + "\" "
@@ -893,6 +896,7 @@ public class ReportGenerator {
                         } else { // mediaItem is null (media file not found)
                             switch (message.getMessageType()) {
                                 case AUDIO_MESSAGE:
+                                case VIEW_ONCE_AUDIO_MESSAGE:
                                     out.println("<div class=\"audioImg\" title=\"Audio\">");
                                     out.print("<span class=\"duration\"> " + formatDuration(message.getDuration())
                                             + "</span>");
@@ -994,7 +998,8 @@ public class ReportGenerator {
         out.print("<span class=\"time\">"); //$NON-NLS-1$
 
         if (message.getMessageType() == MessageType.VIEW_ONCE_IMAGE_MESSAGE
-                || message.getMessageType() == MessageType.VIEW_ONCE_VIDEO_MESSAGE) {
+                || message.getMessageType() == MessageType.VIEW_ONCE_VIDEO_MESSAGE
+                || message.getMessageType() == MessageType.VIEW_ONCE_AUDIO_MESSAGE) {
             out.print(viewOnceIcon);
         }
 
