@@ -6,7 +6,19 @@ import java.util.Map;
 
 import org.apache.tika.metadata.writefilter.MetadataWriteFilter;
 
+/**
+ * Overrides custom metadata write filter to avoid inefficient Tika
+ * implementation of add method.
+ * 
+ * @author Patrick Dalla Bernardina
+ */
 public class IpedMetadata extends SyncMetadata {
+
+    /**
+     * Rewritten MetadataWriteFilter to postpone real data modification avoiding
+     * inefficient Tika implementation of add method when adding multiple values in
+     * single field
+     */
     class IpedMetadataFilter implements MetadataWriteFilter {
         String arr[];
         int pos = 0;
