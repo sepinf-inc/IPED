@@ -37,7 +37,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
@@ -70,6 +69,7 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.utils.DateUtils;
+import org.sleuthkit.datamodel.SleuthkitCase;
 
 import iped.data.IItem;
 import iped.datasource.IDataSource;
@@ -77,6 +77,7 @@ import iped.engine.data.DataSource;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.Item;
 import iped.engine.lucene.analysis.FastASCIIFoldingFilter;
+import iped.engine.sleuthkit.SleuthkitInputStreamFactory;
 import iped.engine.task.ImageThumbTask;
 import iped.engine.task.MinIOTask.MinIOInputInputStreamFactory;
 import iped.engine.task.similarity.ImageSimilarityTask;
@@ -91,7 +92,6 @@ import iped.utils.FileInputStreamFactory;
 import iped.utils.IOUtil;
 import iped.utils.SeekableInputStreamFactory;
 import iped.utils.SelectImagePathWithDialog;
-import iped.utils.StringUtil;
 import iped.utils.UTF8Properties;
 import jep.NDArray;
 
@@ -126,8 +126,7 @@ public class IndexItem extends BasicProps {
 
     private static Map<String, SeekableInputStreamFactory> inputStreamFactories = new HashMap<>();
 
-    private static Map<String, Class<?>> typesMap = Collections
-            .synchronizedMap(new TreeMap<String, Class<?>>(StringUtil.getIgnoreCaseComparator()));
+    private static Map<String, Class<?>> typesMap = MetadataUtil.getMetadataTypes();
 
     private static FieldType storedTokenizedNoNormsField = new FieldType();
     private static FieldType dateField = new FieldType();
@@ -213,14 +212,12 @@ public class IndexItem extends BasicProps {
     }
 
     public static void loadMetadataTypes(File confDir) throws IOException, ClassNotFoundException {
-        if (typesMap.size() > 0)
-            return;
         File metadataTypesFile = new File(confDir, attrTypesFilename);
         if (metadataTypesFile.exists()) {
             UTF8Properties props = new UTF8Properties();
             props.load(metadataTypesFile);
             for (String key : props.stringPropertyNames()) {
-                typesMap.put(key, Class.forName(props.getProperty(key)));
+                MetadataUtil.setMetadataType(key, Class.forName(props.getProperty(key)));
             }
         }
     }
@@ -258,7 +255,7 @@ public class IndexItem extends BasicProps {
             if (evidence.getInputStreamFactory() != null
                     && evidence.getInputStreamFactory().getDataSourceURI() != null) {
                 URI uri = evidence.getInputStreamFactory().getDataSourceURI();
-                value = Util.getRelativePath(output, uri);
+                value = Util.getRelativePath(output, uri).replace('\\', '/');
 
                 doc.add(new StringField(SOURCE_PATH, value, Field.Store.YES));
                 doc.add(new SortedDocValuesField(SOURCE_PATH, new BytesRef(value)));
@@ -438,11 +435,15 @@ public class IndexItem extends BasicProps {
         for (Entry<String, Object> entry : evidence.getExtraAttributeMap().entrySet()) {
             if (entry.getValue() instanceof Collection) {
                 for (Object val : (Collection<?>) entry.getValue()) {
-                    typesMap.putIfAbsent(entry.getKey(), val.getClass());
+                    if (typesMap.get(entry.getKey()) == null) {
+                        MetadataUtil.setMetadataType(entry.getKey(), val.getClass());
+                    }
                     addExtraAttributeToDoc(doc, entry.getKey(), val, true, timeEventSet);
                 }
             } else {
-                typesMap.putIfAbsent(entry.getKey(), entry.getValue().getClass());
+                if (typesMap.get(entry.getKey()) == null) {
+                    MetadataUtil.setMetadataType(entry.getKey(), entry.getValue().getClass());
+                }
                 addExtraAttributeToDoc(doc, entry.getKey(), entry.getValue(), false, timeEventSet);
             }
         }
@@ -690,14 +691,14 @@ public class IndexItem extends BasicProps {
             try {
                 Double doubleVal = Double.valueOf(value);
                 String newKey = key + ":number";
-                typesMap.put(newKey, Double.class);
+                MetadataUtil.setMetadataType(newKey, Double.class);
                 addExtraAttributeToDoc(doc, newKey, doubleVal, isMultiValued, timeEventSet);
 
             } catch (NumberFormatException e) {
                 Date date = DateUtil.tryToParseDate(value);
                 if (date != null) {
                     String newKey = key + ":date";
-                    typesMap.put(newKey, Date.class);
+                    MetadataUtil.setMetadataType(newKey, Date.class);
                     addExtraAttributeToDoc(doc, newKey, date, isMultiValued, timeEventSet);
                 }
             }
@@ -721,7 +722,7 @@ public class IndexItem extends BasicProps {
             } catch (NumberFormatException | ParseException e) {
                 // value doesn't match built-in type, store value in other field as string
                 key += ":string";
-                typesMap.put(key, String.class);
+                MetadataUtil.setMetadataType(key, String.class);
             }
         }
 
@@ -811,7 +812,14 @@ public class IndexItem extends BasicProps {
             if (doc.get(IndexItem.SOURCE_PATH) != null && doc.get(IndexItem.SOURCE_DECODER) != null) {
                 String sourcePath = doc.get(IndexItem.SOURCE_PATH);
                 String className = doc.get(IndexItem.SOURCE_DECODER);
-                if (!MinIOInputInputStreamFactory.class.getName().equals(className)) {
+                if (SleuthkitInputStreamFactory.class.getName().equals(className)) {
+                    // Use the correct TSK database (sleuth.db location and name may change in some
+                    // situations), to avoid issue #1782.
+                    SleuthkitCase sleuthCase = iCase.getSleuthCase();
+                    if (sleuthCase != null) {
+                        sourcePath = sleuthCase.getDbDirPath() + File.separatorChar + sleuthCase.getDatabaseName();
+                    }
+                } else if (!MinIOInputInputStreamFactory.class.getName().equals(className)) {
                     sourcePath = Util.getResolvedFile(outputBase.getParent(), sourcePath).toString();
                 }
                 synchronized (inputStreamFactories) {
@@ -884,7 +892,8 @@ public class IndexItem extends BasicProps {
                         evidence.setIdInDataSource("");
                         evidence.setInputStreamFactory(new FileInputStreamFactory(viewFile.toPath()));
                         evidence.setTempFile(viewFile);
-                        evidence.setMediaType(null);
+                        // Do not reset media type (see issue #1409)
+                        // evidence.setMediaType(null);
                     }
                 }
             }

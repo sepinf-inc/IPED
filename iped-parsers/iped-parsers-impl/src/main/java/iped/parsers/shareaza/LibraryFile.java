@@ -20,7 +20,7 @@ package iped.parsers.shareaza;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -36,7 +36,7 @@ import iped.search.IItemSearcher;
 /**
  * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
  */
-class LibraryFile extends ShareazaEntity {
+public class LibraryFile extends ShareazaEntity {
 
     private final XMLElement metadata = new XMLElement();
     private final List<SharedSource> sharedSources = new ArrayList<>();
@@ -65,7 +65,7 @@ class LibraryFile extends ShareazaEntity {
     private boolean cachedPreview;
     private boolean bogus;
     private final LibraryFolder parentFolder;
-    private HashSet<String> hashSetHits = new HashSet<>();
+    private List<String> hashSetHits;
 
     public LibraryFile(LibraryFolder parentFolder) {
         super("LIBRARY FILE"); //$NON-NLS-1$
@@ -206,25 +206,22 @@ class LibraryFile extends ShareazaEntity {
         return "True".equals(getInheritedShared()); //$NON-NLS-1$
     }
 
-    public void printTableRow(XHTMLContentHandler html, String path, IItemSearcher searcher,
-            Map<Integer, List<String>> albunsForFiles) throws SAXException {
+    public void printTableRow(XHTMLContentHandler html, String path, IItemSearcher searcher, Map<Integer, List<String>> albunsForFiles) throws SAXException {
 
-        hashSetHits.addAll(ChildPornHashLookup.lookupHash(md5));
-        hashSetHits.addAll(ChildPornHashLookup.lookupHash(sha1));
+        hashSetHits = ChildPornHashLookup.lookupHashAndMerge(md5, hashSetHits);
+        hashSetHits = ChildPornHashLookup.lookupHashAndMerge(sha1, hashSetHits);
 
         AttributesImpl attributes = new AttributesImpl();
         if (md5 != null && !md5.isEmpty()) {
             attributes.addAttribute("", "name", "name", "CDATA", md5.toUpperCase());
         }
-        if (!hashSetHits.isEmpty()) {
+        if (hashSetHits != null && !hashSetHits.isEmpty()) {
             attributes.addAttribute("", "class", "class", "CDATA", "r");
         }
-        html.startElement("tr", attributes); 
+        html.startElement("tr", attributes);
 
-        printTd(html, searcher, path, name, albunsForFiles.get(index), index, size, time,
-                getInheritedShared(), virtualSize, virtualBase, sha1, tiger, md5, ed2k, bth, verify, uri,
-                metadataAuto, metadataTime, metadataModified, rating, comments, shareTags, hitsTotal,
-                uploadsTotal, cachedPreview, bogus);
+        printTd(html, searcher, path, name, albunsForFiles.get(index), index, size, time, getInheritedShared(), virtualSize, virtualBase, sha1, tiger, md5, ed2k, bth, verify, uri, metadataAuto, metadataTime, metadataModified, rating,
+                comments, shareTags, hitsTotal, uploadsTotal, cachedPreview, bogus);
 
         html.endElement("tr"); //$NON-NLS-1$
     }
@@ -253,7 +250,7 @@ class LibraryFile extends ShareazaEntity {
                         }
                         html.characters(album);
                         first = false;
-                        
+
                     }
                 } else {
                     html.characters(o.toString());
@@ -263,7 +260,7 @@ class LibraryFile extends ShareazaEntity {
             col++;
         }
         html.startElement("td"); //$NON-NLS-1$
-        if (!hashSetHits.isEmpty()) {
+        if (hashSetHits != null && !hashSetHits.isEmpty()) {
             html.characters(hashSetHits.toString());
         }
         html.endElement("td"); //$NON-NLS-1$
@@ -273,7 +270,7 @@ class LibraryFile extends ShareazaEntity {
     }
 
     public boolean isHashDBHit() {
-        return !hashSetHits.isEmpty();
+        return hashSetHits != null && !hashSetHits.isEmpty();
     }
 
     public long getSize() {
@@ -287,9 +284,105 @@ class LibraryFile extends ShareazaEntity {
     public String getSha1() {
         return sha1;
     }
-    
+
     public int getIndex() {
         return index;
+    }
+
+    public List<SharedSource> getSharedSources() {
+        return sharedSources;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getTime() {
+        return time;
+    }
+
+    public String getShared() {
+        return shared;
+    }
+
+    public long getVirtualSize() {
+        return virtualSize;
+    }
+
+    public long getVirtualBase() {
+        return virtualBase;
+    }
+
+    public String getTiger() {
+        return tiger;
+    }
+
+    public String getEd2k() {
+        return ed2k;
+    }
+
+    public String getBth() {
+        return bth;
+    }
+
+    public String getVerify() {
+        return verify;
+    }
+
+    public String getUri() {
+        return uri;
+    }
+
+    public boolean isMetadataAuto() {
+        return metadataAuto;
+    }
+
+    public String getMetadataTime() {
+        return metadataTime;
+    }
+
+    public int getRating() {
+        return rating;
+    }
+
+    public String getComments() {
+        return comments;
+    }
+
+    public String getShareTags() {
+        return shareTags;
+    }
+
+    public boolean isMetadataModified() {
+        return metadataModified;
+    }
+
+    public long getHitsTotal() {
+        return hitsTotal;
+    }
+
+    public long getUploadsTotal() {
+        return uploadsTotal;
+    }
+
+    public boolean isCachedPreview() {
+        return cachedPreview;
+    }
+
+    public boolean isBogus() {
+        return bogus;
+    }
+
+    public LibraryFolder getParentFolder() {
+        return parentFolder;
+    }
+
+    public List<String> getHashSetHits() {
+        return hashSetHits == null ? Collections.emptyList() : hashSetHits;
+    }
+
+    public void setIndex(int index) {
+        this.index = index;
     }
 
 }

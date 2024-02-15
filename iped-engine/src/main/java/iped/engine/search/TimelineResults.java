@@ -2,6 +2,7 @@ package iped.engine.search;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.lucene.index.BinaryDocValues;
@@ -16,6 +17,12 @@ import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 
 public class TimelineResults {
+
+    /**
+     * One greater than the maximum number of allowed timestamp values in the same
+     * DateTime property.
+     */
+    private static final short MAX_TIMESTAMPS_PER_PROPERTY = 1024;
 
     private SortedSetDocValues timeStampValues = null;
     private SortedSetDocValues timeEventGroupValues = null;
@@ -40,7 +47,9 @@ public class TimelineResults {
         ArrayList<IItemId> ids = new ArrayList<>();
         ArrayList<Float> scores = new ArrayList<>();
         int[] eventOrd = new int[Short.MAX_VALUE];
-        int[][] eventsInDocOrds = new int[Short.MAX_VALUE][1 << 9];
+        int[] blankEventOrd = new int[eventOrd.length];
+        Arrays.fill(blankEventOrd, -1);
+        int[][] eventsInDocOrds = new int[Short.MAX_VALUE][MAX_TIMESTAMPS_PER_PROPERTY];
         int idx = 0;
         for (IItemId id : items.getIterator()) {
             int luceneId = ipedCase.getLuceneId(id);
@@ -54,6 +63,7 @@ public class TimelineResults {
 
             long ord;
             short pos = 0;
+            System.arraycopy(blankEventOrd, 0, eventOrd, 0, eventOrd.length);
             while (tegvAdv && (ord = timeEventGroupValues.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
                 for (int k : eventsInDocOrds[pos++]) {
                     if (k == -1) {
@@ -67,8 +77,11 @@ public class TimelineResults {
                 if (ord > Integer.MAX_VALUE) {
                     throw new RuntimeException("Integer overflow when converting timestamp ord to int");
                 }
-                ids.add(new TimeItemId(this, id.getSourceId(), id.getId(), (int) ord, eventOrd[pos++]));
-                scores.add(items.getScore(idx));
+                if (eventOrd[pos] != -1) {
+                    ids.add(new TimeItemId(this, id.getSourceId(), id.getId(), (int) ord, eventOrd[pos]));
+                    scores.add(items.getScore(idx));
+                }
+                pos++;
             }
             idx++;
         }
@@ -90,13 +103,16 @@ public class TimelineResults {
     }
 
     private static final void loadOrdsFromStringInner(String string, int len, int[] ret) {
-        int i = 0, j = 0, k = 0;
+        int i = 0, j = 0, k = 0, max_k = ret.length - 1;
         do {
             j = string.indexOf(IndexItem.EVENT_IDX_SEPARATOR2, i);
             if (j == -1) {
                 j = len;
             }
             ret[k++] = Integer.parseInt(string.substring(i, j));
+            if (k == max_k) {
+                break;
+            }
             i = j + 1;
         } while (j < len);
         ret[k] = -1;

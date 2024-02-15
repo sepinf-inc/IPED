@@ -45,6 +45,7 @@ import org.apache.tika.sax.AbstractRecursiveParserWrapperHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.io.URLUtil;
 import iped.utils.IOUtil;
 
 public class ForkParser extends AbstractParser {
@@ -136,7 +137,7 @@ public class ForkParser extends AbstractParser {
     }
 
     private static Path getMainJarsPath() {
-        URL url = ForkParser.class.getProtectionDomain().getCodeSource().getLocation();
+        URL url = URLUtil.getURL(ForkParser.class);
         Path jarPath = null;
         try {
             jarPath = new File(url.toURI()).getParentFile().toPath();

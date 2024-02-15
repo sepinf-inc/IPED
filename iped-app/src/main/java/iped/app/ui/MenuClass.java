@@ -53,7 +53,7 @@ public class MenuClass extends JPopupMenu {
             exportCheckedTreeToZip, exportTree, exportTreeChecked, similarDocs, openViewfile, createReport,
             resetColLayout, lastColLayout, saveColLayout, addToGraph, navigateToParentChat, pinFirstColumns,
             similarImagesCurrent, similarImagesExternal, similarFacesCurrent, similarFacesExternal, toggleTimelineView,
-            uiZoom, savePanelsLayout, loadPanelsLayout;
+            uiZoom, catIconSize, savePanelsLayout, loadPanelsLayout;
 
     MenuListener menuListener = new MenuListener(this);
     boolean isTreeMenu;
@@ -233,6 +233,10 @@ public class MenuClass extends JPopupMenu {
         uiZoom.addActionListener(menuListener);
         layoutAppearance.add(uiZoom);
 
+        catIconSize = new JMenuItem(Messages.getString("MenuClass.IconSize")); //$NON-NLS-1$
+        catIconSize.addActionListener(menuListener);
+        layoutAppearance.add(catIconSize);
+        
         previewScreenshot = new JMenuItem(Messages.getString("MenuClass.CopyViewerImage")); //$NON-NLS-1$
         previewScreenshot.addActionListener(menuListener);
         this.add(previewScreenshot);

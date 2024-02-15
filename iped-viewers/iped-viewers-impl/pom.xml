@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>iped</groupId>
 		<artifactId>iped-viewers</artifactId>
-		<version>4.1-snapshot</version>
+		<version>4.2-snapshot</version>
 	</parent>
 	<artifactId>iped-viewers-impl</artifactId>
 
@@ -97,7 +97,7 @@
             <type>jar</type>
         </dependency>
         <dependency>
-            <groupId>org.icepdf</groupId>
+            <groupId>com.github.pcorless.icepdf</groupId>
             <artifactId>icepdf-viewer</artifactId>
             <version>${icepdf.version}</version>
             <type>jar</type>
@@ -110,8 +110,24 @@
         <dependency>
     		<groupId>com.twelvemonkeys.imageio</groupId>
     		<artifactId>imageio-psd</artifactId>
-    		<version>3.7.0</version>
+    		<version>${twelvemonkeys.version}</version>
 	  	</dependency>
+        <dependency>
+    		<groupId>com.twelvemonkeys.imageio</groupId>
+    		<artifactId>imageio-webp</artifactId>
+    		<version>${twelvemonkeys.version}</version>
+	  	</dependency>
+        <dependency>
+    		<groupId>com.twelvemonkeys.imageio</groupId>
+    		<artifactId>imageio-bmp</artifactId>
+    		<version>${twelvemonkeys.version}</version>
+	  	</dependency>
+	  	<dependency>
+	  	    <!--See https://github.com/sepinf-inc/IPED/issues/1530-->
+            <groupId>com.twelvemonkeys.imageio</groupId>
+            <artifactId>imageio-tiff</artifactId>
+            <version>${twelvemonkeys.version}</version>
+        </dependency>
 	</dependencies>
 
 </project>

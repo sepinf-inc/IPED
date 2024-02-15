@@ -7,9 +7,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -71,8 +71,6 @@ public class EdgeWebCacheParser extends AbstractParser {
 
     protected boolean extractEntries = true;
 
-    private ItemInfo itemInfo;
-
     @Field
     public void setExtractEntries(boolean extractEntries) {
         this.extractEntries = extractEntries;
@@ -109,7 +107,7 @@ public class EdgeWebCacheParser extends AbstractParser {
             }
     }
 
-    private void printError(String function, int result, PointerByReference errorPointer) {
+    private void printError(String function, int result, PointerByReference errorPointer, ItemInfo itemInfo) {
         LOGGER.warn("Error decoding " + itemInfo.getPath() + ": Function '" + function + "'. Function result number '"
                 + result + "' Error value: " + errorPointer.getValue().getString(0)); //$NON-NLS-1$
         esedbLibrary.libesedb_error_free(errorPointer);
@@ -124,7 +122,7 @@ public class EdgeWebCacheParser extends AbstractParser {
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
 
-        itemInfo = context.get(ItemInfo.class);
+        ItemInfo itemInfo = context.get(ItemInfo.class);
 
         TemporaryResources tmp = new TemporaryResources();
         File webcacheFile = tmp.createTemporaryFile();
@@ -143,7 +141,7 @@ public class EdgeWebCacheParser extends AbstractParser {
                 String filePath = evidenceFile.getAbsolutePath();
 
                 PointerByReference filePointerReference = new PointerByReference();
-                List<EdgeContainer> history = getHistory(filePath, filePointerReference);
+                List<EdgeContainer> history = getHistory(filePath, filePointerReference, itemInfo);
 
                 int virtualId = 1;
 
@@ -190,10 +188,10 @@ public class EdgeWebCacheParser extends AbstractParser {
                         extractor.parseEmbedded(new EmptyInputStream(), handler, metadataHistory, true);
                     }
 
-                    closeTablePointer(ec.getTablePointer());
+                    closeTablePointer(ec.getTablePointer(), itemInfo);
                 }
 
-                closeFilePointer(filePointerReference);
+                closeFilePointer(filePointerReference, itemInfo);
             }
         } catch (Exception e) {
             genericParser.parse(tis, handler, metadata, context);
@@ -287,9 +285,9 @@ public class EdgeWebCacheParser extends AbstractParser {
         }
     }
 
-    protected List<EdgeContainer> getHistory(String filePath, PointerByReference filePointerReference)
+    protected List<EdgeContainer> getHistory(String filePath, PointerByReference filePointerReference, ItemInfo itemInfo)
             throws EdgeWebCacheException {
-        List<EdgeContainer> history = new LinkedList<EdgeContainer>();
+        List<EdgeContainer> history = new ArrayList<EdgeContainer>();
 
         try {
             /*
@@ -319,25 +317,25 @@ public class EdgeWebCacheParser extends AbstractParser {
 
                 result = esedbLibrary.libesedb_file_initialize(filePointerReference, errorPointer);
                 if (result < 0)
-                    printError("File Initialize", result, errorPointer);
+                    printError("File Initialize", result, errorPointer, itemInfo);
 
                 result = esedbLibrary.libesedb_check_file_signature(filePath, errorPointer);
                 if (result < 0)
-                    printError("Check File Signature", result, errorPointer);
+                    printError("Check File Signature", result, errorPointer, itemInfo);
 
                 if (result == 0) {
-                    throw new EdgeWebCacheException("File does not contains an ESEDB");
+                    throw new EdgeWebCacheException("File does not contain an ESEDB");
                 }
 
                 result = esedbLibrary.libesedb_file_open(filePointerReference.getValue(), filePath, accessFlags,
                         errorPointer);
                 if (result < 0)
-                    printError("File Open", result, errorPointer);
+                    printError("File Open", result, errorPointer, itemInfo);
 
                 result = esedbLibrary.libesedb_file_get_number_of_tables(filePointerReference.getValue(),
                         numberOfTables, errorPointer);
                 if (result < 0)
-                    printError("File Get Number of Tables", result, errorPointer);
+                    printError("File Get Number of Tables", result, errorPointer, itemInfo);
 
                 numTables = numberOfTables.getValue();
 
@@ -366,28 +364,28 @@ public class EdgeWebCacheParser extends AbstractParser {
                 result = esedbLibrary.libesedb_file_get_table(filePointerReference.getValue(), tables,
                         tablePointerReference, errorPointer);
                 if (result < 0)
-                    printError("File Get Table", result, errorPointer);
+                    printError("File Get Table", result, errorPointer, itemInfo);
 
                 result = esedbLibrary.libesedb_table_get_utf8_name_size(tablePointerReference.getValue(), tableNameSize,
                         errorPointer);
                 if (result < 0)
-                    printError("Table Get UTF8 Name Size", result, errorPointer);
+                    printError("Table Get UTF8 Name Size", result, errorPointer, itemInfo);
 
                 result = esedbLibrary.libesedb_table_get_utf8_name(tablePointerReference.getValue(), tableName,
                         tableNameSize.getValue(), errorPointer);
                 if (result < 0)
-                    printError("Table Get UTF8 Name", result, errorPointer);
+                    printError("Table Get UTF8 Name", result, errorPointer, itemInfo);
                 String tableNameString = tableName.getString(0);
 
                 result = esedbLibrary.libesedb_table_get_number_of_columns(tablePointerReference.getValue(),
                         numberOfColumns, columnFlags, errorPointer);
                 if (result < 0)
-                    printError("Table Get Number of Columns", result, errorPointer);
+                    printError("Table Get Number of Columns", result, errorPointer, itemInfo);
 
                 result = esedbLibrary.libesedb_table_get_number_of_records(tablePointerReference.getValue(),
                         numberOfRecords, errorPointer);
                 if (result < 0)
-                    printError("Table Get Number of Records", result, errorPointer);
+                    printError("Table Get Number of Records", result, errorPointer, itemInfo);
 
                 numRecords = numberOfRecords.getValue();
 
@@ -408,7 +406,7 @@ public class EdgeWebCacheParser extends AbstractParser {
 
                                 @Override
                                 public EdgeVisit next() {
-                                    return getRecord(i++, errorPointer, tablePointerReference, columnType);
+                                    return getRecord(i++, errorPointer, tablePointerReference, columnType, itemInfo);
                                 }
 
                             };
@@ -428,26 +426,26 @@ public class EdgeWebCacheParser extends AbstractParser {
         return history;
     }
 
-    private void closeTablePointer(PointerByReference tablePointer) {
+    private void closeTablePointer(PointerByReference tablePointer, ItemInfo itemInfo) {
         PointerByReference errorPointer = new PointerByReference();
         int result = esedbLibrary.libesedb_table_free(tablePointer, errorPointer);
         if (result < 0)
-            printError("Table Free", result, errorPointer);
+            printError("Table Free", result, errorPointer, itemInfo);
     }
 
-    private void closeFilePointer(PointerByReference filePointerReference) {
+    private void closeFilePointer(PointerByReference filePointerReference, ItemInfo itemInfo) {
         PointerByReference errorPointer = new PointerByReference();
         int result = esedbLibrary.libesedb_file_close(filePointerReference.getValue(), errorPointer);
         if (result < 0)
-            printError("File Close", result, errorPointer);
+            printError("File Close", result, errorPointer, itemInfo);
 
         result = esedbLibrary.libesedb_file_free(filePointerReference, errorPointer);
         if (result < 0)
-            printError("File Free", result, errorPointer);
+            printError("File Free", result, errorPointer, itemInfo);
     }
 
     private EdgeVisit getRecord(int i, PointerByReference errorPointer, PointerByReference tablePointerReference,
-            IntByReference columnType) {
+            IntByReference columnType, ItemInfo itemInfo) {
 
         int result = 0;
         /*
@@ -479,12 +477,12 @@ public class EdgeWebCacheParser extends AbstractParser {
         result = esedbLibrary.libesedb_table_get_record(tablePointerReference.getValue(), i, recordPointerReference,
                 errorPointer);
         if (result < 0)
-            printError("Table Get Record", result, errorPointer);
+            printError("Table Get Record", result, errorPointer, itemInfo);
 
         result = esedbLibrary.libesedb_record_get_number_of_values(recordPointerReference.getValue(),
                 recordNumberOfValues, errorPointer);
         if (result < 0)
-            printError("Record Get Number of Values", result, errorPointer);
+            printError("Record Get Number of Values", result, errorPointer, itemInfo);
 
         /*
          * The column types
@@ -512,19 +510,19 @@ public class EdgeWebCacheParser extends AbstractParser {
         result = esedbLibrary.libesedb_record_get_value_64bit(recordPointerReference.getValue(), 0, recordValueData,
                 errorPointer);
         if (result < 0)
-            printError("Record Get EntryId Data", result, errorPointer);
+            printError("Record Get EntryId Data", result, errorPointer, itemInfo);
         entryId = recordValueData.getValue();
         /* Integer 64bit signed */
         result = esedbLibrary.libesedb_record_get_value_64bit(recordPointerReference.getValue(), 5, recordValueData,
                 errorPointer);
         if (result < 0)
-            printError("Record Get FileSize Data", result, errorPointer);
+            printError("Record Get FileSize Data", result, errorPointer, itemInfo);
         fileSize = recordValueData.getValue();
         /* Integer 32bit unsigned */
         result = esedbLibrary.libesedb_record_get_value_32bit(recordPointerReference.getValue(), 8, recordValueData32,
                 errorPointer);
         if (result < 0)
-            printError("Record Get AccessCount Data", result, errorPointer);
+            printError("Record Get AccessCount Data", result, errorPointer, itemInfo);
         accessCount = recordValueData32.getValue();
 
         /*
@@ -539,43 +537,43 @@ public class EdgeWebCacheParser extends AbstractParser {
         result = esedbLibrary.libesedb_record_get_value_64bit(recordPointerReference.getValue(), 10, recordValueData,
                 errorPointer);
         if (result < 0)
-            printError("Record Get CreationTime Data", result, errorPointer);
+            printError("Record Get CreationTime Data", result, errorPointer, itemInfo);
         creation = TimeConverter.filetimeToMillis(recordValueData.getValue());
         /* Integer 64bit signed */
         result = esedbLibrary.libesedb_record_get_value_64bit(recordPointerReference.getValue(), 12, recordValueData,
                 errorPointer);
         if (result < 0)
-            printError("Record Get ModifiedTime Data", result, errorPointer);
+            printError("Record Get ModifiedTime Data", result, errorPointer, itemInfo);
         modified = TimeConverter.filetimeToMillis(recordValueData.getValue());
         /* Integer 64bit signed */
         result = esedbLibrary.libesedb_record_get_value_64bit(recordPointerReference.getValue(), 13, recordValueData,
                 errorPointer);
         if (result < 0)
-            printError("Record Get AccessedTime Data", result, errorPointer);
+            printError("Record Get AccessedTime Data", result, errorPointer, itemInfo);
         accessed = TimeConverter.filetimeToMillis(recordValueData.getValue());
 
         /* Large Text */
         result = esedbLibrary.libesedb_record_get_column_type(recordPointerReference.getValue(), 17, columnType,
                 errorPointer);
         if (result < 0)
-            printError("Record Get Column Type", result, errorPointer);
+            printError("Record Get Column Type", result, errorPointer, itemInfo);
 
         result = esedbLibrary.libesedb_record_get_value_data_flags(recordPointerReference.getValue(), 17,
                 valueDataFlags, errorPointer);
         if (result < 0)
-            printError("Record Get Value Data Flags", result, errorPointer);
+            printError("Record Get Value Data Flags", result, errorPointer, itemInfo);
 
         if (valueDataFlags.getValue() == 1) {
             result = esedbLibrary.libesedb_record_get_value_utf8_string_size(recordPointerReference.getValue(), 17,
                     recordValueDataSize, errorPointer);
             if (result < 0)
-                printError("Record Get URL UTF8 String Size", result, errorPointer);
+                printError("Record Get URL UTF8 String Size", result, errorPointer, itemInfo);
 
             if ((recordValueDataSize.getValue() > 0) && (result == 1)) {
                 result = esedbLibrary.libesedb_record_get_value_utf8_string(recordPointerReference.getValue(), 17,
                         recordValueDataUrl, recordValueDataSize.getValue(), errorPointer);
                 if (result < 0)
-                    printError("Record Get URL UTF8 String", result, errorPointer);
+                    printError("Record Get URL UTF8 String", result, errorPointer, itemInfo);
                 url = recordValueDataUrl.getString(0);
             }
         }
@@ -583,18 +581,18 @@ public class EdgeWebCacheParser extends AbstractParser {
         result = esedbLibrary.libesedb_record_get_value_utf8_string_size(recordPointerReference.getValue(), 18,
                 recordValueDataSize, errorPointer);
         if (result < 0)
-            printError("Record Get FileName UTF8 String Size", result, errorPointer);
+            printError("Record Get FileName UTF8 String Size", result, errorPointer, itemInfo);
         if ((recordValueDataSize.getValue() > 0) && (result == 1)) {
             result = esedbLibrary.libesedb_record_get_value_utf8_string(recordPointerReference.getValue(), 18,
                     recordValueDataFilename, recordValueDataSize.getValue(), errorPointer);
             if (result < 0)
-                printError("Record Get FileName UTF8 String", result, errorPointer);
+                printError("Record Get FileName UTF8 String", result, errorPointer, itemInfo);
             file = recordValueDataFilename.getString(0);
         }
 
         result = esedbLibrary.libesedb_record_free(recordPointerReference, errorPointer);
         if (result < 0)
-            printError("Record Free", result, errorPointer);
+            printError("Record Free", result, errorPointer, itemInfo);
 
         return new EdgeVisit(entryId, fileSize, accessCount, creation, modified, accessed, file, url);
     }

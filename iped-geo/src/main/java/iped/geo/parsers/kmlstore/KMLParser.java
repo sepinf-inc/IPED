@@ -60,11 +60,16 @@ public class KMLParser {
                 if (isTrack(ele)) {
                     parsePlacemarkTrack(ele, features, featureBuilder);
                 } else {
-                    features.add(parsePlacemark(ele, featureBuilder));
+                    try {
+                        features.add(parsePlacemark(ele, featureBuilder));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
             }
             if (ele.getName().toLowerCase().equals("folder")) {
-                features.add(parseFolder(ele, featureBuilder));
+                Folder f = parseFolder(ele, featureBuilder);
+                features.add(f);
             }
         }
 
@@ -74,33 +79,41 @@ public class KMLParser {
     private static void parsePlacemarkTrack(Element ele, List<Object> features, SimpleFeatureBuilder featureBuilder) {
         List<Element> eles = ele.getChildren();
         GeometryFactory geometryFactory = JTSFactoryFinder.getGeometryFactory();
+
         for (Iterator<Element> iterator = eles.iterator(); iterator.hasNext();) {
             Element element = iterator.next();
             if (element.getName().toLowerCase().equals("track")) {
+                ArrayList<String> timestamps = new ArrayList<String>();
                 List<Element> tracks = element.getChildren();
-                String timestamp = null, name = null;
-                Coordinate coord = null;
 
                 for (Iterator<Element> iterator2 = tracks.iterator(); iterator2.hasNext();) {
                     Element element2 = iterator2.next();
                     if (element2.getName().toLowerCase().equals("when")) {
-                        timestamp = element2.getText();
-                        name = element2.getText();
-                    }
-                    if (element2.getName().toLowerCase().equals("coord")) {
-                        coord = parseCoordinate(element2.getText(), " ");
-                    }
-                    if ((timestamp != null) && (coord != null)) {
-                        featureBuilder.add(geometryFactory.createPoint(coord));
-                        featureBuilder.add(name);
-                        featureBuilder.add("Trilha");
-                        featureBuilder.add(timestamp);
-                        features.add(featureBuilder.buildFeature(null));
-                        timestamp = null;
-                        coord = null;
+                        timestamps.add(element2.getText());
                     }
                 }
 
+                Coordinate[] coords = new Coordinate[timestamps.size()];
+
+                int i = 0;
+                for (Iterator<Element> iterator2 = tracks.iterator(); iterator2.hasNext();) {
+                    Element element2 = iterator2.next();
+                    if (element2.getName().toLowerCase().equals("coord")) {
+                        coords[i] = parseCoordinate(element2.getText(), " ,");
+                        i++;
+                    }
+                }
+
+                for (int j = 0; j < coords.length; j++) {
+                    String timestamp = timestamps.get(i);
+                    Coordinate coord = coords[i];
+
+                    featureBuilder.add(geometryFactory.createPoint(coord));
+                    featureBuilder.add(timestamp);
+                    featureBuilder.add("Trilha");
+                    featureBuilder.add(timestamp);
+                    features.add(featureBuilder.buildFeature(null));
+                }
             }
         }
     }
@@ -129,18 +142,21 @@ public class KMLParser {
         for (Iterator<Element> iterator = eles.iterator(); iterator.hasNext();) {
             Element ele = iterator.next();
 
-            Geometry geoInt = parseGeometry(ele, geometryFactory);
-            if (geoInt != null) {
-                geo = geoInt;
-            }
             if (ele.getName().toLowerCase().equals("name")) {
                 name = ele.getText();
+                continue;
             }
             if (ele.getName().toLowerCase().equals("description")) {
                 description = ele.getText();
+                continue;
             }
             if (ele.getName().toLowerCase().equals("timestamp")) {
                 timestamp = ele.getChildren().get(0).getText();
+                continue;
+            }
+            Geometry geoInt = parseGeometry(ele, geometryFactory);
+            if (geoInt != null) {
+                geo = geoInt;
             }
         }
 
@@ -194,7 +210,7 @@ public class KMLParser {
             geo = geometryFactory.createPoint(coord);
         }
 
-        if (ele.getName().toLowerCase().equals("linestring")) {
+        if (ele.getName().toLowerCase().equals("linestring") || ele.getName().toLowerCase().equals("linearring")) {
             List<Element> eles = ele.getChildren();
             Element coordsEle = null;
             for (Iterator<Element> iterator = eles.iterator(); iterator.hasNext();) {
@@ -205,8 +221,8 @@ public class KMLParser {
                 }
             }
 
-            String coordinates = coordsEle.getText();
-            StringTokenizer st = new StringTokenizer(coordinates, " ");
+            String coordinates = coordsEle.getText().trim();
+            StringTokenizer st = new StringTokenizer(coordinates, " \t\n\r");
             Coordinate[] coords = new Coordinate[st.countTokens()];
             int i = 0;
             while (st.hasMoreTokens()) {
@@ -214,8 +230,11 @@ public class KMLParser {
                 coords[i] = parseCoordinate(tok);
                 i++;
             }
-            geo = geometryFactory.createLineString(coords);
-
+            if (ele.getName().toLowerCase().equals("linestring")) {
+                geo = geometryFactory.createLineString(coords);
+            } else {
+                geo = geometryFactory.createLinearRing(coords);
+            }
         }
 
         if (ele.getName().toLowerCase().equals("polygon")) {
@@ -234,17 +253,7 @@ public class KMLParser {
             }
 
             if (boundary != null) {
-                String coordinates = boundary.getChildren().get(0).getChildren().get(0).getText();
-
-                StringTokenizer st = new StringTokenizer(coordinates, " ");
-                Coordinate[] coords = new Coordinate[st.countTokens()];
-                int i = 0;
-                while (st.hasMoreTokens()) {
-                    String tok = st.nextToken(" ");
-                    coords[i] = parseCoordinate(tok);
-                    i++;
-                }
-                geo = geometryFactory.createPolygon(coords);
+                geo = parseGeometry(boundary.getChildren().get(0), geometryFactory);
             }
         }
 
@@ -271,14 +280,24 @@ public class KMLParser {
         List<Element> eles = pm.getChildren();
         for (Iterator<Element> iterator = eles.iterator(); iterator.hasNext();) {
             Element ele = iterator.next();
-            if (ele.getName().toLowerCase().equals("placemark")) {
-                features.add(parsePlacemark(ele, featureBuilder));
-            }
-            if (ele.getName().toLowerCase().equals("folder")) {
-                features.add(parseFolder(ele, featureBuilder));
-            }
-            if (ele.getName().toLowerCase().equals("name")) {
-                folder.setName(ele.getText());
+            try {
+                if (ele.getName().toLowerCase().equals("placemark")) {
+                    features.add(parsePlacemark(ele, featureBuilder));
+                }
+                if (ele.getName().toLowerCase().equals("folder")) {
+                    features.add(parseFolder(ele, featureBuilder));
+                }
+                if (ele.getName().toLowerCase().equals("name")) {
+                    folder.setName(ele.getText());
+                }
+                if (ele.getName().toLowerCase().equals("extendeddata")) {
+                    Element data = ele.getChild("Data");
+                    if (data != null && data.getAttribute("name") != null && data.getAttribute("name").getValue().equals("iped.geo.track")) {
+                        folder.setTrack(true);
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
 

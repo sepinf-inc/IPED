@@ -1,4 +1,3 @@
-
 /*
 	Copyright (c) 2021, Patrick Dalla Bernardina - MIT licence
 	
@@ -251,25 +250,52 @@ BoxSelect = L.Handler.extend({
 
 });
 
-
 L.KML = L.MarkerClusterGroup.extend({
 	tourOrder:'none',
+	resolveFullyLoaded: null,
+    fullyLoaded: null,
+    afterFullyLoadedEvent: null,
+	onFullyLoaded: null,
+    nextlinestyle: {color: 'blue', weight: 3},
+    trackLineStyle: {color: 'green', weight:3, smoothFactor:4},
+    previouslinestyle: {color: 'red', weight: 3},
+    geoJSONLayers: [],
 	initialize: function (kml, kmlOptions) {
 		L.MarkerClusterGroup.prototype.initialize.call(this,kmlOptions);
 		this._kml = kml;
 		this._layers = {};
 		this._kmlOptions = kmlOptions;
-		
+		this.fullyLoaded = new Promise((resolve, reject) => {this.resolveFullyLoaded = resolve});
+		this.afterFullyLoadedEvent = this.fullyLoaded.then((track)=>{
+            if(track.onFullyLoaded){
+                track.onFullyLoaded();
+            }
+        });
 		if (kml) {
 			this.addKML(kml, kmlOptions);
 		}
 	},
+    drawFeature(json){
+        let l = L.geoJSON(json);
+        this.geoJSONLayers.push(l);
+        this.addLayer(l);
+
+        this._map.fitBounds(l.getBounds());
+    },
+    hideLastFeature(json){
+        while(this.geoJSONLayers.length>0){
+            if(this!=this.geoJSONLayers[0]){
+		this.removeLayer(this.geoJSONLayers[0]);
+            }
+            this.geoJSONLayers.shift();//remove first item from array
+        }
+    },
 	markersCount: function(){
-		var i=0;
-       	for (var ind in this.markers){
-			i++;
-		}
-		return i;
+        try{
+            return this.visibleMarkerCoords.length;
+        }catch(e){
+            alert(e);
+        }
 	},
 	selecionaMarcadorBounds: function (bounds){
 		mids=[];
@@ -279,7 +305,6 @@ L.KML = L.MarkerClusterGroup.extend({
    				mids.push(m.id);
 				m.selected='true';
 				m.atualizaIcone();
-				
 			}
     	}
 		window.app.selectMarkerBF(mids);
@@ -302,34 +327,86 @@ L.KML = L.MarkerClusterGroup.extend({
     	}
 		window.app.selectMarkerBF(mids);
 	},
-	selecionaMarcador: function (id, b){
-		for(i=0;i<id.length;i++){
-			if(b=='true'){
-				this.markers[id[i]].selected='true';
-			}else{
-				this.markers[id[i]].selected='false';
-			}
-			this.markers[id[i]].atualizaIcone();
-		}
-	},
+    selecionaMarcador: function (id, b){
+        selecionaMarcador(id, b, true);
+    },
+    selecionaMarcador: function (id, b, notify){
+        for(i=0;i<id.length;i++){
+            mark=this.markers[id[i]];
+            if(b=='true'){
+                mark.selected='true';
+                //mark.showDirectionLines(); 
+                this.selectedPlacemarks.push(mark);
+            }else{
+                mark.selected='false';
+                mark.hideDirectionLines();
+                let i = this.selectedPlacemarks.indexOf(mark);
+                if(i>-1){
+                    this.selectedPlacemarks.splice(i,1);
+                }
+            }
+            mark.atualizaIcone();
+            if(notify){
+                mark.onClick();
+            }
+        }
+    },
+    checkMarcador: function (id, b, notify){
+            for(i=0;i<id.length;i++){
+                mark=this.markers[id[i]];
+                if(b=='true'){
+                    mark.checked='true';
+                }else{
+                    mark.checked='false';
+                }
+                mark.atualizaIcone();
+            }
+    },
 	marca: function (id, b){
-		if(b=='true'){
-			this.markers[id].checked='true';
-			document.getElementById('marker_checkbox').checked=true;
-		}else{
-			this.markers[id].checked='false';
-			document.getElementById('marker_checkbox').checked=false;
-		}
-		this.markers[id].atualizaIcone();
+        try{
+            let marker_checkbox = document.getElementById('marker_checkbox_'+this.id)
+            if(b=='true'){
+                this.markers[id].checked='true';
+                if(marker_checkbox){
+                    marker_checkbox.checked=true;
+                }
+            }else{
+                this.markers[id].checked='false';
+                if(marker_checkbox){
+                    marker_checkbox.checked=false;
+                }
+            }
+            this.markers[id].atualizaIcone();
+        }catch(e){
+            alert(e);
+        }
 	},
+	minlat:0, 
+	minlongit:0, 
+	maxlat:0, 
+	maxlingit:0,
+	orderPromise:null,
+	
     viewAll: function(){
-    	ms=[];
-    	for (var ind in this.markers){
-			var m = this.markers[ind];
-   			ms.push(m);
-    	}
-		this.centralizaMarcadores(ms);
+        var corner1 = L.latLng(this.minlat, this.minlongit);
+        var corner2 = L.latLng(this.maxlat, this.maxlongit);
+        var bounds = L.latLngBounds(corner1, corner2);
+        var target = this._map._getBoundsCenterZoom(bounds, map.options);
+        var zoom = this._map._zoom;
+        zoom = target.zoom;
+        this._map.setView(target.center, zoom, map.option);
 	},
+
+    setAllRange: function(minlongit, minlat, maxlongit, maxlat){
+        this.minlongit = minlongit;
+        this.minlat = minlat;
+        this.maxlongit = maxlongit;
+        this.maxlat=maxlat;
+        this.viewAll();        
+    },
+    centralizaMarcador: function(m){
+        this._map.setView(m.getLatLng());
+    },
 	centralizaMarcadores: function(ms){
     	if(ms.length>0){
     		var fg = new L.featureGroup(ms);
@@ -339,24 +416,61 @@ L.KML = L.MarkerClusterGroup.extend({
 			if(target.zoom < zoom){
 				zoom = target.zoom; 	
 			}
-			this._map.setView(target.center, zoom, map.option);
-	    	//map.fitBounds(fg.getBounds());
+			if(ms.length>1){
+                map.fitBounds(fg.getBounds());
+            }else{
+                this.centralizaMarcador(ms[0]);
+            }
     	}
 	},
     centralizaSelecao: function(){
-    	ms=[];
-    	for (var ind in this.markers){
-			var m = this.markers[ind];
-    		if(m.selected=='true'){
-    			ms.push(m);
-    		}
-    	}
-		this.centralizaMarcadores(ms);
+		this.centralizaMarcadores(this.selectedPlacemarks);
     },
-	
+
 	styles:[],
 	markers:[],
+    markerCoords:[],
+    visibleMarkerCoords:[],
 	layers:[],
+	pathsVisible:false,
+	lastVisibleTrack:null,
+
+	createPaths: function () {
+        if(this.paths){
+            return new Promise((resolve, reject)=>{resolve();});
+        }else{
+            return this.fullyLoaded.then((track)=>{
+                try{
+                    this.paths = new L.Polyline(this.visibleMarkerCoords, {
+                        color: 'red',
+                        weight: 3,
+                        opacity: 1,
+                        smoothFactor: 1
+                    });
+                    this.paths.arrowheads({
+                          size: '18px',
+                          fill: true,
+                          yawn: 25,
+                          frequency: 'allvertices'
+                    });
+                }catch(e){
+                    alert(e);                
+                }
+           });
+        }
+    },
+    
+    tooglePaths: function (){
+        if(this.pathsVisible){
+            this.removeLayer(this.paths);
+            this.pathsVisible=false;
+        }else{
+            this.createPaths().then(()=>{
+                this.addLayer(this.paths);
+                this.pathsVisible=true;
+            });
+        }
+    },
 	
 	addKML: function (xml, kmlOptions) {
 		layers = this.parseKML(xml, kmlOptions);
@@ -373,6 +487,12 @@ L.KML = L.MarkerClusterGroup.extend({
 
 	latLngs: [],
 
+    parseStylesFromXmlString: function (xmlString, kmlOptions) {
+        let parser = new DOMParser();
+        let xmldoc = parser.parseFromString(xmlString, 'text/xml');
+        this.styles = this.parseStyles(xmldoc, kmlOptions);
+    },
+    
 	parseKML: function (xml, kmlOptions) {
 		styles = this.parseStyles(xml, kmlOptions);
 		style = styles;
@@ -387,19 +507,23 @@ L.KML = L.MarkerClusterGroup.extend({
 			}
 		}
 		el = xml.getElementsByTagName('Placemark');
-		for (var j = 0; j < el.length; j++) {
-			if (!this._check_folder(el[j])) { continue; }
-			l = this.parsePlacemark(el[j], xml, style);
-			if (l) { layers.push(l); }
-		}
+        if(el){
+            for (var j = 0; j < el.length; j++) {
+                if (!this._check_folder(el[j])) { continue; }
+                l = this.parsePlacemark(el[j], xml, style);
+                if (l) { layers.push(l); }
+            }
+        }
 		el = xml.getElementsByTagName('gx:Tour');
-		this.tourOrder=el[0].getElementsByTagName('name')[0].childNodes[0].nodeValue;
+		if(el.length>0){
+            this.tourOrder=el[0].getElementsByTagName('name')[0].childNodes[0].nodeValue;
+        }
 
 		el = xml.getElementsByTagName('GroundOverlay');
-		for (var k = 0; k < el.length; k++) {
-			l = this.parseGroundOverlay(el[k]);
-			if (l) { layers.push(l); }
-		}
+        for (var k = 0; k < el.length; k++) {
+            l = this.parseGroundOverlay(el[k]);
+            if (l) { layers.push(l); }
+        }
 		return layers;
 	},
 
@@ -545,7 +669,291 @@ L.KML = L.MarkerClusterGroup.extend({
 		}
 		return l;
 	},
+	
+    msAddPlacemark:[],
+    selectedPlacemarks:[],
+    lastAddedPlacemark: null,
+    addpromises:[],
+    visibleLayer:null,
+    orderedVisiblePlacemarks:[],
+    placemarks:[],
+    placemarkIndexes:[],
 
+    deselectAll:function (){
+        while(this.selectedPlacemarks.length>0){
+            if(this!=this.selectedPlacemarks[0]){
+                this.selectedPlacemarks[0].selected=false;
+                this.selectedPlacemarks[0].hideDirectionLines();
+                this.selectedPlacemarks[0].hideTrack();
+                this.selectedPlacemarks[0].atualizaIcone();
+            }
+            this.selectedPlacemarks.shift();//remove first item from array
+        }
+    },
+    updateLeadMarker(marker){
+        if(this.curMark){
+            this.curMark.hideDirectionLines();
+        }
+        if(this.curMark!=this.markers[marker]){
+            //this.markers[marker].showDirectionLines();
+        }
+        this.curMark = this.markers[marker];
+    },
+    
+    highlight: function(mark){
+        mark.selected='true';
+        this.selectedPlacemarks.push(mark);        
+    },
+    
+    unhighlight: function(mark){
+        mark.selected='false';
+        mark.hideDirectionLines();
+        let i = this.selectedPlacemarks.indexOf(mark);
+        if(i>-1){
+            this.selectedPlacemarks.splice(i,1);
+        }
+    },
+    
+    addPlacemark: function (id, name, descr, lat, long, checked, selected, options) {
+        var m = new L.KMLMarker(new L.LatLng(lat, long), options);
+        m.id=id;
+        m.styles = this.styles;
+        m.checked=checked;
+        m.selected=selected;
+        m.name = name;
+        m.descr = descr;
+        m.bindPopup('<input type="checkbox" id="marker_checkbox_'+id+'" value=""  onclick="L.checkMarker(window.clickedMark.id)"/><h2>' + m.name + '</h2>' + m.descr, { className: 'kml-popup'});
+        this.popupOpened=false;
+        m.styleUrl='#item';
+        m.parent=this;
+        m.atualizaIcone();
+
+        this.markers[id]=m;
+        this.markerCoords.push(m.getLatLng());
+        this.msAddPlacemark.push(m);
+        if(this.msAddPlacemark.length>=10000000){
+            var placemarks=this.msAddPlacemark;
+            new Promise((resolve)=>{
+                this.flushAddPlacemarkArray(placemarks);
+                resolve();
+            });
+            this.msAddPlacemark=[];
+        }
+        return m;
+    },
+    
+    flushAddPlacemarkArray: function (placemarks){
+        if(placemarks.length>0){
+            this.visibleLayer = new L.FeatureGroup(placemarks);
+            this.fire('addlayer', {layer: this.visibleLayer});
+            this.addLayer(this.visibleLayer);
+        }
+    },
+    curMark:null,
+    getNextMarker(a){
+        if(this.curMark.next){
+            this.curMark=this.curMark.next;
+            return this.curMark;
+        }else{
+            return null;
+        }
+    },
+    getPreviousMarker(a){
+        if(this.curMark.previous){
+            this.curMark=this.curMark.previous;
+            return this.curMark;
+        }else{
+            return null;
+        }
+    },
+    getLastMarker(a){
+        this.curMark = this.orderedVisiblePlacemarks[this.orderedVisiblePlacemarks.length-1];
+        return this.curMark;
+    },
+    getFirstMarker(a){
+        this.curMark = this.placemarks[this.placemarkIndexes[0]];
+        return this.curMark;
+    },
+    clearVisibleMarkers(){
+        if(this.curMark){
+            let mark=this.curMark;
+            mark.hideDirectionLines();
+            let i = this.selectedPlacemarks.indexOf(mark);
+            if(i>-1){
+                this.selectedPlacemarks.splice(i,1);
+            }
+            if(mark.track){
+                if(this.hasLayer(mark.track)){
+                    this.removeLayer(mark.track);
+                }
+            }
+        }
+        if(this.lastVisibleTrack){
+            if(this.hasLayer(this.lastVisibleTrack)){
+                this.removeLayer(this.lastVisibleTrack);
+            }
+        }
+        this.orderedVisiblePlacemarks=[];
+        this.visibleMarkerCoords=[];
+        if(this.pathsVisible){
+            this.removeLayer(this.paths);
+        }
+        this.pathsVisible=false;
+        
+        this.paths=null;
+        
+        this.fullyLoaded = new Promise((resolve, reject) => {this.resolveFullyLoaded = resolve});
+        this.afterFullyLoadedEvent = this.fullyLoaded.then((track)=>{
+            if(track.onFullyLoaded){
+                track.onFullyLoaded();
+            }
+        });
+        
+
+        this.placemarks=[];
+        this.placemarkIndexes=[];
+        if(this.visibleLayer) this.removeLayer(this.visibleLayer);
+        this.visibleLayer=null;
+    },
+    orderVisibleMarkers(){
+            if(this.placemarks.length>0){
+                if(this.visibleLayer) this.removeLayer(this.visibleLayer);
+                this.visibleLayer = new L.FeatureGroup(this.placemarks);
+                this.fire('addlayer', {layer: this.visibleLayer});
+                this.addLayer(this.visibleLayer);
+            }
+            var that = this;
+            if(that.placemarks.length>0){
+                this.orderPromise = new Promise((resolve, reject) => {
+                    try{
+                        for(let i=0; i<this.placemarkIndexes.length; i++){
+                            let j = that.placemarkIndexes[i];
+                            that.orderedVisiblePlacemarks[j]=that.placemarks[i];
+                            that.visibleMarkerCoords[j]=that.placemarks[i].getLatLng();
+                        }
+                        let m=null;
+                        let lastPlacemark=null;
+                        for(let i=0; i<that.orderedVisiblePlacemarks.length; i++){
+                            m=that.orderedVisiblePlacemarks[i];
+                            if(m){
+                                if(m.nextLine && that.hasLayer(m.nextLine)){
+                                    that.removeLayer(m.nextLine);
+                                }
+                                m.nextLine=null;                                
+                                if(m.previousLine && that.hasLayer(m.previousLine)){
+                                    that.removeLayer(m.previousLine);
+                                }
+                                m.previousLine=null;
+                                if(lastPlacemark){
+                                    lastPlacemark.next = m;
+                                    m.previous = lastPlacemark;
+                                }else{
+                                    m.previous = null;
+                                }
+                                lastPlacemark=m;
+                            }
+                        }
+                        if(m){
+                            m.next=null;
+                        }
+                        resolve();
+                    }catch(e){
+                        alert(e);
+                        reject();                    
+                    }
+                });
+                let self = this;
+                this.orderPromise.then(()=>{
+                    if(self.resolveFullyLoaded){
+                        self.resolveFullyLoaded(self);
+                    }
+                });
+            }
+
+        /*
+        Promise.all(this.addpromises).then(()=>{
+        });*/        
+    },
+    drawPolyline(a){
+        try{
+            if(a){
+                let m=this.markers['marker_'+a[0]];
+                
+                if(m.track){
+                    poly=m.track;
+                }else{
+                    let latLngs = [];
+                    for(let i=0; i<a.length; i++){
+                        m=this.markers['marker_'+a[i]];
+                        latLngs.push(m.getLatLng());
+                    }
+                    poly=L.polyline(latLngs, this.trackLineStyle);
+                    for(let i=0; i<a.length; i++){
+                        m=this.markers['marker_'+a[i]];
+                        m.track=poly;
+                    }
+                }
+                poly=poly.arrowheads({
+                      size: '18px',
+                      fill: true,
+                      yawn: 25,
+                      frequency: 'allvertices'
+                });
+                this.lastVisibleTrack=poly;
+                this.addLayer(poly);
+            }
+        }catch(e){
+            alert(e);
+        }
+    },
+    showMarkers(a){
+        try{
+            if(a){
+                for(let i=0; i<a.length; i++){
+                    let m=this.markers['marker_'+a[i][0]];
+                    if(m){
+                        this.placemarks.push(m);
+                        this.placemarkIndexes.push(a[i][1]);
+                        if(a[i][2]){
+                            if(m.checked != 'true'){
+                                m.checked = 'true';
+                                m.atualizaIcone();
+                            }
+                        }else{
+                            if(m.checked != 'false'){
+                                m.checked = 'false';
+                                m.atualizaIcone();
+                            }
+                        }
+                        this.orderedVisiblePlacemarks.push(null);
+                        this.visibleMarkerCoords.push(null);
+                    }
+                }
+            }
+        }catch(e){
+            alert(e);
+        }
+    },
+    createMarkers(a){
+        try{
+            if(a){
+                    for(let i=0; i<a.length; i++){
+                        m = this.addPlacemark('marker_'+a[i][0], a[i][2], a[i][3], a[i][4], a[i][5], a[i][6], a[i][7], {});
+                        this.markers.push(m);
+                        this.placemarks.push(m);
+                        this.placemarkIndexes.push(a[i][1]);
+                        this.orderedVisiblePlacemarks.push(null);
+                        this.visibleMarkerCoords.push(null);
+                    }
+                    /*
+                this.addpromises.push(new Promise((resolve)=>{
+                    resolve();
+                }));*/
+            }
+        }catch(e){
+            alert(e);
+        }
+    },
 	parsePlacemark: function (place, xml, style, options) {
 		var h, i, j, k, el, il, opts = options || {};
 
@@ -614,25 +1022,25 @@ L.KML = L.MarkerClusterGroup.extend({
 		return layer;
 	},
 
-  addPlacePopup: function(place, layer) {
-    var el, i, j, name, descr = '';
-    el = place.getElementsByTagName('name');
-    if (el.length && el[0].childNodes.length) {
-      name = el[0].childNodes[0].nodeValue;
-	  layer.name=name;
-    }
-    el = place.getElementsByTagName('description');
-    for (i = 0; i < el.length; i++) {
-      for (j = 0; j < el[i].childNodes.length; j++) {
-        descr = descr + el[i].childNodes[j].nodeValue;
-      }
-    }
-    layer.descr=descr;
-
-    if (name) {
-      layer.bindPopup('<input type="checkbox" id="marker_checkbox" value=""/><h2>' + name + '</h2>' + descr, { className: 'kml-popup'});
-    }
-  },
+      addPlacePopup: function(place, layer) {
+        var el, i, j, name, descr = '';
+        el = place.getElementsByTagName('name');
+        if (el.length && el[0].childNodes.length) {
+          name = el[0].childNodes[0].nodeValue;
+    	  layer.name=name;
+        }
+        el = place.getElementsByTagName('description');
+        for (i = 0; i < el.length; i++) {
+          for (j = 0; j < el[i].childNodes.length; j++) {
+            descr = descr + el[i].childNodes[j].nodeValue;
+          }
+        }
+        layer.descr=descr;
+    
+        if (name) {
+          layer.bindPopup('<input type="checkbox" id="marker_checkbox" value=""/><h2>' + name + '</h2>' + descr, { className: 'kml-popup'});
+        }
+      },
 
 	parseCoords: function (xml) {
 		var el = xml.getElementsByTagName('coordinates');
@@ -840,61 +1248,145 @@ L.KMLMarker = L.Marker.extend({
 	atualizaIcone: function(){
 		if(this.selected=='true'){
 			if(this.checked=='true'){
-				this.setIcon(styles['#itemSelecionadoMarcado'].icon);
+				this.setIcon(this.styles['#itemSelecionadoMarcado'].icon);
 			}else{
-				this.setIcon(styles['#itemSelecionado'].icon);
+				this.setIcon(this.styles['#itemSelecionado'].icon);
 			}
 		}else{
 			if(this.checked=='true'){
-				this.setIcon(styles['#itemMarcado'].icon);
+				this.setIcon(this.styles['#itemMarcado'].icon);
 			}else{
-				this.setIcon(styles['#item'].icon);
+				this.setIcon(this.styles['#item'].icon);
 			}
 		}
 	},
-	onClick: function(e){
-		//workaround to skip leaflet behaviour that invokes onClick twice, the one programatically invoked is skipped;
-		if(!e.originalEvent.isTrusted) {
-			return;
-		}
+    next:null,
+    previous:null,
+    nextLine:null,
+    previousLine:null,
+    directionLinesVisible:false,
+    createNextDirectionLine: function(){        
+        if(this.nextLine){
+        }else{
+            if(this.next){
+                let lagLng = null;
+                let nextLagLng = null;
+                if(this._spiderLeg){
+                    latLng = this._spiderLeg.getLatLngs()[0];
+                }else{
+                    latLng = this.getLatLng();
+                }
+                if(this.next._spiderLeg){
+                    nextLatLng = this.next._spiderLeg.getLatLngs()[0];                    
+                }else{
+                    nextLatLng = this.next.getLatLng();
+                }
+                this.nextLine = L.polyline([latLng, nextLatLng], this.parent.nextlinestyle);
+                this.nextLine.arrowheads({
+                      size: "18px",
+                      fill: true,
+                      yawn: 30,
+                      frequency: 'endonly'
+                    });
+            }
+        }
+    },
+    createDirectionLines: function(){
+        this.createNextDirectionLine();
+        if(this.previousLine){
+        }else{
+            if(this.previous){                
+                this.previous.createNextDirectionLine();
+                this.previousLine = this.previous.nextLine;
+            }
+        }
+    },
+    
+    hideTrack(){
+        if(this.track){
+            this.parent.removeLayer(this.track);
+        }        
+    },
 
-		if(e.originalEvent.shiftKey){
-			if(this.selected=='true'){
-				this.selected='false';
-			}else{
-				this.selected='true';
-			}
-			this.atualizaIcone();
-		}
-		if(e.originalEvent.ctrlKey){
-			if(this.checked=='true'){
-				this.checked='false';
-				document.getElementById('marker_checkbox').checked=false;
-			}else{
-				this.checked='true';
-				document.getElementById('marker_checkbox').checked=true;
-			}
-			this.atualizaIcone();
-		}
-		if(!this.isPopupOpen()){
-			if(this.checked=='true'){
-				this.bindPopup('<input type="checkbox" id="marker_checkbox" checked onclick="L.checkMarker(\''+this.id+'\')"/><h2>' + this.name + '</h2>' + this.descr, { className: 'kml-popup'});
-			}else{
-				this.bindPopup('<input type="checkbox" id="marker_checkbox" onclick="L.checkMarker(\''+this.id+'\')"/><h2>' + this.name + '</h2>' + this.descr, { className: 'kml-popup'});
-			}
-			this.togglePopup();
-		}
-		if(e.originalEvent.shiftKey){
-			var button = (typeof e.originalEvent.which != "undefined") ? e.originalEvent.which : e.originalEvent.button;
-			window.app.markerMouseClickedBF(this.id, button, 'shift');
-		}else{
-			if(e.originalEvent.ctrlKey){
-				window.app.checkMarkerBF(this.id, this.checked=='true');
-			}else{
-				var button = (typeof e.originalEvent.which != "undefined") ? e.originalEvent.which : e.originalEvent.button;
-				window.app.markerMouseClickedBF(this.id, button, '');
-			}			
-		}
+    showDirectionLines: function(){
+        this.createDirectionLines();
+        if(this.nextLine){
+            this.nextLine.setStyle(this.parent.nextlinestyle);
+            this.parent.addLayer(this.nextLine);            
+        }
+        if(this.previousLine) {
+            this.previousLine.setStyle(this.parent.previouslinestyle);
+            this.parent.addLayer(this.previousLine);
+        }
+        this.directionLinesVisible=true;
+    },
+
+    hideDirectionLines: function(){
+        this.createDirectionLines();
+        if(this.nextLine) this.parent.removeLayer(this.nextLine);
+        if(this.previousLine) this.parent.removeLayer(this.previousLine);
+        this.directionLinesVisible=false;
+    },
+	onClick: function(e){
+        try{
+            window.clickedMark = this;
+            var modf = '';
+
+            //workaround to skip leaflet behaviour that invokes onClick twice, the one programatically invoked is skipped;
+            if(!e.originalEvent.isTrusted) {
+                return;
+            }
+    
+            if(this.parent){
+                if(!e.originalEvent.ctrlKey && !e.originalEvent.shiftKey){
+                    this.parent.deselectAll();
+                }
+            }
+
+            if(e.originalEvent.ctrlKey){
+                modf=modf+'|ctrl';
+                if(this.checked=='true'){
+                    this.checked='false';
+                }else{
+                    this.checked='true';
+                }
+            }else{
+                if(this.selected=='true'){
+                    this.parent.unhighlight(this);
+                }else{
+                    this.parent.highlight(this);
+                }
+            }
+            this.atualizaIcone();
+
+            if(this.checked && this.checked=='true'){                
+                document.getElementById('marker_checkbox_'+this.id).checked=true;
+            }else{
+                document.getElementById('marker_checkbox_'+this.id).checked=false;
+            }
+            
+            var button = (typeof e.originalEvent.which != "undefined") ? e.originalEvent.which : e.originalEvent.button;
+            
+            if(e.originalEvent.shiftKey){
+                modf=modf+'|shift';
+
+                window.app.markerMouseClickedBF(this.id, button, modf);
+                if(e.originalEvent.ctrlKey){
+                    window.app.checkMarkerBF(this.id, this.checked=='true');
+                }
+            }else{
+                if(e.originalEvent.ctrlKey){
+                    window.app.checkMarkerBF(this.id, this.checked=='true');
+                }           
+                window.app.markerMouseClickedBF(this.id, button, modf);
+            }
+            
+            this.parent.curMark=this;
+            
+            var that = this;
+        }catch(e){
+            alert(e);
+        }
 	},
 	selected:false,
 	checked:false

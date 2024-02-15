@@ -83,7 +83,9 @@ public class TableReportGenerator {
                 PrintWriter out = new PrintWriter(writer);) {
             cols = tableReader.getHeaders().size();
 
+            out.print("<html>");
             out.print("<head>"); //$NON-NLS-1$
+            out.print("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />");
             out.print("<style>"); //$NON-NLS-1$
             out.print("table {border-collapse: collapse;} table, td, th {border: 1px solid black;}"); //$NON-NLS-1$
             out.print("</style>"); //$NON-NLS-1$
@@ -206,7 +208,7 @@ public class TableReportGenerator {
             }
 
             out.print("</body>");
-            
+            out.print("</html>");
             out.close();
 
         }

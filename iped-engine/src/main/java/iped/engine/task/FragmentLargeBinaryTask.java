@@ -12,7 +12,6 @@ import iped.engine.datasource.SleuthkitReader;
 import iped.engine.task.carver.BaseCarveTask;
 import iped.engine.util.TextCache;
 import iped.parsers.standard.StandardParser;
-import iped.parsers.util.MetadataUtil;
 
 /**
  * Breaks large binary files (indexed by strings) into smaller pieces to be
@@ -24,7 +23,7 @@ import iped.parsers.util.MetadataUtil;
 public class FragmentLargeBinaryTask extends BaseCarveTask {
 
     // workaround for https://github.com/sepinf-inc/IPED/issues/1281
-    private static final long MIN_SPLIT_SIZE_IF_XHTML_OR_ERROR = 1 << 30;
+    private static final int TEXT_SPLIT_SIZE = 1 << 30;
 
     private SplitLargeBinaryConfig splitConfig;
     private StandardParser autoParser;
@@ -48,13 +47,9 @@ public class FragmentLargeBinaryTask extends BaseCarveTask {
 
     @Override
     public boolean isEnabled() {
-        return !caseData.isIpedReport();
-    }
-
-    public static boolean isXHtmlToSplit(IItem evidence) {
-        return evidence.getLength() != null && evidence.getLength() >= MIN_SPLIT_SIZE_IF_XHTML_OR_ERROR
-                && (MetadataUtil.isHtmlMediaType(evidence.getMediaType())
-                        || MetadataUtil.isHtmlSubType(evidence.getMediaType()));
+        // Always enabled, see https://github.com/sepinf-inc/IPED/issues/1281 and
+        // https://github.com/sepinf-inc/IPED/issues/1676
+        return true;
     }
 
     @Override
@@ -63,9 +58,10 @@ public class FragmentLargeBinaryTask extends BaseCarveTask {
         boolean hasSpecificParser = ParsingTask.hasSpecificParser(autoParser, evidence);
         boolean hadParserException = Boolean.valueOf(evidence.getMetadata().get(StandardParser.PARSER_EXCEPTION));
 
+        TextCache textCache = ((Item) evidence).getTextCache();
+
         if (evidence.getLength() != null && evidence.getLength() >= splitConfig.getMinItemSizeToFragment()
-                && (evidence.isTimedOut() || isXHtmlToSplit(evidence)
-                        || (hasSpecificParser && hadParserException && evidence.getLength() >= MIN_SPLIT_SIZE_IF_XHTML_OR_ERROR)
+                && (evidence.isTimedOut()
                         || (!hasSpecificParser && (!EmbeddedDiskProcessTask.isSupported(evidence)
                                 || !EmbeddedDiskProcessTask.isFirstOrUniqueImagePart(evidence) || hadParserException)))
                 && evidence.getInputStreamFactory() != null
@@ -76,19 +72,32 @@ public class FragmentLargeBinaryTask extends BaseCarveTask {
             int overlap = splitConfig.getFragmentOverlapSize();
             for (long offset = 0; offset < evidence.getLength(); offset += fragSize - overlap) {
                 long len = offset + fragSize < evidence.getLength() ? fragSize : evidence.getLength() - offset;
-                this.addFragmentFile(evidence, offset, len, fragNum++);
+                this.addFragmentFile(evidence, offset, len, fragNum++, null);
                 if (Thread.currentThread().isInterrupted())
                     return;
             }
 
             // set an empty text in parent
-            TextCache textCache = new TextCache();
-            ((Item) evidence).setParsedTextCache(textCache);
+            ((Item) evidence).setParsedTextCache(new TextCache());
+
+        } else if (textCache != null && textCache.getSize() > TEXT_SPLIT_SIZE) {
+            int fragNum = 0;
+            long totalTextSize = textCache.getSize();
+            for (long textOffset = 0; textOffset < totalTextSize; textOffset += TEXT_SPLIT_SIZE - splitConfig.getFragmentOverlapSize()) {
+                TextCache textCacheChunk = textCache.clone();
+                int textSize = textOffset + TEXT_SPLIT_SIZE < totalTextSize ? TEXT_SPLIT_SIZE : (int) (totalTextSize - textOffset);
+                textCacheChunk.setTextBounds(textOffset, textSize);
+                this.addFragmentFile(evidence, 0, evidence.getLength(), fragNum++, textCacheChunk);
+            }
+            if (fragNum > 0) {
+                // set an empty text in parent
+                ((Item) evidence).setParsedTextCache(new TextCache());
+            }
         }
 
     }
 
-    private void addFragmentFile(IItem parentEvidence, long off, long len, int fragNum) {
+    private void addFragmentFile(IItem parentEvidence, long off, long len, int fragNum, TextCache textCache) {
         String name = parentEvidence.getName() + "_" + fragNum; //$NON-NLS-1$
         Item fragFile = getOffsetFile(parentEvidence, off, len, name, parentEvidence.getMediaType());
         configureOffsetItem(parentEvidence, fragFile, off);
@@ -100,6 +109,13 @@ public class FragmentLargeBinaryTask extends BaseCarveTask {
         fragFile.setModificationDate(parentEvidence.getModDate());
         fragFile.setChangeDate(parentEvidence.getChangeDate());
         fragFile.setExtraAttribute(FILE_FRAGMENT, true);
+        if (textCache != null) {
+            fragFile.setParsedTextCache(textCache);
+        }
+        // avoid computing hash for fragments again
+        if (parentEvidence.getHash() != null && !parentEvidence.getHash().isEmpty()) {
+            fragFile.setHash("");
+        }
         addOffsetFile(fragFile, parentEvidence);
     }
 

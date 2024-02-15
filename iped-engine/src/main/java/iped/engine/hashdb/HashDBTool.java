@@ -60,6 +60,11 @@ public class HashDBTool {
     private static final String nsrlSetPropertyValue = "NSRL";
     private static final String nsrlPrefix = "nsrl";
 
+    private static final String nsrlDBSelectProducts = "select package_id, name from PKG";
+    private static final String nsrlDBSelectHashes = "select sha1, md5, package_id from FILE";
+    private static final String nsrlDBEstimateHashesCountMinimal = "select max(rowid) from FILE";
+    private static final String nsrlDBEstimateHashesCountFull = "select max(rowid) from METADATA";
+
     private static final String caidDataModelKey = "odata.metadata";
     private static final String caidDataModelValue = "http://github.com/ICMEC/ProjectVic/DataModels/1.2.xml#Media";
     private static final String caidSetPropertyValue = "CAID";
@@ -604,11 +609,13 @@ public class HashDBTool {
         System.out.println("\nReading " + (type == FileType.INPUT ? "" : type.toString() + " ") + "file "
                 + file.getPath() + "...");
         if (type == FileType.NSRL_PROD)
-            return readNSRLProd(file);
+            return readNsrlProd(file);
         if (type == FileType.PROJECT_VIC)
-            return readProjectVIC(file);
+            return readProjectVic(file);
         if (type == FileType.NIST_CAID)
             return readNistCaid(file);
+        if (type == FileType.NSRL_DB)
+            return readNsrlDb(file);
 
         String savedDelimiter = null;
         Set<String> savedSkipCols = null;
@@ -725,8 +732,7 @@ public class HashDBTool {
             CSVRecord prevRecord = null;
             while (it.hasNext()) {
                 CSVRecord record = it.next();
-                cnt++;
-                if ((cnt & 8191) == 0)
+                if ((cnt++ & 8191) == 0)
                     updatePercentage(record.getCharacterPosition() / (double) len);
                 if (type != FileType.ICSE && !record.isConsistent()) {
                     in.close();
@@ -846,6 +852,167 @@ public class HashDBTool {
         return true;
     }
 
+    private boolean readNsrlDb(File file) {
+        Connection conn = null;
+        Statement stmt = null;
+        ResultSet rs = null;
+        nsrlProdCodeToName = new HashMap<Integer, String>();
+        long t = System.currentTimeMillis();
+        try {
+            conn = createNsrlDbConn(file);
+            stmt = conn.createStatement();
+
+            // Read NSRL product names
+            stmt.execute(nsrlDBSelectProducts);
+            stmt.setFetchSize(1024);
+            rs = stmt.getResultSet();
+            while (rs.next()) {
+                int packageId = rs.getInt(1);
+                String name = rs.getString(2);
+                nsrlProdCodeToName.put(packageId, name);
+            }
+            rs.close();
+
+            // Estimate the number of rows (count would be too slow)
+            int tot = 0;
+            stmt.execute(nsrlDBEstimateHashesCountMinimal);
+            rs = stmt.getResultSet();
+            if (rs.next()) {
+                tot = rs.getInt(1);
+            }
+            rs.close();
+
+            // If count is zero, we are likely importing a full version of RDS V3
+            if (tot == 0) {
+                try {
+                    stmt.execute(nsrlDBEstimateHashesCountFull);
+                    rs = stmt.getResultSet();
+                    if (rs.next()) {
+                        tot = rs.getInt(1);
+                    }
+                    rs.close();
+                } catch (Exception e) {
+                }
+                // If still no total, do not show percentage but total records read
+                if (tot == 0) {
+                    tot = -1;
+                }
+            }
+
+            // NSRL properties
+            int setPropertyId = getPropertyId(setPropertyName);
+            int productNamePropertyId = getPropertyId(nsrlPrefix + nsrlProductName);
+
+            // NSRL hashes
+            int idxSha1 = hashType("SHA1");
+            int idxMd5 = hashType("MD5");
+
+            // Read NSRL files
+            byte[][] prevHashes = new byte[hashTypes.length][];
+            byte[][] hashes = new byte[hashTypes.length][];
+            Map<Integer, Set<String>> properties = new HashMap<Integer, Set<String>>();
+            stmt.execute(nsrlDBSelectHashes);
+            stmt.setFetchSize(65536);
+            rs = stmt.getResultSet();
+            int cnt = 0;
+            while (rs.next()) {
+                if ((cnt++ & 8191) == 0)
+                    updatePercentage(cnt / (double) tot);
+
+                String sha1 = rs.getString(1);
+                String md5 = rs.getString(2);
+                int packageId = rs.getInt(3);
+
+                boolean hasHash = false;
+                Arrays.fill(hashes, null);
+
+                byte[] hSha1 = hashes[idxSha1] = hashStrToBytes(sha1, hashBytesLen[idxSha1]);
+                if (hSha1.length == 0) {
+                    hashes[idxSha1] = null;
+                    totInvHash++;
+                } else {
+                    hasHash = true;
+                }
+
+                byte[] hMd5 = hashes[idxMd5] = hashStrToBytes(md5, hashBytesLen[idxMd5]);
+                if (hMd5.length == 0) {
+                    hashes[idxMd5] = null;
+                    totInvHash++;
+                } else {
+                    hasHash = true;
+                }
+
+                if (hasHash) {
+                    boolean sameHashes = true;
+                    for (int i = 0; i < hashes.length; i++) {
+                        byte[] a = hashes[i];
+                        byte[] b = prevHashes[i];
+                        if (a == null && b == null)
+                            continue;
+                        if (a == null || b == null || !Arrays.equals(a, b)) {
+                            sameHashes = false;
+                            break;
+                        }
+                    }
+                    if (sameHashes) {
+                        totComb++;
+                        if (mode == ProcessMode.REPLACE_ALL || mode == ProcessMode.REMOVE_ALL) {
+                            properties.clear();
+                        }
+                    } else {
+                        if (cnt > 1 && !process(prevHashes, properties)) {
+                            System.out.println();
+                            throw new RuntimeException("Record #" + (cnt - 1) + ": invalid content!");
+                        }
+                        properties.clear();
+                        System.arraycopy(hashes, 0, prevHashes, 0, hashes.length);
+                    }
+
+                    String productName = nsrlProdCodeToName.get(packageId);
+                    if (productName == null) {
+                        productName = "Product #" + packageId;
+                        totNoProd++;
+                    }
+                    merge(properties, setPropertyId, nsrlSetPropertyValue);
+                    merge(properties, productNamePropertyId, productName);
+                }
+            }
+            rs.close();
+            if (!process(prevHashes, properties)) {
+                System.out.println();
+                throw new RuntimeException("Record #" + (cnt - 1) + ": invalid content!");
+            }
+            updatePercentage(-1);
+            System.out.println("\r" + cnt + " records read in " + endTime(t));
+            printTotals();
+        } catch (Exception e) {
+            System.out.println("Error reading file: " + file);
+            e.printStackTrace();
+            return false;
+        } finally {
+            if (rs != null) {
+                try {
+                    rs.close();
+                } catch (Exception e) {
+                }
+            }
+            if (stmt != null) {
+                try {
+                    stmt.close();
+                } catch (Exception e) {
+                }
+            }
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (Exception e) {
+                }
+            }
+            nsrlProdCodeToName = null;
+        }
+        return true;
+    }
+
     private void merge(Map<Integer, Set<String>> properties, int key, String newVal) {
         Set<String> st = properties.get(key);
         if (st == null) {
@@ -856,7 +1023,7 @@ public class HashDBTool {
         st.add(newVal);
     }
 
-    private boolean readProjectVIC(File file) {
+    private boolean readProjectVic(File file) {
         BufferedInputStream bis = null;
         RandomAccessFile raf = null;
         JsonParser jp = null;
@@ -916,8 +1083,9 @@ public class HashDBTool {
                                     if (h.length == 0) {
                                         hashes[idx] = null;
                                         totInvHash++;
+                                    } else {
+                                        hasHash = true;
                                     }
-                                    hasHash = true;
                                 }
                             } else if ("PhotoDNA".equalsIgnoreCase(name)) {
                                 String value = jp.nextTextValue();
@@ -1063,8 +1231,9 @@ public class HashDBTool {
                                     if (h.length == 0) {
                                         hashes[idx] = null;
                                         totInvHash++;
+                                    } else {
+                                        hasHash = true;
                                     }
-                                    hasHash = true;
                                 }
                             } else if ("MediaSize".equalsIgnoreCase(name)) {
                                 token = jp.nextToken();
@@ -1152,7 +1321,7 @@ public class HashDBTool {
         return false;
     }
 
-    private boolean readNSRLProd(File file) {
+    private boolean readNsrlProd(File file) {
         BufferedReader in = null;
         try {
             in = new BufferedReader(new FileReader(file), 1 << 20);
@@ -1242,6 +1411,9 @@ public class HashDBTool {
             bar[bar.length - 1] = ']';
             char[] s = (String.format("%.1f", pct * 100) + "%").toCharArray();
             System.arraycopy(s, 0, bar, (bar.length - s.length) / 2, s.length);
+        } else if (pct < -1) {
+            char[] s = (String.valueOf((int) (-pct)) + " records read").toCharArray();
+            System.arraycopy(s, 0, bar, 1, s.length);
         }
         bar[0] = '\r';
         System.out.print(new String(bar));
@@ -1263,7 +1435,7 @@ public class HashDBTool {
             File file = inputs.get(i);
             FileType type = getFileType(file);
             if (type == FileType.NSRL_MAIN || type == FileType.NSRL_MAIN_ZIP) {
-                if (!checkNSRLHeader(file, type))
+                if (!checkNsrlHeader(file, type))
                     return false;
                 File prodFile = new File(file.getParentFile(), nsrlProdFileName);
                 if (!prodFile.exists() || !prodFile.isFile()) {
@@ -1271,14 +1443,14 @@ public class HashDBTool {
                             + " must be present in the same folder of NSRL main file (" + file.getName() + ").");
                     return false;
                 }
-                if (!checkNSRLHeader(prodFile, FileType.NSRL_PROD))
+                if (!checkNsrlHeader(prodFile, FileType.NSRL_PROD))
                     return false;
                 // Insert NSRL Product file before the main file.
                 inputs.add(i++, prodFile);
             } else if (type == FileType.CSV || type == FileType.INPUT || type == FileType.ICSE) {
                 if (!checkInputHeader(file, type))
                     return false;
-            } else if (type == FileType.PROJECT_VIC || type == FileType.NIST_CAID) {
+            } else if (type == FileType.PROJECT_VIC || type == FileType.NIST_CAID || type == FileType.NSRL_DB) {
                 // Identification was based on its content (plus file extension)
             } else {
                 if (type == FileType.UNKNOWN) {
@@ -1322,9 +1494,69 @@ public class HashDBTool {
             return FileType.PROJECT_VIC;
         if (name.endsWith(".json") && isKnownJson(file, FileType.NIST_CAID))
             return FileType.NIST_CAID;
+        if (name.endsWith(".db") && isKnownDB(file, FileType.NSRL_DB))
+            return FileType.NSRL_DB;
         if (!inputFolderUsed)
             return FileType.INPUT;
         return FileType.UNKNOWN;
+    }
+
+    private Connection createNsrlDbConn(File file) throws Exception {
+        SQLiteConfig config = new SQLiteConfig();
+        config.setReadOnly(true);
+        config.setCacheSize(131072);
+        config.setPageSize(8192);
+        config.setEncoding(Encoding.UTF8);
+        config.setOpenMode(SQLiteOpenMode.READONLY);
+        Connection conn = config.createConnection("jdbc:sqlite:" + file.getAbsolutePath());
+        return conn;
+    }
+
+    private boolean isKnownDB(File file, FileType type) {
+        if (type == FileType.NSRL_DB) {
+            for (int i = 0; i < 2; i++) {
+                String select = i == 0 ? nsrlDBSelectProducts : nsrlDBSelectHashes;
+                Connection conn = null;
+                Statement stmt = null;
+                ResultSet rs = null;
+                boolean ok = false;
+                try {
+                    conn = createNsrlDbConn(file);
+                    stmt = conn.createStatement();
+                    stmt.execute(select + " LIMIT 1");
+                    stmt.setFetchSize(1);
+                    rs = stmt.getResultSet();
+                    ok = rs.next();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return false;
+                } finally {
+                    if (rs != null) {
+                        try {
+                            rs.close();
+                        } catch (Exception e) {
+                        }
+                    }
+                    if (stmt != null) {
+                        try {
+                            stmt.close();
+                        } catch (Exception e) {
+                        }
+                    }
+                    if (conn != null) {
+                        try {
+                            conn.close();
+                        } catch (Exception e) {
+                        }
+                    }
+                }
+                if (!ok) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
     }
 
     private boolean isKnownJson(File file, FileType type) {
@@ -1356,7 +1588,7 @@ public class HashDBTool {
         return false;
     }
 
-    private boolean checkNSRLHeader(File file, FileType type) {
+    private boolean checkNsrlHeader(File file, FileType type) {
         BufferedReader in = null;
         ZipInputStream zipInput = null;
         try {
@@ -1905,8 +2137,9 @@ public class HashDBTool {
         System.out.println("    Allows importing CSV files with a set of hashes and associated properties");
         System.out.println("    into a database that can be later used during IPED case processing, to");
         System.out.println("    search for these hashes and add their properties to the case item when a");
-        System.out.println("    hit is found. NIST NSRL RDS files, NIST CAID Non-RDS JSON, Project VIC JSON");
-        System.out.println("    and INTERPOL ICSE database CSV can also be imported directly.");
+        System.out.println("    hit is found. NIST NSRL RDS files (v2), NIST NSRL RDS DBs (v3), NIST CAID");
+        System.out.println("    Non-RDS JSON, Project VIC JSON and INTERPOL ICSE database CSV can also be");
+        System.out.println("    imported directly.");
         System.out.println();
         System.out.println("Usage: java -jar iped-hashdb.jar -d <input file or folder> -o <output DB file>");
         System.out.println("            [-replace | -replaceAll | -remove | -removeAll] [-noOpt]");
@@ -1967,6 +2200,6 @@ public class HashDBTool {
     }
 
     enum FileType {
-        CSV, NSRL_MAIN, NSRL_MAIN_ZIP, NSRL_PROD, PROJECT_VIC, UNKNOWN, INPUT, ICSE, NIST_CAID;
+        CSV, NSRL_DB, NSRL_MAIN, NSRL_MAIN_ZIP, NSRL_PROD, PROJECT_VIC, UNKNOWN, INPUT, ICSE, NIST_CAID;
     }
 }

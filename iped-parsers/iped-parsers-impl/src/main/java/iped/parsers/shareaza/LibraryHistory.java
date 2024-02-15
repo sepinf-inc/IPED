@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
+ * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
  */
 class LibraryHistory extends ShareazaEntity {
 
@@ -49,8 +49,8 @@ class LibraryHistory extends ShareazaEntity {
             lastSeededTorrentPath = ar.readString();
             if (lastSeededTorrentPath.length() > 0) {
                 lastSeededTorrentName = ar.readString();
-                lastSeededTorrentTime = Util.formatDatetime(Util.convertToEpoch(ar.readUInt()));
-                lastSeededTorrentBTH = ar.readHash(20, "base32"); //$NON-NLS-1$
+                lastSeededTorrentTime = Util.formatDatetime(ar.readUInt());
+                lastSeededTorrentBTH = ar.readHash(20, "base32", false); //$NON-NLS-1$
             }
         }
     }

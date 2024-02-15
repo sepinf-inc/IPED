@@ -18,7 +18,6 @@
  */
 package iped.app.ui;
 
-import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -57,12 +56,9 @@ import iped.viewers.util.ImageMetadataUtil;
 
 public class GalleryModel extends AbstractTableModel {
 
-    /**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	private static Logger LOGGER = LoggerFactory.getLogger(GalleryModel.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(GalleryModel.class);
 
     /**
      * Max Sleuthkit connection pool size. Using more threads than this sometimes
@@ -71,11 +67,11 @@ public class GalleryModel extends AbstractTableModel {
     private static final int MAX_TSK_POOL_SIZE = 20;
 
     public static final int defaultColCount = 10;
-    
+
     private static final double blurIntensity = 0.02d;
 
     private int colCount = defaultColCount;
-    private int thumbSize = 160;
+    private int thumbSize;
     private int galleryThreads = 1;
     private boolean logRendering = false;
     private ImageThumbTask imgThumbTask;
@@ -132,8 +128,7 @@ public class GalleryModel extends AbstractTableModel {
     }
 
     private boolean isAnimationImage(Document doc, String mediaType) {
-        return VideoThumbTask.isImageSequence(mediaType) || 
-                doc.get(VideoThumbTask.ANIMATION_FRAMES_PROP) != null;
+        return VideoThumbTask.isImageSequence(mediaType) || doc.get(VideoThumbTask.ANIMATION_FRAMES_PROP) != null;
     }
 
     private boolean isSupportedVideo(String mediaType) {
@@ -198,7 +193,6 @@ public class GalleryModel extends AbstractTableModel {
                 BufferedImage image = null;
                 InputStream stream = null;
                 GalleryValue value = new GalleryValue(doc.get(IndexItem.NAME), null, id);
-                boolean getDimension = true;
                 try {
                     if (cache.containsKey(id)) {
                         return;
@@ -215,7 +209,8 @@ public class GalleryModel extends AbstractTableModel {
                     }
 
                     BytesRef bytesRef = doc.getBinaryValue(IndexItem.THUMB);
-                    if (bytesRef != null && ((!isSupportedVideo(mediaType) && !isAnimationImage(doc, mediaType)) || App.get().useVideoThumbsInGallery)) {
+                    if (bytesRef != null && ((!isSupportedVideo(mediaType) && !isAnimationImage(doc, mediaType))
+                            || App.get().useVideoThumbsInGallery)) {
                         byte[] thumb = bytesRef.bytes;
                         if (thumb.length > 0) {
                             image = ImageIO.read(new ByteArrayInputStream(thumb));
@@ -226,38 +221,27 @@ public class GalleryModel extends AbstractTableModel {
 
                     String hash = doc.get(IndexItem.HASH);
                     if (image == null && hash != null && !hash.isEmpty()) {
-                        image = getViewImage(docId, hash, isSupportedVideo(mediaType) || isAnimationImage(doc, mediaType));
-                        int resizeTolerance = 4;
-                        if (image != null) {
-                            if (image.getWidth() < thumbSize - resizeTolerance
-                                    && image.getHeight() < thumbSize - resizeTolerance) {
-                                value.originalW = image.getWidth();
-                                value.originalH = image.getHeight();
-                                getDimension = false;
-                            }
-                        }
+                        image = getViewImage(docId, hash,
+                                isSupportedVideo(mediaType) || isAnimationImage(doc, mediaType));
                     }
 
-                    if (image == null && !isSupportedImage(mediaType) && !isSupportedVideo(mediaType)) {
-                        image = errorImg;
-                        value.icon = unsupportedIcon;
+                    if (Boolean.valueOf(doc.get(IndexItem.ISDIR))) {
+                        value.unsupportedType = true;
+                        value.icon = IconManager.getFolderIconGallery();
+
+                    } else if (image == null && !isSupportedImage(mediaType) && !isSupportedVideo(mediaType)) {
+                        value.unsupportedType = true;
+                        String type = doc.get(IndexItem.TYPE);
+                        String contentType = doc.get(IndexItem.CONTENTTYPE);
+                        value.icon = IconManager.getFileIconGallery(contentType, type);
                     }
 
-                    if (image == null && stream == null && isSupportedImage(mediaType)) {
+                    if (image == null && value.icon == null && stream == null && isSupportedImage(mediaType)) {
                         stream = App.get().appCase.getItemByLuceneID(docId).getBufferedInputStream();
                     }
 
                     if (stream != null) {
                         stream.mark(10000000);
-                    }
-
-                    if (stream != null && getDimension) {
-                        Dimension d = ImageUtil.getImageFileDimension(stream);
-                        if (d != null) {
-                            value.originalW = d.width;
-                            value.originalH = d.height;
-                        }
-                        stream.reset();
                     }
 
                     if (image == null && stream != null && imgThumbTask.getImageThumbConfig().isExtractThumb()
@@ -281,6 +265,11 @@ public class GalleryModel extends AbstractTableModel {
                         if (value.icon == null)
                             value.icon = errorIcon;
                     } else {
+                        // Resize image only if it is too large (> 2x the desired thumbSize)
+                        if (image.getWidth() > thumbSize * 2 || image.getHeight() > thumbSize * 2) {
+                            image = ImageUtil.resizeImage(image, thumbSize, thumbSize);
+                        }
+
                         if (blurFilter) {
                             image = ImageUtil.blur(image, thumbSize, blurIntensity);
                         }

@@ -40,6 +40,9 @@ import org.slf4j.LoggerFactory;
 
 import iped.app.bootstrap.Bootstrap;
 import iped.app.processing.CmdLineArgsImpl;
+import iped.app.ui.bookmarks.BookmarkIcon;
+import iped.data.IMultiBookmarks;
+import iped.io.URLUtil;
 
 public class ReportDialog implements ActionListener, TableModelListener {
 
@@ -112,7 +115,7 @@ public class ReportDialog implements ActionListener, TableModelListener {
 
         updateList();
 
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         panel.add(top, BorderLayout.NORTH);
         panel.add(scrollPane, BorderLayout.CENTER);
         panel.add(footer, BorderLayout.SOUTH);
@@ -131,13 +134,14 @@ public class ReportDialog implements ActionListener, TableModelListener {
 
     public void updateList() {
 
-        String[] labels = App.get().appCase.getMultiBookmarks().getBookmarkSet().toArray(new String[0]);
+        IMultiBookmarks multiBookmarks = App.get().appCase.getMultiBookmarks();
+        String[] labels = multiBookmarks.getBookmarkSet().toArray(new String[0]);
         Arrays.sort(labels, Collator.getInstance());
 
         Object[][] data = new Object[labels.length][];
         int i = 0;
         for (String label : labels) {
-            Object[] row = { App.get().appCase.getMultiBookmarks().isInReport(label), label, false };
+            Object[] row = { multiBookmarks.isInReport(label), label, false };
             data[i++] = row;
         }
         TableModel tableModel = new TableModel(data, header);
@@ -147,11 +151,10 @@ public class ReportDialog implements ActionListener, TableModelListener {
         tableModel.addTableModelListener(this);
         scrollPane = new JScrollPane(table);
 
+        ((JComponent) table.getDefaultRenderer(Boolean.class)).setOpaque(true);        
+        
         table.getColumnModel().getColumn(0).setHeaderRenderer(new DefaultTableCellRenderer() {
 
-            /**
-			 * 
-			 */
 			private static final long serialVersionUID = 1L;
 			private boolean listenerAdded = false;
 
@@ -174,15 +177,26 @@ public class ReportDialog implements ActionListener, TableModelListener {
             }
         });
 
+        table.getColumnModel().getColumn(1).setCellRenderer(new DefaultTableCellRenderer() {
+
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                    boolean hasFocus, int row, int column) {
+                super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                setIcon(value == null ? null : BookmarkIcon.getIcon(multiBookmarks, value.toString()));
+                return this;
+            }
+        });
+
         selectAll.addActionListener(this);
 
     }
 
     private class TableModel extends DefaultTableModel {
-        /**
-		 * 
-		 */
-		private static final long serialVersionUID = 1L;
+		
+        private static final long serialVersionUID = 1L;
 
 		TableModel(Object[][] data, Object[] columnNames) {
             super(data, columnNames);
@@ -263,7 +277,7 @@ public class ReportDialog implements ActionListener, TableModelListener {
         String output = this.output.getText().trim();
         logger.info("Generating report to " + output); //$NON-NLS-1$
 
-        URL url = this.getClass().getProtectionDomain().getCodeSource().getLocation();
+        URL url = URLUtil.getURL(this.getClass());
         try {
             String classpath = new File(url.toURI()).getAbsolutePath();
             if (!classpath.endsWith(".jar")) //$NON-NLS-1$

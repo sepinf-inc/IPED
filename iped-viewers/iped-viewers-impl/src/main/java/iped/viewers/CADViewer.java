@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.io.IStreamSource;
+import iped.io.URLUtil;
 import iped.utils.IOUtil;
 import iped.viewers.api.AbstractViewer;
 import iped.viewers.localization.Messages;
@@ -45,7 +46,7 @@ public class CADViewer extends AbstractViewer {
         this.getPanel().add(externalViewerPanel);
 
         try {
-            basePath = new File(CADViewer.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+            basePath = new File(URLUtil.getURL(CADViewer.class).toURI());
             basePath = basePath.getParentFile().getParentFile();
 
         } catch (URISyntaxException e) {
@@ -90,7 +91,7 @@ public class CADViewer extends AbstractViewer {
                 pb.redirectErrorStream(true);
                 try {
                     Process process = pb.start();
-                    IOUtil.ignoreInputStream(process.getInputStream());
+                    IOUtil.ignoreInputStream(process);
 
                 } catch (IOException e1) {
                     e1.printStackTrace();

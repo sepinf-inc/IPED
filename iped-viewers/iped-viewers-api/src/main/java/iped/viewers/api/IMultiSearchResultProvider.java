@@ -34,4 +34,14 @@ public interface IMultiSearchResultProvider {
      * creates an independent search from the current search result
      */
     IIPEDSearcher createNewSearch(String query);
+
+    /*
+     * creates an independent search from the current search result
+     */
+    IIPEDSearcher createNewSearch(String query, boolean applyFilters);
+
+    /*
+     * creates an independent search from the current search result
+     */
+    IIPEDSearcher createNewSearch(String query, String[] sortFields);
 }

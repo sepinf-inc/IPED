@@ -5,7 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -47,7 +47,7 @@ import iped.utils.EmptyInputStream;
  * https://medium.com/@karaiskc/understanding-apples-binary-property-list-format-281e6da00dbd
  * https://github.com/3breadt/dd-plist
  * 
- * @author Paulo César Herrmann Wanner <herrmann.pchw@dpf.gov.br>
+ * @author Paulo César Herrmann Wanner <herrmann.pchw@pf.gov.br>
  */
 public class SafariPlistParser extends AbstractParser {
 
@@ -342,7 +342,7 @@ public class SafariPlistParser extends AbstractParser {
     }
 
     protected List<SafariResumedVisit> getResumedHistory(InputStream is) throws Exception {
-        List<SafariResumedVisit> resumedHistory = new LinkedList<SafariResumedVisit>();
+        List<SafariResumedVisit> resumedHistory = new ArrayList<SafariResumedVisit>();
 
         NSDictionary rootDict = (NSDictionary) PropertyListParser.parse(is);
         NSObject[] parameters = ((NSArray) rootDict.objectForKey("WebHistoryDates")).getArray();
@@ -371,7 +371,7 @@ public class SafariPlistParser extends AbstractParser {
     }
 
     // protected List<SafariVisit> getHistory(InputStream is) throws Exception {
-    // List<SafariVisit> history = new LinkedList<SafariVisit>();
+    // List<SafariVisit> history = new ArrayList<SafariVisit>();
     //
     // NSDictionary rootDict = (NSDictionary) PropertyListParser.parse(is);
     // NSObject[] parameters = ((NSArray)
@@ -400,7 +400,7 @@ public class SafariPlistParser extends AbstractParser {
     // }
 
     private List<Download> getDownloads(InputStream is) throws Exception {
-        List<Download> downloads = new LinkedList<>();
+        List<Download> downloads = new ArrayList<>();
 
         NSDictionary rootDict = (NSDictionary) PropertyListParser.parse(is);
         NSObject[] parameters = ((NSArray) rootDict.objectForKey("DownloadHistory")).getArray();
@@ -555,7 +555,7 @@ public class SafariPlistParser extends AbstractParser {
     }
 
     private List<SafariBookmark> getBookmarks(InputStream is) throws Exception {
-        List<SafariBookmark> bookmarks = new LinkedList<SafariBookmark>();
+        List<SafariBookmark> bookmarks = new ArrayList<SafariBookmark>();
 
         NSDictionary rootDict = (NSDictionary) PropertyListParser.parse(is);
 

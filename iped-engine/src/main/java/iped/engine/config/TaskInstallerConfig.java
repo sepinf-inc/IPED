@@ -8,7 +8,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,25 +28,23 @@ import iped.engine.task.PythonTask;
 import iped.engine.task.ScriptTask;
 import iped.exception.IPEDException;
 
-public class TaskInstallerConfig implements Configurable<List<String>> {
+public class TaskInstallerConfig implements Configurable<String> {
 
     /**
      * 
      */
     private static final long serialVersionUID = 1L;
     private static final String CONFIG_XML = "TaskInstaller.xml"; //$NON-NLS-1$
-    public static final String SCRIPT_BASE = "conf/scripts"; //$NON-NLS-1$
+    public static final String SCRIPT_BASE = "scripts/tasks"; //$NON-NLS-1$
 
-    private List<String> xmls = new ArrayList<>();
+    private String xml;
 
     public List<AbstractTask> getNewTaskInstances() {
         Map<String, AbstractTask> tasks = new LinkedHashMap<>();
-        for (String xml : xmls) {
-            try {
-                loadTasks(xml, tasks);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+        try {
+            loadTasks(xml, tasks);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
         return tasks.values().stream().collect(Collectors.toList());
     }
@@ -65,7 +62,7 @@ public class TaskInstallerConfig implements Configurable<List<String>> {
     @Override
     public void processConfig(Path resource) throws IOException {
         byte[] bytes = Files.readAllBytes(resource);
-        this.xmls.add(new String(bytes, StandardCharsets.UTF_8));
+        this.xml = new String(bytes, StandardCharsets.UTF_8);
     }
 
 	private void loadTasks(String xml, Map<String, AbstractTask> tasks) throws InstantiationException,
@@ -85,31 +82,35 @@ public class TaskInstallerConfig implements Configurable<List<String>> {
             attr = node.getAttributes().getNamedItem("script"); //$NON-NLS-1$
             if (attr != null) {
                 String scriptName = attr.getNodeValue();
-                File scriptDir = new File(Configuration.getInstance().appRoot, SCRIPT_BASE);
-                tasks.putIfAbsent(scriptName, getScriptTask(scriptDir, scriptName));
+                File scriptDir = new File(Configuration.getInstance().configPath, SCRIPT_BASE);
+                File script = new File(scriptDir, scriptName);
+                if (!script.exists()) {
+                    scriptDir = new File(Configuration.getInstance().appRoot, SCRIPT_BASE);
+                    script = new File(scriptDir, scriptName);
+                    if (!script.exists()) {
+                        throw new IPEDException("Script File not found: " + script.getAbsolutePath()); //$NON-NLS-1$
+                    }
+                }
+                tasks.putIfAbsent(scriptName, getScriptTask(script));
             }
         }
     }
 
-    private AbstractTask getScriptTask(File scriptDir, String name) {
-        File script = new File(scriptDir, name);
-        if (!script.exists())
-            throw new IPEDException("Script File not found: " + script.getAbsolutePath()); //$NON-NLS-1$
-
-        if (name.endsWith(".py"))
+    private AbstractTask getScriptTask(File script) {
+        if (script.getName().endsWith(".py"))
             return new PythonTask(script);
         else
             return new ScriptTask(script);
     }
 
     @Override
-    public List<String> getConfiguration() {
-        return xmls;
+    public String getConfiguration() {
+        return xml;
     }
 
     @Override
-    public void setConfiguration(List<String> config) {
-        this.xmls = config;
+    public void setConfiguration(String config) {
+        this.xml = config;
     }
 
 }

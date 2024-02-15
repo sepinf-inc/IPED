@@ -481,12 +481,25 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
     }
 
     /**
+     * See https://github.com/sepinf-inc/IPED/issues/1353 This flag is used to avoid
+     * unneeded synchronization after a happens-before relationship was triggered
+     * after the first synchronization. It seems to work without being volatile (not
+     * sure why...), that would make method calls slower.
+     */
+    private boolean sortingUpdated = false;
+
+    /**
      * {@inheritDoc}
      *
      * @throws IndexOutOfBoundsException
      *             {@inheritDoc}
      */
     public int convertRowIndexToView(int index) {
+        if (sortingUpdated) {
+            synchronized (this) {
+                sortingUpdated = false;
+            }
+        }
         if (modelToView == null) {
             if (index < 0 || index >= getModelWrapper().getRowCount()) {
                 throw new IndexOutOfBoundsException("Invalid index");
@@ -503,6 +516,11 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
      *             {@inheritDoc}
      */
     public int convertRowIndexToModel(int index) {
+        if (sortingUpdated) {
+            synchronized (this) {
+                sortingUpdated = false;
+            }
+        }
         if (viewToModel == null) {
             if (index < 0 || index >= getModelWrapper().getRowCount()) {
                 throw new IndexOutOfBoundsException("Invalid index");
@@ -522,7 +540,7 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
      * Sorts the existing filtered data. This should only be used if the filter
      * hasn't changed.
      */
-    private void sortExistingData() {
+    private synchronized void sortExistingData() {
         int[] lastViewToModel = getViewToModelAsInts(viewToModel);
 
         updateUseToString();
@@ -550,6 +568,8 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
             setModelToViewFromViewToModel(false);
         }
         fireRowSorterChanged(lastViewToModel);
+
+        sortingUpdated = true;
     }
 
     /**
@@ -561,7 +581,7 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
      * @see #setRowFilter
      * @see #setSortKeys
      */
-    public void sort() {
+    public synchronized void sort() {
         sorted = true;
         int[] lastViewToModel = getViewToModelAsInts(viewToModel);
         updateUseToString();
@@ -601,6 +621,8 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
             setModelToViewFromViewToModel(false);
         }
         fireRowSorterChanged(lastViewToModel);
+
+        sortingUpdated = true;
     }
 
     /**
@@ -1108,7 +1130,7 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
         fireRowSorterChanged(oldViewToModel);
     }
 
-    private void rowsUpdated0(int firstRow, int lastRow) {
+    private synchronized void rowsUpdated0(int firstRow, int lastRow) {
         int[] oldViewToModel = getViewToModelAsInts(viewToModel);
         int i, j;
         int delta = lastRow - firstRow + 1;
@@ -1201,6 +1223,8 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
         }
         // And finally fire a sort event.
         fireRowSorterChanged(oldViewToModel);
+
+        sortingUpdated = true;
     }
 
     private void checkColumn(int column) {

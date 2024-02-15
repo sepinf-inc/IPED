@@ -6,7 +6,9 @@ import java.io.IOException;
 import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.concurrent.TimeUnit;
 
 public class KeyNode extends CellContent {
@@ -15,6 +17,7 @@ public class KeyNode extends CellContent {
 
     public KeyNode(RegistryFile reg, byte[] data) {
         super(reg, data);
+
     }
 
     public Date getLastWrittenAsDate() {
@@ -46,6 +49,11 @@ public class KeyNode extends CellContent {
         return f;
     }
 
+    public int getParentOffset() {
+        byte buffer[] = Arrays.copyOfRange(data, 16, 20);
+        return (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16 | (buffer[3] & 0xFF) << 24;
+    }
+
     public int getSubKeysCount() {
         byte buffer[] = Arrays.copyOfRange(data, 20, 24);
         return (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16 | (buffer[3] & 0xFF) << 24;
@@ -75,8 +83,7 @@ public class KeyNode extends CellContent {
     public ArrayList<KeyNode> getSubKeys() {
         if (getSubKeysCount() > 0) {
             byte[] buffer = Arrays.copyOfRange(data, 28, 32);
-            int listOffset = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16
-                    | (buffer[3] & 0xFF) << 24;
+            int listOffset = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16 | (buffer[3] & 0xFF) << 24;
             buffer = null;
 
             ArrayList<KeyNode> resultado = new ArrayList<KeyNode>();
@@ -89,6 +96,52 @@ public class KeyNode extends CellContent {
         }
     }
 
+    public ArrayList<Integer> getSubKeyOffsets() {
+        if (getSubKeysCount() > 0) {
+            byte[] buffer = Arrays.copyOfRange(data, 28, 32);
+            int listOffset = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16 | (buffer[3] & 0xFF) << 24;
+            buffer = null;
+
+            ArrayList<Integer> result = new ArrayList<Integer>();
+            result.add(listOffset);
+
+            addSubkeyOffsets(listOffset, result);
+
+            return result;
+        } else {
+            return new ArrayList<Integer>();
+        }
+    }
+
+    private void addSubkeyOffsets(int listOffset, ArrayList<Integer> result) {
+        HiveCell cell = reg.loadCell(listOffset);
+        if (cell.getCellContent() instanceof SubKeysList) {
+            SubKeysList listOffsets = (SubKeysList) cell.getCellContent();
+            int offsets[] = listOffsets.getOffsets();
+            for (int i = 0; i < offsets.length; i++) {
+                int offset = offsets[i];
+                result.add(offset);
+            }
+        }
+        if (cell.getCellContent() instanceof IndexRoot) {
+            IndexRoot ri = (IndexRoot) cell.getCellContent();
+            int[] offsets = ri.getOffsets();
+            for (int i = 0; i < offsets.length; i++) {
+                addSubkeyOffsets(offsets[i], result);
+            }
+        }
+    }
+
+    public String getPath() {
+        KeyNode current = this;
+        String path = "";
+        while (current != null) {
+            path = current.getKeyName() + "/" + path;
+            current = (KeyNode) reg.getCell(current.getParentOffset()).cellContent;
+        }
+        return "/" + path;
+    }
+
     private void addSubkeys(int listOffset, ArrayList resultado) {
         HiveCell cell = reg.getCell(listOffset);
         if (cell.getCellContent() instanceof SubKeysList) {
@@ -97,7 +150,9 @@ public class KeyNode extends CellContent {
             for (int i = 0; i < offsets.length; i++) {
                 int offset = offsets[i];
                 HiveCell keyCell = reg.getCell(offset);
-                resultado.add((KeyNode) keyCell.getCellContent());
+                if (keyCell != null) {
+                    resultado.add((KeyNode) keyCell.getCellContent());
+                }
             }
         }
         if (cell.getCellContent() instanceof IndexRoot) {
@@ -109,6 +164,34 @@ public class KeyNode extends CellContent {
         }
     }
 
+    public ArrayList<Integer> getSubCellsOffsets() {
+        ArrayList<Integer> result = new ArrayList<Integer>();
+        int count = getValuesCount();
+        if (count <= 0) {
+            return result;
+        }
+
+        byte[] buffer = Arrays.copyOfRange(data, 40, 44);
+        int listOffset = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16 | (buffer[3] & 0xFF) << 24;
+        buffer = null;
+
+        result.add(listOffset);
+
+        int pos = 0;
+        HiveCell cellList = reg.loadCell(listOffset);
+        if (cellList.getCellContent() instanceof DataCell) {
+            DataCell listSegments = (DataCell) cellList.getCellContent();
+            int offset = 0;
+            for (int i = 0; i < count; i++) {
+                buffer = Arrays.copyOfRange(listSegments.data, i * 4, (i * 4) + 4);
+                offset = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16 | (buffer[3] & 0xFF) << 24;
+                result.add(offset);
+            }
+        }
+
+        return result;
+    }
+
     private void loadValues() {
         int count = getValuesCount();
         if (count <= 0) {
@@ -118,23 +201,23 @@ public class KeyNode extends CellContent {
         values = new KeyValue[count];
 
         byte[] buffer = Arrays.copyOfRange(data, 40, 44);
-        int listOffset = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16
-                | (buffer[3] & 0xFF) << 24;
+        int listOffset = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16 | (buffer[3] & 0xFF) << 24;
         buffer = null;
 
         int pos = 0;
         HiveCell cellList = reg.getCell(listOffset);
-        if (cellList.getCellContent() instanceof DataCell) {
-            DataCell listSegments = (DataCell) cellList.getCellContent();
-            int offset = 0;
-            for (int i = 0; i < count; i++) {
-                buffer = Arrays.copyOfRange(listSegments.data, i * 4, (i * 4) + 4);
-                offset = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16
-                        | (buffer[3] & 0xFF) << 24;
-                buffer = null;
-                HiveCell valueCell = reg.getCell(offset);
-                values[pos] = (KeyValue) valueCell.getCellContent();
-                pos++;
+        if (cellList != null) {
+            if (cellList.getCellContent() instanceof DataCell) {
+                DataCell listSegments = (DataCell) cellList.getCellContent();
+                int offset = 0;
+                for (int i = 0; i < count; i++) {
+                    buffer = Arrays.copyOfRange(listSegments.data, i * 4, (i * 4) + 4);
+                    offset = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16 | (buffer[3] & 0xFF) << 24;
+                    buffer = null;
+                    HiveCell valueCell = reg.getCell(offset);
+                    values[pos] = (KeyValue) valueCell.getCellContent();
+                    pos++;
+                }
             }
         }
     }
@@ -182,5 +265,29 @@ public class KeyNode extends CellContent {
          * 
          * return result;
          */ }
+
+    public Collection<? extends Integer> getValueOffsets() {
+        HashSet<Integer> result = new HashSet<Integer>();
+
+        int count = getValuesCount();
+
+        byte[] buffer = Arrays.copyOfRange(data, 40, 44);
+        int listOffset = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16 | (buffer[3] & 0xFF) << 24;
+        buffer = null;
+
+        int pos = 0;
+        HiveCell cellList = reg.getCell(listOffset);
+        if (cellList.getCellContent() instanceof DataCell) {
+            DataCell listSegments = (DataCell) cellList.getCellContent();
+            int offset = 0;
+            for (int i = 0; i < count; i++) {
+                buffer = Arrays.copyOfRange(listSegments.data, i * 4, (i * 4) + 4);
+                offset = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16 | (buffer[3] & 0xFF) << 24;
+                result.add(offset);
+            }
+        }
+
+        return result;
+    }
 
 }

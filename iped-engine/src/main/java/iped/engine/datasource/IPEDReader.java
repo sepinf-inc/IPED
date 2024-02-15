@@ -18,6 +18,7 @@
  */
 package iped.engine.datasource;
 
+import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -26,6 +27,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -61,6 +63,7 @@ import iped.engine.data.Item;
 import iped.engine.io.MetadataInputStreamFactory;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.LuceneSearchResult;
+import iped.engine.task.EmbeddedDiskProcessTask;
 import iped.engine.task.HashDBLookupTask;
 import iped.engine.task.HashTask;
 import iped.engine.task.MinIOTask.MinIOInputInputStreamFactory;
@@ -72,6 +75,7 @@ import iped.engine.task.die.DIETask;
 import iped.engine.task.index.IndexItem;
 import iped.engine.util.Util;
 import iped.parsers.mail.OutlookPSTParser;
+import iped.parsers.mail.win10.Win10MailParser;
 import iped.parsers.ocr.OCRParser;
 import iped.parsers.ufed.UFEDChatParser;
 import iped.properties.BasicProps;
@@ -125,7 +129,7 @@ public class IPEDReader extends DataSourceReader {
         // Configuração para não expandir containers
         CategoryToExpandConfig expandConfig = ConfigurationManager.get().findObject(CategoryToExpandConfig.class);
         expandConfig.setEnabled(false);
-
+        EmbeddedDiskProcessTask.setEnabled(false);
         CarverTask.setEnabled(false);
         LedCarveTask.setEnabled(false);
         HashDBLookupTask.setEnabled(false);
@@ -211,7 +215,7 @@ public class IPEDReader extends DataSourceReader {
 
         insertIntoProcessQueue(result, false);
 
-        // Inclui anexos de emails de PST
+        // Add attachments of emails from PST, OST, UFED decoding, Win10Mail
         insertEmailAttachs(result);
 
         // insert items referenced by bookmarked items
@@ -230,27 +234,43 @@ public class IPEDReader extends DataSourceReader {
             return;
 
         int lastId = -1;
+        int totalItems = 0;
         for (int i = 0; i < oldToNewIdMap.length; i++) {
             if (oldToNewIdMap[i] > lastId) {
                 lastId = oldToNewIdMap[i];
             }
+            if (oldToNewIdMap[i] != -1) {
+                totalItems++;
+            }
+        }
+        if (lastId == -1) {
+            // Nothing was added, skip copying bookmarks (see issue #2037)
+            LOGGER.info("No bookmarked items copied from {}", basePath);
+            return;
         }
 
-        IBookmarks reportState = new Bookmarks(lastId - 1, lastId, output);
+        IBookmarks reportState = new Bookmarks(totalItems, lastId, output);
         reportState.loadState();
 
+        int added = 0;
         for (int oldLabelId : selectedLabels) {
             String labelName = state.getBookmarkName(oldLabelId);
             String labelComment = state.getBookmarkComment(oldLabelId);
+            Color labelColor = state.getBookmarkColor(oldLabelId);
+
             int newLabelId = reportState.newBookmark(labelName);
             reportState.setBookmarkComment(newLabelId, labelComment);
+            reportState.setBookmarkColor(newLabelId, labelColor);
+
             ArrayList<Integer> newIds = new ArrayList<Integer>();
             for (int oldId = 0; oldId <= ipedCase.getLastId(); oldId++)
                 if (state.hasBookmark(oldId, oldLabelId) && oldToNewIdMap[oldId] != -1)
                     newIds.add(oldToNewIdMap[oldId]);
             reportState.addBookmark(newIds, newLabelId);
+            added += newIds.size();
         }
-        reportState.saveState();
+        LOGGER.info("{} bookmarked items copied from {}", added, basePath);
+        reportState.saveState(true);
     }
 
     private void insertParentTreeNodes(LuceneSearchResult result) throws Exception {
@@ -292,7 +312,8 @@ public class IPEDReader extends DataSourceReader {
             for (int docID : result.getLuceneIds()) {
                 String mimetype = ipedCase.getReader().document(docID).get(IndexItem.CONTENTTYPE);
                 if (OutlookPSTParser.OUTLOOK_MSG_MIME.equals(mimetype)
-                        || UfedXmlReader.UFED_EMAIL_MIME.equals(mimetype)) {
+                        || UfedXmlReader.UFED_EMAIL_MIME.equals(mimetype)
+                        || Win10MailParser.WIN10_MAIL_MSG.toString().equals(mimetype)) {
                     hasEmail = true;
                     isSelectedEmail[Integer.parseInt(ipedCase.getReader().document(docID).get(IndexItem.ID))] = true;
                 }
@@ -336,6 +357,7 @@ public class IPEDReader extends DataSourceReader {
                     IIPEDSearcher searchAttachs = new IPEDSearcher(ipedCase, query.build());
                     LuceneSearchResult attachs = LuceneSearchResult.get(ipedCase, searchAttachs.search());
                     insertIntoProcessQueue(attachs, false);
+                    insertLinkedItems(attachs);
                     query = new BooleanQuery.Builder();
                     num = 0;
                 }
@@ -606,13 +628,6 @@ public class IPEDReader extends DataSourceReader {
                     evidence.setExtraAttribute(hash.toString(), value);
             }
 
-            // armazena metadados de emails, necessário para emails de PST
-            if (OutlookPSTParser.OUTLOOK_MSG_MIME.equals(mimetype))
-                for (String key : ExtraProperties.COMMUNICATION_BASIC_PROPS) {
-                    for (String val : doc.getValues(key))
-                        evidence.getMetadata().add(key, val);
-                }
-
             value = doc.get(IndexItem.DELETED);
             evidence.setDeleted(Boolean.parseBoolean(value));
 
@@ -663,9 +678,14 @@ public class IPEDReader extends DataSourceReader {
                     } else
                         evidence.setExtraAttribute(f.name(), IndexItem.getCastedValue(c, f));
                 } else {
-                    Object casted = IndexItem.getCastedValue(c, f);
-                    if (casted != null) {
-                        evidence.getMetadata().add(f.name(), casted.toString());
+                    if (Date.class.equals(c) && f.stringValue() != null) {
+                        String val = f.stringValue();
+                        evidence.getMetadata().add(f.name(), val);
+                    } else {
+                        Object casted = IndexItem.getCastedValue(c, f);
+                        if (casted != null) {
+                            evidence.getMetadata().add(f.name(), casted.toString());
+                        }
                     }
                 }
             }

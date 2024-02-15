@@ -37,7 +37,7 @@ import org.xml.sax.SAXException;
 /**
  * Parser para arquivo Searches.dat do Shareaza
  *
- * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
+ * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
  */
 public class ShareazaSearchesDatParser extends AbstractParser {
 

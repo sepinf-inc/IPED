@@ -3,12 +3,18 @@ package iped.parsers.registry.model;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
+
+import iped.parsers.registry.keys.RegistryKeyParserFilter;
 
 /*
  * Esta biblioteca foi implementada seguindo a especificação publicada em:
@@ -22,6 +28,9 @@ public class RegistryFile {
     // StreamSource ss;
     int rootCellOffset;
     HashMap<Integer, HiveCell> readCells;
+    RandomAccessFile ras;
+    private int hbinSize;
+    RegistryKeyParserFilter currentKeyFilter;
 
     public RegistryFile(File file) {
         this.file = file;
@@ -41,8 +50,9 @@ public class RegistryFile {
         fis.read(reg.fileHeader);
 
         byte[] buffer = Arrays.copyOfRange(reg.fileHeader, 36, 40);
-        rootCellOffset = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16
-                | (buffer[3] & 0xFF) << 24;
+        rootCellOffset = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16 | (buffer[3] & 0xFF) << 24;
+        buffer = Arrays.copyOfRange(reg.fileHeader, 40, 44);
+        hbinSize = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16 | (buffer[3] & 0xFF) << 24;
         buffer = null;
 
         boolean hbexite = true;
@@ -56,17 +66,15 @@ public class RegistryFile {
             }
 
             buffer = Arrays.copyOfRange(hb.header, 4, 8);
-            hb.offset = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16
-                    | (buffer[3] & 0xFF) << 24;
+            hb.offset = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16 | (buffer[3] & 0xFF) << 24;
             buffer = null;
             buffer = Arrays.copyOfRange(hb.header, 8, 12);
-            hb.size = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16
-                    | (buffer[3] & 0xFF) << 24;
+            hb.size = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16 | (buffer[3] & 0xFF) << 24;
             buffer = null;
 
             int hiveDataReadCount = 32; // inicia com o tamanho do cabecalho ja lido + offset
             while (hiveDataReadCount < hb.size) {
-                HiveCell cell = readCell(fis);
+                HiveCell cell = readCell(fis.getChannel());
                 readCells.put(pos, cell);
 
                 hiveDataReadCount += cell.getSize();
@@ -77,14 +85,92 @@ public class RegistryFile {
         fis.close();
     }
 
-    public HiveCell readCell(InputStream fis) throws IOException {
+    public HiveCell loadCell(int offset) {
+        try {
+            ras.seek(4096 + offset);
+            HiveCell cell = readCell(ras.getChannel());
+            return cell;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public void load(RegistryKeyParserFilter keyFilter) throws IOException {
+        currentKeyFilter = keyFilter;
+
+        ras = new RandomAccessFile(file, "r");
+        int pos = 0;
+
+        HashSet<Integer> cellsToLoad = new HashSet<Integer>();
+        readCells = new HashMap<Integer, HiveCell>();
+
+        Registry reg = new Registry();
+        ras.read(reg.fileHeader);
+
+        byte[] buffer = Arrays.copyOfRange(reg.fileHeader, 36, 40);
+        rootCellOffset = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16 | (buffer[3] & 0xFF) << 24;
+        buffer = Arrays.copyOfRange(reg.fileHeader, 40, 44);
+        hbinSize = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16 | (buffer[3] & 0xFF) << 24;
+        buffer = null;
+
+        HiveCell cell = loadCell(rootCellOffset);
+        KeyNode kn = (KeyNode) cell.cellContent;
+        readCells.put(rootCellOffset, cell);
+        recursiveKeyLoad(kn, "ROOT");
+    }
+
+    private void recursiveKeyLoad(KeyNode kn, String path) {
+        if (path == null) {
+            path = "ROOT";
+        }
+        ArrayList<Integer> subkeyOffsets = kn.getSubKeyOffsets();
+        for (Iterator iterator = subkeyOffsets.iterator(); iterator.hasNext();) {
+            Integer offset = (Integer) iterator.next();
+            HiveCell cell = loadCell(offset);
+            if (cell.cellContent instanceof KeyNode) {
+                KeyNode kn2 = (KeyNode) cell.cellContent;
+                String subPath = path + "/" + kn2.getKeyName();
+                if (subPath.contains("/Select")) {
+                    System.out.print(false);
+                }
+                if (currentKeyFilter == null || currentKeyFilter.hasChildRegistered(subPath)) {
+                    readCells.put(offset, cell);
+                    recursiveKeyLoad(kn2, subPath);
+                }
+            } else {
+                readCells.put(offset, cell);
+            }
+        }
+        ArrayList<Integer> valuesOffsets = kn.getSubCellsOffsets();
+        for (Iterator iterator = valuesOffsets.iterator(); iterator.hasNext();) {
+            Integer offset = (Integer) iterator.next();
+            HiveCell cell = loadCell(offset);
+            readCells.put(offset, cell);
+
+            recursiveCellLoad(cell);
+        }
+    }
+
+    private void recursiveCellLoad(HiveCell cell) {
+        ArrayList<Integer> dataOffsets = cell.cellContent.getSubCellsOffsets();
+        for (Iterator iterator2 = dataOffsets.iterator(); iterator2.hasNext();) {
+            int offset = (Integer) iterator2.next();
+            HiveCell subcell = loadCell(offset);
+            readCells.put(offset, subcell);
+            recursiveCellLoad(subcell);
+        }
+    }
+
+    public HiveCell readCell(FileChannel fis) throws IOException {
         HiveCell cell = new HiveCell();
 
         byte[] buffer = new byte[4];
-        fis.read(buffer);
+        ByteBuffer bb = ByteBuffer.wrap(buffer);
+        fis.read(bb);
         cell.setSize(buffer);
         buffer = new byte[cell.getSize() - 4];
-        fis.read(buffer);
+        bb = ByteBuffer.wrap(buffer);
+        fis.read(bb);
 
         String celltype = new String(Arrays.copyOf(buffer, 2));
         switch (celltype) {
@@ -150,6 +236,18 @@ public class RegistryFile {
         } else {
             return null;
         }
+    }
+
+    static public void main(String args[]) throws IOException {
+        RegistryFile rf = new RegistryFile(new File("/home/patrick.pdb/multicase/p2p/P2P/System32/config/SYSTEM"));
+        rf.load(new RegistryKeyParserFilter() {
+            @Override
+            public boolean hasChildRegistered(String keyPath) {
+                return keyPath.contains("Select");
+            }
+        });
+
+        KeyNode k = rf.findKeyNode("/Select");
     }
 
 }

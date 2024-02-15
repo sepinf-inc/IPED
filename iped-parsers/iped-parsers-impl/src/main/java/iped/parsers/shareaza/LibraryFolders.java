@@ -32,7 +32,7 @@ import iped.search.IItemSearcher;
 /**
  * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
  */
-class LibraryFolders extends ShareazaEntity {
+public class LibraryFolders extends ShareazaEntity {
 
     private final List<LibraryFolder> folders = new ArrayList<>();
     private final AlbumFolder albumRoot = new AlbumFolder();
@@ -84,5 +84,9 @@ class LibraryFolders extends ShareazaEntity {
 
     public Map<Integer, LibraryFile> getIndexToFile() {
         return indexToFile;
+    }
+
+    public String getName() {
+        return albumRoot.getName();
     }
 }

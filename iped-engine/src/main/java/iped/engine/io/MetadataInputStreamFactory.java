@@ -35,7 +35,7 @@ public class MetadataInputStreamFactory extends SeekableInputStreamFactory {
             return !MetadataUtil.ignorePreviewMetas.contains(meta);
 
         } else {
-            return meta.startsWith(ExtraProperties.UFED_META_PREFIX) || meta.startsWith(ExtraProperties.MESSAGE_PREFIX);
+            return meta.startsWith(ExtraProperties.UFED_META_PREFIX) || meta.startsWith(ExtraProperties.MESSAGE_PREFIX) || meta.startsWith(ExtraProperties.COMMUNICATION_PREFIX) || meta.startsWith(ExtraProperties.COMMON_META_PREFIX);
         }
 
     }

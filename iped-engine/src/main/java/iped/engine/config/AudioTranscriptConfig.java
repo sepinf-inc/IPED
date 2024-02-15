@@ -1,5 +1,8 @@
 package iped.engine.config;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,11 +14,12 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
      * 
      */
     private static final long serialVersionUID = 1L;
-    private static final String CONF_FILE = "AudioTranscriptConfig.txt";
+    public static final String CONF_FILE = "AudioTranscriptConfig.txt";
     private static final String ENABLE_KEY = "enableAudioTranscription";
     private static final String IMPL_CLASS_KEY = "implementationClass";
     private static final String REGION_KEY = "serviceRegion";
-    private static final String TIMEOUT_KEY = "timeout";
+    private static final String MIN_TIMEOUT_KEY = "minTimeout";
+    private static final String TIMEOUT_PER_SEC_KEY = "timeoutPerSec";
     private static final String LANG_KEY = "language";
     private static final String MIMES_KEY = "mimesToProcess";
     private static final String CONVERT_CMD_KEY = "convertCommand";
@@ -26,12 +30,14 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
     public static final String WAV2VEC2_SERVICE = "wav2vec2Service";
     private static final String GOOGLE_MODEL = "googleModel";
     private static final String LANG_AUTO_VAL = "auto";
+    private static final String SKIP_KNOWN_FILES = "skipKnownFiles";
 
     private List<String> languages = new ArrayList<>();
     private List<String> mimesToProcess = new ArrayList<>();
     private String className;
     private String serviceRegion;
-    private int timeoutPerSec;
+    private int minTimeout = 180; // seconds
+    private int timeoutPerSec = 3; // seconds
     private String convertCmd;
     private int requestIntervalMillis = 0;
     private int maxConcurrentRequests;
@@ -39,6 +45,11 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
     private String huggingFaceModel;
     private String wav2vec2Service;
     private String googleModel;
+    private boolean skipKnownFiles = true;
+
+    public boolean getSkipKnownFiles() {
+        return this.skipKnownFiles;
+    }
 
     public String getServiceRegion() {
         return serviceRegion;
@@ -64,8 +75,16 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
         return className;
     }
 
+    public void setClassName(String clazz) {
+        this.className = clazz;
+    }
+
     public int getTimeoutPerSec() {
         return timeoutPerSec;
+    }
+
+    public int getMinTimeout() {
+        return minTimeout;
     }
 
     public String getConvertCmd() {
@@ -118,7 +137,6 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
         className = properties.getProperty(IMPL_CLASS_KEY).trim();
         serviceRegion = properties.getProperty(REGION_KEY).trim();
         convertCmd = properties.getProperty(CONVERT_CMD_KEY).trim();
-        timeoutPerSec = Integer.valueOf(properties.getProperty(TIMEOUT_KEY).trim());
         requestIntervalMillis = Integer.valueOf(properties.getProperty(REQUEST_INTERVAL_KEY).trim());
         maxConcurrentRequests = Integer.valueOf(properties.getProperty(MAX_REQUESTS_KEY).trim());
         minWordScore = Float.valueOf(properties.getProperty(MIN_WORD_SCORE).trim());
@@ -135,6 +153,39 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
             googleModel = googleModel.trim();
         }
 
+        String skipKnown = properties.getProperty(SKIP_KNOWN_FILES);
+        if (skipKnown != null) {
+            this.skipKnownFiles = Boolean.valueOf(skipKnown.trim());
+        }
+        String value = properties.getProperty(MIN_TIMEOUT_KEY);
+        if (value != null) {
+            minTimeout = Integer.valueOf(value.trim());
+        }
+        value = properties.getProperty(TIMEOUT_PER_SEC_KEY);
+        if (value != null) {
+            timeoutPerSec = Integer.valueOf(value.trim());
+        }
+    }
+
+    /**
+     * Avoid leaking the transcription service address (host:port)
+     * 
+     * @param moduleOutput
+     * @throws IOException
+     */
+    public void clearTranscriptionServiceAddress(File moduleOutput) throws IOException {
+        File config = new File(moduleOutput, "conf/" + CONF_FILE);
+        if (config.exists() && config.canWrite()) {
+            List<String> lines = Files.readAllLines(config.toPath());
+            List<String> outLines = new ArrayList<>();
+            for (String line : lines) {
+                if (!line.isEmpty() && (line.trim().startsWith(WAV2VEC2_SERVICE) || line.substring(1).trim().startsWith(WAV2VEC2_SERVICE))) {
+                    line = "# " + WAV2VEC2_SERVICE + " = 127.0.0.1:11111";
+                }
+                outLines.add(line);
+            }
+            Files.write(config.toPath(), outLines);
+        }
     }
 
 }

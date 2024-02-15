@@ -30,6 +30,7 @@ import iped.app.ui.viewers.HexSearcherImpl;
 import iped.app.ui.viewers.TextViewer;
 import iped.engine.task.index.IndexItem;
 import iped.io.IStreamSource;
+import iped.io.URLUtil;
 import iped.viewers.ATextViewer;
 import iped.viewers.CADViewer;
 import iped.viewers.EmailViewer;
@@ -45,7 +46,6 @@ import iped.viewers.MsgViewer;
 import iped.viewers.MultiViewer;
 import iped.viewers.ReferencedFileViewer;
 import iped.viewers.TiffViewer;
-import iped.viewers.TikaHtmlViewer;
 import iped.viewers.api.AbstractViewer;
 import iped.viewers.components.HitsTable;
 import iped.viewers.util.LibreOfficeFinder;
@@ -97,7 +97,7 @@ public class ViewerController {
         viewersRepository.addViewer(new ImageViewer());
         viewersRepository.addViewer(new CADViewer());
         viewersRepository.addViewer(new HtmlViewer());
-        viewersRepository.addViewer(new EmailViewer());
+        viewersRepository.addViewer(new EmailViewer(new AttachmentSearcherImpl()));
         viewersRepository.addViewer(new MsgViewer());
         linkViewer = new HtmlLinkViewer(new AttachmentSearcherImpl());
         viewersRepository.addViewer(linkViewer);
@@ -113,7 +113,7 @@ public class ViewerController {
                     }
 
                     // LibreOffice viewer initialization
-                    URI jarUri = LibreOfficeViewer.class.getProtectionDomain().getCodeSource().getLocation().toURI();
+                    URI jarUri = URLUtil.getURL(LibreOfficeViewer.class).toURI();
                     File moduledir = new File(jarUri).getParentFile().getParentFile();
                     LibreOfficeFinder loFinder = new LibreOfficeFinder(moduledir);
                     final String pathLO = loFinder.getLOPath();

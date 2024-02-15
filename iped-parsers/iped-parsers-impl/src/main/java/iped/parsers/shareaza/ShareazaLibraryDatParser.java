@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
@@ -36,7 +37,9 @@ import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.parsers.util.BeanMetadataExtraction;
 import iped.parsers.util.Messages;
+import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
 
@@ -49,7 +52,15 @@ public class ShareazaLibraryDatParser extends AbstractParser {
 
     private static final long serialVersionUID = -207806473837042332L;
     public static final String LIBRARY_DAT_MIME_TYPE = "application/x-shareaza-library-dat"; //$NON-NLS-1$
+    public static final String LIBRARY_DAT_ENTRY_MIME_TYPE = "application/x-shareaza-library-dat-entry"; //$NON-NLS-1$
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.parse(LIBRARY_DAT_MIME_TYPE));
+
+    private boolean extractEntries = false;
+
+    @Field
+    public void setExtractEntries(boolean value) {
+        this.extractEntries = value;
+    }
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
@@ -109,6 +120,21 @@ public class ShareazaLibraryDatParser extends AbstractParser {
 
         library.printTable(xhtml, searcher);
 
+        metadata.set(BasicProps.HASCHILD, "true");
+        metadata.set(ExtraProperties.EMBEDDED_FOLDER, "true");
+
+        if (extractEntries) {
+            BeanMetadataExtraction bme = new BeanMetadataExtraction(ExtraProperties.P2P_META_PREFIX, LIBRARY_DAT_ENTRY_MIME_TYPE);
+            bme.addPropertyExclusion(LibraryFolder.class, "indexToFile");
+            bme.addPropertyExclusion(LibraryFolder.class, "parentFolder");
+            bme.addPropertyExclusion(LibraryFile.class, "parentFolder");
+            bme.registerClassNameProperty(LibraryFolder.class, "path");
+            bme.registerClassNameProperty(AlbumFolder.class, "name");
+            bme.registerTransformationMapping(LibraryFile.class, ExtraProperties.LINKED_ITEMS, "md5:${md5}");
+            bme.registerTransformationMapping(LibraryFile.class, ExtraProperties.SHARED_HASHES, "${md5}");
+            bme.extractEmbedded(0, context, metadata, handler, library.getLibraryFolders());
+        }
+
         xhtml.endElement("table"); //$NON-NLS-1$
         /*
          * xhtml.startElement("h2"); xhtml.characters("Dados completos do arquivo:");
@@ -144,8 +170,12 @@ public class ShareazaLibraryDatParser extends AbstractParser {
     private void storeSharedHashes(LibraryFile file, Metadata metadata) {
         if (file.isShared() && file.getMd5() != null && file.getMd5().length() == 32) {
             metadata.add(ExtraProperties.SHARED_HASHES, file.getMd5());
-        } else if (file.isShared() && file.getSha1() != null && file.getSha1().length() == 40) {
+        }
+        if (file.isShared() && file.getSha1() != null && file.getSha1().length() == 40) {
             metadata.add(ExtraProperties.SHARED_HASHES, file.getSha1());
+        }
+        if (file.isShared() && file.getEd2k() != null && file.getEd2k().length() == 32) {
+            metadata.add(ExtraProperties.SHARED_HASHES, file.getEd2k());
         }
     }
 
@@ -172,7 +202,7 @@ public class ShareazaLibraryDatParser extends AbstractParser {
 
         return result;
     }
-    
+
     private int countHashDBHits(LibraryFolder folder, Set<Integer> indexesCounted) {
         int result = 0;
         for (LibraryFolder f : folder.getLibraryFolders())
@@ -230,5 +260,4 @@ public class ShareazaLibraryDatParser extends AbstractParser {
             html.endElement("th"); //$NON-NLS-1$
         }
     }
-
 }

@@ -9,11 +9,15 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.Deflater;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -65,9 +69,12 @@ public class MinIOTask extends AbstractTask {
     private static final String SECRET_KEY = "secretkey";
     private static final String BUCKET_KEY = "bucket";
 
-    private static String accessKey;
-    private static String secretKey;
-    private static String bucket = null;
+    private static AtomicBoolean credentialsLoaded = new AtomicBoolean(false);
+
+    private static String paramBucket = null;
+
+    private static String accessKey = null;
+    private static String secretKey = null;
 
     private static Tika tika;
 
@@ -79,12 +86,19 @@ public class MinIOTask extends AbstractTask {
     private static final long zipMaxSize = 8 * 1024 * 1024;
     private static final long zipMaxFiles = 10000;
 
-    private TemporaryResources tmp = null;
-    private ZipArchiveOutputStream out = null;
-    private CountingOutputStream cos = null;
-    private File zipfile = null;
-    private long zipLength = 0;
-    private long zipFiles = 0;
+    private static class ZipRequest {
+        public TemporaryResources tmp = null;
+        public ZipArchiveOutputStream out = null;
+        public CountingOutputStream cos = null;
+        public File zipfile = null;
+        public long zipLength = 0;
+        public long zipFiles = 0;
+    }
+
+    private Map<String, ZipRequest> zipRequests = new HashMap<>();
+    private static Set<String> existBucket = new HashSet<>();
+
+
     private long timeout;
     private int retries;
 
@@ -128,43 +142,25 @@ public class MinIOTask extends AbstractTask {
         zipFilesMaxSize = minIOConfig.getZipFilesMaxSize();
 
         String server = minIOConfig.getHost() + ":" + minIOConfig.getPort();
-
-        // case name is default bucket name
-        if (bucket == null) {
-            bucket = output.getParentFile().getName().toLowerCase();
+        if (!credentialsLoaded.getAndSet(true)) {
+            loadCredentials(caseData);
+            if (paramBucket != null) {
+                logger.error("Passing the bucket as a parameter may prevent removing the evidence from the case.");
+            }
         }
-        loadCredentials(caseData);
+
 
         minioClient = MinioClient.builder().endpoint(server).credentials(accessKey, secretKey).build();
         minioClient.setTimeout(timeout, timeout, timeout);
         inputStreamFactory = new MinIOInputInputStreamFactory(URI.create(server));
 
-        // Check if the bucket already exists.
-        boolean isExist = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucket).build());
-        if (!isExist) {
-            minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucket).build());
-        }
+
 
     }
 
-    private static void loadCredentials(ICaseData caseData) {
-        if (accessKey != null && secretKey != null) {
+    private static void parseFields(String cmdFields) {
+        if (cmdFields == null)
             return;
-        }
-        String cmdFields = null;
-        if (caseData != null) {
-            CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-            cmdFields = args.getExtraParams().get(CMD_LINE_KEY);
-        }
-        if (cmdFields == null) {
-            cmdFields = System.getProperty(CMD_LINE_KEY);
-        }
-        if (cmdFields == null) {
-            cmdFields = System.getenv(CMD_LINE_KEY);
-        }
-        if (cmdFields == null) {
-            throw new RuntimeException("'MinioCredentials' not set by ENV var, sys prop or cmd line param.");
-        }
         String[] entries = cmdFields.split(";");
         for (String entry : entries) {
             String[] pair = entry.split(":", 2);
@@ -173,8 +169,27 @@ public class MinIOTask extends AbstractTask {
             else if (SECRET_KEY.equals(pair[0]))
                 secretKey = pair[1];
             else if (BUCKET_KEY.equals(pair[0]))
-                bucket = pair[1];
+                paramBucket = pair[1];
         }
+    }
+    private static void loadCredentials(ICaseData caseData) {
+        if (accessKey != null && secretKey != null) {
+            return;
+        }
+
+        parseFields(System.getenv(CMD_LINE_KEY));
+        parseFields(System.getProperty(CMD_LINE_KEY));
+
+        if (caseData != null) {
+            CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+            parseFields(args.getExtraParams().get(CMD_LINE_KEY));
+
+        }
+
+        if (accessKey == null || secretKey == null) {
+            throw new RuntimeException("'MinioCredentials' not set by ENV var, sys prop or cmd line param.");
+        }
+
     }
 
     @Override
@@ -197,40 +212,67 @@ public class MinIOTask extends AbstractTask {
     }
 
     private void flushZipFile() throws Exception {
-        if (zipfile != null) {
-            logger.info("Flushing MinIOTask " + worker.id + " Sending zip containing " + zipFiles + " files");
-            sendZipFile();
+        for (String bucket : zipRequests.keySet()) {
+            ZipRequest zp = zipRequests.get(bucket);
+            if (zp.zipfile != null) {
+                logger.info("Flushing MinIOTask " + worker.id + " Sending zip containing " + zp.zipFiles + " files");
+                sendZipFile(bucket);
+            }
         }
     }
 
-    private String getZipName() {
-        return DigestUtils.md5Hex(zipfile.getName()).toUpperCase() + ".zip";
+    private String getZipName(ZipRequest zp) {
+        return DigestUtils.md5Hex(zp.zipfile.getName()).toUpperCase() + ".zip";
+    }
+
+    private String getBucket(IItem i) throws Exception {
+        String bucket = paramBucket == null ? i.getDataSource().getUUID() : paramBucket;
+        if (!zipRequests.containsKey(bucket)) {
+            zipRequests.put(bucket, new ZipRequest());
+        }
+        // Check if the bucket already exists.
+        synchronized (existBucket) {
+            if (!existBucket.contains(bucket)) {
+                existBucket.add(bucket);
+                boolean isExist = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucket).build());
+                if (!isExist) {
+                    minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucket).build());
+                }
+            }
+        }
+        return bucket;
     }
 
     private String insertInZipFile(String hash, SeekableInputStream is, IItem i, boolean preview)
             throws Exception {
-        if (out == null) {
-            zipLength = 0;
-            tmp = new TemporaryResources();
-            zipfile = tmp.createTemporaryFile();
-            cos = new CountingOutputStream(new BufferedOutputStream(new FileOutputStream(zipfile)));
-            out = new ZipArchiveOutputStream(cos);
-            out.setLevel(Deflater.NO_COMPRESSION);
+        ZipRequest zp = zipRequests.get(getBucket(i));
+        if (zp == null) {
+            zp = new ZipRequest();
+            zipRequests.put(getBucket(i), zp);
         }
-        String fullpath = bucket + "/zips/" + getZipName() + "/" + hash;
+        if (zp.out == null) {
+            zp.zipLength = 0;
+            zp.tmp = new TemporaryResources();
+            zp.zipfile = zp.tmp.createTemporaryFile();
+            zp.cos = new CountingOutputStream(new BufferedOutputStream(new FileOutputStream(zp.zipfile)));
+            zp.out = new ZipArchiveOutputStream(zp.cos);
+            zp.out.setLevel(Deflater.NO_COMPRESSION);
+        }
+
+        String fullpath = getBucket(i) + "/zips/" + getZipName(zp) + "/" + hash;
 
         // insert into the queue of files waiting to be sent
         if (!preview) {
             queue.put(i.getId(), new QueueItem(i, fullpath));
         }
 
-        zipFiles++;
+        zp.zipFiles++;
         ZipArchiveEntry entry = new ZipArchiveEntry(hash);
         entry.setSize(is.size());
-        out.putArchiveEntry(entry);
-        IOUtils.copy(is, out);
-        out.closeArchiveEntry();
-        zipLength = cos.getByteCount();
+        zp.out.putArchiveEntry(entry);
+        IOUtils.copy(is, zp.out);
+        zp.out.closeArchiveEntry();
+        zp.zipLength = zp.cos.getByteCount();
 
         return fullpath;
 
@@ -244,20 +286,21 @@ public class MinIOTask extends AbstractTask {
         if (preview) {
             bucketPath = "preview/" + hash;
         }
-        String fullPath = bucket + "/" + bucketPath;
+        String fullPath = getBucket(i) + "/" + bucketPath;
 
         // if empty or already exists do not continue
         if (is.size() <= 0) {
             return null;
         }
-
-        if (checkIfExists(bucketPath)) {
-            updateDataSource(i, fullPath);
+        if (checkIfExists(getBucket(i), bucketPath)) {
+            if (!preview) {
+                updateDataSource(i, fullPath);
+            }
             return fullPath;
         }
 
         if (is.size() > zipFilesMaxSize) {
-            insertItem(hash, is, mediatype, bucketPath);
+            insertItem(hash, is, mediatype, getBucket(i), bucketPath);
             if (!preview) {
                 updateDataSource(i, fullPath);
             }
@@ -269,28 +312,31 @@ public class MinIOTask extends AbstractTask {
 
     }
 
-    private void sendZipFile() throws Exception {
-        out.close();
+    private void sendZipFile(String bucket) throws Exception {
 
-        if (zipFiles > 0) {
-            try (SeekableFileInputStream fi = new SeekableFileInputStream(zipfile)) {
+        ZipRequest zp = zipRequests.get(bucket);
 
-                sendFile(PutObjectArgs.builder().bucket(bucket).object("/zips/" + getZipName())
+        zp.out.close();
+
+        if (zp.zipFiles > 0) {
+            try (SeekableFileInputStream fi = new SeekableFileInputStream(zp.zipfile)) {
+
+                sendFile(PutObjectArgs.builder().bucket(bucket).object("/zips/" + getZipName(zp))
                                 .userMetadata(Collections.singletonMap("x-minio-extrac", "true")),
-                        fi, zipfile.length(), Math.max(zipfile.length(), 1024 * 1024 * 5));
+                        fi, zp.zipfile.length(), Math.max(zp.zipfile.length(), 1024 * 1024 * 5));
 
             }
         }
         // mark to send items to next tasks
         sendQueue = true;
 
-        tmp.close();
-        zipFiles = 0;
-        zipLength = 0;
-        out = null;
-        cos = null;
-        tmp = null;
-        zipfile = null;
+        zp.tmp.close();
+        zp.zipFiles = 0;
+        zp.zipLength = 0;
+        zp.out = null;
+        zp.cos = null;
+        zp.tmp = null;
+        zp.zipfile = null;
     }
 
     private void sendZipItemsToNextTask() throws Exception {
@@ -304,7 +350,7 @@ public class MinIOTask extends AbstractTask {
         sendQueue = false;
     }
 
-    private boolean checkIfExists(String hash) throws Exception {
+    private boolean checkIfExists(String bucket, String hash) throws Exception {
         boolean exists = false;
         try {
             minioClient.statObject(StatObjectArgs.builder().bucket(bucket).object(hash).build());
@@ -322,7 +368,7 @@ public class MinIOTask extends AbstractTask {
 
     private void sendFile(Builder builder, SeekableInputStream is, long size, long partSize) throws Exception {
         Exception ex = null;
-        for (int i = 0; i <= retries; i++) {
+        for (int i = 0; i <= retries || retries == -1; i++) {
             try {
                 is.seek(0);
                 minioClient.putObject(builder.stream(new BufferedInputStream(is), size, partSize).build());
@@ -335,7 +381,7 @@ public class MinIOTask extends AbstractTask {
         throw ex;
     }
 
-    private void insertItem(String hash, SeekableInputStream is, String mediatype, String bucketPath)
+    private void insertItem(String hash, SeekableInputStream is, String mediatype, String bucket, String bucketPath)
             throws Exception {
 
         try {
@@ -406,6 +452,7 @@ public class MinIOTask extends AbstractTask {
         } catch (Exception e) {
             // TODO: handle exception
             logger.error(e.getMessage() + "File " + item.getPath() + " (" + item.getLength() + " bytes)", e);
+            throw e;
         }
         if (item.getViewFile() != null && item.getViewFile().length() > 0) {
             try (SeekableFileInputStream is = new SeekableFileInputStream(item.getViewFile())) {
@@ -421,11 +468,14 @@ public class MinIOTask extends AbstractTask {
                 // TODO: handle exception
                 logger.error(e.getMessage() + "Preview " + item.getViewFile().getPath() + " ("
                         + item.getViewFile().length() + " bytes)", e);
+                throw e;
             }
         }
+        String bucket = getBucket(item);
+        ZipRequest zp = zipRequests.get(bucket);
 
-        if (zipFiles >= zipMaxFiles || zipLength >= zipMaxSize) {
-            sendZipFile();
+        if (zp.zipFiles >= zipMaxFiles || zp.zipLength >= zipMaxSize) {
+            sendZipFile(bucket);
         }
 
     }
@@ -574,7 +624,7 @@ public class MinIOTask extends AbstractTask {
             if (i == -1)
                 return -1;
             else
-                return b[0];
+                return b[0] & 0xFF;
         }
 
         @Override

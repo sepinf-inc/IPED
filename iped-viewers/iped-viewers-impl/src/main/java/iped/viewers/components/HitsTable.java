@@ -18,29 +18,25 @@
  */
 package iped.viewers.components;
 
-import java.awt.Color;
+import java.awt.Dimension;
 
+import javax.swing.JComponent;
 import javax.swing.JTable;
-import javax.swing.UIManager;
+import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
 
 public class HitsTable extends JTable {
 
-    /**
-     *
-     */
     private static final long serialVersionUID = 1L;
 
     public HitsTable(AbstractTableModel tableModel) {
         super(tableModel);
-    }
-    
-    @Override
-    public void updateUI() {
-        Color c = UIManager.getColor("text");
-        if (c != null)
-            setForeground(new Color(c.getRGB()));
-        super.updateUI();
+        setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        setFillsViewportHeight(true);
+        setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        getTableHeader().setPreferredSize(new Dimension(0, 0));
+        setShowGrid(false);
+        ((JComponent) getDefaultRenderer(Boolean.class)).setOpaque(true);
     }
 
     @Override

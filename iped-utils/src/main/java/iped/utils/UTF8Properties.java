@@ -34,8 +34,8 @@ public class UTF8Properties extends Properties {
                 pos = str.indexOf('=', pos + 1);
             }
             if (pos > 0) {
-                String key = str.substring(0, pos).replace("\\=", "=").replace("\\:", ":").trim(); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-                String val = str.substring(pos + 1).replace("\\=", "=").replace("\\:", ":").trim(); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+                String key = str.substring(0, pos).replace("\\=", "=").trim(); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+                String val = str.substring(pos + 1).replace("\\=", "=").trim(); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
                 super.put(key, val);
             }
         }

@@ -47,6 +47,7 @@ import iped.engine.task.regex.RegexHits;
 import iped.engine.util.UIPropertyListenerProvider;
 import iped.engine.util.Util;
 import iped.exception.IPEDException;
+import iped.parsers.discord.DiscordParser;
 import iped.parsers.mail.OutlookPSTParser;
 import iped.parsers.skype.SkypeParser;
 import iped.parsers.telegram.TelegramParser;
@@ -248,6 +249,8 @@ public class GraphTask extends AbstractTask {
                 || SkypeParser.MESSAGE_MIME_TYPE.toString().equals(mediaType)
                 || SkypeParser.ATTACHMENT_MIME_TYPE.toString().equals(mediaType)
                 || SkypeParser.FILETRANSFER_MIME_TYPE.toString().equals(mediaType)
+                || DiscordParser.MSG_MIME_TYPE.equals(mediaType)
+                || DiscordParser.ATTACH_MIME_TYPE.equals(mediaType)
                 || MediaTypes.UFED_MESSAGE_ATTACH_MIME.toString().equals(mediaType)
                 || MediaTypes.UFED_MESSAGE_MIME.toString().equals(mediaType)) {
             return "message";
@@ -268,6 +271,7 @@ public class GraphTask extends AbstractTask {
 
         if (WhatsAppParser.WHATSAPP_CALL.toString().equals(mediaType)
                 || TelegramParser.TELEGRAM_CALL.toString().equals(mediaType)
+                || DiscordParser.CALL_MIME_TYPE.equals(mediaType)
                 || MediaTypes.UFED_CALL_MIME.toString().equals(mediaType)) {
             return "call";
         }

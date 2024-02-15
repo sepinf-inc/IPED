@@ -31,8 +31,7 @@ public class BigData extends CellContent {
             DataCell listSegments = (DataCell) cellList.getCellContent();
             for (int i = 0; i < numSegments; i++) {
                 buffer = Arrays.copyOfRange(listSegments.data, i * 4, i * 4 + 4);
-                offset = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16
-                        | (buffer[3] & 0xFF) << 24;
+                offset = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16 | (buffer[3] & 0xFF) << 24;
                 buffer = null;
 
                 HiveCell cellData = reg.getCell(offset);
@@ -52,6 +51,25 @@ public class BigData extends CellContent {
         } else {
             System.out.println("Erro: not a data cell.");
         }
+
+        return result;
+    }
+
+    @Override
+    public ArrayList<Integer> getSubCellsOffsets() {
+        ArrayList<Integer> result = new ArrayList<Integer>();
+
+        byte buffer[] = null;
+        int size = 0;
+
+        buffer = Arrays.copyOfRange(data, 2, 4);
+        int numSegments = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8;
+        buffer = null;
+        offsets = new int[numSegments];
+        buffer = Arrays.copyOfRange(data, 4, 8);
+        int offset = (buffer[0] & 0xFF) | (buffer[1] & 0xFF) << 8 | (buffer[2] & 0xFF) << 16 | (buffer[3] & 0xFF) << 24;
+
+        result.add(offset);// just the first offset for now
 
         return result;
     }

@@ -1,5 +1,6 @@
 package iped.engine.search;
 
+import java.util.BitSet;
 import java.util.Iterator;
 
 import iped.data.IIPEDSource;
@@ -12,6 +13,9 @@ public class MultiSearchResult implements IMultiSearchResult {
 
     private IItemId[] ids;
     private float[] scores;
+    IPEDSearcher ipedSearcher;
+    IIPEDSource ipedSource;
+    BitSet docids;
 
     public MultiSearchResult() {
         this.ids = new ItemId[0];
@@ -19,6 +23,11 @@ public class MultiSearchResult implements IMultiSearchResult {
     }
 
     public MultiSearchResult(IItemId[] ids, float[] scores) {
+        this.ids = ids;
+        this.scores = scores;
+    }
+
+    public MultiSearchResult(IIPEDSource ipedSource, IItemId[] ids, float[] scores) {
         this.ids = ids;
         this.scores = scores;
     }
@@ -69,6 +78,14 @@ public class MultiSearchResult implements IMultiSearchResult {
         @Override
         public void remove() {
             throw new UnsupportedOperationException("Remove not allowed"); //$NON-NLS-1$
+        }
+
+        public int getPos() {
+            return pos;
+        }
+
+        public void setPos(int pos) {
+            this.pos = pos;
         }
     }
 
@@ -148,5 +165,32 @@ public class MultiSearchResult implements IMultiSearchResult {
         result.ids = this.ids.clone();
         result.scores = this.scores.clone();
         return result;
+    }
+
+    public boolean hasDocId(int docId) {
+        return docids.get(docId);
+    }
+
+    public IPEDSearcher getIpedSearcher() {
+        return ipedSearcher;
+    }
+
+    public void setIpedSearcher(IPEDSearcher ipedSearcher) {
+        this.ipedSearcher = ipedSearcher;
+    }
+
+    @Override
+    public IIPEDSource getIPEDSource() {
+        return ipedSource;
+    }
+
+    public void setIPEDSource(IIPEDSource ipedSource) {
+        if (this.ipedSource == null || this.docids == null) {
+            this.ipedSource = ipedSource;
+            this.docids = new BitSet(ids.length);
+            for (int i = 0; i < ids.length; i++) {
+                docids.set(ipedSource.getLuceneId(ids[i]));
+            }
+        }
     }
 }

@@ -12,7 +12,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -34,8 +36,11 @@ import iped.parsers.ufed.UFEDChatParser;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
+import iped.utils.StringUtil;
 
 public class MetadataUtil {
+
+    private static Map<String, Class<?>> typesMap = Collections.synchronizedMap(new TreeMap<String, Class<?>>(StringUtil.getIgnoreCaseComparator()));
 
     private static Set<String> generalKeys = getGeneralKeys();
 
@@ -60,6 +65,26 @@ public class MetadataUtil {
     private static final Set<String> RAW_MAIL_HEADERS = getRawMailHeaders();
 
     private static Pattern emailPattern = Pattern.compile("[0-9a-zA-Z\\+\\.\\_\\%\\-\\#\\!]+\\@[0-9a-zA-Z\\-\\.]+");
+
+    private static final Set<String> customMetadataPrefixes = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
+    public static Map<String, Class<?>> getMetadataTypes() {
+        return Collections.unmodifiableMap(typesMap);
+    }
+
+    public static void setMetadataType(String metadataName, Class<?> metadataType) {
+        typesMap.put(metadataName, metadataType);
+    }
+
+    /**
+     * Method to add a new metadata prefix. Can be called from parsers to install a
+     * new meta prefix.
+     * 
+     * @param metaPrefix
+     */
+    public static void addCustomMetadataPrefix(String metaPrefix) {
+        customMetadataPrefixes.add(metaPrefix);
+    }
 
     private static final Set<String> getBasicHeaders() {
         Collator collator = Collator.getInstance();
@@ -224,6 +249,8 @@ public class MetadataUtil {
         generalKeys.add(ExtraProperties.USER_NOTES);
         generalKeys.add(ExtraProperties.THUMBNAIL_BASE64);
         generalKeys.add(ExtraProperties.DOWNLOADED_DATA);
+        generalKeys.add(ExtraProperties.TRANSCRIPT_ATTR);
+        generalKeys.add(ExtraProperties.CONFIDENCE_ATTR);
         generalKeys.add(OCRParser.OCR_CHAR_COUNT);
         generalKeys.add(RawStringParser.COMPRESS_RATIO);
 
@@ -595,12 +622,19 @@ public class MetadataUtil {
 
     private static void includePrefix(Metadata metadata, String prefix) {
         String[] keys = metadata.names();
-        for (String key : keys) {
+        outer: for (String key : keys) {
             if (generalKeys.contains(key) || key.toLowerCase().startsWith(prefix.toLowerCase())
                     || key.startsWith(ExtraProperties.UFED_META_PREFIX)
                     || key.startsWith(ExtraProperties.COMMON_META_PREFIX)
-                    || key.startsWith(TikaCoreProperties.TIKA_META_PREFIX))
+                    || key.startsWith(ExtraProperties.COMMUNICATION_PREFIX)
+                    || key.startsWith(TikaCoreProperties.TIKA_META_PREFIX)) {
                 continue;
+            }
+            for (String customPrefix : customMetadataPrefixes) {
+                if (key.startsWith(customPrefix)) {
+                    continue outer;
+                }
+            }
             String[] values = metadata.getValues(key);
             metadata.remove(key);
             for (String val : values)

@@ -5,6 +5,7 @@
  */
 package iped.search;
 
+import iped.data.IIPEDSource;
 import iped.data.IItemId;
 
 /**
@@ -14,6 +15,8 @@ import iped.data.IItemId;
 public interface IMultiSearchResult {
 
     IItemId getItem(int i);
+
+    IIPEDSource getIPEDSource();
 
     Iterable<IItemId> getIterator();
 

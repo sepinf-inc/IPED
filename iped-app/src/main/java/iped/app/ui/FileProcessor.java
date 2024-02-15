@@ -18,7 +18,6 @@
  */
 package iped.app.ui;
 
-import java.awt.Dialog.ModalityType;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -61,6 +60,12 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
     private int docId;
     private boolean listRelated;
     private static volatile IItem lastItem;
+
+    public static final void disposeLastItem() {
+        if (lastItem != null) {
+            lastItem.dispose();
+        }
+    }
 
     public FileProcessor(int docId, boolean listRelated) {
         this.listRelated = listRelated;
@@ -175,15 +180,17 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
         App.get().getViewerController().loadFile(item, viewItem, contentType, highlights);
 
         if (listRelated) {
-            App.get().subItemModel.listSubItems(doc);
+            App.get().subItemModel.listItems(doc);
             if (Thread.currentThread().isInterrupted()) {
                 return;
             }
-            App.get().parentItemModel.listParents(doc);
+            App.get().parentItemModel.listItems(doc);
 
-            App.get().duplicatesModel.listDuplicates(doc);
+            App.get().duplicatesModel.listItems(doc);
 
-            App.get().referencesModel.listReferencingItems(doc);
+            App.get().referencedByModel.listItems(doc);
+
+            App.get().referencesModel.listItems(doc);
         }
     }
 
@@ -216,13 +223,17 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                    ModalityType previous = App.get().dialogBar.getModalityType();
-                    String prevMsg = App.get().progressBar.getString();
-                    App.get().progressBar.setString(Messages.getString("FileProcessor.OpeningEvidence")); //$NON-NLS-1$
-                    App.get().dialogBar.setModalityType(ModalityType.APPLICATION_MODAL);
-                    App.get().dialogBar.setVisible(visible);
-                    App.get().dialogBar.setModalityType(previous);
-                    App.get().progressBar.setString(prevMsg);
+                    if (visible) {
+                        String prevMsg = App.get().progressBar.getString();
+                        App.get().progressBar.setString(Messages.getString("FileProcessor.OpeningEvidence")); //$NON-NLS-1$
+                        App.get().dialogBar.setVisible(true);
+                        App.get().progressBar.setString(prevMsg);
+                    } else {
+                        // Use dispose() instead of setVisible(false) here as a workaround for #1595, as
+                        // sometimes the area covered by the dialog was not cleared after
+                        // setVisible(false), in some environments/situations.
+                        App.get().dialogBar.dispose();
+                    }
                 }
             });
         } catch (Exception e) {

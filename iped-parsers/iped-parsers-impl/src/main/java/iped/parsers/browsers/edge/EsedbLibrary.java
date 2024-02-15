@@ -6,6 +6,7 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.LongByReference;
 import com.sun.jna.ptr.PointerByReference;
+import com.sun.jna.ptr.ShortByReference;
 
 /*
  * Libesedb JNA interface mapping and usage.
@@ -258,6 +259,25 @@ public interface EsedbLibrary extends Library {
     int libesedb_record_get_value_data(Pointer record, int value_entry, LongByReference value_data, int value_data_size,
             PointerByReference error);
 
+     /*
+     * Retrieves the binary data size of the specific entry
+     * Returns 1 if successful, 0 if value is NULL or -1 on error
+     * int libesedb_record_get_value_binary_data_size(libesedb_record_t
+     * *record, int value_entry, size_t *binary_data_size, libesedb_error_t **error);
+     */
+    int libesedb_record_get_value_binary_data_size(Pointer record, int value_entry, IntByReference binary_data_size,
+            PointerByReference error);
+
+    /*
+     * Retrieves the binary data value of a specific entry
+     * Returns 1 if successful, 0 if value is NULL or -1 on error
+     * int libesedb_record_get_value_binary_data(libesedb_record_t *record, int
+     * value_entry, uint8_t *binary_data, size_t binary_data_size, libesedb_error_t
+     * **error);
+     */
+    int libesedb_record_get_value_binary_data(Pointer record, int value_entry, Memory binary_data, int binary_data_size,
+            PointerByReference error);
+
     /*
      * Retrieves the size of an UTF-8 encoded string a specific entry The returned
      * size includes the end of string character Returns 1 if successful, 0 if value
@@ -301,6 +321,16 @@ public interface EsedbLibrary extends Library {
     int libesedb_record_get_value_utf16_string(Pointer record, int value_entry, Memory utf16_string,
             int utf16_string_size, PointerByReference error);
 
+
+    /*
+     * Retrieves the 16-bit value of a specific entry
+     * Returns 1 if successful, 0 if value is NULL or -1 on error
+     * libesedb_record_get_value_16bit(libesedb_record_t *record, int value_entry,
+     * uint16_t *value_16bit, libesedb_error_t **error);
+     */
+    int libesedb_record_get_value_16bit(Pointer record, int value_entry, IntByReference value_16bit,
+            PointerByReference error);
+
     /*
      * Retrieves the 32-bit value of a specific entry Returns 1 if successful, 0 if
      * value is NULL or -1 on error int
@@ -317,6 +347,15 @@ public interface EsedbLibrary extends Library {
      * uint64_t *value_64bit, libesedb_error_t **error);
      */
     int libesedb_record_get_value_64bit(Pointer record, int value_entry, LongByReference value_64bit,
+            PointerByReference error);
+
+    /*
+     * Retrieves the boolean value of a specific entry
+     * Returns 1 if successful, 0 if value is NULL or -1 on error
+     * int libesedb_record_get_value_boolean(libesedb_record_t *record, int value_entry,
+     * uint8_t *value_boolean, libcerror_error_t **error);
+     */
+    int libesedb_record_get_value_boolean(Pointer record, int value_entry, ShortByReference value_boolean,
             PointerByReference error);
 
     /*

@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import iped.app.ui.viewers.AttachmentSearcherImpl;
 import iped.data.IItem;
 import iped.exception.IPEDException;
+import iped.parsers.mail.win10.Win10MailParser;
+import iped.parsers.util.Util;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
 import iped.utils.IOUtil;
@@ -24,7 +26,8 @@ public class ExternalFileOpen {
                 IItem item = App.get().appCase.getItemByLuceneID(luceneId);
                 String itemReferenceQuery = item.getMetadata().get(ExtraProperties.LINKED_ITEMS);
                 if (itemReferenceQuery != null
-                        && MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.CHAT_MESSAGE_MIME)) {
+                        && (MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.METADATA_ENTRY)
+                            || MediaTypes.isInstanceOf(item.getMediaType(), Win10MailParser.WIN10_MAIL_ATTACH))) {
                     item = new AttachmentSearcherImpl().getItem(itemReferenceQuery);
                     if (item == null)
                         return;
@@ -32,8 +35,7 @@ public class ExternalFileOpen {
                 try {
                     if (IOUtil.isToOpenExternally(item.getName(), item.getType())) {
                         LOGGER.info("Externally Opening file " + item.getPath()); //$NON-NLS-1$
-                        File file = item.getTempFile();
-                        file.setReadOnly();
+                        File file = Util.getFileWithRightExt(item);
                         open(file);
                     }
 

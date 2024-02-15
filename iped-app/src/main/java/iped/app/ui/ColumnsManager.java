@@ -56,6 +56,7 @@ import iped.engine.task.index.IndexItem;
 import iped.engine.task.regex.RegexTask;
 import iped.engine.util.Util;
 import iped.localization.LocalizedProperties;
+import iped.parsers.evtx.EvtxParser;
 import iped.parsers.ocr.OCRParser;
 import iped.parsers.standard.StandardParser;
 import iped.properties.BasicProps;
@@ -83,8 +84,9 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
             Messages.getString("ColumnsManager.PDF"), Messages.getString("ColumnsManager.Office"), //$NON-NLS-1$ //$NON-NLS-2$
             Messages.getString("ColumnsManager.HTML"), Messages.getString("ColumnsManager.Regex"), //$NON-NLS-1$ //$NON-NLS-2$
             Messages.getString("ColumnsManager.Language"), Messages.getString("ColumnsManager.NamedEntity"), //$NON-NLS-1$ //$NON-NLS-2$
-            Messages.getString("ColumnsManager.UFED"), Messages.getString("ColumnsManager.Other"), //$NON-NLS-1$ //$NON-NLS-2$
-            Messages.getString("ColumnsManager.All") }; //$NON-NLS-1$
+            Messages.getString("ColumnsManager.PeerToPeer"), Messages.getString("ColumnsManager.UFED"), //$NON-NLS-1$ //$NON-NLS-2$
+            Messages.getString("ColumnsManager.WindowsEvt"), //$NON-NLS-1$ //$NON-NLS-2$
+            Messages.getString("ColumnsManager.Other"), Messages.getString("ColumnsManager.All") }; //$NON-NLS-1$ //$NON-NLS-2$
 
     private static final File getGlobalColsFile() {
         String name = "visibleCols"; //$NON-NLS-1$
@@ -252,7 +254,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         combo.addActionListener(this);
 
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         panel.add(topPanel, BorderLayout.NORTH);
 
         JScrollPane scrollList = new JScrollPane(listPanel);
@@ -527,10 +529,12 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         ArrayList<String> officeFields = new ArrayList<String>();
         ArrayList<String> htmlFields = new ArrayList<String>();
         ArrayList<String> nerFields = new ArrayList<String>();
+        ArrayList<String> p2pFields = new ArrayList<String>();
         ArrayList<String> ufedFields = new ArrayList<String>();
         ArrayList<String> hashDbFields = new ArrayList<String>();
         ArrayList<String> communicationFields = new ArrayList<String>();
         ArrayList<String> commonFields = new ArrayList<String>();
+        ArrayList<String> winEvtFields = new ArrayList<String>();
 
         for (String f : allExtraAttrs) {
             if (f.startsWith(RegexTask.REGEX_PREFIX))
@@ -559,12 +563,17 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
                 htmlFields.add(f);
             else if (f.startsWith(NamedEntityTask.NER_PREFIX))
                 nerFields.add(f);
+            else if (f.startsWith(ExtraProperties.P2P_META_PREFIX))
+                p2pFields.add(f);
             else if (f.startsWith(ExtraProperties.UFED_META_PREFIX))
                 ufedFields.add(f);
             else if (f.startsWith(Message.MESSAGE_PREFIX) || ExtraProperties.COMMUNICATION_BASIC_PROPS.contains(f))
                 communicationFields.add(f);
             else if (f.startsWith(ExtraProperties.COMMON_META_PREFIX))
                 commonFields.add(f);
+            else if (f.startsWith(EvtxParser.EVTX_METADATA_PREFIX)) {
+                winEvtFields.add(f);
+            }
         }
 
         String[][] customGroups = new String[][] { defaultFields.clone(), hashDbFields.toArray(new String[0]),
@@ -574,7 +583,8 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
                 videoFields.toArray(new String[0]), pdfFields.toArray(new String[0]),
                 officeFields.toArray(new String[0]), htmlFields.toArray(new String[0]),
                 regexFields.toArray(new String[0]), languageFields.toArray(new String[0]),
-                nerFields.toArray(new String[0]), ufedFields.toArray(new String[0]) };
+                nerFields.toArray(new String[0]), p2pFields.toArray(new String[0]),
+                ufedFields.toArray(new String[0]), winEvtFields.toArray(new String[0]) };
 
         ArrayList<String> otherFields = new ArrayList<String>();
         for (String f : indexFields) {

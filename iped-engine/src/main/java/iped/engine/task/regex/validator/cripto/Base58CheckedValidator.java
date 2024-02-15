@@ -9,7 +9,7 @@ import java.util.Arrays;
  * Utility class for validation of Base58Checked values used in various
  * criptocurrencies
  * 
- * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
+ * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
  *
  */
 public class Base58CheckedValidator {

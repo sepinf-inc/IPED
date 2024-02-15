@@ -114,6 +114,8 @@ public class UICaseDataLoader extends SwingWorker<Void, Integer> {
                 UICaseSearcherFilter pesquisa = new UICaseSearcherFilter(new MatchAllDocsQuery());
                 pesquisa.execute();
                 LOGGER.info("Listing all items Finished"); //$NON-NLS-1$
+            } else {
+                App.get().notifyCaseDataChanged();
             }
 
             treeModel = new TreeViewModel();
@@ -154,6 +156,7 @@ public class UICaseDataLoader extends SwingWorker<Void, Integer> {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
+                App.get().dialogBar.setVisible(false);
                 String msg = e.getMessage();
                 if (msg == null && e.getCause() != null) {
                     msg = e.getCause().getMessage();
@@ -163,27 +166,28 @@ public class UICaseDataLoader extends SwingWorker<Void, Integer> {
                         + App.get().getLogConfiguration().getLogFile()
                         + Messages.getString("AppLazyInitializer.errorMsg.line3") + msg, // $NON-NLS-1$
                         Messages.getString("AppLazyInitializer.errorTitle"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
-
-                App.get().dialogBar.setVisible(false);
             }
         });
     }
 
     @Override
     public void done() {
-        CategoryTreeModel.install();
-        App.get().filterManager.loadFilters();
-        BookmarksController.get().updateUIandHistory();
-
-        App.get().tree.setModel(treeModel);
-        App.get().tree.setLargeModel(true);
-        App.get().tree.setCellRenderer(new TreeCellRenderer());
-
-        if (updateItems) {
-            ColumnsManager.getInstance().dispose();
-            App.get().appletListener.updateFileListing();
+        try {
+            CategoryTreeModel.install();
+            App.get().filterManager.loadFilters();
+            BookmarksController.get().updateUIandHistory();
+    
+            App.get().tree.setModel(treeModel);
+            App.get().tree.setLargeModel(true);
+            App.get().tree.setCellRenderer(new TreeCellRenderer());
+    
+            if (updateItems) {
+                ColumnsManager.getInstance().dispose();
+                App.get().appletListener.updateFileListing();
+            }
+        } finally {
+            App.get().dialogBar.setVisible(false);
         }
-        App.get().dialogBar.setVisible(false);
     }
 
 }

@@ -36,6 +36,17 @@ public class SignatureTask extends AbstractTask {
     private boolean processFileSignatures = true;
     private Detector detector;
 
+    private Detector getDetector() {
+        if (detector == null) {
+            // check if custom signatures were loaded correctly
+            if (MediaTypes.getParentType(MediaType.parse("message/x-chat-message")).equals(MediaType.OCTET_STREAM)) {
+                throw new RuntimeException("Custom signature file not loaded!");
+            }
+            detector = TikaConfig.getDefaultConfig().getDetector();
+        }
+        return detector;
+    }
+
     @Override
     public boolean isEnabled() {
         return true;
@@ -56,7 +67,7 @@ public class SignatureTask extends AbstractTask {
                     TikaInputStream tis = null;
                     try {
                         tis = evidence.getTikaStream();
-                        type = detector.detect(tis, metadata).getBaseType();
+                        type = getDetector().detect(tis, metadata).getBaseType();
 
                     } catch (IOException e) {
                         LOGGER.warn("{} Error detecting signature: {} ({} bytes)\t\t{}", //$NON-NLS-1$
@@ -77,14 +88,16 @@ public class SignatureTask extends AbstractTask {
                     }
                 }
 
+                String ext = evidence.getExt() != null ? evidence.getExt().toLowerCase() : "";
+
                 // Caso seja item office07 cifrado e tenha extensão específica, refina o tipo
                 if (type != null && type.toString().equals("application/x-tika-ooxml-protected") //$NON-NLS-1$
-                        && "docx xlsx pptx".contains(evidence.getExt().toLowerCase())) { //$NON-NLS-1$
-                    type = MediaType.application("x-tika-ooxml-protected-" + evidence.getExt().toLowerCase()); //$NON-NLS-1$
+                        && (ext.equals("docx") || ext.equals("xlsx") || ext.equals("pptx"))) { //$NON-NLS-1$
+                    type = MediaType.application("x-tika-ooxml-protected-" + ext); //$NON-NLS-1$
                 }
 
                 if (type == null) {
-                    type = detector.detect(null, metadata).getBaseType();
+                    type = getDetector().detect(null, metadata).getBaseType();
 
                     // workaround for #197. Should we check TSK_FS_META_FLAG_ENUM?
                     int i = 0;
@@ -93,7 +106,7 @@ public class SignatureTask extends AbstractTask {
                         if (evidence.getName().endsWith(suffix)) {
                             String name = evidence.getName().substring(0, evidence.getName().lastIndexOf(suffix));
                             metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, name);
-                            type = detector.detect(null, metadata).getBaseType();
+                            type = getDetector().detect(null, metadata).getBaseType();
                         }
                     }
 
@@ -136,16 +149,11 @@ public class SignatureTask extends AbstractTask {
         installCustomSignatures();
         SignatureConfig config = configurationManager.findObject(SignatureConfig.class);
         processFileSignatures = config.isEnabled();
-        detector = TikaConfig.getDefaultConfig().getDetector();
     }
 
     public static void installCustomSignatures() {
         SignatureConfig config = ConfigurationManager.get().findObject(SignatureConfig.class);
         System.setProperty(MimeTypesFactory.CUSTOM_MIMES_SYS_PROP, config.getTmpConfigFile().getAbsolutePath());
-        // check if setting property above works
-        if (MediaTypes.getParentType(MediaType.parse("message/x-chat-message")).equals(MediaType.OCTET_STREAM)) {
-            throw new RuntimeException("Custom signature file not loaded!");
-        }
     }
 
     @Override

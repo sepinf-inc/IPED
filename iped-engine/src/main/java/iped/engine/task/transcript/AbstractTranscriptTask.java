@@ -1,24 +1,28 @@
 package iped.engine.task.transcript;
 
+import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
+import java.net.NoRouteToHostException;
 import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
+
+import javax.sound.sampled.AudioFileFormat;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
 
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.mime.MediaType;
@@ -29,21 +33,22 @@ import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteConfig.SynchronousMode;
 
 import iped.configuration.Configurable;
+import iped.configuration.IConfigurationDirectory;
 import iped.data.IItem;
 import iped.engine.config.AudioTranscriptConfig;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
-import iped.engine.config.LocalConfig;
 import iped.engine.io.TimeoutException;
 import iped.engine.task.AbstractTask;
+import iped.engine.task.HashDBLookupTask;
+import iped.engine.task.video.VideoThumbTask;
+import iped.exception.IPEDException;
 import iped.properties.ExtraProperties;
 import iped.utils.IOUtil;
 
 public abstract class AbstractTranscriptTask extends AbstractTask {
 
     private static Logger LOGGER = LoggerFactory.getLogger(AbstractTranscriptTask.class);
-
-    private static final String TEST_FFMPEG = "ffmpeg -version";
 
     protected static final MediaType wav = MediaType.audio("vnd.wave");
 
@@ -57,16 +62,12 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
 
     protected static final int TIMEOUT_PER_MB = 100;
 
-    protected static final int MIN_TIMEOUT = 10;
+    protected static int MIN_TIMEOUT = 180;
 
     protected static final int WAV_BYTES_PER_SEC = 16000 * 2; // 16khz sample rate and 16bits per sample
 
     private static final int MAX_WAV_TIME = 59;
     private static final int MAX_WAV_SIZE = 16000 * 2 * MAX_WAV_TIME;
-    private static final String SPLIT_CMD = "ffmpeg -i $INPUT -f segment -segment_time " + MAX_WAV_TIME
-            + " -c copy $OUTPUT%03d.wav";
-
-    private static Boolean ffmpegDetected;
 
     protected AudioTranscriptConfig transcriptConfig;
     
@@ -94,6 +95,10 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
                 || evidence.getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR) != null) {
             return false;
         }
+        if (transcriptConfig.getSkipKnownFiles() && evidence.getExtraAttribute(HashDBLookupTask.STATUS_ATTRIBUTE) != null) {
+            return false;
+        }
+
         boolean supported = false;
         for (String mime : transcriptConfig.getMimesToProcess()) {
             if (evidence.getMediaType().toString().startsWith(mime)) {
@@ -102,29 +107,6 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             }
         }
         return supported;
-    }
-
-    protected static synchronized boolean checkFFmpeg() {
-        if (ffmpegDetected == null) {
-            try {
-                ProcessBuilder pb = new ProcessBuilder();
-                pb.command(TEST_FFMPEG.split(" "));
-                pb.redirectErrorStream(true);
-                Process p = pb.start();
-                IOUtil.ignoreInputStream(p.getInputStream());
-                int exit = p.waitFor();
-                if (exit == 0) {
-                    ffmpegDetected = true;
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            if (ffmpegDetected == null) {
-                ffmpegDetected = false;
-                LOGGER.error("Error testing FFmpeg, is it on path? Audios longer than 1min need it to be transcribed.");
-            }
-        }
-        return ffmpegDetected;
     }
 
     private void createConnection() {
@@ -197,18 +179,22 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
     public void init(ConfigurationManager configurationManager) throws Exception {
 
         transcriptConfig = configurationManager.findObject(AudioTranscriptConfig.class);
+        MIN_TIMEOUT = transcriptConfig.getMinTimeout();
+
+        // clear default config service address in output
+        this.transcriptConfig.clearTranscriptionServiceAddress(output);
+        // clear profile config service address in output
+        this.transcriptConfig.clearTranscriptionServiceAddress(new File(output, "profile"));
 
         if (conn == null && transcriptConfig.isEnabled()) {
             createConnection();
         }
 
-        // testFfmpeg();
-
     }
 
     public static TextAndScore transcribeWavBreaking(File tmpFile, String itemPath,
             Function<File, TextAndScore> transcribeWavPart) throws Exception {
-        if (tmpFile.length() <= MAX_WAV_SIZE || !checkFFmpeg()) {
+        if (tmpFile.length() <= MAX_WAV_SIZE) {
             return transcribeWavPart.apply(tmpFile);
         } else {
             Collection<File> parts = getAudioSplits(tmpFile, itemPath);
@@ -231,42 +217,34 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         }
     }
 
-    protected static Collection<File> getAudioSplits(File tmpFile, String itemPath)
-            throws InterruptedException, IOException {
-        ProcessBuilder pb = new ProcessBuilder();
-        File outFile = File.createTempFile("iped", "");
-        outFile.delete();
-        String cmd[] = SPLIT_CMD.split(" ");
-        for (int i = 0; i < cmd.length; i++) {
-            cmd[i] = cmd[i].replace("$INPUT", tmpFile.getAbsolutePath());
-            cmd[i] = cmd[i].replace("$OUTPUT", outFile.getAbsolutePath());
+    protected static Collection<File> getAudioSplits(File inFile, String itemPath) {
+        List<File> splitFiles = new ArrayList<File>();
+        AudioInputStream aIn = null;
+        AudioInputStream aOut = null;
+        try {
+            File outFile = File.createTempFile("iped", "");
+            outFile.delete();
+            aIn = AudioSystem.getAudioInputStream(inFile);
+            int bytesPerFrame = aIn.getFormat().getFrameSize();
+            int framesPerPart = Math.round(aIn.getFormat().getFrameRate() * MAX_WAV_TIME);
+            byte[] partBytes = new byte[framesPerPart * bytesPerFrame];
+            int numBytesRead = 0;
+            int seq = 0;
+            while ((numBytesRead = aIn.readNBytes(partBytes, 0, partBytes.length)) > 0) {
+                ByteArrayInputStream bais = new ByteArrayInputStream(partBytes, 0, numBytesRead);
+                aOut = new AudioInputStream(bais, aIn.getFormat(), numBytesRead);
+                File splitFile = new File(String.format("%s%03d.wav", outFile.getAbsolutePath(), ++seq));
+                splitFiles.add(splitFile);
+                AudioSystem.write(aOut, AudioFileFormat.Type.WAVE, splitFile);
+                IOUtil.closeQuietly(aOut);
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Failed to split audio file: " + itemPath, e);
+        } finally {
+            IOUtil.closeQuietly(aOut);
+            IOUtil.closeQuietly(aIn);
         }
-        pb.command(cmd);
-        pb.redirectErrorStream(true);
-        Process p = pb.start();
-        IOUtil.ignoreInputStream(p.getInputStream());
-        int exit = p.waitFor();
-        if (exit == 0) {
-            File[] files = outFile.getParentFile().listFiles(new PrefixFilter(outFile.getName()));
-            return new TreeSet<>(Arrays.asList(files));
-        } else {
-            LOGGER.error("Failed to split audio file " + itemPath);
-            return Collections.emptyList();
-        }
-    }
-
-    private static class PrefixFilter implements FilenameFilter {
-
-        private String prefix;
-
-        PrefixFilter(String prefix) {
-            this.prefix = prefix;
-        }
-
-        @Override
-        public boolean accept(File dir, String name) {
-            return name.startsWith(prefix);
-        }
+        return splitFiles;
     }
 
     protected File getWavFile(File itemFile, String itemPath) throws IOException, InterruptedException {
@@ -276,9 +254,12 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         ProcessBuilder pb = new ProcessBuilder();
         String[] cmd = transcriptConfig.getConvertCmd().split(" ");
         if (SystemUtils.IS_OS_WINDOWS) {
-            LocalConfig localConfig = ConfigurationManager.get().findObject(LocalConfig.class);
-            String mplayerWin = localConfig.getMplayerWinPath();
-            cmd[0] = cmd[0].replace("mplayer", Configuration.getInstance().appRoot + "/" + mplayerWin);
+            String mplayerWin = VideoThumbTask.MPLAYER_WIN_PATH;
+            String ipedRoot = System.getProperty(IConfigurationDirectory.IPED_ROOT);
+            if (ipedRoot == null) {
+                ipedRoot = Configuration.getInstance().appRoot;
+            }
+            cmd[0] = cmd[0].replace("mplayer", ipedRoot + "/" + mplayerWin);
         }
         for (int i = 0; i < cmd.length; i++) {
             cmd[i] = cmd[i].replace("$INPUT", input.getAbsolutePath());
@@ -290,8 +271,8 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         }
         pb.redirectErrorStream(true);
         Process p = pb.start();
-        IOUtil.ignoreInputStream(p.getInputStream());
-        long timeoutSecs = MIN_TIMEOUT + TIMEOUT_PER_MB * input.length() / (1 << 20);
+        IOUtil.ignoreInputStream(p);
+        long timeoutSecs = MIN_TIMEOUT / 3 + TIMEOUT_PER_MB * input.length() / (1 << 20);
         boolean finished = p.waitFor(timeoutSecs, TimeUnit.SECONDS);
         if (!finished) {
             LOGGER.warn("Timeout after {}s converting to wav: {}", timeoutSecs, itemPath);
@@ -313,15 +294,14 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             if (!tmpFile.exists()) {
                 LOGGER.warn("Conversion to wav failed, no wav generated: {} ", itemPath);
                 tmpFile = null;
-            }
-            if (tmpFile.length() == 0) {
+            } else if (tmpFile.length() == 0) {
                 tmpFile.delete();
                 LOGGER.warn("Conversion to wav failed, empty wav generated: {} ", itemPath);
                 tmpFile = null;
             }
         }
         if (!finished) {
-            throw new TimeoutException();
+            throw new TimeoutException("Timeout while converting audio to wav.");
         }
         return tmpFile;
     }
@@ -349,8 +329,8 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             LOGGER.info("Successful transcriptions: " + transcriptionSuccess.intValue());
             LOGGER.info("Failed transcriptions: " + transcriptionFail.intValue());
             LOGGER.info("Total transcription output characters: " + transcriptionChars.longValue());
-            LOGGER.info(
-                    "Average transcription time (ms/audio): " + (transcriptionTime.longValue() / totTranscriptions));
+            LOGGER.info("Average transcription time (ms/audio): " + (transcriptionTime.longValue() / (totTranscriptions)));
+            LOGGER.info("Total transcription throughput (audios/s): " + (1000 * this.worker.manager.getNumWorkers() * totTranscriptions / transcriptionTime.longValue()));
             transcriptionSuccess.set(0);
             transcriptionFail.set(0);
         }
@@ -400,6 +380,13 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             return;
         }
 
+        try {
+            evidence.getTempFile();
+        } catch (IOException e) {
+            LOGGER.warn("Error creating temp file {} ({} bytes) {}", evidence.getPath(), evidence.getLength(), e.toString());
+            return;
+        }
+
         TemporaryResources tmp = new TemporaryResources();
         File tmpFile = getTempFileToTranscript(evidence, tmp);
         if (tmpFile == null) {
@@ -424,10 +411,10 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             }
 
         } catch (Exception e) {
-            if (e instanceof TooManyConnectException) {
+            if (e instanceof TooManyConnectException || e instanceof IPEDException || e instanceof NoRouteToHostException) {
                 throw e;
             }
-            LOGGER.warn("Unexpected exception while transcribing: " + evidence.getPath(), e);
+            LOGGER.error("Unexpected exception while transcribing: " + evidence.getPath(), e);
         } finally {
             tmp.close();
         }

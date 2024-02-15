@@ -24,7 +24,7 @@ import java.io.InputStream;
 import org.apache.poi.util.LittleEndianInputStream;
 
 /**
- * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
+ * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
  */
 class MFCParser {
 
@@ -86,8 +86,12 @@ class MFCParser {
     }
 
     public String readHash(int n, String encoder) throws IOException {
+        return readHash(n, encoder, true);
+    }
+    
+    public String readHash(int n, String encoder, boolean readValid) throws IOException {
         String ret = "0"; //$NON-NLS-1$
-        boolean valid = readBool();
+        boolean valid = readValid ? readBool() : true;
         if (valid) {
             byte[] bytes = readBytes(n);
             switch (encoder) {
@@ -113,20 +117,35 @@ class MFCParser {
         return ret;
     }
 
-    private int readStringLen() throws IOException {
+    // Returns int[] {stringLen, isUnicode (0 or 1)}
+    private int[] readStringLen() throws IOException {
         int blen = readUByte();
+        int isUnicode = 0;
         if (blen < 0xff) {
-            return blen;
+            return new int[] { blen, isUnicode };
         }
 
         int wlen = readUShort();
         if (wlen == 0xfffe) {
-            return -1; /* string unicode. tamanho em seguida */
-
-        } else if (wlen == 0xffff) {
+            isUnicode = 1;
+            blen = readUByte();
+            if (blen < 0xff) {
+                return new int[] { blen, isUnicode };
+            }
             wlen = readUShort();
         }
-        return wlen;
+
+        if (wlen < 0xffff) {
+            return new int[] { wlen, isUnicode };
+        }
+
+        long dLen = readUInt();
+        if (dLen < 0xFFFFFFFF) {
+            return new int[] { (int) dLen, isUnicode };
+        }
+
+        long qLen = readUInt();
+        return new int[] { (int) qLen, isUnicode };
     }
 
     public int readCount() throws IOException {
@@ -138,15 +157,13 @@ class MFCParser {
     }
 
     public String readString() throws IOException {
-        int len = readStringLen();
-        boolean unicode = false;
-        if (len == -1) {
-            len = readStringLen();
-            unicode = true;
-        }
+        int[] r = readStringLen();
+        int len = r[0];
+        boolean isUnicode = r[1] == 1;
+
         String ret = ""; //$NON-NLS-1$
         if (len > 0) {
-            if (unicode) {
+            if (isUnicode) {
                 ret = new String(readBytes(len * 2), "UTF-16LE"); //$NON-NLS-1$
             } else {
                 ret = new String(readBytes(len), "UTF-8"); //$NON-NLS-1$

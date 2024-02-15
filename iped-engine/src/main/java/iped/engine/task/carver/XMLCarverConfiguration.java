@@ -3,6 +3,7 @@ package iped.engine.task.carver;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,6 +37,7 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
     private static AhoCorasick tree = null;
     private static String CARVE_DIR_INDIVIDUAIS = "carvers";
 
+    private ArrayList<String> originalXmls = new ArrayList<>();
     private boolean ignoreCorrupted = true;
     protected HashSet<MediaType> TYPES_TO_PROCESS;
     protected HashSet<String> TYPES_TO_NOT_PROCESS = new HashSet<String>();
@@ -43,6 +45,7 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
     private ArrayList<CarverType> carverTypesArray = new ArrayList<CarverType>();
 
     public void loadXMLConfigFile(File confFile) throws IOException {
+        originalXmls.add(Files.readString(confFile.toPath()));
         Document doc = null;
         try {
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -162,6 +165,7 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
         Element minLength = XMLUtil.getFirstElement(carverTypeEl, "minLength");
         Element maxLength = XMLUtil.getFirstElement(carverTypeEl, "maxLength");
         Element carverScriptFile = XMLUtil.getFirstElement(carverTypeEl, "carverScriptFile");
+        Element stopOnNextHeader = XMLUtil.getFirstElement(carverTypeEl, "stopOnNextHeader");
 
         if (name != null) {
             ct.setName(name.getTextContent());
@@ -185,6 +189,9 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
         }
         if (maxLength != null) {
             ct.setMaxLength(Long.parseLong(maxLength.getTextContent().trim()));
+        }
+        if (stopOnNextHeader != null) {
+            ct.setStopOnNextHeader(Boolean.parseBoolean(stopOnNextHeader.getTextContent().trim()));
         }
         if (carverClass != null) {
             ct.setCarverClass(carverClass.getTextContent().trim());
@@ -290,6 +297,11 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
 
     public boolean isToIgnoreCorrupted() {
         return this.ignoreCorrupted;
+    }
+
+    @Override
+    public String toString() {
+        return originalXmls.toString().replace("\r\n", " ").replace('\r', ' ').replace('\n', ' ');
     }
 
 }

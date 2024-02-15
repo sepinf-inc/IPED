@@ -48,6 +48,7 @@ public class IPEDSearcher implements IIPEDSearcher {
     Query query;
     boolean treeQuery, noScore, rewriteQuery = true;
     NoScoringCollector collector;
+    Sort sort;
 
     private volatile boolean canceled;
 
@@ -63,6 +64,27 @@ public class IPEDSearcher implements IIPEDSearcher {
     public IPEDSearcher(IPEDSource ipedCase, String query) {
         this.ipedCase = ipedCase;
         setQuery(query);
+    }
+
+    public IPEDSearcher(IPEDSource ipedCase, Query query, String... sort) {
+        this.ipedCase = ipedCase;
+        this.query = query;
+        setSorting(sort);
+    }
+
+    public IPEDSearcher(IPEDSource ipedCase, String query, String... sort) {
+        this.ipedCase = ipedCase;
+        setQuery(query);
+        setSorting(sort);
+    }
+
+    // TODO improve this to handle other field types
+    private void setSorting(String... sort) {
+        SortField[] fields = new SortField[sort.length];
+        for (int i = 0; i < fields.length; i++) {
+            fields[i] = new SortField(sort[i], SortField.Type.STRING);
+        }
+        this.sort = new Sort(fields);
     }
 
     public void setTreeQuery(boolean treeQuery) {
@@ -147,7 +169,13 @@ public class IPEDSearcher implements IIPEDSearcher {
         LuceneSearchResult searchResult = new LuceneSearchResult(0);
 
         // sort by index doc order: needed by features using docValues that iterate over results
-        Sort sort = new Sort(SortField.FIELD_DOC);
+        Sort sort = null;
+        if (this.sort != null) {
+            sort = this.sort;
+        } else {
+            sort = new Sort(SortField.FIELD_DOC);
+        }
+        
         int maxResults = MAX_SIZE_TO_SCORE;
         ScoreDoc[] scoreDocs = null;
         do {
@@ -162,6 +190,13 @@ public class IPEDSearcher implements IIPEDSearcher {
         } while (scoreDocs.length > 0 && !canceled);
 
         return searchResult;
+    }
+    
+    public boolean hasDocId(int docId) {
+        if (collector != null) {
+            return collector.bits.get(docId);
+        }
+        return true;
     }
 
     private Query getNonTreeQuery(Query query) {

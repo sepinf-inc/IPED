@@ -7,14 +7,13 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.bouncycastle.jcajce.provider.digest.Keccak;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import iped.engine.task.regex.BasicAbstractRegexValidatorService;
 
 /**
  * Validate Ethereum address encoded as in EIP-55
  * 
- * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
+ * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
  *
  */
 public class EthereumAddressValidatorService extends BasicAbstractRegexValidatorService {
@@ -23,7 +22,6 @@ public class EthereumAddressValidatorService extends BasicAbstractRegexValidator
     private static final int[] MASKS = { 128, 8 };
 
     static {
-        Security.addProvider(new BouncyCastleProvider());
         digest = new Keccak.Digest256();
     }
 

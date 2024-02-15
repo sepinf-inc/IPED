@@ -34,6 +34,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
+import java.lang.management.ManagementFactory;
 import java.net.URI;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Files;
@@ -45,6 +46,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.SystemUtils;
@@ -481,7 +485,7 @@ public class Util {
             if (C_Library == null) {
                 C_Library = (CLibrary) Native.loadLibrary("c", CLibrary.class);
             }
-            C_Library.putenv(key + "=" + value);
+            C_Library.setenv(key, value, true);
         }
     }
 
@@ -572,4 +576,14 @@ public class Util {
         }
     }
 
+    public static long getPhysicalMemorySize() {
+        try {
+            MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+            Object attribute = mBeanServer.getAttribute(new ObjectName("java.lang", "type", "OperatingSystem"),
+                    "TotalPhysicalMemorySize");
+            return Long.parseLong(attribute.toString());
+        } catch (Exception e) {
+        }
+        return 0;
+    }
 }

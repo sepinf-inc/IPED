@@ -30,6 +30,8 @@ public class VideoThumbsConfig extends AbstractTaskPropertiesConfig {
 
     private static final String MAX_DIMENSION_SIZE = "maxDimensionSize";
 
+    private static final String NUM_FRAMES_EQUATION = "numFramesEquation";
+
     /**
      * Image width of extracted frame.
      */
@@ -86,6 +88,13 @@ public class VideoThumbsConfig extends AbstractTaskPropertiesConfig {
      */
     private int maxDimensionSize = 1024;
 
+    /**
+     * Javascript equation to compute number of extracted thumbs from video duration
+     * in seconds.
+     */
+    private String numFramesEquation;
+
+
     public int getWidth() {
         return width;
     }
@@ -136,6 +145,10 @@ public class VideoThumbsConfig extends AbstractTaskPropertiesConfig {
 
     public int getMaxDimensionSize() {
         return maxDimensionSize;
+    }
+
+    public String getNumFramesEquation() {
+        return this.numFramesEquation;
     }
 
     @Override
@@ -205,6 +218,11 @@ public class VideoThumbsConfig extends AbstractTaskPropertiesConfig {
         value = properties.getProperty(MAX_DIMENSION_SIZE);
         if (value != null) {
             maxDimensionSize = Integer.parseInt(value.trim());
+        }
+        
+        value = properties.getProperty(NUM_FRAMES_EQUATION);
+        if (value != null) {
+            numFramesEquation = value.trim();
         }
 
     }

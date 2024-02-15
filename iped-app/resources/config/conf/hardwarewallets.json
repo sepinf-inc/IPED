@@ -1,0 +1,188 @@
+[
+    {
+    "VendorID": "0C45",
+    "ProductID": "64AD",
+    "VendorName": "Test",
+    "DeviceName": "not really a wallet"
+    },
+    {
+    "VendorID": "04F9",
+    "ProductID": "0023",
+    "VendorName": "Test 2",
+    "DeviceName": "also not really a wallet"
+    },
+  {
+    "VendorID": "03eb",
+    "ProductID": 2402,
+    "VendorName": "ShiftCrypto",
+    "DeviceName": "BitBox01 (DigitalBitBox)"
+  },
+  {
+    "VendorID": "03eb",
+    "ProductID": 2403,
+    "VendorName": "ShiftCrypto",
+    "DeviceName": "BitBox02"
+  },
+  {
+    "VendorID": "096e",
+    "ProductID": 891,
+    "VendorName": "Feitian Tech",
+    "DeviceName": "JuBiter Blade"
+  },
+  {
+    "VendorID": 1209,
+    "ProductID": "aaaa",
+    "VendorName": "Prokey",
+    "DeviceName": "Optimum"
+  },
+  {
+    "VendorID": 1209,
+    "ProductID": "abba",
+    "VendorName": "Generic",
+    "DeviceName": "SafeWISE CoinSafe"
+  },
+  {
+    "VendorID": 1209,
+    "ProductID": "b0b0",
+    "VendorName": "Generic",
+    "DeviceName": "Monero Hardware bootloader"
+  },
+  {
+    "VendorID": 1209,
+    "ProductID": "c0dA",
+    "VendorName": "Generic",
+    "DeviceName": "Monero Hardware"
+  },
+  {
+    "VendorID": 1209,
+    "ProductID": "d00d",
+    "VendorName": "Generic",
+    "DeviceName": "Monero Hardware developer"
+  },
+  {
+    "VendorID": 1209,
+    "ProductID": "53c0",
+    "VendorName": "SatoshiLabs",
+    "DeviceName": "Trezor v2 bootloader"
+  },
+  {
+    "VendorID": 1209,
+    "ProductID": "53c1",
+    "VendorName": "SatoshiLabs",
+    "DeviceName": "Trezor v2"
+  },
+  {
+    "VendorID": 1209,
+    "ProductID": 7000,
+    "VendorName": "Secalot",
+    "DeviceName": "Secalot Dongle"
+  },
+  {
+    "VendorID": 1209,
+    "ProductID": 7001,
+    "VendorName": "Secalot",
+    "DeviceName": "Secalot Bootloader"
+  },
+  {
+    "VendorID": 1209,
+    "ProductID": 7551,
+    "VendorName": "Generic",
+    "DeviceName": "OpenDime DAFU bootloader"
+  },
+  {
+    "VendorID": 1209,
+    "ProductID": 9998,
+    "VendorName": "Opolo",
+    "DeviceName": "Cosmos Bootloader"
+  },
+  {
+    "VendorID": 1209,
+    "ProductID": 9999,
+    "VendorName": "Opolo",
+    "DeviceName": "Cosmos Firmware"
+  },
+  {
+    "VendorID": 2341,
+    "ProductID": "003d",
+    "VendorName": "Bitlox",
+    "DeviceName": "Ultimate aka lockbox 3A8C"
+  },
+  {
+    "VendorID": 2341,
+    "ProductID": "003e",
+    "VendorName": "Bitlox",
+    "DeviceName": "Ultimate aka lockbox"
+  },
+  {
+    "VendorID": 2581,
+    "ProductID": 1807,
+    "VendorName": "Ledger",
+    "DeviceName": "HW1"
+  },
+  {
+    "VendorID": 2581,
+    "ProductID": 1808,
+    "VendorName": "Ledger",
+    "DeviceName": "HW1"
+  },
+  {
+    "VendorID": 2581,
+    "ProductID": "1b7c",
+    "VendorName": "Ledger",
+    "DeviceName": "HW1"
+  },
+  {
+    "VendorID": 2581,
+    "ProductID": "2b7c",
+    "VendorName": "Ledger",
+    "DeviceName": "HW1"
+  },
+  {
+    "VendorID": 2581,
+    "ProductID": "3b7c",
+    "VendorName": "Ledger",
+    "DeviceName": "HW1"
+  },
+  {
+    "VendorID": 2581,
+    "ProductID": "4b7c",
+    "VendorName": "Ledger",
+    "DeviceName": "HW1"
+  },
+  {
+    "VendorID": 2581,
+    "ProductID": "f1d1",
+    "VendorName": "Ledger",
+    "DeviceName": "HW1? Or Ledger Nano S Plus"
+  },
+  {
+    "VendorID": "2b24",
+    "ProductID": "All",
+    "VendorName": "KeepKey",
+    "DeviceName": "Bitcoin Wallet"
+  },
+  {
+    "VendorID": "2c97",
+    "ProductID": "All",
+    "VendorName": "Ledger",
+    "DeviceName": "Ledger HW2, Nano S, Aramis, X and Blue"
+  },
+  {
+    "VendorID": "2f48",
+    "ProductID": 2130,
+    "VendorName": "D'CENT",
+    "DeviceName": "Biometric Wallet"
+  },
+  {
+    "VendorID": "534c",
+    "ProductID": 1,
+    "VendorName": "SatoshiLabs",
+    "DeviceName": "Trezor v1"
+  },
+  {
+    "VendorID": "d13e",
+    "ProductID": "cc10",
+    "VendorName": "CoinKite",
+    "DeviceName": "ColdCard"
+  }
+]

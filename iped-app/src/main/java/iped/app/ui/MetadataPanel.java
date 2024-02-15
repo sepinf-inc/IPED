@@ -235,17 +235,17 @@ public class MetadataPanel extends JPanel
         this.add(scrollList, BorderLayout.CENTER);
     }
 
-    abstract class LookupOrd {
+    static public abstract class LookupOrd {
         boolean isCategory = false;
 
-        abstract String lookupOrd(int ord) throws IOException;
+        public abstract String lookupOrd(int ord) throws IOException;
     }
 
-    class LookupOrdSDV extends LookupOrd {
+    static public class LookupOrdSDV extends LookupOrd {
 
         SortedDocValues sdv;
 
-        LookupOrdSDV(SortedDocValues sdv) {
+        public LookupOrdSDV(SortedDocValues sdv) {
             this.sdv = sdv;
         }
 
@@ -259,11 +259,11 @@ public class MetadataPanel extends JPanel
         }
     }
 
-    class LookupOrdSSDV extends LookupOrd {
+    static public class LookupOrdSSDV extends LookupOrd {
 
         SortedSetDocValues ssdv;
 
-        LookupOrdSSDV(SortedSetDocValues ssdv) {
+        public LookupOrdSSDV(SortedSetDocValues ssdv) {
             this.ssdv = ssdv;
         }
 
@@ -277,11 +277,11 @@ public class MetadataPanel extends JPanel
         }
     }
 
-    private static class ValueCount {
+    public static class ValueCount {
         LookupOrd lo;
         int ord, count;
 
-        ValueCount(LookupOrd lo, int ord, int count) {
+        public ValueCount(LookupOrd lo, int ord, int count) {
             this.lo = lo;
             this.ord = ord;
             this.count = count;
@@ -306,6 +306,10 @@ public class MetadataPanel extends JPanel
         public String toString() {
             NumberFormat nf = LocalizedFormat.getNumberInstance(); 
             return getVal() + " (" + nf.format(count) + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+        }
+
+        public int getCount() {
+            return count;
         }
     }
 
@@ -429,11 +433,16 @@ public class MetadataPanel extends JPanel
         if (array == null) {
             return;
         }
-        App.get().dialogBar.setVisible(true);
+        setWaitVisible(true);
         new Thread() {
             public void run() {
-                filteredArray = filter(array);
-                sortAndUpdateList(filteredArray);
+                try {
+                    filteredArray = filter(array);
+                    sortAndUpdateList(filteredArray);
+                } finally {
+                    setWaitVisible(false);
+                }
+
             }
         }.start();
     }
@@ -455,27 +464,30 @@ public class MetadataPanel extends JPanel
     }
 
     private void copyResultsToClipboard() {
-        App.get().dialogBar.setVisible(true);
+        setWaitVisible(true);
         new Thread() {
             public void run() {
-                StringBuffer strBuffer = new StringBuffer();
-                for (int i = 0; i < list.getModel().getSize(); i++) {
-                    ValueCount item = list.getModel().getElementAt(i);
-                    String val = item.getVal();
-                    if (val != null && !val.isEmpty()) {
-                        strBuffer.append(val);
-                        strBuffer.append(System.lineSeparator());
+                try {
+                    StringBuffer strBuffer = new StringBuffer();
+                    for (int i = 0; i < list.getModel().getSize(); i++) {
+                        ValueCount item = list.getModel().getElementAt(i);
+                        String val = item.getVal();
+                        if (val != null && !val.isEmpty()) {
+                            strBuffer.append(val);
+                            strBuffer.append(System.lineSeparator());
+                        }
                     }
+                    Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(strBuffer.toString()),
+                            null);
+                } finally {
+                    setWaitVisible(false);
                 }
-                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(strBuffer.toString()),
-                        null);
-                App.get().dialogBar.setVisible(false);
             }
         }.start();
     }
 
     private void populateList() {
-        App.get().dialogBar.setVisible(true);
+        setWaitVisible(true);
         final boolean updateResult = !list.isSelectionEmpty();
         if (updateResult) {
             updatingResult = true;
@@ -495,6 +507,8 @@ public class MetadataPanel extends JPanel
                     countValues(updateResult);
                 } catch (IOException e) {
                     e.printStackTrace();
+                } finally {
+                    setWaitVisible(false);
                 }
             }
         }.start();
@@ -1251,7 +1265,6 @@ public class MetadataPanel extends JPanel
 
                 // System.out.println("finish");
                 updateTabColor();
-                App.get().dialogBar.setVisible(false);
             }
         });
 
@@ -1429,5 +1442,13 @@ public class MetadataPanel extends JPanel
         }
         listFilter.setText("");
         propsFilter.setText("");
+    }
+    
+    private void setWaitVisible(final boolean visible) {
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                App.get().dialogBar.setVisible(visible);
+            }
+        });
     }
 }

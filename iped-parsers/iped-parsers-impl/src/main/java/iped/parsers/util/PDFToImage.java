@@ -42,6 +42,7 @@ import org.icepdf.core.util.GraphicsRenderingHints;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import iped.io.URLUtil;
 import iped.utils.IOUtil;
 
 /**
@@ -164,7 +165,7 @@ public class PDFToImage implements Closeable {
                     throw new IOException("Error: no writer found for image format '" + EXT + "'"); //$NON-NLS-1$ //$NON-NLS-2$
 
             } else {
-                URL url = this.getClass().getProtectionDomain().getCodeSource().getLocation();
+                URL url = URLUtil.getURL(this.getClass());
                 String jarDir = new File(url.toURI()).getParent();
                 String classpath = jarDir + "/*"; //$NON-NLS-1$
                 String[] cmd = { "java", "-cp", classpath, "-Xmx" + externalConvMaxMem, //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
@@ -175,7 +176,7 @@ public class PDFToImage implements Closeable {
                 pb.redirectErrorStream(true);
                 Process process = pb.start();
 
-                IOUtil.ignoreInputStream(process.getInputStream());
+                IOUtil.ignoreInputStream(process);
 
                 try {
                     process.waitFor();

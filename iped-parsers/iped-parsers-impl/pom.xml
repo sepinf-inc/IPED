@@ -4,7 +4,7 @@
     <parent>
         <groupId>iped</groupId>
         <artifactId>iped-parsers</artifactId>
-        <version>4.1-snapshot</version>
+        <version>4.2-snapshot</version>
     </parent>
     <artifactId>iped-parsers-impl</artifactId>
     <packaging>jar</packaging>
@@ -47,7 +47,21 @@
           			<groupId>org.apache.tika</groupId>
     				<artifactId>tika-parser-image-module</artifactId>
         		</exclusion>
+        		<exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
         	</exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.plist</groupId>
+            <artifactId>dd-plist</artifactId>
+            <version>1.26</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>32.0.1-jre</version>
         </dependency>
 		<dependency>
   		    <groupId>org.apache.tika</groupId>
@@ -67,7 +81,7 @@
 		<dependency>
   		    <groupId>com.fasterxml.jackson.core</groupId>
 		    <artifactId>jackson-databind</artifactId>
-		    <version>2.13.2.2</version>
+		    <version>2.13.4.2</version>
 		</dependency>
 		<dependency>
 		    <groupId>com.googlecode.json-simple</groupId>
@@ -91,10 +105,24 @@
             <type>jar</type>
         </dependency>
         <dependency>
-            <groupId>org.icepdf</groupId>
+            <groupId>com.github.pcorless.icepdf</groupId>
             <artifactId>icepdf-core</artifactId>
             <version>${icepdf.version}</version>
             <type>jar</type>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.github.jai-imageio</groupId>
+                    <artifactId>jai-imageio-jpeg2000</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.bouncycastle</groupId>
+                    <artifactId>bcprov-ext-jdk15on</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>iped</groupId>
@@ -143,22 +171,22 @@
         <dependency>
             <groupId>com.dampcake</groupId>
             <artifactId>bencode</artifactId>
-            <version>1.3</version>
+            <version>${bencode.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-text</artifactId>
-            <version>1.8</version>
+            <version>1.10.0</version>
         </dependency>
         <dependency>
-            <groupId>dpf.ap</groupId>
+            <groupId>com.github.sepinf-inc.telegram-decoder</groupId>
             <artifactId>telegram-decoder-api</artifactId>
-            <version>1.0.4-SNAPSHOT</version>
+            <version>${telegram.version}</version>
         </dependency>
         <dependency>
-            <groupId>dpf.ap</groupId>
+            <groupId>com.github.sepinf-inc.telegram-decoder</groupId>
             <artifactId>telegram-decoder-impl</artifactId>
-            <version>${telegram.impl.version}</version>
+            <version>${telegram.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -181,6 +209,38 @@
             <groupId>io.github.fmpfeifer</groupId>
             <artifactId>libfqlite</artifactId>
             <version>1.57.05</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.springframework/spring-expression -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-expression</artifactId>
+            <version>5.3.26</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework</groupId>
+                    <artifactId>spring-jcl</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>2.6</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.horrorho</groupId>
+            <artifactId>RagingMoose</artifactId>
+            <version>c92dba11561cb1423dd81e3bb9dea8ae92a392d3</version>
+        </dependency>
+        <dependency>
+            <groupId>net.dongliu</groupId>
+            <artifactId>apk-parser</artifactId>
+            <version>2.6.10</version>
+        </dependency>
+        <dependency>
+          <groupId>com.webcohesion.ofx4j</groupId>
+          <artifactId>ofx4j</artifactId>
+          <version>1.36</version>
         </dependency>
     </dependencies>
     

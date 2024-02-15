@@ -28,11 +28,7 @@ numThreads = default
 # Full path for sleuthkit-4.x.x.jar built on Linux OS.
 # It is distributed a Windows only version with some optimization patches.
 # It is recommended to apply the patch (in source folder) before building sleuthkit on Linux.
-#tskJarPath = /home/user/tsk-4.6.5-src-folder/bindings/java/dist/sleuthkit-4.6.5.jar
-
-# Relative path for mplayer on Windows.
-# For Linux OS, mplayer must be on PATH. Do not comment out the param below.
-mplayerPath = ../mplayer/mplayer.exe
+#tskJarPath = /usr/local/share/java/sleuthkit-4.11.1.jar
 
 # Plugin folder for optional libs not embedded because of license restrictions.
 # They will be dynamically loaded at runtime.

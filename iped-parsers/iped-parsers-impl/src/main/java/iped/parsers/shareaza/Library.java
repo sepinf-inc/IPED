@@ -30,7 +30,7 @@ import iped.search.IItemSearcher;
 /**
  * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
  */
-class Library extends ShareazaEntity {
+public class Library extends ShareazaEntity {
 
     /* private String time; */
     private int version;

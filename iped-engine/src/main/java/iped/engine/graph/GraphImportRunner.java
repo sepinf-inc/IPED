@@ -21,6 +21,8 @@ import org.neo4j.cli.AdminTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import iped.io.URLUtil;
+
 public class GraphImportRunner {
 
     private static Logger LOGGER = LoggerFactory.getLogger(GraphImportRunner.class);
@@ -76,7 +78,7 @@ public class GraphImportRunner {
         args.add(getJreExecutable().getAbsolutePath());
         args.add("-cp");
         try {
-            URL url = AdminTool.class.getProtectionDomain().getCodeSource().getLocation();
+            URL url = URLUtil.getURL(AdminTool.class);
             args.add(new File(url.toURI()).getParentFile().getAbsolutePath() + "/*");
         } catch (URISyntaxException e1) {
             throw new IOException(e1);

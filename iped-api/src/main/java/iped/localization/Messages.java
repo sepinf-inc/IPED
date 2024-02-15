@@ -15,6 +15,8 @@ import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 import java.util.ResourceBundle.Control;
 
+import iped.io.URLUtil;
+
 public class Messages {
 
     public static final String LOCALE_SYS_PROP = "iped-locale";
@@ -27,7 +29,7 @@ public class Messages {
     public static ResourceBundle getExternalBundle(String bundleName, Locale locale) {
         File file = null;
         try {
-            URL url = Messages.class.getProtectionDomain().getCodeSource().getLocation();
+            URL url = URLUtil.getURL(Messages.class);
             file = new File(new File(url.toURI()).getParentFile().getParentFile(), BUNDLES_FOLDER);
         } catch (URISyntaxException e1) {
             e1.printStackTrace();

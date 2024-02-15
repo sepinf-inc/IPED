@@ -262,21 +262,36 @@ public class IOUtil {
     public static void deleteDirectory(File file, boolean logError) throws IOException {
         if (file.isDirectory()) {
             String[] names = file.list();
-            if (names != null)
+            if (names != null) {
                 for (int i = 0; i < names.length; i++) {
                     File subFile = new File(file, names[i]);
                     deleteDirectory(subFile, logError);
                 }
+            }
         }
         try {
             Files.delete(file.toPath());
 
         } catch (Exception e) {
             // also catch InvalidPathException and others
-            if (logError) {
-                LoggerFactory.getLogger(IOUtil.class).info("Delete failed on '" + file.getPath() + "' " + e.toString()); //$NON-NLS-1$ //$NON-NLS-2$
-            } else
-                throw e;
+            if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
+                // see https://learn.microsoft.com/en-us/troubleshoot/windows-server/backup-and-storage/cannot-delete-file-folder-on-ntfs-file-system
+                new File("\\\\?\\" + file.getAbsolutePath()).delete();
+                /*
+                String[] cmd = { "powershell.exe", "rm", "-Recurse", "-Force", "\\\"\\\\?\\" + file.getAbsolutePath() + "\\\"" };
+                try {
+                    Runtime.getRuntime().exec(cmd).waitFor();
+                } catch (Exception e2) {
+                    e2.printStackTrace();
+                }*/
+            }
+            if (file.exists()) {
+                if (logError) {
+                    LoggerFactory.getLogger(IOUtil.class).info("Delete failed on '" + file.getPath() + "' " + e.toString()); //$NON-NLS-1$ //$NON-NLS-2$
+                } else {
+                    throw e;
+                }
+            }
         }
 
     }
@@ -355,7 +370,7 @@ public class IOUtil {
         int read = 0;
         while (read < len) {
             int r = is.read(arr, read, len - read);
-            if (r <= 0) break;
+            if (r < 0) break;
             read += r;
         }
         return len == read ? arr : null;
@@ -367,7 +382,7 @@ public class IOUtil {
         int read = 0;
         while (read < len) {
             int r = is.read(arr, read, len - read);
-            if (r <= 0) break;
+            if (r < 0) break;
             read += r;
         }
         if (len != read) return null;
@@ -408,23 +423,35 @@ public class IOUtil {
     }
 
     public static void ignoreInputStream(final InputStream stream) {
-        ignoreInputStream(stream, null);
+        ignoreInputStream0(stream);
     }
 
+    public static void ignoreInputStream(final Process p) {
+        ignoreInputStream0(p.getInputStream());
+    }
+
+    public static void ignoreErrorStream(Process p) {
+        ignoreInputStream0(p.getErrorStream());
+    }
+
+    @Deprecated
     public static void ignoreInputStream(final InputStream stream, final ContainerVolatile msg) {
+        ignoreInputStream0(stream);
+    }
+
+    private static void ignoreInputStream0(final InputStream stream) {
         Thread t = new Thread() {
             @Override
             public void run() {
                 byte[] out = new byte[1024];
                 int read = 0;
-                while (read != -1)
-                    try {
+                try {
+                    while (read != -1) {
                         read = stream.read(out);
-                        if (msg != null)
-                            msg.progress = true;
-
-                    } catch (Exception e) {
                     }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         };
         t.setDaemon(true);

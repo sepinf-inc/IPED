@@ -11,7 +11,7 @@ import iped.engine.task.regex.BasicAbstractRegexValidatorService;
  * same rules as of bitcoin address, so it's not possible to tell the difference
  * (it will be validated as BitcoinAddress)
  * 
- * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
+ * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
  *
  */
 public class BCHAddressValidatorService extends BasicAbstractRegexValidatorService {

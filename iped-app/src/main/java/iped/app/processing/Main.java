@@ -27,9 +27,11 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import iped.app.bootstrap.Bootstrap;
 import iped.app.config.LogConfiguration;
 import iped.app.processing.ui.ProgressConsole;
 import iped.app.processing.ui.ProgressFrame;
+import iped.app.ui.splash.StartUpControlClient;
 import iped.app.ui.utils.UiScale;
 import iped.engine.Version;
 import iped.engine.config.Configuration;
@@ -37,6 +39,7 @@ import iped.engine.core.Manager;
 import iped.engine.localization.Messages;
 import iped.engine.util.UIPropertyListenerProvider;
 import iped.exception.IPEDException;
+import iped.io.URLUtil;
 import iped.parsers.ocr.OCRParser;
 
 /**
@@ -54,6 +57,8 @@ public class Main {
     File logFile;
     LogConfiguration logConfiguration;
     CmdLineArgsImpl cmdLineParams;
+
+    private StartUpControlClient startUpControlClient;
 
     private Manager manager;
 
@@ -143,7 +148,7 @@ public class Main {
      * Define o caminho onde será encontrado o arquivo de configuração principal.
      */
     public void setConfigPath() throws Exception {
-        URL url = Main.class.getProtectionDomain().getCodeSource().getLocation();
+        URL url = URLUtil.getURL(Main.class);
 
         if ("true".equals(System.getProperty("Debugging"))) {
             rootPath = System.getProperty("user.dir");
@@ -218,6 +223,10 @@ public class Main {
             provider.addPropertyChangeListener(console, false);
         }
 
+        if (startUpControlClient != null) {
+            startUpControlClient.finish();
+        }
+
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
@@ -244,9 +253,10 @@ public class Main {
             public void run() {
                 byte[] buf = new byte[4096];
                 try {
-                    while (is.read(buf) == -1) {
-                        provider.cancel(true);
-                    }
+                    while (is.read(buf) != -1)
+                        ;
+                    provider.cancel(true);
+
                 } catch (Exception e) {
                     // ignore
                 }
@@ -271,8 +281,11 @@ public class Main {
     public static void main(String[] args) {
 
         Main iped = new Main(args, true);
-        PrintStream SystemOut = System.out;
+        PrintStream SystemOut = System.out; // this is redirected by LogConfiguration
         boolean success = false;
+
+        iped.startUpControlClient = new StartUpControlClient();
+        iped.startUpControlClient.start();
 
         try {
             iped.setConfigPath();
@@ -289,6 +302,8 @@ public class Main {
             }
 
             Configuration.getInstance().loadConfigurables(iped.configPath, true);
+            
+            SystemOut.println(Bootstrap.SUB_PROCESS_TEMP_FOLDER + System.getProperty("java.io.tmpdir"));
 
             success = iped.execute();
 

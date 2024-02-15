@@ -9,7 +9,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -43,7 +43,7 @@ import iped.utils.EmptyInputStream;
  * https://stackoverflow.com/questions/34167003/what-format-is-the-safari-history-db-history-visits-visit-time-in
  * http://az4n6.blogspot.com/2014/07/safari-and-iphone-internet-history.html
  * 
- * @author Paulo César Herrmann Wanner <herrmann.pchw@dpf.gov.br>
+ * @author Paulo César Herrmann Wanner <herrmann.pchw@pf.gov.br>
  */
 public class SafariSqliteParser extends AbstractSqliteBrowserParser {
 
@@ -229,7 +229,7 @@ public class SafariSqliteParser extends AbstractSqliteBrowserParser {
 
     protected List<SafariResumedVisit> getResumedHistory(Connection connection, Metadata metadata, ParseContext context)
             throws SQLException {
-        List<SafariResumedVisit> resumedHistory = new LinkedList<SafariResumedVisit>();
+        List<SafariResumedVisit> resumedHistory = new ArrayList<SafariResumedVisit>();
 
         Statement st = null;
         try {
@@ -273,7 +273,7 @@ public class SafariSqliteParser extends AbstractSqliteBrowserParser {
 
     protected List<SafariVisit> getHistory(Connection connection, Metadata metadata, ParseContext context)
             throws SQLException {
-        List<SafariVisit> history = new LinkedList<SafariVisit>();
+        List<SafariVisit> history = new ArrayList<SafariVisit>();
 
         Statement st = null;
         try {

@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map.Entry;
+import java.util.Properties;
 
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -68,13 +70,31 @@ public class SleuthkitInputStreamFactory extends SeekableInputStreamFactory {
                         if (!SleuthkitReader.isTSKPatched()) {
                             tskDB = getWriteableDBFile(tskDB);
                         }
-                        sleuthkitCase = SleuthkitCase.openCase(tskDB.getAbsolutePath());
+                        sleuthkitCase = openSleuthkitCase(tskDB.getAbsolutePath());
+
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
                 }
             }
         }
+        return sleuthkitCase;
+    }
+
+    /**
+     * Workaround for https://github.com/sepinf-inc/IPED/issues/1176
+     * 
+     * @param tskDB
+     * @return
+     * @throws TskCoreException
+     */
+    public static SleuthkitCase openSleuthkitCase(String tskDBPath) throws TskCoreException {
+        Properties sysProps = System.getProperties();
+        SleuthkitCase sleuthkitCase = SleuthkitCase.openCase(tskDBPath);
+        for (Entry<Object, Object> entry : System.getProperties().entrySet()) {
+            sysProps.setProperty(entry.getKey().toString(), entry.getValue().toString());
+        }
+        System.setProperties(sysProps);
         return sleuthkitCase;
     }
 

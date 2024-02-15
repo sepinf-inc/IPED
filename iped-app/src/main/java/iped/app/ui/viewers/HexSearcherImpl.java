@@ -140,7 +140,7 @@ public class HexSearcherImpl implements HexSearcher {
                 tempLength = bufferLength + maxTermLength;
 
                 data.seek(posicao);
-                int n = data.read(buffer, 0, tempLength);
+                int n = data.readNBytes(buffer, 0, tempLength);
 
                 for (String texto : palavras) {
 
@@ -206,7 +206,7 @@ public class HexSearcherImpl implements HexSearcher {
             LEFT: if (!interromper && tempLength > 0) {
 
                 data.seek(posicao);
-                int n = data.read(buffer, 0, tempLength);
+                int n = data.readNBytes(buffer, 0, tempLength);
 
                 if (n > 0) {
 

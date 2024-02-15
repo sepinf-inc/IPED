@@ -40,8 +40,14 @@ import iped.engine.config.ExportByKeywordsConfig;
 import iped.engine.config.RegexTaskConfig;
 import iped.engine.config.RegexTaskConfig.RegexEntry;
 import iped.engine.data.Item;
+import iped.engine.hashdb.HashDBDataSource;
 import iped.engine.lucene.analysis.FastASCIIFoldingFilter;
 import iped.engine.task.AbstractTask;
+import iped.engine.task.HashDBLookupTask;
+import iped.engine.task.HashTask;
+import iped.engine.task.PhotoDNALookup;
+import iped.engine.task.index.IndexItem;
+import iped.properties.ExtraProperties;
 
 public class RegexTask extends AbstractTask {
 
@@ -60,6 +66,26 @@ public class RegexTask extends AbstractTask {
     private static Regex regexFull;
 
     private static FSTConfiguration fastSerializer = FSTConfiguration.createDefaultConfiguration();
+
+    private static final Set<String> ignoredKeys = new HashSet<String>();
+    static {
+        // Ignore these keys when reading item's properties to be searched (issue #1988)
+        ignoredKeys.add(HashTask.HASH.EDONKEY.toString());
+        ignoredKeys.add(HashTask.HASH.MD5.toString());
+        ignoredKeys.add(HashTask.HASH.SHA1.toString());
+        ignoredKeys.add(HashTask.HASH.SHA256.toString());
+        ignoredKeys.add(HashTask.HASH.SHA512.toString());
+        ignoredKeys.add(IndexItem.TRACK_ID);
+        ignoredKeys.add(IndexItem.PARENT_TRACK_ID);
+        ignoredKeys.add(IndexItem.CONTAINER_TRACK_ID);
+        ignoredKeys.add(IndexItem.EVIDENCE_UUID);
+        ignoredKeys.add(ExtraProperties.GLOBAL_ID);
+        ignoredKeys.add(HashDBLookupTask.ATTRIBUTES_PREFIX + HashDBDataSource.ledMd5_512);
+        ignoredKeys.add(HashDBLookupTask.ATTRIBUTES_PREFIX + HashDBDataSource.ledMd5_64k);
+        ignoredKeys.add(HashDBLookupTask.ATTRIBUTES_PREFIX + HashDBDataSource.photoDna);
+        ignoredKeys.add(PhotoDNALookup.PHOTO_DNA_HIT_PREFIX + HashTask.HASH.MD5.name());
+        ignoredKeys.add(PhotoDNALookup.PHOTO_DNA_NEAREAST_HASH);
+    }
 
     private char[] cbuf = new char[1 << 20];
 
@@ -149,11 +175,11 @@ public class RegexTask extends AbstractTask {
     public void init(ConfigurationManager configurationManager) throws Exception {
 
         regexConfig = configurationManager.findObject(RegexTaskConfig.class);
-        logger.info("Loaded {} regexes from configuration.", regexConfig.getRegexList().size());
-
         ExportByKeywordsConfig exportConfig = configurationManager.findObject(ExportByKeywordsConfig.class);
 
         if (regexConfig.isEnabled() && regexList == null) {
+
+            logger.info("Loaded {} regexes from configuration.", regexConfig.getRegexList().size());
 
             if (loadCache(regexConfig, exportConfig)) {
                 logger.info("Regex cache loaded from {}", cacheFile.getAbsolutePath());
@@ -186,7 +212,7 @@ public class RegexTask extends AbstractTask {
                 logger.info("Regex cache saved to {}", cacheFile.getAbsolutePath());
             }
 
-            initValidators(new File(output, "conf"));
+            initValidators(new File(output, "scripts"));
         }
 
     }
@@ -273,9 +299,9 @@ public class RegexTask extends AbstractTask {
     private Reader getExtraAttributeReader(IItem item) {
         StringBuilder sb = new StringBuilder();
         for (String key : item.getExtraAttributeMap().keySet().toArray(new String[0])) {
-            if (!key.startsWith(REGEX_PREFIX)) {
+            if (!key.startsWith(REGEX_PREFIX) && !ignoredKeys.contains(key)) {
                 Object val = item.getExtraAttribute(key);
-                sb.append(key).append(": ").append(val.toString());
+                sb.append(key).append(": ").append(val.toString()).append('\n');
             }
         }
         return new StringReader(sb.toString());
@@ -303,11 +329,11 @@ public class RegexTask extends AbstractTask {
             while (fullMatcher.find()) {
                 int start = fullMatcher.start();
                 int end = fullMatcher.end();
-                String hit = text.substring(start, end);
+                String fullHit = text.substring(start, end);
                 int i = 0;
                 for (Regex regex : regexList) {
-                    if (regex.pattern.run(hit)) {
-                        hit = hit.substring(regex.prefix, hit.length() - regex.sufix);
+                    if (regex.pattern.run(fullHit)) {
+                        String hit = fullHit.substring(regex.prefix, fullHit.length() - regex.sufix);
                         if (regex.ignoreCases)
                             hit = hit.toLowerCase();
                         if (regexValidator.validate(regex, hit)) {

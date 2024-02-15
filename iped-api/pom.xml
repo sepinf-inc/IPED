@@ -4,23 +4,13 @@
     <parent>
         <groupId>iped</groupId>
         <artifactId>iped-parent</artifactId>
-        <version>4.1-snapshot</version>
+        <version>4.2-snapshot</version>
     </parent>
     
     <artifactId>iped-api</artifactId>
     <packaging>jar</packaging>
     
     <dependencies>
-        <dependency>
-            <groupId>commons-configuration</groupId>
-            <artifactId>commons-configuration</artifactId>
-            <version>1.10</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>29.0-jre</version>
-        </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-core</artifactId>
@@ -30,11 +20,6 @@
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-core</artifactId>
             <version>${tika.core.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.sleuthkit</groupId>
-            <artifactId>sleuthkit</artifactId>
-            <version>${sleuthkit.version}</version>
         </dependency>
     </dependencies>
     

@@ -54,7 +54,6 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
         App.get().setEnableGallerySimSearchButton(false);
         App.get().ipedResult = new MultiSearchResult();
         App.get().setLastSelectedDoc(-1);
-        App.get().resultsModel.fireTableDataChanged();
         if (App.get().resultSortKeys == null || (App.get().resultsTable.getRowSorter() != null
                 && !App.get().resultsTable.getRowSorter().getSortKeys().isEmpty())) {
             App.get().resultSortKeys = App.get().resultsTable.getRowSorter().getSortKeys();
@@ -65,6 +64,7 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
         App.get().duplicateDock.setTitleText(Messages.getString("DuplicatesTableModel.Duplicates")); //$NON-NLS-1$
         App.get().parentDock.setTitleText(Messages.getString("ParentTableModel.ParentCount")); //$NON-NLS-1$
         App.get().referencesDock.setTitleText(Messages.getString("ReferencesTab.Title")); //$NON-NLS-1$
+        App.get().referencedByDock.setTitleText(Messages.getString("ReferencedByTab.Title")); //$NON-NLS-1$
         App.get().status.setText(" "); //$NON-NLS-1$
 
         App.get().getViewerController().clear();
@@ -76,6 +76,7 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
         App.get().parentItemModel.results = new LuceneSearchResult(0);
         App.get().parentItemModel.fireTableDataChanged();
         App.get().referencesModel.clear();
+        App.get().referencedByModel.clear();
 
         try {
             UICaseSearcherFilter task;
@@ -158,9 +159,11 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
                         Messages.getString("AppListener.UncheckAll.Title"), JOptionPane.YES_NO_OPTION); //$NON-NLS-1$
                 if (result == JOptionPane.YES_OPTION) {
                     App.get().appCase.getMultiBookmarks().clearChecked();
+                    App.get().sendCheckAllToResultSetViewers(false);
                 }
             } else {
                 App.get().appCase.getMultiBookmarks().checkAll();
+                App.get().sendCheckAllToResultSetViewers(true);
             }
 
             App.get().gallery.getDefaultEditor(GalleryCellRenderer.class).stopCellEditing();

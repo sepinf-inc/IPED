@@ -151,6 +151,15 @@ public abstract class AbstractTask {
      */
     abstract protected void process(IItem evidence) throws Exception;
 
+    protected static class ItemReEnqueuedException extends RuntimeException {
+
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 1L;
+
+    }
+
     /**
      * Realiza o processamento do item na tarefa e o envia para a próxima tarefa.
      *
@@ -175,9 +184,16 @@ public abstract class AbstractTask {
         worker.runningTask = this;
         worker.evidence = evidence;
 
+        boolean sendToNextTask = true;
+
         if (this.isEnabled() && (!evidence.isToIgnore() || processIgnoredItem())) {
             long t = System.nanoTime() / 1000;
-            processMonitorTimeout(evidence);
+            try {
+                processMonitorTimeout(evidence);
+
+            } catch (ItemReEnqueuedException e) {
+                sendToNextTask = false;
+            }
             Long subitensTime = subitemProcessingTime.remove(evidence.getId());
             if (subitensTime == null) {
                 subitensTime = 0L;
@@ -185,7 +201,9 @@ public abstract class AbstractTask {
             taskTime += System.nanoTime() / 1000 - t - subitensTime;
         }
 
-        sendToNextTask(evidence);
+        if (sendToNextTask) {
+            sendToNextTask(evidence);
+        }
 
         worker.evidence = prevEvidence;
         worker.runningTask = prevTask;
@@ -206,12 +224,7 @@ public abstract class AbstractTask {
             if (evidence.isRoot() || priority <= worker.manager.getProcessingQueues().getCurrentQueuePriority())
                 nextTask.processAndSendToNextTask(evidence);
             else {
-                evidence.dispose();
-                SkipCommitedTask.checkAgainLaterProcessedParents(evidence);
-                worker.manager.getProcessingQueues().addItemToQueue(evidence, priority);
-                if (!evidence.isQueueEnd()) {
-                    worker.decItemsBeingProcessed();
-                }
+                reEnqueueItem(evidence, priority);
             }
         } else if (!evidence.isQueueEnd()) {
             // dec items being processed counter if this is last task
@@ -232,6 +245,20 @@ public abstract class AbstractTask {
                 }
                 stats.addVolume(len);
             }
+        }
+    }
+
+    protected void reEnqueueItem(IItem item) throws InterruptedException {
+        reEnqueueItem(item, worker.manager.getProcessingQueues().getCurrentQueuePriority());
+        throw new ItemReEnqueuedException();
+    }
+
+    private void reEnqueueItem(IItem item, int queue) throws InterruptedException {
+        item.dispose();
+        SkipCommitedTask.checkAgainLaterProcessedParents(item);
+        worker.manager.getProcessingQueues().addItemToQueue(item, queue);
+        if (!item.isQueueEnd()) {
+            worker.decItemsBeingProcessed();
         }
     }
 

@@ -182,13 +182,17 @@ public class Configuration {
         }
 
         ConfigurationManager configManager = ConfigurationManager.createInstance(configDirectory);
-        configManager.addObject(new LocaleConfig());
+        LocaleConfig lc = new LocaleConfig();
+        configManager.addObject(lc);
+        configManager.loadConfig(lc);
 
         PluginConfig pluginConfig = new PluginConfig();
         configManager.addObject(pluginConfig);
         configManager.loadConfig(pluginConfig);
         addPluginJarsToConfigurationLookup(configDirectory, pluginConfig);
 
+        configManager.addObject(new SplashScreenConfig());
+        
         if (!loadAll) {
             configManager.loadConfigs();
             return;

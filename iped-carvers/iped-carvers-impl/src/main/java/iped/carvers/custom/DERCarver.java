@@ -3,10 +3,9 @@ package iped.carvers.custom;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.cert.Certificate;
+import java.security.KeyStore;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
 
 import org.apache.commons.codec.DecoderException;
 import org.apache.tika.mime.MediaType;
@@ -37,12 +36,15 @@ public class DERCarver extends AbstractCarver {
     public long getLengthFromHit(IItem parentEvidence, Hit header) throws IOException {
         try (SeekableInputStream is = parentEvidence.getSeekableInputStream()) {
             is.seek(header.getOffset() + 1);
-            byte lenlenb[] = new byte[1];
-            is.read(lenlenb);
-            int lenlen = lenlenb[0] & 0x7F;
-            byte lenb[] = new byte[lenlen];
-            is.read(lenb);
-
+            int b = is.read();
+            if (b == -1) {
+                throw new IOException("End of stream reached");
+            }
+            int lenlen = b & 0x7F;
+            byte[] lenb = is.readNBytes(lenlen);
+            if (lenb.length < lenlen) {
+                throw new IOException("End of stream reached");
+            }
             long len = 0;
             long valor = 0;
             for (int j = 0; j < lenlen; j++) {
@@ -60,28 +62,39 @@ public class DERCarver extends AbstractCarver {
             throws InvalidCarvedObjectException {
 
         try (SeekableInputStream is = parentEvidence.getSeekableInputStream()) {
-            byte[] buf = new byte[(int) length];
             is.seek(header.getOffset());
-            is.read(buf);
+            byte[] buf = is.readNBytes((int) length);
+            if (buf.length < length) {
+                throw new IOException("End of stream reached");
+            }
             parse(buf); // tenta interpretar o certificado com o tamanho do cabecalho incluso
+
         } catch (Exception e) {
             throw new InvalidCarvedObjectException(e);
         }
 
     }
 
-    public Certificate parse(byte[] buff) throws IOException {
+    public void parse(byte[] buff) throws IOException {
         try {
             CertificateFactory cf = CertificateFactory.getInstance("X.509");
-
-            X509Certificate cert = null;
-
             InputStream certStream = new ByteArrayInputStream(buff);
-            cert = (X509Certificate) cf.generateCertificate(certStream);
+            cf.generateCertificate(certStream);
 
-            return cert;
         } catch (CertificateException e) {
-            throw new IOException(e);
+            try {
+                // se não for um certificado válido tenta verificar se é um keystore
+                KeyStore p12 = KeyStore.getInstance("PKCS12");
+                ByteArrayInputStream bais = new ByteArrayInputStream(buff);
+                p12.load(bais, "123".toCharArray());
+
+            } catch (Exception e1) {
+                if (!e1.toString().contains("password")) {
+                    // o erro não foi de senha invalida, então a stream foi aparentemente
+                    // recuperada.
+                    throw new IOException(e1);
+                }
+            }
         }
     }
 

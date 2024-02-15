@@ -9,7 +9,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -45,7 +45,7 @@ import iped.utils.EmptyInputStream;
  * https://www.acquireforensics.com/blog/google-chrome-browser-forensics.html
  * http://paper.ijcsns.org/07_book/201609/20160919.pdf
  * 
- * @author Paulo César Herrmann Wanner <herrmann.pchw@dpf.gov.br>
+ * @author Paulo César Herrmann Wanner <herrmann.pchw@pf.gov.br>
  */
 public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
 
@@ -498,7 +498,7 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
 
     protected List<ResumedVisit> getResumedHistory(Connection connection, Metadata metadata, ParseContext context)
             throws SQLException {
-        List<ResumedVisit> resumedHistory = new LinkedList<ResumedVisit>();
+        List<ResumedVisit> resumedHistory = new ArrayList<ResumedVisit>();
 
         Statement st = null;
         try {
@@ -524,7 +524,7 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
 
     protected List<Visit> getHistory(Connection connection, Metadata metadata, ParseContext context)
             throws SQLException {
-        List<Visit> history = new LinkedList<Visit>();
+        List<Visit> history = new ArrayList<Visit>();
 
         Statement st = null;
         try {
@@ -549,7 +549,7 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
 
     protected List<Download> getDownloads(Connection connection, Metadata metadata, ParseContext context)
             throws SQLException {
-        List<Download> downloads = new LinkedList<Download>();
+        List<Download> downloads = new ArrayList<Download>();
 
         Statement st = null;
         try {
@@ -582,7 +582,7 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
 
     protected List<Search> getSearchTerms(Connection connection, Metadata metadata, ParseContext context)
             throws SQLException {
-        List<Search> searches = new LinkedList<Search>();
+        List<Search> searches = new ArrayList<Search>();
 
         Statement st = null;
         try {

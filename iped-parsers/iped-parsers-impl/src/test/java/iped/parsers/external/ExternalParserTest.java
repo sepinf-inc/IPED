@@ -73,7 +73,7 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
             List<String> repoPaths = new ArrayList<>();
             repoPaths.add("libyal/libagdb/20181111.1/libagdb-20181111.1.zip");
             repoPaths.add("libyal/sccainfo/20170205.1/sccainfo-20170205.1.zip");
-            repoPaths.add("abelcheung/rifiuti2/0.6.1/rifiuti2-0.6.1.zip"); // recyclebin and recyclebinINFO2 parsers
+            repoPaths.add("abelcheung/rifiuti2/0.7.0/rifiuti2-0.7.0.zip"); // recyclebin and recyclebinINFO2 parsers
             repoPaths.add("libyal/evtxexport/20170122.1/evtxexport-20170122.1.zip");
             repoPaths.add("libyal/evtexport/20180317.1/evtexport-20180317.1.zip");
             for (String repoPath : repoPaths) {
@@ -92,13 +92,13 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
         prefetchConfigGenerator.writeDocumentToFile(XMLFile);
 
         // append RecycleBin parser
-        ExternalParserConfigGenerator recyclebinConfigGenerator = createExternalParserConfig("RecycleBinParser", tmpPath + "rifiuti/",
-            "rifiuti-vista -v", "rifiuti-vista -8 ${INPUT}", "x-recyclebin", 3, "UTF-8");
+        ExternalParserConfigGenerator recyclebinConfigGenerator = createExternalParserConfig("RecycleBinParser", tmpPath + "rifiuti2/",
+            "rifiuti-vista -v", "rifiuti-vista ${INPUT}", "x-recyclebin", 3, "UTF-8");
         recyclebinConfigGenerator.writeDocumentToFile(XMLFile);
 
         // append RecycleBinInfo2 parser
-        ExternalParserConfigGenerator recyclebinInfo2ConfigGenerator = createExternalParserConfig("RecycleInfo2Parser", tmpPath + "rifiuti/",
-            "rifiuti -v", "rifiuti -8 ${INPUT}", "x-info2", 3, "UTF-8");
+        ExternalParserConfigGenerator recyclebinInfo2ConfigGenerator = createExternalParserConfig("RecycleInfo2Parser", tmpPath + "rifiuti2/",
+            "rifiuti2 -v", "rifiuti2 ${INPUT}", "x-info2", 3, "UTF-8");
         recyclebinInfo2ConfigGenerator.writeDocumentToFile(XMLFile);
 
         // append EvtxLogParser parser
@@ -189,7 +189,7 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
     @Test
     public void testRecycleBin() throws IOException, TikaException, SAXException, TransformerException {
 
-        ContentHandler handler = new BodyContentHandler();
+        ContentHandler handler = new BodyContentHandler(1 << 20);
         ParseContext context = new ParseContext();
         Metadata metadata = new Metadata();
         String fileName = "test_recyclebin.png";
@@ -209,7 +209,7 @@ public class ExternalParserTest implements ExternalParsersConfigReaderMetKeys {
     @Test
     public void testRecycleBinInfo2() throws IOException, TikaException, SAXException, TransformerException {
 
-        ContentHandler handler = new BodyContentHandler();
+        ContentHandler handler = new BodyContentHandler(1 << 20);
         ParseContext context = new ParseContext();
         Metadata metadata = new Metadata();
         String fileName = "test_recyclebinINFO2";

@@ -32,6 +32,7 @@ import iped.configuration.Configurable;
 import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.EnableTaskProperty;
+import iped.io.SeekableInputStream;
 import iped.parsers.emule.KnownMetDecoder;
 import iped.parsers.emule.KnownMetEntry;
 import iped.utils.IOUtil;
@@ -73,6 +74,12 @@ public class KnownMetCarveTask extends BaseCarveTask {
      */
 
     private static final MediaType eMuleMediaType = MediaType.application("x-emule"); //$NON-NLS-1$
+
+    /**
+     * Media type dos arquivos part.met recuperados.
+     */
+
+    private static final MediaType eMulePartMetMediaType = MediaType.application("x-emule-part-met"); //$NON-NLS-1$
 
     /**
      * Passo para verificação do início do arquivo.
@@ -140,6 +147,7 @@ public class KnownMetCarveTask extends BaseCarveTask {
         // Percorre conteúdo buscando padrões plausíveis de arquivos known.met
         byte[] bb = new byte[1];
         byte[] buf = new byte[step - 1];
+        byte[] buf2 = new byte[1 << 20];
         BufferedInputStream is = null;
         long offset = 0;
         try {
@@ -147,7 +155,7 @@ public class KnownMetCarveTask extends BaseCarveTask {
             while (is.read(bb) > 0) {
                 byte read = bb[0];
                 if (read == 14 || read == 15) {
-                    is.read(buf);
+                    is.readNBytes(buf, 0, buf.length);
                     int numFiles = toInt(buf, 0);
                     if (numFiles > 0 && numFiles < 65536) {
                         int pos = 4;
@@ -162,17 +170,18 @@ public class KnownMetCarveTask extends BaseCarveTask {
                                 int numTags = toInt(buf, pos);
                                 if (numTags > 2 && numTags < 100) {
                                     int len = 512 * numFiles;
-                                    BufferedInputStream inParse = null;
+                                    SeekableInputStream inParse = null;
                                     try {
-                                        inParse = evidence.getBufferedInputStream();
-                                        inParse.skip(offset);
-                                        List<KnownMetEntry> l = KnownMetDecoder.parseToList(inParse, len);
+                                        inParse = evidence.getSeekableInputStream();
+                                        inParse.seek(offset);
+                                        List<KnownMetEntry> l = KnownMetDecoder.parseToList(inParse, len, true);
                                         if (!l.isEmpty()) {
                                             addCarvedFile(evidence, offset, len, "Carved-" + offset + "-known.met", //$NON-NLS-1$ //$NON-NLS-2$
                                                     eMuleMediaType);
                                             numCarvedItems.incrementAndGet();
                                         }
                                     } catch (Exception e) {
+                                        e.printStackTrace();
                                     } finally {
                                         IOUtil.closeQuietly(inParse);
                                     }
@@ -180,8 +189,54 @@ public class KnownMetCarveTask extends BaseCarveTask {
                             }
                         }
                     }
+                } else if (read == -32 || read == -30) {
+                    is.readNBytes(buf, 0, buf.length);
+                    long date = toInt(buf, 0) * 1000L;
+                    if (date > dateMin && date < dateMax) {
+                        int pos = 20;
+                        int numParts = toSmall(buf, pos);
+                        int numTags = 2;
+                        pos += 2;
+                        pos += 16 * numParts;
+                        if (pos < 500) {
+                            numTags = toInt(buf, pos);
+                        }
+                        if (numTags >= 2 && numTags <= 1024 && numParts <= 4096 && numParts >= 0) {
+                            SeekableInputStream inParse = null;
+                            try {
+                                inParse = evidence.getSeekableInputStream();
+                                inParse.seek(offset);
+                                int bytesRead = inParse.readNBytes(buf2, 0, buf2.length);
+                                if (bytesRead > 25) {
+                                    KnownMetEntry entry = new KnownMetEntry();
+                                    int len = KnownMetDecoder.parseEntry(entry, 1, buf2, true);
+                                    if (len > 0) {
+                                        addCarvedFile(evidence, offset, len + 1, "Carved-" + offset + "-part.met", //$NON-NLS-1$ //$NON-NLS-2$
+                                                eMulePartMetMediaType);
+                                        numCarvedItems.incrementAndGet();
+                                    }
+                                }
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            } finally {
+                                IOUtil.closeQuietly(inParse);
+                            }
+                        }
+                    }
                 } else {
-                    is.skip(step - 1);
+                    long skip = 0;
+                    do {
+                        long i = is.skip(step - 1 - skip);
+                        if (i == 0) {
+                            // check EOF
+                            is.mark(1);
+                            if (is.read() == -1) {
+                                return;
+                            }
+                            is.reset();
+                        }
+                        skip += i;
+                    } while (skip < step - 1);
                 }
                 offset += step;
             }
@@ -202,6 +257,6 @@ public class KnownMetCarveTask extends BaseCarveTask {
     }
 
     private static boolean isAcceptedType(MediaType mediaType) {
-        return mediaType.getBaseType().equals(UNALLOCATED_MIMETYPE) || mediaType.getBaseType().equals(mtPageFile);
+        return LedCarveTask.isAcceptedType(mediaType);
     }
 }

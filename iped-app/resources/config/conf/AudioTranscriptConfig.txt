@@ -19,6 +19,8 @@ implementationClass = iped.engine.task.transcript.VoskTranscriptTask
 #implementationClass = iped.engine.task.transcript.RemoteWav2Vec2TranscriptTask
 
 # If you want to use the Microsoft Azure service implementation, comment above and uncomment below.
+# You MUST include Microsoft client-sdk.jar into plugins folder.
+# Download it from https://csspeechstorage.blob.core.windows.net/maven/com/microsoft/cognitiveservices/speech/client-sdk/1.19.0/client-sdk-1.19.0.jar
 # You must pass your subscription key using command line parameter -XazureSubscriptionKey=XXXXXXXX
 #implementationClass = iped.engine.task.transcript.MicrosoftTranscriptTask
 
@@ -43,10 +45,16 @@ language = auto
 convertCommand = mplayer -benchmark -vo null -vc null -srate 16000 -af format=s16le,channels=1 -ao pcm:fast:file=$OUTPUT $INPUT
 
 # Mime types or supertypes to process. If you want to add videos use ; as separator and update 'convertCommand'.
-mimesToProcess = audio
+mimesToProcess = audio/3gpp; audio/3gpp2; audio/vnd.3gpp.iufp; audio/x-aac; audio/x-aiff; audio/amr; audio/amr-wb; audio/amr-wb+; audio/mp4; audio/ogg; audio/vorbis; audio/x-oggflac; audio/x-oggpcm; audio/opus; audio/speex; audio/qcelp; audio/vnd.wave; audio/x-caf; audio/x-ms-wma; audio/x-opus+ogg; audio/ilbc
 
-# Max number of seconds to wait until each audio second is transcribed. A minimum of 10s is always wait.
-timeout = 3
+# Skip known audios found in the hash lookup database.
+skipKnownFiles = true
+
+# Minimum number of seconds to wait for each audio transcription.
+minTimeout = 180
+
+# Number of seconds to wait for each audio second transcription. 'minTimeout' param above is added to this.
+timeoutPerSec = 3
 
 #########################################
 # VoskTranscriptTask options
@@ -87,7 +95,7 @@ minWordScore = 0.5
 #########################################
 
 # IP:PORT of the service/central node used by the RemoteWav2Vec2TranscriptTask implementation.
-# wav2vec2Service = 127.0.0.1:54321
+# wav2vec2Service = 127.0.0.1:11111
 
 #########################################
 # MicrosoftTranscriptTask options

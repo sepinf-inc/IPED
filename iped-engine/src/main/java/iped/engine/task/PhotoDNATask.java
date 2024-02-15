@@ -20,7 +20,7 @@ public class PhotoDNATask extends AbstractTask {
 
     private Logger LOGGER = LoggerFactory.getLogger(PhotoDNATask.class);
 
-    public static final String PDNA_NOT_FOUND_MSG = "Optional photoDNA lib not found in plugins folder. If you are law enforcement, ask sepinf.inc@pf.gov.br";
+    public static final String PDNA_NOT_FOUND_MSG = "Optional photoDNA lib not found in plugins folder. If you are law enforcement, ask iped@pf.gov.br";
 
     public static final int HASH_SIZE = 144;
 

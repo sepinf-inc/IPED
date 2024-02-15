@@ -32,8 +32,7 @@ public class GetResultsKMLWorker extends iped.viewers.api.CancelableWorker<KMLRe
     int contSemCoordenadas = 0, itemsWithGPS = 0;
     Consumer<KMLResult> consumer;
 
-    public GetResultsKMLWorker(IMultiSearchResultProvider app, String[] colunas, JProgressBar progress,
-            Consumer<KMLResult> consumer) {
+    public GetResultsKMLWorker(IMultiSearchResultProvider app, String[] colunas, JProgressBar progress, Consumer<KMLResult> consumer) {
         this.app = app;
         this.colunas = colunas;
         this.progress = progress;
@@ -56,115 +55,124 @@ public class GetResultsKMLWorker extends iped.viewers.api.CancelableWorker<KMLRe
 
     @Override
     protected KMLResult doInBackground() throws Exception {
-
-        StringBuilder tourPlayList = new StringBuilder(""); //$NON-NLS-1$
-        StringBuilder kml = new StringBuilder(""); //$NON-NLS-1$
-
-        String coluna = null;
-        boolean descendingOrder = false;
+        KMLResult kmlResult = new KMLResult();
         try {
-            coluna = app.getSortColumn();
-            descendingOrder = app.getSortOrder().equals(SortOrder.DESCENDING);
-        } catch (Exception ex) {
-            coluna = BasicProps.ID;
-            descendingOrder = false;
-        }
+            StringBuilder tourPlayList = new StringBuilder(""); //$NON-NLS-1$
+            StringBuilder kml = new StringBuilder(""); //$NON-NLS-1$
 
-        kml.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"); //$NON-NLS-1$
-        kml.append("<kml xmlns=\"http://www.opengis.net/kml/2.2\" xmlns:gx=\"http://www.google.com/kml/ext/2.2\" >"); //$NON-NLS-1$
-        kml.append("<Document>"); //$NON-NLS-1$
-        kml.append("<name>" + Messages.getString("KMLResult.SearchResults") + "</name>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        kml.append("<open>1</open>"); //$NON-NLS-1$
-        kml.append("<description>" + Messages.getString("KMLResult.SearchResultsDescription") + "</description>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        kml.append("<Style id=\"basico\"><BalloonStyle><![CDATA[" //$NON-NLS-1$
-                + " $[name] <br/> $[description] <br/> " + Messages.getString("KMLResult.ShowInTree") //$NON-NLS-1$ //$NON-NLS-2$
-                + "]]>" //$NON-NLS-1$
-                + "</BalloonStyle></Style>"); //$NON-NLS-1$
+            String coluna = null;
+            boolean descendingOrder = false;
+            try {
+                coluna = app.getSortColumn();
+                descendingOrder = app.getSortOrder().equals(SortOrder.DESCENDING);
+            } catch (Exception ex) {
+                coluna = BasicProps.ID;
+                descendingOrder = false;
+            }
 
-        kml.append("<Folder>"); //$NON-NLS-1$
-        kml.append("<name>" + Messages.getString("KMLResult.Results") + "</name>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            kml.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"); //$NON-NLS-1$
+            kml.append("<kml xmlns=\"http://www.opengis.net/kml/2.2\" xmlns:gx=\"http://www.google.com/kml/ext/2.2\" >"); //$NON-NLS-1$
+            kml.append("<Document>"); //$NON-NLS-1$
+            kml.append("<name>" + Messages.getString("KMLResult.SearchResults") + "</name>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            kml.append("<open>1</open>"); //$NON-NLS-1$
+            kml.append("<description>" + Messages.getString("KMLResult.SearchResultsDescription") + "</description>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            kml.append("<Style id=\"basico\"><BalloonStyle><![CDATA[" //$NON-NLS-1$
+                    + " $[name] <br/> $[description] <br/> " + Messages.getString("KMLResult.ShowInTree") //$NON-NLS-1$ //$NON-NLS-2$
+                    + "]]>" //$NON-NLS-1$
+                    + "</BalloonStyle></Style>"); //$NON-NLS-1$
 
-        IMultiSearchResult results = app.getResults();
-        Document doc;
+            kml.append("<Folder>"); //$NON-NLS-1$
+            kml.append("<name>" + Messages.getString("KMLResult.Results") + "</name>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
-        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss"); //$NON-NLS-1$
-        df.setTimeZone(TimeZone.getTimeZone("GMT")); //$NON-NLS-1$
+            IMultiSearchResult results = app.getResults();
+            Document doc;
 
-        if (progress != null) {
-            progress.setMaximum(results.getLength());
-        }
-
-        String query = ExtraProperties.LOCATIONS.replace(":", "\\:") + ":*";
-
-        /* nova query com apenas os itens que possuem georreferenciamento */
-        IIPEDSearcher searcher = app.createNewSearch(query);
-        IMultiSearchResult multiResult = searcher.multiSearch();
-
-        Map<IItemId, List<Integer>> gpsItems = new HashMap<>();
-        for (IItemId item : multiResult.getIterator())
-            gpsItems.put(item, null);
-
-        for (int row = 0; row < results.getLength(); row++) {
+            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss"); //$NON-NLS-1$
+            df.setTimeZone(TimeZone.getTimeZone("GMT")); //$NON-NLS-1$
 
             if (progress != null) {
-                progress.setValue(row + 1);
+                progress.setMaximum(results.getLength());
             }
 
-            IItemId item = results.getItem(app.getResultsTable().convertRowIndexToModel(row));
+            String query = ExtraProperties.LOCATIONS.replace(":", "\\:") + ":*";
 
-            if (!gpsItems.containsKey(item))
-                continue;
+            IIPEDSearcher searcher = app.createNewSearch(query);
+            IMultiSearchResult multiResult = searcher.multiSearch();
 
-            int luceneId = app.getIPEDSource().getLuceneId(item);
-            doc = app.getIPEDSource().getSearcher().doc(luceneId);
-
-            String lat;
-            String longit;
-            String alt = resolveAltitude(doc);
-
-            String[] locations = doc.getValues(ExtraProperties.LOCATIONS);
-
-            if (locations != null && locations.length == 1) {
-                String[] locs = locations[0].split(";"); //$NON-NLS-1$
-                lat = locs[0].trim();
-                longit = locs[1].trim();
-                generateLocationKML(tourPlayList, kml, coluna, doc, df, row, item, lat, longit, alt, -1);
+            Map<IItemId, List<Integer>> gpsItems = new HashMap<>();
+            for (IItemId item : multiResult.getIterator()) {
                 gpsItems.put(item, null);
+            }
 
-            } else if (locations != null && locations.length > 1) {
-                int subitem = -1;
-                List<Integer> subitems = new ArrayList<>();
-                gpsItems.put(item, subitems);
-                for (String location : locations) {
-                    String[] locs = location.split(";"); //$NON-NLS-1$
+            for (int row = 0; row < results.getLength(); row++) {
+
+                if (progress != null) {
+                    progress.setValue(row + 1);
+                }
+
+                IItemId item = results.getItem(app.getResultsTable().convertRowIndexToModel(row));
+
+                if (!gpsItems.containsKey(item)) {
+                    continue;
+                }
+
+                int luceneId = app.getIPEDSource().getLuceneId(item);
+                doc = app.getIPEDSource().getSearcher().doc(luceneId);
+
+                String lat;
+                String longit;
+                String alt = resolveAltitude(doc);
+
+                String[] locations = doc.getValues(ExtraProperties.LOCATIONS);
+
+                if (locations != null && locations.length == 1) {
+                    String[] locs = locations[0].split(";"); //$NON-NLS-1$
                     lat = locs[0].trim();
                     longit = locs[1].trim();
-                    generateLocationKML(tourPlayList, kml, coluna, doc, df, row, item, lat, longit, alt, ++subitem);
-                    subitems.add(subitem);
+                    generateLocationKML(tourPlayList, kml, coluna, doc, df, row, item, lat, longit, alt, -1);
+                    gpsItems.put(item, null);
+
+                } else if (locations != null && locations.length > 1) {
+                    int subitem = -1;
+                    List<Integer> subitems = new ArrayList<>();
+                    gpsItems.put(item, subitems);
+                    for (String location : locations) {
+                        String[] locs = location.split(";"); //$NON-NLS-1$
+                        lat = locs[0].trim();
+                        longit = locs[1].trim();
+                        generateLocationKML(tourPlayList, kml, coluna, doc, df, row, item, lat, longit, alt, ++subitem);
+                        subitems.add(subitem);
+                    }
+                } else {
+                    contSemCoordenadas++;
                 }
-            } else {
-                contSemCoordenadas++;
+
             }
+            kml.append("</Folder>"); //$NON-NLS-1$
+
+            kml.append("<gx:Tour>"); //$NON-NLS-1$
+            if (descendingOrder) {
+                kml.append("  <name>" + coluna + "-DESC</name>"); //$NON-NLS-1$ //$NON-NLS-2$
+            } else {
+                kml.append("  <name>" + coluna + "</name>"); //$NON-NLS-1$ //$NON-NLS-2$
+            }
+            kml.append("  <gx:Playlist>"); //$NON-NLS-1$
+            kml.append(tourPlayList);
+            kml.append("  </gx:Playlist>"); //$NON-NLS-1$
+            kml.append("</gx:Tour>"); //$NON-NLS-1$
+
+            kml.append("</Document>"); //$NON-NLS-1$
+            kml.append("</kml>"); //$NON-NLS-1$
+
+            kmlResult.setResultKML(kml.toString(), itemsWithGPS, gpsItems);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            // Thread.currentThread().setContextClassLoader(oldCcl);
 
         }
-        kml.append("</Folder>"); //$NON-NLS-1$
 
-        kml.append("<gx:Tour>"); //$NON-NLS-1$
-        if (descendingOrder) {
-            kml.append("  <name>" + coluna + "-DESC</name>"); //$NON-NLS-1$ //$NON-NLS-2$
-        } else {
-            kml.append("  <name>" + coluna + "</name>"); //$NON-NLS-1$ //$NON-NLS-2$
-        }
-        kml.append("  <gx:Playlist>"); //$NON-NLS-1$
-        kml.append(tourPlayList);
-        kml.append("  </gx:Playlist>"); //$NON-NLS-1$
-        kml.append("</gx:Tour>"); //$NON-NLS-1$
-
-        kml.append("</Document>"); //$NON-NLS-1$
-        kml.append("</kml>"); //$NON-NLS-1$
-
-        KMLResult kmlResult = new KMLResult();
-        kmlResult.setResultKML(kml.toString(), itemsWithGPS, gpsItems);
         return kmlResult;
 
     }
@@ -177,9 +185,8 @@ public class GetResultsKMLWorker extends iped.viewers.api.CancelableWorker<KMLRe
 
     }
 
-    private void generateLocationKML(StringBuilder tourPlayList, StringBuilder kml, String coluna,
-            org.apache.lucene.document.Document doc, SimpleDateFormat df, int row, IItemId item, String lat,
-            String longit, String alt, int subitem) {
+    private void generateLocationKML(StringBuilder tourPlayList, StringBuilder outerKml, String coluna, org.apache.lucene.document.Document doc, SimpleDateFormat df, int row, IItemId item, String lat, String longit, String alt,
+            int subitem) {
         if (progress != null)
             progress.setString(Messages.getString("KMLResult.LoadingGPSData") + ": " + (++itemsWithGPS)); //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -191,6 +198,7 @@ public class GetResultsKMLWorker extends iped.viewers.api.CancelableWorker<KMLRe
             gid = "marker_" + item.getSourceId() + "_" + item.getId() + "_" + subitem; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         }
 
+        StringBuilder kml = new StringBuilder();
         kml.append("<Placemark>"); //$NON-NLS-1$
         // kml+="<styleUrl>#basico</styleUrl>";
         kml.append("<id>" + gid + "</id>"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -252,6 +260,8 @@ public class GetResultsKMLWorker extends iped.viewers.api.CancelableWorker<KMLRe
         kml.append("<TimeSpan><begin>" + dataCriacao + "</begin></TimeSpan>"); //$NON-NLS-1$ //$NON-NLS-2$
 
         kml.append("</Placemark>"); //$NON-NLS-1$
+
+        outerKml.append(kml);
     }
 
     static public String htmlFormat(String html) {
@@ -265,5 +275,4 @@ public class GetResultsKMLWorker extends iped.viewers.api.CancelableWorker<KMLRe
         String alt = doc.get(ExtraProperties.COMMON_META_PREFIX + Metadata.ALTITUDE.getName());
         return alt;
     }
-
 }

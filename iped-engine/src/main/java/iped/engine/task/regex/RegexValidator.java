@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.engine.task.regex.RegexTask.Regex;
+import iped.io.URLUtil;
 
 public class RegexValidator {
 
@@ -83,7 +84,7 @@ public class RegexValidator {
 
     private String getLocation(RegexValidatorService service) {
         try {
-            URL location = service.getClass().getProtectionDomain().getCodeSource().getLocation();
+            URL location = URLUtil.getURL(service.getClass());
             return location.toString();
         } catch (SecurityException e) {
             return null;

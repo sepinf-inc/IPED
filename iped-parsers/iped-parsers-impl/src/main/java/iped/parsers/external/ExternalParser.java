@@ -56,6 +56,7 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.io.URLUtil;
 import iped.utils.IOUtil;
 
 /**
@@ -238,7 +239,7 @@ public class ExternalParser extends AbstractParser {
         if (rootFolder != null)
             return rootFolder;
 
-        URL url = ExternalParser.class.getProtectionDomain().getCodeSource().getLocation();
+        URL url = URLUtil.getURL(ExternalParser.class);
         try {
             rootFolder = new File(url.toURI()).getParentFile().getParentFile().getAbsolutePath();
 
@@ -398,14 +399,32 @@ public class ExternalParser extends AbstractParser {
             int line = 1;
             for (int n = reader.read(buffer); n != -1; n = reader.read(buffer)) {
                 String str = new String(buffer, 0, n);
-                if (tmpFile != null)
+                if (tmpFile != null) {
                     str = str.replace(tmpFile.getName(), origFileName);
-                String[] lines = str.split("\n");
-                for (String s : lines) {
-                    if (line++ > linesToIgnore) {
-                        xhtml.characters(s);
-                        xhtml.startElement("br");
-                        xhtml.endElement("br");
+                }
+                int i0 = 0, i1;
+                while (true) {
+                    int advance = 2;
+                    i1 = str.indexOf("\r\n", i0);
+                    if (i1 == -1) {
+                        advance = 1;
+                        i1 = str.indexOf("\n", i0);
+                        if (i1 == -1) {
+                            i1 = str.indexOf("\r", i0);
+                        }
+                    }
+                    String l = i1 != -1 ? str.substring(i0, i1) : str.substring(i0);
+                    if (line > linesToIgnore) {
+                        xhtml.characters(l);
+                        if (i1 != -1) {
+                            xhtml.newline();
+                        }
+                    }
+                    if (i1 != -1) {
+                        line++;
+                        i0 = i1 + advance;
+                    } else {
+                        break;
                     }
                 }
             }

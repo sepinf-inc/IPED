@@ -21,22 +21,27 @@ import org.w3c.dom.NodeList;
 
 import iped.configuration.IConfigurationDirectory;
 
-public class RegistryKeyParserManager {
-    ScriptEngine engine;
-    Invocable inv;
+public class RegistryKeyParserManager implements RegistryKeyParserFilter {
+
+    private static final String BASE_FOLDER = "iped.parsers.registry.RegistryParser";
 
     // singleton
     private static RegistryKeyParserManager registroKeyParserManager = new RegistryKeyParserManager();
+
+    private KeyPathPatternMap<RegistryKeyParser> map = new KeyPathPatternMap<RegistryKeyParser>();
+    private RegistryKeyParser defaultRegistryKeyParser = new HtmlKeyParser();
+    private ScriptEngine engine;
+    private Invocable inv;
 
     private RegistryKeyParserManager() {
         loadConfigPath();
     }
 
-    private void loadConfigPath() {
+    synchronized private void loadConfigPath() {
         try {
-            String configPath = System.getProperty(IConfigurationDirectory.IPED_CONF_PATH);
+            String appRoot = System.getProperty(IConfigurationDirectory.IPED_APP_ROOT);
 
-            File dir = new File(configPath + "/conf/ParsersCustomConfigs/iped.parsers.registry.RegistryParser");
+            File dir = new File(appRoot, "conf/parsers/" + BASE_FOLDER);
             File[] files = dir.listFiles(new FilenameFilter() {
                 @Override
                 public boolean accept(File dir, String name) {
@@ -49,7 +54,9 @@ public class RegistryKeyParserManager {
                 }
             }
 
-            loadJSFiles(dir);
+            File jsDir = new File(appRoot, "scripts/parsers/" + BASE_FOLDER);
+            loadJSFiles(jsDir);
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -139,9 +146,6 @@ public class RegistryKeyParserManager {
         return registroKeyParserManager;
     }
 
-    private KeyPathPatternMap<RegistryKeyParser> map = new KeyPathPatternMap<RegistryKeyParser>();
-    private RegistryKeyParser defaultRegistryKeyParser = new HtmlKeyParser();
-
     public RegistryKeyParser getDefaultRegistryKeyParser() {
         return defaultRegistryKeyParser;
     }
@@ -179,11 +183,9 @@ public class RegistryKeyParserManager {
             int slashIndex = meio.indexOf("/");
             if (slashIndex >= 0) {
                 meio = meio.substring(0, slashIndex);
-                patternSubts = patternSubts.substring(0, patternSubts.indexOf("*")) + meio
-                        + patternSubts.substring(patternSubts.indexOf("*") + 1);
+                patternSubts = patternSubts.substring(0, patternSubts.indexOf("*")) + meio + patternSubts.substring(patternSubts.indexOf("*") + 1);
             } else {
-                patternSubts = patternSubts.substring(0, patternSubts.indexOf("*")) + meio
-                        + patternSubts.substring(patternSubts.indexOf("*") + 1);
+                patternSubts = patternSubts.substring(0, patternSubts.indexOf("*")) + meio + patternSubts.substring(patternSubts.indexOf("*") + 1);
             }
             wildIndex = patternSubts.indexOf("*");
         }

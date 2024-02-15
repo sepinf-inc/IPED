@@ -22,6 +22,8 @@ import java.awt.Dialog.ModalityType;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import javax.swing.JOptionPane;
@@ -50,6 +52,8 @@ import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
 import iped.utils.LocalizedFormat;
 import iped.viewers.api.CancelableWorker;
+import iped.viewers.api.IQueryFilterer;
+import iped.viewers.api.ResultSetViewer;
 import iped.viewers.util.ProgressDialog;
 
 public class UICaseSearcherFilter extends CancelableWorker<MultiSearchResult, Object> {
@@ -126,6 +130,22 @@ public class UICaseSearcherFilter extends CancelableWorker<MultiSearchResult, Ob
             boolQuery.add(result, Occur.MUST);
             result = boolQuery.build();
             numFilters++;
+        }
+
+        /* loop through all registered result set viewer to get configured query filters */ 
+        List<ResultSetViewer> list = App.get().getResultSetViewers();
+        for (Iterator<ResultSetViewer> iterator = list.iterator(); iterator.hasNext();) {
+            ResultSetViewer resultSetViewer = iterator.next();
+            if (resultSetViewer instanceof IQueryFilterer) {
+                Query resultSetViewerQuery = ((IQueryFilterer) resultSetViewer).getQuery();
+                if (resultSetViewerQuery != null) {
+                    BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
+                    boolQuery.add(resultSetViewerQuery, Occur.MUST);
+                    boolQuery.add(result, Occur.MUST);
+                    result = boolQuery.build();
+                    numFilters++;
+                }
+            }
         }
 
         if (App.get().similarImagesQueryRefItem != null) {
@@ -300,6 +320,7 @@ public class UICaseSearcherFilter extends CancelableWorker<MultiSearchResult, Ob
 
         if (!this.isCancelled())
             try {
+                this.get().setIpedSearcher(this.searcher);
                 App.get().ipedResult = this.get();
 
                 App.get().resultsTable.getColumnModel().getColumn(0).setHeaderValue(LocalizedFormat.format(this.get().getLength()));
@@ -312,6 +333,7 @@ public class UICaseSearcherFilter extends CancelableWorker<MultiSearchResult, Ob
                     App.get().resultsModel.fireTableDataChanged();
                     App.get().galleryModel.fireTableStructureChanged();
                 }
+                App.get().resultsModel.fireTableDataChanged();
                 ColumnsManager.getInstance().updateDinamicCols();
                 new ResultTotalSizeCounter().countVolume(App.get().ipedResult);
 

@@ -53,7 +53,6 @@ import iped.configuration.Configurable;
 import iped.data.IItem;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
-import iped.engine.config.LocalConfig;
 import iped.engine.config.VideoThumbsConfig;
 import iped.engine.core.Statistics;
 import iped.engine.core.Worker.ProcessTime;
@@ -89,7 +88,7 @@ public class VideoThumbTask extends ThumbTask {
     /**
      * Caminho relativo para o MPlayer distribuído para Windows
      */
-    private static String mplayerWin = "../mplayer/mplayer.exe"; //$NON-NLS-1$
+    public static final String MPLAYER_WIN_PATH = "tools/mplayer/mplayer.exe"; //$NON-NLS-1$
 
     /**
      * Property to flag frames extracted as subitems from videos.
@@ -241,9 +240,7 @@ public class VideoThumbTask extends ThumbTask {
                 }
 
                 if (System.getProperty("os.name").toLowerCase().startsWith("windows")) { //$NON-NLS-1$ //$NON-NLS-2$
-                    LocalConfig localConfig = configurationManager.findObject(LocalConfig.class);
-                    mplayerWin = localConfig.getMplayerWinPath();
-                    mplayer = Configuration.getInstance().appRoot + "/" + mplayerWin; //$NON-NLS-1$
+                    mplayer = Configuration.getInstance().appRoot + "/" + MPLAYER_WIN_PATH; // $NON-NLS-1$
                 }
                 videoThumbsMaker.setMPlayer(mplayer);
 
@@ -254,10 +251,11 @@ public class VideoThumbTask extends ThumbTask {
                     logger.error("MPlayer Configured = " + mplayer); //$NON-NLS-1$
                     logger.error("Check mplayer path and try to run it from terminal."); //$NON-NLS-1$
                     taskEnabled = false;
-                    init.set(true);
+                    logger.info("Task disabled."); //$NON-NLS-1$
+                } else {
+                    logger.info("Task enabled."); //$NON-NLS-1$
+                    logger.info("MPLAYER version: " + vmp); //$NON-NLS-1$
                 }
-                logger.info("Task enabled."); //$NON-NLS-1$
-                logger.info("MPLAYER version: " + vmp); //$NON-NLS-1$
                 init.set(true);
             }
         }
@@ -275,6 +273,7 @@ public class VideoThumbTask extends ThumbTask {
         videoThumbsMaker.setTimeoutInfo(videoConfig.getTimeoutInfo());
         videoThumbsMaker.setVideoThumbsOriginalDimension(videoConfig.getVideoThumbsOriginalDimension());
         videoThumbsMaker.setMaxDimensionSize(videoConfig.getMaxDimensionSize());
+        videoThumbsMaker.setNumFramesEquation(videoConfig.getNumFramesEquation());
 
         // Cria configurações de extração de cenas
         configs = new ArrayList<VideoThumbsOutputConfig>();
@@ -342,13 +341,19 @@ public class VideoThumbTask extends ThumbTask {
             evidence.setCategory(VIDEO_THUMB_CATEGORY);
         }
 
-        // Verifica se está desabilitado e se o tipo de arquivo é tratado
-        if (!taskEnabled || (!isVideoType(evidence.getMediaType()) && !checkAnimatedImage(evidence)) || !evidence.isToAddToCase()
+        // Check if evidence type is handled (video or animated image) and has a hash value
+        if ((!isVideoType(evidence.getMediaType()) && !checkAnimatedImage(evidence)) || !evidence.isToAddToCase()
                 || evidence.getHashValue() == null) {
             return;
         }
 
         if (caseData.isIpedReport() && evidence.getViewFile() != null && evidence.getViewFile().length() > 0) {
+            evidence.setExtraAttribute(HAS_THUMB, true);
+            return;
+        }
+        
+        // Check if the task is enabled (after handling the view file, if it is a report)
+        if (!taskEnabled) {
             return;
         }
 

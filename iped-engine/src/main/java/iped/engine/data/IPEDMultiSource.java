@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -91,8 +93,12 @@ public class IPEDMultiSource extends IPEDSource {
 
             String content = new String(bytes, "UTF-8"); //$NON-NLS-1$
             for (String pathStr : content.split("\n")) { //$NON-NLS-1$
-                File path = new File(pathStr.trim());
-                if (!new File(path, MODULE_DIR).exists()) {
+                pathStr = pathStr.trim();
+                if (pathStr.isEmpty() || pathStr.startsWith("#")) {
+                    continue;
+                }
+                File path = new File(pathStr);
+                if (!checkIfIsCaseFolder(path)) {
                     throw new IllegalArgumentException("Invalid case path: " + path.getAbsolutePath());
                 }
                 files.add(path);
@@ -115,7 +121,7 @@ public class IPEDMultiSource extends IPEDSource {
         if (subFiles != null)
             for (File file : subFiles) {
                 if (file.isDirectory()) {
-                    if (new File(file, MODULE_DIR).exists())
+                    if (checkIfIsCaseFolder(file))
                         files.add(file);
                     else
                         files.addAll(searchCasesinFolder(file));
@@ -305,6 +311,17 @@ public class IPEDMultiSource extends IPEDSource {
     @Override
     public int getLastId() {
         throw new RuntimeException("Forbidden call from " + this.getClass().getSimpleName()); //$NON-NLS-1$
+    }
+
+    @Override
+    public Set<String> getEvidenceUUIDs() {
+        if (evidenceUUIDs.size() <= 0) {
+            for (Iterator iterator = cases.iterator(); iterator.hasNext();) {
+                IPEDSource curcase = (IPEDSource) iterator.next();
+                evidenceUUIDs.addAll(curcase.getEvidenceUUIDs());
+            }
+        }
+        return super.getEvidenceUUIDs();
     }
 
 }

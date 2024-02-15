@@ -10,8 +10,15 @@ import org.apache.tika.Tika;
 
 import iped.data.IItem;
 import iped.io.IStreamSource;
+import iped.parsers.ares.AresParser;
+import iped.parsers.discord.DiscordParser;
+import iped.parsers.emule.KnownMetParser;
+import iped.parsers.emule.PartMetParser;
+import iped.parsers.mail.win10.Win10MailParser;
+import iped.parsers.shareaza.ShareazaLibraryDatParser;
 import iped.parsers.skype.SkypeParser;
 import iped.parsers.telegram.TelegramParser;
+import iped.parsers.threema.ThreemaParser;
 import iped.parsers.whatsapp.WhatsAppParser;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
@@ -22,7 +29,8 @@ import iped.viewers.localization.Messages;
 
 public class ReferencedFileViewer extends AbstractViewer {
 
-    private String labelPrefix;
+    private static final String REFERENCE_NOT_FOUND = Messages.getString("ReferenceViewer.FileNotFound");
+    private static final String REFERENCE_NOT_SUPPORTED = Messages.getString("ReferenceViewer.NotSupported");
 
     private JLabel typeNotSupported;
 
@@ -35,7 +43,6 @@ public class ReferencedFileViewer extends AbstractViewer {
         super();
         this.multiViewer = multiViewer;
         this.attachSearcher = attachSearcher;
-        this.labelPrefix = Messages.getString("ReferenceViewer.NotSupported");
         this.typeNotSupported = new JLabel();
         this.getPanel().add(typeNotSupported);
     }
@@ -50,7 +57,14 @@ public class ReferencedFileViewer extends AbstractViewer {
         return WhatsAppParser.WHATSAPP_ATTACHMENT.toString().equals(contentType)
                 || TelegramParser.TELEGRAM_ATTACHMENT.toString().equals(contentType)
                 || SkypeParser.ATTACHMENT_MIME_TYPE.equals(contentType)
-                || MediaTypes.UFED_MESSAGE_ATTACH_MIME.toString().equals(contentType);
+                || DiscordParser.ATTACH_MIME_TYPE.equals(contentType)
+                || KnownMetParser.KNOWN_MET_ENTRY_MIME_TYPE.equals(contentType)
+                || PartMetParser.PART_MET_ENTRY_MIME_TYPE.equals(contentType)
+                || AresParser.ARES_ENTRY_MIME_TYPE.equals(contentType)
+                || ShareazaLibraryDatParser.LIBRARY_DAT_ENTRY_MIME_TYPE.equals(contentType)
+                || MediaTypes.UFED_MESSAGE_ATTACH_MIME.toString().equals(contentType)
+                || Win10MailParser.WIN10_MAIL_ATTACH.toString().equals(contentType)
+                || ThreemaParser.THREEMA_ATTACHMENT.toString().equals(contentType);
     }
 
     @Override
@@ -69,18 +83,21 @@ public class ReferencedFileViewer extends AbstractViewer {
     public void loadFile(IStreamSource content, Set<String> highlightTerms) {
 
         if (content == null) {
-            if (lastItem != null)
+            if (lastItem != null) {
                 lastItem.dispose();
-            typeNotSupported.setVisible(false);
+            }
             return;
         }
+
+        typeNotSupported.setVisible(false);
 
         if (content instanceof IItem) {
             IItem item = (IItem) content;
             String query = item.getMetadata().get(ExtraProperties.LINKED_ITEMS);
             lastItem = attachSearcher.getItem(query);
             if (lastItem == null) {
-                typeNotSupported.setVisible(false);
+                typeNotSupported.setText(REFERENCE_NOT_FOUND + query);
+                typeNotSupported.setVisible(true);
             } else if (lastItem.getViewFile() != null) {
                 FileContentSource viewContent = new FileContentSource(lastItem.getViewFile());
                 String mediaType = detectType(lastItem.getViewFile());
@@ -95,7 +112,7 @@ public class ReferencedFileViewer extends AbstractViewer {
         if (multiViewer.isSupportedType(mediaType)) {
             multiViewer.loadFile(content, mediaType, highlightTerms);
         } else {
-            typeNotSupported.setText(labelPrefix + mediaType);
+            typeNotSupported.setText(REFERENCE_NOT_SUPPORTED + mediaType);
             typeNotSupported.setVisible(true);
         }
     }

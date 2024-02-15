@@ -20,8 +20,6 @@ import com.dd.plist.PropertyListParser;
 
 public class WAAccount extends WAContact {
 
-    private static final String idSuffix = "@s.whatsapp.net"; //$NON-NLS-1$
-
     private boolean isUnknown = false;
 
     public WAAccount(String id) {
@@ -41,25 +39,25 @@ public class WAAccount extends WAContact {
             XPath xpath = XPathFactory.newInstance().newXPath();
             XPathExpression expr = xpath.compile("/map/string[@name=\"registration_jid\"]");
             String value = (String) expr.evaluate(doc, XPathConstants.STRING);
-            if (value == null) {
+            if (value == null || value.isBlank()) {
                 expr = xpath.compile("/map/string[@name=\"ph\"]");
                 value = (String) expr.evaluate(doc, XPathConstants.STRING);
-                if (value == null)
+                if (value == null || value.isBlank())
                     return null;
             }
-            if (!value.endsWith(idSuffix))
-                value += idSuffix;
+            if (!value.endsWith(waSuffix))
+                value += waSuffix;
 
             WAAccount account = new WAAccount(value);
 
             expr = xpath.compile("/map/string[@name=\"push_name\"]");
             value = (String) expr.evaluate(doc, XPathConstants.STRING);
-            if (value != null)
+            if (value != null && !value.isBlank())
                 account.setWaName(value);
 
             expr = xpath.compile("/map/string[@name=\"my_current_status\"]");
             value = (String) expr.evaluate(doc, XPathConstants.STRING);
-            if (value != null)
+            if (value != null && !value.isBlank())
                 account.setStatus(value);
 
             return account;
@@ -80,8 +78,8 @@ public class WAAccount extends WAContact {
                     return null;
             }
             String strVal = value.toString();
-            if (!strVal.endsWith(idSuffix))
-                strVal += idSuffix;
+            if (!strVal.endsWith(waSuffix))
+                strVal += waSuffix;
 
             WAAccount account = new WAAccount(strVal);
 

@@ -98,4 +98,8 @@ public class CategoryTreeListener implements TreeSelectionListener, TreeExpansio
         clearing = false;
     }
 
+    public HashSet<TreePath> getSelection() {
+        return selection;
+    }
+
 }

@@ -8,7 +8,7 @@ import iped.parsers.util.Messages;
 /**
  * Representa uma troca de arquivos pelo Skype registrada no main.db
  *
- * @author Patrick Dalla Bernardina patrick.pdb@dpf.gov.br
+ * @author Patrick Dalla Bernardina patrick.pdb@pf.gov.br
  */
 
 public class SkypeFileTransfer {

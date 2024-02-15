@@ -6,7 +6,7 @@ jobs:
 
   build-java11:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
     - uses: actions/checkout@v1
@@ -28,34 +28,19 @@ jobs:
       if: steps.libagdb.outputs.cache-hit != 'true'
       run: | 
             sudo apt install git autoconf automake autopoint libtool pkg-config
-            git clone https://github.com/libyal/libagdb.git && cd libagdb/ && git checkout e858e15
+            git clone https://github.com/libyal/libagdb.git && cd libagdb/ && git checkout 667a782
             sudo ./synclibs.sh && sudo ./autogen.sh && sudo ./configure
 
-    - name: Load imagemagick from cache
-      id: imagemagick
-      uses: actions/cache@v1
-      with:
-        path: ImageMagick-7.1.0
-        key: imagemagick
-
-    - name: Compile imagemagick
-      # imagemagick 7 needs to be built from source
-      if: steps.imagemagick.outputs.cache-hit != 'true'
-      run: |
-            sudo apt-get install gsfonts
-            git clone https://github.com/ImageMagick/ImageMagick.git ImageMagick-7.1.0
-            cd ImageMagick-7.1.0/
-            sudo ./configure --with-modules && sudo make
-
     - name: Install External Tools
-      run: |        
-          sudo apt-get update && sudo apt install \
+      run: |
+          sudo apt-get update && sudo apt-get install \
           libscca-utils rifiuti2 libevtx-utils libevt-utils \
-          libmsiecf-utils=20181227-1.1 \
-          pff-tools=20180714-2 \
-          libesedb-utils=20181229-3.1 \
-          tesseract-ocr=4.1.1-2build2 \
-          tesseract-ocr-por=1:4.00~git30-7274cfa-1 \
+          libmsiecf-utils=20181227-2build1 \
+          pff-tools=20180714-3build1 \
+          libesedb-utils=20181229-3.1build2 \
+          tesseract-ocr \
+          tesseract-ocr-por \
+          imagemagick \
           python3-pip
           sudo perl -MCPAN -e 'install Parse::Win32Registry'
           pip install jep==4.0.3
@@ -64,8 +49,6 @@ jobs:
           sudo ldconfig /usr/local/lib
           cd ..
           sudo apt-get install gsfonts
-          cd ImageMagick-7.1.0/ && sudo make install
-          sudo ldconfig /usr/local/lib
 
 
     - name: Build with Maven
@@ -81,7 +64,7 @@ jobs:
 
   build-java14:
     
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
     - uses: actions/checkout@v1
@@ -104,34 +87,19 @@ jobs:
       if: steps.libagdb.outputs.cache-hit != 'true'
       run: | 
             sudo apt install git autoconf automake autopoint libtool pkg-config
-            git clone https://github.com/libyal/libagdb.git && cd libagdb/ && git checkout e858e15
+            git clone https://github.com/libyal/libagdb.git && cd libagdb/ && git checkout 667a782
             sudo ./synclibs.sh && sudo ./autogen.sh && sudo ./configure
-
-    - name: Load imagemagick from cache
-      id: imagemagick
-      uses: actions/cache@v1
-      with:
-        path: ImageMagick-7.1.0
-        key: imagemagick
-
-    - name: Compile imagemagick
-      # imagemagick 7 needs to be built from source
-      if: steps.imagemagick.outputs.cache-hit != 'true'
-      run: |
-            sudo apt-get install gsfonts
-            git clone https://github.com/ImageMagick/ImageMagick.git ImageMagick-7.1.0
-            cd ImageMagick-7.1.0/
-            sudo ./configure --with-modules && sudo make
 
     - name: Install External Tools
       run: |        
-          sudo apt-get update && sudo apt install \
+          sudo add-apt-repository ppa:alex-p/tesseract-ocr-devel && sudo apt-get update && sudo apt-get install \
           libscca-utils rifiuti2 libevtx-utils libevt-utils \
-          libmsiecf-utils=20181227-1.1 \
-          pff-tools=20180714-2 \
-          libesedb-utils=20181229-3.1 \
-          tesseract-ocr=4.1.1-2build2 \
-          tesseract-ocr-por=1:4.00~git30-7274cfa-1 \
+          libmsiecf-utils=20181227-2build1 \
+          pff-tools=20180714-3build1 \
+          libesedb-utils=20181229-3.1build2 \
+          tesseract-ocr \
+          tesseract-ocr-por \
+          imagemagick \
           python3-pip
           sudo perl -MCPAN -e 'install Parse::Win32Registry'
           pip install jep==4.0.3
@@ -140,8 +108,6 @@ jobs:
           sudo ldconfig /usr/local/lib
           cd ..
           sudo apt-get install gsfonts
-          cd ImageMagick-7.1.0/ && sudo make install
-          sudo ldconfig /usr/local/lib
 
     - name: Build with Maven
       run: mvn -B package --file pom.xml

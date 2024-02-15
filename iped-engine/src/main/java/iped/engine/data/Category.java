@@ -8,6 +8,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import iped.engine.localization.CategoryLocalization;
 import iped.utils.LocalizedFormat;
@@ -35,8 +36,10 @@ public class Category implements Serializable, Comparable<Category> {
     @JsonAlias("categories")
     private SortedSet<Category> children = new TreeSet<>();
 
+    @JsonIgnore
     private Category parent;
 
+    @JsonIgnore
     private int numItems = -1;
 
     public Category() {
@@ -97,7 +100,7 @@ public class Category implements Serializable, Comparable<Category> {
 
     @Override
     public boolean equals(Object o) {
-        return compareTo((Category) o) == 0;
+        return o instanceof Category && compareTo((Category) o) == 0;
     }
 
     public String toString() {

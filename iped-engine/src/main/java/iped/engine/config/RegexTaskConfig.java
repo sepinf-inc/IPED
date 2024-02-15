@@ -69,6 +69,17 @@ public class RegexTaskConfig extends AbstractTaskConfig<Pair<Boolean, List<iped.
         public String getRegex() {
             return regex;
         }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("regexName=").append(regexName).append(",");
+            sb.append("prefix=").append(prefix).append(",");
+            sb.append("suffix=").append(suffix).append(",");
+            sb.append("ignoreCase=").append(ignoreCase).append(",");
+            sb.append("regex=").append(regex);
+            return sb.toString();
+        }
     }
 
     public static final String replace(String s) {

@@ -3,15 +3,15 @@ package iped.parsers.whatsapp;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -22,7 +22,7 @@ import iped.parsers.util.ChildPornHashLookup;
 
 /**
  *
- * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
+ * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
  */
 public class Message {
 
@@ -33,6 +33,7 @@ public class Message {
 
     private long id;
     private int deletedId = -1;
+    private String callId = null;
     private String remoteId;
     private String remoteResource;
     private String localResource;
@@ -40,6 +41,7 @@ public class Message {
     private String data;
     private boolean fromMe;
     private boolean deleted;
+    private boolean forwarded;
     private Date timeStamp;
     private String mediaUrl;
     private String mediaMime;
@@ -60,10 +62,15 @@ public class Message {
     private int mediaDuration;
     private MessageStatus messageStatus;
     private String recoveredFrom = null;
-    private Set<String> childPornSets = new HashSet<>();
+    private List<String> childPornSets;
     private IItemReader mediaItem = null;
     private String mediaQuery = null;
-    private List<MessageAddOn> addOns = new ArrayList<>();
+    private List<MessageAddOn> addOns;
+    private long idQuote;
+    private Message messageQuote = null;
+    private boolean quoted = false;
+    private String uuid = null;
+    private String metaData = null;
 
     static {
         try {
@@ -75,7 +82,21 @@ public class Message {
         }
     }
 
-    public static void closeStaticResources() throws IOException {
+    private static synchronized void reOpenChannel() {
+        if (fileChannel.isOpen()) {
+            return;
+        }
+        try {
+            fileChannel = FileChannel.open(thumbsfile.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE);
+        } catch (NoSuchFileException e) {
+            // fix for https://github.com/sepinf-inc/IPED/issues/2051
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static synchronized void closeStaticResources() throws IOException {
         if (fileChannel.isOpen()) {
             fileChannel.truncate(0);
             fileChannel.close();
@@ -85,7 +106,6 @@ public class Message {
 
     public Message() {
         messageType = MessageType.TEXT_MESSAGE;
-        vcards = new ArrayList<>();
     }
 
     public long getId() {
@@ -98,15 +118,23 @@ public class Message {
 
     /**
      * Deleted recovered messages may have the same id as an allocated message. This
-     * returns a global unique id for a decoded database.
+     * returns a global unique id for a decoded database. Calls can also have the
+     * same id, so a new info is used as id
      * 
      * @return a unique string id
      */
     public String getUniqueId() {
+        String new_id = Long.toString(id);
+        if (callId != null) {
+            new_id += "_" + callId;
+        }
         if (deletedId == -1) {
             deletedId = deletedCounter.getAndIncrement();
         }
-        return !deleted ? Long.toString(id) : id + "_" + deletedId;
+        if (deleted) {
+            new_id += "_" + deletedId;
+        }
+        return new_id;
     }
 
     public String getRemoteId() {
@@ -197,7 +225,7 @@ public class Message {
         } else {
             this.mediaHash = mediaHash;
         }
-        childPornSets.addAll(ChildPornHashLookup.lookupHash(this.mediaHash));
+        childPornSets = ChildPornHashLookup.lookupHashAndMerge(this.mediaHash, childPornSets);
     }
 
     public byte[] getThumbData() {
@@ -208,6 +236,9 @@ public class Message {
             ByteBuffer bb = ByteBuffer.allocate(thumbSize);
             fileChannel.read(bb, thumbOffset);
             return bb.array();
+        } catch (ClosedChannelException e) {
+            reOpenChannel();
+            return getThumbData();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -222,7 +253,9 @@ public class Message {
             thumbSize = rawData.length;
             thumbOffset = fileOffset.getAndAdd(thumbSize);
             fileChannel.write(ByteBuffer.wrap(rawData), thumbOffset);
-
+        } catch (ClosedChannelException e) {
+            reOpenChannel();
+            setThumbData(rawData);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -276,6 +309,14 @@ public class Message {
         this.deleted = deleted;
     }
 
+    public boolean isForwarded() {
+        return forwarded;
+    }
+
+    public void setForwarded(boolean forwarded) {
+        this.forwarded = forwarded;
+    }
+
     public MessageType getMessageType() {
         return messageType;
     }
@@ -285,7 +326,7 @@ public class Message {
     }
 
     public List<String> getVcards() {
-        return vcards;
+        return vcards == null ? Collections.emptyList() : vcards;
     }
 
     public void setVcards(List<String> vcards) {
@@ -350,8 +391,12 @@ public class Message {
 
     public boolean isSystemMessage() {
         switch (messageType) {
+            case BLOCKED_CONTACT:
+            case BUSINESS_CHAT:
+            case BUSINESS_TO_STANDARD:
+            case MESSAGES_ENCRYPTED:
             case MESSAGES_NOW_ENCRYPTED:
-            case ENCRIPTION_KEY_CHANGED:
+            case ENCRYPTION_KEY_CHANGED:
             case GROUP_CREATED:
             case USER_JOINED_GROUP:
             case USER_JOINED_GROUP_FROM_LINK:
@@ -372,7 +417,9 @@ public class Message {
 
     public boolean isCall() {
         return messageType == MessageType.VIDEO_CALL || messageType == MessageType.VOICE_CALL
-                || messageType == MessageType.MISSED_VIDEO_CALL || messageType == MessageType.MISSED_VOICE_CALL;
+                || messageType == MessageType.MISSED_VIDEO_CALL || messageType == MessageType.MISSED_VOICE_CALL
+                || messageType == MessageType.REFUSED_VIDEO_CALL || messageType == MessageType.REFUSED_VOICE_CALL
+                || messageType == MessageType.UNKNOWN_VOICE_CALL || messageType == MessageType.UNKNOWN_VIDEO_CALL;
     }
 
     public String getRecoveredFrom() {
@@ -383,12 +430,12 @@ public class Message {
         this.recoveredFrom = recoveredFrom;
     }
 
-    public Set<String> getChildPornSets() {
-        return childPornSets;
+    public List<String> getChildPornSets() {
+        return childPornSets == null ? Collections.emptyList() : childPornSets;
     }
 
-    public void addChildPornSets(Collection<String> sets) {
-        this.childPornSets.addAll(sets);
+    public void lookupAndAddChildPornSets(String hash) {
+        childPornSets = ChildPornHashLookup.lookupHashAndMerge(hash, childPornSets);
     }
     
     public IItemReader getMediaItem() {
@@ -408,15 +455,66 @@ public class Message {
     }
 
     public boolean addMessageAddOn(MessageAddOn m) {
+        if (addOns == null) {
+            addOns = new ArrayList<MessageAddOn>(1);
+        }
         return addOns.add(m);
     }
 
     public List<MessageAddOn> getAddOns() {
-        return addOns;
+        return addOns == null ? Collections.emptyList() : addOns;
+    }
+
+    public String getCallId() {
+        return callId;
+    }
+
+    public void setCallId(String callId) {
+        this.callId = callId;
+    }
+
+    public long getIdQuote() {
+        return idQuote;
+    }
+
+    public void setIdQuote(long idQuote) {
+        this.idQuote = idQuote;
+    }
+
+    public boolean isQuoted() {
+        return this.quoted;
+    }
+
+    public void setQuoted(boolean quoted) {
+        this.quoted = quoted;
+    }
+
+    public Message getMessageQuote(){
+        return this.messageQuote;
+    }
+
+    public void setMessageQuote(Message messageQuote){
+        this.messageQuote = messageQuote;
+    }
+
+    public String getUuid() {
+        return this.uuid;
+    }
+
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
+    }
+
+    public String getMetaData() {
+        return this.metaData;
+    }
+
+    public void setMetaData(String metaData) {
+        this.metaData = metaData;
     }
 
     public static enum MessageType {
-        TEXT_MESSAGE, IMAGE_MESSAGE, AUDIO_MESSAGE, VIDEO_MESSAGE, UNKNOWN_MEDIA_MESSAGE, CONTACT_MESSAGE, LOCATION_MESSAGE, SHARE_LOCATION_MESSAGE, VOICE_CALL, VIDEO_CALL, APP_MESSAGE, GIF_MESSAGE, MESSAGES_NOW_ENCRYPTED, ENCRIPTION_KEY_CHANGED, MISSED_VOICE_CALL, MISSED_VIDEO_CALL, DELETED_MESSAGE, DELETED_FROM_SENDER, GROUP_CREATED, USER_JOINED_GROUP, USER_JOINED_GROUP_FROM_LINK, USERS_JOINED_GROUP, USER_LEFT_GROUP, USER_REMOVED_FROM_GROUP, URL_MESSAGE, GROUP_ICON_CHANGED, GROUP_ICON_DELETED, GROUP_DESCRIPTION_CHANGED, SUBJECT_CHANGED, YOU_ADMIN, WAITING_MESSAGE, STICKER_MESSAGE, UNKNOWN_MESSAGE
+        TEXT_MESSAGE, IMAGE_MESSAGE, AUDIO_MESSAGE, VIDEO_MESSAGE, UNKNOWN_MEDIA_MESSAGE, CONTACT_MESSAGE, LOCATION_MESSAGE, SHARE_LOCATION_MESSAGE, VOICE_CALL, VIDEO_CALL, APP_MESSAGE, GIF_MESSAGE, BLOCKED_CONTACT, UNBLOCKED_CONTACT, BUSINESS_CHAT, BUSINESS_TO_STANDARD, MESSAGES_ENCRYPTED, MESSAGES_NOW_ENCRYPTED, ENCRYPTION_KEY_CHANGED, MISSED_VOICE_CALL, MISSED_VIDEO_CALL, DELETED_MESSAGE, DELETED_BY_ADMIN, DELETED_BY_SENDER, GROUP_CREATED, USER_JOINED_GROUP, USER_JOINED_GROUP_FROM_LINK, USERS_JOINED_GROUP, USER_LEFT_GROUP, USER_REMOVED_FROM_GROUP, URL_MESSAGE, GROUP_ICON_CHANGED, GROUP_ICON_DELETED, GROUP_DESCRIPTION_CHANGED, SUBJECT_CHANGED, YOU_ADMIN, WAITING_MESSAGE, STICKER_MESSAGE, REFUSED_VIDEO_CALL, REFUSED_VOICE_CALL, UNAVAILABLE_VIDEO_CALL, UNAVAILABLE_VOICE_CALL, UNKNOWN_VOICE_CALL, UNKNOWN_VIDEO_CALL, UNKNOWN_MESSAGE
     }
 
     public static enum MessageStatus {

@@ -43,7 +43,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
@@ -101,7 +100,8 @@ public class SleuthkitReader extends DataSourceReader {
     private static final String PASSWORD_PER_IMAGE = "data/PasswordPerImage.txt";
 
     // TODO update @deleteDatasource() when updating TSK
-    public static final String MIN_TSK_VER = "4.11.0";
+    public static final String MIN_TSK_VER_TESTED = "4.11.0";
+    public static final String MAX_TSK_VER_TESTED = "4.12.0";
 
     public static String DB_NAME = "sleuth.db"; //$NON-NLS-1$
     public static MediaType UNALLOCATED_MIMETYPE = BaseCarveTask.UNALLOCATED_MIMETYPE;
@@ -119,9 +119,6 @@ public class SleuthkitReader extends DataSourceReader {
     // this guarantees just one producer populates the DB at a time (e.g. when
     // decoding embedded disks recursively)
     private static Semaphore decodeImageSemaphore = new Semaphore(1);
-
-    // count number of embedded disks being decoded at the same time
-    private static AtomicInteger embeddedDisksBeingDecoded = new AtomicInteger();
 
     private CmdLineArgs args;
     private Long firstId, lastId;
@@ -282,17 +279,18 @@ public class SleuthkitReader extends DataSourceReader {
             LOGGER.error("We recommend to apply the iped patch on sleuthkit, see https://github.com/sepinf-inc/IPED/wiki/Linux#the-sleuthkit"); //$NON-NLS-1$
         }
 
-        String[] minVerParts = MIN_TSK_VER.split("\\.");
+        String[] minVerParts = MIN_TSK_VER_TESTED.split("\\.");
         String[] currVerParts = tskVer.split("\\.");
 
         int majorVerExpected = Integer.valueOf(minVerParts[0]);
         int majorVerFound = Integer.valueOf(currVerParts[0]);
         int minorVerExpected = Integer.valueOf(minVerParts[1]);
         int minorVerFound = Integer.valueOf(currVerParts[1]);
+        int maxMinorVerTested = Integer.valueOf(MAX_TSK_VER_TESTED.split("\\.")[1]);
 
         if (majorVerExpected != majorVerFound || minorVerFound < minorVerExpected)
-            throw new Exception("Sleuthkit version " + tskVer + " not supported. Install version " + MIN_TSK_VER); //$NON-NLS-1$ //$NON-NLS-2$
-        else if (minorVerFound > minorVerExpected)
+            throw new Exception("Sleuthkit version " + tskVer + " not supported. Install version " + MIN_TSK_VER_TESTED); //$NON-NLS-1$ //$NON-NLS-2$
+        if (minorVerFound > maxMinorVerTested)
             LOGGER.error("Sleuthkit version " + tskVer + " not tested! It may contain incompatibilities!"); //$NON-NLS-1$ //$NON-NLS-2$
 
         tskChecked = true;
@@ -309,10 +307,6 @@ public class SleuthkitReader extends DataSourceReader {
     public void read(File image, Item parent) throws Exception {
 
         checkTSKVersion();
-
-        if (embeddedDisk) {
-            embeddedDisksBeingDecoded.incrementAndGet();
-        }
 
         args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
         if (args.getProfile() != null) {
@@ -366,7 +360,7 @@ public class SleuthkitReader extends DataSourceReader {
                 synchronized (this.getClass()) {
                     if (sleuthCase == null) {
                         if (new File(dbPath).exists()) {
-                            sleuthCase = SleuthkitCase.openCase(dbPath);
+                            sleuthCase = SleuthkitInputStreamFactory.openSleuthkitCase(dbPath);
 
                         } else {
                             UIPropertyListenerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
@@ -384,7 +378,6 @@ public class SleuthkitReader extends DataSourceReader {
                 sysProps.setProperty(entry.getKey().toString(), entry.getValue().toString());
             }
             System.setProperties(sysProps);
-
 
             Manager.getInstance().initSleuthkitServers();
 
@@ -448,10 +441,6 @@ public class SleuthkitReader extends DataSourceReader {
 
         } else if (addImageFuture.get(image) != null)
             addImageFuture.get(image).get();
-
-        if (embeddedDisk) {
-            embeddedDisksBeingDecoded.decrementAndGet();
-        }
 
     }
     
@@ -611,6 +600,7 @@ public class SleuthkitReader extends DataSourceReader {
            addImage.run(UUID.randomUUID().toString(), new String[] { image.getAbsolutePath() }, sectorSize);
 
         } catch (Throwable e) {
+            e.printStackTrace();
             String ignore = "org.sleuthkit.datamodel.TskDataException: Errors occurred while ingesting image";
             for (String error : e.toString().split("\\n")) {
                 error = error.trim();
@@ -1161,18 +1151,10 @@ public class SleuthkitReader extends DataSourceReader {
         }
 
         if (embeddedDisk) {
-            // always add to queue to avoid deadlock if expanding many virtual disks simultaneously
-            Manager.getInstance().getProcessingQueues().addItemFirstNonBlocking(item);
+            // add embedded disk subitems to queue head to process them first
+            Manager.getInstance().getProcessingQueues().addItemFirst(item);
         } else {
-            if (embeddedDisksBeingDecoded.get() < Manager.getInstance().getNumWorkers()) {
-                // this can block if queue is full, but we have at least 1 worker running
-                Manager.getInstance().getProcessingQueues().addItem(item);
-            } else {
-                // avoid deadlock if all workers are trying to decode virtual disks and the main
-                // evidence is still being decoded
-                Manager.getInstance().getProcessingQueues().addItemNonBlocking(item);
-            }
-
+            Manager.getInstance().getProcessingQueues().addItem(item);
         }
         // store parents trackID after adding to queue (where it is computed and ID
         // could be reassigned)

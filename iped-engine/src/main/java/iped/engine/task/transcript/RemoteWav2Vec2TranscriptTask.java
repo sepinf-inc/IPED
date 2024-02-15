@@ -15,16 +15,23 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tika.io.TemporaryResources;
 
+import iped.configuration.IConfigurationDirectory;
 import iped.data.IItem;
+import iped.engine.config.AudioTranscriptConfig;
 import iped.engine.config.ConfigurationManager;
+import iped.engine.core.Manager;
 import iped.engine.io.TimeoutException;
 import iped.engine.task.transcript.RemoteWav2Vec2Service.MESSAGES;
 import iped.exception.IPEDException;
@@ -35,8 +42,6 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
 
     private static final int MAX_CONNECT_ERRORS = 60;
 
-    private static final int RETRY_INTERVAL_MILLIS = 100;
-
     private static final int UPDATE_SERVERS_INTERVAL_MILLIS = 60000;
 
     private static List<Server> servers = new ArrayList<>();
@@ -44,6 +49,12 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
     private static int currentServer = -1;
 
     private static AtomicInteger numConnectErrors = new AtomicInteger();
+
+    private static AtomicLong audioSendingTime = new AtomicLong();
+
+    private static AtomicLong transcriptReceiveTime = new AtomicLong();
+
+    private static AtomicBoolean statsPrinted = new AtomicBoolean();
 
     private static long lastUpdateServersTime = 0;
 
@@ -57,6 +68,14 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
         }
     }
 
+    // See https://github.com/sepinf-inc/IPED/issues/1576
+    private int getRetryIntervalMillis() {
+        // This depends on how much time worker nodes need to consume their queue.
+        // Of course audios duration, nodes queue size and performance affect this.
+        // This tries to be fair with clients independent of their number of threads.
+        return Manager.getInstance().getNumWorkers() * 100;
+    }
+
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
 
@@ -67,6 +86,32 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
         }
         
         if (!servers.isEmpty()) {
+            return;
+        }
+
+        boolean disable = false;
+        if (transcriptConfig.getWav2vec2Service() == null) {
+            String ipedRoot = System.getProperty(IConfigurationDirectory.IPED_ROOT);
+            if (ipedRoot != null) {
+                Path path = new File(ipedRoot, "conf/" + AudioTranscriptConfig.CONF_FILE).toPath();
+                configurationManager.getConfigurationDirectory().addPath(path);
+                configurationManager.addObject(transcriptConfig);
+                configurationManager.loadConfig(transcriptConfig);
+                // maybe user changed installation configs
+                if (transcriptConfig.getWav2vec2Service() == null) {
+                    disable = true;
+                } else {
+                    transcriptConfig.setEnabled(true);
+                    transcriptConfig.setClassName(this.getClass().getName());
+                }
+            } else {
+                disable = true;
+            }
+        }
+        
+        if (disable) {
+            transcriptConfig.setEnabled(false);
+            logger.warn("Remote transcription module disabled, service address not configured.");
             return;
         }
 
@@ -84,11 +129,10 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
         try (Socket client = new Socket(ip, port);
                 InputStream is = client.getInputStream();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
-                PrintWriter writer = new PrintWriter(
-                        new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8), true)) {
+                PrintWriter writer = new PrintWriter(new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8), true)) {
 
+            client.setSoTimeout(10000);
             writer.println(MESSAGES.DISCOVER);
-
             int numServers = Integer.parseInt(reader.readLine());
             List<Server> servers = new ArrayList<>();
             for (int i = 0; i < numServers; i++) {
@@ -99,15 +143,14 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
                 servers.add(server);
                 logger.info("Transcription server discovered: {}:{}", server.ip, server.port);
             }
-            if (!servers.isEmpty()) {
-                RemoteWav2Vec2TranscriptTask.servers = servers;
-                lastUpdateServersTime = System.currentTimeMillis();
-            }
+            RemoteWav2Vec2TranscriptTask.servers = servers;
+            lastUpdateServersTime = System.currentTimeMillis();
         } catch (ConnectException e) {
+            String msg = "Central transcription node refused connection, is it online? " + e.toString();
             if (servers.isEmpty()) {
-                throw new IPEDException("Transcription server refused connection, is it online?");
+                throw new IPEDException(msg);
             } else {
-                logger.error("Transcription server refused connection, is it online?");
+                logger.warn(msg);
             }
         }
     }
@@ -120,6 +163,12 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
     @Override
     public void finish() throws Exception {
         super.finish();
+        if (!statsPrinted.getAndSet(true)) {
+            int numWorkers = this.worker.manager.getNumWorkers();
+            DecimalFormat df = new DecimalFormat();
+            logger.info("Time spent to send audios: {}s", df.format(audioSendingTime.get() / (1000 * numWorkers)));
+            logger.info("Time spent to receive transcriptions: {}s", df.format(transcriptReceiveTime.get() / (1000 * numWorkers)));
+        }
     }
 
     /**
@@ -139,9 +188,11 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
         return servers.get(currentServer);
     }
 
+    /**
+     * Don't convert to WAV on client side, return the audio as is.
+     */
     @Override
-    protected File getTempFileToTranscript(IItem evidence, TemporaryResources tmp)
-            throws IOException, InterruptedException {
+    protected File getTempFileToTranscript(IItem evidence, TemporaryResources tmp) throws IOException, InterruptedException {
         return evidence.getTempFile();
     }
 
@@ -169,46 +220,71 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
                     continue;
                 }
                 if (!MESSAGES.ACCEPTED.toString().equals(response)) {
-                    logger.error("Error 0 in communication channel with {}.", server);
+                    logger.error("Error 0 in communication with {}. The audio will be retried.", server);
                     continue;
                 }
 
-                logger.info("Transcription server {} accepted connection", server);
+                logger.debug("Transcription server {} accepted connection", server);
+
+                long t0 = System.currentTimeMillis();
+
+                bos.write(MESSAGES.VERSION_1_2.toString().getBytes());
+                // bos.write("\n".getBytes());
 
                 bos.write(MESSAGES.AUDIO_SIZE.toString().getBytes());
 
                 DataOutputStream dos = new DataOutputStream(bos);
-                // WAV part should be smaller than 1min, so smaller than 2GB
-                dos.writeInt((int) tmpFile.length());
+                // Must use long see #1833
+                dos.writeLong(tmpFile.length());
                 dos.flush();
 
                 Files.copy(tmpFile.toPath(), bos);
                 bos.flush();
 
+                long t1 = System.currentTimeMillis();
+
                 response = reader.readLine();
+
+                while (MESSAGES.PING.toString().equals(response)) {
+                    logger.debug("ping {}", response);
+                    response = reader.readLine();
+                }
+
                 if (MESSAGES.WARN.toString().equals(response)) {
                     String warn = reader.readLine();
-                    logger.warn("Fail to transcribe on server:{} audio:{} error:{}", server, evidence.getPath(), warn);
+                    boolean tryAgain = false;
                     if (warn.contains(TimeoutException.class.getName())) {
+                        // Timeout converting audio to wav, possibly it's corrupted
                         evidence.setTimeOut(true);
                         stats.incTimeouts();
+                    } else if (warn.contains(SocketTimeoutException.class.getName()) || warn.contains(SocketException.class.getName())) {
+                        tryAgain = true;
+                    }
+                    logger.warn("Fail to transcribe on server: {} audio: {} error: {}.{}", server, evidence.getPath(), warn, (tryAgain ? " The audio will be retried." : ""));
+                    if (tryAgain) {
+                        continue;
                     }
                     return null;
                 }
                 if (MESSAGES.ERROR.toString().equals(response) || response == null) {
-                    String error = response != null ? reader.readLine() : "Remote server process possibly crashed!";
-                    logger.error("Error 1 in communication channel with {}: {}", server, error);
-                    throw new IOException(error);
+                    String error = response != null ? reader.readLine() : "Remote server process crashed or node was turned off!";
+                    logger.error("Error 1 in communication with {}: {}. The audio will be retried.", server, error);
+                    throw new SocketException(error);
                 }
 
                 TextAndScore textAndScore = new TextAndScore();
                 textAndScore.score = Double.parseDouble(response);
                 textAndScore.text = reader.readLine();
 
+                long t2 = System.currentTimeMillis();
+
                 if (!MESSAGES.DONE.toString().equals(reader.readLine())) {
-                    logger.error("Error 2 in communication channel with {}.", server);
-                    throw new IOException("Error receiving transcription.");
+                    logger.error("Error 2 in communication with {}. The audio will be retried.", server);
+                    throw new SocketException("Error receiving transcription.");
                 }
+
+                audioSendingTime.addAndGet(t1 - t0);
+                transcriptReceiveTime.addAndGet(t2 - t1);
 
                 return textAndScore;
 
@@ -221,17 +297,21 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
                     sleepBeforeRetry(requestTime);
                     requestServers(true);
                 } else {
-                    e.printStackTrace();
+                    logger.warn("Network error communicating to server: " + server + ", retrying audio: " + evidence.getPath(), e);
                 }
             }
         }
 
     }
 
-    private static void sleepBeforeRetry(long lastRequestTime) throws InterruptedException {
-        long sleep = RETRY_INTERVAL_MILLIS - (System.currentTimeMillis() - lastRequestTime);
+    private void sleepBeforeRetry(long lastRequestTime) {
+        long sleep = getRetryIntervalMillis() - (System.currentTimeMillis() - lastRequestTime);
         if (sleep > 0) {
-            Thread.sleep(sleep);
+            try {
+                Thread.sleep(sleep);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 

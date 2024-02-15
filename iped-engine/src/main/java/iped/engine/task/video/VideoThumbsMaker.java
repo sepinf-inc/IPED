@@ -13,12 +13,16 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import javax.imageio.ImageIO;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 
 import iped.utils.ImageUtil;
 
@@ -37,6 +41,8 @@ public class VideoThumbsMaker {
     private String mplayer = "mplayer.exe"; //$NON-NLS-1$
     private Boolean videoThumbsOriginalDimension = false;
     private int maxDimensionSize = 1024;
+    private String numFramesEquation;
+    private ScriptEngine scriptEngine;
     private int timeoutProcess = 45000;
     private int timeoutInfo = 15000;
     private int timeoutFirstCall = 300000;
@@ -87,6 +93,7 @@ public class VideoThumbsMaker {
 
         boolean fixed = false;
         File lnk = null;
+        File subTmpFile = null;
         String videoStream = null;
         for (int step = numFrames <= 0 ? 0 : 1; step <= 1; step++) {
             if (step == 1) {
@@ -125,6 +132,25 @@ public class VideoThumbsMaker {
                     step--;
                     continue;
                 }
+                if (inOrg.getAbsolutePath().length() > 256) {
+                    subTmpFile = File.createTempFile("_temp_video_", ".tmp", subTmp);
+                    subTmpFile.deleteOnExit();
+                    if (verbose) {
+                        System.err.println("Using temp file = " + subTmpFile); //$NON-NLS-1$
+                    }
+                    try {
+                        Files.copy(inOrg.toPath(), subTmpFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                        in = subTmpFile;
+                        cmds.set(cmds.size() - 1, in.getPath());
+                        step--;
+                        continue;
+                    } catch (IOException e) {
+                        if (verbose) {
+                            System.err.println("Error copying to temp a file with long path: " + inOrg.toPath()); //$NON-NLS-1$
+                            e.printStackTrace();
+                        }
+                    }
+                }
             }
             if (info != null) {
                 result.setVideoInfo(info);
@@ -141,8 +167,7 @@ public class VideoThumbsMaker {
             return result;
         }
 
-        if (result.getVideoDuration() == 0 || result.getDimension() == null || result.getDimension().width == 0
-                || result.getDimension().height == 0) {
+        if (result.getDimension() == null || result.getDimension().width == 0 || result.getDimension().height == 0) {
             return result;
         }
 
@@ -161,9 +186,18 @@ public class VideoThumbsMaker {
                 maxSize = config.getThumbWidth();
             }
         }
+
         int frequency = (int) ((result.getVideoDuration() - 1000) * 0.00095 / (maxThumbs + 2));
         if (frequency < 1) {
             frequency = 1;
+        }
+        
+        if (numFramesEquation != null) {
+            int newMaxThumbs = getNumFramesFromJSEquation(result.getVideoDuration() / 1000) + 1;
+            if (newMaxThumbs > maxThumbs) {
+                maxThumbs = newMaxThumbs;
+                frequency = 1; // this will cause frameStep to be used below
+            }
         }
 
         File[] files = null;
@@ -325,6 +359,9 @@ public class VideoThumbsMaker {
         }
         if (lnk != null) {
             lnk.delete();
+        }
+        if (subTmpFile != null) {
+            subTmpFile.delete();
         }
         if (images.size() == 0) {
             return result;
@@ -528,12 +565,31 @@ public class VideoThumbsMaker {
         return null;
     }
 
+    private int getNumFramesFromJSEquation(long duration) {
+        if (scriptEngine == null) {
+            ScriptEngineManager manager = new ScriptEngineManager();
+            scriptEngine = manager.getEngineByExtension("js"); // $NON-NLS-1$
+        }
+        scriptEngine.put("duration", duration);
+        try {
+            Object result = scriptEngine.eval(numFramesEquation);
+            return ((Number) result).intValue();
+
+        } catch (ScriptException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public void setMPlayer(String mplayer) {
         this.mplayer = mplayer;
     }
 
     public String getMPlayer() {
         return mplayer;
+    }
+
+    public void setNumFramesEquation(String numFramesEquation) {
+        this.numFramesEquation = numFramesEquation;
     }
 
     public void setVideoThumbsOriginalDimension(Boolean videoThumbsOriginalDimension) {

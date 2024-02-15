@@ -89,9 +89,9 @@ public class TelegramParser extends SQLite3DBParser {
     private static final String ATTACHMENT_MESSAGE = ATTACHMENT_PREFIX + "Attachment: ";
 
     private static boolean enabledForUfdr = false;
-    private static boolean enabledForIOSUfdr = false;
 
     private boolean extractMessages = true;
+    private int minChatSplitSize = 6000000;
 
     public Set<MediaType> getSupportedTypes(ParseContext context) {
         return SUPPORTED_TYPES;
@@ -101,23 +101,19 @@ public class TelegramParser extends SQLite3DBParser {
         return enabledForUfdr;
     }
 
-    public static boolean isEnabledForIOSUfdr() {
-        return enabledForIOSUfdr;
-    }
-
     @Field
     public void setEnabledForUfdr(boolean enable) {
         enabledForUfdr = enable;
     }
 
     @Field
-    public void setEnabledForIOSUfdr(boolean enable) {
-        enabledForIOSUfdr = enable;
+    public void setExtractMessages(boolean extractMessages) {
+        this.extractMessages = extractMessages;
     }
 
     @Field
-    public void setExtractMessages(boolean extractMessages) {
-        this.extractMessages = extractMessages;
+    public void setMinChatSplitSize(int minChatSplitSize) {
+        this.minChatSplitSize = minChatSplitSize;
     }
 
     private void storeLinkedHashes(List<Message> messages, Metadata metadata) {
@@ -149,7 +145,7 @@ public class TelegramParser extends SQLite3DBParser {
                     byte[] bytes = r.genarateContactHtml(c);
                     Metadata cMetadata = new Metadata();
                     cMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, TELEGRAM_CONTACT.toString());
-                    cMetadata.set(TikaCoreProperties.TITLE, c.getName());
+                    cMetadata.set(TikaCoreProperties.TITLE, c.getTitle());
                     cMetadata.set(ExtraProperties.USER_NAME, c.getName());
                     cMetadata.set(ExtraProperties.USER_PHONE, c.getPhone());
                     cMetadata.set(ExtraProperties.USER_ACCOUNT, c.getId() + "");
@@ -190,6 +186,7 @@ public class TelegramParser extends SQLite3DBParser {
         int firstMsg = 0;
         byte[] bytes;
         ReportGenerator r = new ReportGenerator(searcher);
+        r.setMinChatSplitSize(this.minChatSplitSize);
         while ((bytes = r.generateNextChatHtml(c)) != null) {
             int nextMsg = r.getNextMsgNum();
 
@@ -333,7 +330,7 @@ public class TelegramParser extends SQLite3DBParser {
                     byte[] bytes = r.genarateContactHtml(c);
                     Metadata cMetadata = new Metadata();
                     cMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, TELEGRAM_CONTACT.toString());
-                    cMetadata.set(TikaCoreProperties.TITLE, c.getName());
+                    cMetadata.set(TikaCoreProperties.TITLE, c.getTitle());
                     cMetadata.set(ExtraProperties.USER_NAME, c.getName());
                     cMetadata.set(ExtraProperties.USER_PHONE, c.getPhone());
                     cMetadata.set(ExtraProperties.USER_ACCOUNT, c.getId() + "");
@@ -473,23 +470,10 @@ public class TelegramParser extends SQLite3DBParser {
         String mimetype = metadata.get(StandardParser.INDEXER_CONTENT_TYPE);
         if (mimetype.equals(TELEGRAM_DB.toString())) {
             parseTelegramDBAndroid(stream, handler, metadata, context);
-        }
-        if (mimetype.equals(TELEGRAM_DB_IOS.toString())) {
-            if (!enabledForIOSUfdr && PhoneParsingConfig.isFromUfdrDatasourceReader(item)) {
-                return;
-            }
-            try {
-                parseTelegramDBIOS(stream, handler, metadata, context);
-            } catch (Exception e) {
-                // TODO: handle exception
-                e.printStackTrace(System.out);
-                throw e;
-            }
-        }
-        if (mimetype.equals(TELEGRAM_USER_CONF.toString())) {
+        } else if (mimetype.equals(TELEGRAM_DB_IOS.toString())) {
+            parseTelegramDBIOS(stream, handler, metadata, context);
+        } else if (mimetype.equals(TELEGRAM_USER_CONF.toString())) {
             parseAndroidAccount(stream, handler, metadata, context);
         }
-
     }
-
 }

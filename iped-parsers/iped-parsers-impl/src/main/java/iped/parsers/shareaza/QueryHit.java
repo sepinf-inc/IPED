@@ -21,7 +21,7 @@ package iped.parsers.shareaza;
 import java.io.IOException;
 
 /**
- * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
+ * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
  */
 class QueryHit extends ShareazaEntity {
 
