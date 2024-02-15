@@ -1318,6 +1318,10 @@ public class ExtractorIOS extends Extractor {
                         // multiple users added to group
                         result = USER_ADDED_TO_GROUP;
                         break;
+
+                    case 60:
+                        result = MessageType.COMMUNITY_WELCOME;
+                        break;
                 }
                 break;
 
@@ -1409,10 +1413,6 @@ public class ExtractorIOS extends Extractor {
                     case 56:
                         result = SENDER_ADDED_TO_CONTACTS;
                         break;
-
-                    case 60:
-                        result = MessageType.COMMUNITY_WELCOME;
-                        break;
                 }
                 break;
 
@@ -1473,6 +1473,11 @@ public class ExtractorIOS extends Extractor {
 
             case 53:
                 result = VIEW_ONCE_AUDIO_MESSAGE;
+                break;
+
+            case 54:
+                // Another type of video message (found in communities)
+                result = VIDEO_MESSAGE;
                 break;
 
             case 55:
