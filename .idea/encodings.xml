@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Encoding">
+    <file url="file://$PROJECT_DIR$/iped-api/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/iped-api/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/iped-app/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/iped-app/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/iped-carvers/iped-ahocorasick/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/iped-carvers/iped-ahocorasick/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/iped-carvers/iped-carvers-api/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/iped-carvers/iped-carvers-api/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/iped-carvers/iped-carvers-impl/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/iped-carvers/iped-carvers-impl/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/iped-carvers/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/iped-carvers/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/iped-engine/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/iped-engine/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/iped-geo/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/iped-geo/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/iped-parsers/iped-parsers-impl/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/iped-parsers/iped-parsers-impl/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/iped-parsers/java-dbf/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/iped-parsers/java-dbf/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/iped-parsers/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/iped-parsers/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/iped-utils/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/iped-utils/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/iped-viewers/iped-viewers-api/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/iped-viewers/iped-viewers-api/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/iped-viewers/iped-viewers-impl/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/iped-viewers/iped-viewers-impl/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/iped-viewers/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/iped-viewers/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/resources" charset="UTF-8" />
+  </component>
+</project>
