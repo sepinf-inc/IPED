@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,6 +38,7 @@ import org.xml.sax.SAXException;
 import iped.parsers.util.RawISOConverter;
 import iped.parsers.util.Util;
 import iped.properties.ExtraProperties;
+import iped.utils.EmptyInputStream;
 import iped.utils.IOUtil;
 import net.sf.sevenzipjbinding.ExtractAskMode;
 import net.sf.sevenzipjbinding.ExtractOperationResult;
@@ -138,22 +140,27 @@ public class SevenZipParser extends AbstractParser {
             inArchive = SevenZip.openInArchive(null, new RandomAccessFileInStream(randomAccessFile), "password"); //$NON-NLS-1$
             ISimpleInArchive simpleInArchive = inArchive.getSimpleInterface();
             // Armazena as pastas
-            TreeMap<String, Integer> folderMap = new TreeMap<String, Integer>();
+            ArrayList<Integer> folderList = new ArrayList<Integer>();
             ArrayList<Integer> itemsToExtract = new ArrayList<Integer>();
             for (int i = 0; i < simpleInArchive.getNumberOfItems(); i++) {
                 ISimpleInArchiveItem item = simpleInArchive.getArchiveItem(i);
                 if (item.isEncrypted())
                     throw new EncryptedDocumentException();
                 if (item.isFolder())
-                    folderMap.put(item.getPath(), i);
+                    folderList.add(i);
                 else
                     itemsToExtract.add(i);
             }
             MyExtractCallback extractCallback = new MyExtractCallback(simpleInArchive, context, xhtml, extractor, tmp);
             // Processa as pastas na ordem (em profundidade)
-            int[] folders = ArrayUtils.toPrimitive(folderMap.values().toArray(new Integer[0]));
+            int[] folders = ArrayUtils.toPrimitive(folderList.toArray(new Integer[0]));
             inArchive.extract(folders, false, extractCallback);
-            folderMap.clear();
+            for (Folder folder : extractCallback.folderMap.values()) {
+                try (InputStream is = new BufferedInputStream(folder.file != null ? new FileInputStream(folder.file) : new EmptyInputStream())) {
+                    extractCallback.parseSubitem(is, folder.item);
+                }
+            }
+            extractCallback.folderMap.clear();
             // Processa os arquivos
             int[] items = ArrayUtils.toPrimitive(itemsToExtract.toArray(new Integer[0]));
             inArchive.extract(items, false, extractCallback);
@@ -174,7 +181,17 @@ public class SevenZipParser extends AbstractParser {
 
     }
 
-    public class MyExtractCallback implements IArchiveExtractCallback {
+    private static class Folder {
+        File file;
+        ISimpleInArchiveItem item;
+
+        private Folder(File file, ISimpleInArchiveItem item) {
+            this.file = file;
+            this.item = item;
+        }
+    }
+
+    private static class MyExtractCallback implements IArchiveExtractCallback {
 
         ISimpleInArchive simpleInArchive;
         ParseContext context;
@@ -183,6 +200,8 @@ public class SevenZipParser extends AbstractParser {
         TemporaryResources tmp;
 
         ISimpleInArchiveItem item;
+
+        TreeMap<String, Folder> folderMap = new TreeMap<>();
 
         byte[] tmpBuf = new byte[32 * 1024 * 1024];
         int bufPos = 0;
@@ -254,11 +273,20 @@ public class SevenZipParser extends AbstractParser {
         public void setOperationResult(ExtractOperationResult arg0) throws SevenZipException {
 
             try {
+                if (item.isFolder()) {
+                    if (tmpFile == null && bufPos > 0) {
+                        tmpFile = tmp.createTemporaryFile();
+                        Files.copy(new ByteArrayInputStream(tmpBuf, 0, bufPos), tmpFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    }
+                    Folder folder = new Folder(tmpFile, item);
+                    folderMap.put(item.getPath(), folder);
+                    return;
+                }
                 if (tmpFile == null) {
-                    parseSubitem(new ByteArrayInputStream(tmpBuf, 0, bufPos));
+                    parseSubitem(new ByteArrayInputStream(tmpBuf, 0, bufPos), item);
                 } else {
                     try (InputStream is = new BufferedInputStream(new FileInputStream(tmpFile))) {
-                        parseSubitem(is);
+                        parseSubitem(is, item);
                     }
                 }
 
@@ -272,7 +300,7 @@ public class SevenZipParser extends AbstractParser {
 
         }
 
-        private void parseSubitem(InputStream is) throws SAXException, IOException {
+        private void parseSubitem(InputStream is, ISimpleInArchiveItem item) throws SAXException, IOException {
 
             String subitemPath = ""; //$NON-NLS-1$
             try {
