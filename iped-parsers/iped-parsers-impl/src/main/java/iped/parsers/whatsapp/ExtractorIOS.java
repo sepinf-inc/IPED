@@ -1420,6 +1420,7 @@ public class ExtractorIOS extends Extractor {
                         break;
 
                     case 3:
+                    case 36:
                         result = ENCRYPTION_KEY_CHANGED;
                         break;
 

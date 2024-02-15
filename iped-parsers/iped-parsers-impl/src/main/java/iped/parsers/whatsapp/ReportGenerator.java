@@ -280,7 +280,7 @@ public class ReportGenerator {
             case ENCRYPTION_KEY_CHANGED:
                 out.println("<div class=\"systemmessage\">");
                 out.print(lockedIcon);
-                out.println(name + " " + Messages.getString("WhatsAppReport.SecurityChanged"));
+                out.println(Messages.getString("WhatsAppReport.SecurityChanged"));
                 break;
             case SENDER_IN_CONTACTS:
                 out.println("<div class=\"systemmessage\">");
