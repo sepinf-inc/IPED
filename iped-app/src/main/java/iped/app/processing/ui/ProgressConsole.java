@@ -3,13 +3,13 @@ package iped.app.processing.ui;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.text.NumberFormat;
-import java.util.Date;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import iped.data.IItem;
+import iped.engine.core.Statistics;
 import iped.engine.core.Worker;
 import iped.engine.localization.Messages;
 import iped.engine.task.AbstractTask;
@@ -23,76 +23,72 @@ public class ProgressConsole implements PropertyChangeListener {
 
     private final Level MSG = Level.getLevel("MSG"); //$NON-NLS-1$
 
-    private int indexed = 0, discovered = 0;
-    private long rate = 0, instantRate;
-    private int volume, taskSize;
-    private long secsToEnd;
-    private Date indexStart;
+    private boolean discoverEnded;
     private Worker[] workers;
-    private long lastTime = 0;
-    private NumberFormat sizeFormat = LocalizedFormat.getNumberInstance();
+    private long lastTime;
+    private long processingStart;
+    private final NumberFormat sizeFormat = LocalizedFormat.getNumberInstance();
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        if (indexStart == null) {
-            indexStart = new Date();
+        if (processingStart == 0) {
+            processingStart = System.currentTimeMillis();
         }
 
-        if ("processed".equals(evt.getPropertyName())) { //$NON-NLS-1$
-            indexed = (Integer) evt.getNewValue();
-            long now = System.currentTimeMillis();
-            if (now - lastTime >= LOG_ITEMS_INTERVAL_MILLIS) {
-                if (lastTime != 0) {
-                    logItemList();
-                }
-                lastTime = now;
-            }
+        if ("discoverEnded".equals(evt.getPropertyName())) {
+            discoverEnded = true;
+            update();
 
-        } else if ("taskSize".equals(evt.getPropertyName())) { //$NON-NLS-1$
-            taskSize = (Integer) evt.getNewValue();
-
-        } else if ("discovered".equals(evt.getPropertyName())) { //$NON-NLS-1$
-            discovered = (Integer) evt.getNewValue();
-            if (volume == 0)
-                updateString();
+        } else if ("update".equals(evt.getPropertyName())) {
+            update();
 
         } else if ("mensagem".equals(evt.getPropertyName())) { //$NON-NLS-1$
             LOGGER.log(MSG, (String) evt.getNewValue());
 
-        } else if ("progresso".equals(evt.getPropertyName())) { //$NON-NLS-1$
-            long prevVolume = volume;
-            volume = (Integer) evt.getNewValue();
-
-            Date now = new Date();
-            long interval = (now.getTime() - indexStart.getTime()) / 1000 + 1;
-            rate = (long) volume * 1000000L * 3600L / ((1 << 30) * interval);
-            instantRate = (long) (volume - prevVolume) * 1000000L * 3600L / (1 << 30) + 1;
-            updateString();
-
         } else if ("workers".equals(evt.getPropertyName())) { //$NON-NLS-1$
             workers = (Worker[]) evt.getNewValue();
         }
-
     }
 
-    private void updateString() {
-        String msg = Messages.getString("ProgressConsole.Starting"); //$NON-NLS-1$
-        if (indexed > 0) {
-            msg = Messages.getString("ProgressConsole.Processing") + indexed + "/" + discovered; //$NON-NLS-1$ //$NON-NLS-2$
-            int percent = (taskSize != 0) ? (volume * 100 / taskSize) : 0;
-            msg += " (" + percent + "%)" + " " + rate + "GB/h"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-        } else if (discovered > 0) {
-            msg = Messages.getString("ProgressConsole.Found") + discovered //$NON-NLS-1$
-                    + Messages.getString("ProgressConsole.files"); //$NON-NLS-1$
+    private void update() {
+        Statistics s = Statistics.get();
+        if (s == null) {
+            return;
+        }
+        // Get volume/item processed/total
+        int totalVolume = (int) (Statistics.get().getCaseData().getDiscoveredVolume() >>> 20); // Converted to MB
+        int totalItems = Statistics.get().getCaseData().getDiscoveredEvidences();
+        int processedVolume = (int) (Statistics.get().getVolume() >>> 20); // Converted to MB
+        int processedItems = Statistics.get().getProcessed();
+
+        long interval = (System.currentTimeMillis() - processingStart) / 1000 + 1;
+        long rate = processedVolume * 3600L / ((1 << 10) * interval);
+
+        String msg = Messages.getString("ProgressConsole.Starting");
+        if (processedItems > 0) {
+            msg = Messages.getString("ProgressConsole.Processing") + processedItems + "/" + totalItems;
+            int percent = discoverEnded && totalVolume != 0 ? (int) Math.round(processedVolume * 100.0 / totalVolume)
+                    : 0;
+            msg += " (" + percent + "%)" + " " + rate + "GB/h";
+        } else if (totalItems > 0) {
+            msg = Messages.getString("ProgressConsole.Found") + totalItems
+                    + Messages.getString("ProgressConsole.files");
         }
 
-        if (taskSize != 0 && indexStart != null) {
-            secsToEnd = ((long) taskSize - (long) volume) * ((new Date()).getTime() - indexStart.getTime())
-                    / (((long) volume + 1) * 1000);
-            msg += Messages.getString("ProgressConsole.FinishIn") + secsToEnd / 3600 + "h " + (secsToEnd / 60) % 60 //$NON-NLS-1$ //$NON-NLS-2$
-                    + "m " + secsToEnd % 60 + "s"; //$NON-NLS-1$ //$NON-NLS-2$
+        if (discoverEnded && processingStart != 0) {
+            long secsToEnd = (totalVolume - processedVolume) * (System.currentTimeMillis() - processingStart)
+                    / ((processedVolume + 1) * 1000L);
+            msg += Messages.getString("ProgressConsole.FinishIn") + secsToEnd / 3600 + "h " + (secsToEnd / 60) % 60
+                    + "m " + secsToEnd % 60 + "s";
         }
         LOGGER.log(MSG, msg);
+
+        if (System.currentTimeMillis() - lastTime >= LOG_ITEMS_INTERVAL_MILLIS) {
+            if (lastTime != 0) {
+                logItemList();
+            }
+            lastTime = System.currentTimeMillis();
+        }
     }
 
     private void logItemList() {
@@ -107,13 +103,13 @@ public class ProgressConsole implements PropertyChangeListener {
             if (task != null) {
                 msg.append(" [" + task.getName() + "]");
             } else {
-                msg.append(" [no task]"); //$NON-NLS-1$
+                msg.append(" [no task]");
             }
             IItem evidence = workers[i].evidence;
             if (evidence != null) {
                 msg.append(" [" + evidence.getPath() + "]");
                 if (evidence.getLength() != null) {
-                    msg.append(" [" + sizeFormat.format(evidence.getLength()) + " bytes]"); //$NON-NLS-1$ //$NON-NLS-2$
+                    msg.append(" [" + sizeFormat.format(evidence.getLength()) + " bytes]");
                 }
             } else {
                 msg.append(" [no item]");
@@ -121,5 +117,4 @@ public class ProgressConsole implements PropertyChangeListener {
             LOGGER.log(MSG, msg);
         }
     }
-
 }
