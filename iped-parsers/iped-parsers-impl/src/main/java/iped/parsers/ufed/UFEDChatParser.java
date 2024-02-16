@@ -129,7 +129,8 @@ public class UFEDChatParser extends AbstractParser {
                     messages.add(m);
                 } else {
                     HashSet<String> uuids = new HashSet<>();
-                    for (IItemReader subitem = subItems.next(); subItems.hasNext();) {
+                    while (subItems.hasNext()) {
+                        IItemReader subitem = subItems.next();
                         if (uuids.add(subitem.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "id"))) {
                             UfedMessage m = createMessage(msg, subitem);
                             messages.add(m);
