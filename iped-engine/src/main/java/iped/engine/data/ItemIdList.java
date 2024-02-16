@@ -93,5 +93,10 @@ public class ItemIdList extends AbstractSet<IItemId> implements IItemIdList{
         return bitmap.checkedAdd(e.getId());
     }
 
+    @Override
+    public void clear() {
+        bitsets.clear();
+    }
+
 }
 
