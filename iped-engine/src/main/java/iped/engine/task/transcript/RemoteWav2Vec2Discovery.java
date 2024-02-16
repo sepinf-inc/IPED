@@ -100,6 +100,7 @@ public class RemoteWav2Vec2Discovery {
 
     private static void register(Socket client, BufferedReader reader, PrintWriter writer) throws IOException {
         String ip = client.getInetAddress().getHostAddress();
+        String hostname = client.getInetAddress().getHostName();
         System.out.println(new Date() + " Receiving registration from: " + ip);
         String port = reader.readLine();
         String address = ip + ":" + port;
@@ -107,23 +108,34 @@ public class RemoteWav2Vec2Discovery {
         String nodeWavConvs = reader.readLine();
         writer.println(MESSAGES.DONE);
         if (servers.put(address, System.currentTimeMillis()) == null) {
-            System.out.println(new Date() + " Server registered: " + address);
+            System.out.println(new Date() + " Server registered: " + address + " hostname: " + hostname);
             concurrentJobs.put(address, Integer.valueOf(nodeJobs));
             concurrentWavConvs.put(address, Integer.valueOf(nodeWavConvs));
         }
     }
 
     private static void discover(PrintWriter writer) throws IOException {
-        writer.println(Integer.toString(servers.size()));
-        for (String server : servers.keySet()) {
-            writer.println(server);
+        String env_servers = System.getenv("IPED_TRANSCRIPTION_SERVERS");
+        if (!servers.isEmpty() && env_servers != null && !env_servers.trim().isEmpty()) {
+            String servers[] = env_servers.trim().split(",");
+            writer.println(Integer.toString(servers.length));
+            for (String server : servers) {
+                writer.println(server.trim());
+            }
+        } else {
+            writer.println(Integer.toString(servers.size()));
+            for (String server : servers.keySet()) {
+                writer.println(server);
+            }
         }
+
     }
 
     private static void getStats(Socket client, BufferedReader reader, PrintWriter writer) throws IOException {
         String ip = client.getInetAddress().getHostAddress();
         String port = reader.readLine();
         String address = ip + ":" + port;
+        String hostname = client.getInetAddress().getHostName();
         String nodeJobs = reader.readLine();
         String nodeWavConvs = reader.readLine();
 
@@ -139,7 +151,7 @@ public class RemoteWav2Vec2Discovery {
         writer.println(MESSAGES.DONE);
 
         if (servers.put(address, System.currentTimeMillis()) == null) {
-            System.out.println(new Date() + " Server registered: " + address);
+            System.out.println(new Date() + " Server registered: " + address + " hostname: " + hostname);
             concurrentJobs.put(address, Integer.valueOf(nodeJobs));
             concurrentWavConvs.put(address, Integer.valueOf(nodeWavConvs));
         }

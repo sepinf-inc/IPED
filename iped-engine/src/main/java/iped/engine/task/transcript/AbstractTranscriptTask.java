@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.net.NoRouteToHostException;
 import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -32,6 +33,7 @@ import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteConfig.SynchronousMode;
 
 import iped.configuration.Configurable;
+import iped.configuration.IConfigurationDirectory;
 import iped.data.IItem;
 import iped.engine.config.AudioTranscriptConfig;
 import iped.engine.config.Configuration;
@@ -253,7 +255,11 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         String[] cmd = transcriptConfig.getConvertCmd().split(" ");
         if (SystemUtils.IS_OS_WINDOWS) {
             String mplayerWin = VideoThumbTask.MPLAYER_WIN_PATH;
-            cmd[0] = cmd[0].replace("mplayer", Configuration.getInstance().appRoot + "/" + mplayerWin);
+            String ipedRoot = System.getProperty(IConfigurationDirectory.IPED_ROOT);
+            if (ipedRoot == null) {
+                ipedRoot = Configuration.getInstance().appRoot;
+            }
+            cmd[0] = cmd[0].replace("mplayer", ipedRoot + "/" + mplayerWin);
         }
         for (int i = 0; i < cmd.length; i++) {
             cmd[i] = cmd[i].replace("$INPUT", input.getAbsolutePath());
@@ -265,7 +271,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         }
         pb.redirectErrorStream(true);
         Process p = pb.start();
-        IOUtil.ignoreInputStream(p.getInputStream());
+        IOUtil.ignoreInputStream(p);
         long timeoutSecs = MIN_TIMEOUT / 3 + TIMEOUT_PER_MB * input.length() / (1 << 20);
         boolean finished = p.waitFor(timeoutSecs, TimeUnit.SECONDS);
         if (!finished) {
@@ -374,6 +380,13 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             return;
         }
 
+        try {
+            evidence.getTempFile();
+        } catch (IOException e) {
+            LOGGER.warn("Error creating temp file {} ({} bytes) {}", evidence.getPath(), evidence.getLength(), e.toString());
+            return;
+        }
+
         TemporaryResources tmp = new TemporaryResources();
         File tmpFile = getTempFileToTranscript(evidence, tmp);
         if (tmpFile == null) {
@@ -398,10 +411,10 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             }
 
         } catch (Exception e) {
-            if (e instanceof TooManyConnectException || e instanceof IPEDException) {
+            if (e instanceof TooManyConnectException || e instanceof IPEDException || e instanceof NoRouteToHostException) {
                 throw e;
             }
-            LOGGER.warn("Unexpected exception while transcribing: " + evidence.getPath(), e);
+            LOGGER.error("Unexpected exception while transcribing: " + evidence.getPath(), e);
         } finally {
             tmp.close();
         }

@@ -15,6 +15,7 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +27,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tika.io.TemporaryResources;
 
+import iped.configuration.IConfigurationDirectory;
 import iped.data.IItem;
+import iped.engine.config.AudioTranscriptConfig;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.core.Manager;
 import iped.engine.io.TimeoutException;
@@ -83,6 +86,32 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
         }
         
         if (!servers.isEmpty()) {
+            return;
+        }
+
+        boolean disable = false;
+        if (transcriptConfig.getWav2vec2Service() == null) {
+            String ipedRoot = System.getProperty(IConfigurationDirectory.IPED_ROOT);
+            if (ipedRoot != null) {
+                Path path = new File(ipedRoot, "conf/" + AudioTranscriptConfig.CONF_FILE).toPath();
+                configurationManager.getConfigurationDirectory().addPath(path);
+                configurationManager.addObject(transcriptConfig);
+                configurationManager.loadConfig(transcriptConfig);
+                // maybe user changed installation configs
+                if (transcriptConfig.getWav2vec2Service() == null) {
+                    disable = true;
+                } else {
+                    transcriptConfig.setEnabled(true);
+                    transcriptConfig.setClassName(this.getClass().getName());
+                }
+            } else {
+                disable = true;
+            }
+        }
+        
+        if (disable) {
+            transcriptConfig.setEnabled(false);
+            logger.warn("Remote transcription module disabled, service address not configured.");
             return;
         }
 
@@ -199,11 +228,14 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
 
                 long t0 = System.currentTimeMillis();
 
+                bos.write(MESSAGES.VERSION_1_2.toString().getBytes());
+                // bos.write("\n".getBytes());
+
                 bos.write(MESSAGES.AUDIO_SIZE.toString().getBytes());
 
                 DataOutputStream dos = new DataOutputStream(bos);
-                // WAV part should be smaller than 1min, so smaller than 2GB
-                dos.writeInt((int) tmpFile.length());
+                // Must use long see #1833
+                dos.writeLong(tmpFile.length());
                 dos.flush();
 
                 Files.copy(tmpFile.toPath(), bos);
@@ -212,6 +244,12 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
                 long t1 = System.currentTimeMillis();
 
                 response = reader.readLine();
+
+                while (MESSAGES.PING.toString().equals(response)) {
+                    logger.debug("ping {}", response);
+                    response = reader.readLine();
+                }
+
                 if (MESSAGES.WARN.toString().equals(response)) {
                     String warn = reader.readLine();
                     boolean tryAgain = false;
@@ -266,10 +304,14 @@ public class RemoteWav2Vec2TranscriptTask extends AbstractTranscriptTask {
 
     }
 
-    private void sleepBeforeRetry(long lastRequestTime) throws InterruptedException {
+    private void sleepBeforeRetry(long lastRequestTime) {
         long sleep = getRetryIntervalMillis() - (System.currentTimeMillis() - lastRequestTime);
         if (sleep > 0) {
-            Thread.sleep(sleep);
+            try {
+                Thread.sleep(sleep);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 

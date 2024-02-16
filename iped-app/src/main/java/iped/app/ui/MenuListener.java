@@ -18,7 +18,9 @@
  */
 package iped.app.ui;
 
+import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -28,6 +30,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.BorderFactory;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -64,7 +69,9 @@ public class MenuListener implements ActionListener {
     private static Logger LOGGER = LoggerFactory.getLogger(MenuListener.class);
 
     static String CSV = ".csv"; //$NON-NLS-1$
-    static JFileChooser fileChooser;
+    static JFileChooser fileChooser, fileChooserImportKeywords;
+    static JCheckBox checkBookMarkList;  
+    static JCheckBox checkBookMarkWords;
 
     FileFilter defaultFilter, csvFilter = new Filtro();
     MenuClass menu;
@@ -85,6 +92,53 @@ public class MenuListener implements ActionListener {
         if (dirDadosExportados.exists()) {
             fileChooser.setCurrentDirectory(dirDadosExportados);
         }
+    }
+
+    private void setupFileChooserImportKeywords() {
+        if (fileChooserImportKeywords != null)
+            return;
+
+        checkBookMarkList = new JCheckBox(Messages.getString("MenuListener.CheckAddKeywordsAsSingleBookmark"));
+        checkBookMarkWords = new JCheckBox(Messages.getString("MenuListener.CheckAddKeywordsAsMultipleBookmarks"));
+
+        fileChooserImportKeywords = new JFileChooser();
+        defaultFilter = fileChooserImportKeywords.getFileFilter();
+        File moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir();
+        fileChooserImportKeywords.setCurrentDirectory(moduleDir.getParentFile());
+
+        File dirDadosExportados = new File(Messages.getString("ExportToZIP.DefaultPath"));
+        if (dirDadosExportados.exists()) {
+            fileChooserImportKeywords.setCurrentDirectory(dirDadosExportados);
+        }
+
+        fileChooserImportKeywords.setFileFilter(defaultFilter);
+        fileChooserImportKeywords.setFileSelectionMode(JFileChooser.FILES_ONLY);
+
+        JComponent panel = new JPanel();
+        panel.setLayout(new BorderLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+        checkBookMarkList.setSelected(false);
+        panel.add(checkBookMarkList, BorderLayout.NORTH);
+        checkBookMarkWords.setSelected(false);
+        checkBookMarkWords.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
+        panel.add(checkBookMarkWords, BorderLayout.SOUTH);
+
+        int width = (int) fileChooserImportKeywords.getPreferredSize().getWidth();
+        int height = (int) fileChooserImportKeywords.getPreferredSize().getHeight();
+        height += (int) panel.getPreferredSize().getHeight();
+
+        fileChooserImportKeywords.setPreferredSize(new Dimension(width, height));
+
+        fileChooserImportKeywords.setAccessory(panel);
+        JComponent center = null;
+        BorderLayout layout = (BorderLayout) fileChooserImportKeywords.getLayout();
+        for (Component child : fileChooserImportKeywords.getComponents()) {
+            if (BorderLayout.CENTER == layout.getConstraints(child)) {
+                center = (JComponent) child;
+            }
+        }
+        if (center != null)
+            center.add(panel, BorderLayout.SOUTH);
     }
 
     private class Filtro extends FileFilter {
@@ -267,12 +321,12 @@ public class MenuListener implements ActionListener {
             }
 
         } else if (e.getSource() == menu.importKeywords) {
-            setupFileChooser();
-            fileChooser.setFileFilter(defaultFilter);
-            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-            if (fileChooser.showOpenDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
-                File file = fileChooser.getSelectedFile();
-                new KeywordListImporter(file).execute();
+            setupFileChooserImportKeywords();
+            fileChooserImportKeywords.setFileFilter(defaultFilter);
+            fileChooserImportKeywords.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            if (fileChooserImportKeywords.showOpenDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
+                File file = fileChooserImportKeywords.getSelectedFile();
+                new KeywordListImporter(file,checkBookMarkList.isSelected(),checkBookMarkWords.isSelected()).execute();
             }
 
         } else if (e.getSource() == menu.exportTree || e.getSource() == menu.exportTreeChecked

@@ -9,9 +9,9 @@ import java.io.OutputStream;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -28,8 +28,10 @@ import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.compress.archivers.zip.ZipSplitReadOnlySeekableByteChannel;
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.fontbox.ttf.BufferedRandomAccessFile;
 
 import iped.io.SeekableInputStream;
+import iped.utils.ReadOnlyRAFSeekableByteChannel;
 import iped.utils.SeekableFileInputStream;
 import iped.utils.SeekableInputStreamFactory;
 
@@ -38,6 +40,8 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
     private static final int MAX_BYTES_CACHED = 1 << 27;
 
     private static final int MAX_FILES_CACHED = 1 << 9;
+
+    private static final int UFDR_BUF_SIZE = 1 << 16;
 
     private volatile ZipFile zip;
 
@@ -91,20 +95,26 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
                 throw new IOException("ZIP file must have extension!");
             }
             String namePrefix = file.getName().substring(0, idx);
-            ArrayList<File> list = new ArrayList<>();
+            ArrayList<SeekableByteChannel> channels = new ArrayList<>();
             int num = 0;
+            // search for ufdr parts
             while (true) {
                 File segment = new File(file.getParentFile(), namePrefix + ".z" + String.format("%02d", ++num));
                 if (segment.exists()) {
-                    list.add(segment);
+                    BufferedRandomAccessFile braf = new BufferedRandomAccessFile(segment, "r", UFDR_BUF_SIZE);
+                    channels.add(new ReadOnlyRAFSeekableByteChannel(braf));
                 } else {
                     break;
                 }
             }
-            if (list.isEmpty()) {
-                sbc = Files.newByteChannel(file.toPath(), StandardOpenOption.READ);
+            // main ufdr should be the last one
+            BufferedRandomAccessFile braf = new BufferedRandomAccessFile(file, "r", UFDR_BUF_SIZE);
+            channels.add(new ReadOnlyRAFSeekableByteChannel(braf));
+
+            if (channels.size() == 1) {
+                sbc = channels.get(0);
             } else {
-                sbc = ZipSplitReadOnlySeekableByteChannel.forFiles(file, list);
+                sbc = ZipSplitReadOnlySeekableByteChannel.forOrderedSeekableByteChannels(channels.toArray(new SeekableByteChannel[0]));
             }
             zip = new ZipFile(sbc, file.getAbsolutePath(), "UTF-8", true, true);
         }
@@ -149,9 +159,14 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
         }
         synchronized (filesCache) {
             tmp = filesCache.get(path);
-        }
-        if (tmp != null) {
-            return new SeekableFileInputStream(tmp.toFile());
+            if (tmp != null) {
+                try {
+                    return new SeekableFileInputStream(tmp.toFile());
+                } catch (NoSuchFileException e) {
+                    // Could have been deleted by Item.dispose()
+                    filesCache.remove(path);
+                }
+            }
         }
 
         ZipArchiveEntry zae;
@@ -185,7 +200,7 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
                     if (zae.getSize() <= MAX_BYTES_CACHED) {
                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
                         int read;
-                        byte[] buf = new byte[8192];
+                        byte[] buf = new byte[UFDR_BUF_SIZE];
                         while ((read = is.read(buf, 0, buf.length)) >= 0) {
                             if (canceled.get()) {
                                 return null;
@@ -203,7 +218,7 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
                         tmp = Files.createTempFile("zip-stream", null);
                         try (OutputStream out = Files.newOutputStream(tmp)) {
                             int read;
-                            byte[] buf = new byte[8192];
+                            byte[] buf = new byte[UFDR_BUF_SIZE];
                             while (!canceled.get() && (read = is.read(buf, 0, buf.length)) >= 0) {
                                 out.write(buf, 0, read);
                             }
@@ -253,6 +268,7 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
 
     @Override
     public void close() throws IOException {
+        // Closing the ZipFile will close the channel, all sub channels and RAFs
         if (zip != null) {
             zip.close();
             zip = null;

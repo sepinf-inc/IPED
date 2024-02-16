@@ -1,5 +1,6 @@
 package iped.parsers.bittorrent;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -11,7 +12,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.codec.binary.Hex;
+
 import com.dampcake.bencode.BencodeInputStream;
+import com.dampcake.bencode.BencodeOutputStream;
 
 import iped.parsers.util.Util;
 
@@ -24,9 +28,20 @@ public class BencodedDict {
 
     private Map<String, Object> dict;
     private DateFormat df;
+    private boolean incomplete;
 
     public BencodedDict(InputStream is, DateFormat df) throws IOException {
-        dict = new BencodeInputStream(is, StandardCharsets.UTF_8, true).readDictionary();
+        this(is, df, false);
+    }
+
+    public BencodedDict(InputStream is, DateFormat df, boolean canBeIncomplete) throws IOException {
+        if (canBeIncomplete) {
+            BencodedIncompleteInputStream bis = new BencodedIncompleteInputStream(is, StandardCharsets.UTF_8, true);
+            dict = bis.readDictionary();
+            this.incomplete = bis.isIncomplete();
+        } else {
+            dict = new BencodeInputStream(is, StandardCharsets.UTF_8, true).readDictionary();
+        }
         this.df = df;
     }
 
@@ -64,6 +79,14 @@ public class BencodedDict {
         Object obj = getObject(key);
         if (obj == null || !(obj instanceof Long)) {
             return 0;
+        }
+        return (Long) obj;
+    }
+
+    public Long getLongNull(String key) {
+        Object obj = getObject(key);
+        if (obj == null || !(obj instanceof Long)) {
+            return null;
         }
         return (Long) obj;
     }
@@ -144,47 +167,47 @@ public class BencodedDict {
             Object objBuffer = getObject(key);
             if (objBuffer != null && objBuffer instanceof ByteBuffer) {
                 ByteBuffer buffer = (ByteBuffer) objBuffer;
-                resp = new String(encodeHex(buffer.array()));
+                resp = Hex.encodeHexString(buffer.array(), false);
             }
         }
 
         return resp;
     }
 
+    public byte[] getDictBytes() {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try (BencodeOutputStream bos = new BencodeOutputStream(baos)) {
+            bos.writeDictionary(dict);
+            return baos.toByteArray();
+        } catch (IOException e) {
+        }
+        return null;
+    }
+
+    public byte[] getBytes(String key) {
+        byte[] bytes = null;
+
+        if (containsKey(key)) {
+            Object objBuffer = getObject(key);
+            if (objBuffer != null && objBuffer instanceof ByteBuffer) {
+                ByteBuffer buffer = (ByteBuffer) objBuffer;
+                bytes = buffer.array().clone();
+            }
+        }
+
+        return bytes;
+    }
+
     private String getUnknownCharsetString(byte[] data) {
         return Util.decodeUnknowCharset(data);
     }
 
-    /**
-     * Used to build output as Hex
-     */
-    private static final char[] DIGITS_LOWER = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd',
-            'e', 'f' };
+    @Override
+    public String toString() {
+        return dict.toString();
+    }
 
-    /**
-     * Copied from apache commons codec binary.
-     * 
-     * Converts an array of bytes into an array of characters representing the
-     * hexadecimal values of each byte in order. The returned array will be double
-     * the length of the passed array, as it takes two characters to represent any
-     * given byte.
-     *
-     * @param data
-     *            a byte[] to convert to Hex characters
-     * @param toDigits
-     *            the output alphabet (must contain at least 16 chars)
-     * @return A char[] containing the appropriate characters from the alphabet For
-     *         best results, this should be either upper- or lower-case hex.
-     * @since 1.4
-     */
-    private static char[] encodeHex(final byte[] data) {
-        final int l = data.length;
-        final char[] out = new char[l << 1];
-        // two characters form the hex value.
-        for (int i = 0, j = 0; i < l; i++) {
-            out[j++] = DIGITS_LOWER[(0xF0 & data[i]) >>> 4];
-            out[j++] = DIGITS_LOWER[0x0F & data[i]];
-        }
-        return out;
+    public boolean isIncomplete() {
+        return incomplete;
     }
 }

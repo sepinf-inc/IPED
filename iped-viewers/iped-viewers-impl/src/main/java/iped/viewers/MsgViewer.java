@@ -592,6 +592,9 @@ public class MsgViewer extends HtmlViewer {
             String attachName = pair.getRight();
             String ext = Util.getTrueExtension(file);
             file = Util.getFileRenamedToExt(file, ext);
+            if (IOUtil.isTemporaryFile(file)) {
+                file.deleteOnExit();
+            }
             attachs.set(attNum, Pair.of(file, attachName));
             if (IOUtil.isToOpenExternally(attachName, ext)) {
                 this.openFile(file);

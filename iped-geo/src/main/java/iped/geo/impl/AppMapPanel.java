@@ -10,6 +10,7 @@ import java.awt.event.MouseListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
@@ -25,6 +26,7 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 
 import org.apache.lucene.document.Document;
+import org.roaringbitmap.RoaringBitmap;
 
 import iped.data.IItemId;
 import iped.engine.config.ConfigurationManager;
@@ -45,7 +47,7 @@ import iped.viewers.api.IMultiSearchResultProvider;
  * Classe que controla a integração da classe App com a classe MapaCanvas
  */
 
-public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
+public class AppMapPanel extends JPanel implements Consumer<Object[]> {
 
     /**
      * 
@@ -68,6 +70,11 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
     private MapPanelConfig mpConfig;
 
     private JProgressBar gpsProgressBar;
+
+    /*
+     * SwingWorker that prepares the result with georeferenced items that will be
+     * sent to the map
+     */
     private GetResultsJSWorker jsWorker;
     private PropertyChangeListener lastPropertyChangeListener;
 
@@ -79,9 +86,11 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
 
     MapLoadState loadState = MapLoadState.NOTLOADED;
     private GetResultsJSWorker mapLoadWorker;
+    private RoaringBitmap[] geoReferencedBitmap;
 
     public AppMapPanel(IMultiSearchResultProvider resultsProvider, GUIProvider guiProvider) {
         this.resultsProvider = resultsProvider;
+        this.resultsTable = resultsProvider.getResultsTable();
         this.guiProvider = guiProvider;
         this.setLayout(new BorderLayout());
 
@@ -256,14 +265,21 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
             if (loadState == MapLoadState.NOTLOADED) {
                 loadState = MapLoadState.LOADING;
                 mapLoadWorker = new GetResultsJSWorker(resultsProvider, cols, gpsProgressBar, browserCanvas, this);
+
                 mapLoadWorker.addPropertyChangeListener(new PropertyChangeListener() {
                     @Override
                     public void propertyChange(PropertyChangeEvent evt) {
-                        if ("state".equals(evt.getPropertyName()) && (SwingWorker.StateValue.DONE.equals(evt.getNewValue()))) {
+                        if ("state".equals(evt.getPropertyName())
+                                && (SwingWorker.StateValue.DONE.equals(evt.getNewValue()))) {
                             loadState = MapLoadState.LOADED;
+
+                            syncSelectedItems();
+                            mapViewer.applyCheckedItems();
+                            browserCanvas.update();
                         }
                     }
                 });
+
                 mapLoadWorker.execute();
             } else if (loadState == MapLoadState.LOADING) {
                 if (lastPropertyChangeListener != null) {
@@ -292,20 +308,61 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
         }
     }
 
-    @Override
-    public void accept(KMLResult kmlResult) {
-        if (kmlResult.getItemsWithGPS() == 0) {
-            gpsProgressBar.setValue(0);
-            gpsProgressBar.setString(Messages.getString("KMLResult.NoGPSItem"));
-        } else {
-            gpsProgressBar.setVisible(false);
+    private void syncSelectedItems() {
+        int[] selected = resultsTable.getSelectedRows();
+        IMultiSearchResult results = resultsProvider.getResults();
+        HashMap<String, Boolean> selecoes = new HashMap<String, Boolean>();
+        for (int i = 0; i < selected.length; i++) {
+            int rowModel = resultsTable.convertRowIndexToModel(selected[i]);
+            IItemId item = results.getItem(rowModel);
+            addSelection(selecoes, item);
         }
-        this.kmlResult = kmlResult;
-        browserCanvas.setKML(kmlResult.getKML());
-        mapaDesatualizado = false;
+
+        mapViewer.updateMapLeadCursor();
+
+        browserCanvas.sendSelection(selecoes);
+    }
+
+    public void addSelection(HashMap<String, Boolean> selecoes, IItemId item) {
+        if (kmlResult != null && kmlResult.getGPSItems().containsKey(item)) {
+            List<Integer> subitems = kmlResult.getGPSItems().get(item);
+            if (subitems == null) {
+                String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
+                selecoes.put(gid, true);
+            } else {
+                for (Integer subitem : subitems) {
+                    String gid = "marker_" + item.getSourceId() + "_" + item.getId() + "_" //$NON-NLS-1$ //$NON-NLS-2$
+                            + subitem;
+                    selecoes.put(gid, true);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void accept(Object[] result) {
+        KMLResult kmlResult = (KMLResult) result[0];
+
+        if (kmlResult != null) {
+            if (result[1] != null) {
+                geoReferencedBitmap = (RoaringBitmap[]) result[1];
+            }
+
+            if (kmlResult.getItemsWithGPS() == 0) {
+                gpsProgressBar.setValue(0);
+                gpsProgressBar.setString(Messages.getString("KMLResult.NoGPSItem"));
+            } else {
+                gpsProgressBar.setVisible(false);
+            }
+            this.kmlResult = kmlResult;
+            browserCanvas.setKML(kmlResult.getKML());
+
+            mapaDesatualizado = false;
+        }
     }
 
     public void update() {
+        mapViewer.applyCheckedItems();
         browserCanvas.update();
         mapaDesatualizado = false;
     }
@@ -395,7 +452,7 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
         t.getModel().removeTableModelListener(lastMidTableModelListener);
         t.getModel().addTableModelListener(lastMidTableModelListener);
 
-        int pos = 0;
+        int pos = -1;
         IMultiSearchResult results = this.getResultsProvider().getResults();
         for (int i = 0; i < results.getLength(); i++) {
             IItemId item = results.getItem(i);
@@ -407,9 +464,13 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
         }
 
         lastMid = mid;
-        lastPos = t.convertRowIndexToView(pos);
+        if (pos != -1) {
+            lastPos = t.convertRowIndexToView(pos);
 
-        return lastPos;
+            return lastPos;
+        } else {
+            return -1;
+        }
     }
 
     public MapViewer getMapViewer() {
@@ -424,24 +485,29 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
 
     public IItemId[] getTrackSiblings() {
         try {
-            IItemId item = resultsProvider.getResults().getItem(resultsProvider.getResultsTable().convertRowIndexToModel(resultsProvider.getResultsTable().getSelectionModel().getLeadSelectionIndex()));
-            int docId = resultsProvider.getIPEDSource().getLuceneId(item);
-            Document doc = resultsProvider.getIPEDSource().getReader().document(docId);
-            String parentId = doc.get(IndexItem.PARENTID);
-            if (parentId != null) {
-                int parentDocId = resultsProvider.getIPEDSource().getLuceneId(new ItemId(item.getSourceId(), Integer.parseInt(parentId)));
-                Document parentDoc = resultsProvider.getIPEDSource().getReader().document(parentDocId);
-                if ("1".equals(parentDoc.get("geo:isTrack"))) {
-                    IIPEDSearcher search = resultsProvider.createNewSearch("parentId:" + parentId, trackSortFields);
+            int leadIndex = resultsProvider.getResultsTable().getSelectionModel().getLeadSelectionIndex();
+            if (leadIndex != -1) {
+                IItemId item = resultsProvider.getResults()
+                        .getItem(resultsProvider.getResultsTable().convertRowIndexToModel(leadIndex));
+                int docId = resultsProvider.getIPEDSource().getLuceneId(item);
+                Document doc = resultsProvider.getIPEDSource().getReader().document(docId);
+                String parentId = doc.get(IndexItem.PARENTID);
+                if (parentId != null) {
+                    int parentDocId = resultsProvider.getIPEDSource()
+                            .getLuceneId(new ItemId(item.getSourceId(), Integer.parseInt(parentId)));
+                    Document parentDoc = resultsProvider.getIPEDSource().getReader().document(parentDocId);
+                    if ("1".equals(parentDoc.get("geo:isTrack"))) {
+                        IIPEDSearcher search = resultsProvider.createNewSearch("parentId:" + parentId, trackSortFields);
 
-                    IMultiSearchResult results = search.multiSearch();
+                        IMultiSearchResult results = search.multiSearch();
 
-                    if (results.getLength() > 0) {
-                        IItemId[] siblings = new IItemId[results.getLength()];
-                        for (int i = 0; i < results.getLength(); i++) {
-                            siblings[i] = results.getItem(i);
+                        if (results.getLength() > 0) {
+                            IItemId[] siblings = new IItemId[results.getLength()];
+                            for (int i = 0; i < results.getLength(); i++) {
+                                siblings[i] = results.getItem(i);
+                            }
+                            return siblings;
                         }
-                        return siblings;
                     }
                 }
             }
@@ -453,11 +519,15 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
 
     public String getSelectedJSONFeature() {
         try {
-            IItemId item = resultsProvider.getResults().getItem(resultsProvider.getResultsTable().convertRowIndexToModel(resultsProvider.getResultsTable().getSelectionModel().getLeadSelectionIndex()));
-            int docId = resultsProvider.getIPEDSource().getLuceneId(item);
-            Document doc = resultsProvider.getIPEDSource().getReader().document(docId);
-            String jsonFeature = doc.get(GeofileParser.FEATURE_STRING);
-            return jsonFeature;
+            int leadIndex = resultsProvider.getResultsTable().getSelectionModel().getLeadSelectionIndex();
+            if (leadIndex != -1) {
+                IItemId item = resultsProvider.getResults()
+                        .getItem(resultsProvider.getResultsTable().convertRowIndexToModel(leadIndex));
+                int docId = resultsProvider.getIPEDSource().getLuceneId(item);
+                Document doc = resultsProvider.getIPEDSource().getReader().document(docId);
+                String jsonFeature = doc.get(GeofileParser.FEATURE_STRING);
+                return jsonFeature;
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -495,6 +565,10 @@ public class AppMapPanel extends JPanel implements Consumer<KMLResult> {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public boolean hasItem(IItemId item) {
+        return geoReferencedBitmap[item.getSourceId()].contains(item.getId());
     }
 
 }

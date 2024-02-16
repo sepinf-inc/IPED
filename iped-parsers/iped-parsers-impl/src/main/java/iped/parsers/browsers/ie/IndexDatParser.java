@@ -73,8 +73,8 @@ public class IndexDatParser extends AbstractParser {
                 try {
                     String[] cmd = { TOOL_PATH + TOOL_NAME, "-V" }; //$NON-NLS-1$
                     Process p = Runtime.getRuntime().exec(cmd);
-                    IOUtil.ignoreInputStream(p.getErrorStream());
-                    IOUtil.ignoreInputStream(p.getInputStream());
+                    IOUtil.ignoreErrorStream(p);
+                    IOUtil.ignoreInputStream(p);
                     if (p.waitFor() != 0)
                         throw new Exception();
 
@@ -106,7 +106,7 @@ public class IndexDatParser extends AbstractParser {
             String[] cmd = { TOOL_PATH + TOOL_NAME, "-m", "all", file.getAbsolutePath() }; //$NON-NLS-1$ //$NON-NLS-2$
             ProcessBuilder pb = new ProcessBuilder(cmd);
             p = pb.start();
-            IOUtil.ignoreInputStream(p.getErrorStream());
+            IOUtil.ignoreErrorStream(p);
 
             InputStream is = p.getInputStream();
             byte[] data = new byte[64 * 1024];

@@ -14,7 +14,7 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
      * 
      */
     private static final long serialVersionUID = 1L;
-    private static final String CONF_FILE = "AudioTranscriptConfig.txt";
+    public static final String CONF_FILE = "AudioTranscriptConfig.txt";
     private static final String ENABLE_KEY = "enableAudioTranscription";
     private static final String IMPL_CLASS_KEY = "implementationClass";
     private static final String REGION_KEY = "serviceRegion";
@@ -73,6 +73,10 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
 
     public String getClassName() {
         return className;
+    }
+
+    public void setClassName(String clazz) {
+        this.className = clazz;
     }
 
     public int getTimeoutPerSec() {
