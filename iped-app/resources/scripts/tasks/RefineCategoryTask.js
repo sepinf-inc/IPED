@@ -28,6 +28,23 @@ function process(e){
 	var name = e.getName().toLowerCase();
 	var path = e.getPath().toLowerCase().replace(/\\/g, "/");
 	
+	// Workaround for Tika limitation: https://github.com/sepinf-inc/IPED/issues/1793
+	if(mime.equals("application/vnd.apple.unknown.13")){
+		if(ext.equals("pages")){
+			e.setType("pages");
+			e.setMediaTypeStr("application/vnd.apple.pages.13");
+			e.setCategory("Text Documents");
+		} else if(ext.equals("numbers")){
+			e.setType("numbers");
+			e.setMediaTypeStr("application/vnd.apple.numbers.13");
+			e.setCategory("Spreadsheets");
+		} else if(ext.equals("key")){
+			e.setType("key");
+			e.setMediaTypeStr("application/vnd.apple.keynote.13");
+			e.setCategory("Presentations");
+		}
+	}
+	
 	if(mime.equals("application/x-chrome-cache-index") && path.contains("/appdata/roaming/discord")){
 		if(e.getPath().toLowerCase().contains("gpucache")){
 			e.setMediaTypeStr("application/x-discord-gpucache-index");
@@ -55,7 +72,11 @@ function process(e){
 		e.setCategory(cat);
 	}
 	
-	if(mime.equals("application/dita+xml") && e.getName().equals("com.whatsapp_preferences.xml")){
+	if(mime.equals("application/dita+xml") && 
+		(e.getName().equals("com.whatsapp_preferences.xml") || 
+		 e.getName().equals("com.whatsapp_preferences_light.xml") ||
+		 e.getName().equals("com.whatsapp.w4b_preferences.xml") || 
+		 e.getName().equals("com.whatsapp.w4b_preferences_light.xml"))) {
 		e.setMediaTypeStr("application/x-whatsapp-user-xml");
 		e.setCategory("Contacts");
 	}

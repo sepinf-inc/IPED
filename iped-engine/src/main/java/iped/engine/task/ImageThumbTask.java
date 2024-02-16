@@ -293,7 +293,7 @@ public class ImageThumbTask extends ThumbTask {
                 try (BufferedInputStream stream = evidence.getBufferedInputStream()) {
                     BooleanWrapper renderException = new BooleanWrapper();
                     img = ImageUtil.getSubSampledImage(stream, thumbSize * samplingRatio, thumbSize * samplingRatio,
-                            renderException, MediaTypes.getMimeTypeIfJBIG2(evidence));
+                            renderException, MediaTypes.getMimeTypeString(evidence));
                     if (img != null && renderException.value)
                         evidence.setExtraAttribute("thumbException", "true"); //$NON-NLS-1$ //$NON-NLS-2$
                 }

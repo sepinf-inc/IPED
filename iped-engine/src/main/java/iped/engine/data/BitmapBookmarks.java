@@ -18,11 +18,13 @@
  */
 package iped.engine.data;
 
+import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -66,6 +68,7 @@ public class BitmapBookmarks implements IBookmarks {
     private TreeMap<Integer, String> bookmarkComments = new TreeMap<Integer, String>();
     private TreeMap<Integer, KeyStroke> bookmarkKeyStrokes = new TreeMap<Integer, KeyStroke>();
     private Set<Integer> reportBookmarks = new TreeSet<Integer>();
+    TreeMap<Integer, Color> bookmarkColors = new TreeMap<Integer, Color>();
 
     private int selectedItens = 0, totalItems, lastId;
 
@@ -257,6 +260,9 @@ public class BitmapBookmarks implements IBookmarks {
         bookmarkNames.put(bookmarkId, bookmarkName);
         bookmarkComments.put(bookmarkId, null);
         bookmarkKeyStrokes.put(bookmarkId, null);
+        if (bookmarkColors == null)
+            bookmarkColors = new TreeMap<Integer, Color>();
+        bookmarkColors.put(bookmarkId, null);
 
         return bookmarkId;
     }
@@ -267,6 +273,9 @@ public class BitmapBookmarks implements IBookmarks {
         bookmarkNames.remove(bookmark);
         bookmarkComments.remove(bookmark);
         bookmarkKeyStrokes.remove(bookmark);
+        if (bookmarkColors == null)
+            bookmarkColors = new TreeMap<Integer, Color>();
+        bookmarkColors.remove(bookmark);
         reportBookmarks.remove(bookmark);
         bookmarks.remove(bookmark);
     }
@@ -458,6 +467,7 @@ public class BitmapBookmarks implements IBookmarks {
             this.bookmarkComments = state.bookmarkComments;
             this.bookmarkKeyStrokes = state.bookmarkKeyStrokes;
             this.reportBookmarks = state.reportBookmarks;
+            this.bookmarkColors = state.bookmarkColors;
         }catch (ClassCastException e) {
             //try to load old format
             Bookmarks state = loadOldBookmarks(file);
@@ -486,6 +496,7 @@ public class BitmapBookmarks implements IBookmarks {
             this.bookmarkComments = state.bookmarkComments;
             this.bookmarkKeyStrokes = state.bookmarkKeyStrokes;
             this.reportBookmarks = state.reportBookmarks;
+            this.bookmarkColors = state.bookmarkColors;
         }
     }
 
@@ -558,5 +569,22 @@ public class BitmapBookmarks implements IBookmarks {
     public boolean hasBookmark(int id, byte[] bookmarkbits) {
         // TODO Auto-generated method stub
         return false;
+    }
+
+    @Override
+    public synchronized void setBookmarkColor(int bookmarkId, Color color) {
+        if (bookmarkColors == null)
+            bookmarkColors = new TreeMap<Integer, Color>();
+        bookmarkColors.put(bookmarkId, color);
+    }
+
+    @Override
+    public Color getBookmarkColor(int bookmarkId) {
+        return bookmarkColors == null || bookmarkId == -1 ? null : bookmarkColors.get(bookmarkId);
+    }
+
+    @Override
+    public Set<Color> getUsedColors() {
+        return bookmarkColors == null ? new HashSet<Color>() : new HashSet<Color>(bookmarkColors.values());
     }
 }

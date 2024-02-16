@@ -89,6 +89,7 @@ public class ItemIdList extends AbstractSet<IItemId> implements IItemIdList{
             bitmap = new RoaringBitmap();
             bitsets.put(e.getSourceId(), bitmap);
         }
+        length++;
         return bitmap.checkedAdd(e.getId());
     }
 

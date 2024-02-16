@@ -56,6 +56,7 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
     private static Logger LOGGER = LoggerFactory.getLogger(CaseSearcherFilter.class);
     ArrayList<CaseSearchFilterListener> listeners = new ArrayList<CaseSearchFilterListener>();
     RoaringBitmap[] unionsArray;
+    RoaringBitmap[] excludeUnionsArray;
     
     public static SoftReference<MultiSearchResult> allItemsCache;
     private static IPEDSource ipedCase;
@@ -232,6 +233,14 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
                         result.setIPEDSource(ipedCase);
                     }
                 }
+                if (excludeUnionsArray != null) {
+                    MultiSearchResult newresult = filterManager.applyExcludeFilter(excludeUnionsArray, result);
+                    if (newresult != result) {
+                        numFilters++;
+                        result = newresult;
+                        result.setIPEDSource(ipedCase);
+                    }
+                }
 
 
             } catch (Throwable e) {
@@ -325,7 +334,21 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
             }
         }
     }
-    
+
+    public void addBitmapExcludeFilter(RoaringBitmap[] lunionsArray) {
+        if (excludeUnionsArray == null) {
+            excludeUnionsArray = new RoaringBitmap[lunionsArray.length];
+        }
+        for (int i = 0; i < excludeUnionsArray.length; i++) {
+            if (excludeUnionsArray[i] == null) {
+                excludeUnionsArray[i] = new RoaringBitmap();
+                excludeUnionsArray[i].or(lunionsArray[i]);
+            } else {
+                excludeUnionsArray[i].and(lunionsArray[i]);
+            }
+        }
+    }
+
     public void addBitmapFilter(RoaringBitmap[] lunionsArray) {
         if(unionsArray==null) {
             unionsArray = new RoaringBitmap[lunionsArray.length];

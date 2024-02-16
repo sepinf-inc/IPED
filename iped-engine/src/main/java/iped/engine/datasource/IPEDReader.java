@@ -18,6 +18,7 @@
  */
 package iped.engine.datasource;
 
+import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -63,6 +64,7 @@ import iped.engine.data.Item;
 import iped.engine.io.MetadataInputStreamFactory;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.LuceneSearchResult;
+import iped.engine.task.EmbeddedDiskProcessTask;
 import iped.engine.task.HashDBLookupTask;
 import iped.engine.task.HashTask;
 import iped.engine.task.MinIOTask.MinIOInputInputStreamFactory;
@@ -128,7 +130,7 @@ public class IPEDReader extends DataSourceReader {
         // Configuração para não expandir containers
         CategoryToExpandConfig expandConfig = ConfigurationManager.get().findObject(CategoryToExpandConfig.class);
         expandConfig.setEnabled(false);
-
+        EmbeddedDiskProcessTask.setEnabled(false);
         CarverTask.setEnabled(false);
         LedCarveTask.setEnabled(false);
         HashDBLookupTask.setEnabled(false);
@@ -233,27 +235,44 @@ public class IPEDReader extends DataSourceReader {
             return;
 
         int lastId = -1;
+        int totalItems = 0;
         for (int i = 0; i < oldToNewIdMap.length; i++) {
             if (oldToNewIdMap[i] > lastId) {
                 lastId = oldToNewIdMap[i];
             }
+            if (oldToNewIdMap[i] != -1) {
+                totalItems++;
+            }
+        }
+        if (lastId == -1) {
+            // Nothing was added, skip copying bookmarks (see issue #2037)
+            LOGGER.info("No bookmarked items copied from {}", basePath);
+            return;
         }
 
         IBookmarks reportState = new BitmapBookmarks(lastId - 1, lastId, output);
+
         reportState.loadState();
 
+        int added = 0;
         for (int oldLabelId : selectedLabels) {
             String labelName = state.getBookmarkName(oldLabelId);
             String labelComment = state.getBookmarkComment(oldLabelId);
+            Color labelColor = state.getBookmarkColor(oldLabelId);
+
             int newLabelId = reportState.newBookmark(labelName);
             reportState.setBookmarkComment(newLabelId, labelComment);
+            reportState.setBookmarkColor(newLabelId, labelColor);
+
             ArrayList<Integer> newIds = new ArrayList<Integer>();
             for (int oldId = 0; oldId <= ipedCase.getLastId(); oldId++)
                 if (state.hasBookmark(oldId, oldLabelId) && oldToNewIdMap[oldId] != -1)
                     newIds.add(oldToNewIdMap[oldId]);
             reportState.addBookmark(newIds, newLabelId);
+            added += newIds.size();
         }
-        reportState.saveState();
+        LOGGER.info("{} bookmarked items copied from {}", added, basePath);
+        reportState.saveState(true);
     }
 
     private void insertParentTreeNodes(LuceneSearchResult result) throws Exception {

@@ -18,10 +18,12 @@
  */
 package iped.engine.data;
 
+import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -60,6 +62,7 @@ public class Bookmarks implements IBookmarks {
     TreeMap<Integer, String> bookmarkNames = new TreeMap<Integer, String>();
     TreeMap<Integer, String> bookmarkComments = new TreeMap<Integer, String>();
     TreeMap<Integer, KeyStroke> bookmarkKeyStrokes = new TreeMap<Integer, KeyStroke>();
+    TreeMap<Integer, Color> bookmarkColors = new TreeMap<Integer, Color>();
     Set<Integer> reportBookmarks = new TreeSet<Integer>();
 
     int selectedItens = 0, totalItems, lastId;
@@ -199,7 +202,7 @@ public class Bookmarks implements IBookmarks {
         }
         return ret;
     }
-    
+
     public final boolean hasBookmark(int id) {
         boolean hasBookmark = false;
         for (byte[] b : bookmarks) {
@@ -269,6 +272,9 @@ public class Bookmarks implements IBookmarks {
         bookmarkNames.put(bookmarkId, bookmarkName);
         bookmarkComments.put(bookmarkId, null);
         bookmarkKeyStrokes.put(bookmarkId, null);
+        if (bookmarkColors == null)
+            bookmarkColors = new TreeMap<Integer, Color>();
+        bookmarkColors.put(bookmarkId, null);
 
         return bookmarkId;
     }
@@ -279,6 +285,9 @@ public class Bookmarks implements IBookmarks {
         bookmarkNames.remove(bookmark);
         bookmarkComments.remove(bookmark);
         bookmarkKeyStrokes.remove(bookmark);
+        if (bookmarkColors == null)
+            bookmarkColors = new TreeMap<Integer, Color>();
+        bookmarkColors.remove(bookmark);
         reportBookmarks.remove(bookmark);
 
         int bookmarkOrder = bookmark / bookmarkBits;
@@ -313,6 +322,20 @@ public class Bookmarks implements IBookmarks {
 
     public String getBookmarkComment(int bookmarkId) {
         return bookmarkComments.get(bookmarkId);
+    }
+
+    public synchronized void setBookmarkColor(int bookmarkId, Color color) {
+        if (bookmarkColors == null)
+            bookmarkColors = new TreeMap<Integer, Color>();
+        bookmarkColors.put(bookmarkId, color);
+    }
+
+    public Color getBookmarkColor(int bookmarkId) {
+        return bookmarkColors == null || bookmarkId == -1 ? null : bookmarkColors.get(bookmarkId);
+    }
+
+    public Set<Color> getUsedColors() {
+        return bookmarkColors == null ? new HashSet<Color>() : new HashSet<Color>(bookmarkColors.values());
     }
 
     public synchronized void setBookmarkKeyStroke(int bookmarkId, KeyStroke key) {
@@ -483,6 +506,7 @@ public class Bookmarks implements IBookmarks {
         this.bookmarkComments = state.bookmarkComments;
         this.bookmarkKeyStrokes = state.bookmarkKeyStrokes;
         this.reportBookmarks = state.reportBookmarks;
+        this.bookmarkColors = state.bookmarkColors;
     }
 
     public static Bookmarks load(File file) throws ClassNotFoundException, IOException {

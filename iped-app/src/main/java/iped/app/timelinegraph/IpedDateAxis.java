@@ -454,7 +454,6 @@ public class IpedDateAxis extends DateAxis implements MouseResponsiveChartEntity
     public void garanteeShowRange(Date min, Date max) {
         DateRange range = (DateRange) getRange();
         DateRange newRange = null;
-        System.out.println(range.getLowerMillis());
         if (range.getLowerMillis() > min.getTime()) {
             if (range.getUpperMillis() < max.getTime()) {
                 newRange = new DateRange(min.getTime(), max.getTime());

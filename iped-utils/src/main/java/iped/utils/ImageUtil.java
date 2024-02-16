@@ -43,12 +43,16 @@ import org.w3c.dom.NodeList;
 public class ImageUtil {
     private static final int[] orientations = new int[] { 1, 5, 3, 7 };
 
+    private static final String JBIG2 = "image/x-jbig2";
+    private static final String ICO = "image/vnd.microsoft.icon";
+
     public static BufferedImage resizeImage(BufferedImage img, int maxW, int maxH) {
         return resizeImage(img, maxW, maxH, BufferedImage.TYPE_INT_ARGB);
     }
 
     /**
-     * Redimensiona um imagem, mantendo sua proporção original se possível, mas utilizando mantendo dimensões mínimas.
+     * Redimensiona um imagem, mantendo sua proporção original se possível, mas
+     * utilizando mantendo dimensões mínimas.
      */
     public static BufferedImage resizeImage(BufferedImage img, int maxW, int maxH, int minW, int minH, int imageType) {
         int imgW = img.getWidth();
@@ -151,28 +155,31 @@ public class ImageUtil {
         BufferedImage image = null;
         try {
             iis = ImageIO.createImageInputStream(source);
-            Iterator<ImageReader> iter = mimeType == null ? ImageIO.getImageReaders(iis)
-                    : ImageIO.getImageReadersByMIMEType(mimeType);
+            // JBIG2 needs that reader is get by mime type
+            Iterator<ImageReader> iter = JBIG2.equals(mimeType) ? ImageIO.getImageReadersByMIMEType(mimeType)
+                    : ImageIO.getImageReaders(iis);
             if (!iter.hasNext())
                 return null;
             reader = iter.next();
             reader.setInput(iis, false, true);
-            
-            // For sources that contains multiple images (e.g. ICO), get the largest one
+
             int idx = 0;
-            try {
-                int n = reader.getNumImages(false);
-                if (n > 1) {
-                    int max = -1;
-                    for (int i = 0; i < n; i++) {
-                        int wi = reader.getWidth(i);
-                        if (wi > max) {
-                            max = wi;
-                            idx = i;
+            // ICO may contains multiple images, get the largest one
+            if (ICO.equals(mimeType)) {
+                try {
+                    int n = reader.getNumImages(false);
+                    if (n > 1) {
+                        int max = -1;
+                        for (int i = 0; i < n; i++) {
+                            int wi = reader.getWidth(i);
+                            if (wi > max) {
+                                max = wi;
+                                idx = i;
+                            }
                         }
                     }
+                } catch (Exception e) {
                 }
-            } catch (Exception e) {
             }
 
             int w0 = reader.getWidth(idx);
@@ -216,16 +223,24 @@ public class ImageUtil {
         int h = image.getHeight();
         int[] pixels = new int[w * h];
         image.getRGB(0, 0, w, h, pixels, 0, w);
-        int color;
+        int color = -1;
         if (pixels.length > 0) {
-            color = pixels[0];
-        } else
-            return false;
-
-        for (int p : pixels)
-            if (p != color)
-                return false;
-
+            // Starts at ~5% of the pixels
+            for (int i = pixels.length / 20; i < pixels.length; i++) {
+                int p = pixels[i];
+                // Consider only non-transparent pixels
+                if ((p & 0xFF000000) != 0) {
+                    int c = p & 0xFFFFFF;
+                    if (color == -1) {
+                        // Store first color found
+                        color = c;
+                    } else if (color != c) {
+                        // Has different colors
+                        return false;
+                    }
+                }
+            }
+        }
         return true;
     }
 
@@ -338,7 +353,7 @@ public class ImageUtil {
         g2.dispose();
         return out;
     }
-    
+
     public static BufferedImage getImageFromType(BufferedImage img, int type) {
         if (img == null || img.getType() == type) {
             return img;
@@ -530,7 +545,8 @@ public class ImageUtil {
                 nCols = Integer.parseInt(comment.substring(p2 + 1));
             }
         }
-        if (nRows <= 0 || nCols <= 0) return null;
+        if (nRows <= 0 || nCols <= 0)
+            return null;
 
         int imgWidth = img.getWidth();
         int imgHeight = img.getHeight();
@@ -538,7 +554,8 @@ public class ImageUtil {
         final int border = 2;
         int frameWidth = (imgWidth - 2 - border * (nCols + 1)) / nCols;
         int frameHeight = (imgHeight - 2 - border * (nRows + 1)) / nRows;
-        if (frameWidth <= 2 || frameHeight <= 2) return null;
+        if (frameWidth <= 2 || frameHeight <= 2)
+            return null;
 
         List<BufferedImage> frames = new ArrayList<BufferedImage>();
         for (int row = 0; row < nRows; row++) {
@@ -550,7 +567,7 @@ public class ImageUtil {
         }
         return frames;
     }
-    
+
     /**
      * Método auxiliar que percorre uma árvore buscando o valor de um nó com
      * determinado nome.
@@ -631,7 +648,7 @@ public class ImageUtil {
         g.dispose();
         return dest;
     }
-    
+
     public static boolean isCompressedBMP(File file) throws FileNotFoundException, IOException {
         byte[] b = new byte[34];
         if (file.length() >= b.length) {
@@ -645,8 +662,9 @@ public class ImageUtil {
     }
 
     /**
-     * @param intensity A proportion between the blurring window and the image dimensions. 
-     * Typical values are between 0.01 and 0.05.
+     * @param intensity
+     *            A proportion between the blurring window and the image dimensions.
+     *            Typical values are between 0.01 and 0.05.
      */
     public static BufferedImage blur(BufferedImage image, int maxSize, double intensity) {
         int w = image.getWidth();
@@ -666,8 +684,8 @@ public class ImageUtil {
         g.dispose();
         int radius = (int) Math.ceil(intensity * (newImage.getWidth() + newImage.getHeight()) / 2);
         byte[] pixels = ((DataBufferByte) newImage.getRaster().getDataBuffer()).getData();
-        int[] len = {newImage.getWidth(),newImage.getHeight()};
-        int[] step = {1,newImage.getWidth()};
+        int[] len = { newImage.getWidth(), newImage.getHeight() };
+        int[] step = { 1, newImage.getWidth() };
         for (int pass = 0; pass <= 1; pass++) {
             int len1 = len[pass];
             int len2 = len[1 - pass];
@@ -713,7 +731,9 @@ public class ImageUtil {
     }
 
     public static BufferedImage grayscale(BufferedImage image) {
-        if (image == null || image.getType() == BufferedImage.TYPE_BYTE_GRAY || image.getType() == BufferedImage.TYPE_USHORT_GRAY) return image;
+        if (image == null || image.getType() == BufferedImage.TYPE_BYTE_GRAY
+                || image.getType() == BufferedImage.TYPE_USHORT_GRAY)
+            return image;
         if (image.getColorModel().hasAlpha()) {
             ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_GRAY);
             ColorConvertOp op = new ColorConvertOp(cs, null);

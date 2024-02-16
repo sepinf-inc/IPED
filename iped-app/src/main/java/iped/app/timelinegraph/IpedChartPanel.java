@@ -94,6 +94,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
     ArrayList<Date[]> definedFilters = new ArrayList<Date[]>();
     HashSet<String> excludedEvents = new HashSet<String>();
     HashSet<String> hiddenEvents = new HashSet<String>();
+    HashSet<String> selectedEvents = new HashSet<String>();
     private static final String resPath = '/' + App.class.getPackageName().replace('.', '/') + '/';
 
     Date startFilterDate = null;
@@ -441,10 +442,10 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
                     definedFilters.add(filterDates);
 
                     timelineSelectionPopupMenu.setDates(filterDates);
-                    if(ipedChartsPanel.hasFiltersApplied()) {
+                    if (ipedChartsPanel.hasFiltersApplied()) {
                         ipedChartsPanel.setApplyFilters(true);
                         filterSelection();
-                    }else {
+                    } else {
                         timelineSelectionPopupMenu.show(e.getComponent(), e.getX(), e.getY());
                     }
 
@@ -830,13 +831,19 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
     }
 
     public void removeAllFilters() {
+        removeAllFilters(true);
+    }
+
+    public void removeAllFilters(boolean updateResult) {
         for (Date[] removedDates : definedFilters) {
             HighlightWorker sw = new HighlightWorker(ipedChartsPanel.getDomainAxis(), ipedChartsPanel.resultsProvider, removedDates[0], removedDates[1], false, false);
         }
         definedFilters.clear();
         excludedEvents.clear();
         ipedChartsPanel.setApplyFilters(false);
-        filterSelection();
+        if (updateResult) {
+            filterSelection();
+        }
         IpedCombinedDomainXYPlot rootPlot = ((IpedCombinedDomainXYPlot) getChart().getPlot());
         List<XYPlot> xyPlots = rootPlot.getSubplots();
 
@@ -1002,6 +1009,14 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
         this.hiddenEvents = hiddenEvents;
     }
 
+    public HashSet<String> getSelectedEvents() {
+    	return selectedEvents;
+    }
+    
+    public void setSelectedEvents(HashSet<String> selectedEvents) {
+    	this.selectedEvents = selectedEvents;
+    }
+    
     @Override
     public void updateUI() {
         super.updateUI();

@@ -145,8 +145,7 @@ public class ItemProducer extends Thread implements Closeable {
             } else {
                 LOGGER.info("Total items found: {}", caseData.getDiscoveredEvidences()); //$NON-NLS-1$
             }
-            UIPropertyListenerProvider.getInstance().firePropertyChange("taskSize", 0, //$NON-NLS-1$
-                    (int) (caseData.getDiscoveredVolume() / 1000000));
+            UIPropertyListenerProvider.getInstance().firePropertyChange("discoverEnded", 0, 0);
 
         } catch (Throwable e) {
             if (manager.exception == null) {

@@ -143,4 +143,8 @@
     <boolean name="mms4_server_error_receipt_encryption_enabled" value="true" />
     <set name="ab_offline_props:offline_exposure_strings" />
     <int name="sigquit_anr_detector_release_updated_rollout" value="100" />
+    <string name="registration_jid">554499887766</string>
+    <string name="ph">4499887766</string>
+    <string name="push_name">Mr. Roboto</string>
+    <string name="my_current_status">Domo arigato!</string>
 </map>

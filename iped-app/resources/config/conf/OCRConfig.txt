@@ -4,13 +4,12 @@
 
 # You can use the parameter -ocr "bookmark_name" to restrict the OCR to a specific bookmark (just works when creating reports from cmd line).
 
-# Enables OCR in scanned images and PDFs. It can strongly increase processing time.
-# Results depend on the quality and resolution of the images, and on the size and type of the fonts used.
-enableOCR = false
-
 # Dictionary language to be used for OCR. You can specify multiple languages e.g. por+eng but you will pay an important processing cost.
 # Languages supported: eng, por, ita, deu, spa
 OCRLanguage = por
+
+# Skip known files found in the hash lookup database.
+skipKnownFiles = true
 
 # Tesseract layout analysis mode, e.g.: 1- with OSD (orientation & script detection); 3 - no OSD (Tesseract default) 
 pageSegMode = 1

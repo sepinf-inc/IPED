@@ -5,6 +5,7 @@
  */
 package iped.data;
 
+import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -89,6 +90,12 @@ public interface IMultiBookmarks extends Serializable {
     public int getBookmarkCount(String bookmarkName);
 
     void setBookmarkComment(String texto, String comment);
+
+    Color getBookmarkColor(String bookmarkName);
+
+    void setBookmarkColor(String bookmarkName, Color color);
+    
+    Set<Color> getUsedColors();
 
     boolean isInReport(String bookmark);
 

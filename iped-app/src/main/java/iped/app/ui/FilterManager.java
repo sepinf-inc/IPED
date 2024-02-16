@@ -347,6 +347,36 @@ public class FilterManager implements ActionListener, ListSelectionListener {
         filterers.put(t, selected);
     }
 
+    public MultiSearchResult applyExcludeFilter(RoaringBitmap[] resultBitSet, MultiSearchResult input) {
+        LinkedHashSet<IItemId> ids = new LinkedHashSet<IItemId>();
+        ArrayList<Float> scores = new ArrayList<Float>();
+        float[] primitiveScores;
+
+        if (resultBitSet != null) {
+            int i = 0;
+            while (i < input.getLength()) {
+                IItemId itemId = input.getItem(i);
+                if (!resultBitSet[itemId.getSourceId()].contains(itemId.getId())) {
+                    ids.add(itemId);
+                    scores.add(input.getScore(i));
+                }
+                i++;
+            }
+
+            primitiveScores = new float[scores.size()];
+            i = 0;
+            for (Float f : scores) {
+                primitiveScores[i++] = f;
+            }
+        } else {
+            primitiveScores = new float[0];
+        }
+
+        MultiSearchResult result = new MultiSearchResult(ids.toArray(new IItemId[0]), primitiveScores);
+
+        return result;
+    }
+
     public MultiSearchResult applyFilter(RoaringBitmap[] resultBitSet, MultiSearchResult input) {
         LinkedHashSet<IItemId> ids = new LinkedHashSet<IItemId>();
         ArrayList<Float> scores = new ArrayList<Float>();

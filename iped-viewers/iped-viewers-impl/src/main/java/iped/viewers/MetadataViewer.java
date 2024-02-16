@@ -27,6 +27,7 @@ import iped.parsers.util.MetadataUtil;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
+import iped.utils.EmojiUtil;
 import iped.utils.LocalizedFormat;
 import iped.utils.SimpleHTMLEncoder;
 import iped.utils.UiUtil;
@@ -229,7 +230,7 @@ public abstract class MetadataViewer extends AbstractViewer {
         sb.append("</body>"); //$NON-NLS-1$
         sb.append("</html>"); //$NON-NLS-1$
 
-        return sb.toString();
+        return EmojiUtil.replaceByImages(sb.toString());
     }
 
     private void fillMetadata(StringBuilder sb, Metadata metadata) {

@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import iped.parsers.threema.ThreemaParser;
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MediaTypeRegistry;
@@ -13,8 +14,10 @@ import iped.parsers.ares.AresParser;
 import iped.parsers.discord.DiscordParser;
 import iped.parsers.emule.KnownMetParser;
 import iped.parsers.emule.PartMetParser;
+import iped.parsers.mail.RFC822Parser;
 import iped.parsers.mail.win10.Win10MailParser;
 import iped.parsers.python.PythonParser;
+import iped.parsers.shareaza.ShareazaDownloadParser;
 import iped.parsers.shareaza.ShareazaLibraryDatParser;
 import iped.parsers.skype.SkypeParser;
 import iped.parsers.sqlite.SQLite3Parser;
@@ -31,7 +34,7 @@ import iped.properties.MediaTypes;
  * prioridade padrão zero. Primeiro são processados os itens da fila de
  * prioridade 0, depois da fila de prioridade 1 e assim por diante. Assim é
  * possível configurar dependências de processamento entre os itens.
- * 
+ *
  * @author Nassif
  *
  */
@@ -47,49 +50,54 @@ public class QueuesProcessingOrder {
 
         Map<MediaType, Integer> mediaTypes = new HashMap<MediaType, Integer>();
 
-        // handle wal logs
-        mediaTypes.put(SQLite3Parser.MEDIA_TYPE, 1);
-
-        // must be after sqlite processing to find storage_db.db
-        mediaTypes.put(SkypeParser.SKYPE_MIME, 2);
-        
-        //must be processed after all files to link the attachments
-        mediaTypes.put(TelegramParser.TELEGRAM_USER_CONF, 1);
-        mediaTypes.put(TelegramParser.TELEGRAM_DB, 2);
-        mediaTypes.put(TelegramParser.TELEGRAM_DB_IOS, 2);
-
-        mediaTypes.put(MediaType.parse(DiscordParser.INDEX_MIME_TYPE), 1);
-        mediaTypes.put(MediaType.parse(KnownMetParser.EMULE_MIME_TYPE), 1);
-        mediaTypes.put(MediaType.parse(PartMetParser.EMULE_PART_MET_MIME_TYPE), 1);
-        mediaTypes.put(MediaType.parse(AresParser.ARES_MIME_TYPE), 1);
-        mediaTypes.put(MediaType.parse(ShareazaLibraryDatParser.LIBRARY_DAT_MIME_TYPE), 1);
-       
-        mediaTypes.put(WhatsAppParser.WA_DB, 1);
-        mediaTypes.put(WhatsAppParser.MSG_STORE, 2);
-        mediaTypes.put(WhatsAppParser.MSG_STORE_2, 3);
-        mediaTypes.put(WhatsAppParser.CONTACTS_V2, 1);
-        mediaTypes.put(WhatsAppParser.CHAT_STORAGE, 2);
-        mediaTypes.put(WhatsAppParser.CHAT_STORAGE_2, 3);
-
-        mediaTypes.put(UFEDChatParser.UFED_CHAT_MIME, 1);
-        
-        // support for embedded splited image formats
+        // support for embedded splitted images, must be before all other artifacts
+        // so they are processed fine if found inside splitted disk images (#1726)
         mediaTypes.put(MediaTypes.E01_IMAGE, 1);
         mediaTypes.put(MediaTypes.EX01_IMAGE, 1);
         mediaTypes.put(MediaTypes.RAW_IMAGE, 1);
         mediaTypes.put(MediaTypes.VMDK_DESCRIPTOR, 1);
 
+        // handle wal logs
+        mediaTypes.put(SQLite3Parser.MEDIA_TYPE, 2);
+
+        // must be after sqlite processing to find storage_db.db
+        mediaTypes.put(SkypeParser.SKYPE_MIME, 3);
+
+        //must be processed after all files to link the attachments
+        mediaTypes.put(TelegramParser.TELEGRAM_USER_CONF, 2);
+        mediaTypes.put(TelegramParser.TELEGRAM_DB, 3);
+        mediaTypes.put(TelegramParser.TELEGRAM_DB_IOS, 3);
+
+        mediaTypes.put(MediaType.parse(DiscordParser.INDEX_MIME_TYPE), 2);
+        mediaTypes.put(MediaType.parse(KnownMetParser.EMULE_MIME_TYPE), 2);
+        mediaTypes.put(MediaType.parse(PartMetParser.EMULE_PART_MET_MIME_TYPE), 2);
+        mediaTypes.put(MediaType.parse(AresParser.ARES_MIME_TYPE), 2);
+        mediaTypes.put(MediaType.parse(ShareazaLibraryDatParser.LIBRARY_DAT_MIME_TYPE), 2);
+        mediaTypes.put(MediaType.parse(ShareazaDownloadParser.SHAREAZA_DOWNLOAD_META), 2);
+
+        mediaTypes.put(WhatsAppParser.WA_DB, 2);
+        mediaTypes.put(WhatsAppParser.MSG_STORE, 3);
+        mediaTypes.put(WhatsAppParser.MSG_STORE_2, 4);
+        mediaTypes.put(WhatsAppParser.CONTACTS_V2, 2);
+        mediaTypes.put(WhatsAppParser.CHAT_STORAGE, 3);
+        mediaTypes.put(WhatsAppParser.CHAT_STORAGE_2, 4);
+        mediaTypes.put(ThreemaParser.CHAT_STORAGE, 3);
+        mediaTypes.put(ThreemaParser.CHAT_STORAGE_F, 4);
+        mediaTypes.put(UFEDChatParser.UFED_CHAT_MIME, 2);
+
         // avoid NPE when the parser gets the item from parseContext when external
         // parsing is on
-        mediaTypes.put(UsnJrnlParser.USNJRNL_$J, 1);
+        mediaTypes.put(UsnJrnlParser.USNJRNL_$J, 2);
 
-        mediaTypes.put(Win10MailParser.WIN10_MAIL_DB, 1);
+        mediaTypes.put(Win10MailParser.WIN10_MAIL_DB, 2);
+        mediaTypes.put(RFC822Parser.RFC822_PARTIAL0_MIME, 2);
+        mediaTypes.put(RFC822Parser.RFC822_PARTIAL1_MIME, 2);
 
         return mediaTypes;
     }
 
     private static synchronized void setMediaRegistry() {
-        
+
         if (mediaRegistry == null) {
             mediaRegistry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
         }

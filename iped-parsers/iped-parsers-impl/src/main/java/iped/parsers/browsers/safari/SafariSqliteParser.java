@@ -9,7 +9,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -229,7 +229,7 @@ public class SafariSqliteParser extends AbstractSqliteBrowserParser {
 
     protected List<SafariResumedVisit> getResumedHistory(Connection connection, Metadata metadata, ParseContext context)
             throws SQLException {
-        List<SafariResumedVisit> resumedHistory = new LinkedList<SafariResumedVisit>();
+        List<SafariResumedVisit> resumedHistory = new ArrayList<SafariResumedVisit>();
 
         Statement st = null;
         try {
@@ -273,7 +273,7 @@ public class SafariSqliteParser extends AbstractSqliteBrowserParser {
 
     protected List<SafariVisit> getHistory(Connection connection, Metadata metadata, ParseContext context)
             throws SQLException {
-        List<SafariVisit> history = new LinkedList<SafariVisit>();
+        List<SafariVisit> history = new ArrayList<SafariVisit>();
 
         Statement st = null;
         try {

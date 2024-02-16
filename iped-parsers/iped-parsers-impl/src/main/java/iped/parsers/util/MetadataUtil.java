@@ -249,6 +249,8 @@ public class MetadataUtil {
         generalKeys.add(ExtraProperties.USER_NOTES);
         generalKeys.add(ExtraProperties.THUMBNAIL_BASE64);
         generalKeys.add(ExtraProperties.DOWNLOADED_DATA);
+        generalKeys.add(ExtraProperties.TRANSCRIPT_ATTR);
+        generalKeys.add(ExtraProperties.CONFIDENCE_ATTR);
         generalKeys.add(OCRParser.OCR_CHAR_COUNT);
         generalKeys.add(RawStringParser.COMPRESS_RATIO);
 
@@ -624,6 +626,7 @@ public class MetadataUtil {
             if (generalKeys.contains(key) || key.toLowerCase().startsWith(prefix.toLowerCase())
                     || key.startsWith(ExtraProperties.UFED_META_PREFIX)
                     || key.startsWith(ExtraProperties.COMMON_META_PREFIX)
+                    || key.startsWith(ExtraProperties.COMMUNICATION_PREFIX)
                     || key.startsWith(TikaCoreProperties.TIKA_META_PREFIX)) {
                 continue;
             }

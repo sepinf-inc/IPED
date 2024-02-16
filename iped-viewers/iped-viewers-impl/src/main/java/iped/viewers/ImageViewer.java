@@ -119,7 +119,7 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
                 in = new BufferedInputStream(content.getSeekableInputStream());
                 // needed for embedded jbig2
                 String mimeType = content instanceof IItemReader
-                        ? MediaTypes.getMimeTypeIfJBIG2((IItemReader) content)
+                        ? MediaTypes.getMimeTypeString((IItemReader) content)
                         : null;
                 image = ImageUtil.getSubSampledImage(in, maxDim, maxDim, mimeType);
 

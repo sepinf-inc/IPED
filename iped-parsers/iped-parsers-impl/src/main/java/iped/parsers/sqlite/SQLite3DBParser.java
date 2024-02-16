@@ -26,7 +26,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -136,33 +136,35 @@ public class SQLite3DBParser extends AbstractDBParser {
             IItemReader parsingItem = context.get(IItemReader.class);
             if (parsingItem != null) {
                 String parsingFilePath = parsingItem.getPath();
+                String relatedFileName = parsingItem.getName() + suffix;
                 String relatedFileQuery = BasicProps.PATH + ":\"" + searcher.escapeQuery(parsingFilePath + suffix) + "\"";
                 List<IItemReader> items = searcher.search(relatedFileQuery);
                 if (items.size() > 0) {
                     IItemReader relatedItem = null;
-                    // pick the journal/wal with same deleted status
-                    for (IItemReader i : items) {
-                        if (i.isDeleted() == parsingItem.isDeleted()) {
-                            relatedItem = i;
-                            break;
+                    // Pick the journal/wal, prioritizing the same deleted status.
+                    for (IItemReader item : items) {
+                        if (item.isDir() || !relatedFileName.equalsIgnoreCase(item.getName())) {
+                            // Ignore folders or items with name that doesn't match SQLite name (see #1791)
+                            continue;
+                        }
+                        if (relatedItem == null || item.isDeleted() == parsingItem.isDeleted()) {
+                            relatedItem = item;
                         }
                     }
-                    // fallback to first item found
-                    if (relatedItem == null) {
-                        relatedItem = items.get(0);
+                    if (relatedItem != null) {
+                        File relatedFileTemp = new File(theFile.getAbsolutePath() + suffix);
+                        try (InputStream in = relatedItem.getBufferedInputStream()) {
+                            Files.copy(in, relatedFileTemp.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        if (null != tmp) {
+                            tmp.addResource(() -> {
+                                relatedFileTemp.delete();
+                            });
+                        }
+                        return relatedFileTemp;
                     }
-                    File relatedFileTemp = new File(theFile.getAbsolutePath() + suffix);
-                    try (InputStream in = relatedItem.getBufferedInputStream()) {
-                        Files.copy(in, relatedFileTemp.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    if (null != tmp) {
-                        tmp.addResource(()-> {
-                            relatedFileTemp.delete();
-                        });
-                    }
-                    return relatedFileTemp;
                 }
             }
         }
@@ -187,7 +189,7 @@ public class SQLite3DBParser extends AbstractDBParser {
     @Override
     protected List<String> getTableNames(Connection connection, Metadata metadata, ParseContext context)
             throws SQLException {
-        List<String> tableNames = new LinkedList<String>();
+        List<String> tableNames = new ArrayList<String>();
 
         Statement st = null;
         try {

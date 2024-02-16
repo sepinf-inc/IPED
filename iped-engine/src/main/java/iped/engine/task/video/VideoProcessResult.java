@@ -122,7 +122,10 @@ public class VideoProcessResult implements Closeable {
 
         videoDuration = getDuration(info);
         dimension = getDimension(info);
-        videoStream = getVideoStream(info);
+        videoStream = getVideoStream(info, false);
+        if (videoStream == null) {
+            videoStream = getVideoStream(info, true);
+        }
         rotation = getRotation(info);
 
         setFPS(getFPS(info));
@@ -233,8 +236,8 @@ public class VideoProcessResult implements Closeable {
         }
     }
 
-    private String getVideoStream(String info) throws Exception {
-        String s1 = "Video stream found, -vid "; //$NON-NLS-1$
+    private String getVideoStream(String info, boolean alt) throws Exception {
+        String s1 = alt ? ", -vid " : "Video stream found, -vid ";
         int p1 = info.indexOf(s1);
         if (p1 < 0) {
             return null;

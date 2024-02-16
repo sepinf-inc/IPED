@@ -266,7 +266,7 @@
         <dependency>
     		<groupId>io.swagger</groupId>
     		<artifactId>swagger-jersey2-jaxrs</artifactId>
-    		<version>1.5.24</version>
+    		<version>1.6.10</version>
 		</dependency>
 		<dependency>
   			<groupId>org.glassfish.jersey.media</groupId>
@@ -335,7 +335,12 @@
                     <artifactId>commons-logging</artifactId>
                 </exclusion>
             </exclusions>
-         </dependency>
+        </dependency>
+        <dependency>
+            <groupId>org.openjdk.nashorn</groupId>
+            <artifactId>nashorn-core</artifactId>
+            <version>15.4</version>
+        </dependency>
         <dependency>
             <groupId>org.roaringbitmap</groupId>
             <artifactId>RoaringBitmap</artifactId>

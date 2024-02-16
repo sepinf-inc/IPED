@@ -88,10 +88,12 @@ public class SignatureTask extends AbstractTask {
                     }
                 }
 
+                String ext = evidence.getExt() != null ? evidence.getExt().toLowerCase() : "";
+
                 // Caso seja item office07 cifrado e tenha extensão específica, refina o tipo
                 if (type != null && type.toString().equals("application/x-tika-ooxml-protected") //$NON-NLS-1$
-                        && "docx xlsx pptx".contains(evidence.getExt().toLowerCase())) { //$NON-NLS-1$
-                    type = MediaType.application("x-tika-ooxml-protected-" + evidence.getExt().toLowerCase()); //$NON-NLS-1$
+                        && (ext.equals("docx") || ext.equals("xlsx") || ext.equals("pptx"))) { //$NON-NLS-1$
+                    type = MediaType.application("x-tika-ooxml-protected-" + ext); //$NON-NLS-1$
                 }
 
                 if (type == null) {

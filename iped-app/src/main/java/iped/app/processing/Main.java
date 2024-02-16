@@ -27,6 +27,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import iped.app.bootstrap.Bootstrap;
 import iped.app.config.LogConfiguration;
 import iped.app.processing.ui.ProgressConsole;
 import iped.app.processing.ui.ProgressFrame;
@@ -252,9 +253,10 @@ public class Main {
             public void run() {
                 byte[] buf = new byte[4096];
                 try {
-                    while (is.read(buf) == -1) {
-                        provider.cancel(true);
-                    }
+                    while (is.read(buf) != -1)
+                        ;
+                    provider.cancel(true);
+
                 } catch (Exception e) {
                     // ignore
                 }
@@ -279,7 +281,7 @@ public class Main {
     public static void main(String[] args) {
 
         Main iped = new Main(args, true);
-        PrintStream SystemOut = System.out;
+        PrintStream SystemOut = System.out; // this is redirected by LogConfiguration
         boolean success = false;
 
         iped.startUpControlClient = new StartUpControlClient();
@@ -300,6 +302,8 @@ public class Main {
             }
 
             Configuration.getInstance().loadConfigurables(iped.configPath, true);
+            
+            SystemOut.println(Bootstrap.SUB_PROCESS_TEMP_FOLDER + System.getProperty("java.io.tmpdir"));
 
             success = iped.execute();
 

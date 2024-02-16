@@ -17,7 +17,6 @@ import javax.swing.tree.TreePath;
 import org.roaringbitmap.RoaringBitmap;
 
 import iped.data.IMultiBookmarks;
-import iped.engine.data.IPEDMultiSource;
 import iped.engine.data.MultiBitmapBookmarks;
 import iped.engine.search.MultiSearchResult;
 import iped.exception.ParseException;
@@ -38,7 +37,7 @@ public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansi
     HashMap<Object, IFilter> definedFilters = new HashMap<Object, IFilter>();
 
     public Set<String> getSelectedBookmarkNames() {
-        return selection.stream().filter(b -> b != BookmarksTreeModel.ROOT && b != BookmarksTreeModel.NO_BOOKMARKS)
+        return selection.stream().filter(b -> b != BookmarksTreeModel.ROOT)
                 .map(b -> b.toString()).collect(Collectors.toSet());
     }
 
