@@ -41,11 +41,7 @@ import org.jfree.data.xy.TableXYDataset;
 import org.jfree.data.xy.XYDomainInfo;
 import org.roaringbitmap.RoaringBitmap;
 
-<<<<<<< HEAD
-import iped.app.metadata.ValueCount;
-=======
 import iped.app.timelinegraph.DateUtil;
->>>>>>> refs/remotes/origin/master
 import iped.app.timelinegraph.IpedChartPanel;
 import iped.app.timelinegraph.IpedChartsPanel;
 import iped.app.timelinegraph.IpedDateAxis;
