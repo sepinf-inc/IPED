@@ -188,7 +188,7 @@
         </carverType>
 
         <carverType>
-            <name>PDF2</name>
+            <name>PDF</name>
             <carverClass>iped.carvers.custom.PDFCarver</carverClass>
             <signatures>
                 <headerSignature>%PDF-</headerSignature>
