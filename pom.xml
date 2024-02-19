@@ -30,7 +30,7 @@
         <plugin.rsc>${basedir}/resources/plugins</plugin.rsc>
         
         <!--dependencies-->
-        <tika.version>2.4.0</tika.version>
+        <tika.version>2.4.0</tika.version><!-- SyncMetadata change done in commit b673cf4 can be reverted when version is upgraded to include solution of https://issues.apache.org/jira/browse/TIKA-4126 -->
         <tika.core.version>2.4.0-p1</tika.core.version>
         <pdfbox.version>2.0.27</pdfbox.version>
         <lucene.version>9.2.0</lucene.version>
@@ -43,8 +43,9 @@
         <java.dbx.version>1.1-p6</java.dbx.version>
         <xerial.sqlite.version>3.34.0</xerial.sqlite.version>
         <dockingframes.version>1.1.2</dockingframes.version>
-        <telegram.impl.version>1.0.9-SNAPSHOT</telegram.impl.version>
-        <twelvemonkeys.version>3.9.4</twelvemonkeys.version>
+        <telegram.version>1.0.10</telegram.version>
+        <twelvemonkeys.version>3.10.1</twelvemonkeys.version>
+        <bencode.version>1.4.1</bencode.version>
     </properties>
 
     <repositories>

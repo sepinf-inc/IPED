@@ -198,6 +198,57 @@ div.deletedIcon {
     visibility: hidden;
 }
 
+/*Quotes*/
+html {
+    scroll-padding-top: var(--scroll-padding-top);
+}
+  
+div:target{
+    animation-name: div-animate;
+    animation-duration: 2.5s; 
+}
+  
+.quote_from {
+      background:#F5F7F6;
+      border-radius: 5px;
+      border-left: 4px solid #01A280;
+      padding: 5px;	
+      display:table;
+      width:-webkit-fill-available;
+}
+  
+.quote_to {
+    background:#DEF6D4;
+    border-radius: 5px;
+    border-left: 4px solid #01A280;
+    padding: 5px;	
+    display:table;
+    width:-webkit-fill-available;    
+}
+
+.quote_to:hover {
+	background-color: #AFD3F0 !important;
+}
+
+.quote_from:hover {
+	background-color: #AFD3F0 !important;
+}
+
+.quote_user {
+    font-family: Arial;
+    color: #01A280;	
+}
+
+.quote_msg {
+    font-family: Arial;
+    color: #67747D;	
+}
+
+@keyframes div-animate {
+    0% {background: rgba(175, 211, 240,1);}
+    100% {background: rgba(175, 211, 240,0);}
+}
+  
 /*Arrow*/
 .aw {
     display: table-cell;
@@ -517,6 +568,97 @@ div.deletedIcon {
     font-style: italic;
     color: #aaaaaa;
     font-size: small;
+}
+
+/** Modal window - Author: https://github.com/lecoa/Vanilla-JS-Prompt **/
+:root {
+    --bg-color: #fafafa;
+    --text-color: #1b1e24;
+    --scroll-padding-top: 84px;    
+}
+.modal {
+    display: none;
+}
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1001;
+}
+.modal-container {
+    background-color: var(--bg-color);
+    padding: 30px;
+    width: 425px;
+    max-width: 100vw;
+    max-height: 100vh;
+    border-radius: 3px;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+.modal.wide .modal-container {
+    width: 650px;
+}
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.modal-title {
+    margin-top: 0;
+    margin-bottom: 0;
+    font-weight: 700;
+    font-size: 1.25rem;
+    line-height: 1.25;
+    color: var(--text-color);
+    box-sizing: border-box;
+}
+.modal-icon {
+    height: 45px;
+    width: 45px;
+    vertical-align: middle;
+    margin-right: 5px;
+}
+.modal-text {
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+    line-height: 1.5;
+    color: rgba(0, 0, 0, 0.8);
+}
+.modal-text img {
+    width: 100%;
+    max-height: calc(100vh - 200px);
+    object-fit: contain;
+}
+.modal-button {
+    float: right;
+    font-size: 0.875rem;
+    border-radius: 0.25rem;
+    border-style: none;
+    border-width: 0;
+    cursor: pointer;
+    -webkit-appearance: button;
+    text-transform: none;
+    overflow: visible;
+    line-height: 1.15;
+    margin: 0;
+    padding: 0.5rem 1rem;
+    background-color: var(--text-color);
+    border: solid 1px var(--text-color);
+    color: var(--bg-color);
+}
+#modal-button-primary.default{
+    background-color: var(--bg-color);
+    border: solid 1px var(--text-color);
+    color: var(--text-color);
+}
+#modal-button-secondary{
+    display: none;
 }
 
 /** SMALL ICONS **/

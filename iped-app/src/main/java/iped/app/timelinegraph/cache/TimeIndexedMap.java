@@ -1,103 +1,33 @@
 package iped.app.timelinegraph.cache;
 
 import java.io.DataInputStream;
-import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
-import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.TreeMap;
 
-import iped.app.timelinegraph.cache.persistance.CachePersistance;
-import iped.utils.SeekableFileInputStream;
+import org.apache.pdfbox.io.RandomAccessBufferedFileInputStream;
 
-public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> {
-    HashMap<String, TreeMap<Date, Long>> monthIndex = new HashMap<String, TreeMap<Date, Long>>();
-    HashMap<String, Date> startDates = new HashMap<String, Date>();
-    HashMap<String, Date> endDates = new HashMap<String, Date>();
+import iped.app.timelinegraph.cache.persistance.CachePersistance;
+
+public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
+    HashMap<String, TreeMap<Long, Long>> upperPeriodIndex = new HashMap<String, TreeMap<Long, Long>>();
     HashMap<String, File> cacheFiles = new HashMap<String, File>();
     HashMap<String, File> monthIndexCacheFiles = new HashMap<String, File>();
 
     TimelineCache timelineCache = TimelineCache.get();
 
     @Override
-    public List<CacheTimePeriodEntry> put(String key, List<CacheTimePeriodEntry> value) {
-        List<CacheTimePeriodEntry> result = super.put(key, value);
-
-        processIndex(key, value);
+    public Set<CacheTimePeriodEntry> put(String key, Set<CacheTimePeriodEntry> value) {
+        Set<CacheTimePeriodEntry> result = super.put(key, value);
 
         return result;
-    }
-
-    public Date getStartDate(String className) {
-        return startDates.get(className);
-    }
-
-    public Date getEndDate(String className) {
-        return endDates.get(className);
-    }
-
-    protected void processIndex(String key, List<CacheTimePeriodEntry> value) {
-        if (!key.equals("Year") && !key.equals("Month") && !key.equals("Quarter")) {
-            Calendar c = (Calendar) Calendar.getInstance().clone();
-            Date minDate = startDates.get(key);
-            if (minDate == null) {
-                minDate = new Date(Long.MAX_VALUE);
-            }
-            Date maxDate = endDates.get(key);
-            if (maxDate == null) {
-                maxDate = new Date(0);
-            }
-
-            Collections.sort(value);
-
-            long i = 0;
-            for (Iterator iterator = value.iterator(); iterator.hasNext();) {
-                CacheTimePeriodEntry cacheTimePeriodEntry = (CacheTimePeriodEntry) iterator.next();
-                c.clear();
-                c.set(Calendar.YEAR, 1900 + cacheTimePeriodEntry.getDate().getYear());
-                c.set(Calendar.MONTH, cacheTimePeriodEntry.getDate().getMonth());
-                Date month = c.getTime();
-                TreeMap<Date, Long> months = monthIndex.get(key);
-                if (months == null) {
-                    months = new TreeMap<Date, Long>();
-                    monthIndex.put(key, months);
-                }
-                Long firstIndex = months.get(month);
-                if (firstIndex == null) {
-                    months.put(month, i);
-                }
-
-                if (!minDate.before(cacheTimePeriodEntry.getDate())) {
-                    minDate = cacheTimePeriodEntry.getDate();
-                }
-                if (!maxDate.after(cacheTimePeriodEntry.getDate())) {
-                    maxDate = cacheTimePeriodEntry.getDate();
-                }
-
-                i++;
-            }
-            startDates.put(key, minDate);
-            endDates.put(key, minDate);
-        }
-    }
-
-    @Override
-    public void putAll(Map<? extends String, ? extends List<CacheTimePeriodEntry>> m) {
-        super.putAll(m);
-        for (Iterator iterator = m.entrySet().iterator(); iterator.hasNext();) {
-            Entry e = (Entry) iterator.next();
-            processIndex((String) e.getKey(), (List<CacheTimePeriodEntry>) e.getValue());
-        }
     }
 
     public void setIndexFile(String string, File f) throws IOException {
@@ -109,77 +39,46 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
         this.cacheFiles.put(string, cacheFile);
         this.monthIndexCacheFiles.put(string, new File(new File(f, string), "1"));
 
-        SeekableFileInputStream lcacheSfis = new SeekableFileInputStream(cacheFile);
-        CacheDataInputStream lcacheDis = new CacheDataInputStream(lcacheSfis) {
-        };
-
-        try {
-            int committed = lcacheDis.readShort();
-            if (committed != 1) {
-                throw new IOException("File not committed:" + f.getName());
-            }
-        } finally {
+        int committed = 0;
+        try (RandomAccessBufferedFileInputStream lcacheSfis = new RandomAccessBufferedFileInputStream(cacheFile); DataInputStream lcacheDis = new DataInputStream(lcacheSfis)) {
+            committed = lcacheDis.readShort();
         }
-    }
-
-    public static class CacheDataInputStream extends DataInputStream {
-
-        public InputStream wrapped;
-
-        public CacheDataInputStream(InputStream in) {
-            super(in);
-            wrapped = in;
-        }
-
-        public int readInt2() throws IOException {
-            byte[] chs = new byte[4];
-            int i = in.read(chs);
-            if (i < 0) {
-                throw new EOFException();
-            }
-            int ch1 = chs[0] & 0xFF;
-            int ch2 = chs[1] & 0xFF;
-            int ch3 = chs[2] & 0xFF;
-            int ch4 = chs[3] & 0xFF;
-
-            if (ch1 == -1 && ch1 == -1 && ch2 == -1 && ch3 == -1) {
-                return -1;
-            }
-            return ((ch1 << 24) + (ch2 << 16) + (ch3 << 8) + (ch4 << 0));
+        if (committed != 1) {
+            String msg = "File not committed:" + f.getName();
+            throw new IOException(msg);
         }
     }
 
     Date lastStartDate = null;
     Date lastEndDate = null;
-    
 
-    public ResultIterator iterator(String className, Date startDate, Date endDate) {
-        SeekableFileInputStream tmpCacheSifs = null;
-        CacheDataInputStream tmpCacheDis = null;
+    public RandomAccessBufferedFileInputStream getTmpCacheSfis(String className) throws IOException {
+        File f = cacheFiles.get(className);
+        if (f != null) {
+            return new RandomAccessBufferedFileInputStream(f);
+        } else {
+            return null;
+        }
+    }
+
+    public ResultIterator iterator(String className, RandomAccessBufferedFileInputStream lcacheSfis, Date startDate, Date endDate) {
         try {
-            
-            File f = cacheFiles.get(className);
-            if(f==null) {
-                return null;
-            }
-            tmpCacheSifs = new SeekableFileInputStream(f);
-            tmpCacheDis = null;
-            tmpCacheDis = new CacheDataInputStream(tmpCacheSifs);
+            DataInputStream lcacheDis = new DataInputStream(lcacheSfis);
 
-            SeekableFileInputStream lcacheSfis = tmpCacheSifs;
-            CacheDataInputStream lcacheDis = tmpCacheDis;
-
+            // skips header
             lcacheSfis.seek(2l);
             String timezoneID = lcacheDis.readUTF();
-            int entries = lcacheDis.readInt2();
+            int entries = lcacheDis.readInt();
 
             CacheTimePeriodEntry[] cache = timelineCache.get(className, entries);
 
-            long startpos = lcacheSfis.position();
+            long startpos = lcacheSfis.getPosition();// position of first entry in cache
             if (startDate != null) {
+                // if start date is given, search for the position of correspondent first entry
+                // throught month index
                 Long num = null;
                 try {
-                    Entry<Date, Long> entry = monthIndex.get(className).floorEntry(startDate);
+                    Entry<Long, Long> entry = upperPeriodIndex.get(className).floorEntry(startDate.getTime());
                     if (entry != null) {
                         num = entry.getValue();
                     } else {
@@ -193,15 +92,15 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
                 startpos = num.longValue();
             }
 
-            final long pos = startpos;
+            final long pos = startpos;// start position in the index to iterate
 
             try {
                 lcacheSfis.seek(pos);
                 Integer index = null;
                 if (cache != null) {
-                    index = timelineCache.getIndex(className, pos);
+                    index = timelineCache.getIndex(className, pos);// finds the correspondent index position in cache array for the startpos
 
-                    if (lastStartDate != null && startDate != null) {
+                    if (lastStartDate != null && startDate != null) { // liberate some memory of entries in cache out of window of iteration
                         long startinterval = startDate.getTime() - lastStartDate.getTime();
                         if (startinterval > 0) {
                             timelineCache.clean(className, lastStartDate, startDate);
@@ -215,9 +114,9 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
                 lastStartDate = startDate;
                 lastEndDate = endDate;
 
-                if(endDate==null) {
+                if (endDate == null) {
                     return new ResultIterator(pos, index, timelineCache, lcacheSfis, lcacheDis, Long.MAX_VALUE, className);
-                }else {
+                } else {
                     return new ResultIterator(pos, index, timelineCache, lcacheSfis, lcacheDis, endDate.getTime(), className);
                 }
             } catch (IOException e) {
@@ -230,32 +129,33 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
     }
 
     class ResultIterator implements Iterator<CacheTimePeriodEntry> {
-        CacheTimePeriodEntry lastHasNext = null;
-        int cacheCurrentIndex = 0;
-        private Integer startIndex;
-        private CacheTimePeriodEntry[] lcache;
-        private SeekableFileInputStream lcacheSfis;
-        private CacheDataInputStream lcacheDis;
+        CacheTimePeriodEntry lastHasNext = null;// found entry if existent when iterating
+        int cacheCurrentIndex = 0;// current index being iterated (sum with startIndex to identify correspondent
+                                  // cache array index)
+        private CacheTimePeriodEntry[] lcache;// cache array to iterate
+        private RandomAccessBufferedFileInputStream lcacheSfis;// seekable stream to index file (to read from when entry not in cache)
+        private DataInputStream lcacheDis;// data parser stream to same above index file
         private TreeMap<Long, Integer> lcacheIndexes;
         private long startDate = 0;
         private long endDate;
         private String className;
         boolean useCache = false;
         private TimelineCache timelineCache;
-        CachePersistance cp = new CachePersistance();
-        Date startIterationDate = new Date();
-        int countRead=0;
-        int countCache=0;
-        private Reference<CacheTimePeriodEntry>[] lsoftcache;
+        CachePersistance cp = CachePersistance.getInstance();
+        int countRead = 0;// counters to log number of cache reads
+        int countCache = 0;// counters to log number of disk reads
+        private Reference<CacheTimePeriodEntry>[] lsoftcache;// soft reference cache (a more complete cache but with SoftReferences)
         boolean hasSoftCache = false;
         Long nextSeekPos = 0l;
-        private long startPos;
+        private Integer startIndex;// start index in cache array in file to iterate (if not in cache array load
+                                   // from position in file)
+        private long startPos;// start position in file to iterate
 
-        public ResultIterator(long pos, Integer startIndex, TimelineCache timelineCache, SeekableFileInputStream lcacheSfis, CacheDataInputStream lcacheDis, long endDate, String className) {
+        public ResultIterator(long pos, Integer startIndex, TimelineCache timelineCache, RandomAccessBufferedFileInputStream lcacheSfis, DataInputStream lcacheDis, long endDate, String className) {
             this.startPos = pos;
             this.startIndex = startIndex;
             this.lcache = timelineCache.caches.get(className);
-            this.lsoftcache=timelineCache.softCaches.get(className);
+            this.lsoftcache = timelineCache.softCaches.get(className);
             this.lcacheIndexes = (TreeMap) timelineCache.getCachesIndexes(className);
             this.timelineCache = timelineCache;
             this.lcacheSfis = lcacheSfis;
@@ -264,162 +164,94 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
             this.className = className;
             this.useCache = this.lcache != null;
             this.hasSoftCache = timelineCache.hasSoftCacheFor(className);
-            nextSeekPos=startPos;
-        }
-        
-        public long getPosition() throws IOException {
-            return lcacheSfis.position();
-        }
-
-        public boolean finish() {
-            lastHasNext = null;
-            lcache = null;
-            try {
-                lcacheDis.close();
-                lcacheSfis.close();
-            }catch(Exception e) {
-                
-            }
-            return false;
+            nextSeekPos = startPos;
         }
 
         @Override
         public boolean hasNext() {
             try {
                 if (useCache) {
-                    if(startIndex==null) {
-                        startIndex=0;
+                    if (startIndex == null) {
+                        startIndex = 0;
                     }
                     if (startIndex + cacheCurrentIndex < lcache.length) {
                         lastHasNext = lcache[startIndex + cacheCurrentIndex];
-                        if(lastHasNext==null && lsoftcache!=null) {
-                            //try the soft reference cache
+                        if (lastHasNext == null && lsoftcache != null) {
+                            // try the soft reference cache
                             Reference<CacheTimePeriodEntry> softRef = lsoftcache[startIndex + cacheCurrentIndex];
-                            if(softRef!=null) {
+                            if (softRef != null) {
                                 lastHasNext = softRef.get();
-                                if(lastHasNext!=null) {
-                                    lcache[startIndex + cacheCurrentIndex] = lastHasNext; 
+                                if (lastHasNext != null) {
+                                    lcache[startIndex + cacheCurrentIndex] = lastHasNext;
                                 }
                             }
                         }
-                        if(lastHasNext!=null) {
-                            nextSeekPos = lcacheIndexes.ceilingKey(nextSeekPos+1);
+                        if (lastHasNext != null) {
+                            nextSeekPos = lcacheIndexes.ceilingKey(nextSeekPos + 1);
                         }
                     } else {
-                        return finish();
+                        return false;
                     }
                 }
                 if (lastHasNext == null) {// not in cache so load from file
                     long curpos = nextSeekPos;
                     synchronized (lcacheSfis) {
-                        if(nextSeekPos!=lcacheSfis.position()) {
+                        if (nextSeekPos != lcacheSfis.getPosition()) {
                             lcacheSfis.seek(nextSeekPos);
                         }
-                        lastHasNext = cp.loadNextEntry(lcacheDis);
-                        nextSeekPos=lcacheSfis.position();
+                        lastHasNext = cp.loadNextEntry(lcacheDis, cp.isBitstreamSerialize());
+                        nextSeekPos = lcacheSfis.getPosition();
                     }
                     countRead++;
                     if (lcache != null && useCache) {
-                        lcache[startIndex + cacheCurrentIndex]=lastHasNext;
-                        if(hasSoftCache) {
-                            lsoftcache[startIndex + cacheCurrentIndex]=new SoftReference<CacheTimePeriodEntry>(lastHasNext);
+                        lcache[startIndex + cacheCurrentIndex] = lastHasNext;
+                        if (hasSoftCache) {
+                            lsoftcache[startIndex + cacheCurrentIndex] = new SoftReference<CacheTimePeriodEntry>(lastHasNext);
                         }
                         lcacheIndexes.put(nextSeekPos, startIndex + cacheCurrentIndex);
                         cacheCurrentIndex++;
                     }
-                }else {
+                } else {
                     countCache++;
                     cacheCurrentIndex++;
                 }
-                if(startDate==0) {
-                    startDate=lastHasNext.date;
+                if (startDate == 0) {
+                    startDate = lastHasNext.date;
                 }
-            } catch (EOFException e) {
-                e.printStackTrace();
-                return finish();
-            } catch (IOException e) {
-                e.printStackTrace();
-                return finish();
             } catch (Exception e) {
                 e.printStackTrace();
-                return finish();
+                return false;
             }
 
-            if (lastHasNext.date<endDate) {
+            if (lastHasNext.date < endDate) {
                 return true;
             } else {
-                return finish();
+                return false;
             }
         }
 
         @Override
         public CacheTimePeriodEntry next() {
             CacheTimePeriodEntry result = lastHasNext;
-            lastHasNext = null;
+            // lastHasNext = null;
             return result;
         }
     };
 
-    public void createOrLoadDayIndex(IndexTimeStampCache indexTimeStampCache) {
-        CachePersistance cp = new CachePersistance();
-        if (monthIndex.size() == 0) {
+    public void createOrLoadUpperPeriodIndex(IndexTimeStampCache indexTimeStampCache) {
+        CachePersistance cp = CachePersistance.getInstance();
+        if (upperPeriodIndex.size() == 0) {
             for (Iterator iterator = indexTimeStampCache.getPeriodClassesToCache().iterator(); iterator.hasNext();) {
                 String ev = (String) ((Class) iterator.next()).getSimpleName();
                 File f = monthIndexCacheFiles.get(ev);
-                TreeMap<Date, Long> datesPos = new TreeMap<Date, Long>();
+                TreeMap<Long, Long> datesPos = new TreeMap<Long, Long>();
                 Map<Long, Integer> positionsIndexes = timelineCache.getCachesIndexes(ev);
                 try {
                     if (f.exists()) {
-                        cp.loadMonthIndex(ev, datesPos, positionsIndexes);
-                        monthIndex.put(ev, datesPos);
-                    } else {
-                        Date lastMonth = null;
-                        int internalCount = 0;
-                        long lastPos;
-                        Calendar c = (Calendar) Calendar.getInstance().clone();
-                        
-
-                        ResultIterator i = iterator(ev, null, null);
-                        try {
-                            lastPos = i.getPosition();
-                        } catch (IOException e1) {
-                            e1.printStackTrace();
-                            return;
-                        }
-                        int ctIndex=0;
-                        while (i.hasNext()) {
-                            CacheTimePeriodEntry ct = i.next();
-                            c.clear();
-                            c.set(Calendar.YEAR, 1900 + ct.getDate().getYear());
-                            c.set(Calendar.MONTH, ct.getDate().getMonth());
-                            c.set(Calendar.DAY_OF_MONTH, ct.getDate().getDate());
-                            if (ev.equals("Minute") || ev.equals("Second")) {
-                                c.set(Calendar.HOUR_OF_DAY, ct.getDate().getHours());
-                            }
-
-                            internalCount += ct.events.size();
-                            Date month = c.getTime();
-                            if (!month.equals(lastMonth) || internalCount > 4000) {
-                                lastMonth = month;
-                                internalCount = 0;
-                                datesPos.put(month, lastPos);
-                                positionsIndexes.put(lastPos, ctIndex);
-                            }
-                            
-                            ctIndex++;
-
-                            try {
-                                lastPos = i.getPosition();
-                            } catch (IOException e) {
-                                // TODO Auto-generated catch block
-                                e.printStackTrace();
-                            }
-                        }
-                        monthIndex.put(ev, datesPos);
-                        cp.saveMonthIndex(monthIndex, positionsIndexes, ev);
+                        cp.loadUpperPeriodIndex(ev, datesPos, positionsIndexes);
+                        upperPeriodIndex.put(ev, datesPos);
                     }
-                    
-                }finally {
+                } finally {
                     timelineCache.liberateCachesIndexes(ev);
                 }
 
@@ -430,11 +262,8 @@ public class TimeIndexedMap extends HashMap<String, List<CacheTimePeriodEntry>> 
     long cacheStartPos = 0;
     long cacheEndPos = 0;
 
-    public HashMap<String, TreeMap<Date, Long>> getMonthIndex() {
-        return monthIndex;
-    }
-
-    public void clearCache() {
+    public HashMap<String, TreeMap<Long, Long>> getMonthIndex() {
+        return upperPeriodIndex;
     }
 
 }

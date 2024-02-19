@@ -294,6 +294,7 @@
         </parser>
         <parser class="iped.parsers.telegram.TelegramParser">
             <params>
+                <param name="extractMessages" type="bool">false</param>
                 <param name="enabledForUfdr" type="bool">true</param>
                 <param name="minChatSplitSize" type="int">6000000</param>
             </params>
@@ -311,6 +312,12 @@
                 <param name="minChatSplitSize" type="int">6000000</param>
             </params>
         </parser>
+        <parser class="iped.parsers.threema.ThreemaParser">
+            <params>
+                <param name="extractMessages" type="bool">false</param>
+                <param name="extractMediasAsFiles" type="bool">false</param>
+            </params>
+        </parser>
         <parser class="iped.parsers.ufed.UFEDChatParser">
             <!--<mime-exclude>application/x-ufed-chat-whatsapp</mime-exclude>-->
             <params>
@@ -322,11 +329,14 @@
         <parser class="iped.parsers.emule.PartMetParser"></parser>
         <parser class="iped.parsers.emule.PreferencesDatParser"></parser>
         <parser class="iped.parsers.ares.AresParser"></parser>
+        <parser class="iped.parsers.shareaza.ShareazaDownloadParser"></parser>
         <parser class="iped.parsers.shareaza.ShareazaSearchesDatParser"></parser>
         <parser class="iped.parsers.shareaza.ShareazaLibraryDatParser"></parser>
         <parser class="iped.parsers.bittorrent.BitTorrentResumeDatParser"></parser>
         <parser class="iped.parsers.bittorrent.TorrentFileParser"></parser>
         <parser class="iped.parsers.lnk.LNKShortcutParser"></parser>
+        <parser class="iped.parsers.misc.OFXParser"></parser>
+        <parser class="iped.parsers.misc.OFCParser"></parser>
         <!--parser class="iped.parsers.misc.GenericOLEParser"></parser>
         <parser class="iped.parsers.misc.PDFTextParser"></parser>
         <parser class="iped.parsers.video.FLVParserWrapper"></parser>
@@ -348,6 +358,7 @@
         <!-- parser class="iped.parsers.python.PythonParser"></parser-->
         <parser class="iped.parsers.mail.win10.Win10MailParser"></parser>
         <parser class="iped.parsers.discord.DiscordParser"></parser>
+        <!--parser class="iped.parsers.apk.APKParser"></parser-->
 
     </parsers>
 

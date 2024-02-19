@@ -12,6 +12,7 @@ import java.util.Map;
 
 import javax.script.Bindings;
 import javax.script.Invocable;
+import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
@@ -43,7 +44,7 @@ public class ScriptValidatorService implements RegexValidatorService {
     protected void registerScript(File file) {
         try {
             Invocable script = loadScript(manager, file);
-            Bindings bindings = (Bindings) script.invokeFunction("getRegexNames");
+            Map<String, Object> bindings = (Map<String, Object>) script.invokeFunction("getRegexNames");
             List<String> regexNames = getStringArrayValues(bindings);
             for (String regexName : regexNames) {
                 scripts.put(regexName, script);
@@ -53,7 +54,7 @@ public class ScriptValidatorService implements RegexValidatorService {
         }
     }
 
-    private List<String> getStringArrayValues(Bindings bindings) {
+    private List<String> getStringArrayValues(Map<String, Object> bindings) {
         Integer length = ((Number) bindings.get("length")).intValue();
         List<String> result = new ArrayList<String>();
 
@@ -69,8 +70,10 @@ public class ScriptValidatorService implements RegexValidatorService {
 
         try (InputStreamReader reader = new InputStreamReader(new FileInputStream(file), "UTF-8")) { //$NON-NLS-1$
 
-            String ext = file.getName().substring(file.getName().lastIndexOf('.') + 1); // $NON-NLS-1$
-            ScriptEngine engine = manager.getEngineByExtension(ext); // $NON-NLS-1$
+            String ext = file.getName().substring(file.getName().lastIndexOf('.') + 1);
+            ScriptEngine engine = manager.getEngineByExtension(ext);
+            Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
+            // bindings.put("polyglot.js.nashorn-compat", true);
             engine.eval(reader);
 
             return (Invocable) engine;
