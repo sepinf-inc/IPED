@@ -877,19 +877,19 @@ L.KML = L.MarkerClusterGroup.extend({
     drawPolyline(a){
         try{
             if(a){
-                let m=this.markers['marker_'+a[0]];
+                let m=this.markers[a[0]];
                 
                 if(m.track){
                     poly=m.track;
                 }else{
                     let latLngs = [];
                     for(let i=0; i<a.length; i++){
-                        m=this.markers['marker_'+a[i]];
+                        m=this.markers[a[i]];
                         latLngs.push(m.getLatLng());
                     }
                     poly=L.polyline(latLngs, this.trackLineStyle);
                     for(let i=0; i<a.length; i++){
-                        m=this.markers['marker_'+a[i]];
+                        m=this.markers[a[i]];
                         m.track=poly;
                     }
                 }
@@ -910,7 +910,7 @@ L.KML = L.MarkerClusterGroup.extend({
         try{
             if(a){
                 for(let i=0; i<a.length; i++){
-                    let m=this.markers['marker_'+a[i][0]];
+                    let m=this.markers[a[i][0]];
                     if(m){
                         this.placemarks.push(m);
                         this.placemarkIndexes.push(a[i][1]);
@@ -934,16 +934,26 @@ L.KML = L.MarkerClusterGroup.extend({
             alert(e);
         }
     },
+    itemMarkers:{},
     createMarkers(a){
         try{
             if(a){
                     for(let i=0; i<a.length; i++){
-                        m = this.addPlacemark('marker_'+a[i][0], a[i][2], a[i][3], a[i][4], a[i][5], a[i][6], a[i][7], {});
+                        m = this.addPlacemark(a[i][0], a[i][2], a[i][3], a[i][4], a[i][5], a[i][6], a[i][7], {});
                         this.markers.push(m);
                         this.placemarks.push(m);
                         this.placemarkIndexes.push(a[i][1]);
                         this.orderedVisiblePlacemarks.push(null);
                         this.visibleMarkerCoords.push(null);
+                        if(a[i][8]){
+                            m.bgid = a[i][8]; 
+                            if(this.itemMarkers[a[i][8]]){
+                                this.itemMarkers[a[i][8]].push(m);
+                            }else{
+                                this.itemMarkers[a[i][8]]=[m];
+                            }
+                            m.itemMarkers=this.itemMarkers;
+                        }
                     }
                     /*
                 this.addpromises.push(new Promise((resolve)=>{
@@ -1327,7 +1337,48 @@ L.KMLMarker = L.Marker.extend({
         if(this.previousLine) this.parent.removeLayer(this.previousLine);
         this.directionLinesVisible=false;
     },
-	onClick: function(e){
+    toogleCheckedAllItems: function(){
+        checked = this.checked;
+        if(checked == 'true'){
+           checked='false'; 
+        }else{
+           checked='true'; 
+        }
+        if(this.bgid){
+            subitems = this.itemMarkers[this.bgid];
+            for(var i=0; i<subitems.length; i++){
+                subitems[i].checked = checked;
+                subitems[i].atualizaIcone();
+            }
+        }else{
+            this.checked = checked;
+            this.atualizaIcone();
+        }
+    },
+    toogleHighlightedAllItems: function(){
+        highlighted = this.selected;
+        if(this.bgid){
+            subitems = this.itemMarkers[this.bgid];
+            for(var i=0; i<subitems.length; i++){
+                if(highlighted == 'true'){
+                    this.parent.unhighlight(subitems[i]);
+                    alert('unhighlight:'+subitems[i].id);
+                }else{
+                    this.parent.highlight(subitems[i]);
+                    alert('highlight:'+subitems[i].id);
+                }
+                subitems[i].atualizaIcone();
+            }
+        }else{
+            if(highlighted == 'true'){
+                this.parent.unhighlight(this);
+            }else{
+                this.parent.highlight(this);
+	    }
+            this.atualizaIcone();
+        }
+    },
+    onClick: function(e){
         try{
             window.clickedMark = this;
             var modf = '';
@@ -1336,6 +1387,11 @@ L.KMLMarker = L.Marker.extend({
             if(!e.originalEvent.isTrusted) {
                 return;
             }
+            
+            if(!e.originalEvent.ctrlKey && !e.originalEvent.shiftKey && this.selected == 'true'){
+		return; //does nothing as the item is already selected
+	    }
+            
     
             if(this.parent){
                 if(!e.originalEvent.ctrlKey && !e.originalEvent.shiftKey){
@@ -1345,26 +1401,17 @@ L.KMLMarker = L.Marker.extend({
 
             if(e.originalEvent.ctrlKey){
                 modf=modf+'|ctrl';
-                if(this.checked=='true'){
-                    this.checked='false';
-                }else{
-                    this.checked='true';
-                }
+                this.toogleCheckedAllItems();
             }else{
-                if(this.selected=='true'){
-                    this.parent.unhighlight(this);
-                }else{
-                    this.parent.highlight(this);
-                }
+                this.toogleHighlightedAllItems();
             }
-            this.atualizaIcone();
 
             if(this.checked && this.checked=='true'){                
                 document.getElementById('marker_checkbox_'+this.id).checked=true;
             }else{
                 document.getElementById('marker_checkbox_'+this.id).checked=false;
             }
-            
+
             var button = (typeof e.originalEvent.which != "undefined") ? e.originalEvent.which : e.originalEvent.button;
             
             if(e.originalEvent.shiftKey){
