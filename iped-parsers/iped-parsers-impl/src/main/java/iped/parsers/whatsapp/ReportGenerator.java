@@ -528,6 +528,7 @@ public class ReportGenerator {
                 out.println(Messages.getString("WhatsAppReport.CommunityWelcome") + "<br>");
                 break;
             case USER_ADDED_TO_GROUP:
+            case USER_JOINED_GROUP_FROM_INVITATION:
             case USER_JOINED_GROUP_FROM_LINK:
             case USER_REMOVED_FROM_GROUP:
                 List<String> users = message.getUsersAction();
@@ -550,6 +551,8 @@ public class ReportGenerator {
                 if (!selfAction) {
                     if (message.getMessageType() == MessageType.USER_REMOVED_FROM_GROUP) {
                         out.print(Messages.getString("WhatsAppReport.UserRemovedGroup"));
+                    } else if (message.getMessageType() == MessageType.USER_JOINED_GROUP_FROM_INVITATION) {
+                        out.print(Messages.getString("WhatsAppReport.UserJoinedGroupInvitation"));
                     } else if (message.getMessageType() == MessageType.USER_JOINED_GROUP_FROM_LINK) {
                         out.print(Messages.getString("WhatsAppReport.UserJoinedGroupLink"));
                     } else {

@@ -47,6 +47,7 @@ import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_MEDIA_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.URL_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.USER_ADDED_TO_GROUP;
+import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP_FROM_INVITATION;
 import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP_FROM_LINK;
 import static iped.parsers.whatsapp.Message.MessageType.USER_LEFT_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.USER_REMOVED_FROM_GROUP;
@@ -1370,6 +1371,10 @@ public class ExtractorIOS extends Extractor {
 
                     case 22:
                         result = GROUP_DESCRIPTION_DELETED;
+                        break;
+                        
+                    case 23:
+                        result = USER_JOINED_GROUP_FROM_INVITATION;
                         break;
 
                     case 26:
