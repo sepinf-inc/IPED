@@ -1,5 +1,6 @@
 package iped.parsers.whatsapp;
 
+import static iped.parsers.whatsapp.Message.MessageType.AI_THIRD_PARTY;
 import static iped.parsers.whatsapp.Message.MessageType.AUDIO_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.BLOCKED_CONTACT;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_CHAT;
@@ -20,11 +21,13 @@ import static iped.parsers.whatsapp.Message.MessageType.ENCRYPTION_KEY_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_DEFAULT;
 import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_DURATION_CHANGED;
+import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_SETTINGS_NOT_APPLIED;
 import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_SAVE;
 import static iped.parsers.whatsapp.Message.MessageType.GIF_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_ADDED_TO_COMMUNITY;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_EDIT;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_SEND;
+import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ONLY_ADMINS_CAN_ADD;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ONLY_ADMINS_CAN_EDIT;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ONLY_ADMINS_CAN_SEND;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CREATED;
@@ -61,6 +64,7 @@ import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_VOICE_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.USER_ADDED_TO_GROUP;
+import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP_FROM_INVITATION;
 import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP_FROM_LINK;
 import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_WHATSAPP;
 import static iped.parsers.whatsapp.Message.MessageType.USER_LEFT_GROUP;
@@ -400,6 +404,12 @@ public class ExtractorAndroidNew extends Extractor {
                 int actionType = rs.getInt("actionType");
                 m.setMessageType(decodeMessageType(type, status, edit_version, caption, actionType,
                         rs.getInt("bizStateId"), m.getMediaMime()));
+                
+                if (m.getMessageType() == EPHEMERAL_SETTINGS_NOT_APPLIED) {
+                    // Ignore this type of message, as it does nothing and it is not visible in the application itself.
+                    continue;
+                }
+                
                 m.setDuration(rs.getInt("media_duration")); //$NON-NLS-1$
                 if (m.getMessageType() == CONTACT_MESSAGE) {
                     m.setVcards(Arrays.asList(new String[] { Util.getUTF8String(rs, "vcard") }));
@@ -676,6 +686,9 @@ public class ExtractorAndroidNew extends Extractor {
                     case 50:
                         result = STANDARD_CHAT;
                         break;
+                    case 52:
+                        result = USER_JOINED_GROUP_FROM_INVITATION;
+                        break;
                     case 56:
                         result = EPHEMERAL_CHANGED;
                         break;
@@ -687,6 +700,11 @@ public class ExtractorAndroidNew extends Extractor {
                         break;
                     case 59:
                         result = EPHEMERAL_DURATION_CHANGED;
+                        break;
+                    case 60:
+                        // Message present in the table, but not shown in the application itself.
+                        // Can be ignored as nothing was changed.
+                        result = EPHEMERAL_SETTINGS_NOT_APPLIED;
                         break;
                     // TODO: Handle business related notification (no extra tables/fields)
                     // case 63:
@@ -722,6 +740,9 @@ public class ExtractorAndroidNew extends Extractor {
                     case 110:
                         result = COMMUNITY_MANAGEMENT_ACTION;
                         break;
+                    case 92:
+                        result = GROUP_CHANGED_ONLY_ADMINS_CAN_ADD;
+                        break;
                     case 118:
                         result = PINNED_MESSAGE;
                         break;
@@ -736,6 +757,9 @@ public class ExtractorAndroidNew extends Extractor {
                         break;
                     case 136:
                         result = USER_JOINED_WHATSAPP;
+                        break;
+                    case 155:
+                        result = AI_THIRD_PARTY;
                         break;
                     default:
                         break;
@@ -815,6 +839,7 @@ public class ExtractorAndroidNew extends Extractor {
                 result = GROUP_INVITE;
                 break;
             case 25:
+            case 26:
             case 27:
             case 28:
                 result = TEMPLATE_MESSAGE;
@@ -843,7 +868,7 @@ public class ExtractorAndroidNew extends Extractor {
                 result = UI_ELEMENTS_QUOTE;
                 break;
             case 64:
-                if (status == 0 || status == 4) {
+                if (status == 0 || status == 4 || status == 5) {
                     result = DELETED_BY_ADMIN;
                 }
                 break;

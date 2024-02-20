@@ -277,6 +277,10 @@ public class ReportGenerator {
                 out.println("<i>" + Messages.getString("WhatsAppReport.UnknownMessage") + " [ID: " + message.getId() //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         + "]</i>");
                 break;
+            case AI_THIRD_PARTY:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.AIThirdParty"));
+                break;
             case ENCRYPTION_KEY_CHANGED:
                 out.println("<div class=\"systemmessage\">");
                 out.print(lockedIcon);
