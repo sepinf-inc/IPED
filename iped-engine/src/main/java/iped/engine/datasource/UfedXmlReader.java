@@ -121,7 +121,9 @@ public class UfedXmlReader extends DataSourceReader {
 
     private static Random random = new Random();
 
-    File root, ufdrFile;
+    private static HashMap<File, UFDRInputStreamFactory> uisfMap = new HashMap<>();
+
+    File root, rootFolder, ufdrFile;
     UFDRInputStreamFactory uisf;
     FileInputStreamFactory fisf, previewFisf;
     IItem rootItem;
@@ -132,7 +134,7 @@ public class UfedXmlReader extends DataSourceReader {
     private final List<String[]> deviceInfoData = new ArrayList<String[]>();
     private HashSet<String> addedImUfedIds = new HashSet<>();
     private HashSet<String> addedTrackIds = new HashSet<>();
-    
+
     public UfedXmlReader(ICaseData caseData, File output, boolean listOnly) {
         super(caseData, output, listOnly);
     }
@@ -357,6 +359,8 @@ public class UfedXmlReader extends DataSourceReader {
         DateFormat[] dfs = { df1, df2, df3, df4, df5, df6 };
 
         DateFormat out = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+
+        private final DecimalFormat currencyFormat = LocalizedFormat.getDecimalInstance("#,##0.00");
 
         ArrayList<XmlNode> nodeSeq = new ArrayList<>();
         ArrayList<Item> itemSeq = new ArrayList<>();
@@ -1085,7 +1089,7 @@ public class UfedXmlReader extends DataSourceReader {
                     deviceInfoData.add(new String[] { nameAttr, value, extractiontName });
                 }
             }
-            
+
             chars = new StringBuilder();
             nameAttr = null;
 
@@ -1216,12 +1220,15 @@ public class UfedXmlReader extends DataSourceReader {
                 ufdrPathToUfedId.put(path, ufedId);
             }
             if (ufdrFile == null) {
+                if (rootFolder == null) {
+                    rootFolder = root.getParentFile();
+                }
                 if (fisf == null) {
-                    fisf = new FileInputStreamFactory(root.toPath());
+                    fisf = new FileInputStreamFactory(rootFolder.toPath());
                 }
                 item.setInputStreamFactory(fisf);
                 item.setIdInDataSource(path);
-                File file = new File(root, path);
+                File file = new File(rootFolder, path);
                 item.setLength(file.length());
             } else {
                 if (getUISF().entryExists(path)) {
@@ -1303,7 +1310,7 @@ public class UfedXmlReader extends DataSourceReader {
                             .filter(cat -> StringUtils.isNotBlank(cat.value)) //
                             .forEach(cat -> finalScorePerCat.put(cat.value, cat.score));
                 }
-                
+
                 // set scores
                 finalScorePerCat.entrySet().stream()
                         .forEach(e -> item.setExtraAttribute(MEDIA_CLASSES_SCORE_PREFIX + e.getKey(), e.getValue()));
@@ -1585,7 +1592,7 @@ public class UfedXmlReader extends DataSourceReader {
             deviceInfo.setHash(null);
             return file;
         }
-        
+
         @Override
         public void characters(char[] ch, int start, int length) throws SAXException {
             if (listOnly)
