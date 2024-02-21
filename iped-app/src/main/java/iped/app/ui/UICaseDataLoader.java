@@ -114,9 +114,9 @@ public class UICaseDataLoader extends SwingWorker<Void, Integer> {
                 UICaseSearcherFilter pesquisa = new UICaseSearcherFilter(new MatchAllDocsQuery());
                 pesquisa.execute();
                 LOGGER.info("Listing all items Finished"); //$NON-NLS-1$
-            } else {
-                App.get().notifyCaseDataChanged();
             }
+
+            App.get().notifyCaseDataChanged();
 
             treeModel = new TreeViewModel();
 
@@ -185,6 +185,7 @@ public class UICaseDataLoader extends SwingWorker<Void, Integer> {
                 ColumnsManager.getInstance().dispose();
                 App.get().appletListener.updateFileListing();
             }
+
         } finally {
             App.get().dialogBar.setVisible(false);
         }

@@ -33,6 +33,7 @@ import org.jfree.data.time.TimePeriod;
 import org.roaringbitmap.RoaringBitmap;
 
 import iped.app.timelinegraph.IpedChartsPanel;
+import iped.app.timelinegraph.TimeEventGroup;
 import iped.app.timelinegraph.cache.CacheEventEntry;
 import iped.app.timelinegraph.cache.CacheTimePeriodEntry;
 import iped.app.timelinegraph.cache.PersistedArrayList;
@@ -160,11 +161,21 @@ public class CachePersistance {
                 e.printStackTrace();
             }
         }
+        
+        // set the start dir to persist the cache based on TimeEventGroup
+        TimeEventGroup teGroup = timeStampCache.getTimeEventGroup();
+        File startDir;
+        if (!teGroup.equals(TimeEventGroup.ALL_EVENTS)) {
+            startDir = new File(baseDir, teGroup.getName());
+            startDir.mkdir();
+        } else {
+            startDir = baseDir;
+        }
 
         TimeIndexedMap newCache = (TimeIndexedMap) timeStampCache.getNewCache();
 
         for (Entry<String, Set<CacheTimePeriodEntry>> entry : newCache.entrySet()) {
-            savePeriodNewCache(timeStampCache, entry.getValue(), new File(baseDir, entry.getKey()));
+            savePeriodNewCache(teGroup, timeStampCache, entry.getValue(), new File(startDir, entry.getKey()));
         }
     }
 
@@ -235,7 +246,8 @@ public class CachePersistance {
 
     }
 
-    private void savePeriodNewCache(TimeStampCache timeStampCache, Set<CacheTimePeriodEntry> entry, File file) {
+    private void savePeriodNewCache(TimeEventGroup teGroup, TimeStampCache timeStampCache,
+            Set<CacheTimePeriodEntry> entry, File file) {
         file.mkdirs();
         File indexFile = new File(file, "0");
         File upperPeriodIndexFile = new File(file, "1");
@@ -257,7 +269,7 @@ public class CachePersistance {
             CacheTimePeriodEntry[] cache = null;
             if (file.getName().contains("Day")) {
                 cache = new CacheTimePeriodEntry[entry.size()];
-                TimelineCache.get().getCaches().put("Day", cache);
+                TimelineCache.get(teGroup).getCaches().put("Day", cache);
             }
             for (CacheTimePeriodEntry ct : entry) {
                 dos.writeLong(ct.date);
@@ -324,8 +336,9 @@ public class CachePersistance {
         return baseDir;
     }
 
-    public void loadUpperPeriodIndex(String ev, TreeMap<Long, Long> datesPos, Map<Long, Integer> positionsIndexes) {
-        File upperPeriodFile = new File(new File(baseDir, ev), "1");
+    public void loadUpperPeriodIndex(TimeEventGroup timeEventGroup, String periodName, TreeMap<Long, Long> datesPos,
+            Map<Long, Integer> positionsIndexes) {
+        File upperPeriodFile = new File(new File(new File(baseDir,timeEventGroup.getName()), periodName), "1");
         try (DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(upperPeriodFile)))) {
             try {
                 while (true) {

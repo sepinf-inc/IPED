@@ -8,6 +8,9 @@ import java.util.TimeZone;
 
 import org.jfree.data.time.TimePeriod;
 
+import iped.app.timelinegraph.TimeEventGroup;
+
+
 public interface TimeStampCache extends Runnable {
     public void addTimePeriodClassToCache(Class<? extends TimePeriod> timePeriodClass);
 
@@ -20,4 +23,10 @@ public interface TimeStampCache extends Runnable {
     public Map<String, Set<CacheTimePeriodEntry>> getNewCache();
 
     public TimeZone getCacheTimeZone();
+
+    public boolean isFromEventGroup(TimeEventGroup teGroup);
+
+    public void setTimeEventGroup(TimeEventGroup teGroup);
+
+    public TimeEventGroup getTimeEventGroup();
 }

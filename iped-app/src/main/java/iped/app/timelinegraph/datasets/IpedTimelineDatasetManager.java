@@ -2,6 +2,8 @@ package iped.app.timelinegraph.datasets;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -22,6 +24,7 @@ import org.jfree.data.time.Year;
 import org.jfree.data.xy.AbstractIntervalXYDataset;
 
 import iped.app.timelinegraph.IpedChartsPanel;
+import iped.app.timelinegraph.TimeEventGroup;
 import iped.app.timelinegraph.cache.IndexTimeStampCache;
 import iped.app.timelinegraph.cache.TimeStampCache;
 import iped.jfextensions.model.Minute;
@@ -44,20 +47,39 @@ public class IpedTimelineDatasetManager {
         this.ipedChartsPanel = ipedChartsPanel;
 
         List<Class<? extends TimePeriod>> periods = Arrays.asList(Day.class, Hour.class, Year.class, Month.class, Quarter.class, Week.class, Minute.class, Second.class);
-
+        
+        // includes basic properties time event group first
         for (Class<? extends TimePeriod> period : periods) {
-            TimeStampCache timeStampCache = new IndexTimeStampCache(ipedChartsPanel, ipedChartsPanel.getResultsProvider());
+            TimeStampCache timeStampCache = new IndexTimeStampCache(ipedChartsPanel,
+                    ipedChartsPanel.getResultsProvider());
+            timeStampCache.setTimeEventGroup(TimeEventGroup.BASIC_EVENTS);
             timeStampCache.addTimePeriodClassToCache(period);
             timeStampCaches.add(timeStampCache);
         }
+
+        for (TimeEventGroup teGroup : getTimeEventGroupsFromMetadataPrefix()) {
+            if (!teGroup.equals(TimeEventGroup.BASIC_EVENTS)) {
+                for (Class<? extends TimePeriod> period : periods) {
+                    TimeStampCache timeStampCache = new IndexTimeStampCache(ipedChartsPanel,
+                            ipedChartsPanel.getResultsProvider());
+                    timeStampCache.setTimeEventGroup(teGroup);
+                    timeStampCache.addTimePeriodClassToCache(period);
+                    timeStampCaches.add(timeStampCache);
+                }
+            }
+        }
+
     }
 
-    public AbstractIntervalXYDataset getBestDataset(Class<? extends TimePeriod> timePeriodClass, String splitValue) {
+    public AbstractIntervalXYDataset getBestDataset(Class<? extends TimePeriod> timePeriodClass, TimeEventGroup teGroup,
+            String splitValue) {
         try {
             for (TimeStampCache timeStampCache : timeStampCaches) {
-                if (timeStampCache.hasTimePeriodClassToCache(timePeriodClass)) {
+                if (timeStampCache.hasTimePeriodClassToCache(timePeriodClass)
+                        && timeStampCache.isFromEventGroup(teGroup)) {
                     selectedTimeStampCache = timeStampCache;
-                    return new IpedTimelineDataset(this, ipedChartsPanel.getResultsProvider(), splitValue);
+                    IpedTimelineDataset result = new IpedTimelineDataset(this, ipedChartsPanel.getResultsProvider(), splitValue);
+                    return result; 
                 }
             }
             return null;
@@ -142,4 +164,33 @@ public class IpedTimelineDatasetManager {
         return Runtime.getRuntime().freeMemory() + Runtime.getRuntime().maxMemory() - Runtime.getRuntime().totalMemory();
     }
 
+    HashMap<String, TimeEventGroup> groupNames = null;
+
+    public Collection<TimeEventGroup> getTimeEventGroupsFromMetadataPrefix() {
+        if (groupNames == null) {
+            groupNames = new HashMap<String, TimeEventGroup>();
+            String[] cachedEventNames = ipedChartsPanel.getOrdToEventName();
+
+            for (String eventName : cachedEventNames) {
+                String groupName;
+                TimeEventGroup teGroup = TimeEventGroup.BASIC_EVENTS;
+                groupName = teGroup.getName();
+
+                // changes the group if there is a prefix
+                int sepIndex = eventName.indexOf(":");
+                if (sepIndex != -1) {
+                    groupName = eventName.substring(0, eventName.indexOf(":"));
+                    teGroup = groupNames.get(groupName);
+                    if (teGroup == null) {
+                        teGroup = new TimeEventGroup(groupName);
+                        groupNames.put(groupName, teGroup);
+                    }
+                }
+
+
+                teGroup.addEvent(eventName);
+            }
+        }
+        return groupNames.values();
+    }
 }

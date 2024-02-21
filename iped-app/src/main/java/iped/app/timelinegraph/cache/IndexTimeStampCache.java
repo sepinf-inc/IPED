@@ -21,6 +21,7 @@ import org.jfree.data.time.TimePeriod;
 import org.roaringbitmap.RoaringBitmap;
 
 import iped.app.timelinegraph.IpedChartsPanel;
+import iped.app.timelinegraph.TimeEventGroup;
 import iped.app.timelinegraph.cache.persistance.CachePersistance;
 import iped.engine.core.Manager;
 import iped.viewers.api.IMultiSearchResultProvider;
@@ -36,6 +37,7 @@ public class IndexTimeStampCache implements TimeStampCache {
     IMultiSearchResultProvider resultsProvider;
     IpedChartsPanel ipedChartsPanel;
     TimeZone timezone;
+    TimeEventGroup teGroup = TimeEventGroup.ALL_EVENTS;//default TimeEventGroup
 
     TimeIndexedMap newCache = new TimeIndexedMap();
 
@@ -91,7 +93,7 @@ public class IndexTimeStampCache implements TimeStampCache {
                 int ord = 0;
                 while (ord < cachedEventNames.length) {
                     String eventType = cachedEventNames[ord];
-                    if (eventType != null && !eventType.isEmpty()) {
+                    if (eventType != null && !eventType.isEmpty() && teGroup.hasEvent(eventType)) {
                         cacheLoaders.add(new EventTimestampCache(ipedChartsPanel, resultsProvider, this, cachedEventNames[ord], ord));
                     }
                     ord++;
@@ -118,7 +120,7 @@ public class IndexTimeStampCache implements TimeStampCache {
 
                         newCache = new TimeIndexedMap();
                         for (Class periodClasses : periodClassesToCache) {
-                            newCache.setIndexFile(periodClasses.getSimpleName(), cp.getBaseDir());
+                            newCache.setIndexFile(teGroup, periodClasses.getSimpleName(), cp.getBaseDir());
                             LinkedHashSet<CacheTimePeriodEntry> times = new LinkedHashSet<CacheTimePeriodEntry>();
                             newCache.put(periodClasses.getSimpleName(), times);
                         }
@@ -299,6 +301,21 @@ public class IndexTimeStampCache implements TimeStampCache {
         }
 
         selectedCt.addEventEntry(eventInternalOrd, doc);
+    }
+
+    @Override
+    public boolean isFromEventGroup(TimeEventGroup teGroup) {
+        return this.teGroup.equals(teGroup);
+    }
+
+    @Override
+    public void setTimeEventGroup(TimeEventGroup teGroup) {
+        this.teGroup = teGroup;
+    }
+
+    @Override
+    public TimeEventGroup getTimeEventGroup() {
+        return this.teGroup;
     }
 
 }

@@ -10,6 +10,8 @@ import java.awt.Image;
 import java.awt.Rectangle;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.font.TextAttribute;
@@ -36,9 +38,11 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 
 import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -95,6 +99,7 @@ import iped.app.timelinegraph.swingworkers.HighlightWorker;
 import iped.app.ui.App;
 import iped.app.ui.ClearFilterListener;
 import iped.app.ui.ColumnsManager;
+import iped.app.ui.controls.CheckboxListCellRenderer;
 import iped.app.ui.themes.ThemeManager;
 import iped.data.IItemId;
 import iped.engine.search.QueryBuilder;
@@ -109,7 +114,11 @@ import iped.viewers.api.IQueryFilterer;
 import iped.viewers.api.ResultSetViewer;
 import iped.viewers.api.events.RowSorterTableDataChange;
 
-public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableModelListener, ListSelectionListener, IQueryFilterer, ClearFilterListener, ComponentListener {
+/**
+ * @author Patrick Dalla Bernardina
+ */
+public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableModelListener, ListSelectionListener,
+        IQueryFilterer, ClearFilterListener, ComponentListener, ItemListener {
     JTable resultsTable;
     IMultiSearchResultProvider resultsProvider;
     GUIProvider guiProvider;
@@ -145,6 +154,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     IpedChartPanel chartPanel = null;
     JList legendList = new JList();
     JScrollPane listScroller = new JScrollPane(legendList);
+    JComboBox<TimeEventGroup> tegCombo = new JComboBox<>();
 
     IpedStackedXYBarRenderer renderer = null;
     XYLineAndShapeRenderer highlightsRenderer = new XYLineAndShapeRenderer();
@@ -170,6 +180,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
     Color fgColor;
     Color bgColor;
+    private TimeEventGroup currentTeGroup = TimeEventGroup.BASIC_EVENTS;
 
     private static final String resPath = '/' + App.class.getPackageName().replace('.', '/') + '/';
 
@@ -286,7 +297,18 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         splitPane = new IpedSplitPane();
         splitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
 
+
         chartPanel = new IpedChartPanel(chart, this);
+        tegCombo.setRenderer(new CheckboxListCellRenderer<TimeEventGroup>(new Predicate<TimeEventGroup>() {
+            @Override
+            public boolean test(TimeEventGroup t) {
+                return true;
+            }
+        }));
+        chartPanel.add(tegCombo);
+
+        tegCombo.addItemListener(this);
+
         legendListModel = new DefaultListModel<LegendItemBlockContainer>();
         legendList.setModel(legendListModel);
         legendList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
@@ -351,10 +373,6 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         domainAxis.setLowerMargin(0.01);
         domainAxis.setUpperMargin(0.01);
         combinedPlot.setDomainAxis(domainAxis);
-
-        if (ipedTimelineDatasetManager == null) {
-            ipedTimelineDatasetManager = new IpedTimelineDatasetManager(this);
-        }
     }
 
     public String getTimeEventColumnName(String timeEvent) {
@@ -399,14 +417,16 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
             if (selectedBookmarks.size() > 0 && chartPanel.getSplitByBookmark()) {
                 for (String bookmark : selectedBookmarks) {
-                    result.put(bookmark, ipedTimelineDatasetManager.getBestDataset(timePeriodClass, bookmark));
+                    result.put(bookmark,
+                            ipedTimelineDatasetManager.getBestDataset(timePeriodClass, currentTeGroup, bookmark));
                 }
             } else if (selectedCategories.size() > 0 && chartPanel.getSplitByCategory()) {
                 for (String category : selectedCategories) {
-                    result.put(category, ipedTimelineDatasetManager.getBestDataset(timePeriodClass, category));
+                    result.put(category,
+                            ipedTimelineDatasetManager.getBestDataset(timePeriodClass, currentTeGroup, category));
                 }
             } else {
-                result.put("Items", ipedTimelineDatasetManager.getBestDataset(timePeriodClass, null));
+                result.put("Items", ipedTimelineDatasetManager.getBestDataset(timePeriodClass, currentTeGroup, null));
             }
             return result;
         } catch (Exception e) {
@@ -1065,13 +1085,19 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
     @Override
     public void checkAll(boolean value) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     public void notifyCaseDataChanged() {
+        populateEventNames.run();
         this.ipedTimelineDatasetManager = new IpedTimelineDatasetManager(this);
+
+        tegCombo.removeAllItems();
+        tegCombo.addItem(TimeEventGroup.BASIC_EVENTS);
+        for (TimeEventGroup teGroup : ipedTimelineDatasetManager.getTimeEventGroupsFromMetadataPrefix()) {
+            tegCombo.addItem(teGroup);
+        }
+
         this.dataSetUpdated.set(false);
     }
 
@@ -1084,5 +1110,12 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     public static String[] getOrdToEventName() {
         return ordToEventName;
     }
-    
+
+    @Override
+    public void itemStateChanged(ItemEvent e) {
+        if (e.getStateChange() == ItemEvent.SELECTED) {
+            currentTeGroup = (TimeEventGroup) e.getItem();
+            refreshChart(true);
+        }
+    }
 }

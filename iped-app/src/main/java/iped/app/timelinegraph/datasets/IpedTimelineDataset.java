@@ -65,6 +65,9 @@ import iped.search.IMultiSearchResult;
 import iped.viewers.api.IMultiSearchResultProvider;
 import iped.viewers.api.IQueryFilterer;
 
+/**
+ * @author Patrick Dalla Bernardina
+ */
 public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cloneable, PublicCloneable, IntervalXYDataset, DomainInfo, TimelineDataset, TableXYDataset, XYDomainInfo, AsynchronousDataset {
     private static final int CTITEMS_PER_THREAD = 500;
     IMultiSearchResultProvider resultsProvider;
@@ -385,9 +388,11 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                     cacheWindowEndDate = new Date(ipedChartsPanel.getChartPanel().removeNextFromDatePart(endDate).getTime() - 1);
                 }
 
-                try (RandomAccessBufferedFileInputStream sfis = a.getTmpCacheSfis(className)) {
+                try (RandomAccessBufferedFileInputStream sfis = a.getTmpCacheSfis(cache.getTimeEventGroup(),
+                        className)) {
                     if (sfis != null) {
-                        Iterator<CacheTimePeriodEntry> it = a.iterator(className, sfis, startDate, endDate);
+                        Iterator<CacheTimePeriodEntry> it = a.iterator(cache.getTimeEventGroup(), className, sfis,
+                                startDate, endDate);
                         while (it != null && it.hasNext()) {
                             ipedChartsPanel.getIpedTimelineDatasetManager().waitMemory();// method to wait available mem to continue.
                             if (cancelled) {
