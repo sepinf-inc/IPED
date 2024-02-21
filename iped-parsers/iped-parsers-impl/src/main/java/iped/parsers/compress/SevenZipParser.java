@@ -10,14 +10,12 @@ import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.tika.exception.EncryptedDocumentException;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
@@ -139,31 +137,20 @@ public class SevenZipParser extends AbstractParser {
             randomAccessFile = new RandomAccessFile(file.getAbsolutePath(), "r"); //$NON-NLS-1$
             inArchive = SevenZip.openInArchive(null, new RandomAccessFileInStream(randomAccessFile), "password"); //$NON-NLS-1$
             ISimpleInArchive simpleInArchive = inArchive.getSimpleInterface();
-            // Armazena as pastas
-            ArrayList<Integer> folderList = new ArrayList<Integer>();
-            ArrayList<Integer> itemsToExtract = new ArrayList<Integer>();
+
             for (int i = 0; i < simpleInArchive.getNumberOfItems(); i++) {
                 ISimpleInArchiveItem item = simpleInArchive.getArchiveItem(i);
                 if (item.isEncrypted())
                     throw new EncryptedDocumentException();
-                if (item.isFolder())
-                    folderList.add(i);
-                else
-                    itemsToExtract.add(i);
             }
-            MyExtractCallback extractCallback = new MyExtractCallback(simpleInArchive, xhtml, extractor, tmp);
-            // Processa as pastas na ordem (em profundidade)
-            int[] folders = ArrayUtils.toPrimitive(folderList.toArray(new Integer[0]));
-            inArchive.extract(folders, false, extractCallback);
-            for (Folder folder : extractCallback.folderMap.values()) {
-                try (InputStream is = new BufferedInputStream(folder.file != null ? new FileInputStream(folder.file) : new EmptyInputStream())) {
-                    extractCallback.parseSubitem(is, folder.item);
+            TreeMap<String, SubFile> fileMap = new TreeMap<>();
+            MyExtractCallback extractCallback = new MyExtractCallback(simpleInArchive, tmp, fileMap);
+            inArchive.extract(null, false, extractCallback);
+            for (SubFile subFile : fileMap.values().toArray(new SubFile[0])) {
+                try (InputStream is = new BufferedInputStream(subFile.file != null ? new FileInputStream(subFile.file) : new EmptyInputStream())) {
+                    parseSubitem(is, subFile.item, xhtml, extractor, fileMap);
                 }
             }
-            extractCallback.folderMap.clear();
-            // Processa os arquivos
-            int[] items = ArrayUtils.toPrimitive(itemsToExtract.toArray(new Integer[0]));
-            inArchive.extract(items, false, extractCallback);
 
         } catch (SevenZipException e1) {
             throw new TikaException(this.getClass().getSimpleName() + ": " + e1.getMessage(), e1); //$NON-NLS-1$
@@ -181,11 +168,11 @@ public class SevenZipParser extends AbstractParser {
 
     }
 
-    private static class Folder {
+    private static class SubFile {
         File file;
         ISimpleInArchiveItem item;
 
-        private Folder(File file, ISimpleInArchiveItem item) {
+        private SubFile(File file, ISimpleInArchiveItem item) {
             this.file = file;
             this.item = item;
         }
@@ -194,24 +181,18 @@ public class SevenZipParser extends AbstractParser {
     private static class MyExtractCallback implements IArchiveExtractCallback {
 
         ISimpleInArchive simpleInArchive;
-        ContentHandler handler;
-        EmbeddedDocumentExtractor extractor;
         TemporaryResources tmp;
-
+        TreeMap<String, SubFile> fileMap;
         ISimpleInArchiveItem item;
-
-        TreeMap<String, Folder> folderMap = new TreeMap<>();
 
         byte[] tmpBuf = new byte[32 * 1024 * 1024];
         int bufPos = 0;
         File tmpFile;
 
-        public MyExtractCallback(ISimpleInArchive simpleInArchive, ContentHandler handler,
-                EmbeddedDocumentExtractor extractor, TemporaryResources tmp) {
+        public MyExtractCallback(ISimpleInArchive simpleInArchive, TemporaryResources tmp, TreeMap<String, SubFile> fileMap) {
             this.simpleInArchive = simpleInArchive;
-            this.handler = handler;
-            this.extractor = extractor;
             this.tmp = tmp;
+            this.fileMap = fileMap;
         }
 
         @Override
@@ -271,22 +252,12 @@ public class SevenZipParser extends AbstractParser {
         public void setOperationResult(ExtractOperationResult arg0) throws SevenZipException {
 
             try {
-                if (item.isFolder()) {
-                    if (tmpFile == null && bufPos > 0) {
-                        tmpFile = tmp.createTemporaryFile();
-                        Files.copy(new ByteArrayInputStream(tmpBuf, 0, bufPos), tmpFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                    }
-                    Folder folder = new Folder(tmpFile, item);
-                    folderMap.put(item.getPath(), folder);
-                    return;
+                if (tmpFile == null && bufPos > 0) {
+                    tmpFile = tmp.createTemporaryFile();
+                    Files.copy(new ByteArrayInputStream(tmpBuf, 0, bufPos), tmpFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                 }
-                if (tmpFile == null) {
-                    parseSubitem(new ByteArrayInputStream(tmpBuf, 0, bufPos), item);
-                } else {
-                    try (InputStream is = new BufferedInputStream(new FileInputStream(tmpFile))) {
-                        parseSubitem(is, item);
-                    }
-                }
+                SubFile file = new SubFile(tmpFile, item);
+                fileMap.put(item.getPath(), file);
 
             } catch (Exception e) {
                 throw new SevenZipException(e);
@@ -298,32 +269,52 @@ public class SevenZipParser extends AbstractParser {
 
         }
 
-        private void parseSubitem(InputStream is, ISimpleInArchiveItem item) throws SAXException, IOException {
+    }
 
-            String subitemPath = ""; //$NON-NLS-1$
-            try {
-                final Metadata entrydata = new Metadata();
-                subitemPath = item.getPath().replace("\\", "/"); //$NON-NLS-1$ //$NON-NLS-2$
-                entrydata.set(TikaCoreProperties.RESOURCE_NAME_KEY, subitemPath);
-                entrydata.set(ExtraProperties.ITEM_VIRTUAL_ID, item.getPath());
-                entrydata.set(ExtraProperties.PARENT_VIRTUAL_ID, Util.getParentPath(item.getPath()));
-                entrydata.set(TikaCoreProperties.CREATED, item.getCreationTime());
-                entrydata.set(TikaCoreProperties.MODIFIED, item.getLastWriteTime());
-                entrydata.set(ExtraProperties.ACCESSED, item.getLastAccessTime());
-                if (item.isFolder())
-                    entrydata.set(ExtraProperties.EMBEDDED_FOLDER, "true"); //$NON-NLS-1$
+    private void parseSubitem(InputStream is, ISimpleInArchiveItem item, ContentHandler handler, EmbeddedDocumentExtractor extractor, TreeMap<String, SubFile> fileMap) throws SAXException, IOException {
 
-                if (extractor.shouldParseEmbedded(entrydata))
-                    extractor.parseEmbedded(is, handler, entrydata, true);
-
-
-                
-                
-            } catch (SevenZipException e) {
-                LOGGER.warn("Error extracting subitem {} {}", subitemPath, e.getMessage()); //$NON-NLS-1$
-            }
+        String parentPath = Util.getParentPath(item.getPath());
+        if (parentPath != null && !fileMap.containsKey(parentPath)) {
+            parseMissingSubFolder(new EmptyInputStream(), parentPath, handler, extractor, fileMap);
         }
 
+        String subitemPath = ""; //$NON-NLS-1$
+        try {
+            final Metadata entrydata = new Metadata();
+            subitemPath = item.getPath().replace("\\", "/"); //$NON-NLS-1$ //$NON-NLS-2$
+            entrydata.set(TikaCoreProperties.RESOURCE_NAME_KEY, subitemPath);
+            entrydata.set(ExtraProperties.ITEM_VIRTUAL_ID, item.getPath());
+            entrydata.set(ExtraProperties.PARENT_VIRTUAL_ID, parentPath);
+            entrydata.set(TikaCoreProperties.CREATED, item.getCreationTime());
+            entrydata.set(TikaCoreProperties.MODIFIED, item.getLastWriteTime());
+            entrydata.set(ExtraProperties.ACCESSED, item.getLastAccessTime());
+            if (item.isFolder())
+                entrydata.set(ExtraProperties.EMBEDDED_FOLDER, "true"); //$NON-NLS-1$
+
+            if (extractor.shouldParseEmbedded(entrydata))
+                extractor.parseEmbedded(is, handler, entrydata, true);
+
+
+        } catch (SevenZipException e) {
+            LOGGER.warn("Error extracting subitem {} {}", subitemPath, e.getMessage()); //$NON-NLS-1$
+        }
+    }
+
+    private void parseMissingSubFolder(InputStream is, String path, ContentHandler handler, EmbeddedDocumentExtractor extractor, TreeMap<String, SubFile> fileMap) throws SAXException, IOException {
+        String parentPath = Util.getParentPath(path);
+        if (parentPath != null && !fileMap.containsKey(parentPath)) {
+            parseMissingSubFolder(new EmptyInputStream(), parentPath, handler, extractor, fileMap);
+        }
+        Metadata entrydata = new Metadata();
+        String subitemPath = path.replace("\\", "/"); //$NON-NLS-1$ //$NON-NLS-2$
+        entrydata.set(TikaCoreProperties.RESOURCE_NAME_KEY, subitemPath);
+        entrydata.set(ExtraProperties.ITEM_VIRTUAL_ID, path);
+        entrydata.set(ExtraProperties.PARENT_VIRTUAL_ID, parentPath);
+        entrydata.set(ExtraProperties.EMBEDDED_FOLDER, "true");
+        if (extractor.shouldParseEmbedded(entrydata)) {
+            extractor.parseEmbedded(is, handler, entrydata, true);
+        }
+        fileMap.put(path, new SubFile(null, null));
     }
 
 }
