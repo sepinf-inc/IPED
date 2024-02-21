@@ -1261,7 +1261,7 @@ public class UfedXmlReader extends DataSourceReader {
             }
             if (ufdrFile == null) {
                 if (rootFolder == null) {
-                    rootFolder = root.getParentFile();
+                    rootFolder = root.isDirectory() ? root : root.getParentFile();
                 }
                 if (fisf == null) {
                     fisf = new FileInputStreamFactory(rootFolder.toPath());
