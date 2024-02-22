@@ -22,39 +22,56 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.ap.gpinf.interfacetelegram.PhotoData;
 
 /**
- *
  * @author ADMHauck
+ * @author Wladimir Leite
  */
 public class PostBoxCoding {
 
     private static final Logger logger = LoggerFactory.getLogger(PostBoxCoding.class);
 
-    public static int int32 = 0;
-    public static int Int64 = 1;
-    public static int Bool = 2;
-    public static int DOUBLE = 3;
-    public static int STRING = 4;
-    public static int OBJECT = 5;
-    public static int Int32Array = 6;
-    public static int Int64Array = 7;
-    public static int ObjectArray = 8;
-    public static int ObjectDictionary = 9;
-    public static int Bytes = 10;
-    public static int Nil = 11;
-    public static int StringArray = 12;
-    public static int BytesArray = 13;
+    private static final int tInt32 = 0;
+    private static final int tInt64 = 1;
+    private static final int tBool = 2;
+    private static final int tDouble = 3;
+    private static final int tString = 4;
+    private static final int tObject = 5;
+    private static final int tInt32Array = 6;
+    private static final int tInt64Array = 7;
+    private static final int tObjectArray = 8;
+    private static final int tObjectDictionary = 9;
+    private static final int tBytes = 10;
+    private static final int tNil = 11;
+    private static final int tStringArray = 12;
+    private static final int tBytesArray = 13;
 
-    private byte[] data = null;
+    private static final int minTimestamp = 631152000;
+
+    private byte[] data;
+
+    private int offset;
+
+    private static final byte header[] = Base64.getDecoder().decode(
+            "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDACgcHiMeGSgjISMtKygwPGRBPDc3PHtYXUlkkYCZlo+AjIqgtObDoKrarYqMyP/L2u71////m8H////6/+b9//j/2wBDASstLTw1PHZBQXb4pYyl+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj/wAARCAAAAAADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwA=");
+
+    public PostBoxCoding() {
+    }
+
+    public PostBoxCoding(byte[] data) {
+        setData(data);
+    }
 
     public byte[] getData() {
         return data;
@@ -62,28 +79,22 @@ public class PostBoxCoding {
 
     public void setData(byte[] data) {
         this.data = data;
-
     }
 
-    private int offset = 0;
-
-    public int readInt32(int start) {
-        return readInt32(start, true);
+    private int readInt32() {
+        return readInt32(true);
     }
 
-    public long readInt64(int start) {
-        return readInt64(start, true);
+    private long readInt64() {
+        return readInt64(true);
     }
 
-    public int readInt32(int start, boolean bigEndian) {
+    private int readInt32(boolean bigEndian) {
         try {
             int i = 0;
             byte len = 4;
             for (int j = 0; j < len; j++) {
-                int a = data[start + j];
-
-                a = a & 0xFF;
-
+                int a = data[offset++] & 0xFF;
                 if (bigEndian) {
                     i |= (a << (j * 8));
                 } else {
@@ -94,17 +105,15 @@ public class PostBoxCoding {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         return 0;
     }
 
-    public long readInt64(int start, boolean bigEndian) {
+    private long readInt64(boolean bigEndian) {
         try {
             long i = 0;
             byte len = 8;
             for (int j = 0; j < len; j++) {
-                long a = data[start + j];
-                a = a & 0xFF;
+                long a = data[offset++] & 0xFF;
                 if (bigEndian) {
                     i |= (a << (j * 8L));
                 } else {
@@ -115,219 +124,64 @@ public class PostBoxCoding {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         return 0;
     }
 
-    public String readString(int start, int tam) {
-        if (start + tam > data.length || tam == 0)
+    private String readString() {
+        int len = readInt32();
+        return readString(len);
+    }
+
+    private String readKeyString() {
+        int len = readNextByte() & 0xFF;
+        return readString(len);
+    }
+
+    private String readString(int len) {
+        if (offset + len > data.length || len == 0) {
             return null;
-        return new String(Arrays.copyOfRange(data, start, start + tam), StandardCharsets.UTF_8);
+        }
+        String str = new String(data, offset, len, StandardCharsets.UTF_8);
+        offset += len;
+        return str;
     }
 
-    private boolean findOfset_old(String key, int type) {
-        int start = offset;
-        while (offset < data.length) {
-            int offant = offset;
-            int keylength = readNextByte();
-            keylength = keylength & 0xFF;
-            String readk = readString(offset, keylength);
-            offset += keylength;
-
-            if (offset >= data.length) {
-                offset = offant + 1;
-                continue;
-            }
-
-            int readtype = data[offset];
-            readtype = readtype & 0xFF;
-
-            if (keylength == key.length() && key.equals(readk) && type == readtype) {
-                offset++;
-                return true;
-            }
-            offset = offant + 1;
-
-        }
-        if (start > 0) {
-            offset = 0;
-            return findOfset_old(key, type);
-        }
-        return false;
-    }
-
-    private boolean findOfset(String key, int type) {
-        byte[] ofsetkey = new byte[key.length() + 2];
-        ofsetkey[0] = (byte) key.length();
-        byte[] bkey = key.getBytes(StandardCharsets.UTF_8);
-        for (int i = 0; i < bkey.length; i++) {
-            ofsetkey[i + 1] = bkey[i];
-        }
-        ofsetkey[key.length() + 1] = (byte) type;
-        int a = KPM.indexOf(data, ofsetkey, offset);
-        if (a == -1) {
-            a = KPM.indexOf(data, ofsetkey);
-        }
-        if (a == -1) {
-            return false;
-        } else {
-            offset = a + ofsetkey.length;
-            return true;
-        }
-    }
-
-    public double decodeDoubleForKey(String key) {
-        if (findOfset(key, DOUBLE)) {
-            // todo verify if it is little or big endian
-            long bits = readInt64(offset, false);
-            return Double.longBitsToDouble(bits);
-        }
-        return 0;
-    }
-
-    public byte[] decodeBytesForKey(String key) {
-        if (findOfset(key, Bytes)) {
-            int tam = readInt32(offset);
-            offset += 4;
-            if (offset + tam > data.length || tam == 0)
-                return null;
-            return Arrays.copyOfRange(data, offset, offset + tam);
-
-        }
-        return null;
-    }
-
-    public String decodeStringForKey(String key) {
-        if (findOfset(key, STRING)) {
-            int tam = readInt32(offset);
-            offset += 4;
-            String aux = readString(offset, tam);
-            offset += tam;
-            return aux;
-        }
-        return null;
-
-    }
-
-    public GenericObj readObj() {
-        try {
-            GenericObj obj = new GenericObj();
-            obj.hash = readInt32(offset);
-            offset += 4;
-            int btam = readInt32(offset);
-            offset += 4;
-            if (offset + btam <= data.length) {
-                obj.content = Arrays.copyOfRange(data, offset, offset + btam);
-                offset += btam;
-                return obj;
-            } else {
-                offset = data.length - 1;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-
-        }
-        return null;
-    }
-
-    public GenericObj decodeObjectForKey(String key) {
-        if (findOfset(key, OBJECT)) {
-            return readObj();
-        }
-        return null;
-    }
-
-    public int decodeInt32ForKey(String key) {
-        if (findOfset(key, int32)) {
-            int val = readInt32(offset);
-            offset += 4;
-            return val;
-        }
-        return 0;
-    }
-
-    public long decodeInt64ForKey(String key) {
-        if (findOfset(key, Int64)) {
-            logger.debug("offset {}", offset);
-            long val = readInt64(offset);
-            offset += 8;
-            return val;
-        }
-        return 0;
-    }
-
-    public List<GenericObj> decodeObjectArrayForKey(String key) {
-        ArrayList<GenericObj> l = new ArrayList<>();
-        if (findOfset(key, ObjectArray)) {
-            int tam = readInt32(offset);
-            offset += 4;
-            if (tam > data.length)
-                return l;
-            for (int i = 0; i < tam; i++) {
-                GenericObj o = readObj();
-                if (o != null) {
-                    l.add(o);
-                }
-            }
-        }
-        return l;
-    }
-
-    static boolean testbit(byte data, int bit) {
+    private static boolean testbit(int data, int bit) {
         return (data & (1 << bit)) != 0;
     }
 
-    static boolean testbit(int data, int bit) {
-        return (data & (1 << bit)) != 0;
+    @SuppressWarnings("unused")
+    private void readForwardInfo(byte forwardInfoFlags) {
+        long forwardAuthorId = readInt64();
+        int forwardDate = readInt32();
+        if (testbit(forwardInfoFlags, 1)) {
+            long sourceID = readInt64();
+        }
+
+        if (testbit(forwardInfoFlags, 2)) {
+            long MessagePeerId = readInt64();
+            int forwardSourceMessageNamespace = readInt32();
+            int forwardSourceMessageId = readInt32();
+        }
+
+        if (testbit(forwardInfoFlags, 3)) {
+            String authorSignature = readString();
+        }
+
+        if (testbit(forwardInfoFlags, 4)) {
+            String psaType = readString();
+        }
+
+        if (testbit(forwardInfoFlags, 5)) {
+            int flags = readInt32();
+        }
     }
 
-    void readForward(byte flags) {
-        long forwardAuthorId = readInt64(offset);
-        offset += 8;
-        int forwardDate = readInt32(offset);
-        offset += 4;
-
-        if (testbit(flags, 1)) {
-            long sourceID = readInt64(offset);
-            offset += 8;
-
-        }
-
-        if (testbit(flags, 2)) {
-            long MessagePeerId = readInt64(offset);
-            offset += 8;
-            ;
-            int forwardSourceMessageNamespace = readInt32(offset);
-            offset += 4;
-            int forwardSourceMessageIdId = readInt32(offset);
-            offset += 4;
-            ;
-
-        }
-
-        if (testbit(flags, 3)) {
-            int signatureLength = readInt32(offset);
-            offset += 4;
-            String authorSignature = readString(offset, signatureLength);
-            offset += signatureLength;
-        }
-
-        if (testbit(flags, 4)) {
-            int psaTypeLength = readInt32(offset);
-            offset += 4;
-            String psaType = readString(offset, psaTypeLength);
-            offset += psaTypeLength;
-        }
-
-    }
-
-    List<byte[]> readArray() {
-        int nel = readInt32(offset);
-        offset += 4;
+    private List<byte[]> readArray() {
+        int nel = readInt32();
         ArrayList<byte[]> els = new ArrayList<>();
         for (int i = 0; i < nel; i++) {
-            int size = readInt32(offset);
-            offset += 4;
+            int size = readInt32();
             if (offset + size <= data.length) {
                 els.add(Arrays.copyOfRange(data, offset, offset + size));
                 offset += size;
@@ -336,11 +190,9 @@ public class PostBoxCoding {
         return els;
     }
 
-    List<byte[]> readArray(int size) {
-        int nel = readInt32(offset);
-        offset += 4;
+    private List<byte[]> readArray(int size) {
+        int nel = readInt32();
         ArrayList<byte[]> els = new ArrayList<>();
-
         for (int i = 0; i < nel; i++) {
             if (offset + size <= data.length) {
                 els.add(Arrays.copyOfRange(data, offset, offset + size));
@@ -350,53 +202,61 @@ public class PostBoxCoding {
         return els;
     }
 
-    long[] readInt64Array() {
-        int nel = readInt32(offset);
-        offset += 4;
+    private long[] readInt64Array() {
+        int nel = readInt32();
         long els[] = new long[nel];
         for (int i = 0; i < nel; i++) {
-            long val = readInt64(offset);
-            offset += 8;
+            long val = readInt64();
             els[i] = val;
         }
         return els;
     }
 
-    List<PhotoData> getPhotos(List<GenericObj> sizes) {
-        ArrayList<PhotoData> photos = new ArrayList<>();
+    private List<PhotoData> getPhotos(PostBoxObject[] arr) {
+        List<PhotoData> photos = new ArrayList<>();
 
-        for (GenericObj photo : sizes) {
-            this.data = photo.content;
+        for (PostBoxObject a : arr) {
+            PostBoxObject photo = a.getPostBoxObject("r");
+            if (photo != null) {
+                long id = photo.getLong("i");
+                long volume = photo.getLong("v");
+                int local = photo.getInteger("l");
+                int size = photo.getInteger("n");
 
-            this.offset = 0;
-            long id = decodeInt64ForKey("i");
-            long volume = decodeInt64ForKey("v");
-            int local = decodeInt32ForKey("l");
-            int size = decodeInt32ForKey("n");
+                Photo f = null;
+                if (id != 0) {
+                    f = new Photo();
+                    f.setName(String.valueOf(id));
+                    f.setSize(size);
+                }
 
-            if (id != 0) {
-                Photo f = new Photo();
-                f.setName(id + "");
-                f.setSize(size);
-                photos.add(f);
-            }
-
-            if (volume != 0 && local != 0) {
-                Photo f = new Photo();
-                f.setName(volume + "_" + local);
-                f.setSize(size);
-                photos.add(f);
+                if (volume != 0 && local != 0) {
+                    f = new Photo();
+                    f.setName(volume + "_" + local);
+                    f.setSize(size);
+                }
+                if (f != null) {
+                    boolean seen = false;
+                    for (PhotoData p : photos) {
+                        if (p.getSize() == f.getSize() && p.getName().equals(f.getName())) {
+                            seen = true;
+                            break;
+                        }
+                    }
+                    if (!seen) {
+                        photos.add(f);
+                    }
+                }
             }
         }
 
         return photos;
     }
 
-    void readPeersIds(Message m, byte[] d) {
+    private void readPeersIds(Message m, byte[] d) {
         if (m == null || d == null)
             return;
-        PostBoxCoding peersDec = new PostBoxCoding();
-        peersDec.setData(d);
+        PostBoxCoding peersDec = new PostBoxCoding(d);
         long peers[] = peersDec.readInt64Array();
 
         String message = m.getData();
@@ -412,310 +272,463 @@ public class PostBoxCoding {
             }
             message += peer;
         }
-
         m.setData(message);
-
     }
 
-    public byte readNextByte() {
+    private byte readNextByte() {
         if (offset < data.length) {
             return data[offset++];
         }
         return 0;
     }
 
-    void readMedia(Message m) {
+    private static byte[] decodeThumb(byte[] thumb) {
+        // See https://github.com/TelegramMessenger/Telegram-iOS/blob/master/submodules/TinyThumbnail/Sources/TinyThumbnail.swift
+        byte thumbImg[] = new byte[header.length + thumb.length - 1];
+        System.arraycopy(header, 0, thumbImg, 0, header.length);
 
-        String phone = decodeStringForKey("pn");
-        if (phone != null) {
-            String aux = m.getData();
-            aux += "Phone: " + phone;
-            aux += decodeStringForKey("vc");
-            m.setData(aux);
+        byte width = thumb[1];
+        byte height = thumb[2];
+        for (int i = 3; i < thumb.length; i++) {
+            thumbImg[header.length + i - 3] = thumb[i];
         }
-        double lat = decodeDoubleForKey("la");
-        if (lat != 0) {
-            double lon = decodeDoubleForKey("lo");
-            m.setLatitude(lat);
-            m.setLongitude(lon);
-            m.setMediaMime("geo");
-            return;
+        thumbImg[164] = width;
+        thumbImg[166] = height;
+        thumbImg[thumbImg.length - 2] = (byte) 0xFF;
+        thumbImg[thumbImg.length - 1] = (byte) 0xD9;
+        return thumbImg;
+    }
+
+    private static void loadThumb(PostBoxObject obj, Message m) {
+        if (obj.getBytes("itd") != null && obj.getBytes("itd").length > 0) {
+            byte thumb[] = decodeThumb(obj.getBytes("itd"));
+            if (m.getThumb() == null || thumb.length > m.getThumb().length) {
+                m.setThumb(thumb);
+            }
         }
-        offset = 0;
-        List<PhotoData> files = new ArrayList<>();
-        String mimetype = null;
-        String url = decodeStringForKey("u");
-        GenericObj im = decodeObjectForKey("im");
-        int size = 0;
-        int action = 0;
-        offset = 0;
-        if (im != null && url != null) {
-            // link with image
-            this.data = im.content;
-            this.offset = 0;
-            List<GenericObj> sizes = decodeObjectArrayForKey("r");
-            mimetype = "link/image";
-            logger.debug("url: {}", url);
-            files = getPhotos(sizes);
+    }
 
-        } else {
-            List<GenericObj> sizes = decodeObjectArrayForKey("r");
-            if (!sizes.isEmpty()) {
-                // image
-                mimetype = "image";
+    private void readMedia(Message m) {
+        PostBoxObject obj = readPostBoxObject(true);
+        PostBoxObject media = obj.getPostBoxObject("_");
 
-                files = getPhotos(sizes);
-
-            } else {
-                // other documents
-                long id = decodeInt64ForKey("i");
-                if (id == 0) {
-                    // case id=fileid
-                    id = decodeInt64ForKey("f");
-                }
-                long volume = decodeInt64ForKey("v");
-                int local = decodeInt32ForKey("l");
-                size = decodeInt32ForKey("n");
-                String fname = decodeStringForKey("fn");
-                action = decodeInt32ForKey("_rawValue");
-
-                mimetype = decodeStringForKey("mt");
-
-                byte[] thumb = null;
-                thumb = decodeBytesForKey("itd");
-
-                logger.debug("v: {}", volume);
-                logger.debug("l: {}", local);
-                logger.debug("n: {}", size);
-                logger.debug("action: {}", action);
-
-                if (fname != null) {
-                    Photo f = new Photo();
-                    logger.debug("name: {}", fname);
-                    f.setName(fname);
-                    f.setSize(size);
-                    files.add(f);
-                }
-                if (id != 0) {
-                    Photo f = new Photo();
-                    logger.debug("name: {}", id);
-                    f.setName(id + "");
-                    f.setSize(size);
-                    files.add(f);
-
-                }
-
-                if (volume != 0 && local != 0) {
-                    Photo f = new Photo();
-                    f.setName(volume + "_" + local);
-                    logger.debug("name: {}", f.getName());
-                    f.setSize(size);
-                    files.add(f);
-                }
-
-                if (action == 2 || action == 3) {
-                    // add or remove users from group
-                    byte d[] = decodeBytesForKey("peerIds");
-                    readPeersIds(m, d);
-                }
-
-                if (files.isEmpty()) {
-                    offset = 0;
-                    List<GenericObj> options = decodeObjectArrayForKey("os");
-                    if (options != null && !options.isEmpty()) {// telegram pool
-                        offset = 0;
-                        String text = "pool: " + decodeStringForKey("t");
-                        for (GenericObj o : options) {
-                            if (o != null && o.content != null) {
-                                PostBoxCoding opt = new PostBoxCoding();
-                                opt.setData(o.content);
-                                text += "<br/>" + opt.decodeStringForKey("t");
-                            }
-                        }
-                        if (m.getData() != null) {
-                            text = m.getData() + "<br/>" + text;
-                        }
-                        m.setData(text);
-                    }
-                }
-
+        if (media != null) {
+            loadThumb(media, m);
+            String phone = media.getString("pn");
+            if (phone != null) {
+                String aux = m.getData();
+                aux += "Phone: " + phone;
+                aux += media.getString("vc");
+                m.setData(aux);
             }
 
-        }
-        if (m != null) {
+            double lat = media.getDouble("la");
+            if (lat != 0) {
+                double lon = media.getDouble("lo");
+                if (lon != 0) {
+                    m.setLatitude(lat);
+                    m.setLongitude(lon);
+                    m.setMediaMime("geo");
+                    return;
+                }
+            }
+
+            List<PhotoData> files = new ArrayList<>();
+            String mimeType = null;
+            String url = media.getString("u");
+            String linkTitle = media.getString("ti");
+            PostBoxObject im = media.getPostBoxObject("im");
+            int size = 0;
+            int action = 0;
+            if (im != null && url != null) {
+                // link with image
+                PostBoxObject[] sizes = im.getPostBoxObjectArray("r");
+                loadThumb(im, m);
+                if (sizes != null && sizes.length > 0) {
+                    mimeType = "link/image";
+                    logger.debug("url: {}", url);
+                    files = getPhotos(sizes);
+                }
+            } else {
+                PostBoxObject[] sizes = media.getPostBoxObjectArray("r");
+                if (sizes != null && sizes.length > 0) {
+                    // image
+                    mimeType = "image";
+                    files = getPhotos(sizes);
+
+                } else {
+                    // other documents
+                    PostBoxObject data = media.getPostBoxObject("r");
+                    if (data != null) {
+                        loadThumb(data, m);
+                        long id = data.getLong("i");
+                        if (id == 0) {
+                            // case id = fileId
+                            id = data.getLong("f");
+                        }
+                        long volume = data.getLong("v");
+                        int local = data.getInteger("l");
+                        size = data.getInteger("n");
+                        String fname = data.getString("fn");
+
+                        action = media.getInteger("_rawValue");
+                        mimeType = media.getString("mt");
+
+                        // byte[] thumb = media.getBytes("itd");
+
+                        logger.debug("v: {}", volume);
+                        logger.debug("l: {}", local);
+                        logger.debug("n: {}", size);
+                        logger.debug("action: {}", action);
+
+                        if (fname != null) {
+                            Photo f = new Photo();
+                            logger.debug("name: {}", fname);
+                            f.setName(fname);
+                            f.setSize(size);
+                            files.add(f);
+                        }
+
+                        if (id != 0) {
+                            Photo f = new Photo();
+                            logger.debug("name: {}", id);
+                            f.setName(String.valueOf(id));
+                            f.setSize(size);
+                            files.add(f);
+                        }
+
+                        if (volume != 0 && local != 0) {
+                            Photo f = new Photo();
+                            f.setName(volume + "_" + local);
+                            logger.debug("name: {}", f.getName());
+                            f.setSize(size);
+                            files.add(f);
+                        }
+
+                        if (action == 2 || action == 3) {
+                            // add or remove users from group
+                            byte[] d = media.getBytes("peerIds");
+                            readPeersIds(m, d);
+                        }
+                    } else {
+                        PostBoxObject[] options = media.getPostBoxObjectArray("os");
+                        if (options != null) {
+                            // telegram pool
+                            String title = media.getString("t");
+                            if (title != null) {
+                                PoolData poolData = new PoolData(title);
+                                for (PostBoxObject opt : options) {
+                                    if (opt != null) {
+                                        String o = opt.getString("t");
+                                        if (o != null) {
+                                            poolData.add(o);
+                                        }
+                                    }
+                                }
+                                m.setPoolData(poolData);
+                            }
+                        }
+                    }
+                }
+            }
+
             // m.setThumb(thumb);
-            logger.debug("mimetype: {}", mimetype);
-            m.setMediaMime(mimetype);
+            logger.debug("mimeType: {}", mimeType);
+            m.setMediaMime(mimeType);
             if (files.size() == 1) {
                 m.setMediasize(files.get(0).getSize());
             }
             m.setNames(files);
             if (url != null) {
                 m.setLink(true);
-                m.setMediaMime("link");
+                if (mimeType == null) {
+                    m.setMediaMime("link");
+                }
+                m.setUrl(url);
+                m.setLinkTitle(linkTitle);
             }
 
             m.setType(MapTypeMSG.decodeMsg(action));
             m.setMediasize(size);
         }
-
     }
 
+    @SuppressWarnings("unused")
     public void readMessage(byte[] key, byte[] data, Message m, HashMap<String, byte[]> mediaKey) {
-        // reference MessageHistoryTable.swift
+        // Reference:
+        // https://github.com/TelegramMessenger/Telegram-iOS/blob/master/submodules/Postbox/Sources/MessageHistoryTable.swift
+        // Function readIntermediateEntry
         if (m == null) {
             return;
         }
         this.data = data;
-        PostBoxCoding pk = new PostBoxCoding();
-        pk.setData(key);
-        long peerKey = pk.readInt64(0, false);
 
-        int namespacekey = pk.readInt32(8, false);
+        PostBoxCoding pk = new PostBoxCoding(key);
+        long peerKey = pk.readInt64(false);
+        int namespaceKey = pk.readInt32(false);
+        int timestampKey = pk.readInt32(false);
 
-        int timestampkey = pk.readInt32(12, false);
-
-        if (timestampkey < 631152000 && namespacekey > 631152000)
-            timestampkey = namespacekey;
+        if (timestampKey < minTimestamp && namespaceKey > minTimestamp) {
+            timestampKey = namespaceKey;
+        }
 
         byte type = readNextByte();
-        if (type == int32) {
+        if (type == tInt32) {
 
-            int stableId = readInt32(offset);
+            int stableId = readInt32();
             m.setId(stableId);
 
-            offset += 4;
-            int stableVersion = readInt32(offset);
-            offset += 4;
+            int stableVersion = readInt32();
+            byte dataFlags = readNextByte();
 
-            byte dataFlagsValue = readNextByte();
-            long globalID = 0;
-            if (testbit(dataFlagsValue, 0)) {
-                globalID = readInt64(offset);
-                offset += 8;
+            if (testbit(dataFlags, 0)) {
+                long globallyUniqueId = readInt64();
             }
-            int globtag = 0;
-            if (testbit(dataFlagsValue, 1)) {
-                globtag = readInt32(offset);
-                offset += 4;
+            if (testbit(dataFlags, 1)) {
+                int globalTags = readInt32();
             }
-            long groupingKey = 0;
-            if (testbit(dataFlagsValue, 2)) {
-                groupingKey = readInt64(offset);
-                offset += 8;
+            if (testbit(dataFlags, 2)) {
+                long groupingKey = readInt64();
             }
-            int groupInfoID = 0;
-            if (testbit(dataFlagsValue, 3)) {
-                groupInfoID = readInt32(offset);
-                offset += 4;
+            if (testbit(dataFlags, 3)) {
+                int groupInfo = readInt32();
+            }
+            if (testbit(dataFlags, 4)) {
+                int localTagsValue = readInt32();
+            }
+            if (testbit(dataFlags, 5)) {
+                long threadId = readInt64();
             }
 
-            int localTagsValue = 0;
-            if (testbit(dataFlagsValue, 4)) {
-                localTagsValue = readInt32(offset);
-                offset += 4;
-            }
+            int flags = readInt32();
 
-            int flags = readInt32(offset);
-            offset += 4;
-
-            int tagsValue = readInt32(offset);
-            offset += 4;
+            int tags = readInt32();
 
             byte forwardInfoFlags = readNextByte();
             if (forwardInfoFlags != 0) {
-                readForward(forwardInfoFlags);
+                readForwardInfo(forwardInfoFlags);
             }
-            byte hasautor = readNextByte();
-            long authorId = 0;
-
-            if (hasautor == 1) {
-                authorId = readInt64(offset);
+            byte hasAuthor = readNextByte();
+            if (hasAuthor == 1) {
+                long authorId = readInt64();
                 m.setFrom(new Contact(authorId));
-                offset += 8;
             }
 
-            int msglen = readInt32(offset);
-            offset += 4;
-            String txt = readString(offset, msglen);
+            String txt = readString();
             m.setData(txt);
 
-            offset += msglen;
-            // atributos
-            List<byte[]> atrs = readArray();
-            List<byte[]> embededmedia = readArray();
-            List<byte[]> referencemedia = readArray(12);
+            List<byte[]> attrs = readArray();
+            List<byte[]> embeddedMedia = readArray();
+            List<byte[]> referenceMedia = readArray(12);
 
-            boolean incoming = testbit(flags, 2) || testbit(flags, 7);
+            boolean incoming = testbit(flags, 2) || testbit(flags, 8);
             m.setFromMe(!incoming);
 
-            for (byte[] b : referencemedia) {
-                // convert from bigendian to littleendian
+            for (byte[] b : referenceMedia) {
+                // convert from big endian to little endian
                 Util.invertByteArray(b, 0, 4);
                 Util.invertByteArray(b, 4, 8);
 
-                byte[] mediabytes = mediaKey.get(Util.byteArrayToHex(b));
-                if (mediabytes != null) {
-                    PostBoxCoding media = new PostBoxCoding();
-                    media.setData(mediabytes);
+                byte[] mediaBytes = mediaKey.get(Hex.encodeHexString(b));
+                if (mediaBytes != null) {
+                    PostBoxCoding media = new PostBoxCoding(mediaBytes);
                     media.readMedia(m);
                 }
             }
 
-            for (byte[] b : embededmedia) {
+            for (byte[] b : embeddedMedia) {
                 if (b != null) {
-                    PostBoxCoding media = new PostBoxCoding();
-                    media.setData(b);
+                    PostBoxCoding media = new PostBoxCoding(b);
                     media.readMedia(m);
                 }
             }
-
         }
-        m.setTimeStamp(Date.from(Instant.ofEpochSecond(timestampkey)));
 
+        m.setTimeStamp(Date.from(Instant.ofEpochSecond(timestampKey)));
     }
 
-    long getAccountId() {
-        return decodeInt64ForKey("peerId");
+    public long readChatId() {
+        long chatId = readInt64(false);
+        return chatId;
     }
 
-    void readUser(Contact c) {
-        GenericObj user = decodeObjectForKey("_");
-        if (user != null && user.content != null) {
-            setData(user.content);
-            c.setName(decodeStringForKey("fn"));
-            c.setLastName(decodeStringForKey("ln"));
-            c.setUsername(decodeStringForKey("un"));
-            c.setPhone(decodeStringForKey("p"));
-            List<GenericObj> l = decodeObjectArrayForKey("ph");
-            ArrayList<PhotoData> photos = new ArrayList<>();
-            String title = decodeStringForKey("t");
+    public long readAccountId() {
+        PostBoxObject obj = readPostBoxObject(true);
+        PostBoxObject account = obj.getPostBoxObject("_");
+        if (account != null) {
+            long peerId = account.getLong("peerId");
+            if (peerId != 0) {
+                return peerId;
+            }
+        }
+        return 0;
+    }
+
+    public void readContact(Contact c) {
+        PostBoxObject obj = readPostBoxObject(true);
+        PostBoxObject user = obj.getPostBoxObject("_");
+        if (user != null) {
+            c.setName(user.getString("fn"));
+            c.setLastName(user.getString("ln"));
+            c.setUsername(user.getString("un"));
+            c.setPhone(user.getString("p"));
+            String title = user.getString("t");
             if (title != null) {
-                c.setName("gp_name:" + title);
+                c.setGroup(true);
+                c.setName(title);
             }
-            for (GenericObj ph : l) {
-                if (ph == null || ph.content == null) {
-                    continue;
+            PostBoxObject[] objs = user.getPostBoxObjectArray("ph");
+            if (objs != null && objs.length > 0) {
+                List<PhotoData> photos = new ArrayList<>();
+                for (PostBoxObject o : objs) {
+                    long n1 = o.getLong("v");
+                    int n2 = o.getInteger("l");
+                    if (n1 != 0 && n2 != 0) {
+                        Photo p = new Photo();
+                        p.setName(n1 + "_" + n2);
+                        photos.add(p);
+                    }
                 }
-                PostBoxCoding p2 = new PostBoxCoding();
-                p2.setData(ph.content);
-                Photo p = new Photo();
-
-                p.setName(p2.decodeInt64ForKey("v") + "_" + p2.decodeInt32ForKey("l"));
-                photos.add(p);
-                logger.debug("photo: {}", p.getName());
-                c.setPhotos(photos);
+                if (!photos.isEmpty()) {
+                    c.setPhotos(photos);
+                }
             }
         }
-
     }
 
+    private PostBoxObject readPostBoxObject(boolean isRoot) {
+        PostBoxObject obj = new PostBoxObject();
+        int readLimit = data.length;
+        if (!isRoot) {
+            obj.hash = readInt32();
+            int objLen = readInt32();
+            readLimit = offset + objLen;
+        }
+        if (offset + 4 < readLimit && data[offset] == 0) {
+            offset++;
+            int objLen = readInt32();
+            readLimit = offset + objLen;
+        }
+        while (offset < readLimit) {
+            String key = readKeyString();
+            if (key == null) {
+                break;
+            }
+            int type = readNextByte() & 0xFF;
+            Object val = null;
+            int len = 0;
+            switch (type) {
+                case tInt32:
+                    val = readInt32();
+                    break;
+
+                case tInt64:
+                    val = readInt64();
+                    break;
+
+                case tBool:
+                    val = readNextByte() != 0;
+                    break;
+
+                case tDouble:
+                    // TODO: Check in real cases if it uses big or little endian.
+                    long bits = readInt64();
+                    val = Double.longBitsToDouble(bits);
+                    break;
+
+                case tString:
+                    val = readString();
+                    break;
+
+                case tObject:
+                    val = readPostBoxObject(false);
+                    break;
+
+                case tInt32Array:
+                    len = readInt32();
+                    int[] intArr = new int[len];
+                    for (int i = 0; i < len; i++) {
+                        intArr[i] = readInt32();
+                    }
+                    val = intArr;
+                    break;
+
+                case tInt64Array:
+                    len = readInt32();
+                    long[] lngArr = new long[len];
+                    for (int i = 0; i < len; i++) {
+                        lngArr[i] = readInt64();
+                    }
+                    val = lngArr;
+                    break;
+
+                case tObjectArray:
+                    len = readInt32();
+                    PostBoxObject[] objArr = new PostBoxObject[len];
+                    for (int i = 0; i < len; i++) {
+                        objArr[i] = readPostBoxObject(false);
+                    }
+                    val = objArr;
+                    break;
+
+                case tBytes:
+                    len = readInt32();
+                    byte[] bytes = new byte[len];
+                    for (int i = 0; i < len; i++) {
+                        bytes[i] = readNextByte();
+                    }
+                    val = bytes;
+                    break;
+
+                case tBytesArray:
+                    len = readInt32();
+                    byte[][] bytArr = new byte[len][];
+                    for (int i = 0; i < len; i++) {
+                        int arrLen = readInt32();
+                        byte[] bi = bytArr[i] = new byte[arrLen];
+                        for (int j = 0; j < arrLen; j++) {
+                            bi[j] = readNextByte();
+                        }
+                    }
+                    val = bytArr;
+                    break;
+
+                case tStringArray:
+                    len = readInt32();
+                    String[] strArr = new String[len];
+                    for (int i = 0; i < len; i++) {
+                        strArr[i] = readString();
+                    }
+                    val = strArr;
+                    break;
+
+                case tObjectDictionary:
+                    len = readInt32();
+                    Map<PostBoxObject, PostBoxObject> map = new HashMap<PostBoxObject, PostBoxObject>();
+                    for (int i = 0; i < len; i++) {
+                        PostBoxObject keyObj = readPostBoxObject(false);
+                        PostBoxObject valObj = readPostBoxObject(false);
+                        map.put(keyObj, valObj);
+                    }
+                    val = map;
+                    break;
+
+                case tNil:
+                    break;
+
+                default:
+                    logger.warn("Unknown type while decoding PostBox {}", type);
+                    break;
+            }
+            obj.fields.put(key, val);
+        }
+        return obj;
+    }
 }
 
 class Photo implements PhotoData {
-
-    String name = null;
-    int size = 0;
+    private String name;
+    private int size;
 
     public void setName(String name) {
         this.name = name;
@@ -727,14 +740,11 @@ class Photo implements PhotoData {
 
     @Override
     public String getName() {
-
         return name;
     }
 
     @Override
     public long getSize() {
-
         return size;
     }
-
 }

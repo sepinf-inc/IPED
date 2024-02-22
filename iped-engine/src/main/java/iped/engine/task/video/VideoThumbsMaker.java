@@ -167,8 +167,7 @@ public class VideoThumbsMaker {
             return result;
         }
 
-        if (result.getVideoDuration() == 0 || result.getDimension() == null || result.getDimension().width == 0
-                || result.getDimension().height == 0) {
+        if (result.getDimension() == null || result.getDimension().width == 0 || result.getDimension().height == 0) {
             return result;
         }
 

@@ -315,7 +315,16 @@ public class AppMapPanel extends JPanel implements Consumer<Object[]> {
         for (int i = 0; i < selected.length; i++) {
             int rowModel = resultsTable.convertRowIndexToModel(selected[i]);
             IItemId item = results.getItem(rowModel);
+            addSelection(selecoes, item);
+        }
 
+        mapViewer.updateMapLeadCursor();
+
+        browserCanvas.sendSelection(selecoes);
+    }
+
+    public void addSelection(HashMap<String, Boolean> selecoes, IItemId item) {
+        if (kmlResult != null && kmlResult.getGPSItems().containsKey(item)) {
             List<Integer> subitems = kmlResult.getGPSItems().get(item);
             if (subitems == null) {
                 String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
@@ -328,10 +337,6 @@ public class AppMapPanel extends JPanel implements Consumer<Object[]> {
                 }
             }
         }
-
-        mapViewer.updateMapLeadCursor();
-
-        browserCanvas.sendSelection(selecoes);
     }
 
     @Override

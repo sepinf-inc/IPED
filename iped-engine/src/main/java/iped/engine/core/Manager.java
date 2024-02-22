@@ -246,8 +246,6 @@ public class Manager {
 
         stats.printSystemInfo();
 
-        Files.deleteIfExists(getFinishedFileFlag(output).toPath());
-
         output = output.getCanonicalFile();
 
         args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
@@ -592,9 +590,7 @@ public class Manager {
                 UIPropertyListenerProvider.getInstance().firePropertyChange("decodingDir", 0, //$NON-NLS-1$
                         Messages.getString("Manager.Adding") + currentDir.trim() + "\""); //$NON-NLS-1$ //$NON-NLS-2$
             }
-            UIPropertyListenerProvider.getInstance().firePropertyChange("discovered", 0, caseData.getDiscoveredEvidences()); //$NON-NLS-1$
-            UIPropertyListenerProvider.getInstance().firePropertyChange("processed", -1, stats.getProcessed()); //$NON-NLS-1$
-            UIPropertyListenerProvider.getInstance().firePropertyChange("progresso", 0, (int) (stats.getVolume() / 1000000)); //$NON-NLS-1$
+            UIPropertyListenerProvider.getInstance().firePropertyChange("update", 0, 0);
 
             boolean changeToNextQueue = !producer.isAlive();
             for (int k = 0; k < workers.length; k++) {
@@ -870,6 +866,10 @@ public class Manager {
         if (!output.exists() && !output.mkdirs()) {
             throw new IOException("Fail to create folder " + output.getAbsolutePath()); //$NON-NLS-1$
         }
+
+        // The finished file flag should be reset after basic checks (like already
+        // existing output) were done (see issue #2041).
+        Files.deleteIfExists(getFinishedFileFlag(output).toPath());
 
         if (!args.isAppendIndex() && !args.isContinue() && !args.isRestart() && args.getEvidenceToRemove() == null) {
             IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "lib"), new File(output, "lib"), true); //$NON-NLS-1$ //$NON-NLS-2$

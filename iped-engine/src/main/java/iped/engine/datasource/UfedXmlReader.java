@@ -16,6 +16,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.text.DateFormat;
+import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -88,6 +89,7 @@ import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
 import iped.utils.FileInputStreamFactory;
 import iped.utils.IOUtil;
+import iped.utils.LocalizedFormat;
 import iped.utils.SimpleHTMLEncoder;
 
 public class UfedXmlReader extends DataSourceReader {
@@ -123,7 +125,7 @@ public class UfedXmlReader extends DataSourceReader {
 
     private static HashMap<File, UFDRInputStreamFactory> uisfMap = new HashMap<>();
 
-    File root, ufdrFile;
+    File root, rootFolder, ufdrFile;
     UFDRInputStreamFactory uisf;
     FileInputStreamFactory fisf, previewFisf;
     IItem rootItem;
@@ -134,7 +136,7 @@ public class UfedXmlReader extends DataSourceReader {
     private final List<String[]> deviceInfoData = new ArrayList<String[]>();
     private HashSet<String> addedImUfedIds = new HashSet<>();
     private HashSet<String> addedTrackIds = new HashSet<>();
-    
+
     public UfedXmlReader(ICaseData caseData, File output, boolean listOnly) {
         super(caseData, output, listOnly);
     }
@@ -260,10 +262,6 @@ public class UfedXmlReader extends DataSourceReader {
             supportedApps.remove(TelegramParser.TELEGRAM);
         }
 
-        if (isIOS && !TelegramParser.isEnabledForIOSUfdr()) {
-            supportedApps.remove(TelegramParser.TELEGRAM);
-        }
-
         if (parsingConfig.getPhoneParsersToUse().equalsIgnoreCase("internal")) { //$NON-NLS-1$
             UFEDChatParser.setSupportedTypes(Collections.singleton(UFEDChatParser.UFED_CHAT_MIME));
             ignoreSupportedChats = true;
@@ -366,6 +364,8 @@ public class UfedXmlReader extends DataSourceReader {
 
         DateFormat out = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
+        private final DecimalFormat currencyFormat = LocalizedFormat.getDecimalInstance("#,##0.00");
+
         ArrayList<XmlNode> nodeSeq = new ArrayList<>();
         ArrayList<Item> itemSeq = new ArrayList<>();
 
@@ -430,7 +430,8 @@ public class UfedXmlReader extends DataSourceReader {
                 "MessageLabel", //$NON-NLS-1$
                 "ProfilePicture", //$NON-NLS-1$
                 "WebAddress", //$NON-NLS-1$
-                "Reaction" //$NON-NLS-1$
+                "Reaction", //$NON-NLS-1$
+                "Price"
         ));
 
         @Override
@@ -1017,6 +1018,29 @@ public class UfedXmlReader extends DataSourceReader {
                         if (reaction != null) {
                             parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + "Reaction", reaction);
                         }
+                    } else if ("Price".equals(type)) {
+                        String prop = ExtraProperties.UFED_META_PREFIX + "Amount";
+                        String amount = item.getMetadata().get(prop);
+                        if (amount != null) {
+                            try {
+                                double v = Double.parseDouble(amount);
+                                if (v > 922337203685477.0) {
+                                    // Undefined values
+                                    amount = null;
+                                } else {
+                                    amount = currencyFormat.format(v);
+                                }
+                            } catch (Exception e) {
+                            }
+                            if (amount != null) {
+                                parentItem.getMetadata().add(prop, amount);
+                            }
+                        }
+                        prop = ExtraProperties.UFED_META_PREFIX + "Currency";
+                        String currency = item.getMetadata().get(prop);
+                        if (currency != null) {
+                            parentItem.getMetadata().add(prop, currency);
+                        }
                     }
                 } else {
                     if (!ignoreItems) {
@@ -1105,7 +1129,7 @@ public class UfedXmlReader extends DataSourceReader {
                     deviceInfoData.add(new String[] { nameAttr, value, extractiontName });
                 }
             }
-            
+
             chars = new StringBuilder();
             nameAttr = null;
 
@@ -1236,12 +1260,15 @@ public class UfedXmlReader extends DataSourceReader {
                 ufdrPathToUfedId.put(path, ufedId);
             }
             if (ufdrFile == null) {
+                if (rootFolder == null) {
+                    rootFolder = root.isDirectory() ? root : root.getParentFile();
+                }
                 if (fisf == null) {
-                    fisf = new FileInputStreamFactory(root.toPath());
+                    fisf = new FileInputStreamFactory(rootFolder.toPath());
                 }
                 item.setInputStreamFactory(fisf);
                 item.setIdInDataSource(path);
-                File file = new File(root, path);
+                File file = new File(rootFolder, path);
                 item.setLength(file.length());
             } else {
                 if (getUISF().entryExists(path)) {
@@ -1323,7 +1350,7 @@ public class UfedXmlReader extends DataSourceReader {
                             .filter(cat -> StringUtils.isNotBlank(cat.value)) //
                             .forEach(cat -> finalScorePerCat.put(cat.value, cat.score));
                 }
-                
+
                 // set scores
                 finalScorePerCat.entrySet().stream()
                         .forEach(e -> item.setExtraAttribute(MEDIA_CLASSES_SCORE_PREFIX + e.getKey(), e.getValue()));
@@ -1605,7 +1632,7 @@ public class UfedXmlReader extends DataSourceReader {
             deviceInfo.setHash(null);
             return file;
         }
-        
+
         @Override
         public void characters(char[] ch, int start, int length) throws SAXException {
             if (listOnly)

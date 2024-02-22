@@ -45,7 +45,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -78,6 +77,7 @@ public class ExtractorIOS extends Extractor {
     
     private boolean hasProfilePictureItemTable = false;
     private boolean hasZTitleColumn = false;
+    private boolean hasZSTANZAIDAndZMETADATAColumns = false; 
     private SQLException parsingException = null;
 
     public ExtractorIOS(String itemPath, File databaseFile, WAContactsDirectory contacts, WAAccount account, boolean recoverDeletedRecords) {
@@ -149,6 +149,8 @@ public class ExtractorIOS extends Extractor {
                 try {
                     hasProfilePictureItemTable = SQLite3DBParser.containsTable("ZWAPROFILEPICTUREITEM", conn);
                     hasZTitleColumn = SQLite3DBParser.checkIfColumnExists(conn, "ZWAMEDIAITEM", "ZTITLE");
+                    hasZSTANZAIDAndZMETADATAColumns = SQLite3DBParser.checkIfColumnExists(conn, "ZWAMESSAGE", "ZSTANZAID")
+                    && SQLite3DBParser.checkIfColumnExists(conn, "ZWAMEDIAITEM", "ZMETADATA");
                 } catch (SQLException e) {
                     if (firstTry || !isSqliteCorruptException(e)) {
                         throw e;
@@ -204,8 +206,14 @@ public class ExtractorIOS extends Extractor {
                 extractMessages(conn, idToChat, firstTry, true);
 
                 for (Chat c : list) {
+                    HashMap<String, Message> messagesMap = new HashMap<String, Message>();
+                    for (Message m : c.getMessages()) {
+                        if (m.getUuid() != null && !m.getUuid().isEmpty()) {
+                            messagesMap.put(m.getUuid(), m);
+                        }
+                    }
                     if (messagesUndeletedTable != null && !undeletedMessages.isEmpty()) {
-                        mergeUndeletedMessages(c, undeletedMessages, mediaItems, groupMembers, firstTry);
+                        mergeUndeletedMessages(c, messagesMap, undeletedMessages, mediaItems, groupMembers, firstTry);
                     }
                     if (c.isGroupChat()) {
                         try {
@@ -218,6 +226,9 @@ public class ExtractorIOS extends Extractor {
                             }
                         }
                     }
+
+                    // Find quoted messages
+                    findQuotedMessages(c.getMessages(), messagesMap);
                 }
 
                 if (recoverDeletedRecords && !firstTry) {
@@ -262,7 +273,11 @@ public class ExtractorIOS extends Extractor {
         } else {
             sql = isGroupChat ? SELECT_MESSAGES_GROUP_NOZTITLE : SELECT_MESSAGES_USER_NOZTITLE;
         }
-        
+
+        if (!hasZSTANZAIDAndZMETADATAColumns){
+            sql = sql.replace("ZWAMESSAGE.ZSTANZAID as uuid, ZWAMEDIAITEM.ZMETADATA as metadata, ", "");
+        }
+
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
@@ -285,7 +300,7 @@ public class ExtractorIOS extends Extractor {
         }
     }
     
-    private void mergeUndeletedMessages(Chat chat, Map<Long, List<SqliteRow>> undeletedMessages,
+    private void mergeUndeletedMessages(Chat chat, Map<String, Message> messagesMap, Map<Long, List<SqliteRow>> undeletedMessages,
             Map<Long, SqliteRow> mediaItems, Map<Long, SqliteRow> groupMembers, boolean firstTry) throws SQLException {
 
         // Get deleted messages for this Chat
@@ -310,6 +325,9 @@ public class ExtractorIOS extends Extractor {
                             // corrupted recovered record).
                             if (!activeMessageIds.containsKey(m.getId())
                                     || !compareMessagesAlmostTheSame(activeMessageIds.get(m.getId()), m)) {
+                                if (m.getUuid() != null && !m.getUuid().isEmpty()) {
+                                    messagesMap.put(m.getUuid(), m);
+                                }
                                 chat.getMessages().add(m);
                             }
                         }
@@ -322,6 +340,46 @@ public class ExtractorIOS extends Extractor {
             }
 
             Collections.sort(chat.getMessages(), (a, b) -> a.getTimeStamp().compareTo(b.getTimeStamp()));
+        }
+    }
+
+    private void findQuotedMessages(List<Message> messages, Map<String, Message> messagesMap) {
+        long fakeIds = 2000000000L;
+        for (Message m : messages) {
+            if (m.isQuoted() && m.getMetaData() != null) {
+                String metadata = m.getMetaData();
+                int size = getPositiveValueFromMetadata(metadata, 1);
+                int pos = 0;
+                if (size >= 0) {
+                    pos = 2;
+                    String uuidQuote = getSubStringFromMetadata(metadata, pos, size);
+                    Message messageQuote = messagesMap.get(uuidQuote);
+                    if (messageQuote == null){ //TODO - get full carved quote messages from ZMETADATA
+
+                        pos += size;
+                        int unknowflag = getPositiveValueFromMetadata(metadata, pos);
+
+                        pos += 1;
+                        size = getPositiveValueFromMetadata(metadata, pos); // Get size of contac name
+                        pos += 1;
+                        String contact = getSubStringFromMetadata(metadata, pos, size);
+
+                        // pos += size + 2;
+                        // size = getPositiveValueFromMetadata(metadata,pos);
+                        // pos += 1;
+                        // String dataQuote = getSubStringFromMetadata(metadata, pos, size);
+
+                        messageQuote = new Message();
+                        messageQuote.setId(fakeIds--);
+                        messageQuote.setData("[Not Implemented]");
+                        // messageQuote.setFromMe(0);
+                        messageQuote.setRemoteResource(contact); // $NON-NLS-1$
+                        messageQuote.setMessageType(decodeMessageType(0, -1));
+                        messageQuote.setDeleted(true);
+                    }
+                    m.setMessageQuote(messageQuote);
+                }
+            }
         }
     }
 
@@ -391,8 +449,50 @@ public class ExtractorIOS extends Extractor {
             decodeReceiptInfo(m, receiptInfo);
         }
         m.setForwarded(rs.getInt("forwarded") > 0);
+
+        if (hasZSTANZAIDAndZMETADATAColumns){
+            m.setQuoted(getPositiveValueFromMetadata(rs.getString("metadata"),0)==0x2A);
+            m.setUuid(rs.getString("uuid"));        
+            m.setMetaData(rs.getString("metadata"));
+        }
+
         return m;
     }
+
+    public int getPositiveValueFromMetadata(String metadata, int pos){
+        int ret = -1;
+        if (metadata != null){
+            byte [] metadataArray = metadata.getBytes();
+            if (metadataArray!= null && metadataArray.length >= pos+1){
+                return (int)metadataArray[pos];
+            }
+        }        
+        return ret;
+    }
+
+    public String getSubStringFromMetadata(String metadata, int pos, int length){
+        String ret = null;
+        if (metadata != null){
+            if (metadata.length() >= pos + length){
+                return metadata.substring(pos,pos + length);
+            }                
+        }        
+        return ret;
+    }
+
+    public boolean getHasQuoteFromMetadata(String metadata){
+        boolean ret = false;
+        if (metadata != null){
+            byte [] metadataArray = metadata.getBytes();
+            if (metadataArray!= null && metadataArray.length >= 1){
+                if (metadataArray[0] == 0x2A){
+                    return true;
+                }
+            }
+        }        
+        return ret;
+    }
+    
 
     private Message createMessageFromUndeletedRecord(SqliteRow row, Chat chat, Map<Long, SqliteRow> mediaItems,
             Map<Long, SqliteRow> groupMemebers) throws SQLException {
@@ -554,7 +654,7 @@ public class ExtractorIOS extends Extractor {
     }
 
     private List<Chat> undeleteChats(SQLiteUndeleteTable undeleteChatsSessions, WAContactsDirectory contacts) {
-        List<Chat> result = new LinkedList<>();
+        List<Chat> result = new ArrayList<>();
 
         if (undeleteChatsSessions != null && !undeleteChatsSessions.getTableRows().isEmpty()) {
             for (SqliteRow row : undeleteChatsSessions.getTableRows()) {
@@ -701,6 +801,7 @@ public class ExtractorIOS extends Extractor {
             + "ZLATITUDE as latitude, ZLONGITUDE as longitude, ZMEDIAURL as url, ZXMPPTHUMBPATH as thumbpath, " //$NON-NLS-1$
             + "INFO.ZRECEIPTINFO as receiptInfo, " //$NON-NLS-1$
             + "(1 << 7 & ZFLAGS) as forwarded, " //$NON-NLS-1$
+            + "ZWAMESSAGE.ZSTANZAID as uuid, ZWAMEDIAITEM.ZMETADATA as metadata, " //$NON-NLS-1$
             + "ZGROUPEVENTTYPE as gEventType, ZMESSAGETYPE as messageType FROM ZWAMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAMEDIAITEM ON ZWAMESSAGE.Z_PK = ZWAMEDIAITEM.ZMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAMESSAGEINFO INFO ON INFO.Z_PK = ZWAMESSAGE.ZMESSAGEINFO " //$NON-NLS-1$
@@ -714,6 +815,7 @@ public class ExtractorIOS extends Extractor {
             + "ZLATITUDE as latitude, ZLONGITUDE as longitude, ZMEDIAURL as url, ZXMPPTHUMBPATH as thumbpath, " //$NON-NLS-1$
             + "INFO.ZRECEIPTINFO as receiptInfo, " //$NON-NLS-1$
             + "(1 << 7 & ZFLAGS) as forwarded, " //$NON-NLS-1$
+            + "ZWAMESSAGE.ZSTANZAID as uuid, ZWAMEDIAITEM.ZMETADATA as metadata, " //$NON-NLS-1$
             + "ZGROUPEVENTTYPE as gEventType, ZMESSAGETYPE as messageType FROM ZWAMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAMEDIAITEM ON ZWAMESSAGE.Z_PK = ZWAMEDIAITEM.ZMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAMESSAGEINFO INFO ON INFO.Z_PK = ZWAMESSAGE.ZMESSAGEINFO " //$NON-NLS-1$
@@ -728,6 +830,7 @@ public class ExtractorIOS extends Extractor {
             + "ZLATITUDE as latitude, ZLONGITUDE as longitude, ZMEDIAURL as url, ZXMPPTHUMBPATH as thumbpath, " //$NON-NLS-1$
             + "INFO.ZRECEIPTINFO as receiptInfo, " //$NON-NLS-1$
             + "(1 << 7 & ZFLAGS) as forwarded, " //$NON-NLS-1$
+            + "ZWAMESSAGE.ZSTANZAID as uuid, ZWAMEDIAITEM.ZMETADATA as metadata, " //$NON-NLS-1$           
             + "ZGROUPEVENTTYPE as gEventType, ZMESSAGETYPE as messageType FROM ZWAMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAMEDIAITEM ON ZWAMESSAGE.Z_PK = ZWAMEDIAITEM.ZMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAMESSAGEINFO INFO ON INFO.Z_PK = ZWAMESSAGE.ZMESSAGEINFO " //$NON-NLS-1$
@@ -741,6 +844,7 @@ public class ExtractorIOS extends Extractor {
             + "ZLATITUDE as latitude, ZLONGITUDE as longitude, ZMEDIAURL as url, ZXMPPTHUMBPATH as thumbpath, " //$NON-NLS-1$
             + "INFO.ZRECEIPTINFO as receiptInfo, " //$NON-NLS-1$
             + "(1 << 7 & ZFLAGS) as forwarded, " //$NON-NLS-1$
+            + "ZWAMESSAGE.ZSTANZAID as uuid, ZWAMEDIAITEM.ZMETADATA as metadata, " //$NON-NLS-1$          
             + "ZGROUPEVENTTYPE as gEventType, ZMESSAGETYPE as messageType FROM ZWAMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAMEDIAITEM ON ZWAMESSAGE.Z_PK = ZWAMEDIAITEM.ZMESSAGE " //$NON-NLS-1$
             + "LEFT JOIN ZWAGROUPMEMBER ON ZWAGROUPMEMBER.ZCHATSESSION = chatId AND ZWAGROUPMEMBER.Z_PK = ZGROUPMEMBER " //$NON-NLS-1$

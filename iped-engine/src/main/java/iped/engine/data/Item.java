@@ -33,6 +33,7 @@ import iped.data.IHashValue;
 import iped.data.IItem;
 import iped.datasource.IDataSource;
 import iped.engine.core.Statistics;
+import iped.engine.io.ReferencedFile;
 import iped.engine.lucene.analysis.CategoryTokenizer;
 import iped.engine.task.index.IndexItem;
 import iped.engine.tika.SyncMetadata;
@@ -185,7 +186,9 @@ public class Item implements IItem {
 
     private File tmpFile, parentTmpFile;
 
-    private TemporaryResources tmpResources = new TemporaryResources();
+    private ReferencedFile refTmpFile;
+
+    private TemporaryResources tmpResources;
 
     private long startOffset = -1, parentOffset = -1;
 
@@ -242,14 +245,18 @@ public class Item implements IItem {
     }
 
     public void dispose(boolean clearTextCache) {
-        try {
-            tmpResources.close();
-        } catch (Exception e) {
-            LOGGER.warn("Error closing resources of " + getPath(), e);
+        if (tmpResources != null) {
+            try {
+                tmpResources.close();
+            } catch (Exception e) {
+                LOGGER.warn("Error closing resources of " + getPath(), e);
+            }
+            tmpResources = null;
         }
         data = null;
         tmpFile = null;
         tis = null;
+        parentTmpFile = null;
         try {
             if (textCache != null && clearTextCache) {
                 textCache.close();
@@ -658,12 +665,8 @@ public class Item implements IItem {
                         }
                         tmpFile = path.toFile();
                     }
-                    final File finalFile = tmpFile;
-                    tmpResources.addResource(new Closeable() {
-                        public void close() {
-                            finalFile.delete();
-                        }
-                    });
+                    refTmpFile = new ReferencedFile(tmpFile);
+                    addTmpResource(refTmpFile);
                 }
             }
         }
@@ -709,7 +712,7 @@ public class Item implements IItem {
                 tis = TikaInputStream.get(getBufferedInputStream());
             }
         }
-        tmpResources.addResource(tis);
+        addTmpResource(tis);
         return tis;
     }
 
@@ -1194,8 +1197,19 @@ public class Item implements IItem {
         return parentTmpFile != null && parentOffset != -1;
     }
 
-    public void setParentTmpFile(File parentTmpFile) {
+    public void setParentTmpFile(File parentTmpFile, Item parent) {
         this.parentTmpFile = parentTmpFile;
+        if (parent.refTmpFile != null) {
+            parent.refTmpFile.increment();
+            addTmpResource(parent.refTmpFile);
+        }
+    }
+
+    private void addTmpResource(Closeable c) {
+        if (tmpResources == null) {
+            tmpResources = new TemporaryResources(); 
+        }
+        tmpResources.addResource(c);
     }
 
     public void setParentOffset(long parentOffset) {

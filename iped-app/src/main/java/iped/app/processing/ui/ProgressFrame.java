@@ -37,7 +37,6 @@ import java.io.File;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.text.NumberFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -80,11 +79,11 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
     private JProgressBar progressBar;
     private JButton pause, openApp;
     private JLabel tasks, itens, stats, parsers;
-    int indexed = 0, discovered = 0;
-    long rate = 0, instantRate;
-    int volume, taskSize;
-    long secsToEnd;
-    private Date indexStart;
+    private int prevVolume;
+    private boolean discoverEnded;
+    private long rate, instantRate;
+    private long secsToEnd;
+    private long processingStart;
     private Worker[] workers;
     private String[] lastWorkerTaskItemId;
     private long[] lastWorkerTime;
@@ -143,6 +142,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
 
         pause = new JButton(Messages.getString("ProgressFrame.Pause")); //$NON-NLS-1$
         pause.addActionListener(this);
+        pause.setEnabled(false);
 
         openApp = new JButton(Messages.getString("ProgressFrame.OpenApp")); //$NON-NLS-1$
         openApp.addActionListener(this);
@@ -192,51 +192,68 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         });
     }
 
-    private void updateString() {
-        String msg = progressBar.getString();
-        if (indexed > 0) {
-            msg = Messages.getString("ProgressFrame.Processing") + indexed + " / " + discovered; //$NON-NLS-1$ //$NON-NLS-2$
-        } else if (discovered > 0) {
-            msg = Messages.getString("ProgressFrame.Found") + discovered + Messages.getString("ProgressFrame.items"); //$NON-NLS-1$ //$NON-NLS-2$
+    private void update() {
+        Statistics s = Statistics.get();
+        if (s == null) {
+            return;
+        }
+        // Get volume/item processed/total 
+        int totalVolume = (int)(Statistics.get().getCaseData().getDiscoveredVolume() >>> 20); // Converted to MB
+        int totalItems = Statistics.get().getCaseData().getDiscoveredEvidences();
+        int processedVolume = (int)(Statistics.get().getVolume() >>> 20); // Converted to MB
+        int processedItems = Statistics.get().getProcessed();
+
+        progressBar.setMaximum(totalVolume);
+        
+        tasks.setText(getTaskTimes());
+        itens.setText(getItemList());
+        stats.setText(getStats());
+        parsers.setText(getParserTimes());
+        if (processedItems > 0)
+            openApp.setEnabled(true);
+
+        if (discoverEnded) {
+            progressBar.setValue(processedVolume);
         }
 
-        if (taskSize != 0 && indexStart != null) {
-            secsToEnd = ((long) taskSize - (long) volume) * ((new Date()).getTime() - indexStart.getTime())
-                    / (((long) volume + 1) * 1000);
-            msg += Messages.getString("ProgressFrame.FinishIn") + secsToEnd / 3600 + "h " + (secsToEnd / 60) % 60 + "m " //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                    + secsToEnd % 60 + "s"; //$NON-NLS-1$
+        long interval = (System.currentTimeMillis() - processingStart) / 1000 + 1;
+        rate = processedVolume * 3600L / ((1 << 10) * interval);
+        instantRate = (processedVolume - prevVolume) * 3600L / (1 << 10) + 1;
+
+        String msg = progressBar.getString();
+        if (processedItems > 0) {
+            msg = Messages.getString("ProgressFrame.Processing") + processedItems + " / " + totalItems;
+        } else if (totalItems > 0) {
+            msg = Messages.getString("ProgressFrame.Found") + totalItems + Messages.getString("ProgressFrame.items");
+        }
+
+        if (discoverEnded && processingStart != 0) {
+            secsToEnd = (totalVolume - processedVolume) * (System.currentTimeMillis() - processingStart)
+                    / ((processedVolume + 1) * 1000L);
+            msg += Messages.getString("ProgressFrame.FinishIn") + secsToEnd / 3600 + "h " + (secsToEnd / 60) % 60 + "m "
+                    + secsToEnd % 60 + "s";
         } else if (decodingDir != null) {
             msg += " - " + decodingDir;
         }
         progressBar.setString(msg);
-
+        updateTaskBar(totalVolume, processedVolume, discoverEnded);
+        prevVolume = processedVolume;
     }
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        if (indexStart == null) {
-            indexStart = new Date();
+        if (processingStart == 0) {
+            processingStart = System.currentTimeMillis();
             physicalMemory = Util.getPhysicalMemorySize();
-            updateTaskBar();
+            updateTaskBar(0, 0, false);
         }
 
-        if ("processed".equals(evt.getPropertyName())) { //$NON-NLS-1$
-            indexed = (Integer) evt.getNewValue();
-            updateString();
-            tasks.setText(getTaskTimes());
-            itens.setText(getItemList());
-            stats.setText(getStats());
-            parsers.setText(getParserTimes());
-            if (indexed > 0)
-                openApp.setEnabled(true);
-
-        } else if ("taskSize".equals(evt.getPropertyName())) { //$NON-NLS-1$
-            taskSize = (Integer) evt.getNewValue();
-            progressBar.setMaximum(taskSize);
-
-        } else if ("discovered".equals(evt.getPropertyName())) { //$NON-NLS-1$
-            discovered = (Integer) evt.getNewValue();
-            updateString();
+        if ("discoverEnded".equals(evt.getPropertyName())) {
+            discoverEnded = true;
+            update();
+            
+        } else if ("update".equals(evt.getPropertyName())) {
+            update();
 
         } else if ("decodingDir".equals(evt.getPropertyName())) { //$NON-NLS-1$
             decodingDir = (String) evt.getNewValue();
@@ -248,26 +265,12 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
             stats.setText(getStats());
             parsers.setText(getParserTimes());
 
-        } else if ("progresso".equals(evt.getPropertyName())) { //$NON-NLS-1$
-            long prevVolume = volume;
-            volume = (Integer) evt.getNewValue();
-            if (taskSize != 0) {
-                progressBar.setValue(volume);
-            }
-
-            Date now = new Date();
-            long interval = (now.getTime() - indexStart.getTime()) / 1000 + 1;
-            rate = (long) volume * 1000000L * 3600L / ((1 << 30) * interval);
-            instantRate = (long) (volume - prevVolume) * 1000000L * 3600L / (1 << 30) + 1;
-
-            updateTaskBar();
-
         } else if ("workers".equals(evt.getPropertyName())) { //$NON-NLS-1$
             workers = (Worker[]) evt.getNewValue();
             lastWorkerTaskItemId = new String[workers.length];
             lastWorkerTime = new long[workers.length];
+            pause.setEnabled(true);
         }
-
     }
 
     private String getItemList() {
@@ -412,7 +415,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         startTable(msg);
         addTitle(msg, 2, Messages.getString("ProgressFrame.Statistics"));
 
-        long time = (System.currentTimeMillis() - indexStart.getTime()) / 1000;
+        long time = (System.currentTimeMillis() - processingStart) / 1000;
         startRow(msg, Messages.getString("ProgressFrame.ProcessingTime"));
         finishRow(msg, time / 3600 + "h " + (time / 60) % 60 + "m " + time % 60 + "s", Align.RIGHT);
 
@@ -647,7 +650,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getSource().equals(pause)) {
+        if (e.getSource().equals(pause) && workers != null) {
             paused = !paused;
             if (paused)
                 pause.setText(Messages.getString("ProgressFrame.Continue")); //$NON-NLS-1$
@@ -674,14 +677,14 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
     /**
      * Show the current progress and state in system task bar.
      */
-    private void updateTaskBar() {
+    private void updateTaskBar(int totalVolume, int processedVolume, boolean discoverEnded) {
         if (Taskbar.isTaskbarSupported()) {
             Taskbar taskbar = Taskbar.getTaskbar();
             taskbar.setWindowProgressState(this,
-                    paused ? State.PAUSED : taskSize == 0 ? State.INDETERMINATE : State.NORMAL);
-            if (taskSize != 0) {
+                    paused ? State.PAUSED : discoverEnded ? State.INDETERMINATE : State.NORMAL);
+            if (discoverEnded) {
                 // Start from 10%, otherwise "paused" in earlier stages would be hard to see
-                int pct = (int) Math.min(100, 10 + Math.round(90.0 * volume / taskSize));
+                int pct = (int) Math.min(100, 10 + Math.round(90.0 * processedVolume / totalVolume));
                 taskbar.setWindowProgressValue(this, pct);
             }
         }
