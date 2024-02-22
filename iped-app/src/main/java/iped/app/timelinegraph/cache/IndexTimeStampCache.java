@@ -89,6 +89,8 @@ public class IndexTimeStampCache implements TimeStampCache {
             if (!cacheExists) {
                 Date d1 = new Date();
                 logger.info("Starting to build time cache of [{}]...", periodClassesToCache.toString());
+                ipedChartsPanel.info("Starting to build time cache of [" + periodClassesToCache.toString() + "] to "
+                        + teGroup.getName() + " event type group");
 
                 ArrayList<EventTimestampCache> cacheLoaders = new ArrayList<EventTimestampCache>();
 
@@ -139,6 +141,9 @@ public class IndexTimeStampCache implements TimeStampCache {
                 }
 
             } else {
+                ipedChartsPanel.info("Starting to load time cache of [" + periodClassesToCache.toString() + "] to "
+                        + teGroup.getName() + " event type group");
+
                 CachePersistence cp = CachePersistence.getInstance();
                 for (Class periodClasses : periodClassesToCache) {
                     newCache.setIndexFile(teGroup, periodClasses.getSimpleName(), cp.getBaseDir());

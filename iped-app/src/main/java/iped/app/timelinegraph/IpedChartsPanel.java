@@ -41,6 +41,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
+import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
 import javax.swing.JComboBox;
@@ -164,7 +165,9 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
     String metadataToBreakChart = null;
     ImageIcon loading = null;
-    JLabel loadingLabel;
+    JPanel loadingPanel = new JPanel();
+    JLabel loadingLabelImage;
+    JLabel loadingLabelText;
 
     IpedSplitPane splitPane;
 
@@ -377,8 +380,15 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         this.addComponentListener(this);
 
         loading = (ImageIcon) new ImageIcon(IconUtil.class.getResource(resPath + "loading.gif"));
-        loadingLabel = new JLabel("", loading, JLabel.CENTER);
-        this.add(loadingLabel);
+        loadingLabelImage = new JLabel("", loading, JLabel.CENTER);
+        loadingLabelText = new JLabel("", JLabel.CENTER);
+        loadingPanel.setAlignmentY(Component.CENTER_ALIGNMENT);
+        loadingPanel.setLayout(new BoxLayout(loadingPanel, BoxLayout.Y_AXIS));
+        loadingLabelImage.setAlignmentX(Component.CENTER_ALIGNMENT);
+        loadingLabelText.setAlignmentX(Component.CENTER_ALIGNMENT);
+        loadingPanel.add(loadingLabelImage, BorderLayout.CENTER);
+        loadingPanel.add(loadingLabelText, BorderLayout.CENTER);
+        this.add(loadingPanel);
 
         domainAxis.setTickMarkPosition(DateTickMarkPosition.START);
         domainAxis.setLowerMargin(0.01);
@@ -420,6 +430,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     }
 
     public HashMap<String, AbstractIntervalXYDataset> createDataSets() {
+
         HashMap<String, AbstractIntervalXYDataset> result = new HashMap<String, AbstractIntervalXYDataset>();
         try {
             Set<String> selectedBookmarks = guiProvider.getSelectedBookmarks();
@@ -482,8 +493,8 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
             IpedChartsPanel self = this;
 
             self.remove(splitPane);
-            self.remove(loadingLabel);
-            self.add(loadingLabel);
+            self.remove(loadingPanel);
+            self.add(loadingPanel);
             self.repaint();
 
             if (swRefresh != null) {
@@ -548,7 +559,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
                             }
 
                             if (chart != null && !isCancelled()) {
-                                self.remove(loadingLabel);
+                                self.remove(loadingPanel);
                                 self.remove(splitPane);
                                 self.add(splitPane);
                                 splitPane.setTopComponent(chartPanel);
@@ -1060,7 +1071,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
     @Override
     public void componentResized(ComponentEvent e) {
-        this.remove(loadingLabel);
+        this.remove(loadingPanel);
         this.remove(splitPane);
         this.add(splitPane);
     }
@@ -1125,5 +1136,9 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
             selectedTeGroups.add(teGroup);
         }
         refreshChart(false);
+    }
+
+    public void info(String info) {
+        loadingLabelText.setText(info);
     }
 }
