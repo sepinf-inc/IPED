@@ -31,4 +31,6 @@ public interface TimeStampCache extends Runnable {
     public TimeEventGroup getTimeEventGroup();
 
     public boolean isFromEventGroup(ArrayList<TimeEventGroup> selectedTeGroups);
+
+    public boolean isLoading();
 }

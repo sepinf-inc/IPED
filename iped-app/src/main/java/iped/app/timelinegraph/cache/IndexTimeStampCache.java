@@ -13,6 +13,7 @@ import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.logging.log4j.LogManager;
@@ -40,6 +41,7 @@ public class IndexTimeStampCache implements TimeStampCache {
     TimeEventGroup teGroup;// default TimeEventGroup
 
     TimeIndexedMap newCache = new TimeIndexedMap();
+    AtomicBoolean loading = new AtomicBoolean(false);
 
     public IndexTimeStampCache(IpedChartsPanel ipedChartsPanel, IMultiSearchResultProvider resultsProvider) {
         this.resultsProvider = resultsProvider;
@@ -57,6 +59,7 @@ public class IndexTimeStampCache implements TimeStampCache {
 
     @Override
     public void run() {
+        loading.set(true);
         int oldPriority = Thread.currentThread().getPriority();
         Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
         try {
@@ -70,6 +73,7 @@ public class IndexTimeStampCache implements TimeStampCache {
             if (periodClassesToCache.size() == 0) {
                 periodClassesToCache.add(ipedChartsPanel.getTimePeriodClass());
             }
+
             for (Class periodClasses : periodClassesToCache) {
                 CachePersistence cp = CachePersistence.getInstance();
                 try {
@@ -155,13 +159,6 @@ public class IndexTimeStampCache implements TimeStampCache {
     }
 
     public boolean hasTimePeriodClassToCache(Class<? extends TimePeriod> timePeriodClass) {
-        try {
-            timeStampCacheSemaphore.acquire();// pause until cache is populated
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } finally {
-            timeStampCacheSemaphore.release();
-        }
         return periodClassesToCache.contains(timePeriodClass);
     }
 
@@ -326,6 +323,10 @@ public class IndexTimeStampCache implements TimeStampCache {
             }
         }
         return false;
+    }
+
+    public boolean isLoading() {
+        return loading.get();
     }
 
 }

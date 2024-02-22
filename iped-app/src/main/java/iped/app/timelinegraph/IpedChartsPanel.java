@@ -193,6 +193,8 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         }
         combinedPlot.setDomainPannable(true);
 
+        selectedTeGroups.add(TimeEventGroup.BASIC_EVENTS);
+
         toolTipGenerator = new XYToolTipGenerator() {
             @Override
             public String generateToolTip(XYDataset dataset, int series, int item) {
@@ -311,7 +313,6 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
                     }
                 });
         tegCombo.setRenderer(cblcRenderer);
-        tegCombo.addActionListener(this);
         tegCombo.setMaximumSize(new Dimension(100, 0));
 
         legendListModel = new DefaultListModel<LegendItemBlockContainer>();
@@ -618,15 +619,6 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
             public void changed(CDockableLocationEvent dockableEvent) {
                 if (!isUpdated && dockableEvent.isShowingChanged()) {
                     refreshChart();
-                    if (!loadingCacheStarted.getAndSet(true)) {
-                        Runnable r = new Runnable() {
-                            @Override
-                            public void run() {
-                                ipedTimelineDatasetManager.startCacheCreation();
-                            }
-                        };
-                        new Thread(r).start();
-                    }
                 }
             }
         };
@@ -1102,11 +1094,14 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         populateEventNames.run();
         this.ipedTimelineDatasetManager = new IpedTimelineDatasetManager(this);
 
+        // updates tegCombo with updated time event groups of the case
+        tegCombo.removeActionListener(this);
         tegCombo.removeAllItems();
         tegCombo.addItem(TimeEventGroup.BASIC_EVENTS);
         for (TimeEventGroup teGroup : ipedTimelineDatasetManager.getTimeEventGroupsFromMetadataPrefix()) {
             tegCombo.addItem(teGroup);
         }
+        tegCombo.addActionListener(this);
 
         this.dataSetUpdated.set(false);
     }

@@ -9,7 +9,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -76,12 +75,18 @@ public class IpedTimelineDatasetManager {
             String splitValue) {
         selectedTimeStampCaches.clear();
         try {
+            for (TimeEventGroup tGroup : selectedTeGroups) {
+                createCaches(tGroup);// assures caches of the group are created/loaded
+            }
+
             for (TimeStampCache timeStampCache : timeStampCaches) {
-                if (timeStampCache.hasTimePeriodClassToCache(timePeriodClass)
-                        && timeStampCache.isFromEventGroup(selectedTeGroups)) {
-                    selectedTimeStampCaches.add(timeStampCache);
+                if (timeStampCache.isFromEventGroup(selectedTeGroups)) {
+                    if (timeStampCache.hasTimePeriodClassToCache(timePeriodClass)) {
+                        selectedTimeStampCaches.add(timeStampCache);
+                    }
                 }
             }
+
             IpedTimelineDataset result = new IpedTimelineDataset(this, ipedChartsPanel.getResultsProvider(),
                     splitValue);
             return result; 
@@ -91,43 +96,33 @@ public class IpedTimelineDatasetManager {
         return null;
     }
 
-    /*
-     * Start the creation of cache for timeline chart
-     */
-    public void startCacheCreation() {
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
+    public void createCaches(TimeEventGroup teGroup) {
         int poolSize = 1;
+
         int totalItems = ipedChartsPanel.getResultsProvider().getIPEDSource().getTotalItems();
         if (getAvailableMemory() > totalItems * 100) {
             poolSize = (int) Math.ceil((float) Runtime.getRuntime().availableProcessors() / 2f);
-        } else {
-            logger.info("Only {}MB of free memory for {} total items. Timeline index creation will occur sequentially. ", Runtime.getRuntime().freeMemory(), totalItems);
         }
+
         ExecutorService threadPool = Executors.newFixedThreadPool(poolSize);
         boolean first = true;
         for (TimeStampCache timeStampCache : timeStampCaches) {
-            Future<?> future = threadPool.submit(timeStampCache);
-            // first loads the Day cache alone to speed up it, then run others in parallel
-            if (first) {
-                first = false;
-                try {
-                    future.get();
-                } catch (InterruptedException | ExecutionException e) {
-                    e.printStackTrace();
+            if (!timeStampCache.isLoading()) {
+                if (timeStampCache.isFromEventGroup(teGroup)) {
+                    Future<?> future = threadPool.submit(timeStampCache);
+                    // first loads the Day cache alone to speed up it, then run others in parallel
+                    if (first) {
+                        first = false;
+                        try {
+                            future.get();
+                        } catch (InterruptedException | ExecutionException e) {
+                            e.printStackTrace();
+                        }
+                    }
                 }
             }
         }
         threadPool.shutdown();
-        try {
-            threadPool.awaitTermination(12, TimeUnit.HOURS);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
     }
 
     public Collection<TimeStampCache> getCaches() {
