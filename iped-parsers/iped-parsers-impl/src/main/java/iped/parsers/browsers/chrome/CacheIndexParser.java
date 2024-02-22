@@ -147,8 +147,8 @@ public class CacheIndexParser extends AbstractParser {
                 if (exception != null) {
                     throw exception;
                 }
-            } catch (IOException e1) {
             } catch (ChromeCacheException e) {
+                throw new TikaException("Exception parsing Chrome cache", e);
             }
         }
     }
