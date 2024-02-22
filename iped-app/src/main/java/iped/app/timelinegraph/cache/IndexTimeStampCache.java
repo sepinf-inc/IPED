@@ -37,7 +37,7 @@ public class IndexTimeStampCache implements TimeStampCache {
     IMultiSearchResultProvider resultsProvider;
     IpedChartsPanel ipedChartsPanel;
     TimeZone timezone;
-    TimeEventGroup teGroup = TimeEventGroup.ALL_EVENTS;//default TimeEventGroup
+    TimeEventGroup teGroup;// default TimeEventGroup
 
     TimeIndexedMap newCache = new TimeIndexedMap();
 
@@ -73,7 +73,7 @@ public class IndexTimeStampCache implements TimeStampCache {
             for (Class periodClasses : periodClassesToCache) {
                 CachePersistance cp = CachePersistance.getInstance();
                 try {
-                    TimeIndexedMap c = cp.loadNewCache(periodClasses);
+                    TimeIndexedMap c = cp.loadNewCache(teGroup, periodClasses);
                     if (c != null) {
                         cacheExists = true;
                     }
@@ -137,7 +137,7 @@ public class IndexTimeStampCache implements TimeStampCache {
             } else {
                 CachePersistance cp = CachePersistance.getInstance();
                 for (Class periodClasses : periodClassesToCache) {
-                    newCache.setIndexFile(periodClasses.getSimpleName(), cp.getBaseDir());
+                    newCache.setIndexFile(teGroup, periodClasses.getSimpleName(), cp.getBaseDir());
                 }
                 newCache.createOrLoadUpperPeriodIndex(this);
             }
@@ -316,6 +316,16 @@ public class IndexTimeStampCache implements TimeStampCache {
     @Override
     public TimeEventGroup getTimeEventGroup() {
         return this.teGroup;
+    }
+
+    @Override
+    public boolean isFromEventGroup(ArrayList<TimeEventGroup> selectedTeGroups) {
+        for (TimeEventGroup teGroup : selectedTeGroups) {
+            if (isFromEventGroup(teGroup)) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

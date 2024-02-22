@@ -41,7 +41,7 @@ public class IpedTimelineDatasetManager {
 
     List<TimeStampCache> timeStampCaches = new ArrayList<>();
     volatile boolean isCacheLoaded = false;
-    TimeStampCache selectedTimeStampCache;
+    ArrayList<TimeStampCache> selectedTimeStampCaches = new ArrayList<TimeStampCache>();
 
     public IpedTimelineDatasetManager(IpedChartsPanel ipedChartsPanel) {
         this.ipedChartsPanel = ipedChartsPanel;
@@ -71,18 +71,20 @@ public class IpedTimelineDatasetManager {
 
     }
 
-    public AbstractIntervalXYDataset getBestDataset(Class<? extends TimePeriod> timePeriodClass, TimeEventGroup teGroup,
+    public AbstractIntervalXYDataset getBestDataset(Class<? extends TimePeriod> timePeriodClass,
+            ArrayList<TimeEventGroup> selectedTeGroups,
             String splitValue) {
+        selectedTimeStampCaches.clear();
         try {
             for (TimeStampCache timeStampCache : timeStampCaches) {
                 if (timeStampCache.hasTimePeriodClassToCache(timePeriodClass)
-                        && timeStampCache.isFromEventGroup(teGroup)) {
-                    selectedTimeStampCache = timeStampCache;
-                    IpedTimelineDataset result = new IpedTimelineDataset(this, ipedChartsPanel.getResultsProvider(), splitValue);
-                    return result; 
+                        && timeStampCache.isFromEventGroup(selectedTeGroups)) {
+                    selectedTimeStampCaches.add(timeStampCache);
                 }
             }
-            return null;
+            IpedTimelineDataset result = new IpedTimelineDataset(this, ipedChartsPanel.getResultsProvider(),
+                    splitValue);
+            return result; 
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -128,8 +130,8 @@ public class IpedTimelineDatasetManager {
         }
     }
 
-    public TimeStampCache getCache() {
-        return selectedTimeStampCache;
+    public Collection<TimeStampCache> getCaches() {
+        return selectedTimeStampCaches;
     }
 
     public IpedChartsPanel getIpedChartsPanel() {
@@ -171,6 +173,7 @@ public class IpedTimelineDatasetManager {
             groupNames = new HashMap<String, TimeEventGroup>();
             String[] cachedEventNames = ipedChartsPanel.getOrdToEventName();
 
+            int ord = 0;
             for (String eventName : cachedEventNames) {
                 String groupName;
                 TimeEventGroup teGroup = TimeEventGroup.BASIC_EVENTS;
@@ -188,9 +191,11 @@ public class IpedTimelineDatasetManager {
                 }
 
 
-                teGroup.addEvent(eventName);
+                teGroup.addEvent(eventName, ord);
+                ord++;
             }
         }
         return groupNames.values();
     }
+
 }

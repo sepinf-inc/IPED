@@ -136,14 +136,25 @@ public class CachePersistance {
         }
     }
 
-    public TimeIndexedMap loadNewCache(Class<? extends TimePeriod> className) throws IOException {
+    public TimeIndexedMap loadNewCache(TimeEventGroup teGroup, Class<? extends TimePeriod> className)
+            throws IOException {
         TimeIndexedMap newCache = null;
 
-        for (File f : baseDir.listFiles()) {
-            if (f.getName().equals(className.getSimpleName())) {
-                newCache = new TimeIndexedMap();
-                newCache.setIndexFile(className.getSimpleName(), baseDir);
-                break;
+        File[] files = baseDir.listFiles();
+        if (files != null) {
+            for (File f : files) {
+                if (f.getName().equals(teGroup.getName())) {
+                    File[] files2 = f.listFiles();
+                    if (files2 != null) {
+                        for (File f2 : files2) {
+                            if (f2.getName().equals(className.getSimpleName())) {
+                                newCache = new TimeIndexedMap();
+                                newCache.setIndexFile(teGroup, className.getSimpleName(), baseDir);
+                                break;
+                            }
+                        }
+                    }
+                }
             }
         }
 

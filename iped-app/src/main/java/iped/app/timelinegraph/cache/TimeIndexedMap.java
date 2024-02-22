@@ -75,9 +75,6 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
         }
     }
 
-    public void setIndexFile(String periodName, File f) throws IOException {
-    }
-
     Date lastStartDate = null;
     Date lastEndDate = null;
 
