@@ -52,7 +52,7 @@ import iped.app.timelinegraph.cache.CombinedIterators;
 import iped.app.timelinegraph.cache.EventTimestampCache;
 import iped.app.timelinegraph.cache.TimeIndexedMap;
 import iped.app.timelinegraph.cache.TimeStampCache;
-import iped.app.timelinegraph.cache.persistance.CachePersistance;
+import iped.app.timelinegraph.cache.persistance.CachePersistence;
 import iped.app.ui.App;
 import iped.app.ui.CaseSearcherFilter;
 import iped.app.ui.Messages;
@@ -1197,7 +1197,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
             t.start();
         }
 
-        CachePersistance cp = new CachePersistance();
+        CachePersistence cp = new CachePersistence();
 
         public void addValue(Count count, TimePeriod t, String eventType) {
             if (min == null || t.getStart().before(min.getStart())) {

@@ -16,8 +16,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jfree.data.time.TimePeriod;
 
-import iped.app.timelinegraph.cache.persistance.CachePersistance;
-import iped.app.timelinegraph.cache.persistance.CachePersistance.CacheFileIterator;
+import iped.app.timelinegraph.cache.persistance.CachePersistence;
+import iped.app.timelinegraph.cache.persistance.CachePersistence.CacheFileIterator;
 import iped.app.timelinegraph.datasets.IpedTimelineDatasetManager;
 
 public class PersistedArrayList implements Set<CacheTimePeriodEntry> {
@@ -176,7 +176,7 @@ public class PersistedArrayList implements Set<CacheTimePeriodEntry> {
 
         final int lflushCount = flushCount++;
 
-        CachePersistance cp = CachePersistance.getInstance();
+        CachePersistence cp = CachePersistence.getInstance();
         Future f = cp.cachePersistanceExecutor.submit(new Runnable() {
             @Override
             public void run() {
@@ -201,7 +201,7 @@ public class PersistedArrayList implements Set<CacheTimePeriodEntry> {
     }
 
     public void removeFlushes() {
-        CachePersistance.getInstance().cachePersistanceExecutor.execute(new Runnable() {
+        CachePersistence.getInstance().cachePersistanceExecutor.execute(new Runnable() {
             @Override
             public void run() {
                 for (File f : flushFiles) {

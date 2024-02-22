@@ -15,7 +15,7 @@ import java.util.TreeMap;
 import org.apache.pdfbox.io.RandomAccessBufferedFileInputStream;
 
 import iped.app.timelinegraph.TimeEventGroup;
-import iped.app.timelinegraph.cache.persistance.CachePersistance;
+import iped.app.timelinegraph.cache.persistance.CachePersistence;
 
 /**
  * @author Patrick Dalla Bernardina
@@ -171,7 +171,7 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
         private String className;
         boolean useCache = false;
         private TimelineCache timelineCache;
-        CachePersistance cp = CachePersistance.getInstance();
+        CachePersistence cp = CachePersistence.getInstance();
         int countRead = 0;// counters to log number of cache reads
         int countCache = 0;// counters to log number of disk reads
         private Reference<CacheTimePeriodEntry>[] lsoftcache;// soft reference cache (a more complete cache but with SoftReferences)
@@ -271,7 +271,7 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
     };
 
     public void createOrLoadUpperPeriodIndex(IndexTimeStampCache indexTimeStampCache) {
-        CachePersistance cp = CachePersistance.getInstance();
+        CachePersistence cp = CachePersistence.getInstance();
         if (upperPeriodIndex.size() == 0) {
             TimelineCache timelineCache = TimelineCache.get(indexTimeStampCache.getTimeEventGroup());
             for (Iterator iterator = indexTimeStampCache.getPeriodClassesToCache().iterator(); iterator.hasNext();) {

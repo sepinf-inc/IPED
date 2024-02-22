@@ -22,7 +22,7 @@ import org.roaringbitmap.RoaringBitmap;
 
 import iped.app.timelinegraph.IpedChartsPanel;
 import iped.app.timelinegraph.TimeEventGroup;
-import iped.app.timelinegraph.cache.persistance.CachePersistance;
+import iped.app.timelinegraph.cache.persistance.CachePersistence;
 import iped.engine.core.Manager;
 import iped.viewers.api.IMultiSearchResultProvider;
 
@@ -71,7 +71,7 @@ public class IndexTimeStampCache implements TimeStampCache {
                 periodClassesToCache.add(ipedChartsPanel.getTimePeriodClass());
             }
             for (Class periodClasses : periodClassesToCache) {
-                CachePersistance cp = CachePersistance.getInstance();
+                CachePersistence cp = CachePersistence.getInstance();
                 try {
                     TimeIndexedMap c = cp.loadNewCache(teGroup, periodClasses);
                     if (c != null) {
@@ -111,7 +111,7 @@ public class IndexTimeStampCache implements TimeStampCache {
 
                         if (Manager.getInstance() != null && Manager.getInstance().isProcessingFinished()) {
                         }
-                        CachePersistance cp = CachePersistance.getInstance();
+                        CachePersistence cp = CachePersistence.getInstance();
                         cp.saveNewCache(this);
 
                         cacheLoaders.clear();
@@ -135,7 +135,7 @@ public class IndexTimeStampCache implements TimeStampCache {
                 }
 
             } else {
-                CachePersistance cp = CachePersistance.getInstance();
+                CachePersistence cp = CachePersistence.getInstance();
                 for (Class periodClasses : periodClassesToCache) {
                     newCache.setIndexFile(teGroup, periodClasses.getSimpleName(), cp.getBaseDir());
                 }

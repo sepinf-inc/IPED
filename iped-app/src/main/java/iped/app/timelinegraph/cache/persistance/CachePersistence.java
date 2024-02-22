@@ -44,10 +44,10 @@ import iped.app.ui.App;
 import iped.utils.IOUtil;
 
 /*
- * Class implementing method for timeline chart cache persistance
+ * Class implementing method for timeline chart cache persistence
  */
 
-public class CachePersistance {
+public class CachePersistence {
     File baseDir;
 
     HashMap<String, String> pathsToCheck = new HashMap<String, String>();
@@ -60,17 +60,17 @@ public class CachePersistance {
 
     static private boolean bitstreamSerializeAsDefault = true;
 
-    static CachePersistance singleton = new CachePersistance();
+    static CachePersistence singleton = new CachePersistence();
 
     static final String TIMECACHE_BASE_FOLDER = "timecachegroups";
 
-    public static CachePersistance getInstance() {
+    public static CachePersistence getInstance() {
         return singleton;
     }
 
     static public ExecutorService cachePersistanceExecutor = Executors.newFixedThreadPool(1);
 
-    public CachePersistance() {
+    public CachePersistence() {
         File startDir;
         if (App.get().appCase.getAtomicSources().size() == 1) {
             // single case
