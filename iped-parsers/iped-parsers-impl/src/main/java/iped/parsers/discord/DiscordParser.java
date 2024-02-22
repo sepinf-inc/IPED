@@ -159,7 +159,7 @@ public class DiscordParser extends AbstractParser {
                 discordRoot = mapper.readValue(is, new TypeReference<List<DiscordRoot>>() {
                 });
             } catch (JsonProcessingException ex) {
-                LOGGER.error("Invalid JSON inside cache entry " + item.getPath());
+                LOGGER.warn("Invalid JSON inside cache entry " + item.getPath());
                 ex.printStackTrace();
             }
 
@@ -305,7 +305,7 @@ public class DiscordParser extends AbstractParser {
                 }
             }
         } catch (IOException e) {
-            LOGGER.error("Error searching for discord account:" + e.getClass().getCanonicalName());
+            LOGGER.warn("Error searching for discord account:" + e.getClass().getCanonicalName());
         }
         return me;
     }
