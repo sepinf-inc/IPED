@@ -233,6 +233,7 @@ public class Index {
                         ce = new CacheEntry(naIS, dataFiles, externalFiles);
                         lst.add(ce);
                     } catch (Exception e) {
+                        e.printStackTrace();
                         break;// avoid potential infinite loop
                     }
                 }
