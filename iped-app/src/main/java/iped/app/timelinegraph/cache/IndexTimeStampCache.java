@@ -24,6 +24,7 @@ import org.roaringbitmap.RoaringBitmap;
 import iped.app.timelinegraph.IpedChartsPanel;
 import iped.app.timelinegraph.TimeEventGroup;
 import iped.app.timelinegraph.cache.persistance.CachePersistence;
+import iped.app.ui.Messages;
 import iped.engine.core.Manager;
 import iped.viewers.api.IMultiSearchResultProvider;
 
@@ -89,8 +90,8 @@ public class IndexTimeStampCache implements TimeStampCache {
             if (!cacheExists) {
                 Date d1 = new Date();
                 logger.info("Starting to build time cache of [{}]...", periodClassesToCache.toString());
-                ipedChartsPanel.info("Starting to build time cache of [" + periodClassesToCache.toString() + "] to "
-                        + teGroup.getName() + " event type group");
+                ipedChartsPanel.info(Messages.get("IndexTimeStampCache.buildingMessage"),
+                        periodClassesToCache.toString(), teGroup.toString());
 
                 ArrayList<EventTimestampCache> cacheLoaders = new ArrayList<EventTimestampCache>();
 
@@ -141,8 +142,8 @@ public class IndexTimeStampCache implements TimeStampCache {
                 }
 
             } else {
-                ipedChartsPanel.info("Starting to load time cache of [" + periodClassesToCache.toString() + "] to "
-                        + teGroup.getName() + " event type group");
+                ipedChartsPanel.info(Messages.get("IndexTimeStampCache.loadingMessage"),
+                        periodClassesToCache.toString(), teGroup.toString());
 
                 CachePersistence cp = CachePersistence.getInstance();
                 for (Class periodClasses : periodClassesToCache) {

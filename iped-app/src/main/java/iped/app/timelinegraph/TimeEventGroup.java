@@ -5,6 +5,8 @@ import java.util.HashSet;
 
 import org.roaringbitmap.RoaringBitmap;
 
+import iped.app.ui.Messages;
+
 /**
  * Class that represents a collection of event to use as a filter to graph
  * events viewing. Also, the cache will be managed/persisted based on this event
@@ -14,7 +16,8 @@ import org.roaringbitmap.RoaringBitmap;
  */
 public class TimeEventGroup {
     public static final TimeEventGroup ALL_EVENTS = new TimeEventGroup();
-    public static final TimeEventGroup BASIC_EVENTS = new TimeEventGroup("BasicProperties");
+    public static final TimeEventGroup BASIC_EVENTS = new TimeEventGroup(
+            Messages.get("TimeEventGroup.BasicProperties"));
 
     HashSet eventNames = new HashSet<String>();
     RoaringBitmap eventOrds = new RoaringBitmap();

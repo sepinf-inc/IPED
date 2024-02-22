@@ -1141,7 +1141,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         refreshChart(false);
     }
 
-    public void info(String info) {
-        loadingLabelText.setText(info);
+    public void info(String info, String period, String groupname) {
+        loadingLabelText.setText(info.replaceFirst("\\{\\}", period).replaceFirst("\\{\\}", groupname));
     }
 }
