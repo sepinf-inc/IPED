@@ -7,12 +7,14 @@ import java.awt.event.ActionListener;
 import java.util.function.Predicate;
 
 import javax.swing.JCheckBox;
+import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
 
 public class CheckboxListCellRenderer<E> extends JPanel implements ListCellRenderer<E> {
     JCheckBox enabledCheckBox = new JCheckBox();
+    JLabel selectedValues = new JLabel();
     Predicate isEnabled;
     int maxStringWidth = 0;
     boolean indexedPredicate = false;
@@ -32,6 +34,30 @@ public class CheckboxListCellRenderer<E> extends JPanel implements ListCellRende
     @Override
     public Component getListCellRendererComponent(JList<? extends E> list, E value, int index, boolean isSelected,
             boolean cellHasFocus) {
+        if (index == -1) {
+
+            StringBuffer sb = new StringBuffer();
+            sb.append(" ");
+            for (int i = 0; i < list.getModel().getSize(); i++) {
+                Object lvalue = list.getModel().getElementAt(i);
+                boolean include = false;
+                if (indexedPredicate) {
+                    if (isEnabled.test(i)) {
+                        include = true;
+                    }
+                } else {
+                    if (isEnabled.test(lvalue)) {
+                        include = true;
+                    }
+                }
+                if (include) {
+                    sb.append(lvalue);
+                    sb.append(",");
+                }
+            }
+            selectedValues.setText(sb.toString());
+            return selectedValues;
+        }
         if (indexedPredicate) {
             enabledCheckBox.setSelected(isEnabled.test(index));
         } else {

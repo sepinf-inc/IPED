@@ -1,5 +1,6 @@
 package iped.app.timelinegraph;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -154,6 +155,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     IpedChartPanel chartPanel = null;
     JList legendList = new JList();
     JScrollPane listScroller = new JScrollPane(legendList);
+    JPanel legendPane = new JPanel();
     JComboBox<TimeEventGroup> tegCombo = new JComboBox<>();
 
     IpedStackedXYBarRenderer renderer = null;
@@ -309,8 +311,8 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
                     }
                 });
         tegCombo.setRenderer(cblcRenderer);
-        chartPanel.add(tegCombo);
         tegCombo.addActionListener(this);
+        tegCombo.setMaximumSize(new Dimension(100, 0));
 
         legendListModel = new DefaultListModel<LegendItemBlockContainer>();
         legendList.setModel(legendListModel);
@@ -362,7 +364,12 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         ttm.setEnabled(true);
 
         splitPane.setTopComponent(chartPanel);
-        splitPane.setBottomComponent(listScroller);
+
+        legendPane.setPreferredSize(new Dimension(Integer.MAX_VALUE, 80));
+        legendPane.setLayout(new BorderLayout());
+        legendPane.add(tegCombo, BorderLayout.NORTH);
+        legendPane.add(listScroller, BorderLayout.CENTER);
+        splitPane.setBottomComponent(legendPane);
         splitPane.setVisible(false);
 
         chartPanel.setPopupMenu(null);
@@ -544,7 +551,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
                                 self.remove(splitPane);
                                 self.add(splitPane);
                                 splitPane.setTopComponent(chartPanel);
-                                splitPane.setBottomComponent(listScroller);
+                                splitPane.setBottomComponent(legendPane);
                                 splitPane.setVisible(true);
 
                                 // hide hidden events
