@@ -42,6 +42,7 @@ import java.util.function.Predicate;
 
 import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -99,7 +100,6 @@ import iped.app.ui.App;
 import iped.app.ui.ClearFilterListener;
 import iped.app.ui.ColumnsManager;
 import iped.app.ui.controls.CheckboxListCellRenderer;
-import iped.app.ui.controls.JComboCheckBox;
 import iped.app.ui.themes.ThemeManager;
 import iped.data.IItemId;
 import iped.engine.search.QueryBuilder;
@@ -154,7 +154,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     IpedChartPanel chartPanel = null;
     JList legendList = new JList();
     JScrollPane listScroller = new JScrollPane(legendList);
-    JComboCheckBox<TimeEventGroup> tegCombo = new JComboCheckBox<>();
+    JComboBox<TimeEventGroup> tegCombo = new JComboBox<>();
 
     IpedStackedXYBarRenderer renderer = null;
     XYLineAndShapeRenderer highlightsRenderer = new XYLineAndShapeRenderer();
