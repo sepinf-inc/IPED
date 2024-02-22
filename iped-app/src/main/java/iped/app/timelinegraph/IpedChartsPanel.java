@@ -1135,6 +1135,9 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         } else {
             selectedTeGroups.add(teGroup);
         }
+        if (selectedTeGroups.isEmpty()) {
+            selectedTeGroups.add(TimeEventGroup.BASIC_EVENTS);
+        }
         refreshChart(false);
     }
 
