@@ -62,6 +62,8 @@ public class CachePersistance {
 
     static CachePersistance singleton = new CachePersistance();
 
+    static final String TIMECACHE_BASE_FOLDER = "timecachegroups";
+
     public static CachePersistance getInstance() {
         return singleton;
     }
@@ -78,7 +80,7 @@ public class CachePersistance {
             startDir = new File(App.get().casesPathFile.getParentFile(), "iped-multicases");
         }
 
-        startDir = new File(startDir, "timecache");
+        startDir = new File(startDir, TIMECACHE_BASE_FOLDER);
         startDir.mkdirs();
 
         bitstreamSerializeFile = new File(startDir, "bitstreamSerialize");
@@ -101,7 +103,7 @@ public class CachePersistance {
             baseDir = new File(startDir, uuid);
             if (!baseDir.exists() && !baseDir.mkdirs()) {
                 // cache doesn't exist and folder is not writable, use user.home for caches
-                startDir = new File(System.getProperty("user.home"), ".iped/timecache");
+                startDir = new File(System.getProperty("user.home"), ".iped/" + TIMECACHE_BASE_FOLDER);
                 baseDir = new File(startDir, uuid);
                 baseDir.mkdirs();
             }
