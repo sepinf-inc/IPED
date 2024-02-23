@@ -159,8 +159,8 @@ public class DiscordParser extends AbstractParser {
                 discordRoot = mapper.readValue(is, new TypeReference<List<DiscordRoot>>() {
                 });
             } catch (JsonProcessingException ex) {
-                LOGGER.warn("Invalid JSON inside cache entry " + item.getPath());
-                ex.printStackTrace();
+                LOGGER.warn("Invalid JSON inside cache entry " + item.getPath(), ex);
+                discordRoot = Collections.emptyList();
             }
 
             HashMap<String, byte[]> avatarCache = new HashMap<>();
