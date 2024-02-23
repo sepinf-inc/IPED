@@ -330,8 +330,14 @@ public class LeappBridgeTask extends AbstractPythonTask {
 
     @Override
     public void process(IItem evidence) throws Exception {
+        String realName = evidence.getName();
+        if (evidence.isRoot()) {
+            // if evidence is root, its realname can be changed via -dname parameter, so we
+            // need to get it from other source.
+            realName = evidence.getDataSource().getSourceFile().getName();
+        }
         // first rule to check a supposed android Dump folder or android backup
-        if (dumpStartFolderNames.contains(evidence.getName())
+        if (dumpStartFolderNames.contains(realName)
                 || AndroidBackupParser.SUPPORTED_TYPES.contains(evidence.getMediaType())) {
             // if true, creates a subitem to represent the ALeapp report
             Item subItem = (Item) evidence.createChildItem();
