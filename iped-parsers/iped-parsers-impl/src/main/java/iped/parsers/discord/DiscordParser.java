@@ -200,7 +200,8 @@ public class DiscordParser extends AbstractParser {
                 }
             }
 
-            String chatName = "DiscordChat id(" + discordRoot.get(0).getId() + ")";
+            String id = !discordRoot.isEmpty() ? discordRoot.get(0).getId() : "unknown";
+            String chatName = "DiscordChat ID (" + id + ")";
 
             DiscordAuthor me = extractAccount(searcher, commonQuery, mapper, avatarCache, handler, extractor);
 
