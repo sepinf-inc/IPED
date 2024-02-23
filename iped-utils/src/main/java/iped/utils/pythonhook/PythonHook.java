@@ -9,6 +9,12 @@ import java.util.Map.Entry;
 
 import jep.Jep;
 
+/**
+ * Class used to help python method and class override
+ * 
+ * @author Patrick Dalla Bernardina (patrick.dalla@gmail.com)
+ *
+ */
 public class PythonHook {
 
     private Jep jep;
@@ -19,6 +25,9 @@ public class PythonHook {
 
     static HashMap<Jep, PythonHook> installedHooks = new HashMap<Jep, PythonHook>();
 
+    /**
+     * Installs hook on specified Jep instance
+     */
     public static PythonHook installHook(Jep jep) {
         PythonHook result = installedHooks.get(jep);
         if (jep == null) {
