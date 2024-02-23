@@ -26,7 +26,6 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.sax.XHTMLContentHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
@@ -205,6 +204,10 @@ public class DiscordParser extends AbstractParser {
 
             DiscordAuthor me = extractAccount(searcher, commonQuery, mapper, avatarCache, handler, extractor);
 
+            if (discordRoot.isEmpty()) {
+                return;
+            }
+
             Metadata chatmetadata = new Metadata();
 
             chatmetadata.set("URL", item.getName());
@@ -214,7 +217,6 @@ public class DiscordParser extends AbstractParser {
             for (DiscordRoot dr : discordRoot) {
                 for (DiscordSticker sticker : dr.getStickers()) {
                     try {
-                        long greater = 0;
                         List<IItemReader> stickerItems = searcher.search(commonQuery + " AND "
                                 + CacheIndexParser.CACHE_URL.replace(":", "\\:") + ":\"" + sticker.getId() + ".json\""
                                 + " AND " + CacheIndexParser.CACHE_URL.replace(":", "\\:") + ":\"discord\"");
@@ -260,7 +262,6 @@ public class DiscordParser extends AbstractParser {
             // Sort messages by timestamp in ascending order
             Collections.sort(discordRoot);
 
-            XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
             byte[] relatorio = new DiscordHTMLReport(me).convertToHTML(discordRoot, searcher);
             extractor.parseEmbedded(new ByteArrayInputStream(relatorio), handler, chatmetadata, false);
 
