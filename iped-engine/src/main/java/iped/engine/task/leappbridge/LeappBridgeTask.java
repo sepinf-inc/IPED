@@ -41,7 +41,6 @@ import iped.engine.task.ExportFileTask;
 import iped.engine.task.index.IndexItem;
 import iped.engine.util.ParentInfo;
 import iped.parsers.android.backup.AndroidBackupParser;
-import iped.parsers.python.PythonParser;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.SearchResult;
@@ -63,7 +62,7 @@ public class LeappBridgeTask extends AbstractPythonTask {
     public static AtomicInteger pluginTimeCounter = new AtomicInteger(0);
     public static AtomicInteger pluginSearchCounter = new AtomicInteger(0);
 
-    public static Logger logger = LoggerFactory.getLogger(LeappBridgeTask.class);
+    protected static Logger logger = LoggerFactory.getLogger(LeappBridgeTask.class);
 
     public static MediaType DEVICEDETAILS = MediaType.application("x-leapp-devicedetails");
 
@@ -90,8 +89,6 @@ public class LeappBridgeTask extends AbstractPythonTask {
 
     HashMap<String, Item> mappedEvidences = new HashMap<String, Item>();
 
-    static HashMap<Integer, StringBuffer> devInfoBuffers = new HashMap<Integer, StringBuffer>();
-
     public LeappBridgeTask() {
     }
 
@@ -112,41 +109,6 @@ public class LeappBridgeTask extends AbstractPythonTask {
     static private File tmp;
 
     static private int START_QUEUE_PRIORITY = 2;
-
-    public static void logfunc(String message) {
-        logger.info(message);
-    }
-
-    public static void logdevinfo(String message) {
-        Jep jep = PythonParser.getJep();
-        Item evidence = (Item) jep.getValue("evidence");
-        int leappRepEvidence = evidence.getParentId();
-        StringBuffer stringBuffer;
-        synchronized (devInfoBuffers) {
-            stringBuffer = devInfoBuffers.get(leappRepEvidence);
-            if (stringBuffer == null) {
-                stringBuffer = new StringBuffer();
-                devInfoBuffers.put(leappRepEvidence, stringBuffer);
-            }
-        }
-        synchronized (stringBuffer) {
-            stringBuffer.append(message + "<br/>");
-        }
-    }
-
-    public static void timeline(String reportFolder, String tlactivity, Collection datalist, Collection data_headers) {
-
-    }
-
-    public static String media_to_html(String mediaPath, Collection filesFound, String report_folder) {
-        for (Object file : filesFound) {
-            if (file.toString().contains(mediaPath)) {
-                String resultado = "<a href=\"" + file.toString() + "\"></a>";
-                return resultado;
-            }
-        }
-        return "";
-    }
 
     public static Object open(Collection args, Map kargs) {
         Iterator iargs = args.iterator();
@@ -175,17 +137,8 @@ public class LeappBridgeTask extends AbstractPythonTask {
             jep.eval("sys.path.append('" + preparePythonLiteralPath(artifactsPath.getCanonicalPath()) + "')");
             jep.eval("from geopy.geocoders import Nominatim");
 
+            Ilapfuncs.install(jep);
             PythonHook pt = PythonHook.installHook(jep);
-            //pt.overrideFileOpen(LeappBridgeTask.class.getMethod("open", Collection.class, Map.class));
-            pt.overrideModuleFunction("scripts.ilapfuncs", "logfunc",
-                    LeappBridgeTask.class.getMethod("logfunc", String.class));
-            pt.overrideModuleFunction("scripts.ilapfuncs", "timeline",
-                    LeappBridgeTask.class.getMethod("timeline", String.class, String.class, Collection.class,
-                            Collection.class));
-            pt.overrideModuleFunction("scripts.ilapfuncs", "media_to_html", LeappBridgeTask.class
-                    .getMethod("media_to_html", String.class, Collection.class, String.class));
-            pt.overrideModuleFunction("scripts.ilapfuncs", "logdevinfo",
-                    LeappBridgeTask.class.getMethod("logdevinfo", String.class));
             pt.wrapsClass("scripts.artifact_report", "ArtifactHtmlReport", ArtifactJavaReport.class);
 
             pluginsManager.init(jep, getAleappScriptsDir());
@@ -456,7 +409,7 @@ public class LeappBridgeTask extends AbstractPythonTask {
          * anyway in a single DeviceInfo.html.
          */
         Integer leappRepEvidence = evidence.getParentId();
-        StringBuffer stringBuffer = devInfoBuffers.get(leappRepEvidence);
+        StringBuffer stringBuffer = Ilapfuncs.getDeviceInfoBuffer(leappRepEvidence);
 
         if (stringBuffer != null) {
             try {
