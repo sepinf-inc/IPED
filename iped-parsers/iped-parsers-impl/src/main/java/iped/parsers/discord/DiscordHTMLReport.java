@@ -84,7 +84,6 @@ public class DiscordHTMLReport {
             xHandler.startElement("head"); //$NON-NLS-1$
             xHandler.startElement("style"); //$NON-NLS-1$
             xHandler.characters(CSS); // $NON-NLS-1$
-            xHandler.characters(iped.parsers.whatsapp.Util.readResourceAsString("css/whatsapp.css"));
             xHandler.endElement("style"); //$NON-NLS-1$
             xHandler.startElement(
                     "script src=\"https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js\"");
@@ -391,7 +390,6 @@ public class DiscordHTMLReport {
             out.println("<HEAD>");
             out.println(" <meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n");
             out.println("<style>" + CSS + "</style>");
-            out.println("<style>" + iped.parsers.whatsapp.Util.readResourceAsString("css/whatsapp.css") + "</style>");
             out.println("<script>"); //$NON-NLS-1$
             out.println(iped.parsers.whatsapp.Util.readResourceAsString("js/whatsapp.js"));
             out.println("</script>"); //$NON-NLS-1$
