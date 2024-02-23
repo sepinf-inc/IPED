@@ -89,8 +89,7 @@ public class PDFCarver extends DefaultCarver {
             is = parentEvidence.getSeekableInputStream();
             long offset = 0;
             is.seek(hit.getOffset() + 10);
-            int i = 0, off = 0;
-            i = is.read();
+            int i = is.read();
             while (i != -1 && i >= 48 && i <= 57) {
                 offset = offset * 10 + (i - 48);
                 i = is.read();
