@@ -53,7 +53,7 @@ function process(e){
 		}
 	}
 	
-	if(/.*(-delta|-flat|-(f|s)[0-9]{3})\.vmdk/i.test(e.getName())){
+	if(/.*(-delta|-flat|-(f|s)[0-9]{3})\.vmdk$/i.test(e.getName())){
 	    e.setMediaTypeStr("application/x-vmdk-data");
 	}
 	
@@ -206,6 +206,7 @@ function process(e){
 		(path.indexOf("dropbox/") !== -1)||
 		(path.indexOf("com.getdropbox") !== -1)||
 		(path.indexOf("onedrive/") !== -1)||
+		(path.indexOf("onedrive - ") !== -1)||   //onedrive - <OrganizationName> in the case of OneDrive for Business
 		(path.indexOf("skydrive/") !== -1)||
 		(path.indexOf("google drive/") !== -1)||
 		(path.indexOf("/my drive/") !== -1)||
