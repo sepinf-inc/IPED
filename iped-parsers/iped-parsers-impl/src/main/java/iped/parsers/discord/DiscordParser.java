@@ -209,10 +209,11 @@ public class DiscordParser extends AbstractParser {
             }
 
             Metadata chatmetadata = new Metadata();
-
+            int chatVirtualId = 0;
             chatmetadata.set("URL", item.getName());
             chatmetadata.set(TikaCoreProperties.TITLE, chatName);
             chatmetadata.set(StandardParser.INDEXER_CONTENT_TYPE, CHAT_MIME_TYPE_HTML);
+            chatmetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, Integer.toString(chatVirtualId));
 
             for (DiscordRoot dr : discordRoot) {
                 for (DiscordSticker sticker : dr.getStickers()) {
@@ -265,7 +266,7 @@ public class DiscordParser extends AbstractParser {
             byte[] relatorio = new DiscordHTMLReport(me).convertToHTML(discordRoot, searcher);
             extractor.parseEmbedded(new ByteArrayInputStream(relatorio), handler, chatmetadata, false);
 
-            extractMessages(chatName, discordRoot, handler, extractor, 0);
+            extractMessages(chatName, discordRoot, handler, extractor, chatVirtualId);
         }
     }
 
