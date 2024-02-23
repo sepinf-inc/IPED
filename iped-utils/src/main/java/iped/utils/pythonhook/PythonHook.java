@@ -30,7 +30,7 @@ public class PythonHook {
      */
     public static PythonHook installHook(Jep jep) {
         PythonHook result = installedHooks.get(jep);
-        if (jep == null) {
+        if (result == null) {
             result = new PythonHook(jep);
             installedHooks.put(jep, result);
         }
