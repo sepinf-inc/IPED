@@ -175,7 +175,7 @@ public class LeappBridgeTask extends AbstractPythonTask {
             jep.eval("sys.path.append('" + preparePythonLiteralPath(artifactsPath.getCanonicalPath()) + "')");
             jep.eval("from geopy.geocoders import Nominatim");
 
-            PythonHook pt = new PythonHook(jep);
+            PythonHook pt = PythonHook.installHook(jep);
             //pt.overrideFileOpen(LeappBridgeTask.class.getMethod("open", Collection.class, Map.class));
             pt.overrideModuleFunction("scripts.ilapfuncs", "logfunc",
                     LeappBridgeTask.class.getMethod("logfunc", String.class));

@@ -17,7 +17,18 @@ public class PythonHook {
     HashMap<String, List<String>> appends = new HashMap<String, List<String>>();
     HashSet<String> modulesToClear = new HashSet<String>();
 
-    public PythonHook(Jep jep) {
+    static HashMap<Jep, PythonHook> installedHooks = new HashMap<Jep, PythonHook>();
+
+    public static PythonHook installHook(Jep jep) {
+        PythonHook result = installedHooks.get(jep);
+        if (jep == null) {
+            result = new PythonHook(jep);
+            installedHooks.put(jep, result);
+        }
+        return result;
+    }
+
+    private PythonHook(Jep jep) {
         this.jep = jep;
         installHook();
     }
