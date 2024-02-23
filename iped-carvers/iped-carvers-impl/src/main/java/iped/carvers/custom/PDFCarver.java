@@ -19,7 +19,7 @@ public class PDFCarver extends DefaultCarver {
     public void notifyHit(IItem parentEvidence, Hit hit) throws IOException {
         ArrayDeque<Hit> headersWaitingFooters = super.headersWaitingFooters;
         if (hit.getSignature().isHeader()) {
-            // if previously occured a footer hit and a new header hit is found, carve from
+            // if previously occurred a footer hit and a new header hit is found, carve from
             // last footer
             if (lastFooter != null) {
                 carveFromLastFooter(parentEvidence);
@@ -39,9 +39,8 @@ public class PDFCarver extends DefaultCarver {
             } else {
                 Hit lastHead = headersWaitingFooters.peekLast();
                 if (lastHead != null) {
-                    if (lastXREF.getOffset() - lastHead.getOffset() == lastXREFOffset) { // checks consistency of
-                                                                                         // crossref offset information
-                                                                                         // against header offset
+                    // checks consistency of crossref offset information against header offset
+                    if (lastXREF.getOffset() - lastHead.getOffset() == lastXREFOffset) {
                         lastFooter = hit;
                     } else {
                         // probably invalid footer as crossref offset info is inconsistent
@@ -130,5 +129,4 @@ public class PDFCarver extends DefaultCarver {
         }
         super.notifyEnd(parentEvidence);
     }
-
 }
