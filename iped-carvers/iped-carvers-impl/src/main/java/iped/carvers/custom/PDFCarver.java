@@ -7,13 +7,12 @@ import iped.carvers.api.Hit;
 import iped.carvers.standard.DefaultCarver;
 import iped.data.IItem;
 import iped.io.SeekableInputStream;
-import iped.utils.IOUtil;
 
 public class PDFCarver extends DefaultCarver {
-    Hit lastFooter = null;
+    private Hit lastFooter;
     private Hit lastXREF;
     private long lastXREFOffset = -1;
-    boolean lastHitWasStartXRef = false;
+    private boolean lastHitWasStartXRef;
 
     @Override
     public void notifyHit(IItem parentEvidence, Hit hit) throws IOException {
@@ -21,21 +20,15 @@ public class PDFCarver extends DefaultCarver {
         if (hit.getSignature().isHeader()) {
             // if previously occurred a footer hit and a new header hit is found, carve from
             // last footer
-            if (lastFooter != null) {
-                carveFromLastFooter(parentEvidence);
-            }
-            resetState();
+            carveFromLastFooter(parentEvidence);
             headersWaitingFooters.addLast(hit);
         }
 
         if (hit.getSignature().isFooter()) {
             if (lastXREF == null) {
                 // footer without corresponding crossref => invalid footer
-                // so try to carve from last valid footer if not null
-                if (lastFooter != null) {
-                    carveFromLastFooter(parentEvidence);
-                }
-                resetState();
+                // so try to carve from last valid footer
+                carveFromLastFooter(parentEvidence);
             } else {
                 Hit lastHead = headersWaitingFooters.peekLast();
                 if (lastHead != null) {
@@ -44,14 +37,9 @@ public class PDFCarver extends DefaultCarver {
                         lastFooter = hit;
                     } else {
                         // probably invalid footer as crossref offset info is inconsistent
-                        // so try to carve from last valid footer if not null
-                        if (lastFooter != null) {
-                            carveFromLastFooter(parentEvidence);
-                        }
-                        resetState();
+                        // so try to carve from last valid footer
+                        carveFromLastFooter(parentEvidence);
                     }
-                } else {
-                    // try to carve PDF without footer?
                 }
             }
         }
@@ -62,7 +50,6 @@ public class PDFCarver extends DefaultCarver {
 
         if (isStartXrefHit(hit)) {
             lastXREFOffset = readXREFOffset(parentEvidence, hit);
-
             lastHitWasStartXRef = true;
         } else {
             lastHitWasStartXRef = false;
@@ -76,6 +63,7 @@ public class PDFCarver extends DefaultCarver {
         lastFooter = null;
         lastXREF = null;
         lastXREFOffset = -1;
+        lastHitWasStartXRef = false;
     }
 
     private boolean isStartXrefHit(Hit hit) {
@@ -83,24 +71,18 @@ public class PDFCarver extends DefaultCarver {
     }
 
     private long readXREFOffset(IItem parentEvidence, Hit hit) {
-        SeekableInputStream is = null;
-        try {
-            is = parentEvidence.getSeekableInputStream();
+        try (SeekableInputStream is = parentEvidence.getSeekableInputStream()) {
             long offset = 0;
             is.seek(hit.getOffset() + 10);
             int i = is.read();
-            while (i != -1 && i >= 48 && i <= 57) {
-                offset = offset * 10 + (i - 48);
+            while (i != -1 && i >= '0' && i <= '9') {
+                offset = offset * 10 + (i - '0');
                 i = is.read();
             }
-
             return offset;
 
         } catch (Exception e) {
             e.printStackTrace();
-
-        } finally {
-            IOUtil.closeQuietly(is);
         }
 
         return -1;
@@ -111,22 +93,24 @@ public class PDFCarver extends DefaultCarver {
     }
 
     private void carveFromLastFooter(IItem parentEvidence) throws IOException {
-        Hit head, firstHead = null;
-        while ((head = headersWaitingFooters.peekLast()) != null
-                && lastFooter.getOffset() - head.getOffset() <= head.getSignature().getCarverType().getMaxLength()) {
-            firstHead = headersWaitingFooters.pollLast();
+        if (lastFooter != null) {
+            Hit head, firstHead = null;
+            while ((head = headersWaitingFooters.peekLast()) != null && lastFooter.getOffset()
+                    - head.getOffset() <= head.getSignature().getCarverType().getMaxLength()) {
+                firstHead = headersWaitingFooters.pollLast();
+            }
+            if (firstHead != null) {
+                headersWaitingFooters.addLast(firstHead);
+                carveFromFooter(parentEvidence, lastFooter);
+            }
+            lastFooter = null;
         }
-        if (firstHead != null) {
-            headersWaitingFooters.addLast(firstHead);
-            carveFromFooter(parentEvidence, lastFooter);
-        }
-        lastFooter = null;
+        resetState();
     }
 
+    @Override
     public void notifyEnd(IItem parentEvidence) throws IOException {
-        if (lastFooter != null) {
-            carveFromLastFooter(parentEvidence);
-        }
+        carveFromLastFooter(parentEvidence);
         super.notifyEnd(parentEvidence);
     }
 }
