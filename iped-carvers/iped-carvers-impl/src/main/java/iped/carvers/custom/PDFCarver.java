@@ -60,7 +60,7 @@ public class PDFCarver extends DefaultCarver {
     }
 
     //carves from each header hit in headersWaitingFooters
-    private void carveRemainingPDFHeaders(IItem parentEvidence){
+    private void carveRemainingPDFHeaders(IItem parentEvidence)throws IOException{
         Hit header = headersWaitingFooters.pollLast();
         while(header!=null){
             CarverType typeCarved = header.getSignature().getCarverType();
