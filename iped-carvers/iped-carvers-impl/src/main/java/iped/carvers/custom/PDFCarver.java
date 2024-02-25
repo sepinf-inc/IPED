@@ -5,6 +5,7 @@ import java.util.ArrayDeque;
 
 import iped.carvers.api.Hit;
 import iped.carvers.standard.DefaultCarver;
+import iped.carvers.api.CarverType;
 import iped.data.IItem;
 import iped.io.SeekableInputStream;
 
