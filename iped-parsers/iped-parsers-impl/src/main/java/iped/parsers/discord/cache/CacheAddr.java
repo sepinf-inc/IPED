@@ -18,7 +18,7 @@ public class CacheAddr {
 
     private long address;
     private boolean initialized;
-    
+
     static public final int DATA_STREAM_FILE = 0;
     static public final int BLOCK_36 = 1;
     static public final int BLOCK_256 = 2;

@@ -116,8 +116,7 @@ public class CacheEntry {
      * @param externalFiles
      * @throws IOException
      */
-    public CacheEntry(InputStream is, List<IItemReader> dataFiles, List<IItemReader> externalFiles)
-            throws IOException {
+    public CacheEntry(InputStream is, List<IItemReader> dataFiles, List<IItemReader> externalFiles) throws IOException {
         this.dataFiles = dataFiles;
         this.externalFiles = externalFiles;
 
@@ -132,7 +131,7 @@ public class CacheEntry {
         reuseCount = Index.read4bytes(is);
         refetchCount = Index.read4bytes(is);
         state = Index.read4bytes(is);
-        
+
         creationTime = Index.readDate(is);
         keyDataSize = Index.read4bytes(is);
         longKeyAddress = Index.readUnsignedInt(is);
@@ -191,8 +190,7 @@ public class CacheEntry {
                 }
 
                 if (longKeyAddress > 0) {
-                    key = new String(longKeyAddressCacheAddress.getInputStream(dataFiles, externalFiles, null)
-                            .readNBytes(keyDataSize));
+                    key = new String(longKeyAddressCacheAddress.getInputStream(dataFiles, externalFiles, null).readNBytes(keyDataSize));
                 } else {
                     key = new String(keyData);
                 }

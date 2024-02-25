@@ -151,15 +151,14 @@ public class Index {
         this.lst = lst;
     }
 
-    public Index(InputStream is, String path, List<IItemReader> dataFiles, List<IItemReader> externalFiles)
-            throws IOException, ChromeCacheException {
+    public Index(InputStream is, String path, List<IItemReader> dataFiles, List<IItemReader> externalFiles) throws IOException, ChromeCacheException {
 
         magicNumber = readUnsignedInt(is);
-        
+
         if (magicNumber != MAGIC_NUMBER_LE) {
             throw new ChromeCacheException("Invalid index magic number:" + magicNumber);
         }
-        
+
         version = readUnsignedInt(is);
 
         if (!supportedVersions.contains(version)) {
@@ -176,7 +175,7 @@ public class Index {
         experiment = read4bytes(is);
         createTime = readDate(is);
 
-        if(version == 0x00030000l) {
+        if (version == 0x00030000l) {
             bytesCont = read8bytes(is);
         }
 
@@ -262,7 +261,7 @@ public class Index {
         is.read(b);
         ByteBuffer bb = ByteBuffer.wrap(b);
         bb.order(ByteOrder.LITTLE_ENDIAN);
-        return  Integer.toUnsignedLong(bb.getInt());
+        return Integer.toUnsignedLong(bb.getInt());
     }
 
     public static long read8bytes(InputStream is) throws IOException {

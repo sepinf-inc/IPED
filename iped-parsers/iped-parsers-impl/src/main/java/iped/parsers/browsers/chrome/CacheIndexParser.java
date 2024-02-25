@@ -54,11 +54,9 @@ public class CacheIndexParser extends AbstractParser {
     }
 
     @Override
-    public void parse(InputStream indexFile, ContentHandler handler, Metadata metadata, ParseContext context)
-            throws IOException, SAXException, TikaException {
+    public void parse(InputStream indexFile, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
 
-        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
-                new ParsingEmbeddedDocumentExtractor(context));
+        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
 
         IItemSearcher searcher = context.get(IItemSearcher.class);
         IItemReader item = context.get(IItemReader.class);
@@ -66,15 +64,11 @@ public class CacheIndexParser extends AbstractParser {
         context.set(CacheIndexParser.class, this);
 
         if (searcher != null && item != null) {
-            String commonQuery = BasicProps.EVIDENCE_UUID + ":" + item.getDataSource().getUUID() + " AND "
-                    + BasicProps.PARENTID + ":" + item.getParentId() + " AND " + BasicProps.CARVED + ":false AND NOT "
-                    + BasicProps.TYPE + ":slack AND NOT " + BasicProps.TYPE + ":fileslack AND NOT " + BasicProps.NAME
-                    + ":slack AND NOT " + BasicProps.LENGTH + ":0 AND NOT " + BasicProps.ISDIR + ":true AND NOT "
-                    + BasicProps.PATH + ":gpucache";
+            String commonQuery = BasicProps.EVIDENCE_UUID + ":" + item.getDataSource().getUUID() + " AND " + BasicProps.PARENTID + ":" + item.getParentId() + " AND " + BasicProps.CARVED + ":false AND NOT " + BasicProps.TYPE
+                    + ":slack AND NOT " + BasicProps.TYPE + ":fileslack AND NOT " + BasicProps.NAME + ":slack AND NOT " + BasicProps.LENGTH + ":0 AND NOT " + BasicProps.ISDIR + ":true AND NOT " + BasicProps.PATH + ":gpucache";
 
             List<IItemReader> externalFiles = searcher.search(commonQuery + " AND " + BasicProps.NAME + ":f");
-            List<IItemReader> dataFiles = searcher.search(commonQuery + " AND " + BasicProps.NAME
-                    + ":(\"data_0\"  OR \"data_1\" OR \"data_2\" OR \"data_3\" OR \"data_4\" OR \"data_5\")");
+            List<IItemReader> dataFiles = searcher.search(commonQuery + " AND " + BasicProps.NAME + ":(\"data_0\"  OR \"data_1\" OR \"data_2\" OR \"data_3\" OR \"data_4\" OR \"data_5\")");
 
             MetadataUtil.addCustomMetadataPrefix(METADATA_PREFIX);
 
@@ -104,23 +98,17 @@ public class CacheIndexParser extends AbstractParser {
                         }
                         InputStream is;
                         try {
-                            is = ce.getResponseDataSize() > 0
-                                    ? ce.getResponseDataStream(contentEncoding)
-                                    : new ByteArrayInputStream(new byte[] {});
+                            is = ce.getResponseDataSize() > 0 ? ce.getResponseDataStream(contentEncoding) : new ByteArrayInputStream(new byte[] {});
                         } catch (InputStreamNotAvailable e) {
-                            LOGGER.warn(
-                                    "Input Stream for entry not found:" + requestUrl + " in item "
-                                    + item.getPath());
+                            LOGGER.warn("Input Stream for entry not found:" + requestUrl + " in item " + item.getPath());
 
                             is = new ByteArrayInputStream(new byte[] {});
                         }
 
                         Metadata entryMeta = new Metadata();
                         entryMeta.set("URL", requestUrl);
-                        entryMeta.set(TikaCoreProperties.TITLE,
-                                requestUrl.substring(requestUrl.lastIndexOf('/') + 1));
-                        entryMeta.set(TikaCoreProperties.RESOURCE_NAME_KEY,
-                                requestUrl.substring(requestUrl.lastIndexOf('/') + 1));
+                        entryMeta.set(TikaCoreProperties.TITLE, requestUrl.substring(requestUrl.lastIndexOf('/') + 1));
+                        entryMeta.set(TikaCoreProperties.RESOURCE_NAME_KEY, requestUrl.substring(requestUrl.lastIndexOf('/') + 1));
                         entryMeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                         entryMeta.set(IS_CACHE_INDEX_ENTRY, Boolean.TRUE.toString());

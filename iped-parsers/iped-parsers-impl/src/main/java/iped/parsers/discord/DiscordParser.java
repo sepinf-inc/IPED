@@ -81,12 +81,10 @@ public class DiscordParser extends AbstractParser {
 
     private static Logger LOGGER = LoggerFactory.getLogger(Index.class);
 
-    private static final Set<MediaType> SUPPORTED_TYPES = new HashSet<MediaType>(
-            Arrays.asList(MediaType.parse(CHAT_MIME_TYPE)));
+    private static final Set<MediaType> SUPPORTED_TYPES = new HashSet<MediaType>(Arrays.asList(MediaType.parse(CHAT_MIME_TYPE)));
     private static final String ME_URL = "https://discord.com/api/v9/users/@me";
 
-    static
-    {
+    static {
         // this code may be removed when backward parsersconfig.xml compatibility were
         // not more desired
         addChromeIndexMimeTypeSupport();
@@ -110,8 +108,7 @@ public class DiscordParser extends AbstractParser {
     }
 
     @Override
-    public void parse(InputStream indexFile, ContentHandler handler, Metadata metadata, ParseContext context)
-            throws IOException, SAXException, TikaException {
+    public void parse(InputStream indexFile, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
         String contentType = metadata.get(Metadata.CONTENT_TYPE);
         if (contentType.equals(CHAT_MIME_TYPE)) {
             parseDiscord(indexFile, handler, metadata, context);
@@ -123,8 +120,7 @@ public class DiscordParser extends AbstractParser {
     // this code may be removed when backward parsersconfig.xml compatibility were
     // not more desired
     @Deprecated
-    public void parseCacheIndex(InputStream indexFile, ContentHandler handler, Metadata metadata, ParseContext context)
-            throws IOException, SAXException, TikaException {
+    public void parseCacheIndex(InputStream indexFile, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
         // checks if CacheIndexParser wasn't already executed
         if (context.get(CacheIndexParser.class) == null) {
             // if not, force its execution
@@ -135,17 +131,14 @@ public class DiscordParser extends AbstractParser {
         }
     }
 
-    public void parseDiscord(InputStream indexFile, ContentHandler handler, Metadata metadata, ParseContext context)
-            throws IOException, SAXException, TikaException {
+    public void parseDiscord(InputStream indexFile, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
 
-        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
-                new ParsingEmbeddedDocumentExtractor(context));
+        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
 
         IItemSearcher searcher = context.get(IItemSearcher.class);
         IItemReader item = context.get(IItemReader.class);
 
-        String commonQuery = BasicProps.EVIDENCE_UUID + ":" + item.getDataSource().getUUID() + " AND "
-                + BasicProps.PARENTID + ":" + item.getParentId() + " AND NOT " + BasicProps.LENGTH + ":0 AND "
+        String commonQuery = BasicProps.EVIDENCE_UUID + ":" + item.getDataSource().getUUID() + " AND " + BasicProps.PARENTID + ":" + item.getParentId() + " AND NOT " + BasicProps.LENGTH + ":0 AND "
                 + CacheIndexParser.IS_CACHE_INDEX_ENTRY.replace(":", "\\:") + ":true";
 
         try (InputStream is = TikaInputStream.get(indexFile, new TemporaryResources())) {
@@ -175,8 +168,7 @@ public class DiscordParser extends AbstractParser {
                             dr.getAuthor().setAvatarBytes(avatar);
                         } else {
                             try {
-                                List<IItemReader> avatars = searcher.search(commonQuery + " AND " + BasicProps.NAME
-                                        + ":" + dr.getAuthor().getAvatar() + "*");
+                                List<IItemReader> avatars = searcher.search(commonQuery + " AND " + BasicProps.NAME + ":" + dr.getAuthor().getAvatar() + "*");
                                 for (IItemReader avatarItem : avatars) {
                                     try (InputStream is2 = avatarItem.getBufferedInputStream()) {
                                         BufferedImage img = ImageUtil.getSubSampledImage(is2, 64, 64);
@@ -218,9 +210,8 @@ public class DiscordParser extends AbstractParser {
             for (DiscordRoot dr : discordRoot) {
                 for (DiscordSticker sticker : dr.getStickers()) {
                     try {
-                        List<IItemReader> stickerItems = searcher.search(commonQuery + " AND "
-                                + CacheIndexParser.CACHE_URL.replace(":", "\\:") + ":\"" + sticker.getId() + ".json\""
-                                + " AND " + CacheIndexParser.CACHE_URL.replace(":", "\\:") + ":\"discord\"");
+                        List<IItemReader> stickerItems = searcher
+                                .search(commonQuery + " AND " + CacheIndexParser.CACHE_URL.replace(":", "\\:") + ":\"" + sticker.getId() + ".json\"" + " AND " + CacheIndexParser.CACHE_URL.replace(":", "\\:") + ":\"discord\"");
                         for (IItemReader stickerItem : stickerItems) {
                             sticker.setMediaHash(stickerItem.getHash());
                         }
@@ -239,8 +230,7 @@ public class DiscordParser extends AbstractParser {
 
                         if (parts.length > 1) {
                             long greater = 0;
-                            List<IItemReader> atts = searcher.search(commonQuery + " AND "
-                                    + CacheIndexParser.CACHE_URL.replace(":", "\\:") + ":\"" + parts[1] + "\"");
+                            List<IItemReader> atts = searcher.search(commonQuery + " AND " + CacheIndexParser.CACHE_URL.replace(":", "\\:") + ":\"" + parts[1] + "\"");
                             for (IItemReader attsItem : atts) {
                                 if (da.getSize() > greater) {
                                     da.setMediaHash(attsItem.getHash());
@@ -270,14 +260,12 @@ public class DiscordParser extends AbstractParser {
         }
     }
 
-    private DiscordAuthor extractAccount(IItemSearcher searcher, String commonQuery, ObjectMapper mapper,
-            HashMap<String, byte[]> avatarCache, ContentHandler handler, EmbeddedDocumentExtractor extractor) {
+    private DiscordAuthor extractAccount(IItemSearcher searcher, String commonQuery, ObjectMapper mapper, HashMap<String, byte[]> avatarCache, ContentHandler handler, EmbeddedDocumentExtractor extractor) {
         DiscordAuthor me = null;
-        
+
         try {
             // find me info
-            List<IItemReader> mes = searcher
-                    .search(commonQuery + " AND " + CacheIndexParser.CACHE_URL.replace(":", "\\:") + ":\"" + ME_URL + "\"");
+            List<IItemReader> mes = searcher.search(commonQuery + " AND " + CacheIndexParser.CACHE_URL.replace(":", "\\:") + ":\"" + ME_URL + "\"");
             for (IItemReader mei : mes) {
                 if (mei.getName().equals("@me")) {
                     try (InputStream is2 = mei.getBufferedInputStream()) {
@@ -313,8 +301,7 @@ public class DiscordParser extends AbstractParser {
         return me;
     }
 
-    private void extractMessages(String chatName, List<DiscordRoot> discordRoot, ContentHandler handler,
-            EmbeddedDocumentExtractor extractor, int chatVirtualId) throws SAXException, IOException {
+    private void extractMessages(String chatName, List<DiscordRoot> discordRoot, ContentHandler handler, EmbeddedDocumentExtractor extractor, int chatVirtualId) throws SAXException, IOException {
         int msgCount = 0;
 
         // Checking Participants
