@@ -59,7 +59,7 @@ public class PDFCarver extends DefaultCarver {
     }
 
     //carves from each header hit in headersWaitingFooters
-    private carveRemainingPDFHeaders(IItem parentEvidence){
+    private void carveRemainingPDFHeaders(IItem parentEvidence){
         Hit header = headersWaitingFooters.pollLast();
         while(header!=null){
             carveFromHeader(parentEvidence, header);
