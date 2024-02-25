@@ -62,7 +62,8 @@ public class PDFCarver extends DefaultCarver {
     private void carveRemainingPDFHeaders(IItem parentEvidence){
         Hit header = headersWaitingFooters.pollLast();
         while(header!=null){
-            carveFromHeader(parentEvidence, header);
+            CarverType typeCarved = header.getSignature().getCarverType();
+            carveFromHeader(parentEvidence, header, typeCarved.getMaxLength());
             header = headersWaitingFooters.pollLast();
         }
     }
