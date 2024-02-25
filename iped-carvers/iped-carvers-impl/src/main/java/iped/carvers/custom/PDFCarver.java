@@ -58,6 +58,15 @@ public class PDFCarver extends DefaultCarver {
         clearOldHeaders(parentEvidence);
     }
 
+    //carves from each header hit in headersWaitingFooters
+    private carveRemainingPDFHeaders(IItem parentEvidence){
+        Hit header = headersWaitingFooters.pollLast();
+        while(header!=null){
+            carveFromHeader(parentEvidence, header);
+            header = headersWaitingFooters.pollLast();
+        }
+    }
+
     private void resetState() {
         headersWaitingFooters.clear();
         lastFooter = null;
@@ -105,6 +114,10 @@ public class PDFCarver extends DefaultCarver {
             }
             lastFooter = null;
         }
+
+        //carves any from remaining PDF header hit without footer hit
+        carveRemainingPDFHeaders(parentEvidence);
+        
         resetState();
     }
 
