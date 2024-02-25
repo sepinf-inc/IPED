@@ -40,13 +40,26 @@ public class CacheIndexParser extends AbstractParser {
 
     private static Logger LOGGER = LoggerFactory.getLogger(CacheIndexParser.class);
 
-    public static final String METADATA_PREFIX = "chromeCache";
-    public static final String IS_CACHE_INDEX_ENTRY = METADATA_PREFIX + ":isChromeCacheEntry";
-    public static final String CACHE_URL = METADATA_PREFIX + ":chromeCacheUrl";
-    private static final String CACHE_ENTRY_NAME = METADATA_PREFIX + ":cacheEntryName";
+    private static final String HTTP_META_PREFIX = "http:";
+    public static final String METADATA_PREFIX = "chromeCache:";
 
-    public static final String CACHE_ENTRY_CREATED = METADATA_PREFIX + ":created";
-    public static final String CACHE_ENTRY_COUNT = METADATA_PREFIX + ":numEntries";
+    public static final String IS_CACHE_INDEX_ENTRY = METADATA_PREFIX + "isChromeCacheEntry";
+    public static final String CACHE_URL = METADATA_PREFIX + "chromeCacheUrl";
+    private static final String CACHE_ENTRY_NAME = METADATA_PREFIX + "cacheEntryName";
+    public static final String CACHE_ENTRY_CREATED = METADATA_PREFIX + "created";
+    public static final String CACHE_ENTRY_COUNT = METADATA_PREFIX + "numEntries";
+
+    static {
+        MetadataUtil.addCustomMetadataPrefix(METADATA_PREFIX);
+        MetadataUtil.addCustomMetadataPrefix(HTTP_META_PREFIX);
+        MetadataUtil.setMetadataType(CACHE_ENTRY_COUNT, Integer.class);
+        MetadataUtil.setMetadataType(HTTP_META_PREFIX + "flags", Integer.class);
+        MetadataUtil.setMetadataType(HTTP_META_PREFIX + "status", Integer.class);
+        MetadataUtil.setMetadataType(HTTP_META_PREFIX + "payload_size", Integer.class);
+        MetadataUtil.setMetadataType(HTTP_META_PREFIX + "content-length", Integer.class);
+        MetadataUtil.setMetadataType(HTTP_META_PREFIX + "request_time", Long.class);
+        MetadataUtil.setMetadataType(HTTP_META_PREFIX + "response_time", Long.class);
+    }
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -69,8 +82,6 @@ public class CacheIndexParser extends AbstractParser {
 
             List<IItemReader> externalFiles = searcher.search(commonQuery + " AND " + BasicProps.NAME + ":f");
             List<IItemReader> dataFiles = searcher.search(commonQuery + " AND " + BasicProps.NAME + ":(\"data_0\"  OR \"data_1\" OR \"data_2\" OR \"data_3\" OR \"data_4\" OR \"data_5\")");
-
-            MetadataUtil.addCustomMetadataPrefix(METADATA_PREFIX);
 
             Index index;
             try {
@@ -117,7 +128,7 @@ public class CacheIndexParser extends AbstractParser {
                         entryMeta.set(TikaCoreProperties.CREATED, ce.getCreationTime());
 
                         for (Map.Entry<String, String> entry : httpResponse.entrySet()) {
-                            entryMeta.set(entry.getKey(), entry.getValue());
+                            entryMeta.set(HTTP_META_PREFIX + entry.getKey(), entry.getValue());
                         }
 
                         extractor.parseEmbedded(is, handler, entryMeta, true);
