@@ -18,6 +18,7 @@ public class PDFCarver extends DefaultCarver {
     @Override
     public void notifyHit(IItem parentEvidence, Hit hit) throws IOException {
         ArrayDeque<Hit> headersWaitingFooters = super.headersWaitingFooters;
+        
         if (hit.getSignature().isHeader()) {
             // if previously occurred a footer hit and a new header hit is found, carve from
             // last footer
@@ -105,14 +106,20 @@ public class PDFCarver extends DefaultCarver {
 
     private void carveFromLastFooter(IItem parentEvidence) throws IOException {
         if (lastFooter != null) {
-            Hit head, firstHead = null;
-            while ((head = headersWaitingFooters.peekLast()) != null && lastFooter.getOffset()
-                    - head.getOffset() <= head.getSignature().getCarverType().getMaxLength()) {
-                firstHead = headersWaitingFooters.pollLast();
+            Hit head, matchHead = null;
+            Iterator<Hit> i = headersWaitingFooters.descendingIterator();
+            while(i.hasNext()){
+                head = i.next();
+                if (lastXREF.getOffset() - lastHead.getOffset() == lastXREFOffset) {
+                    matchHead = head;
+                    break;
+                }
             }
-            if (firstHead != null) {
-                headersWaitingFooters.addLast(firstHead);
-                carveFromFooter(parentEvidence, lastFooter);
+            if (matchHead != null) {
+                //repositions match head as last, so default carveFromFooter will use it to carve the PDF
+                headersWaitingFooters.remove(matchHead);
+                headersWaitingFooters.addLast(matchHead);
+                super.carveFromFooter(parentEvidence, lastFooter);
             }
             lastFooter = null;
         }
