@@ -37,17 +37,11 @@ import iped.utils.SimpleHTMLEncoder;
  */
 public class DiscordHTMLReport {
 
-    private static final String CSS = "TABLE {  border-collapse: collapse; font-family: Arial, sans-serif; } " + ".title tr td {border: none;}" + ".td-timestamp p {font-size: 10px;text-align:center}"
-            + ".black {background-color: #383838; color:#E0E0E0;}" + ".gray {background-color: #585858; color:#E0E0E0;}" + "TH { border: solid; font-weight: bold; text-align: center; background-color:#AAAAAA; foreground-color:#FFFFFF; } "
-            + "TR { vertical-align: middle; } " + ".rb { background-color:#E7E7E7; vertical-align: middle; } " + ".rr {  background-color:#FFFFFF; vertical-align: middle; } "
-            + "TD { border: solid; border-width: thin; padding: 3px; text-align: left; vertical-align: middle; word-wrap: break-word; } "
-            + ".e { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: center; vertical-align: middle; word-wrap: break-word; width: 150px; font-family: monospace; } "
-            + ".a { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: center; vertical-align: middle; word-wrap: break-word; width: 110px; } "
-            + ".b { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: left; vertical-align: middle; word-wrap: break-word; word-break: break-all; width: 450px; } "
-            + ".z { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: left; vertical-align: middle; word-wrap: break-word; word-break: break-all; width: 160px; } "
-            + ".c { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: right; vertical-align: middle; word-wrap: break-word;  width: 110px; } "
-            + ".h { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: center; vertical-align: middle; word-wrap: break-word; width: 110px; }" + ".check {vertical-align: top; }"
-            + " TD:hover[onclick]{background-color:#F0F0F0; cursor:pointer} " + ".img {height: 256px}";
+    private static final String defaultAvatarMe = Base64.getEncoder().encodeToString(readResourceAsBytes("discordme.png"));
+    private static final String defaultAvatarOther = Base64.getEncoder().encodeToString(readResourceAsBytes("discord.png"));
+    private static final String lottiejs = new String(readResourceAsBytes("lottie-player.js"), Charset.forName("UTF-8"));
+    private static final String CSS = new String(readResourceAsBytes("/iped/parsers/discord/discord.css"), Charset.forName("UTF-8"));
+
     private DiscordAuthor me;
 
     public DiscordHTMLReport(DiscordAuthor me) {
@@ -65,10 +59,6 @@ public class DiscordHTMLReport {
         }
         return result;
     }
-
-    private static String defaultAvatarMe = Base64.getEncoder().encodeToString(readResourceAsBytes("discordme.png"));
-    private static String defaultAvatarOther = Base64.getEncoder().encodeToString(readResourceAsBytes("discord.png"));
-    private static String lottiejs = new String(readResourceAsBytes("lottie-player.js"), Charset.forName("UTF-8"));
 
     public byte[] convertToHTML(List<DiscordRoot> drl, IItemSearcher searcher) throws IOException {
         return convertToHTML(drl, searcher, true);
