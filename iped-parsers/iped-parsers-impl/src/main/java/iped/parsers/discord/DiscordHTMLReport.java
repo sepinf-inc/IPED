@@ -251,7 +251,6 @@ public class DiscordHTMLReport {
 
                         out.println("       <BR/>");
                         out.println("       <DIV>" + format(att.getFilename()) + "</DIV>");
-                        out.println("       </a>");
 
                         if (item.getMediaType().toString().startsWith("audio/")) {
                             out.println("<div class=\"audioImg iped-audio\" " //$NON-NLS-1$
@@ -268,6 +267,9 @@ public class DiscordHTMLReport {
                                 out.println("<div class=\"videoImg iped-video\" title=\"Video\"" + " data-src1=\"" + format(exportPath) + "\"" + " data-src2=\"" + format(source) + "\"></div>");
                             }
                         }
+
+                        out.println("       </a>");
+
                     } else {
                         out.println("       <DIV>" + format(att.getFilename()) + "</DIV>");
                     }
