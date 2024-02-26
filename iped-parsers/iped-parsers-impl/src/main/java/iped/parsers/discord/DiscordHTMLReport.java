@@ -264,8 +264,9 @@ public class DiscordHTMLReport {
                                         + format(source) + "\"" //$NON-NLS-1$
                                         + " title=\"" + att.getFilename() //$NON-NLS-1$
                                         + "\"/>");
+                            } else {
+                                out.println("<div class=\"videoImg iped-video\" title=\"Video\"" + " data-src1=\"" + format(exportPath) + "\"" + " data-src2=\"" + format(source) + "\"></div>");
                             }
-                            out.println("<div class=\"videoImg iped-video\" title=\"Video\"" + " data-src1=\"" + format(exportPath) + "\"" + " data-src2=\"" + format(source) + "\"></div>");
                         }
                     } else {
                         out.println("       <DIV>" + format(att.getFilename()) + "</DIV>");
