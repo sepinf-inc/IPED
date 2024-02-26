@@ -233,9 +233,13 @@ public class DiscordHTMLReport {
                         byte[] thumb = item.getThumb();
 
                         out.println("       <a onclick=\"app.open('hash:" + att.getMediaHash() + "')\" href='" + Util.getExportPath(item) + "'>");
-                        if (!item.getMediaType().toString().startsWith("video/")) {
+                        if (!item.getMediaType().toString().startsWith("video/") && !item.getMediaType().toString().startsWith("audio/")) {
                             if (thumb != null) {
                                 out.println("       <img src=\"data:image/jpeg;base64," + Base64.getEncoder().encodeToString(thumb) + "\" title=\"" + format(att.getFilename()) + "\">");
+                            } else if (item.getMediaType().toString().startsWith("image/")) {
+                                out.println("       <div class=\"imageImg\" title=\"" + format(att.getFilename()) + "\">");
+                            } else {
+                                out.println("       <div class=\"attachImg\" title=\"" + format(att.getFilename()) + "\">");
                             }
                         }
 

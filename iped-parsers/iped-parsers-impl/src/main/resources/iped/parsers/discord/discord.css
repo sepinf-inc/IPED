@@ -58,3 +58,11 @@ div.imageImg {
     padding: 0;
 }
 
+div.attachImg {
+    width: 100px;
+    height: 102px;
+    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAMAAABg3Am1AAABDlBMVEX////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////uKVtWAAAAWnRSTlMAEmOducrGpmwkBGTCzIIRC5iql6W1IQyexGkTClC2tyeNHg+yLkR8Ao4QFoCvgRitj77FkRxmOSq/yxsImot+kAW6IpKuKU44ogNax0ZRQ3CDAW60PqlKUj3wyZ2TAAABRUlEQVRIx+3VaVPCMBAG4MW2IMIreJajVkXRguKBqGhVpCAq3rf+/z9ieoyiAyQZ/dj90t3MM9NJttsQhfHXiIwoqhaNjcbF+FgiCT+08ZSAT0+4dHJqOsqeM7Ncr2eAbC7PMmPOBMy8gJ9fCIqUAizyvVn4KpeWgaKEJ1oBVmU8WSpUGU9UAso8v7ZeieX0YHED2OT4gun2bCto2fbAN6R7fHUHqPl7qA7aQ6/P6JEKsDv0lH56oj1gny2XB/Xht68f4NAmOjoGTgQ9Gr7v+y3186dNzzut0Mt7Rc5bbd83z3zfYb42xNM5m3dvXi6yQp4uoXX8rCjkuxqU74rvyej96Qh4IgdOV8ZTA7iS8RTXcH3jJnUx7w0i2rd391nP0wPP0+NTcBGgxDzZzxzP4uXV5cmE5VV2S+D+iL+9fxjhLf0/8QkpXU/soGbvHgAAAABJRU5ErkJggg==");
+    background-size: 100% 100%;
+    margin: 0;
+    padding: 0;
+}
