@@ -2,6 +2,7 @@ package iped.carvers.custom;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
+import java.util.Iterator;
 
 import iped.carvers.api.Hit;
 import iped.carvers.standard.DefaultCarver;
@@ -110,7 +111,7 @@ public class PDFCarver extends DefaultCarver {
             Iterator<Hit> i = headersWaitingFooters.descendingIterator();
             while(i.hasNext()){
                 head = i.next();
-                if (lastXREF.getOffset() - lastHead.getOffset() == lastXREFOffset) {
+                if (lastXREF.getOffset() - matchHead.getOffset() == lastXREFOffset) {
                     matchHead = head;
                     break;
                 }
