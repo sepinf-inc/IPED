@@ -233,6 +233,8 @@ public class DiscordHTMLReport {
                         byte[] thumb = item.getThumb();
 
                         out.println("       <a onclick=\"app.open('hash:" + att.getMediaHash() + "')\" href='" + Util.getExportPath(item) + "'>");
+                        out.println("       " + format(att.getFilename()) + "<BR/>");
+
                         if (!item.getMediaType().toString().startsWith("video/") && !item.getMediaType().toString().startsWith("audio/")) {
                             if (thumb != null) {
                                 out.println("       <img src=\"data:image/jpeg;base64," + Base64.getEncoder().encodeToString(thumb) + "\" title=\"" + format(att.getFilename()) + "\">");
@@ -242,9 +244,6 @@ public class DiscordHTMLReport {
                                 out.println("       <div class=\"attachImg\" title=\"" + format(att.getFilename()) + "\">");
                             }
                         }
-
-                        out.println("       <BR/>");
-                        out.println("       <DIV>" + format(att.getFilename()) + "</DIV>");
 
                         if (item.getMediaType().toString().startsWith("audio/")) {
                             out.println("<div class=\"audioImg iped-audio\" " //$NON-NLS-1$
