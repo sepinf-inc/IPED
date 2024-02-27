@@ -191,10 +191,12 @@
             <name>PDF</name>
             <carverClass>iped.carvers.custom.PDFCarver</carverClass>
             <signatures>
-                <headerSignature>%PDF-</headerSignature>
-                <controlSignature>xref</controlSignature>
-                <controlSignature>startxref</controlSignature>
-                <footerSignature>%%EOF?</footerSignature>
+                <headerSignature>%PDF-1</headerSignature>
+                <headerSignature>%PDF-2</headerSignature>
+                <footerSignature>\0a%%EOF\0d\0a</footerSignature>
+                <footerSignature>\0d%%EOF\0d</footerSignature>
+                <footerSignature>\0a%%EOF\0a</footerSignature>
+                <footerSignature>\0a%%EOF</footerSignature>
             </signatures>
             <minLength>1000</minLength>
             <maxLength>50000000</maxLength>
