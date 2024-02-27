@@ -24,7 +24,6 @@ import iped.parsers.discord.json.DiscordReaction;
 import iped.parsers.discord.json.DiscordRoot;
 import iped.parsers.discord.json.DiscordSticker;
 import iped.parsers.util.Messages;
-import iped.parsers.util.Util;
 import iped.properties.BasicProps;
 import iped.search.IItemSearcher;
 import iped.utils.IOUtil;
@@ -231,8 +230,9 @@ public class DiscordHTMLReport {
                         String exportPath = iped.parsers.util.Util.getExportPath(item);
                         String source = iped.parsers.util.Util.getSourceFileIfExists(item).orElse("");
                         byte[] thumb = item.getThumb();
+                        String href = iped.parsers.util.Util.getReportHref(item);
 
-                        out.println("       <a onclick=\"app.open('hash:" + att.getMediaHash() + "')\" href='" + Util.getExportPath(item) + "'>");
+                        out.println("       <a onclick=\"app.open('hash:" + att.getMediaHash() + "')\" href=\"" + format(href) + "\">"); //$NON-NLS-1$ //$NON-NLS-2$
                         out.println("       " + format(att.getFilename()) + "<BR/>");
 
                         if (!item.getMediaType().toString().startsWith("video/") && !item.getMediaType().toString().startsWith("audio/")) {
