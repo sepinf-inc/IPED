@@ -11,6 +11,7 @@ import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MediaTypeRegistry;
 
 import iped.parsers.ares.AresParser;
+import iped.parsers.browsers.chrome.CacheIndexParser;
 import iped.parsers.discord.DiscordParser;
 import iped.parsers.emule.KnownMetParser;
 import iped.parsers.emule.PartMetParser;
@@ -47,7 +48,6 @@ public class QueuesProcessingOrder {
 
     /** Definie as prioridades de processamento dos mimeTypes */
     private static Map<MediaType, Integer> installTypesToPostProcess() {
-
         Map<MediaType, Integer> mediaTypes = new HashMap<MediaType, Integer>();
 
         // support for embedded splitted images, must be before all other artifacts
@@ -68,7 +68,9 @@ public class QueuesProcessingOrder {
         mediaTypes.put(TelegramParser.TELEGRAM_DB, 3);
         mediaTypes.put(TelegramParser.TELEGRAM_DB_IOS, 3);
 
-        mediaTypes.put(MediaType.parse(DiscordParser.INDEX_MIME_TYPE), 2);
+        mediaTypes.put(CacheIndexParser.CHROME_INDEX_MIME_TYPE, 2);
+        mediaTypes.put(MediaType.parse(DiscordParser.CHAT_MIME_TYPE), 3);
+
         mediaTypes.put(MediaType.parse(KnownMetParser.EMULE_MIME_TYPE), 2);
         mediaTypes.put(MediaType.parse(PartMetParser.EMULE_PART_MET_MIME_TYPE), 2);
         mediaTypes.put(MediaType.parse(AresParser.ARES_MIME_TYPE), 2);
