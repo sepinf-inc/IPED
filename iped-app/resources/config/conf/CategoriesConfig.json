@@ -85,7 +85,7 @@
         {"name": "Jabber", "mimes":["application/x-jabber-chat"]},
         {"name": "Facebook", "mimes":["application/x-ufed-chat-preview-facebook"]},
         {"name": "Instagram", "mimes":["application/x-ufed-chat-preview-instagram"]},
-        {"name": "Discord", "mimes":["application/x-discord-index", "application/x-discord-chat"]},
+        {"name": "Discord", "mimes":["application/x-discord-chat"]},
         {"name": "Chat Activities", "mimes": ["application/x-ufed-chatactivity"]},
         {"name": "Others Chats", "mimes":["application/x-ufed-html-chats", "application/x-ufed-chats-txt", "application/x-ufed-chat", "application/x-ufed-chat-preview"]}
     ]},
@@ -116,7 +116,8 @@
       {"name": "Internet History Entries", "mimes": ["application/x-ufed-visitedpage", "application/x-firefox-history-registry", "application/x-firefox-downloads-registry", "application/x-chrome-history-registry", "application/x-chrome-downloads-registry", "application/x-edge-history-registry", "application/x-safari-downloads-registry", "application/x-safari-history-registry"]},
       {"name": "Web Bookmarks", "mimes": ["application/x-ufed-html-bookmarks", "application/x-ufed-webbookmark", "application/x-firefox-bookmarks", "application/x-firefox-bookmarks-registry"]},
       {"name": "Mozilla Firefox Saved Session", "mimes": ["application/x-firefox-savedsession"]},
-      {"name": "TorTCFragment", "mimes": ["application/x-tor-tc-fragment"]}
+      {"name": "TorTCFragment", "mimes": ["application/x-tor-tc-fragment"]},
+      {"name": "Chrome Cache", "mimes": ["application/x-chrome-cache-index", "application/x-discord-index", "application/x-discord-chat+json"]}
     ]}, 
     
     {"name": "Image Disks", "categories":[
