@@ -1584,6 +1584,7 @@
         </magic>
         <glob pattern="*.lzfse"/>
     </mime-type>
+    
 
     <mime-type type="application/x-ofx-v1">
         <magic priority="50">

@@ -1,5 +1,6 @@
 package iped.parsers.discord.cache;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -15,7 +16,15 @@ import iped.io.SeekableInputStream;
  */
 public class CacheAddr {
 
+    private long address;
     private boolean initialized;
+
+    static public final int DATA_STREAM_FILE = 0;
+    static public final int BLOCK_36 = 1;
+    static public final int BLOCK_256 = 2;
+    static public final int BLOCK_1024 = 3;
+    static public final int BLOCK_4096 = 4;
+
     private int fileType;
     private int numBlocks;
     private int fileSelector;
@@ -71,6 +80,7 @@ public class CacheAddr {
      */
     public CacheAddr(long address) throws IOException {
 
+        this.address = address;
         initialized = (address & 0x80000000L) == 0x80000000L;
         fileType = (int) ((address & 0x70000000L) >> 28);
 
@@ -95,34 +105,56 @@ public class CacheAddr {
 
     }
 
-    private int getBlockSize() {
-        return fileType == 2 ? 256 : (fileType == 3 ? 1024 : 4096);
+    @Override
+    public String toString() {
+        return "CacheAddr [address=" + address + ", initialized=" + initialized + ", fileType=" + fileType + ", numBlocks=" + numBlocks + ", fileSelector=" + fileSelector + ", startBlock=" + startBlock + ", fileName=" + fileName
+                + ", fileNameStr=" + fileNameStr + "]";
     }
 
-    public InputStream getInputStream(List<IItemReader> dataFiles, List<IItemReader> externalFiles) throws IOException {
+    private int getBlockSize() {
+        return fileType == BLOCK_256 ? 256 : (fileType == BLOCK_1024 ? 1024 : 4096);
+    }
+
+    public InputStream getInputStream(List<IItemReader> dataFiles, List<IItemReader> externalFiles, Integer dataStreamSize) throws IOException {
         if (!initialized) {
             throw new InputStreamNotAvailable();
         }
 
         switch (fileType) {
-            case 0:
+            case DATA_STREAM_FILE:
                 for (IItemReader extFile : externalFiles)
-                    if (extFile.getName().equals(fileNameStr)) {
+                    if (extFile.getName().equals(fileNameStr) || extFile.getName().startsWith(fileNameStr + ".")) {
                         return extFile.getBufferedInputStream();
                     }
                 break;
-            case 2:
-            case 3:
-            case 4:
+            case BLOCK_256:
+            case BLOCK_1024:
+            case BLOCK_4096:
                 for (IItemReader dataFile : dataFiles)
                     if (dataFile.getName().equals(("data_" + fileSelector))) {
                         SeekableInputStream sis = dataFile.getSeekableInputStream();
                         sis.seek(8192 + startBlock * getBlockSize());
-                        return sis;
+
+                        // If the value of the StreamSize data variable is null, it takes all available
+                        // blocks for that cache entry. The variable dataStreamSize represents the exact
+                        // size of the data in the files, it is important to obtain the exact size as it
+                        // can generate an error in the Botli library, since it does not handle excess
+                        // zero bytes
+                        byte[] blocks = (dataStreamSize == null) ? new byte[(numBlocks + 1) * getBlockSize()] : new byte[dataStreamSize];
+                        sis.read(blocks);
+                        return new ByteArrayInputStream(blocks);
                     }
         }
 
         throw new InputStreamNotAvailable();
+    }
+
+    public long getAddress() {
+        return address;
+    }
+
+    public void setAddress(long address) {
+        this.address = address;
     }
 
 }
