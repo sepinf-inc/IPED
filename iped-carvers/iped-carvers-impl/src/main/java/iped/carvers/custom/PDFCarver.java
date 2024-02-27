@@ -1,139 +1,90 @@
 package iped.carvers.custom;
 
 import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.Iterator;
+import java.nio.charset.StandardCharsets;
 
 import iped.carvers.api.Hit;
 import iped.carvers.standard.DefaultCarver;
-import iped.carvers.api.CarverType;
 import iped.data.IItem;
 import iped.io.SeekableInputStream;
 
 public class PDFCarver extends DefaultCarver {
     private Hit lastFooter;
-    private Hit lastXREF;
-    private long lastXREFOffset = -1;
-    private boolean lastHitWasStartXRef;
+
+    private static final String startxref = "startxref";
+    private static final String xref = "xref";
 
     @Override
     public void notifyHit(IItem parentEvidence, Hit hit) throws IOException {
-        ArrayDeque<Hit> headersWaitingFooters = super.headersWaitingFooters;
-        
         if (hit.getSignature().isHeader()) {
-            // if previously occurred a footer hit and a new header hit is found, carve from
-            // last footer
-            carveFromLastFooter(parentEvidence);
-            headersWaitingFooters.addLast(hit);
-        }
+            // Carve any pending header-footer pair
+            carveFromLastHits(parentEvidence);
+            headersWaitingFooters.add(hit);
 
-        if (hit.getSignature().isFooter()) {
-            if (lastXREF == null) {
-                // footer without corresponding crossref => invalid footer
-                // so try to carve from last valid footer
-                carveFromLastFooter(parentEvidence);
+        } else if (hit.getSignature().isFooter() && !headersWaitingFooters.isEmpty()) {
+            if (lastFooter == null || hit.getOffset() == lastFooter.getOffset()
+                    || matchFooterHeader(parentEvidence, headersWaitingFooters.peekLast(), hit)) {
+                // If this is the first footer found after the last header, or it is a longer
+                // one in the same offset, or it matches last header, then do not carve now.
+                // Wait to see if there are more footers for the same header.
+                lastFooter = hit;
             } else {
-                Hit lastHead = headersWaitingFooters.peekLast();
-                if (lastHead != null) {
-                    // checks consistency of crossref offset information against header offset
-                    if (lastXREF.getOffset() - lastHead.getOffset() == lastXREFOffset) {
-                        lastFooter = hit;
-                    } else {
-                        // probably invalid footer as crossref offset info is inconsistent
-                        // so try to carve from last valid footer
-                        carveFromLastFooter(parentEvidence);
+                // Otherwise carve using the pending the last header-footer pair
+                carveFromLastHits(parentEvidence);
+            }
+        }
+    }
+
+    private void carveFromLastHits(IItem parentEvidence) throws IOException {
+        if (!headersWaitingFooters.isEmpty() && lastFooter != null) {
+            carveFromFooter(parentEvidence, lastFooter);
+        }
+        lastFooter = null;
+    }
+
+    private boolean matchFooterHeader(IItem parentEvidence, Hit header, Hit footer) {
+        try (SeekableInputStream is = parentEvidence.getSeekableInputStream()) {
+            // Get "startxref" from the bytes right before the footer.
+            long xrefOffset = -1;
+            long pos = Math.max(0, footer.getOffset() - 24);
+            is.seek(pos);
+            byte[] lastBytes = is.readNBytes((int) (footer.getOffset() - pos));
+            for (int i = 0; i <= lastBytes.length - startxref.length(); i++) {
+                boolean found = true;
+                for (int j = 0; j < startxref.length(); j++) {
+                    if ((lastBytes[i + j] & 0xFF) != startxref.charAt(j)) {
+                        found = false;
+                        break;
                     }
                 }
-            }
-        }
-
-        if (isXrefHit(hit) && !lastHitWasStartXRef) {
-            lastXREF = hit;
-        }
-
-        if (isStartXrefHit(hit)) {
-            lastXREFOffset = readXREFOffset(parentEvidence, hit);
-            lastHitWasStartXRef = true;
-        } else {
-            lastHitWasStartXRef = false;
-        }
-
-        clearOldHeaders(parentEvidence);
-    }
-
-    //carves from each header hit in headersWaitingFooters
-    private void carveRemainingPDFHeaders(IItem parentEvidence)throws IOException{
-        Hit header = headersWaitingFooters.pollLast();
-        while(header!=null){
-            CarverType typeCarved = header.getSignature().getCarverType();
-            carveFromHeader(parentEvidence, header, typeCarved.getMaxLength());
-            header = headersWaitingFooters.pollLast();
-        }
-    }
-
-    private void resetState() {
-        headersWaitingFooters.clear();
-        lastFooter = null;
-        lastXREF = null;
-        lastXREFOffset = -1;
-        lastHitWasStartXRef = false;
-    }
-
-    private boolean isStartXrefHit(Hit hit) {
-        return hit.getSignature().getSigString().equals("startxref");
-    }
-
-    private long readXREFOffset(IItem parentEvidence, Hit hit) {
-        try (SeekableInputStream is = parentEvidence.getSeekableInputStream()) {
-            long offset = 0;
-            is.seek(hit.getOffset() + 10);
-            int i = is.read();
-            while (i != -1 && i >= '0' && i <= '9') {
-                offset = offset * 10 + (i - '0');
-                i = is.read();
-            }
-            return offset;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return -1;
-    }
-
-    private boolean isXrefHit(Hit hit) {
-        return hit.getSignature().getSigString().equals("xref");
-    }
-
-    private void carveFromLastFooter(IItem parentEvidence) throws IOException {
-        if (lastFooter != null) {
-            Hit head, matchHead = null;
-            Iterator<Hit> i = headersWaitingFooters.descendingIterator();
-            while(i.hasNext()){
-                head = i.next();
-                if (lastXREF.getOffset() - matchHead.getOffset() == lastXREFOffset) {
-                    matchHead = head;
+                if (found) {
+                    int off = i + startxref.length();
+                    String s = new String(lastBytes, off, lastBytes.length - off, StandardCharsets.ISO_8859_1);
+                    xrefOffset = Long.parseLong(s.trim());
                     break;
                 }
             }
-            if (matchHead != null) {
-                //repositions match head as last, so default carveFromFooter will use it to carve the PDF
-                headersWaitingFooters.remove(matchHead);
-                headersWaitingFooters.addLast(matchHead);
-                super.carveFromFooter(parentEvidence, lastFooter);
-            }
-            lastFooter = null;
-        }
 
-        //carves any from remaining PDF header hit without footer hit
-        carveRemainingPDFHeaders(parentEvidence);
-        
-        resetState();
+            // If "xrefOffset" was found and it is between the header and the footer...
+            if (xrefOffset > 0 && xrefOffset + header.getOffset() + xref.length() < footer.getOffset()) {
+                // ...check if it really points to "xref"
+                is.seek(header.getOffset() + xrefOffset);
+                byte[] bytes = is.readNBytes(xref.length());
+                for (int i = 0; i < xref.length(); i++) {
+                    if ((bytes[i] & 0xFF) != xref.charAt(i)) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        } catch (Exception e) {
+        }
+        return false;
     }
 
     @Override
     public void notifyEnd(IItem parentEvidence) throws IOException {
-        carveFromLastFooter(parentEvidence);
+        carveFromLastHits(parentEvidence);
         super.notifyEnd(parentEvidence);
     }
 }
