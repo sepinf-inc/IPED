@@ -68,7 +68,7 @@ public class WhatsAppParserTest extends AbstractPkgTest {
             assertEquals("Would you still say you love me", whatsapptracker.messagebody.get(2));
             assertEquals("The game is over", whatsapptracker.messagebody.get(3));
             assertEquals("Teste", whatsapptracker.messagebody.get(4));
-            assertEquals("! USER_JOINED_GROUP", whatsapptracker.messagebody.get(42));
+            assertEquals("! USER_ADDED_TO_GROUP", whatsapptracker.messagebody.get(42));
             assertEquals("! MESSAGES_NOW_ENCRYPTED", whatsapptracker.messagebody.get(43));
 
             assertEquals("Nickerida (556183125151@s.whatsapp.net)", whatsapptracker.messageto.get(0));

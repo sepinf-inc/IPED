@@ -4360,3 +4360,6 @@ Hardware-Wallet-DeviceName = java.lang.String
 WinEvtx:recordCount = java.lang.Integer
 WinEvtx:eventRecordID = java.lang.Integer
 CarvedOffset = java.lang.Long
+mediaSize = java.lang.Long
+mediaMime = java.lang.String
+mediaName = java.lang.String
