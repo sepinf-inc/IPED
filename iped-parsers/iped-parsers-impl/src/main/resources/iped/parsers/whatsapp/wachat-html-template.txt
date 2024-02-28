@@ -2,14 +2,14 @@
 <html>
     <head>
         <title>${id}</title>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-        <meta name="viewport" content="width=device-width" />
-        <meta charset="UTF-8" />
-        <link rel="shortcut icon" href="${favicon}"" />
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <meta charset="UTF-8">
+        <link rel="shortcut icon" href="${favicon}"">
         <style>
             ${css}
             .tab {display: inline-block; border-collapse: collapse; border: 1px solid black;}
-            .cel {border-colapse: colapse; border: 1px solid black; font-family: Arial, sans-serif;}
+            .cel {border-colapse: colapse; border: 1px solid black;}
             .check {vertical-align: top;}
             .iped-audio, .iped-video { display: block; }
         </style>
@@ -19,10 +19,14 @@
     </head>
     <body>
         <div id="topbar">
-          <span class="left">
-            <img src="${avatar}" width="64" height="64" />
-            ${title}
-          </span>
+            <div style="display: inline-block; padding: 6px 0px 2px 6px;">
+                <img src="${avatar}" width="72" height="72">
+            </div>
+            <div style="display: inline-block; width: 555px; vertical-align: bottom;">
+                <span class="left">
+                    ${title}
+                </span>
+            </div>
         </div>
         <div id="conversation"><br><br><br><br><br>
         ${deleted}

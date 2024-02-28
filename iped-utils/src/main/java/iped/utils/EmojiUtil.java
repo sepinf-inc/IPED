@@ -89,7 +89,7 @@ public class EmojiUtil {
                                         skip = j;
                                     }
                                 }
-                                line.append("<img class=\"e").append(key).append("\"/>");
+                                line.append("<img class=\"e").append(key).append("\">");
                                 usedEmojis.add(key);
                                 i = skip;
                                 if (i < len) {
