@@ -88,6 +88,7 @@ import iped.engine.util.UIPropertyListenerProvider;
 import iped.engine.util.Util;
 import iped.exception.IPEDException;
 import iped.properties.BasicProps;
+import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
 import iped.utils.IOUtil;
 import iped.utils.UTF8Properties;
@@ -926,6 +927,20 @@ public class SleuthkitReader extends DataSourceReader {
         if (evidence == null) {
             evidence = new Item();
             evidence.setLength(absFile.getSize());
+        }
+
+        if (absFile.getOwnerUid().isPresent()) {
+            evidence.setExtraAttribute(ExtraProperties.OWNER_ID, absFile.getOwnerUid().get());
+        }
+        if (absFile.getOsAccountObjectId().isPresent()) {
+            OsAccount user = sleuthCase.getOsAccountManager()
+                    .getOsAccountByObjectId(absFile.getOsAccountObjectId().get());
+            if (user != null) {
+                if (user.getLoginName().isPresent())
+                    evidence.setExtraAttribute(ExtraProperties.OWNER_LOGIN, user.getLoginName().get());
+                if (user.getFullName().isPresent())
+                    evidence.setExtraAttribute(ExtraProperties.OWNER_FULL_NAME, user.getFullName().get());
+            }
         }
 
         if (listOnly || fastmode || embeddedDisk) {
