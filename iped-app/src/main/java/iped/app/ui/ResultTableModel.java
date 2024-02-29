@@ -50,6 +50,7 @@ import iped.search.IMultiSearchResult;
 import iped.utils.DateUtil;
 import iped.utils.LocalizedFormat;
 import iped.viewers.ATextViewer;
+import iped.viewers.components.HitsTableModel;
 
 public class ResultTableModel extends AbstractTableModel implements SearchResultTableModel {
 
@@ -74,11 +75,6 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 
     private static String[] columnNames = {};
     
-    // The <p> is used as a workaround to avoid weird line break. As it is a JDK
-    // bug, it may be removed when it is fixed there. See issue #2102.
-    static final String htmlStartTag = "<html><p style=\"width:4000px;\">";
-    static final String htmlEndTag = "</p></html>";
-
     public void initCols() {
 
         try {
@@ -333,13 +329,13 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                 TextFragment[] fragments = TextHighlighter.getHighlightedFrags(false, value, field, 0);
                 if (fragments[0].getScore() > 0) {
                     StringBuilder s = new StringBuilder();
-                    s.append(htmlStartTag);
+                    s.append(HitsTableModel.htmlStartTag);
                     if (App.get().getFontStartTag() != null)
                         s.append(App.get().getFontStartTag());
                     s.append(fragments[0].toString());
                     if (App.get().getFontStartTag() != null)
                         s.append(ATextViewer.HIGHLIGHT_END_TAG);
-                    s.append(htmlEndTag);
+                    s.append(HitsTableModel.htmlEndTag);
                     value = s.toString();
                 }
             }
