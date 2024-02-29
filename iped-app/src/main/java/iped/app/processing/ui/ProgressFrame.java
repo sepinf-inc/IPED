@@ -66,6 +66,7 @@ import iped.engine.task.carver.BaseCarveTask;
 import iped.engine.util.UIPropertyListenerProvider;
 import iped.engine.util.Util;
 import iped.parsers.standard.StandardParser;
+import iped.utils.EmojiUtil;
 import iped.utils.IconUtil;
 import iped.utils.LocalizedFormat;
 
@@ -323,10 +324,10 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
             addCell(msg, wt, wt.equals("-") ? Align.CENTER : Align.RIGHT);
 
             if (evidence != null) {
-                String len = "";
+                String s = evidence.getPath();
                 if (evidence.getLength() != null && evidence.getLength() > 0)
-                    len = " (" + nf.format(evidence.getLength()) + " bytes)";
-                finishRow(msg, evidence.getPath() + len);
+                    s += " (" + nf.format(evidence.getLength()) + " bytes)";
+                finishRow(msg, clean(s));
             } else {
                 finishRow(msg, Messages.getString("ProgressFrame.WaitingItem"));
             }
@@ -671,6 +672,14 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
                 JOptionPane.showMessageDialog(this, Messages.getString("ProgressFrame.AlreadyOpen")); //$NON-NLS-1$
         }
 
+    }
+
+    /**
+     * This is a workaround to avoid weird line breaks caused by a JDK bug. It may
+     * be removed when it is fixed there. See issue #2102.
+     */
+    private String clean(String s) {
+        return EmojiUtil.replace(s, '?');
     }
 
     /**
