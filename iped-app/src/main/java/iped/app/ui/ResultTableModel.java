@@ -74,7 +74,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     public static String[] fixedCols = { "", "" }; //$NON-NLS-1$ //$NON-NLS-2$
 
     private static String[] columnNames = {};
-    
+
     public void initCols() {
 
         try {
