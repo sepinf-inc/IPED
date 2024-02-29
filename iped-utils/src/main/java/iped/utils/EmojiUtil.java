@@ -26,12 +26,12 @@ public class EmojiUtil {
         initSpecialChars();
     }
 
-    public static String replace(String s, char replacement) {
+    public static String clean(String s, char replacement) {
         int len = s.length();
         boolean found = false;
         for (int i = 0; i < len;) {
             int c = s.codePointAt(i);
-            if (c > 0x2000 && base64ImagesPerCode.containsKey(format(c))) {
+            if (c > 0x2000) {
                 found = true;
                 break;
             }
@@ -44,13 +44,13 @@ public class EmojiUtil {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < len;) {
             int c = s.codePointAt(i);
-            Character rep = specialCharsReplacement.get(c);
-            if (rep != null) {
-                i += Character.charCount(c);
-                ret.append(rep == 0 ? replacement : rep);
-                continue;
-            }
             if (c > 0x2000) {
+                Character rep = specialCharsReplacement.get(c);
+                if (rep != null) {
+                    i += Character.charCount(c);
+                    ret.append(rep);
+                    continue;
+                }
                 sb.delete(0, sb.length());
                 sb.append(format(c));
                 if (base64ImagesPerCode.containsKey(sb.toString())) {
@@ -74,6 +74,11 @@ public class EmojiUtil {
                             i += Character.charCount(next);
                         }
                     }
+                    continue;
+                }
+                if (!Character.isLetterOrDigit(c)) {
+                    i += Character.charCount(c);
+                    ret.append(replacement);
                     continue;
                 }
             }
@@ -236,20 +241,6 @@ public class EmojiUtil {
     }
 
     private static void initSpecialChars() {
-        initRange(0x2200, 0x22FF); // Mathematical Operators
-        initRange(0x2A00, 0x2AFF); // Supplemental Mathematical Operators
-        initRange(0x2100, 0x214F); // Letterlike Symbols
-        initRange(0x27C0, 0x27EF); // Miscellaneous Mathematical Symbols-A
-        initRange(0x2980, 0x29FF); // Miscellaneous Mathematical Symbols-B
-        initRange(0x2300, 0x23FF); // Miscellaneous Technical
-        initRange(0x25A0, 0x25FF); // Geometric Shapes
-        initRange(0x2190, 0x21FF); // Arrows
-        initRange(0x27F0, 0x27FF); // Supplemental Arrows-A
-        initRange(0x2900, 0x2900); // Supplemental Arrows-B
-        initRange(0x2B00, 0x2BFF); // Miscellaneous Symbols and Arrows
-        initRange(0x20D0, 0x20FF); // Combining Diacritical Marks for Symbols
-        initRange(0x1EE00, 0x1EEFF); // Arabic Mathematical Alphabetic Symbols
-        initRange(0x1D400, 0x1D7FF); // Mathematical Alphanumeric Symbols
         char c = 'A';
         for (int i = 0x1D400; i <= 0x1D6A3; i++) {
             specialCharsReplacement.put(i, c);
@@ -259,12 +250,6 @@ public class EmojiUtil {
         for (int i = 0x1D7CE; i <= 0x1D7FF; i++) {
             specialCharsReplacement.put(i, c);
             c = c == '9' ? '0' : (char) (c + 1);
-        }
-    }
-
-    private static void initRange(int start, int end) {
-        for (int i = start; i <= end; i++) {
-            specialCharsReplacement.put(i, (char) 0);
         }
     }
 }
