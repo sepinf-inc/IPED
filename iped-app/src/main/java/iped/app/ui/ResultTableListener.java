@@ -45,6 +45,7 @@ import iped.engine.search.IPEDSearcher;
 import iped.engine.search.MultiSearchResult;
 import iped.properties.BasicProps;
 import iped.viewers.ATextViewer;
+import iped.viewers.components.HitsTableModel;
 
 public class ResultTableListener implements ListSelectionListener, MouseListener, KeyListener {
 
@@ -380,7 +381,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
         String cell = table.getValueAt(row, col).toString();
         if (App.get().getFontStartTag() != null)
             cell = cell.replace(App.get().getFontStartTag(), "");
-        return cell.replace(ResultTableModel.htmlStartTag, "").replace(ResultTableModel.htmlEndTag, "")
+        return cell.replace(HitsTableModel.htmlStartTag, "").replace(HitsTableModel.htmlEndTag, "")
                 .replace(ATextViewer.HIGHLIGHT_START_TAG, "").replace(ATextViewer.HIGHLIGHT_END_TAG, "");
     }
 
