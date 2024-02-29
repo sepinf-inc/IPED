@@ -73,6 +73,11 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     public static String[] fixedCols = { "", "" }; //$NON-NLS-1$ //$NON-NLS-2$
 
     private static String[] columnNames = {};
+    
+    // The <p> is used as a workaround to avoid weird line break. As it is a JDK
+    // bug, it may be removed when it is fixed there. See issue #2102.
+    static final String htmlStartTag = "<html><p style=\"width:4000px;\">";
+    static final String htmlEndTag = "</p></html>";
 
     public void initCols() {
 
@@ -328,13 +333,13 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                 TextFragment[] fragments = TextHighlighter.getHighlightedFrags(false, value, field, 0);
                 if (fragments[0].getScore() > 0) {
                     StringBuilder s = new StringBuilder();
-                    s.append("<html><nobr>"); //$NON-NLS-1$
+                    s.append(htmlStartTag);
                     if (App.get().getFontStartTag() != null)
                         s.append(App.get().getFontStartTag());
                     s.append(fragments[0].toString());
                     if (App.get().getFontStartTag() != null)
                         s.append(ATextViewer.HIGHLIGHT_END_TAG);
-                    s.append("</html>"); //$NON-NLS-1$
+                    s.append(htmlEndTag);
                     value = s.toString();
                 }
             }
