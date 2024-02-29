@@ -680,7 +680,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
      * be removed when it is fixed there. See issue #2102.
      */
     private String clean(String s) {
-        return EmojiUtil.replace(s, '?');
+        return EmojiUtil.clean(s, '?');
     }
 
     /**
