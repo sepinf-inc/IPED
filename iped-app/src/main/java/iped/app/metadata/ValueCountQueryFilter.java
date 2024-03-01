@@ -31,13 +31,17 @@ public class ValueCountQueryFilter implements IQueryFilter{
             name = new StringBuffer();
             name.append(filterField);
             name.append(":[");
+            boolean first = true;
             for(ValueCount value: values) {
+                if (!first) {
+                    name.append(",");
+                }
                 name.append(value.getVal());
-                name.append(",");
                 if(name.length()>50) {
                     name.append("(...)");
                     break;
                 }
+                first = false;
             }
             name.append("]");
         }
