@@ -117,7 +117,7 @@ public class TimelineListener implements IResultSetFilterer {
         if(isTimelineViewEnabled()) {
             return new IResultSetFilter() {
                 public String toString() {
-                    return "Timeline view applied";
+                    return Messages.get("FilterValue.TimelineView");
                 }
 
                 @Override

@@ -1688,7 +1688,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         }
         
         public String toString() {
-            return "Similar image:"+refName;
+            return Messages.get("FilterValue.SimilarImage") + " " + refName;
         }
 
         @Override
@@ -1737,10 +1737,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             }
             return null;
         }
-        
-        public String toString() {
-            return "Similar image filterer";
-        }
 
         @Override
         public IFilter getFilter() {
@@ -1769,7 +1765,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     
     class DuplicateFilter implements IResultSetFilter, IMutableFilter {
         public String toString() {
-            return "Duplicate filter applied.";
+            return Messages.get("FilterValue.Duplicates");
         }
 
         @Override
@@ -1792,10 +1788,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 result.add(duplicateFilter);
             }
             return result;
-        }
-        
-        public String toString() {
-            return "Dupicate filterer";
         }
 
         @Override
@@ -1890,7 +1882,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         }
 
         public String toString() {
-            return "Similar face:"+refName;
+            return Messages.get("FilterValue.SimilarFace") + " " + refName;
         }
 
         @Override
@@ -2013,10 +2005,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             return null;
         }
 
-        public String toString() {
-            return "Search input";
-        }
-
         @Override
         public void clearFilter() {
             appletListener.clearAllFilters = true;
@@ -2089,7 +2077,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         }
         
         public String toString() {
-            return "Silimar document ("+Integer.toString(filterPercent)+"%):"+itemRef.getName();
+            return Messages.get("FilterValue.SimilarDocument") + " (" + Integer.toString(filterPercent) + "%): " + itemRef.getName();
         }
 
         @Override
