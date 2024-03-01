@@ -46,11 +46,9 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.BitSet;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -1933,10 +1931,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             return result;
         }
         
-        public String toString() {
-            return "Similar face filterer";
-        }
-        
         public void setItem(IItemId itemId, IItem item) {
             this.itemRef = item;
             filter = new SimilarFacesSearchFilter(itemId, itemRef);            
@@ -1964,11 +1958,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         public void clearFilter() {
             itemRef=null;
             SimilarFacesFilterActions.clear(false);
-        }
-
-        @Override
-        public String getFilterName() {
-            return "Similar face filterer";
         }
 
     }

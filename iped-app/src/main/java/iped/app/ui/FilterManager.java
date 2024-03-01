@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -35,7 +34,6 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import org.apache.lucene.search.BooleanQuery.Builder;
 import org.apache.lucene.search.Query;
 import org.roaringbitmap.RoaringBitmap;
 
@@ -453,7 +451,6 @@ class ComboFilterer implements IQueryFilterer, IResultSetFilterer{
             return null;
         }
 
-        Builder builder = new Builder();
         Query result=null;
         try {
             result = new QueryBuilder(App.get().appCase).getQuery(fm.getFilterExpression((String) comboFilter.getSelectedItem()));
@@ -463,10 +460,6 @@ class ComboFilterer implements IQueryFilterer, IResultSetFilterer{
         }
         
         return result;
-    }
-
-    public String toString() {
-        return "Predefined filters";
     }
 
     @Override
