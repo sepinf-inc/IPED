@@ -21,10 +21,10 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultTreeCellRenderer;
-import javax.swing.tree.TreePath;
 
 import org.apache.lucene.search.Query;
 
+import iped.app.ui.controls.CheckBoxTreeCellRenderer;
 import iped.app.ui.filterdecisiontree.CombinedFilterer;
 import iped.app.ui.filterdecisiontree.DecisionNode;
 import iped.app.ui.filterdecisiontree.FilterNode;
@@ -70,7 +70,7 @@ public class FiltersPanel extends JPanel implements ClearFilterListener
     public void install(FilterManager filterManager) {
         this.filterManager = filterManager;
         filtersTree = new JTree();
-        filtersTree.setCellRenderer(new IFiltersTreeCellRenderer(filtersTree, new Predicate<Object>() {
+        CheckBoxTreeCellRenderer treeCellRenderer = new CheckBoxTreeCellRenderer(filtersTree, new Predicate<Object>() {
             @Override
             public boolean test(Object t) {
                 if(t instanceof IFilterer) {
@@ -86,29 +86,21 @@ public class FiltersPanel extends JPanel implements ClearFilterListener
                 }
                 return false;
             }            
-        }));
+        });
+        filtersTree.setCellRenderer(treeCellRenderer);
+        filtersTree.setCellEditor(treeCellRenderer);
         filtersTree.setEditable(true);
-
+        // filtersTree.setSelectionModel(null);
         filtersTree.setRootVisible(false);
-        
         filtersTree.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                super.mouseClicked(e);
-                TreePath p = filtersTree.getPathForLocation(e.getX(), e.getY());
-                Object c = p.getLastPathComponent();
-            }
-
             @Override
             public void mousePressed(MouseEvent e) {
                 dragSourceTree = filtersTree;
-                super.mousePressed(e);
             }
         });
-        filtersTree.setModel(new FiltersTreeModel(filterManager.getFilterers()));
-        
 
-        
+        filtersTree.setModel(new FiltersTreeModel(filterManager.getFilterers()));
+
         combinedFilterer = new CombinedFilterer();
         
         filterManager.addResultSetFilterer(combinedFilterer);
@@ -169,7 +161,7 @@ public class FiltersPanel extends JPanel implements ClearFilterListener
             @Override
             public void itemStateChanged(ItemEvent e) {
                 if(ckStructuredFilterer.isSelected()) {
-                    ckStructuredFilterer.setBackground(IFiltersTreeCellRenderer.ENABLED_BK_COLOR);
+                    ckStructuredFilterer.setBackground(CheckBoxTreeCellRenderer.ENABLED_BK_COLOR);
                     ckStructuredFilterer.setOpaque(true);
                     filterManager.setFilterEnabled(combinedFilterer, true);
                     ckStructuredFilterer.updateUI();
