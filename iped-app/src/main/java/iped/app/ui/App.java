@@ -309,7 +309,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     private DuplicatesFilterer duplicatesFilterer;
 
-    FiltersPanel filtersPanel;
+    public FiltersPanel filtersPanel;
 
     private DefaultSingleCDockable filtersTabDock;
 
