@@ -21,6 +21,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultTreeCellRenderer;
+import javax.swing.tree.TreePath;
 
 import org.apache.lucene.search.Query;
 
@@ -47,8 +48,6 @@ public class FiltersPanel extends JPanel implements ClearFilterListener
     private JScrollPane structuredFiltererTreePane;
     private JSplitPane splitPane;
 
-    private JTree dragSourceTree;
-
     private CombinedFilterer combinedFilterer;
     private OperandPopupMenu operandMenu;
     FilterManager filterManager;
@@ -59,11 +58,17 @@ public class FiltersPanel extends JPanel implements ClearFilterListener
     private JCheckBox ckStructuredFilterer;
     private FiltererMenu filtererMenu;
 
+    private volatile TreePath lastClickedPath;
+
     public FiltersPanel() {
         invertUrl = this.getClass().getResource("negative.png");
         invertIcon = new ImageIcon(invertUrl);
         intersectionIcon = new ImageIcon(this.getClass().getResource("intersection.png"));
         combinationIcon = new ImageIcon(this.getClass().getResource("combination.png"));
+    }
+
+    public TreePath getLastClickedPath() {
+        return lastClickedPath;
     }
 
 
@@ -90,12 +95,12 @@ public class FiltersPanel extends JPanel implements ClearFilterListener
         filtersTree.setCellRenderer(treeCellRenderer);
         filtersTree.setCellEditor(treeCellRenderer);
         filtersTree.setEditable(true);
-        // filtersTree.setSelectionModel(null);
+        filtersTree.setSelectionModel(null);
         filtersTree.setRootVisible(false);
         filtersTree.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                dragSourceTree = filtersTree;
+                lastClickedPath = filtersTree.getPathForLocation(e.getX(), e.getY());
             }
         });
 
@@ -238,15 +243,12 @@ public class FiltersPanel extends JPanel implements ClearFilterListener
             @Override
             public void mousePressed(MouseEvent e) {
                 super.mousePressed(e);
-                dragSourceTree = structuredFiltererTree;
                 if (e.isPopupTrigger()) {
                     showPopupMenu(e);
                 }
             }
             @Override
             public void mouseReleased(MouseEvent e) {
-                dragSourceTree = null;
-
                 super.mouseReleased(e);
                 if (e.isPopupTrigger()) {
                     showPopupMenu(e);

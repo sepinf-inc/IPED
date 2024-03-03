@@ -17,7 +17,6 @@ import javax.swing.JTree;
 import javax.swing.event.CellEditorListener;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreeCellEditor;
-import javax.swing.tree.TreeSelectionModel;
 
 import org.apache.tika.mime.MediaType;
 
@@ -41,7 +40,6 @@ public class CheckBoxTreeCellRenderer extends DefaultTreeCellRenderer implements
 
     public CheckBoxTreeCellRenderer(JTree tree, Predicate<Object> checkedPredicate) {
         this.checkedPredicate = checkedPredicate;
-        tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     }
 
     public CheckBoxTreeCellRenderer(JTree tree, Predicate<Object> checkedPredicate, Predicate<Object> visiblePredicate) {

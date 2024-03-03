@@ -52,7 +52,7 @@ public class FilterTransferHandler extends TransferHandler {
     protected Transferable createTransferable(JComponent c) {
         JTree tree = (JTree) c;
 
-        TreePath tp = tree.getSelectionPath();
+        TreePath tp = filtersPanel.getLastClickedPath();
         Object o = tp.getLastPathComponent();
 
         Object parent = (Object) tp.getParentPath().getLastPathComponent();
