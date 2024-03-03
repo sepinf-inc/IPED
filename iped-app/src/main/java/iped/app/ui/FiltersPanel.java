@@ -2,11 +2,13 @@ package iped.app.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Image;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionListener;
 import java.net.URL;
 import java.util.List;
 import java.util.function.Predicate;
@@ -101,6 +103,20 @@ public class FiltersPanel extends JPanel implements ClearFilterListener
             @Override
             public void mousePressed(MouseEvent e) {
                 lastClickedPath = filtersTree.getPathForLocation(e.getX(), e.getY());
+            }
+        });
+        filtersTree.addMouseMotionListener(new MouseMotionListener() {
+            @Override
+            public void mouseDragged(MouseEvent e) {
+            }
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                TreePath tp = filtersTree.getPathForLocation(e.getX(), e.getY());
+                if (tp != null && tp.getLastPathComponent() instanceof IFilter) {
+                    filtersTree.setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
+                } else {
+                    filtersTree.setCursor(Cursor.getDefaultCursor());
+                }
             }
         });
 
