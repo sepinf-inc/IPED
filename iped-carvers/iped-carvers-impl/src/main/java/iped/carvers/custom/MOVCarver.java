@@ -28,50 +28,44 @@ public class MOVCarver extends AbstractCarver {
     private int defaultMaxLength = 500000000;
 
     public MOVCarver() throws DecoderException {
-        carverTypes = new CarverType[5];
+        carverTypes = new CarverType[6];
 
         carverTypes[0] = new CarverType();
         carverTypes[0].addHeader("????ftypmp41");
-        carverTypes[0].addHeader("????ftypmp42");
+        carverTypes[0].addHeader("????ftypmp42????mp");
+        carverTypes[0].addHeader("????ftypmp42????MP");
         carverTypes[0].addHeader("????ftypmmp4");
         carverTypes[0].addHeader("????ftypMSNV");
         carverTypes[0].addHeader("????ftypFACE");
         carverTypes[0].addHeader("????ftypdash");
         carverTypes[0].addHeader("????ftypisom");
         carverTypes[0].setMimeType(MediaType.parse("video/mp4"));
-        carverTypes[0].setMaxLength(defaultMaxLength);
-        carverTypes[0].setMinLength(defaultMinLength);
-        carverTypes[0].setName("MOV");
 
         carverTypes[1] = new CarverType();
         carverTypes[1].addHeader("????ftypmjp2");
         carverTypes[1].setMimeType(MediaType.parse("video/mj2"));
-        carverTypes[1].setMaxLength(defaultMaxLength);
-        carverTypes[1].setMinLength(defaultMinLength);
-        carverTypes[1].setName("MOV");
 
         carverTypes[2] = new CarverType();
         carverTypes[2].addHeader("????ftypM4V");
         carverTypes[2].setMimeType(MediaType.parse("video/x-m4v"));
-        carverTypes[2].setMaxLength(defaultMaxLength);
-        carverTypes[2].setMinLength(defaultMinLength);
-        carverTypes[2].setName("MOV");
 
         carverTypes[3] = new CarverType();
         carverTypes[3].addHeader("????ftyp3g");
         carverTypes[3].setMimeType(MediaType.parse("video/3gpp"));
-        carverTypes[3].setMaxLength(defaultMaxLength);
-        carverTypes[3].setMinLength(defaultMinLength);
-        carverTypes[3].setName("MOV");
 
         carverTypes[4] = new CarverType();
         carverTypes[4].addHeader("????ftypqt\\20\\20");
         carverTypes[4].setMimeType(MediaType.parse("video/quicktime"));
-        carverTypes[4].setMaxLength(defaultMaxLength);
-        carverTypes[4].setMinLength(defaultMinLength);
-        carverTypes[4].setName("MOV");
+
+        carverTypes[5] = new CarverType();
+        carverTypes[5].addHeader("????ftypmp42????M4A");
+        carverTypes[5].addHeader("????ftypmp42????m4a");
+        carverTypes[5].setMimeType(MediaType.parse("audio/mp4"));
 
         for (int i = 0; i < carverTypes.length; i++) {
+            carverTypes[i].setMaxLength(defaultMaxLength);
+            carverTypes[i].setMinLength(defaultMinLength);
+            carverTypes[i].setName("MOV");
             carverTypes[i].setCarverClass(this.getClass().getName());
         }
     }
