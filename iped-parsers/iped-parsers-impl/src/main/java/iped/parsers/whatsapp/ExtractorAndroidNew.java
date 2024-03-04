@@ -35,6 +35,7 @@ import static iped.parsers.whatsapp.Message.MessageType.GROUP_DESCRIPTION_CHANGE
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_ICON_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_INVITE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_ONLY_ADMINS_CAN_SEND;
+import static iped.parsers.whatsapp.Message.MessageType.GROUP_REMOVED_FROM_COMMUNITY;
 import static iped.parsers.whatsapp.Message.MessageType.IMAGE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.LOCATION_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.MESSAGES_ENCRYPTED;
@@ -63,7 +64,10 @@ import static iped.parsers.whatsapp.Message.MessageType.UNBLOCKED_CONTACT;
 import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_VOICE_CALL;
+import static iped.parsers.whatsapp.Message.MessageType.USER_ADDED_TO_COMMUNITY;
 import static iped.parsers.whatsapp.Message.MessageType.USER_ADDED_TO_GROUP;
+import static iped.parsers.whatsapp.Message.MessageType.USER_COMMUNITY_ADMIN;
+import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP_FROM_COMMUNITY;
 import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP_FROM_INVITATION;
 import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP_FROM_LINK;
 import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_WHATSAPP;
@@ -468,7 +472,10 @@ public class ExtractorAndroidNew extends Extractor {
                 }
 
                 if (hasSystemChat
-                        && (m.getMessageType() == USER_ADDED_TO_GROUP || m.getMessageType() == USER_REMOVED_FROM_GROUP
+                        && (m.getMessageType() == USER_ADDED_TO_COMMUNITY || m.getMessageType() == USER_ADDED_TO_GROUP
+                                || m.getMessageType() == USER_COMMUNITY_ADMIN
+                                || m.getMessageType() == USER_REMOVED_FROM_GROUP
+                                || m.getMessageType() == USER_JOINED_GROUP_FROM_COMMUNITY
                                 || m.getMessageType() == USER_JOINED_GROUP_FROM_LINK
                                 || m.getMessageType() == USER_LEFT_GROUP)) {
                     extractUsersGroupAction(conn, m);
@@ -730,15 +737,26 @@ public class ExtractorAndroidNew extends Extractor {
                     case 108:
                         result = GROUP_ADDED_TO_COMMUNITY;
                         break;
+                    case 78:
+                        result = GROUP_REMOVED_FROM_COMMUNITY;
+                        break;
+                    case 79:
+                        result = USER_JOINED_GROUP_FROM_COMMUNITY;
+                        break;
                     case 80:
                         result = EPHEMERAL_SAVE;
                         break;
+                    case 81:
+                        result = USER_COMMUNITY_ADMIN;
+                        break;
                     case 87:
                     case 88:
-                    case 90:
                     case 95:
                     case 110:
                         result = COMMUNITY_MANAGEMENT_ACTION;
+                        break;
+                    case 90:
+                        result = USER_ADDED_TO_COMMUNITY;
                         break;
                     case 92:
                         result = GROUP_CHANGED_ONLY_ADMINS_CAN_ADD;
