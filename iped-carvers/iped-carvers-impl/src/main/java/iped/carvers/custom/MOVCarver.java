@@ -32,8 +32,6 @@ public class MOVCarver extends AbstractCarver {
 
         carverTypes[0] = new CarverType();
         carverTypes[0].addHeader("????ftypmp41");
-        carverTypes[0].addHeader("????ftypmp42????mp");
-        carverTypes[0].addHeader("????ftypmp42????MP");
         carverTypes[0].addHeader("????ftypmmp4");
         carverTypes[0].addHeader("????ftypMSNV");
         carverTypes[0].addHeader("????ftypFACE");
@@ -58,9 +56,7 @@ public class MOVCarver extends AbstractCarver {
         carverTypes[4].setMimeType(MediaType.parse("video/quicktime"));
 
         carverTypes[5] = new CarverType();
-        carverTypes[5].addHeader("????ftypmp42????M4A");
-        carverTypes[5].addHeader("????ftypmp42????m4a");
-        carverTypes[5].setMimeType(MediaType.parse("audio/mp4"));
+        carverTypes[5].addHeader("????ftypmp42");
 
         for (int i = 0; i < carverTypes.length; i++) {
             carverTypes[i].setMaxLength(defaultMaxLength);
