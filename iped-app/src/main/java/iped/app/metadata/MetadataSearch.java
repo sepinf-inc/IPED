@@ -52,8 +52,6 @@ public class MetadataSearch extends MetadataSearchable{
     volatile IMultiSearchResult ipedResult;
 
     public MetadataSearch() {
-        System.out.print(logScale);
-        // TODO Auto-generated constructor stub
     }
 
     public void setIpedResult(IMultiSearchResult ipedResult2) {
