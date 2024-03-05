@@ -128,6 +128,9 @@ public class FilterTransferHandler extends TransferHandler {
 
     @Override
     protected void exportDone(JComponent source, Transferable data, int action) {
+        if (data == null) {
+            return;
+        }
         try {
             JTree tree = (JTree) source;
             DecisionNode parentDecisionNode = (OperandNode) data.getTransferData(parentOperandNodeFlavor);
