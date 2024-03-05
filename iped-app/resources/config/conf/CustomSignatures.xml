@@ -1584,7 +1584,16 @@
         </magic>
         <glob pattern="*.lzfse"/>
     </mime-type>
-    
+
+    <mime-type type="audio/mp4">
+        <magic priority="60">
+            <match value="ftypmp42" type="string" offset="4">
+                <match value="M4A" type="string" offset="16"/>
+                <match value="m4a" type="string" offset="16"/>
+            </match>
+        </magic>
+        <glob pattern="*.mp4a"/>
+    </mime-type>
 
     <mime-type type="application/x-ofx-v1">
         <magic priority="50">
