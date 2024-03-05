@@ -1473,13 +1473,22 @@
     </mime-type>
 
     <mime-type type="audio/mp4">
+        <alias type="audio/x-m4a"/>
+        <alias type="audio/x-mp4a"/>
         <magic priority="60">
+            <match value="ftypM4A " type="string" offset="4"/>
+            <match value="ftypM4B " type="string" offset="4"/>
+            <match value="ftypF4A " type="string" offset="4"/>
+            <match value="ftypF4B " type="string" offset="4"/>
             <match value="ftypmp42" type="string" offset="4">
                 <match value="M4A" type="string" offset="16"/>
                 <match value="m4a" type="string" offset="16"/>
             </match>
         </magic>
         <glob pattern="*.mp4a"/>
+        <glob pattern="*.m4a"/>
+        <glob pattern="*.m4b"/>
+        <sub-class-of type="application/quicktime" />
     </mime-type>
 
 </mime-info>
