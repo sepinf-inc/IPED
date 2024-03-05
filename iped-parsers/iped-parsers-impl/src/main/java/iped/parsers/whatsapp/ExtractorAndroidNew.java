@@ -42,6 +42,7 @@ import static iped.parsers.whatsapp.Message.MessageType.MESSAGES_ENCRYPTED;
 import static iped.parsers.whatsapp.Message.MessageType.MESSAGES_NOW_ENCRYPTED;
 import static iped.parsers.whatsapp.Message.MessageType.MISSED_VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.MISSED_VOICE_CALL;
+import static iped.parsers.whatsapp.Message.MessageType.NEW_PARTICIPANTS_NEED_ADMIN_APPROVAL;
 import static iped.parsers.whatsapp.Message.MessageType.ORDER_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.PINNED_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.POLL_MESSAGE;
@@ -748,6 +749,9 @@ public class ExtractorAndroidNew extends Extractor {
                         break;
                     case 81:
                         result = USER_COMMUNITY_ADMIN;
+                        break;
+                    case 84:
+                        result = NEW_PARTICIPANTS_NEED_ADMIN_APPROVAL;
                         break;
                     case 87:
                     case 88:

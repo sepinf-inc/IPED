@@ -531,6 +531,10 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.CommunityWelcome") + "<br>");
                 break;
+            case NEW_PARTICIPANTS_NEED_ADMIN_APPROVAL:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.NewParticipantsNeedAdminApproval") + "<br>");
+                break;
             case USER_ADDED_TO_GROUP:
             case USER_ADDED_TO_COMMUNITY:
             case USER_COMMUNITY_ADMIN:                
