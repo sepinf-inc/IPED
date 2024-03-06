@@ -115,8 +115,8 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 
         fields = ColumnsManager.getInstance().getLoadedCols();
         for (String col : fields) {
-            col = LocalizedProperties.getLocalizedField(col);
-            cols.add(col.substring(0, 1).toUpperCase() + col.substring(1));
+            String localizedCol = LocalizedProperties.getLocalizedField(col);
+            cols.add(localizedCol.substring(0, 1).toUpperCase() + localizedCol.substring(1));
             cols2.add(col);
         }
 
