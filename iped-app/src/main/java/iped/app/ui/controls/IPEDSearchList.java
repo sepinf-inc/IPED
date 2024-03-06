@@ -87,8 +87,8 @@ public class IPEDSearchList<E> extends JPanel {
                             public void run() {
                                 synchronized (this) {
                                     if (result != null) {
-                                        list.setModel(result);
                                         list.clearSelection();
+                                        list.setModel(result);
                                         list.updateUI();
                                     }
                                 }
@@ -126,8 +126,8 @@ public class IPEDSearchList<E> extends JPanel {
                         }
                         fl = new FilteredList(text);
                     }else {
-                        list.setModel(defaultListModel);
                         list.clearSelection();
+                        list.setModel(defaultListModel);
                         list.updateUI();
                     }
                 }
