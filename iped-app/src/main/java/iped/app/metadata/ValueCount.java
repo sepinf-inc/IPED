@@ -47,12 +47,12 @@ public class ValueCount {
 
     @Override
     public boolean equals(Object obj) {
-        return (obj instanceof ValueCount) && toString().equals(((ValueCount)obj).toString());
+        return (obj instanceof ValueCount) && ((ValueCount) obj).ord == this.ord;
     }
 
     @Override
     public int hashCode() {
-        return toString().hashCode();
+        return ord;
     }
 
     public int getOrd() {
