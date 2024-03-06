@@ -31,13 +31,13 @@ import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 
-import iped.app.ui.controls.IPEDSearchList;
 import iped.app.metadata.MetadataSearch;
 import iped.app.metadata.ValueCount;
 import iped.app.ui.App;
 import iped.app.ui.ResultTableModel;
 import iped.app.ui.TableHeaderFilterManager;
 import iped.app.ui.controls.CheckboxListCellRenderer;
+import iped.app.ui.controls.IPEDSearchList;
 
 public class MetadataValueSearchList extends IPEDSearchList<ValueCount>{
     MetadataSearch metadataSearch;
@@ -132,13 +132,7 @@ public class MetadataValueSearchList extends IPEDSearchList<ValueCount>{
                 }
             });
 
-            cr = new CheckboxListCellRenderer<ValueCount>(new Predicate<ValueCount>() {
-                @Override
-                public boolean test(ValueCount t) {
-                    return selected.contains(t);
-                }
-                
-            });
+            cr = new CheckboxListCellRenderer<>();
             list.setCellRenderer(cr);
             list.addListSelectionListener(new ListSelectionListener() {
                 @Override
