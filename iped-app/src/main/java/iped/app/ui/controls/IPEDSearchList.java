@@ -1,17 +1,12 @@
 package iped.app.ui.controls;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.dnd.DropTarget;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.beans.VetoableChangeListener;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 
 import javax.swing.DefaultListModel;
@@ -20,11 +15,9 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListModel;
-import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
-import javax.swing.event.ListSelectionListener;
 
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rtextarea.RTextScrollPane;
@@ -59,9 +52,8 @@ public class IPEDSearchList<E> extends JPanel {
             createGUI();
         }
         
-        class FilteredList implements Future<DefaultListModel>{
+        class FilteredList {
             DefaultListModel result = new DefaultListModel<>();
-            Thread thread;
 
             public FilteredList(String text) {
                 Predicate checkContains = new Predicate<E>() {
@@ -90,40 +82,29 @@ public class IPEDSearchList<E> extends JPanel {
                                 }
                             }
                         }
+                        SwingUtilities.invokeLater(new Runnable() {
+                            @Override
+                            public void run() {
+                                synchronized (this) {
+                                    if (result != null) {
+                                        list.setModel(result);
+                                        list.clearSelection();
+                                        list.updateUI();
+                                    }
+                                }
+                            }
+                        });
                     }
                 };
-                thread = new Thread(r);
+                Thread thread = new Thread(r);
                 thread.start();
             }
             
-            @Override
-            public boolean cancel(boolean mayInterruptIfRunning) {
+            public void cancel() {
                 synchronized (this) {
                     result = null;
                 }
-                return false;
             }
-
-            @Override
-            public boolean isCancelled() {
-                return result == null;
-            }
-
-            @Override
-            public boolean isDone() {
-                return false;
-            }
-
-            @Override
-            public DefaultListModel<Object> get() throws InterruptedException, ExecutionException {
-                return result;
-            }
-
-            @Override
-            public DefaultListModel<Object> get(long timeout, TimeUnit unit)
-                    throws InterruptedException, ExecutionException, TimeoutException {
-                return result;
-            }            
         }
 
         public void createGUI() {
@@ -140,26 +121,10 @@ public class IPEDSearchList<E> extends JPanel {
                 @Override public void keyReleased(KeyEvent e) {
                     String text = txFilter.getText();
                     if(text.length()>0) {
-                        if(fl!=null) {
-                            fl.cancel(true);
+                        if (fl != null) {
+                            fl.cancel();
                         }
                         fl = new FilteredList(text);
-                        SwingUtilities.invokeLater(new Runnable() {
-                            @Override
-                            public void run() {
-                                DefaultListModel lm;
-                                try {
-                                    lm = fl.get();
-                                    if(lm!=null) {
-                                        list.setModel(lm);
-                                        list.clearSelection();
-                                        list.updateUI();
-                                    }
-                                } catch (InterruptedException | ExecutionException e1) {
-                                    e1.printStackTrace();
-                                }
-                            }
-                        });
                     }else {
                         list.setModel(defaultListModel);
                         list.clearSelection();
@@ -189,118 +154,14 @@ public class IPEDSearchList<E> extends JPanel {
             list.setTransferHandler(newHandler);
         }
 
-
-        public Color getSelectionForeground() {
-            return list.getSelectionForeground();
-        }
-
-
-        public void setSelectionForeground(Color selectionForeground) {
-            list.setSelectionForeground(selectionForeground);
-        }
-
-
-        public Color getSelectionBackground() {
-            return list.getSelectionBackground();
-        }
-
-
-        public void setSelectionBackground(Color selectionBackground) {
-            list.setSelectionBackground(selectionBackground);
-        }
-
-
-        public int getVisibleRowCount() {
-            return list.getVisibleRowCount();
-        }
-
-
+        @Override
         public void setDropTarget(DropTarget dt) {
             list.setDropTarget(dt);
         }
 
-
-        public void setDragEnabled(boolean b) {
-            list.setDragEnabled(b);
-        }
-
-
-        public final void setDropMode(DropMode dropMode) {
-            list.setDropMode(dropMode);
-        }
-
-
-        public ListSelectionModel getSelectionModel() {
-            return list.getSelectionModel();
-        }
-
-
-        public ListSelectionListener[] getListSelectionListeners() {
-            return list.getListSelectionListeners();
-        }
-
-
-        public void setSelectionMode(int selectionMode) {
-            list.setSelectionMode(selectionMode);
-        }
-
-
-        public int getSelectionMode() {
-            return list.getSelectionMode();
-        }
-
-
-        public void clearSelection() {
-            list.clearSelection();
-        }
-
-
-        public int[] getSelectedIndices() {
-            return list.getSelectedIndices();
-        }
-
-
-        public void setSelectedIndex(int index) {
-            list.setSelectedIndex(index);
-        }
-
-
-        public void setSelectedIndices(int[] indices) {
-            list.setSelectedIndices(indices);
-        }
-
-
-        public Object[] getSelectedValues() {
-            return list.getSelectedValues();
-        }
-
-
-        public List<E> getSelectedValuesList() {
-            return list.getSelectedValuesList();
-        }
-
-
-        public int getSelectedIndex() {
-            return list.getSelectedIndex();
-        }
-
-
-        public E getSelectedValue() {
-            return list.getSelectedValue();
-        }
-
-
-        public void setSelectedValue(Object anObject, boolean shouldScroll) {
-            list.setSelectedValue(anObject, shouldScroll);
-        }
-
-
+        @Override
         public void addVetoableChangeListener(VetoableChangeListener listener) {
             list.addVetoableChangeListener(listener);
-        }
-
-        public JList<E> getListComponent() {
-            return list;
         }
 
         @Override
