@@ -23,6 +23,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -152,7 +153,12 @@ public class MetadataValueSearchList extends IPEDSearchList<ValueCount>{
                             }
                         }
                     }
-                    list.updateUI();
+                    SwingUtilities.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            list.updateUI();
+                        }
+                    });
                 }
             });
             list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
