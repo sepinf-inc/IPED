@@ -5,15 +5,12 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.Set;
-import java.util.function.Predicate;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
@@ -22,10 +19,6 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
 import javax.swing.JTable;
-import javax.swing.ListSelectionModel;
-import javax.swing.SwingUtilities;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
@@ -36,20 +29,17 @@ import iped.app.metadata.ValueCount;
 import iped.app.ui.App;
 import iped.app.ui.ResultTableModel;
 import iped.app.ui.TableHeaderFilterManager;
-import iped.app.ui.controls.CheckboxListCellRenderer;
 import iped.app.ui.controls.IPEDSearchList;
 
 public class MetadataValueSearchList extends IPEDSearchList<ValueCount>{
-    MetadataSearch metadataSearch;
-    JPopupMenu menu = new JPopupMenu();
-    JButton btFiltrar;
-    Set<ValueCount> selected = new HashSet<ValueCount>();
-    private CheckboxListCellRenderer<ValueCount> cr;
+
+    private MetadataSearch metadataSearch;
+    private JPopupMenu menu = new JPopupMenu();
+    private JButton btFiltrar;
     private TableHeaderFilterManager fm;
     private JButton btClear;
 
-    public MetadataValueSearchList(Predicate<ValueCount> availablePredicate, String field) {
-        super(availablePredicate);
+    public MetadataValueSearchList(String field) {
         try {
             fm = TableHeaderFilterManager.get();
             
@@ -132,48 +122,19 @@ public class MetadataValueSearchList extends IPEDSearchList<ValueCount>{
                 }
             });
 
-            cr = new CheckboxListCellRenderer<>();
-            list.setCellRenderer(cr);
-            list.addListSelectionListener(new ListSelectionListener() {
-                @Override
-                public void valueChanged(ListSelectionEvent e) {
-                    if(!e.getValueIsAdjusting()) {
-                        for(int i=e.getFirstIndex();i<=e.getLastIndex();i++) {
-                            ValueCount vc = list.getModel().getElementAt(i);
-                            if(list.getSelectedValuesList().contains(vc)) {
-                                selected.add(vc);
-                            }else {
-                                selected.remove(vc);
-                            }
-                        }
-                    }
-                    SwingUtilities.invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            list.updateUI();
-                        }
-                    });
-                }
-            });
-            list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public void show(Component invoker, int x, int y) {
+    public void show(Component invoker, int colIndex, int x, int y) {
         JTableHeader header = (JTableHeader) invoker;
-        int colIndex = header.columnAtPoint(new Point(x,y));
-        if(list.getPreferredSize().getWidth()>header.getParent().getWidth()/2) {
-            list.setPreferredSize(new Dimension(header.getParent().getWidth()/2, (int)list.getPreferredSize().getHeight()));
-        }
-        if(colIndex>-1) {
+        if (colIndex >= 4) {
             int colwidth = header.getColumnModel().getColumn(colIndex).getWidth();
-            if(list.getPreferredSize().getWidth()<colwidth) {
-                list.setFixedCellWidth(colwidth-24);
-            }
+            colwidth = Math.min(Math.max(colwidth, 150), 1000);
+            this.setPreferredSize(new Dimension(colwidth, 250));
+            menu.show(invoker, x, y);
         }
-        menu.show(invoker, x, y);
     }
     
     public static void install(JTable resultsTable) {
@@ -207,11 +168,11 @@ public class MetadataValueSearchList extends IPEDSearchList<ValueCount>{
                         pos+=cm.getColumn(i).getWidth();
                     }
                     
-                    ci = resultsTable.convertColumnIndexToModel(ci);                    
-                    String field = ((ResultTableModel)resultsTable.getModel()).getColumnFieldName(ci);
+                    int colModel = resultsTable.convertColumnIndexToModel(ci);
+                    String field = ((ResultTableModel) resultsTable.getModel()).getColumnFieldName(colModel);
 
-                    MetadataValueSearchList m = new MetadataValueSearchList(null, field);
-                    m.show(header, pos, header.getY()+header.getHeight());
+                    MetadataValueSearchList m = new MetadataValueSearchList(field);
+                    m.show(header, ci, pos, header.getY() + header.getHeight());
                 }
             }
         });
