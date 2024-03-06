@@ -1,59 +1,103 @@
 package iped.app.ui.controls;
 
 import java.awt.BorderLayout;
-import java.awt.Graphics;
-import java.awt.dnd.DropTarget;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.beans.VetoableChangeListener;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 
-import javax.swing.DefaultListModel;
-import javax.swing.DropMode;
-import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.ListModel;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
-import javax.swing.TransferHandler;
+import javax.swing.table.AbstractTableModel;
 
-import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
-import org.fife.ui.rtextarea.RTextScrollPane;
+import iped.app.metadata.ValueCount;
 
 public class IPEDSearchList<E> extends JPanel {
-        protected RSyntaxTextArea txFilter;
-        Predicate<E> availablePredicate;
-        protected List<E> availableItems;
-        protected JScrollPane listScrollPanel;
-        protected JList<E> list;
-        protected int paintRef;
-        protected int paintSize;
-        private ListModel<E> defaultListModel;
+
+    protected JTextField txFilter;
+    protected List<E> availableItems;
+    protected Set<ValueCount> selected = new HashSet<ValueCount>();
+
+        private JTable table;
+        private List<ValueCount> data;
+        private TableModel model;
 
         protected IPEDSearchList() {
-            this(null);
-        }
-
-        protected IPEDSearchList(Predicate<E> availablePredicate) {
             super(new BorderLayout());
-            this.availablePredicate=availablePredicate;
-        }
-        
-        public void createGUI(List<E> m) {
-            list = new JList(m.toArray());
-            defaultListModel = list.getModel();
-            createGUI();
         }
 
-        public void createGUI(ListModel<E> m) {
-            list = new JList<E>(m);
-            createGUI();
+        private void adjustFirstColWidth() {
+            table.getColumnModel().getColumn(0).setMaxWidth(18);
+        }
+
+        private class TableModel extends AbstractTableModel {
+
+            /**
+             * 
+             */
+            private static final long serialVersionUID = 1L;
+
+            private List<ValueCount> data;
+
+            private TableModel(List<ValueCount> data) {
+                this.data = data;
+            }
+
+            @Override
+            public int getRowCount() {
+                return data.size();
+            }
+
+            @Override
+            public int getColumnCount() {
+                return 2;
+            }
+
+            @Override
+            public Class<?> getColumnClass(int c) {
+                if (c == 0) {
+                    return Boolean.class;
+                }
+                return ValueCount.class;
+            }
+
+            @Override
+            public Object getValueAt(int rowIndex, int columnIndex) {
+                if (columnIndex == 0) {
+                    return selected.contains(data.get(rowIndex));
+                } else {
+                    return data.get(rowIndex);
+                }
+            }
+
+            @Override
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return columnIndex == 0;
+            }
+
+            public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+                if (columnIndex == 0 && aValue instanceof Boolean) {
+                    if ((Boolean) aValue) {
+                        selected.add(data.get(rowIndex));
+                    } else {
+                        selected.remove(data.get(rowIndex));
+                    }
+                }
+            }
+
         }
         
-        class FilteredList {
-            DefaultListModel result = new DefaultListModel<>();
+        private class FilteredList {
+
+            private List<ValueCount> data = new ArrayList<>();
 
             public FilteredList(String text) {
                 Predicate checkContains = new Predicate<E>() {
@@ -72,13 +116,13 @@ public class IPEDSearchList<E> extends JPanel {
                     @Override
                     public void run() {
                         for(int i=0; i<availableItems.size(); i++) {
-                            Object o = availableItems.get(i);
+                            E o = availableItems.get(i);
                             if(checkContains.test(o)) {
                                 synchronized (this) {
-                                    if(result==null) {
+                                    if (data == null) {
                                         return;//thread was canceled
                                     }
-                                    result.addElement(o);
+                                    data.add((ValueCount) o);
                                 }
                             }
                         }
@@ -86,10 +130,11 @@ public class IPEDSearchList<E> extends JPanel {
                             @Override
                             public void run() {
                                 synchronized (this) {
-                                    if (result != null) {
-                                        list.clearSelection();
-                                        list.setModel(result);
-                                        list.updateUI();
+                                    if (data != null) {
+                                        TableModel filteredModel = new TableModel(data);
+                                        table.setModel(filteredModel);
+                                        adjustFirstColWidth();
+                                        filteredModel.fireTableDataChanged();
                                     }
                                 }
                             }
@@ -102,17 +147,41 @@ public class IPEDSearchList<E> extends JPanel {
             
             public void cancel() {
                 synchronized (this) {
-                    result = null;
+                    data = null;
                 }
             }
         }
 
-        public void createGUI() {
-            list.setFixedCellWidth(100);
-            list.setFixedCellHeight(16);
-            
-            txFilter = new RSyntaxTextArea(1,20);
-            txFilter.setHighlightCurrentLine(false);
+        public void createGUI(List<ValueCount> m) {
+            data = m;
+            model = new TableModel(data);
+            table = new JTable(model);
+            table.setTableHeader(null);
+            table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+            table.setFillsViewportHeight(true);
+            adjustFirstColWidth();
+            table.addKeyListener(new KeyListener() {
+                @Override
+                public void keyTyped(KeyEvent e) {
+                }
+
+                @Override
+                public void keyPressed(KeyEvent e) {
+                }
+
+                @Override
+                public void keyReleased(KeyEvent e) {
+                    if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+                        for (int row : table.getSelectedRows()) {
+                            boolean checked = (Boolean) table.getValueAt(row, 0);
+                            table.setValueAt(!checked, row, 0);
+                        }
+                        table.repaint();
+                    }
+                }
+            });
+
+            txFilter = new JTextField();
             txFilter.addKeyListener(new KeyListener() {
                 private IPEDSearchList<E>.FilteredList fl;
                 @Override
@@ -125,62 +194,22 @@ public class IPEDSearchList<E> extends JPanel {
                             fl.cancel();
                         }
                         fl = new FilteredList(text);
-                    }else {
-                        list.clearSelection();
-                        list.setModel(defaultListModel);
-                        list.updateUI();
+                    } else {
+                        table.setModel(model);
+                        adjustFirstColWidth();
+                        model.fireTableDataChanged();
                     }
                 }
                 @Override public void keyPressed(KeyEvent e) {}
             });
             
-            RTextScrollPane tsFilter = new RTextScrollPane(txFilter);
-            tsFilter.setBackground(this.getBackground());
-            tsFilter.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
-            tsFilter.setLineNumbersEnabled(false);
-            this.add(tsFilter,BorderLayout.NORTH);
-            listScrollPanel = new JScrollPane();
+            this.add(txFilter, BorderLayout.NORTH);
+
+            JScrollPane listScrollPanel = new JScrollPane(table);
             listScrollPanel.setBackground(this.getBackground());
             listScrollPanel.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-            listScrollPanel.setViewportView(list);
             listScrollPanel.setAutoscrolls(true);
-            list.setDropMode(DropMode.ON);
             this.add(listScrollPanel, BorderLayout.CENTER);
         }
 
-
-        @Override
-        public void setTransferHandler(TransferHandler newHandler) {
-            list.setTransferHandler(newHandler);
-        }
-
-        @Override
-        public void setDropTarget(DropTarget dt) {
-            list.setDropTarget(dt);
-        }
-
-        @Override
-        public void addVetoableChangeListener(VetoableChangeListener listener) {
-            list.addVetoableChangeListener(listener);
-        }
-
-        @Override
-        public void paintImmediately(int x, int y, int w, int h) {
-            paintRef++;
-            if(paintRef>=1000000) {
-                paintRef=1;
-            }
-            paintSize=list.getModel().getSize();
-            super.paintImmediately(x, y, w, h);
-        }
-
-        @Override
-        protected void paintChildren(Graphics g) {
-            paintRef++;
-            if(paintRef>=1000000) {
-                paintRef=1;
-            }
-            paintSize=list.getModel().getSize();
-            super.paintChildren(g);
-        }
 }
