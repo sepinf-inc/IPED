@@ -518,14 +518,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         filterManager = new FilterManager(filterComboBox);
 
         similarDocumentFilterer = new SimilarDocumentFilterer();
-        filterManager.addQueryFilterer(similarDocumentFilterer);
-        
+
         similarImagesFilterer = new SimilarImagesQueryFilterer();
-        filterManager.addQueryFilterer(similarImagesFilterer);
-        filterManager.addResultSetFilterer(similarImagesFilterer);
-        
+
         similarFacesSearchFilterer = new SimilarFacesSearchFilterer();
-        filterManager.addResultSetFilterer(similarFacesSearchFilterer);
 
         filterDuplicates = new JCheckBox(Messages.getString("App.FilterDuplicates"));
         filterDuplicates.setToolTipText(Messages.getString("App.FilterDuplicatesTip"));
@@ -647,9 +643,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         categoryTree.setRootVisible(true);
         categoryTree.setExpandsSelectedPaths(false);
         categoryListener = new CategoryTreeListener();
-        
-        filterManager.addQueryFilterer(categoryListener);
-        
+
         categoryTree.addTreeSelectionListener(categoryListener);
         categoryTree.addTreeExpansionListener(categoryListener);
 
@@ -657,13 +651,11 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         bookmarksTree.setCellRenderer(new BookmarkTreeCellRenderer());
         ToolTipManager.sharedInstance().registerComponent(bookmarksTree);
         bookmarksListener = new BookmarksTreeListener();
-        filterManager.addResultSetFilterer(bookmarksListener);
         bookmarksTree.addTreeSelectionListener(bookmarksListener);
         bookmarksTree.addTreeExpansionListener(bookmarksListener);
         bookmarksTree.setExpandsSelectedPaths(false);
 
         metadataPanel = new MetadataPanel();
-        filterManager.addResultSetFilterer(metadataPanel);
 
         categoriesPanel = new JScrollPane(categoryTree);
         bookmarksPanel = new JScrollPane(bookmarksTree);
@@ -675,7 +667,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         tree.setRootVisible(true);
         tree.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
         treeListener = new TreeListener();
-        filterManager.addQueryFilterer(treeListener);
         tree.addTreeSelectionListener(treeListener);
         tree.addTreeExpansionListener(treeListener);
         tree.addMouseListener(treeListener);
@@ -759,7 +750,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             }
         };
         timelineListener = new TimelineListener(timelineButton, IconUtil.getToolbarIcon("timeon", resPath));
-        filterManager.addResultSetFilterer(timelineListener);
 
         if (triageGui) {
             verticalLayout = true;
@@ -802,11 +792,20 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         resultsTable.addMouseListener(new ResultTableListener());
         resultsTable.addKeyListener(new ResultTableListener());
 
-        filterManager.addQueryFilterer(new SearchFilterer());
-
         duplicatesFilterer = new DuplicatesFilterer();
-        filterManager.addResultSetFilterer(duplicatesFilterer);
+
+        filterManager.addQueryFilterer(new SearchFilterer());
+        filterManager.addQueryFilterer(categoryListener);
+        filterManager.addQueryFilterer(treeListener);
+        filterManager.addQueryFilterer(similarImagesFilterer);
+        filterManager.addQueryFilterer(similarDocumentFilterer);
+        filterManager.addResultSetFilterer(bookmarksListener);
         filterManager.addResultSetFilterer(FilterSelectedEdges.getInstance());
+        filterManager.addResultSetFilterer(duplicatesFilterer);
+        filterManager.addResultSetFilterer(similarImagesFilterer);
+        filterManager.addResultSetFilterer(similarFacesSearchFilterer);
+        filterManager.addResultSetFilterer(timelineListener);
+        filterManager.addResultSetFilterer(metadataPanel);
 
         filterManager.getFilterers().stream().forEach(new Consumer<IFilterer>() {
             @Override
