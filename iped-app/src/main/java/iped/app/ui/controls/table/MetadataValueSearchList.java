@@ -10,7 +10,9 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
@@ -34,6 +36,8 @@ import iped.app.ui.popups.FieldValuePopupMenu;
 
 public class MetadataValueSearchList extends IPEDSearchList<ValueCount>{
 
+    private static HashMap<String, Set<ValueCount>> lastFilteredValuesPerField = new HashMap<>();
+
     private MetadataSearch metadataSearch;
     private JPopupMenu menu = new JPopupMenu();
     private JButton btFiltrar;
@@ -44,6 +48,12 @@ public class MetadataValueSearchList extends IPEDSearchList<ValueCount>{
         try {
             fm = TableHeaderFilterManager.get();
             
+            Set<ValueCount> values = lastFilteredValuesPerField.get(field);
+            if (values != null) {
+                this.selected = values;
+            }
+            lastFilteredValuesPerField.put(field, this.selected);
+
             metadataSearch = TableHeaderFilterManager.get().getMetadataSearch(field);
             
             JMenuItem emptyMenu = new JCheckBoxMenuItem(FieldValuePopupMenu.EMPTY_STR);
@@ -104,7 +114,6 @@ public class MetadataValueSearchList extends IPEDSearchList<ValueCount>{
                         HashSet<ValueCount> selectedClone = new HashSet<ValueCount>();
                         selectedClone.addAll(selected);
                         fm.addFilter(field, selectedClone);
-                        selected.clear();
                     }
                     menu.setVisible(false);
                     App.get().getAppListener().updateFileListing();
