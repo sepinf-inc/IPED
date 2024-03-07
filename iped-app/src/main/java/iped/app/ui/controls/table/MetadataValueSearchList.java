@@ -30,6 +30,7 @@ import iped.app.ui.App;
 import iped.app.ui.ResultTableModel;
 import iped.app.ui.TableHeaderFilterManager;
 import iped.app.ui.controls.IPEDSearchList;
+import iped.app.ui.popups.FieldValuePopupMenu;
 
 public class MetadataValueSearchList extends IPEDSearchList<ValueCount>{
 
@@ -45,7 +46,7 @@ public class MetadataValueSearchList extends IPEDSearchList<ValueCount>{
             
             metadataSearch = TableHeaderFilterManager.get().getMetadataSearch(field);
             
-            JMenuItem emptyMenu = new JCheckBoxMenuItem("Empty");
+            JMenuItem emptyMenu = new JCheckBoxMenuItem(FieldValuePopupMenu.EMPTY_STR);
             emptyMenu.setSelected(fm.getContainsEmptyFilter(field));
             emptyMenu.addActionListener(new ActionListener() {
                 @Override
@@ -61,7 +62,7 @@ public class MetadataValueSearchList extends IPEDSearchList<ValueCount>{
                 }
             });
             menu.add(emptyMenu);
-            JMenuItem nonEmptyMenu = new JCheckBoxMenuItem("Non empty");
+            JMenuItem nonEmptyMenu = new JCheckBoxMenuItem(FieldValuePopupMenu.NON_EMPTY_STR);
             nonEmptyMenu.setSelected(fm.getContainsNonEmptyFilter(field));
             nonEmptyMenu.addActionListener(new ActionListener() {
                 @Override
@@ -91,7 +92,7 @@ public class MetadataValueSearchList extends IPEDSearchList<ValueCount>{
             JPanel panelButons = new JPanel(new FlowLayout(FlowLayout.CENTER, 1, 1));
             this.add(panelButons, BorderLayout.SOUTH);
 
-            btFiltrar = new JButton("Filter");
+            btFiltrar = new JButton(FieldValuePopupMenu.FILTER);
             panelButons.add(btFiltrar);
 
             btFiltrar.addActionListener(new ActionListener() {
@@ -111,7 +112,7 @@ public class MetadataValueSearchList extends IPEDSearchList<ValueCount>{
                 }
             });
 
-            btClear = new JButton("Clear");
+            btClear = new JButton(FieldValuePopupMenu.CLEAR);
             panelButons.add(btClear);
 
             btClear.addActionListener(new ActionListener() {

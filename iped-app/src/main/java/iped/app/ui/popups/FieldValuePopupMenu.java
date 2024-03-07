@@ -43,6 +43,8 @@ public class FieldValuePopupMenu extends JPopupMenu implements ActionListener{
     public static final String FILTER_GREATER_THAN_STR = Messages.get("FieldValuePopupMenu.GreaterThan");
     public static final String FILTER_LESS_THAN_STR = Messages.get("FieldValuePopupMenu.LessThan");
     public static final String CONTAINS_STR = Messages.get("FieldValuePopupMenu.Contains");
+    public static final String CLEAR = Messages.get("FieldValuePopupMenu.Clear");
+    public static final String FILTER = Messages.get("FieldValuePopupMenu.Filter");
 
     JMenuItem filterLessThan;
     JMenuItem filterGreaterThan;
