@@ -104,10 +104,16 @@ public class FieldValuePopupMenu extends JPopupMenu implements ActionListener{
         this.add(new JSeparator());
 
         if(value.length()>0) {
-            filterEquals=createValuedMenuItem(FieldValuePopupMenu.EQUALS_STR);
-            filterEquals.addActionListener(this);
-            this.add(filterEquals);
             
+            isDate = isDate(value);
+
+            // TODO: fix for non numeric and non Date fields
+            if (IndexItem.isNumeric(field) || isDate) {
+                filterEquals = createValuedMenuItem(FieldValuePopupMenu.EQUALS_STR);
+                filterEquals.addActionListener(this);
+                this.add(filterEquals);
+            }
+
             if(IndexItem.isNumeric(field)) {
                 filterLessThan=createValuedMenuItem(FieldValuePopupMenu.FILTER_LESS_THAN_STR);
                 this.add(filterLessThan);
@@ -115,7 +121,7 @@ public class FieldValuePopupMenu extends JPopupMenu implements ActionListener{
                 filterGreaterThan=createValuedMenuItem(FieldValuePopupMenu.FILTER_GREATER_THAN_STR);
                 filterGreaterThan.addActionListener(this);
                 this.add(filterGreaterThan);
-            }else if(isDate=isDate(value)){
+            } else if (isDate) {
                 filterLessThan=createValuedMenuItem(FieldValuePopupMenu.BEFORE_STR);
                 filterLessThan.addActionListener(this);
                 this.add(filterLessThan);
@@ -124,9 +130,10 @@ public class FieldValuePopupMenu extends JPopupMenu implements ActionListener{
                 filterGreaterThan.addActionListener(this);
                 this.add(filterGreaterThan);
             }else {
-                filterStartsWith=createValuedMenuItem(FieldValuePopupMenu.STARTS_WITH_STR);
-                filterStartsWith.addActionListener(this);
-                this.add(filterStartsWith);
+                // TODO: fix for non numeric and non Date fields
+                // filterStartsWith=createValuedMenuItem(FieldValuePopupMenu.STARTS_WITH_STR);
+                // filterStartsWith.addActionListener(this);
+                // this.add(filterStartsWith);
 
                 filterContains=createValuedMenuItem(FieldValuePopupMenu.CONTAINS_STR);
                 filterContains.addActionListener(this);
