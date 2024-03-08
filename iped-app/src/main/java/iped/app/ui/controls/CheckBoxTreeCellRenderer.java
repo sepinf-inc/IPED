@@ -46,18 +46,17 @@ public class CheckBoxTreeCellRenderer extends DefaultTreeCellRenderer implements
         this(tree, checkedPredicate);
         this.visiblePredicate = visiblePredicate;
     }
-    
+
     public String getValueString(Object value) {
         if (value instanceof IFilterer) {
             IFilterer filterer = ((IFilterer) value);
             return filterer.getFilterName();
         }
-        return value.toString();        
+        return value.toString();
     }
 
     @Override
-    public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded,
-            boolean leaf, int row, boolean hasFocus) {
+    public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
 
         JLabel label = new JLabel();
         if (row == -1) {
@@ -66,11 +65,11 @@ public class CheckBoxTreeCellRenderer extends DefaultTreeCellRenderer implements
         }
 
         Icon icon = null;
-        if(value instanceof MediaType) {
+        if (value instanceof MediaType) {
             icon = IconManager.getFileIcon(value.toString().split("/")[0], "");
         }
-        if(value instanceof Category) {
-            icon = IconManager.getCategoryIcon(((Category)value).getName().toLowerCase());
+        if (value instanceof Category) {
+            icon = IconManager.getCategoryIcon(((Category) value).getName().toLowerCase());
         }
         if (value instanceof IMiniaturizable) {
             icon = new ImageIcon(((IMiniaturizable) value).getThumb().getScaledInstance(16, 16, java.awt.Image.SCALE_SMOOTH));

@@ -52,7 +52,7 @@ public class MetadataSearchable {
     }
 
     public boolean isSingleValuedField() {
-        return numValues!=null || docValues!=null;
+        return numValues != null || docValues != null;
     }
 
     Iterator empty = new Iterator<String>() {
@@ -72,12 +72,12 @@ public class MetadataSearchable {
             loadDocValues(field);
             boolean adv = docValuesSet.advanceExact(doc);
 
-            if(adv) {
+            if (adv) {
                 return empty;
             }
 
             return new Iterator<String>() {
-                long ord= -1;
+                long ord = -1;
 
                 @Override
                 public boolean hasNext() {
@@ -105,5 +105,5 @@ public class MetadataSearchable {
         }
         return empty;
     }
-    
+
 }

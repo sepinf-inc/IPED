@@ -17,7 +17,7 @@ import iped.search.IMultiSearchResult;
 import iped.viewers.api.IResultSetFilter;
 
 public class ValueCountFilter implements IResultSetFilter {
-    
+
     private String filterField;
     private HashSet<ValueCount> values;
     private HashSet<Integer> ords = new HashSet<Integer>();
@@ -25,7 +25,7 @@ public class ValueCountFilter implements IResultSetFilter {
     public ValueCountFilter(String filterField, Set<ValueCount> selectedValues) {
         this.filterField = filterField;
         values = new HashSet<ValueCount>();
-        if(selectedValues!=null) {
+        if (selectedValues != null) {
             values.addAll(selectedValues);
         }
         for (Iterator iterator = selectedValues.iterator(); iterator.hasNext();) {
@@ -33,10 +33,9 @@ public class ValueCountFilter implements IResultSetFilter {
             ords.add(valueCount.getOrd());
         }
     }
-    
+
     @Override
-    public IMultiSearchResult filterResult(IMultiSearchResult src)
-            throws ParseException, QueryNodeException, IOException {
+    public IMultiSearchResult filterResult(IMultiSearchResult src) throws ParseException, QueryNodeException, IOException {
         ArrayList<IItemId> selectedItems = new ArrayList<IItemId>();
         ArrayList<Float> scores = new ArrayList<Float>();
         int i = 0;
@@ -47,8 +46,7 @@ public class ValueCountFilter implements IResultSetFilter {
             }
             i++;
         }
-        MultiSearchResult r = new MultiSearchResult(selectedItems.toArray(new ItemId[0]),
-                ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
+        MultiSearchResult r = new MultiSearchResult(selectedItems.toArray(new ItemId[0]), ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
 
         return r;
     }

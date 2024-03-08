@@ -9,7 +9,7 @@ import iped.utils.LocalizedFormat;
 public class ValueCount {
     LookupOrd lo;
     protected int ord, count;
-    String cachedStringValue=null;
+    String cachedStringValue = null;
 
     public ValueCount(LookupOrd lo, int ord, int count) {
         this.lo = lo;
@@ -34,9 +34,9 @@ public class ValueCount {
 
     @Override
     public String toString() {
-        if(cachedStringValue==null) {
-            NumberFormat nf = LocalizedFormat.getNumberInstance(); 
-            cachedStringValue = getVal() + " (" + nf.format(count) + ")"; //$NON-NLS-1$ //$NON-NLS-2$                
+        if (cachedStringValue == null) {
+            NumberFormat nf = LocalizedFormat.getNumberInstance();
+            cachedStringValue = getVal() + " (" + nf.format(count) + ")"; //$NON-NLS-1$ //$NON-NLS-2$
         }
         return cachedStringValue;
     }
@@ -62,7 +62,7 @@ public class ValueCount {
     public void setOrd(int ord) {
         this.ord = ord;
     }
-    
+
     public void incrementCount() {
         count++;
     }

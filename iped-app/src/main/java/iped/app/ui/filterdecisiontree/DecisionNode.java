@@ -7,11 +7,11 @@ public class DecisionNode {
     DecisionNode parent;
     List<DecisionNode> children = new ArrayList<DecisionNode>();
     boolean inverted = false;
-    
+
     public DecisionNode getParent() {
         return parent;
     }
-    
+
     public List<DecisionNode> getChildren() {
         return children;
     }
@@ -29,7 +29,7 @@ public class DecisionNode {
     }
 
     public void invert() {
-        this.inverted = !inverted;        
+        this.inverted = !inverted;
     }
 
 }

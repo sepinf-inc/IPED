@@ -15,17 +15,16 @@ public class StartsWithFilter extends PreQueryValueFilter {
                 return t.startsWith(value);
             }
         });
-        this.queryStr = field+":"+value+"*";
+        this.queryStr = field + ":" + value + "*";
     }
 
     @Override
-    public IMultiSearchResult filterResult(IMultiSearchResult src)
-            throws ParseException, QueryNodeException, IOException {
+    public IMultiSearchResult filterResult(IMultiSearchResult src) throws ParseException, QueryNodeException, IOException {
         return super.filterResult(src);
     }
-    
+
     public String toString() {
-        return field+"^=\""+value+"\"";
+        return field + "^=\"" + value + "\"";
     }
 
 }

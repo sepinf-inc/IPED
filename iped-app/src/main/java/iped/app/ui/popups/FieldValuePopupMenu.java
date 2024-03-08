@@ -32,7 +32,7 @@ import iped.data.IItemId;
 import iped.engine.task.index.IndexItem;
 import iped.utils.DateUtil;
 
-public class FieldValuePopupMenu extends JPopupMenu implements ActionListener{
+public class FieldValuePopupMenu extends JPopupMenu implements ActionListener {
     private static final String STARTS_WITH_STR = Messages.get("FieldValuePopupMenu.StartsWith");
     public static final String EQUALS_STR = Messages.get("FieldValuePopupMenu.Equals");
     public static final String NON_EMPTY_STR = Messages.get("FieldValuePopupMenu.NonEmpty");
@@ -63,7 +63,7 @@ public class FieldValuePopupMenu extends JPopupMenu implements ActionListener{
     private JButton btValue;
     private JMenuItem filterEquals;
     private JMenuItem filterStartsWith;
-    
+
     HashMap<JMenuItem, JMenu> parentMenus = new HashMap<JMenuItem, JMenu>();
 
     public FieldValuePopupMenu(IItemId itemId, String field, String value) {
@@ -72,10 +72,10 @@ public class FieldValuePopupMenu extends JPopupMenu implements ActionListener{
         fm = TableHeaderFilterManager.get();
 
         this.itemId = itemId;
-        this.field=field;
+        this.field = field;
         this.value = value;
 
-        if(value!=null && value!="" && value.length()>0) {
+        if (value != null && value != "" && value.length() > 0) {
             JPanel valuePanel = new JPanel();
             valuePanel.setBorder(BorderFactory.createEmptyBorder());
             JLabel lbValue = new JLabel(value);
@@ -83,28 +83,28 @@ public class FieldValuePopupMenu extends JPopupMenu implements ActionListener{
             btValue.setBorder(BorderFactory.createEmptyBorder());
             URL imageUrl = App.class.getResource("copy.png");
             ImageIcon imageIcon = new ImageIcon(imageUrl);
-            Image image = imageIcon.getImage(); // transform it 
-            Image newimg = image.getScaledInstance(16, 16,  java.awt.Image.SCALE_SMOOTH); // scale it the smooth way  
-            imageIcon = new ImageIcon(newimg);  // transform it back
+            Image image = imageIcon.getImage(); // transform it
+            Image newimg = image.getScaledInstance(16, 16, java.awt.Image.SCALE_SMOOTH); // scale it the smooth way
+            imageIcon = new ImageIcon(newimg); // transform it back
             btValue.setIcon(imageIcon);
             btValue.addActionListener(this);
-            btValue.setMaximumSize(new Dimension(16,16));
+            btValue.setMaximumSize(new Dimension(16, 16));
             valuePanel.add(lbValue);
             valuePanel.add(btValue);
             this.add(valuePanel);
         }
-        
+
         try {
             ms = new MetadataSearchable(field);
         } catch (IOException e) {
             e.printStackTrace();
             return;
         }
-        
+
         this.add(new JSeparator());
 
-        if(value.length()>0) {
-            
+        if (value.length() > 0) {
+
             isDate = isDate(value);
 
             // TODO: fix for non numeric and non Date fields
@@ -114,54 +114,54 @@ public class FieldValuePopupMenu extends JPopupMenu implements ActionListener{
                 this.add(filterEquals);
             }
 
-            if(IndexItem.isNumeric(field)) {
-                filterLessThan=createValuedMenuItem(FieldValuePopupMenu.FILTER_LESS_THAN_STR);
+            if (IndexItem.isNumeric(field)) {
+                filterLessThan = createValuedMenuItem(FieldValuePopupMenu.FILTER_LESS_THAN_STR);
                 this.add(filterLessThan);
 
-                filterGreaterThan=createValuedMenuItem(FieldValuePopupMenu.FILTER_GREATER_THAN_STR);
+                filterGreaterThan = createValuedMenuItem(FieldValuePopupMenu.FILTER_GREATER_THAN_STR);
                 filterGreaterThan.addActionListener(this);
                 this.add(filterGreaterThan);
             } else if (isDate) {
-                filterLessThan=createValuedMenuItem(FieldValuePopupMenu.BEFORE_STR);
+                filterLessThan = createValuedMenuItem(FieldValuePopupMenu.BEFORE_STR);
                 filterLessThan.addActionListener(this);
                 this.add(filterLessThan);
 
-                filterGreaterThan=createValuedMenuItem(FieldValuePopupMenu.AFTER_STR);
+                filterGreaterThan = createValuedMenuItem(FieldValuePopupMenu.AFTER_STR);
                 filterGreaterThan.addActionListener(this);
                 this.add(filterGreaterThan);
-            }else {
+            } else {
                 // TODO: fix for non numeric and non Date fields
                 // filterStartsWith=createValuedMenuItem(FieldValuePopupMenu.STARTS_WITH_STR);
                 // filterStartsWith.addActionListener(this);
                 // this.add(filterStartsWith);
 
-                filterContains=createValuedMenuItem(FieldValuePopupMenu.CONTAINS_STR);
+                filterContains = createValuedMenuItem(FieldValuePopupMenu.CONTAINS_STR);
                 filterContains.addActionListener(this);
                 this.add(filterContains);
 
-                filterNotContains=createValuedMenuItem(FieldValuePopupMenu.NOT_CONTAINS_STR);
+                filterNotContains = createValuedMenuItem(FieldValuePopupMenu.NOT_CONTAINS_STR);
                 filterNotContains.addActionListener(this);
                 this.add(filterNotContains);
             }
         }
-        filterEmpty=new JMenuItem(FieldValuePopupMenu.EMPTY_STR);
+        filterEmpty = new JMenuItem(FieldValuePopupMenu.EMPTY_STR);
         filterEmpty.addActionListener(this);
         this.add(filterEmpty);
 
-        filterNonEmpty=new JMenuItem(FieldValuePopupMenu.NON_EMPTY_STR);
+        filterNonEmpty = new JMenuItem(FieldValuePopupMenu.NON_EMPTY_STR);
         filterNonEmpty.addActionListener(this);
         this.add(filterNonEmpty);
     }
-    
+
     private JMenuItem createValuedMenuItem(String text) {
-        if(ms.isSingleValuedField()) {
+        if (ms.isSingleValuedField()) {
             JMenuItem result = new JMenuItem(text);
             result.addActionListener(this);
             return result;
-        }else {
+        } else {
             String[] itemValues = value.split("\\s\\|\\s");
-            
-            if(itemValues.length>1) {
+
+            if (itemValues.length > 1) {
                 JMenu result = new JMenu(text);
 
                 for (int i = 0; i < itemValues.length; i++) {
@@ -173,7 +173,7 @@ public class FieldValuePopupMenu extends JPopupMenu implements ActionListener{
                 }
 
                 return result;
-            }else {
+            } else {
                 JMenuItem result = new JMenuItem(text);
                 result.addActionListener(this);
                 return result;
@@ -186,43 +186,43 @@ public class FieldValuePopupMenu extends JPopupMenu implements ActionListener{
         try {
             df.parse(value);
             return true;
-        }catch (Exception e) {
+        } catch (Exception e) {
         }
         return false;
     }
-    
+
     @Override
     public void actionPerformed(ActionEvent e) {
         Object source = e.getSource();
         String strValue = value;
-        
-        if(source instanceof JMenuItem) {
-            JMenu parentMenu = parentMenus.get((JMenuItem)source);
-            if(parentMenu != null) {
-                strValue = ((JMenuItem)source).getText(); 
+
+        if (source instanceof JMenuItem) {
+            JMenu parentMenu = parentMenus.get((JMenuItem) source);
+            if (parentMenu != null) {
+                strValue = ((JMenuItem) source).getText();
                 source = parentMenu;
             }
         }
-        
-        if(source==filterEquals) {
+
+        if (source == filterEquals) {
             fm.addEqualsFilter(field, strValue);
         }
-        if(source==filterStartsWith) {
+        if (source == filterStartsWith) {
             fm.addStartsWithFilter(field, strValue);
         }
-        if(source==filterContains) {
-            fm.addFilter(field, field+":\""+strValue+"\"");
+        if (source == filterContains) {
+            fm.addFilter(field, field + ":\"" + strValue + "\"");
         }
-        if(source==filterNotContains) {
-            fm.addFilter(field, "-"+field+":\""+strValue+"\"");
+        if (source == filterNotContains) {
+            fm.addFilter(field, "-" + field + ":\"" + strValue + "\"");
         }
-        if(source==filterEmpty) {
+        if (source == filterEmpty) {
             fm.addEmptyFilter(field);
         }
-        if(source==filterNonEmpty) {
+        if (source == filterNonEmpty) {
             fm.addNonEmptyFilter(field);
         }
-        if(isDate) {
+        if (isDate) {
             try {
                 Date d = df.parse(strValue);
                 value = DateUtil.dateToString(d);
@@ -230,21 +230,21 @@ public class FieldValuePopupMenu extends JPopupMenu implements ActionListener{
                 e1.printStackTrace();
             }
         }
-        if(source==filterLessThan) {
-            fm.addFilter(field, field+":[* TO "+strValue+"]");
+        if (source == filterLessThan) {
+            fm.addFilter(field, field + ":[* TO " + strValue + "]");
         }
-        if(source==filterGreaterThan) {
-            fm.addFilter(field, field+":["+strValue+" TO *]");
+        if (source == filterGreaterThan) {
+            fm.addFilter(field, field + ":[" + strValue + " TO *]");
         }
-        
-        if(source==btValue) {
+
+        if (source == btValue) {
             StringSelection stringSelection = new StringSelection(value);
             Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
             clipboard.setContents(stringSelection, null);
             this.setVisible(false);
             return;
         }
-        
+
         App.get().getAppListener().updateFileListing();
         App.get().setDockablesColors();
     }

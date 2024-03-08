@@ -4,8 +4,9 @@ import iped.data.IItem;
 import iped.data.IItemId;
 
 public interface IItemRef {
-    
-    IItem getItemRef(); 
-    IItemId getItemRefId(); 
+
+    IItem getItemRef();
+
+    IItemId getItemRefId();
 
 }

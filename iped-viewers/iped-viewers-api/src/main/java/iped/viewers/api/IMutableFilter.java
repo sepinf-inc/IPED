@@ -12,19 +12,19 @@ import java.util.Iterator;
  */
 public interface IMutableFilter {
     ArrayList<IFilterChangeListener> filterChangeListeners = new ArrayList<>();
-    
+
     default public void addFilterChangeListener(IFilterChangeListener filterChangeListener) {
-        filterChangeListeners.add(filterChangeListener);        
+        filterChangeListeners.add(filterChangeListener);
     }
 
     default public void removeFilterChangeListener(IFilterChangeListener filterChangeListener) {
-        filterChangeListeners.remove(filterChangeListener);        
+        filterChangeListeners.remove(filterChangeListener);
     }
 
     default public void fireFilterChangeListener() {
         for (Iterator iterator = filterChangeListeners.iterator(); iterator.hasNext();) {
             IFilterChangeListener filterChangeListener = (IFilterChangeListener) iterator.next();
-            filterChangeListener.onFilterChange(this);            
+            filterChangeListener.onFilterChange(this);
         }
     }
 

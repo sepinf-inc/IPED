@@ -915,7 +915,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
     public void filterSelection() {
         this.getIpedChartsPanel().setInternalUpdate(true);
         App app = (App) this.getIpedChartsPanel().getResultsProvider();
-        if(!isClearing) {
+        if (!isClearing) {
             app.getAppListener().updateFileListing();
         }
         app.setDockablesColors();

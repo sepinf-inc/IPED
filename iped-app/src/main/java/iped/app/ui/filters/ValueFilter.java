@@ -22,56 +22,55 @@ public class ValueFilter extends MetadataSearchable implements IResultSetFilter 
     protected String field;
     protected String value;
     Predicate<String> predicate = null;
-    
+
     public ValueFilter(String field, String value, Predicate<String> predicate) {
         this.field = field;
         this.value = value;
         this.predicate = predicate;
         reader = App.get().appCase.getLeafReader();
-        
+
     }
-    
+
     public boolean checkinDocValues(int doc) {
-        if(docValues==null) {
+        if (docValues == null) {
             return false;
         }
         try {
             boolean adv = docValues.advanceExact(doc);
             String val = docValues.lookupOrd(docValues.ordValue()).utf8ToString();
-            
-            if(val!=null && predicate.test(val)) {
+
+            if (val != null && predicate.test(val)) {
                 return true;
             }
-        }catch (Exception e) {
+        } catch (Exception e) {
         }
         return false;
     }
-    
+
     public boolean checkinDocValuesSet(int doc) {
-        if(docValuesSet==null) {
+        if (docValuesSet == null) {
             return false;
         }
         try {
             boolean adv = docValuesSet.advanceExact(doc);
 
-            long ord= -1;
+            long ord = -1;
             while (adv && (ord = docValuesSet.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
                 String val = docValuesSet.lookupOrd(ord).utf8ToString();
 
-                if(val!=null && predicate.test(val)) {
+                if (val != null && predicate.test(val)) {
                     return true;
                 }
             }
-        }catch (Exception e) {
+        } catch (Exception e) {
         }
         return false;
     }
 
     @Override
-    public IMultiSearchResult filterResult(IMultiSearchResult src)
-            throws ParseException, QueryNodeException, IOException {
-        
-        if(predicate==null) {
+    public IMultiSearchResult filterResult(IMultiSearchResult src) throws ParseException, QueryNodeException, IOException {
+
+        if (predicate == null) {
             return src;
         }
 
@@ -80,23 +79,22 @@ public class ValueFilter extends MetadataSearchable implements IResultSetFilter 
         } catch (IOException e) {
             e.printStackTrace();
         }
-            
+
         HashMap<Integer, byte[]> bookmarkBitsPerSource = new HashMap<Integer, byte[]>();
         ArrayList<IItemId> selectedItems = new ArrayList<IItemId>();
         ArrayList<Float> scores = new ArrayList<Float>();
         int i = 0;
         for (IItemId item : src.getIterator()) {
             int doc = App.get().appCase.getLuceneId(item);
-            
-            if(checkinDocValues(doc) || checkinDocValuesSet(doc)) {
+
+            if (checkinDocValues(doc) || checkinDocValuesSet(doc)) {
                 selectedItems.add(item);
                 scores.add(src.getScore(i));
             }
-            
+
             i++;
         }
-        MultiSearchResult r = new MultiSearchResult(selectedItems.toArray(new ItemId[0]),
-                ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
+        MultiSearchResult r = new MultiSearchResult(selectedItems.toArray(new ItemId[0]), ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
 
         return r;
     }

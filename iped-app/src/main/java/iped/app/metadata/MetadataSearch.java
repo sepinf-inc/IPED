@@ -27,39 +27,36 @@ import iped.localization.LocalizedProperties;
 import iped.properties.BasicProps;
 import iped.search.IMultiSearchResult;
 
-public class MetadataSearch extends MetadataSearchable{
+public class MetadataSearch extends MetadataSearchable {
     public static final String EVENT_SEPARATOR = Pattern.quote(IndexItem.EVENT_SEPARATOR);
-    public static final String RANGE_SEPARATOR = Messages.getString("MetadataPanel.RangeSeparator"); //$NON-NLS-1$    
+    public static final String RANGE_SEPARATOR = Messages.getString("MetadataPanel.RangeSeparator"); //$NON-NLS-1$
     public static final String MONEY_FIELD = RegexTask.REGEX_PREFIX + "MONEY"; //$NON-NLS-1$
 
     volatile boolean logScale = false;
     volatile boolean noRanges = false;
 
-    /* LOG SCALE: Up to 40 bins:
-     *            0 -> negative infinite,
-     *      1 to 19 -> count negative numbers, 
-     *     20 to 37 -> count positive numbers,
-     *           38 -> positive infinite,
-     *           39 -> NaN.
+    /*
+     * LOG SCALE: Up to 40 bins: 0 -> negative infinite, 1 to 19 -> count negative
+     * numbers, 20 to 37 -> count positive numbers, 38 -> positive infinite, 39 ->
+     * NaN.
      */
     private static final int logScaleBins = 40;
     private static final int logScaleHalf = 20;
 
     volatile double min, max, interval;
-    //LINEAR SCALE: Up to 10 bins 
+    // LINEAR SCALE: Up to 10 bins
     private static final int linearScaleBins = 10;
-    
+
     volatile IMultiSearchResult ipedResult;
 
     public MetadataSearch() {
     }
 
     public void setIpedResult(IMultiSearchResult ipedResult2) {
-        this.ipedResult = ipedResult2;        
+        this.ipedResult = ipedResult2;
     }
 
-    public MultiSearchResult getIdsWithOrd(MultiSearchResult result, String field, Set<Integer> ordsToGet)
-            throws IOException {
+    public MultiSearchResult getIdsWithOrd(MultiSearchResult result, String field, Set<Integer> ordsToGet) throws IOException {
 
         boolean isNumeric = IndexItem.isNumeric(field);
         boolean isFloat = IndexItem.isFloat(field);
@@ -245,7 +242,7 @@ public class MetadataSearch extends MetadataSearchable{
                         k++;
                     }
                 }
-            }            
+            }
         } else if (docValues != null) {
             for (IItemId item : result.getIterator()) {
                 int doc = App.get().appCase.getLuceneId(item);
@@ -285,8 +282,7 @@ public class MetadataSearch extends MetadataSearchable{
             }
         }
 
-        return new MultiSearchResult(items.toArray(new ItemId[0]),
-                ArrayUtils.toPrimitive(scores.toArray(new Float[scores.size()])));
+        return new MultiSearchResult(items.toArray(new ItemId[0]), ArrayUtils.toPrimitive(scores.toArray(new Float[scores.size()])));
     }
 
     private long[] getEventOrdsFromEventSet(SortedSetDocValues eventDocValues, String eventSet) throws IOException {
@@ -330,7 +326,7 @@ public class MetadataSearch extends MetadataSearchable{
         boolean hasNegativeInfinite = false;
         boolean hasPositiveInfinite = false;
         boolean hasNaN = false;
-        
+
         if (isNumeric && numValues != null && !noRanges) {
             if (logScale) {
                 valueCount = new int[logScaleBins];
@@ -434,7 +430,7 @@ public class MetadataSearch extends MetadataSearchable{
                                 actualMin[ord] = lval;
                             if (lval > actualMax[ord])
                                 actualMax[ord] = lval;
-                        }                        
+                        }
                         if (ord < 0)
                             ord = 0;
                         else if (ord >= linearScaleBins)
@@ -499,7 +495,7 @@ public class MetadataSearch extends MetadataSearchable{
                     }
                 }
                 valueCount = new int[linearScaleBins];
-                interval = min >= max ? 1 :(max - min) / linearScaleBins;
+                interval = min >= max ? 1 : (max - min) / linearScaleBins;
                 long[] rangeMin = null;
                 long[] rangeMax = null;
                 if (!isFloat && !isDouble) {
@@ -550,7 +546,7 @@ public class MetadataSearch extends MetadataSearchable{
                                 actualMin[ord] = lval;
                             if (lval > actualMax[ord])
                                 actualMax[ord] = lval;
-                        }                        
+                        }
                         if (ord < 0)
                             ord = 0;
                         else if (ord >= linearScaleBins)
@@ -562,7 +558,7 @@ public class MetadataSearch extends MetadataSearchable{
                 }
             }
         } else if (isNumeric && numValuesSet != null && noRanges) {
-            HashMap<Double,SingleValueCount> map = new HashMap<Double,SingleValueCount>();
+            HashMap<Double, SingleValueCount> map = new HashMap<Double, SingleValueCount>();
             for (IItemId item : ipedResult.getIterator()) {
                 int doc = App.get().appCase.getLuceneId(item);
                 boolean adv = numValuesSet.advanceExact(doc);
@@ -585,7 +581,7 @@ public class MetadataSearch extends MetadataSearchable{
             }
             list.addAll(l);
         } else if (isNumeric && numValues != null && noRanges) {
-            HashMap<Double,SingleValueCount> map = new HashMap<Double,SingleValueCount>();
+            HashMap<Double, SingleValueCount> map = new HashMap<Double, SingleValueCount>();
             for (IItemId item : ipedResult.getIterator()) {
                 int doc = App.get().appCase.getLuceneId(item);
                 boolean adv = numValues.advanceExact(doc);
@@ -606,13 +602,13 @@ public class MetadataSearch extends MetadataSearchable{
             for (int i = 0; i < l.size(); i++) {
                 l.get(i).setOrd(i);
             }
-            list.addAll(l);            
+            list.addAll(l);
         } else if (docValues != null) {
             valueCount = new int[docValues.getValueCount()];
             for (IItemId item : ipedResult.getIterator()) {
                 int doc = App.get().appCase.getLuceneId(item);
                 boolean adv = docValues.advanceExact(doc);
-                if(adv) {
+                if (adv) {
                     int ord = docValues.ordValue();
                     valueCount[ord]++;
                 }
@@ -647,9 +643,9 @@ public class MetadataSearch extends MetadataSearchable{
                     if (logScale) {
                         if (ord == 0)
                             start = end = Double.NEGATIVE_INFINITY;
-                        else if (ord == logScaleBins - 2) 
+                        else if (ord == logScaleBins - 2)
                             start = end = Double.POSITIVE_INFINITY;
-                        else if (ord == logScaleBins - 1) 
+                        else if (ord == logScaleBins - 1)
                             start = end = Double.NaN;
                         else if (ord < logScaleHalf) {
                             end = ord == logScaleHalf - 1 ? 0 : -(long) Math.pow(10, logScaleHalf - 1 - ord);
@@ -712,15 +708,14 @@ public class MetadataSearch extends MetadataSearchable{
     }
 
     public void setLogScale(boolean b) {
-        logScale = b;        
+        logScale = b;
     }
 
     public void setNoRanges(boolean b) {
-        noRanges=b;        
+        noRanges = b;
     }
 
 }
-
 
 class LookupOrdSDV extends LookupOrd {
 

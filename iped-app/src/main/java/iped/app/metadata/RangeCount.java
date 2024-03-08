@@ -20,10 +20,10 @@ public class RangeCount extends ValueCount {
         sb.append(getVal());
         sb.append(" ("); //$NON-NLS-1$
         sb.append(nf.format(count));
-        sb.append(')');            
+        sb.append(')');
         return sb.toString();
     }
-    
+
     @Override
     public String getVal() {
         StringBuilder sb = new StringBuilder();

@@ -34,7 +34,7 @@ import iped.app.ui.TableHeaderFilterManager;
 import iped.app.ui.controls.IPEDSearchList;
 import iped.app.ui.popups.FieldValuePopupMenu;
 
-public class MetadataValueSearchList extends IPEDSearchList<ValueCount>{
+public class MetadataValueSearchList extends IPEDSearchList<ValueCount> {
 
     private static HashMap<String, Set<ValueCount>> lastFilteredValuesPerField = new HashMap<>();
 
@@ -47,7 +47,7 @@ public class MetadataValueSearchList extends IPEDSearchList<ValueCount>{
     public MetadataValueSearchList(String field) {
         try {
             fm = TableHeaderFilterManager.get();
-            
+
             Set<ValueCount> values = lastFilteredValuesPerField.get(field);
             if (values != null) {
                 this.selected = values;
@@ -55,15 +55,15 @@ public class MetadataValueSearchList extends IPEDSearchList<ValueCount>{
             lastFilteredValuesPerField.put(field, this.selected);
 
             metadataSearch = TableHeaderFilterManager.get().getMetadataSearch(field);
-            
+
             JMenuItem emptyMenu = new JCheckBoxMenuItem(FieldValuePopupMenu.EMPTY_STR);
             emptyMenu.setSelected(fm.getContainsEmptyFilter(field));
             emptyMenu.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    if(emptyMenu.isSelected()) {
+                    if (emptyMenu.isSelected()) {
                         fm.addEmptyFilter(field);
-                    }else {
+                    } else {
                         fm.removeEmptyFilter(field);
                     }
                     menu.setVisible(false);
@@ -77,9 +77,9 @@ public class MetadataValueSearchList extends IPEDSearchList<ValueCount>{
             nonEmptyMenu.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    if(nonEmptyMenu.isSelected()) {
+                    if (nonEmptyMenu.isSelected()) {
                         fm.addNonEmptyFilter(field);
-                    }else {
+                    } else {
                         fm.removeNonEmptyFilter(field);
                     }
                     menu.setVisible(false);
@@ -94,7 +94,7 @@ public class MetadataValueSearchList extends IPEDSearchList<ValueCount>{
             this.setBackground(menu.getBackground());
 
             metadataSearch.setIpedResult(App.get().getResults());
-            
+
             this.availableItems = metadataSearch.countValues(field);
 
             createGUI(availableItems);
@@ -108,9 +108,9 @@ public class MetadataValueSearchList extends IPEDSearchList<ValueCount>{
             btFiltrar.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    if(selected.size()==0) {
+                    if (selected.size() == 0) {
                         fm.removeFilter(field);
-                    }else {
+                    } else {
                         HashSet<ValueCount> selectedClone = new HashSet<ValueCount>();
                         selectedClone.addAll(selected);
                         fm.addFilter(field, selectedClone);
@@ -146,38 +146,38 @@ public class MetadataValueSearchList extends IPEDSearchList<ValueCount>{
             menu.show(invoker, x, y);
         }
     }
-    
+
     public static void install(JTable resultsTable) {
         JTableHeader header = resultsTable.getTableHeader();
         TableCellRenderer dr = header.getDefaultRenderer();
         header.setDefaultRenderer(new DefaultTableCellRenderer() {
             Color originalColor = this.getForeground();
+
             @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-                    boolean hasFocus, int row, int column) {
-                Component result= dr.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                column = resultsTable.convertColumnIndexToModel(column);                    
-                String field = ((ResultTableModel)resultsTable.getModel()).getColumnFieldName(column);
-                if(TableHeaderFilterManager.get().isFieldFiltered(field)) {
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                Component result = dr.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                column = resultsTable.convertColumnIndexToModel(column);
+                String field = ((ResultTableModel) resultsTable.getModel()).getColumnFieldName(column);
+                if (TableHeaderFilterManager.get().isFieldFiltered(field)) {
                     result.setForeground(Color.red);
-                }else {
+                } else {
                     result.setForeground(originalColor);
                 }
                 return result;
             }
-            
+
         });
         resultsTable.getTableHeader().addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if(e.getButton() == MouseEvent.BUTTON3) {
+                if (e.getButton() == MouseEvent.BUTTON3) {
                     TableColumnModel cm = header.getColumnModel();
                     int pos = 0;
                     int ci = cm.getColumnIndexAtX(e.getX());
-                    for(int i = 0; i < ci; i++) {
-                        pos+=cm.getColumn(i).getWidth();
+                    for (int i = 0; i < ci; i++) {
+                        pos += cm.getColumn(i).getWidth();
                     }
-                    
+
                     int colModel = resultsTable.convertColumnIndexToModel(ci);
                     String field = ((ResultTableModel) resultsTable.getModel()).getColumnFieldName(colModel);
 
