@@ -550,7 +550,8 @@ public class UfedXmlReader extends DataSourceReader {
                 item.setPath(path);
 
                 String name = path.substring(path.lastIndexOf('/') + 1);
-                item.setName(name);
+                // Check if the name is not too long (see issue #2107) 
+                updateName(item, name);
 
                 item.setParent(getParent(path));
 
@@ -1373,10 +1374,11 @@ public class UfedXmlReader extends DataSourceReader {
         private void updateName(IItem item, String newName) {
             // prevents error DocValuesField is too large
             int maxNameSize = 4096;
-            if (newName.length() > maxNameSize)
+            if (newName.length() > maxNameSize) {
                 newName = newName.substring(0, maxNameSize);
+                item.setPath(item.getPath().substring(0, item.getPath().lastIndexOf('/') + 1) + newName);
+            }
             item.setName(newName);
-            item.setPath(item.getPath().substring(0, item.getPath().lastIndexOf('/') + 1) + newName);
         }
 
         private String handleAttachment(Item item) {
