@@ -1,14 +1,10 @@
 package iped.app.ui.controls.table;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -21,9 +17,7 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
 import javax.swing.JTable;
-import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.JTableHeader;
-import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 
 import iped.app.metadata.MetadataSearch;
@@ -32,15 +26,17 @@ import iped.app.ui.App;
 import iped.app.ui.ResultTableModel;
 import iped.app.ui.TableHeaderFilterManager;
 import iped.app.ui.controls.IPEDSearchList;
+import iped.app.ui.controls.ResizablePopupMenu;
 import iped.app.ui.popups.FieldValuePopupMenu;
 
 public class MetadataValueSearchList extends IPEDSearchList<ValueCount> {
+    private static final long serialVersionUID = 7433141453098578420L;
 
     private static HashMap<String, Set<ValueCount>> lastFilteredValuesPerField = new HashMap<>();
 
     private MetadataSearch metadataSearch;
-    private JPopupMenu menu = new JPopupMenu();
-    private JButton btFiltrar;
+    private JPopupMenu menu = new ResizablePopupMenu();
+    private JButton btFilter;
     private TableHeaderFilterManager fm;
     private JButton btClear;
 
@@ -50,13 +46,16 @@ public class MetadataValueSearchList extends IPEDSearchList<ValueCount> {
 
             Set<ValueCount> values = lastFilteredValuesPerField.get(field);
             if (values != null) {
-                this.selected = values;
+                selected = values;
             }
-            lastFilteredValuesPerField.put(field, this.selected);
+            lastFilteredValuesPerField.put(field, selected);
 
             metadataSearch = TableHeaderFilterManager.get().getMetadataSearch(field);
 
+            Dimension minDim = new Dimension(150, 18);
             JMenuItem emptyMenu = new JCheckBoxMenuItem(FieldValuePopupMenu.EMPTY_STR);
+            emptyMenu.setMinimumSize(minDim);
+            emptyMenu.setPreferredSize(minDim);
             emptyMenu.setSelected(fm.getContainsEmptyFilter(field));
             emptyMenu.addActionListener(new ActionListener() {
                 @Override
@@ -73,6 +72,8 @@ public class MetadataValueSearchList extends IPEDSearchList<ValueCount> {
             });
             menu.add(emptyMenu);
             JMenuItem nonEmptyMenu = new JCheckBoxMenuItem(FieldValuePopupMenu.NON_EMPTY_STR);
+            nonEmptyMenu.setMinimumSize(minDim);
+            nonEmptyMenu.setPreferredSize(minDim);
             nonEmptyMenu.setSelected(fm.getContainsNonEmptyFilter(field));
             nonEmptyMenu.addActionListener(new ActionListener() {
                 @Override
@@ -91,21 +92,25 @@ public class MetadataValueSearchList extends IPEDSearchList<ValueCount> {
             menu.add(new JSeparator());
 
             menu.add(this);
-            this.setBackground(menu.getBackground());
+            setOpaque(false);
 
             metadataSearch.setIpedResult(App.get().getResults());
 
-            this.availableItems = metadataSearch.countValues(field);
+            availableItems = metadataSearch.countValues(field);
 
             createGUI(availableItems);
 
-            JPanel panelButons = new JPanel(new FlowLayout(FlowLayout.CENTER, 1, 1));
-            this.add(panelButons, BorderLayout.SOUTH);
+            JPanel panelButtons = new JPanel(new FlowLayout(FlowLayout.CENTER, 1, 1));
+            panelButtons.setOpaque(false);
+            add(panelButtons, BorderLayout.SOUTH);
 
-            btFiltrar = new JButton(FieldValuePopupMenu.FILTER);
-            panelButons.add(btFiltrar);
+            Dimension butDim = new Dimension(72, 26);
 
-            btFiltrar.addActionListener(new ActionListener() {
+            btFilter = new JButton(FieldValuePopupMenu.FILTER);
+            btFilter.setPreferredSize(butDim);
+            panelButtons.add(btFilter);
+
+            btFilter.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     if (selected.size() == 0) {
@@ -122,13 +127,14 @@ public class MetadataValueSearchList extends IPEDSearchList<ValueCount> {
             });
 
             btClear = new JButton(FieldValuePopupMenu.CLEAR);
-            panelButons.add(btClear);
+            btClear.setPreferredSize(butDim);
+            panelButtons.add(btClear);
 
             btClear.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     selected.clear();
-                    btFiltrar.doClick();
+                    btFilter.doClick();
                 }
             });
 
@@ -137,55 +143,26 @@ public class MetadataValueSearchList extends IPEDSearchList<ValueCount> {
         }
     }
 
-    public void show(Component invoker, int colIndex, int x, int y) {
-        JTableHeader header = (JTableHeader) invoker;
-        if (colIndex >= 4) {
-            int colwidth = header.getColumnModel().getColumn(colIndex).getWidth();
-            colwidth = Math.min(Math.max(colwidth, 150), 1000);
-            this.setPreferredSize(new Dimension(colwidth, 250));
-            menu.show(invoker, x, y);
+    public static void show(JTableHeader header, int column) {
+        TableColumnModel cm = header.getColumnModel();
+        int x = 0;
+        for (int i = 0; i < column; i++) {
+            x += cm.getColumn(i).getWidth();
         }
+
+        int colModel = header.getTable().convertColumnIndexToModel(column);
+        String field = ((ResultTableModel) header.getTable().getModel()).getColumnFieldName(colModel);
+
+        MetadataValueSearchList m = new MetadataValueSearchList(field);
+
+        int colWidth = header.getColumnModel().getColumn(column).getWidth();
+        colWidth = Math.min(Math.max(colWidth, 160), 1000);
+        m.setMinimumSize(new Dimension(150, 120));
+        m.setPreferredSize(new Dimension(colWidth, 250));
+        m.menu.show(header, x, header.getY() + header.getHeight());
     }
 
     public static void install(JTable resultsTable) {
-        JTableHeader header = resultsTable.getTableHeader();
-        TableCellRenderer dr = header.getDefaultRenderer();
-        header.setDefaultRenderer(new DefaultTableCellRenderer() {
-            Color originalColor = this.getForeground();
-
-            @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                Component result = dr.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                column = resultsTable.convertColumnIndexToModel(column);
-                String field = ((ResultTableModel) resultsTable.getModel()).getColumnFieldName(column);
-                if (TableHeaderFilterManager.get().isFieldFiltered(field)) {
-                    result.setForeground(Color.red);
-                } else {
-                    result.setForeground(originalColor);
-                }
-                return result;
-            }
-
-        });
-        resultsTable.getTableHeader().addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (e.getButton() == MouseEvent.BUTTON3) {
-                    TableColumnModel cm = header.getColumnModel();
-                    int pos = 0;
-                    int ci = cm.getColumnIndexAtX(e.getX());
-                    for (int i = 0; i < ci; i++) {
-                        pos += cm.getColumn(i).getWidth();
-                    }
-
-                    int colModel = resultsTable.convertColumnIndexToModel(ci);
-                    String field = ((ResultTableModel) resultsTable.getModel()).getColumnFieldName(colModel);
-
-                    MetadataValueSearchList m = new MetadataValueSearchList(field);
-                    m.show(header, ci, pos, header.getY() + header.getHeight());
-                }
-            }
-        });
         App.get().getFilterManager().addResultSetFilterer(TableHeaderFilterManager.get());
         App.get().getFilterManager().addQueryFilterer(TableHeaderFilterManager.get());
     }

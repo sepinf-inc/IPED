@@ -127,6 +127,7 @@ import iped.app.ui.bookmarks.BookmarkIcon;
 import iped.app.ui.bookmarks.BookmarkTreeCellRenderer;
 import iped.app.ui.controls.CSelButton;
 import iped.app.ui.controls.CustomButton;
+import iped.app.ui.controls.table.FilterTableHeaderRenderer;
 import iped.app.ui.controls.table.MetadataValueSearchList;
 import iped.app.ui.themes.ThemeManager;
 import iped.app.ui.utils.PanelsLayout;
@@ -564,6 +565,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         resultsTable.setShowGrid(false);
         resultsTable.setAutoscrolls(false);
         ((JComponent) resultsTable.getDefaultRenderer(Boolean.class)).setOpaque(true);
+        resultsTable.getTableHeader().setDefaultRenderer(new FilterTableHeaderRenderer(resultsTable));
         
         MetadataValueSearchList.install(resultsTable);
         

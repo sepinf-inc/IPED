@@ -1,14 +1,15 @@
 package iped.app.ui.controls;
 
 import java.awt.BorderLayout;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
+import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -21,7 +22,7 @@ import javax.swing.table.AbstractTableModel;
 import iped.app.metadata.ValueCount;
 
 public class IPEDSearchList<E> extends JPanel {
-
+    private static final long serialVersionUID = -6552496361510386212L;
     protected JTextField txFilter;
     protected List<E> availableItems;
     protected Set<ValueCount> selected = new HashSet<ValueCount>();
@@ -100,7 +101,7 @@ public class IPEDSearchList<E> extends JPanel {
         private List<ValueCount> data = new ArrayList<>();
 
         public FilteredList(String text) {
-            Predicate checkContains = new Predicate<E>() {
+            Predicate<E> checkContains = new Predicate<E>() {
                 @Override
                 public boolean test(E t) {
                     if (!text.equals("")) {
@@ -158,17 +159,10 @@ public class IPEDSearchList<E> extends JPanel {
         table = new JTable(model);
         table.setTableHeader(null);
         table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        ((JComponent) table.getDefaultRenderer(Boolean.class)).setOpaque(true);
         table.setFillsViewportHeight(true);
         adjustFirstColWidth();
-        table.addKeyListener(new KeyListener() {
-            @Override
-            public void keyTyped(KeyEvent e) {
-            }
-
-            @Override
-            public void keyPressed(KeyEvent e) {
-            }
-
+        table.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_SPACE) {
@@ -182,12 +176,8 @@ public class IPEDSearchList<E> extends JPanel {
         });
 
         txFilter = new JTextField();
-        txFilter.addKeyListener(new KeyListener() {
+        txFilter.addKeyListener(new KeyAdapter() {
             private IPEDSearchList<E>.FilteredList fl;
-
-            @Override
-            public void keyTyped(KeyEvent e) {
-            }
 
             @Override
             public void keyReleased(KeyEvent e) {
@@ -203,19 +193,13 @@ public class IPEDSearchList<E> extends JPanel {
                     model.fireTableDataChanged();
                 }
             }
-
-            @Override
-            public void keyPressed(KeyEvent e) {
-            }
         });
 
         this.add(txFilter, BorderLayout.NORTH);
 
         JScrollPane listScrollPanel = new JScrollPane(table);
-        listScrollPanel.setBackground(this.getBackground());
         listScrollPanel.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         listScrollPanel.setAutoscrolls(true);
         this.add(listScrollPanel, BorderLayout.CENTER);
     }
-
 }
