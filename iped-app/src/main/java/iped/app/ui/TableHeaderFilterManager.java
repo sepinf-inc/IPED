@@ -45,12 +45,12 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
     private TableHeaderFilterManager() {
     }
 
-    private String escapeField(String field) {
-        return QueryBuilder.escape(field);
+    private String escape(String string) {
+        return QueryBuilder.escape(string);
     }
 
     public void removeFilter(String field) {
-        field = escapeField(field);
+        field = escape(field);
         selectedValues.remove(field);
         otherFilters.remove(field);
         panels.remove(field);
@@ -83,7 +83,7 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
     }
     
     public void addEmptyFilter(String field) {
-        field = escapeField(field);
+        field = escape(field);
         String filterExpression = "-" + field;
         if(IndexItem.isNumeric(field)) {
             filterExpression+=":[* TO *]";
@@ -94,7 +94,7 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
     }
 
     public void addNonEmptyFilter(String field) {
-        field = escapeField(field);
+        field = escape(field);
         String filterExpression = field;
         if(IndexItem.isNumeric(field)) {
             filterExpression+=":[* TO *]";
@@ -105,21 +105,21 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
     }
 
     public void removeEmptyFilter(String field) {
-        field = escapeField(field);
+        field = escape(field);
         otherFilters.remove(field);
         definedFilters.remove(field);
         App.get().getFilterManager().notifyFilterChange();
     }
 
     public void removeNonEmptyFilter(String field) {
-        field = escapeField(field);
+        field = escape(field);
         otherFilters.remove(field);
         definedFilters.remove(field);
         App.get().getFilterManager().notifyFilterChange();
     }
 
     public void addFilter(String field, Set<ValueCount> selected) {
-        field = escapeField(field);
+        field = escape(field);
         selectedValues.put(field, selected);
         definedFilters.put(field, new ValueCountQueryFilter(field , selected));
         otherFilters.remove(field);
@@ -127,7 +127,7 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
     }
 
     public void addEqualsFilter(String field, String value) {
-        field = escapeField(field);
+        field = escape(field);
         definedFilters.put(field, new EqualsFilter(field, value));
         selectedValues.remove(field);
         otherFilters.remove(field);
@@ -135,7 +135,7 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
     }
 
     public void addStartsWithFilter(String field, String value) {
-        field = escapeField(field);
+        field = escape(field);
         definedFilters.put(field, new StartsWithFilter(field, value));
         selectedValues.remove(field);
         otherFilters.remove(field);
@@ -143,12 +143,12 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
     }
 
     public Set<ValueCount> getFilter(String field) {
-        field = escapeField(field);
+        field = escape(field);
         return selectedValues.get(field);
     }
 
     public boolean isFieldFiltered(String field) {
-        field = escapeField(field);
+        field = escape(field);
         return definedFilters.get(field)!=null || selectedValues.get(field)!=null || otherFilters.get(field)!=null;
     }
 
@@ -194,27 +194,41 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
     }
 
     public boolean getContainsEmptyFilter(String field) {
-        field = escapeField(field);
+        field = escape(field);
         String filter = otherFilters.get(field);
         return filter != null && (filter.equals("-" + field + ":?*") || filter.equals("-" + field + ":[* TO *]"));
     }
 
     public boolean getContainsNonEmptyFilter(String field) {
-        field = escapeField(field);
+        field = escape(field);
         String filter = otherFilters.get(field);
         return filter != null && (filter.equals(field + ":?*") || filter.equals(field + ":[* TO *]"));
     }
 
-    public void addFilter(String field, String string) {
-        field = escapeField(field);
-        string = string.trim();
-        int i=string.indexOf(field);
-        if(i>=0) {
-            string = string.substring(0, i) + field + string.substring(i + field.length());
-        }
-        addQueryFilter(field, string);
+    public void addFilter(String field, String value) {
+        field = escape(field);
+        value = escape(value.trim());
+        addQueryFilter(field, field + ":\"" + value + "\"");
     }
-    
+
+    public void addNegativeFilter(String field, String value) {
+        field = escape(field);
+        value = escape(value.trim());
+        addQueryFilter(field, "-" + field + ":\"" + value + "\"");
+    }
+
+    public void addLessThanFilter(String field, String value) {
+        field = escape(field);
+        value = escape(value.trim());
+        addQueryFilter(field, field + ":[* TO " + value + "]");
+    }
+
+    public void addGreaterThanFilter(String field, String value) {
+        field = escape(field);
+        value = escape(value.trim());
+        addQueryFilter(field, field + ":[" + value + " TO *]");
+    }
+
     @Override
     public List<IFilter> getDefinedFilters() {
         ArrayList<IFilter> list = new ArrayList<>();

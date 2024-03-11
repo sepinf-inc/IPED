@@ -211,10 +211,10 @@ public class FieldValuePopupMenu extends JPopupMenu implements ActionListener {
             fm.addStartsWithFilter(field, strValue);
         }
         if (source == filterContains) {
-            fm.addFilter(field, field + ":\"" + strValue + "\"");
+            fm.addFilter(field, strValue);
         }
         if (source == filterNotContains) {
-            fm.addFilter(field, "-" + field + ":\"" + strValue + "\"");
+            fm.addNegativeFilter(field, strValue);
         }
         if (source == filterEmpty) {
             fm.addEmptyFilter(field);
@@ -231,10 +231,10 @@ public class FieldValuePopupMenu extends JPopupMenu implements ActionListener {
             }
         }
         if (source == filterLessThan) {
-            fm.addFilter(field, field + ":[* TO " + strValue + "]");
+            fm.addLessThanFilter(field, strValue);
         }
         if (source == filterGreaterThan) {
-            fm.addFilter(field, field + ":[" + strValue + " TO *]");
+            fm.addGreaterThanFilter(field, strValue);
         }
 
         if (source == btValue) {
