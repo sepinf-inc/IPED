@@ -13,6 +13,7 @@ import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.logging.log4j.LogManager;
@@ -21,7 +22,9 @@ import org.jfree.data.time.TimePeriod;
 import org.roaringbitmap.RoaringBitmap;
 
 import iped.app.timelinegraph.IpedChartsPanel;
-import iped.app.timelinegraph.cache.persistance.CachePersistance;
+import iped.app.timelinegraph.TimeEventGroup;
+import iped.app.timelinegraph.cache.persistance.CachePersistence;
+import iped.app.ui.Messages;
 import iped.engine.core.Manager;
 import iped.viewers.api.IMultiSearchResultProvider;
 
@@ -36,8 +39,10 @@ public class IndexTimeStampCache implements TimeStampCache {
     IMultiSearchResultProvider resultsProvider;
     IpedChartsPanel ipedChartsPanel;
     TimeZone timezone;
+    TimeEventGroup teGroup;// default TimeEventGroup
 
     TimeIndexedMap newCache = new TimeIndexedMap();
+    AtomicBoolean loading = new AtomicBoolean(false);
 
     public IndexTimeStampCache(IpedChartsPanel ipedChartsPanel, IMultiSearchResultProvider resultsProvider) {
         this.resultsProvider = resultsProvider;
@@ -55,6 +60,7 @@ public class IndexTimeStampCache implements TimeStampCache {
 
     @Override
     public void run() {
+        loading.set(true);
         int oldPriority = Thread.currentThread().getPriority();
         Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
         try {
@@ -68,10 +74,11 @@ public class IndexTimeStampCache implements TimeStampCache {
             if (periodClassesToCache.size() == 0) {
                 periodClassesToCache.add(ipedChartsPanel.getTimePeriodClass());
             }
+
             for (Class periodClasses : periodClassesToCache) {
-                CachePersistance cp = CachePersistance.getInstance();
+                CachePersistence cp = CachePersistence.getInstance();
                 try {
-                    TimeIndexedMap c = cp.loadNewCache(periodClasses);
+                    TimeIndexedMap c = cp.loadNewCache(teGroup, periodClasses);
                     if (c != null) {
                         cacheExists = true;
                     }
@@ -83,6 +90,8 @@ public class IndexTimeStampCache implements TimeStampCache {
             if (!cacheExists) {
                 Date d1 = new Date();
                 logger.info("Starting to build time cache of [{}]...", periodClassesToCache.toString());
+                ipedChartsPanel.info(Messages.get("IndexTimeStampCache.buildingMessage"),
+                        periodClassesToCache.toString(), teGroup.toString());
 
                 ArrayList<EventTimestampCache> cacheLoaders = new ArrayList<EventTimestampCache>();
 
@@ -91,7 +100,7 @@ public class IndexTimeStampCache implements TimeStampCache {
                 int ord = 0;
                 while (ord < cachedEventNames.length) {
                     String eventType = cachedEventNames[ord];
-                    if (eventType != null && !eventType.isEmpty()) {
+                    if (eventType != null && !eventType.isEmpty() && teGroup.hasEvent(eventType)) {
                         cacheLoaders.add(new EventTimestampCache(ipedChartsPanel, resultsProvider, this, cachedEventNames[ord], ord));
                     }
                     ord++;
@@ -109,7 +118,7 @@ public class IndexTimeStampCache implements TimeStampCache {
 
                         if (Manager.getInstance() != null && Manager.getInstance().isProcessingFinished()) {
                         }
-                        CachePersistance cp = CachePersistance.getInstance();
+                        CachePersistence cp = CachePersistence.getInstance();
                         cp.saveNewCache(this);
 
                         cacheLoaders.clear();
@@ -118,7 +127,7 @@ public class IndexTimeStampCache implements TimeStampCache {
 
                         newCache = new TimeIndexedMap();
                         for (Class periodClasses : periodClassesToCache) {
-                            newCache.setIndexFile(periodClasses.getSimpleName(), cp.getBaseDir());
+                            newCache.setIndexFile(teGroup, periodClasses.getSimpleName(), cp.getBaseDir());
                             LinkedHashSet<CacheTimePeriodEntry> times = new LinkedHashSet<CacheTimePeriodEntry>();
                             newCache.put(periodClasses.getSimpleName(), times);
                         }
@@ -133,9 +142,12 @@ public class IndexTimeStampCache implements TimeStampCache {
                 }
 
             } else {
-                CachePersistance cp = CachePersistance.getInstance();
+                ipedChartsPanel.info(Messages.get("IndexTimeStampCache.loadingMessage"),
+                        periodClassesToCache.toString(), teGroup.toString());
+
+                CachePersistence cp = CachePersistence.getInstance();
                 for (Class periodClasses : periodClassesToCache) {
-                    newCache.setIndexFile(periodClasses.getSimpleName(), cp.getBaseDir());
+                    newCache.setIndexFile(teGroup, periodClasses.getSimpleName(), cp.getBaseDir());
                 }
                 newCache.createOrLoadUpperPeriodIndex(this);
             }
@@ -153,13 +165,6 @@ public class IndexTimeStampCache implements TimeStampCache {
     }
 
     public boolean hasTimePeriodClassToCache(Class<? extends TimePeriod> timePeriodClass) {
-        try {
-            timeStampCacheSemaphore.acquire();// pause until cache is populated
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } finally {
-            timeStampCacheSemaphore.release();
-        }
         return periodClassesToCache.contains(timePeriodClass);
     }
 
@@ -299,6 +304,35 @@ public class IndexTimeStampCache implements TimeStampCache {
         }
 
         selectedCt.addEventEntry(eventInternalOrd, doc);
+    }
+
+    @Override
+    public boolean isFromEventGroup(TimeEventGroup teGroup) {
+        return this.teGroup.equals(teGroup);
+    }
+
+    @Override
+    public void setTimeEventGroup(TimeEventGroup teGroup) {
+        this.teGroup = teGroup;
+    }
+
+    @Override
+    public TimeEventGroup getTimeEventGroup() {
+        return this.teGroup;
+    }
+
+    @Override
+    public boolean isFromEventGroup(ArrayList<TimeEventGroup> selectedTeGroups) {
+        for (TimeEventGroup teGroup : selectedTeGroups) {
+            if (isFromEventGroup(teGroup)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean isLoading() {
+        return loading.get();
     }
 
 }

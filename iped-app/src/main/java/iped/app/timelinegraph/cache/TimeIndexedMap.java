@@ -14,14 +14,39 @@ import java.util.TreeMap;
 
 import org.apache.pdfbox.io.RandomAccessBufferedFileInputStream;
 
-import iped.app.timelinegraph.cache.persistance.CachePersistance;
+import iped.app.timelinegraph.TimeEventGroup;
+import iped.app.timelinegraph.cache.persistance.CachePersistence;
 
+/**
+ * @author Patrick Dalla Bernardina
+ */
 public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
-    HashMap<String, TreeMap<Long, Long>> upperPeriodIndex = new HashMap<String, TreeMap<Long, Long>>();
-    HashMap<String, File> cacheFiles = new HashMap<String, File>();
-    HashMap<String, File> monthIndexCacheFiles = new HashMap<String, File>();
+    /*
+     * Cache persistence will be done based on tuple of TimeEventGroup and Period name
+     */
+    public class Tuple {
+        TimeEventGroup teGroup;
+        String periodName;
 
-    TimelineCache timelineCache = TimelineCache.get();
+        public Tuple(TimeEventGroup teGroup, String periodName) {
+            this.periodName = periodName;
+            this.teGroup = teGroup;
+        }
+
+        @Override
+        public int hashCode() {
+            return periodName.hashCode() * teGroup.hashCode();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return (obj instanceof Tuple) && obj.hashCode() == this.hashCode();
+        }
+    }
+
+    HashMap<Tuple, TreeMap<Long, Long>> upperPeriodIndex = new HashMap<Tuple, TreeMap<Long, Long>>();
+    HashMap<Tuple, File> cacheFiles = new HashMap<Tuple, File>();
+    HashMap<Tuple, File> monthIndexCacheFiles = new HashMap<Tuple, File>();
 
     @Override
     public Set<CacheTimePeriodEntry> put(String key, Set<CacheTimePeriodEntry> value) {
@@ -30,14 +55,15 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
         return result;
     }
 
-    public void setIndexFile(String string, File f) throws IOException {
-        File cacheFile = new File(new File(f, string), "0");
+    public void setIndexFile(TimeEventGroup teGroup, String periodName, File f) throws IOException {
+        File baseCacheDir = new File(new File(f, teGroup.getName()), periodName);
+        File cacheFile = new File(baseCacheDir, "0");
         if (!cacheFile.exists() || cacheFile.length() == 0) {
             throw new IOException("File content does not exists:" + f.getName());
         }
 
-        this.cacheFiles.put(string, cacheFile);
-        this.monthIndexCacheFiles.put(string, new File(new File(f, string), "1"));
+        this.cacheFiles.put(new Tuple(teGroup, periodName), cacheFile);
+        this.monthIndexCacheFiles.put(new Tuple(teGroup, periodName), new File(baseCacheDir, "1"));
 
         int committed = 0;
         try (RandomAccessBufferedFileInputStream lcacheSfis = new RandomAccessBufferedFileInputStream(cacheFile); DataInputStream lcacheDis = new DataInputStream(lcacheSfis)) {
@@ -52,8 +78,9 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
     Date lastStartDate = null;
     Date lastEndDate = null;
 
-    public RandomAccessBufferedFileInputStream getTmpCacheSfis(String className) throws IOException {
-        File f = cacheFiles.get(className);
+    public RandomAccessBufferedFileInputStream getTmpCacheSfis(TimeEventGroup teGroup, String className)
+            throws IOException {
+        File f = cacheFiles.get(new Tuple(teGroup, className));
         if (f != null) {
             return new RandomAccessBufferedFileInputStream(f);
         } else {
@@ -61,7 +88,8 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
         }
     }
 
-    public ResultIterator iterator(String className, RandomAccessBufferedFileInputStream lcacheSfis, Date startDate, Date endDate) {
+    public ResultIterator iterator(TimeEventGroup teGroup, String className,
+            RandomAccessBufferedFileInputStream lcacheSfis, Date startDate, Date endDate) {
         try {
             DataInputStream lcacheDis = new DataInputStream(lcacheSfis);
 
@@ -70,6 +98,7 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
             String timezoneID = lcacheDis.readUTF();
             int entries = lcacheDis.readInt();
 
+            TimelineCache timelineCache = TimelineCache.get(teGroup);
             CacheTimePeriodEntry[] cache = timelineCache.get(className, entries);
 
             long startpos = lcacheSfis.getPosition();// position of first entry in cache
@@ -78,7 +107,8 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
                 // throught month index
                 Long num = null;
                 try {
-                    Entry<Long, Long> entry = upperPeriodIndex.get(className).floorEntry(startDate.getTime());
+                    Entry<Long, Long> entry = upperPeriodIndex.get(new Tuple(teGroup, className))
+                            .floorEntry(startDate.getTime());
                     if (entry != null) {
                         num = entry.getValue();
                     } else {
@@ -141,7 +171,7 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
         private String className;
         boolean useCache = false;
         private TimelineCache timelineCache;
-        CachePersistance cp = CachePersistance.getInstance();
+        CachePersistence cp = CachePersistence.getInstance();
         int countRead = 0;// counters to log number of cache reads
         int countCache = 0;// counters to log number of disk reads
         private Reference<CacheTimePeriodEntry>[] lsoftcache;// soft reference cache (a more complete cache but with SoftReferences)
@@ -151,7 +181,9 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
                                    // from position in file)
         private long startPos;// start position in file to iterate
 
-        public ResultIterator(long pos, Integer startIndex, TimelineCache timelineCache, RandomAccessBufferedFileInputStream lcacheSfis, DataInputStream lcacheDis, long endDate, String className) {
+        public ResultIterator(long pos, Integer startIndex, TimelineCache timelineCache,
+                RandomAccessBufferedFileInputStream lcacheSfis, DataInputStream lcacheDis, long endDate,
+                String className) {
             this.startPos = pos;
             this.startIndex = startIndex;
             this.lcache = timelineCache.caches.get(className);
@@ -239,20 +271,22 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
     };
 
     public void createOrLoadUpperPeriodIndex(IndexTimeStampCache indexTimeStampCache) {
-        CachePersistance cp = CachePersistance.getInstance();
+        CachePersistence cp = CachePersistence.getInstance();
         if (upperPeriodIndex.size() == 0) {
+            TimelineCache timelineCache = TimelineCache.get(indexTimeStampCache.getTimeEventGroup());
             for (Iterator iterator = indexTimeStampCache.getPeriodClassesToCache().iterator(); iterator.hasNext();) {
-                String ev = (String) ((Class) iterator.next()).getSimpleName();
-                File f = monthIndexCacheFiles.get(ev);
+                String periodName = (String) ((Class) iterator.next()).getSimpleName();
+                File f = monthIndexCacheFiles.get(new Tuple(indexTimeStampCache.getTimeEventGroup(), periodName));
                 TreeMap<Long, Long> datesPos = new TreeMap<Long, Long>();
-                Map<Long, Integer> positionsIndexes = timelineCache.getCachesIndexes(ev);
+                Map<Long, Integer> positionsIndexes = timelineCache.getCachesIndexes(periodName);
                 try {
                     if (f.exists()) {
-                        cp.loadUpperPeriodIndex(ev, datesPos, positionsIndexes);
-                        upperPeriodIndex.put(ev, datesPos);
+                        cp.loadUpperPeriodIndex(indexTimeStampCache.getTimeEventGroup(), periodName, datesPos,
+                                positionsIndexes);
+                        upperPeriodIndex.put(new Tuple(indexTimeStampCache.getTimeEventGroup(), periodName), datesPos);
                     }
                 } finally {
-                    timelineCache.liberateCachesIndexes(ev);
+                    timelineCache.liberateCachesIndexes(periodName);
                 }
 
             }
@@ -262,7 +296,7 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
     long cacheStartPos = 0;
     long cacheEndPos = 0;
 
-    public HashMap<String, TreeMap<Long, Long>> getMonthIndex() {
+    public HashMap<Tuple, TreeMap<Long, Long>> getMonthIndex() {
         return upperPeriodIndex;
     }
 

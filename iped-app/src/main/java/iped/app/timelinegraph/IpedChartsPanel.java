@@ -1,5 +1,6 @@
 package iped.app.timelinegraph;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -8,6 +9,8 @@ import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.MouseAdapter;
@@ -36,9 +39,12 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 
+import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -95,6 +101,7 @@ import iped.app.timelinegraph.swingworkers.HighlightWorker;
 import iped.app.ui.App;
 import iped.app.ui.ClearFilterListener;
 import iped.app.ui.ColumnsManager;
+import iped.app.ui.controls.CheckboxListCellRenderer;
 import iped.app.ui.themes.ThemeManager;
 import iped.data.IItemId;
 import iped.engine.search.QueryBuilder;
@@ -109,7 +116,11 @@ import iped.viewers.api.IQueryFilterer;
 import iped.viewers.api.ResultSetViewer;
 import iped.viewers.api.events.RowSorterTableDataChange;
 
-public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableModelListener, ListSelectionListener, IQueryFilterer, ClearFilterListener, ComponentListener {
+/**
+ * @author Patrick Dalla Bernardina
+ */
+public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableModelListener, ListSelectionListener,
+        IQueryFilterer, ClearFilterListener, ComponentListener, ActionListener {
     JTable resultsTable;
     IMultiSearchResultProvider resultsProvider;
     GUIProvider guiProvider;
@@ -145,6 +156,8 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     IpedChartPanel chartPanel = null;
     JList legendList = new JList();
     JScrollPane listScroller = new JScrollPane(legendList);
+    JPanel legendPane = new JPanel();
+    JComboBox<TimeEventGroup> tegCombo = new JComboBox<>();
 
     IpedStackedXYBarRenderer renderer = null;
     XYLineAndShapeRenderer highlightsRenderer = new XYLineAndShapeRenderer();
@@ -152,7 +165,9 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
     String metadataToBreakChart = null;
     ImageIcon loading = null;
-    JLabel loadingLabel;
+    JPanel loadingPanel = new JPanel();
+    JLabel loadingLabelImage;
+    JLabel loadingLabelText;
 
     IpedSplitPane splitPane;
 
@@ -170,6 +185,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
     Color fgColor;
     Color bgColor;
+    private ArrayList<TimeEventGroup> selectedTeGroups = new ArrayList<TimeEventGroup>();
 
     private static final String resPath = '/' + App.class.getPackageName().replace('.', '/') + '/';
 
@@ -179,6 +195,8 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
             chart.getTitle().setVerticalAlignment(VerticalAlignment.CENTER);
         }
         combinedPlot.setDomainPannable(true);
+
+        selectedTeGroups.add(TimeEventGroup.BASIC_EVENTS);
 
         toolTipGenerator = new XYToolTipGenerator() {
             @Override
@@ -194,6 +212,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         super(b);
 
         this.setLayout(new GridLayout());
+
     }
 
     class LegendCellRenderer extends JLabel implements ListCellRenderer<LegendItemBlockContainer> {
@@ -286,7 +305,19 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         splitPane = new IpedSplitPane();
         splitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
 
+
         chartPanel = new IpedChartPanel(chart, this);
+
+        CheckboxListCellRenderer cblcRenderer = new CheckboxListCellRenderer<TimeEventGroup>(
+                new Predicate<TimeEventGroup>() {
+                    @Override
+                    public boolean test(TimeEventGroup t) {
+                        return selectedTeGroups.contains(t);
+                    }
+                });
+        tegCombo.setRenderer(cblcRenderer);
+        tegCombo.setMaximumSize(new Dimension(100, 0));
+
         legendListModel = new DefaultListModel<LegendItemBlockContainer>();
         legendList.setModel(legendListModel);
         legendList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
@@ -337,24 +368,32 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         ttm.setEnabled(true);
 
         splitPane.setTopComponent(chartPanel);
-        splitPane.setBottomComponent(listScroller);
+
+        legendPane.setPreferredSize(new Dimension(Integer.MAX_VALUE, 80));
+        legendPane.setLayout(new BorderLayout());
+        legendPane.add(tegCombo, BorderLayout.NORTH);
+        legendPane.add(listScroller, BorderLayout.CENTER);
+        splitPane.setBottomComponent(legendPane);
         splitPane.setVisible(false);
 
         chartPanel.setPopupMenu(null);
         this.addComponentListener(this);
 
         loading = (ImageIcon) new ImageIcon(IconUtil.class.getResource(resPath + "loading.gif"));
-        loadingLabel = new JLabel("", loading, JLabel.CENTER);
-        this.add(loadingLabel);
+        loadingLabelImage = new JLabel("", loading, JLabel.CENTER);
+        loadingLabelText = new JLabel("", JLabel.CENTER);
+        loadingPanel.setAlignmentY(Component.CENTER_ALIGNMENT);
+        loadingPanel.setLayout(new BoxLayout(loadingPanel, BoxLayout.Y_AXIS));
+        loadingLabelImage.setAlignmentX(Component.CENTER_ALIGNMENT);
+        loadingLabelText.setAlignmentX(Component.CENTER_ALIGNMENT);
+        loadingPanel.add(loadingLabelImage, BorderLayout.CENTER);
+        loadingPanel.add(loadingLabelText, BorderLayout.CENTER);
+        this.add(loadingPanel);
 
         domainAxis.setTickMarkPosition(DateTickMarkPosition.START);
         domainAxis.setLowerMargin(0.01);
         domainAxis.setUpperMargin(0.01);
         combinedPlot.setDomainAxis(domainAxis);
-
-        if (ipedTimelineDatasetManager == null) {
-            ipedTimelineDatasetManager = new IpedTimelineDatasetManager(this);
-        }
     }
 
     public String getTimeEventColumnName(String timeEvent) {
@@ -391,6 +430,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     }
 
     public HashMap<String, AbstractIntervalXYDataset> createDataSets() {
+
         HashMap<String, AbstractIntervalXYDataset> result = new HashMap<String, AbstractIntervalXYDataset>();
         try {
             Set<String> selectedBookmarks = guiProvider.getSelectedBookmarks();
@@ -399,14 +439,16 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
             if (selectedBookmarks.size() > 0 && chartPanel.getSplitByBookmark()) {
                 for (String bookmark : selectedBookmarks) {
-                    result.put(bookmark, ipedTimelineDatasetManager.getBestDataset(timePeriodClass, bookmark));
+                    result.put(bookmark,
+                            ipedTimelineDatasetManager.getBestDataset(timePeriodClass, selectedTeGroups, bookmark));
                 }
             } else if (selectedCategories.size() > 0 && chartPanel.getSplitByCategory()) {
                 for (String category : selectedCategories) {
-                    result.put(category, ipedTimelineDatasetManager.getBestDataset(timePeriodClass, category));
+                    result.put(category,
+                            ipedTimelineDatasetManager.getBestDataset(timePeriodClass, selectedTeGroups, category));
                 }
             } else {
-                result.put("Items", ipedTimelineDatasetManager.getBestDataset(timePeriodClass, null));
+                result.put("Items", ipedTimelineDatasetManager.getBestDataset(timePeriodClass, selectedTeGroups, null));
             }
             return result;
         } catch (Exception e) {
@@ -451,8 +493,8 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
             IpedChartsPanel self = this;
 
             self.remove(splitPane);
-            self.remove(loadingLabel);
-            self.add(loadingLabel);
+            self.remove(loadingPanel);
+            self.add(loadingPanel);
             self.repaint();
 
             if (swRefresh != null) {
@@ -517,11 +559,11 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
                             }
 
                             if (chart != null && !isCancelled()) {
-                                self.remove(loadingLabel);
+                                self.remove(loadingPanel);
                                 self.remove(splitPane);
                                 self.add(splitPane);
                                 splitPane.setTopComponent(chartPanel);
-                                splitPane.setBottomComponent(listScroller);
+                                splitPane.setBottomComponent(legendPane);
                                 splitPane.setVisible(true);
 
                                 // hide hidden events
@@ -588,15 +630,6 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
             public void changed(CDockableLocationEvent dockableEvent) {
                 if (!isUpdated && dockableEvent.isShowingChanged()) {
                     refreshChart();
-                    if (!loadingCacheStarted.getAndSet(true)) {
-                        Runnable r = new Runnable() {
-                            @Override
-                            public void run() {
-                                ipedTimelineDatasetManager.startCacheCreation();
-                            }
-                        };
-                        new Thread(r).start();
-                    }
                 }
             }
         };
@@ -1038,7 +1071,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
     @Override
     public void componentResized(ComponentEvent e) {
-        this.remove(loadingLabel);
+        this.remove(loadingPanel);
         this.remove(splitPane);
         this.add(splitPane);
     }
@@ -1065,13 +1098,22 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
     @Override
     public void checkAll(boolean value) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     public void notifyCaseDataChanged() {
+        populateEventNames.run();
         this.ipedTimelineDatasetManager = new IpedTimelineDatasetManager(this);
+
+        // updates tegCombo with updated time event groups of the case
+        tegCombo.removeActionListener(this);
+        tegCombo.removeAllItems();
+        tegCombo.addItem(TimeEventGroup.BASIC_EVENTS);
+        for (TimeEventGroup teGroup : ipedTimelineDatasetManager.getTimeEventGroupsFromMetadataPrefix()) {
+            tegCombo.addItem(teGroup);
+        }
+        tegCombo.addActionListener(this);
+
         this.dataSetUpdated.set(false);
     }
 
@@ -1084,5 +1126,22 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     public static String[] getOrdToEventName() {
         return ordToEventName;
     }
-    
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        TimeEventGroup teGroup = (TimeEventGroup) tegCombo.getSelectedItem();
+        if (selectedTeGroups.contains(teGroup)) {
+            selectedTeGroups.remove(teGroup);
+        } else {
+            selectedTeGroups.add(teGroup);
+        }
+        if (selectedTeGroups.isEmpty()) {
+            selectedTeGroups.add(TimeEventGroup.BASIC_EVENTS);
+        }
+        refreshChart(false);
+    }
+
+    public void info(String info, String period, String groupname) {
+        loadingLabelText.setText(info.replaceFirst("\\{\\}", period).replaceFirst("\\{\\}", groupname));
+    }
 }

@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.Semaphore;
 
+import iped.app.timelinegraph.TimeEventGroup;
+
 public class TimelineCache {
     Date startDate;
     Date endDate;
@@ -25,11 +27,7 @@ public class TimelineCache {
         // neverUnloadCache.add("Day");
     }
 
-    static TimelineCache singleton = new TimelineCache();
-
-    static public TimelineCache get() {
-        return singleton;
-    }
+    static HashMap<TimeEventGroup, TimelineCache> singletonMap = new HashMap<TimeEventGroup, TimelineCache>();
 
     private TimelineCache() {
     }
@@ -159,5 +157,14 @@ public class TimelineCache {
 
     public HashMap<String, CacheTimePeriodEntry[]> getCaches() {
         return caches;
+    }
+
+    public static TimelineCache get(TimeEventGroup teGroup) {
+        TimelineCache result = singletonMap.get(teGroup);
+        if (result == null) {
+            result = new TimelineCache();
+            singletonMap.put(teGroup, result);
+        }
+        return result;
     }
 }

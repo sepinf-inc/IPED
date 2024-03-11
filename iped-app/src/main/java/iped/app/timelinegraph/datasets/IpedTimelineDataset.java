@@ -1,8 +1,10 @@
 package iped.app.timelinegraph.datasets;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -10,8 +12,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -45,12 +45,14 @@ import iped.app.timelinegraph.DateUtil;
 import iped.app.timelinegraph.IpedChartPanel;
 import iped.app.timelinegraph.IpedChartsPanel;
 import iped.app.timelinegraph.IpedDateAxis;
+import iped.app.timelinegraph.TimeEventGroup;
 import iped.app.timelinegraph.cache.CacheEventEntry;
 import iped.app.timelinegraph.cache.CacheTimePeriodEntry;
+import iped.app.timelinegraph.cache.CombinedIterators;
 import iped.app.timelinegraph.cache.EventTimestampCache;
 import iped.app.timelinegraph.cache.TimeIndexedMap;
 import iped.app.timelinegraph.cache.TimeStampCache;
-import iped.app.timelinegraph.cache.persistance.CachePersistance;
+import iped.app.timelinegraph.cache.persistance.CachePersistence;
 import iped.app.ui.App;
 import iped.app.ui.CaseSearcherFilter;
 import iped.app.ui.Messages;
@@ -65,6 +67,9 @@ import iped.search.IMultiSearchResult;
 import iped.viewers.api.IMultiSearchResultProvider;
 import iped.viewers.api.IQueryFilterer;
 
+/**
+ * @author Patrick Dalla Bernardina
+ */
 public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cloneable, PublicCloneable, IntervalXYDataset, DomainInfo, TimelineDataset, TableXYDataset, XYDomainInfo, AsynchronousDataset {
     private static final int CTITEMS_PER_THREAD = 500;
     IMultiSearchResultProvider resultsProvider;
@@ -92,8 +97,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
     SortedSetDocValues timeEventGroupValues;
     IpedChartsPanel ipedChartsPanel;
 
-    SortedSet<String> eventTypes = new TreeSet<String>();
-    String[] eventTypesArray;
+    RoaringBitmap eventOrds = new RoaringBitmap();
     LeafReader reader;
 
     static ThreadPoolExecutor queriesThreadPool = new ThreadPoolExecutor(5, 10, 20000, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());// pool of concurrent group of itens in a dataset beeing populated
@@ -219,6 +223,9 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                 for (int i = 0; i < threadCtsEnd; i++) {
                     CacheTimePeriodEntry ct = threadLocalCts[i];
                     for (CacheEventEntry ce : ct.getEvents()) {
+                        if (!eventOrds.contains(ce.getEventOrd())) {
+                            continue;
+                        }
                         if (ce.docIds != null) {
                             Count count = new Count();
                             for (int docId : ce.docIds) {
@@ -346,8 +353,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
             result = csf.get();
 
             if (result.getLength() > 0) {
-                TimeStampCache cache = ipedChartsPanel.getIpedTimelineDatasetManager().getCache();
-                TimeIndexedMap a = (TimeIndexedMap) cache.getNewCache();
+                Collection<TimeStampCache> caches = ipedChartsPanel.getIpedTimelineDatasetManager().getCaches();
 
                 String className = ipedChartsPanel.getTimePeriodClass().getSimpleName();
 
@@ -385,60 +391,83 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                     cacheWindowEndDate = new Date(ipedChartsPanel.getChartPanel().removeNextFromDatePart(endDate).getTime() - 1);
                 }
 
-                try (RandomAccessBufferedFileInputStream sfis = a.getTmpCacheSfis(className)) {
-                    if (sfis != null) {
-                        Iterator<CacheTimePeriodEntry> it = a.iterator(className, sfis, startDate, endDate);
-                        while (it != null && it.hasNext()) {
-                            ipedChartsPanel.getIpedTimelineDatasetManager().waitMemory();// method to wait available mem to continue.
-                            if (cancelled) {
-                                break;
-                            }
+                ArrayList<RandomAccessBufferedFileInputStream> toCloseAtEnd = new ArrayList<RandomAccessBufferedFileInputStream>();
+                try {
+                    Iterator<CacheTimePeriodEntry>[] iterators = new Iterator[caches.size()];
+                    int i = 0;
+                    eventOrds.clear();
+                    for (TimeStampCache cache : caches) {
+                        TimeIndexedMap cacheMap = (TimeIndexedMap) cache.getNewCache();
+                        TimeEventGroup teGroup = cache.getTimeEventGroup();
+                        RandomAccessBufferedFileInputStream sfis = cacheMap
+                                .getTmpCacheSfis(teGroup, className);
+                        if (sfis == null) {
+                            throw new IOException("Temporary timeline cache not found for " + cache.getTimeEventGroup()
+                                    + " group:" + className);
+                        }
+                        eventOrds.or(teGroup.getEventOrds());
+                        toCloseAtEnd.add(sfis);
+                        iterators[i] = cacheMap.iterator(teGroup, className, sfis, startDate,
+                                endDate);
+                        i++;
+                    }
+                    CombinedIterators it = new CombinedIterators(iterators);
+                    while (it != null && it.hasNext()) {
+                        ipedChartsPanel.getIpedTimelineDatasetManager().waitMemory();// method to wait available mem to continue.
+                        if (cancelled) {
+                            break;
+                        }
 
-                            CacheTimePeriodEntry ctpe = it.next();
+                        CacheTimePeriodEntry ctpe = it.next();
 
-                            boolean remove = false;
-                            if (!fullrange) {
-                                if (ctpe.getDate().before(startDate)) {
-                                    if (ctpe.getDate().getTime() > cacheWindowStartDate.getTime()) {
-                                        if (!memoryWindowCache.contains(ctpe)) {
-                                            beforecache.addFirst(ctpe);
-                                            memoryWindowCache.add(ctpe);
-                                        }
-                                        remove = false;
-                                    } else {
-                                        // remove from memoryCacheWindow
-                                        remove = true;
-                                    }
-                                } else if (ctpe.getDate().after(endDate)) {
-                                    if (ctpe.getDate().getTime() < cacheWindowEndDate.getTime()) {
-                                        if (!memoryWindowCache.contains(ctpe)) {
-                                            aftercache.add(ctpe);
-                                            memoryWindowCache.add(ctpe);
-                                        }
-                                        remove = false;
-                                    } else {
-                                        // remove from memoryCacheWindow
-                                        remove = true;
-                                    }
-                                } else {// inside visible window
+
+                        boolean remove = false;
+
+                        if (!fullrange) {
+                            if (ctpe.getDate().before(startDate)) {
+                                if (ctpe.getDate().getTime() > cacheWindowStartDate.getTime()) {
                                     if (!memoryWindowCache.contains(ctpe)) {
-                                        visibleIntervalCache.add(ctpe);
+                                        beforecache.addFirst(ctpe);
                                         memoryWindowCache.add(ctpe);
                                     }
                                     remove = false;
+                                } else {
+                                    // remove from memoryCacheWindow
+                                    remove = true;
                                 }
-                            } else {
+                            } else if (ctpe.getDate().after(endDate)) {
+                                if (ctpe.getDate().getTime() < cacheWindowEndDate.getTime()) {
+                                    if (!memoryWindowCache.contains(ctpe)) {
+                                        aftercache.add(ctpe);
+                                        memoryWindowCache.add(ctpe);
+                                    }
+                                    remove = false;
+                                } else {
+                                    // remove from memoryCacheWindow
+                                    remove = true;
+                                }
+                            } else {// inside visible window
                                 if (!memoryWindowCache.contains(ctpe)) {
                                     visibleIntervalCache.add(ctpe);
                                     memoryWindowCache.add(ctpe);
                                 }
+                                remove = false;
                             }
-                            if (remove) {
-                                TimePeriod t = ipedChartsPanel.getDomainAxis().getDateOnConfiguredTimePeriod(ipedChartsPanel.getTimePeriodClass(), ctpe.getDate());
-                                accumulator.remove(t);
-                                memoryWindowCache.remove(ctpe);
+                        } else {
+                            if (!memoryWindowCache.contains(ctpe)) {
+                                visibleIntervalCache.add(ctpe);
+                                memoryWindowCache.add(ctpe);
                             }
                         }
+                        if (remove) {
+                            TimePeriod t = ipedChartsPanel.getDomainAxis().getDateOnConfiguredTimePeriod(ipedChartsPanel.getTimePeriodClass(), ctpe.getDate());
+                            accumulator.remove(t);
+                            memoryWindowCache.remove(ctpe);
+                        }
+                    }
+                } finally {
+                    for (RandomAccessBufferedFileInputStream sfis : toCloseAtEnd) {
+                        sfis.close();
                     }
                 }
 
@@ -1168,7 +1197,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
             t.start();
         }
 
-        CachePersistance cp = new CachePersistance();
+        CachePersistence cp = new CachePersistence();
 
         public void addValue(Count count, TimePeriod t, String eventType) {
             if (min == null || t.getStart().before(min.getStart())) {

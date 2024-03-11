@@ -33,6 +33,7 @@ import org.jfree.data.time.TimePeriod;
 import org.roaringbitmap.RoaringBitmap;
 
 import iped.app.timelinegraph.IpedChartsPanel;
+import iped.app.timelinegraph.TimeEventGroup;
 import iped.app.timelinegraph.cache.CacheEventEntry;
 import iped.app.timelinegraph.cache.CacheTimePeriodEntry;
 import iped.app.timelinegraph.cache.PersistedArrayList;
@@ -43,10 +44,10 @@ import iped.app.ui.App;
 import iped.utils.IOUtil;
 
 /*
- * Class implementing method for timeline chart cache persistance
+ * Class implementing method for timeline chart cache persistence
  */
 
-public class CachePersistance {
+public class CachePersistence {
     File baseDir;
 
     HashMap<String, String> pathsToCheck = new HashMap<String, String>();
@@ -59,15 +60,17 @@ public class CachePersistance {
 
     static private boolean bitstreamSerializeAsDefault = true;
 
-    static CachePersistance singleton = new CachePersistance();
+    static CachePersistence singleton = new CachePersistence();
 
-    public static CachePersistance getInstance() {
+    static final String TIMECACHE_BASE_FOLDER = "timecachegroups";
+
+    public static CachePersistence getInstance() {
         return singleton;
     }
 
     static public ExecutorService cachePersistanceExecutor = Executors.newFixedThreadPool(1);
 
-    public CachePersistance() {
+    public CachePersistence() {
         File startDir;
         if (App.get().appCase.getAtomicSources().size() == 1) {
             // single case
@@ -77,7 +80,7 @@ public class CachePersistance {
             startDir = new File(App.get().casesPathFile.getParentFile(), "iped-multicases");
         }
 
-        startDir = new File(startDir, "timecache");
+        startDir = new File(startDir, TIMECACHE_BASE_FOLDER);
         startDir.mkdirs();
 
         bitstreamSerializeFile = new File(startDir, "bitstreamSerialize");
@@ -100,7 +103,7 @@ public class CachePersistance {
             baseDir = new File(startDir, uuid);
             if (!baseDir.exists() && !baseDir.mkdirs()) {
                 // cache doesn't exist and folder is not writable, use user.home for caches
-                startDir = new File(System.getProperty("user.home"), ".iped/timecache");
+                startDir = new File(System.getProperty("user.home"), ".iped/" + TIMECACHE_BASE_FOLDER);
                 baseDir = new File(startDir, uuid);
                 baseDir.mkdirs();
             }
@@ -135,14 +138,25 @@ public class CachePersistance {
         }
     }
 
-    public TimeIndexedMap loadNewCache(Class<? extends TimePeriod> className) throws IOException {
+    public TimeIndexedMap loadNewCache(TimeEventGroup teGroup, Class<? extends TimePeriod> className)
+            throws IOException {
         TimeIndexedMap newCache = null;
 
-        for (File f : baseDir.listFiles()) {
-            if (f.getName().equals(className.getSimpleName())) {
-                newCache = new TimeIndexedMap();
-                newCache.setIndexFile(className.getSimpleName(), baseDir);
-                break;
+        File[] files = baseDir.listFiles();
+        if (files != null) {
+            for (File f : files) {
+                if (f.getName().equals(teGroup.getName())) {
+                    File[] files2 = f.listFiles();
+                    if (files2 != null) {
+                        for (File f2 : files2) {
+                            if (f2.getName().equals(className.getSimpleName())) {
+                                newCache = new TimeIndexedMap();
+                                newCache.setIndexFile(teGroup, className.getSimpleName(), baseDir);
+                                break;
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -160,11 +174,21 @@ public class CachePersistance {
                 e.printStackTrace();
             }
         }
+        
+        // set the start dir to persist the cache based on TimeEventGroup
+        TimeEventGroup teGroup = timeStampCache.getTimeEventGroup();
+        File startDir;
+        if (!teGroup.equals(TimeEventGroup.ALL_EVENTS)) {
+            startDir = new File(baseDir, teGroup.getName());
+            startDir.mkdir();
+        } else {
+            startDir = baseDir;
+        }
 
         TimeIndexedMap newCache = (TimeIndexedMap) timeStampCache.getNewCache();
 
         for (Entry<String, Set<CacheTimePeriodEntry>> entry : newCache.entrySet()) {
-            savePeriodNewCache(timeStampCache, entry.getValue(), new File(baseDir, entry.getKey()));
+            savePeriodNewCache(teGroup, timeStampCache, entry.getValue(), new File(startDir, entry.getKey()));
         }
     }
 
@@ -235,7 +259,8 @@ public class CachePersistance {
 
     }
 
-    private void savePeriodNewCache(TimeStampCache timeStampCache, Set<CacheTimePeriodEntry> entry, File file) {
+    private void savePeriodNewCache(TimeEventGroup teGroup, TimeStampCache timeStampCache,
+            Set<CacheTimePeriodEntry> entry, File file) {
         file.mkdirs();
         File indexFile = new File(file, "0");
         File upperPeriodIndexFile = new File(file, "1");
@@ -257,7 +282,7 @@ public class CachePersistance {
             CacheTimePeriodEntry[] cache = null;
             if (file.getName().contains("Day")) {
                 cache = new CacheTimePeriodEntry[entry.size()];
-                TimelineCache.get().getCaches().put("Day", cache);
+                TimelineCache.get(teGroup).getCaches().put("Day", cache);
             }
             for (CacheTimePeriodEntry ct : entry) {
                 dos.writeLong(ct.date);
@@ -324,8 +349,9 @@ public class CachePersistance {
         return baseDir;
     }
 
-    public void loadUpperPeriodIndex(String ev, TreeMap<Long, Long> datesPos, Map<Long, Integer> positionsIndexes) {
-        File upperPeriodFile = new File(new File(baseDir, ev), "1");
+    public void loadUpperPeriodIndex(TimeEventGroup timeEventGroup, String periodName, TreeMap<Long, Long> datesPos,
+            Map<Long, Integer> positionsIndexes) {
+        File upperPeriodFile = new File(new File(new File(baseDir,timeEventGroup.getName()), periodName), "1");
         try (DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(upperPeriodFile)))) {
             try {
                 while (true) {
