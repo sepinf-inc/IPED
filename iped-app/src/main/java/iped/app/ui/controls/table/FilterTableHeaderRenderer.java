@@ -13,8 +13,6 @@ import java.awt.RenderingHints;
 import java.awt.RenderingHints.Key;
 import java.awt.Stroke;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionAdapter;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -28,6 +26,7 @@ import javax.swing.JTable;
 import javax.swing.RowSorter;
 import javax.swing.SortOrder;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.plaf.UIResource;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.JTableHeader;
@@ -54,7 +53,6 @@ public class FilterTableHeaderRenderer extends DefaultTableCellRenderer implemen
     private final SpaceIcon spaceIcon = new SpaceIcon();
     private final JTableHeader header;
     private final Map<Integer, Integer> xFilter = new HashMap<Integer, Integer>();
-    private final MouseListener[] mouseListeners;
 
     private int hoverColumn = -1;
     private boolean hasFilterIcon;
@@ -63,69 +61,70 @@ public class FilterTableHeaderRenderer extends DefaultTableCellRenderer implemen
     private int hoverFilter = -1;
     private int column;
 
-    public FilterTableHeaderRenderer(JTable table) {
+    private static final Stroke stroke = new BasicStroke(1f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
+    private static final float[] dist2 = { 0, 1 };
+    private static final float[] dist3 = { 0, 0.5f, 1 };
+
+    private final Color colorFilterIcon0;
+    private final Color colorFilterIcon0Hover;
+    private final Color colorFilterIcon1;
+    private final Color colorFilterIcon2;
+    private final Color colorFilterIcon2Hover;
+    private final Color colorArrow;
+    private final Color colorArrowFiltered;
+    private final Color colorHeaderBorder0;
+    private final Color colorHeaderBorder1;
+    private final Color colorHeaderBorder2;
+    private final Color colorHeader1;
+    private final Color colorHeader1Filtered;
+    private final Color colorHeader1Sorted;
+    private final Color colorHeader1Hover;
+    private final Color colorHeader1FilteredHover;
+    private final Color colorHeader1SortedHover;
+    private final Color colorHeader2;
+    private final Color colorHeader2Filtered;
+    private final Color colorHeader2Sorted;
+    private final Color colorHeader2Hover;
+    private final Color colorHeader2FilteredHover;
+    private final Color colorHeader2SortedHover;
+
+    public FilterTableHeaderRenderer(JTableHeader header) {
         setHorizontalAlignment(JLabel.LEFT);
         setHorizontalTextPosition(JLabel.LEADING);
         setOpaque(false);
         setBorder(BorderFactory.createEmptyBorder(2, 3, 4, 4));
-        header = table.getTableHeader();
-        header.addMouseMotionListener(new MouseMotionAdapter() {
-            public void mouseMoved(MouseEvent e) {
-                update(e, 0);
-            }
-        });
-        mouseListeners = header.getMouseListeners();
-        for (MouseListener ml : mouseListeners) {
-            header.removeMouseListener(ml);
-        }
-        header.addMouseListener(new MouseListener() {
-            public void mouseExited(MouseEvent e) {
-                hoverColumn = hoverFilter = -1;
-                header.repaint();
-                for (MouseListener ml : mouseListeners) {
-                    ml.mouseExited(e);
-                }
-            }
+        this.header = header;
 
-            public void mouseEntered(MouseEvent e) {
-                update(e, 0);
-                for (MouseListener ml : mouseListeners) {
-                    ml.mouseEntered(e);
-                }
-            }
-
-            public void mouseClicked(MouseEvent e) {
-                if (e.getButton() == MouseEvent.BUTTON1) {
-                    if (update(e, 1)) {
-                        e.consume();
-                        return;
-                    }
-                } else if (e.getButton() == MouseEvent.BUTTON3) {
-                    if (update(e, 3)) {
-                        e.consume();
-                        return;
-                    }
-                }
-                for (MouseListener ml : mouseListeners) {
-                    ml.mouseClicked(e);
-                }
-            }
-
-            public void mousePressed(MouseEvent e) {
-                for (MouseListener ml : mouseListeners) {
-                    ml.mousePressed(e);
-                }
-            }
-
-            public void mouseReleased(MouseEvent e) {
-                for (MouseListener ml : mouseListeners) {
-                    ml.mouseReleased(e);
-                }
-            }
-        });
+        colorFilterIcon0 = UIManager.getColor("Filter.Icon0");
+        colorFilterIcon0Hover = UIManager.getColor("Filter.Icon0Hover");
+        colorFilterIcon1 = UIManager.getColor("Filter.Icon1");
+        colorFilterIcon2 = UIManager.getColor("Filter.Icon2");
+        colorFilterIcon2Hover = UIManager.getColor("Filter.Icon2Hover");
+        colorArrow = UIManager.getColor("Filter.Arrow");
+        colorArrowFiltered = UIManager.getColor("Filter.ArrowFiltered");
+        colorHeaderBorder0 = UIManager.getColor("Filter.Border0");
+        colorHeaderBorder1 = UIManager.getColor("Filter.Border1");
+        colorHeaderBorder2 = UIManager.getColor("Filter.Border2");
+        colorHeader1 = UIManager.getColor("Filter.Header1");
+        colorHeader1Filtered = UIManager.getColor("Filter.Header1Filtered");
+        colorHeader1Sorted = UIManager.getColor("Filter.Header1Sorted");
+        colorHeader1Hover = UIManager.getColor("Filter.Header1Hover");
+        colorHeader1FilteredHover = UIManager.getColor("Filter.Header1FilteredHover");
+        colorHeader1SortedHover = UIManager.getColor("Filter.Header1SortedHover");
+        colorHeader2 = UIManager.getColor("Filter.Header2");
+        colorHeader2Filtered = UIManager.getColor("Filter.Header2Filtered");
+        colorHeader2Sorted = UIManager.getColor("Filter.Header2Sorted");
+        colorHeader2Hover = UIManager.getColor("Filter.Header2Hover");
+        colorHeader2FilteredHover = UIManager.getColor("Filter.Header2FilteredHover");
+        colorHeader2SortedHover = UIManager.getColor("Filter.Header2SortedHover");
     }
 
-    private boolean update(MouseEvent e, int click) {
+    public void clear() {
+        hoverColumn = hoverFilter = -1;
+        header.repaint();
+    }
+
+    public boolean update(MouseEvent e, int click) {
         synchronized (xFilter) {
             int prevHoverColumn = hoverColumn;
             int prevHoverFilter = hoverFilter;
@@ -134,12 +133,18 @@ public class FilterTableHeaderRenderer extends DefaultTableCellRenderer implemen
                 int c = header.columnAtPoint(e.getPoint());
                 if (c >= 0) {
                     if (click == 3) {
-                        MetadataValueSearchList.show(header, c);
+                        if (hasFilterIcon) {
+                            MetadataValueSearchList.show(header, c);
+                        }
                         return true;
                     }
-                    Integer x = xFilter.get(c);
-                    if (x != null && e.getX() >= x - iconGap && e.getX() <= x + iconGap + filterIconSize) {
-                        hoverFilter = c;
+                    if (hasFilterIcon) {
+                        Integer x = xFilter.get(c);
+                        if (x != null && e.getX() >= x - iconGap && e.getX() <= x + iconGap + filterIconSize) {
+                            hoverFilter = c;
+                        } else {
+                            hoverColumn = c;
+                        }
                     } else {
                         hoverColumn = c;
                     }
@@ -165,22 +170,24 @@ public class FilterTableHeaderRenderer extends DefaultTableCellRenderer implemen
         setBackground(null);
         setFont(header.getFont());
 
-        sortArrow = -1;
-        if (table.getRowSorter() != null) {
-            SortOrder sortOrder = getColumnSortOrder(table, column);
-            if (sortOrder == SortOrder.ASCENDING) {
-                sortArrow = 1;
-            } else if (sortOrder == SortOrder.DESCENDING) {
-                sortArrow = 2;
+        if (table != null) {
+            sortArrow = -1;
+            if (table.getRowSorter() != null) {
+                SortOrder sortOrder = getColumnSortOrder(table, column);
+                if (sortOrder == SortOrder.ASCENDING) {
+                    sortArrow = 1;
+                } else if (sortOrder == SortOrder.DESCENDING) {
+                    sortArrow = 2;
+                }
             }
-        }
-        int modelColumn = table.convertColumnIndexToModel(column);
-        String field = ((ResultTableModel) table.getModel()).getColumnFieldName(modelColumn);
-        isFiltered = TableHeaderFilterManager.get().isFieldFiltered(field);
-        hasFilterIcon = modelColumn >= 4;
+            int modelColumn = table.convertColumnIndexToModel(column);
+            String field = ((ResultTableModel) table.getModel()).getColumnFieldName(modelColumn);
+            isFiltered = TableHeaderFilterManager.get().isFieldFiltered(field);
+            hasFilterIcon = modelColumn >= 4; // Columns 0 to 3 can not be filtered
 
-        setText(value == null ? "" : value.toString());
-        setIcon(sortArrow == -1 ? null : spaceIcon);
+            setText(value == null ? "" : value.toString());
+            setIcon(sortArrow == -1 ? null : spaceIcon);
+        }
         return this;
     }
 
@@ -206,49 +213,45 @@ public class FilterTableHeaderRenderer extends DefaultTableCellRenderer implemen
 
         Color c1 = null;
         Color c2 = null;
-        // TODO: Create color constants and handle dark mode
         Color fg = getForeground();
         if (column == hoverColumn) {
             if (isFiltered) {
-                c1 = new Color(220, 50, 50);
-                c2 = new Color(250, 90, 90);
-                setForeground(Color.white);
+                c1 = colorHeader1FilteredHover;
+                c2 = colorHeader2FilteredHover;
+                setForeground(colorArrowFiltered);
             } else if (sortArrow != -1) {
-                c1 = new Color(200, 218, 234);
-                c2 = new Color(240, 248, 255);
+                c1 = colorHeader1SortedHover;
+                c2 = colorHeader2SortedHover;
             } else {
-                c1 = new Color(235, 238, 244);
-                c2 = new Color(255, 255, 255);
+                c1 = colorHeader1Hover;
+                c2 = colorHeader2Hover;
             }
         } else {
             if (isFiltered) {
-                c1 = new Color(190, 0, 0);
-                c2 = new Color(240, 50, 50);
-                setForeground(Color.white);
+                c1 = colorHeader1Filtered;
+                c2 = colorHeader2Filtered;
+                setForeground(colorArrowFiltered);
             } else if (sortArrow != -1) {
-                c1 = new Color(180, 198, 214);
-                c2 = new Color(220, 228, 236);
+                c1 = colorHeader1Sorted;
+                c2 = colorHeader2Sorted;
             } else {
-                c1 = new Color(215, 218, 224);
-                c2 = new Color(249, 249, 251);
+                c1 = colorHeader1;
+                c2 = colorHeader2;
             }
         }
         Point2D start = new Point2D.Float(0, 0);
         Point2D end = new Point2D.Float(0, h);
-        float[] dist = { 0.0f, 0.5f, 1.0f };
         Color[] colors = { c2, c1, c2 };
-        LinearGradientPaint p = new LinearGradientPaint(start, end, dist, colors);
+        LinearGradientPaint p = new LinearGradientPaint(start, end, dist3, colors);
         g2.setPaint(p);
         g2.fill(rc);
 
-        Color c0 = new Color(141, 145, 153);
-        g2.setColor(c0);
+        g2.setColor(colorHeaderBorder0);
         g2.drawLine(0, h - 1, w, h - 1);
 
-        c1 = new Color(171, 175, 181);
-        c2 = new Color(214, 216, 220);
-        colors = new Color[] { c2, c1, c2 };
-        p = new LinearGradientPaint(start, end, dist, colors);
+        colors[1] = colorHeaderBorder1;
+        colors[0] = colors[2] = colorHeaderBorder2;
+        p = new LinearGradientPaint(start, end, dist3, colors);
         g2.setPaint(p);
         g2.fill(new Rectangle2D.Double(w - 1, 0, 1, h - 1));
 
@@ -298,31 +301,16 @@ public class FilterTableHeaderRenderer extends DefaultTableCellRenderer implemen
         gp.closePath();
 
         Stroke oldStroke = g2.getStroke();
-        g2.setStroke(new BasicStroke(1f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g2.setStroke(stroke);
 
-        // TODO: Create color constants and handle dark mode
         Point2D start = new Point2D.Float(x, y);
         Point2D end = new Point2D.Float(x + filterIconSize, y);
-        float[] dist = { 0.0f, 1.0f };
-        Color c1 = new Color(242, 246, 252);
-        Color c2 = null;
-        if (hover) {
-            c2 = new Color(70, 116, 162);
-        } else {
-            c2 = new Color(172, 176, 182);
-        }
-        Color[] colors = { c1, c2 };
-        LinearGradientPaint p = new LinearGradientPaint(start, end, dist, colors);
+        Color[] colors = { colorFilterIcon1, hover ? colorFilterIcon2Hover : colorFilterIcon2 };
+        LinearGradientPaint p = new LinearGradientPaint(start, end, dist2, colors);
         g2.setPaint(p);
         g2.fill(gp);
 
-        Color c0 = null;
-        if (hover) {
-            c0 = new Color(40, 86, 132, 200);
-        } else {
-            c0 = new Color(152, 156, 162, 200);
-        }
-        g2.setColor(c0);
+        g2.setColor(hover ? colorFilterIcon0Hover : colorFilterIcon0);
         g2.draw(gp);
 
         g2.setStroke(oldStroke);
@@ -342,8 +330,8 @@ public class FilterTableHeaderRenderer extends DefaultTableCellRenderer implemen
             gp.lineTo(x + arrowIconSize / 2.0, y + arrowIconSize);
             gp.closePath();
         }
-        // TODO: Create color constants and handle dark mode
-        g2.setColor(isFiltered ? new Color(255, 255, 255, 200) : new Color(70, 116, 162, 200));
+
+        g2.setColor(isFiltered ? colorArrowFiltered : colorArrow);
         g2.fill(gp);
     }
 

@@ -79,6 +79,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
 import javax.swing.border.Border;
+import javax.swing.table.JTableHeader;
 import javax.swing.text.JTextComponent;
 import javax.swing.tree.TreePath;
 
@@ -127,6 +128,7 @@ import iped.app.ui.bookmarks.BookmarkIcon;
 import iped.app.ui.bookmarks.BookmarkTreeCellRenderer;
 import iped.app.ui.controls.CSelButton;
 import iped.app.ui.controls.CustomButton;
+import iped.app.ui.controls.table.FilterTableHeaderController;
 import iped.app.ui.controls.table.FilterTableHeaderRenderer;
 import iped.app.ui.controls.table.MetadataValueSearchList;
 import iped.app.ui.themes.ThemeManager;
@@ -565,8 +567,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         resultsTable.setShowGrid(false);
         resultsTable.setAutoscrolls(false);
         ((JComponent) resultsTable.getDefaultRenderer(Boolean.class)).setOpaque(true);
-        resultsTable.getTableHeader().setDefaultRenderer(new FilterTableHeaderRenderer(resultsTable));
-        
+        FilterTableHeaderController.init(resultsTable.getTableHeader());
+
         MetadataValueSearchList.install(resultsTable);
         
         InputMap inputMap = resultsTable.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
@@ -902,6 +904,11 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     }
 
     public void updateUI(boolean refresh) {
+        JTableHeader header = resultsTable.getTableHeader();
+        FilterTableHeaderRenderer renderer = new FilterTableHeaderRenderer(header);
+        header.setDefaultRenderer(renderer);
+        FilterTableHeaderController.setRenderer(header, renderer);
+
         queryComboBox.getEditor().getEditorComponent().addMouseListener(appletListener);
         queryComboBox.getComponent(0).addMouseListener(appletListener);
         new AutoCompleteColumns((JTextComponent) queryComboBox.getEditor().getEditorComponent());
