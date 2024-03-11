@@ -187,6 +187,11 @@ public class FieldValuePopupMenu extends JPopupMenu implements ActionListener {
             df.parse(value);
             return true;
         } catch (Exception e) {
+            try {
+                DateUtil.stringToDate(value);
+                return true;
+            } catch (Exception e1) {
+            }
         }
         return false;
     }
@@ -227,7 +232,11 @@ public class FieldValuePopupMenu extends JPopupMenu implements ActionListener {
                 Date d = df.parse(strValue);
                 strValue = DateUtil.dateToString(d);
             } catch (ParseException e1) {
-                e1.printStackTrace();
+                try {
+                    DateUtil.stringToDate(strValue);
+                } catch (ParseException e2) {
+                    e2.printStackTrace();
+                }
             }
         }
         if (source == filterLessThan) {
