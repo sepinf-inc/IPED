@@ -14,6 +14,7 @@ import org.apache.lucene.search.Query;
 import iped.app.metadata.MetadataSearch;
 import iped.app.metadata.ValueCount;
 import iped.app.metadata.ValueCountQueryFilter;
+import iped.app.ui.controls.table.MetadataValueSearchList;
 import iped.app.ui.filters.EqualsFilter;
 import iped.app.ui.filters.StartsWithFilter;
 import iped.engine.search.MultiSearchResult;
@@ -33,7 +34,7 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
     private static TableHeaderFilterManager singleton = new TableHeaderFilterManager();
 
     private HashMap<String, Set<ValueCount>> selectedValues = new HashMap<String, Set<ValueCount>>();
-    HashMap<String, MetadataSearch> panels = new HashMap<String, MetadataSearch>();
+    private HashMap<String, MetadataSearch> panels = new HashMap<String, MetadataSearch>();
     private HashMap<String, IFilter> definedFilters = new HashMap<String, IFilter>();
     private HashMap<String, String> otherFilters = new HashMap<String, String>();
 
@@ -271,5 +272,7 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
         otherFilters.clear();
         definedFilters.clear();
         selectedValues.clear();
+        MetadataValueSearchList.clearSelectedValues();
+        App.get().getFilterManager().notifyFilterChange();
     }
 }

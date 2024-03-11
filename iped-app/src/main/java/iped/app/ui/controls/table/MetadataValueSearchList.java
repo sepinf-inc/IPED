@@ -40,6 +40,10 @@ public class MetadataValueSearchList extends IPEDSearchList<ValueCount> {
     private TableHeaderFilterManager fm;
     private JButton btClear;
 
+    public static void clearSelectedValues() {
+        lastFilteredValuesPerField.clear();
+    }
+
     public MetadataValueSearchList(String field) {
         try {
             fm = TableHeaderFilterManager.get();
