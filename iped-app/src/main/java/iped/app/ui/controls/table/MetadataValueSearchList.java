@@ -16,7 +16,6 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
-import javax.swing.JTable;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumnModel;
 
@@ -166,8 +165,4 @@ public class MetadataValueSearchList extends IPEDSearchList<ValueCount> {
         m.menu.show(header, x, header.getY() + header.getHeight());
     }
 
-    public static void install(JTable resultsTable) {
-        App.get().getFilterManager().addResultSetFilterer(TableHeaderFilterManager.get());
-        App.get().getFilterManager().addQueryFilterer(TableHeaderFilterManager.get());
-    }
 }

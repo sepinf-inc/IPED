@@ -130,7 +130,6 @@ import iped.app.ui.controls.CSelButton;
 import iped.app.ui.controls.CustomButton;
 import iped.app.ui.controls.table.FilterTableHeaderController;
 import iped.app.ui.controls.table.FilterTableHeaderRenderer;
-import iped.app.ui.controls.table.MetadataValueSearchList;
 import iped.app.ui.themes.ThemeManager;
 import iped.app.ui.utils.PanelsLayout;
 import iped.app.ui.viewers.TextViewer;
@@ -569,8 +568,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         ((JComponent) resultsTable.getDefaultRenderer(Boolean.class)).setOpaque(true);
         FilterTableHeaderController.init(resultsTable.getTableHeader());
 
-        MetadataValueSearchList.install(resultsTable);
-        
         InputMap inputMap = resultsTable.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         inputMap.put(KeyStroke.getKeyStroke("SPACE"), "none"); //$NON-NLS-1$ //$NON-NLS-2$
         inputMap.put(KeyStroke.getKeyStroke("ctrl SPACE"), "none"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -803,12 +800,14 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         filterManager.addQueryFilterer(treeListener);
         filterManager.addQueryFilterer(similarImagesFilterer);
         filterManager.addQueryFilterer(similarDocumentFilterer);
+        filterManager.addQueryFilterer(TableHeaderFilterManager.get());
         filterManager.addResultSetFilterer(bookmarksListener);
         filterManager.addResultSetFilterer(FilterSelectedEdges.getInstance());
         filterManager.addResultSetFilterer(duplicatesFilterer);
         filterManager.addResultSetFilterer(similarImagesFilterer);
         filterManager.addResultSetFilterer(similarFacesSearchFilterer);
         filterManager.addResultSetFilterer(timelineListener);
+        filterManager.addResultSetFilterer(TableHeaderFilterManager.get());
         filterManager.addResultSetFilterer(metadataPanel);
 
         filterManager.getFilterers().stream().forEach(new Consumer<IFilterer>() {
