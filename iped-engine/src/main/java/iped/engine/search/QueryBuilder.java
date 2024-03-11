@@ -18,6 +18,7 @@ import org.apache.lucene.document.DateTools;
 import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermsEnum;
+import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
 import org.apache.lucene.queryparser.flexible.standard.config.PointsConfig;
 import org.apache.lucene.search.BooleanClause;
@@ -89,6 +90,12 @@ public class QueryBuilder {
 
     public void setAllowLeadingWildcard(boolean allow) {
         this.allowLeadingWildCard = allow;
+    }
+
+    public static String escape(String query) {
+        query = query.replace('“', '"').replace('”', '"').replace('„', '"').replace('＂', '"');
+        query = query.replace('«', ' ').replace('»', ' ');
+        return QueryParserUtil.escape(query);
     }
 
     private Set<String> getQueryStrings(Query query) {
