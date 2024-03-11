@@ -35,6 +35,7 @@ import iped.app.ui.themes.ThemeManager;
 import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.IndexTaskConfig;
+import iped.engine.data.IPEDSource;
 import iped.engine.search.SimilarFacesSearch;
 import iped.engine.task.similarity.ImageSimilarityTask;
 import iped.parsers.vcard.VCardParser;
@@ -53,7 +54,7 @@ public class MenuClass extends JPopupMenu {
             exportCheckedTreeToZip, exportTree, exportTreeChecked, similarDocs, openViewfile, createReport,
             resetColLayout, lastColLayout, saveColLayout, addToGraph, navigateToParentChat, pinFirstColumns,
             similarImagesCurrent, similarImagesExternal, similarFacesCurrent, similarFacesExternal, toggleTimelineView,
-            uiZoom, catIconSize, savePanelsLayout, loadPanelsLayout;
+            uiZoom, catIconSize, savePanelsLayout, loadPanelsLayout, exportCase;
 
     MenuListener menuListener = new MenuListener(this);
     boolean isTreeMenu;
@@ -316,6 +317,22 @@ public class MenuClass extends JPopupMenu {
         createReport = new JMenuItem(Messages.getString("MenuClass.GenerateReport")); //$NON-NLS-1$
         createReport.addActionListener(menuListener);
         this.add(createReport);
+
+
+        boolean isReport = false;
+        for (IPEDSource source : App.get().appCase.getAtomicSources()) {
+            if (source.isReport()){
+                isReport = true;
+                break;
+            }
+        }
+
+        if (!isReport && !App.get().isMultiCase){
+            this.addSeparator();
+            exportCase = new JMenuItem("Export Case"); //$NON-NLS-1$
+            exportCase.addActionListener(menuListener);
+            this.add(exportCase);
+        }
 
     }
 

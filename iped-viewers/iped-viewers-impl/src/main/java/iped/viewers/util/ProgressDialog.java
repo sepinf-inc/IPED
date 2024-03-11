@@ -169,6 +169,10 @@ public class ProgressDialog implements ActionListener, Runnable, IProgressMonito
             });
     }
 
+    public void reset(){
+        progressBar.setValue(0);
+    }
+
     public void setMaximum(final long max) {
         scale = 100f / max;
     }
