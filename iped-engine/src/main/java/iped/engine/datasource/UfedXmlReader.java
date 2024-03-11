@@ -45,7 +45,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Property;
 import org.apache.tika.mime.MediaType;
@@ -76,6 +75,7 @@ import iped.engine.io.MetadataInputStreamFactory;
 import iped.engine.io.UFDRInputStreamFactory;
 import iped.engine.io.UFEDXMLWrapper;
 import iped.engine.localization.Messages;
+import iped.engine.search.QueryBuilder;
 import iped.engine.task.ImageThumbTask;
 import iped.engine.task.die.DIETask;
 import iped.engine.task.index.IndexItem;
@@ -115,7 +115,7 @@ public class UfedXmlReader extends DataSourceReader {
     public static final String UFED_CONTACTPHOTO_MIME = UFED_MIME_PREFIX + "contactphoto";
     public static final String MSISDN_PROP = "MSISDN";
 
-    private static final String ESCAPED_UFED_ID = QueryParserUtil.escape(UFED_ID);
+    private static final String ESCAPED_UFED_ID = QueryBuilder.escape(UFED_ID);
     private static final String EMPTY_EXTRACTION_STR = "-";
 
     private final Set<String> supportedApps = new HashSet<String>(

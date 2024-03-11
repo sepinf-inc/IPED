@@ -44,7 +44,6 @@ import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.tree.TreePath;
 
-import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 import org.apache.lucene.search.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,6 +57,7 @@ import iped.data.IItemId;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.ItemId;
 import iped.engine.search.IPEDSearcher;
+import iped.engine.search.QueryBuilder;
 import iped.engine.search.SimilarDocumentSearch;
 import iped.parsers.ufed.UFEDChatParser;
 import iped.properties.ExtraProperties;
@@ -452,7 +452,7 @@ public class MenuListener implements ActionListener {
                 chatId = atomicSource.getParentId(itemId.getId());
             } else {
                 IPEDSearcher searcher = new IPEDSearcher((IPEDSource) atomicSource);
-                searcher.setQuery(QueryParserUtil.escape(UFEDChatParser.CHILD_MSG_IDS) + ":" + itemId.getId());
+                searcher.setQuery(QueryBuilder.escape(UFEDChatParser.CHILD_MSG_IDS) + ":" + itemId.getId());
                 try {
                     SearchResult r = searcher.search();
                     if (r.getLength() == 1)
