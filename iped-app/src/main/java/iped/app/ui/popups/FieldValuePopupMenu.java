@@ -225,7 +225,7 @@ public class FieldValuePopupMenu extends JPopupMenu implements ActionListener {
         if (isDate) {
             try {
                 Date d = df.parse(strValue);
-                value = DateUtil.dateToString(d);
+                strValue = DateUtil.dateToString(d);
             } catch (ParseException e1) {
                 e1.printStackTrace();
             }
