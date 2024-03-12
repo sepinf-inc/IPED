@@ -33,6 +33,7 @@ import javax.swing.table.JTableHeader;
 
 import iped.app.ui.ResultTableModel;
 import iped.app.ui.TableHeaderFilterManager;
+import iped.utils.UiUtil;
 
 public class FilterTableHeaderRenderer extends DefaultTableCellRenderer implements UIResource {
     private static final long serialVersionUID = 6359006660516330179L;
@@ -95,28 +96,29 @@ public class FilterTableHeaderRenderer extends DefaultTableCellRenderer implemen
         setBorder(BorderFactory.createEmptyBorder(2, 3, 4, 4));
         this.header = header;
 
+        int hoverShift = 20;
         colorFilterIcon0 = UIManager.getColor("Filter.Icon0");
         colorFilterIcon0Hover = UIManager.getColor("Filter.Icon0Hover");
         colorFilterIcon1 = UIManager.getColor("Filter.Icon1");
         colorFilterIcon2 = UIManager.getColor("Filter.Icon2");
         colorFilterIcon2Hover = UIManager.getColor("Filter.Icon2Hover");
         colorArrow = UIManager.getColor("Filter.Arrow");
-        colorArrowFiltered = UIManager.getColor("Filter.ArrowFiltered");
+        colorArrowFiltered = new Color(255, 255, 255, 220);
         colorHeaderBorder0 = UIManager.getColor("Filter.Border0");
         colorHeaderBorder1 = UIManager.getColor("Filter.Border1");
         colorHeaderBorder2 = UIManager.getColor("Filter.Border2");
         colorHeader1 = UIManager.getColor("Filter.Header1");
-        colorHeader1Filtered = UIManager.getColor("Filter.Header1Filtered");
+        colorHeader1Filtered = new Color(190, 0, 0);
         colorHeader1Sorted = UIManager.getColor("Filter.Header1Sorted");
-        colorHeader1Hover = UIManager.getColor("Filter.Header1Hover");
-        colorHeader1FilteredHover = UIManager.getColor("Filter.Header1FilteredHover");
-        colorHeader1SortedHover = UIManager.getColor("Filter.Header1SortedHover");
+        colorHeader1Hover = UiUtil.shift(colorHeader1, hoverShift);
+        colorHeader1FilteredHover = UiUtil.shift(colorHeader1Filtered, hoverShift);
+        colorHeader1SortedHover = UiUtil.shift(colorHeader1Sorted, hoverShift);
         colorHeader2 = UIManager.getColor("Filter.Header2");
-        colorHeader2Filtered = UIManager.getColor("Filter.Header2Filtered");
+        colorHeader2Filtered = new Color(240, 50, 50);
         colorHeader2Sorted = UIManager.getColor("Filter.Header2Sorted");
-        colorHeader2Hover = UIManager.getColor("Filter.Header2Hover");
-        colorHeader2FilteredHover = UIManager.getColor("Filter.Header2FilteredHover");
-        colorHeader2SortedHover = UIManager.getColor("Filter.Header2SortedHover");
+        colorHeader2Hover = UiUtil.shift(colorHeader2, hoverShift);
+        colorHeader2FilteredHover = UiUtil.shift(colorHeader2Filtered, hoverShift);
+        colorHeader2SortedHover = UiUtil.shift(colorHeader2Sorted, hoverShift);
     }
 
     public void clear() {
