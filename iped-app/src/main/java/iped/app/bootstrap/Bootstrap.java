@@ -117,8 +117,8 @@ public class Bootstrap {
         }
 
         if (!XmxDefined) {
-            // if -Xmx is not specified, set it, up to 32GB
-            long memSize = Math.min((long) (physicalMemory * getRAMToHeapFactor()), 32L * 1024 * 1024 * 1024);
+            // if -Xmx is not specified, set it, up to 32500MB
+            long memSize = Math.min((long) (physicalMemory * getRAMToHeapFactor()), 32500L * 1024 * 1024);
             heapArgs.add("-Xmx" + (memSize / (1024 * 1024)) + "M");
         }
 
