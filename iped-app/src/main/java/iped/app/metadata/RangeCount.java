@@ -45,4 +45,21 @@ public class RangeCount extends ValueCount {
     public double getEnd() {
         return end;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof RangeCount) {
+            RangeCount rc = (RangeCount) obj;
+            if (this.start == rc.start && this.end == rc.end) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Double.hashCode(start);
+    }
+
 }
