@@ -33,8 +33,6 @@ import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.twelvemonkeys.imageio.stream.ByteArrayImageInputStream;
-
 import iped.data.IHashValue;
 import iped.data.IItem;
 import iped.datasource.IDataSource;
@@ -48,6 +46,7 @@ import iped.engine.util.TextCache;
 import iped.engine.util.Util;
 import iped.io.ISeekableInputStreamFactory;
 import iped.io.SeekableInputStream;
+import iped.utils.ByteArrayImageInputStream;
 import iped.utils.EmptyInputStream;
 import iped.utils.HashValue;
 import iped.utils.IOUtil;
