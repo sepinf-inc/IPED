@@ -11,12 +11,10 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.BitSet;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
@@ -409,18 +407,11 @@ public class MetadataPanel extends JPanel
         }
     }
 
-    public MultiSearchResult getFilteredItemIds(String field, JList<ValueCount> list, MultiSearchResult result) throws ParseException, QueryNodeException, IOException {
-        field = LocalizedProperties.getNonLocalizedField(field.trim());
-
-        Set<Integer> ords = new HashSet<>();
-        for (ValueCount value : list.getSelectedValuesList()) {
-            ords.add(value.getOrd());
-        }
-        return ms.getIdsWithOrd(result, field, ords);
-    }
-
     public MultiSearchResult getFilteredItemIds(MultiSearchResult result) throws ParseException, QueryNodeException, IOException {
         String field = (String) props.getSelectedItem();
+        if (field == null) {
+            return result;
+        }
         field = LocalizedProperties.getNonLocalizedField(field.trim());
 
         Set<Integer> ords = new HashSet<>();
@@ -560,6 +551,7 @@ public class MetadataPanel extends JPanel
             return;
         }
 
+        field = LocalizedProperties.getNonLocalizedField(field.trim());
         boolean isNumeric = IndexItem.isNumeric(field);
 
         SwingUtilities.invokeLater(new Runnable() {
@@ -617,21 +609,14 @@ public class MetadataPanel extends JPanel
 
     }
 
-
-    public MultiSearchResult getIdsWithOrd(MultiSearchResult result, String key, Set<Integer> ords) throws IOException {
-        return ms.getIdsWithOrd(result, key, ords);
-    }
-
-
-    public List<ValueCount> countValues(String field) throws IOException {
-        ms.setIpedResult(App.get().ipedResult);
-        return ms.countValues(field);
-    }
-
     @Override
     public List getDefinedFilters() {
         ArrayList<IFilter> result = new ArrayList<IFilter>();
         String field = (String) props.getSelectedItem();
+        if (field == null) {
+            return result;
+        }
+        field = LocalizedProperties.getNonLocalizedField(field.trim());
         HashSet<ValueCount> selectedValues = new HashSet<ValueCount>();
         selectedValues.addAll(list.getSelectedValuesList());
         if(isFiltering()) {
