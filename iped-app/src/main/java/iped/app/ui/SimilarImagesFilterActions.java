@@ -75,8 +75,7 @@ public class SimilarImagesFilterActions {
                 BufferedInputStream is = null;
                 try {
                     is = new BufferedInputStream(new FileInputStream(file));
-                    img = ImageUtil.getSubSampledImage(is, ImageSimilarity.maxDim * sampleFactor,
-                            ImageSimilarity.maxDim * sampleFactor);
+                    img = ImageUtil.getSubSampledImage(is, ImageSimilarity.maxDim * sampleFactor);
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {

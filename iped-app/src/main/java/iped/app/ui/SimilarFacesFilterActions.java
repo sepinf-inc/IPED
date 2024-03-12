@@ -114,7 +114,7 @@ public class SimilarFacesFilterActions {
                 }
 
                 try (InputStream is = new FileInputStream(file)) {
-                    BufferedImage img = ImageUtil.getSubSampledImage(is, 100, 100);
+                    BufferedImage img = ImageUtil.getSubSampledImage(is, 100);
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
                     ImageIO.write(img, "jpg", baos);
                     app.similarFacesRefItem.setThumb(baos.toByteArray());

@@ -170,8 +170,8 @@ public class DiscordParser extends AbstractParser {
                             try {
                                 List<IItemReader> avatars = searcher.search(commonQuery + " AND " + BasicProps.NAME + ":" + dr.getAuthor().getAvatar() + "*");
                                 for (IItemReader avatarItem : avatars) {
-                                    try (InputStream is2 = avatarItem.getBufferedInputStream()) {
-                                        BufferedImage img = ImageUtil.getSubSampledImage(is2, 64, 64);
+                                    BufferedImage img = ImageUtil.getSubSampledImage(avatarItem, 64);
+                                    if (img != null) {
                                         img = ImageUtil.getOpaqueImage(img);
                                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
                                         ImageIO.write(img, "jpg", baos);
@@ -179,8 +179,6 @@ public class DiscordParser extends AbstractParser {
                                         dr.getAuthor().setAvatarBytes(avatar);
                                         avatarCache.put(dr.getAuthor().getAvatar(), avatar);
                                         break;
-                                    } catch (InputStreamNotAvailable e) {
-                                        // ignore
                                     }
                                 }
                             } catch (Exception e) {
