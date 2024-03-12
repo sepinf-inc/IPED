@@ -250,7 +250,7 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
                 for (String filterField : panels.keySet()) {
                     MetadataSearch internalMetadataSearch = panels.get(filterField);
                     Set<Integer> ords = new HashSet<>();
-                    Set<ValueCount> values = selectedValues.get(filterField);
+                    Set<ValueCount> values = selectedValues.get(escape(filterField));
                     if(values!=null && values.size()>0) {
                         for(ValueCount value: values) {
                             ords.add(value.getOrd());
