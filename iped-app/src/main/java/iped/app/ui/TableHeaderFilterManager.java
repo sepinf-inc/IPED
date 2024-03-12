@@ -163,29 +163,18 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
 
     @Override
     public Query getQuery() {
-        if (true) {
-            if (definedFilters.size()==0) {
-                return null;
-            }
-
-            Query result;
-            
-            BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
-
-            int i = 0;
-            for (IFilter filter : definedFilters.values()) {
-                if(filter instanceof IQueryFilter) {
-                    boolQuery.add(((IQueryFilter)filter).getQuery(), Occur.MUST);
-                }
-                i++;
-            }
-
-            result = boolQuery.build();
-
-            return result;
-        } else {
+        if (definedFilters.size() == 0) {
             return null;
         }
+        int i = 0;
+        BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
+        for (IFilter filter : definedFilters.values()) {
+            if (filter instanceof IQueryFilter && !(filter instanceof ValueCountQueryFilter)) {
+                boolQuery.add(((IQueryFilter) filter).getQuery(), Occur.MUST);
+                i++;
+            }
+        }
+        return i > 0 ? boolQuery.build() : null;
     }
 
     @Override
