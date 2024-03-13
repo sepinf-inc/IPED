@@ -97,6 +97,21 @@ minWordScore = 0.5
 # IP:PORT of the service/central node used by the RemoteWav2Vec2TranscriptTask implementation.
 # wav2vec2Service = 127.0.0.1:11111
 
+#Performs a heuristic for dynamic thread allocation and spaced requeue. Helps improve performance of slow transcription servers.                    
+#clientDynamicThreadRequeueHeuristics = true
+
+#If active, the client will also help the server with the transcription task, only if the client has no other tasks to do. The heuristic must be turned on
+#clientTranscriptHelp = true
+
+#Defines the implementation class for client help, must be a local implementation ( not remote transcript task )
+#clientTranscriptHelpImplementationClass = iped.engine.task.transcript.Wav2Vec2TranscriptTask
+
+#Advanced Parameter. Defines which part of the queue the items will be sent to. 4 = 1/4 size. Values ​​greater than or equal to 1
+#clientSplitQueueRatio = 4
+
+#Advanced Parameter. Sets the delta time in milliseconds when consecutive items are requested to be requeued, provides better spacing.
+#clientRequeueDeltaTime = 5000
+
 #########################################
 # MicrosoftTranscriptTask options
 #########################################
