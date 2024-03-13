@@ -2,19 +2,17 @@ package iped.app.ui.filters;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.function.Predicate;
 
 import org.apache.commons.lang.ArrayUtils;
-import org.apache.lucene.index.SortedSetDocValues;
+import org.apache.lucene.util.BytesRef;
+import org.apache.lucene.util.NumericUtils;
 
 import iped.app.metadata.MetadataSearchable;
 import iped.app.ui.App;
 import iped.data.IItemId;
 import iped.engine.data.ItemId;
 import iped.engine.search.MultiSearchResult;
-import iped.exception.ParseException;
-import iped.exception.QueryNodeException;
+import iped.engine.task.index.IndexItem;
 import iped.search.IMultiSearchResult;
 import iped.viewers.api.IResultSetFilter;
 
@@ -24,82 +22,68 @@ import iped.viewers.api.IResultSetFilter;
  * 
  * @author Patrick Dalla Bernardina
  */
-public class ValueFilter extends MetadataSearchable implements IResultSetFilter {
+public abstract class ValueFilter extends MetadataSearchable implements IResultSetFilter {
+
     protected String field;
-    Predicate<String> predicate = null;
+    protected String value;
+    protected int refOrd;
+    protected long refVal;
+    protected boolean isNumeric;
+    protected boolean isFloat;
+    protected boolean isDouble;
 
-    public ValueFilter(String field, Predicate<String> predicate) {
+    protected abstract boolean filterLuceneDoc(int doc) throws IOException;
+
+    public ValueFilter(String field, String value) {
         this.field = field;
-        this.predicate = predicate;
-        reader = App.get().appCase.getLeafReader();
-
-    }
-
-    public boolean checkinDocValues(int doc) {
-        if (docValues == null) {
-            return false;
-        }
-        try {
-            boolean adv = docValues.advanceExact(doc);
-            String val = docValues.lookupOrd(docValues.ordValue()).utf8ToString();
-
-            if (val != null && predicate.test(val)) {
-                return true;
+        this.value = value;
+        isNumeric = IndexItem.isNumeric(field);
+        isFloat = IndexItem.isFloat(field);
+        isDouble = IndexItem.isDouble(field);
+        if (isNumeric) {
+            if (isFloat) {
+                refVal = NumericUtils.floatToSortableInt(Float.valueOf(value));
+            } else if (isDouble) {
+                refVal = NumericUtils.doubleToSortableLong(Double.valueOf(value));
+            } else {
+                refVal = Long.valueOf(value.replace(",", "").replace(".", ""));
             }
-        } catch (Exception e) {
         }
-        return false;
-    }
-
-    public boolean checkinDocValuesSet(int doc) {
-        if (docValuesSet == null) {
-            return false;
-        }
-        try {
-            boolean adv = docValuesSet.advanceExact(doc);
-
-            long ord = -1;
-            while (adv && (ord = docValuesSet.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
-                String val = docValuesSet.lookupOrd(ord).utf8ToString();
-
-                if (val != null && predicate.test(val)) {
-                    return true;
-                }
-            }
-        } catch (Exception e) {
-        }
-        return false;
     }
 
     @Override
-    public IMultiSearchResult filterResult(IMultiSearchResult src) throws ParseException, QueryNodeException, IOException {
-
-        if (predicate == null) {
-            return src;
+    protected void loadDocValues(String field) throws IOException {
+        super.loadDocValues(field);
+        if (!isNumeric) {
+            if (docValues != null) {
+                refOrd = docValues.lookupTerm(new BytesRef(IndexItem.normalize(value, true)));
+            } else if (docValuesSet != null) {
+                // TODO handle multivalued string fields
+            }
         }
+    }
 
-        try {
-            loadDocValues(field);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    @Override
+    public IMultiSearchResult filterResult(IMultiSearchResult src) throws IOException {
+
+        loadDocValues(field);
 
         ArrayList<IItemId> selectedItems = new ArrayList<IItemId>();
         ArrayList<Float> scores = new ArrayList<Float>();
+
         int i = 0;
         for (IItemId item : src.getIterator()) {
             int doc = App.get().appCase.getLuceneId(item);
-
-            if (checkinDocValues(doc) || checkinDocValuesSet(doc)) {
+            if (filterLuceneDoc(doc)) {
                 selectedItems.add(item);
                 scores.add(src.getScore(i));
             }
-
             i++;
         }
         MultiSearchResult r = new MultiSearchResult(selectedItems.toArray(new ItemId[0]), ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
 
         return r;
     }
+
 
 }
