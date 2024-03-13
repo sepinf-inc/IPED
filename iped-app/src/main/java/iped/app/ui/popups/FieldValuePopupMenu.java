@@ -107,12 +107,9 @@ public class FieldValuePopupMenu extends JPopupMenu implements ActionListener {
 
             isDate = isDate(value);
 
-            // TODO: fix for non numeric and non Date fields
-            if (IndexItem.isNumeric(field) || isDate) {
-                filterEquals = createValuedMenuItem(FieldValuePopupMenu.EQUALS_STR);
-                filterEquals.addActionListener(this);
-                this.add(filterEquals);
-            }
+            filterEquals = createValuedMenuItem(FieldValuePopupMenu.EQUALS_STR);
+            filterEquals.addActionListener(this);
+            this.add(filterEquals);
 
             if (IndexItem.isNumeric(field)) {
                 filterLessThan = createValuedMenuItem(FieldValuePopupMenu.FILTER_LESS_THAN_STR);
@@ -130,10 +127,9 @@ public class FieldValuePopupMenu extends JPopupMenu implements ActionListener {
                 filterGreaterThan.addActionListener(this);
                 this.add(filterGreaterThan);
             } else {
-                // TODO: fix for non numeric and non Date fields
-                // filterStartsWith=createValuedMenuItem(FieldValuePopupMenu.STARTS_WITH_STR);
-                // filterStartsWith.addActionListener(this);
-                // this.add(filterStartsWith);
+                filterStartsWith = createValuedMenuItem(FieldValuePopupMenu.STARTS_WITH_STR);
+                filterStartsWith.addActionListener(this);
+                this.add(filterStartsWith);
 
                 filterContains = createValuedMenuItem(FieldValuePopupMenu.CONTAINS_STR);
                 filterContains.addActionListener(this);
