@@ -14,19 +14,17 @@ import iped.search.IMultiSearchResult;
  * 
  * @author Patrick Dalla Bernardina
  */
-public class EqualsFilter extends PreQueryValueFilter {
+public class EqualsFilter extends ValueFilter {
+	String value;
+	
     public EqualsFilter(String field, String value) {
-        super(field, value, new Predicate<String>() {
+        super(field, new Predicate<String>() {
             @Override
             public boolean test(String t) {
                 return t.equals(value);
             }
         });
-        if(IndexItem.isNumeric(field)) {
-            this.queryStr = field+":["+value+" TO "+value+"]";
-        }else {
-            this.queryStr = field+":\""+value+"\"";
-        }
+        this.value = value;
     }
 
     @Override

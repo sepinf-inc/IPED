@@ -13,15 +13,17 @@ import iped.search.IMultiSearchResult;
  * 
  * @author Patrick Dalla Bernardina
  */
-public class StartsWithFilter extends PreQueryValueFilter {
+public class StartsWithFilter extends ValueFilter {
+	String value;
+	
     public StartsWithFilter(String field, String value) {
-        super(field, value, new Predicate<String>() {
+        super(field, new Predicate<String>() {
             @Override
             public boolean test(String t) {
                 return t.startsWith(value);
             }
         });
-        this.queryStr = field + ":" + value + "*";
+        this.value = value;
     }
 
     public String toString() {
