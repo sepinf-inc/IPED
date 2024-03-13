@@ -18,14 +18,18 @@ import iped.exception.QueryNodeException;
 import iped.search.IMultiSearchResult;
 import iped.viewers.api.IResultSetFilter;
 
+/*
+ * Represents a filter based on a Predicate used to filter each
+ * field value
+ * 
+ * @author Patrick Dalla Bernardina
+ */
 public class ValueFilter extends MetadataSearchable implements IResultSetFilter {
     protected String field;
-    protected String value;
     Predicate<String> predicate = null;
 
-    public ValueFilter(String field, String value, Predicate<String> predicate) {
+    public ValueFilter(String field, Predicate<String> predicate) {
         this.field = field;
-        this.value = value;
         this.predicate = predicate;
         reader = App.get().appCase.getLeafReader();
 
@@ -80,7 +84,6 @@ public class ValueFilter extends MetadataSearchable implements IResultSetFilter 
             e.printStackTrace();
         }
 
-        HashMap<Integer, byte[]> bookmarkBitsPerSource = new HashMap<Integer, byte[]>();
         ArrayList<IItemId> selectedItems = new ArrayList<IItemId>();
         ArrayList<Float> scores = new ArrayList<Float>();
         int i = 0;

@@ -7,6 +7,12 @@ import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
 import iped.search.IMultiSearchResult;
 
+/*
+ * A PreQueryValueFilter that has a predicate to check if the field value starts with the 
+ * defined value.
+ * 
+ * @author Patrick Dalla Bernardina
+ */
 public class StartsWithFilter extends PreQueryValueFilter {
     public StartsWithFilter(String field, String value) {
         super(field, value, new Predicate<String>() {
@@ -18,13 +24,7 @@ public class StartsWithFilter extends PreQueryValueFilter {
         this.queryStr = field + ":" + value + "*";
     }
 
-    @Override
-    public IMultiSearchResult filterResult(IMultiSearchResult src) throws ParseException, QueryNodeException, IOException {
-        return super.filterResult(src);
-    }
-
     public String toString() {
         return field + "^=\"" + value + "\"";
     }
-
 }
