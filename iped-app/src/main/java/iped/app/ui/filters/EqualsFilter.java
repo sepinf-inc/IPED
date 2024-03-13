@@ -21,7 +21,7 @@ public class EqualsFilter extends ValueFilter {
         super(field, new Predicate<String>() {
             @Override
             public boolean test(String t) {
-                return t.equals(value);
+                return t.equalsIgnoreCase(value);
             }
         });
         this.value = value;

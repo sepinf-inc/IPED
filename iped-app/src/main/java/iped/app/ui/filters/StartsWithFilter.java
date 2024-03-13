@@ -1,11 +1,6 @@
 package iped.app.ui.filters;
 
-import java.io.IOException;
 import java.util.function.Predicate;
-
-import iped.exception.ParseException;
-import iped.exception.QueryNodeException;
-import iped.search.IMultiSearchResult;
 
 /*
  * A PreQueryValueFilter that has a predicate to check if the field value starts with the 
@@ -16,13 +11,21 @@ import iped.search.IMultiSearchResult;
 public class StartsWithFilter extends ValueFilter {
 	String value;
 	
+    private static class StartsPredicate implements Predicate<String> {
+        String value;
+
+        private StartsPredicate(String value) {
+            this.value = value.toLowerCase();
+        }
+
+        @Override
+        public boolean test(String t) {
+            return t.startsWith(value);
+        }
+    }
+
     public StartsWithFilter(String field, String value) {
-        super(field, new Predicate<String>() {
-            @Override
-            public boolean test(String t) {
-                return t.startsWith(value);
-            }
-        });
+        super(field, new StartsPredicate(value));
         this.value = value;
     }
 
