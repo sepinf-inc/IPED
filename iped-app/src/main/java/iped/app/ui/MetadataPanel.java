@@ -16,6 +16,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
@@ -285,12 +286,12 @@ public class MetadataPanel extends JPanel
     private void populateList() {
         setWaitVisible(true);
         final boolean updateResult = !list.isSelectionEmpty();
-        Future<?> f = null;
+        Future<MultiSearchResult> future = null;
         if (updateResult) {
             updatingResult=true;
-            f = App.get().appletListener.futureUpdateFileListing();
+            future = App.get().appletListener.futureUpdateFileListing();
         }
-        Future<?> resolved = f;
+        Future<MultiSearchResult> finalfuture = future;
 
         ms.setLogScale(scale.getValue() == 1);
         ms.setNoRanges(scale.getValue() == -1);
@@ -302,27 +303,25 @@ public class MetadataPanel extends JPanel
             @Override
             public void run() {
                 try {
-                    if(resolved!=null) {
-                        while(!resolved.isDone()) {
-                            try {
-                                Thread.sleep(100);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                        }                    
+                    IMultiSearchResult result = null;
+                    if (finalfuture != null) {
+                        try {
+                            result = finalfuture.get();
+                        } catch (InterruptedException | ExecutionException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    if (result == null) {
+                        result = App.get().ipedResult;
                     }
                     updatingResult=false;
-                    ms.setIpedResult(App.get().ipedResult);
+                    ms.setIpedResult(result);
 
                     countValues();
+
                 } catch (IOException e) {
                     e.printStackTrace();
                 } finally {
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
                     setWaitVisible(false);
                 }
             }
@@ -344,8 +343,9 @@ public class MetadataPanel extends JPanel
                 for (int idx = 0; idx < sortedArray.length; idx++)
                     if (selSet.contains(sortedArray[idx]))
                         selIdx[i++] = idx;
-                if (i > 0)
+                if (!updateAction && i > 0) {
                     list.setSelectedIndices(selIdx);
+                }
                 updatingList = false;
 
                 // System.out.println("finish");
@@ -355,13 +355,15 @@ public class MetadataPanel extends JPanel
 
     }
 
+    private boolean updateAction = false;;
+
     @Override
     public void actionPerformed(ActionEvent e) {
 
         if (updatingProps)
             return;
 
-        if (e.getSource() == update || e.getSource() == props)
+        if ((updateAction = e.getSource() == update) || e.getSource() == props)
             populateList();
 
         else if (e.getSource() == groups)

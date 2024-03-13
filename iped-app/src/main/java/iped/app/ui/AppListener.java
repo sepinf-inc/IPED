@@ -44,11 +44,11 @@ public class AppListener implements ActionListener, MouseListener {
         updateFileListing(null);
     }
     
-    public Future<?> futureUpdateFileListing() {
+    public Future<MultiSearchResult> futureUpdateFileListing() {
         return updateFileListing(null);
     }
 
-    public Future<?> updateFileListing(Query query) {
+    public Future<MultiSearchResult> updateFileListing(Query query) {
 
         App.get().getTextViewer().textTable.scrollRectToVisible(new Rectangle());
         App.get().hitsTable.scrollRectToVisible(new Rectangle());
