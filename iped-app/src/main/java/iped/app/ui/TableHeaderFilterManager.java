@@ -127,16 +127,18 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
     }
 
     public void addEqualsFilter(String field, String value) {
+        EqualsFilter filter = new EqualsFilter(field, value);
         field = escape(field);
-        definedFilters.put(field, new EqualsFilter(field, value));
+        definedFilters.put(field, filter);
         selectedValues.remove(field);
         otherFilters.remove(field);
         App.get().getFilterManager().notifyFilterChange();
     }
 
     public void addStartsWithFilter(String field, String value) {
+        StartsWithFilter filter = new StartsWithFilter(field, value);
         field = escape(field);
-        definedFilters.put(field, new StartsWithFilter(field, value));
+        definedFilters.put(field, filter);
         selectedValues.remove(field);
         otherFilters.remove(field);
         App.get().getFilterManager().notifyFilterChange();
