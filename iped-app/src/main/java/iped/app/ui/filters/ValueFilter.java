@@ -16,9 +16,9 @@ import iped.engine.task.index.IndexItem;
 import iped.search.IMultiSearchResult;
 import iped.viewers.api.IResultSetFilter;
 
-/*
- * Represents a filter based on a Predicate used to filter each
- * field value
+/**
+ * Represents a filter to check which documents have a field value matching some
+ * criteria based on the provided value.
  * 
  * @author Patrick Dalla Bernardina
  */
@@ -26,7 +26,7 @@ public abstract class ValueFilter extends MetadataSearchable implements IResultS
 
     protected String field;
     protected String value;
-    protected int refOrd;
+    protected long refOrd;
     protected long refVal;
     protected boolean isNumeric;
     protected boolean isFloat;
@@ -58,7 +58,9 @@ public abstract class ValueFilter extends MetadataSearchable implements IResultS
             if (docValues != null) {
                 refOrd = docValues.lookupTerm(new BytesRef(IndexItem.normalize(value, true)));
             } else if (docValuesSet != null) {
-                // TODO handle multivalued string fields
+                refOrd = docValuesSet.lookupTerm(new BytesRef(IndexItem.normalize(value, true)));
+            } else {
+                throw new IOException("No String DocValues found for field " + field);
             }
         }
     }

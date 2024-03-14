@@ -2,19 +2,21 @@ package iped.app.ui.filters;
 
 import java.io.IOException;
 
+import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.util.BytesRef;
 
 import iped.engine.task.index.IndexItem;
 
-/*
- * A PreQueryValueFilter that has a predicate to check if the field value starts with the 
- * defined value.
+/**
+ * A ValueFilter that checks in which docs the specified field starts with the
+ * provided string value.
  * 
  * @author Patrick Dalla Bernardina
+ * @author Luís Nassif
  */
 public class StartsWithFilter extends ValueFilter {
 
-    private int stopOrd;
+    private long stopOrd;
 
     public StartsWithFilter(String field, String value) {
         super(field, value);
@@ -31,8 +33,7 @@ public class StartsWithFilter extends ValueFilter {
         if (docValues != null) {
             stopOrd = docValues.lookupTerm(new BytesRef(stopValue));
         } else if (docValuesSet != null) {
-            // TODO handle multivalued string fields
-
+            stopOrd = docValuesSet.lookupTerm(new BytesRef(stopValue));
         } else {
             throw new IOException("No String DocValues found for field " + field);
         }
@@ -51,7 +52,14 @@ public class StartsWithFilter extends ValueFilter {
                 }
             }
         } else if (docValuesSet != null) {
-            // TODO handle multivalued string fields
+            if (docValuesSet.advanceExact(doc)) {
+                long ord;
+                while ((ord = docValuesSet.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
+                    if (ord >= refOrd && ord < stopOrd) {
+                        return true;
+                    }
+                }
+            }
         }
         return false;
     }
