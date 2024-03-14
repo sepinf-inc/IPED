@@ -11,8 +11,10 @@ import iped.app.metadata.MetadataSearchable;
 import iped.app.ui.App;
 import iped.data.IItemId;
 import iped.engine.data.ItemId;
+import iped.engine.localization.CategoryLocalization;
 import iped.engine.search.MultiSearchResult;
 import iped.engine.task.index.IndexItem;
+import iped.properties.BasicProps;
 import iped.search.IMultiSearchResult;
 import iped.viewers.api.IResultSetFilter;
 
@@ -51,14 +53,24 @@ public abstract class ValueFilter extends MetadataSearchable implements IResultS
         }
     }
 
+    protected String normalize(String value) {
+        if (BasicProps.HASH.equals(field)) {
+            return value;
+        } else if (BasicProps.CATEGORY.equals(field)) {
+            value = CategoryLocalization.getInstance().getNonLocalizedCategory(value);
+            return IndexItem.normalize(value, false);
+        }
+        return IndexItem.normalize(value, true);
+    }
+
     @Override
     protected void loadDocValues(String field) throws IOException {
         super.loadDocValues(field);
         if (!isNumeric) {
             if (docValues != null) {
-                refOrd = docValues.lookupTerm(new BytesRef(IndexItem.normalize(value, true)));
+                refOrd = docValues.lookupTerm(new BytesRef(normalize(value)));
             } else if (docValuesSet != null) {
-                refOrd = docValuesSet.lookupTerm(new BytesRef(IndexItem.normalize(value, true)));
+                refOrd = docValuesSet.lookupTerm(new BytesRef(normalize(value)));
             } else {
                 throw new IOException("No String DocValues found for field " + field);
             }

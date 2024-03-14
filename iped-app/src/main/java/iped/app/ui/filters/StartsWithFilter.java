@@ -5,8 +5,6 @@ import java.io.IOException;
 import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.util.BytesRef;
 
-import iped.engine.task.index.IndexItem;
-
 /**
  * A ValueFilter that checks in which docs the specified field starts with the
  * provided string value.
@@ -29,7 +27,7 @@ public class StartsWithFilter extends ValueFilter {
     protected void loadDocValues(String field) throws IOException {
         super.loadDocValues(field);
         String stopValue = value + "邹";
-        stopValue = IndexItem.normalize(stopValue, true);
+        stopValue = normalize(stopValue);
         if (docValues != null) {
             stopOrd = docValues.lookupTerm(new BytesRef(stopValue));
         } else if (docValuesSet != null) {
