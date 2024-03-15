@@ -56,9 +56,7 @@ public class BookmarksController implements IBookmarksController {
 
     public void addToRecentSearches(String texto) {
 
-        if (!texto.equals(HISTORY_DIV) && !texto.trim().isEmpty()
-                && !App.get().appCase.getMultiBookmarks().getTypedWords().contains(texto)
-                && !App.get().appCase.getKeywords().contains(texto)) {
+        if (!texto.equals(HISTORY_DIV) && !texto.trim().isEmpty() && !App.get().appCase.getMultiBookmarks().getTypedWords().contains(texto) && !App.get().appCase.getKeywords().contains(texto)) {
 
             if (App.get().appCase.getMultiBookmarks().getTypedWords().size() == 0)
                 App.get().queryComboBox.addItem(HISTORY_DIV);
@@ -83,9 +81,8 @@ public class BookmarksController implements IBookmarksController {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                App.get().checkBox.setText(
-                        LocalizedFormat.format(App.get().appCase.getMultiBookmarks().getTotalChecked()) + " / " //$NON-NLS-1$
-                                + LocalizedFormat.format(App.get().appCase.getTotalItems()));
+                App.get().checkBox.setText(LocalizedFormat.format(App.get().appCase.getMultiBookmarks().getTotalChecked()) + " / " //$NON-NLS-1$
+                        + LocalizedFormat.format(App.get().appCase.getTotalItems()));
                 App.get().checkBox.setSelected(App.get().appCase.getMultiBookmarks().getTotalChecked() > 0);
                 App.get().bookmarksListener.updateModelAndSelection();
                 App.get().repaintAllTableViews();

@@ -62,8 +62,7 @@ public class TextParserListener implements PropertyChangeListener {
                 } catch (Exception e) {
                 }
 
-            App.get().hitsDock.setTitleText(LocalizedFormat.format(fileParser.getHits().size())
-                    + Messages.getString("TextParserListener.hits")); //$NON-NLS-1$
+            App.get().hitsDock.setTitleText(LocalizedFormat.format(fileParser.getHits().size()) + Messages.getString("TextParserListener.hits")); //$NON-NLS-1$
 
         }
 

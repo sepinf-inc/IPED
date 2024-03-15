@@ -30,6 +30,7 @@ import org.apache.lucene.search.FieldExistsQuery;
 import org.apache.lucene.search.FuzzyQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.MatchNoDocsQuery;
 import org.apache.lucene.search.MultiTermQuery;
 import org.apache.lucene.search.PhraseQuery;
 import org.apache.lucene.search.PointRangeQuery;
@@ -210,6 +211,9 @@ public class QueryBuilder {
         }
         if (query instanceof MatchAllDocsQuery) {
             return getMatchAllItemsQuery();
+
+        } else if (query instanceof MatchNoDocsQuery) {
+            return query;
 
         } else if (query instanceof FieldExistsQuery) {
             return query;
