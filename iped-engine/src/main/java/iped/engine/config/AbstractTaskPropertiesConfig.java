@@ -29,6 +29,6 @@ public abstract class AbstractTaskPropertiesConfig extends AbstractTaskConfig<UT
         processProperties(properties);
     }
 
-    abstract void processProperties(UTF8Properties properties);
+    public abstract void processProperties(UTF8Properties properties);
 
 }

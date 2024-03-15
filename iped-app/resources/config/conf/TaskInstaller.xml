@@ -40,7 +40,6 @@
     <task class="iped.engine.task.PhotoDNALookup"></task>
     <task script="NSFWNudityDetectTask.py"></task>
     <task script="FaceRecognitionTask.py"></task>
-    <task script="SearchHardwareWallets.py"></task>
     
     <!--Carving must be installed before IndexTask because it sets hasChildren property in parent items-->
     <task class="iped.engine.task.carver.LedCarveTask"></task>
@@ -49,6 +48,7 @@
     
     <task class="iped.engine.task.FragmentLargeBinaryTask"></task>
     <task class="iped.engine.task.EntropyTask"></task>
+    <task class="iped.geo.nominatim.NominatimTask"></task>
     <task class="iped.engine.task.MinIOTask"></task>
     <task class="iped.engine.task.index.ElasticSearchIndexTask"></task>
     <task class="iped.engine.task.index.IndexTask"></task>

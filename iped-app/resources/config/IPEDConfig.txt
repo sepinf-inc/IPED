@@ -106,7 +106,7 @@ enableAudioTranscription = false
 # Enables carving. "addUnallocated" must be enabled to unallocated area be searched.
 # By default carving runs on almost every item in the case. 
 # File types to be searched and retrieved can be set in file "conf/CarvingConfig.txt"
-enableCarving = false
+enableCarving = true
 
 # Enables carving that retrieves known files from the LED base, based on the beginning (64K) of the file.
 # It's necessary to enable "addUnallocated" and to configure "hashesDB" (with LED hashes data imported).
@@ -139,6 +139,10 @@ enableVideoThumbs = true
 # [Experimental] Enables thumbnail creation for PDFs and many formats supported by LibreOffice.
 # Advanced configurations can be found at conf/DocThumbsConfig.txt.
 enableDocThumbs = false
+
+# Enables nominatim address resolving of geo locations
+# Server settings can be modified in file "conf/NominatimConfig.txt"
+enableNominatimLocationResolving = true
 
 # Enables HTML report generation on automatic extractions or from selected items.
 # Generation settings can be modified in file "conf/HTMLReportConfig.txt"
