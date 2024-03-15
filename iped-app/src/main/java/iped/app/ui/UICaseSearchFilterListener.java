@@ -37,7 +37,7 @@ public class UICaseSearchFilterListener implements CaseSearchFilterListener {
             try {
                 saveHighlightTerms();
             } catch (Exception e) {
-
+                e.printStackTrace();
             }
 
             App.get().clearAllFilters.setNumberOfFilters(caseSearcherFilter.getNumFilters());
