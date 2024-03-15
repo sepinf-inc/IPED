@@ -56,8 +56,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 
     private static final long serialVersionUID = 1L;
 
-    private static final List<String> basicDateFields = Arrays.asList(IndexItem.ACCESSED, IndexItem.MODIFIED,
-            IndexItem.CREATED, IndexItem.CHANGED);
+    private static final List<String> basicDateFields = Arrays.asList(IndexItem.ACCESSED, IndexItem.MODIFIED, IndexItem.CREATED, IndexItem.CHANGED);
 
     private static final String lengthField = LocalizedProperties.getLocalizedField(IndexItem.LENGTH);
     public static String BOOKMARK_COL = Messages.getString("ResultTableModel.bookmark"); //$NON-NLS-1$
@@ -141,7 +140,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     public int getRowCount() {
         return App.get().ipedResult.getLength();
     }
-        
+
     @Override
     public String getColumnName(int col) {
         if (col == 0) {
@@ -168,8 +167,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                 if (mb == -1) {
                     App.get().resultsTable.getColumnModel().getColumn(col).setHeaderValue(columnNames[i] + " (...)"); //$NON-NLS-1$
                 } else {
-                    App.get().resultsTable.getColumnModel().getColumn(col).setHeaderValue(
-                            columnNames[i] + " (" + LocalizedFormat.format(mb) + "MB)"); //$NON-NLS-1$ //$NON-NLS-2$
+                    App.get().resultsTable.getColumnModel().getColumn(col).setHeaderValue(columnNames[i] + " (" + LocalizedFormat.format(mb) + "MB)"); //$NON-NLS-1$ //$NON-NLS-2$
                 }
             }
         }
@@ -288,7 +286,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                     Arrays.sort(values, collator);
                 }
             }
-            
+
             if (values.length == 0) {
                 BytesRef[] bytes = doc.getBinaryValues(field);
                 if (bytes.length > 0) {
@@ -361,5 +359,5 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
         return value;
 
     }
-    
+
 }

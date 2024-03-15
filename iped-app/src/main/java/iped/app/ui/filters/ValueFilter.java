@@ -99,5 +99,4 @@ public abstract class ValueFilter extends MetadataSearchable implements IResultS
         return r;
     }
 
-
 }

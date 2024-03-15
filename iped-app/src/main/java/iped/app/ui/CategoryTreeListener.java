@@ -69,7 +69,7 @@ public class CategoryTreeListener implements TreeSelectionListener, TreeExpansio
 
         } else {
             App.get().setCategoriesDefaultColor(false);
-            queryStr="";
+            queryStr = "";
 
             Builder builder = new Builder();
             categoryList.clear();
@@ -88,7 +88,7 @@ public class CategoryTreeListener implements TreeSelectionListener, TreeExpansio
     private void addCategoryToQuery(Category category, Builder builder) {
         String name = IndexItem.normalize(category.getName(), true);
         builder.add(new TermQuery(new Term(IndexItem.CATEGORY, name)), Occur.SHOULD);
-        queryStr+=" category:\""+name+"\"";
+        queryStr += " category:\"" + name + "\"";
 
         categoryList.add(category);
 
@@ -120,9 +120,9 @@ public class CategoryTreeListener implements TreeSelectionListener, TreeExpansio
     public HashSet<TreePath> getSelection() {
         return selection;
     }
-    
+
     public void recursiveCategoryQuery(Category cat, StringBuffer buff) {
-        for(Category category:cat.getChildren()) {
+        for (Category category : cat.getChildren()) {
             String name = IndexItem.normalize(category.getName(), true);
             buff.append(" || category:\"");
             buff.append(name);
@@ -135,7 +135,7 @@ public class CategoryTreeListener implements TreeSelectionListener, TreeExpansio
     public List<IFilter> getDefinedFilters() {
         CategoryTreeListener self = this;
         List<IFilter> result = new ArrayList<IFilter>();
-        for(Category category:categoryList) {
+        for (Category category : categoryList) {
             result.add(new IQueryFilter() {
                 @Override
                 public Query getQuery() {
@@ -145,7 +145,7 @@ public class CategoryTreeListener implements TreeSelectionListener, TreeExpansio
                     queryStr.append(name);
                     queryStr.append("\"");
                     recursiveCategoryQuery(category, queryStr);
-                    
+
                     Query query;
                     try {
                         query = new QueryBuilder(App.get().appCase).getQuery(queryStr.toString());
@@ -155,6 +155,7 @@ public class CategoryTreeListener implements TreeSelectionListener, TreeExpansio
                     }
                     return null;
                 }
+
                 public String toString() {
                     return IndexItem.normalize(category.getName(), true);
                 }
@@ -167,13 +168,13 @@ public class CategoryTreeListener implements TreeSelectionListener, TreeExpansio
     public boolean hasFiltersApplied() {
         return false;
     }
-    
+
     public String toString() {
         return "Category panel filterer";
     }
 
     @Override
     public boolean hasFilters() {
-        return categoryList.size()>0;
+        return categoryList.size() > 0;
     }
 }

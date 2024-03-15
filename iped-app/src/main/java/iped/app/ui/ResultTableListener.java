@@ -169,7 +169,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
         }
         return null;
     }
-    
+
     private IItemId getSelectedItemId() {
         return getSelectedItemId(App.get().resultsTable.getSelectedRow());
     }
@@ -177,27 +177,27 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
     private void showContextMenu(IItemId itemId, MouseEvent evt) {
         IItem item = itemId == null ? null : App.get().appCase.getItemByItemId(itemId);
 
-        if(evt.getButton()==MouseEvent.BUTTON3 && (evt.getModifiersEx() & MouseEvent.CTRL_DOWN_MASK)==MouseEvent.CTRL_DOWN_MASK) {
+        if (evt.getButton() == MouseEvent.BUTTON3 && (evt.getModifiersEx() & MouseEvent.CTRL_DOWN_MASK) == MouseEvent.CTRL_DOWN_MASK) {
             JTable resultsTable = App.get().resultsTable;
             int colIndex = resultsTable.columnAtPoint(evt.getPoint());
             int rowIndex = resultsTable.rowAtPoint(evt.getPoint());
-            
+
             IItemId id = getSelectedItemId(rowIndex);
-            
+
             TableColumnModel cm = resultsTable.getTableHeader().getColumnModel();
             int pos = 0;
-            for(int i = 0; i < colIndex; i++) {
-                pos+=cm.getColumn(i).getWidth();
+            for (int i = 0; i < colIndex; i++) {
+                pos += cm.getColumn(i).getWidth();
             }
-            
+
             String value = (String) resultsTable.getValueAt(rowIndex, colIndex);
-            colIndex = resultsTable.convertColumnIndexToModel(colIndex);                    
-            String field = ((ResultTableModel)resultsTable.getModel()).getColumnFieldName(colIndex);
+            colIndex = resultsTable.convertColumnIndexToModel(colIndex);
+            String field = ((ResultTableModel) resultsTable.getModel()).getColumnFieldName(colIndex);
 
             (new FieldValuePopupMenu(id, field, value)).show((Component) evt.getSource(), evt.getX(), evt.getY());
             return;
         }
-        
+
         new MenuClass(item).show((Component) evt.getSource(), evt.getX(), evt.getY());
     }
 
@@ -253,7 +253,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
             // Shortcut to Deep-Selection Remove (Item plus sub-items)
             recursiveItemSelection(false);
             evt.consume();
-        } else 
+        } else
             BookmarksManager.get().keyPressed(evt);
 
     }
@@ -309,15 +309,12 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
         try {
             IItem item = App.get().appCase.getItemByItemId(rootID);
             if (item.hasChildren() || item.isDir()) { // Filter subItems which have children or are directories.
-                logger.debug("Searching items with evidenceUUID {} id {}", item.getDataSource().getUUID(),
-                        item.getId());
-                String query = BasicProps.EVIDENCE_UUID + ":" + item.getDataSource().getUUID() + " AND "
-                        + BasicProps.PARENTIDs + ":" + rootID.getId();
+                logger.debug("Searching items with evidenceUUID {} id {}", item.getDataSource().getUUID(), item.getId());
+                String query = BasicProps.EVIDENCE_UUID + ":" + item.getDataSource().getUUID() + " AND " + BasicProps.PARENTIDs + ":" + rootID.getId();
                 IPEDSearcher task = new IPEDSearcher(App.get().appCase, query);
                 MultiSearchResult result = task.multiSearch();
                 if (result.getLength() > 0) {
-                    logger.debug("Found {} subitems of sourceId {} id {}", result.getLength(), rootID.getSourceId(),
-                            rootID.getId());
+                    logger.debug("Found {} subitems of sourceId {} id {}", result.getLength(), rootID.getSourceId(), rootID.getId());
                     for (IItemId subItem : result.getIterator()) {
                         App.get().appCase.getMultiBookmarks().setChecked((Boolean) state, subItem);
                     }
@@ -331,15 +328,15 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
     }
 
     /**
-     * Add a simple "type-to-find" feature to the table.
-     * It works on the currently sorted column, if it uses a String comparator,
-     * so it will not work on numeric and date columns.
+     * Add a simple "type-to-find" feature to the table. It works on the currently
+     * sorted column, if it uses a String comparator, so it will not work on numeric
+     * and date columns.
      */
     @Override
     public void keyTyped(KeyEvent evt) {
         char c = evt.getKeyChar();
-        if (c == ' ' || (evt.getModifiersEx() & (InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK)) != 0 ||
-               c == KeyEvent.VK_TAB || c == KeyEvent.VK_ESCAPE || c == KeyEvent.VK_BACK_SPACE || c == KeyEvent.VK_DELETE)
+        if (c == ' ' || (evt.getModifiersEx() & (InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK)) != 0 || c == KeyEvent.VK_TAB || c == KeyEvent.VK_ESCAPE || c == KeyEvent.VK_BACK_SPACE
+                || c == KeyEvent.VK_DELETE)
             return;
 
         JTable table = App.get().resultsTable;
@@ -350,14 +347,13 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
         int sortCol = sortKeys.get(0).getColumn();
         int viewCol = table.convertColumnIndexToView(sortCol);
 
-        // Only works on String columns 
-        if (!((RowComparator) ((ResultTableRowSorter) table.getRowSorter()).getComparator(sortCol))
-                .isStringComparator())
+        // Only works on String columns
+        if (!((RowComparator) ((ResultTableRowSorter) table.getRowSorter()).getComparator(sortCol)).isStringComparator())
             return;
 
         if (BookmarksManager.get().hasSingleKeyShortcut())
             return;
-        
+
         long t = System.currentTimeMillis();
         if (t - lastKeyTime > 500)
             lastKeyString = ""; //$NON-NLS-1$
@@ -409,8 +405,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
         String cell = table.getValueAt(row, col).toString();
         if (App.get().getFontStartTag() != null)
             cell = cell.replace(App.get().getFontStartTag(), "");
-        return cell.replace(HitsTableModel.htmlStartTag, "").replace(HitsTableModel.htmlEndTag, "")
-                .replace(ATextViewer.HIGHLIGHT_START_TAG, "").replace(ATextViewer.HIGHLIGHT_END_TAG, "");
+        return cell.replace(HitsTableModel.htmlStartTag, "").replace(HitsTableModel.htmlEndTag, "").replace(ATextViewer.HIGHLIGHT_START_TAG, "").replace(ATextViewer.HIGHLIGHT_END_TAG, "");
     }
 
 }

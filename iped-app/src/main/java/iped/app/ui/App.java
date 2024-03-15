@@ -241,8 +241,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     Color defaultColor;
     Color defaultFocusedColor;
     Color defaultSelectedColor;
-    private JScrollPane hitsScroll, subItemScroll, parentItemScroll, duplicatesScroll, referencesScroll,
-            referencedByScroll;
+    private JScrollPane hitsScroll, subItemScroll, parentItemScroll, duplicatesScroll, referencesScroll, referencedByScroll;
     JScrollPane viewerScroll, resultsScroll, galleryScroll;
     JPanel topPanel;
     ClearFilterButton clearAllFilters;
@@ -271,7 +270,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     public IItem similarFacesRefItem;
     public List<? extends SortKey> similarFacesPrevSortKeys;
     SimilarDocumentFilterer similarDocumentFilterer;
-
 
     public File casesPathFile;
     boolean isMultiCase;
@@ -363,8 +361,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         return this.fontStartTag;
     }
 
-    public void init(LogConfiguration logConfiguration, boolean isMultiCase, File casesPathFile,
-            Manager processingManager, String codePath) {
+    public void init(LogConfiguration logConfiguration, boolean isMultiCase, File casesPathFile, Manager processingManager, String codePath) {
 
         this.logConfiguration = logConfiguration;
         this.isMultiCase = isMultiCase;
@@ -696,8 +693,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                     private static final long serialVersionUID = -9020339124009415001L;
 
                     public void setLabelInsets(Insets labelInsets) {
-                        labelInsets = new Insets(labelInsets.top - 1, labelInsets.left - 3, labelInsets.bottom - 1,
-                                labelInsets.right - 3);
+                        labelInsets = new Insets(labelInsets.top - 1, labelInsets.left - 3, labelInsets.bottom - 1, labelInsets.right - 3);
                         super.setLabelInsets(labelInsets);
                     }
                 };
@@ -715,36 +711,30 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         // Customize appearance of buttons and check boxes shown in docking frames title
         // bar, so focus is not painted (avoiding intersection with buttons icons) and
         // more clear indication when a CCheckBox is selected.
-        dockingControl.getController().getActionViewConverter().putClient(ActionType.BUTTON, ViewTarget.TITLE,
-                new ViewGenerator<ButtonDockAction, BasicTitleViewItem<JComponent>>() {
-                    public BasicTitleViewItem<JComponent> create(ActionViewConverter converter, ButtonDockAction action,
-                            Dockable dockable) {
-                        BasicButtonHandler handler = new BasicButtonHandler(action, dockable);
-                        CustomButton button = new CustomButton(handler, handler);
-                        handler.setModel(button.getModel());
-                        return handler;
-                    }
-                });
-        dockingControl.getController().getActionViewConverter().putTheme(ActionType.CHECK, ViewTarget.TITLE,
-                new ViewGenerator<SelectableDockAction, BasicTitleViewItem<JComponent>>() {
-                    public BasicTitleViewItem<JComponent> create(ActionViewConverter converter,
-                            SelectableDockAction action, Dockable dockable) {
-                        BasicSelectableHandler.Check handler = new BasicSelectableHandler.Check(action, dockable);
-                        CustomButton button = new CustomButton(handler, handler);
-                        handler.setModel(button.getModel());
-                        return handler;
-                    }
-                });
+        dockingControl.getController().getActionViewConverter().putClient(ActionType.BUTTON, ViewTarget.TITLE, new ViewGenerator<ButtonDockAction, BasicTitleViewItem<JComponent>>() {
+            public BasicTitleViewItem<JComponent> create(ActionViewConverter converter, ButtonDockAction action, Dockable dockable) {
+                BasicButtonHandler handler = new BasicButtonHandler(action, dockable);
+                CustomButton button = new CustomButton(handler, handler);
+                handler.setModel(button.getModel());
+                return handler;
+            }
+        });
+        dockingControl.getController().getActionViewConverter().putTheme(ActionType.CHECK, ViewTarget.TITLE, new ViewGenerator<SelectableDockAction, BasicTitleViewItem<JComponent>>() {
+            public BasicTitleViewItem<JComponent> create(ActionViewConverter converter, SelectableDockAction action, Dockable dockable) {
+                BasicSelectableHandler.Check handler = new BasicSelectableHandler.Check(action, dockable);
+                CustomButton button = new CustomButton(handler, handler);
+                handler.setModel(button.getModel());
+                return handler;
+            }
+        });
 
         dockingControl.putProperty(StackDockStation.TAB_PLACEMENT, TabPlacement.TOP_OF_DOCKABLE);
         this.getContentPane().add(dockingControl.getContentArea(), BorderLayout.CENTER);
         defaultColor = dockingControl.getController().getColors().get(ColorMap.COLOR_KEY_TAB_BACKGROUND);
         defaultFocusedColor = dockingControl.getController().getColors().get(ColorMap.COLOR_KEY_TAB_BACKGROUND_FOCUSED);
-        defaultSelectedColor = dockingControl.getController().getColors()
-                .get(ColorMap.COLOR_KEY_TAB_BACKGROUND_SELECTED);
+        defaultSelectedColor = dockingControl.getController().getColors().get(ColorMap.COLOR_KEY_TAB_BACKGROUND_SELECTED);
 
-        timelineButton = new CCheckBox(Messages.get("App.ToggleTimelineView"),
-                IconUtil.getToolbarIcon("time", resPath)) {
+        timelineButton = new CCheckBox(Messages.get("App.ToggleTimelineView"), IconUtil.getToolbarIcon("time", resPath)) {
             protected void changed() {
                 if (timelineListener != null)
                     timelineListener.setTimelineTableView(isSelected());
@@ -950,8 +940,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         graphDock = createDockable("graphtab", Messages.getString("App.Links"), appGraphAnalytics);
 
-        CCheckBox butToggleVideoFramesMode = new CCheckBox(Messages.getString("Gallery.ToggleVideoFrames"),
-                IconUtil.getToolbarIcon("video", resPath)) {
+        CCheckBox butToggleVideoFramesMode = new CCheckBox(Messages.getString("Gallery.ToggleVideoFrames"), IconUtil.getToolbarIcon("video", resPath)) {
             protected void changed() {
                 galleryModel.clearVideoThumbsInCache();
                 useVideoThumbsInGallery = isSelected();
@@ -961,8 +950,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         galleryTabDock.addAction(butToggleVideoFramesMode);
         galleryTabDock.addSeparator();
 
-        galleryGrayButton = new CCheckBox(Messages.getString("Gallery.GalleryGrayFilter"),
-                IconUtil.getToolbarIcon("gray-scale", resPath)) {
+        galleryGrayButton = new CCheckBox(Messages.getString("Gallery.GalleryGrayFilter"), IconUtil.getToolbarIcon("gray-scale", resPath)) {
             protected void changed() {
                 galleryModel.setGrayFilter(isSelected());
                 gallery.repaint();
@@ -970,8 +958,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         };
         galleryTabDock.addAction(galleryGrayButton);
 
-        galleryBlurButton = new CCheckBox(Messages.getString("Gallery.GalleryBlurFilter"),
-                IconUtil.getToolbarIcon("blur-image", resPath)) {
+        galleryBlurButton = new CCheckBox(Messages.getString("Gallery.GalleryBlurFilter"), IconUtil.getToolbarIcon("blur-image", resPath)) {
             protected void changed() {
                 galleryModel.setBlurFilter(isSelected());
                 gallery.repaint();
@@ -980,8 +967,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         galleryTabDock.addAction(galleryBlurButton);
         galleryTabDock.addSeparator();
 
-        butSimSearch = new CButton(Messages.getString("MenuClass.FindSimilarImages"),
-                IconUtil.getToolbarIcon("find", resPath));
+        butSimSearch = new CButton(Messages.getString("MenuClass.FindSimilarImages"), IconUtil.getToolbarIcon("find", resPath));
         galleryTabDock.addAction(butSimSearch);
         galleryTabDock.addSeparator();
         butSimSearch.addActionListener(new ActionListener() {
@@ -992,11 +978,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         butSimSearch.setEnabled(false);
 
         // Add buttons to control the thumbnails size / number of columns in the gallery
-        CButton butDec = new CButton(Messages.getString("Gallery.DecreaseThumbsSize"),
-                IconUtil.getToolbarIcon("minus", resPath));
+        CButton butDec = new CButton(Messages.getString("Gallery.DecreaseThumbsSize"), IconUtil.getToolbarIcon("minus", resPath));
         galleryTabDock.addAction(butDec);
-        CButton butInc = new CButton(Messages.getString("Gallery.IncreaseThumbsSize"),
-                IconUtil.getToolbarIcon("plus", resPath));
+        CButton butInc = new CButton(Messages.getString("Gallery.IncreaseThumbsSize"), IconUtil.getToolbarIcon("plus", resPath));
         galleryTabDock.addAction(butInc);
         galleryTabDock.addSeparator();
         butDec.addActionListener(new ActionListener() {
@@ -1015,16 +999,15 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             final ResultSetViewer resultSetViewer = iterator.next();
 
             resultSetViewer.init(resultsTable, this, this);
-            DefaultSingleCDockable tabDock = createDockable(resultSetViewer.getID(), resultSetViewer.getTitle(),
-                    resultSetViewer.getPanel());
+            DefaultSingleCDockable tabDock = createDockable(resultSetViewer.getID(), resultSetViewer.getTitle(), resultSetViewer.getPanel());
 
             resultSetViewer.setDockableContainer(tabDock);
 
             if (resultSetViewer instanceof ClearFilterListener) {
                 clearAllFilters.addClearListener((ClearFilterListener) resultSetViewer);
             }
-            
-            if(resultSetViewer instanceof IQueryFilterer) {
+
+            if (resultSetViewer instanceof IQueryFilterer) {
                 filterManager.addQueryFilterer((IQueryFilterer) resultSetViewer);
             }
 
@@ -1046,8 +1029,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         duplicateDock = createDockable("duplicatestab", Messages.getString("DuplicatesTableModel.Duplicates"), //$NON-NLS-1$ //$NON-NLS-2$
                 duplicatesScroll);
         referencesDock = createDockable("referencestab", Messages.getString("ReferencesTab.Title"), referencesScroll);
-        referencedByDock = createDockable("referencedbytab", Messages.getString("ReferencedByTab.Title"),
-                referencedByScroll);
+        referencedByDock = createDockable("referencedbytab", Messages.getString("ReferencedByTab.Title"), referencedByScroll);
 
         dockingControl.addDockable(categoriesTabDock);
         dockingControl.addDockable(filtersTabDock);
@@ -1077,8 +1059,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         List<AbstractViewer> viewers = viewerController.getViewers();
         viewerDocks = new ArrayList<DefaultSingleCDockable>();
         for (AbstractViewer viewer : viewers) {
-            DefaultSingleCDockable viewerDock = createDockable(viewer.getClass().getName(), viewer.getName(),
-                    viewer.getPanel());
+            DefaultSingleCDockable viewerDock = createDockable(viewer.getClass().getName(), viewer.getName(), viewer.getPanel());
             viewerDocks.add(viewerDock);
             dockingControl.addDockable(viewerDock);
             viewerController.put(viewer, viewerDock);
@@ -1088,8 +1069,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     }
 
     private void setupViewerDocks() {
-        CCheckBox chkFixed = new CCheckBox(Messages.getString("ViewerController.FixViewer"),
-                IconUtil.getToolbarIcon("pin", resPath)) {
+        CCheckBox chkFixed = new CCheckBox(Messages.getString("ViewerController.FixViewer"), IconUtil.getToolbarIcon("pin", resPath)) {
             protected void changed() {
                 viewerController.setFixed(isSelected());
             }
@@ -1108,8 +1088,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                             if (newLocation != null) {
                                 newLocation = newLocation.getParent();
                             }
-                            if ((oldLocation == null && newLocation != null)
-                                    || (oldLocation != null && !oldLocation.equals(newLocation))) {
+                            if ((oldLocation == null && newLocation != null) || (oldLocation != null && !oldLocation.equals(newLocation))) {
                                 validated = viewerController.validateViewer(viewer);
                             }
                         }
@@ -1120,10 +1099,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 }
             });
 
-            CButton prevHit = new CButton(Messages.getString("ViewerController.PrevHit"),
-                    IconUtil.getToolbarIcon("prev", resPath));
-            CButton nextHit = new CButton(Messages.getString("ViewerController.NextHit"),
-                    IconUtil.getToolbarIcon("next", resPath));
+            CButton prevHit = new CButton(Messages.getString("ViewerController.PrevHit"), IconUtil.getToolbarIcon("prev", resPath));
+            CButton nextHit = new CButton(Messages.getString("ViewerController.NextHit"), IconUtil.getToolbarIcon("next", resPath));
             prevHit.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
                     viewer.scrollToNextHit(false);
@@ -1144,8 +1121,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             if (toolbarSupport >= 0) {
                 Icon downIcon = IconUtil.getToolbarIcon("down", resPath);
                 Icon upIcon = IconUtil.getToolbarIcon("up", resPath);
-                CSelButton butToolbar = new CSelButton(Messages.getString("ViewerController.ShowToolBar"), upIcon,
-                        downIcon);
+                CSelButton butToolbar = new CSelButton(Messages.getString("ViewerController.ShowToolBar"), upIcon, downIcon);
                 butToolbar.addActionListener(new ActionListener() {
                     public void actionPerformed(ActionEvent e) {
                         butToolbar.toggle();
@@ -1213,9 +1189,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     private void removeAllDockables() {
 
         List<DefaultSingleCDockable> docks = new ArrayList<>();
-        docks.addAll(Arrays.asList(hitsDock, subitemDock, duplicateDock, parentDock, tableTabDock, galleryTabDock,
-                bookmarksTabDock, evidenceTabDock, metadataTabDock, categoriesTabDock, graphDock, referencesDock,
-                referencedByDock, filtersTabDock));
+        docks.addAll(Arrays.asList(hitsDock, subitemDock, duplicateDock, parentDock, tableTabDock, galleryTabDock, bookmarksTabDock, evidenceTabDock, metadataTabDock, categoriesTabDock, graphDock, referencesDock, referencedByDock,
+                filtersTabDock));
         docks.addAll(viewerDocks);
         docks.addAll(rsTabDock);
         rsTabDock.clear();
@@ -1303,8 +1278,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         }
     }
 
-    private void setTabColor(DefaultSingleCDockable dock, Color colorBackground, Color colorFocused,
-            Color colorSelected) {
+    private void setTabColor(DefaultSingleCDockable dock, Color colorBackground, Color colorFocused, Color colorSelected) {
         dock.getColors().setColor(ColorMap.COLOR_KEY_TAB_BACKGROUND, colorBackground);
         dock.getColors().setColor(ColorMap.COLOR_KEY_TAB_BACKGROUND_FOCUSED, colorFocused);
         dock.getColors().setColor(ColorMap.COLOR_KEY_TAB_BACKGROUND_SELECTED, colorSelected);
@@ -1354,8 +1328,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             removeAllDockables();
         createAllDockables();
 
-        tableTabDock
-                .setLocation(verticalLayout ? CLocation.base().normalNorth(0.7) : CLocation.base().normalNorth(0.5));
+        tableTabDock.setLocation(verticalLayout ? CLocation.base().normalNorth(0.7) : CLocation.base().normalNorth(0.5));
         tableTabDock.setVisible(true);
 
         galleryTabDock.setLocationsAside(tableTabDock);
@@ -1374,8 +1347,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             graphDock.setVisible(true);
         }
 
-        hitsDock.setLocation(
-                verticalLayout ? CLocation.base().normalSouth(0.3) : CLocation.base().normalSouth(0.5).west(0.4));
+        hitsDock.setLocation(verticalLayout ? CLocation.base().normalSouth(0.3) : CLocation.base().normalSouth(0.5).west(0.4));
         hitsDock.setVisible(true);
 
         subitemDock.setLocationsAside(hitsDock);
@@ -1432,8 +1404,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     private void adjustViewerLayout() {
         DefaultSingleCDockable prevDock = viewerDocks.get(0);
-        prevDock.setLocation(
-                verticalLayout ? CLocation.base().normalEast(0.35) : CLocation.base().normalSouth(0.5).east(0.6));
+        prevDock.setLocation(verticalLayout ? CLocation.base().normalEast(0.35) : CLocation.base().normalSouth(0.5).east(0.6));
         prevDock.setVisible(true);
         for (int i = 1; i < viewerDocks.size(); i++) {
             DefaultSingleCDockable dock = viewerDocks.get(i);
@@ -1645,19 +1616,17 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             }
         }
     }
-    
 
     public FilterManager getFilterManager() {
         return filterManager;
     }
-    
-    class SimilarImageFilter implements IQueryFilter, IResultSetFilter, IMiniaturizable, IItemRef{
+
+    class SimilarImageFilter implements IQueryFilter, IResultSetFilter, IMiniaturizable, IItemRef {
         IItem refItem;
         IItemId refItemId;
         private String refName;
         private BufferedImage img;
         private Query query;
-        
 
         public SimilarImageFilter(IItemId itemId, IItem similarImagesQueryRefItem) {
             this.refItem = similarImagesQueryRefItem;
@@ -1676,12 +1645,11 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                     }
                 }
             }
-            
+
         }
 
         @Override
-        public IMultiSearchResult filterResult(IMultiSearchResult src)
-                throws ParseException, QueryNodeException, IOException {
+        public IMultiSearchResult filterResult(IMultiSearchResult src) throws ParseException, QueryNodeException, IOException {
             IMultiSearchResult result = src;
             if (refItem != null) {
                 LOGGER.info("Starting similar image search...");
@@ -1693,7 +1661,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             }
             return result;
         }
-        
+
         public String toString() {
             return Messages.get("FilterValue.SimilarImage") + " " + refName;
         }
@@ -1734,12 +1702,12 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         @Override
         public boolean hasFiltersApplied() {
-            return item!=null;
+            return item != null;
         }
 
         @Override
         public Query getQuery() {
-            if(item!=null) {
+            if (item != null) {
                 return new SimilarImagesSearch().getQueryForSimilarImages(item);
             }
             return null;
@@ -1761,7 +1729,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         @Override
         public void clearFilter() {
             item = null;
-            similarImageFilterPanel.clearFilter();            
+            similarImageFilterPanel.clearFilter();
         }
 
         public void setItem(IItemId itemId, IItem similarImagesFilterer) {
@@ -1769,25 +1737,24 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             imageFilter = new SimilarImageFilter(itemId, item);
         }
     };
-    
+
     class DuplicateFilter implements IResultSetFilter, IMutableFilter {
         public String toString() {
             return Messages.get("FilterValue.Duplicates");
         }
 
         @Override
-        public IMultiSearchResult filterResult(IMultiSearchResult src)
-                throws ParseException, QueryNodeException, IOException {
+        public IMultiSearchResult filterResult(IMultiSearchResult src) throws ParseException, QueryNodeException, IOException {
             IMultiSearchResult result = src;
             DynamicDuplicateFilter duplicateFilter = new DynamicDuplicateFilter(App.get().appCase);
             result = duplicateFilter.filter(src);
             return result;
         }
     }
-    
+
     IResultSetFilter duplicateFilter = new DuplicateFilter();
-    
-    class DuplicatesFilterer implements IResultSetFilterer{
+
+    class DuplicatesFilterer implements IResultSetFilterer {
         @Override
         public List getDefinedFilters() {
             ArrayList<IFilter> result = new ArrayList<IFilter>();
@@ -1801,7 +1768,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         public IFilter getFilter() {
             if (filterDuplicates.isSelected()) {
                 return duplicateFilter;
-            }else {
+            } else {
                 return null;
             }
         }
@@ -1824,7 +1791,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             appletListener.clearAllFilters = false;
         }
     }
-    
+
     class SimilarFacesSearchFilter implements IResultSetFilter, IMiniaturizable, IItemRef, IQuantifiableFilter {
         IItem itemRef;
         IItemId itemIdRef;
@@ -1837,19 +1804,19 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             this.itemIdRef = itemIdRef;
             sfs = new SimilarFacesSearch(appCase, itemRef);
             if (itemRef != null) {
-                BufferedInputStream buff=null;
+                BufferedInputStream buff = null;
                 int orientation = 0;
                 try {
                     buff = new BufferedInputStream(itemRef.getSeekableInputStream());
                     orientation = ImageMetadataUtil.getOrientation(buff);
-                    
+
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
                 if (buff != null) {
                     refName = itemRef.getName();
                     List<String> location = sfs.getMatchLocations(itemRef, itemRef);
-                    String[] valuesStr = location.get(0).replace("[", "").replace("]", "").split(",");//first face only
+                    String[] valuesStr = location.get(0).replace("[", "").replace("]", "").split(",");// first face only
                     try {
                         buff = new BufferedInputStream(itemRef.getSeekableInputStream());
                         img = ImageIO.read(buff);
@@ -1857,32 +1824,31 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                             img = ImageUtil.rotate(img, orientation);
                         }
 
-                        int[] values = new int[valuesStr.length]; 
+                        int[] values = new int[valuesStr.length];
                         for (int i = 0; i < valuesStr.length; i++) {
-                            values[i]=(int) Math.round(Integer.parseInt(valuesStr[i].trim()));
+                            values[i] = (int) Math.round(Integer.parseInt(valuesStr[i].trim()));
                         }
                         int top = values[0];
                         int right = values[1];
                         int bottom = values[2];
                         int left = values[3];
-                        
-                        img = cropImage(img, new Rectangle(left, top, right - left, bottom - top)); 
+
+                        img = cropImage(img, new Rectangle(left, top, right - left, bottom - top));
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
             }
         }
-        
+
         private BufferedImage cropImage(BufferedImage src, Rectangle rect) {
             BufferedImage dest = src.getSubimage(rect.x, rect.y, rect.width, rect.height);
-            return dest; 
+            return dest;
         }
 
         @Override
-        public IMultiSearchResult filterResult(IMultiSearchResult src)
-                throws ParseException, QueryNodeException, IOException {
-            if(itemRef!=null) {
+        public IMultiSearchResult filterResult(IMultiSearchResult src) throws ParseException, QueryNodeException, IOException {
+            if (itemRef != null) {
                 return sfs.filter((MultiSearchResult) src);
             }
             return src;
@@ -1914,30 +1880,31 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         @Override
         public void setQuantityValue(int value) {
-            SimilarFacesSearch.setMinScore(value);            
+            SimilarFacesSearch.setMinScore(value);
         }
-    }; 
+    };
 
-    class SimilarFacesSearchFilterer implements IResultSetFilterer{
+    class SimilarFacesSearchFilterer implements IResultSetFilterer {
         SimilarFacesSearchFilter filter = null;
         IItem itemRef;
+
         @Override
         public List getDefinedFilters() {
             ArrayList<IFilter> result = new ArrayList<IFilter>();
-            if(similarFacesRefItem!=null) {
+            if (similarFacesRefItem != null) {
                 result.add(filter);
             }
             return result;
         }
-        
+
         public void setItem(IItemId itemId, IItem item) {
             this.itemRef = item;
-            filter = new SimilarFacesSearchFilter(itemId, itemRef);            
+            filter = new SimilarFacesSearchFilter(itemId, itemRef);
         }
 
         @Override
         public IFilter getFilter() {
-            if(itemRef!=null) {
+            if (itemRef != null) {
                 return filter;
             }
             return null;
@@ -1945,23 +1912,23 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         @Override
         public boolean hasFilters() {
-            return itemRef!=null;
+            return itemRef != null;
         }
 
         @Override
         public boolean hasFiltersApplied() {
-            return itemRef!=null;
+            return itemRef != null;
         }
 
         @Override
         public void clearFilter() {
-            itemRef=null;
+            itemRef = null;
             SimilarFacesFilterActions.clear(false);
         }
 
     }
 
-    class SearchFilterer implements IQueryFilterer{
+    class SearchFilterer implements IQueryFilterer {
         @Override
         public List<IFilter> getDefinedFilters() {
             ArrayList<IFilter> result = new ArrayList<IFilter>();
@@ -1976,7 +1943,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                     public Query getQuery() {
                         return query;
                     }
-                    
+
                     public String toString() {
                         return title;
                     }
@@ -1994,7 +1961,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 if (searchText.equals(BookmarksController.HISTORY_DIV) || searchText.equals(App.SEARCH_TOOL_TIP)) {
                     return false;
                 }
-                if("".equals(searchText)||"*".equals(searchText)||"*:*".equals(searchText)) {
+                if ("".equals(searchText) || "*".equals(searchText) || "*:*".equals(searchText)) {
                     return false;
                 }
                 return true;
@@ -2021,26 +1988,24 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     }
 
-
     public IItem getSimilarImagesQueryRefItem() {
         return similarImagesQueryRefItem;
     }
 
     public void setSimilarImagesQueryRefItem(IItemId itemId, IItem similarImagesQueryRefItem) {
         this.similarImagesQueryRefItem = similarImagesQueryRefItem;
-        similarImagesFilterer.setItem(itemId, similarImagesQueryRefItem);        
+        similarImagesFilterer.setItem(itemId, similarImagesQueryRefItem);
     }
 
-    
-    class SimilarDocumentFilter implements IQueryFilter, IItemRef, IQuantifiableFilter{
+    class SimilarDocumentFilter implements IQueryFilter, IItemRef, IQuantifiableFilter {
         private IItem itemRef;
         private IItemId itemRefId;
         String refName;
         private int filterPercent;
         Query query;
-        
-        public SimilarDocumentFilter(IItemId itemId, IItem item, int percent){
-            this.itemRef=item;
+
+        public SimilarDocumentFilter(IItemId itemId, IItem item, int percent) {
+            this.itemRef = item;
             this.itemRefId = itemId;
             this.filterPercent = percent;
         }
@@ -2057,7 +2022,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         @Override
         public Query getQuery() {
-            if(query==null) {
+            if (query == null) {
                 query = new SimilarDocumentSearch().getQueryForSimilarDocs(itemRefId, filterPercent, App.get().appCase);
             }
             return query;
@@ -2082,7 +2047,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         public void setPercent(int percent) {
             this.filterPercent = percent;
         }
-        
+
         public String toString() {
             return Messages.get("FilterValue.SimilarDocument") + " (" + Integer.toString(filterPercent) + "%): " + itemRef.getName();
         }
@@ -2095,11 +2060,11 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         @Override
         public void setQuantityValue(int value) {
             filterPercent = value;
-            query=null;
+            query = null;
         }
     }
-    
-    class SimilarDocumentFilterer implements IQueryFilterer{
+
+    class SimilarDocumentFilterer implements IQueryFilterer {
 
         private IItem item;
         private IItemId itemId;
@@ -2108,18 +2073,18 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         @Override
         public List<IFilter> getDefinedFilters() {
-            if(filter!=null) {
+            if (filter != null) {
                 ArrayList<IFilter> result = new ArrayList<>();
                 result.add(filter);
                 return result;
-            }else {
+            } else {
                 return null;
             }
         }
 
         @Override
         public boolean hasFilters() {
-            return filter!=null;
+            return filter != null;
         }
 
         @Override
@@ -2129,20 +2094,20 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         @Override
         public void clearFilter() {
-            filter=null;
-            item=null;
-            itemId=null;
+            filter = null;
+            item = null;
+            itemId = null;
         }
 
         @Override
         public Query getQuery() {
-            if(itemId!=null && item!=null) {
-                if(filter==null) {
+            if (itemId != null && item != null) {
+                if (filter == null) {
                     filter = new SimilarDocumentFilter(itemId, item, percent);
                 }
                 return filter.getQuery();
             }
-           return null;
+            return null;
         }
 
         public IItem getItem() {
@@ -2161,10 +2126,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         public void setPercent(int percent) {
             this.percent = percent;
-            filter=null;
+            filter = null;
         }
     }
-
 
     public AppListener getAppletListener() {
         return appletListener;

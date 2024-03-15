@@ -54,7 +54,7 @@ public class Messages {
             throw e;
         }
     }
-    
+
     public static String getString(String key, Object... args) {
         String value = get(key);
         if (args != null)

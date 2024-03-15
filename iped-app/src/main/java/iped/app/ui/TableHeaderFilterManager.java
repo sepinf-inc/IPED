@@ -29,7 +29,7 @@ import iped.viewers.api.IQueryFilterer;
 import iped.viewers.api.IResultSetFilter;
 import iped.viewers.api.IResultSetFilterer;
 
-public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilterer{
+public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilterer {
 
     private static TableHeaderFilterManager singleton = new TableHeaderFilterManager();
 
@@ -62,9 +62,10 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
         otherFilters.put(escapedField, filterExpression);
         definedFilters.put(escapedField, new IQueryFilter() {
             private Query query;
+
             @Override
             public Query getQuery() {
-                if(query==null) {
+                if (query == null) {
                     try {
                         query = new QueryBuilder(App.get().appCase).getQuery(filterExpression);
                     } catch (ParseException | QueryNodeException e) {
@@ -74,6 +75,7 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
                 }
                 return query;
             }
+
             public String toString() {
                 return filterExpression;
             }
@@ -81,14 +83,14 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
         selectedValues.remove(escapedField);
         App.get().getFilterManager().notifyFilterChange();
     }
-    
+
     public void addEmptyFilter(String field) {
         field = escape(field);
         String filterExpression = "-" + field;
-        if(IndexItem.isNumeric(field)) {
-            filterExpression+=":[* TO *]";
-        }else {
-            filterExpression+=":?*";
+        if (IndexItem.isNumeric(field)) {
+            filterExpression += ":[* TO *]";
+        } else {
+            filterExpression += ":?*";
         }
         addQueryFilter(field, filterExpression);
     }
@@ -96,10 +98,10 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
     public void addNonEmptyFilter(String field) {
         field = escape(field);
         String filterExpression = field;
-        if(IndexItem.isNumeric(field)) {
-            filterExpression+=":[* TO *]";
-        }else {
-            filterExpression+=":?*";
+        if (IndexItem.isNumeric(field)) {
+            filterExpression += ":[* TO *]";
+        } else {
+            filterExpression += ":?*";
         }
         addQueryFilter(field, filterExpression);
     }
@@ -121,7 +123,7 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
     public void addFilter(String field, Set<ValueCount> selected) {
         field = escape(field);
         selectedValues.put(field, selected);
-        definedFilters.put(field, new ValueCountQueryFilter(field , selected));
+        definedFilters.put(field, new ValueCountQueryFilter(field, selected));
         otherFilters.remove(field);
         App.get().getFilterManager().notifyFilterChange();
     }
@@ -151,12 +153,12 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
 
     public boolean isFieldFiltered(String field) {
         field = escape(field);
-        return definedFilters.get(field)!=null || selectedValues.get(field)!=null || otherFilters.get(field)!=null;
+        return definedFilters.get(field) != null || selectedValues.get(field) != null || otherFilters.get(field) != null;
     }
 
     public MetadataSearch getMetadataSearch(String field) {
         MetadataSearch result = panels.get(field);
-        if(result==null) {
+        if (result == null) {
             result = new MetadataSearch();
             panels.put(field, result);
         }
@@ -181,7 +183,7 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
 
     @Override
     public boolean hasFiltersApplied() {
-        return !(otherFilters.size()==0 && selectedValues.size()==0);
+        return !(otherFilters.size() == 0 && selectedValues.size() == 0);
     }
 
     public boolean getContainsEmptyFilter(String field) {
@@ -226,7 +228,7 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
         list.addAll(definedFilters.values());
         return list;
     }
-    
+
     public String toString() {
         return "Main table header filterer";
     }
@@ -235,29 +237,28 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
     public IFilter getFilter() {
         return new IResultSetFilter() {
             @Override
-            public IMultiSearchResult filterResult(IMultiSearchResult src)
-                    throws ParseException, QueryNodeException, IOException {
+            public IMultiSearchResult filterResult(IMultiSearchResult src) throws ParseException, QueryNodeException, IOException {
                 MultiSearchResult result = (MultiSearchResult) src;
                 for (String filterField : panels.keySet()) {
                     MetadataSearch internalMetadataSearch = panels.get(filterField);
                     Set<Integer> ords = new HashSet<>();
                     Set<ValueCount> values = selectedValues.get(escape(filterField));
-                    if(values!=null && values.size()>0) {
-                        for(ValueCount value: values) {
+                    if (values != null && values.size() > 0) {
+                        for (ValueCount value : values) {
                             ords.add(value.getOrd());
                         }
-                        result = internalMetadataSearch.getIdsWithOrd(result, filterField, ords); 
-                        if(result.getLength()<=0) {
+                        result = internalMetadataSearch.getIdsWithOrd(result, filterField, ords);
+                        if (result.getLength() <= 0) {
                             return result;
                         }
                     }
                 }
                 for (IFilter filter : definedFilters.values()) {
-                    if(filter instanceof IResultSetFilter) {
+                    if (filter instanceof IResultSetFilter) {
                         IResultSetFilter rsFilter = (IResultSetFilter) filter;
                         result = (MultiSearchResult) rsFilter.filterResult(result);
                     }
-                    if(result.getLength()<=0) {
+                    if (result.getLength() <= 0) {
                         return result;
                     }
                 }
@@ -268,12 +269,12 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
 
     @Override
     public boolean hasFilters() {
-        return definedFilters.size()>0;
+        return definedFilters.size() > 0;
     }
 
     @Override
     public void clearFilter() {
-        panels.clear();        
+        panels.clear();
         otherFilters.clear();
         definedFilters.clear();
         selectedValues.clear();

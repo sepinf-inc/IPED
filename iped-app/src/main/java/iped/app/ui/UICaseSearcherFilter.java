@@ -24,7 +24,6 @@ import iped.engine.search.IPEDSearcher;
 
 public class UICaseSearcherFilter extends CaseSearcherFilter {
 
-
     volatile int numFilters = 0;
 
     String queryText;

@@ -198,8 +198,7 @@ public class GalleryModel extends AbstractTableModel {
                         return;
                     }
 
-                    if (!App.get().gallery.getVisibleRect()
-                            .intersects(App.get().gallery.getCellRect(row, col, false))) {
+                    if (!App.get().gallery.getVisibleRect().intersects(App.get().gallery.getCellRect(row, col, false))) {
                         return;
                     }
 
@@ -209,8 +208,7 @@ public class GalleryModel extends AbstractTableModel {
                     }
 
                     BytesRef bytesRef = doc.getBinaryValue(IndexItem.THUMB);
-                    if (bytesRef != null && ((!isSupportedVideo(mediaType) && !isAnimationImage(doc, mediaType))
-                            || App.get().useVideoThumbsInGallery)) {
+                    if (bytesRef != null && ((!isSupportedVideo(mediaType) && !isAnimationImage(doc, mediaType)) || App.get().useVideoThumbsInGallery)) {
                         byte[] thumb = bytesRef.bytes;
                         if (thumb.length > 0) {
                             image = ImageIO.read(new ByteArrayInputStream(thumb));
@@ -221,8 +219,7 @@ public class GalleryModel extends AbstractTableModel {
 
                     String hash = doc.get(IndexItem.HASH);
                     if (image == null && hash != null && !hash.isEmpty()) {
-                        image = getViewImage(docId, hash,
-                                isSupportedVideo(mediaType) || isAnimationImage(doc, mediaType));
+                        image = getViewImage(docId, hash, isSupportedVideo(mediaType) || isAnimationImage(doc, mediaType));
                     }
 
                     if (Boolean.valueOf(doc.get(IndexItem.ISDIR))) {
@@ -244,8 +241,7 @@ public class GalleryModel extends AbstractTableModel {
                         stream.mark(10000000);
                     }
 
-                    if (image == null && stream != null && imgThumbTask.getImageThumbConfig().isExtractThumb()
-                            && mediaType.equals("image/jpeg")) { //$NON-NLS-1$
+                    if (image == null && stream != null && imgThumbTask.getImageThumbConfig().isExtractThumb() && mediaType.equals("image/jpeg")) { //$NON-NLS-1$
                         image = ImageMetadataUtil.getThumb(CloseShieldInputStream.wrap(stream));
                         stream.reset();
                     }

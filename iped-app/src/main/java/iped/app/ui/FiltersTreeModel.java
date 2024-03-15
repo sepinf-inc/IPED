@@ -11,13 +11,13 @@ import javax.swing.tree.TreePath;
 import iped.viewers.api.IFilterer;
 
 public class FiltersTreeModel implements TreeModel {
-    
+
     String rootName = "Filters";
     private IFilterer[] filterers;
-    HashMap<Object, List<Object>> childrenCache = new HashMap<Object, List<Object>>(); 
+    HashMap<Object, List<Object>> childrenCache = new HashMap<Object, List<Object>>();
 
-    public FiltersTreeModel(Set<IFilterer> filterers){
-        this.filterers=filterers.toArray(new IFilterer[0]);
+    public FiltersTreeModel(Set<IFilterer> filterers) {
+        this.filterers = filterers.toArray(new IFilterer[0]);
     }
 
     @Override
@@ -27,11 +27,11 @@ public class FiltersTreeModel implements TreeModel {
 
     @Override
     public Object getChild(Object parent, int index) {
-        if(rootName.equals(parent)) {
+        if (rootName.equals(parent)) {
             return filterers[index];
         }
 
-        if(parent instanceof IFilterer) {
+        if (parent instanceof IFilterer) {
             List filters = childrenCache.get(parent);
             return filters.get(index);
         }
@@ -41,13 +41,13 @@ public class FiltersTreeModel implements TreeModel {
 
     @Override
     public int getChildCount(Object parent) {
-        if(rootName.equals(parent)) {
+        if (rootName.equals(parent)) {
             return filterers.length;
         }
 
-        if(parent instanceof IFilterer) {
+        if (parent instanceof IFilterer) {
             List filters = ((IFilterer) parent).getDefinedFilters();
-            if(filters==null) {
+            if (filters == null) {
                 return 0;
             }
             childrenCache.put(parent, filters);
@@ -59,11 +59,11 @@ public class FiltersTreeModel implements TreeModel {
 
     @Override
     public boolean isLeaf(Object node) {
-        if(rootName.equals(node)) {
+        if (rootName.equals(node)) {
             return false;
         }
 
-        if(node instanceof IFilterer) {
+        if (node instanceof IFilterer) {
             return !((IFilterer) node).hasFilters();
         }
 
@@ -73,7 +73,7 @@ public class FiltersTreeModel implements TreeModel {
     @Override
     public void valueForPathChanged(TreePath path, Object newValue) {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
@@ -85,13 +85,13 @@ public class FiltersTreeModel implements TreeModel {
     @Override
     public void addTreeModelListener(TreeModelListener l) {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
     public void removeTreeModelListener(TreeModelListener l) {
         // TODO Auto-generated method stub
-        
+
     }
-    
+
 }

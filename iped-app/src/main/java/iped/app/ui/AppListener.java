@@ -43,7 +43,7 @@ public class AppListener implements ActionListener, MouseListener {
     public void updateFileListing() {
         updateFileListing(null);
     }
-    
+
     public Future<MultiSearchResult> futureUpdateFileListing() {
         return updateFileListing(null);
     }
@@ -59,8 +59,7 @@ public class AppListener implements ActionListener, MouseListener {
         App.get().setEnableGallerySimSearchButton(false);
         App.get().ipedResult = new MultiSearchResult();
         App.get().setLastSelectedDoc(-1);
-        if (App.get().resultSortKeys == null || (App.get().resultsTable.getRowSorter() != null
-                && !App.get().resultsTable.getRowSorter().getSortKeys().isEmpty())) {
+        if (App.get().resultSortKeys == null || (App.get().resultsTable.getRowSorter() != null && !App.get().resultsTable.getRowSorter().getSortKeys().isEmpty())) {
             App.get().resultSortKeys = App.get().resultsTable.getRowSorter().getSortKeys();
         }
         App.get().resultsTable.getRowSorter().setSortKeys(null);
@@ -94,7 +93,7 @@ public class AppListener implements ActionListener, MouseListener {
 
             task.applyUIQueryFilters();
             task.execute();
-            
+
             return task;
         } catch (Exception e) {
             e.printStackTrace();
@@ -119,8 +118,7 @@ public class AppListener implements ActionListener, MouseListener {
             updateFileList = true;
         }
 
-        if (evt.getSource() == App.get().queryComboBox && !clearSearchBox && evt.getActionCommand().equals("comboBoxChanged")
-                && !BookmarksController.get().isUpdatingHistory()) {
+        if (evt.getSource() == App.get().queryComboBox && !clearSearchBox && evt.getActionCommand().equals("comboBoxChanged") && !BookmarksController.get().isUpdatingHistory()) {
             if (App.get().queryComboBox.getSelectedItem() != null) {
                 searchText = App.get().queryComboBox.getSelectedItem().toString();
                 if (searchText.equals(BookmarksController.HISTORY_DIV) || searchText.equals(App.SEARCH_TOOL_TIP)) {
@@ -213,8 +211,7 @@ public class AppListener implements ActionListener, MouseListener {
     public void mousePressed(MouseEvent evt) {
 
         Object termo = App.get().queryComboBox.getSelectedItem();
-        if (termo != null && termo.equals(App.SEARCH_TOOL_TIP)
-                && App.get().queryComboBox.isAncestorOf((Component) evt.getSource())) {
+        if (termo != null && termo.equals(App.SEARCH_TOOL_TIP) && App.get().queryComboBox.isAncestorOf((Component) evt.getSource())) {
             clearSearchBox = true;
             App.get().queryComboBox.setSelectedItem(""); //$NON-NLS-1$
         }

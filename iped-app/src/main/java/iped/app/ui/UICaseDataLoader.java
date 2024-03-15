@@ -92,8 +92,7 @@ public class UICaseDataLoader extends SwingWorker<Void, Integer> {
             checkIfProcessingFinished(App.get().appCase);
 
             App.get().appCase.checkImagePaths();
-            App.get().appCase.getMultiBookmarks()
-                    .addSelectionListener(App.get().getViewerController().getHtmlLinkViewer());
+            App.get().appCase.getMultiBookmarks().addSelectionListener(App.get().getViewerController().getHtmlLinkViewer());
 
             if (!updateItems) {
                 App.get().appGraphAnalytics.initGraphService();
@@ -144,9 +143,7 @@ public class UICaseDataLoader extends SwingWorker<Void, Integer> {
                         casesList = Messages.getString("ProcessingNotFinished.cases");
                         casesList += casesWithError.stream().collect(Collectors.joining("\n"));
                     }
-                    JOptionPane.showMessageDialog(App.get(),
-                            Messages.getString("ProcessingNotFinished.message") + casesList,
-                            Messages.getString("ProcessingNotFinished.title"), JOptionPane.WARNING_MESSAGE);
+                    JOptionPane.showMessageDialog(App.get(), Messages.getString("ProcessingNotFinished.message") + casesList, Messages.getString("ProcessingNotFinished.title"), JOptionPane.WARNING_MESSAGE);
                 }
             }
         });
@@ -163,8 +160,7 @@ public class UICaseDataLoader extends SwingWorker<Void, Integer> {
                 }
                 JOptionPane.showMessageDialog(App.get(), Messages.getString("AppLazyInitializer.errorMsg.line1") //$NON-NLS-1$
                         + Messages.getString("AppLazyInitializer.errorMsg.line2") //$NON-NLS-1$
-                        + App.get().getLogConfiguration().getLogFile()
-                        + Messages.getString("AppLazyInitializer.errorMsg.line3") + msg, // $NON-NLS-1$
+                        + App.get().getLogConfiguration().getLogFile() + Messages.getString("AppLazyInitializer.errorMsg.line3") + msg, // $NON-NLS-1$
                         Messages.getString("AppLazyInitializer.errorTitle"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
             }
         });
@@ -176,11 +172,11 @@ public class UICaseDataLoader extends SwingWorker<Void, Integer> {
             CategoryTreeModel.install();
             App.get().filterManager.loadFilters();
             BookmarksController.get().updateUIandHistory();
-    
+
             App.get().tree.setModel(treeModel);
             App.get().tree.setLargeModel(true);
             App.get().tree.setCellRenderer(new TreeCellRenderer());
-    
+
             if (updateItems) {
                 ColumnsManager.getInstance().dispose();
                 App.get().appletListener.updateFileListing();

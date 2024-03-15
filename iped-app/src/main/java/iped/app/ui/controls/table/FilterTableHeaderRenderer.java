@@ -163,8 +163,7 @@ public class FilterTableHeaderRenderer extends DefaultTableCellRenderer implemen
         return false;
     }
 
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
-            int row, int column) {
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         this.column = column;
 
         Color fgColor = header.getForeground();
@@ -347,9 +346,7 @@ public class FilterTableHeaderRenderer extends DefaultTableCellRenderer implemen
         viewR.y = i.top;
         viewR.width = getWidth() - (i.left + i.right);
         viewR.height = getHeight() - (i.top + i.bottom);
-        SwingUtilities.layoutCompoundLabel(this, fontMetrics, getText(), spaceIcon, getVerticalAlignment(),
-                getHorizontalAlignment(), getVerticalTextPosition(), getHorizontalTextPosition(), viewR, iconR, textR,
-                getIconTextGap());
+        SwingUtilities.layoutCompoundLabel(this, fontMetrics, getText(), spaceIcon, getVerticalAlignment(), getHorizontalAlignment(), getVerticalTextPosition(), getHorizontalTextPosition(), viewR, iconR, textR, getIconTextGap());
         int x = getWidth() - i.right;
         if (hasFilterIcon) {
             x -= filterIconSize;

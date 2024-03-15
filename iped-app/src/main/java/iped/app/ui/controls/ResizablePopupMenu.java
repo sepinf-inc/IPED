@@ -69,8 +69,7 @@ public class ResizablePopupMenu extends JPopupMenu {
                 if (isResizing) {
                     Point p = toScreen(e);
                     Dimension minDim = getMinimumSize();
-                    Dimension newDim = new Dimension(Math.max(minDim.width, startSize.width + p.x - mouseStart.x),
-                            Math.max(minDim.height, startSize.height + p.y - mouseStart.y));
+                    Dimension newDim = new Dimension(Math.max(minDim.width, startSize.width + p.x - mouseStart.x), Math.max(minDim.height, startSize.height + p.y - mouseStart.y));
                     setPopupSize(newDim);
                 }
             }
@@ -119,7 +118,6 @@ public class ResizablePopupMenu extends JPopupMenu {
     }
 
     private void updateCursor(MouseEvent e) {
-        setCursor(Cursor.getPredefinedCursor(
-                isCorner(e.getPoint()) || isResizing ? Cursor.SE_RESIZE_CURSOR : Cursor.DEFAULT_CURSOR));
+        setCursor(Cursor.getPredefinedCursor(isCorner(e.getPoint()) || isResizing ? Cursor.SE_RESIZE_CURSOR : Cursor.DEFAULT_CURSOR));
     }
 }

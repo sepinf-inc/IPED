@@ -1,7 +1,5 @@
 package iped.app.ui;
 
-import java.util.List;
-
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
@@ -11,14 +9,14 @@ import iped.app.ui.filterdecisiontree.OperandNode;
 import iped.viewers.api.IFilterer;
 
 public class CombinedFilterTreeModel implements TreeModel {
-    
+
     String rootName = "Filters";
     private IFilterer[] filterers;
 
     public CombinedFilterTreeModel(CombinedFilterer logicFilterer) {
         this.rootName = logicFilterer.getFilterName();
-        this.filterers=new IFilterer[1];
-        this.filterers[0]=logicFilterer;
+        this.filterers = new IFilterer[1];
+        this.filterers[0] = logicFilterer;
     }
 
     @Override
@@ -28,17 +26,17 @@ public class CombinedFilterTreeModel implements TreeModel {
 
     @Override
     public Object getChild(Object parent, int index) {
-        if(rootName.equals(parent)) {
+        if (rootName.equals(parent)) {
             return filterers[index];
         }
 
-        if(parent instanceof CombinedFilterer) {
+        if (parent instanceof CombinedFilterer) {
             CombinedFilterer lf = (CombinedFilterer) parent;
             return lf.getRootNode().getChildren().get(index);
         }
 
-        if(parent instanceof OperandNode) {
-            return ((OperandNode)parent).getChildren().get(index);
+        if (parent instanceof OperandNode) {
+            return ((OperandNode) parent).getChildren().get(index);
         }
 
         return null;
@@ -46,17 +44,17 @@ public class CombinedFilterTreeModel implements TreeModel {
 
     @Override
     public int getChildCount(Object parent) {
-        if(rootName.equals(parent)) {
+        if (rootName.equals(parent)) {
             return filterers.length;
         }
 
-        if(parent instanceof CombinedFilterer) {
+        if (parent instanceof CombinedFilterer) {
             CombinedFilterer lf = (CombinedFilterer) parent;
             return lf.getRootNode().getChildren().size();
         }
 
-        if(parent instanceof OperandNode) {
-            return ((OperandNode)parent).getChildren().size();
+        if (parent instanceof OperandNode) {
+            return ((OperandNode) parent).getChildren().size();
         }
 
         return 0;
@@ -64,15 +62,15 @@ public class CombinedFilterTreeModel implements TreeModel {
 
     @Override
     public boolean isLeaf(Object node) {
-        if(rootName.equals(node)) {
+        if (rootName.equals(node)) {
             return false;
         }
 
-        if(node instanceof CombinedFilterer) {
+        if (node instanceof CombinedFilterer) {
             return false;
         }
 
-        if(node instanceof OperandNode) {
+        if (node instanceof OperandNode) {
             return false;
         }
 
@@ -82,7 +80,7 @@ public class CombinedFilterTreeModel implements TreeModel {
     @Override
     public void valueForPathChanged(TreePath path, Object newValue) {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
@@ -94,13 +92,13 @@ public class CombinedFilterTreeModel implements TreeModel {
     @Override
     public void addTreeModelListener(TreeModelListener l) {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
     public void removeTreeModelListener(TreeModelListener l) {
         // TODO Auto-generated method stub
-        
+
     }
 
     public String getRootName() {
@@ -110,5 +108,5 @@ public class CombinedFilterTreeModel implements TreeModel {
     public void setRootName(String rootName) {
         this.rootName = rootName;
     }
-    
+
 }

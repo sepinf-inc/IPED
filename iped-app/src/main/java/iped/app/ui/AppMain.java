@@ -47,9 +47,9 @@ public class AppMain {
     public static void main(String[] args) {
         // Start up control client should be is created as soon as possible
         // and only when main is called (not when AppMain is instantiated directly).
-        startUpControlClient =  new StartUpControlClient();
+        startUpControlClient = new StartUpControlClient();
         startUpControlClient.start();
-        
+
         // Set the UiScale (must be before any UI-related code).
         UiScale.loadUserSetting();
 
@@ -190,7 +190,7 @@ public class AppMain {
                 startUpControlClient.finish();
                 startUpControlClient = null;
             }
-            
+
             if (!App.get().isVisible()) {
                 if (processingManager != null) {
                     return;

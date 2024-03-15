@@ -52,7 +52,7 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
     private static Logger LOGGER = LoggerFactory.getLogger(CaseSearcherFilter.class);
     ArrayList<CaseSearchFilterListener> listeners = new ArrayList<CaseSearchFilterListener>();
     RoaringBitmap[] unionsArray;
-    
+
     public static SoftReference<MultiSearchResult> allItemsCache;
     private static IPEDSource ipedCase;
 
@@ -109,15 +109,15 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
                 numFilters++;
         }
 
-        if(applyUIFilters) {
+        if (applyUIFilters) {
             List<IQueryFilterer> queryFilterers = filterManager.queryFilterers;
             for (Iterator iterator = queryFilterers.iterator(); iterator.hasNext();) {
                 IQueryFilterer iQueryFilterer = (IQueryFilterer) iterator.next();
-                
-                if(filterManager.isFiltererEnabled(iQueryFilterer)) {
+
+                if (filterManager.isFiltererEnabled(iQueryFilterer)) {
                     if (exceptions == null || !exceptions.contains(iQueryFilterer)) {
                         Query fquery = iQueryFilterer.getQuery();
-                        if(fquery!=null) {
+                        if (fquery != null) {
                             BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
                             boolQuery.add(fquery, Occur.MUST);
                             boolQuery.add(result, Occur.MUST);
@@ -131,7 +131,6 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
 
         return result;
     }
-
 
     MultiSearchResult result = null;
     private boolean applyUIFilters = true;
@@ -159,7 +158,8 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
                 }
 
                 Query q = searcher.getQuery();
-                //LOGGER.info("Searching for query " + (q != null ? q.toString() : queryText)); //$NON-NLS-1$
+                // LOGGER.info("Searching for query " + (q != null ? q.toString() : queryText));
+                // //$NON-NLS-1$
 
                 if (q instanceof MatchAllDocsQuery && allItemsCache != null)
                     result = allItemsCache.get();
@@ -171,21 +171,21 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
                 }
 
                 result.setIPEDSource(ipedCase);
-                if(applyUIFilters && filterManager!=null) {
+                if (applyUIFilters && filterManager != null) {
                     List<IResultSetFilterer> rsFilterers = filterManager.getResultSetFilterers();
-                    for (Iterator iterator = rsFilterers.iterator(); iterator.hasNext() && result.getLength()>0;) {
+                    for (Iterator iterator = rsFilterers.iterator(); iterator.hasNext() && result.getLength() > 0;) {
                         IResultSetFilterer iRSFilterer = (IResultSetFilterer) iterator.next();
-                        if(filterManager.isFiltererEnabled(iRSFilterer)) {
+                        if (filterManager.isFiltererEnabled(iRSFilterer)) {
                             IFilter rsFilter = iRSFilterer.getFilter();
-                            if(rsFilter!=null) {
-                                RoaringBitmap[] cachedBitmaps = filterManager.getCachedBitmaps((IResultSetFilter)rsFilter); 
-                                if(cachedBitmaps!=null) {
+                            if (rsFilter != null) {
+                                RoaringBitmap[] cachedBitmaps = filterManager.getCachedBitmaps((IResultSetFilter) rsFilter);
+                                if (cachedBitmaps != null) {
                                     addBitmapFilter(cachedBitmaps);
-                                }else {
-                                    MultiSearchResult newresult = filterManager.applyFilter((IResultSetFilter)rsFilter, result);
-                                    if(newresult!=result) {
+                                } else {
+                                    MultiSearchResult newresult = filterManager.applyFilter((IResultSetFilter) rsFilter, result);
+                                    if (newresult != result) {
                                         numFilters++;
-                                        result=newresult;
+                                        result = newresult;
                                         result.setIPEDSource(ipedCase);
                                     }
                                 }
@@ -193,16 +193,15 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
                         }
                     }
                 }
-                
-                if(unionsArray!=null) {
+
+                if (unionsArray != null) {
                     MultiSearchResult newresult = filterManager.applyFilter(unionsArray, result);
-                    if(newresult!=result) {
+                    if (newresult != result) {
                         numFilters++;
-                        result=newresult;
+                        result = newresult;
                         result.setIPEDSource(ipedCase);
                     }
                 }
-
 
             } catch (Throwable e) {
                 e.printStackTrace();
@@ -280,14 +279,14 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
     }
 
     public void addBitmapFilter(RoaringBitmap[] lunionsArray) {
-        if(unionsArray==null) {
-            unionsArray=new RoaringBitmap[lunionsArray.length];
+        if (unionsArray == null) {
+            unionsArray = new RoaringBitmap[lunionsArray.length];
         }
         for (int i = 0; i < unionsArray.length; i++) {
-            if(unionsArray[i]==null) {
+            if (unionsArray[i] == null) {
                 unionsArray[i] = new RoaringBitmap();
                 unionsArray[i].or(lunionsArray[i]);
-            }else {
+            } else {
                 unionsArray[i].and(lunionsArray[i]);
             }
         }

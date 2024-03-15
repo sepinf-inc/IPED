@@ -17,8 +17,7 @@ import iped.engine.task.index.IndexItem;
 import iped.engine.util.Util;
 import iped.search.IMultiSearchResult;
 
-public abstract class BaseTableModel extends AbstractTableModel
-        implements MouseListener, ListSelectionListener, SearchResultTableModel {
+public abstract class BaseTableModel extends AbstractTableModel implements MouseListener, ListSelectionListener, SearchResultTableModel {
 
     private static final long serialVersionUID = 1L;
 
@@ -65,8 +64,7 @@ public abstract class BaseTableModel extends AbstractTableModel
 
     @Override
     public void setValueAt(Object value, int row, int col) {
-        App.get().appCase.getMultiBookmarks().setChecked((Boolean) value,
-                App.get().appCase.getItemId(results.getLuceneIds()[row]));
+        App.get().appCase.getMultiBookmarks().setChecked((Boolean) value, App.get().appCase.getItemId(results.getLuceneIds()[row]));
         BookmarksController.get().updateUISelection();
     }
 
@@ -79,13 +77,11 @@ public abstract class BaseTableModel extends AbstractTableModel
 
             case 1:
                 // Item Checkbox
-                return App.get().appCase.getMultiBookmarks()
-                        .isChecked(App.get().appCase.getItemId(results.getLuceneIds()[row]));
+                return App.get().appCase.getMultiBookmarks().isChecked(App.get().appCase.getItemId(results.getLuceneIds()[row]));
 
             case 2:
                 // Item Bookmarks
-                return Util.concatStrings(App.get().appCase.getMultiBookmarks()
-                        .getBookmarkList(App.get().appCase.getItemId(results.getLuceneIds()[row])));
+                return Util.concatStrings(App.get().appCase.getMultiBookmarks().getBookmarkList(App.get().appCase.getItemId(results.getLuceneIds()[row])));
 
             case 3:
                 // Item Name
