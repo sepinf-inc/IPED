@@ -1216,6 +1216,14 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     private boolean evidenceDefaultColor = true;
     private boolean bookmarksDefaultColor = true;
     private boolean graphDefaultColor = true;
+    private boolean tableDefaultColor = true;
+
+    public void setTableDefaultColor(boolean defaultColor) {
+        if (tableDefaultColor != defaultColor) {
+            tableDefaultColor = defaultColor;
+            setDockablesColors();
+        }
+    }
 
     public void setGraphDefaultColor(boolean defaultColor) {
         if (graphDefaultColor != defaultColor) {
@@ -1266,6 +1274,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         setTabColor(evidenceTabDock, evidenceDefaultColor);
         setTabColor(bookmarksTabDock, bookmarksDefaultColor);
         setTabColor(graphDock, graphDefaultColor);
+        setTabColor(tableTabDock, tableDefaultColor);
     }
 
     private void setTabColor(DefaultSingleCDockable dock, boolean isDefault) {

@@ -310,6 +310,7 @@ public class FilterManager implements ActionListener, ListSelectionListener {
     }
 
     public void notifyFilterChange() {
+        App.get().setTableDefaultColor(!TableHeaderFilterManager.get().hasFiltersApplied());
     }
 
     public boolean isFiltererEnabled(IFilterer t) {

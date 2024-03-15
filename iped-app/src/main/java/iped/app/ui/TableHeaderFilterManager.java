@@ -183,7 +183,7 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
 
     @Override
     public boolean hasFiltersApplied() {
-        return !(otherFilters.size() == 0 && selectedValues.size() == 0);
+        return !(otherFilters.isEmpty() && selectedValues.isEmpty() && definedFilters.isEmpty());
     }
 
     public boolean getContainsEmptyFilter(String field) {
