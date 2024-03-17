@@ -118,6 +118,9 @@ public class UfedXmlReader extends DataSourceReader {
     private static final String ESCAPED_UFED_ID = QueryBuilder.escape(UFED_ID);
     private static final String EMPTY_EXTRACTION_STR = "-";
 
+    private static final String FILE_ID_ATTR = ExtraProperties.UFED_META_PREFIX + "file_id"; //$NON-NLS-1$
+    private static final String LOCAL_PATH_META = ExtraProperties.UFED_META_PREFIX + "local_path"; //$NON-NLS-1$
+
     private final Set<String> supportedApps = new HashSet<String>(
             Arrays.asList(WhatsAppParser.WHATSAPP, TelegramParser.TELEGRAM, WhatsAppParser.WHATSAPP + " Business"));
 
@@ -133,6 +136,7 @@ public class UfedXmlReader extends DataSourceReader {
     HashMap<String, IItem> pathToParent = new HashMap<>();
     boolean ignoreSupportedChats = false;
     HashMap<String, String> ufdrPathToUfedId = new HashMap<>();
+    HashMap<String, String> ufedFileIdToLocalPath = new HashMap<>();    // used to replace non-existent attachment extracted path by local path
     private final List<String[]> deviceInfoData = new ArrayList<String[]>();
     private HashSet<String> addedImUfedIds = new HashSet<>();
     private HashSet<String> addedTrackIds = new HashSet<>();
@@ -405,7 +409,6 @@ public class UfedXmlReader extends DataSourceReader {
         ));
 
         HashSet<String> ignoreNameAttrs = new HashSet<>(Arrays.asList("Tags", //$NON-NLS-1$
-                "Local Path", //$NON-NLS-1$
                 "CreationTime", //$NON-NLS-1$
                 "ModifyTime", //$NON-NLS-1$
                 "AccessTime", //$NON-NLS-1$
@@ -722,7 +725,15 @@ public class UfedXmlReader extends DataSourceReader {
                     item.setCategory(chars.toString());
 
                 } else if ("Local Path".equals(nameAttr)) { //$NON-NLS-1$
-                    setContent(item, normalizePaths(chars.toString()));
+                    String normalizedPath = normalizePaths(chars.toString());
+                    setContent(item, normalizedPath);
+
+                    // Add "Local Path" to item metadata
+                    item.getMetadata().add(LOCAL_PATH_META, normalizedPath);
+
+                    // Add key to map item id to "Local Path"
+                    ufedFileIdToLocalPath.put(item.getMetadata().get(UFED_ID), normalizedPath);
+
                     if (item.getPath().endsWith("wireless/Library/Databases/CellularUsage.db")) {
                         parseIphoneSimSwitch(item);
                     }
@@ -1390,6 +1401,18 @@ public class UfedXmlReader extends DataSourceReader {
             if (extracted_path != null) {
                 extracted_path = normalizePaths(extracted_path);
                 ufedId = ufdrPathToUfedId.get(extracted_path);
+
+                // If extracted path doesn't exist, replace non-existent extracted path by attached file's local path
+                if (!getUISF().entryExists(extracted_path)) {
+                    // Debug messages
+                    // System.out.println("Attachment path problem : extracted path (non-existent) will be replaced by local path -> " + item.getPath());
+                    // System.out.println(" extracted path -> " + extracted_path);
+                    // System.out.println(" local path -> " + ufedFileIdToLocalPath.get(item.getMetadata().get(FILE_ID_ATTR)));
+
+                    // Replace extracted path by attached file's local path
+                    extracted_path = ufedFileIdToLocalPath.get(item.getMetadata().get(FILE_ID_ATTR));
+                }
+                
             }
             setContent(item, extracted_path);
             return ufedId;
