@@ -651,23 +651,21 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
                 e.consume();
                 return;
             }
-            
+
             int index = list.getSelectedIndex();
-            
+
             if (keystrokeToBookmark.containsKey(stroke)) {
-            	if (list.getModel().getElementAt(index).getKey() == stroke)
-            	{
-            		removeKeyStroke(list.getModel().getElementAt(index).getName());
-            		list.getModel().getElementAt(index).setKey(null);
-            		list.repaint();
-            	}
-            	else {
-            		showMessage(Messages.getString("BookmarksManager.KeyStrokeAlert3"));
-            	}
+                if (list.getModel().getElementAt(index).getKey() == stroke) {
+                    removeKeyStroke(list.getModel().getElementAt(index).getName());
+                    list.getModel().getElementAt(index).setKey(null);
+                    list.repaint();
+                } else {
+                    showMessage(Messages.getString("BookmarksManager.KeyStrokeAlert3"));
+                }
                 e.consume();
                 return;
             }
-            
+
             list.getModel().getElementAt(index).setKey(stroke);
             list.repaint();
 
@@ -688,17 +686,17 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
         }
 
     }
-    
+
     private void setKeyStroke(KeyStroke stroke, String bookmarkStr) {
-    	keystrokeToBookmark.put(stroke, bookmarkStr);
+        keystrokeToBookmark.put(stroke, bookmarkStr);
         keystrokeToBookmark.put(getRemoveKey(stroke), bookmarkStr);
 
         App.get().appCase.getMultiBookmarks().setBookmarkKeyStroke(bookmarkStr, stroke);
         App.get().appCase.getMultiBookmarks().saveState();
     }
-    
+
     private void removeKeyStroke(String bookmarkStr) {
-    	Iterator<KeyStroke> iterator = keystrokeToBookmark.keySet().iterator();
+        Iterator<KeyStroke> iterator = keystrokeToBookmark.keySet().iterator();
         while (iterator.hasNext()) {
             String bookmark = keystrokeToBookmark.get(iterator.next());
             if (bookmark.equalsIgnoreCase(bookmarkStr)) {
