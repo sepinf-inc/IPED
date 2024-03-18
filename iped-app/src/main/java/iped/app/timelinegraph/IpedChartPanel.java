@@ -115,6 +115,8 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
 
     private boolean zoomingStart;
 
+    boolean isClearing;
+
     public IpedChartPanel(IpedChart chart, IpedChartsPanel ipedChartsPanel) {
         super(chart, true);
 
@@ -913,7 +915,9 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
     public void filterSelection() {
         this.getIpedChartsPanel().setInternalUpdate(true);
         App app = (App) this.getIpedChartsPanel().getResultsProvider();
-        app.getAppListener().updateFileListing();
+        if (!isClearing) {
+            app.getAppListener().updateFileListing();
+        }
         app.setDockablesColors();
     }
 

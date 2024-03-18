@@ -80,8 +80,7 @@ public class HitsTableListener implements ListSelectionListener {
                         x = getWidth(text) - 100;
                         index2 = line.indexOf(ATextViewer.HIGHLIGHT_END_TAG);
                         text = line.substring(index1, index2 - ATextViewer.HIGHLIGHT_START_TAG.length());
-                        width = App.get().getFontMetrics(App.get().getTextViewer().textTable.getFont())
-                                .stringWidth(text) + 150;
+                        width = App.get().getFontMetrics(App.get().getTextViewer().textTable.getFont()).stringWidth(text) + 150;
                         Rectangle rect = App.get().getTextViewer().textTable.getCellRect(viewRow, 0, true);
                         rect.setBounds(x, rect.y, width, rect.height);
                         App.get().getTextViewer().textTable.scrollRectToVisible(rect);
