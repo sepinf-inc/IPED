@@ -66,8 +66,7 @@ public class SubitemTableModel extends BaseTableModel {
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override
                     public void run() {
-                        App.get().subitemDock.setTitleText(
-                                LocalizedFormat.format(sumSubitens) + Messages.getString("SubitemTableModel.Subitens"));
+                        App.get().subitemDock.setTitleText(LocalizedFormat.format(sumSubitens) + Messages.getString("SubitemTableModel.Subitens"));
                     }
                 });
             }

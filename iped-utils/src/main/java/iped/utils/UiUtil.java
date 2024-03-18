@@ -9,6 +9,13 @@ public class UiUtil {
         return "#" + Integer.toHexString(c.getRGB() & 0xFFFFFF);
     }
 
+    public static Color shift(Color c, int delta) {
+        int r = Math.max(0, Math.min(255, c.getRed() + delta));
+        int g = Math.max(0, Math.min(255, c.getGreen() + delta));
+        int b = Math.max(0, Math.min(255, c.getBlue() + delta));
+        return new Color(r, g, b, c.getAlpha());
+    }
+
     public static Color mix(Color c1, Color c2, double weight) {
         if (weight < 0)
             return c2;

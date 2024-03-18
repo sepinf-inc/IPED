@@ -56,8 +56,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 
     private static final long serialVersionUID = 1L;
 
-    private static final List<String> basicDateFields = Arrays.asList(IndexItem.ACCESSED, IndexItem.MODIFIED,
-            IndexItem.CREATED, IndexItem.CHANGED);
+    private static final List<String> basicDateFields = Arrays.asList(IndexItem.ACCESSED, IndexItem.MODIFIED, IndexItem.CREATED, IndexItem.CHANGED);
 
     private static final String lengthField = LocalizedProperties.getLocalizedField(IndexItem.LENGTH);
     public static String BOOKMARK_COL = Messages.getString("ResultTableModel.bookmark"); //$NON-NLS-1$
@@ -74,6 +73,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     public static String[] fixedCols = { "", "" }; //$NON-NLS-1$ //$NON-NLS-2$
 
     private static String[] columnNames = {};
+    private static String[] originalColumnNames = {};
 
     public void initCols() {
 
@@ -107,17 +107,21 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     public void updateCols() {
 
         ArrayList<String> cols = new ArrayList<String>();
+        ArrayList<String> cols2 = new ArrayList<String>();
         for (String col : fixedCols) {
             cols.add(col);
+            cols2.add(col);
         }
 
         fields = ColumnsManager.getInstance().getLoadedCols();
         for (String col : fields) {
-            col = LocalizedProperties.getLocalizedField(col);
-            cols.add(col.substring(0, 1).toUpperCase() + col.substring(1));
+            String localizedCol = LocalizedProperties.getLocalizedField(col);
+            cols.add(localizedCol.substring(0, 1).toUpperCase() + localizedCol.substring(1));
+            cols2.add(col);
         }
 
         columnNames = cols.toArray(new String[0]);
+        originalColumnNames = cols2.toArray(new String[0]);
     }
 
     public ResultTableModel() {
@@ -146,6 +150,14 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
         }
     }
 
+    public String getColumnFieldName(int col) {
+        if (col == 0) {
+            return LocalizedFormat.format(App.get().ipedResult.getLength());
+        } else {
+            return originalColumnNames[col];
+        }
+    }
+
     public void updateLengthHeader(long mb) {
         for (int i = 0; i < columnNames.length; i++) {
             if (lengthField.equalsIgnoreCase(columnNames[i])) {
@@ -155,8 +167,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                 if (mb == -1) {
                     App.get().resultsTable.getColumnModel().getColumn(col).setHeaderValue(columnNames[i] + " (...)"); //$NON-NLS-1$
                 } else {
-                    App.get().resultsTable.getColumnModel().getColumn(col).setHeaderValue(
-                            columnNames[i] + " (" + LocalizedFormat.format(mb) + "MB)"); //$NON-NLS-1$ //$NON-NLS-2$
+                    App.get().resultsTable.getColumnModel().getColumn(col).setHeaderValue(columnNames[i] + " (" + LocalizedFormat.format(mb) + "MB)"); //$NON-NLS-1$ //$NON-NLS-2$
                 }
             }
         }
@@ -275,7 +286,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                     Arrays.sort(values, collator);
                 }
             }
-            
+
             if (values.length == 0) {
                 BytesRef[] bytes = doc.getBinaryValues(field);
                 if (bytes.length > 0) {

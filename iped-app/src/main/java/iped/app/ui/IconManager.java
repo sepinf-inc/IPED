@@ -79,13 +79,11 @@ public class IconManager {
                         if (e == null) {
                             break;
                         }
-                        String path = IconManager.class.getName().toString().replace(".", separator)
-                                .replace(IconManager.class.getSimpleName(), "") + iconPath + separator;
+                        String path = IconManager.class.getName().toString().replace(".", separator).replace(IconManager.class.getSimpleName(), "") + iconPath + separator;
                         String nameWithPath = e.getName();
                         String name = nameWithPath.replace(path, "");
                         if (nameWithPath.startsWith(path) && name.toLowerCase().endsWith(ICON_EXTENSION)) {
-                            BufferedImage img = ImageIO
-                                    .read(IconManager.class.getResource(iconPath + separator + name));
+                            BufferedImage img = ImageIO.read(IconManager.class.getResource(iconPath + separator + name));
                             map.put(name.replace(ICON_EXTENSION, "").toLowerCase(), new QualityIcon(img, size));
                         }
                     }
@@ -134,8 +132,7 @@ public class IconManager {
         return getFileIcon(mimeType, extension, mimeIconMap, extIconMap, defaultIcon);
     }
 
-    private static Icon getFileIcon(String mimeType, String extension, Map<String, QualityIcon> mimeIconMap,
-            Map<String, QualityIcon> extIconMap, Icon defaultIcon) {
+    private static Icon getFileIcon(String mimeType, String extension, Map<String, QualityIcon> mimeIconMap, Map<String, QualityIcon> extIconMap, Icon defaultIcon) {
         if (mimeType != null && !mimeType.isBlank()) {
             Icon icon = mimeIconMap.get(mimeType.strip());
             if (icon != null) {

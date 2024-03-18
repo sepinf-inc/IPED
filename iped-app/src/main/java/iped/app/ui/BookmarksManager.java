@@ -344,8 +344,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
 
                 for (IItemId itemId : uniqueSelectedIds) {
                     IItem item = ipedCase.getItemByItemId(itemId);
-                    if (item.getHash() != null && !item.getHash().isEmpty()
-                            && !emptyDataHashes.contains(item.getHash())) {
+                    if (item.getHash() != null && !item.getHash().isEmpty() && !emptyDataHashes.contains(item.getHash())) {
                         hashes.add(item.getHash().toLowerCase());
                         selectedIdsSet.add(itemId);
                     }
@@ -426,8 +425,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
 
     @Override
     public void actionPerformed(final ActionEvent evt) {
-        if (evt.getSource() == butAdd || evt.getSource() == butRemove || evt.getSource() == butUpdateComment
-                || evt.getSource() == butEdit || evt.getSource() == butDelete) {
+        if (evt.getSource() == butAdd || evt.getSource() == butRemove || evt.getSource() == butUpdateComment || evt.getSource() == butEdit || evt.getSource() == butDelete) {
             // Check if there is at least one bookmark selected
             if (list.getSelectedIndex() == -1) {
                 showMessage(Messages.getString("BookmarksManager.AlertNoSelectedBookmarks"));
@@ -450,8 +448,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
             if (!name.isEmpty() && !listModel.contains(new BookmarkAndKey(name))) {
                 multiBookmarks.newBookmark(name);
                 multiBookmarks.setBookmarkComment(name, comment);
-                multiBookmarks.setBookmarkColor(name,
-                        BookmarkColorsUtil.getInitialColor(multiBookmarks.getUsedColors(), name));
+                multiBookmarks.setBookmarkColor(name, BookmarkColorsUtil.getInitialColor(multiBookmarks.getUsedColors(), name));
                 updateList();
             }
             list.clearSelection();
@@ -563,8 +560,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
 
     private void bookmark(ArrayList<IItemId> uniqueSelectedIds, List<String> bookmarks, boolean insert, boolean isNew) {
         if (uniqueSelectedIds.isEmpty() && !isNew) {
-            showMessage(Messages.getString(checked.isSelected() ? "BookmarksManager.AlertNoCheckedtems"
-                    : "BookmarksManager.AlertNoHighlightedItems"));
+            showMessage(Messages.getString(checked.isSelected() ? "BookmarksManager.AlertNoCheckedtems" : "BookmarksManager.AlertNoHighlightedItems"));
             return;
         }
 
@@ -613,8 +609,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
         if (e.isConsumed())
             return;
 
-        if (e.getKeyCode() == KeyEvent.VK_SHIFT || e.getKeyCode() == KeyEvent.VK_CONTROL
-                || e.getKeyCode() == KeyEvent.VK_ALT) {
+        if (e.getKeyCode() == KeyEvent.VK_SHIFT || e.getKeyCode() == KeyEvent.VK_CONTROL || e.getKeyCode() == KeyEvent.VK_ALT) {
             return;
         }
 
@@ -628,11 +623,8 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
 
         // Avoid conflict with keys used for selection/navigation in the bookmark list,
         // items table or items gallery.
-        if ((e.isControlDown() && e.getKeyCode() == 'A') || e.getKeyCode() == KeyEvent.VK_LEFT
-                || e.getKeyCode() == KeyEvent.VK_RIGHT || e.getKeyCode() == KeyEvent.VK_UP
-                || e.getKeyCode() == KeyEvent.VK_DOWN || e.getKeyCode() == KeyEvent.VK_HOME
-                || e.getKeyCode() == KeyEvent.VK_END || e.getKeyCode() == KeyEvent.VK_PAGE_UP
-                || e.getKeyCode() == KeyEvent.VK_PAGE_DOWN) {
+        if ((e.isControlDown() && e.getKeyCode() == 'A') || e.getKeyCode() == KeyEvent.VK_LEFT || e.getKeyCode() == KeyEvent.VK_RIGHT || e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_DOWN
+                || e.getKeyCode() == KeyEvent.VK_HOME || e.getKeyCode() == KeyEvent.VK_END || e.getKeyCode() == KeyEvent.VK_PAGE_UP || e.getKeyCode() == KeyEvent.VK_PAGE_DOWN) {
             return;
         }
 
@@ -691,8 +683,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
                 return;
             }
             ArrayList<IItemId> uniqueSelectedIds = getUniqueSelectedIds();
-            bookmark(uniqueSelectedIds, Collections.singletonList(bookmark),
-                    (e.getModifiersEx() & KeyEvent.ALT_DOWN_MASK) == 0, false);
+            bookmark(uniqueSelectedIds, Collections.singletonList(bookmark), (e.getModifiersEx() & KeyEvent.ALT_DOWN_MASK) == 0, false);
             e.consume();
         }
 
@@ -729,8 +720,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
 
     public boolean hasSingleKeyShortcut() {
         for (KeyStroke k : keystrokeToBookmark.keySet()) {
-            if ((k.getModifiers()
-                    & (InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK)) == 0) {
+            if ((k.getModifiers() & (InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK)) == 0) {
                 int c = k.getKeyCode();
                 if ((c >= KeyEvent.VK_0 && c <= KeyEvent.VK_9) || (c >= KeyEvent.VK_A && c <= KeyEvent.VK_Z)) {
                     return true;
