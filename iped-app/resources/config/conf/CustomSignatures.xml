@@ -1626,7 +1626,7 @@
     </mime-type>
     
     <mime-type type="application/x-vlc-ini">
-        <sub-class-of type="text/plain"/>
+        <sub-class-of type="text/x-ini"/>
         <glob pattern="vlc-qt-interface.ini"/>
     </mime-type>
 
