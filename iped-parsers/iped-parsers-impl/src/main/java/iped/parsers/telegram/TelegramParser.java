@@ -201,12 +201,18 @@ public class TelegramParser extends SQLite3DBParser {
             chatMetadata.set(ExtraProperties.DELETED, Boolean.toString(c.isDeleted()));
             chatMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
-            if (c.isGroup()) {
+            if (c.isGroupOrChannel()) {
                 ChatGroup cg = (ChatGroup) c;
-                if (cg.getMembers() != null && !cg.getMembers().isEmpty()) {
-                    for (Long id : cg.getMembers()) {
-                        chatMetadata.add(ExtraProperties.PARTICIPANTS, e.getContact(id).toString());
-                    }
+                for (long id : cg.getMembers()) {
+                    chatMetadata.add(ExtraProperties.PARTICIPANTS, e.getContact(id).toString());
+                }
+                for (long id : cg.getAdmins()) {
+                    chatMetadata.add(ExtraProperties.COMMUNICATION_PREFIX + "ChannelAdmins",
+                            e.getContact(id).toString());
+                }
+                int participantsCount = cg.getParticipantsCount();
+                if (participantsCount > 0) {
+                    chatMetadata.add(ExtraProperties.PARTICIPANTS + "Count", String.valueOf(participantsCount));
                 }
             }
 
@@ -230,7 +236,9 @@ public class TelegramParser extends SQLite3DBParser {
 
     private String getChatNamePrefix(Chat c) {
         String title = "Telegram_";
-        if (c.isGroup()) {
+        if (c.isChannel()) {
+            title += "Channel";
+        } else if (c.isGroup()) {
             title += "Group";
         } else {
             title += "Chat";
@@ -256,7 +264,7 @@ public class TelegramParser extends SQLite3DBParser {
                 meta.set(ExtraProperties.LOCATIONS, m.getLatitude() + ";" + m.getLongitude());
             }
             meta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, m.getFrom().toString());
-            if (m.getChat().isGroup()) {
+            if (m.getChat().isGroupOrChannel()) {
                 ChatGroup groupChat = (ChatGroup) m.getChat();
                 for (Long id : groupChat.getMembers()) {
                     if (id != m.getFrom().getId())
