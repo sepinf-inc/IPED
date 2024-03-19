@@ -124,7 +124,6 @@ public class Manager {
 
     private static long commitIntervalMillis = 30 * 60 * 1000;
     private static Logger LOGGER = LogManager.getLogger(Manager.class);
-    private static String FINISHED_FLAG = "data/processing_finished";
     private static Manager instance;
 
     private CaseData caseData;
@@ -252,17 +251,22 @@ public class Manager {
             LOGGER.info("Evidence " + (i++) + ": '{}'", source.getAbsolutePath()); //$NON-NLS-1$ //$NON-NLS-2$
         }
 
+        EvidenceStatus status = new EvidenceStatus(output.getParentFile());
+
         try {
             openIndex();
 
             if (args.getEvidenceToRemove() != null) {
-                removeEvidence(args.getEvidenceToRemove());
+                removeEvidence(args.getEvidenceToRemove(), status);
                 return;
             }
 
             initWorkers();
 
             initSleuthkitServers();
+
+            status.addProcessingEvidences(args);
+            status.save();
 
             // apenas conta o número de arquivos a indexar
             counter = new ItemProducer(this, caseData, true, sources, output);
@@ -301,16 +305,9 @@ public class Manager {
 
         stats.logStatistics(this);
 
-        Files.createFile(getFinishedFileFlag(output).toPath());
+        status.addSuccessfulEvidences(args);
+        status.save();
 
-    }
-
-    private static File getFinishedFileFlag(File output) {
-        return new File(output, FINISHED_FLAG);
-    }
-
-    public static boolean isProcessingFinishedOK(File moduleDir) {
-        return getFinishedFileFlag(moduleDir).exists();
     }
 
     private void closeItemProducers() {
@@ -429,7 +426,7 @@ public class Manager {
         return conf;
     }
 
-    private void removeEvidence(String evidenceName) throws Exception {
+    private void removeEvidence(String evidenceName, EvidenceStatus status) throws Exception {
         Level CONSOLE = Level.getLevel("MSG"); //$NON-NLS-1$
         LOGGER.log(CONSOLE, "Removing evidence '{}' from case...", evidenceName);
 
@@ -441,7 +438,10 @@ public class Manager {
             IPEDSearcher searcher = new IPEDSearcher(ipedCase, query);
             SearchResult result = searcher.search();
             if (result.getLength() == 0) {
-                Files.createFile(getFinishedFileFlag(output).toPath());
+                if (status.removeEvidence(evidenceName)) {
+                    status.save();
+                    return;
+                }
                 throw new IPEDException("Evidence name '" + evidenceName + "' not found!");
             }
             Item item = (Item) ipedCase.getItemByID(result.getId(0));
@@ -500,7 +500,8 @@ public class Manager {
                 new File(output, GraphTask.CSVS_PATH));
         LOGGER.log(CONSOLE, "Deleted {} CSV connections.", deletions);
 
-        Files.createFile(getFinishedFileFlag(output).toPath());
+        status.removeEvidence(evidenceName);
+        status.save();
     }
 
     private void openIndex() throws IOException {
@@ -847,10 +848,6 @@ public class Manager {
         if (!output.exists() && !output.mkdirs()) {
             throw new IOException("Fail to create folder " + output.getAbsolutePath()); //$NON-NLS-1$
         }
-
-        // The finished file flag should be reset after basic checks (like already
-        // existing output) were done (see issue #2041).
-        Files.deleteIfExists(getFinishedFileFlag(output).toPath());
 
         if (!args.isAppendIndex() && !args.isContinue() && !args.isRestart() && args.getEvidenceToRemove() == null) {
             IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "lib"), new File(output, "lib"), true); //$NON-NLS-1$ //$NON-NLS-2$

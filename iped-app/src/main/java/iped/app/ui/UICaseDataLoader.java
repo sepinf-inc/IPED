@@ -18,9 +18,8 @@
  */
 package iped.app.ui;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -31,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.engine.config.ConfigurationManager;
+import iped.engine.core.EvidenceStatus;
 import iped.engine.core.Manager;
 import iped.engine.data.IPEDMultiSource;
 import iped.engine.data.IPEDSource;
@@ -132,21 +132,37 @@ public class UICaseDataLoader extends SwingWorker<Void, Integer> {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                List<String> casesWithError = new ArrayList<>();
+                HashMap<String, List<String>> failedCases = new HashMap<>();
                 for (IPEDSource source : multiSource.getAtomicSources()) {
-                    if (manager == null && !Manager.isProcessingFinishedOK(source.getModuleDir())) {
-                        casesWithError.add(source.getCaseDir().getAbsolutePath());
+                    EvidenceStatus status = new EvidenceStatus(source.getCaseDir());
+                    List<String> failedEvidences = status.getFailedEvidences();
+                    if (manager == null && (failedEvidences == null || !failedEvidences.isEmpty())) {
+                        failedCases.put(source.getCaseDir().getAbsolutePath(), failedEvidences);
                     }
                 }
-                if (!casesWithError.isEmpty()) {
-                    String casesList = "";
+                StringBuilder message = new StringBuilder();
+                if (!failedCases.isEmpty()) {
                     if (multiSource.getAtomicSources().size() > 1) {
-                        casesList = Messages.getString("ProcessingNotFinished.cases");
-                        casesList += casesWithError.stream().collect(Collectors.joining("\n"));
+                        message.append(Messages.getString("ProcessingNotFinished.cases"));
                     }
-                    JOptionPane.showMessageDialog(App.get(),
-                            Messages.getString("ProcessingNotFinished.message") + casesList,
-                            Messages.getString("ProcessingNotFinished.title"), JOptionPane.WARNING_MESSAGE);
+                    int i = 0;
+                    for (String failedCase : failedCases.keySet()) {
+                        message.append("\n");
+                        if (multiSource.getAtomicSources().size() > 1) {
+                            message.append("\n" + (++i) + ". " + failedCase);
+                        }
+                        List<String> evidences = failedCases.get(failedCase);
+                        if (evidences != null) {
+                            for (int j = 0; j < evidences.size(); j++) {
+                                message.append("\n        " + (j + 1) + ". ");
+                                message.append(Messages.getString("ProcessingNotFinished.evidence"));
+                                message.append(" " + evidences.get(j));
+                            }
+                        }
+                    }
+                }
+                if (message.length() > 0) {
+                    JOptionPane.showMessageDialog(App.get(), Messages.getString("ProcessingNotFinished.message") + message, Messages.getString("ProcessingNotFinished.title"), JOptionPane.WARNING_MESSAGE);
                 }
             }
         });
