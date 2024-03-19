@@ -1624,5 +1624,10 @@
         </magic>
         <glob pattern="*.ofc"/>
     </mime-type>
+    
+    <mime-type type="application/x-vlc-ini">
+        <sub-class-of type="text/plain"/>
+        <glob pattern="vlc-qt-interface.ini"/>
+    </mime-type>
 
 </mime-info>
