@@ -137,7 +137,9 @@ public class Extractor {
 
     private int getParticipantsCount(Connection conn, ChatGroup cg) throws SQLException {
         int count = 0;
-        if (SQLite3DBParser.containsTable("chat_settings_v2", conn)) {
+        String table = "chat_settings_v2";
+        String column = "participants_count";
+        if (SQLite3DBParser.containsTable(table, conn) && SQLite3DBParser.checkIfColumnExists(conn, table, column)) {
             try (PreparedStatement stmt = conn.prepareStatement(SELECT_CHATS_SETTINGS)) {
                 stmt.setLong(1, -cg.getId());
                 ResultSet rs = stmt.executeQuery();
