@@ -1,37 +1,56 @@
 package iped.parsers.vlc;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.Set;
 
-public class VLCIniParser {
+import org.apache.tika.exception.TikaException;
+import org.apache.tika.metadata.Metadata;
+import org.apache.tika.mime.MediaType;
+import org.apache.tika.parser.ParseContext;
+import org.apache.tika.parser.Parser;
+import org.apache.tika.sax.XHTMLContentHandler;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.SAXException;
 
+public class VLCIniParser implements Parser {
+
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+
+    private static final Set<MediaType> SUPPORTED_TYPES = MediaType.set(MediaType.application("x-vlc-ini"));
     private static final String RECENT_APPS_SECTION = "[RecentMedia]";
 
-    public static List<String> parseRecentFiles(String iniFilePath) throws IOException {
-        List<String> recentFiles = new ArrayList<>();
+    @Override
+    public Set<MediaType> getSupportedTypes(ParseContext arg0) {
+        return SUPPORTED_TYPES;
+    }
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(iniFilePath))) {
+    @Override
+    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
+
+        XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
+        xhtml.startDocument();
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
             String line;
             boolean insideRecentAppsSection = false;
-
             while ((line = reader.readLine()) != null) {
-                // Procurando pela seção [RecentApps]
-                if (isRecentAppsSection(line)) {
+                line = line.strip();
+                if (line.equalsIgnoreCase(RECENT_APPS_SECTION)) {
                     insideRecentAppsSection = true;
-                } else if (insideRecentAppsSection && !line.trim().isEmpty()) {
-                    // Dentro da seção [RecentApps], pegar as linhas com caminhos de arquivos
-                    recentFiles.add(line.trim());
+                } else if (insideRecentAppsSection && !line.isEmpty()) {
+                    xhtml.characters(line);
                 }
             }
+        } finally {
+            xhtml.endDocument();
         }
-
-        return recentFiles;
     }
 
-    private static boolean isRecentAppsSection(String line) {
-        return line.trim().equalsIgnoreCase(RECENT_APPS_SECTION);
-    }
 }
