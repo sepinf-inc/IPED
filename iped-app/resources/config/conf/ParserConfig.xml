@@ -374,6 +374,7 @@
         <parser class="iped.parsers.mail.win10.Win10MailParser"></parser>
         <parser class="iped.parsers.discord.DiscordParser"></parser>
         <parser class="iped.parsers.apk.APKParser"></parser>
+        <parser class="iped.parsers.vlc.VLCIniParser"></parser>
 
     </parsers>
 
