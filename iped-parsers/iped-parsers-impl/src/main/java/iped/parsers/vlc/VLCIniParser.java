@@ -44,6 +44,8 @@ public class VLCIniParser implements Parser {
                 line = line.strip();
                 if (line.equalsIgnoreCase(RECENT_APPS_SECTION)) {
                     insideRecentAppsSection = true;
+                } else if (line.startsWith("[") && line.endsWith("]")) {
+                    insideRecentAppsSection = false;
                 } else if (insideRecentAppsSection && !line.isEmpty()) {
                     xhtml.characters(line);
                 }
