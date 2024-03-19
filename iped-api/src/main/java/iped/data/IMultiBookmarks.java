@@ -81,6 +81,8 @@ public interface IMultiBookmarks extends Serializable {
 
     KeyStroke getBookmarkKeyStroke(String bookmarkName);
     
+    void removeBookmarkKeyStroke(String bookmarkName);
+    
     void checkAll();
 
     void setChecked(boolean value, IItemId item);

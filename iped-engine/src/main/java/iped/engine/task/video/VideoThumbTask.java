@@ -660,7 +660,7 @@ public class VideoThumbTask extends ThumbTask {
 
         } else if (mediaType.equals("image/gif")) {
             ImageReader reader = null;
-            try (BufferedInputStream is = evidence.getBufferedInputStream(); ImageInputStream iis = ImageIO.createImageInputStream(is)) {
+            try (ImageInputStream iis = evidence.getImageInputStream()) {
                 reader = ImageIO.getImageReaders(iis).next();
                 reader.setInput(iis, false, true);
                 numImages = reader.getNumImages(true);

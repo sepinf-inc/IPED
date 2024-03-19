@@ -318,7 +318,7 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
             <!-- check https://github.com/sepinf-inc/IPED/issues/1068 when upgrading this -->
-            <version>1.21</version>
+            <version>1.25.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.tika</groupId>
@@ -341,5 +341,10 @@
             <artifactId>nashorn-core</artifactId>
             <version>15.4</version>
         </dependency>
+        <dependency>
+            <groupId>org.roaringbitmap</groupId>
+            <artifactId>RoaringBitmap</artifactId>
+            <version>0.9.39</version>
+        </dependency>                
      </dependencies>
 </project>

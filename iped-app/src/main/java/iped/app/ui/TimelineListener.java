@@ -1,5 +1,6 @@
 package iped.app.ui;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,9 +10,17 @@ import javax.swing.RowSorter.SortKey;
 import javax.swing.SortOrder;
 
 import bibliothek.gui.dock.common.action.CCheckBox;
+import iped.engine.search.MultiSearchResult;
+import iped.engine.search.TimelineResults;
+import iped.exception.ParseException;
+import iped.exception.QueryNodeException;
 import iped.properties.BasicProps;
+import iped.search.IMultiSearchResult;
+import iped.viewers.api.IFilter;
+import iped.viewers.api.IResultSetFilter;
+import iped.viewers.api.IResultSetFilterer;
 
-public class TimelineListener implements ClearFilterListener {
+public class TimelineListener implements IResultSetFilterer {
 
     private CCheckBox timelineButton;
     private Icon defaultIcon, filteredIcon;
@@ -36,7 +45,7 @@ public class TimelineListener implements ClearFilterListener {
     public void toggleTimelineTableView() {
         timelineButton.setSelected(!timelineViewEnabled);
     }
-    
+
     public void setTimelineTableView(boolean isEnabled) {
         if (timelineViewEnabled != isEnabled) {
             timelineViewEnabled = isEnabled;
@@ -83,6 +92,50 @@ public class TimelineListener implements ClearFilterListener {
             }
             timelinePrevSortKeys = null;
         }
+    }
+
+    @Override
+    public List getDefinedFilters() {
+        ArrayList<IFilter> result = new ArrayList<IFilter>();
+        if (isTimelineViewEnabled()) {
+            result.add(getFilter());
+        }
+        return result;
+    }
+
+    public String toString() {
+        return "Timeline view";
+    }
+
+    @Override
+    public IFilter getFilter() {
+        if (isTimelineViewEnabled()) {
+            return new IResultSetFilter() {
+                public String toString() {
+                    return Messages.get("FilterValue.TimelineView");
+                }
+
+                @Override
+                public IMultiSearchResult filterResult(IMultiSearchResult src) throws ParseException, QueryNodeException, IOException {
+                    if (isTimelineViewEnabled()) {
+                        return new TimelineResults(App.get().appCase).expandTimestamps((MultiSearchResult) src);
+                    } else {
+                        return src;
+                    }
+                }
+            };
+        }
+        return null;
+    }
+
+    @Override
+    public boolean hasFilters() {
+        return isTimelineViewEnabled();
+    }
+
+    @Override
+    public boolean hasFiltersApplied() {
+        return false;
     }
 
 }

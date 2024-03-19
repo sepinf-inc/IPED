@@ -1,4 +1,4 @@
-﻿########################################################################
+﻿﻿########################################################################
 # Processing Settings
 ########################################################################
 
@@ -128,6 +128,9 @@ enableImageSimilarity = false
 # Advanced configuration options can be found in conf/FaceRecognitionConfig.txt.
 # If enabled, you can search for faces from the analysis interface, check the options menu.
 enableFaceRecognition = false
+
+# Enables searching for crypto hardware wallets.
+enableSearchHardwareWallets = true
 
 # Enables extraction of image frames from video files
 # Extraction settings can be modified in file "conf/VideoThumbsConfig.txt"

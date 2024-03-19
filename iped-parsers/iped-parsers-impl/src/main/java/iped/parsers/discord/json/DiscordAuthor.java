@@ -14,6 +14,12 @@ public class DiscordAuthor {
     @JsonProperty("username")
     private String username;
 
+    @JsonProperty("email")
+    private String email;
+
+    @JsonProperty("phone")
+    private String phone;
+
     @JsonProperty("avatar")
     private String avatar;
 
@@ -136,6 +142,22 @@ public class DiscordAuthor {
     public String toString() {
         return "DiscordAuthor [id=" + id + ", username=" + username + ", avatar=" + avatar + ", discriminator=" + discriminator + ", public_flags=" + public_flags + ", bot=" + bot + ", name=" + name + ", url=" + url + ", icon_url="
                 + icon_url + ", proxy_icon_url=" + proxy_icon_url + "]";
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
 }

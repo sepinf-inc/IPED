@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.lucene.index.SortedDocValues;
-import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 import org.apache.lucene.util.BytesRef;
 
 import com.zaxxer.sparsebits.SparseBitSet;
@@ -19,6 +18,7 @@ import iped.data.IItemId;
 import iped.engine.lucene.DocValuesUtil;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.MultiSearchResult;
+import iped.engine.search.QueryBuilder;
 import iped.properties.BasicProps;
 import iped.viewers.api.AttachmentSearcher;
 
@@ -147,8 +147,7 @@ public class AttachmentSearcherImpl implements AttachmentSearcher {
 
     @Override
     public String escapeQuery(String string) {
-        string = string.replace('“', '"').replace('”', '"');
-        return QueryParserUtil.escape(string);
+        return QueryBuilder.escape(string);
     }
 
 }

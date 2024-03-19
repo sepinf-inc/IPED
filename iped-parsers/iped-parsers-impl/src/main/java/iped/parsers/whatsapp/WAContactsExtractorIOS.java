@@ -62,8 +62,8 @@ public class WAContactsExtractorIOS extends WAContactsExtractor {
                     id += WAContact.waSuffix;
                 }
                 WAContact c = directory.getContact(id);
-                c.setDisplayName(getString(rs, "ZHIGHLIGHTEDNAME")); //$NON-NLS-1$
-                c.setWaName(getString(rs, "ZFULLNAME")); //$NON-NLS-1$
+                c.setWaName(getString(rs, "ZHIGHLIGHTEDNAME")); //$NON-NLS-1$
+                c.setDisplayName(getString(rs, "ZFULLNAME")); //$NON-NLS-1$
                 c.setNickName(getString(rs, "ZNICKNAME")); //$NON-NLS-1$
                 String given_name = getString(rs, "ZGIVENNAME"); //$NON-NLS-1$
                 if (given_name == null)
@@ -87,8 +87,8 @@ public class WAContactsExtractorIOS extends WAContactsExtractor {
                 }
                 if (! directory.hasContact(Util.getNameFromId(id))) { // only recover contact if it does not exist already
                     WAContact c = directory.getContact(id);
-                    c.setDisplayName(nullToEmpty(row.getTextValue("ZHIGHLIGHTEDNAME"))); //$NON-NLS-1$
-                    c.setWaName(nullToEmpty(row.getTextValue("ZFULLNAME"))); //$NON-NLS-1$
+                    c.setWaName(nullToEmpty(row.getTextValue("ZHIGHLIGHTEDNAME"))); //$NON-NLS-1$
+                    c.setDisplayName(nullToEmpty(row.getTextValue("ZFULLNAME"))); //$NON-NLS-1$
                     c.setNickName(nullToEmpty(row.getTextValue("ZNICKNAME"))); //$NON-NLS-1$
                     String given_name = row.getTextValue("ZGIVENNAME"); //$NON-NLS-1$
                     if (given_name == null) 

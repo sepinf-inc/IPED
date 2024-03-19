@@ -231,6 +231,11 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
         return null;
     }
     
+    public void removeBookmarkKeyStroke(String bookmarkName) {
+        for (IBookmarks m : map.values())
+            m.removeBookmarkKeyStroke(m.getBookmarkId(bookmarkName));
+    }
+    
     public int getBookmarkCount(String bookmarkName) {
         int ret = 0;
         for (IBookmarks m : map.values()) {

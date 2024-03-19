@@ -1,7 +1,7 @@
 package iped.engine.task;
 
 import java.io.IOException;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -12,6 +12,7 @@ import iped.data.IItem;
 import iped.engine.CmdLineArgs;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.LocalConfig;
+import iped.engine.config.TempFileTaskConfig;
 import iped.engine.data.Item;
 import iped.utils.IOUtil;
 
@@ -29,8 +30,7 @@ import iped.utils.IOUtil;
 public class TempFileTask extends AbstractTask {
 
     private static Logger LOGGER = LoggerFactory.getLogger(TempFileTask.class);
-    private static int MAX_TEMPFILE_LEN = 1024 * 1024 * 1024;
-    private boolean indexTempOnSSD = false;
+    private long maxFileSize = 1L << 30;
     private boolean isEnabled = true;
 
     @Override
@@ -40,25 +40,33 @@ public class TempFileTask extends AbstractTask {
 
     @Override
     public List<Configurable<?>> getConfigurables() {
-        return Collections.emptyList();
+        return Arrays.asList(new TempFileTaskConfig());
     }
 
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
-        LocalConfig config = configurationManager.findObject(LocalConfig.class);
-        indexTempOnSSD = config.isIndexTempOnSSD();
+        LocalConfig localConfig = configurationManager.findObject(LocalConfig.class);
+        boolean indexTempOnSSD = localConfig.isIndexTempOnSSD();
+
         CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-        isEnabled = !"fastmode".equals(args.getProfile()) && !"triage".equals(args.getProfile());
+        isEnabled = indexTempOnSSD && !"fastmode".equals(args.getProfile()) && !"triage".equals(args.getProfile());
+
+        if (isEnabled) {
+            TempFileTaskConfig tempFileTaskConfig = configurationManager.findObject(TempFileTaskConfig.class);
+            maxFileSize = tempFileTaskConfig.getMaxFileSize();
+        }
     }
 
     @Override
     public void finish() throws Exception {
-        // TODO Auto-generated method stub
     }
 
     @Override
     protected void process(IItem evidence) throws Exception {
 
+        if (!isEnabled) {
+            return;
+        }
 
         if (evidence instanceof Item) {
             if (((Item) evidence).cacheDataInMemory()) {
@@ -66,16 +74,14 @@ public class TempFileTask extends AbstractTask {
             }
         }
 
-        if (!indexTempOnSSD) {
-            return;
-        }
-
         Long len = evidence.getLength();
-        if (len != null && len <= MAX_TEMPFILE_LEN) {
+        if (len != null && len <= maxFileSize) {
             try {
                 // skip items with File refs && carved items pointing to parent temp file
-                if (!IOUtil.hasFile(evidence) && (!(evidence instanceof Item) || !((Item) evidence).hasParentTmpFile())) {
-                    if (!evidence.isSubItem()) { // should we create temp files for subitems compressed into the sqlite storages?
+                if (!IOUtil.hasFile(evidence)
+                        && (!(evidence instanceof Item) || !((Item) evidence).hasParentTmpFile())) {
+                    if (!evidence.isSubItem()) { // should we create temp files for subitems compressed into the sqlite
+                                                 // storages?
                         evidence.getTempFile();
                     }
                 }
@@ -84,7 +90,5 @@ public class TempFileTask extends AbstractTask {
                         e.toString());
             }
         }
-
     }
-
 }

@@ -102,6 +102,8 @@ public interface IBookmarks extends Serializable {
 
     KeyStroke getBookmarkKeyStroke(int bookmarkId);
     
+    void removeBookmarkKeyStroke(int bookmarkId);
+    
     int getBookmarkCount(int bookmarkId);
     
     void setInReport(int bookmarkId, boolean inReport);

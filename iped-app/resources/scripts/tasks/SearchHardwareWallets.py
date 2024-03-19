@@ -15,6 +15,8 @@ hwFound = 'Hardware-Wallet-Found'
 
 bookmarkCreated = False
 
+enableProp = 'enableSearchHardwareWallets'
+enabled = False
 
 # The main class name must be equal to the script file name without .py extension
 # One instance of this class is created by each processing thread and each thread calls the implemented methods of its own object.
@@ -24,17 +26,22 @@ class SearchHardwareWallets:
 
     # Returns if this task is enabled or not. This could access options read by init() method.
     def isEnabled(self):
-        return True
+        return enabled
 
     # Returns an optional list of configurable objects that can load/save parameters from/to config files. 
     def getConfigurables(self):
-        return []
+        from iped.engine.config import EnableTaskProperty
+        return [EnableTaskProperty(enableProp)]
 
     # Do some task initialization, like reading options, custom config files or model.
     # It is executed when application starts by each processing thread on its class instance.
     # @Params
     # configuration:    configuration manager by which configurables can be retrieved after populated.
     def init(self, configuration):
+        global enabled
+        enabled = configuration.getEnableTaskProperty(enableProp)
+        if not enabled:
+            return
         if SearchHardwareWallets.wallets is not None:
             return
         from java.lang import System

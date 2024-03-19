@@ -833,14 +833,9 @@ public class HTMLReportTask extends AbstractTask {
             int thumbSize = htmlReportConfig.getThumbSize();
             if (img == null) {
                 final int sampleFactor = 3;
-                BufferedInputStream stream = evidence.getBufferedInputStream();
-                try {
-                    img = ImageUtil.getSubSampledImage(stream, thumbSize * sampleFactor, thumbSize * sampleFactor);
-                } finally {
-                    IOUtil.closeQuietly(stream);
-                }
+                img = ImageUtil.getSubSampledImage(evidence, thumbSize * sampleFactor);
                 if (img == null) {
-                    stream = evidence.getBufferedInputStream();
+                    BufferedInputStream stream = evidence.getBufferedInputStream();
                     try {
                         img = externalImageConverter.getImage(stream, thumbSize, false, evidence.getLength());
                     } finally {
