@@ -84,8 +84,7 @@ public class DuplicatesTableModel extends BaseTableModel {
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override
                     public void run() {
-                        App.get().duplicateDock
-                                .setTitleText(duplicates + Messages.getString("DuplicatesTableModel.Duplicates"));
+                        App.get().duplicateDock.setTitleText(duplicates + Messages.getString("DuplicatesTableModel.Duplicates"));
                     }
                 });
             }

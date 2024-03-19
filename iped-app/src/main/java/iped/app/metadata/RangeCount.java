@@ -20,10 +20,10 @@ public class RangeCount extends ValueCount {
         sb.append(getVal());
         sb.append(" ("); //$NON-NLS-1$
         sb.append(nf.format(count));
-        sb.append(')');            
+        sb.append(')');
         return sb.toString();
     }
-    
+
     @Override
     public String getVal() {
         StringBuilder sb = new StringBuilder();
@@ -45,4 +45,21 @@ public class RangeCount extends ValueCount {
     public double getEnd() {
         return end;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof RangeCount) {
+            RangeCount rc = (RangeCount) obj;
+            if (this.start == rc.start && this.end == rc.end) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Double.hashCode(start);
+    }
+
 }

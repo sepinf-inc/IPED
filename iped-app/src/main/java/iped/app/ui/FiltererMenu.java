@@ -21,11 +21,11 @@ public class FiltererMenu extends JPopupMenu implements ActionListener {
     private JMenuItem gotToRefMenuItem;
     SliderMenuItem sliderMenuItem;
 
-    public static final String CLEAR_FILTERS_STR = Messages.get("FiltererMenu.clearFilters"); 
-    public static final String GOTO_ITEM_STR = Messages.get("FiltererMenu.goToItem"); 
+    public static final String CLEAR_FILTERS_STR = Messages.get("FiltererMenu.clearFilters");
+    public static final String GOTO_ITEM_STR = Messages.get("FiltererMenu.goToItem");
     private static final String REFERENCED_ITEM_NOT_IN_RS = Messages.get("FiltererMenu.ItemNotInRS");
 
-    public FiltererMenu(){
+    public FiltererMenu() {
         clearMenuitem = new JMenuItem(CLEAR_FILTERS_STR);
         clearMenuitem.addActionListener(this);
         this.add(clearMenuitem);
@@ -41,13 +41,13 @@ public class FiltererMenu extends JPopupMenu implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if(e.getSource()==clearMenuitem) {
-            ((IFilterer)selected).clearFilter();
+        if (e.getSource() == clearMenuitem) {
+            ((IFilterer) selected).clearFilter();
         }
 
         JTable table;
-        if(e.getSource()==gotToRefMenuItem) {
-            IItemId refId = ((IItemRef)selected).getItemRefId();
+        if (e.getSource() == gotToRefMenuItem) {
+            IItemId refId = ((IItemRef) selected).getItemRefId();
             gotoItem(refId);
             return;
         }
@@ -55,53 +55,52 @@ public class FiltererMenu extends JPopupMenu implements ActionListener {
         App.get().filtersPanel.updateUI();
         App.get().getAppListener().updateFileListing();
     }
-    
+
     static public void gotoItem(IItemId refId) {
         JTable table;
-        if(refId!=null) {
+        if (refId != null) {
             table = App.get().resultsTable;
             IMultiSearchResult results = App.get().getResults();
             int row = -1;
             for (int i = 0; i < results.getLength(); i++) {
-                if(results.getItem(i).equals(refId)) {
-                    row=i;
+                if (results.getItem(i).equals(refId)) {
+                    row = i;
                     break;
                 }
             }
-            if(row!=-1) {
+            if (row != -1) {
                 table.changeSelection(table.convertRowIndexToView(row), 0, false, false);
-            }else {
+            } else {
                 JOptionPane.showMessageDialog(table, FiltererMenu.REFERENCED_ITEM_NOT_IN_RS);
             }
         }
     }
-    
+
     public void setContext(Object o) {
         this.selected = o;
-        if((o instanceof IFilterer)&&(((IFilterer)o).getDefinedFilters().size()>0)) {
+        if ((o instanceof IFilterer) && (((IFilterer) o).getDefinedFilters().size() > 0)) {
             clearMenuitem.setVisible(true);
-        }else {
+        } else {
             clearMenuitem.setVisible(false);
         }
-        if((o instanceof IItemRef) && (((IItemRef)selected).getItemRefId()!=null)) {
+        if ((o instanceof IItemRef) && (((IItemRef) selected).getItemRefId() != null)) {
             gotToRefMenuItem.setVisible(true);
-        }else {
+        } else {
             gotToRefMenuItem.setVisible(false);
         }
-        
+
         sliderMenuItem.setVisible(false);
-        if((o instanceof IQuantifiableFilter)) {
+        if ((o instanceof IQuantifiableFilter)) {
             sliderMenuItem.setVisible(true);
-            sliderMenuItem.setFilter((IQuantifiableFilter)o);
+            sliderMenuItem.setFilter((IQuantifiableFilter) o);
         }
     }
 
     @Override
     public void setVisible(boolean b) {
-        if(!b && sliderMenuItem.hasSliderChanged()) {
+        if (!b && sliderMenuItem.hasSliderChanged()) {
             App.get().appletListener.updateFileListing();
         }
         super.setVisible(b);
     }
 }
-

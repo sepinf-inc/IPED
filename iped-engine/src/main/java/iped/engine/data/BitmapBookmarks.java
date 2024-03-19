@@ -587,4 +587,9 @@ public class BitmapBookmarks implements IBookmarks {
     public Set<Color> getUsedColors() {
         return bookmarkColors == null ? new HashSet<Color>() : new HashSet<Color>(bookmarkColors.values());
     }
+
+    
+    public synchronized void removeBookmarkKeyStroke(int bookmarkId) {
+    	bookmarkKeyStrokes.remove(bookmarkId);
+    }
 }

@@ -55,8 +55,7 @@ public class SimilarImagesFilterPanel extends JPanel implements ClearFilterListe
     }
 
     protected String buildDefaultToolTip(String tooltipTitle, String tooltipDescInternal, String tooltipDescExternal) {
-        return "<HTML>" + tooltipTitle + "<br>" + (isRefExternal ? tooltipDescExternal : tooltipDescInternal) + ": <b>"
-                + refName + "</b></HTML>";
+        return "<HTML>" + tooltipTitle + "<br>" + (isRefExternal ? tooltipDescExternal : tooltipDescInternal) + ": <b>" + refName + "</b></HTML>";
     }
 
     protected String getRemoveToolTip() {
@@ -78,7 +77,7 @@ public class SimilarImagesFilterPanel extends JPanel implements ClearFilterListe
                     e.printStackTrace();
                 }
             }
-        }        
+        }
         repaint();
     }
 
@@ -102,7 +101,7 @@ public class SimilarImagesFilterPanel extends JPanel implements ClearFilterListe
             int h = (int) Math.round(img.getHeight() * zoom);
             int x = w >= ph ? 0 : (ph - w) / 2;
             int y = h >= ph ? 0 : (ph - h) / 2;
-            
+
             Shape clip = g2.getClip();
             g2.setClip(rc);
             g2.drawImage(img, x, y, w, h, null);

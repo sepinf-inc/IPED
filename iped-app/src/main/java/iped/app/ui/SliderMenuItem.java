@@ -16,12 +16,12 @@ import javax.swing.event.ChangeListener;
 
 import iped.viewers.api.IQuantifiableFilter;
 
-public class SliderMenuItem extends JPanel implements MenuElement{
+public class SliderMenuItem extends JPanel implements MenuElement {
     private JSlider valueSlider;
     private JLabel sliderLabel;
     IQuantifiableFilter filter;
     boolean sliderChanged;
-    
+
     public SliderMenuItem() {
         sliderLabel = new JLabel("");
         sliderLabel.setVisible(true);
@@ -34,22 +34,22 @@ public class SliderMenuItem extends JPanel implements MenuElement{
         this.add(valueSlider, BorderLayout.CENTER);
         setSize(new Dimension(100, 48));
     }
-    
+
     public boolean hasSliderChanged() {
         return sliderChanged;
     }
-    
+
     public void setFilter(IQuantifiableFilter o) {
         this.filter = o;
-        sliderChanged=false;
-        setValue(((IQuantifiableFilter)o).getQuantityValue());
-        setText("Value:"+ Integer.toString(getValue()));
+        sliderChanged = false;
+        setValue(((IQuantifiableFilter) o).getQuantityValue());
+        setText("Value:" + Integer.toString(getValue()));
         addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
-                ((IQuantifiableFilter)o).setQuantityValue(getValue());
-                setText("Value:"+ Integer.toString(getValue()));
-                sliderChanged=true;
+                ((IQuantifiableFilter) o).setQuantityValue(getValue());
+                setText("Value:" + Integer.toString(getValue()));
+                sliderChanged = true;
             }
         });
     }
@@ -57,19 +57,19 @@ public class SliderMenuItem extends JPanel implements MenuElement{
     @Override
     public void processMouseEvent(MouseEvent event, MenuElement[] path, MenuSelectionManager manager) {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
     public void processKeyEvent(KeyEvent event, MenuElement[] path, MenuSelectionManager manager) {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
     public void menuSelectionChanged(boolean isIncluded) {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
@@ -103,5 +103,5 @@ public class SliderMenuItem extends JPanel implements MenuElement{
     public int getHeight() {
         return super.getHeight();
     }
-    
+
 }

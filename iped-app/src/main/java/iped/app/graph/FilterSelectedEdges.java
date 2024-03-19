@@ -2,20 +2,17 @@ package iped.app.graph;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.kharon.Edge;
 import org.kharon.Graph;
 import org.kharon.OverlappedEdges;
-import org.kharon.renderers.Renderers;
 
 import iped.app.ui.App;
 import iped.data.IItemId;
@@ -29,7 +26,7 @@ import iped.viewers.api.IFilter;
 import iped.viewers.api.IResultSetFilter;
 import iped.viewers.api.IResultSetFilterer;
 
-public class FilterSelectedEdges implements IResultSetFilterer{
+public class FilterSelectedEdges implements IResultSetFilterer {
 
     private static FilterSelectedEdges INSTANCE = new FilterSelectedEdges();
 
@@ -166,7 +163,7 @@ public class FilterSelectedEdges implements IResultSetFilterer{
     public List getDefinedFilters() {
         ArrayList<IFilter> result = new ArrayList<IFilter>();
         IFilter filter = getFilter();
-        if(filter!=null) {
+        if (filter != null) {
             result.add(filter);
         }
         return result;
@@ -174,19 +171,19 @@ public class FilterSelectedEdges implements IResultSetFilterer{
 
     @Override
     public IFilter getFilter() {
-        if(selectedEdges!=null && selectedEdges.size()>0) {
+        if (selectedEdges != null && selectedEdges.size() > 0) {
             Set<IItemId> selectedEdgesItems = FilterSelectedEdges.getInstance().getItemIdsOfSelectedEdges();
             HashSet<Edge> edges = new HashSet();
             edges.addAll(FilterSelectedEdges.getInstance().selectedEdges);
             return new EdgeFilter(graph, selectedEdgesItems, edges);
-        }else {
+        } else {
             return null;
         }
     }
 
     @Override
     public boolean hasFilters() {
-        return selectedEdges.size()>0;
+        return selectedEdges.size() > 0;
     }
 
     @Override
@@ -196,7 +193,7 @@ public class FilterSelectedEdges implements IResultSetFilterer{
 
     @Override
     public void clearFilter() {
-        FilterSelectedEdges.INSTANCE.clearSelection(false);        
+        FilterSelectedEdges.INSTANCE.clearSelection(false);
     }
 
     public void setGraph(Graph graph) {
@@ -204,7 +201,7 @@ public class FilterSelectedEdges implements IResultSetFilterer{
     }
 }
 
-class EdgeFilter implements IResultSetFilter{
+class EdgeFilter implements IResultSetFilter {
     Set<Edge> selectedEdges = new HashSet();
     Set<IItemId> selectedEdgesIds = new HashSet();
     String name;
@@ -216,26 +213,24 @@ class EdgeFilter implements IResultSetFilter{
         this.graph = graph;
         StringBuffer sb = new StringBuffer();
 
-        
         String lastLabel = null;
         HashSet group = new HashSet();
         for (Iterator iterator = selectedEdges.iterator(); iterator.hasNext();) {
             Edge edge = (Edge) iterator.next();
-            String filterInfo = graph.getNode(edge.getSource()).getLabel()+"->"+graph.getNode(edge.getTarget()).getLabel();
-            if(!group.contains(filterInfo)) {
+            String filterInfo = graph.getNode(edge.getSource()).getLabel() + "->" + graph.getNode(edge.getTarget()).getLabel();
+            if (!group.contains(filterInfo)) {
                 group.add(filterInfo);
                 sb.append(filterInfo);
                 sb.append(",");
             }
         }
-        if(sb.length()>1) {
-            name = sb.toString().substring(0,sb.length()-1);
+        if (sb.length() > 1) {
+            name = sb.toString().substring(0, sb.length() - 1);
         }
     }
 
     @Override
-    public IMultiSearchResult filterResult(IMultiSearchResult src)
-            throws ParseException, QueryNodeException, IOException {
+    public IMultiSearchResult filterResult(IMultiSearchResult src) throws ParseException, QueryNodeException, IOException {
         IMultiSearchResult result = src;
         ArrayList<IItemId> filteredItems = new ArrayList<IItemId>();
         ArrayList<Float> scores = new ArrayList<Float>();
@@ -247,8 +242,7 @@ class EdgeFilter implements IResultSetFilter{
             }
             i++;
         }
-        result = new MultiSearchResult(filteredItems.toArray(new ItemId[0]),
-                ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
+        result = new MultiSearchResult(filteredItems.toArray(new ItemId[0]), ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
         return result;
     }
 

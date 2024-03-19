@@ -1,25 +1,25 @@
 package iped.app.ui.filterdecisiontree;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import iped.app.ui.Messages;
 
 public class OperandNode extends DecisionNode {
 
-    public enum Operand {AND,OR};
+    public enum Operand {
+        AND, OR
+    };
+
     Operand operand;
 
-    static String ANDSTR = Messages.get("Operand.AND"); 
+    static String ANDSTR = Messages.get("Operand.AND");
     static String ORSTR = Messages.get("Operand.OR");
-    
+
     public OperandNode(Operand op) {
         this.operand = op;
     }
-    
+
     @Override
     public String toString() {
-        if(operand==Operand.AND) {
+        if (operand == Operand.AND) {
             return ANDSTR;
         }
         return ORSTR;

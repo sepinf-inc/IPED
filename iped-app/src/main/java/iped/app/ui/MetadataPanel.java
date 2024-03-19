@@ -11,13 +11,12 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.BitSet;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
@@ -69,8 +68,7 @@ import iped.viewers.api.IFilter;
 import iped.viewers.api.IResultSetFilter;
 import iped.viewers.api.IResultSetFilterer;
 
-public class MetadataPanel extends JPanel
-        implements ActionListener, ListSelectionListener, ChangeListener, IResultSetFilterer {
+public class MetadataPanel extends JPanel implements ActionListener, ListSelectionListener, ChangeListener, IResultSetFilterer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MetadataPanel.class);
 
@@ -83,23 +81,20 @@ public class MetadataPanel extends JPanel
     private static final int MAX_TERMS_TO_HIGHLIGHT = 1024;
 
     private volatile static LeafReader reader;
-    
 
     JList<ValueCount> list = new JList<ValueCount>();
     JScrollPane scrollList = new JScrollPane(list);
     JSlider sort = new JSlider(JSlider.HORIZONTAL, 0, 1, 0);
-    private final JLabel labelScale = new JLabel(Messages.getString("MetadataPanel.Scale")); //$NON-NLS-1$    
+    private final JLabel labelScale = new JLabel(Messages.getString("MetadataPanel.Scale")); //$NON-NLS-1$
     JComboBox<String> groups;
     JComboBox<String> props = new JComboBox<String>();
     JSlider scale = new JSlider(JSlider.HORIZONTAL, -1, 1, 0);
     private final HoverButton update = new HoverButton();
-    HintTextField listFilter = new HintTextField(
-            "[" + Messages.getString("MetadataPanel.FilterValues") + "] " + (char) 0x2193);
+    HintTextField listFilter = new HintTextField("[" + Messages.getString("MetadataPanel.FilterValues") + "] " + (char) 0x2193);
     private final HoverButton copyResultToClipboard = new HoverButton();
     private final HoverButton reset = new HoverButton();
-    private final HintTextField propsFilter = new HintTextField(
-            "[" + Messages.getString("MetadataPanel.FilterProps") + "] " + (char) 0x2191);
-    
+    private final HintTextField propsFilter = new HintTextField("[" + Messages.getString("MetadataPanel.FilterProps") + "] " + (char) 0x2191);
+
     private Object lastPropSel;
 
     ValueCount[] array, filteredArray;
@@ -109,9 +104,7 @@ public class MetadataPanel extends JPanel
 
     private MetadataSearch ms = new MetadataSearch();
 
-
     private static final long serialVersionUID = 1L;
-
 
     public MetadataPanel() {
         super(new BorderLayout());
@@ -142,7 +135,7 @@ public class MetadataPanel extends JPanel
         copyResultToClipboard.setToolTipText(Messages.getString("MetadataPanel.CopyClipboard"));
         copyResultToClipboard.setPreferredSize(new Dimension(20, 20));
         copyResultToClipboard.addActionListener(this);
-        
+
         reset.setIcon(IconUtil.getIcon("clear", RES_PATH, 16));
         reset.setToolTipText(Messages.getString("MetadataPanel.Clear"));
         reset.setPreferredSize(new Dimension(20, 20));
@@ -165,7 +158,7 @@ public class MetadataPanel extends JPanel
         center.add(groups);
         center.add(props);
         center.add(l3c);
-        
+
         propsFilter.getDocument().addDocumentListener(new DocumentListener() {
             public void removeUpdate(DocumentEvent e) {
                 changedUpdate(e);
@@ -181,7 +174,7 @@ public class MetadataPanel extends JPanel
                 }
             }
         });
-        
+
         JPanel l4 = new JPanel(new FlowLayout(FlowLayout.RIGHT, 1, 1));
         l4.add(new JLabel(Messages.getString("MetadataPanel.Sort")));
         l4.add(sort);
@@ -204,7 +197,6 @@ public class MetadataPanel extends JPanel
         this.add(scrollList, BorderLayout.CENTER);
     }
 
-
     private void updateProps() {
         updatingProps = true;
         props.removeAllItems();
@@ -215,9 +207,7 @@ public class MetadataPanel extends JPanel
             fields = fields.stream().map(f -> LocalizedProperties.getLocalizedField(f)).collect(Collectors.toList());
             Collections.sort(fields, StringUtil.getIgnoreCaseComparator());
             for (String f : fields) {
-                if (f.equals(ResultTableModel.BOOKMARK_COL) || f.equals(ResultTableModel.SCORE_COL)
-                        || f.startsWith(ImageSimilarityTask.IMAGE_FEATURES)
-                        || f.startsWith(SimilarFacesSearch.FACE_FEATURES))
+                if (f.equals(ResultTableModel.BOOKMARK_COL) || f.equals(ResultTableModel.SCORE_COL) || f.startsWith(ImageSimilarityTask.IMAGE_FEATURES) || f.startsWith(SimilarFacesSearch.FACE_FEATURES))
                     continue;
                 if (filterStr.isEmpty() || f.toLowerCase().contains(filterStr))
                     props.addItem(f);
@@ -275,8 +265,7 @@ public class MetadataPanel extends JPanel
                             strBuffer.append(System.lineSeparator());
                         }
                     }
-                    Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(strBuffer.toString()),
-                            null);
+                    Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(strBuffer.toString()), null);
                 } finally {
                     setWaitVisible(false);
                 }
@@ -287,12 +276,12 @@ public class MetadataPanel extends JPanel
     private void populateList() {
         setWaitVisible(true);
         final boolean updateResult = !list.isSelectionEmpty();
-        Future<?> f = null;
+        Future<MultiSearchResult> future = null;
         if (updateResult) {
-            updatingResult=true;
-            f = App.get().appletListener.futureUpdateFileListing();
+            updatingResult = true;
+            future = App.get().appletListener.futureUpdateFileListing();
         }
-        Future<?> resolved = f;
+        Future<MultiSearchResult> finalfuture = future;
 
         ms.setLogScale(scale.getValue() == 1);
         ms.setNoRanges(scale.getValue() == -1);
@@ -304,27 +293,25 @@ public class MetadataPanel extends JPanel
             @Override
             public void run() {
                 try {
-                    if(resolved!=null) {
-                        while(!resolved.isDone()) {
-                            try {
-                                Thread.sleep(100);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                        }                    
+                    IMultiSearchResult result = null;
+                    if (finalfuture != null) {
+                        try {
+                            result = finalfuture.get();
+                        } catch (InterruptedException | ExecutionException e) {
+                            e.printStackTrace();
+                        }
                     }
-                    updatingResult=false;
-                    ms.setIpedResult(App.get().ipedResult);
+                    if (result == null) {
+                        result = App.get().ipedResult;
+                    }
+                    updatingResult = false;
+                    ms.setIpedResult(result);
 
                     countValues();
+
                 } catch (IOException e) {
                     e.printStackTrace();
                 } finally {
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
                     setWaitVisible(false);
                 }
             }
@@ -346,8 +333,9 @@ public class MetadataPanel extends JPanel
                 for (int idx = 0; idx < sortedArray.length; idx++)
                     if (selSet.contains(sortedArray[idx]))
                         selIdx[i++] = idx;
-                if (i > 0)
+                if (!updateAction && i > 0) {
                     list.setSelectedIndices(selIdx);
+                }
                 updatingList = false;
 
                 // System.out.println("finish");
@@ -357,13 +345,15 @@ public class MetadataPanel extends JPanel
 
     }
 
+    private boolean updateAction = false;;
+
     @Override
     public void actionPerformed(ActionEvent e) {
 
         if (updatingProps)
             return;
 
-        if (e.getSource() == update || e.getSource() == props)
+        if ((updateAction = e.getSource() == update) || e.getSource() == props)
             populateList();
 
         else if (e.getSource() == groups)
@@ -377,7 +367,7 @@ public class MetadataPanel extends JPanel
 
         else if (e.getSource() == reset)
             resetPanel();
-        
+
     }
 
     @Override
@@ -409,18 +399,11 @@ public class MetadataPanel extends JPanel
         }
     }
 
-    public MultiSearchResult getFilteredItemIds(String field, JList<ValueCount> list, MultiSearchResult result) throws ParseException, QueryNodeException, IOException {
-        field = LocalizedProperties.getNonLocalizedField(field.trim());
-
-        Set<Integer> ords = new HashSet<>();
-        for (ValueCount value : list.getSelectedValuesList()) {
-            ords.add(value.getOrd());
-        }
-        return ms.getIdsWithOrd(result, field, ords);
-    }
-
     public MultiSearchResult getFilteredItemIds(MultiSearchResult result) throws ParseException, QueryNodeException, IOException {
         String field = (String) props.getSelectedItem();
+        if (field == null) {
+            return result;
+        }
         field = LocalizedProperties.getNonLocalizedField(field.trim());
 
         Set<Integer> ords = new HashSet<>();
@@ -434,8 +417,7 @@ public class MetadataPanel extends JPanel
     public Set<String> getHighlightTerms() throws ParseException, QueryNodeException {
 
         String field = (String) props.getSelectedItem();
-        if (field == null || !(field.startsWith(RegexTask.REGEX_PREFIX) || field.startsWith(NamedEntityTask.NER_PREFIX))
-                || list.isSelectionEmpty())
+        if (field == null || !(field.startsWith(RegexTask.REGEX_PREFIX) || field.startsWith(NamedEntityTask.NER_PREFIX)) || list.isSelectionEmpty())
             return Collections.emptySet();
 
         Set<String> highlightTerms = new HashSet<String>();
@@ -458,8 +440,7 @@ public class MetadataPanel extends JPanel
         }
 
         QueryBuilder stdParser = new QueryBuilder(App.get().appCase);
-        ComplexPhraseQueryParser complexPhraseParser = new ComplexPhraseQueryParser(IndexItem.CONTENT,
-                App.get().appCase.getAnalyzer());
+        ComplexPhraseQueryParser complexPhraseParser = new ComplexPhraseQueryParser(IndexItem.CONTENT, App.get().appCase.getAnalyzer());
         stdParser.setAllowLeadingWildcard(true);
         complexPhraseParser.setAllowLeadingWildcard(true);
 
@@ -516,7 +497,7 @@ public class MetadataPanel extends JPanel
         }
 
     }
-    
+
     private void resetPanel() {
         if (groups.getSelectedItem() != null) {
             boolean empty = list.isSelectionEmpty();
@@ -535,7 +516,7 @@ public class MetadataPanel extends JPanel
         listFilter.setText("");
         propsFilter.setText("");
     }
-    
+
     private void setWaitVisible(final boolean visible) {
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
@@ -546,7 +527,7 @@ public class MetadataPanel extends JPanel
 
     public void setSelectedProperty(String string) {
         // TODO Auto-generated method stub
-        
+
     }
 
     private void countValues() throws IOException {
@@ -560,6 +541,7 @@ public class MetadataPanel extends JPanel
             return;
         }
 
+        field = LocalizedProperties.getNonLocalizedField(field.trim());
         boolean isNumeric = IndexItem.isNumeric(field);
 
         SwingUtilities.invokeLater(new Runnable() {
@@ -573,7 +555,7 @@ public class MetadataPanel extends JPanel
         ArrayList<ValueCount> resultList = ms.countValues(field);
 
         array = resultList.toArray(new ValueCount[0]);
-        
+
         filteredArray = filter(array);
 
         LOGGER.info("Metadata value counting took {}ms", (System.currentTimeMillis() - time));
@@ -617,33 +599,24 @@ public class MetadataPanel extends JPanel
 
     }
 
-
-    public MultiSearchResult getIdsWithOrd(MultiSearchResult result, String key, Set<Integer> ords) throws IOException {
-        return ms.getIdsWithOrd(result, key, ords);
-    }
-
-
-    public List<ValueCount> countValues(String field) throws IOException {
-        ms.setIpedResult(App.get().ipedResult);
-        return ms.countValues(field);
-    }
-
     @Override
     public List getDefinedFilters() {
         ArrayList<IFilter> result = new ArrayList<IFilter>();
         String field = (String) props.getSelectedItem();
+        if (field == null) {
+            return result;
+        }
+        field = LocalizedProperties.getNonLocalizedField(field.trim());
         HashSet<ValueCount> selectedValues = new HashSet<ValueCount>();
         selectedValues.addAll(list.getSelectedValuesList());
-        if(isFiltering()) {
+        if (isFiltering()) {
             ValueCount sample = selectedValues.iterator().next();
-            result.add(new ValueCountQueryFilter(field , selectedValues));
+            result.add(new ValueCountQueryFilter(field, selectedValues));
             /*
-            if(sample instanceof RangeCount) {
-                result.add(new ValueCountQueryFilter(field , selectedValues));
-            }else {
-                result.add(new ValueCountFilter(field , selectedValues));
-            }
-            */
+             * if(sample instanceof RangeCount) { result.add(new ValueCountQueryFilter(field
+             * , selectedValues)); }else { result.add(new ValueCountFilter(field ,
+             * selectedValues)); }
+             */
         }
         return result;
     }
@@ -654,36 +627,32 @@ public class MetadataPanel extends JPanel
 
     @Override
     public IFilter getFilter() {
-        if(isFiltering()) {
+        if (isFiltering()) {
             return new IResultSetFilter() {
                 public String toString() {
                     String field = (String) props.getSelectedItem();
                     field = LocalizedProperties.getNonLocalizedField(field.trim());
-                    return field+":"+list.getSelectedValue();
+                    return field + ":" + list.getSelectedValue();
                 }
 
                 @Override
-                public IMultiSearchResult filterResult(IMultiSearchResult src)
-                        throws ParseException, QueryNodeException, IOException {
-                    return getFilteredItemIds((MultiSearchResult)src);
+                public IMultiSearchResult filterResult(IMultiSearchResult src) throws ParseException, QueryNodeException, IOException {
+                    return getFilteredItemIds((MultiSearchResult) src);
                 }
-            };        
+            };
         }
         return null;
     }
-
 
     @Override
     public boolean hasFilters() {
         return isFiltering();
     }
 
-
     @Override
     public boolean hasFiltersApplied() {
         // TODO Auto-generated method stub
         return false;
     }
-    
-}
 
+}

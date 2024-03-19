@@ -16,7 +16,7 @@ import iped.exception.QueryNodeException;
 import iped.utils.LocalizedFormat;
 import iped.viewers.util.ProgressDialog;
 
-public class UICaseSearchFilterListener implements CaseSearchFilterListener{
+public class UICaseSearchFilterListener implements CaseSearchFilterListener {
 
     private static Logger LOGGER = LoggerFactory.getLogger(UICaseSearchFilterListener.class);
     ProgressDialog progressDialog;
@@ -37,7 +37,7 @@ public class UICaseSearchFilterListener implements CaseSearchFilterListener{
             try {
                 saveHighlightTerms();
             } catch (Exception e) {
-
+                e.printStackTrace();
             }
 
             App.get().clearAllFilters.setNumberOfFilters(caseSearcherFilter.getNumFilters());
@@ -65,7 +65,7 @@ public class UICaseSearchFilterListener implements CaseSearchFilterListener{
                 }
 
             App.get().filtersPanel.updateUI();
-        }finally {
+        } finally {
             if (progressDialog != null)
                 progressDialog.close();
         }
@@ -96,7 +96,7 @@ public class UICaseSearchFilterListener implements CaseSearchFilterListener{
             App.get().appCase.reopen();
         } catch (IOException e) {
             e.printStackTrace();
-        }finally {
+        } finally {
             if (progressDialog != null)
                 progressDialog.close();
         }
@@ -108,4 +108,3 @@ public class UICaseSearchFilterListener implements CaseSearchFilterListener{
     }
 
 }
-

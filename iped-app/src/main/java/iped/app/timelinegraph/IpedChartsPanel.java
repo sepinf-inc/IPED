@@ -1088,7 +1088,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
     public List getDefinedFilters() {
         ArrayList<IFilter> result = new ArrayList<IFilter>();
         if (chartPanel.definedFilters.size() > 0) {
-            for(Date[] dates : chartPanel.definedFilters) {
+            for (Date[] dates : chartPanel.definedFilters) {
                 result.add(new IQueryFilter() {
                     private Query query;
 
@@ -1097,11 +1097,11 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
                         timeFilter += " TO ";
                         timeFilter += domainAxis.ISO8601DateFormatUTC(dates[1]);
                         return timeFilter;
-                   }
+                    }
 
                     @Override
                     public Query getQuery() {
-                        if(query==null) {
+                        if (query == null) {
                             String timeFilter = "timeStamp:[";
                             timeFilter += domainAxis.ISO8601DateFormatUTC(dates[0]);
                             timeFilter += " TO ";
@@ -1120,24 +1120,24 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
                 });
             }
         }
-        for(String event:chartPanel.excludedEvents) {
+        for (String event : chartPanel.excludedEvents) {
             result.add(new IFilter() {
-               public String toString() {
-                   return "-eventType:"+event;
-               }
+                public String toString() {
+                    return "-eventType:" + event;
+                }
             });
         }
-        
-      return result;
+
+        return result;
     }
-    
+
     public String toString() {
         return "Timeline panel";
     }
 
     @Override
     public boolean hasFilters() {
-        return chartPanel.definedFilters.size() > 0 || chartPanel.excludedEvents.size()>0;
+        return chartPanel.definedFilters.size() > 0 || chartPanel.excludedEvents.size() > 0;
     }
 
     public static String[] getOrdToEventName() {

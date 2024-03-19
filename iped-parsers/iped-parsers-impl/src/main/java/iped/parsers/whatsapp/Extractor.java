@@ -50,7 +50,7 @@ public abstract class Extractor {
         // adds all contacts that sent at least one message
         for (Message m : c.getMessages()) {
             if (m.getRemoteResource() != null)
-                c.getGroupmembers().add(contacts.getContact(m.getRemoteResource()));
+                c.getGroupMembers().add(contacts.getContact(m.getRemoteResource()));
         }
         if (SELECT_GROUP_MEMBERS == null) {
             return;
@@ -63,7 +63,7 @@ public abstract class Extractor {
                 while (rs.next()) {
                     String memberId = rs.getString("member");
                     if (!memberId.trim().isEmpty()) {
-                        c.getGroupmembers().add(contacts.getContact(memberId));
+                        c.getGroupMembers().add(contacts.getContact(memberId));
                     }
                 }
 
@@ -108,7 +108,7 @@ public abstract class Extractor {
         List<Chat> cleanedList = new ArrayList<>();
         for (Chat c : list) {
             String remote = c.getRemote() != null ? c.getRemote().getId() : null;
-            if (!c.getMessages().isEmpty() || !c.getGroupmembers().isEmpty()
+            if (!c.getMessages().isEmpty() || !c.getGroupMembers().isEmpty()
                     || (c.getSubject() != null && !c.getSubject().isBlank())
                     || (remote != null && !(remote = remote.strip()).isEmpty() && !remote.equals("0"))) {
                 cleanedList.add(c);

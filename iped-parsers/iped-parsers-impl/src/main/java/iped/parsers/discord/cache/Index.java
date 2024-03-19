@@ -2,13 +2,21 @@ package iped.parsers.discord.cache;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
+import org.apache.poi.hpsf.Filetime;
+import org.apache.poi.util.LittleEndianByteArrayInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.ImmutableList;
+
 import iped.data.IItemReader;
+import iped.parsers.browsers.chrome.ChromeCacheException;
 import iped.parsers.discord.cache.CacheAddr.InputStreamNotAvailable;
 
 /**
@@ -25,17 +33,20 @@ public class Index {
 
     private static Logger logger = LoggerFactory.getLogger(Index.class);
 
+    static private final long MAGIC_NUMBER_LE = 0xC103CAC3l; // magic number in little endian
+    static private final List<Long> supportedVersions = ImmutableList.of(0x00020001l, 0x00030000l);
+
     private final long magicNumber;
     private final long version;
     private final int entriesCont;
-    private final int bytesCont;
+    private long bytesCont;
     private final int lastFile;
     private final int id;
     private final CacheAddr stats;
     private final int tableLength;
     private final int crash;
     private final int experiment;
-    private final long createTime;
+    private final Date createTime;
     private final int[] padding = new int[52];
     private int[] pad1 = new int[2];
     private int filled;
@@ -60,7 +71,7 @@ public class Index {
         return entriesCont;
     }
 
-    public int getBytesCont() {
+    public long getBytesCont() {
         return bytesCont;
     }
 
@@ -88,7 +99,7 @@ public class Index {
         return experiment;
     }
 
-    public long getCreateTime() {
+    public Date getCreateTime() {
         return createTime;
     }
 
@@ -140,10 +151,20 @@ public class Index {
         this.lst = lst;
     }
 
-    public Index(InputStream is, String path, List<IItemReader> dataFiles, List<IItemReader> externalFiles) throws IOException {
+    public Index(InputStream is, String path, List<IItemReader> dataFiles, List<IItemReader> externalFiles) throws IOException, ChromeCacheException {
 
         magicNumber = readUnsignedInt(is);
+
+        if (magicNumber != MAGIC_NUMBER_LE) {
+            throw new ChromeCacheException("Invalid index magic number:" + magicNumber);
+        }
+
         version = readUnsignedInt(is);
+
+        if (!supportedVersions.contains(version)) {
+            throw new ChromeCacheException("Unsupported index version number:" + version);
+        }
+
         entriesCont = read4bytes(is);
         bytesCont = read4bytes(is);
         lastFile = read4bytes(is);
@@ -152,9 +173,13 @@ public class Index {
         tableLength = read4bytes(is);
         crash = read4bytes(is);
         experiment = read4bytes(is);
-        createTime = read8bytes(is);
+        createTime = readDate(is);
 
-        for (int i = 0; i < 52; i++) {
+        if (version == 0x00030000l) {
+            bytesCont = read8bytes(is);
+        }
+
+        for (int i = 0; i < 50; i++) {
             padding[i] = (int) readUnsignedInt(is);
         }
 
@@ -166,10 +191,7 @@ public class Index {
         for (int i = 0; i < 5; i++) {
             sizes[i] = read4bytes(is);
         }
-        /*
-         * sizes = new int[5]; for (int i = 0; i < 5; i++) { sizes[i] = read4bytes(is);
-         * }
-         */
+
         heads = new CacheAddr[5];
         for (int i = 0; i < 5; i++) {
             heads[i] = new CacheAddr(readUnsignedInt(is));
@@ -198,27 +220,32 @@ public class Index {
             table[i] = new CacheAddr(readUnsignedInt(is));
         }
 
-        List<CacheEntry> entries = new ArrayList<>();
-
+        int validEntryCount = 0;
         for (CacheAddr ea : table) {
-            try (InputStream eaIS = ea.getInputStream(dataFiles, externalFiles)) {
-                entries.add(new CacheEntry(eaIS, dataFiles, externalFiles));
+            try (InputStream eaIS = ea.getInputStream(dataFiles, externalFiles, null)) {
+                validEntryCount++;
+                CacheEntry ce = new CacheEntry(eaIS, dataFiles, externalFiles);
+                lst.add(ce);
+                while (ce.getNextEntry().getAddress() != 0) {
+                    CacheAddr na = ce.getNextEntry();
+                    try (InputStream naIS = na.getInputStream(dataFiles, externalFiles, null)) {
+                        ce = new CacheEntry(naIS, dataFiles, externalFiles);
+                        lst.add(ce);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        break;// avoid potential infinite loop
+                    }
+                }
             } catch (InputStreamNotAvailable e) {
                 continue;
             } catch (IOException e) {
                 logger.warn("Exception reading CacheEntry of Discord Index " + path, e);
             }
         }
+        if (validEntryCount != entriesCont) {
+            System.out.println();
 
-        for (CacheEntry en : entries) {
-            if (en.getState() == 0) {
-                String key = en.getKey();
-                if (key != null && !key.trim().isEmpty()) {
-                    lst.add(en);
-                }
-            }
         }
-
     }
 
     public static int read2bytes(InputStream is) throws IOException {
@@ -230,11 +257,24 @@ public class Index {
     }
 
     public static long readUnsignedInt(InputStream is) throws IOException {
-        return (read2bytes(is) | (read2bytes(is) << 16)) & 0xffffffffL;
+        byte[] b = new byte[4];
+        is.read(b);
+        ByteBuffer bb = ByteBuffer.wrap(b);
+        bb.order(ByteOrder.LITTLE_ENDIAN);
+        return Integer.toUnsignedLong(bb.getInt());
     }
 
     public static long read8bytes(InputStream is) throws IOException {
-        return read4bytes(is) | (readUnsignedInt(is) << 32);
+        byte b[] = new byte[8];
+        is.read(b);
+        return ByteBuffer.wrap(b).getLong() & 0xffffffffffffffffL;
+    }
+
+    public static Date readDate(InputStream is) throws IOException {
+        byte[] buf = new byte[8];
+        is.read(buf);
+        long timestamp = new LittleEndianByteArrayInputStream(buf).readLong();
+        return Filetime.filetimeToDate(timestamp * 10);
     }
 
 }

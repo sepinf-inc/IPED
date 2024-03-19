@@ -12,7 +12,7 @@ public class FilterNode extends DecisionNode {
     public IFilter getFilter() {
         return filter;
     }
-    
+
     @Override
     public String toString() {
         return filter.toString();

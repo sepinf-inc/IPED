@@ -14,7 +14,7 @@ public class SingleValueCount extends ValueCount implements Comparable<SingleVal
 
     @Override
     public String toString() {
-        NumberFormat nf = LocalizedFormat.getNumberInstance(); 
+        NumberFormat nf = LocalizedFormat.getNumberInstance();
         StringBuilder sb = new StringBuilder();
         sb.append(nf.format(value));
         sb.append(" ("); //$NON-NLS-1$
@@ -28,9 +28,8 @@ public class SingleValueCount extends ValueCount implements Comparable<SingleVal
         NumberFormat nf = LocalizedFormat.getNumberInstance();
         return nf.format(value);
     }
-    
+
     public int compareTo(SingleValueCount o) {
         return Double.compare(value, o.value);
     }
-}    
-
+}

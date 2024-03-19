@@ -155,7 +155,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
         if (item.getMediaType() != null) {
             contentType = item.getMediaType().toString();
         }
-        
+
         boolean enabled = item.getExtraAttribute(ImageSimilarityTask.IMAGE_FEATURES) != null;
         App.get().setEnableGallerySimSearchButton(enabled);
 
@@ -196,8 +196,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
 
     private void waitEvidenceOpening(final IItem item) throws InterruptedException {
         ISeekableInputStreamFactory factory = item.getInputStreamFactory();
-        if (!(factory instanceof SleuthkitInputStreamFactory) && !(factory instanceof ZIPInputStreamFactory)
-                && !(factory instanceof AD1InputStreamFactory)) {
+        if (!(factory instanceof SleuthkitInputStreamFactory) && !(factory instanceof ZIPInputStreamFactory) && !(factory instanceof AD1InputStreamFactory)) {
             return;
         }
         if (!dataSourceOpened.contains(item.getDataSource().getUUID())) {

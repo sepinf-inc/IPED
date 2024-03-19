@@ -48,13 +48,10 @@ import iped.engine.search.QueryBuilder;
 import iped.engine.task.index.IndexItem;
 import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
-import iped.viewers.api.ClearFilterListener;
 import iped.viewers.api.IFilter;
-import iped.viewers.api.IQueryFilter;
 import iped.viewers.api.IQueryFilterer;
 
-public class TreeListener extends MouseAdapter
-        implements TreeSelectionListener, ActionListener, TreeExpansionListener, IQueryFilterer {
+public class TreeListener extends MouseAdapter implements TreeSelectionListener, ActionListener, TreeExpansionListener, IQueryFilterer {
 
     private Query treeQuery, recursiveTreeQuery;
     boolean rootSelected = false;
@@ -87,7 +84,7 @@ public class TreeListener extends MouseAdapter
             }
         }
 
-        definedFilters=null;
+        definedFilters = null;
         if (rootSelected || selection.isEmpty()) {
             treeQuery = new TermQuery(new Term(IndexItem.ISROOT, "true")); //$NON-NLS-1$
             recursiveTreeQuery = null;
@@ -215,12 +212,12 @@ public class TreeListener extends MouseAdapter
     @Override
     public List getDefinedFilters() {
         TreeListener self = this;
-        if(definedFilters == null) {
+        if (definedFilters == null) {
             definedFilters = new ArrayList<IFilter>();
-            if(selection.size() >= 1) {
-                if(App.get().recursiveTreeList.isSelected()) {
+            if (selection.size() >= 1) {
+                if (App.get().recursiveTreeList.isSelected()) {
                     definedFilters.add(new QueryFilter(self.recursiveTreeQuery));
-                }else {
+                } else {
                     definedFilters.add(new QueryFilter(self.treeQuery));
                 }
             }
@@ -230,7 +227,7 @@ public class TreeListener extends MouseAdapter
 
     @Override
     public boolean hasFiltersApplied() {
-        return recursiveTreeQuery!=null;
+        return recursiveTreeQuery != null;
     }
 
     @Override
@@ -240,14 +237,14 @@ public class TreeListener extends MouseAdapter
         else
             return treeQuery;
     }
-    
+
     public String toString() {
         return "Evidence panel";
     }
 
     @Override
     public boolean hasFilters() {
-        return recursiveTreeQuery!=null;
+        return recursiveTreeQuery != null;
     }
 
 }

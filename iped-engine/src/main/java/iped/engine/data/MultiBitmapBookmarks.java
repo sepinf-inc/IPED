@@ -512,4 +512,9 @@ public class MultiBitmapBookmarks implements Serializable, IMultiBookmarks {
         return usedColors;
     }
 
+	@Override
+    public void removeBookmarkKeyStroke(String bookmarkName) {
+        for (IBookmarks m : map.values())
+            m.removeBookmarkKeyStroke(m.getBookmarkId(bookmarkName));
+    }
 }

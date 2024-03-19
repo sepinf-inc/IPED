@@ -188,13 +188,17 @@
         </carverType>
 
         <carverType>
-            <!-- May be improved: if a PDF is edited, changes are appended to the end of file and a new footer is added, so it should also accumulate footers for PDFs -->
             <name>PDF</name>
+            <carverClass>iped.carvers.custom.PDFCarver</carverClass>
             <signatures>
-                <headerSignature>%PDF-</headerSignature>
-                <footerSignature>%%EOF?</footerSignature>
+                <headerSignature>%PDF-1</headerSignature>
+                <headerSignature>%PDF-2</headerSignature>
+                <footerSignature>\0a%%EOF\0d\0a</footerSignature>
+                <footerSignature>\0d%%EOF\0d</footerSignature>
+                <footerSignature>\0a%%EOF\0a</footerSignature>
+                <footerSignature>\0a%%EOF</footerSignature>
             </signatures>
-            <minLength>1000</minLength>            
+            <minLength>1000</minLength>
             <maxLength>50000000</maxLength>
             <mediaType>application/pdf</mediaType>
         </carverType>

@@ -1,9 +1,7 @@
 package iped.engine.search;
 
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import org.roaringbitmap.RoaringBitmap;
 
@@ -206,20 +204,20 @@ public class MultiSearchResult implements IMultiSearchResult {
     }
 
     public RoaringBitmap[] getCasesBitSets(IPEDMultiSource multiSource) {
-        if(casesBitSet==null) {
+        if (casesBitSet == null) {
             Integer lastSourceId = -1;
-            RoaringBitmap bitset=null;
-            int maxSrcId=0;
+            RoaringBitmap bitset = null;
+            int maxSrcId = 0;
 
             List<IPEDSource> cases = multiSource.getAtomicSources();
             for (Iterator iterator = cases.iterator(); iterator.hasNext();) {
                 IPEDSource ipedSource = (IPEDSource) iterator.next();
-                if(ipedSource.getSourceId()>maxSrcId) {
+                if (ipedSource.getSourceId() > maxSrcId) {
                     maxSrcId = ipedSource.getSourceId();
                 }
             }
-            
-            casesBitSet = new RoaringBitmap[maxSrcId+1];
+
+            casesBitSet = new RoaringBitmap[maxSrcId + 1];
 
             for (Iterator iterator = cases.iterator(); iterator.hasNext();) {
                 IPEDSource ipedSource = (IPEDSource) iterator.next();
@@ -228,10 +226,10 @@ public class MultiSearchResult implements IMultiSearchResult {
 
             for (int i = 0; i < ids.length; i++) {
                 int sourceId = ids[i].getSourceId();
-                if(sourceId!=lastSourceId) {
+                if (sourceId != lastSourceId) {
                     bitset = casesBitSet[ids[i].getSourceId()];
-                    lastSourceId=sourceId;
-                }                
+                    lastSourceId = sourceId;
+                }
                 bitset.add(ids[i].getId());
             }
         }

@@ -45,15 +45,20 @@ function process(e){
 		}
 	}
 	
-	if(mime.equals("application/x-chrome-cache-index") && path.contains("/appdata/roaming/discord")){
-		if(e.getPath().toLowerCase().contains("gpucache")){
-			e.setMediaTypeStr("application/x-discord-gpucache-index");
-		} else {
-			e.setMediaTypeStr("application/x-discord-index");
-		}
+	if(e.getMetadata().get("chromeCache:isChromeCacheEntry")){
+		e.addCategory("Chrome Cache");
 	}
+    cacheUrl = e.getMetadata().get("chromeCache:chromeCacheUrl");
+    if(cacheUrl != null && cacheUrl.contains("discord")){
+        if(e.getName().startsWith("messages")){
+            e.setMediaTypeStr("application/x-discord-chat+json")
+        }
+        if(e.getName().contains("@me")){
+            e.setMediaTypeStr("application/x-discord-account")
+        }            
+    }
 	
-	if(/.*(-delta|-flat|-(f|s)[0-9]{3})\.vmdk/i.test(e.getName())){
+	if(/.*(-delta|-flat|-(f|s)[0-9]{3})\.vmdk$/i.test(e.getName())){
 	    e.setMediaTypeStr("application/x-vmdk-data");
 	}
 	
@@ -206,6 +211,7 @@ function process(e){
 		(path.indexOf("dropbox/") !== -1)||
 		(path.indexOf("com.getdropbox") !== -1)||
 		(path.indexOf("onedrive/") !== -1)||
+		(path.indexOf("onedrive - ") !== -1)||   //onedrive - <OrganizationName> in the case of OneDrive for Business
 		(path.indexOf("skydrive/") !== -1)||
 		(path.indexOf("google drive/") !== -1)||
 		(path.indexOf("/my drive/") !== -1)||

@@ -24,7 +24,7 @@ import iped.viewers.api.IFilter;
 import iped.viewers.api.IFilterer;
 
 public class FilterTransferHandler extends TransferHandler {
-    
+
     static final public DataFlavor filterFlavor = new DataFlavor(IFilter.class, "iped.IFilter");
     static final public DataFlavor filterNodeFlavor = new DataFlavor(FilterNode.class, "iped.FilterNode");
     static final public DataFlavor operandNodeFlavor = new DataFlavor(OperandNode.class, "iped.OperandNode");
@@ -40,8 +40,7 @@ public class FilterTransferHandler extends TransferHandler {
     @Override
     public boolean canImport(JComponent comp, DataFlavor[] transferFlavors) {
         for (int i = 0; i < transferFlavors.length; i++) {
-            if(transferFlavors[i].equals(filterFlavor) || transferFlavors[i].equals(filterNodeFlavor)
-                    || transferFlavors[i].equals(operandNodeFlavor)) {
+            if (transferFlavors[i].equals(filterFlavor) || transferFlavors[i].equals(filterNodeFlavor) || transferFlavors[i].equals(operandNodeFlavor)) {
                 return true;
             }
         }
@@ -52,59 +51,56 @@ public class FilterTransferHandler extends TransferHandler {
     protected Transferable createTransferable(JComponent c) {
         JTree tree = (JTree) c;
 
-        TreePath tp = tree.getSelectionPath();
+        TreePath tp = filtersPanel.getLastClickedPath();
         Object o = tp.getLastPathComponent();
 
         Object parent = (Object) tp.getParentPath().getLastPathComponent();
-        if(parent instanceof CombinedFilterer) {
-            parent = ((CombinedFilterer)parent).getRootNode();
+        if (parent instanceof CombinedFilterer) {
+            parent = ((CombinedFilterer) parent).getRootNode();
         }
-        
-        DecisionNode parentDecisionNodeTmp = null; 
-        if(parent instanceof DecisionNode) {
+
+        DecisionNode parentDecisionNodeTmp = null;
+        if (parent instanceof DecisionNode) {
             parentDecisionNodeTmp = (DecisionNode) parent;
         }
-        
+
         final DecisionNode parentDecisionNode = parentDecisionNodeTmp;
-        
-        if(o!=null && !(o instanceof IFilterer)) {
+
+        if (o != null && !(o instanceof IFilterer)) {
             Transferable result = new Transferable() {
-                private DataFlavor[] filterFlavors = {filterFlavor, filterNodeFlavor, operandNodeFlavor};
+                private DataFlavor[] filterFlavors = { filterFlavor, filterNodeFlavor, operandNodeFlavor };
 
                 @Override
                 public boolean isDataFlavorSupported(DataFlavor flavor) {
-                    return flavor.equals(filterFlavor) 
-                            || flavor.equals(filterNodeFlavor) 
-                            || flavor.equals(operandNodeFlavor)
-                            || flavor.equals(parentOperandNodeFlavor);
+                    return flavor.equals(filterFlavor) || flavor.equals(filterNodeFlavor) || flavor.equals(operandNodeFlavor) || flavor.equals(parentOperandNodeFlavor);
                 }
 
                 @Override
                 public DataFlavor[] getTransferDataFlavors() {
-                    return filterFlavors ;
+                    return filterFlavors;
                 }
 
                 @Override
                 public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
-                    if(flavor.equals(filterFlavor)) {
-                        if(o instanceof IFilter) {
+                    if (flavor.equals(filterFlavor)) {
+                        if (o instanceof IFilter) {
                             return o;
                         }
                         return null;
                     }
-                    if(flavor.equals(filterNodeFlavor)) {
-                        if(o instanceof FilterNode) {
+                    if (flavor.equals(filterNodeFlavor)) {
+                        if (o instanceof FilterNode) {
                             return o;
                         }
                         return null;
                     }
-                    if(flavor.getHumanPresentableName().equals(operandNodeFlavor.getHumanPresentableName())) {
-                        if(o instanceof OperandNode) {
+                    if (flavor.getHumanPresentableName().equals(operandNodeFlavor.getHumanPresentableName())) {
+                        if (o instanceof OperandNode) {
                             return o;
                         }
                         return null;
                     }
-                    if(flavor.getHumanPresentableName().equals(parentOperandNodeFlavor.getHumanPresentableName())) {
+                    if (flavor.getHumanPresentableName().equals(parentOperandNodeFlavor.getHumanPresentableName())) {
                         return parentDecisionNode;
                     }
                     return null;
@@ -112,7 +108,7 @@ public class FilterTransferHandler extends TransferHandler {
             };
             return result;
         }
-        
+
         return null;
     }
 
@@ -128,29 +124,32 @@ public class FilterTransferHandler extends TransferHandler {
 
     @Override
     protected void exportDone(JComponent source, Transferable data, int action) {
+        if (data == null) {
+            return;
+        }
         try {
             JTree tree = (JTree) source;
             DecisionNode parentDecisionNode = (OperandNode) data.getTransferData(parentOperandNodeFlavor);
-            if(parentDecisionNode!=null && action == MOVE) {
+            if (parentDecisionNode != null && action == MOVE) {
                 OperandNode operand = (OperandNode) data.getTransferData(operandNodeFlavor);
-                if(operand!=null) {
+                if (operand != null) {
                     parentDecisionNode.remove((DecisionNode) operand);
                 }
                 FilterNode filterNode = (FilterNode) data.getTransferData(filterNodeFlavor);
-                if(filterNode!=null) {
+                if (filterNode != null) {
                     parentDecisionNode.remove((DecisionNode) filterNode);
                 }
             }
             tree.updateUI();
 
             combinedFilterer.startSearchResult(App.get().getResults());
-            
-            if(filtersPanel.hasFiltersApplied()) {
+
+            if (filtersPanel.hasFiltersApplied()) {
                 App.get().getAppListener().updateFileListing();
             }
-        }catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
-            
+
         }
 
         super.exportDone(source, data, action);
@@ -163,67 +162,67 @@ public class FilterTransferHandler extends TransferHandler {
         DropLocation loc = support.getDropLocation();
         TreePath destPath = tree.getPathForLocation(loc.getDropPoint().x, loc.getDropPoint().y);
         Object o = destPath.getLastPathComponent();
-        
+
         Transferable data = support.getTransferable();
-        if(data!=null) {
+        if (data != null) {
             try {
-                if(o instanceof CombinedFilterer) {
-                    dest=((CombinedFilterer)o).getRootNode();
-                }else if(o instanceof OperandNode) {
-                    dest=((OperandNode)o);
+                if (o instanceof CombinedFilterer) {
+                    dest = ((CombinedFilterer) o).getRootNode();
+                } else if (o instanceof OperandNode) {
+                    dest = ((OperandNode) o);
                 }
-                if(dest!=null) {
+                if (dest != null) {
                     FilterNode filterNode = (FilterNode) data.getTransferData(filterNodeFlavor);
                     IFilter filter = null;
                     IFilter filterClonedSrc = null;
-                    if(filterNode!=null) {
-                        if(support.getDropAction() == COPY) {
+                    if (filterNode != null) {
+                        if (support.getDropAction() == COPY) {
                             filterClonedSrc = filter;
-                            filter = (IFilter) clone(((FilterNode)filterNode).getFilter());
-                            if(filter!=null) {
+                            filter = (IFilter) clone(((FilterNode) filterNode).getFilter());
+                            if (filter != null) {
                                 dest.addFilter(new FilterNode(filter));
-                            }else {
+                            } else {
                                 return false;
                             }
-                        }else {
-                            if(support.getDropAction() == MOVE) {
+                        } else {
+                            if (support.getDropAction() == MOVE) {
                                 dest.addFilter(filterNode);
                                 tree.expandPath(destPath.pathByAddingChild(filterNode));
                             }
                         }
-                    }else {
+                    } else {
                         filter = (IFilter) data.getTransferData(filterFlavor);
-                        if(filter!=null) {
+                        if (filter != null) {
                             FilterNode fn = new FilterNode(filter);
                             dest.addFilter(fn);
                             tree.expandPath(destPath.pathByAddingChild(fn));
                         }
                     }
-                    if(filter!=null) {
+                    if (filter != null) {
                         tree.updateUI();
                         try {
-                            if(filterClonedSrc==null) {
+                            if (filterClonedSrc == null) {
                                 combinedFilterer.preCacheFilter(filter);
-                            }else {
-                                if(filter!=filterClonedSrc) {
+                            } else {
+                                if (filter != filterClonedSrc) {
                                     combinedFilterer.preCacheFilterClone(filter, filterClonedSrc);
                                 }
                             }
-                        }catch(Exception e) {
-                            if(e.getCause() instanceof QueryNodeException) {
+                        } catch (Exception e) {
+                            if (e.getCause() instanceof QueryNodeException) {
                                 JOptionPane.showMessageDialog(tree.getRootPane(), Messages.get("FiltersPanel.addQueryFilterError"));
                                 return false;
                             }
                         }
                     }
-                    
+
                     OperandNode operand = (OperandNode) data.getTransferData(operandNodeFlavor);
-                    if(operand!=null) {
-                        if(support.getDropAction() == COPY) {
+                    if (operand != null) {
+                        if (support.getDropAction() == COPY) {
                             DecisionNode dn = (DecisionNode) clone(operand);
-                            if(dn!=null) {
+                            if (dn != null) {
                                 dest.addDecisionNode(dn);
-                            }else {
+                            } else {
                                 return false;
                             }
                         } else {
@@ -231,11 +230,11 @@ public class FilterTransferHandler extends TransferHandler {
                             tree.expandPath(destPath.pathByAddingChild(operand));
                         }
                     }
-                    
+
                     return true;
                 }
-            }catch(IOException | UnsupportedFlavorException e) {
-                e.printStackTrace();                
+            } catch (IOException | UnsupportedFlavorException e) {
+                e.printStackTrace();
             }
         }
         return false;

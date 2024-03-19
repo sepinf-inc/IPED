@@ -76,8 +76,7 @@ public class SimilarImagesFilterActions {
                 BufferedInputStream is = null;
                 try {
                     is = new BufferedInputStream(new FileInputStream(file));
-                    img = ImageUtil.getSubSampledImage(is, ImageSimilarity.maxDim * sampleFactor,
-                            ImageSimilarity.maxDim * sampleFactor);
+                    img = ImageUtil.getSubSampledImage(is, ImageSimilarity.maxDim * sampleFactor);
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {
@@ -107,12 +106,10 @@ public class SimilarImagesFilterActions {
                     Item item = new Item();
                     item.setName(file.getName());
                     item.setThumb(baos.toByteArray());
-                    item.setExtraAttribute(ImageSimilarityTask.IMAGE_FEATURES,
-                            new ImageSimilarity().extractFeatures(img));
+                    item.setExtraAttribute(ImageSimilarityTask.IMAGE_FEATURES, new ImageSimilarity().extractFeatures(img));
                     app.setSimilarImagesQueryRefItem(null, item);
                 } else {
-                    JOptionPane.showMessageDialog(App.get(), Messages.getString("ImageSimilarity.ExternalError"),
-                            Messages.getString("ImageSimilarity.ExternalTitle"), JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(App.get(), Messages.getString("ImageSimilarity.ExternalError"), Messages.getString("ImageSimilarity.ExternalTitle"), JOptionPane.ERROR_MESSAGE);
                     return;
                 }
             }

@@ -8,8 +8,8 @@ import iped.viewers.api.IQueryFilter;
 
 public class QueryFilter implements IQueryFilter {
     Query query;
-    String title=null;
-    
+    String title = null;
+
     public QueryFilter(Query query) {
         this.query = query;
     }
@@ -23,9 +23,9 @@ public class QueryFilter implements IQueryFilter {
     public Query getQuery() {
         return query;
     }
-    
+
     public String toString() {
-        return title!=null?title:query.toString();
+        return title != null ? title : query.toString();
     }
 
     @Override

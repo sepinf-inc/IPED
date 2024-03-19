@@ -50,13 +50,13 @@ import iped.search.IMultiSearchResult;
 import iped.utils.DateUtil;
 import iped.utils.LocalizedFormat;
 import iped.viewers.ATextViewer;
+import iped.viewers.components.HitsTableModel;
 
 public class ResultTableModel extends AbstractTableModel implements SearchResultTableModel {
 
     private static final long serialVersionUID = 1L;
 
-    private static final List<String> basicDateFields = Arrays.asList(IndexItem.ACCESSED, IndexItem.MODIFIED,
-            IndexItem.CREATED, IndexItem.CHANGED);
+    private static final List<String> basicDateFields = Arrays.asList(IndexItem.ACCESSED, IndexItem.MODIFIED, IndexItem.CREATED, IndexItem.CHANGED);
 
     private static final String lengthField = LocalizedProperties.getLocalizedField(IndexItem.LENGTH);
     public static String BOOKMARK_COL = Messages.getString("ResultTableModel.bookmark"); //$NON-NLS-1$
@@ -115,8 +115,8 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 
         fields = ColumnsManager.getInstance().getLoadedCols();
         for (String col : fields) {
-            col = LocalizedProperties.getLocalizedField(col);
-            cols.add(col.substring(0, 1).toUpperCase() + col.substring(1));
+            String localizedCol = LocalizedProperties.getLocalizedField(col);
+            cols.add(localizedCol.substring(0, 1).toUpperCase() + localizedCol.substring(1));
             cols2.add(col);
         }
 
@@ -140,7 +140,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     public int getRowCount() {
         return App.get().ipedResult.getLength();
     }
-        
+
     @Override
     public String getColumnName(int col) {
         if (col == 0) {
@@ -167,8 +167,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                 if (mb == -1) {
                     App.get().resultsTable.getColumnModel().getColumn(col).setHeaderValue(columnNames[i] + " (...)"); //$NON-NLS-1$
                 } else {
-                    App.get().resultsTable.getColumnModel().getColumn(col).setHeaderValue(
-                            columnNames[i] + " (" + LocalizedFormat.format(mb) + "MB)"); //$NON-NLS-1$ //$NON-NLS-2$
+                    App.get().resultsTable.getColumnModel().getColumn(col).setHeaderValue(columnNames[i] + " (" + LocalizedFormat.format(mb) + "MB)"); //$NON-NLS-1$ //$NON-NLS-2$
                 }
             }
         }
@@ -287,7 +286,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                     Arrays.sort(values, collator);
                 }
             }
-            
+
             if (values.length == 0) {
                 BytesRef[] bytes = doc.getBinaryValues(field);
                 if (bytes.length > 0) {
@@ -341,13 +340,13 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                 TextFragment[] fragments = TextHighlighter.getHighlightedFrags(false, value, field, 0);
                 if (fragments[0].getScore() > 0) {
                     StringBuilder s = new StringBuilder();
-                    s.append("<html><nobr>"); //$NON-NLS-1$
+                    s.append(HitsTableModel.htmlStartTag);
                     if (App.get().getFontStartTag() != null)
                         s.append(App.get().getFontStartTag());
                     s.append(fragments[0].toString());
                     if (App.get().getFontStartTag() != null)
                         s.append(ATextViewer.HIGHLIGHT_END_TAG);
-                    s.append("</html>"); //$NON-NLS-1$
+                    s.append(HitsTableModel.htmlEndTag);
                     value = s.toString();
                 }
             }
@@ -360,5 +359,5 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
         return value;
 
     }
-    
+
 }

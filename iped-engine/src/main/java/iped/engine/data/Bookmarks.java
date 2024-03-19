@@ -345,6 +345,10 @@ public class Bookmarks implements IBookmarks {
     public KeyStroke getBookmarkKeyStroke(int bookmarkId) {
         return bookmarkKeyStrokes.get(bookmarkId);
     }
+    
+    public synchronized void removeBookmarkKeyStroke(int bookmarkId) {
+    	bookmarkKeyStrokes.remove(bookmarkId);
+    }
 
     public synchronized void setInReport(int bookmarkId, boolean inReport) {
         if (inReport)
