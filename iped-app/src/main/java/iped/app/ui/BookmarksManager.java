@@ -83,7 +83,7 @@ import iped.data.IMultiBookmarks;
 import iped.engine.data.IPEDMultiSource;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.ItemId;
-import iped.engine.data.ItemIdList;
+import iped.engine.data.ItemIdSet;
 import iped.engine.lucene.DocValuesUtil;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.MultiSearchResult;
@@ -324,7 +324,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
         return 2200L * countSelected / 1000 < 2600L * countDocs / 44_000_000;
     }
 
-    private void includeDuplicates(ItemIdList uniqueSelectedIds) {
+    private void includeDuplicates(ItemIdSet uniqueSelectedIds) {
 
         ProgressDialog progress = new ProgressDialog(App.get(), null);
         progress.setNote(Messages.getString("BookmarksManager.SearchingDuplicates")); //$NON-NLS-1$
@@ -470,7 +470,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
 
         if (evt.getSource() == butAdd || evt.getSource() == butRemove || evt.getSource() == butNew) {
 
-            ItemIdList uniqueSelectedIds = getUniqueSelectedIds();
+            ItemIdSet uniqueSelectedIds = getUniqueSelectedIds();
 
             ArrayList<String> bookmarks = new ArrayList<String>();
             for (int index : list.getSelectedIndices())
@@ -529,8 +529,8 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
 
     }
 
-    private ItemIdList getUniqueSelectedIds() {
-        ItemIdList result = new ItemIdList();
+    private ItemIdSet getUniqueSelectedIds() {
+        ItemIdSet result = new ItemIdSet();
         final App app = App.get();
         if (checked.isSelected()) {
             int sourceId = 0;
@@ -560,7 +560,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
         return result;
     }
 
-    private void bookmark(ItemIdList uniqueSelectedIds, List<String> bookmarks, boolean insert, boolean isNew) {
+    private void bookmark(ItemIdSet uniqueSelectedIds, List<String> bookmarks, boolean insert, boolean isNew) {
         if (uniqueSelectedIds.isEmpty() && !isNew) {
             showMessage(Messages.getString(checked.isSelected() ? "BookmarksManager.AlertNoCheckedtems" : "BookmarksManager.AlertNoHighlightedItems"));
             return;
@@ -682,7 +682,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
             if (bookmark == null) {
                 return;
             }
-            ItemIdList  uniqueSelectedIds = getUniqueSelectedIds();
+            ItemIdSet  uniqueSelectedIds = getUniqueSelectedIds();
             bookmark(uniqueSelectedIds, Collections.singletonList(bookmark), (e.getModifiersEx() & KeyEvent.ALT_DOWN_MASK) == 0, false);
 
             e.consume();

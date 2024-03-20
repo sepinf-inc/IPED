@@ -7,13 +7,12 @@ import java.util.Iterator;
 import org.roaringbitmap.RoaringBitmap;
 
 import iped.data.IItemId;
-import iped.data.IItemIdList;
 
-public class ItemIdList extends AbstractSet<IItemId> implements IItemIdList {
+public class ItemIdSet extends AbstractSet<IItemId> {
     HashMap<Integer, RoaringBitmap> bitsets = new HashMap<Integer, RoaringBitmap>();
     int length = 0;
 
-    public ItemIdList() {
+    public ItemIdSet() {
 
     }
 

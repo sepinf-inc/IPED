@@ -17,12 +17,10 @@ import java.util.TreeSet;
 import javax.swing.KeyStroke;
 
 import org.apache.commons.lang.ArrayUtils;
-import org.roaringbitmap.RoaringBitmap;
 
 import iped.data.IBookmarks;
 import iped.data.IIPEDSource;
 import iped.data.IItemId;
-import iped.data.IItemIdList;
 import iped.data.IMultiBookmarks;
 import iped.data.SelectionListener;
 import iped.engine.search.MultiSearchResult;
@@ -123,7 +121,7 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
         return m.hasBookmark(item.getId(), bookmarkId);
     }
 
-    public void addBookmark(IItemIdList ids, String bookmarkName) {
+    public void addBookmark(Set<IItemId> ids, String bookmarkName) {
         HashMap<Integer, List<Integer>> itemsPerSource = getIdsPerSource(ids);
         for (Integer sourceId : itemsPerSource.keySet()) {
             IBookmarks m = map.get(sourceId);
@@ -134,7 +132,7 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
         }
     }
 
-    private HashMap<Integer, List<Integer>> getIdsPerSource(IItemIdList ids) {
+    private HashMap<Integer, List<Integer>> getIdsPerSource(Set<IItemId> ids) {
         HashMap<Integer, List<Integer>> itemsPerSource = new HashMap<>();
         for (IItemId item : ids) {
             List<Integer> items = itemsPerSource.get(item.getSourceId());
@@ -147,7 +145,7 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
         return itemsPerSource;
     }
 
-    public void removeBookmark(IItemIdList ids, String bookmarkName) {
+    public void removeBookmark(Set<IItemId> ids, String bookmarkName) {
         HashMap<Integer, List<Integer>> itemsPerSource = getIdsPerSource(ids);
         for (Integer sourceId : itemsPerSource.keySet()) {
             IBookmarks m = map.get(sourceId);

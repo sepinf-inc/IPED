@@ -9,8 +9,7 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 import iped.data.IItemId;
-import iped.data.IItemIdList;
-import iped.engine.data.ItemIdList;
+import iped.engine.data.ItemIdSet;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.MultiSearchResult;
 import iped.engine.util.Util;
@@ -60,7 +59,7 @@ public class KeywordListImporter extends CancelableWorker {
 
                     if (addBookMarkList || addBookMarkWords) {
 
-                        IItemIdList uniqueSelectedIds = new ItemIdList();
+                        ItemIdSet uniqueSelectedIds = new ItemIdSet();
 
                         for (IItemId item : searchResults.getIterator()) {
                             uniqueSelectedIds.add(item);

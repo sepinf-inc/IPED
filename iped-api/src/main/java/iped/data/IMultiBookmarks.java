@@ -25,7 +25,7 @@ import iped.search.IMultiSearchResult;
  */
 public interface IMultiBookmarks extends Serializable {
 
-    void addBookmark(IItemIdList uniqueSelectedIds, String bookmarkName);
+    void addBookmark(Set<IItemId> uniqueSelectedIds, String bookmarkName);
 
     void addToTypedWords(String texto);
 
@@ -69,7 +69,7 @@ public interface IMultiBookmarks extends Serializable {
 
     void newBookmark(String bookmarkName);
 
-    void removeBookmark(IItemIdList uniqueSelectedIds, String bookmarkName);
+    void removeBookmark(Set<IItemId> uniqueSelectedIds, String bookmarkName);
 
     void saveState();
 
