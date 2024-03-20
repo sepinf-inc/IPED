@@ -53,16 +53,19 @@ public class VLCIniParser implements Parser {
                     insideRecentMRL = true;
                 } else if (line.startsWith("[") && line.endsWith("]")) {
                     if (insideRecentMRL && paths != null && !paths[0].equals("@Invalid()")) {
+                        xhtml.characters("Recent Medias:");
+                        xhtml.newline();
+                        xhtml.newline();
                         for (int i = 0; i < paths.length; i++) {
-                            String time = "";
-                            if (times != null && i < times.length) {
-                                time = "Time=" + times[i].strip() + " ";
+                            String LastSkipPosition = "";
+                            if (times != null && i < times.length && !times[i].strip().equals("0")) {
+                                LastSkipPosition = " [LastSkipPosition=" + times[i].strip() + "ms]";
                             }
                             String path = paths[i].strip().replace("\\\\", "/");
                             if (path.startsWith("file://")) {
                                 path = new File(URI.create(path)).getAbsolutePath();
                             }
-                            xhtml.characters(time + "Path=" + path);
+                            xhtml.characters(path + LastSkipPosition);
                             xhtml.newline();
                         }
                     }
