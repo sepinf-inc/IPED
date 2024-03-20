@@ -20,12 +20,7 @@
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-core</artifactId>
             <version>${tika.core.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.roaringbitmap</groupId>
-            <artifactId>RoaringBitmap</artifactId>
-            <version>0.9.39</version>
-        </dependency>                
+        </dependency>               
     </dependencies>
     
     <build>
