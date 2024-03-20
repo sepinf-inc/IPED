@@ -1,7 +1,6 @@
 package iped.parsers.vlc;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -63,7 +62,11 @@ public class VLCIniParser implements Parser {
                             }
                             String path = paths[i].strip().replace("\\\\", "/");
                             if (path.startsWith("file://")) {
-                                path = new File(URI.create(path)).getAbsolutePath();
+                                path = URI.create(path).getPath();
+                                // absolute windows path adjustment
+                                if (path.startsWith("/") && path.length() > 2 && path.charAt(2) == ':') {
+                                    path = path.substring(1);
+                                }
                             }
                             xhtml.characters(path + LastSkipPosition);
                             xhtml.newline();
