@@ -5,7 +5,6 @@ import java.awt.event.MouseWheelListener;
 import java.awt.geom.Point2D;
 import java.io.Serializable;
 
-import org.jfree.chart.ChartPanel;
 import org.jfree.chart.ChartRenderingInfo;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PiePlot;
@@ -66,7 +65,7 @@ public class IpedTimelineMouseWheelHandler implements MouseWheelListener, Serial
      */
     @Override
     public void mouseWheelMoved(MouseWheelEvent e) {
-        if (lastWhen < e.getWhen()+100) {// avoid calling the event more then once
+        if (lastWhen < e.getWhen() + 100) {// avoid calling the event more then once
             JFreeChart chart = this.chartPanel.getChart();
             if (chart == null) {
                 return;

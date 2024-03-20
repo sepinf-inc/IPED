@@ -137,7 +137,7 @@ public class MultiBitmapBookmarks implements Serializable, IMultiBookmarks {
     }
 
     private void invalidadeCaches() {
-        unionsCache=null;
+        unionsCache = null;
         bsetCache.clear();
     }
 
@@ -209,7 +209,7 @@ public class MultiBitmapBookmarks implements Serializable, IMultiBookmarks {
         }
         return null;
     }
-    
+
     public int getBookmarkCount(String bookmarkName) {
         int ret = 0;
         for (IBookmarks m : map.values()) {
@@ -223,7 +223,7 @@ public class MultiBitmapBookmarks implements Serializable, IMultiBookmarks {
         }
         return ret;
     }
-    
+
     public void setInReport(String bookmarkName, boolean inReport) {
         for (IBookmarks m : map.values()) {
             int bookmarkId = m.getBookmarkId(bookmarkName);
@@ -247,23 +247,25 @@ public class MultiBitmapBookmarks implements Serializable, IMultiBookmarks {
         return bookmarks;
     }
 
-    //cache made of soft reference to bookmarks hashcodes
+    // cache made of soft reference to bookmarks hashcodes
     HashMap<Integer, SoftReference<RoaringBitmap[]>> bsetCache = new HashMap<Integer, SoftReference<RoaringBitmap[]>>();
+
     /**
-     * return union of RoaringBitmap arrays with itemIds for each case of the bookmarks in parameter
+     * return union of RoaringBitmap arrays with itemIds for each case of the
+     * bookmarks in parameter
      */
     public RoaringBitmap[] getBookmarksUnions(Set<String> bookmarkNames) {
         SoftReference<RoaringBitmap[]> sbitmap = bsetCache.get(bookmarkNames.hashCode());
-        RoaringBitmap[] unions=null;
-        if(sbitmap!=null) {
+        RoaringBitmap[] unions = null;
+        if (sbitmap != null) {
             unions = sbitmap.get();
         }
-        if(unions==null) {
+        if (unions == null) {
             unions = new RoaringBitmap[map.size()];
 
             for (Entry<Integer, IBookmarks> e : map.entrySet()) {
                 IBookmarks bookmarks = (IBookmarks) e.getValue();
-                if(bookmarks instanceof BitmapBookmarks) {
+                if (bookmarks instanceof BitmapBookmarks) {
                     RoaringBitmap lunion = ((BitmapBookmarks) e.getValue()).getBookmarksUnion(bookmarkNames);
                     unions[e.getKey()] = lunion;
                 }
@@ -272,25 +274,26 @@ public class MultiBitmapBookmarks implements Serializable, IMultiBookmarks {
         }
 
         unions = unions.clone();
-        for(int i=0; i<unions.length; i++) {
-            unions[i]=unions[i].clone();
+        for (int i = 0; i < unions.length; i++) {
+            unions[i] = unions[i].clone();
         }
-        
-        return unions;        
+
+        return unions;
     }
 
     SoftReference<RoaringBitmap[]> unionsCache = new SoftReference<RoaringBitmap[]>(null);
+
     /**
-     * return union of RoaringBitmap arrays with itemIds for each case 
+     * return union of RoaringBitmap arrays with itemIds for each case
      */
     public RoaringBitmap[] getBookmarksUnions() {
-        RoaringBitmap[] unions = unionsCache!=null?unionsCache.get():null;
-        if(unions==null) {
+        RoaringBitmap[] unions = unionsCache != null ? unionsCache.get() : null;
+        if (unions == null) {
             unions = new RoaringBitmap[map.size()];
 
             for (Entry<Integer, IBookmarks> e : map.entrySet()) {
                 IBookmarks bookmarks = (IBookmarks) e.getValue();
-                if(bookmarks instanceof BitmapBookmarks) {
+                if (bookmarks instanceof BitmapBookmarks) {
                     RoaringBitmap lunion = ((BitmapBookmarks) e.getValue()).getBookmarksUnion();
                     unions[e.getKey()] = lunion;
                 }
@@ -298,18 +301,17 @@ public class MultiBitmapBookmarks implements Serializable, IMultiBookmarks {
             unionsCache = new SoftReference<RoaringBitmap[]>(unions);
         }
         unions = unions.clone();
-        for(int i=0; i<unions.length; i++) {
-            unions[i]=unions[i].clone();
+        for (int i = 0; i < unions.length; i++) {
+            unions[i] = unions[i].clone();
         }
-        
-        return unions;        
+
+        return unions;
     }
-    
-    
+
     public IMultiSearchResult filterBookmarks(IMultiSearchResult result, Set<String> bookmarkNames) {
         RoaringBitmap[] unions = getBookmarksUnions(bookmarkNames);
         RoaringBitmap uniqueUnion = null;
-        if(map.size()==1) {
+        if (map.size() == 1) {
             uniqueUnion = unions[0];
         }
 
@@ -317,31 +319,30 @@ public class MultiBitmapBookmarks implements Serializable, IMultiBookmarks {
         ArrayList<Float> scores = new ArrayList<Float>();
         int i = 0;
         for (IItemId item : result.getIterator()) {
-            RoaringBitmap union=null;
-            if(map.size()>1) {
+            RoaringBitmap union = null;
+            if (map.size() > 1) {
                 union = unions[item.getSourceId()];
-            }else {
-                union=uniqueUnion;
+            } else {
+                union = uniqueUnion;
             }
-            if(union.contains(item.getId())) {
+            if (union.contains(item.getId())) {
                 selectedItems.add(item);
                 scores.add(result.getScore(i));
             }
             i++;
         }
-        MultiSearchResult r = new MultiSearchResult(selectedItems.toArray(new ItemId[0]),
-                ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
+        MultiSearchResult r = new MultiSearchResult(selectedItems.toArray(new ItemId[0]), ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
 
         return r;
     }
 
     public IMultiSearchResult filterBookmarksOrNoBookmarks(IMultiSearchResult result, Set<String> bookmarkNames) {
-        HashMap<Integer,RoaringBitmap> unions = new HashMap<Integer,RoaringBitmap>();
+        HashMap<Integer, RoaringBitmap> unions = new HashMap<Integer, RoaringBitmap>();
 
         for (Entry<Integer, IBookmarks> e : map.entrySet()) {
             IBookmarks bookmarks = (IBookmarks) e.getValue();
-            if(bookmarks instanceof BitmapBookmarks) {
-                unions.put(e.getKey(), ((BitmapBookmarks)bookmarks).getBookmarksOrNoBookmarksUnion(bookmarkNames));
+            if (bookmarks instanceof BitmapBookmarks) {
+                unions.put(e.getKey(), ((BitmapBookmarks) bookmarks).getBookmarksOrNoBookmarksUnion(bookmarkNames));
             }
         }
 
@@ -350,26 +351,25 @@ public class MultiBitmapBookmarks implements Serializable, IMultiBookmarks {
         int i = 0;
         for (IItemId item : result.getIterator()) {
             RoaringBitmap union = unions.get(item.getSourceId());
-            if(union.contains(item.getId())) {
+            if (union.contains(item.getId())) {
                 selectedItems.add(item);
                 scores.add(result.getScore(i));
             }
             i++;
         }
-        MultiSearchResult r = new MultiSearchResult(selectedItems.toArray(new ItemId[0]),
-                ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
+        MultiSearchResult r = new MultiSearchResult(selectedItems.toArray(new ItemId[0]), ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
 
         return r;
     }
 
     public IMultiSearchResult filterNoBookmarks(IMultiSearchResult result) {
 
-        HashMap<Integer,RoaringBitmap> unions = new HashMap<Integer,RoaringBitmap>();
+        HashMap<Integer, RoaringBitmap> unions = new HashMap<Integer, RoaringBitmap>();
 
         for (Entry<Integer, IBookmarks> e : map.entrySet()) {
             IBookmarks bookmarks = (IBookmarks) e.getValue();
-            if(bookmarks instanceof BitmapBookmarks) {
-                unions.put(e.getKey(), ((BitmapBookmarks)bookmarks).getBookmarksUnion());
+            if (bookmarks instanceof BitmapBookmarks) {
+                unions.put(e.getKey(), ((BitmapBookmarks) bookmarks).getBookmarksUnion());
             }
         }
 
@@ -378,14 +378,13 @@ public class MultiBitmapBookmarks implements Serializable, IMultiBookmarks {
         int i = 0;
         for (IItemId item : result.getIterator()) {
             RoaringBitmap union = unions.get(item.getSourceId());
-            if(!union.contains(item.getId())) {
+            if (!union.contains(item.getId())) {
                 selectedItems.add(item);
                 scores.add(result.getScore(i));
             }
             i++;
         }
-        MultiSearchResult r = new MultiSearchResult(selectedItems.toArray(new ItemId[0]),
-                ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
+        MultiSearchResult r = new MultiSearchResult(selectedItems.toArray(new ItemId[0]), ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
 
         return r;
     }
@@ -402,8 +401,7 @@ public class MultiBitmapBookmarks implements Serializable, IMultiBookmarks {
             }
             i++;
         }
-        MultiSearchResult r = new MultiSearchResult(selectedItems.toArray(new ItemId[0]),
-                ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
+        MultiSearchResult r = new MultiSearchResult(selectedItems.toArray(new ItemId[0]), ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
 
         return r;
     }
@@ -512,7 +510,7 @@ public class MultiBitmapBookmarks implements Serializable, IMultiBookmarks {
         return usedColors;
     }
 
-	@Override
+    @Override
     public void removeBookmarkKeyStroke(String bookmarkName) {
         for (IBookmarks m : map.values())
             m.removeBookmarkKeyStroke(m.getBookmarkId(bookmarkName));

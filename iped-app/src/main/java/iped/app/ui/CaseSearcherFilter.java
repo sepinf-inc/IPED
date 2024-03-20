@@ -148,7 +148,7 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
     public MultiSearchResult doInBackground() {
 
         synchronized (this.getClass()) {
-            
+
             Date d1 = new Date();
 
             if (this.isCancelled())
@@ -158,8 +158,8 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
                 for (CaseSearchFilterListener caseSearchFilterListener : listeners) {
                     caseSearchFilterListener.onStart();
                 }
-                
-                if (this.isCancelled()){
+
+                if (this.isCancelled()) {
                     throw new CancellationException();
                 }
 
@@ -178,7 +178,7 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
                 if (result == null) {
                     result = searcher.multiSearch();
 
-                    if (this.isCancelled()){
+                    if (this.isCancelled()) {
                         throw new CancellationException();
                     }
 
@@ -189,15 +189,15 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
                 result.setIPEDSource(ipedCase);
 
                 addBitmapFilter(result.getCasesBitSets((IPEDMultiSource) ipedCase));
-                if (this.isCancelled()){
+                if (this.isCancelled()) {
                     throw new CancellationException();
                 }
 
                 if (applyUIFilters && filterManager != null) {
                     List<IResultSetFilterer> rsFilterers = filterManager.getResultSetFilterers();
 
-                    for (Iterator iterator = rsFilterers.iterator(); iterator.hasNext() && result.getLength()>0;) {
-                        if (this.isCancelled()){
+                    for (Iterator iterator = rsFilterers.iterator(); iterator.hasNext() && result.getLength() > 0;) {
+                        if (this.isCancelled()) {
                             throw new CancellationException();
                         }
 
@@ -205,18 +205,18 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
                         if (filterManager.isFiltererEnabled(iRSFilterer)) {
                             IFilter rsFilter = iRSFilterer.getFilter();
 
-                            if(rsFilter!=null) {
-                                if(rsFilter instanceof IBitmapFilter) {// if the filter exposes a internal bitmap
-                                    addBitmapFilter((IBitmapFilter)rsFilter);
-                                }else {
-                                    RoaringBitmap[] cachedBitmaps = filterManager.getCachedBitmaps((IResultSetFilter)rsFilter); 
-                                    if(cachedBitmaps!=null) { //if filtermanager returned a cached bitmap
+                            if (rsFilter != null) {
+                                if (rsFilter instanceof IBitmapFilter) {// if the filter exposes a internal bitmap
+                                    addBitmapFilter((IBitmapFilter) rsFilter);
+                                } else {
+                                    RoaringBitmap[] cachedBitmaps = filterManager.getCachedBitmaps((IResultSetFilter) rsFilter);
+                                    if (cachedBitmaps != null) { // if filtermanager returned a cached bitmap
                                         addBitmapFilter(cachedBitmaps);
-                                    }else {
-                                        MultiSearchResult newresult = filterManager.applyFilter((IResultSetFilter)rsFilter, result);
-                                        if(newresult!=result) {
+                                    } else {
+                                        MultiSearchResult newresult = filterManager.applyFilter((IResultSetFilter) rsFilter, result);
+                                        if (newresult != result) {
                                             numFilters++;
-                                            result=newresult;
+                                            result = newresult;
                                             result.setIPEDSource(ipedCase);
                                         }
                                     }
@@ -226,11 +226,10 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
                     }
                 }
 
-
-                if (this.isCancelled()){
+                if (this.isCancelled()) {
                     throw new CancellationException();
                 }
-                if(unionsArray!=null) {
+                if (unionsArray != null) {
                     MultiSearchResult newresult = filterManager.applyFilter(unionsArray, result);
                     if (newresult != result) {
                         numFilters++;
@@ -248,7 +247,7 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
                 }
 
             } catch (Throwable e) {
-                if(!(e instanceof CancellationException)){
+                if (!(e instanceof CancellationException)) {
                     e.printStackTrace();
                 }
                 return new MultiSearchResult(new ItemId[0], new float[0]);
@@ -257,9 +256,9 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
 
             result.setIpedSearcher(searcher);
             result.setIPEDSource(ipedCase);
-            
+
             Date d2 = new Date();
-            System.out.println("Time:"+(d2.getTime()-d1.getTime()));
+            System.out.println("Time:" + (d2.getTime() - d1.getTime()));
 
             return result;
         }
@@ -329,11 +328,11 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
 
     public void addBitmapFilter(IBitmapFilter filter) {
         RoaringBitmap[] lunionsArray = filter.getBitmap();
-        
+
         for (int i = 0; i < unionsArray.length; i++) {
-            if(filter.isToFilterOut()) {
+            if (filter.isToFilterOut()) {
                 unionsArray[i].andNot(lunionsArray[i]);
-            }else {
+            } else {
                 unionsArray[i].and(lunionsArray[i]);
             }
         }
@@ -354,7 +353,7 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
     }
 
     public void addBitmapFilter(RoaringBitmap[] lunionsArray) {
-        if(unionsArray==null) {
+        if (unionsArray == null) {
             unionsArray = new RoaringBitmap[lunionsArray.length];
         }
         for (int i = 0; i < unionsArray.length; i++) {

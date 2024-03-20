@@ -63,7 +63,7 @@ public class BitmapBookmarks implements IBookmarks {
     static int bookmarkBits = Byte.SIZE;
 
     private boolean[] selected;
-    HashMap<Integer,RoaringBitmap> bookmarks;
+    HashMap<Integer, RoaringBitmap> bookmarks;
     private TreeMap<Integer, String> bookmarkNames = new TreeMap<Integer, String>();
     private TreeMap<Integer, String> bookmarkComments = new TreeMap<Integer, String>();
     private TreeMap<Integer, KeyStroke> bookmarkKeyStrokes = new TreeMap<Integer, KeyStroke>();
@@ -187,7 +187,7 @@ public class BitmapBookmarks implements IBookmarks {
         for (Iterator iterator = ids.iterator(); iterator.hasNext();) {
             Integer id = (Integer) iterator.next();
             bookmarkBitmap.add(id);
-            if(unionAll!=null) {
+            if (unionAll != null) {
                 unionAll.add(id);
             }
         }
@@ -196,7 +196,7 @@ public class BitmapBookmarks implements IBookmarks {
     public int getBookmarkCount(int bookmark) {
         return bookmarks.get(bookmark).getCardinality();
     }
-    
+
     public final boolean hasBookmark(int id) {
         boolean hasBookmark = false;
         for (RoaringBitmap b : bookmarks.values()) {
@@ -223,7 +223,7 @@ public class BitmapBookmarks implements IBookmarks {
         boolean result = false;
         for (int i = 0; i < bookmarkIds.length; i++) {
             result = bookmarks.get(bookmarkIds[i]).contains(id);
-            if(result) {
+            if (result) {
                 return true;
             }
         }
@@ -236,7 +236,7 @@ public class BitmapBookmarks implements IBookmarks {
             Integer id = (Integer) iterator.next();
             bookmarkBitmap.remove(id);
         }
-        unionAll=null;//invalidades unionAll
+        unionAll = null;// invalidades unionAll
     }
 
     public synchronized int newBookmark(String bookmarkName) {
@@ -341,7 +341,7 @@ public class BitmapBookmarks implements IBookmarks {
         RoaringBitmap union = getBookmarksOrNoBookmarksUnion(bookmarkNames);
         for (int i = 0; i < result.getLength(); i++) {
             int id = result.getId(i);
-            if (!union.contains(id)){
+            if (!union.contains(id)) {
                 result.getIds()[i] = -1;
             }
         }
@@ -452,14 +452,14 @@ public class BitmapBookmarks implements IBookmarks {
     }
 
     public synchronized void loadState(File file) throws IOException, ClassNotFoundException {
-        try{
+        try {
             BitmapBookmarks state = load(file);
 
             if (state.selected != null /* && state.read != null */) {
                 int len = Math.min(state.selected.length, this.selected.length);
                 System.arraycopy(state.selected, 0, this.selected, 0, len);
             }
-            
+
             this.bookmarks = state.bookmarks;
             this.typedWords = state.typedWords;
             this.selectedItens = state.selectedItens;
@@ -468,8 +468,8 @@ public class BitmapBookmarks implements IBookmarks {
             this.bookmarkKeyStrokes = state.bookmarkKeyStrokes;
             this.reportBookmarks = state.reportBookmarks;
             this.bookmarkColors = state.bookmarkColors;
-        }catch (ClassCastException e) {
-            //try to load old format
+        } catch (ClassCastException e) {
+            // try to load old format
             Bookmarks state = loadOldBookmarks(file);
 
             if (state.selected != null /* && state.read != null */) {
@@ -477,19 +477,19 @@ public class BitmapBookmarks implements IBookmarks {
                 System.arraycopy(state.selected, 0, this.selected, 0, len);
             }
 
-            for(Entry<Integer, String> bname: state.bookmarkNames.entrySet()) {
+            for (Entry<Integer, String> bname : state.bookmarkNames.entrySet()) {
                 int[] ids = new int[1];
-                ids[0]=state.getBookmarkId(bname.getValue());
+                ids[0] = state.getBookmarkId(bname.getValue());
                 byte[] b = state.getBookmarkBits(ids);
                 RoaringBitmap r = new RoaringBitmap();
-                for(int i=0; i<lastId; i++) {
-                    if(state.hasBookmark(i, b)) {
+                for (int i = 0; i < lastId; i++) {
+                    if (state.hasBookmark(i, b)) {
                         r.add(i);
                     }
                 }
                 this.bookmarks.put(bname.getKey(), r);
             }
-            
+
             this.typedWords = state.typedWords;
             this.selectedItens = state.selectedItens;
             this.bookmarkNames = state.bookmarkNames;
@@ -520,12 +520,12 @@ public class BitmapBookmarks implements IBookmarks {
         // seta valor na versão de visualização ou vice-versa
         selected[id] = value;
     }
-    
+
     public RoaringBitmap getBookmarksUnion() {
-        if(unionAll == null) {
+        if (unionAll == null) {
             unionAll = new RoaringBitmap();
             for (Iterator<RoaringBitmap> iterator = bookmarks.values().iterator(); iterator.hasNext();) {
-                unionAll.or(iterator.next());                
+                unionAll.or(iterator.next());
             }
         }
         return unionAll.clone();
@@ -538,9 +538,9 @@ public class BitmapBookmarks implements IBookmarks {
         }
 
         RoaringBitmap union = new RoaringBitmap();
-        for (Entry<Integer,RoaringBitmap> e:bookmarks.entrySet()) {
-            if(bookmarkIds.contains(e.getKey())) {
-                union.or(e.getValue());                
+        for (Entry<Integer, RoaringBitmap> e : bookmarks.entrySet()) {
+            if (bookmarkIds.contains(e.getKey())) {
+                union.or(e.getValue());
             }
         }
         return union;
@@ -556,12 +556,12 @@ public class BitmapBookmarks implements IBookmarks {
         RoaringBitmap unionOthers = getBookmarksUnion();
 
         for (Entry<Integer, RoaringBitmap> e : bookmarks.entrySet()) {
-            if(bookmarkIds.contains(e.getKey())) {
+            if (bookmarkIds.contains(e.getKey())) {
                 union.or(e.getValue());
             }
         }
 
-        union.orNot(unionOthers, Math.max(union.getCardinality(), unionOthers.getCardinality())+1);
+        union.orNot(unionOthers, Math.max(union.getCardinality(), unionOthers.getCardinality()) + 1);
         return union;
     }
 
@@ -588,8 +588,7 @@ public class BitmapBookmarks implements IBookmarks {
         return bookmarkColors == null ? new HashSet<Color>() : new HashSet<Color>(bookmarkColors.values());
     }
 
-    
     public synchronized void removeBookmarkKeyStroke(int bookmarkId) {
-    	bookmarkKeyStrokes.remove(bookmarkId);
+        bookmarkKeyStrokes.remove(bookmarkId);
     }
 }

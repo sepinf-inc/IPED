@@ -166,15 +166,15 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
         this.xPosition = TimePeriodAnchor.START;
         this.resultsProvider = resultsProvider;
         this.splitValue = splitValue;
-        
+
         int maxSrcId = 0;
         List<IPEDSource> srcs = App.get().appCase.getAtomicSources();
         filterManager = App.get().getFilterManager();
         for (Iterator iterator = srcs.iterator(); iterator.hasNext();) {
             IPEDSource ipedSource = (IPEDSource) iterator.next();
             int srcId = ipedSource.getSourceId();
-            if(srcId>maxSrcId) {
-                maxSrcId=srcId;
+            if (srcId > maxSrcId) {
+                maxSrcId = srcId;
             }
         }
         if (splitValue != null && !splitValue.equals("Bookmarks") && ipedChartsPanel.getChartPanel().getSplitByBookmark()) {

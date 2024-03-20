@@ -20,7 +20,7 @@
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-core</artifactId>
             <version>${tika.core.version}</version>
-        </dependency>               
+        </dependency>
     </dependencies>
     
     <build>

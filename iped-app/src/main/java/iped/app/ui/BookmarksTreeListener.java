@@ -68,7 +68,7 @@ public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansi
             } else {
                 Object bookmark = path.getLastPathComponent();
                 selection.add(bookmark);
-                if(!bookmark.equals(BookmarksTreeModel.ROOT) && !bookmark.equals(BookmarksTreeModel.NO_BOOKMARKS)) {
+                if (!bookmark.equals(BookmarksTreeModel.ROOT) && !bookmark.equals(BookmarksTreeModel.NO_BOOKMARKS)) {
                     HashSet<String> oneBookmark = new HashSet<>();
                     oneBookmark.add(bookmark.toString());
                     definedFilters.put(bookmark, new BookMarkFilter(oneBookmark));
@@ -182,8 +182,7 @@ public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansi
         BookmarksTreeListener self = this;
         Set<String> bookmarkSelection = getSelectedBookmarkNames();
 
-        if ((!bookmarkSelection.isEmpty() || isNoBookmarksSelected())
-                && !isRootSelected()) {
+        if ((!bookmarkSelection.isEmpty() || isNoBookmarksSelected()) && !isRootSelected()) {
             IFilter result;
             if (isNoBookmarksSelected()) {
                 if (bookmarkSelection.isEmpty()) {
@@ -211,16 +210,15 @@ public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansi
 }
 
 class BookMarkFilter implements IResultSetFilter, IMutableFilter, IBitmapFilter {
-    Set<String> bookmark; 
+    Set<String> bookmark;
 
-    public BookMarkFilter(Set<String> bookmark2){
-        this.bookmark = bookmark2;            
+    public BookMarkFilter(Set<String> bookmark2) {
+        this.bookmark = bookmark2;
     }
 
     @Override
-    public IMultiSearchResult filterResult(IMultiSearchResult src)
-            throws ParseException, QueryNodeException, IOException {
-        return (MultiSearchResult) App.get().appCase.getMultiBookmarks().filterBookmarks(src, (Set<String>)bookmark);
+    public IMultiSearchResult filterResult(IMultiSearchResult src) throws ParseException, QueryNodeException, IOException {
+        return (MultiSearchResult) App.get().appCase.getMultiBookmarks().filterBookmarks(src, (Set<String>) bookmark);
     }
 
     public String toString() {
@@ -230,21 +228,24 @@ class BookMarkFilter implements IResultSetFilter, IMutableFilter, IBitmapFilter 
     @Override
     public RoaringBitmap[] getBitmap() {
         IMultiBookmarks mm = App.get().appCase.getMultiBookmarks();
-        if(mm instanceof MultiBitmapBookmarks) {
-            return ((MultiBitmapBookmarks)mm).getBookmarksUnions(bookmark);
+        if (mm instanceof MultiBitmapBookmarks) {
+            return ((MultiBitmapBookmarks) mm).getBookmarksUnions(bookmark);
         }
         return null;
     }
 };
 
 class NoBookMarkFilter implements IResultSetFilter, IMutableFilter, IBitmapFilter {
-    Set<String> bookmarkSelection; 
+    Set<String> bookmarkSelection;
+
     public NoBookMarkFilter(Set<String> bookmarkSelection) {
-        this.bookmarkSelection = bookmarkSelection;            
+        this.bookmarkSelection = bookmarkSelection;
     }
+
     public NoBookMarkFilter() {
         // TODO Auto-generated constructor stub
     }
+
     @Override
     public IMultiSearchResult filterResult(IMultiSearchResult src) throws ParseException, QueryNodeException, IOException {
         return (MultiSearchResult) App.get().appCase.getMultiBookmarks().filterNoBookmarks(src);
@@ -253,23 +254,25 @@ class NoBookMarkFilter implements IResultSetFilter, IMutableFilter, IBitmapFilte
     public String toString() {
         return BookmarksTreeModel.NO_BOOKMARKS_NAME;
     }
-    
+
     @Override
-    public boolean isToFilterOut() {return true;};
-    
+    public boolean isToFilterOut() {
+        return true;
+    };
+
     @Override
     public RoaringBitmap[] getBitmap() {
         IMultiBookmarks mm = App.get().appCase.getMultiBookmarks();
-        if(mm instanceof MultiBitmapBookmarks) {
-            RoaringBitmap[] result = ((MultiBitmapBookmarks)mm).getBookmarksUnions();
-            RoaringBitmap[] rbSelecitons = null; 
-            if(bookmarkSelection!=null) {
-                rbSelecitons = ((MultiBitmapBookmarks)mm).getBookmarksUnions(bookmarkSelection);
+        if (mm instanceof MultiBitmapBookmarks) {
+            RoaringBitmap[] result = ((MultiBitmapBookmarks) mm).getBookmarksUnions();
+            RoaringBitmap[] rbSelecitons = null;
+            if (bookmarkSelection != null) {
+                rbSelecitons = ((MultiBitmapBookmarks) mm).getBookmarksUnions(bookmarkSelection);
             }
-            if(rbSelecitons!=null) {
-                for(int i=0; i<result.length; i++) {
+            if (rbSelecitons != null) {
+                for (int i = 0; i < result.length; i++) {
                     result[i].andNot(rbSelecitons[i]);
-                }            
+                }
             }
             return result;
         }
