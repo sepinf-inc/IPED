@@ -1404,11 +1404,6 @@ public class UfedXmlReader extends DataSourceReader {
 
                 // If extracted path doesn't exist, replace non-existent extracted path by attached file's local path
                 if (!getUISF().entryExists(extracted_path)) {
-                    // Debug messages
-                    // System.out.println("Attachment path problem : extracted path (non-existent) will be replaced by local path -> " + item.getPath());
-                    // System.out.println(" extracted path -> " + extracted_path);
-                    // System.out.println(" local path -> " + ufedFileIdToLocalPath.get(item.getMetadata().get(FILE_ID_ATTR)));
-
                     // Replace extracted path by attached file's local path
                     extracted_path = ufedFileIdToLocalPath.get(item.getMetadata().get(FILE_ID_ATTR));
                 }
