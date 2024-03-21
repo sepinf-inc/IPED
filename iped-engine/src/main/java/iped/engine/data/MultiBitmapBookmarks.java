@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import javax.swing.KeyStroke;
 
@@ -38,7 +39,7 @@ public class MultiBitmapBookmarks implements Serializable, IMultiBookmarks {
     private static final long serialVersionUID = 1L;
 
     // cache made of soft reference to bookmarks hashcodes
-    private transient HashMap<Integer, SoftReference<RoaringBitmap[]>> bsetCache = new HashMap<Integer, SoftReference<RoaringBitmap[]>>();
+    private transient HashMap<String, SoftReference<RoaringBitmap[]>> bsetCache = new HashMap<>();
     private transient SoftReference<RoaringBitmap[]> unionsCache = new SoftReference<RoaringBitmap[]>(null);
     private transient List<SelectionListener> selectionListeners = new ArrayList<>();
 
@@ -268,7 +269,8 @@ public class MultiBitmapBookmarks implements Serializable, IMultiBookmarks {
      * bookmarks in parameter
      */
     public RoaringBitmap[] getBookmarksUnions(Set<String> bookmarkNames) {
-        SoftReference<RoaringBitmap[]> sbitmap = bsetCache.get(bookmarkNames.hashCode());
+        String key = bookmarkNames.stream().sorted().collect(Collectors.joining("|"));
+        SoftReference<RoaringBitmap[]> sbitmap = bsetCache.get(key);
         RoaringBitmap[] unions = null;
         if (sbitmap != null) {
             unions = sbitmap.get();
@@ -283,7 +285,7 @@ public class MultiBitmapBookmarks implements Serializable, IMultiBookmarks {
                     unions[e.getKey()] = lunion;
                 }
             }
-            bsetCache.put(bookmarkNames.hashCode(), new SoftReference<RoaringBitmap[]>(unions));
+            bsetCache.put(key, new SoftReference<RoaringBitmap[]>(unions));
         }
 
         unions = unions.clone();
