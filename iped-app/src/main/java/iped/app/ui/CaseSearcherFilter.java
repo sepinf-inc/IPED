@@ -97,10 +97,6 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
         }
     }
 
-    private Query getQueryWithUIFilter() throws ParseException, QueryNodeException {
-        return getQueryWithUIFilter(null);
-    }
-
     private Query getQueryWithUIFilter(Set<IQueryFilterer> exceptions) throws ParseException, QueryNodeException {
         Query result;
         numFilters = 0;
@@ -258,7 +254,7 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
             result.setIPEDSource(ipedCase);
 
             Date d2 = new Date();
-            System.out.println("Time:" + (d2.getTime() - d1.getTime()));
+            LOGGER.info("Search and filtering took {}ms", d2.getTime() - d1.getTime());
 
             return result;
         }
