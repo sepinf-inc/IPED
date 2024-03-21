@@ -36,6 +36,7 @@ import iped.utils.SimpleHTMLEncoder;
 import iped.viewers.api.IMultiSearchResultProvider;
 
 public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLResult, Integer> {
+    public static final String MARKER_PREFIX = "marker_";
     IMultiSearchResultProvider app;
     String[] colunas;
     JProgressBar progress;
@@ -193,7 +194,7 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
 
                                 updateViewableRegion(longit, lat);
 
-                                String gid = item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
+                                String gid = GetResultsJSWorker.MARKER_PREFIX + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
 
                                 gpsItems.put(item, null);
 
@@ -201,7 +202,7 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
                                 if (app.getIPEDSource().getMultiBookmarks().isChecked(item)) {
                                     checked = 1;
                                 }
-                                ;
+
                                 itemsWithGPS++;
                                 finalGids.append("['" + gid + "'," + finalMapOrder + "," + checked + "],");
                             } else {
@@ -214,8 +215,9 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
                                     String longit = locs[1].trim();
 
                                     updateViewableRegion(longit, lat);
+                                    subitem++;
 
-                                    String gid = "marker_" + item.getSourceId() + "_" + item.getId() + "_" + subitem; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                                    String gid = GetResultsJSWorker.MARKER_PREFIX + item.getSourceId() + "_" + item.getId() + "_" + subitem; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
                                     subitems.add(subitem);
 
@@ -411,7 +413,7 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
                                 lat = Float.valueOf(locs[0].trim()).toString();
                                 longit = Float.valueOf(locs[1].trim()).toString();
 
-                                String gid = item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
+                                String gid = GetResultsJSWorker.MARKER_PREFIX + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
 
                                 boolean checked = app.getIPEDSource().getMultiBookmarks().isChecked(item);
                                 boolean selected = app.getResultsTable().isRowSelected(finalRow);
@@ -437,7 +439,10 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
                                     lat = Float.valueOf(locs[0].trim()).toString();
                                     longit = Float.valueOf(locs[1].trim()).toString();
 
-                                    String gid = item.getSourceId() + "_" + item.getId() + "_" + subitem; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                                    subitem++;
+                                    String bgid = GetResultsJSWorker.MARKER_PREFIX + item.getSourceId() + "_" //$NON-NLS-1$
+                                            + item.getId(); // $NON-NLS-1$ //$NON-NLS-3$
+                                    String gid = GetResultsJSWorker.MARKER_PREFIX + item.getSourceId() + "_" + item.getId() + "_" + subitem; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
                                     boolean checked = app.getIPEDSource().getMultiBookmarks().isChecked(item);
                                     boolean selected = app.getResultsTable().isRowSelected(finalRow);
@@ -446,7 +451,7 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
                                         finalGids.append(",");
                                     }
                                     finalGids.append("['" + gid + "'," + finalRow + ",'" + StringEscapeUtils.escapeJavaScript(htmlFormat(doc.get(BasicProps.NAME))) + "','" + Messages.getString("KMLResult.SearchResultsDescription") + "',"
-                                            + lat + "," + longit + "," + checked + "," + selected + "]");
+                                            + lat + "," + longit + "," + checked + "," + selected + ",'" + bgid + "']");
 
                                     updateViewableRegion(longit, lat);
                                     itemsWithGPS++;

@@ -315,7 +315,7 @@ public class AppMapPanel extends JPanel implements Consumer<Object[]> {
         for (int i = 0; i < selected.length; i++) {
             int rowModel = resultsTable.convertRowIndexToModel(selected[i]);
             IItemId item = results.getItem(rowModel);
-            addSelection(selecoes, item);
+            addSelection(selecoes, item, true);
         }
 
         mapViewer.updateMapLeadCursor();
@@ -323,17 +323,17 @@ public class AppMapPanel extends JPanel implements Consumer<Object[]> {
         browserCanvas.sendSelection(selecoes);
     }
 
-    public void addSelection(HashMap<String, Boolean> selecoes, IItemId item) {
+    public void addSelection(HashMap<String, Boolean> selecoes, IItemId item, boolean selected) {
         if (kmlResult != null && kmlResult.getGPSItems().containsKey(item)) {
             List<Integer> subitems = kmlResult.getGPSItems().get(item);
             if (subitems == null) {
-                String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
-                selecoes.put(gid, true);
+                String gid = GetResultsJSWorker.MARKER_PREFIX + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
+                selecoes.put(gid, selected);
             } else {
                 for (Integer subitem : subitems) {
-                    String gid = "marker_" + item.getSourceId() + "_" + item.getId() + "_" //$NON-NLS-1$ //$NON-NLS-2$
+                    String gid = GetResultsJSWorker.MARKER_PREFIX + item.getSourceId() + "_" + item.getId() + "_" //$NON-NLS-1$ //$NON-NLS-2$
                             + subitem;
-                    selecoes.put(gid, true);
+                    selecoes.put(gid, selected);
                 }
             }
         }
@@ -380,11 +380,12 @@ public class AppMapPanel extends JPanel implements Consumer<Object[]> {
         if (kmlResult != null && kmlResult.getGPSItems().containsKey(item)) {
             List<Integer> subitems = kmlResult.getGPSItems().get(item);
             if (subitems == null) {
-                String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
+                String gid = GetResultsJSWorker.MARKER_PREFIX + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
                 browserCanvas.selectCheckbox(gid, b);
             } else {
                 for (Integer subitem : subitems) {
-                    String gid = "marker_" + item.getSourceId() + "_" + item.getId() + "_" + subitem; //$NON-NLS-1$ //$NON-NLS-2$
+                    String gid = GetResultsJSWorker.MARKER_PREFIX + item.getSourceId() + "_" + item.getId() + "_" //$NON-NLS-1$ //$NON-NLS-2$
+                            + subitem;
                     browserCanvas.selectCheckbox(gid, b);
                 }
             }
@@ -456,7 +457,7 @@ public class AppMapPanel extends JPanel implements Consumer<Object[]> {
         IMultiSearchResult results = this.getResultsProvider().getResults();
         for (int i = 0; i < results.getLength(); i++) {
             IItemId item = results.getItem(i);
-            String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
+            String gid = GetResultsJSWorker.MARKER_PREFIX + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
             if (mid.equals(gid)) {
                 pos = i;
                 break;
