@@ -1236,6 +1236,7 @@ public class ReportGenerator {
             }
 
             switch (messageQuote.getMessageType()) {
+                case VIEW_ONCE_AUDIO_MESSAGE:
                 case AUDIO_MESSAGE:
                     if (quoteData == null || quoteData.isEmpty()) {
                         quoteData = Messages.getString("WhatsAppReport.Audio");
@@ -1247,6 +1248,7 @@ public class ReportGenerator {
                             + quoteEnd);
                     break;
 
+                case VIEW_ONCE_VIDEO_MESSAGE:
                 case VIDEO_MESSAGE:
                 case GIF_MESSAGE:
                     quoteIcon = "\uD83D\uDCF9";
@@ -1265,6 +1267,7 @@ public class ReportGenerator {
                     }
                     break;
 
+                case VIEW_ONCE_IMAGE_MESSAGE:
                 case STICKER_MESSAGE:
                 case IMAGE_MESSAGE:
                     quoteIcon = "\uD83D\uDDBC";
