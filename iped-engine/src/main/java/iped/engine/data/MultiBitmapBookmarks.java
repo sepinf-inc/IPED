@@ -37,6 +37,9 @@ public class MultiBitmapBookmarks implements Serializable, IMultiBookmarks {
      */
     private static final long serialVersionUID = 1L;
 
+    // cache made of soft reference to bookmarks hashcodes
+    private transient HashMap<Integer, SoftReference<RoaringBitmap[]>> bsetCache = new HashMap<Integer, SoftReference<RoaringBitmap[]>>();
+    private transient SoftReference<RoaringBitmap[]> unionsCache = new SoftReference<RoaringBitmap[]>(null);
     private transient List<SelectionListener> selectionListeners = new ArrayList<>();
 
     Map<Integer, IBookmarks> map = new HashMap<Integer, IBookmarks>();
@@ -260,9 +263,6 @@ public class MultiBitmapBookmarks implements Serializable, IMultiBookmarks {
         return bookmarks;
     }
 
-    // cache made of soft reference to bookmarks hashcodes
-    HashMap<Integer, SoftReference<RoaringBitmap[]>> bsetCache = new HashMap<Integer, SoftReference<RoaringBitmap[]>>();
-
     /**
      * return union of RoaringBitmap arrays with itemIds for each case of the
      * bookmarks in parameter
@@ -293,8 +293,6 @@ public class MultiBitmapBookmarks implements Serializable, IMultiBookmarks {
 
         return unions;
     }
-
-    SoftReference<RoaringBitmap[]> unionsCache = new SoftReference<RoaringBitmap[]>(null);
 
     /**
      * return union of RoaringBitmap arrays with itemIds for each case
