@@ -25,6 +25,9 @@ import iped.search.IMultiSearchResult;
  */
 public interface IMultiBookmarks extends Serializable {
 
+    @Deprecated
+    void addBookmark(List<IItemId> ids, String bookmarkName);
+
     void addBookmark(Set<IItemId> uniqueSelectedIds, String bookmarkName);
 
     void addToTypedWords(String texto);
@@ -68,6 +71,9 @@ public interface IMultiBookmarks extends Serializable {
     void loadState(File file) throws ClassNotFoundException, IOException;
 
     void newBookmark(String bookmarkName);
+
+    @Deprecated
+    void removeBookmark(List<IItemId> ids, String bookmarkName);
 
     void removeBookmark(Set<IItemId> uniqueSelectedIds, String bookmarkName);
 

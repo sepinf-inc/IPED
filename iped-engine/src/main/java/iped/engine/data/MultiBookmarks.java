@@ -121,6 +121,13 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
         return m.hasBookmark(item.getId(), bookmarkId);
     }
 
+    @Deprecated
+    public void addBookmark(List<IItemId> ids, String bookmarkName) {
+        ItemIdSet set = new ItemIdSet();
+        set.addAll(ids);
+        addBookmark(set, bookmarkName);
+    }
+
     public void addBookmark(Set<IItemId> ids, String bookmarkName) {
         HashMap<Integer, List<Integer>> itemsPerSource = getIdsPerSource(ids);
         for (Integer sourceId : itemsPerSource.keySet()) {
@@ -143,6 +150,13 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
             items.add(item.getId());
         }
         return itemsPerSource;
+    }
+
+    @Deprecated
+    public void removeBookmark(List<IItemId> ids, String bookmarkName) {
+        ItemIdSet set = new ItemIdSet();
+        set.addAll(ids);
+        removeBookmark(set, bookmarkName);
     }
 
     public void removeBookmark(Set<IItemId> ids, String bookmarkName) {
