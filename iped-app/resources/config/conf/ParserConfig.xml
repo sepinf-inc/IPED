@@ -285,7 +285,11 @@
         </parser>
         <parser class="iped.parsers.mail.OutlookDBXParser"></parser>
         <parser class="iped.parsers.database.XBaseParser"></parser>
-        <parser class="iped.parsers.sqlite.SQLite3Parser"></parser>
+        <parser class="iped.parsers.sqlite.SQLite3Parser">
+            <params>
+                <param name="tableRowsPerItem" type="int">300</param>
+            </params>
+        </parser>
         <parser class="iped.parsers.usnjrnl.UsnJrnlParser">
             <params>
                 <param name="extractEntries" type="bool">false</param>

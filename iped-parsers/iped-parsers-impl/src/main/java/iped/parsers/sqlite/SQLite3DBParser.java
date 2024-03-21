@@ -23,6 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -55,6 +56,7 @@ import iped.utils.IOUtil;
 public class SQLite3DBParser extends AbstractDBParser {
 
     protected static final String SQLITE_CLASS_NAME = "org.sqlite.JDBC"; //$NON-NLS-1$
+	private Boolean isApple = null;
 
     /**
      *
@@ -115,6 +117,8 @@ public class SQLite3DBParser extends AbstractDBParser {
                     }
                 }
             };
+            
+            isApple = AppleORMUtils.isAppleORMMetadata(connection);
 
         } catch (SQLException e) {
             throw new IOException(e.getMessage());
@@ -209,7 +213,7 @@ public class SQLite3DBParser extends AbstractDBParser {
 
     @Override
     public JDBCTableReader getTableReader(Connection connection, String tableName, ParseContext context) {
-        return new SQLite3TableReader(connection, tableName, context);
+        return new SQLite3TableReader(connection, tableName, context, this);
     }
 
     public static boolean checkIfColumnExists(Connection connection, String table, String column) throws SQLException  {
@@ -256,4 +260,9 @@ public class SQLite3DBParser extends AbstractDBParser {
         }
         return result;
     }
+
+	public Boolean isAppleORM() {
+		return isApple;
+	}
+
 }

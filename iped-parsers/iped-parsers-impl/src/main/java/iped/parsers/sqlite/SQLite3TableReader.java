@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
+import java.util.TreeSet;
 
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
@@ -36,6 +37,7 @@ import org.apache.tika.parser.ParseContext;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.parsers.jdbc.AbstractDBParser;
 import iped.parsers.jdbc.JDBCTableReader;
 import iped.parsers.util.Messages;
 import iped.utils.TimeConverter;
@@ -52,12 +54,24 @@ import iped.utils.TimeConverter;
  */
 class SQLite3TableReader extends JDBCTableReader {
 
-    DateFormat df = new SimpleDateFormat(Messages.getString("SQLite3TableReader.DateFormat"), Locale.ROOT); //$NON-NLS-1$
+    private static final int UNIXTIME_DATEFORMAT = 1;
+	private static final int SYSTEMTIME_DATEFORMAT = 2;
+	private static final int PRTIME_DATEFORMAT = 3;
+	private static final int FILETIME_DATEFORMAT = 4;
+	private static final int JAVADATE_DATEFORMAT = 5;
+	private static final int APPLEORM_DATEFORMAT = 6;
+	
+	private static final long APPLEORM_EPOCH = 978307200;
+	SQLite3DBParser dbparser;
+	TreeSet<Integer> notADate = new TreeSet<>();
+
+	DateFormat df = new SimpleDateFormat(Messages.getString("SQLite3TableReader.DateFormat"), Locale.ROOT); //$NON-NLS-1$
 
     private boolean dateGuessed = false;
 
-    public SQLite3TableReader(Connection connection, String tableName, ParseContext context) {
+    public SQLite3TableReader(Connection connection, String tableName, ParseContext context, SQLite3DBParser dbparser) {
         super(connection, tableName, context);
+        this.dbparser = dbparser;
         df.setTimeZone(TimeZone.getTimeZone("UTC")); //$NON-NLS-1$
     }
 
@@ -109,8 +123,12 @@ class SQLite3TableReader extends JDBCTableReader {
 
     private int[] dateFormats, numPlausibleDates, zeroes;
 
+    /*
+     * Loops through all integer column values to determine if the column seams
+     * to store integer date representation.
+     * The result is stored in dateFormat[] array.
+     */
     private void detectDateFormat() throws SQLException {
-
         ResultSet results = super.getTableData();
         ResultSetMetaData meta = results.getMetaData();
         if (dateFormats == null) {
@@ -133,6 +151,9 @@ class SQLite3TableReader extends JDBCTableReader {
                     }
                     Date date;
                     int dateFormat = 0;
+                	if(meta.getColumnName(col).startsWith("Z") && meta.getTableName(col).startsWith("Z")) {
+                		dateFormat = APPLEORM_DATEFORMAT-1; //goes directly to APPLEORM_DATEFORMAT, ignoring the remainder 
+                	}
                     do {
                         date = decodeDate(val, ++dateFormat);
 
@@ -145,6 +166,26 @@ class SQLite3TableReader extends JDBCTableReader {
                         }
 
                     } while (date != null);
+
+                }
+                if (meta.getColumnType(col) == Types.FLOAT || meta.getColumnType(col) == Types.REAL) {
+                	if(meta.getColumnName(col).startsWith("Z") && meta.getTableName(col).startsWith("Z")) {
+                        int dateFormat = 0;
+                		dateFormat = APPLEORM_DATEFORMAT-1; //goes directly to APPLEORM_DATEFORMAT, ignoring the remainder
+                        long val = results.getLong(col);
+                        if (val <= 0) {
+                            zeroes[col]++;
+                        }else {
+                            Date date = decodeDate(val, ++dateFormat);
+
+                            if (date != null && (date.after(minPlausibleDate) && date.before(maxPlausibleDate))) {
+                                if (dateFormats[col] == 0)
+                                    dateFormats[col] = dateFormat;
+                                if (dateFormats[col] == dateFormat)
+                                    numPlausibleDates[col]++;
+                            }
+                        }
+                	}
                 }
             }
         }
@@ -158,20 +199,23 @@ class SQLite3TableReader extends JDBCTableReader {
     private Date decodeDate(long val, int dateFormat) {
         Date date;
         switch (dateFormat) {
-            case 1:
+            case UNIXTIME_DATEFORMAT:
                 date = TimeConverter.unixTimeToDate(val);
                 break;
-            case 2:
+            case SYSTEMTIME_DATEFORMAT:
                 date = TimeConverter.systemTimeToDate(val);
                 break;
-            case 3:
+            case PRTIME_DATEFORMAT:
                 date = TimeConverter.PRTimeToDate(val);
                 break;
-            case 4:
+            case FILETIME_DATEFORMAT:
                 date = TimeConverter.fileTimeToDate(val);
                 break;
-            case 5:
+            case JAVADATE_DATEFORMAT:
                 date = new Date(val);
+                break;
+            case APPLEORM_DATEFORMAT:
+                date = TimeConverter.unixTimeToDate(val + APPLEORM_EPOCH);
                 break;
             default:
                 date = null;
@@ -192,25 +236,69 @@ class SQLite3TableReader extends JDBCTableReader {
         // stored as a column of type Integer, but the columnTypeName is TIMESTAMP, and
         // the
         // value is a string representing a Long.
+		String datetext="";
         if (rsmd.getColumnTypeName(col).equals("TIMESTAMP")) { //$NON-NLS-1$
-            text = parseDateFromLongString(rs.getString(col));
-
+        	long longValue = rs.getLong(col);
+        	if(rs.wasNull()) {
+        		text = null;
+        	}else {
+                if(dbparser.isAppleORM()) {
+                	//Apple ORM date format
+                	datetext = parseDateFromLong((longValue+ APPLEORM_EPOCH)*1000l);
+                }else {
+                	datetext = parseDateFromLong(longValue);
+                }            
+            	text=AbstractDBParser.DATETIME_MARKUP_START+datetext+"\">"+datetext+"</time>";
+        	}
         } else {
             long val = rs.getLong(col);
             text = Long.toString(val);
 
             if (val > 0 && dateFormats[col] != 0) {
-                text += " (*" + df.format(decodeDate(val, dateFormats[col])) + ")";
+            	datetext = df.format(decodeDate(val, dateFormats[col]));
+                text += AbstractDBParser.DATETIME_MARKUP_START+datetext+"\"> (*" + datetext + ")</time>";
                 dateGuessed = true;
             }
+        }
+
+        return text;
+    }
+
+    @Override
+    protected String handleFloat(ResultSetMetaData rsmd, ResultSet rs, int col, ContentHandler handler)
+            throws SQLException, SAXException {
+
+        String text = null;
+
+        // As of this writing, with xerial's sqlite jdbc connector, a timestamp is
+        // stored as a column of type Integer, but the columnTypeName is TIMESTAMP, and
+        // the
+        // value is a string representing a Long.
+		String datetext="";
+        if (rsmd.getColumnTypeName(col).equals("TIMESTAMP") //$NON-NLS-1$
+                || rsmd.getColumnName(col).toLowerCase().contains("timestamp")) {
+        	long longValue = rs.getLong(col);
+        	if(rs.wasNull()) {
+        		text = null;
+        	}else {
+                if(dbparser.isAppleORM()) {
+                	//Apple ORM date format
+                	datetext = parseDateFromLong((longValue+ APPLEORM_EPOCH)*1000l);
+                }else {
+                	datetext = parseDateFromLong(longValue);
+                }            
+            	text=AbstractDBParser.DATETIME_MARKUP_START+datetext+"\">"+datetext+"</time>";
+        	}
+        } else {
+        	return super.handleFloat(rsmd, rs, col, handler);
         }
 
         return text;
 
     }
 
-    private String parseDateFromLongString(String longString) throws SAXException {
-        java.sql.Date d = new java.sql.Date(Long.parseLong(longString));
+    private String parseDateFromLong(Long longValue) throws SAXException {
+        java.sql.Date d = new java.sql.Date(longValue);
         return df.format(d);
 
     }

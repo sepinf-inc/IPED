@@ -78,7 +78,6 @@ import iped.engine.io.ParsingReader;
 import iped.engine.search.ItemSearcher;
 import iped.engine.task.carver.CarverTask;
 import iped.engine.task.index.IndexItem;
-import iped.engine.tika.SyncMetadata;
 import iped.engine.util.ItemInfoFactory;
 import iped.engine.util.ParentInfo;
 import iped.engine.util.TextCache;
@@ -119,6 +118,7 @@ import iped.properties.MediaTypes;
 import iped.search.IItemSearcher;
 import iped.utils.EmptyInputStream;
 import iped.utils.IOUtil;
+import iped.utils.tika.SyncMetadata;
 
 /**
  * TAREFA DE PARSING DE ALGUNS TIPOS DE ARQUIVOS. ARMAZENA O TEXTO EXTRAÍDO,
@@ -589,7 +589,9 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             subItem.setTempAttribute(PARENT_CONTAINER_HASH, evidence.getHash());
 
             // protection for future concurrent access, see #794
-            metadata = new SyncMetadata(metadata);
+            if (!(metadata instanceof SyncMetadata)) {
+                metadata = new SyncMetadata(metadata);
+            }
             subItem.setMetadata(metadata);
 
             boolean updateInputStream = false;
