@@ -91,6 +91,30 @@
 				</configuration>
 			</plugin>
             <plugin>
+                <groupId>com.googlecode.maven-download-plugin</groupId>
+                <artifactId>download-maven-plugin</artifactId>
+                <version>1.6.8</version>
+                <executions>
+                    <execution>
+                        <id>download-aleapp</id>
+                        <goals>
+                            <goal>wget</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <url>https://github.com/abrignoni/ALEAPP/archive/refs/tags/v3.1.9.zip</url>
+                    <unpack>true</unpack>
+                    <fileMappers>
+                      <org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                        <pattern>ALEAPP[^/]+/</pattern>
+                        <replacement>./</replacement>
+                      </org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                    </fileMappers>
+                    <outputDirectory>${tools.dir}/ALEAPP</outputDirectory>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <version>2.10</version>
@@ -137,7 +161,7 @@
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
-                    </execution>
+                    </execution>                    
                     <execution>
                         <id>unpack-esedbexport</id>
                         <phase>package</phase>
@@ -208,7 +232,7 @@
                                     <artifactId>libagdb</artifactId>
                                     <version>20181111.1</version>
                                     <type>zip</type>
-                                    <overWrite>true</overWrite>
+                                    <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
@@ -227,7 +251,7 @@
                                     <artifactId>evtexport</artifactId>
                                     <version>20180317.1</version>
                                     <type>zip</type>
-                                    <overWrite>true</overWrite>
+                                    <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
@@ -246,7 +270,7 @@
                                     <artifactId>evtxexport</artifactId>
                                     <version>20170122.1</version>
                                     <type>zip</type>
-                                    <overWrite>true</overWrite>
+                                    <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
@@ -265,7 +289,7 @@
                                     <artifactId>sccainfo</artifactId>
                                     <version>20170205.1</version>
                                     <type>zip</type>
-                                    <overWrite>true</overWrite>
+                                    <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
@@ -284,7 +308,7 @@
                                     <artifactId>rifiuti2</artifactId>
                                     <version>0.7.0</version>
                                     <type>zip</type>
-                                    <overWrite>true</overWrite>
+                                    <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
@@ -571,7 +595,7 @@
                                     <artifactId>nativeview-dll</artifactId>
                                     <version>1.0.1</version>
                                     <type>zip</type>
-                                    <overWrite>true</overWrite>
+                                    <overWrite>false</overWrite>
                                     <outputDirectory>${lib.dir}</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
