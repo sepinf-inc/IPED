@@ -426,12 +426,17 @@ public class MultiBitmapBookmarks implements Serializable, IMultiBookmarks {
 
     public void loadState(File file) throws ClassNotFoundException, IOException {
         Object obj = Util.readObject(file.getAbsolutePath());
-        if (obj instanceof IMultiBookmarks) {
+        if (obj instanceof MultiBitmapBookmarks) {
+            MultiBitmapBookmarks state = (MultiBitmapBookmarks) obj;
+            if (state.getTotalItens() != this.getTotalItens())
+                throw new IllegalArgumentException("Incompatible state file! It has different number of items."); //$NON-NLS-1$
+            map = state.map;
+        } else if (obj instanceof MultiBookmarks) {
             MultiBookmarks state = (MultiBookmarks) obj;
             if (state.getTotalItens() != this.getTotalItens())
                 throw new IllegalArgumentException("Incompatible state file! It has different number of items."); //$NON-NLS-1$
             map = state.map;
-        } else {
+        } else if (obj instanceof IBookmarks) {
             IBookmarks m = (IBookmarks) obj;
             if (map.size() > 1 || m.getTotalItens() != this.getTotalItens())
                 throw new IllegalArgumentException("Incompatible state file!"); //$NON-NLS-1$
