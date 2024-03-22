@@ -250,7 +250,7 @@ public class IPEDReader extends DataSourceReader {
             return;
         }
 
-        IBookmarks reportState = new BitmapBookmarks(lastId - 1, lastId, output);
+        IBookmarks reportState = new BitmapBookmarks(totalItems, lastId, output);
 
         reportState.loadState();
 
