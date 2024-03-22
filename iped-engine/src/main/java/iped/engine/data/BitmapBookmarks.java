@@ -459,8 +459,13 @@ public class BitmapBookmarks implements IBookmarks {
                 int len = Math.min(state.selected.length, this.selected.length);
                 System.arraycopy(state.selected, 0, this.selected, 0, len);
             }
-
             this.bookmarks = state.bookmarks;
+            for (RoaringBitmap bitmap : this.bookmarks.values()) {
+                if (bitmap.last() > lastId) {
+                    bitmap.remove((long) lastId + 1, (long) bitmap.last() + 1);
+                }
+            }
+
             this.typedWords = state.typedWords;
             this.selectedItens = state.selectedItens;
             this.bookmarkNames = state.bookmarkNames;
@@ -468,6 +473,7 @@ public class BitmapBookmarks implements IBookmarks {
             this.bookmarkKeyStrokes = state.bookmarkKeyStrokes;
             this.reportBookmarks = state.reportBookmarks;
             this.bookmarkColors = state.bookmarkColors;
+
         } catch (ClassCastException e) {
             // try to load old format
             Bookmarks state = loadOldBookmarks(file);
@@ -505,7 +511,7 @@ public class BitmapBookmarks implements IBookmarks {
         return (BitmapBookmarks) Util.readObject(file.getAbsolutePath());
     }
 
-    public static Bookmarks loadOldBookmarks(File file) throws ClassNotFoundException, IOException {
+    private static Bookmarks loadOldBookmarks(File file) throws ClassNotFoundException, IOException {
         LOGGER.info("Loading state from file " + file.getAbsolutePath()); //$NON-NLS-1$
         return (Bookmarks) Util.readObject(file.getAbsolutePath());
     }
