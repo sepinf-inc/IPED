@@ -70,7 +70,7 @@ public class ItemIdSet extends AbstractSet<IItemId> {
 
     public void put(int finalSourceId, RoaringBitmap ids) {
         RoaringBitmap oldlist = bitsets.put(finalSourceId, ids);
-        if (oldlist == null) {
+        if (oldlist != null) {
             length -= oldlist.getCardinality();
         }
         length += ids.getCardinality();
