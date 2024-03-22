@@ -48,6 +48,7 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.store.Directory;
+import org.apache.lucene.util.Bits;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.slf4j.Logger;
@@ -290,8 +291,13 @@ public class IPEDSource implements IIPEDSource {
             return;
         }
 
+        Bits liveDocs = atomicReader.getLiveDocs();
+
         int i;
         while ((i = ndv.nextDoc()) != DocIdSetIterator.NO_MORE_DOCS) {
+            if (liveDocs != null && !liveDocs.get(i)) {
+                continue;
+            }
             ids[i] = (int) ndv.longValue();
             parentDocs.set(i);
             if (ids[i] > lastId)
