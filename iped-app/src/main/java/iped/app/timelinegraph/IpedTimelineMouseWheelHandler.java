@@ -65,7 +65,7 @@ public class IpedTimelineMouseWheelHandler implements MouseWheelListener, Serial
      */
     @Override
     public void mouseWheelMoved(MouseWheelEvent e) {
-        if (lastWhen < e.getWhen() + 100) {// avoid calling the event more then once
+        if (lastWhen < e.getWhen() - 25) { // avoid calling the event more then once
             JFreeChart chart = this.chartPanel.getChart();
             if (chart == null) {
                 return;
