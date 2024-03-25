@@ -184,11 +184,6 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
 
                 result.setIPEDSource(ipedCase);
 
-                addBitmapFilter(result.getCasesBitSets((IPEDMultiSource) ipedCase));
-                if (this.isCancelled()) {
-                    throw new CancellationException();
-                }
-
                 if (applyUIFilters && filterManager != null) {
                     List<IResultSetFilterer> rsFilterers = filterManager.getResultSetFilterers();
 
@@ -324,6 +319,12 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
 
     public void addBitmapFilter(IBitmapFilter filter) {
         RoaringBitmap[] lunionsArray = filter.getBitmap();
+
+        if (unionsArray == null) {
+            // creates the unionsArray and puts the cases bitmaps as the initial bitmap
+            // array
+            addBitmapFilter(result.getCasesBitSets((IPEDMultiSource) ipedCase));
+        }
 
         for (int i = 0; i < unionsArray.length; i++) {
             if (filter.isToFilterOut()) {
