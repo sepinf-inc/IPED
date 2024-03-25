@@ -194,6 +194,10 @@ public class BitmapBookmarks implements IBookmarks {
     }
 
     public int getBookmarkCount(int bookmark) {
+        RoaringBitmap bmark = bookmarks.get(bookmark);
+        if (bmark == null) {
+            return 0;
+        }
         return bookmarks.get(bookmark).getCardinality();
     }
 
