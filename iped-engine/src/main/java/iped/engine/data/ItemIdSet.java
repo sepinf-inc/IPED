@@ -3,14 +3,15 @@ package iped.engine.data;
 import java.util.AbstractSet;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 import org.roaringbitmap.RoaringBitmap;
 
 import iped.data.IItemId;
 
 public class ItemIdSet extends AbstractSet<IItemId> {
-    HashMap<Integer, RoaringBitmap> bitsets = new HashMap<Integer, RoaringBitmap>();
-    int length = 0;
+
+    private HashMap<Integer, RoaringBitmap> bitsets = new HashMap<Integer, RoaringBitmap>();
 
     public ItemIdSet() {
 
@@ -22,63 +23,59 @@ public class ItemIdSet extends AbstractSet<IItemId> {
     }
 
     class ItemIdBitSetIterator implements Iterator<IItemId> {
-        Integer currentSrcId = null;
+
         Iterator<Integer> srcIterator;
-        RoaringBitmap currentBitset;
-        int currentItemIdIdex = -1;
-        private int currentLastId;
+        Iterator<Integer> idIterator;
+        IItemId nextItemId = null;
+        int currentSrcId = -1;
 
         ItemIdBitSetIterator() {
             srcIterator = bitsets.keySet().iterator();
+            advance();
         }
 
         @Override
         public boolean hasNext() {
-            if (currentSrcId == null) {
-                if (!nextBitSet()) {
-                    return false;
-                }
-            }
-            currentItemIdIdex = (int) currentBitset.nextValue(currentItemIdIdex + 1);
-            if (currentItemIdIdex == -1) {
-                if (!nextBitSet()) {
-                    return false;
-                }
-            }
-            return currentSrcId != null;
+            return nextItemId != null;
         }
 
         @Override
         public IItemId next() {
-            return new ItemId(currentSrcId, currentItemIdIdex);
+            if (nextItemId == null) {
+                throw new NoSuchElementException();
+            }
+            IItemId itemId = nextItemId;
+            advance();
+            return itemId;
         }
 
-        private boolean nextBitSet() {
-            if (srcIterator.hasNext()) {
+        private void advance() {
+            if (idIterator != null && idIterator.hasNext()) {
+                int currentId = idIterator.next();
+                nextItemId = new ItemId(currentSrcId, currentId);
+            } else if (srcIterator.hasNext()) {
                 currentSrcId = srcIterator.next();
-                if (currentSrcId != null) {
-                    currentBitset = bitsets.get(currentSrcId);
-                    currentItemIdIdex = -1;
-                    currentLastId = currentBitset.last();
-                }
-                return true;
+                RoaringBitmap bitmap = bitsets.get(currentSrcId);
+                idIterator = bitmap.iterator();
+                advance();
             } else {
-                return false;
+                nextItemId = null;
             }
         }
+
     }
 
     public void put(int finalSourceId, RoaringBitmap ids) {
-        RoaringBitmap oldlist = bitsets.put(finalSourceId, ids);
-        if (oldlist != null) {
-            length -= oldlist.getCardinality();
-        }
-        length += ids.getCardinality();
+        bitsets.put(finalSourceId, ids);
     }
 
     @Override
     public int size() {
-        return length;
+        int size = 0;
+        for (RoaringBitmap r : bitsets.values()) {
+            size += r.getCardinality();
+        }
+        return size;
     }
 
     @Override
@@ -88,7 +85,6 @@ public class ItemIdSet extends AbstractSet<IItemId> {
             bitmap = new RoaringBitmap();
             bitsets.put(e.getSourceId(), bitmap);
         }
-        length++;
         return bitmap.checkedAdd(e.getId());
     }
 
