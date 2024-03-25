@@ -465,7 +465,7 @@ public class BitmapBookmarks implements IBookmarks {
             }
             this.bookmarks = state.bookmarks;
             for (RoaringBitmap bitmap : this.bookmarks.values()) {
-                if (bitmap.last() > lastId) {
+                if (!bitmap.isEmpty() && bitmap.last() > lastId) {
                     bitmap.remove((long) lastId + 1, (long) bitmap.last() + 1);
                 }
             }
