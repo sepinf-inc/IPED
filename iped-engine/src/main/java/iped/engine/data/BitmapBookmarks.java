@@ -581,8 +581,7 @@ public class BitmapBookmarks implements IBookmarks {
 
     @Override
     public boolean hasBookmark(int id, byte[] bookmarkbits) {
-        // TODO Auto-generated method stub
-        return false;
+        throw new UnsupportedOperationException();
     }
 
     @Override
