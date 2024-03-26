@@ -62,7 +62,7 @@ public class BitmapBookmarks implements IBookmarks {
 
     static int bookmarkBits = Byte.SIZE;
 
-    private boolean[] selected;
+    private RoaringBitmap selected;
     HashMap<Integer, RoaringBitmap> bookmarks;
     private TreeMap<Integer, String> bookmarkNames = new TreeMap<Integer, String>();
     private TreeMap<Integer, String> bookmarkComments = new TreeMap<Integer, String>();
@@ -70,7 +70,7 @@ public class BitmapBookmarks implements IBookmarks {
     private Set<Integer> reportBookmarks = new TreeSet<Integer>();
     TreeMap<Integer, Color> bookmarkColors = new TreeMap<Integer, Color>();
 
-    private int selectedItens = 0, totalItems, lastId;
+    private int selectedItems = 0, totalItems, lastId;
 
     private LinkedHashSet<String> typedWords = new LinkedHashSet<String>();
     private File indexDir;
@@ -91,7 +91,7 @@ public class BitmapBookmarks implements IBookmarks {
     public BitmapBookmarks(int totalItens, int lastId, final File modulePath) {
         this.totalItems = totalItens;
         this.lastId = lastId;
-        selected = new boolean[lastId + 1];
+        selected = new RoaringBitmap();
         bookmarks = new HashMap<>();
         indexDir = new File(modulePath, "index"); //$NON-NLS-1$
         stateFile = new File(modulePath, STATEFILENAME);
@@ -131,24 +131,22 @@ public class BitmapBookmarks implements IBookmarks {
     }
 
     public int getTotalChecked() {
-        return selectedItens;
+        return selectedItems;
     }
 
     public boolean isChecked(int id) {
-        return selected[id];
+        return selected.contains(id);
     }
 
     public synchronized void clearSelected() {
-        selectedItens = 0;
-        for (int i = 0; i < selected.length; i++) {
-            selected[i] = false;
-        }
+        selectedItems = 0;
+        selected.clear();
     }
 
     public synchronized void checkAll() {
-        selectedItens = totalItems;
+        selectedItems = totalItems;
         ipedCase.getLuceneIdStream().forEach(i -> {
-            selected[ipedCase.getId(i)] = true;
+            selected.add(ipedCase.getId(i));
         });
     }
 
@@ -372,7 +370,7 @@ public class BitmapBookmarks implements IBookmarks {
 
     public SearchResult filterChecked(SearchResult result) {
         for (int i = 0; i < result.getLength(); i++) {
-            if (!selected[result.getId(i)]) {
+            if (!selected.contains(result.getId(i))) {
                 result.getIds()[i] = -1;
             }
         }
@@ -459,9 +457,11 @@ public class BitmapBookmarks implements IBookmarks {
         try {
             BitmapBookmarks state = load(file);
 
-            if (state.selected != null /* && state.read != null */) {
-                int len = Math.min(state.selected.length, this.selected.length);
-                System.arraycopy(state.selected, 0, this.selected, 0, len);
+            if (state.selected != null) {
+                selected = state.selected.clone();
+                if (!selected.isEmpty() && selected.last() > lastId) {
+                    selected.remove((long) lastId + 1, (long) selected.last() + 1);
+                }
             }
             this.bookmarks = state.bookmarks;
             for (RoaringBitmap bitmap : this.bookmarks.values()) {
@@ -471,7 +471,7 @@ public class BitmapBookmarks implements IBookmarks {
             }
 
             this.typedWords = state.typedWords;
-            this.selectedItens = state.selectedItens;
+            this.selectedItems = state.selectedItems;
             this.bookmarkNames = state.bookmarkNames;
             this.bookmarkComments = state.bookmarkComments;
             this.bookmarkKeyStrokes = state.bookmarkKeyStrokes;
@@ -482,9 +482,14 @@ public class BitmapBookmarks implements IBookmarks {
             // try to load old format
             Bookmarks state = loadOldBookmarks(file);
 
-            if (state.selected != null /* && state.read != null */) {
-                int len = Math.min(state.selected.length, this.selected.length);
-                System.arraycopy(state.selected, 0, this.selected, 0, len);
+            if (state.selected != null) {
+                int len = Math.min(state.selected.length, this.lastId + 1);
+                selected.clear();
+                for (int i = 0; i < len; i++) {
+                    if (state.selected[i]) {
+                        selected.add(i);
+                    }
+                }
             }
 
             for (Entry<Integer, String> bname : state.bookmarkNames.entrySet()) {
@@ -501,7 +506,7 @@ public class BitmapBookmarks implements IBookmarks {
             }
 
             this.typedWords = state.typedWords;
-            this.selectedItens = state.selectedItens;
+            this.selectedItems = state.selectedItens;
             this.bookmarkNames = state.bookmarkNames;
             this.bookmarkComments = state.bookmarkComments;
             this.bookmarkKeyStrokes = state.bookmarkKeyStrokes;
@@ -521,14 +526,13 @@ public class BitmapBookmarks implements IBookmarks {
     }
 
     public synchronized void setChecked(boolean value, int id) {
-        if (value != selected[id]) {
-            if (value)
-                selectedItens++;
-            else
-                selectedItens--;
+        if (value) {
+            if (selected.checkedAdd(id)) {
+                selectedItems++;
+            }
+        } else if (selected.checkedRemove(id)) {
+            selectedItems--;
         }
-        // seta valor na versão de visualização ou vice-versa
-        selected[id] = value;
     }
 
     public RoaringBitmap getBookmarksUnion() {
