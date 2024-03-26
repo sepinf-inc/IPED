@@ -594,7 +594,11 @@ public class VideoThumbTask extends ThumbTask {
             extractor.setWorker(worker);
 
             // export thumb data to internal database
-            BufferedImage img = adjustFrameDimension(ImageIO.read(frame), w, h);
+            BufferedImage img = ImageIO.read(frame);
+            if (img == null) {
+                continue;
+            }
+            img = adjustFrameDimension(img, w, h);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ImageIO.write(img, "jpg", baos);
             ByteArrayInputStream is = new ByteArrayInputStream(baos.toByteArray());
