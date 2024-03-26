@@ -54,6 +54,7 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
         return sum;
     }
 
+    @Deprecated
     public int getTotalItens() {
         int sum = 0;
         for (IBookmarks m : map.values())

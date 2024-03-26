@@ -76,11 +76,17 @@ public class Bookmarks implements IBookmarks {
 
     private transient IPEDSource ipedCase;
 
+    public Bookmarks(IPEDSource ipedCase) {
+        this(ipedCase, ipedCase.getModuleDir());
+    }
+
+    @Deprecated
     public Bookmarks(IPEDSource ipedCase, File modulePath) {
         this(ipedCase.getTotalItems(), ipedCase.getLastId(), modulePath);
         this.ipedCase = ipedCase;
     }
 
+    @Deprecated
     public Bookmarks(int totalItens, int lastId, final File modulePath) {
         this.totalItems = totalItens;
         this.lastId = lastId;
@@ -107,6 +113,7 @@ public class Bookmarks implements IBookmarks {
         return lastId;
     }
 
+    @Deprecated
     public int getTotalItens() {
         return this.totalItems;
     }

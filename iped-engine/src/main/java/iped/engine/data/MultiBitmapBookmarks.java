@@ -61,7 +61,7 @@ public class MultiBitmapBookmarks implements Serializable, IMultiBookmarks {
         return sum;
     }
 
-    public int getTotalItens() {
+    private int getTotalItens() {
         int sum = 0;
         for (IBookmarks m : map.values())
             sum += m.getTotalItens();

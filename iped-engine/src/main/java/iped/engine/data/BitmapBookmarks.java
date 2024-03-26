@@ -70,7 +70,7 @@ public class BitmapBookmarks implements IBookmarks {
     private Set<Integer> reportBookmarks = new TreeSet<Integer>();
     TreeMap<Integer, Color> bookmarkColors = new TreeMap<Integer, Color>();
 
-    private int selectedItems = 0, totalItems, lastId;
+    private int lastId;
 
     private LinkedHashSet<String> typedWords = new LinkedHashSet<String>();
     private File indexDir;
@@ -83,18 +83,17 @@ public class BitmapBookmarks implements IBookmarks {
 
     private RoaringBitmap unionAll;
 
-    public BitmapBookmarks(IPEDSource ipedCase, File modulePath) {
-        this(ipedCase.getTotalItems(), ipedCase.getLastId(), modulePath);
+    public BitmapBookmarks(IPEDSource ipedCase) {
+        this(ipedCase.getCaseDir(), ipedCase.getLastId());
         this.ipedCase = ipedCase;
     }
 
-    public BitmapBookmarks(int totalItens, int lastId, final File modulePath) {
-        this.totalItems = totalItens;
+    public BitmapBookmarks(File casePath, int lastId) {
         this.lastId = lastId;
         selected = new RoaringBitmap();
         bookmarks = new HashMap<>();
-        indexDir = new File(modulePath, "index"); //$NON-NLS-1$
-        stateFile = new File(modulePath, STATEFILENAME);
+        indexDir = new File(casePath, IPEDSource.MODULE_DIR + "/" + IPEDSource.INDEX_DIR);
+        stateFile = new File(casePath, IPEDSource.MODULE_DIR + "/" + STATEFILENAME);
         updateCookie();
         try {
             stateFile = stateFile.getCanonicalFile();
@@ -114,8 +113,12 @@ public class BitmapBookmarks implements IBookmarks {
         return lastId;
     }
 
+    @Deprecated
     public int getTotalItens() {
-        return this.totalItems;
+        if (ipedCase != null) {
+            return ipedCase.getTotalItems();
+        }
+        throw new UnsupportedOperationException();
     }
 
     public File getIndexDir() {
@@ -131,7 +134,7 @@ public class BitmapBookmarks implements IBookmarks {
     }
 
     public int getTotalChecked() {
-        return selectedItems;
+        return selected.getCardinality();
     }
 
     public boolean isChecked(int id) {
@@ -139,12 +142,10 @@ public class BitmapBookmarks implements IBookmarks {
     }
 
     public synchronized void clearSelected() {
-        selectedItems = 0;
         selected.clear();
     }
 
     public synchronized void checkAll() {
-        selectedItems = totalItems;
         ipedCase.getLuceneIdStream().forEach(i -> {
             selected.add(ipedCase.getId(i));
         });
@@ -471,7 +472,6 @@ public class BitmapBookmarks implements IBookmarks {
             }
 
             this.typedWords = state.typedWords;
-            this.selectedItems = state.selectedItems;
             this.bookmarkNames = state.bookmarkNames;
             this.bookmarkComments = state.bookmarkComments;
             this.bookmarkKeyStrokes = state.bookmarkKeyStrokes;
@@ -506,7 +506,6 @@ public class BitmapBookmarks implements IBookmarks {
             }
 
             this.typedWords = state.typedWords;
-            this.selectedItems = state.selectedItens;
             this.bookmarkNames = state.bookmarkNames;
             this.bookmarkComments = state.bookmarkComments;
             this.bookmarkKeyStrokes = state.bookmarkKeyStrokes;
@@ -527,11 +526,9 @@ public class BitmapBookmarks implements IBookmarks {
 
     public synchronized void setChecked(boolean value, int id) {
         if (value) {
-            if (selected.checkedAdd(id)) {
-                selectedItems++;
-            }
-        } else if (selected.checkedRemove(id)) {
-            selectedItems--;
+            selected.add(id);
+        } else {
+            selected.remove(id);
         }
     }
 

@@ -241,7 +241,7 @@ public class IPEDSource implements IIPEDSource {
                 Item.getAllExtraAttributes().addAll(extraAttributes);
             }
 
-            bookmarks = new BitmapBookmarks(this, moduleDir);
+            bookmarks = new BitmapBookmarks(this);
             bookmarks.loadState();
             multiBookmarks = new MultiBitmapBookmarks(Collections.singletonList(this));
 
