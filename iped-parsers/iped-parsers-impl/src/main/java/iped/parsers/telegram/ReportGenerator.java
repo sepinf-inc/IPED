@@ -94,6 +94,8 @@ public class ReportGenerator {
         out.println("<br>" + Messages.getString("TelegramContact.Phone") + " " + format(contact.getPhone()));
         if (contact.isGroup()) {
             out.println("<br>[" + Messages.getString("TelegramContact.Group") + "]");
+        } else if (contact.isChannel()) {
+            out.println("<br>[" + Messages.getString("TelegramContact.Channel") + "]");
         }
         out.println("</body>\n</html>"); //$NON-NLS-1$
 
@@ -113,14 +115,19 @@ public class ReportGenerator {
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, StandardCharsets.UTF_8));
         String title = c.getName();
-        if (!c.isGroup()) {
-            if (c.getC().getPhone() != null)
-                title += " phone:" + c.getC().getPhone();
-            else if (c.getC().getUsername() != null)
-                title += " user:" + c.getC().getUsername();
+        if (c.isGroup()) {
+            title = Messages.getString("TelegramContact.Group") + ": " + title;
+        } else if (c.isChannel()) {
+            title = Messages.getString("TelegramContact.Channel") + ": " + title;
+        } else {
+            if (c.getC().getPhone() != null) {
+                title += " (" + Messages.getString("TelegramContact.Phone") + " " + c.getC().getPhone() + ")";
+            } else if (c.getC().getUsername() != null) {
+                title += " (" + Messages.getString("TelegramContact.Username") + " " + c.getC().getUsername() + ")";
+            }
         }
 
-        printMessageFileHeader(out, title, c.getId() + "", c.getC().getAvatar(), c.isGroup() && c.isDeleted());
+        printMessageFileHeader(out, title, c.getC().getAvatar(), c.isGroup(), c.isChannel(), c.isDeleted());
 
         if (currentMsg > 0)
             out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
@@ -139,7 +146,7 @@ public class ReportGenerator {
                 lastDate = thisDate;
             }
 
-            printMessage(out, m, c.isGroup());
+            printMessage(out, m);
 
             if (currentMsg != c.getMessages().size() && bout.size() >= minChatSplitSize) {
                 out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
@@ -356,7 +363,7 @@ public class ReportGenerator {
         printImage(out, message, true);
     }
 
-    private void printMessage(PrintWriter out, Message message, boolean group) {
+    private void printMessage(PrintWriter out, Message message) {
 
         out.println("<div class=\"linha\" id=\"" + message.getId() + "\">"); //$NON-NLS-1$
         if (message.isFromMe()) {
@@ -428,12 +435,12 @@ public class ReportGenerator {
 
     }
 
-    private static void printMessageFileHeader(PrintWriter out, String title, String id, byte[] avatar,
-            boolean isDeletedGroup) {
+    private static void printMessageFileHeader(PrintWriter out, String title, byte[] avatar,
+            boolean isGroup, boolean isChannel, boolean isDeleted) {
         out.println("<!DOCTYPE html>\n" //$NON-NLS-1$
                 + "<html>\n" //$NON-NLS-1$
                 + "<head>\n" //$NON-NLS-1$
-                + "	<title>" + id + "</title>\n" //$NON-NLS-1$ //$NON-NLS-2$
+                + "	<title>" + title + "</title>\n" //$NON-NLS-1$ //$NON-NLS-2$
                 + "	<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n" //$NON-NLS-1$
                 + "	<meta name=\"viewport\" content=\"width=device-width\" />\n" //$NON-NLS-1$
                 + "     <meta charset=\"UTF-8\" />\n" //$NON-NLS-1$
@@ -460,10 +467,14 @@ public class ReportGenerator {
                 + "<div id=\"conversation\">\n" //$NON-NLS-1$
                 + "<br/><br/><br/>"); //$NON-NLS-1$
 
-
-        if (isDeletedGroup) {
-            out.println("<div class=\"linha\"><div class=\"recoveredChat\">"
-                    + Messages.getString("TelegramReport.RecoveredGroup") + "</div></div>");
+        if (isDeleted && (isGroup || isChannel)) {
+            out.print("<div class=\"linha\"><div class=\"recoveredChat\">");
+            if (isGroup) {
+                out.print(Messages.getString("TelegramReport.RecoveredGroup"));
+            } else {
+                out.print(Messages.getString("TelegramReport.RecoveredChannel"));
+            }
+            out.println("</div></div>");
         }
     }
 
