@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -11,12 +12,15 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import javax.swing.KeyStroke;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.roaringbitmap.RoaringBitmap;
 
 import iped.data.IBookmarks;
 import iped.data.IIPEDSource;
@@ -27,18 +31,21 @@ import iped.engine.search.MultiSearchResult;
 import iped.engine.util.Util;
 import iped.search.IMultiSearchResult;
 
-public class MultiBookmarks implements Serializable, IMultiBookmarks {
+public class MultiBitmapBookmarks implements Serializable, IMultiBookmarks {
 
     /**
      * 
      */
     private static final long serialVersionUID = 1L;
 
+    // cache made of soft reference to bookmarks hashcodes
+    private transient HashMap<String, SoftReference<RoaringBitmap[]>> bsetCache = new HashMap<>();
+    private transient SoftReference<RoaringBitmap[]> unionsCache = new SoftReference<RoaringBitmap[]>(null);
     private transient List<SelectionListener> selectionListeners = new ArrayList<>();
 
     Map<Integer, IBookmarks> map = new HashMap<Integer, IBookmarks>();
 
-    public MultiBookmarks(List<IPEDSource> cases) {
+    public MultiBitmapBookmarks(List<IPEDSource> cases) {
         for (IIPEDSource s : cases)
             map.put(s.getSourceId(), s.getBookmarks());
     }
@@ -54,8 +61,7 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
         return sum;
     }
 
-    @Deprecated
-    public int getTotalItens() {
+    private int getTotalItens() {
         int sum = 0;
         for (IBookmarks m : map.values())
             sum += m.getTotalItens();
@@ -109,9 +115,8 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
     }
 
     public boolean hasBookmark(IItemId item, Set<String> bookmarkNames) {
-        IBookmarks m = map.get(item.getSourceId());
-        int[] bookmarkIds = getBookmarkIds(m, bookmarkNames);
-        return bookmarkIds != null && m.hasBookmark(item.getId(), m.getBookmarkBits(bookmarkIds));
+        RoaringBitmap r = getBookmarksUnions(bookmarkNames)[item.getSourceId()];
+        return r.contains(item.getId());
     }
 
     public final boolean hasBookmark(ItemId item, String bookmarkName) {
@@ -138,6 +143,12 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
                 bookmarkId = m.newBookmark(bookmarkName);
             m.addBookmark(itemsPerSource.get(sourceId), bookmarkId);
         }
+        invalidadeCaches();
+    }
+
+    private void invalidadeCaches() {
+        unionsCache = null;
+        bsetCache.clear();
     }
 
     private HashMap<Integer, List<Integer>> getIdsPerSource(Set<IItemId> ids) {
@@ -168,7 +179,7 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
             if (bookmarkId != -1)
                 m.removeBookmark(itemsPerSource.get(sourceId), bookmarkId);
         }
-
+        invalidadeCaches();
     }
 
     public void newBookmark(String bookmarkName) {
@@ -202,36 +213,6 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
         return null;
     }
 
-    public void setBookmarkColor(String bookmarkName, Color color) {
-        for (IBookmarks m : map.values()) {
-            int bid = m.getBookmarkId(bookmarkName);
-            if (bid != -1) {
-                m.setBookmarkColor(bid, color);
-            }
-        }
-
-    }
-
-    public Color getBookmarkColor(String bookmarkName) {
-        for (IBookmarks m : map.values()) {
-            int bid = m.getBookmarkId(bookmarkName);
-            if (bid != -1) {
-                Color color = m.getBookmarkColor(bid);
-                if (color != null)
-                    return color;
-            }
-        }
-        return null;
-    }
-
-    public Set<Color> getUsedColors() {
-        Set<Color> usedColors = new HashSet<Color>();
-        for (IBookmarks m : map.values()) {
-            usedColors.addAll(m.getUsedColors());
-        }
-        return usedColors;
-    }
-
     public void setBookmarkKeyStroke(String bookmarkName, KeyStroke key) {
         for (IBookmarks m : map.values())
             m.setBookmarkKeyStroke(m.getBookmarkId(bookmarkName), key);
@@ -245,12 +226,7 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
         }
         return null;
     }
-    
-    public void removeBookmarkKeyStroke(String bookmarkName) {
-        for (IBookmarks m : map.values())
-            m.removeBookmarkKeyStroke(m.getBookmarkId(bookmarkName));
-    }
-    
+
     public int getBookmarkCount(String bookmarkName) {
         int ret = 0;
         for (IBookmarks m : map.values()) {
@@ -261,7 +237,7 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
         }
         return ret;
     }
-    
+
     public void setInReport(String bookmarkName, boolean inReport) {
         for (IBookmarks m : map.values()) {
             int bookmarkId = m.getBookmarkId(bookmarkName);
@@ -285,77 +261,140 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
         return bookmarks;
     }
 
+    /**
+     * return union of RoaringBitmap arrays with itemIds for each case of the
+     * bookmarks in parameter
+     */
+    public RoaringBitmap[] getBookmarksUnions(Set<String> bookmarkNames) {
+        String key = bookmarkNames.stream().sorted().collect(Collectors.joining("|"));
+        SoftReference<RoaringBitmap[]> sbitmap = bsetCache.get(key);
+        RoaringBitmap[] unions = null;
+        if (sbitmap != null) {
+            unions = sbitmap.get();
+        }
+        if (unions == null) {
+            unions = new RoaringBitmap[map.size()];
+
+            for (Entry<Integer, IBookmarks> e : map.entrySet()) {
+                IBookmarks bookmarks = (IBookmarks) e.getValue();
+                if (bookmarks instanceof BitmapBookmarks) {
+                    RoaringBitmap lunion = ((BitmapBookmarks) e.getValue()).getBookmarksUnion(bookmarkNames);
+                    unions[e.getKey()] = lunion;
+                }
+            }
+            bsetCache.put(key, new SoftReference<RoaringBitmap[]>(unions));
+        }
+
+        unions = unions.clone();
+        for (int i = 0; i < unions.length; i++) {
+            unions[i] = unions[i].clone();
+        }
+
+        return unions;
+    }
+
+    /**
+     * return union of RoaringBitmap arrays with itemIds for each case
+     */
+    public RoaringBitmap[] getBookmarksUnions() {
+        RoaringBitmap[] unions = unionsCache != null ? unionsCache.get() : null;
+        if (unions == null) {
+            unions = new RoaringBitmap[map.size()];
+
+            for (Entry<Integer, IBookmarks> e : map.entrySet()) {
+                IBookmarks bookmarks = (IBookmarks) e.getValue();
+                if (bookmarks instanceof BitmapBookmarks) {
+                    RoaringBitmap lunion = ((BitmapBookmarks) e.getValue()).getBookmarksUnion();
+                    unions[e.getKey()] = lunion;
+                }
+            }
+            unionsCache = new SoftReference<RoaringBitmap[]>(unions);
+        }
+        unions = unions.clone();
+        for (int i = 0; i < unions.length; i++) {
+            unions[i] = unions[i].clone();
+        }
+
+        return unions;
+    }
+
     public IMultiSearchResult filterBookmarks(IMultiSearchResult result, Set<String> bookmarkNames) {
+        RoaringBitmap[] unions = getBookmarksUnions(bookmarkNames);
+        RoaringBitmap uniqueUnion = null;
+        if (map.size() == 1) {
+            uniqueUnion = unions[0];
+        }
+
         ArrayList<IItemId> selectedItems = new ArrayList<IItemId>();
         ArrayList<Float> scores = new ArrayList<Float>();
         int i = 0;
-        HashMap<Integer, byte[]> bookmarkBitsPerSource = new HashMap<Integer, byte[]>();
         for (IItemId item : result.getIterator()) {
-            IBookmarks m = map.get(item.getSourceId());
-            byte[] bookmarkbits = bookmarkBitsPerSource.get(item.getSourceId());
-            if (bookmarkbits == null) {
-                int[] bookmarkIds = getBookmarkIds(m, bookmarkNames);
-                if (bookmarkIds != null)
-                    bookmarkbits = m.getBookmarkBits(bookmarkIds);
-                else
-                    bookmarkbits = new byte[0];
-                bookmarkBitsPerSource.put(item.getSourceId(), bookmarkbits);
+            RoaringBitmap union = null;
+            if (map.size() > 1) {
+                union = unions[item.getSourceId()];
+            } else {
+                union = uniqueUnion;
             }
-            if (bookmarkbits.length != 0 && m.hasBookmark(item.getId(), bookmarkbits)) {
+            if (union.contains(item.getId())) {
                 selectedItems.add(item);
                 scores.add(result.getScore(i));
             }
             i++;
         }
-        MultiSearchResult r = new MultiSearchResult(selectedItems.toArray(new ItemId[0]),
-                ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
+        MultiSearchResult r = new MultiSearchResult(selectedItems.toArray(new ItemId[0]), ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
 
         return r;
     }
 
     public IMultiSearchResult filterBookmarksOrNoBookmarks(IMultiSearchResult result, Set<String> bookmarkNames) {
+        HashMap<Integer, RoaringBitmap> unions = new HashMap<Integer, RoaringBitmap>();
+
+        for (Entry<Integer, IBookmarks> e : map.entrySet()) {
+            IBookmarks bookmarks = (IBookmarks) e.getValue();
+            if (bookmarks instanceof BitmapBookmarks) {
+                unions.put(e.getKey(), ((BitmapBookmarks) bookmarks).getBookmarksOrNoBookmarksUnion(bookmarkNames));
+            }
+        }
+
         ArrayList<IItemId> selectedItems = new ArrayList<IItemId>();
         ArrayList<Float> scores = new ArrayList<Float>();
         int i = 0;
-        HashMap<Integer, byte[]> bookmarkBitsPerSource = new HashMap<Integer, byte[]>();
         for (IItemId item : result.getIterator()) {
-            IBookmarks m = map.get(item.getSourceId());
-            byte[] bookmarkbits = bookmarkBitsPerSource.get(item.getSourceId());
-            if (bookmarkbits == null) {
-                int[] bookmarkIds = getBookmarkIds(m, bookmarkNames);
-                if (bookmarkIds != null)
-                    bookmarkbits = m.getBookmarkBits(bookmarkIds);
-                else
-                    bookmarkbits = new byte[0];
-                bookmarkBitsPerSource.put(item.getSourceId(), bookmarkbits);
-            }
-            if (!m.hasBookmark(item.getId())
-                    || (bookmarkbits.length != 0 && m.hasBookmark(item.getId(), bookmarkbits))) {
+            RoaringBitmap union = unions.get(item.getSourceId());
+            if (union.contains(item.getId())) {
                 selectedItems.add(item);
                 scores.add(result.getScore(i));
             }
             i++;
         }
-        MultiSearchResult r = new MultiSearchResult(selectedItems.toArray(new ItemId[0]),
-                ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
+        MultiSearchResult r = new MultiSearchResult(selectedItems.toArray(new ItemId[0]), ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
 
         return r;
     }
 
     public IMultiSearchResult filterNoBookmarks(IMultiSearchResult result) {
 
+        HashMap<Integer, RoaringBitmap> unions = new HashMap<Integer, RoaringBitmap>();
+
+        for (Entry<Integer, IBookmarks> e : map.entrySet()) {
+            IBookmarks bookmarks = (IBookmarks) e.getValue();
+            if (bookmarks instanceof BitmapBookmarks) {
+                unions.put(e.getKey(), ((BitmapBookmarks) bookmarks).getBookmarksUnion());
+            }
+        }
+
         ArrayList<IItemId> selectedItems = new ArrayList<IItemId>();
         ArrayList<Float> scores = new ArrayList<Float>();
         int i = 0;
         for (IItemId item : result.getIterator()) {
-            if (!this.hasBookmark(item)) {
+            RoaringBitmap union = unions.get(item.getSourceId());
+            if (!union.contains(item.getId())) {
                 selectedItems.add(item);
                 scores.add(result.getScore(i));
             }
             i++;
         }
-        MultiSearchResult r = new MultiSearchResult(selectedItems.toArray(new ItemId[0]),
-                ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
+        MultiSearchResult r = new MultiSearchResult(selectedItems.toArray(new ItemId[0]), ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
 
         return r;
     }
@@ -372,8 +411,7 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
             }
             i++;
         }
-        MultiSearchResult r = new MultiSearchResult(selectedItems.toArray(new ItemId[0]),
-                ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
+        MultiSearchResult r = new MultiSearchResult(selectedItems.toArray(new ItemId[0]), ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
 
         return r;
     }
@@ -385,12 +423,17 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
 
     public void loadState(File file) throws ClassNotFoundException, IOException {
         Object obj = Util.readObject(file.getAbsolutePath());
-        if (obj instanceof IMultiBookmarks) {
+        if (obj instanceof MultiBitmapBookmarks) {
+            MultiBitmapBookmarks state = (MultiBitmapBookmarks) obj;
+            if (state.getTotalItens() != this.getTotalItens())
+                throw new IllegalArgumentException("Incompatible state file! It has different number of items."); //$NON-NLS-1$
+            map = state.map;
+        } else if (obj instanceof MultiBookmarks) {
             MultiBookmarks state = (MultiBookmarks) obj;
             if (state.getTotalItens() != this.getTotalItens())
                 throw new IllegalArgumentException("Incompatible state file! It has different number of items."); //$NON-NLS-1$
             map = state.map;
-        } else {
+        } else if (obj instanceof IBookmarks) {
             IBookmarks m = (IBookmarks) obj;
             if (map.size() > 1 || m.getTotalItens() != this.getTotalItens())
                 throw new IllegalArgumentException("Incompatible state file!"); //$NON-NLS-1$
@@ -452,4 +495,39 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
         selectionListeners.remove(listener);
     }
 
+    public void setBookmarkColor(String bookmarkName, Color color) {
+        for (IBookmarks m : map.values()) {
+            int bid = m.getBookmarkId(bookmarkName);
+            if (bid != -1) {
+                m.setBookmarkColor(bid, color);
+            }
+        }
+
+    }
+
+    public Color getBookmarkColor(String bookmarkName) {
+        for (IBookmarks m : map.values()) {
+            int bid = m.getBookmarkId(bookmarkName);
+            if (bid != -1) {
+                Color color = m.getBookmarkColor(bid);
+                if (color != null)
+                    return color;
+            }
+        }
+        return null;
+    }
+
+    public Set<Color> getUsedColors() {
+        Set<Color> usedColors = new HashSet<Color>();
+        for (IBookmarks m : map.values()) {
+            usedColors.addAll(m.getUsedColors());
+        }
+        return usedColors;
+    }
+
+    @Override
+    public void removeBookmarkKeyStroke(String bookmarkName) {
+        for (IBookmarks m : map.values())
+            m.removeBookmarkKeyStroke(m.getBookmarkId(bookmarkName));
+    }
 }

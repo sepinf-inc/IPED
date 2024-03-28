@@ -157,7 +157,7 @@ public class IPEDMultiSource extends IPEDSource {
                     keywords.add(keyword);
 
         // marcadores = new Bookmarks(this, this.getCaseDir());
-        this.multiBookmarks = new MultiBookmarks(cases);
+        this.multiBookmarks = new MultiBitmapBookmarks(cases);
 
         analyzer = AppAnalyzer.get();
 

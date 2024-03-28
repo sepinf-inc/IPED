@@ -341,10 +341,5 @@
             <artifactId>nashorn-core</artifactId>
             <version>15.4</version>
         </dependency>
-        <dependency>
-            <groupId>org.roaringbitmap</groupId>
-            <artifactId>RoaringBitmap</artifactId>
-            <version>0.9.39</version>
-        </dependency>                
      </dependencies>
 </project>

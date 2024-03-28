@@ -22,6 +22,7 @@ import io.swagger.annotations.ApiParam;
 import iped.data.IItemId;
 import iped.data.IMultiBookmarks;
 import iped.engine.data.ItemId;
+import iped.engine.data.ItemIdSet;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.webapi.json.DataListJSON;
 import iped.engine.webapi.json.DocIDJSON;
@@ -65,7 +66,7 @@ public class Bookmarks {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response insertLabel(@PathParam("bookmark") String bookmark, @ApiParam(required = true) DocIDJSON[] docs) {
         IMultiBookmarks mm = Sources.multiSource.getMultiBookmarks();
-        List<IItemId> itemIds = new ArrayList<>();
+        ItemIdSet itemIds = new ItemIdSet();
         for (DocIDJSON d : docs) {
             itemIds.add(new ItemId(Sources.sourceStringToInt.get(d.getSource()), d.getId()));
         }
@@ -80,7 +81,7 @@ public class Bookmarks {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response removeLabel(@PathParam("bookmark") String bookmark, @ApiParam(required = true) DocIDJSON[] docs) {
         IMultiBookmarks mm = Sources.multiSource.getMultiBookmarks();
-        List<IItemId> itemIds = new ArrayList<>();
+        ItemIdSet itemIds = new ItemIdSet();
         for (DocIDJSON d : docs) {
             itemIds.add(new ItemId(Sources.sourceStringToInt.get(d.getSource()), d.getId()));
         }
