@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
@@ -52,6 +53,7 @@ public class ExportCSVTask extends AbstractTask {
     private static final String ENABLE_PARAM = "exportFileProps"; //$NON-NLS-1$
 
     private static final String CSV_NAME = Messages.getString("ExportCSVTask.CsvName"); //$NON-NLS-1$
+    private static final String COMMIT_FILE_PATH = "iped/data/FileListCSV.commit";
     private static final String HEADER = Messages.getString("ExportCSVTask.CsvColNames"); //$NON-NLS-1$
     private static final String SEPARATOR = Messages.getString("ExportCSVTask.CsvSeparator"); //$NON-NLS-1$
     private static final String LINK_FUNCTION = Messages.getString("ExportCSVTask.LinkFunction"); //$NON-NLS-1$
@@ -60,9 +62,10 @@ public class ExportCSVTask extends AbstractTask {
 
     private static boolean exportFileProps = false;
     private static StringBuilder staticList = new StringBuilder();
+    private static Long initialCsvSize;
 
     private CmdLineArgs args;
-    private File tmp;
+    private File csvFile, commitFile, tmp;
 
     /**
      * Indica que itens ignorados, como duplicados ou conhecidos (hash), devem ser
@@ -84,6 +87,10 @@ public class ExportCSVTask extends AbstractTask {
     protected void process(IItem evidence) throws IOException {
 
         if (!exportFileProps || (caseData.isIpedReport() && !evidence.isToAddToCase())) {
+            return;
+        }
+
+        if (Boolean.valueOf((String) evidence.getTempAttribute(SkipCommitedTask.IS_COMMITTED))) {
             return;
         }
 
@@ -201,7 +208,7 @@ public class ExportCSVTask extends AbstractTask {
         synchronized (this.getClass()) {
             staticList.append(list);
             if (staticList.length() >= MIN_FLUSH_SIZE) {
-                flush(output);
+                flush(csvFile);
             }
         }
     }
@@ -216,7 +223,7 @@ public class ExportCSVTask extends AbstractTask {
     }
 
     private static synchronized void flush(File output) throws IOException {
-        if (!output.exists()) {
+        if (!output.exists() || output.length() == 0) {
             writeHeader(output);
         }
         try (OutputStream os = Files.newOutputStream(output.toPath(), StandardOpenOption.APPEND)) {
@@ -226,7 +233,7 @@ public class ExportCSVTask extends AbstractTask {
     }
 
     private static void writeHeader(File file) throws IOException {
-        try (OutputStream os = Files.newOutputStream(file.toPath(), StandardOpenOption.CREATE_NEW);
+        try (OutputStream os = Files.newOutputStream(file.toPath(), StandardOpenOption.CREATE);
                 Writer writer = new OutputStreamWriter(os, StandardCharsets.UTF_8)) {
             byte[] utf8bom = { (byte) 0xEF, (byte) 0xBB, (byte) 0xBF };
             os.write(utf8bom);
@@ -234,25 +241,31 @@ public class ExportCSVTask extends AbstractTask {
         }
     }
 
-    public static void commit(File moduleDir) throws IOException {
+    public static synchronized void commit(File moduleDir) throws IOException {
         if (!exportFileProps)
             return;
         File csv = new File(moduleDir.getParentFile(), CSV_NAME);
         flush(csv);
         Util.fsync(csv.toPath());
+        long csvSize = csv.length();
+        String lines = initialCsvSize + "\r\n" + csvSize;
+        File commitFile = new File(csv.getParentFile(), COMMIT_FILE_PATH);
+        Files.write(commitFile.toPath(), lines.getBytes(StandardCharsets.UTF_8));
+        Util.fsync(commitFile.toPath());
     }
 
     public void finish() throws IOException {
         if (exportFileProps && staticList != null) {
-            flush(output);
+            commit(output);
             staticList = null;
 
             if (!args.isContinue() && !args.isRestart())
                 return;
 
-            // clean duplicate entries in csv
+            // Clean up duplicated entries in CSV. CSV commits happen after index commits,
+            // so duplicated entries are still written after --continue
             try (BufferedWriter writer = Files.newBufferedWriter(tmp.toPath(), StandardOpenOption.CREATE);
-                    BufferedReader reader = Files.newBufferedReader(output.toPath())) {
+                    BufferedReader reader = Files.newBufferedReader(csvFile.toPath())) {
                 HashSet<HashValue> added = new HashSet<>();
                 String line = null;
                 boolean header = true;
@@ -269,8 +282,16 @@ public class ExportCSVTask extends AbstractTask {
                     header = false;
                 }
             }
-            output.delete();
-            tmp.renameTo(output);
+            File bkp = new File(csvFile.getAbsolutePath() + ".bkp");
+            bkp.delete();
+            if (csvFile.renameTo(bkp)) {
+                if (tmp.renameTo(csvFile)) {
+                    bkp.delete();
+                } else {
+                    bkp.renameTo(csvFile);
+                }
+            }
+            tmp.delete();
         }
     }
 
@@ -282,19 +303,40 @@ public class ExportCSVTask extends AbstractTask {
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
 
-        this.output = new File(output.getParentFile(), CSV_NAME);
+        csvFile = new File(output.getParentFile(), CSV_NAME);
+        commitFile = new File(output.getParentFile(), COMMIT_FILE_PATH);
+        commitFile.getParentFile().mkdirs();
 
         args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-        if (output.exists() && !args.isAppendIndex() && !args.isContinue() && !args.isRestart()) {
-            Files.delete(output.toPath());
+        if (!args.isAppendIndex() && !args.isContinue() && !args.isRestart()) {
+            Files.deleteIfExists(commitFile.toPath());
+            Files.deleteIfExists(csvFile.toPath());
         }
-
-        tmp = new File(output.getAbsolutePath() + ".tmp");
-        if (tmp.exists()) {
-            Files.delete(tmp.toPath());
-        }
+        
+        tmp = new File(csvFile.getAbsolutePath() + ".tmp");
+        Files.deleteIfExists(tmp.toPath());
 
         exportFileProps = configurationManager.getEnableTaskProperty(ENABLE_PARAM);
+
+        if (initialCsvSize != null) {
+            return;
+        }
+
+        if (csvFile.exists() && commitFile.exists()) {
+            List<String> lines = Files.readAllLines(commitFile.toPath());
+            int idx = args.isRestart() ? 0 : 1; // position 0 keeps first commit point, position 1 keeps last commit point
+            long size = Long.parseLong(lines.get(idx));
+            try (FileChannel fc = FileChannel.open(csvFile.toPath(), StandardOpenOption.WRITE, StandardOpenOption.SYNC)) {
+                fc.truncate(size);
+            }
+            if (args.isAppendIndex() && !args.isContinue() && !args.isRestart()) {
+                initialCsvSize = csvFile.length();
+            } else {
+                initialCsvSize = Long.parseLong(lines.get(0));
+            }
+        } else {
+            initialCsvSize = args.isAppendIndex() && csvFile.exists() ? csvFile.length() : 0;
+        }
 
     }
 
