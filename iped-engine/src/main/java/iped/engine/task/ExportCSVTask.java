@@ -248,10 +248,32 @@ public class ExportCSVTask extends AbstractTask {
         flush(csv);
         Util.fsync(csv.toPath());
         long csvSize = csv.length();
-        String lines = initialCsvSize + "\r\n" + csvSize;
+        // We are going to write a 16 bytes commit log file. It's very unlikely (if not
+        // impossible) to happen a non atomic operation when writing that data to the
+        // physical disk, since physical sectors are at least 512 bytes. If that is not
+        // true, we can improve this later.
+        byte[] bytes = new byte[16];
+        longToBytes(initialCsvSize, bytes, 0);
+        longToBytes(csvSize, bytes, 8);
         File commitFile = new File(csv.getParentFile(), COMMIT_FILE_PATH);
-        Files.write(commitFile.toPath(), lines.getBytes(StandardCharsets.UTF_8));
+        Files.write(commitFile.toPath(), bytes);
         Util.fsync(commitFile.toPath());
+    }
+
+    private static void longToBytes(long l, byte[] result, int offset) {
+        result[offset] = (byte) ((l >> 56) & 0xFF);
+        result[1 + offset] = (byte) ((l >> 48) & 0xFF);
+        result[2 + offset] = (byte) ((l >> 40) & 0xFF);
+        result[3 + offset] = (byte) ((l >> 32) & 0xFF);
+        result[4 + offset] = (byte) ((l >> 24) & 0xFF);
+        result[5 + offset] = (byte) ((l >> 16) & 0xFF);
+        result[6 + offset] = (byte) ((l >> 8) & 0xFF);
+        result[7 + offset] = (byte) (l & 0xFF);
+    }
+
+    private static long bytesToLong(byte[] bytes, int offset) {
+        return (long) (bytes[offset] & 0xff) << 56 | (long) (bytes[1 + offset] & 0xff) << 48 | (long) (bytes[2 + offset] & 0xff) << 40 | (long) (bytes[3 + offset] & 0xff) << 32 | (long) (bytes[4 + offset] & 0xff) << 24
+                | (bytes[5 + offset] & 0xff) << 16 | (bytes[6 + offset] & 0xff) << 8 | (bytes[7 + offset] & 0xff);
     }
 
     public void finish() throws IOException {
@@ -323,16 +345,16 @@ public class ExportCSVTask extends AbstractTask {
         }
 
         if (csvFile.exists() && commitFile.exists()) {
-            List<String> lines = Files.readAllLines(commitFile.toPath());
-            int idx = args.isRestart() ? 0 : 1; // position 0 keeps first commit point, position 1 keeps last commit point
-            long size = Long.parseLong(lines.get(idx));
+            byte[] bytes = Files.readAllBytes(commitFile.toPath());
+            int idx = args.isRestart() ? 0 : 8; // position 0-7 keeps first commit point, position 8-15 keeps last commit point
+            long size = bytesToLong(bytes, idx);
             try (FileChannel fc = FileChannel.open(csvFile.toPath(), StandardOpenOption.WRITE, StandardOpenOption.SYNC)) {
                 fc.truncate(size);
             }
             if (args.isAppendIndex() && !args.isContinue() && !args.isRestart()) {
                 initialCsvSize = csvFile.length();
             } else {
-                initialCsvSize = Long.parseLong(lines.get(0));
+                initialCsvSize = bytesToLong(bytes, 0);
             }
         } else {
             initialCsvSize = args.isAppendIndex() && csvFile.exists() ? csvFile.length() : 0;
