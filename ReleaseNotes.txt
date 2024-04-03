@@ -36,9 +36,8 @@ Fixes:
 #2120: Reduce the automatically set maximum for "-Xmx" from 32GB to 32500MB (@wladimirleite)
 #2008: Minor localization issues on UI (@lfcnassif)
 Optimizations:
+#455:  Optimization of UFDR reader memory usage (@lfcnassif)
 #2084: Optimize expansion of certain RAR files (@lfcnassif)
-#1265: Optimize Graph CSV (un)compression again (@lfcnassif)
-
 
 
 05/10/2023: IPED-4.1.5:
