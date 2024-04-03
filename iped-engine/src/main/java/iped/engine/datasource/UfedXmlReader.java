@@ -16,6 +16,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.text.DateFormat;
+import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -88,6 +89,7 @@ import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
 import iped.utils.FileInputStreamFactory;
 import iped.utils.IOUtil;
+import iped.utils.LocalizedFormat;
 import iped.utils.SimpleHTMLEncoder;
 
 public class UfedXmlReader extends DataSourceReader {
