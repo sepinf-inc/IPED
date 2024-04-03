@@ -1,3 +1,46 @@
+XX/04/2024: IPED-4.1.6:
+Fixes:
+#1932: Imagemagick portable missing vcomp140.dll dependency [4.1.5 regression] (@lfcnassif)
+#1940: Sometimes items are not included in their bookmarks, when generating a report from a multicase (@wladimirleite)
+#2037: Bookmarks may be lost in multicase reports (@wladimirleite)
+#1975: Processed files in mounted folders with incorrect extension being renamed when opened externally (@lfcnassif)
+#439:  Show warning in GUI for each evidence processed unsuccessfully (@lfcnassif)
+#2092: Incorrect directory tree when parsing partial RAR files (@lfcnassif)
+#1977: Telegram parser duplicating messages (@hauck-jvsh)
+#1921: WhatsApp recovered media messages may become duplicated (iOS only) (@wladimirleite)
+#2089: Failing to process Cellebrite XML Reports (@fmpfeifer, @lfcnassif)
+#2038: Aborting OutOfMemoryError caused by too many results from ItemSearcher called from UFEDChatParser (@lfcnassif, @wladimirleite)
+#2099: Non VMDK file being detected as VMDK causing processing to abort (@fsicoli)
+#2107: Aborting "IllegalArgumentException: DocValuesField "parentIds" is too large, must be <= 32766" caused by very long file name in a UFDR (@wladimirleite)
+#2110: Report generation aborting because of inconsistent data types while indexing a property (@wladimirleite, @lfcnassif)
+#2145: Rare NullPointerException from VideoThumbTask when extracting frames as subitems (@lfcnassif)
+#2141: lastId incorrectly computed after some evidence is removed from case (@lfcnassif)
+#1947: NullPointerException in LanguageDetectTask (@wladimirleite)
+#2077: DecoderException: Odd number of characters from ExportCSVTask if resuming processing (@lfcnassif)
+#1942: Audios not retried and skipped if specific errors happen in remote transcription service (@lfcnassif)
+#1945: Makes Wav2Vec2 transcription robust to new versions of python libraries (@lfcnassif)
+#2102: Weird line wraps when file names contain emojis (@wladimirleite)
+#1989: Parsing exception when searching for chat attachments (@lfcnassif)
+#2051: Stop condition for iped.parsers.whatsapp.Message.setThumbData() recursion (@aberenguel, @lfcnassif)
+#2024: Geopoints are being indexed wrongly inside opensearch (@hauck-jvsh)
+#1938: Fix PDF thumbnail when page is rotated (@wladimirleite)
+#1740: Clear selection not correctly updated on Map (@patrickdalla)
+#1929: Timeline panel needlessly call updateFileListing when clear filters button is pressed (@patrickdalla)
+#1685: Item from UFDR being extracted three times (@lfcnassif, @hauck-jvsh)
+#2041: Using an existing case output folder by accident makes the case unfinished (@wladimirleite)
+#1993: Pressing the "Pause" button during initialization phase cause an exception (@wladimirleite)
+#1988: Avoid searching for regexes in hash values and UUIDs (@wladimirleite)
+#1955: FileNotFoundException might be caused by race condition reading UFDR evidence (@lfcnassif)
+#2064: Negative estimated time to finish UFDR processing (@wladimirleite)
+#1950: Sometimes negative parse times are shown (@wladimirleite)
+#2120: Reduce the automatically set maximum for "-Xmx" from 32GB to 32500MB (@wladimirleite)
+#2008: Minor localization issues on UI (@lfcnassif)
+Optimizations:
+#2084: Optimize expansion of certain RAR files (@lfcnassif)
+#1265: Optimize Graph CSV (un)compression again (@lfcnassif)
+
+
+
 05/10/2023: IPED-4.1.5:
 Fixes:
 #1903: RCE vulnerability in libwebp dependency (@tc-wleite, @lfcnassif)
