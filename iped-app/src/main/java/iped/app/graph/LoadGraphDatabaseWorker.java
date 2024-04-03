@@ -120,7 +120,7 @@ class LoadGraphDatabaseWorker extends SwingWorker<Void, Void> {
         }
 
         @Override
-        protected Boolean doInBackground() throws Exception {
+        protected Boolean doInBackground() throws IOException {
             try {
                 List<File> csvParents = cases.stream().map(c -> new File(c.getModuleDir(), GraphTask.CSVS_PATH))
                         .collect(Collectors.toList());
