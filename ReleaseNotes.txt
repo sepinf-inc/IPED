@@ -1,4 +1,7 @@
-XX/04/2024: IPED-4.1.6:
+05/04/2024: IPED-4.1.6:
+Optimizations:
+#455:  Optimization of UFDR reader memory usage (@lfcnassif)
+#2084: Optimize expansion of certain RAR files (@lfcnassif)
 Fixes:
 #1932: Imagemagick portable missing vcomp140.dll dependency [4.1.5 regression] (@lfcnassif)
 #1940: Sometimes items are not included in their bookmarks, when generating a report from a multicase (@wladimirleite)
@@ -35,9 +38,6 @@ Fixes:
 #1950: Sometimes negative parse times are shown (@wladimirleite)
 #2120: Reduce the automatically set maximum for "-Xmx" from 32GB to 32500MB (@wladimirleite)
 #2008: Minor localization issues on UI (@lfcnassif)
-Optimizations:
-#455:  Optimization of UFDR reader memory usage (@lfcnassif)
-#2084: Optimize expansion of certain RAR files (@lfcnassif)
 
 
 05/10/2023: IPED-4.1.5:
