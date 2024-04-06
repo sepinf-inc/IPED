@@ -602,6 +602,11 @@ public class IconManager {
             mimeIconMap.put("application/x-usnjournal-$j", icon);
         }
 
+        icon = availableIconsMap.get("vlc-ini");
+        if (icon != null) {
+            mimeIconMap.put("application/x-vlc-ini", icon);
+        }
+
         return mimeIconMap;
     }
 
