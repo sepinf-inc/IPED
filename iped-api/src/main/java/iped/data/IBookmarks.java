@@ -52,6 +52,7 @@ public interface IBookmarks extends Serializable {
 
     int getLastId();
 
+    @Deprecated
     int getTotalItens();
 
     int getTotalChecked();
