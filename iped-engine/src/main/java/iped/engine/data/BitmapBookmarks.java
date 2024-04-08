@@ -257,9 +257,9 @@ public class BitmapBookmarks implements IBookmarks {
 
         if (bookmarkId == -1) {
             bookmarkId = bookmarkNames.size();
-            bookmarks.put(bookmarkId, new RoaringBitmap());
         }
-
+        bookmarks.put(bookmarkId, new RoaringBitmap());
+        
         bookmarkNames.put(bookmarkId, bookmarkName);
         bookmarkComments.put(bookmarkId, null);
         bookmarkKeyStrokes.put(bookmarkId, null);
