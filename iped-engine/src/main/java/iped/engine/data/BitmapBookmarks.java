@@ -359,7 +359,7 @@ public class BitmapBookmarks implements IBookmarks {
 
         for (int i = 0; i < result.getLength(); i++) {
             int id = result.getId(i);
-            if (unionAll.contains(i)) {
+            if (unionAll.contains(id)) {
                 result.getIds()[i] = -1;
             }
         }
