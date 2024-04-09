@@ -183,8 +183,7 @@ public class BitmapBookmarks implements IBookmarks {
 
     public synchronized void addBookmark(List<Integer> ids, int bookmark) {
         RoaringBitmap bookmarkBitmap = bookmarks.get(bookmark);
-        for (Iterator iterator = ids.iterator(); iterator.hasNext();) {
-            Integer id = (Integer) iterator.next();
+        for (Integer id : ids) {
             bookmarkBitmap.add(id);
             if (unionAll != null) {
                 unionAll.add(id);
@@ -235,11 +234,10 @@ public class BitmapBookmarks implements IBookmarks {
 
     public synchronized void removeBookmark(List<Integer> ids, int bookmark) {
         RoaringBitmap bookmarkBitmap = bookmarks.get(bookmark);
-        for (Iterator iterator = ids.iterator(); iterator.hasNext();) {
-            Integer id = (Integer) iterator.next();
+        for (Integer id : ids) {
             bookmarkBitmap.remove(id);
         }
-        unionAll = null;// invalidades unionAll
+        unionAll = null;// invalidates unionAll
     }
 
     public synchronized int newBookmark(String bookmarkName) {
@@ -257,9 +255,9 @@ public class BitmapBookmarks implements IBookmarks {
 
         if (bookmarkId == -1) {
             bookmarkId = bookmarkNames.size();
-            bookmarks.put(bookmarkId, new RoaringBitmap());
         }
-
+        bookmarks.put(bookmarkId, new RoaringBitmap());
+        
         bookmarkNames.put(bookmarkId, bookmarkName);
         bookmarkComments.put(bookmarkId, null);
         bookmarkKeyStrokes.put(bookmarkId, null);
@@ -361,7 +359,7 @@ public class BitmapBookmarks implements IBookmarks {
 
         for (int i = 0; i < result.getLength(); i++) {
             int id = result.getId(i);
-            if (unionAll.contains(i)) {
+            if (unionAll.contains(id)) {
                 result.getIds()[i] = -1;
             }
         }
