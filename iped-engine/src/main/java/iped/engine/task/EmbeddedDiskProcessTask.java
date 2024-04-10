@@ -237,7 +237,7 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
             String parentTrackId = item.getExtraAttribute(IndexItem.PARENT_TRACK_ID).toString();
             File exportDir = new File(new File(this.output, outputFolder), parentTrackId);
             exportDir.mkdirs();
-            imageFile = new File(exportDir, item.getName()).getCanonicalFile();
+            imageFile = new File(exportDir, cleanFileName(item.getName())).getCanonicalFile();
             boolean alreadyExported = false;
 
             File trackFile = new File(imageFile.getAbsolutePath() + "_trackID");
@@ -255,7 +255,7 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
                         }
                     } else {
                         // exported image refers to a different item with same path, use another output
-                        imageFile = new File(exportDir, trackId + "/" + item.getName()).getCanonicalFile();
+                        imageFile = new File(exportDir, trackId + "/" + cleanFileName(item.getName())).getCanonicalFile();
                         imageFile.getParentFile().mkdirs();
                         if (imageFile.exists() && imageFile.length() == item.getLength()) {
                             alreadyExported = true;
@@ -285,6 +285,11 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
             exportedDisks.add(imageFile);
         }
         return imageFile;
+    }
+
+    private String cleanFileName(String name) {
+        // 255 is max file name length in NTFS
+        return IOUtil.getValidFilename(name, 255);
     }
 
 }
