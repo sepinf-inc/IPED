@@ -118,7 +118,7 @@ public class TelegramParser extends SQLite3DBParser {
 
     private void storeLinkedHashes(List<Message> messages, Metadata metadata) {
         for (Message m : messages) {
-            if (m.getMediaHash() != null) {
+            if (Util.isValidHash(m.getMediaHash())) {
                 metadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + m.getMediaHash()); //$NON-NLS-1$
                 if (m.isFromMe())
                     metadata.add(ExtraProperties.SHARED_HASHES, m.getMediaHash());
@@ -288,10 +288,10 @@ public class TelegramParser extends SQLite3DBParser {
             if (m.getMediaMime() != null) {
                 meta.add(ExtraProperties.MESSAGE_BODY, ATTACHMENT_MESSAGE + m.getMediaMime());
             }
-            if (m.getMediasize() != 0) {
-                meta.set("mediaSize", Long.toString(m.getMediasize()));
+            if (m.getMediaSize() != 0) {
+                meta.set("mediaSize", Long.toString(m.getMediaSize()));
             }
-            if (m.getMediaHash() != null) {
+            if (Util.isValidHash(m.getMediaHash())) {
                 meta.set(StandardParser.INDEXER_CONTENT_TYPE, TELEGRAM_ATTACHMENT.toString());
                 meta.set(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + m.getMediaHash()); //$NON-NLS-1$
                 if (!m.getChildPornSets().isEmpty()) {
