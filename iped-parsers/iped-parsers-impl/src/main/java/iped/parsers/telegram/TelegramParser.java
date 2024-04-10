@@ -288,8 +288,8 @@ public class TelegramParser extends SQLite3DBParser {
             if (m.getMediaMime() != null) {
                 meta.add(ExtraProperties.MESSAGE_BODY, ATTACHMENT_MESSAGE + m.getMediaMime());
             }
-            if (m.getMediasize() != 0) {
-                meta.set("mediaSize", Long.toString(m.getMediasize()));
+            if (m.getMediaSize() != 0) {
+                meta.set("mediaSize", Long.toString(m.getMediaSize()));
             }
             if (Util.isValidHash(m.getMediaHash())) {
                 meta.set(StandardParser.INDEXER_CONTENT_TYPE, TELEGRAM_ATTACHMENT.toString());
