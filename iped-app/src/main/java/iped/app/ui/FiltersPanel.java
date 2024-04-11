@@ -209,9 +209,12 @@ public class FiltersPanel extends JPanel implements ClearFilterListener, IQueryF
 
         filtersTree.addMouseListener(new MouseAdapter() {
             public void showPopupMenu(MouseEvent e) {
-                Object o = filtersTree.getPathForLocation(e.getX(), e.getY()).getLastPathComponent();
-                filtererMenu.setContext(o);
-                filtererMenu.show((JComponent) e.getSource(), e.getX(), e.getY());
+                TreePath tp = filtersTree.getPathForLocation(e.getX(), e.getY());
+                if (tp != null) {
+                    Object o = tp.getLastPathComponent();
+                    filtererMenu.setContext(o);
+                    filtererMenu.show((JComponent) e.getSource(), e.getX(), e.getY());
+                }
             }
 
             @Override
