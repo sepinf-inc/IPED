@@ -173,41 +173,24 @@ public class FilterTransferHandler extends TransferHandler {
                 }
                 if (dest != null) {
                     FilterNode filterNode = (FilterNode) data.getTransferData(filterNodeFlavor);
-                    IFilter filter = null;
-                    IFilter filterClonedSrc = null;
                     if (filterNode != null) {
                         if (support.getDropAction() == COPY) {
-                            filterClonedSrc = filter;
-                            filter = (IFilter) clone(((FilterNode) filterNode).getFilter());
-                            if (filter != null) {
-                                dest.addFilter(new FilterNode(filter));
-                            } else {
-                                return false;
-                            }
-                        } else {
-                            if (support.getDropAction() == MOVE) {
-                                dest.addFilter(filterNode);
-                                tree.expandPath(destPath.pathByAddingChild(filterNode));
-                            }
+                            filterNode = new FilterNode(filterNode.getFilter());
+                        } else if (support.getDropAction() != MOVE) {
+                            filterNode = null;
                         }
                     } else {
-                        filter = (IFilter) data.getTransferData(filterFlavor);
+                        IFilter filter = (IFilter) data.getTransferData(filterFlavor);
                         if (filter != null) {
-                            FilterNode fn = new FilterNode(filter);
-                            dest.addFilter(fn);
-                            tree.expandPath(destPath.pathByAddingChild(fn));
+                            filterNode = new FilterNode(filter);
                         }
                     }
-                    if (filter != null) {
+                    if (filterNode != null) {
+                        dest.addFilter(filterNode);
+                        tree.expandPath(destPath.pathByAddingChild(filterNode));
                         tree.updateUI();
                         try {
-                            if (filterClonedSrc == null) {
-                                combinedFilterer.preCacheFilter(filter);
-                            } else {
-                                if (filter != filterClonedSrc) {
-                                    combinedFilterer.preCacheFilterClone(filter, filterClonedSrc);
-                                }
-                            }
+                            combinedFilterer.preCacheFilter(filterNode);
                         } catch (Exception e) {
                             if (e.getCause() instanceof QueryNodeException) {
                                 JOptionPane.showMessageDialog(tree.getRootPane(), Messages.get("FiltersPanel.addQueryFilterError"));

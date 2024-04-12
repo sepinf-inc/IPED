@@ -14,7 +14,6 @@ import iped.app.ui.Messages;
 import iped.app.ui.SliderMenuItem;
 import iped.app.ui.filterdecisiontree.OperandNode.Operand;
 import iped.data.IItemId;
-import iped.viewers.api.IFilter;
 import iped.viewers.api.IItemRef;
 import iped.viewers.api.IQuantifiableFilter;
 
@@ -97,13 +96,13 @@ public class OperandPopupMenu extends JPopupMenu implements ActionListener {
         if (e.getSource() == removeMenuitem) {
             ((DecisionNode) op).getParent().remove(op);
             if (op instanceof FilterNode) {
-                logicFilterer.removePreCachedFilter((IFilter) ((FilterNode) op).getFilter());
+                logicFilterer.removePreCachedFilter((FilterNode) op);
             }
         }
         if (e.getSource() == inverMenuitem) {
             ((DecisionNode) op).invert();
             if (op instanceof FilterNode) {
-                logicFilterer.invertPreCached(((FilterNode) op).getFilter());
+                logicFilterer.invertPreCached((FilterNode) op);
             }
             logicFilterer.invalidateCache();
         }
@@ -162,8 +161,8 @@ public class OperandPopupMenu extends JPopupMenu implements ActionListener {
     @Override
     public void setVisible(boolean b) {
         if (!b && sliderMenuItem.hasSliderChanged()) {
-            logicFilterer.removePreCachedFilter((IFilter) ((FilterNode) op).getFilter());
-            logicFilterer.preCacheFilter((IFilter) ((FilterNode) op).getFilter());
+            logicFilterer.removePreCachedFilter((FilterNode) op);
+            logicFilterer.preCacheFilter((FilterNode) op);
 
             logicFilterer.startSearchResult(App.get().getResults());
 
