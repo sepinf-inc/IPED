@@ -9,14 +9,23 @@
 # you should download it from https://alphacephei.com/vosk/models and put in 'models/vosk/[lang]' folder.
 implementationClass = iped.engine.task.transcript.VoskTranscriptTask
 
-# Uses a local/remote wav2vec2 implementation for transcription. Accuracy is much better than most Vosk models.
-# The local impl is AT LEAST 1 order of magnitude slower than Vosk on high end CPUs. Using a good GPU is highly recommended!
-# The remote impl is useful if you have a central server/cluster with many GPUs to be shared among processing nodes.
-# For both the local or remote options, please check the installation steps: https://github.com/sepinf-inc/IPED/wiki/User-Manual#wav2vec2
-# If you use the local implementation, you must set 'huggingFaceModel' param below.
-# If you use the remote implementation, you must set 'wav2vec2Service' param below.
+# Uses a local wav2vec2 implementation for transcription. Accuracy is much better than most Vosk models.
+# This is AT LEAST 1 order of magnitude slower than Vosk on high end CPUs. Using a good GPU is highly recommended!
+# Please check the installation steps: https://github.com/sepinf-inc/IPED/wiki/User-Manual#wav2vec2
+# If you enable this, you must set 'huggingFaceModel' param below.
 #implementationClass = iped.engine.task.transcript.Wav2Vec2TranscriptTask
-#implementationClass = iped.engine.task.transcript.RemoteWav2Vec2TranscriptTask
+
+# Uses a local Whiper implementation for transcription. Accuracy is better than wav2vec2 depending on the model.
+# This is slower than wav2vec2 depending on the model. Using a very good GPU is highly recommended!
+# Please check the installation steps: https://github.com/sepinf-inc/IPED/wiki/User-Manual#whisper
+# If you enable this, you must set 'whisperModel' param below.
+#implementationClass = iped.engine.task.transcript.WhisperTranscriptTask
+
+# Uses a remote service for transcription.
+# The remote service is useful if you have a central server/cluster with many GPUs to be shared among processing nodes.
+# Please check steps on https://github.com/sepinf-inc/IPED/wiki/User-Manual#wav2vec2
+# If enable this, you must set 'remoteServiceAddress' param below.
+#implementationClass = iped.engine.task.transcript.RemoteAudioTranscriptTask
 
 # If you want to use the Microsoft Azure service implementation, comment above and uncomment below.
 # You MUST include Microsoft client-sdk.jar into plugins folder.
@@ -91,11 +100,20 @@ minWordScore = 0.5
 # huggingFaceModel = jonatasgrosman/wav2vec2-xls-r-1b-french
 
 #########################################
-# RemoteWav2Vec2TranscriptTask options
+# Local WhisperTranscriptTask options
+#########################################
+
+# Possible values: tiny, base, small, medium, large-v3
+# large-v3 is much better than medium, but 2x slower and uses 2x more memory.
+# If you know the language you want to transcribe, please set the 'language' option above. Auto detection causes mistakes.
+whisperModel = medium
+
+#########################################
+# RemoteAudioTranscriptTask options
 #########################################
 
 # IP:PORT of the service/central node used by the RemoteWav2Vec2TranscriptTask implementation.
-# wav2vec2Service = 127.0.0.1:11111
+# remoteServiceAddress = 127.0.0.1:11111
 
 #########################################
 # MicrosoftTranscriptTask options
