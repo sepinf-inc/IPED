@@ -32,4 +32,15 @@ public class DecisionNode {
         this.inverted = !inverted;
     }
 
+    @Override
+    public DecisionNode clone() {
+        DecisionNode clone = new DecisionNode();
+        clone.parent = this.parent;
+        clone.inverted = this.inverted;
+        for (DecisionNode child : this.children) {
+            clone.children.add(child.clone());
+        }
+        return clone;
+    }
+
 }
