@@ -615,6 +615,11 @@ public class IconManager {
             mimeIconMap.put("application/x-vlc-ini", icon);
         }
 
+        icon = availableIconsMap.get("markdown");
+        if (icon != null) {
+            mimeIconMap.put("text/x-web-markdown", icon);
+        }
+
         return mimeIconMap;
     }
 
