@@ -333,6 +333,10 @@ public class IconManager {
             mimeIconMap.put("application/x-ufed-visitedpage", icon);
             mimeIconMap.put("application/x-safari-history-registry", icon);
             mimeIconMap.put("application/x-safari-history", icon);
+        }
+
+        icon = availableIconsMap.get("safari-sqlite");
+        if (icon != null) {
             mimeIconMap.put("application/x-safari-sqlite", icon);
         }
 
@@ -343,6 +347,10 @@ public class IconManager {
             mimeIconMap.put("application/x-chrome-downloads", icon);
             mimeIconMap.put("application/x-chrome-history", icon);
             mimeIconMap.put("application/x-chrome-searches", icon);
+        }
+
+        icon = availableIconsMap.get("chrome-sqlite");
+        if (icon != null) {
             mimeIconMap.put("application/x-chrome-sqlite", icon);
         }
 
