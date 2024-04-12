@@ -620,6 +620,16 @@ public class IconManager {
             mimeIconMap.put("text/x-web-markdown", icon);
         }
 
+        icon = availableIconsMap.get("notification");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-notification", icon);
+        }
+
+        icon = availableIconsMap.get("mobilecard");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-mobilecard", icon);
+        }
+
         return mimeIconMap;
     }
 
