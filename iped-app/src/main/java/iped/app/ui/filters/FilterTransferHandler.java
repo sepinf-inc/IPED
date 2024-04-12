@@ -176,7 +176,11 @@ public class FilterTransferHandler extends TransferHandler {
                     if (filterNode != null) {
                         if (support.getDropAction() == COPY) {
                             filterNode = new FilterNode(filterNode.getFilter());
-                        } else if (support.getDropAction() != MOVE) {
+                        } else {
+                            if (support.getDropAction() == MOVE) {
+                                dest.addFilter(filterNode);
+                                tree.expandPath(destPath.pathByAddingChild(filterNode));
+                            }
                             filterNode = null;
                         }
                     } else {
@@ -185,7 +189,7 @@ public class FilterTransferHandler extends TransferHandler {
                             filterNode = new FilterNode(filter);
                         }
                     }
-                    if (filterNode != null) {
+                    if (filterNode != null && filterNode.getFilter() != null) {
                         dest.addFilter(filterNode);
                         tree.expandPath(destPath.pathByAddingChild(filterNode));
                         tree.updateUI();
