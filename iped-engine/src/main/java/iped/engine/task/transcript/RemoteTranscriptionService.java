@@ -143,10 +143,10 @@ public class RemoteTranscriptionService {
         LocalConfig localConfig = new LocalConfig();
         cm.addObject(audioConfig);
         cm.addObject(localConfig);
-        cm.loadConfig(audioConfig);
         cm.loadConfig(localConfig);
+        cm.loadConfig(audioConfig);
 
-        Wav2Vec2TranscriptTask task = new Wav2Vec2TranscriptTask();
+        AbstractTranscriptTask task = (AbstractTranscriptTask) Class.forName(audioConfig.getClassName()).getDeclaredConstructor().newInstance();
         audioConfig.setEnabled(true);
         task.init(cm);
 
@@ -261,7 +261,7 @@ public class RemoteTranscriptionService {
         }
     }
 
-    private static void waitRequests(ServerSocket server, Wav2Vec2TranscriptTask task, String discoveryIp) {
+    private static void waitRequests(ServerSocket server, AbstractTranscriptTask task, String discoveryIp) {
         AtomicInteger jobs = new AtomicInteger();
         while (true) {
             try {
