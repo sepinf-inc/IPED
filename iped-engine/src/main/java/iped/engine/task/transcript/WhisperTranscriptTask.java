@@ -40,7 +40,12 @@ public class WhisperTranscriptTask extends Wav2Vec2TranscriptTask {
         int cpus = getNumProcessors();
         int threads = Runtime.getRuntime().availableProcessors() / cpus;
 
-        pb.command(python, script, model, Integer.toString(device), Integer.toString(threads), transcriptConfig.getLanguages().get(0));
+        String lang = transcriptConfig.getLanguages().get(0);
+        if (lang.contains("-")) {
+            lang = lang.substring(0, lang.indexOf("-"));
+        }
+
+        pb.command(python, script, model, Integer.toString(device), Integer.toString(threads), lang);
 
         Process process = pb.start();
 
