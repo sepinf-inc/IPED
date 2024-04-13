@@ -105,7 +105,9 @@ minWordScore = 0.5
 
 # Possible values: tiny, base, small, medium, large-v3
 # large-v3 is much better than medium, but 2x slower and uses 2x more memory.
-# If you know the language you want to transcribe, please set the 'language' option above. Auto detection causes mistakes.
+# If you know the language you want to transcribe, please set the 'language' option above.
+# 'language = auto' uses the 'locale' set on LocalConfig.txt
+# 'language = detect' uses auto detection, but it can cause mistakes
 whisperModel = medium
 
 #########################################

@@ -16,7 +16,7 @@ def main():
     threads = int(sys.argv[3])
     language = sys.argv[4]
     
-    if language == 'auto':
+    if language == 'detect':
         language = None
 
     from faster_whisper import WhisperModel
