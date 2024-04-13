@@ -33,10 +33,10 @@ import iped.engine.config.AudioTranscriptConfig;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.core.Manager;
 import iped.engine.io.TimeoutException;
-import iped.engine.task.transcript.RemoteWav2Vec2Service.MESSAGES;
+import iped.engine.task.transcript.RemoteTranscriptionService.MESSAGES;
 import iped.exception.IPEDException;
 
-public class RemoteAudioTranscriptTask extends AbstractTranscriptTask {
+public class RemoteTranscriptionTask extends AbstractTranscriptTask {
 
     private static Logger logger = LogManager.getLogger(Wav2Vec2TranscriptTask.class);
 
@@ -119,7 +119,7 @@ public class RemoteAudioTranscriptTask extends AbstractTranscriptTask {
         
     }
 
-    private static synchronized void requestServers(RemoteAudioTranscriptTask task, boolean now) throws IOException {
+    private static synchronized void requestServers(RemoteTranscriptionTask task, boolean now) throws IOException {
         if (!now && System.currentTimeMillis() - lastUpdateServersTime < UPDATE_SERVERS_INTERVAL_MILLIS) {
             return;
         }
@@ -143,7 +143,7 @@ public class RemoteAudioTranscriptTask extends AbstractTranscriptTask {
                 servers.add(server);
                 logger.info("Transcription server discovered: {}:{}", server.ip, server.port);
             }
-            RemoteAudioTranscriptTask.servers = servers;
+            RemoteTranscriptionTask.servers = servers;
             lastUpdateServersTime = System.currentTimeMillis();
         } catch (ConnectException e) {
             String msg = "Central transcription node refused connection, is it online? " + e.toString();

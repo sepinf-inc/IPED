@@ -35,7 +35,7 @@ import iped.engine.task.transcript.AbstractTranscriptTask.TextAndScore;
 import iped.io.URLUtil;
 import iped.utils.IOUtil;
 
-public class RemoteWav2Vec2Service {
+public class RemoteTranscriptionService {
     
     static enum MESSAGES {
         ACCEPTED,
@@ -131,11 +131,11 @@ public class RemoteWav2Vec2Service {
             printHelpAndExit();
         }
 
-        File jar = new File(URLUtil.getURL(RemoteWav2Vec2Service.class).toURI());
+        File jar = new File(URLUtil.getURL(RemoteTranscriptionService.class).toURI());
         File root = jar.getParentFile().getParentFile();
 
         System.setProperty("org.apache.logging.log4j.level", "INFO");
-        logger = LoggerFactory.getLogger(RemoteWav2Vec2Service.class);
+        logger = LoggerFactory.getLogger(RemoteTranscriptionService.class);
 
         Configuration.getInstance().loadConfigurables(root.getAbsolutePath());
         ConfigurationManager cm = ConfigurationManager.get();

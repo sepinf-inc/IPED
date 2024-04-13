@@ -25,7 +25,7 @@ implementationClass = iped.engine.task.transcript.VoskTranscriptTask
 # The remote service is useful if you have a central server/cluster with many GPUs to be shared among processing nodes.
 # Please check steps on https://github.com/sepinf-inc/IPED/wiki/User-Manual#wav2vec2
 # If enable this, you must set 'remoteServiceAddress' param below.
-#implementationClass = iped.engine.task.transcript.RemoteAudioTranscriptTask
+#implementationClass = iped.engine.task.transcript.RemoteTranscriptionTask
 
 # If you want to use the Microsoft Azure service implementation, comment above and uncomment below.
 # You MUST include Microsoft client-sdk.jar into plugins folder.

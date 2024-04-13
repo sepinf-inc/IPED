@@ -6,6 +6,6 @@ package iped.engine.task.transcript;
  * @author Nassif
  *
  */
-public class RemoteWav2Vec2TranscriptTask extends RemoteAudioTranscriptTask {
+public class RemoteWav2Vec2TranscriptTask extends RemoteTranscriptionTask {
 
 }
