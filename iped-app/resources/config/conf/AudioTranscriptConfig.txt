@@ -15,7 +15,7 @@ implementationClass = iped.engine.task.transcript.VoskTranscriptTask
 # If you enable this, you must set 'huggingFaceModel' param below.
 #implementationClass = iped.engine.task.transcript.Wav2Vec2TranscriptTask
 
-# Uses a local Whiper implementation for transcription. Accuracy is better than wav2vec2 depending on the model.
+# Uses a local Whisper implementation for transcription. Accuracy is better than wav2vec2 depending on the model.
 # This is slower than wav2vec2 depending on the model. Using a very good GPU is highly recommended!
 # Please check the installation steps: https://github.com/sepinf-inc/IPED/wiki/User-Manual#whisper
 # If you enable this, you must set 'whisperModel' param below.
