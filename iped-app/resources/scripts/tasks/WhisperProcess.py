@@ -23,8 +23,8 @@ def main():
     
     print(library_loaded, file=stdout, flush=True)
     
-    import torch
-    cudaCount = torch.cuda.device_count()
+    import GPUtil
+    cudaCount = len(GPUtil.getGPUs())
 
     print(str(cudaCount), file=stdout, flush=True)
 
