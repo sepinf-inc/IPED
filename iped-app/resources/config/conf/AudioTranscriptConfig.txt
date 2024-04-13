@@ -10,21 +10,21 @@
 implementationClass = iped.engine.task.transcript.VoskTranscriptTask
 
 # Uses a local wav2vec2 implementation for transcription. Accuracy is much better than most Vosk models.
-# This is AT LEAST 1 order of magnitude slower than Vosk on high end CPUs. Using a good GPU is highly recommended!
+# This is up to 10x slower than Vosk on high end CPUs. Using a good GPU is highly recommended!
 # Please check the installation steps: https://github.com/sepinf-inc/IPED/wiki/User-Manual#wav2vec2
 # If you enable this, you must set 'huggingFaceModel' param below.
 #implementationClass = iped.engine.task.transcript.Wav2Vec2TranscriptTask
 
 # Uses a local Whisper implementation for transcription. Accuracy is better than wav2vec2 depending on the model.
-# This is slower than wav2vec2 depending on the model. Using a very good GPU is highly recommended!
+# This is up to 4x slower than wav2vec2 depending on compared models. Using a high end GPU is strongly recommended!
 # Please check the installation steps: https://github.com/sepinf-inc/IPED/wiki/User-Manual#whisper
 # If you enable this, you must set 'whisperModel' param below.
 #implementationClass = iped.engine.task.transcript.WhisperTranscriptTask
 
 # Uses a remote service for transcription.
 # The remote service is useful if you have a central server/cluster with many GPUs to be shared among processing nodes.
-# Please check steps on https://github.com/sepinf-inc/IPED/wiki/User-Manual#wav2vec2
-# If enable this, you must set 'remoteServiceAddress' param below.
+# Please check steps on https://github.com/sepinf-inc/IPED/wiki/User-Manual#remote-transcription
+# If you enable this, you must set 'remoteServiceAddress' param below.
 #implementationClass = iped.engine.task.transcript.RemoteTranscriptionTask
 
 # If you want to use the Microsoft Azure service implementation, comment above and uncomment below.
