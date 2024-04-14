@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.Properties;
 import java.util.Set;
 
+import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
@@ -53,6 +54,8 @@ public class SQLite3Parser extends AbstractParser {
 
     private final Set<MediaType> SUPPORTED_TYPES;
 
+	private int tableRowsPerItem;
+
     /**
      * Checks to see if class is available for org.sqlite.JDBC.
      * <p>
@@ -68,6 +71,11 @@ public class SQLite3Parser extends AbstractParser {
         }
         SUPPORTED_TYPES = tmp;
     }
+    
+    @Field
+    public void setTableRowsPerItem(int value) {
+    	this.tableRowsPerItem = value;
+    }
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -78,6 +86,7 @@ public class SQLite3Parser extends AbstractParser {
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
         SQLite3DBParser p = new SQLite3DBParser();
+        p.setTableRowsPerItem(tableRowsPerItem);
         p.parse(stream, handler, metadata, context);
     }
 
