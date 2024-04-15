@@ -76,7 +76,7 @@ def main():
         text = transcription.replace('\n', ' ').replace('\r', ' ')
         
         probs = probs if len(probs) != 0 else [0]
-        finalScore = numpy.average(probs)
+        finalScore = numpy.mean(probs)
         
         print(finished, file=stdout, flush=True)
         print(str(finalScore), file=stdout, flush=True)
