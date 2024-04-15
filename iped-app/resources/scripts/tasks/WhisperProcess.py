@@ -35,13 +35,13 @@ def main():
         deviceNum = 0
     
     try:
-        model = WhisperModel(modelName, device=deviceId, device_index=deviceNum, cpu_threads=threads, compute_type="int8")
+        model = WhisperModel(modelName, device=deviceId, device_index=deviceNum, cpu_threads=threads, compute_type="float16")
 
     except Exception as e:
         if deviceId != 'cpu':
             # loading on GPU failed (OOM?), try on CPU
             deviceId = 'cpu'
-            model = WhisperModel(model_size_or_path=modelName, device=deviceId, cpu_threads=threads, compute_type="int8")
+            model = WhisperModel(model_size_or_path=modelName, device=deviceId, cpu_threads=threads, compute_type="float16")
         else:
             raise e
     
