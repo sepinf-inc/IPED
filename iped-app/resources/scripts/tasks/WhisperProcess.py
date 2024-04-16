@@ -28,20 +28,23 @@ def main():
 
     print(str(cudaCount), file=stdout, flush=True)
 
+    compute_type = 'int8'
     if cudaCount > 0:
         deviceId = 'cuda'
+        compute_type = 'float16'
     else:
         deviceId = 'cpu'
         deviceNum = 0
     
     try:
-        model = WhisperModel(modelName, device=deviceId, device_index=deviceNum, cpu_threads=threads, compute_type="float16")
+        model = WhisperModel(modelName, device=deviceId, device_index=deviceNum, cpu_threads=threads, compute_type=compute_type)
 
     except Exception as e:
         if deviceId != 'cpu':
             # loading on GPU failed (OOM?), try on CPU
             deviceId = 'cpu'
-            model = WhisperModel(model_size_or_path=modelName, device=deviceId, cpu_threads=threads, compute_type="float16")
+            compute_type = 'int8'
+            model = WhisperModel(model_size_or_path=modelName, device=deviceId, cpu_threads=threads, compute_type=compute_type)
         else:
             raise e
     
