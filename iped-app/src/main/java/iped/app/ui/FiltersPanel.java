@@ -45,8 +45,8 @@ public class FiltersPanel extends JPanel implements ClearFilterListener, IQueryF
 {
     private JTree filtersTree;
     private JScrollPane filtersTreePane;
-    private JTree structuredFiltererTree;
-    private JScrollPane structuredFiltererTreePane;
+    private JTree combinedFiltererTree;
+    private JScrollPane combinedFiltererTreePane;
     private JSplitPane splitPane;
 
     private CombinedFilterer combinedFilterer;
@@ -126,8 +126,8 @@ public class FiltersPanel extends JPanel implements ClearFilterListener, IQueryF
         filterManager.addResultSetFilterer(combinedFilterer);
         filterManager.setFilterEnabled(combinedFilterer, false);
 
-        structuredFiltererTree = new JTree(new CombinedFilterTreeModel(combinedFilterer));
-        structuredFiltererTree.setCellRenderer(new DefaultTreeCellRenderer() {
+        combinedFiltererTree = new JTree(new CombinedFilterTreeModel(combinedFilterer));
+        combinedFiltererTree.setCellRenderer(new DefaultTreeCellRenderer() {
 
             JLabel nlabel = new JLabel(invertIcon);
             JPanel p = new JPanel(new BorderLayout());
@@ -195,13 +195,13 @@ public class FiltersPanel extends JPanel implements ClearFilterListener, IQueryF
             }
         });
         structuredFiltererTreePanel.add(ckStructuredFilterer, BorderLayout.NORTH);
-        structuredFiltererTreePane = new JScrollPane(structuredFiltererTree);
-        structuredFiltererTreePanel.add(structuredFiltererTreePane, BorderLayout.CENTER);
+        combinedFiltererTreePane = new JScrollPane(combinedFiltererTree);
+        structuredFiltererTreePanel.add(combinedFiltererTreePane, BorderLayout.CENTER);
         splitPane.setBottomComponent(structuredFiltererTreePanel);
         this.setLayout(new BorderLayout());
         this.add(splitPane, BorderLayout.CENTER);
 
-        operandMenu = new OperandPopupMenu(structuredFiltererTree, combinedFilterer);
+        operandMenu = new OperandPopupMenu(combinedFiltererTree, combinedFilterer);
 
         filtererMenu = new FiltererMenu();
 
@@ -234,26 +234,26 @@ public class FiltersPanel extends JPanel implements ClearFilterListener, IQueryF
             }
         });
 
-        structuredFiltererTree.setDragEnabled(true);
-        structuredFiltererTree.setRootVisible(true);
+        combinedFiltererTree.setDragEnabled(true);
+        combinedFiltererTree.setRootVisible(true);
 
         FiltersPanel self = this;
 
         FilterTransferHandler fth = new FilterTransferHandler(this, combinedFilterer);
-        structuredFiltererTree.setTransferHandler(fth);
-        structuredFiltererTree.setDropMode(DropMode.ON);
+        combinedFiltererTree.setTransferHandler(fth);
+        combinedFiltererTree.setDropMode(DropMode.ON);
         filtersTree.setTransferHandler(fth);
 
-        structuredFiltererTree.addMouseListener(new MouseAdapter() {
+        combinedFiltererTree.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                lastClickedPath = structuredFiltererTree.getPathForLocation(e.getX(), e.getY());
+                lastClickedPath = combinedFiltererTree.getPathForLocation(e.getX(), e.getY());
             }
         });
 
-        structuredFiltererTree.addMouseListener(new MouseAdapter() {
+        combinedFiltererTree.addMouseListener(new MouseAdapter() {
             public void showPopupMenu(MouseEvent e) {
-                Object o = structuredFiltererTree.getPathForLocation(e.getX(), e.getY()).getLastPathComponent();
+                Object o = combinedFiltererTree.getPathForLocation(e.getX(), e.getY()).getLastPathComponent();
                 if (o instanceof CombinedFilterer || o instanceof DecisionNode) {
                     if (o instanceof CombinedFilterer) {
                         operandMenu.setDecisionNode(((CombinedFilterer) o).getRootNode());
