@@ -30,6 +30,9 @@ public class DecisionNode {
             Set<DecisionNode> nodes = model.getFiltersToNodeMap().get(filterNode.getFilter());
             if (nodes != null) {
                 nodes.remove(filterNode);
+                if (nodes.size() == 0) {
+                    model.getFiltersToNodeMap().remove(filterNode.getFilter());
+                }
             }
         }
         children.remove(value);
