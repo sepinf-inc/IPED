@@ -13,6 +13,7 @@ import javax.swing.TransferHandler;
 import javax.swing.tree.TreePath;
 
 import iped.app.ui.App;
+import iped.app.ui.CombinedFilterTreeModel;
 import iped.app.ui.FiltersPanel;
 import iped.app.ui.Messages;
 import iped.app.ui.filterdecisiontree.CombinedFilterer;
@@ -119,7 +120,7 @@ public class FilterTransferHandler extends TransferHandler {
 
     @Override
     public int getSourceActions(JComponent c) {
-        return MOVE;
+        return COPY_OR_MOVE;
     }
 
     @Override
@@ -173,28 +174,41 @@ public class FilterTransferHandler extends TransferHandler {
                 }
                 if (dest != null) {
                     FilterNode filterNode = (FilterNode) data.getTransferData(filterNodeFlavor);
+                    IFilter filter = null;
+                    IFilter filterClonedSrc = null;
                     if (filterNode != null) {
                         if (support.getDropAction() == COPY) {
-                            filterNode = new FilterNode(filterNode.getFilter());
+                            filterClonedSrc = filter;
+                            filter = (IFilter) clone(((FilterNode) filterNode).getFilter());
+                            if (filter != null) {
+                                dest.addFilter(new FilterNode(filter, (CombinedFilterTreeModel) tree.getModel()));
+                            } else {
+                                return false;
+                            }
                         } else {
                             if (support.getDropAction() == MOVE) {
                                 dest.addFilter(filterNode);
                                 tree.expandPath(destPath.pathByAddingChild(filterNode));
                             }
-                            filterNode = null;
                         }
                     } else {
-                        IFilter filter = (IFilter) data.getTransferData(filterFlavor);
+                        filter = (IFilter) data.getTransferData(filterFlavor);
                         if (filter != null) {
-                            filterNode = new FilterNode(filter);
+                            FilterNode fn = new FilterNode(filter, (CombinedFilterTreeModel) tree.getModel());
+                            dest.addFilter(fn);
+                            tree.expandPath(destPath.pathByAddingChild(fn));
                         }
                     }
-                    if (filterNode != null && filterNode.getFilter() != null) {
-                        dest.addFilter(filterNode);
-                        tree.expandPath(destPath.pathByAddingChild(filterNode));
+                    if (filter != null) {
                         tree.updateUI();
                         try {
-                            combinedFilterer.preCacheFilter(filterNode);
+                            if (filterClonedSrc == null) {
+                                combinedFilterer.preCacheFilter(filter);
+                            } else {
+                                if (filter != filterClonedSrc) {
+                                    combinedFilterer.preCacheFilterClone(filter, filterClonedSrc);
+                                }
+                            }
                         } catch (Exception e) {
                             if (e.getCause() instanceof QueryNodeException) {
                                 JOptionPane.showMessageDialog(tree.getRootPane(), Messages.get("FiltersPanel.addQueryFilterError"));
@@ -206,7 +220,7 @@ public class FilterTransferHandler extends TransferHandler {
                     OperandNode operand = (OperandNode) data.getTransferData(operandNodeFlavor);
                     if (operand != null) {
                         if (support.getDropAction() == COPY) {
-                            DecisionNode dn = operand.clone();
+                            DecisionNode dn = (DecisionNode) clone(operand);
                             if (dn != null) {
                                 dest.addDecisionNode(dn);
                             } else {
@@ -226,6 +240,10 @@ public class FilterTransferHandler extends TransferHandler {
         }
         return false;
 
+    }
+
+    private Object clone(Object object) {
+        return object;
     }
 
 }

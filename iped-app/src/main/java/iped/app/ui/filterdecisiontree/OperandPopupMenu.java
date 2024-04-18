@@ -9,11 +9,13 @@ import javax.swing.JSeparator;
 import javax.swing.JTree;
 
 import iped.app.ui.App;
+import iped.app.ui.CombinedFilterTreeModel;
 import iped.app.ui.FiltererMenu;
 import iped.app.ui.Messages;
 import iped.app.ui.SliderMenuItem;
 import iped.app.ui.filterdecisiontree.OperandNode.Operand;
 import iped.data.IItemId;
+import iped.viewers.api.IFilter;
 import iped.viewers.api.IItemRef;
 import iped.viewers.api.IQuantifiableFilter;
 
@@ -94,15 +96,18 @@ public class OperandPopupMenu extends JPopupMenu implements ActionListener {
             }
         }
         if (e.getSource() == removeMenuitem) {
-            ((DecisionNode) op).getParent().remove(op);
+            ((DecisionNode) op).getParent().remove(op);            
             if (op instanceof FilterNode) {
-                logicFilterer.removePreCachedFilter((FilterNode) op);
+                if (!((CombinedFilterTreeModel) filtersTree.getModel())
+                        .hasFilter((IFilter) ((FilterNode) op).getFilter())) {
+                    logicFilterer.removePreCachedFilter((IFilter) ((FilterNode) op).getFilter());
+                }
             }
         }
         if (e.getSource() == inverMenuitem) {
             ((DecisionNode) op).invert();
             if (op instanceof FilterNode) {
-                logicFilterer.invertPreCached((FilterNode) op);
+                logicFilterer.invertPreCached(((FilterNode) op).getFilter());
             }
             logicFilterer.invalidateCache();
         }
@@ -161,8 +166,8 @@ public class OperandPopupMenu extends JPopupMenu implements ActionListener {
     @Override
     public void setVisible(boolean b) {
         if (!b && sliderMenuItem.hasSliderChanged()) {
-            logicFilterer.removePreCachedFilter((FilterNode) op);
-            logicFilterer.preCacheFilter((FilterNode) op);
+            logicFilterer.removePreCachedFilter((IFilter) ((FilterNode) op).getFilter());
+            logicFilterer.preCacheFilter((IFilter) ((FilterNode) op).getFilter());
 
             logicFilterer.startSearchResult(App.get().getResults());
 
