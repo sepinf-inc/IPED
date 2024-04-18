@@ -55,4 +55,21 @@ public class OperandNode extends DecisionNode {
     public Operand getOperand() {
         return operand;
     }
+
+    @Override
+    public DecisionNode clone() {
+        OperandNode clone = new OperandNode(this.operand, model);
+        clone.parent = this.parent;
+        clone.inverted = this.inverted;
+        for (DecisionNode child : this.children) {
+            try {
+                DecisionNode dn = (DecisionNode) child.clone();
+                dn.parent = clone;
+                clone.children.add(dn);
+            } catch (CloneNotSupportedException e) {
+                e.printStackTrace();
+            }
+        }
+        return clone;
+    }
 }

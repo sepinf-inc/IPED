@@ -220,7 +220,7 @@ public class FilterTransferHandler extends TransferHandler {
                     OperandNode operand = (OperandNode) data.getTransferData(operandNodeFlavor);
                     if (operand != null) {
                         if (support.getDropAction() == COPY) {
-                            DecisionNode dn = (DecisionNode) clone(operand);
+                            DecisionNode dn = (DecisionNode) operand.clone();
                             if (dn != null) {
                                 dest.addDecisionNode(dn);
                             } else {
