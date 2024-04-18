@@ -24,6 +24,7 @@ import javax.swing.JSplitPane;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
 
 import org.apache.lucene.search.Query;
 
@@ -127,6 +128,7 @@ public class FiltersPanel extends JPanel implements ClearFilterListener, IQueryF
         filterManager.setFilterEnabled(combinedFilterer, false);
 
         combinedFiltererTree = new JTree(new CombinedFilterTreeModel(combinedFilterer));
+        combinedFiltererTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
         combinedFiltererTree.setCellRenderer(new DefaultTreeCellRenderer() {
 
             JLabel nlabel = new JLabel(invertIcon);
