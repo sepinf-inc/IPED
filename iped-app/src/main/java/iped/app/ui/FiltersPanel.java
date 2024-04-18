@@ -3,7 +3,11 @@ package iped.app.ui;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
 import java.awt.Image;
+import java.awt.Rectangle;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
@@ -127,7 +131,26 @@ public class FiltersPanel extends JPanel implements ClearFilterListener, IQueryF
         filterManager.addResultSetFilterer(combinedFilterer);
         filterManager.setFilterEnabled(combinedFilterer, false);
 
-        combinedFiltererTree = new JTree(new CombinedFilterTreeModel(combinedFilterer));
+        combinedFiltererTree = new JTree(new CombinedFilterTreeModel(combinedFilterer)) {
+            String dragHereMsg = Messages.get("iped.app.ui.filterdecisiontree.CombinedFilterer.dragAndDropTooltip");
+
+            @Override
+            protected void paintComponent(Graphics g) {
+                // TODO Auto-generated method stub
+                super.paintComponent(g);
+                if (((CombinedFilterTreeModel) getModel()).getFiltersToNodeMap().size() == 0) {
+                    drawCenteredString(g, dragHereMsg, this.getBounds(), g.getFont());
+                }
+            }
+
+            public void drawCenteredString(Graphics g, String text, Rectangle rect, Font font) {
+                FontMetrics metrics = g.getFontMetrics(font);
+                int x = rect.x + (rect.width - metrics.stringWidth(text)) / 2;
+                int y = rect.y + ((rect.height - metrics.getHeight()) / 2) + metrics.getAscent();
+                g.setFont(font);
+                g.drawString(text, x, y);
+            }
+        };
         combinedFiltererTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
         combinedFiltererTree.setCellRenderer(new DefaultTreeCellRenderer() {
 
