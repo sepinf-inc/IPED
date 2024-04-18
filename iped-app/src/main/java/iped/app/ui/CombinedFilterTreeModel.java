@@ -118,7 +118,11 @@ public class CombinedFilterTreeModel implements TreeModel {
     }
 
     public boolean hasFilter(IFilter iFilter) {
-        return filtersToNodeMap.get(iFilter).size() > 0;
+        Set<DecisionNode> nodes = filtersToNodeMap.get(iFilter);
+        if (nodes != null) {
+            return filtersToNodeMap.get(iFilter).size() > 0;
+        }
+        return false;
     }
 
     public HashMap<IFilter, Set<DecisionNode>> getFiltersToNodeMap() {

@@ -1,5 +1,7 @@
 package iped.app.ui.filterdecisiontree;
 
+import java.util.Set;
+
 import iped.app.ui.CombinedFilterTreeModel;
 import iped.viewers.api.IFilter;
 
@@ -25,7 +27,10 @@ public class FilterNode extends DecisionNode {
         FilterNode clone = new FilterNode(filter, model);
         clone.parent = this.parent;
         clone.inverted = this.inverted;
-        model.getFiltersToNodeMap().get(filter).add(this);
+        Set<DecisionNode> nodes = model.getFiltersToNodeMap().get(filter);
+        if (nodes != null) {
+            nodes.add(this);
+        }
         return clone;
     }
 
