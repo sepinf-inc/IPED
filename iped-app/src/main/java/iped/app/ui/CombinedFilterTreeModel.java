@@ -1,19 +1,27 @@
 package iped.app.ui;
 
+import java.util.HashMap;
+import java.util.Set;
+
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
 import iped.app.ui.filterdecisiontree.CombinedFilterer;
+import iped.app.ui.filterdecisiontree.DecisionNode;
 import iped.app.ui.filterdecisiontree.OperandNode;
+import iped.app.ui.filterdecisiontree.OperandNode.Operand;
+import iped.viewers.api.IFilter;
 import iped.viewers.api.IFilterer;
 
 public class CombinedFilterTreeModel implements TreeModel {
 
     String rootName = "Filters";
     private IFilterer[] filterers;
+    HashMap<IFilter, Set<DecisionNode>> filtersToNodeMap = new HashMap<IFilter, Set<DecisionNode>>();
 
     public CombinedFilterTreeModel(CombinedFilterer logicFilterer) {
+        logicFilterer.setRootNode(new OperandNode(Operand.OR, this));
         this.rootName = logicFilterer.getFilterName();
         this.filterers = new IFilterer[1];
         this.filterers[0] = logicFilterer;
@@ -107,6 +115,14 @@ public class CombinedFilterTreeModel implements TreeModel {
 
     public void setRootName(String rootName) {
         this.rootName = rootName;
+    }
+
+    public boolean hasFilter(IFilter iFilter) {
+        return filtersToNodeMap.get(iFilter).size() > 0;
+    }
+
+    public HashMap<IFilter, Set<DecisionNode>> getFiltersToNodeMap() {
+        return filtersToNodeMap;
     }
 
 }
