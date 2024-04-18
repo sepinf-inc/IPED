@@ -34,9 +34,9 @@ import iped.viewers.api.IResultSetFilter;
 import iped.viewers.api.IResultSetFilterer;
 
 public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListener {
-    OperandNode rootNode = new OperandNode(Operand.OR);
+    OperandNode rootNode;
 
-    private final Map<FilterNode, FutureBitSetResult> cachedBitSet = new HashMap<>();
+    private final Map<IFilter, FutureBitSetResult> cachedBitSet = new HashMap<IFilter, FutureBitSetResult>();
 
     int queueCount = 0;
 
@@ -62,8 +62,8 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
         };
     }
 
-    public void removePreCachedFilter(FilterNode node) {
-        cachedBitSet.remove(node);
+    public void removePreCachedFilter(IFilter filter) {
+        cachedBitSet.remove(filter);
     }
 
     /**
@@ -164,15 +164,21 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
         public RoaringBitmap[] get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
             return null;
         }
-
     }
 
-    public void preCacheFilter(FilterNode node) {
-        IFilter filter = node.getFilter();
-        cachedBitSet.put(node, new FutureBitSetResult(this, filter));
+    public void preCacheFilter(IFilter filter, FutureBitSetResult fbs) {
+        cachedBitSet.put(filter, fbs);
         if (filter instanceof IMutableFilter) {
             ((IMutableFilter) filter).addFilterChangeListener(this);
         }
+    }
+
+    public void preCacheFilter(IFilter filter) {
+        preCacheFilter(filter, new FutureBitSetResult(this, filter));
+    }
+
+    public void preCacheFilterClone(IFilter filter, IFilter filterClonedSrc) {
+        preCacheFilter(filter, cachedBitSet.get(filterClonedSrc));
     }
 
     static public RoaringBitmap getAllSetBitSet(int length) {
@@ -289,6 +295,8 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
                 public void run() {
                     try {
                         result = getBitSet(input, op, self);
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     } finally {
                         resultFinished.release();
                     }
@@ -371,16 +379,18 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
             }
         }
 
-        for (DecisionNode node : op.getChildren()) {
+        for (Iterator iterator = op.getChildren().iterator(); iterator.hasNext();) {
             if (cancelCheck != null && cancelCheck.isCancelled()) {
                 return null;
             }
 
+            DecisionNode node = (DecisionNode) iterator.next();
+
             RoaringBitmap[] fbitset = null;
             if (node instanceof FilterNode) {
                 try {
-                    fbitset = cachedBitSet.get(((FilterNode) node)).get();
-                } catch (InterruptedException | ExecutionException e) {
+                    fbitset = cachedBitSet.get(((FilterNode) node).getFilter()).get();
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             } else if (node instanceof OperandNode) {
@@ -532,8 +542,8 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
         return false;
     }
 
-    public void invertPreCached(FilterNode node) {
-        FutureBitSetResult fbitset = cachedBitSet.get(node);
+    public void invertPreCached(IFilter op) {
+        FutureBitSetResult fbitset = cachedBitSet.get(op);
         fbitset.invert();
     }
 
@@ -550,6 +560,10 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
 
     public void invalidateCache() {
         cbs = null;
+    }
+
+    public void setRootNode(OperandNode rootNode) {
+        this.rootNode = rootNode;
     }
 
 }
