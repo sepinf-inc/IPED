@@ -245,6 +245,13 @@ public class FiltersPanel extends JPanel implements ClearFilterListener, IQueryF
         filtersTree.setTransferHandler(fth);
 
         structuredFiltererTree.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                lastClickedPath = structuredFiltererTree.getPathForLocation(e.getX(), e.getY());
+            }
+        });
+
+        structuredFiltererTree.addMouseListener(new MouseAdapter() {
             public void showPopupMenu(MouseEvent e) {
                 Object o = structuredFiltererTree.getPathForLocation(e.getX(), e.getY()).getLastPathComponent();
                 if (o instanceof CombinedFilterer || o instanceof DecisionNode) {
