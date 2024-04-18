@@ -48,14 +48,8 @@ public class DecisionNode {
     }
 
     @Override
-    public DecisionNode clone() {
-        DecisionNode clone = new DecisionNode(model);
-        clone.parent = this.parent;
-        clone.inverted = this.inverted;
-        for (DecisionNode child : this.children) {
-            clone.children.add(child.clone());
-        }
-        return clone;
+    public Object clone() throws CloneNotSupportedException {
+        throw new CloneNotSupportedException();
     }
 
 }

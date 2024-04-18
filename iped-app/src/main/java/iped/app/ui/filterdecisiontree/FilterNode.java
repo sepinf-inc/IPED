@@ -20,4 +20,13 @@ public class FilterNode extends DecisionNode {
         return filter.toString();
     }
 
+    @Override
+    public DecisionNode clone() {
+        FilterNode clone = new FilterNode(filter, model);
+        clone.parent = this.parent;
+        clone.inverted = this.inverted;
+        model.getFiltersToNodeMap().get(filter).add(this);
+        return clone;
+    }
+
 }
