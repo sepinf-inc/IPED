@@ -33,6 +33,12 @@ import iped.viewers.api.IQueryFilter;
 import iped.viewers.api.IResultSetFilter;
 import iped.viewers.api.IResultSetFilterer;
 
+/**
+ * A resultSet filterer that uses a defined decision tree made up of filters
+ * combined by logical operands to filter the resultSet.
+ * 
+ * @author patrick.pdb
+ */
 public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListener {
     OperandNode rootNode;
 

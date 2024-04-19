@@ -2,6 +2,12 @@ package iped.viewers.api;
 
 import org.roaringbitmap.RoaringBitmap;
 
+/**
+ * A filter that exposes a RoaringBitmap that can be used to filter the
+ * resultSet
+ * 
+ * @author patrick.pdb
+ */
 public interface IBitmapFilter extends IFilter {
     RoaringBitmap[] getBitmap();
 
