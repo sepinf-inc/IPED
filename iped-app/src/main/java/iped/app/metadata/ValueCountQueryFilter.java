@@ -14,6 +14,7 @@ import iped.viewers.api.IQueryFilter;
 public class ValueCountQueryFilter implements IQueryFilter {
     StringBuffer queryStr = null;
     StringBuffer name = null;
+    StringBuffer textualDetail = null;
     Set<ValueCount> values = null;
     String filterField;
     private Query query;
@@ -24,6 +25,25 @@ public class ValueCountQueryFilter implements IQueryFilter {
         if (selectedValues != null) {
             values.addAll(selectedValues);
         }
+    }
+
+    @Override
+    public String getTextualDetails() {
+        if (textualDetail == null) {
+            textualDetail = new StringBuffer();
+            textualDetail.append(filterField);
+            textualDetail.append(":[");
+            boolean first = true;
+            for (ValueCount value : values) {
+                if (!first) {
+                    textualDetail.append(",");
+                }
+                textualDetail.append(value.getVal());
+                first = false;
+            }
+            textualDetail.append("]");
+        }
+        return textualDetail.toString();
     }
 
     public String toString() {

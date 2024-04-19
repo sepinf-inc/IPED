@@ -26,6 +26,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTree;
+import javax.swing.ToolTipManager;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
@@ -80,6 +81,7 @@ public class FiltersPanel extends JPanel implements ClearFilterListener, IQueryF
     public void install(FilterManager filterManager) {
         this.filterManager = filterManager;
         filtersTree = new JTree();
+
         CheckBoxTreeCellRenderer treeCellRenderer = new CheckBoxTreeCellRenderer(filtersTree, new Predicate<Object>() {
             @Override
             public boolean test(Object t) {
@@ -96,7 +98,20 @@ public class FiltersPanel extends JPanel implements ClearFilterListener, IQueryF
                 }
                 return false;
             }
-        });
+        }) {
+            @Override
+            public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded,
+                    boolean leaf, int row, boolean hasFocus) {
+                Component result = super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
+                if (value instanceof IFilter) {
+                    IFilter filter = (IFilter) value;
+                    String toolTip = filter.getTextualDetails();
+                    ((JComponent)result).setToolTipText(toolTip);
+                }
+
+                return result;
+            }
+        };
         filtersTree.setCellRenderer(treeCellRenderer);
         filtersTree.setCellEditor(treeCellRenderer);
         filtersTree.setEditable(true);
@@ -183,11 +198,16 @@ public class FiltersPanel extends JPanel implements ClearFilterListener, IQueryF
                         Image newimg = ((IMiniaturizable) filter).getThumb().getScaledInstance(16, 16, java.awt.Image.SCALE_SMOOTH);
                         label.setIcon(new ImageIcon(newimg));
                     }
+                    String toolTip = filter.getTextualDetails();
+                    p.setToolTipText(toolTip);
+                } else {
+                    p.setToolTipText(null);
                 }
                 return p;
             }
 
         });
+        ToolTipManager.sharedInstance().registerComponent(combinedFiltererTree);
 
         splitPane = new JSplitPane();
 
