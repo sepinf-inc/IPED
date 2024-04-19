@@ -181,7 +181,7 @@ public class IPEDSearchList<E> extends JPanel {
 
             @Override
             public void keyReleased(KeyEvent e) {
-                String text = txFilter.getText();
+                String text = txFilter.getText().toLowerCase();
                 if (text.length() > 0) {
                     if (fl != null) {
                         fl.cancel();
