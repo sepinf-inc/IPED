@@ -23,5 +23,4 @@ public interface IFilterer extends ClearFilterListener {
             return this.getClass().getName();
         }
     }
-
 }

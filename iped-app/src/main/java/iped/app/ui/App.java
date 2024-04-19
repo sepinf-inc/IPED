@@ -1980,7 +1980,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         @Override
         public boolean hasFiltersApplied() {
-            return false;
+            return hasFilters();
         }
 
         @Override
@@ -2098,7 +2098,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         @Override
         public boolean hasFiltersApplied() {
-            return false;
+            return filter != null;
         }
 
         @Override

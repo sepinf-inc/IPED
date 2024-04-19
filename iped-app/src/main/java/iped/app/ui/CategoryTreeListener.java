@@ -166,7 +166,7 @@ public class CategoryTreeListener implements TreeSelectionListener, TreeExpansio
 
     @Override
     public boolean hasFiltersApplied() {
-        return false;
+        return categoryList.size() > 0;
     }
 
     public String toString() {

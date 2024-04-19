@@ -1,6 +1,7 @@
 package iped.app.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Font;
@@ -8,6 +9,8 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
@@ -82,23 +85,27 @@ public class FiltersPanel extends JPanel implements ClearFilterListener, IQueryF
         this.filterManager = filterManager;
         filtersTree = new JTree();
 
-        CheckBoxTreeCellRenderer treeCellRenderer = new CheckBoxTreeCellRenderer(filtersTree, new Predicate<Object>() {
+        Predicate filtererEnabledPredicate = new Predicate<Object>() {
             @Override
             public boolean test(Object t) {
                 if (t instanceof IFilterer) {
-                    return filterManager.isFiltererEnabled((IFilterer) t);
+                    return filterManager.isFiltererEnabled((IFilterer) t) && (((IFilterer) t).hasFiltersApplied());
                 }
                 return false;
-            }
-        }, new Predicate<Object>() {
+            };
+        };
+
+        Predicate filtererVisiblePredicate = new Predicate<Object>() {
             @Override
             public boolean test(Object t) {
                 if (t instanceof IFilterer) {
-                    return ((IFilterer) t).hasFilters();
+                    return true;
                 }
                 return false;
-            }
-        }) {
+            };
+        };
+        CheckBoxTreeCellRenderer treeCellRenderer = new CheckBoxTreeCellRenderer(filtersTree,
+                filtererEnabledPredicate, filtererVisiblePredicate) {
             @Override
             public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded,
                     boolean leaf, int row, boolean hasFocus) {
@@ -109,9 +116,26 @@ public class FiltersPanel extends JPanel implements ClearFilterListener, IQueryF
                     ((JComponent)result).setToolTipText(toolTip);
                 }
 
+                if (value instanceof IFilterer) {
+                    result.setBackground((((IFilterer) value).hasFiltersApplied()) ? ENABLED_BK_COLOR : Color.white);
+                }
+
                 return result;
             }
         };
+        treeCellRenderer.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                IFilterer filterer = (IFilterer) e.getSource();
+                if (filterer.hasFiltersApplied()) {
+                    filterManager.setFilterEnabled(filterer, !filterManager.isFiltererEnabled(filterer));
+                    App.get().filtersPanel.updateUI();
+                    App.get().getAppListener().updateFileListing();
+                } else {
+                    App.get().filtersPanel.updateUI();
+                }
+            }
+        });
         filtersTree.setCellRenderer(treeCellRenderer);
         filtersTree.setCellEditor(treeCellRenderer);
         filtersTree.setEditable(true);
