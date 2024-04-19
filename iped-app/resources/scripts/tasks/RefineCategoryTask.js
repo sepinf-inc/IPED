@@ -148,7 +148,7 @@ function process(e){
 		}
 	}
 
-	// Call sub-categories
+	// Calls sub-categories
 	if (mime.equals("application/x-ufed-call")) {
 		source = e.getMetadata().get("ufed:Source");
 		if (source == null) {
@@ -164,6 +164,7 @@ function process(e){
 			} else if (source.contains("threema")) {
 				e.setCategory("Threema Calls");
 			} else {
+			    // New sub-categories may be created from other phone call apps handled by UFED
 				e.setCategory("Other Calls");
 			}
 		}
