@@ -49,6 +49,7 @@ import static iped.parsers.whatsapp.Message.MessageType.POLL_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.PRODUCT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.REFUSED_VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.REFUSED_VOICE_CALL;
+import static iped.parsers.whatsapp.Message.MessageType.RESET_GROUP_LINK;
 import static iped.parsers.whatsapp.Message.MessageType.SENDER_IN_CONTACTS;
 import static iped.parsers.whatsapp.Message.MessageType.SHARE_LOCATION_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.STANDARD_CHAT;
@@ -663,6 +664,9 @@ public class ExtractorAndroidNew extends Extractor {
                         break;
                     case 20:
                         result = USER_JOINED_GROUP_FROM_LINK;
+                        break;
+                    case 21:
+                        result = RESET_GROUP_LINK;
                         break;
                     case 27:
                         result = GROUP_DESCRIPTION_CHANGED;

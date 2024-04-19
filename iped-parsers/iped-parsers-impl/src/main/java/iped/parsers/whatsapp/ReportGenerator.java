@@ -669,6 +669,11 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.GroupOnlyAdminsCanSend") + "<br>");
                 break;
+            case RESET_GROUP_LINK:
+                out.println("<div class=\"systemmessage\">");
+                out.print(name + " ");
+                out.println(Messages.getString("WhatsAppReport.ResetGroupLink") + ".<br>");
+                break;
             case CHANGED_DEVICE:
                 out.println("<div class=\"systemmessage\">");
                 out.println(name + " " + Messages.getString("WhatsAppReport.ChangedDevice") + "<br>");
