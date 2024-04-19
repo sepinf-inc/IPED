@@ -151,7 +151,14 @@
       ]}
     ]},
     {"name": "Extraction Summary", "mimes": ["application/x-ufed-html-summary"]},
-    {"name": "Calls", "mimes": ["application/x-ufed-html-calls", "application/x-ufed-call", "call/x-threema-call", "call/x-whatsapp-call", "call/x-telegram-call", "call/x-discord-call", "application/x-ios-calllog-db", "application/x-ios8-calllog-db"]},
+    {"name": "Calls", "categories":[ 
+        {"name": "Facebook Calls", "mimes":[]},
+        {"name": "Phone Calls", "mimes":["call/x-discord-call"]},
+        {"name": "Telegram Calls", "mimes":["call/x-telegram-call"]},
+        {"name": "Threema Calls", "mimes":["call/x-threema-call"]},
+        {"name": "WhatsApp Calls", "mimes":["call/x-whatsapp-call"]},
+        {"name": "Other Calls", "mimes":["application/x-ufed-html-calls", "application/x-ufed-call", "application/x-ios-calllog-db", "application/x-ios8-calllog-db"]}
+    ]},
     {"name": "SMS Messages", "mimes": ["application/x-ufed-html-sms", "application/x-ufed-sms", "application/x-ios-sms-db"]},
     {"name": "MMS Messages", "mimes": ["application/x-ufed-html-mms", "application/x-ufed-mms"]},
     {"name": "Instant Messages", "mimes": ["message/x-chat-message", "message/x-threema-message", "application/x-ufed-instantmessage", "message/x-whatsapp-message", "message/x-skype-message", "message/x-skype-filetransfer", "message/x-telegram-message", "message/x-discord-message"]},

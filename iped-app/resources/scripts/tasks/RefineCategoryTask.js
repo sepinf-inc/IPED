@@ -148,6 +148,27 @@ function process(e){
 		}
 	}
 
+	// Call sub-categories
+	if (mime.equals("application/x-ufed-call")) {
+		source = e.getMetadata().get("ufed:Source");
+		if (source == null) {
+			e.setCategory("Phone Calls");
+		} else {
+			source = source.toLowerCase();
+			if (source.contains("whatsapp")) {
+				e.setCategory("WhatsApp Calls");
+			} else if (source.contains("facebook")) {
+				e.setCategory("Facebook Calls");
+			} else if (source.contains("discord")) {
+				e.setCategory("Discord Calls");
+			} else if (source.contains("threema")) {
+				e.setCategory("Threema Calls");
+			} else {
+				e.setCategory("Other Calls");
+			}
+		}
+	}
+
 	// Usually, conditions that overwrite the category (using setCategory()) 
 	// should go before the ones that add other categories (using addCategory()).
 
