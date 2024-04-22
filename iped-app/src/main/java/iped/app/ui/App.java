@@ -1985,6 +1985,12 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         @Override
         public Query getQuery() {
+            String searchText = App.get().queryComboBox.getSelectedItem().toString();
+            try {
+                return new QueryBuilder(appCase).getQuery(searchText);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             return null;
         }
 

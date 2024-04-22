@@ -87,7 +87,7 @@ public class AppListener implements ActionListener, MouseListener {
         try {
             UICaseSearcherFilter task;
             if (query == null)
-                task = new UICaseSearcherFilter(searchText);
+                task = new UICaseSearcherFilter("");
             else
                 task = new UICaseSearcherFilter(query);
 
