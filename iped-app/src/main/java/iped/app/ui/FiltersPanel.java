@@ -127,7 +127,7 @@ public class FiltersPanel extends JPanel implements ClearFilterListener, IQueryF
             @Override
             public void actionPerformed(ActionEvent e) {
                 IFilterer filterer = (IFilterer) e.getSource();
-                if (filterer.hasFiltersApplied()) {
+                if (filterer.hasFilters()) {
                     filterManager.setFilterEnabled(filterer, !filterManager.isFiltererEnabled(filterer));
                     App.get().filtersPanel.updateUI();
                     App.get().getAppListener().updateFileListing();
