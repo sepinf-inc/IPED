@@ -3,10 +3,12 @@ package iped.app.ui;
 import java.io.File;
 import java.io.IOException;
 
+import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
+import iped.data.IMultiBookmarks;
 import iped.engine.data.Bookmarks;
 import iped.utils.LocalizedFormat;
 import iped.viewers.bookmarks.IBookmarksController;
@@ -54,15 +56,27 @@ public class BookmarksController implements IBookmarksController {
         return this.multiSetting;
     }
 
-    public void addToRecentSearches(String texto) {
+    public void addToRecentSearches(String text) {
 
-        if (!texto.equals(HISTORY_DIV) && !texto.trim().isEmpty() && !App.get().appCase.getMultiBookmarks().getTypedWords().contains(texto) && !App.get().appCase.getKeywords().contains(texto)) {
+        if (!text.equals(HISTORY_DIV) && !text.trim().isEmpty() && !App.get().appCase.getKeywords().contains(text)) {
+            JComboBox<String> queryComboBox = App.get().queryComboBox;
+            IMultiBookmarks multiBookmarks = App.get().appCase.getMultiBookmarks();
+            
+            if (multiBookmarks.getTypedWords().isEmpty()) {
+                queryComboBox.addItem(HISTORY_DIV);
+            }
+            multiBookmarks.addToTypedWords(text);
+            
+            // Remove if already present
+            queryComboBox.removeItem(text);
 
-            if (App.get().appCase.getMultiBookmarks().getTypedWords().size() == 0)
-                App.get().queryComboBox.addItem(HISTORY_DIV);
-
-            App.get().queryComboBox.addItem(texto);
-            App.get().appCase.getMultiBookmarks().addToTypedWords(texto);
+            // Insert at the top, right after HISTORY_DIV
+            for (int i = 0; i < queryComboBox.getItemCount(); i++) {
+                if (queryComboBox.getItemAt(i).equals(HISTORY_DIV)) {
+                    queryComboBox.insertItemAt(text, i + 1);
+                    break;
+                }
+            }
         }
     }
 
@@ -122,8 +136,9 @@ public class BookmarksController implements IBookmarksController {
         if (App.get().appCase.getMultiBookmarks().getTypedWords().size() != 0)
             App.get().queryComboBox.addItem(HISTORY_DIV);
 
+        int insPos = App.get().queryComboBox.getItemCount(); 
         for (String text : App.get().appCase.getMultiBookmarks().getTypedWords()) {
-            App.get().queryComboBox.addItem(text);
+            App.get().queryComboBox.insertItemAt(text, insPos);
         }
         App.get().queryComboBox.setSelectedItem(prevText);
         updatingHistory = false;
