@@ -527,6 +527,10 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">");
                 out.println(name + " " + Messages.getString("WhatsAppReport.CommunityRenamed") + ".<br>");
                 break;
+            case ANY_COMMUNITY_MEMBER_CAN_JOIN_GROUP:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.AnyCommunityMemberCanJoinThisGroup") + "<br>");
+                break;
             case COMMUNITY_MANAGEMENT_ACTION:
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.CommunityManagementAction") + "<br>");

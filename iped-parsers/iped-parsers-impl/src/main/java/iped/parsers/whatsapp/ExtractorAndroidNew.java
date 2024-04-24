@@ -1,6 +1,7 @@
 package iped.parsers.whatsapp;
 
 import static iped.parsers.whatsapp.Message.MessageType.AI_THIRD_PARTY;
+import static iped.parsers.whatsapp.Message.MessageType.ANY_COMMUNITY_MEMBER_CAN_JOIN_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.AUDIO_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.BLOCKED_CONTACT;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_CHAT;
@@ -770,6 +771,9 @@ public class ExtractorAndroidNew extends Extractor {
                         break;
                     case 92:
                         result = GROUP_CHANGED_ONLY_ADMINS_CAN_ADD;
+                        break;
+                    case 102:
+                        result = ANY_COMMUNITY_MEMBER_CAN_JOIN_GROUP;
                         break;
                     case 107:
                         result = COMMUNITY_RENAMED;
