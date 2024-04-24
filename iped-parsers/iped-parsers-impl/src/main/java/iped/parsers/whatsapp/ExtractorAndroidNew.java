@@ -12,6 +12,7 @@ import static iped.parsers.whatsapp.Message.MessageType.CHANGED_DEVICE;
 import static iped.parsers.whatsapp.Message.MessageType.CHANGED_NUMBER_TO;
 import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_ADDED_PRIVACY;
 import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_CREATED;
+import static iped.parsers.whatsapp.Message.MessageType.CHAT_ADDED_PRIVACY;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_MANAGEMENT_ACTION;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_RENAMED;
 import static iped.parsers.whatsapp.Message.MessageType.CONTACT_MESSAGE;
@@ -103,6 +104,7 @@ import java.util.Map;
 
 import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.whatsapp.Message.MessageStatus;
+import iped.parsers.whatsapp.Message.MessageType;
 
 /**
  *
@@ -771,6 +773,9 @@ public class ExtractorAndroidNew extends Extractor {
                         break;
                     case 92:
                         result = GROUP_CHANGED_ONLY_ADMINS_CAN_ADD;
+                        break;
+                    case 99:
+                        result = CHAT_ADDED_PRIVACY;
                         break;
                     case 102:
                         result = ANY_COMMUNITY_MEMBER_CAN_JOIN_GROUP;
