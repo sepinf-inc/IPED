@@ -523,6 +523,10 @@ public class ReportGenerator {
                 }
                 out.println("<br>");
                 break;
+            case COMMUNITY_RENAMED:
+                out.println("<div class=\"systemmessage\">");
+                out.println(name + " " + Messages.getString("WhatsAppReport.CommunityRenamed") + ".<br>");
+                break;
             case COMMUNITY_MANAGEMENT_ACTION:
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.CommunityManagementAction") + "<br>");

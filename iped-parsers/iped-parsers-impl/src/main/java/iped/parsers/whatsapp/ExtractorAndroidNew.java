@@ -12,6 +12,7 @@ import static iped.parsers.whatsapp.Message.MessageType.CHANGED_NUMBER_TO;
 import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_ADDED_PRIVACY;
 import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_CREATED;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_MANAGEMENT_ACTION;
+import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_RENAMED;
 import static iped.parsers.whatsapp.Message.MessageType.CONTACT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_ADMIN;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_SENDER;
@@ -769,6 +770,9 @@ public class ExtractorAndroidNew extends Extractor {
                         break;
                     case 92:
                         result = GROUP_CHANGED_ONLY_ADMINS_CAN_ADD;
+                        break;
+                    case 107:
+                        result = COMMUNITY_RENAMED;
                         break;
                     case 118:
                         result = PINNED_MESSAGE;
