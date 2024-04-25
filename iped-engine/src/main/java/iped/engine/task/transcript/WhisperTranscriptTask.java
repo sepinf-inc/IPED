@@ -1,6 +1,7 @@
 package iped.engine.task.transcript;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
@@ -88,6 +89,11 @@ public class WhisperTranscriptTask extends Wav2Vec2TranscriptTask {
         server.device = device;
 
         return server;
+    }
+
+    @Override
+    protected TextAndScore transcribeAudio(File tmpFile) throws Exception {
+        return transcribeWavPart(tmpFile);
     }
 
 }
