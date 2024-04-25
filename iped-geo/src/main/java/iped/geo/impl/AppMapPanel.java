@@ -585,7 +585,7 @@ public class AppMapPanel extends JPanel implements Consumer<Object[]> {
             return false;
         }
         RoaringBitmap casegeoReferencedBitmap = geoReferencedBitmap[item.getSourceId()];
-        if (casegeoReferencedBitmap == null) {
+        if (casegeoReferencedBitmap != null) {
             return casegeoReferencedBitmap.contains(item.getId());
         } else {
             return false;
