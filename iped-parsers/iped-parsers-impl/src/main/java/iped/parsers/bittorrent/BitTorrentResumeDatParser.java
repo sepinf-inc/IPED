@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.TimeZone;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
@@ -37,6 +38,7 @@ public class BitTorrentResumeDatParser extends AbstractParser {
     private static final String[] header = new String[] { Messages.getString("BitTorrentResumeDatParser.TorrentFile"), //$NON-NLS-1$
             Messages.getString("BitTorrentResumeDatParser.RootDir"), //$NON-NLS-1$
             Messages.getString("BitTorrentResumeDatParser.Path"), //$NON-NLS-1$
+            Messages.getString("BitTorrentResumeDatParser.InfoHash"), //$NON-NLS-1$
             Messages.getString("BitTorrentResumeDatParser.Downloaded"), //$NON-NLS-1$
             Messages.getString("BitTorrentResumeDatParser.Uploaded"), //$NON-NLS-1$
             Messages.getString("BitTorrentResumeDatParser.AddedDate"), //$NON-NLS-1$
@@ -46,7 +48,7 @@ public class BitTorrentResumeDatParser extends AbstractParser {
             Messages.getString("BitTorrentResumeDatParser.SeedTime"), //$NON-NLS-1$
             Messages.getString("BitTorrentResumeDatParser.RunTime") //$NON-NLS-1$
     };
-    private static final char[] colAlign = new char[] { 'a', 'a', 'a', 'c', 'c', 'b', 'b', 'b', 'b', 'c', 'c' };
+    private static final char[] colAlign = new char[] { 'a', 'a', 'a', 'h', 'c', 'c', 'b', 'b', 'b', 'b', 'c', 'c' };
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -74,7 +76,8 @@ public class BitTorrentResumeDatParser extends AbstractParser {
                 + ".rb { background-color:#E7E7F0; vertical-align: middle; } " //$NON-NLS-1$
                 + ".a { border: solid; border-width: thin; padding: 3px; text-align: left; vertical-align: middle; word-wrap: break-word; } " //$NON-NLS-1$
                 + ".b { border: solid; border-width: thin; padding: 3px; text-align: center; vertical-align: middle; word-wrap: break-word; } " //$NON-NLS-1$
-                + ".c { border: solid; border-width: thin; padding: 3px; text-align: right; vertical-align: middle; word-wrap: break-word; } "); //$NON-NLS-1$
+                + ".c { border: solid; border-width: thin; padding: 3px; text-align: right; vertical-align: middle; word-wrap: break-word; } " //$NON-NLS-1$
+                + ".h { font-weight: bold; border: solid; border-width: thin; padding: 3px; text-align: left; vertical-align: middle; white-space: nowrap; font-family: monospace; }");
         xhtml.endElement("style"); //$NON-NLS-1$
         xhtml.newline();
         try {
@@ -100,9 +103,16 @@ public class BitTorrentResumeDatParser extends AbstractParser {
                 if (torrentDict == null) {
                     continue;
                 }
+                byte[] infoBytes = torrentDict.getBytes("info");
+                String infoHash = "";
+                if (infoBytes != null) {
+                    infoHash = DigestUtils.sha1Hex(infoBytes).toUpperCase();
+                }                
                 xhtml.startElement("tr", "class", a ? "ra" : "rb"); //$NON-NLS-1$ $NON-NLS-2$ $NON-NLS-3$ $NON-NLS-4$
-                String[] rowElements = new String[] { torrent, torrentDict.getString("rootdir"), //$NON-NLS-1$
+                String[] rowElements = new String[] { torrent, 
+                        torrentDict.getString("rootdir"), //$NON-NLS-1$
                         torrentDict.getString("path"), //$NON-NLS-1$
+                        infoHash,
                         Long.toString(torrentDict.getLong("downloaded")), //$NON-NLS-1$
                         Long.toString(torrentDict.getLong("uploaded")), //$NON-NLS-1$
                         torrentDict.getDate("added_on"), //$NON-NLS-1$
