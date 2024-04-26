@@ -40,6 +40,7 @@ import iped.utils.LocalizedFormat;
 public class TorrentFileParser extends AbstractParser {
 
     private static final String TORRENT_CREATION_DATE = "torrentCreationDate";
+    public static final String TORRENT_INFO_HASH = "torrentInfoHash";
     private static final long serialVersionUID = 3238363426940179831L;
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.application("x-bittorrent")); //$NON-NLS-1$
     public static final String TORRENT_FILE_MIME_TYPE = "application/x-bittorrent"; //$NON-NLS-1$
@@ -109,7 +110,6 @@ public class TorrentFileParser extends AbstractParser {
         xhtml.startElement("table", "class", "dt");
         TorrentInfo info = extractTorrentInfo(dict);
         outputInfo(xhtml, Messages.getString("TorrentFileDatParser.Name"), info.name);
-
         outputInfo(xhtml, Messages.getString("TorrentFileDatParser.InfoHash"), info.infoHash, true);
         outputInfo(xhtml, Messages.getString("TorrentFileDatParser.PieceLength"), info.pieceLength);
         outputInfo(xhtml, Messages.getString("TorrentFileDatParser.NumberOfPieces"), info.numPieces);
@@ -118,7 +118,9 @@ public class TorrentFileParser extends AbstractParser {
         outputInfo(xhtml, Messages.getString("TorrentFileDatParser.Comment"), info.comment);
         outputInfo(xhtml, Messages.getString("TorrentFileDatParser.CreatedBy"), info.createdBy);
         outputInfo(xhtml, Messages.getString("TorrentFileDatParser.CreationDate"), info.creationDate);
+        xhtml.endElement("table");
 
+        // Set creation date metadata
         MetadataUtil.setMetadataType(TORRENT_CREATION_DATE, Date.class);
         if (!info.creationDate.isEmpty()) {
             try {
@@ -128,8 +130,11 @@ public class TorrentFileParser extends AbstractParser {
                 e1.printStackTrace();
             }
         }
-
-        xhtml.endElement("table");
+        
+        // Set infoHash metadata
+        if (info.infoHash != null && !info.infoHash.isBlank()) {
+            metadata.set(TORRENT_INFO_HASH, info.infoHash);
+        }
 
         // Files Table
         xhtml.startElement("table", "class", "dt"); //$NON-NLS-1$ $NON-NLS-2$ $NON-NLS-3$

@@ -5,10 +5,11 @@ import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
 
-import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
@@ -20,8 +21,12 @@ import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.data.IItemReader;
 import iped.parsers.util.IgnoreCorruptedCarved;
 import iped.parsers.util.Messages;
+import iped.properties.BasicProps;
+import iped.properties.ExtraProperties;
+import iped.search.IItemSearcher;
 import iped.utils.LocalizedFormat;
 
 /**
@@ -46,9 +51,11 @@ public class BitTorrentResumeDatParser extends AbstractParser {
             Messages.getString("BitTorrentResumeDatParser.Time"), //$NON-NLS-1$
             Messages.getString("BitTorrentResumeDatParser.LastSeenCompleteDate"), //$NON-NLS-1$
             Messages.getString("BitTorrentResumeDatParser.SeedTime"), //$NON-NLS-1$
-            Messages.getString("BitTorrentResumeDatParser.RunTime") //$NON-NLS-1$
+            Messages.getString("BitTorrentResumeDatParser.RunTime"), //$NON-NLS-1$
+            Messages.getString("BitTorrentResumeDatParser.TorrentFoundInCase") //$NON-NLS-1$
     };
-    private static final char[] colAlign = new char[] { 'a', 'a', 'a', 'h', 'c', 'c', 'b', 'b', 'b', 'b', 'c', 'c' };
+    private static final char[] colAlign = new char[] { 'a', 'a', 'a', 'h', 'c', 'c', 'b', 'b', 'b', 'b', 'c', 'c', 'b' };
+    private static final String strYes = Messages.getString("BitTorrentResumeDatParser.Yes");
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -94,6 +101,7 @@ public class BitTorrentResumeDatParser extends AbstractParser {
             }
             xhtml.endElement("tr"); //$NON-NLS-1$
 
+            IItemSearcher searcher = context.get(IItemSearcher.class);
             boolean a = true;
             for (String torrent : dict.keySet()) {
                 if (torrent.equals(".fileguard") || torrent.equals("rec")) { //$NON-NLS-1$ $NON-NLS-2$
@@ -106,8 +114,13 @@ public class BitTorrentResumeDatParser extends AbstractParser {
                 byte[] infoBytes = torrentDict.getBytes("info");
                 String infoHash = "";
                 if (infoBytes != null) {
-                    infoHash = DigestUtils.sha1Hex(infoBytes).toUpperCase();
-                }                
+                    infoHash = Hex.encodeHexString(infoBytes, false);
+                }
+                IItemReader item = searchTorrentInCase(searcher, infoHash);
+                if (item != null) {
+                    metadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + item.getHash());
+                }
+                
                 xhtml.startElement("tr", "class", a ? "ra" : "rb"); //$NON-NLS-1$ $NON-NLS-2$ $NON-NLS-3$ $NON-NLS-4$
                 String[] rowElements = new String[] { torrent, 
                         torrentDict.getString("rootdir"), //$NON-NLS-1$
@@ -120,7 +133,8 @@ public class BitTorrentResumeDatParser extends AbstractParser {
                         torrentDict.getDate("time"), //$NON-NLS-1$
                         torrentDict.getDate("last seen complete"), //$NON-NLS-1$
                         Long.toString(torrentDict.getLong("seedtime")), //$NON-NLS-1$
-                        Long.toString(torrentDict.getLong("runtime")) //$NON-NLS-1$
+                        Long.toString(torrentDict.getLong("runtime")), //$NON-NLS-1$
+                        item != null ? strYes: ""
                 };
                 for (int i = 0; i < rowElements.length; i++) {
                     String c = rowElements[i];
@@ -145,6 +159,16 @@ public class BitTorrentResumeDatParser extends AbstractParser {
         } finally {
             xhtml.endDocument();
         }
+    }
 
+    private static IItemReader searchTorrentInCase(IItemSearcher searcher, String infoHash) {
+        if (searcher == null || infoHash == null || infoHash.isBlank()) {
+            return null;
+        }
+        List<IItemReader> items = searcher.search(TorrentFileParser.TORRENT_INFO_HASH + ":" + infoHash);
+        if (items == null || items.isEmpty()) {
+            return null;
+        }
+        return items.get(0);
     }
 }
