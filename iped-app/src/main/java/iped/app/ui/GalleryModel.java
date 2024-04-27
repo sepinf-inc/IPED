@@ -247,7 +247,7 @@ public class GalleryModel extends AbstractTableModel {
                     }
 
                     if (image == null && stream != null) {
-                        image = ImageUtil.getSubSampledImage(stream, thumbSize, thumbSize);
+                        image = ImageUtil.getSubSampledImage(stream, thumbSize);
                         stream.reset();
                     }
 

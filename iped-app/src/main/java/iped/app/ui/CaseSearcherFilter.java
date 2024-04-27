@@ -20,9 +20,11 @@ package iped.app.ui;
 
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutorService;
 
 import javax.swing.JOptionPane;
@@ -35,6 +37,7 @@ import org.roaringbitmap.RoaringBitmap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import iped.engine.data.IPEDMultiSource;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.ItemId;
 import iped.engine.search.IPEDSearcher;
@@ -43,6 +46,7 @@ import iped.engine.search.QueryBuilder;
 import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
 import iped.viewers.api.CancelableWorker;
+import iped.viewers.api.IBitmapFilter;
 import iped.viewers.api.IFilter;
 import iped.viewers.api.IQueryFilterer;
 import iped.viewers.api.IResultSetFilter;
@@ -52,7 +56,8 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
     private static Logger LOGGER = LoggerFactory.getLogger(CaseSearcherFilter.class);
     ArrayList<CaseSearchFilterListener> listeners = new ArrayList<CaseSearchFilterListener>();
     RoaringBitmap[] unionsArray;
-
+    RoaringBitmap[] excludeUnionsArray;
+    
     public static SoftReference<MultiSearchResult> allItemsCache;
     private static IPEDSource ipedCase;
 
@@ -90,10 +95,6 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
                     Messages.getString("UISearcher.Error.Title"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
             // e.printStackTrace();
         }
-    }
-
-    private Query getQueryWithUIFilter() throws ParseException, QueryNodeException {
-        return getQueryWithUIFilter(null);
     }
 
     private Query getQueryWithUIFilter(Set<IQueryFilterer> exceptions) throws ParseException, QueryNodeException {
@@ -144,12 +145,18 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
 
         synchronized (this.getClass()) {
 
+            Date d1 = new Date();
+
             if (this.isCancelled())
-                return null;
+                throw new CancellationException();
 
             try {
                 for (CaseSearchFilterListener caseSearchFilterListener : listeners) {
                     caseSearchFilterListener.onStart();
+                }
+
+                if (this.isCancelled()) {
+                    throw new CancellationException();
                 }
 
                 if (ipedCase == null || ipedCase != App.get().appCase) {
@@ -166,27 +173,43 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
 
                 if (result == null) {
                     result = searcher.multiSearch();
+
+                    if (this.isCancelled()) {
+                        throw new CancellationException();
+                    }
+
                     if (q instanceof MatchAllDocsQuery && (allItemsCache == null || allItemsCache.get() == null))
                         allItemsCache = new SoftReference(result.clone());
                 }
 
                 result.setIPEDSource(ipedCase);
+
                 if (applyUIFilters && filterManager != null) {
                     List<IResultSetFilterer> rsFilterers = filterManager.getResultSetFilterers();
+
                     for (Iterator iterator = rsFilterers.iterator(); iterator.hasNext() && result.getLength() > 0;) {
+                        if (this.isCancelled()) {
+                            throw new CancellationException();
+                        }
+
                         IResultSetFilterer iRSFilterer = (IResultSetFilterer) iterator.next();
                         if (filterManager.isFiltererEnabled(iRSFilterer)) {
                             IFilter rsFilter = iRSFilterer.getFilter();
+
                             if (rsFilter != null) {
-                                RoaringBitmap[] cachedBitmaps = filterManager.getCachedBitmaps((IResultSetFilter) rsFilter);
-                                if (cachedBitmaps != null) {
-                                    addBitmapFilter(cachedBitmaps);
+                                if (rsFilter instanceof IBitmapFilter) {// if the filter exposes a internal bitmap
+                                    addBitmapFilter((IBitmapFilter) rsFilter);
                                 } else {
-                                    MultiSearchResult newresult = filterManager.applyFilter((IResultSetFilter) rsFilter, result);
-                                    if (newresult != result) {
-                                        numFilters++;
-                                        result = newresult;
-                                        result.setIPEDSource(ipedCase);
+                                    RoaringBitmap[] cachedBitmaps = filterManager.getCachedBitmaps((IResultSetFilter) rsFilter);
+                                    if (cachedBitmaps != null) { // if filtermanager returned a cached bitmap
+                                        addBitmapFilter(cachedBitmaps);
+                                    } else {
+                                        MultiSearchResult newresult = filterManager.applyFilter((IResultSetFilter) rsFilter, result);
+                                        if (newresult != result) {
+                                            numFilters++;
+                                            result = newresult;
+                                            result.setIPEDSource(ipedCase);
+                                        }
                                     }
                                 }
                             }
@@ -194,6 +217,9 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
                     }
                 }
 
+                if (this.isCancelled()) {
+                    throw new CancellationException();
+                }
                 if (unionsArray != null) {
                     MultiSearchResult newresult = filterManager.applyFilter(unionsArray, result);
                     if (newresult != result) {
@@ -202,15 +228,28 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
                         result.setIPEDSource(ipedCase);
                     }
                 }
+                if (excludeUnionsArray != null) {
+                    MultiSearchResult newresult = filterManager.applyExcludeFilter(excludeUnionsArray, result);
+                    if (newresult != result) {
+                        numFilters++;
+                        result = newresult;
+                        result.setIPEDSource(ipedCase);
+                    }
+                }
 
             } catch (Throwable e) {
-                e.printStackTrace();
+                if (!(e instanceof CancellationException)) {
+                    e.printStackTrace();
+                }
                 return new MultiSearchResult(new ItemId[0], new float[0]);
 
             }
 
             result.setIpedSearcher(searcher);
             result.setIPEDSource(ipedCase);
+
+            Date d2 = new Date();
+            LOGGER.info("Search and filtering took {}ms", d2.getTime() - d1.getTime());
 
             return result;
         }
@@ -276,6 +315,38 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
 
     public void setAppyUIFilters(boolean applyUIFilters) {
         this.applyUIFilters = applyUIFilters;
+    }
+
+    public void addBitmapFilter(IBitmapFilter filter) {
+        RoaringBitmap[] lunionsArray = filter.getBitmap();
+
+        if (unionsArray == null) {
+            // creates the unionsArray and puts the cases bitmaps as the initial bitmap
+            // array
+            addBitmapFilter(result.getCasesBitSets((IPEDMultiSource) ipedCase));
+        }
+
+        for (int i = 0; i < unionsArray.length; i++) {
+            if (filter.isToFilterOut()) {
+                unionsArray[i].andNot(lunionsArray[i]);
+            } else {
+                unionsArray[i].and(lunionsArray[i]);
+            }
+        }
+    }
+
+    public void addBitmapExcludeFilter(RoaringBitmap[] lunionsArray) {
+        if (excludeUnionsArray == null) {
+            excludeUnionsArray = new RoaringBitmap[lunionsArray.length];
+        }
+        for (int i = 0; i < excludeUnionsArray.length; i++) {
+            if (excludeUnionsArray[i] == null) {
+                excludeUnionsArray[i] = new RoaringBitmap();
+                excludeUnionsArray[i].or(lunionsArray[i]);
+            } else {
+                excludeUnionsArray[i].and(lunionsArray[i]);
+            }
+        }
     }
 
     public void addBitmapFilter(RoaringBitmap[] lunionsArray) {

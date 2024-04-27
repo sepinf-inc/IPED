@@ -523,6 +523,14 @@ public class ReportGenerator {
                 }
                 out.println("<br>");
                 break;
+            case COMMUNITY_RENAMED:
+                out.println("<div class=\"systemmessage\">");
+                out.println(name + " " + Messages.getString("WhatsAppReport.CommunityRenamed") + ".<br>");
+                break;
+            case ANY_COMMUNITY_MEMBER_CAN_JOIN_GROUP:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.AnyCommunityMemberCanJoinThisGroup") + "<br>");
+                break;
             case COMMUNITY_MANAGEMENT_ACTION:
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.CommunityManagementAction") + "<br>");
@@ -668,6 +676,11 @@ public class ReportGenerator {
             case GROUP_ONLY_ADMINS_CAN_SEND:
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.GroupOnlyAdminsCanSend") + "<br>");
+                break;
+            case RESET_GROUP_LINK:
+                out.println("<div class=\"systemmessage\">");
+                out.print(name + " ");
+                out.println(Messages.getString("WhatsAppReport.ResetGroupLink") + ".<br>");
                 break;
             case CHANGED_DEVICE:
                 out.println("<div class=\"systemmessage\">");
@@ -1236,6 +1249,7 @@ public class ReportGenerator {
             }
 
             switch (messageQuote.getMessageType()) {
+                case VIEW_ONCE_AUDIO_MESSAGE:
                 case AUDIO_MESSAGE:
                     if (quoteData == null || quoteData.isEmpty()) {
                         quoteData = Messages.getString("WhatsAppReport.Audio");
@@ -1247,6 +1261,7 @@ public class ReportGenerator {
                             + quoteEnd);
                     break;
 
+                case VIEW_ONCE_VIDEO_MESSAGE:
                 case VIDEO_MESSAGE:
                 case GIF_MESSAGE:
                     quoteIcon = "\uD83D\uDCF9";
@@ -1265,6 +1280,7 @@ public class ReportGenerator {
                     }
                     break;
 
+                case VIEW_ONCE_IMAGE_MESSAGE:
                 case STICKER_MESSAGE:
                 case IMAGE_MESSAGE:
                     quoteIcon = "\uD83D\uDDBC";

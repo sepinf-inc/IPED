@@ -290,12 +290,11 @@ public class ImageThumbTask extends ThumbTask {
             }
             if (img == null) {
                 long t = System.currentTimeMillis();
-                try (BufferedInputStream stream = evidence.getBufferedInputStream()) {
-                    BooleanWrapper renderException = new BooleanWrapper();
-                    img = ImageUtil.getSubSampledImage(stream, thumbSize * samplingRatio, thumbSize * samplingRatio,
-                            renderException, MediaTypes.getMimeTypeString(evidence));
-                    if (img != null && renderException.value)
-                        evidence.setExtraAttribute("thumbException", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+                BooleanWrapper renderException = new BooleanWrapper();
+                img = ImageUtil.getSubSampledImage(evidence, thumbSize * samplingRatio, renderException,
+                        MediaTypes.getMimeTypeString(evidence));
+                if (img != null && renderException.value) {
+                    evidence.setExtraAttribute("thumbException", "true");
                 }
                 performanceStats[img == null ? 6 : 4]++;
                 performanceStats[img == null ? 7 : 5] += System.currentTimeMillis() - t;

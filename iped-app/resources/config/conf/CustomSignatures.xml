@@ -1606,8 +1606,9 @@
 
     <mime-type type="application/x-ofx-v1">
         <magic priority="50">
-            <match value="OFXHEADER:100" type="string" offset="0"/>
+            <match value="OFXHEADER:100" type="string" offset="0:1"/>
         </magic>
+        <sub-class-of type="text/plain"/>
         <glob pattern="*.ofx"/>
     </mime-type>
 
@@ -1623,6 +1624,11 @@
             <match value="&lt;OFC&gt;" type="string" offset="0"/>
         </magic>
         <glob pattern="*.ofc"/>
+    </mime-type>
+    
+    <mime-type type="application/x-vlc-ini">
+        <sub-class-of type="text/x-ini"/>
+        <glob pattern="vlc-qt-interface.ini"/>
     </mime-type>
 
 </mime-info>

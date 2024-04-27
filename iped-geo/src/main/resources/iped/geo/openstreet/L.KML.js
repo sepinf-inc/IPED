@@ -718,11 +718,19 @@ L.KML = L.MarkerClusterGroup.extend({
         var m = new L.KMLMarker(new L.LatLng(lat, long), options);
         m.id=id;
         m.styles = this.styles;
-        m.checked=checked;
+        if(checked){
+            m.checked='true';
+        }else{
+            m.checked='false';
+        }
         m.selected=selected;
         m.name = name;
         m.descr = descr;
-        m.bindPopup('<input type="checkbox" id="marker_checkbox_'+id+'" value=""  onclick="L.checkMarker(window.clickedMark.id)"/><h2>' + m.name + '</h2>' + m.descr, { className: 'kml-popup'});
+        checkedstr='';
+        if(checked){
+            checkedstr='checked';
+        }
+        m.bindPopup('<input type="checkbox" id="marker_checkbox_'+id+'"  '+checkedstr+' value=""  onclick="L.checkMarker(window.clickedMark.id)"/><h2>' + m.name + '</h2>' + m.descr, { className: 'kml-popup'});
         this.popupOpened=false;
         m.styleUrl='#item';
         m.parent=this;

@@ -60,6 +60,7 @@ Manager = java.lang.Integer
 Communication:Date = java.util.Date
 Communication:From = java.lang.String
 Communication:To = java.lang.String
+Communication:ParticipantsCount = java.lang.Integer
 Message-Bcc = java.lang.String
 Message-Body = java.lang.String
 Message-Cc = java.lang.String

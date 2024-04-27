@@ -550,7 +550,8 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
                 p2pFields.add(f);
             else if (f.startsWith(ExtraProperties.UFED_META_PREFIX))
                 ufedFields.add(f);
-            else if (f.startsWith(Message.MESSAGE_PREFIX) || ExtraProperties.COMMUNICATION_BASIC_PROPS.contains(f))
+            else if (f.startsWith(Message.MESSAGE_PREFIX) || f.startsWith(ExtraProperties.COMMUNICATION_PREFIX)
+                    || ExtraProperties.COMMUNICATION_BASIC_PROPS.contains(f))
                 communicationFields.add(f);
             else if (f.startsWith(ExtraProperties.COMMON_META_PREFIX))
                 commonFields.add(f);

@@ -52,6 +52,7 @@ public interface IBookmarks extends Serializable {
 
     int getLastId();
 
+    @Deprecated
     int getTotalItens();
 
     int getTotalChecked();
@@ -101,6 +102,8 @@ public interface IBookmarks extends Serializable {
     void setBookmarkKeyStroke(int bookmarkId, KeyStroke key);
 
     KeyStroke getBookmarkKeyStroke(int bookmarkId);
+    
+    void removeBookmarkKeyStroke(int bookmarkId);
     
     int getBookmarkCount(int bookmarkId);
     

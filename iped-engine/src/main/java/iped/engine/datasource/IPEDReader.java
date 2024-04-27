@@ -56,6 +56,7 @@ import iped.engine.CmdLineArgs;
 import iped.engine.config.CategoryToExpandConfig;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.core.Manager;
+import iped.engine.data.BitmapBookmarks;
 import iped.engine.data.Bookmarks;
 import iped.engine.data.DataSource;
 import iped.engine.data.IPEDSource;
@@ -249,7 +250,8 @@ public class IPEDReader extends DataSourceReader {
             return;
         }
 
-        IBookmarks reportState = new Bookmarks(totalItems, lastId, output);
+        IBookmarks reportState = new BitmapBookmarks(output.getParentFile(), lastId);
+
         reportState.loadState();
 
         int added = 0;

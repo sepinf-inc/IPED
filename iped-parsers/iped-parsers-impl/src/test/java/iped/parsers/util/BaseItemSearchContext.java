@@ -15,6 +15,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+import javax.imageio.ImageIO;
+import javax.imageio.stream.ImageInputStream;
+
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
@@ -602,6 +605,11 @@ public abstract class BaseItemSearchContext extends TestCase {
             @Override
             public BufferedInputStream getBufferedInputStream() throws IOException {
                 return new BufferedInputStream(Files.newInputStream(file.toPath()));
+            }
+
+            @Override
+            public ImageInputStream getImageInputStream() throws IOException {
+                return ImageIO.createImageInputStream(file);
             }
 
             @Override

@@ -1,6 +1,7 @@
 package iped.parsers.whatsapp;
 
 import static iped.parsers.whatsapp.Message.MessageType.AI_THIRD_PARTY;
+import static iped.parsers.whatsapp.Message.MessageType.ANY_COMMUNITY_MEMBER_CAN_JOIN_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.AUDIO_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.BLOCKED_CONTACT;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_CHAT;
@@ -11,7 +12,10 @@ import static iped.parsers.whatsapp.Message.MessageType.CHANGED_DEVICE;
 import static iped.parsers.whatsapp.Message.MessageType.CHANGED_NUMBER_TO;
 import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_ADDED_PRIVACY;
 import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_CREATED;
+import static iped.parsers.whatsapp.Message.MessageType.CHAT_ADDED_PRIVACY;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_MANAGEMENT_ACTION;
+import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_RENAMED;
+import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_WELCOME;
 import static iped.parsers.whatsapp.Message.MessageType.CONTACT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_ADMIN;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_SENDER;
@@ -49,6 +53,7 @@ import static iped.parsers.whatsapp.Message.MessageType.POLL_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.PRODUCT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.REFUSED_VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.REFUSED_VOICE_CALL;
+import static iped.parsers.whatsapp.Message.MessageType.RESET_GROUP_LINK;
 import static iped.parsers.whatsapp.Message.MessageType.SENDER_IN_CONTACTS;
 import static iped.parsers.whatsapp.Message.MessageType.SHARE_LOCATION_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.STANDARD_CHAT;
@@ -76,6 +81,7 @@ import static iped.parsers.whatsapp.Message.MessageType.USER_LEFT_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.USER_REMOVED_FROM_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.VIDEO_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.VIEW_ONCE_AUDIO_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.VIEW_ONCE_IMAGE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.VIEW_ONCE_VIDEO_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.VOICE_CALL;
@@ -99,6 +105,7 @@ import java.util.Map;
 
 import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.whatsapp.Message.MessageStatus;
+import iped.parsers.whatsapp.Message.MessageType;
 
 /**
  *
@@ -663,6 +670,9 @@ public class ExtractorAndroidNew extends Extractor {
                     case 20:
                         result = USER_JOINED_GROUP_FROM_LINK;
                         break;
+                    case 21:
+                        result = RESET_GROUP_LINK;
+                        break;
                     case 27:
                         result = GROUP_DESCRIPTION_CHANGED;
                         break;
@@ -765,8 +775,20 @@ public class ExtractorAndroidNew extends Extractor {
                     case 92:
                         result = GROUP_CHANGED_ONLY_ADMINS_CAN_ADD;
                         break;
+                    case 99:
+                        result = CHAT_ADDED_PRIVACY;
+                        break;
+                    case 102:
+                        result = ANY_COMMUNITY_MEMBER_CAN_JOIN_GROUP;
+                        break;
+                    case 107:
+                        result = COMMUNITY_RENAMED;
+                        break;
                     case 118:
                         result = PINNED_MESSAGE;
+                        break;
+                    case 124:
+                        result = COMMUNITY_WELCOME;
                         break;
                     case 129:
                         result = SENDER_IN_CONTACTS;
@@ -910,6 +932,9 @@ public class ExtractorAndroidNew extends Extractor {
                         result = IMAGE_MESSAGE;
                     }
                 }
+                break;
+            case 82:
+                result = VIEW_ONCE_AUDIO_MESSAGE;
                 break;
             case 90:
                 // Newer databases also have entries to any call in messages table
