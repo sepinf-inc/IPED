@@ -82,7 +82,7 @@ public class BitTorrentResumeDatParser extends AbstractParser {
                 + ".rh { font-weight: bold; text-align: center; background-color:#AAAAEE; } " //$NON-NLS-1$
                 + ".ra { vertical-align: middle; } " //$NON-NLS-1$
                 + ".rb { background-color:#E7E7F0; vertical-align: middle; } " //$NON-NLS-1$
-                + ".a { border: solid; border-width: thin; padding: 3px; text-align: left; vertical-align: middle; word-wrap: break-word; } " //$NON-NLS-1$
+                + ".a { max-width: 400px; border: solid; border-width: thin; padding: 3px; text-align: left; vertical-align: middle; word-wrap: break-word; } " //$NON-NLS-1$
                 + ".b { border: solid; border-width: thin; padding: 3px; text-align: center; vertical-align: middle; word-wrap: break-word; } " //$NON-NLS-1$
                 + ".c { border: solid; border-width: thin; padding: 3px; text-align: right; vertical-align: middle; word-wrap: break-word; } " //$NON-NLS-1$
                 + ".h { font-weight: bold; border: solid; border-width: thin; padding: 3px; text-align: left; vertical-align: middle; white-space: nowrap; font-family: monospace; }");
