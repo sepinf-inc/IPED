@@ -30,6 +30,7 @@ import iped.data.IItemReader;
 import iped.parsers.util.BeanMetadataExtraction;
 import iped.parsers.util.ChildPornHashLookup;
 import iped.parsers.util.Messages;
+import iped.parsers.util.P2PUtil;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
 import iped.utils.LocalizedFormat;
@@ -116,7 +117,7 @@ public class PartMetParser extends AbstractParser {
 
         int hashDBHits = 0;
         List<String> hashSets = ChildPornHashLookup.lookupHash(KnownMetParser.EDONKEY, e.getHash());
-        IItemReader item = KnownMetParser.searchItemInCase(searcher, KnownMetParser.EDONKEY, e.getHash());
+        IItemReader item = P2PUtil.searchItemInCase(searcher, KnownMetParser.EDONKEY, e.getHash());
         if (item != null)
             hashSets = ChildPornHashLookup.lookupHashAndMerge(item.getHash(), hashSets);
         if (hashSets != null && !hashSets.isEmpty())
@@ -131,7 +132,7 @@ public class PartMetParser extends AbstractParser {
         xhtml.endElement("td");
         xhtml.startElement("td", "class", "b");
         if (item != null)
-            KnownMetParser.printNameWithLink(xhtml, item, e.getName());
+            P2PUtil.printNameWithLink(xhtml, item, e.getName());
         else
             xhtml.characters(e.getName());
         xhtml.endElement("td");
