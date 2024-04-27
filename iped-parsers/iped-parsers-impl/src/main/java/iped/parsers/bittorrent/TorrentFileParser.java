@@ -1,5 +1,6 @@
 package iped.parsers.bittorrent;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -7,6 +8,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -25,10 +27,14 @@ import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.data.IItemReader;
 import iped.parsers.util.IgnoreCorruptedCarved;
 import iped.parsers.util.Messages;
 import iped.parsers.util.MetadataUtil;
+import iped.parsers.util.P2PUtil;
+import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
+import iped.search.IItemSearcher;
 import iped.utils.DateUtil;
 import iped.utils.LocalizedFormat;
 
@@ -44,12 +50,21 @@ public class TorrentFileParser extends AbstractParser {
     private static final long serialVersionUID = 3238363426940179831L;
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.application("x-bittorrent")); //$NON-NLS-1$
     public static final String TORRENT_FILE_MIME_TYPE = "application/x-bittorrent"; //$NON-NLS-1$
-    private static final String[] header = { Messages.getString("TorrentFileDatParser.FullPath"), //$NON-NLS-1$
+    private static final String[] header = { Messages.getString("TorrentFileDatParser.File"),
+            Messages.getString("TorrentFileDatParser.FullPath"), //$NON-NLS-1$
             Messages.getString("TorrentFileDatParser.FileSize"), //$NON-NLS-1$
             Messages.getString("TorrentFileDatParser.MD5"), //$NON-NLS-1$
             Messages.getString("TorrentFileDatParser.SHA1"), //$NON-NLS-1$
-            Messages.getString("TorrentFileDatParser.ED2K") //$NON-NLS-1$
+            Messages.getString("TorrentFileDatParser.ED2K"), //$NON-NLS-1$
+            Messages.getString("TorrentFileDatParser.FileFoundInCase")
     };
+    private static final String strYes = Messages.getString("TorrentFileDatParser.Yes");
+    
+    private static final int maxPieceLength = 1 << 26;
+    private static final long minFileLength = 1 << 16;
+    private static final long maxFileLength = 1L << 34;
+    private static final int maxHitsCheck = 16;
+    private static final int minPiecesMultiFile = 8;
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -71,17 +86,18 @@ public class TorrentFileParser extends AbstractParser {
             throw new TikaException("Error parsing torrent file", e); //$NON-NLS-1$
         }
 
-        List<FileInTorrent> files = extractFileList(dict, metadata);
+        IItemSearcher searcher = context.get(IItemSearcher.class);
+        List<FileInTorrent> files = extractFileList(dict, metadata, searcher);
 
-        char[] colClass = { 'a', 'c', 'h', 'h', 'h' };
-        boolean[] include = { true, true, false, false, false };
+        char[] colClass = { 'c', 'a', 'c', 'h', 'h', 'h', 'b' };
+        boolean[] include = { true, true, true, false, false, false, false };
         for (FileInTorrent file : files) {
             if (!file.md5.isEmpty())
-                include[2] = true;
-            if (!file.sha1.isEmpty())
                 include[3] = true;
-            if (!file.ed2k.isEmpty())
+            if (!file.sha1.isEmpty())
                 include[4] = true;
+            if (!file.ed2k.isEmpty())
+                include[5] = true;
         }
 
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
@@ -126,7 +142,6 @@ public class TorrentFileParser extends AbstractParser {
             try {
                 metadata.set(TORRENT_CREATION_DATE, DateUtil.dateToString(df.parse(info.creationDate)));
             } catch (ParseException e1) {
-                // TODO Auto-generated catch block
                 e1.printStackTrace();
             }
         }
@@ -134,6 +149,20 @@ public class TorrentFileParser extends AbstractParser {
         // Set infoHash metadata
         if (info.infoHash != null && !info.infoHash.isBlank()) {
             metadata.set(TORRENT_INFO_HASH, info.infoHash);
+        }
+
+        // Try to link the first item
+        if (searcher != null && !files.isEmpty() && info.pieces != null && info.pieceLength != null) {
+            FileInTorrent file = files.get(0);
+            if (file.item == null) {
+                IItemReader item = searchAndMatchFileInCase(searcher, file.length, info.pieceLength, info.pieces,
+                        files.size() > 1);
+                if (item != null) {
+                    file.item = item;
+                    include[6] = true;
+                    metadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + file.item.getHash());
+                }
+            }
         }
 
         // Files Table
@@ -148,31 +177,35 @@ public class TorrentFileParser extends AbstractParser {
         }
         xhtml.endElement("tr"); //$NON-NLS-1$
 
-        boolean a = true;
-        for (FileInTorrent file : files) {
-            xhtml.startElement("tr", "class", a ? "ra" : "rb"); //$NON-NLS-1$ $NON-NLS-2$ $NON-NLS-3$ $NON-NLS-4$
-            String[] rowElements = new String[] { file.fullPath, Long.toString(file.length), file.md5, file.sha1,
-                    file.ed2k };
-            for (int i = 0; i < rowElements.length; i++) {
-                if (include[i]) {
-                    xhtml.startElement("td", "class", String.valueOf(colClass[i])); //$NON-NLS-1$ $NON-NLS-2$
-                    if (rowElements[i].equals("")) { //$NON-NLS-1$
-                        rowElements[i] = " "; //$NON-NLS-1$
-                    } else if (i == 1) {
+        for (int i = 0; i < files.size(); i++) {
+            FileInTorrent file = files.get(i);
+            xhtml.startElement("tr", "class", i % 2 == 0 ? "ra" : "rb"); 
+            String[] rowElements = new String[] { String.valueOf(i + 1), file.fullPath, Long.toString(file.length),
+                    file.md5, file.sha1, file.ed2k, file.item != null ? strYes : "" };
+            for (int j = 0; j < rowElements.length; j++) {
+                if (include[j]) {
+                    String str = rowElements[j];
+                    xhtml.startElement("td", "class", String.valueOf(colClass[j]));
+                    if (str.length() == 0) {
+                        str = " ";
+                    } else if (j == 2) {
                         // File length column
                         try {
-                            rowElements[i] = LocalizedFormat.format(Long.parseLong(rowElements[i]));
+                            str = LocalizedFormat.format(Long.parseLong(str));
                         } catch (Exception e) {
                         }
                     }
-                    xhtml.characters(rowElements[i]);
-                    xhtml.endElement("td"); //$NON-NLS-1$
+                    if (j == 1 && file.item != null) {
+                        P2PUtil.printNameWithLink(xhtml, file.item, str);
+                    } else {
+                        xhtml.characters(str);
+                    }
+                    xhtml.endElement("td");
                 }
             }
-            xhtml.endElement("tr"); //$NON-NLS-1$
-            a = !a;
+            xhtml.endElement("tr");
         }
-        xhtml.endElement("table"); //$NON-NLS-1$
+        xhtml.endElement("table");
 
         // Pieces Hashes Table
         if (info.pieces != null) {
@@ -186,9 +219,8 @@ public class TorrentFileParser extends AbstractParser {
             xhtml.endElement("td");
             xhtml.endElement("tr");
 
-            a = true;
             for (int i = 0; i < info.pieces.length; i++) {
-                xhtml.startElement("tr", "class", a ? "ra" : "rb");
+                xhtml.startElement("tr", "class", i % 2 == 0 ? "ra" : "rb");
                 xhtml.startElement("td", "class", "c");
                 xhtml.characters(LocalizedFormat.format(i + 1));
                 xhtml.endElement("td");
@@ -196,7 +228,6 @@ public class TorrentFileParser extends AbstractParser {
                 xhtml.characters(info.pieces[i]);
                 xhtml.endElement("td");
                 xhtml.endElement("tr");
-                a = !a;
             }
             xhtml.endElement("table");
         }
@@ -223,7 +254,7 @@ public class TorrentFileParser extends AbstractParser {
         }
     }
 
-    private static List<FileInTorrent> extractFileList(BencodedDict dict, Metadata metadata) throws TikaException {
+    private static List<FileInTorrent> extractFileList(BencodedDict dict, Metadata metadata, IItemSearcher searcher) throws TikaException {
         BencodedDict info = dict.getDict("info"); //$NON-NLS-1$
         List<FileInTorrent> files;
 
@@ -252,6 +283,9 @@ public class TorrentFileParser extends AbstractParser {
                     file.md5 = fileDict.getString("md5sum"); //$NON-NLS-1$
                     if (file.md5.length() > 0) {
                         metadata.add(ExtraProperties.LINKED_ITEMS, "md5:" + file.md5);
+                        if (file.item == null) {
+                            file.item = P2PUtil.searchItemInCase(searcher, "md5", file.md5);
+                        }
                     }
                     file.sha1 = fileDict.getString("sha1").trim(); //$NON-NLS-1$
                     if (file.sha1.length() > 0) {
@@ -259,8 +293,17 @@ public class TorrentFileParser extends AbstractParser {
                             file.sha1 = fileDict.getHexEncodedBytes("sha1"); //$NON-NLS-1$
                         }
                         metadata.add(ExtraProperties.LINKED_ITEMS, "sha-1:" + file.sha1);
+                        if (file.item == null) {
+                            file.item = P2PUtil.searchItemInCase(searcher, "sha-1", file.sha1);
+                        }
                     }
-                    file.ed2k = fileDict.getHexEncodedBytes("ed2k"); //$NON-NLS-1$
+                    file.ed2k = fileDict.getHexEncodedBytes("ed2k");
+                    if (file.ed2k.length() > 0) {
+                        metadata.add(ExtraProperties.LINKED_ITEMS, "edonkey" + file.ed2k);
+                        if (file.item == null) {
+                            file.item = P2PUtil.searchItemInCase(searcher, "edonkey", file.ed2k);
+                        }
+                    }
                     files.add(file);
                 }
 
@@ -299,6 +342,7 @@ public class TorrentFileParser extends AbstractParser {
         String md5;
         String sha1;
         String ed2k;
+        IItemReader item;
     }
 
     private static TorrentInfo extractTorrentInfo(BencodedDict dict) throws TikaException {
@@ -345,5 +389,67 @@ public class TorrentFileParser extends AbstractParser {
         Long pieceLength;
         Long numPieces;
         String[] pieces;
+    }
+
+    private static IItemReader searchAndMatchFileInCase(IItemSearcher searcher, long fileLength, long pieceLength,
+            String[] pieces, boolean isMultiFile) {
+        if (pieceLength <= 0 || pieceLength > maxPieceLength || fileLength < minFileLength
+                || fileLength > maxFileLength) {
+            return null;
+        }
+        int totPieces = (int) ((fileLength + pieceLength - 1) / pieceLength);
+        if (totPieces > pieces.length || (isMultiFile && totPieces < minPiecesMultiFile)) {
+            return null;
+        }
+        List<IItemReader> items = searcher.search(BasicProps.LENGTH + ":" + fileLength);
+        if (items == null) {
+            return null;
+        }
+        byte[] bytes = new byte[(int) pieceLength];
+        int check = maxHitsCheck;
+        for (int step = 0; step <= 1; step++) {
+            NEXT: for (int i = 0; i < items.size(); i++) {
+                IItemReader item = items.get(i);
+                if (item.getHash() == null) {
+                    continue;
+                }
+                if (step == 0 ^ (item.isCarved() || item.isDeleted())) {
+                    // In the first step check only "active" items
+                    // Carved and deleted items are checked later
+                    continue;
+                }
+
+                // Check if the all pieces hashes match
+                try (BufferedInputStream is = item.getBufferedInputStream()) {
+                    for (int n = 0; n < totPieces; n++) {
+                        int read = is.readNBytes(bytes, 0, bytes.length);
+                        if (read < 0 || (read < bytes.length && n < totPieces - 1)) {
+                            continue NEXT;
+                        }
+                        if (read == bytes.length || !isMultiFile) {
+                            byte[] in = bytes;
+                            if (read < bytes.length) {
+                                in = Arrays.copyOf(bytes, read);
+                            }
+                            String calc = DigestUtils.sha1Hex(in);
+                            if (calc == null || !calc.equalsIgnoreCase(pieces[n])) {
+                                continue NEXT;
+                            }
+                        }
+                    }
+
+                    // Found an item that matches all piece hashes
+                    return item;
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                if (--check == 0) {
+                    break;
+                }
+            }
+        }
+        return null;
     }
 }
