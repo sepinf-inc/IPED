@@ -5,7 +5,6 @@ import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
 
@@ -24,6 +23,7 @@ import org.xml.sax.SAXException;
 import iped.data.IItemReader;
 import iped.parsers.util.IgnoreCorruptedCarved;
 import iped.parsers.util.Messages;
+import iped.parsers.util.P2PUtil;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
@@ -40,7 +40,8 @@ public class BitTorrentResumeDatParser extends AbstractParser {
     private static final Set<MediaType> SUPPORTED_TYPES = Collections
             .singleton(MediaType.application("x-bittorrent-resume-dat")); //$NON-NLS-1$
     public static final String RESUME_DAT_MIME_TYPE = "application/x-bittorrent-resume-dat"; //$NON-NLS-1$
-    private static final String[] header = new String[] { Messages.getString("BitTorrentResumeDatParser.TorrentFile"), //$NON-NLS-1$
+    private static final String[] header = new String[] { "#",
+            Messages.getString("BitTorrentResumeDatParser.TorrentFile"), //$NON-NLS-1$
             Messages.getString("BitTorrentResumeDatParser.RootDir"), //$NON-NLS-1$
             Messages.getString("BitTorrentResumeDatParser.Path"), //$NON-NLS-1$
             Messages.getString("BitTorrentResumeDatParser.InfoHash"), //$NON-NLS-1$
@@ -54,7 +55,7 @@ public class BitTorrentResumeDatParser extends AbstractParser {
             Messages.getString("BitTorrentResumeDatParser.RunTime"), //$NON-NLS-1$
             Messages.getString("BitTorrentResumeDatParser.TorrentFoundInCase") //$NON-NLS-1$
     };
-    private static final char[] colAlign = new char[] { 'a', 'a', 'a', 'h', 'c', 'c', 'b', 'b', 'b', 'b', 'c', 'c', 'b' };
+    private static final char[] colAlign = new char[] { 'b', 'a', 'a', 'a', 'h', 'c', 'c', 'b', 'b', 'b', 'b', 'c', 'c', 'b' };
     private static final String strYes = Messages.getString("BitTorrentResumeDatParser.Yes");
 
     @Override
@@ -101,6 +102,7 @@ public class BitTorrentResumeDatParser extends AbstractParser {
             }
             xhtml.endElement("tr"); //$NON-NLS-1$
 
+            int numEntries = 0;
             IItemSearcher searcher = context.get(IItemSearcher.class);
             boolean a = true;
             for (String torrent : dict.keySet()) {
@@ -116,13 +118,15 @@ public class BitTorrentResumeDatParser extends AbstractParser {
                 if (infoBytes != null) {
                     infoHash = Hex.encodeHexString(infoBytes, false);
                 }
-                IItemReader item = searchTorrentInCase(searcher, infoHash);
+                IItemReader item = P2PUtil.searchItemInCase(searcher, TorrentFileParser.TORRENT_INFO_HASH, infoHash);
                 if (item != null) {
                     metadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + item.getHash());
                 }
                 
                 xhtml.startElement("tr", "class", a ? "ra" : "rb"); //$NON-NLS-1$ $NON-NLS-2$ $NON-NLS-3$ $NON-NLS-4$
-                String[] rowElements = new String[] { torrent, 
+                String[] rowElements = new String[] {
+                        String.valueOf(++numEntries),
+                        torrent, 
                         torrentDict.getString("rootdir"), //$NON-NLS-1$
                         torrentDict.getString("path"), //$NON-NLS-1$
                         infoHash,
@@ -154,21 +158,11 @@ public class BitTorrentResumeDatParser extends AbstractParser {
                 xhtml.endElement("tr"); //$NON-NLS-1$
                 a = !a;
             }
+            metadata.set(ExtraProperties.P2P_REGISTRY_COUNT, String.valueOf(numEntries));
 
             xhtml.endElement("table"); //$NON-NLS-1$
         } finally {
             xhtml.endDocument();
         }
-    }
-
-    private static IItemReader searchTorrentInCase(IItemSearcher searcher, String infoHash) {
-        if (searcher == null || infoHash == null || infoHash.isBlank()) {
-            return null;
-        }
-        List<IItemReader> items = searcher.search(TorrentFileParser.TORRENT_INFO_HASH + ":" + infoHash);
-        if (items == null || items.isEmpty()) {
-            return null;
-        }
-        return items.get(0);
     }
 }
