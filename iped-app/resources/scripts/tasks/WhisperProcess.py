@@ -45,7 +45,7 @@ def main():
             print('FAILED to load model on GPU, fallbacking to CPU!', file=sys.stderr)
             deviceId = 'cpu'
             if compute_type == 'float16': # not supported on CPU
-                compute_type = 'float32'
+                compute_type = 'int8'
             model = whisperx.load_model(modelName, device=deviceId, device_index=deviceNum, threads=threads, compute_type=compute_type, language=language)
         else:
             raise e

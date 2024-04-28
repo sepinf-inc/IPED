@@ -111,8 +111,8 @@ minWordScore = 0.5
 whisperModel = medium
 
 # Compute type precision. This affects accuracy, speed and memory usage.
-# Possible values: float32, float16 (GPU only), int8
-precision = float32
+# Possible values: float32 (better), float16 (recommended for GPU), int8 (faster)
+precision = int8
 
 # Batch size (number of parallel transcriptions). If you have a GPU with enough memory,
 # increasing this value to e.g. 16 can speed up transcribing long audios up to 10x.

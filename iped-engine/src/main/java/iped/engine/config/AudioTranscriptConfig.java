@@ -51,7 +51,7 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
     private String remoteService;
     private String googleModel;
     private boolean skipKnownFiles = true;
-    private String precision = "float32";
+    private String precision = "int8";
     private int batchSize = 1;
 
     public String getPrecision() {
