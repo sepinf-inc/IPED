@@ -326,7 +326,7 @@ public class TorrentFileParser extends AbstractParser {
                     }
                     file.ed2k = fileDict.getHexEncodedBytes("ed2k");
                     if (file.ed2k.length() > 0) {
-                        metadata.add(ExtraProperties.LINKED_ITEMS, "edonkey" + file.ed2k);
+                        metadata.add(ExtraProperties.LINKED_ITEMS, "edonkey:" + file.ed2k);
                         if (file.item == null) {
                             file.item = P2PUtil.searchItemInCase(searcher, "edonkey", file.ed2k);
                         }
