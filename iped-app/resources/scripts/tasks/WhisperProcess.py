@@ -19,7 +19,7 @@ def main():
     if language == 'detect':
         language = None
 
-    from faster_whisper import WhisperModel
+    import whisperx
     
     print(library_loaded, file=stdout, flush=True)
     
@@ -37,7 +37,7 @@ def main():
         deviceNum = 0
     
     try:
-        model = WhisperModel(modelName, device=deviceId, device_index=deviceNum, cpu_threads=threads, compute_type=compute_type)
+        model = whisperx.load_model(modelName, device=deviceId, device_index=deviceNum, threads=threads, compute_type=compute_type)
 
     except Exception as e:
         if deviceId != 'cpu':
@@ -62,14 +62,14 @@ def main():
             continue
 
         transcription = ''
-        probs = []
+        logprobs = []
         try:
-            segments, info = model.transcribe(audio=line, language=language, beam_size=5, word_timestamps=True)
-            for segment in segments:
-                transcription += segment.text
-                words = segment.words
-                if words is not None:
-                    probs += [word.probability for word in words]
+            audio = whisperx.load_audio(line)
+            result = model.transcribe(audio, batch_size=8, language=language)
+            for segment in result['segments']:
+                transcription += segment['text']
+                if 'avg_logprob' in segment:
+                    logprobs.append(segment['avg_logprob'])
 
         except Exception as e:
             msg = repr(e).replace('\n', ' ').replace('\r', ' ')
@@ -78,8 +78,10 @@ def main():
         
         text = transcription.replace('\n', ' ').replace('\r', ' ')
         
-        probs = probs if len(probs) != 0 else [0]
-        finalScore = numpy.mean(probs)
+        if len(logprobs) == 0:
+            logprobs = [0]
+
+        finalScore = numpy.mean(numpy.exp(logprobs))
         
         print(finished, file=stdout, flush=True)
         print(str(finalScore), file=stdout, flush=True)
