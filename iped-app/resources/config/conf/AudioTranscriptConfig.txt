@@ -103,7 +103,7 @@ minWordScore = 0.5
 # Local WhisperTranscriptTask options
 #########################################
 
-# Possible values: tiny, base, small, medium, large-v3
+# Possible values: tiny, base, small, medium, large-v3, dwhoelz/whisper-large-pt-cv11-ct2
 # large-v3 is much better than medium, but 2x slower and uses 2x more memory.
 # If you know the language you want to transcribe, please set the 'language' option above.
 # 'language = auto' uses the 'locale' set on LocalConfig.txt
