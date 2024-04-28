@@ -42,9 +42,10 @@ def main():
     except Exception as e:
         if deviceId != 'cpu':
             # loading on GPU failed (OOM?), try on CPU
+            print('FAILED to load model on GPU, fallbacking to CPU!', file=sys.stderr)
             deviceId = 'cpu'
             compute_type = 'int8'
-            model = WhisperModel(model_size_or_path=modelName, device=deviceId, cpu_threads=threads, compute_type=compute_type)
+            model = whisperx.load_model(modelName, device=deviceId, device_index=deviceNum, threads=threads, compute_type=compute_type)
         else:
             raise e
     
