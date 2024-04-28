@@ -37,7 +37,7 @@ def main():
         deviceNum = 0
     
     try:
-        model = whisperx.load_model(modelName, device=deviceId, device_index=deviceNum, threads=threads, compute_type=compute_type)
+        model = whisperx.load_model(modelName, device=deviceId, device_index=deviceNum, threads=threads, compute_type=compute_type, language=language)
 
     except Exception as e:
         if deviceId != 'cpu':
@@ -45,7 +45,7 @@ def main():
             print('FAILED to load model on GPU, fallbacking to CPU!', file=sys.stderr)
             deviceId = 'cpu'
             compute_type = 'int8'
-            model = whisperx.load_model(modelName, device=deviceId, device_index=deviceNum, threads=threads, compute_type=compute_type)
+            model = whisperx.load_model(modelName, device=deviceId, device_index=deviceNum, threads=threads, compute_type=compute_type, language=language)
         else:
             raise e
     

@@ -40,7 +40,7 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
 
     private static LinkedBlockingDeque<Server> deque = new LinkedBlockingDeque<>();
 
-    private static volatile Level logLevel = Level.forName("MSG", 250);
+    protected static volatile Level logLevel = Level.forName("MSG", 250);
 
     static class Server {
         Process process;

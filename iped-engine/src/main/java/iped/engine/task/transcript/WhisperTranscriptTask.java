@@ -3,7 +3,10 @@ package iped.engine.task.transcript;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.List;
 
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.logging.log4j.LogManager;
@@ -94,6 +97,43 @@ public class WhisperTranscriptTask extends Wav2Vec2TranscriptTask {
     @Override
     protected TextAndScore transcribeAudio(File tmpFile) throws Exception {
         return transcribeWavPart(tmpFile);
+    }
+
+    @Override
+    protected void logInputStream(InputStream is) {
+        List<String> ignoreMsgs = Arrays.asList(
+                "With dispatcher enabled, this function is no-op. You can remove the function call.",
+                "torchvision is not available - cannot save figures",
+                "Lightning automatically upgraded your loaded checkpoint from",
+                "Model was trained with pyannote.audio 0.0.1, yours is",
+                "Model was trained with torch 1.10.0+cu102, yours is");
+        Thread t = new Thread() {
+            public void run() {
+                byte[] buf = new byte[1024];
+                int read = 0;
+                try {
+                    while ((read = is.read(buf)) != -1) {
+                        String msg = new String(buf, 0, read).trim();
+                        boolean ignore = false;
+                        for (String i : ignoreMsgs) {
+                            if (msg.contains(i)) {
+                                ignore = true;
+                                break;
+                            }
+                        }
+                        if (ignore) {
+                            logger.warn(msg);
+                        } else {
+                            logger.log(logLevel, msg);
+                        }
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        t.setDaemon(true);
+        t.start();
     }
 
 }
