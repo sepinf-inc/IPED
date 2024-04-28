@@ -3393,6 +3393,7 @@ og:url = java.lang.String
 ontent-Type" = java.lang.String
 p2pHistoryEntries = java.lang.Integer
 childPornHashHits = java.lang.Integer
+p2p:torrentFilesFoundInCase = java.lang.Integer
 containerTrackId = java.lang.String
 parentTrackId = java.lang.String
 trackId = java.lang.String

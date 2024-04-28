@@ -53,9 +53,10 @@ public class BitTorrentResumeDatParser extends AbstractParser {
             Messages.getString("BitTorrentResumeDatParser.LastSeenCompleteDate"), //$NON-NLS-1$
             Messages.getString("BitTorrentResumeDatParser.SeedTime"), //$NON-NLS-1$
             Messages.getString("BitTorrentResumeDatParser.RunTime"), //$NON-NLS-1$
-            Messages.getString("BitTorrentResumeDatParser.TorrentFoundInCase") //$NON-NLS-1$
+            Messages.getString("BitTorrentResumeDatParser.TorrentFoundInCase"), //$NON-NLS-1$
+            Messages.getString("BitTorrentResumeDatParser.FilesFoundInCase") //$NON-NLS-1$
     };
-    private static final char[] colAlign = new char[] { 'b', 'a', 'a', 'a', 'h', 'c', 'c', 'b', 'b', 'b', 'b', 'c', 'c', 'b' };
+    private static final char[] colAlign = new char[] { 'b', 'a', 'a', 'a', 'h', 'c', 'c', 'b', 'b', 'b', 'b', 'c', 'c', 'b', 'b' };
     private static final String strYes = Messages.getString("BitTorrentResumeDatParser.Yes");
 
     @Override
@@ -118,11 +119,22 @@ public class BitTorrentResumeDatParser extends AbstractParser {
                 if (infoBytes != null) {
                     infoHash = Hex.encodeHexString(infoBytes, false);
                 }
+                int filesFoundInCase = 0;
                 IItemReader item = P2PUtil.searchItemInCase(searcher, TorrentFileParser.TORRENT_INFO_HASH, infoHash);
                 if (item != null) {
                     metadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + item.getHash());
+                    String[] values = item.getMetadata().getValues(ExtraProperties.LINKED_ITEMS);
+                    if (values != null) {
+                        for (String v : values) {
+                            metadata.add(ExtraProperties.LINKED_ITEMS, v);
+                        }
+                    }
+                    String v = item.getMetadata().get(TorrentFileParser.TORRENT_FILES_FOUND_IN_CASE);
+                    if (v != null && !v.isBlank()) {
+                        filesFoundInCase = Integer.parseInt(v);
+                    }
                 }
-                
+
                 xhtml.startElement("tr", "class", a ? "ra" : "rb"); //$NON-NLS-1$ $NON-NLS-2$ $NON-NLS-3$ $NON-NLS-4$
                 String[] rowElements = new String[] {
                         String.valueOf(++numEntries),
@@ -138,7 +150,8 @@ public class BitTorrentResumeDatParser extends AbstractParser {
                         torrentDict.getDate("last seen complete"), //$NON-NLS-1$
                         Long.toString(torrentDict.getLong("seedtime")), //$NON-NLS-1$
                         Long.toString(torrentDict.getLong("runtime")), //$NON-NLS-1$
-                        item != null ? strYes: ""
+                        item != null ? strYes: "",
+                        filesFoundInCase > 0 ? String.valueOf(filesFoundInCase): ""
                 };
                 for (int i = 0; i < rowElements.length; i++) {
                     String c = rowElements[i];

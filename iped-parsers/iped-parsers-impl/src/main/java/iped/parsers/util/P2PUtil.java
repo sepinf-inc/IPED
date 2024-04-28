@@ -16,7 +16,7 @@ public class P2PUtil {
         if (searcher == null || hash == null || hash.isBlank()) {
             return null;
         }
-        List<IItemReader> items = searcher.search(hashAlgo + ":" + hash);
+        List<IItemReader> items = searcher.search(searcher.escapeQuery(hashAlgo) + ":" + hash);
         if (items == null || items.isEmpty()) {
             return null;
         }

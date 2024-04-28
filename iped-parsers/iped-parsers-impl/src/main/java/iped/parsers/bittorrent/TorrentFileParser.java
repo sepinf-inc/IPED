@@ -46,8 +46,11 @@ import iped.utils.LocalizedFormat;
  */
 public class TorrentFileParser extends AbstractParser {
 
-    private static final String TORRENT_CREATION_DATE = "torrentCreationDate";
-    public static final String TORRENT_INFO_HASH = "torrentInfoHash";
+    private static final String TORRENT_CREATION_DATE = ExtraProperties.P2P_META_PREFIX + "torrentCreationDate";
+    public static final String TORRENT_INFO_HASH = ExtraProperties.P2P_META_PREFIX + "torrentInfoHash";
+    public static final String TORRENT_FILES_FOUND_IN_CASE = ExtraProperties.P2P_META_PREFIX
+            + "torrentFilesFoundInCase";
+    
     private static final long serialVersionUID = 3238363426940179831L;
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.application("x-bittorrent")); //$NON-NLS-1$
     public static final String TORRENT_FILE_MIME_TYPE = "application/x-bittorrent"; //$NON-NLS-1$
@@ -185,6 +188,11 @@ public class TorrentFileParser extends AbstractParser {
         // Set infoHash metadata
         if (info.infoHash != null && !info.infoHash.isBlank()) {
             metadata.set(TORRENT_INFO_HASH, info.infoHash);
+        }
+
+        // Set the number of files found in case metadata
+        if (foundInCase > 0) {
+            metadata.set(TORRENT_FILES_FOUND_IN_CASE, String.valueOf(foundInCase));
         }
 
         // Files Table
