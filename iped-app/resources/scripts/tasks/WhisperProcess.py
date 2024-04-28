@@ -79,9 +79,9 @@ def main():
         text = transcription.replace('\n', ' ').replace('\r', ' ')
         
         if len(logprobs) == 0:
-            logprobs = [0]
-
-        finalScore = numpy.mean(numpy.exp(logprobs))
+            finalScore = 0
+        else:
+            finalScore = numpy.mean(numpy.exp(logprobs))
         
         print(finished, file=stdout, flush=True)
         print(str(finalScore), file=stdout, flush=True)
