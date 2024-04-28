@@ -33,6 +33,8 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
     private static final String GOOGLE_MODEL = "googleModel";
     private static final String LANG_AUTO_VAL = "auto";
     private static final String SKIP_KNOWN_FILES = "skipKnownFiles";
+    private static final String PRECISION = "precision";
+    private static final String BATCH_SIZE = "batchSize";
 
     private List<String> languages = new ArrayList<>();
     private List<String> mimesToProcess = new ArrayList<>();
@@ -49,6 +51,16 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
     private String remoteService;
     private String googleModel;
     private boolean skipKnownFiles = true;
+    private String precision = "float32";
+    private int batchSize = 1;
+
+    public String getPrecision() {
+        return precision;
+    }
+
+    public int getBatchSize() {
+        return batchSize;
+    }
 
     public boolean getSkipKnownFiles() {
         return this.skipKnownFiles;
@@ -155,6 +167,7 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
         if (whisperModel != null) {
             whisperModel = whisperModel.strip();
         }
+
         remoteService = properties.getProperty(REMOTE_SERVICE);
         if (remoteService == null) {
             remoteService = properties.getProperty(WAV2VEC2_SERVICE);
@@ -178,6 +191,14 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
         value = properties.getProperty(TIMEOUT_PER_SEC_KEY);
         if (value != null) {
             timeoutPerSec = Integer.valueOf(value.trim());
+        }
+        value = properties.getProperty(PRECISION);
+        if (value != null) {
+            precision = value.trim();
+        }
+        value = properties.getProperty(BATCH_SIZE);
+        if (value != null) {
+            batchSize = Integer.parseInt(value.trim());
         }
     }
 

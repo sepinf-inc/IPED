@@ -49,7 +49,10 @@ public class WhisperTranscriptTask extends Wav2Vec2TranscriptTask {
             lang = lang.substring(0, lang.indexOf("-"));
         }
 
-        pb.command(python, script, model, Integer.toString(device), Integer.toString(threads), lang);
+        String precision = transcriptConfig.getPrecision();
+        String batchSize = Integer.toString(transcriptConfig.getBatchSize());
+
+        pb.command(python, script, model, Integer.toString(device), Integer.toString(threads), lang, precision, batchSize);
 
         Process process = pb.start();
 

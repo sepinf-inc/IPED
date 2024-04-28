@@ -110,6 +110,15 @@ minWordScore = 0.5
 # 'language = detect' uses auto detection, but it can cause mistakes
 whisperModel = medium
 
+# Compute type precision. This affects accuracy, speed and memory usage.
+# Possible values: float32, float16 (GPU only), int8
+precision = float32
+
+# Batch size (number of parallel transcriptions). If you have a GPU with enough memory,
+# increasing this value to e.g. 16 can speed up transcribing long audios up to 10x.
+# Test what is the better value for your GPU before hitting OOM.
+batchSize = 1
+
 #########################################
 # RemoteAudioTranscriptTask options
 #########################################

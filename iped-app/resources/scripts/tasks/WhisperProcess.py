@@ -15,6 +15,8 @@ def main():
     deviceNum = int(sys.argv[2])
     threads = int(sys.argv[3])
     language = sys.argv[4]
+    compute_type = sys.argv[5]
+    batch_size = int(sys.argv[6])
     
     if language == 'detect':
         language = None
@@ -28,10 +30,8 @@ def main():
 
     print(str(cudaCount), file=stdout, flush=True)
 
-    compute_type = 'int8'
     if cudaCount > 0:
         deviceId = 'cuda'
-        compute_type = 'float16'
     else:
         deviceId = 'cpu'
         deviceNum = 0
@@ -44,7 +44,8 @@ def main():
             # loading on GPU failed (OOM?), try on CPU
             print('FAILED to load model on GPU, fallbacking to CPU!', file=sys.stderr)
             deviceId = 'cpu'
-            compute_type = 'int8'
+            if compute_type == 'float16': # not supported on CPU
+                compute_type = 'float32'
             model = whisperx.load_model(modelName, device=deviceId, device_index=deviceNum, threads=threads, compute_type=compute_type, language=language)
         else:
             raise e
@@ -66,7 +67,7 @@ def main():
         logprobs = []
         try:
             audio = whisperx.load_audio(line)
-            result = model.transcribe(audio, batch_size=8, language=language)
+            result = model.transcribe(audio, batch_size=batch_size, language=language)
             for segment in result['segments']:
                 transcription += segment['text']
                 if 'avg_logprob' in segment:
