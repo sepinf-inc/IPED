@@ -57,7 +57,7 @@ public class WhisperTranscriptTask extends Wav2Vec2TranscriptTask {
         String line = reader.readLine();
 
         if (!LIBRARY_LOADED.equals(line)) {
-            throw new StartupException("'faster_whisper' python lib not loaded correctly. Have you installed it?");
+            throw new StartupException("'whisperx' python lib not loaded correctly. Have you installed it?");
         }
 
         int cudaCount = Integer.valueOf(reader.readLine());
