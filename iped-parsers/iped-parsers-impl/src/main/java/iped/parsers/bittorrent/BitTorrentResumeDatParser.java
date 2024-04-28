@@ -125,8 +125,17 @@ public class BitTorrentResumeDatParser extends AbstractParser {
                     metadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + item.getHash());
                     String[] values = item.getMetadata().getValues(ExtraProperties.LINKED_ITEMS);
                     if (values != null) {
+                        Long uploaded = torrentDict.getLong("uploaded");
+                        boolean isShared = uploaded != null && uploaded > 0;
                         for (String v : values) {
                             metadata.add(ExtraProperties.LINKED_ITEMS, v);
+                            if (isShared) {
+                                int p = v.lastIndexOf(':');
+                                if (p >= 0) {
+                                    v = v.substring(p + 1).trim();
+                                }
+                                metadata.add(ExtraProperties.SHARED_HASHES, v);
+                            }
                         }
                     }
                     String v = item.getMetadata().get(TorrentFileParser.TORRENT_FILES_FOUND_IN_CASE);

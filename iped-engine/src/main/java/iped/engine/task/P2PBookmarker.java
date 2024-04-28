@@ -18,6 +18,7 @@ import iped.engine.localization.Messages;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.task.index.IndexItem;
 import iped.parsers.ares.AresParser;
+import iped.parsers.bittorrent.BitTorrentResumeDatParser;
 import iped.parsers.emule.KnownMetParser;
 import iped.parsers.emule.PartMetParser;
 import iped.parsers.gdrive.GDriveCloudGraphParser;
@@ -79,10 +80,9 @@ public class P2PBookmarker {
                 new P2PProgram(HashTask.HASH.SHA1.toString(), "Ares", new Color(238, 173, 0)));
 
         List<String> shareazaHashes = Arrays.asList(HashTask.HASH.MD5.toString(), HashTask.HASH.SHA1.toString(), HashTask.HASH.EDONKEY.toString());
-
         p2pPrograms.put(ShareazaLibraryDatParser.LIBRARY_DAT_MIME_TYPE,
                 new P2PProgram(shareazaHashes, "Shareaza", new Color(170, 20, 20)));
-        
+       
         p2pPrograms.put(ShareazaDownloadParser.SHAREAZA_DOWNLOAD_META,
                 new P2PProgram(shareazaHashes, "Shareaza SD", new Color(170, 20, 20)));
 
@@ -100,6 +100,11 @@ public class P2PBookmarker {
                 new P2PProgram(IndexItem.HASH, "Telegram", new Color(120, 190, 250)));
 
         p2pPrograms.put(ThreemaParser.THREEMA_CHAT.toString(), new P2PProgram(IndexItem.HASH, "Threema")); // $NON-NLS-1$
+
+        List<String> torrentHashes = Arrays.asList(IndexItem.HASH, HashTask.HASH.MD5.toString(),
+                HashTask.HASH.SHA1.toString(), HashTask.HASH.EDONKEY.toString());
+        p2pPrograms.put(BitTorrentResumeDatParser.RESUME_DAT_MIME_TYPE,
+                new P2PProgram(torrentHashes, "Torrent", new Color(0, 160, 60)));
 
         P2PProgram progGDrive = new P2PProgram(HashTask.HASH.MD5.toString(), "GoogleDrive");
         p2pPrograms.put(GDriveCloudGraphParser.GDRIVE_CLOUD_GRAPH_REG.toString(), progGDrive);
