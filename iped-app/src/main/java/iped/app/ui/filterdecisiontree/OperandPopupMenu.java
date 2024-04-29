@@ -96,10 +96,9 @@ public class OperandPopupMenu extends JPopupMenu implements ActionListener {
             }
         }
         if (e.getSource() == removeMenuitem) {
-            ((DecisionNode) op).getParent().remove(op);            
+            ((DecisionNode) op).getParent().remove(op);
             if (op instanceof FilterNode) {
-                if (!((CombinedFilterTreeModel) filtersTree.getModel())
-                        .hasFilter((IFilter) ((FilterNode) op).getFilter())) {
+                if (!((CombinedFilterTreeModel) filtersTree.getModel()).hasFilter((IFilter) ((FilterNode) op).getFilter())) {
                     logicFilterer.removePreCachedFilter((IFilter) ((FilterNode) op).getFilter());
                 }
             }

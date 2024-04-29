@@ -38,7 +38,7 @@ public class OperandNode extends DecisionNode {
 
     public void addFilter(FilterNode filterNode) {
         Set<DecisionNode> nodes = model.getFiltersToNodeMap().get(filterNode.getFilter());
-        if(nodes == null) {
+        if (nodes == null) {
             nodes = new HashSet<DecisionNode>();
             model.getFiltersToNodeMap().put(filterNode.getFilter(), nodes);
         }

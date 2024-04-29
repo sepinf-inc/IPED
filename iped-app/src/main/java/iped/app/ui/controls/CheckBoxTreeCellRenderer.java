@@ -83,7 +83,7 @@ public class CheckBoxTreeCellRenderer extends DefaultTreeCellRenderer implements
         if (visiblePredicate == null || visiblePredicate.test(value)) {
             JCheckBox checkbox = new JCheckBox();
             checkbox.setSelected(checkedPredicate.test(value));
-            for(ActionListener al: listenerList.getListeners(ActionListener.class)) {
+            for (ActionListener al : listenerList.getListeners(ActionListener.class)) {
                 checkbox.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
