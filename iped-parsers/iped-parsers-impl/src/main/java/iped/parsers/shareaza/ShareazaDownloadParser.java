@@ -612,7 +612,7 @@ public class ShareazaDownloadParser extends AbstractParser {
             // TIGER HASH DATABASE
             int pTreeSize = read4Bytes(buffer);
             if (pTreeSize > 0) {
-                sbTigerDB.append("TIGER Hash Database");
+                sbTigerDB.append("TIGER Hash Database:"+ "\n");
                 sbTigerDB.append("     Tree Size:               " + pTreeSize + "\n");
 
                 int hashTigerDatabaseSize = hashTigerDataBaseSize(pTreeSize);
