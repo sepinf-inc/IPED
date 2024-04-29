@@ -74,8 +74,12 @@ public class AppAnalyzer {
 
         return new NonFinalPerFieldAnalyzerWrapper(defaultAnalyzer, analyzerPerField) {
             protected Analyzer getWrappedAnalyzer(String fieldName) {
-                if (Date.class.equals(IndexItem.getMetadataTypes().get(fieldName))) {
-                    return new KeywordAnalyzer();
+                if (fieldName != null) {
+                    // Use actual (non localized) field names to check if it is a date (See #2175).
+                    fieldName = LocalizedProperties.getNonLocalizedField(fieldName);
+                    if (Date.class.equals(IndexItem.getMetadataTypes().get(fieldName))) {
+                        return new KeywordAnalyzer();
+                    }
                 }
                 return super.getWrappedAnalyzer(fieldName);
             }

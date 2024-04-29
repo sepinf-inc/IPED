@@ -38,7 +38,7 @@ public class AppListener implements ActionListener, MouseListener {
 
     private String searchText = ""; //$NON-NLS-1$
     boolean clearAllFilters = false;
-    private boolean clearSearchBox = false;
+    private boolean updateSearchBox = false;
 
     public void updateFileListing() {
         updateFileListing(null);
@@ -118,16 +118,18 @@ public class AppListener implements ActionListener, MouseListener {
             updateFileList = true;
         }
 
-        if (evt.getSource() == App.get().queryComboBox && !clearSearchBox && evt.getActionCommand().equals("comboBoxChanged") && !BookmarksController.get().isUpdatingHistory()) {
+        if (evt.getSource() == App.get().queryComboBox && !updateSearchBox && evt.getActionCommand().equals("comboBoxChanged") && !BookmarksController.get().isUpdatingHistory()) {
             if (App.get().queryComboBox.getSelectedItem() != null) {
                 searchText = App.get().queryComboBox.getSelectedItem().toString();
+                updateSearchBox = true;
                 if (searchText.equals(BookmarksController.HISTORY_DIV) || searchText.equals(App.SEARCH_TOOL_TIP)) {
                     searchText = ""; //$NON-NLS-1$
-                    clearSearchBox = true;
                     App.get().queryComboBox.setSelectedItem(""); //$NON-NLS-1$
+                } else {
+                    searchText = searchText.trim();
+                    BookmarksController.get().addToRecentSearches(searchText);
+                    App.get().queryComboBox.setSelectedItem(searchText);
                 }
-                searchText = searchText.trim();
-                BookmarksController.get().addToRecentSearches(searchText);
             }
 
             if (!searchText.isEmpty())
@@ -187,7 +189,7 @@ public class AppListener implements ActionListener, MouseListener {
             App.get().getContextMenu().menuListener.exportFileTree(true, true);
         }
 
-        clearSearchBox = false;
+        updateSearchBox = false;
 
     }
 
@@ -212,7 +214,7 @@ public class AppListener implements ActionListener, MouseListener {
 
         Object termo = App.get().queryComboBox.getSelectedItem();
         if (termo != null && termo.equals(App.SEARCH_TOOL_TIP) && App.get().queryComboBox.isAncestorOf((Component) evt.getSource())) {
-            clearSearchBox = true;
+            updateSearchBox = true;
             App.get().queryComboBox.setSelectedItem(""); //$NON-NLS-1$
         }
 
