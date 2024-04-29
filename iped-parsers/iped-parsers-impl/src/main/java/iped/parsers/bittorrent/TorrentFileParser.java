@@ -71,6 +71,10 @@ public class TorrentFileParser extends AbstractParser {
     private static final long maxFileLength = 1L << 34;
     private static final int maxHitsCheck = 64;
     private static final int minPiecesMultiFile = 8;
+    
+    private static final int md5Len = 32;
+    private static final int sha1Len = 40;
+    private static final int edonkeyLen = 32;
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -289,18 +293,19 @@ public class TorrentFileParser extends AbstractParser {
         }
     }
 
-    private static List<FileInTorrent> extractFileList(BencodedDict dict, Metadata metadata, IItemSearcher searcher) throws TikaException {
-        BencodedDict info = dict.getDict("info"); //$NON-NLS-1$
+    private static List<FileInTorrent> extractFileList(BencodedDict dict, Metadata metadata, IItemSearcher searcher)
+            throws TikaException {
+        BencodedDict info = dict.getDict("info");
         List<FileInTorrent> files;
 
         if (info != null) {
-            if (info.containsKey("files")) { //$NON-NLS-1$
-                // Multi file torrent
-                List<Object> filesList = info.getList("files"); //$NON-NLS-1$
+            if (info.containsKey("files")) {
+                // Multi-file torrent
+                List<Object> filesList = info.getList("files");
                 if (filesList == null) {
-                    throw new TikaException("Error parsing torrent file"); //$NON-NLS-1$
+                    throw new TikaException("Error parsing torrent file");
                 }
-                String name = info.getString("name"); //$NON-NLS-1$
+                String name = info.getString("name");
                 files = new ArrayList<>(filesList.size());
                 for (Object fileDictObj : filesList) {
                     BencodedDict fileDict = (BencodedDict) fileDictObj;
@@ -309,66 +314,62 @@ public class TorrentFileParser extends AbstractParser {
                     if (name != null && 0 != name.length()) {
                         fullPathBuilder.append(name).append(File.separator);
                     }
-                    for (String elem : fileDict.getListOfStrings("path")) { //$NON-NLS-1$
+                    for (String elem : fileDict.getListOfStrings("path")) {
                         fullPathBuilder.append(elem).append(File.separator);
                     }
                     fullPathBuilder.deleteCharAt(fullPathBuilder.length() - 1);
                     file.fullPath = fullPathBuilder.toString();
-                    file.length = fileDict.getLong("length"); //$NON-NLS-1$
-                    file.md5 = fileDict.getString("md5sum"); //$NON-NLS-1$
-                    if (file.md5.length() > 0) {
-                        metadata.add(ExtraProperties.LINKED_ITEMS, "md5:" + file.md5);
-                        if (file.item == null) {
-                            file.item = P2PUtil.searchItemInCase(searcher, "md5", file.md5);
-                        }
-                    }
-                    file.sha1 = fileDict.getString("sha1").trim(); //$NON-NLS-1$
-                    if (file.sha1.length() > 0) {
-                        if (file.sha1.length() != 40) {
-                            file.sha1 = fileDict.getHexEncodedBytes("sha1"); //$NON-NLS-1$
-                        }
-                        metadata.add(ExtraProperties.LINKED_ITEMS, "sha-1:" + file.sha1);
-                        if (file.item == null) {
-                            file.item = P2PUtil.searchItemInCase(searcher, "sha-1", file.sha1);
-                        }
-                    }
-                    file.ed2k = fileDict.getHexEncodedBytes("ed2k");
-                    if (file.ed2k.length() > 0) {
-                        metadata.add(ExtraProperties.LINKED_ITEMS, "edonkey:" + file.ed2k);
-                        if (file.item == null) {
-                            file.item = P2PUtil.searchItemInCase(searcher, "edonkey", file.ed2k);
-                        }
-                    }
+                    file.length = fileDict.getLong("length");
+                    file.md5 = getStringOrBytes(fileDict, "md5sum", md5Len);
+                    file.sha1 = getStringOrBytes(fileDict, "sha1", sha1Len);
+                    file.ed2k = getStringOrBytes(fileDict, "ed2k", edonkeyLen);
                     files.add(file);
                 }
 
             } else {
                 // Single file torrent
                 FileInTorrent file = new FileInTorrent();
-                file.fullPath = info.getString("name"); //$NON-NLS-1$
-                file.length = info.getLong("length"); //$NON-NLS-1$
-                file.md5 = info.getString("md5sum"); //$NON-NLS-1$
-                if (file.md5.length() > 0) {
-                    metadata.add(ExtraProperties.LINKED_ITEMS, "md5:" + file.md5);
-                }
-                file.sha1 = info.getString("sha1").trim(); //$NON-NLS-1$
-                if (file.sha1.length() > 0) {
-                    if (file.sha1.length() != 40) {
-                        file.sha1 = info.getHexEncodedBytes("sha1"); //$NON-NLS-1$
-                    }
-                    metadata.add(ExtraProperties.LINKED_ITEMS, "sha-1:" + file.sha1);
-                }
-                file.ed2k = info.getHexEncodedBytes("ed2k"); //$NON-NLS-1$
+                file.fullPath = info.getString("name");
+                file.length = info.getLong("length");
+                file.md5 = getStringOrBytes(info, "md5sum", md5Len);
+                file.sha1 = getStringOrBytes(info, "sha1", sha1Len);
+                file.ed2k = getStringOrBytes(info, "ed2k", edonkeyLen);
                 files = Collections.singletonList(file);
             }
 
             if (files.isEmpty()) {
-                throw new TikaException("Error parsing torrent file"); //$NON-NLS-1$
+                throw new TikaException("Error parsing torrent file");
             }
+
+            // Try to link files to case items by hash
+            for (FileInTorrent file : files) {
+                linkTorrentToItem(searcher, metadata, file, "md5", file.md5, md5Len);
+                linkTorrentToItem(searcher, metadata, file, "sha-1", file.sha1, sha1Len);
+                linkTorrentToItem(searcher, metadata, file, "edonkey", file.ed2k, edonkeyLen);
+            }
+
         } else {
-            throw new TikaException("Error parsing torrent file"); //$NON-NLS-1$
+            throw new TikaException("Error parsing torrent file");
         }
         return files;
+    }
+
+    private static String getStringOrBytes(BencodedDict dict, String key, int len) {
+        String s = dict.getString(key).trim();
+        if (s.length() > 0 && s.length() != len) {
+            s = dict.getHexEncodedBytes(key);
+        }
+        return s;
+    }
+
+    private static void linkTorrentToItem(IItemSearcher searcher, Metadata metadata, FileInTorrent file, String key,
+            String val, int len) {
+        if (val.length() == len) {
+            metadata.add(ExtraProperties.LINKED_ITEMS, key + ":" + val);
+            if (file.item == null) {
+                file.item = P2PUtil.searchItemInCase(searcher, key, val);
+            }
+        }
     }
 
     private static class FileInTorrent {
