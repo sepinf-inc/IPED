@@ -419,12 +419,12 @@ public class ShareazaDownloadParser extends AbstractParser {
                 sbFile.append("File: " + "\n");
 
                 long nTotal = read8Bytes(buffer);
-                long nRemaning = read8Bytes(buffer);
+                long nRemaining = read8Bytes(buffer);
                 int nFragments = read4Bytes(buffer);
-                totalDownloaded = nTotal - nRemaning;
+                totalDownloaded = nTotal - nRemaining;
 
                 sbFile.append("    Total Size:          " + nTotal + "\n");
-                sbFile.append("    Total Remaning:      " + nRemaning + "\n");
+                sbFile.append("    Total Remaining:     " + nRemaining + "\n");
                 sbFile.append("    Total Downloaded:    " + totalDownloaded + "\n");
                 sbFile.append("    Number of Fragments: " + nFragments + "\n");
 
