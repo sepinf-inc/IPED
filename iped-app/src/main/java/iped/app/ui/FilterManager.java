@@ -43,13 +43,12 @@ import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
 import iped.utils.UTF8Properties;
 import iped.viewers.api.IFilter;
-import iped.viewers.api.IFilterManager;
 import iped.viewers.api.IFilterer;
 import iped.viewers.api.IQueryFilterer;
 import iped.viewers.api.IResultSetFilter;
 import iped.viewers.api.IResultSetFilterer;
 
-public class FilterManager implements ActionListener, ListSelectionListener, IFilterManager {
+public class FilterManager implements ActionListener, ListSelectionListener {
     HashMap<IFilter, RoaringBitmap[]> cachedFilterBitsets = new HashMap<IFilter, RoaringBitmap[]>();
     boolean useCachedBitmaps = false;
 
