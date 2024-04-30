@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.logging.log4j.LogManager;
@@ -15,6 +16,8 @@ import org.apache.logging.log4j.Logger;
 import iped.configuration.IConfigurationDirectory;
 import iped.engine.config.AudioTranscriptConfig;
 import iped.engine.config.Configuration;
+import iped.engine.config.ConfigurationManager;
+import iped.exception.IPEDException;
 
 public class WhisperTranscriptTask extends Wav2Vec2TranscriptTask {
 
@@ -23,6 +26,20 @@ public class WhisperTranscriptTask extends Wav2Vec2TranscriptTask {
     private static final String SCRIPT_PATH = "/scripts/tasks/WhisperProcess.py";
     private static final String LIBRARY_LOADED = "library_loaded";
     private static final String MODEL_LOADED = "model_loaded";
+
+    private static final AtomicBoolean ffmpegTested = new AtomicBoolean();
+
+    @Override
+    public void init(ConfigurationManager configurationManager) throws Exception {
+        if (!ffmpegTested.getAndSet(true)) {
+            try {
+                Runtime.getRuntime().exec("ffmpeg");
+            } catch (IOException e) {
+                throw new IPEDException("Error checking FFmpeg presence, is it on PATH?");
+            }
+        }
+        super.init(configurationManager);
+    }
 
     @Override
     protected Server startServer0(int device) throws IOException {
