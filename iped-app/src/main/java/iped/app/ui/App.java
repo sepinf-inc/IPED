@@ -1941,24 +1941,26 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         @Override
         public List<IFilter> getDefinedFilters() {
             ArrayList<IFilter> result = new ArrayList<IFilter>();
-            String filterText = (String) queryComboBox.getSelectedItem();
-            Query query;
-            try {
-                query = new QueryBuilder(appCase).getQuery(filterText);
-                result.add(new IQueryFilter() {
-                    String title = filterText;
+            String filterText = queryComboBox.getSelectedItem().toString();
+            if (!SEARCH_TOOL_TIP.equals(filterText)) {
+                Query query;
+                try {
+                    query = new QueryBuilder(appCase).getQuery(filterText);
+                    result.add(new IQueryFilter() {
+                        String title = filterText;
 
-                    @Override
-                    public Query getQuery() {
-                        return query;
-                    }
+                        @Override
+                        public Query getQuery() {
+                            return query;
+                        }
 
-                    public String toString() {
-                        return title;
-                    }
-                });
-            } catch (ParseException | QueryNodeException e) {
-                e.printStackTrace();
+                        public String toString() {
+                            return title;
+                        }
+                    });
+                } catch (ParseException | QueryNodeException e) {
+                    e.printStackTrace();
+                }
             }
             return result;
         }
@@ -1966,7 +1968,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         @Override
         public boolean hasFilters() {
             if (App.get().queryComboBox.getSelectedItem() != null) {
-                String searchText = App.get().queryComboBox.getSelectedItem().toString();
+                String searchText = queryComboBox.getSelectedItem().toString();
                 if (searchText.equals(BookmarksController.HISTORY_DIV) || searchText.equals(App.SEARCH_TOOL_TIP)) {
                     return false;
                 }
@@ -1985,9 +1987,13 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         @Override
         public Query getQuery() {
-            String searchText = App.get().queryComboBox.getSelectedItem().toString();
+            String searchText = queryComboBox.getSelectedItem().toString();
             try {
-                return new QueryBuilder(appCase).getQuery(searchText);
+                if (!SEARCH_TOOL_TIP.equals(searchText)) {
+                    return new QueryBuilder(appCase).getQuery(searchText);
+                } else {
+                    return null;
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
