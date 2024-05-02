@@ -36,6 +36,8 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
     private HashMap<String, Set<ValueCount>> selectedValues = new HashMap<String, Set<ValueCount>>();
     private HashMap<String, MetadataSearch> panels = new HashMap<String, MetadataSearch>();
     private HashMap<String, IFilter> definedFilters = new HashMap<String, IFilter>();
+
+    // store the filters defined by the FieldValuePopupMenu
     private HashMap<String, String> otherFilters = new HashMap<String, String>();
 
     static public TableHeaderFilterManager get() {
@@ -124,6 +126,8 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
         field = escape(field);
         selectedValues.put(field, selected);
         definedFilters.put(field, new ValueCountQueryFilter(field, selected));
+
+        // clear any other filter defined
         otherFilters.remove(field);
         App.get().getFilterManager().notifyFilterChange();
     }
@@ -133,7 +137,10 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
         field = escape(field);
         definedFilters.put(field, filter);
         selectedValues.remove(field);
+
+        // clear any other filter defined
         otherFilters.remove(field);
+        otherFilters.put(field, value);
         App.get().getFilterManager().notifyFilterChange();
     }
 
@@ -142,7 +149,10 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
         field = escape(field);
         definedFilters.put(field, filter);
         selectedValues.remove(field);
+
+        // clear any other filter defined
         otherFilters.remove(field);
+        otherFilters.put(field, value);
         App.get().getFilterManager().notifyFilterChange();
     }
 
@@ -280,5 +290,9 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
         selectedValues.clear();
         MetadataValueSearchList.clearSelectedValues();
         App.get().getFilterManager().notifyFilterChange();
+    }
+
+    public HashMap<String, String> getOtherFilters() {
+        return otherFilters;
     }
 }
