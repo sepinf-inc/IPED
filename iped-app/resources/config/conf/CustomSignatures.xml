@@ -441,11 +441,22 @@
         <_comment>BitTorrent Client Resume.dat file</_comment>
         <sub-class-of type="application/x-p2p"/>
         <magic priority="50">
-    		<match value="d10:.fileguard" type="string" offset="0"/>
+    		<match value="d10:.fileguard" type="string" offset="0">
+	    		<match value="e4:info" type="string" offset="16:1024"/>
+    		</match>
 		</magic>
         <glob pattern="resume.dat" />
-        <glob pattern="resume.dat.old" />
-        <glob pattern="resume.dat.new" />
+    </mime-type>
+
+    <mime-type type="application/x-bittorrent-settings-dat">
+        <_comment>BitTorrent Client Settings.dat file</_comment>
+        <sub-class-of type="application/x-p2p"/>
+        <magic priority="50">
+    		<match value="d10:.fileguard" type="string" offset="0">
+	    		<match value="e9:autostart" type="string" offset="16:1024"/>
+    		</match>
+		</magic>
+        <glob pattern="settings.dat" />
     </mime-type>
 
 	<mime-type type="application/x-bittorrent">
