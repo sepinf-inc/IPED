@@ -118,8 +118,8 @@ public class UfedXmlReader extends DataSourceReader {
     private static final String ESCAPED_UFED_ID = QueryBuilder.escape(UFED_ID);
     private static final String EMPTY_EXTRACTION_STR = "-";
 
-    private final Set<String> supportedApps = new HashSet<String>(
-            Arrays.asList(WhatsAppParser.WHATSAPP, TelegramParser.TELEGRAM, WhatsAppParser.WHATSAPP + " Business"));
+    private Set<String> supportedApps = new HashSet<String>(Arrays.asList(WhatsAppParser.WHATSAPP,
+            TelegramParser.TELEGRAM, WhatsAppParser.WHATSAPP + " Business", WhatsAppParser.WHATSAPP + " (Dual App)"));
 
     private static Random random = new Random();
 
@@ -257,6 +257,15 @@ public class UfedXmlReader extends DataSourceReader {
         ParsingTaskConfig parsingConfig = ConfigurationManager.get().findObject(ParsingTaskConfig.class);
 
         PhoneParsingConfig.setUfdrReaderName(UfedXmlReader.class.getSimpleName());
+
+        try {
+            supportedApps = new HashSet<String>(
+                    Arrays.asList(parsingConfig.getInternalParsersList().split("\\s*,\\s*")));
+        } catch (Exception e) {
+            LOGGER.warn(
+                    "Failed to parse internalParsersList parameter from ParsingConfig.txt. Using default internal value:"
+                            + supportedApps.toString());
+        }
 
         if (!TelegramParser.isEnabledForUfdr()) {
             supportedApps.remove(TelegramParser.TELEGRAM);

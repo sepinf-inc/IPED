@@ -26,6 +26,7 @@ public class ParsingTaskConfig extends AbstractTaskPropertiesConfig {
     private boolean sortPDFChars;
     private boolean processImagesInPDFs = false;
     private String phoneParsersToUse;
+    private String internalParsersList;
 
     @Override
     public String getTaskEnableProperty() {
@@ -108,6 +109,11 @@ public class ParsingTaskConfig extends AbstractTaskPropertiesConfig {
             phoneParsersToUse = value.trim();
         }
 
+        value = properties.getProperty("internalParsersList"); //$NON-NLS-1$
+        if (value != null) {
+            internalParsersList = value.trim();
+        }
+
     }
 
     public boolean isEnableExternalParsing() {
@@ -156,6 +162,14 @@ public class ParsingTaskConfig extends AbstractTaskPropertiesConfig {
 
     public int getMinRawStringSize() {
         return minRawStringSize;
+    }
+
+    public String getInternalParsersList() {
+        return internalParsersList;
+    }
+
+    public void setInternalParsersList(String internalParsersList) {
+        this.internalParsersList = internalParsersList;
     }
 
 }

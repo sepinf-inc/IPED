@@ -32,6 +32,9 @@ minRawStringSize = 4
 # Possible values: internal, external, all
 phoneParsersToUse = internal
 
+# List of UFED sources names that IPED has an internal specific parser 
+internalParsersList = WhatsApp, WhatsApp (Dual App), WhatsApp Business, Telegram
+
 # If true, takes into account the characters' position on the page when reconstructing the extracted text.
 # Needed to properly index rotated PDFs but doubles the processing time of PDFs.
 sortPDFChars = false
