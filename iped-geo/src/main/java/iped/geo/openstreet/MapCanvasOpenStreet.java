@@ -49,7 +49,7 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
     String lastGoogleApiKey = null;
     private boolean htmlloaded;
     private Semaphore sem;
-    private String themeScript;
+    private String themeScript = MapCanvasOpenStreet.LIGHT_THEME_SCRIPT;;
 
     public MapCanvasOpenStreet() {
         this.jfxPanel = new JFXPanel();

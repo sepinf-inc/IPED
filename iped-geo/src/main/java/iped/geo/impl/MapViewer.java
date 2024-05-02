@@ -137,32 +137,34 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
 
         if (!mapaPanel.browserCanvas.isLoaded()) {
             mapaPanel.updateMap();
-        }
+            updatingCheckbox = false;
+        } else {
+            /*
+             * Se a alteração foi feita no próprio mapa ou a operação é de ordenação, ela
+             * não precisa ser refeita.
+             */
+            if (!desabilitaTemp) {
+                mapaPanel.setMapOutDated(true);
 
-        /*
-         * Se a alteração foi feita no próprio mapa ou a operação é de ordenação, ela
-         * não precisa ser refeita.
-         */
-        if (!desabilitaTemp) {
-            mapaPanel.setMapOutDated(true);
+                /* somente chamado se o tab de mapas estiver sendo exibido */
+                if (dockable != null && dockable.isShowing()) {
+                    if (!updatingCheckbox) {
+                        mapaPanel.updateMap();
+                    } else {
+                        mapaPanel.update();
+                    }
 
-            /* somente chamado se o tab de mapas estiver sendo exibido */
-            if (dockable != null && dockable.isShowing()) {
-                if (!updatingCheckbox) {
-                    mapaPanel.updateMap();
-                } else {
-                    mapaPanel.update();
+                    updatingCheckbox = false;
                 }
-
+            } else {
+                // reabilita renderização automatica pela alteração no modelo
+                desabilitaTemp = false;
+            }
+            if (dockable == null || !dockable.isShowing()) {
                 updatingCheckbox = false;
             }
-        } else {
-            // reabilita renderização automatica pela alteração no modelo
-            desabilitaTemp = false;
         }
-        if (dockable == null || !dockable.isShowing()) {
-            updatingCheckbox = false;
-        }
+
     }
 
     public void applyCheckedItems() {

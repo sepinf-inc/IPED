@@ -21,6 +21,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.imageio.stream.FileImageInputStream;
+import javax.imageio.stream.ImageInputStream;
+import javax.imageio.stream.MemoryCacheImageInputStream;
+
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
@@ -42,6 +46,7 @@ import iped.engine.util.TextCache;
 import iped.engine.util.Util;
 import iped.io.ISeekableInputStreamFactory;
 import iped.io.SeekableInputStream;
+import iped.utils.ByteArrayImageInputStream;
 import iped.utils.EmptyInputStream;
 import iped.utils.HashValue;
 import iped.utils.IOUtil;
@@ -202,7 +207,9 @@ public class Item implements IItem {
 
     private ISeekableInputStreamFactory inputStreamFactory;
 
-    static final int BUF_LEN = 8 * 1024 * 1024;
+    private static final int BUF_LEN = 8 * 1024 * 1024;
+    
+    private static final int maxImageLength = 128 << 20;
 
     /**
      * Adiciona o item a uma categoria.
@@ -295,6 +302,36 @@ public class Item implements IItem {
             return new BufferedInputStream(new ByteArrayInputStream(data));
         }
         return new BufferedInputStream(getSeekableInputStream(), getBestBufferSize());
+    }
+
+    public ImageInputStream getImageInputStream() throws IOException {
+        if (data != null) {
+            return new ByteArrayImageInputStream(data);
+        }
+        if (tmpFile != null) {
+            return new FileImageInputStream(tmpFile);
+        }
+        File file = IOUtil.getFile(this);
+        if (file != null) {
+            return new FileImageInputStream(file);
+        }
+        if (length == null || length <= maxImageLength) {
+            BufferedInputStream bis = getBufferedInputStream();
+            return new MemoryCacheImageInputStream(bis) {
+                @Override
+                public void close() throws IOException {
+                    // This BufferedInputStream was created to be used by the returned
+                    // ImageInputStream, so it should be closed when the IIS is closed.
+                    IOUtil.closeQuietly(bis);
+                    super.close();
+                }
+            };
+        }
+
+        // If the file is too large, then create a temporary File, instead of using the
+        // InputStream to avoid excessive memory usage or even OOME (see issue #2033).
+        file = getTempFile();
+        return new FileImageInputStream(file);
     }
 
     /**

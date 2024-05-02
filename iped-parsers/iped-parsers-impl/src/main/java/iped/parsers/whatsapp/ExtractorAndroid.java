@@ -1,12 +1,12 @@
 package iped.parsers.whatsapp;
 
-import static iped.parsers.whatsapp.Message.MessageType.APP_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.AUDIO_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_CHAT;
 import static iped.parsers.whatsapp.Message.MessageType.CONTACT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_ADMIN;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_SENDER;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.DOC_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.ENCRYPTION_KEY_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.GIF_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CREATED;
@@ -24,7 +24,7 @@ import static iped.parsers.whatsapp.Message.MessageType.SUBJECT_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.TEXT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_MEDIA_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_MESSAGE;
-import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP;
+import static iped.parsers.whatsapp.Message.MessageType.USER_ADDED_TO_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP_FROM_LINK;
 import static iped.parsers.whatsapp.Message.MessageType.USER_LEFT_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.USER_REMOVED_FROM_GROUP;
@@ -426,7 +426,7 @@ public class ExtractorAndroid extends Extractor {
                 }
             }
     
-            Collections.sort(messages, (a, b) -> a.getTimeStamp().compareTo(b.getTimeStamp()));
+            Collections.sort(messages);
         }
 
         //Find quote messages
@@ -490,7 +490,7 @@ public class ExtractorAndroid extends Extractor {
         m.setLatitude(rs.getDouble("latitude")); //$NON-NLS-1$
         m.setLongitude(rs.getDouble("longitude")); //$NON-NLS-1$
         m.setMessageType(decodeMessageType(type, status, edit_version, caption, (int) media_size));
-        m.setMediaDuration(SQLite3DBParser.getIntIfExists(rs, "media_duration")); //$NON-NLS-1$
+        m.setDuration(SQLite3DBParser.getIntIfExists(rs, "media_duration")); //$NON-NLS-1$
         if (m.getMessageType() == CONTACT_MESSAGE) {
             m.setVcards(Arrays.asList(new String[] { m.getData() }));
         }
@@ -536,7 +536,7 @@ public class ExtractorAndroid extends Extractor {
                     } else if (mediaMime.startsWith("video")) {
                         m.setMessageType(VIDEO_MESSAGE);
                     } else if (mediaMime.startsWith("application")) {
-                        m.setMessageType(APP_MESSAGE);
+                        m.setMessageType(DOC_MESSAGE);
                     } else if (mediaMime.startsWith("audio")) {
                         m.setMessageType(AUDIO_MESSAGE);
                     } else if (m.getMediaCaption() != null) {
@@ -570,7 +570,7 @@ public class ExtractorAndroid extends Extractor {
                             break;
                         case 4:
                         case 12:
-                            result = USER_JOINED_GROUP;
+                            result = USER_ADDED_TO_GROUP;
                             break;
                         case 5:
                             result = USER_LEFT_GROUP;
@@ -638,7 +638,7 @@ public class ExtractorAndroid extends Extractor {
                 }
                 break;
             case 9:
-                result = APP_MESSAGE;
+                result = DOC_MESSAGE;
                 break;
             case 10:
                 if (caption != null) {

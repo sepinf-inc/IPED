@@ -34,6 +34,7 @@ public class Contact implements ContactInterface {
     private byte[] avatar = null;
     private List<PhotoData> photos = null;
     private boolean isGroup;
+    private boolean isChannel;
 
     public Contact(long id) {
         this.id = id;
@@ -48,7 +49,13 @@ public class Contact implements ContactInterface {
     }
 
     public String getTitle() {
-        return isGroup ? "Group - " + name : name;
+        if (isGroup) {
+            return "Group - " + name;
+        }
+        if (isChannel) {
+            return "Channel - " + name;
+        }
+        return name;
     }
 
     public String getName() {
@@ -148,6 +155,18 @@ public class Contact implements ContactInterface {
 
     public void setGroup(boolean isGroup) {
         this.isGroup = isGroup;
+    }
+
+    public boolean isChannel() {
+        return isChannel;
+    }
+
+    public void setChannel(boolean isChannel) {
+        this.isChannel = isChannel;
+    }
+
+    public boolean isGroupOrChannel() {
+        return isGroup || isChannel;
     }
 
     @Override

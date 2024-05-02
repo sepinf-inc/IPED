@@ -73,11 +73,9 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
     private static final File globalCols = getGlobalColsFile();
 
-    private static final List<Integer> defaultWidths = Arrays.asList(50, 100, 200, 50, 50, 100, 60, 150, 155, 155, 155, 155,
-            155, 155, 250, 2000);
+    private static final List<Integer> defaultWidths = Arrays.asList(50, 100, 200, 50, 50, 100, 60, 150, 155, 155, 155, 155, 155, 155, 250, 2000);
 
-    public static final String[] groupNames = { Messages.getString("ColumnsManager.Basic"),
-            Messages.getString("ColumnsManager.HashDB"), Messages.getString("ColumnsManager.Advanced"), //$NON-NLS-2$ //$NON-NLS-2$
+    public static final String[] groupNames = { Messages.getString("ColumnsManager.Basic"), Messages.getString("ColumnsManager.HashDB"), Messages.getString("ColumnsManager.Advanced"), //$NON-NLS-3$
             Messages.getString("ColumnsManager.Common"), // $NON-NLS-2$
             Messages.getString("ColumnsManager.Communication"), Messages.getString("ColumnsManager.Audio"), //$NON-NLS-2$
             Messages.getString("ColumnsManager.Image"), Messages.getString("ColumnsManager.Video"), //$NON-NLS-1$
@@ -97,18 +95,12 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         return new File(System.getProperty("user.home") + "/.iped/" + name); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
-    private static final String[] defaultFields = { ResultTableModel.SCORE_COL, ResultTableModel.BOOKMARK_COL,
-            IndexItem.NAME, IndexItem.EXT, IndexItem.TYPE, IndexItem.LENGTH, IndexItem.DELETED, IndexItem.CATEGORY, IndexItem.CREATED,
-            IndexItem.MODIFIED, IndexItem.ACCESSED, IndexItem.CHANGED, IndexItem.TIMESTAMP, IndexItem.TIME_EVENT,
-            IndexItem.HASH, IndexItem.PATH };
+    private static final String[] defaultFields = { ResultTableModel.SCORE_COL, ResultTableModel.BOOKMARK_COL, IndexItem.NAME, IndexItem.EXT, IndexItem.TYPE, IndexItem.LENGTH, IndexItem.DELETED, IndexItem.CATEGORY, IndexItem.CREATED,
+            IndexItem.MODIFIED, IndexItem.ACCESSED, IndexItem.CHANGED, IndexItem.TIMESTAMP, IndexItem.TIME_EVENT, IndexItem.HASH, IndexItem.PATH };
 
-    private static final String[] extraFields = { IndexItem.CARVED, IndexItem.CONTENTTYPE,
-            IndexItem.HASCHILD, IndexItem.ID, IndexItem.ISDIR, IndexItem.ISROOT, IndexItem.PARENTID,
-            IndexItem.PARENTIDs, IndexItem.SUBITEMID, IndexItem.ID_IN_SOURCE, IndexItem.SOURCE_PATH,
-            IndexItem.SOURCE_DECODER, IndexItem.SUBITEM, IndexItem.TIMEOUT, IndexItem.TREENODE, IndexItem.EVIDENCE_UUID,
-            StandardParser.PARSER_EXCEPTION, OCRParser.OCR_CHAR_COUNT, ExtraProperties.CSAM_HASH_HITS,
-            ExtraProperties.P2P_REGISTRY_COUNT, ExtraProperties.SHARED_HASHES, ExtraProperties.SHARED_ITEMS,
-            ExtraProperties.LINKED_ITEMS, ExtraProperties.TIKA_PARSER_USED, IndexItem.META_ADDRESS,
+    private static final String[] extraFields = { IndexItem.CARVED, IndexItem.CONTENTTYPE, IndexItem.HASCHILD, IndexItem.ID, IndexItem.ISDIR, IndexItem.ISROOT, IndexItem.PARENTID, IndexItem.PARENTIDs, IndexItem.SUBITEMID,
+            IndexItem.ID_IN_SOURCE, IndexItem.SOURCE_PATH, IndexItem.SOURCE_DECODER, IndexItem.SUBITEM, IndexItem.TIMEOUT, IndexItem.TREENODE, IndexItem.EVIDENCE_UUID, StandardParser.PARSER_EXCEPTION, OCRParser.OCR_CHAR_COUNT,
+            ExtraProperties.CSAM_HASH_HITS, ExtraProperties.P2P_REGISTRY_COUNT, ExtraProperties.SHARED_HASHES, ExtraProperties.SHARED_ITEMS, ExtraProperties.LINKED_ITEMS, ExtraProperties.TIKA_PARSER_USED, IndexItem.META_ADDRESS,
             IndexItem.MFT_SEQUENCE, IndexItem.FILESYSTEM_ID };
 
     private static ColumnsManager instance;
@@ -209,7 +201,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
         listPanel = new JPanel() {
             private static final long serialVersionUID = -4882872614411133375L;
-            
+
             @Override
             public void updateUI() {
                 super.updateUI();
@@ -295,8 +287,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
                     int removed = 0;
                     for (int i = 0; i < loadedFields.size(); i++) {
                         String field = loadedFields.get(i);
-                        if (!indexedSet.contains(field) && !field.equals(ResultTableModel.SCORE_COL)
-                                && !field.equals(ResultTableModel.BOOKMARK_COL)) {
+                        if (!indexedSet.contains(field) && !field.equals(ResultTableModel.SCORE_COL) && !field.equals(ResultTableModel.BOOKMARK_COL)) {
                             colState.visibleFields.remove(i - removed);
                             colState.initialWidths.remove(i - removed);
                             removed++;
@@ -323,8 +314,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         if (!autoManageCols)
             return;
 
-        if (App.get().ipedResult.getLength() == App.get().appCase.getTotalItems()
-                || App.get().ipedResult.getLength() == 0)
+        if (App.get().ipedResult.getLength() == App.get().appCase.getTotalItems() || App.get().ipedResult.getLength() == 0)
             return;
 
         final ProgressDialog progress = new ProgressDialog(App.get(), null, false, 100, ModalityType.TOOLKIT_MODAL);
@@ -387,13 +377,11 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
         Set<String> colNamesToPin = new HashSet<>();
         for (int i = 2; i < Math.min(firstColsToPin, App.get().resultsTable.getColumnCount()); i++) {
-            colNamesToPin.add(
-                    App.get().resultsTable.getColumnModel().getColumn(i).getHeaderValue().toString().toLowerCase());
+            colNamesToPin.add(App.get().resultsTable.getColumnModel().getColumn(i).getHeaderValue().toString().toLowerCase());
         }
 
         for (String field : (List<String>) colState.visibleFields.clone()) {
-            if (!dinamicFields.contains(field) && !colNamesToPin.contains(field.toLowerCase())
-                    && !field.equals(BasicProps.LENGTH)) // length header changes to listed items total size info
+            if (!dinamicFields.contains(field) && !colNamesToPin.contains(field.toLowerCase()) && !field.equals(BasicProps.LENGTH)) // length header changes to listed items total size info
             {
                 updateGUICol(field, false);
             }
@@ -412,8 +400,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         for (int i = newColStart; i < App.get().resultsTable.getColumnCount(); i++) {
             TableColumn col = App.get().resultsTable.getColumnModel().getColumn(i);
             String colName = col.getHeaderValue().toString();
-            if (colName.startsWith(ExtraProperties.MESSAGE_PREFIX)
-                    || colName.startsWith(ExtraProperties.COMMUNICATION_PREFIX)) {
+            if (colName.startsWith(ExtraProperties.MESSAGE_PREFIX) || colName.startsWith(ExtraProperties.COMMUNICATION_PREFIX)) {
                 App.get().resultsTable.moveColumn(i, newPosEmail++);
                 newPosOther++;
             } else if (colName.toLowerCase().startsWith(ExtraProperties.UFED_META_PREFIX)) {
@@ -427,8 +414,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         for (int i = newPosOther; i <= lastOldCol; i++) {
             TableColumn col = App.get().resultsTable.getColumnModel().getColumn(i);
             String colName = col.getHeaderValue().toString();
-            if (colName.startsWith(ExtraProperties.MESSAGE_PREFIX)
-                    || colName.startsWith(ExtraProperties.COMMUNICATION_PREFIX)) {
+            if (colName.startsWith(ExtraProperties.MESSAGE_PREFIX) || colName.startsWith(ExtraProperties.COMMUNICATION_PREFIX)) {
                 App.get().resultsTable.moveColumn(i, newPosEmail++);
             }
         }
@@ -477,8 +463,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
     public void resetColumns(List<String> newCols, List<Integer> widths) {
         for (String field : (List<String>) colState.visibleFields.clone())
-            if (!newCols.contains(field) && !field.equals(ResultTableModel.SCORE_COL)
-                    && !field.equals(ResultTableModel.BOOKMARK_COL))
+            if (!newCols.contains(field) && !field.equals(ResultTableModel.SCORE_COL) && !field.equals(ResultTableModel.BOOKMARK_COL))
                 updateGUICol(field, false);
 
         for (String field : newCols) {
@@ -491,8 +476,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
             col = LocalizedProperties.getLocalizedField(col);
             for (int i = 0; i < App.get().resultsTable.getColumnModel().getColumnCount(); i++) {
                 TableColumn tc = App.get().resultsTable.getColumnModel().getColumn(i);
-                if (tc.getHeaderValue() instanceof String && ((String) tc.getHeaderValue())
-                        .startsWith(col.substring(0, 1).toUpperCase() + col.substring(1))) {
+                if (tc.getHeaderValue() instanceof String && ((String) tc.getHeaderValue()).startsWith(col.substring(0, 1).toUpperCase() + col.substring(1))) {
                     App.get().resultsTable.moveColumn(i, newPos++);
                 }
             }
@@ -541,8 +525,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
                 regexFields.add(f);
             else if (f.startsWith(LanguageDetectTask.LANGUAGE_PREFIX))
                 languageFields.add(f);
-            else if (f.startsWith(HashDBLookupTask.ATTRIBUTES_PREFIX)
-                    || f.startsWith(PhotoDNALookup.PHOTO_DNA_HIT_PREFIX))
+            else if (f.startsWith(HashDBLookupTask.ATTRIBUTES_PREFIX) || f.startsWith(PhotoDNALookup.PHOTO_DNA_HIT_PREFIX))
                 hashDbFields.add(f);
             else
                 extraAttrs.add(f);
@@ -567,7 +550,8 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
                 p2pFields.add(f);
             else if (f.startsWith(ExtraProperties.UFED_META_PREFIX))
                 ufedFields.add(f);
-            else if (f.startsWith(Message.MESSAGE_PREFIX) || ExtraProperties.COMMUNICATION_BASIC_PROPS.contains(f))
+            else if (f.startsWith(Message.MESSAGE_PREFIX) || f.startsWith(ExtraProperties.COMMUNICATION_PREFIX)
+                    || ExtraProperties.COMMUNICATION_BASIC_PROPS.contains(f))
                 communicationFields.add(f);
             else if (f.startsWith(ExtraProperties.COMMON_META_PREFIX))
                 commonFields.add(f);
@@ -576,15 +560,9 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
             }
         }
 
-        String[][] customGroups = new String[][] { defaultFields.clone(), hashDbFields.toArray(new String[0]),
-                extraAttrs.toArray(new String[0]), commonFields.toArray(new String[0]),
-                communicationFields.toArray(new String[0]),
-                audioFields.toArray(new String[0]), imageFields.toArray(new String[0]),
-                videoFields.toArray(new String[0]), pdfFields.toArray(new String[0]),
-                officeFields.toArray(new String[0]), htmlFields.toArray(new String[0]),
-                regexFields.toArray(new String[0]), languageFields.toArray(new String[0]),
-                nerFields.toArray(new String[0]), p2pFields.toArray(new String[0]),
-                ufedFields.toArray(new String[0]), winEvtFields.toArray(new String[0]) };
+        String[][] customGroups = new String[][] { defaultFields.clone(), hashDbFields.toArray(new String[0]), extraAttrs.toArray(new String[0]), commonFields.toArray(new String[0]), communicationFields.toArray(new String[0]),
+                audioFields.toArray(new String[0]), imageFields.toArray(new String[0]), videoFields.toArray(new String[0]), pdfFields.toArray(new String[0]), officeFields.toArray(new String[0]), htmlFields.toArray(new String[0]),
+                regexFields.toArray(new String[0]), languageFields.toArray(new String[0]), nerFields.toArray(new String[0]), p2pFields.toArray(new String[0]), ufedFields.toArray(new String[0]), winEvtFields.toArray(new String[0]) };
 
         ArrayList<String> otherFields = new ArrayList<String>();
         for (String f : indexFields) {

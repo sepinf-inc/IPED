@@ -68,10 +68,8 @@ public class SimilarFacesFilterActions {
             app.similarFacesRefItem = null;
             app.similarFacesFilterPanel.setVisible(false);
             List<? extends SortKey> sortKeys = app.resultsTable.getRowSorter().getSortKeys();
-            if (sortKeys != null && !sortKeys.isEmpty() && sortKeys.get(0).getColumn() == 2
-                    && app.similarFacesPrevSortKeys != null)
-                ((ResultTableRowSorter) app.resultsTable.getRowSorter())
-                        .setSortKeysSuper(app.similarFacesPrevSortKeys);
+            if (sortKeys != null && !sortKeys.isEmpty() && sortKeys.get(0).getColumn() == 2 && app.similarFacesPrevSortKeys != null)
+                ((ResultTableRowSorter) app.resultsTable.getRowSorter()).setSortKeysSuper(app.similarFacesPrevSortKeys);
             app.similarFacesPrevSortKeys = null;
             if (updateResults)
                 app.appletListener.updateFileListing();
@@ -81,6 +79,8 @@ public class SimilarFacesFilterActions {
     public static void searchSimilarImages(boolean external) {
         App app = App.get();
 
+        IItemId itemId = null;
+
         if (external) {
             JFileChooser fileChooser = new JFileChooser();
             fileChooser.setDialogTitle(Messages.getString("FaceSimilarity.ExternalTitle"));
@@ -89,6 +89,7 @@ public class SimilarFacesFilterActions {
                 public String getDescription() {
                     return Messages.getString("FaceSimilarity.Image");
                 }
+
                 public boolean accept(File f) {
                     return true;
                 }
@@ -107,14 +108,13 @@ public class SimilarFacesFilterActions {
 
                 // populates tif orientation if rotated
                 try (BufferedInputStream bis = new BufferedInputStream(Files.newInputStream(file.toPath()))) {
-                    App.get().getAutoParser().parse(bis, new IgnoreContentHandler(),
-                            app.similarFacesRefItem.getMetadata(), new ParseContext());
+                    App.get().getAutoParser().parse(bis, new IgnoreContentHandler(), app.similarFacesRefItem.getMetadata(), new ParseContext());
                 } catch (IOException | SAXException | TikaException e2) {
                     e2.printStackTrace();
                 }
 
                 try (InputStream is = new FileInputStream(file)) {
-                    BufferedImage img = ImageUtil.getSubSampledImage(is, 100, 100);
+                    BufferedImage img = ImageUtil.getSubSampledImage(is, 100);
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
                     ImageIO.write(img, "jpg", baos);
                     app.similarFacesRefItem.setThumb(baos.toByteArray());
@@ -124,8 +124,7 @@ public class SimilarFacesFilterActions {
 
                 final WaitDialog wait = new WaitDialog(app, Messages.getString("FaceSimilarity.LoadingFace"));
 
-                FaceFeatureExtractor callable = new FaceFeatureExtractor(app.similarFacesRefItem,
-                        app.appCase.getModuleDir()) {
+                FaceFeatureExtractor callable = new FaceFeatureExtractor(app.similarFacesRefItem, app.appCase.getModuleDir()) {
                     @Override
                     protected void onFinish() {
                         SwingUtilities.invokeLater(new Runnable() {
@@ -144,8 +143,7 @@ public class SimilarFacesFilterActions {
 
                 } catch (InterruptedException | ExecutionException e) {
                     e.printStackTrace();
-                    JOptionPane.showMessageDialog(App.get(), e.getMessage(),
-                            Messages.getString("FaceSimilarity.ExternalTitle"), JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(App.get(), e.getMessage(), Messages.getString("FaceSimilarity.ExternalTitle"), JOptionPane.ERROR_MESSAGE);
                     app.similarFacesRefItem = null;
                 }
             }
@@ -153,7 +151,7 @@ public class SimilarFacesFilterActions {
             app.similarFacesRefItem = null;
             int selIdx = app.resultsTable.getSelectedRow();
             if (selIdx != -1) {
-                IItemId itemId = app.ipedResult.getItem(app.resultsTable.convertRowIndexToModel(selIdx));
+                itemId = app.ipedResult.getItem(app.resultsTable.convertRowIndexToModel(selIdx));
                 if (itemId != null) {
                     app.similarFacesRefItem = app.appCase.getItemByItemId(itemId);
                     if (app.similarFacesRefItem.getExtraAttribute(SimilarFacesSearch.FACE_FEATURES) == null) {
@@ -167,8 +165,7 @@ public class SimilarFacesFilterActions {
             int minScore = 0;
             while (minScore == 0) {
                 try {
-                    String input = JOptionPane.showInputDialog(app, Messages.getString("FaceSimilarity.MinScore"),
-                            SimilarFacesSearch.getMinScore());
+                    String input = JOptionPane.showInputDialog(app, Messages.getString("FaceSimilarity.MinScore"), SimilarFacesSearch.getMinScore());
                     minScore = Integer.parseInt(input.trim());
                     if (minScore < 1 || minScore > 100) {
                         minScore = 0;
@@ -180,6 +177,8 @@ public class SimilarFacesFilterActions {
                 }
             }
         }
+
+        app.similarFacesSearchFilterer.setItem(itemId, app.similarFacesRefItem);
 
         if (app.similarFacesRefItem != null) {
             List<? extends SortKey> sortKeys = app.resultsTable.getRowSorter().getSortKeys();
@@ -239,8 +238,7 @@ public class SimilarFacesFilterActions {
                     File script = new File(moduleDir, SCRIPT_PATH);
                     PythonTask task = new PythonTask(script);
                     task.setCaseData(new CaseData());
-                    AbstractTaskPropertiesConfig taskConfig = (AbstractTaskPropertiesConfig) ConfigurationManager.get()
-                            .getTaskConfigurable(CONF_FILE);
+                    AbstractTaskPropertiesConfig taskConfig = (AbstractTaskPropertiesConfig) ConfigurationManager.get().getTaskConfigurable(CONF_FILE);
 
                     // if jep is not found, no config is returned for python tasks
                     if (taskConfig != null) {

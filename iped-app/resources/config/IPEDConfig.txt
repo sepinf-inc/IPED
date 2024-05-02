@@ -1,4 +1,4 @@
-﻿########################################################################
+﻿﻿########################################################################
 # Processing Settings
 ########################################################################
 
@@ -103,9 +103,9 @@ enableOCR = false
 # Configure it in conf/AudioTranscriptConfig.txt
 enableAudioTranscription = false
 
-# Enables carving. "addUnallocated" must be enabled to unallocated area be searched.
-# By default carving runs on almost every item in the case. 
-# File types to be searched and retrieved can be set in file "conf/CarvingConfig.txt"
+# Enables carving. "addUnallocated" must be enabled to scan unallocated space.
+# By default, our carving module scans many places in the evidence for deleted or embedded files. 
+# Places to scan and file types to recover can be configured in "conf/CarverConfig.xml"
 enableCarving = false
 
 # Enables carving that retrieves known files from the LED base, based on the beginning (64K) of the file.
@@ -128,6 +128,9 @@ enableImageSimilarity = false
 # Advanced configuration options can be found in conf/FaceRecognitionConfig.txt.
 # If enabled, you can search for faces from the analysis interface, check the options menu.
 enableFaceRecognition = false
+
+# Enables searching for crypto hardware wallets.
+enableSearchHardwareWallets = true
 
 # Enables extraction of image frames from video files
 # Extraction settings can be modified in file "conf/VideoThumbsConfig.txt"

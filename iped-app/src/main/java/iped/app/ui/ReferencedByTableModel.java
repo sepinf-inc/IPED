@@ -74,8 +74,7 @@ public class ReferencedByTableModel extends BaseTableModel {
         String sha1 = doc.get(HashTask.HASH.SHA1.toString());
         String sha256 = doc.get(HashTask.HASH.SHA256.toString());
         String edonkey = doc.get(HashTask.HASH.EDONKEY.toString());
-        String hashes = Arrays.asList(md5, sha1, sha256, edonkey).stream().filter(a -> a != null)
-                .collect(Collectors.joining(" "));
+        String hashes = Arrays.asList(md5, sha1, sha256, edonkey).stream().filter(a -> a != null).collect(Collectors.joining(" "));
 
         if (hashes.isEmpty()) {
             results = new LuceneSearchResult(0);
@@ -94,8 +93,7 @@ public class ReferencedByTableModel extends BaseTableModel {
                     SwingUtilities.invokeLater(new Runnable() {
                         @Override
                         public void run() {
-                            App.get().referencedByDock
-                                    .setTitleText(Messages.getString("ReferencedByTab.Title") + " " + length);
+                            App.get().referencedByDock.setTitleText(Messages.getString("ReferencedByTab.Title") + " " + length);
                         }
                     });
                     refDoc = doc;

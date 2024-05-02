@@ -89,10 +89,10 @@ public class WAContact {
     }
 
     public String getName() {
-        if (waName != null && ! waName.isBlank())
-            return waName;
-        else if (displayName != null && !displayName.isBlank())
+        if (displayName != null && !displayName.isBlank())
             return displayName;
+        else if (waName != null && !waName.isBlank())
+            return waName;
         else if (givenName != null && !givenName.isBlank())
             return givenName;
         else if (nickName != null && !nickName.isBlank())
