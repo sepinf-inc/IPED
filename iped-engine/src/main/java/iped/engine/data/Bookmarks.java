@@ -474,10 +474,10 @@ public class Bookmarks implements IBookmarks {
         }
     }
 
-    public synchronized void addToTypedWords(String texto) {
-
-        if (!texto.trim().isEmpty() && !typedWords.contains(texto)) {
-            typedWords.add(texto);
+    public synchronized void addToTypedWords(String text) {
+        if (!text.trim().isEmpty()) {
+            typedWords.remove(text); // Remove if present before adding, to update insertion order
+            typedWords.add(text);
             saveState();
         }
     }
