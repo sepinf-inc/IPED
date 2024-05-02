@@ -10,9 +10,10 @@ public class ParsingTaskConfig extends AbstractTaskPropertiesConfig {
     private static final long serialVersionUID = 1L;
 
     public static final String ENABLE_PARAM = "enableFileParsing";
-    private static final String CONF_FILE = "ParsingTaskConfig.txt";
+    public static final String CONF_FILE = "ParsingTaskConfig.txt";
 
     public static final String NUM_EXTERNAL_PARSERS = "numExternalParsers";
+    public static final String SOURCES_WITH_PARSERS = "sourcesWithInternalParsers";
 
     private boolean enableExternalParsing = false;
     private int numExternalParsers;
@@ -109,7 +110,7 @@ public class ParsingTaskConfig extends AbstractTaskPropertiesConfig {
             phoneParsersToUse = value.trim();
         }
 
-        value = properties.getProperty("internalParsersList"); //$NON-NLS-1$
+        value = properties.getProperty(SOURCES_WITH_PARSERS); // $NON-NLS-1$
         if (value != null) {
             internalParsersList = value.trim();
         }

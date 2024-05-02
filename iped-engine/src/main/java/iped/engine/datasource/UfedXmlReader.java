@@ -259,12 +259,9 @@ public class UfedXmlReader extends DataSourceReader {
         PhoneParsingConfig.setUfdrReaderName(UfedXmlReader.class.getSimpleName());
 
         try {
-            supportedApps = new HashSet<String>(
-                    Arrays.asList(parsingConfig.getInternalParsersList().split("\\s*,\\s*")));
+            supportedApps = new HashSet<String>(Arrays.asList(parsingConfig.getInternalParsersList().split("\\s*,\\s*")));
         } catch (Exception e) {
-            LOGGER.warn(
-                    "Failed to parse internalParsersList parameter from ParsingConfig.txt. Using default internal value:"
-                            + supportedApps.toString());
+            LOGGER.warn("Failed to parse {} parameter from {}. Using default internal value: {}", ParsingTaskConfig.SOURCES_WITH_PARSERS, ParsingTaskConfig.CONF_FILE, supportedApps.toString());
         }
 
         if (!TelegramParser.isEnabledForUfdr()) {
