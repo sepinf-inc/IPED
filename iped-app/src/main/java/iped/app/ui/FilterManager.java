@@ -295,12 +295,12 @@ public class FilterManager implements ActionListener, ListSelectionListener, Act
 
     public void addQueryFilterer(IQueryFilterer qf) {
         queryFilterers.add(qf);
-        filterers.put(qf, false);
+        filterers.put(qf, true);
     }
 
     public void addResultSetFilterer(IResultSetFilterer rsf) {
         resultSetFilterers.add(rsf);
-        filterers.put(rsf, false);
+        filterers.put(rsf, true);
     }
 
     public Set<IFilterer> getFilterers() {
@@ -338,8 +338,9 @@ public class FilterManager implements ActionListener, ListSelectionListener, Act
             this.actionPerformed(new ActionEvent(t, IFilterer.ENABLE_FILTER_EVENT, "Enable"));
         } else {
             t.fireActionListener(new ActionEvent(t, IFilterer.DISABLE_FILTER_EVENT, "Disable"));
-            this.actionPerformed(new ActionEvent(t, IFilterer.DISABLE_FILTER_EVENT, "Enable"));
+            this.actionPerformed(new ActionEvent(t, IFilterer.DISABLE_FILTER_EVENT, "Disable"));
         }
+        App.get().setDockablesColors();
     }
 
     public MultiSearchResult applyExcludeFilter(RoaringBitmap[] resultBitSet, MultiSearchResult input) {

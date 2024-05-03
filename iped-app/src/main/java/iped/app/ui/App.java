@@ -1284,16 +1284,20 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             DefaultSingleCDockable tabDock = (DefaultSingleCDockable) dockingControl.getCDockable(i);
             Component c = tabDock.getContentPane().getComponent(0);
             if (c instanceof IFilterer) {
-                setTabColor(tabDock, !filterManager.isFiltererEnabled(((IFilterer) c)));
+                setTabColor(tabDock,
+                        !filterManager.isFiltererEnabled(((IFilterer) c)) || !((IFilterer) c).hasFilters());
             }
         }
 
-        setTabColor(categoriesTabDock, categoriesDefaultColor);
-        setTabColor(metadataTabDock, metadataDefaultColor);
-        setTabColor(evidenceTabDock, evidenceDefaultColor);
-        setTabColor(bookmarksTabDock, bookmarksDefaultColor);
+        setTabColor(categoriesTabDock,
+                !filterManager.isFiltererEnabled(categoryListener) || !categoryListener.hasFilters());
+        setTabColor(metadataTabDock, !filterManager.isFiltererEnabled(metadataPanel) || !metadataPanel.hasFilters());
+        setTabColor(evidenceTabDock, !filterManager.isFiltererEnabled(treeListener) || !treeListener.hasFilters());
+        setTabColor(bookmarksTabDock,
+                !filterManager.isFiltererEnabled(bookmarksListener) || !bookmarksListener.hasFilters());
         setTabColor(graphDock, graphDefaultColor);
-        setTabColor(tableTabDock, tableDefaultColor);
+        setTabColor(tableTabDock, !filterManager.isFiltererEnabled(TableHeaderFilterManager.get())
+                || !TableHeaderFilterManager.get().hasFilters());
     }
 
     private void setTabColor(DefaultSingleCDockable dock, boolean isDefault) {
