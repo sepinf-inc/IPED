@@ -117,7 +117,10 @@ public class FiltersPanel extends JPanel implements ClearFilterListener, IQueryF
                 }
 
                 if (value instanceof IFilterer) {
-                    result.setBackground((((IFilterer) value).hasFiltersApplied()) ? ENABLED_BK_COLOR : Color.white);
+                    result.setBackground(
+                            (((IFilterer) value).hasFilters() && filterManager.isFiltererEnabled((IFilterer) value))
+                                    ? ENABLED_BK_COLOR
+                                    : Color.white);
                 }
 
                 return result;
