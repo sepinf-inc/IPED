@@ -523,6 +523,14 @@ public class ReportGenerator {
                 }
                 out.println("<br>");
                 break;
+            case COMMUNITY_RENAMED:
+                out.println("<div class=\"systemmessage\">");
+                out.println(name + " " + Messages.getString("WhatsAppReport.CommunityRenamed") + ".<br>");
+                break;
+            case ANY_COMMUNITY_MEMBER_CAN_JOIN_GROUP:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.AnyCommunityMemberCanJoinThisGroup") + "<br>");
+                break;
             case COMMUNITY_MANAGEMENT_ACTION:
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.CommunityManagementAction") + "<br>");
@@ -668,6 +676,11 @@ public class ReportGenerator {
             case GROUP_ONLY_ADMINS_CAN_SEND:
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.GroupOnlyAdminsCanSend") + "<br>");
+                break;
+            case RESET_GROUP_LINK:
+                out.println("<div class=\"systemmessage\">");
+                out.print(name + " ");
+                out.println(Messages.getString("WhatsAppReport.ResetGroupLink") + ".<br>");
                 break;
             case CHANGED_DEVICE:
                 out.println("<div class=\"systemmessage\">");
