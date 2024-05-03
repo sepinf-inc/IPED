@@ -62,8 +62,7 @@ public class TimelineFilterSelectionPopupMenu extends JPopupMenu implements Acti
         }
 
         if (e.getSource() == filterSelection) {
-            ipedChartPanel.getIpedChartsPanel().setApplyFilters(true);
-            ipedChartPanel.filterSelection();
+            ipedChartPanel.applyFilters(true);
         }
 
         if (e.getSource() == selectItems) {

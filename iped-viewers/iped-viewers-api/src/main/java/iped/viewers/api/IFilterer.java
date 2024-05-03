@@ -8,7 +8,10 @@ import java.util.List;
  * @author patrick.pdb
  *
  */
-public interface IFilterer extends ClearFilterListener {
+public interface IFilterer extends ClearFilterListener, ActionListenerControl {
+
+    public static final int ENABLE_FILTER_EVENT = 0;
+    public static final int DISABLE_FILTER_EVENT = 1;
 
     List<IFilter> getDefinedFilters();
 
@@ -23,4 +26,6 @@ public interface IFilterer extends ClearFilterListener {
             return this.getClass().getName();
         }
     }
+
+
 }

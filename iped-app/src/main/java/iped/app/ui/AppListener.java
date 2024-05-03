@@ -141,11 +141,13 @@ public class AppListener implements ActionListener, MouseListener {
         }
 
         if (evt.getSource() == App.get().filterDuplicates) {
-            if (!App.get().filterDuplicates.isSelected())
-                App.get().filterDuplicates.setForeground(App.get().topPanel.getBackground());
-            else
-                App.get().filterDuplicates.setForeground(App.get().alertColor);
+            if (!App.get().filterDuplicates.isSelected()) {
+                App.get().filterManager.setFilterEnabled(App.get().duplicatesFilterer, false);
+            } else {
+                App.get().filterManager.setFilterEnabled(App.get().duplicatesFilterer, true);
+            }
 
+            App.get().filtersPanel.updateUI();
             updateFileList = true;
         }
 

@@ -42,13 +42,15 @@ import iped.engine.search.MultiSearchResult;
 import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
 import iped.utils.UTF8Properties;
+import iped.viewers.api.ActionListenerControl;
 import iped.viewers.api.IFilter;
 import iped.viewers.api.IFilterer;
 import iped.viewers.api.IQueryFilterer;
 import iped.viewers.api.IResultSetFilter;
 import iped.viewers.api.IResultSetFilterer;
 
-public class FilterManager implements ActionListener, ListSelectionListener {
+public class FilterManager implements ActionListener, ListSelectionListener, ActionListenerControl {
+
     HashMap<IFilter, RoaringBitmap[]> cachedFilterBitsets = new HashMap<IFilter, RoaringBitmap[]>();
     boolean useCachedBitmaps = false;
 
@@ -264,6 +266,7 @@ public class FilterManager implements ActionListener, ListSelectionListener {
         if (e.getSource() == butDelete && filter != null) {
             filters.remove(filter);
         }
+
         populateList();
         updateFilter();
         try {
@@ -292,12 +295,12 @@ public class FilterManager implements ActionListener, ListSelectionListener {
 
     public void addQueryFilterer(IQueryFilterer qf) {
         queryFilterers.add(qf);
-        filterers.put(qf, true);
+        filterers.put(qf, false);
     }
 
     public void addResultSetFilterer(IResultSetFilterer rsf) {
         resultSetFilterers.add(rsf);
-        filterers.put(rsf, true);
+        filterers.put(rsf, false);
     }
 
     public Set<IFilterer> getFilterers() {
@@ -330,6 +333,13 @@ public class FilterManager implements ActionListener, ListSelectionListener {
 
     public void setFilterEnabled(IFilterer t, boolean selected) {
         filterers.put(t, selected);
+        if (selected) {
+            t.fireActionListener(new ActionEvent(t, IFilterer.ENABLE_FILTER_EVENT, "Enable"));
+            this.actionPerformed(new ActionEvent(t, IFilterer.ENABLE_FILTER_EVENT, "Enable"));
+        } else {
+            t.fireActionListener(new ActionEvent(t, IFilterer.DISABLE_FILTER_EVENT, "Disable"));
+            this.actionPerformed(new ActionEvent(t, IFilterer.DISABLE_FILTER_EVENT, "Enable"));
+        }
     }
 
     public MultiSearchResult applyExcludeFilter(RoaringBitmap[] resultBitSet, MultiSearchResult input) {

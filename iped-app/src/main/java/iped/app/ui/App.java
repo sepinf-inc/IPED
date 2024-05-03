@@ -307,7 +307,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     private SimilarImagesQueryFilterer similarImagesFilterer;
 
-    private DuplicatesFilterer duplicatesFilterer;
+    public DuplicatesFilterer duplicatesFilterer;
 
     public FiltersPanel filtersPanel;
 
@@ -515,6 +515,12 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         filterComboBox.addItem(App.FILTRO_TODOS);
         filterComboBox.setToolTipText(Messages.getString("App.FilterTip")); //$NON-NLS-1$
         filterManager = new FilterManager(filterComboBox);
+        filterManager.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                setDockablesColors();
+            }
+        });
 
         similarDocumentFilterer = new SimilarDocumentFilterer();
 
@@ -784,6 +790,19 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         resultsTable.addKeyListener(new ResultTableListener());
 
         duplicatesFilterer = new DuplicatesFilterer();
+        duplicatesFilterer.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent event) {
+                if (event.getID() == IFilterer.DISABLE_FILTER_EVENT) {
+                    App.get().filterDuplicates.setForeground(App.get().topPanel.getBackground());
+                    filterDuplicates.setSelected(false);
+                }
+                if (event.getID() == IFilterer.ENABLE_FILTER_EVENT) {
+                    App.get().filterDuplicates.setForeground(App.get().alertColor);
+                    filterDuplicates.setSelected(true);
+                }
+            }
+        });
 
         filterManager.addQueryFilterer(new SearchFilterer());
         filterManager.addQueryFilterer(categoryListener);
@@ -1264,8 +1283,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         for (int i = 0; i < dockingControl.getCDockableCount(); i++) {
             DefaultSingleCDockable tabDock = (DefaultSingleCDockable) dockingControl.getCDockable(i);
             Component c = tabDock.getContentPane().getComponent(0);
-            if (c instanceof IQueryFilterer) {
-                setTabColor(tabDock, !((IQueryFilterer) c).hasFiltersApplied());
+            if (c instanceof IFilterer) {
+                setTabColor(tabDock, !filterManager.isFiltererEnabled(((IFilterer) c)));
             }
         }
 
@@ -1784,7 +1803,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         @Override
         public boolean hasFilters() {
-            return filterDuplicates.isSelected();
+            return true;
         }
 
         @Override
