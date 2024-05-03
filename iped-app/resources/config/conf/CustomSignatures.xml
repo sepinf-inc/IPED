@@ -446,6 +446,8 @@
     		</match>
 		</magic>
         <glob pattern="resume.dat" />
+        <glob pattern="resume.dat.old" />
+        <glob pattern="resume.dat.new" />
     </mime-type>
 
     <mime-type type="application/x-bittorrent-settings-dat">
@@ -456,7 +458,6 @@
 	    		<match value="e9:autostart" type="string" offset="16:1024"/>
     		</match>
 		</magic>
-        <glob pattern="settings.dat" />
     </mime-type>
 
 	<mime-type type="application/x-bittorrent">
