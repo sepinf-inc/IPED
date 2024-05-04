@@ -23,7 +23,7 @@ import iped.viewers.localization.Messages;
 public class LOExtractor extends CancelableWorker<Object, Object> {
 
     private File output, input;
-    private ProgressDialog progressMonitor;
+    private volatile ProgressDialog progressMonitor;
     private int progress = 0, numSubitens = 2876;// TODO obter número de itens automaticamente
     private boolean completed = false;
 
