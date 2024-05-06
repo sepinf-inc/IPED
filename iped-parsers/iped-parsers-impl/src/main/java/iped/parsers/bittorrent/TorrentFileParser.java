@@ -62,6 +62,9 @@ public class TorrentFileParser extends AbstractParser {
             Messages.getString("TorrentFileDatParser.ED2K"), //$NON-NLS-1$
             Messages.getString("TorrentFileDatParser.FileFoundInCase")
     };
+    private static final String strConfirmedPieces = Messages.getString("TorrentFileDatParser.ConfirmedPieces");
+    private static final String strAtOffset = Messages.getString("TorrentFileDatParser.AtOffset");
+
     private static final String strYes = Messages.getString("TorrentFileDatParser.Yes");
     
     private static final String padding = "_____padding_file";
@@ -141,10 +144,12 @@ public class TorrentFileParser extends AbstractParser {
             for (int i = 0; i < files.size(); i++) {
                 FileInTorrent file = files.get(i);
                 if (file.item == null) {
-                    IItemReader item = searchAndMatchFileInCase(searcher, file.length, info.pieceLength, info.pieces,
+                    ItemPiecesMatchInfo itemPiecesMatchInfo = searchAndMatchFileInCase(searcher, file.length,
+                            info.pieceLength, info.pieces,
                             (int) (tot / info.pieceLength), (int) (tot % info.pieceLength), i == files.size() - 1);
-                    if (item != null) {
-                        file.item = item;
+                    if (itemPiecesMatchInfo != null) {
+                        file.item = itemPiecesMatchInfo.item;
+                        file.itemPiecesMatchInfo = itemPiecesMatchInfo;
                         metadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + file.item.getHash());
                     }
                 }
@@ -220,7 +225,8 @@ public class TorrentFileParser extends AbstractParser {
             }
             xhtml.startElement("tr", "class", row % 2 == 0 ? "ra" : "rb"); 
             String[] rowElements = new String[] { String.valueOf(++row), file.fullPath, Long.toString(file.length),
-                    file.md5, file.sha1, file.ed2k, file.item != null ? strYes : "" };
+                    file.md5, file.sha1, file.ed2k,
+                    file.item != null ? formatMatchInfo(file.itemPiecesMatchInfo) : "" };
             for (int col = 0; col < rowElements.length; col++) {
                 if (include[col]) {
                     String str = rowElements[col];
@@ -272,6 +278,19 @@ public class TorrentFileParser extends AbstractParser {
         }
 
         xhtml.endDocument();
+    }
+
+
+    private String formatMatchInfo(ItemPiecesMatchInfo itemPiecesMatchInfo) {
+
+        if(itemPiecesMatchInfo!=null){
+            String str = strYes + " (" + strConfirmedPieces + " " + (itemPiecesMatchInfo.startPiece + 1) + "-"
+                    + (itemPiecesMatchInfo.finalPiece + 1) + " " + strAtOffset + " " + itemPiecesMatchInfo.startOffset
+                    + ")";
+            return str;
+        }else{
+            return "";
+        }
     }
 
     private static void outputInfo(XHTMLContentHandler xhtml, String key, Object value) throws SAXException {
@@ -373,6 +392,7 @@ public class TorrentFileParser extends AbstractParser {
     }
 
     private static class FileInTorrent {
+        public ItemPiecesMatchInfo itemPiecesMatchInfo;
         String fullPath;
         long length;
         String md5;
@@ -427,7 +447,15 @@ public class TorrentFileParser extends AbstractParser {
         String[] pieces;
     }
 
-    private static IItemReader searchAndMatchFileInCase(IItemSearcher searcher, long fileLength, long pieceLength,
+    private static class ItemPiecesMatchInfo {
+        IItemReader item;
+        int startPiece;
+        int finalPiece;
+        int startOffset;
+    }
+
+    private static ItemPiecesMatchInfo searchAndMatchFileInCase(IItemSearcher searcher, long fileLength,
+            long pieceLength,
             String[] pieces, final int firstPiece, final int offset, final boolean isLast) {
         if (fileLength < minFileLength || fileLength > maxFileLength) {
             return null;
@@ -454,16 +482,19 @@ public class TorrentFileParser extends AbstractParser {
                 if (item.getHash() == null || !seen.add(item.getHash())) {
                     continue;
                 }
-
                 // Check if the all pieces hashes match
                 try (BufferedInputStream is = item.getBufferedInputStream()) {
+                    ItemPiecesMatchInfo itemPiecesMatchInfo = new ItemPiecesMatchInfo();
+                    itemPiecesMatchInfo.startOffset = offset;
                     if (offset > 0) {
                         int read = is.readNBytes(bytes, 0, bytes.length - offset);
                         if (read < bytes.length - offset) {
                             continue NEXT;
                         }
                     }
-                    for (int n = offset == 0 ? 0 : 1; n < totPieces; n++) {
+                    int n = offset == 0 ? 0 : 1;
+                    itemPiecesMatchInfo.startPiece = n + firstPiece;
+                    for (; n < totPieces; n++) {
                         int read = is.readNBytes(bytes, 0, bytes.length);
                         if (read < 0 || (read < bytes.length && n < totPieces - 1)) {
                             continue NEXT;
@@ -479,9 +510,11 @@ public class TorrentFileParser extends AbstractParser {
                             }
                         }
                     }
+                    itemPiecesMatchInfo.finalPiece = n + firstPiece;
+                    itemPiecesMatchInfo.item = item;
 
                     // Found an item that matches all pieces hashes
-                    return item;
+                    return itemPiecesMatchInfo;
 
                 } catch (Exception e) {
                     e.printStackTrace();
