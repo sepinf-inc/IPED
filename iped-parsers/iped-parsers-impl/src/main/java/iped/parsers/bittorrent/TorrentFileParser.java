@@ -428,12 +428,12 @@ public class TorrentFileParser extends AbstractParser {
     }
 
     private static IItemReader searchAndMatchFileInCase(IItemSearcher searcher, long fileLength, long pieceLength,
-            String[] pieces, int firstPiece, int offset, boolean isLast) {
+            String[] pieces, final int firstPiece, final int offset, final boolean isLast) {
         if (fileLength < minFileLength || fileLength > maxFileLength) {
             return null;
         }
         int totPieces = (int) ((fileLength + pieceLength - 1 + offset) / pieceLength);
-        if (firstPiece + totPieces > pieces.length || ((!isLast||offset!=0) && totPieces < minPiecesMultiFile)) {
+        if (firstPiece + totPieces > pieces.length || ((!isLast || offset != 0) && totPieces < minPiecesMultiFile)) {
             return null;
         }
         List<IItemReader> items = searcher.search(BasicProps.LENGTH + ":" + fileLength);
@@ -462,9 +462,8 @@ public class TorrentFileParser extends AbstractParser {
                         if (read < bytes.length - offset) {
                             continue NEXT;
                         }
-                        firstPiece++;
                     }
-                    for (int n = firstPiece; n < totPieces; n++) {
+                    for (int n = offset == 0 ? 0 : 1; n < totPieces; n++) {
                         int read = is.readNBytes(bytes, 0, bytes.length);
                         if (read < 0 || (read < bytes.length && n < totPieces - 1)) {
                             continue NEXT;
@@ -475,13 +474,13 @@ public class TorrentFileParser extends AbstractParser {
                                 in = Arrays.copyOf(bytes, read);
                             }
                             String calc = DigestUtils.sha1Hex(in);
-                            if (calc == null || !calc.equalsIgnoreCase(pieces[n])) {
+                            if (calc == null || !calc.equalsIgnoreCase(pieces[n + firstPiece])) {
                                 continue NEXT;
                             }
                         }
                     }
 
-                    // Found an item that matches all piece hashes
+                    // Found an item that matches all pieces hashes
                     return item;
 
                 } catch (Exception e) {
