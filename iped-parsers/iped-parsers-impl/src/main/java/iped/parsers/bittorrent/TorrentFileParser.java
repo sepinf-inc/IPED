@@ -50,7 +50,7 @@ public class TorrentFileParser extends AbstractParser {
     public static final String TORRENT_INFO_HASH = ExtraProperties.P2P_META_PREFIX + "torrentInfoHash";
     public static final String TORRENT_FILES_FOUND_IN_CASE = ExtraProperties.P2P_META_PREFIX
             + "torrentFilesFoundInCase";
-    
+
     private static final long serialVersionUID = 3238363426940179831L;
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.application("x-bittorrent")); //$NON-NLS-1$
     public static final String TORRENT_FILE_MIME_TYPE = "application/x-bittorrent"; //$NON-NLS-1$
@@ -60,7 +60,8 @@ public class TorrentFileParser extends AbstractParser {
             Messages.getString("TorrentFileDatParser.MD5"), //$NON-NLS-1$
             Messages.getString("TorrentFileDatParser.SHA1"), //$NON-NLS-1$
             Messages.getString("TorrentFileDatParser.ED2K"), //$NON-NLS-1$
-            Messages.getString("TorrentFileDatParser.FileFoundInCase")
+            Messages.getString("TorrentFileDatParser.FileFoundInCase"),
+            Messages.getString("TorrentFileDatParser.PathInCase") 
     };
     private static final String strConfirmedPieces = Messages.getString("TorrentFileDatParser.ConfirmedPieces");
     private static final String strAtOffset = Messages.getString("TorrentFileDatParser.AtOffset");
@@ -102,8 +103,8 @@ public class TorrentFileParser extends AbstractParser {
         IItemSearcher searcher = context.get(IItemSearcher.class);
         List<FileInTorrent> files = extractFileList(dict, metadata, searcher);
 
-        char[] colClass = { 'c', 'a', 'c', 'h', 'h', 'h', 'b' };
-        boolean[] include = { true, true, true, false, false, false, false };
+        char[] colClass = { 'c', 'a', 'c', 'h', 'h', 'h', 'b', 'a' };
+        boolean[] include = { true, true, true, false, false, false, false, false };
         for (FileInTorrent file : files) {
             if (!file.md5.isEmpty())
                 include[3] = true;
@@ -121,11 +122,12 @@ public class TorrentFileParser extends AbstractParser {
                         + ".rh { font-weight: bold; text-align: center; background-color:#AAAAEE; } "
                         + ".ra { vertical-align: middle; } "
                         + ".rb { background-color:#E7E7F0; vertical-align: middle; } "
-                        + ".a { border: solid; border-width: thin; padding: 3px; text-align: left; vertical-align: middle; word-wrap: break-word; } "
-                        + ".b { border: solid; border-width: thin; padding: 3px; text-align: center; vertical-align: middle; word-wrap: break-word; } "
-                        + ".c { border: solid; border-width: thin; padding: 3px; text-align: right; vertical-align: middle; word-wrap: break-word; } "
+                        + ".a { min-width: 200px; border: solid; border-width: thin; padding: 3px; text-align: left; vertical-align: middle; word-wrap: break-word; } "
+                        + ".b { min-width: 100px; border: solid; border-width: thin; padding: 3px; text-align: center; vertical-align: middle; word-wrap: break-word; } "
+                        + ".c { min-width: 80px; border: solid; border-width: thin; padding: 3px; text-align: right; vertical-align: middle; word-wrap: break-word; } "
                         + ".d { font-weight: bold; background-color:#AAAAEE; border: solid; border-width: thin; padding: 3px; text-align: left; vertical-align: middle; white-space: nowrap; } "
-                        + ".h { font-weight: bold; border: solid; border-width: thin; padding: 3px; text-align: left; vertical-align: middle; white-space: nowrap; font-family: monospace; } ");
+                        + ".h { min-width: 200px; font-weight: bold; border: solid; border-width: thin; padding: 3px; text-align: left; vertical-align: middle; white-space: nowrap; font-family: monospace; } "
+                        + ".s { font-size: x-small; } ");
         xhtml.endElement("style"); //$NON-NLS-1$
         xhtml.newline();
 
@@ -164,6 +166,7 @@ public class TorrentFileParser extends AbstractParser {
                 paddingEntries++;
             } else if (file.item != null) {
                 include[6] = true;
+                include[7] = true;
                 foundInCase++;
             }
         }
@@ -225,8 +228,7 @@ public class TorrentFileParser extends AbstractParser {
             }
             xhtml.startElement("tr", "class", row % 2 == 0 ? "ra" : "rb"); 
             String[] rowElements = new String[] { String.valueOf(++row), file.fullPath, Long.toString(file.length),
-                    file.md5, file.sha1, file.ed2k,
-                    file.item != null ? formatMatchInfo(file.itemPiecesMatchInfo) : "" };
+                    file.md5, file.sha1, file.ed2k, "", file.item == null ? "" : file.item.getPath() };
             for (int col = 0; col < rowElements.length; col++) {
                 if (include[col]) {
                     String str = rowElements[col];
@@ -242,6 +244,8 @@ public class TorrentFileParser extends AbstractParser {
                     }
                     if (col == 1 && file.item != null) {
                         P2PUtil.printNameWithLink(xhtml, file.item, str);
+                    } else if (col == 6) {
+                        outputMatchInfo(xhtml, file.itemPiecesMatchInfo);
                     } else {
                         xhtml.characters(str);
                     }
@@ -280,16 +284,20 @@ public class TorrentFileParser extends AbstractParser {
         xhtml.endDocument();
     }
 
-
-    private String formatMatchInfo(ItemPiecesMatchInfo itemPiecesMatchInfo) {
-
-        if(itemPiecesMatchInfo!=null){
-            String str = strYes + " (" + strConfirmedPieces + " " + (itemPiecesMatchInfo.startPiece + 1) + "-"
-                    + (itemPiecesMatchInfo.finalPiece + 1) + " " + strAtOffset + " " + itemPiecesMatchInfo.startOffset
-                    + ")";
-            return str;
-        }else{
-            return "";
+    private static void outputMatchInfo(XHTMLContentHandler xhtml, ItemPiecesMatchInfo itemPiecesMatchInfo)
+            throws SAXException {
+        if (itemPiecesMatchInfo != null) {
+            xhtml.characters(strYes);
+            xhtml.startElement("br");
+            xhtml.startElement("span", "class", "s");
+            xhtml.characters("(" + strConfirmedPieces + " ");
+            xhtml.characters(LocalizedFormat.format(itemPiecesMatchInfo.startPiece + 1));
+            xhtml.characters("-");
+            xhtml.characters(LocalizedFormat.format(itemPiecesMatchInfo.finalPiece + 1));
+            xhtml.characters(" " + strAtOffset + " ");
+            xhtml.characters(LocalizedFormat.format(itemPiecesMatchInfo.startOffset));
+            xhtml.characters(")");
+            xhtml.endElement("span");
         }
     }
 
@@ -392,7 +400,7 @@ public class TorrentFileParser extends AbstractParser {
     }
 
     private static class FileInTorrent {
-        public ItemPiecesMatchInfo itemPiecesMatchInfo;
+        ItemPiecesMatchInfo itemPiecesMatchInfo;
         String fullPath;
         long length;
         String md5;
