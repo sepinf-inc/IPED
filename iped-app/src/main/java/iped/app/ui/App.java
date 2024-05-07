@@ -812,7 +812,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         filterManager.addQueryFilterer(TableHeaderFilterManager.get());
         filterManager.addResultSetFilterer(bookmarksListener);
         filterManager.addResultSetFilterer(FilterSelectedEdges.getInstance());
-        filterManager.addResultSetFilterer(duplicatesFilterer);
+        filterManager.addResultSetFilterer(duplicatesFilterer, false);
         filterManager.addResultSetFilterer(similarImagesFilterer);
         filterManager.addResultSetFilterer(similarFacesSearchFilterer);
         filterManager.addResultSetFilterer(timelineListener);

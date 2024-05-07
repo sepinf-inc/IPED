@@ -298,11 +298,6 @@ public class FilterManager implements ActionListener, ListSelectionListener, Act
         filterers.put(qf, true);
     }
 
-    public void addResultSetFilterer(IResultSetFilterer rsf) {
-        resultSetFilterers.add(rsf);
-        filterers.put(rsf, true);
-    }
-
     public Set<IFilterer> getFilterers() {
         return filterers.keySet();
     }
@@ -408,6 +403,16 @@ public class FilterManager implements ActionListener, ListSelectionListener, Act
             return null;
         }
         return cachedFilterBitsets.get(rsFilter);
+    }
+
+    public void addResultSetFilterer(IResultSetFilterer rsf, boolean b) {
+        resultSetFilterers.add(rsf);
+        filterers.put(rsf, b);
+    }
+
+    public void addResultSetFilterer(IResultSetFilterer rsf) {
+        resultSetFilterers.add(rsf);
+        filterers.put(rsf, true);
     }
 }
 
