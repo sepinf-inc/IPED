@@ -166,7 +166,7 @@
     {"name": "Notes", "mimes": ["application/x-ufed-html-notes", "application/x-ufed-note", "application/x-ios-oldnotes-db", "application/x-ios-notes-db"]},
     {"name": "Wireless Networks", "mimes": ["application/x-ufed-html-wifi", "application/x-ufed-wirelessnetwork","application/aleapp-wi-fiprofiles"]},
     {"name": "Notifications", "mimes": ["application/x-ufed-html-notifications", "application/x-ufed-notification"]},
-    {"name": "Locations", "mimes": ["application/x-ufed-html-locations", "application/x-ufed-location", "application/x-ios-locations-db"]},
+    {"name": "Locations", "mimes": ["application/x-ufed-html-locations", "application/x-ufed-location", "application/x-ios-locations-db", "application/aleapp-googlemapssearches-1", "application/aleapp-googlesearchhistorymaps", "application/aleapp-googlemapslasttrip" ]},
     {"name": "Cookies", "mimes": ["application/x-ufed-html-cookies", "application/x-ufed-cookie", "application/aleapp-chrome-cookies"]},
     {"name": "Configuration", "mimes": ["application/x-ufed-html-configurations"]},
     {"name": "Passwords", "mimes": ["application/x-ufed-html-passwords", "application/x-ufed-password"]},
