@@ -532,10 +532,11 @@ public class LeappBridgeTask extends AbstractPythonTask {
                     IPEDSearcher filesSearcher = new IPEDSearcher(ipedCase);
                     String query = "path:\"" + dumpEvidence.getPath() + "\"";
 
-                    StringTokenizer st = new StringTokenizer(pattern, "*/");
+                    StringTokenizer st = new StringTokenizer(pattern, "*/ ");
+                    String token = null;
                     while (st.hasMoreTokens()) {
-                        String token = st.nextToken();
-                        query += " && path:\"" + token + "\"";
+                        token = st.nextToken();
+                        query += " && path:" + token + "";
                     }
 
                     filesSearcher.setQuery(query);
