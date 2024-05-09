@@ -43,7 +43,7 @@ public class ALeappPluginsManager {
 
     public boolean hasPatternMatch(String file, LeapArtifactsPlugin plugin) {
         for (String pattern : plugin.patterns) {
-            if (pattern.startsWith("*/")) {
+            if (pattern.startsWith("*")) {
                 pattern = "*" + pattern;
             }
             if (FileSystems.getDefault().getPathMatcher("glob:" + pattern).matches(Path.of(file))) {
