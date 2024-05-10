@@ -41,6 +41,7 @@
     <task script="NSFWNudityDetectTask.py"></task>
     <task script="FaceRecognitionTask.py"></task>
     <task script="SearchHardwareWallets.py"></task>
+    <task script="TranslateTextTask.py"></task>
     
     <!--Carving must be installed before IndexTask because it sets hasChildren property in parent items-->
     <task class="iped.engine.task.carver.LedCarveTask"></task>
