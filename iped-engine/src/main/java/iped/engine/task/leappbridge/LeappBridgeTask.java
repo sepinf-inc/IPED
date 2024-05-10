@@ -530,15 +530,9 @@ public class LeappBridgeTask extends AbstractPythonTask {
                 // these tmp copies of the files.
                 for (String pattern : p.patterns) {
                     IPEDSearcher filesSearcher = new IPEDSearcher(ipedCase);
-                    String query = "path:\"" + dumpEvidence.getPath() + "\"";
-
-                    StringTokenizer st = new StringTokenizer(pattern, "*/ ");
-                    String token = null;
-                    while (st.hasMoreTokens()) {
-                        token = st.nextToken();
-                        query += " && path:" + token + "";
-                    }
-
+                    
+                    
+                    String query = patternToLuceneQuery(dumpEvidence, pattern);
                     filesSearcher.setQuery(query);
                     SearchResult filesResult = filesSearcher.search();
                     for (int j = 0; j < filesResult.getLength(); j++) {
@@ -613,7 +607,6 @@ public class LeappBridgeTask extends AbstractPythonTask {
                 logger.warn("ALeapp plugin " + p.getName() + " files search time:" + delta);
             }
 
-
             if (filesFound.size() <= 0) {
                 evidence.setToIgnore(true);
                 return;
@@ -626,6 +619,7 @@ public class LeappBridgeTask extends AbstractPythonTask {
                     m.add(ExtraProperties.LINKED_ITEMS, "path:\"*" + filel + "\" && name:\"" + filename + "\"");
 
                 }
+
                 executePlugin(evidence, p, filesFound, reportDumpPath);
             }
         } catch (Exception e) {
@@ -808,5 +802,54 @@ public class LeappBridgeTask extends AbstractPythonTask {
             logger.debug("Exception while trying to classify evidence:" + e.getName());
             ex.printStackTrace();
         }
+    }
+
+    /**
+     * Get a query to filter out lucene results to be tested based on the path
+     * pattern.
+     * 
+     * @param dumpEvidence
+     *            Dump evidence root, so the query will apply only to its children.
+     * @param pattern
+     *            GLOB search Pattern of the items to be searched
+     */
+    private String patternToLuceneQuery(IItem dumpEvidence, String pattern) {
+        String query = "path:\"" + dumpEvidence.getPath() + "\"";
+
+        StringTokenizer st = new StringTokenizer(pattern, "/");
+        String token = null;
+        String field = "path:";
+        while (st.hasMoreTokens()) {
+            token = st.nextToken();
+            if (!st.hasMoreTokens()) {
+                field = "name:";// for last token we use the name field
+            }
+            if (!token.contains("*")) {
+                query += " && " + field + "\"" + token + "\"";
+            } else {
+                StringTokenizer st2 = new StringTokenizer(token, "*");
+                String token2 = null;
+                while (st2.hasMoreTokens()) {
+                    token2 = st2.nextToken();
+                    String value = token2;
+                    if (field.equals("name:")) {
+                        int index = token2.lastIndexOf(".");
+                        if (index >= 0) {// extension found
+                            value = token2.substring(0, index);
+                            String ext = token2.substring(index + 1);
+                            String parts[] = ext.split("[^a-zA-Z0-9]");
+                            for (String part : parts) {
+                                query += " && ext:*" + part + "*";
+                            }
+                        }
+                    }
+                    String parts[] = value.split("[^a-zA-Z0-9]");
+                    for (String part : parts) {
+                        query += " && " + field + "*" + part + "*";
+                    }
+                }
+            }
+        }
+        return query;
     }
 }
