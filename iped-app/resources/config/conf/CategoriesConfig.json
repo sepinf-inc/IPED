@@ -86,7 +86,7 @@
         {"name": "Facebook", "mimes":["application/x-ufed-chat-preview-facebook"]},
         {"name": "Instagram", "mimes":["application/x-ufed-chat-preview-instagram"]},
         {"name": "Discord", "mimes":["application/x-discord-index", "application/x-discord-chat"]},
-        {"name": "Badoo", "mimes":["application/aleapp-badoochat"]}
+        {"name": "Badoo", "mimes":["application/aleapp-badoochat"]},
         {"name": "Chat Activities", "mimes": ["application/x-ufed-chatactivity"]},
         {"name": "Others Chats", "mimes":["application/x-ufed-html-chats", "application/x-ufed-chats-txt", "application/x-ufed-chat", "application/x-ufed-chat-preview"]}
     ]},
