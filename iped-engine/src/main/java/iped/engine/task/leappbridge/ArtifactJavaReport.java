@@ -259,7 +259,10 @@ public class ArtifactJavaReport {
         }
 
         try {
-            // some plugins have the linked item per artifact record
+            if (value.startsWith("/storage/emulated/0")) {
+                value = value.replace("/storage/emulated/0", reportDumpPath.getCanonicalPath() + "/data/media/0");
+            }
+            // some plugins have linked items per artifact record
             if (value.startsWith(reportDumpPath.getCanonicalPath())) {
                 String filel = value.toString().substring(reportDumpPath.getCanonicalPath().length());
                 addLinkMetadata(m, property, filel);
