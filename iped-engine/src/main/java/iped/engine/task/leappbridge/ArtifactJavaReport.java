@@ -286,33 +286,41 @@ public class ArtifactJavaReport {
             if (strDelimiter.equals("'") || strDelimiter.equals("\"")) {
                 end = refFileStr.indexOf(strDelimiter, 2);
             }
+            
 
             try {
                 refFileStr = refFileStr.substring(1, end); // to end string delimiter
-                if (refFileStr.startsWith("." + File.pathSeparator)) {
-                    refFileStr = reportDumpPath + File.pathSeparator + refFileStr.substring(1);
-                }
 
-                File refFile = new File(refFileStr);
+                if (isGoogleMapsLink(refFileStr)) {
+                    tryExtractGoogleMapsLinkCoords(m, refFileStr);
+                }else {
+                    if (refFileStr.startsWith(".") || refFileStr.startsWith("\\") || refFileStr.startsWith("/")) {
+                        if (refFileStr.startsWith("." + File.pathSeparator)) {
+                            refFileStr = reportDumpPath + File.pathSeparator + refFileStr.substring(1);
+                        }
 
-                if (refFile.getCanonicalPath().startsWith(reportDumpPath.getCanonicalPath())) {
-                    // the referenced file is an existent file inside the dump
-                    // so adds a link to it
-                    String filel = refFileStr.toString().substring(reportDumpPath.getCanonicalPath().length());
-                    addLinkMetadata(m, filel);
-                } else if (refFileStr.startsWith(reportPath.getName())) {
-                    // file is in report path.
-                    byte[] bytes = Files
-                            .readAllBytes(Path.of(reportPath.getParentFile().getAbsolutePath() + "/" + refFile));
+                        File refFile = new File(refFileStr);
 
-                    ExportFileTask extractor = new ExportFileTask();
-                    extractor.setWorker(worker);
-                    ByteArrayInputStream is = new ByteArrayInputStream(bytes);
-                    extractor.extractFile(is, subItem, subItem.getLength());
+                        if (refFile.getCanonicalPath().startsWith(reportDumpPath.getCanonicalPath())) {
+                            // the referenced file is an existent file inside the dump
+                            // so adds a link to it
+                            String filel = refFileStr.toString().substring(reportDumpPath.getCanonicalPath().length());
+                            addLinkMetadata(m, filel);
+                        } else if (refFileStr.startsWith(reportPath.getName())) {
+                            // file is in report path.
+                            byte[] bytes = Files.readAllBytes(
+                                    Path.of(reportPath.getParentFile().getAbsolutePath() + "/" + refFile));
 
-                    return; // do not add metadata with this value as it contains temporary reference
-                } else {
-                    nope();
+                            ExportFileTask extractor = new ExportFileTask();
+                            extractor.setWorker(worker);
+                            ByteArrayInputStream is = new ByteArrayInputStream(bytes);
+                            extractor.extractFile(is, subItem, subItem.getLength());
+
+                            return; // do not add metadata with this value as it contains temporary reference
+                        } else {
+                            nope();
+                        }
+                    }
                 }
             } catch (IOException e) {
                 LeappBridgeTask.logger.warn("Error in link creation to:" + refFileStr);
@@ -353,6 +361,34 @@ public class ArtifactJavaReport {
         m.add(LeappBridgeTask.ALEAPP_METADATA_PREFIX + ":" + property, value);
     }
 
+    private void tryExtractGoogleMapsLinkCoords(Metadata m, String refFileStr) {
+        int latIndex = refFileStr.indexOf("/dir/") + 5;
+        if (latIndex > 5) {
+            String latStr = refFileStr.substring(latIndex, refFileStr.indexOf(",", latIndex) - 1);
+            int longIndex = refFileStr.indexOf(",", latIndex) + 1;
+            String longStr = refFileStr.substring(longIndex, refFileStr.indexOf("/", latIndex) - 1);
+            String coordsStr = latStr + ";" + longStr;
+
+            m.add(LeappBridgeTask.ALEAPP_METADATA_PREFIX + ":" + "toDirection", coordsStr);
+            checkAndAddLocation(m, latStr + ";" + longStr);
+
+            latIndex = refFileStr.indexOf("/@", longIndex) + 2;
+            if (latIndex > 2) {
+                latStr = refFileStr.substring(latIndex, refFileStr.indexOf("z", latIndex) - 1);
+                longIndex = refFileStr.indexOf(",", latIndex) + 1;
+                longStr = refFileStr.substring(longIndex, refFileStr.indexOf("/", latIndex) - 1);
+                coordsStr = latStr + ";" + longStr;
+
+                m.add(LeappBridgeTask.ALEAPP_METADATA_PREFIX + ":" + "fromDirection", coordsStr);
+                checkAndAddLocation(m, latStr + ";" + longStr);
+            }
+        }
+    }
+
+    private boolean isGoogleMapsLink(String refFileStr) {
+        return refFileStr.trim().startsWith("https://google.com/maps");
+    }
+
     private void addLinkMetadata(Metadata m, String filel) throws IOException {
         filel = LeappBridgeTask.revertSpecialChars(filel).replace("/", "////");
         String filename = filel.substring(filel.lastIndexOf("/") + 1);
@@ -365,7 +401,7 @@ public class ArtifactJavaReport {
     }
 
     public void add_section_heading(String heading, int size) {
-        System.out.println("add_section_heading:" + heading + "(" + size + ")");
+        // System.out.println("add_section_heading:" + heading + "(" + size + ")");
     }
 
 
