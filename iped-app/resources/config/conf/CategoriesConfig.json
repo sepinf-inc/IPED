@@ -95,6 +95,7 @@
     {"name": "Programs and Libraries", "mimes": ["application/java-archive", "application/x-dosexec", "application/x-msdownload", "application/x-bat", "application/vnd.ms-cab-compressed", "application/x-font-ttf", "application/pkcs7-signature", "application/vnd.ms-htmlhelp", "application/java-vm", "application/vnd.ms-pki.seccat", "application/x-ms-installer", "application/x-ufed-html-apps", "application/x-ufed-installedapplication","application/aleapp-packages"],
         "categories":[
             {"name": "AppRoles"},
+            {"name": "App Notifications"},
             {"name":"Installed via PlayStore", "mimes":["application/aleapp-installedapps-vending"]},
             {"name":"Update information", "mimes":["application/aleapp-installedapps-gms"]},
             {"name":"Google User Linked Apps", "mimes":["application/aleapp-installedapps-library"]},

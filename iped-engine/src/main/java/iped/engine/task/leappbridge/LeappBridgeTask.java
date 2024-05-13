@@ -714,6 +714,11 @@ public class LeappBridgeTask extends AbstractPythonTask {
             Metadata m = e.getMetadata();
             String pluginName = m.get(ALEAPP_PLUGIN);
 
+            if (pluginName.startsWith("FCMQueueMessages")) {
+                e.setCategory("APP Notifications");
+                return;
+            }
+
             if (pluginName.equals("accounts_ce") || pluginName.equals("accounts_de")) {
                 e.setCategory("User Accounts");
                 return;
