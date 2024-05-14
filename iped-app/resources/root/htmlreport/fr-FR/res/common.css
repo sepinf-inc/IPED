@@ -1,0 +1,120 @@
+/* CSS Document */
+
+/* This css contains definitions that are used by all
+   the generated report html pages (except Index.html)
+   All of the report sections used one or more of the 
+   following definitions */ 
+
+/* The body selector applies to all the pages, thus 
+   if you want to change font, font-size etc, change 
+   the properties here */
+body
+{
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12px;
+}
+/* all html table set to no border */
+table
+{
+    border:none;
+}
+
+/* define color of light gray used within header etc */
+.clrBkgrnd
+{
+    background-color:#F2F0E6
+}
+
+/* define a value used within bookmark section */
+.bkmkValue
+{
+    border-bottom-style:inset;
+    border-bottom-width:thin;
+}
+
+/* define all the Heading properties */
+.contentHead, .bkmkColHead, .bkmkLblFiles
+{
+    border-bottom:groove; 
+    border-top:groove; 
+    background-color:#D2C8AE;
+    text-align:left;
+    font-size: 20px;
+    color:#21536A
+}
+
+/* .labelBorderless used in conjuction with .clrBkgrnd
+   for the background-color property */
+.labelBorderless 
+{ 
+    font-weight:bold;
+    text-align:left; 
+}
+
+/* all graohic numbers definition */
+.graphicNumbers
+{
+    font-weight:bold
+}
+
+/* define all link properties */
+a
+{
+    text-decoration:none;
+}
+a:hover
+{ 
+    text-decoration:underline;
+}
+
+th.columnHead 
+{ 
+    border-bottom:double; 
+    border-top:ridge; 
+    text-align:left; 
+    background-color:#D2C8AE 
+}
+
+td
+{
+    border-left:none;
+    border-right:none;
+    border-top:none
+}
+/* td.label used in conjuction with .clrBkgrnd
+   for the background-color property */
+td.label 
+{ 
+    font-weight:bold; 
+    text-align:left; 
+    border-right:solid; 
+    border-right-width:thin; 
+}
+/* td.graphicNumber used in conjuction with .clrBkgrnd
+   and graphicNumbers; For the background-color property 
+   and font-weight property*/
+td.graphicNumber
+{
+    text-align:center;
+    border:groove; 
+}
+td.graphicPath
+{
+    border:none;
+}
+td.graphic
+{
+    border:solid;
+    border-width:thin
+}
+
+/*td.screenCaptureDesc used in screen captures section*/
+td.screenCaptureDesc
+{
+    text-align:center;    
+}
+
+
+div.row, p {
+    clear:both;
+}
