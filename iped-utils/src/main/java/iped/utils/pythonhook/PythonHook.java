@@ -37,6 +37,10 @@ public class PythonHook {
         return result;
     }
 
+    public static PythonHook getHook(Jep jep) {
+        return installedHooks.get(jep);
+    }
+
     private PythonHook(Jep jep) {
         this.jep = jep;
         installHook();
@@ -78,24 +82,28 @@ public class PythonHook {
         return source;
     }
 
+    boolean fileOpenOverriden = false;
     public void overrideFileOpen(Method method) {
-        String packageName = method.getDeclaringClass().getPackageName();
-        String className = method.getDeclaringClass().getSimpleName();
-        String methodName = method.getName();
+        if (!fileOpenOverriden) {
+            String packageName = method.getDeclaringClass().getPackageName();
+            String className = method.getDeclaringClass().getSimpleName();
+            String methodName = method.getName();
 
-        jep.eval(contextWrapper);
+            jep.eval(contextWrapper);
 
-        StringBuffer def = new StringBuffer("lambda *args, **kwargs:");
-        def.append("ContextWrapper(");
-        def.append(className + "." + methodName + "(");
-        def.append("locals()['args'],locals()['kwargs']");
-        def.append(")");
-        def.append(")");
+            StringBuffer def = new StringBuffer("lambda *args, **kwargs:");
+            def.append("ContextWrapper(");
+            def.append(className + "." + methodName + "(");
+            def.append("locals()['args'],locals()['kwargs']");
+            def.append(")");
+            def.append(")");
 
-        // overrides open
-        jep.eval("from " + packageName + " import " + className);
-        jep.eval("globals()['__builtins__']['oldopen']=globals()['__builtins__']['open']");
-        jep.eval("globals()['__builtins__']['open']=" + def);
+            // overrides open
+            jep.eval("from " + packageName + " import " + className);
+            jep.eval("globals()['__builtins__']['oldopen']=globals()['__builtins__']['open']");
+            jep.eval("globals()['__builtins__']['open']=" + def);
+            fileOpenOverriden = true;
+        }
     }
 
     public void installHook() {

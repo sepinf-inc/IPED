@@ -9,9 +9,15 @@ import java.util.Collection;
 public class FileHook {
     FileInputStream fis;
     File f;
+    String encoding;
 
     public FileHook(String path, String... args) {
         f = new File(path);
+    }
+
+    public FileHook(String path, String mode, String encoding) {
+        f = new File(path);
+        encoding = encoding;
     }
 
     public FileHook(String path, String mode) {
@@ -22,15 +28,24 @@ public class FileHook {
         this(path, "r");
     }
 
-    public String read() throws FileNotFoundException {
+    public FileInputStream getFileInputStream() throws FileNotFoundException {
         if (fis == null) {
             fis = new FileInputStream(f);
         }
-        return "old";
+        return fis;
+    }
+
+    public byte[] read() throws IOException {
+        return getFileInputStream().readAllBytes();
+    }
+
+    public byte[] read(int i) throws IOException {
+        return getFileInputStream().readNBytes(i);
     }
 
     public void enter() {
         try {
+            fis = null;
             System.out.println("Enter:" + f.getCanonicalPath());
         } catch (IOException e) {
             // TODO Auto-generated catch block
@@ -40,11 +55,19 @@ public class FileHook {
 
     public void exit(Collection args) {
         try {
+            if (fis != null) {
+                fis.close();
+                fis = null;
+            }
             System.out.println("Exit:" + f.getCanonicalPath());
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+    }
+
+    public void write() {
+        // do not write
     }
 
     public void close() throws IOException {
