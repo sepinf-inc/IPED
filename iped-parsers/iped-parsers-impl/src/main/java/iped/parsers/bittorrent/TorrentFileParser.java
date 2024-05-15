@@ -520,7 +520,7 @@ public class TorrentFileParser extends AbstractParser {
                             }
                         }
                     }
-                    itemPiecesMatchInfo.finalPiece = n + firstPiece;
+                    itemPiecesMatchInfo.finalPiece = n + firstPiece - 1;
                     itemPiecesMatchInfo.item = item;
 
                     // Found an item that matches all pieces hashes
