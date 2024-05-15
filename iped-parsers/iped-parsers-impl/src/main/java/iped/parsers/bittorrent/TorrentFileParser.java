@@ -294,8 +294,10 @@ public class TorrentFileParser extends AbstractParser {
             xhtml.characters(LocalizedFormat.format(itemPiecesMatchInfo.startPiece + 1));
             xhtml.characters("-");
             xhtml.characters(LocalizedFormat.format(itemPiecesMatchInfo.finalPiece + 1));
-            xhtml.characters(" " + strAtOffset + " ");
-            xhtml.characters(LocalizedFormat.format(itemPiecesMatchInfo.startOffset));
+            if (itemPiecesMatchInfo.startOffset != 0) {
+                xhtml.characters(" " + strAtOffset + " ");
+                xhtml.characters(LocalizedFormat.format(itemPiecesMatchInfo.startOffset));
+            }
             xhtml.characters(")");
             xhtml.endElement("span");
         }
