@@ -45,6 +45,7 @@ import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.SearchResult;
 import iped.utils.DateUtil;
+import iped.utils.IOUtil;
 import iped.utils.pythonhook.FileHook;
 import iped.utils.pythonhook.PythonHook;
 import jep.Jep;
@@ -103,6 +104,7 @@ public class LeappBridgeTask extends AbstractPythonTask {
     private HashMap<String, Document> filesFoundDocuments;
 
     private ALeappConfig config;
+    private PythonHook pt;
 
     static private File aleappDir;
 
@@ -112,7 +114,17 @@ public class LeappBridgeTask extends AbstractPythonTask {
 
     public static Object open(Collection args, Map kargs) {
         Iterator iargs = args.iterator();
-        return new FileHook(iargs.next().toString());
+        Object[] o = args.toArray();
+        if (o.length == 1) {
+            return new FileHook((String) o[0]);
+        }
+        if (o.length == 2) {
+            return new FileHook((String) o[0], (String) o[1]);
+        }
+        if (o.length == 3) {
+            return new FileHook((String) o[0], (String) o[1], (String) o[3]);
+        }
+        return null;
     }
 
     @Override
@@ -140,11 +152,15 @@ public class LeappBridgeTask extends AbstractPythonTask {
             Ilapfuncs.install(jep);
             PythonHook pt = PythonHook.installHook(jep);
             pt.wrapsClass("scripts.artifact_report", "ArtifactHtmlReport", ArtifactJavaReport.class);
-
+            
             pluginsManager.init(jep, getAleappScriptsDir());
         } else {
             throw new Exception("ALeapp plugin scripts path not found:" + artifactsPath.getCanonicalPath());
         }
+    }
+
+    public FileHook open(String filePath, String mode) {
+        return new FileHook(filePath, mode);
     }
 
     @Override
@@ -229,6 +245,12 @@ public class LeappBridgeTask extends AbstractPythonTask {
                     jep.set("mappedEvidences", mappedEvidences);
 
                     jep.eval("logfunc('" + PLUGIN_EXECUTION_MESSAGE + ":" + p.getModuleName() + "')");
+
+                    //
+                    // PythonHook pt = PythonHook.installHook(jep);
+                    // pt.overrideFileOpen(LeappBridgeTask.class.getMethod("open", String.class,
+                    // String.class));
+
                     jep.eval("parse(" + lists + ",'"
                             + reportPath.getCanonicalPath().replace("\\", "\\\\") + "',dumb,True,'UTC')");
                 } finally {
@@ -531,7 +553,7 @@ public class LeappBridgeTask extends AbstractPythonTask {
                 for (String pattern : p.patterns) {
                     IPEDSearcher filesSearcher = new IPEDSearcher(ipedCase);
                     
-                    
+
                     String query = patternToLuceneQuery(dumpEvidence, pattern);
                     filesSearcher.setQuery(query);
                     SearchResult filesResult = filesSearcher.search();
@@ -554,17 +576,39 @@ public class LeappBridgeTask extends AbstractPythonTask {
                                 IItem item = ipedCase.getItemByLuceneID(artLuceneId);
                                 File tmp = item.getTempFile();
 
-                                String sourcePath = new File(
-                                        ipedCase.getCaseDir() + "/" + artdoc.get(IndexItem.SOURCE_PATH))
-                                                .getCanonicalPath();
+                                if (!IOUtil.isTemporaryFile(tmp)) {
+                                    if (tmp.getCanonicalPath().startsWith(ipedCase.getCaseDir().getCanonicalPath())) {
+                                        // getTempFile returned the file exported in the output case path
+                                        String artParentPath = artpath.substring(0, artpath.lastIndexOf("/"));
+                                        String artname = artpath.substring(artParentPath.length());
+                                        File artfolder = new File(reportDumpPath, artParentPath);
+                                        artfolder.mkdirs();
 
+                                        File file_found = new File(artfolder, artname);
 
-                                if (tmp.getCanonicalPath().startsWith(sourcePath)) {
-                                    reportDumpPath = new File(sourcePath);
-                                    // the file returned by getTempFile() is the file itself
-                                    String fileStr = preparePythonLiteralPath(tmp.getCanonicalPath());
-                                    filesFound.add(fileStr);
-                                    filesFoundDocuments.put(fileStr, artdoc);
+                                        if (!file_found.exists()) {
+                                            // if the file wasn't already placed by prior iterations, copy its content
+                                            if (!tmp.isDirectory()) {
+                                                Files.copy(tmp.toPath(), file_found.toPath());
+                                            } else {
+                                                // should not occur
+                                                System.out.println();
+                                            }
+                                        }
+                                        String fileStr = preparePythonLiteralPath(file_found.getCanonicalPath());
+                                        filesFound.add(fileStr);
+                                        filesFoundDocuments.put(fileStr, artdoc);
+                                    } else {
+                                        // the file returned by getTempFile() is the file itself. It must occur
+                                        // only if the source evidence is a "path" (not a container)
+                                        String sourcePath = new File(
+                                                ipedCase.getCaseDir() + "/" + artdoc.get(IndexItem.SOURCE_PATH))
+                                                        .getCanonicalPath();
+                                        reportDumpPath = new File(sourcePath);
+                                        String fileStr = preparePythonLiteralPath(tmp.getCanonicalPath());
+                                        filesFound.add(fileStr);
+                                        filesFoundDocuments.put(fileStr, artdoc);
+                                    }
                                 } else {
                                     // the file returned by getTempFile() is a copy to the file in a temp folder
                                     // so recreate the path structure inside the temp folder

@@ -28,6 +28,8 @@ public class Ilapfuncs {
                     Ilapfuncs.class.getMethod("media_to_html", String.class, Collection.class, String.class));
             pt.overrideModuleFunction("scripts.ilapfuncs", "logdevinfo",
                     Ilapfuncs.class.getMethod("logdevinfo", String.class));
+            pt.overrideModuleFunction("scripts.ilapfuncs", "tsv", Ilapfuncs.class.getMethod("tsv", String.class,
+                    Collection.class, Collection.class, String.class));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -63,6 +65,11 @@ public class Ilapfuncs {
     }
 
     public static void timeline(String reportFolder, String tlactivity, Collection datalist, Collection data_headers) {
+
+    }
+
+    public static void tsv(String reportFolder, Collection data_headers, Collection data_list, String tsvname,
+            String srcfile) {
 
     }
 
