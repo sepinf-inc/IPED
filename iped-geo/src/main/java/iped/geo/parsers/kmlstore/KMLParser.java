@@ -17,12 +17,14 @@ import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
+import org.slf4j.LoggerFactory;
 
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 
 public class KMLParser {
+    private static org.slf4j.Logger LOGGER = LoggerFactory.getLogger(KMLParser.class);
 
     public static List<Object> parse(File file) throws SchemaException, IOException, JDOMException {
         /*
@@ -52,6 +54,8 @@ public class KMLParser {
         Element kml = document.getRootElement();
         Element placemarks = kml.getChildren().get(0);
         List<Element> pms = placemarks.getChildren();
+        
+        ArrayList<Exception> exList = new ArrayList<Exception>();
 
         for (Iterator<Element> iterator = pms.iterator(); iterator.hasNext();) {
             Element ele = iterator.next();
@@ -60,17 +64,17 @@ public class KMLParser {
                 if (isTrack(ele)) {
                     parsePlacemarkTrack(ele, features, featureBuilder);
                 } else {
-                    try {
-                        features.add(parsePlacemark(ele, featureBuilder));
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+                    features.add(parsePlacemark(ele, featureBuilder, exList));
                 }
             }
             if (ele.getName().toLowerCase().equals("folder")) {
-                Folder f = parseFolder(ele, featureBuilder);
+                Folder f = parseFolder(ele, featureBuilder, exList);
                 features.add(f);
             }
+        }
+
+        if (exList.size() > 0) {
+            LOGGER.warn("GeofileParser encountered " + exList.size() + " invalid geo features.");
         }
 
         return features;
@@ -131,7 +135,8 @@ public class KMLParser {
         return false;
     }
 
-    public static SimpleFeature parsePlacemark(Element pm, SimpleFeatureBuilder featureBuilder) {
+    public static SimpleFeature parsePlacemark(Element pm, SimpleFeatureBuilder featureBuilder,
+            ArrayList<Exception> exList) {
         List<Element> eles = pm.getChildren();
         GeometryFactory geometryFactory = JTSFactoryFinder.getGeometryFactory();
         Geometry geo = null;
@@ -154,7 +159,7 @@ public class KMLParser {
                 timestamp = ele.getChildren().get(0).getText();
                 continue;
             }
-            Geometry geoInt = parseGeometry(ele, geometryFactory);
+            Geometry geoInt = parseGeometry(ele, geometryFactory, exList);
             if (geoInt != null) {
                 geo = geoInt;
             }
@@ -202,78 +207,106 @@ public class KMLParser {
         }
     }
 
-    public static Geometry parseGeometry(Element ele, GeometryFactory geometryFactory) {
+    public static Coordinate[] closePlygonCoords(Coordinate[] coords) {
+        Coordinate[] closedCoords = new Coordinate[coords.length + 1];
+        for (int j = 0; j < coords.length; j++) {
+            closedCoords[j] = coords[j];
+        }
+        closedCoords[coords.length] = coords[0];
+        return closedCoords;
+    }
+
+    public static Geometry parseGeometry(Element ele, GeometryFactory geometryFactory, ArrayList<Exception> exList) {
         Geometry geo = null;
 
-        if (ele.getName().toLowerCase().equals("point")) {
-            Coordinate coord = parsePoint(ele);
-            geo = geometryFactory.createPoint(coord);
-        }
+        try {
+            if (ele.getName().toLowerCase().equals("point")) {
+                Coordinate coord = parsePoint(ele);
+                geo = geometryFactory.createPoint(coord);
+            }
 
-        if (ele.getName().toLowerCase().equals("linestring") || ele.getName().toLowerCase().equals("linearring")) {
-            List<Element> eles = ele.getChildren();
-            Element coordsEle = null;
-            for (Iterator<Element> iterator = eles.iterator(); iterator.hasNext();) {
-                Element element = iterator.next();
-                if (element.getName().toLowerCase().equals("coordinates")) {
-                    coordsEle = element;
-                    break;
+            if (ele.getName().toLowerCase().equals("linestring") || ele.getName().toLowerCase().equals("linearring")) {
+                List<Element> eles = ele.getChildren();
+                Element coordsEle = null;
+                for (Iterator<Element> iterator = eles.iterator(); iterator.hasNext();) {
+                    Element element = iterator.next();
+                    if (element.getName().toLowerCase().equals("coordinates")) {
+                        coordsEle = element;
+                        break;
+                    }
+                }
+
+                String coordinates = coordsEle.getText().trim();
+                StringTokenizer st = new StringTokenizer(coordinates, " \t\n\r");
+                Coordinate[] coords = new Coordinate[st.countTokens()];
+                int i = 0;
+                while (st.hasMoreTokens()) {
+                    String tok = st.nextToken(" ");
+                    coords[i] = parseCoordinate(tok);
+                    i++;
+                }
+
+                if (coords.length < 3) {
+                    geo = geometryFactory.createLineString(coords);
+                } else {
+                    if (ele.getName().toLowerCase().equals("linestring")) {
+                        geo = geometryFactory.createLineString(coords);
+                    } else {
+                        try {
+                            geo = geometryFactory.createLinearRing(coords);
+                        } catch (IllegalArgumentException e) {
+                            if (e.getMessage().contains("closed linestring")) {
+                                try {
+                                    geo = geometryFactory.createLineString(coords);
+                                } catch (Exception e2) {
+                                    throw e2;
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
-            String coordinates = coordsEle.getText().trim();
-            StringTokenizer st = new StringTokenizer(coordinates, " \t\n\r");
-            Coordinate[] coords = new Coordinate[st.countTokens()];
-            int i = 0;
-            while (st.hasMoreTokens()) {
-                String tok = st.nextToken(" ");
-                coords[i] = parseCoordinate(tok);
-                i++;
-            }
-            if (ele.getName().toLowerCase().equals("linestring")) {
-                geo = geometryFactory.createLineString(coords);
-            } else {
-                geo = geometryFactory.createLinearRing(coords);
-            }
-        }
-
-        if (ele.getName().toLowerCase().equals("polygon")) {
-            Element boundary = null;
-            List<Element> eles = ele.getChildren();
-            for (Iterator<Element> iterator = eles.iterator(); iterator.hasNext();) {
-                Element element = iterator.next();
-                if (element.getName().toLowerCase().equals("outerboundaryis")) {
-                    boundary = element;
-                    break;
+            if (ele.getName().toLowerCase().equals("polygon")) {
+                Element boundary = null;
+                List<Element> eles = ele.getChildren();
+                for (Iterator<Element> iterator = eles.iterator(); iterator.hasNext();) {
+                    Element element = iterator.next();
+                    if (element.getName().toLowerCase().equals("outerboundaryis")) {
+                        boundary = element;
+                        break;
+                    }
+                    if (element.getName().toLowerCase().equals("innerboundaryis")) {
+                        boundary = element;
+                        break;
+                    }
                 }
-                if (element.getName().toLowerCase().equals("innerboundaryis")) {
-                    boundary = element;
-                    break;
+
+                if (boundary != null) {
+                    geo = parseGeometry(boundary.getChildren().get(0), geometryFactory, exList);
                 }
             }
 
-            if (boundary != null) {
-                geo = parseGeometry(boundary.getChildren().get(0), geometryFactory);
-            }
-        }
+            if (ele.getName().toLowerCase().equals("multigeometry")) {
+                List<Geometry> geos = new ArrayList<Geometry>();
 
-        if (ele.getName().toLowerCase().equals("multigeometry")) {
-            List<Geometry> geos = new ArrayList<Geometry>();
-
-            List<Element> eles = ele.getChildren();
-            for (Iterator<Element> iterator = eles.iterator(); iterator.hasNext();) {
-                Geometry subgeo = parseGeometry(iterator.next(), geometryFactory);
-                if (subgeo != null) {
-                    geos.add(subgeo);
+                List<Element> eles = ele.getChildren();
+                for (Iterator<Element> iterator = eles.iterator(); iterator.hasNext();) {
+                    Geometry subgeo = parseGeometry(iterator.next(), geometryFactory, exList);
+                    if (subgeo != null) {
+                        geos.add(subgeo);
+                    }
                 }
+                geo = geometryFactory.buildGeometry(geos);
             }
-            geo = geometryFactory.buildGeometry(geos);
+        } catch (Exception e) {
+            exList.add(e);
         }
 
         return geo;
     }
 
-    public static Folder parseFolder(Element pm, SimpleFeatureBuilder featureBuilder) {
+    public static Folder parseFolder(Element pm, SimpleFeatureBuilder featureBuilder, ArrayList<Exception> exList) {
         List<Object> features = new ArrayList<Object>();
         Folder folder = new Folder();
 
@@ -282,10 +315,10 @@ public class KMLParser {
             Element ele = iterator.next();
             try {
                 if (ele.getName().toLowerCase().equals("placemark")) {
-                    features.add(parsePlacemark(ele, featureBuilder));
+                    features.add(parsePlacemark(ele, featureBuilder, exList));
                 }
                 if (ele.getName().toLowerCase().equals("folder")) {
-                    features.add(parseFolder(ele, featureBuilder));
+                    features.add(parseFolder(ele, featureBuilder, exList));
                 }
                 if (ele.getName().toLowerCase().equals("name")) {
                     folder.setName(ele.getText());
