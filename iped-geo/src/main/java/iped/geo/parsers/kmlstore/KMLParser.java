@@ -1,7 +1,10 @@
 package iped.geo.parsers.kmlstore;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -27,6 +30,34 @@ public class KMLParser {
     private static org.slf4j.Logger LOGGER = LoggerFactory.getLogger(KMLParser.class);
 
     public static List<Object> parse(File file) throws SchemaException, IOException, JDOMException {
+        try (FileInputStream fis = new FileInputStream(file)) {
+            return parse(fis);
+        } catch (Exception e) {
+            if (e.getMessage().contains("The prefix \"gx\" for element \"gx:altitudeMode\" is not bound")) {
+                try (FileInputStream fis = new FileInputStream(file)) {
+                    byte[] bytes = fis.readAllBytes();
+                    String s = new String(bytes);
+                    s = s.replace("<kml ", "<kml xmlns:gx=\"http://www.google.com/kml/ext/2.2\" ");
+                    return KMLParser.parse(new ByteArrayInputStream(s.getBytes()));
+                } catch (Exception e2) {
+                    throw e2;
+                }
+            }
+            if (e.getMessage().contains("byte UTF-8 sequence")) {
+                try (FileInputStream fis = new FileInputStream(file)) {
+                    byte[] bytes = fis.readAllBytes();
+                    String s = new String(bytes);
+                    s = s.replace("encoding=\"UTF-8\"", "encoding=\"windows-1252\"");
+                    return KMLParser.parse(new ByteArrayInputStream(s.getBytes()));
+                } catch (Exception e2) {
+                    throw e2;
+                }
+            }
+            throw e;
+        }
+    }
+
+    public static List<Object> parse(InputStream is) throws SchemaException, IOException, JDOMException {
         /*
          * A list to collect features as we create them.
          */
@@ -49,10 +80,11 @@ public class KMLParser {
         SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(placemarkFeatureType);
 
         SAXBuilder saxBuilder = new SAXBuilder();
-        Document document = saxBuilder.build(file);
+        Document document = saxBuilder.build(is);
 
         Element kml = document.getRootElement();
         Element placemarks = kml.getChildren().get(0);
+
         List<Element> pms = placemarks.getChildren();
         
         ArrayList<Exception> exList = new ArrayList<Exception>();
@@ -67,7 +99,7 @@ public class KMLParser {
                     features.add(parsePlacemark(ele, featureBuilder, exList));
                 }
             }
-            if (ele.getName().toLowerCase().equals("folder")) {
+            if (ele.getName().toLowerCase().equals("folder") || ele.getName().toLowerCase().equals("document")) {
                 Folder f = parseFolder(ele, featureBuilder, exList);
                 features.add(f);
             }
@@ -246,7 +278,7 @@ public class KMLParser {
                     i++;
                 }
 
-                if (coords.length < 3) {
+                if (coords.length < 4) {
                     geo = geometryFactory.createLineString(coords);
                 } else {
                     if (ele.getName().toLowerCase().equals("linestring")) {
@@ -317,7 +349,7 @@ public class KMLParser {
                 if (ele.getName().toLowerCase().equals("placemark")) {
                     features.add(parsePlacemark(ele, featureBuilder, exList));
                 }
-                if (ele.getName().toLowerCase().equals("folder")) {
+                if (ele.getName().toLowerCase().equals("folder") || ele.getName().toLowerCase().equals("document")) {
                     features.add(parseFolder(ele, featureBuilder, exList));
                 }
                 if (ele.getName().toLowerCase().equals("name")) {
