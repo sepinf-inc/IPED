@@ -6,13 +6,17 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
+import java.text.DateFormat;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.TimeZone;
 
 import javax.swing.UIManager;
 
@@ -27,6 +31,7 @@ import iped.parsers.util.MetadataUtil;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
+import iped.utils.DateUtil;
 import iped.utils.EmojiUtil;
 import iped.utils.LocalizedFormat;
 import iped.utils.SimpleHTMLEncoder;
@@ -45,7 +50,8 @@ import javafx.scene.web.WebEngine;
 
 public abstract class MetadataViewer extends AbstractViewer {
 
-    private DecimalFormat df = LocalizedFormat.getDecimalInstance("#,###.############"); //$NON-NLS-1$
+    private final DecimalFormat df = LocalizedFormat.getDecimalInstance("#,###.############"); //$NON-NLS-1$
+    private final DateFormat dateFormat = new SimpleDateFormat(Messages.getString("MetadataViewer.DateFormat"));
 
     private TabPane tabPane;
     private JFXPanel jfxPanel;
@@ -67,6 +73,8 @@ public abstract class MetadataViewer extends AbstractViewer {
 
     public MetadataViewer() {
         super(new GridLayout());
+
+        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
 
         jfxPanel = new JFXPanel();
         for (int i = 0; i < 3; i++)
@@ -252,12 +260,37 @@ public abstract class MetadataViewer extends AbstractViewer {
                 val = metadata.get(meta);
                 if (isNumeric(meta)) {
                     val = df.format(Double.valueOf(val));
+                } else {
+                    try {
+                        Date date = DateUtil.stringToDate(val);
+                        val = dateFormat.format(date);
+                    } catch (Exception e) {
+                    }
                 }
             } else {
                 String[] vals = metadata.getValues(meta);
                 if (isNumeric(meta)) {
                     for (int i = 0; i < vals.length; i++) {
                         vals[i] = df.format(Double.valueOf(vals[i]));
+                    }
+                } else {
+                    boolean isDate = true;
+                    for (int i = 0; i < vals.length; i++) {
+                        try {
+                            DateUtil.stringToDate(vals[i]);
+                        } catch (Exception e) {
+                            isDate = false;
+                            break;
+                        }
+                    }
+                    if (isDate) {
+                        for (int i = 0; i < vals.length; i++) {
+                            try {
+                                Date date = DateUtil.stringToDate(vals[i]);
+                                vals[i] = dateFormat.format(date);
+                            } catch (Exception e) {
+                            }
+                        }
                     }
                 }
                 val = Arrays.asList(vals).toString();
@@ -277,10 +310,10 @@ public abstract class MetadataViewer extends AbstractViewer {
         fillProp(sb, BasicProps.TYPE, item.getType());
         fillProp(sb, BasicProps.DELETED, item.isDeleted());
         fillProp(sb, BasicProps.CATEGORY, item.getCategorySet());
-        fillProp(sb, BasicProps.CREATED, item.getCreationDate());
-        fillProp(sb, BasicProps.MODIFIED, item.getModDate());
-        fillProp(sb, BasicProps.ACCESSED, item.getAccessDate());
-        fillProp(sb, BasicProps.CHANGED, item.getChangeDate());
+        fillProp(sb, BasicProps.CREATED, formatDate(item.getCreationDate()));
+        fillProp(sb, BasicProps.MODIFIED, formatDate(item.getModDate()));
+        fillProp(sb, BasicProps.ACCESSED, formatDate(item.getAccessDate()));
+        fillProp(sb, BasicProps.CHANGED, formatDate(item.getChangeDate()));
         fillProp(sb, BasicProps.HASH, item.getHash());
         fillProp(sb, BasicProps.PATH, item.getPath());
         sb.append("</table>"); //$NON-NLS-1$
@@ -345,6 +378,10 @@ public abstract class MetadataViewer extends AbstractViewer {
         } else {
             sb.append(SimpleHTMLEncoder.htmlEncode(str));
         }
+    }
+
+    private String formatDate(Date date) {
+        return date == null ? null : dateFormat.format(date);
     }
 
     private String format(Object value) {
