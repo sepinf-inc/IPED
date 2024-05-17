@@ -40,7 +40,7 @@ import iped.utils.QualityIcon;
  */
 public class IconManager {
 
-    public static final int defaultSize = 16;
+    public static final int defaultSize = 18;
     public static final int defaultGallerySize = 24;
     public static final int defaultCategorySize = 20;
 
