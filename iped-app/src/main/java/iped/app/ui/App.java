@@ -562,7 +562,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         resultsTable.setDefaultRenderer(String.class, new TableCellRenderer());
         resultsTable.setShowGrid(false);
         resultsTable.setAutoscrolls(false);
-        ((JComponent) resultsTable.getDefaultRenderer(Boolean.class)).setOpaque(true);
         FilterTableHeaderController.init(resultsTable.getTableHeader());
 
         InputMap inputMap = resultsTable.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
@@ -1486,8 +1485,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     }
 
     private void updateIconContainerUI(JComponent comp, int size, boolean updateUI) {
+        JTable table = null;
         if (comp instanceof JTable && comp != gallery) {
-            JTable table = (JTable) comp;
+            table = (JTable) comp;
             table.setRowHeight(size);
 
             // Set bookmark icons column width based on current icon size
@@ -1499,6 +1499,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         }
         if (updateUI) {
             comp.updateUI();
+        }
+        if (table != null) {
+            // Fix the background of boolean columns (with a CheckBox)
+            ((JComponent) table.getDefaultRenderer(Boolean.class)).setOpaque(true);
         }
     }
 
