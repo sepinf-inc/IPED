@@ -63,23 +63,23 @@ public class GalleryCellEditor extends AbstractCellEditor implements TableCellEd
 
         label.setHorizontalAlignment(JLabel.CENTER);
         check.addActionListener(this);
-        
+
         updateUI();
     }
-    
+
     public void updateUI() {
         selColor = UIManager.getColor("Gallery.cellSelected");
         if (selColor == null)
             selColor = new Color(180, 200, 230);
-        
+
         background = UIManager.getColor("Gallery.background");
         if (background == null)
             background = new Color(240, 240, 242);
-        
+
         Color selBorderColor = UIManager.getColor("Gallery.cellSelectBorder");
         if (selBorderColor == null)
             selBorderColor = new Color(20, 50, 80);
-        selBorder = BorderFactory.createLineBorder(selBorderColor, 1);    
+        selBorder = BorderFactory.createLineBorder(selBorderColor, 1);
 
         warningColor = UIManager.getColor("Gallery.warning");
         if (warningColor == null)

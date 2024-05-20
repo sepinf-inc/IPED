@@ -5,13 +5,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import iped.parsers.threema.ThreemaParser;
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MediaTypeRegistry;
 
 import iped.engine.task.leappbridge.LeappBridgeTask;
 import iped.parsers.ares.AresParser;
+import iped.parsers.bittorrent.BitTorrentResumeDatParser;
+import iped.parsers.bittorrent.TorrentFileParser;
+import iped.parsers.browsers.chrome.CacheIndexParser;
 import iped.parsers.discord.DiscordParser;
 import iped.parsers.emule.KnownMetParser;
 import iped.parsers.emule.PartMetParser;
@@ -23,6 +25,7 @@ import iped.parsers.shareaza.ShareazaLibraryDatParser;
 import iped.parsers.skype.SkypeParser;
 import iped.parsers.sqlite.SQLite3Parser;
 import iped.parsers.telegram.TelegramParser;
+import iped.parsers.threema.ThreemaParser;
 import iped.parsers.ufed.UFEDChatParser;
 import iped.parsers.usnjrnl.UsnJrnlParser;
 import iped.parsers.whatsapp.WhatsAppParser;
@@ -48,7 +51,6 @@ public class QueuesProcessingOrder {
 
     /** Definie as prioridades de processamento dos mimeTypes */
     private static Map<MediaType, Integer> installTypesToPostProcess() {
-
         Map<MediaType, Integer> mediaTypes = new HashMap<MediaType, Integer>();
 
         // support for embedded splitted images, must be before all other artifacts
@@ -69,12 +71,17 @@ public class QueuesProcessingOrder {
         mediaTypes.put(TelegramParser.TELEGRAM_DB, 3);
         mediaTypes.put(TelegramParser.TELEGRAM_DB_IOS, 3);
 
-        mediaTypes.put(MediaType.parse(DiscordParser.INDEX_MIME_TYPE), 2);
+        mediaTypes.put(CacheIndexParser.CHROME_INDEX_MIME_TYPE, 2);
+        mediaTypes.put(MediaType.parse(DiscordParser.CHAT_MIME_TYPE), 3);
+
         mediaTypes.put(MediaType.parse(KnownMetParser.EMULE_MIME_TYPE), 2);
         mediaTypes.put(MediaType.parse(PartMetParser.EMULE_PART_MET_MIME_TYPE), 2);
         mediaTypes.put(MediaType.parse(AresParser.ARES_MIME_TYPE), 2);
         mediaTypes.put(MediaType.parse(ShareazaLibraryDatParser.LIBRARY_DAT_MIME_TYPE), 2);
         mediaTypes.put(MediaType.parse(ShareazaDownloadParser.SHAREAZA_DOWNLOAD_META), 2);
+
+        mediaTypes.put(MediaType.parse(TorrentFileParser.TORRENT_FILE_MIME_TYPE), 2);
+        mediaTypes.put(MediaType.parse(BitTorrentResumeDatParser.RESUME_DAT_MIME_TYPE), 3);
 
         mediaTypes.put(WhatsAppParser.WA_DB, 2);
         mediaTypes.put(WhatsAppParser.MSG_STORE, 3);

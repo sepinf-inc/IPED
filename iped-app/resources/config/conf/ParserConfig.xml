@@ -307,6 +307,8 @@
                 <param name="extractMessages" type="bool">true</param>
                 <param name="mergeBackups" type="bool">true</param>
                 <param name="linkMediasByNameAndApproxSizeFallback" type="bool">true</param>
+                <!--Set as 0 to disable long path matching fallback-->                
+                <param name="linkMediasByLongPathFallback" type="int">40</param>
                 <param name="downloadConnectionTimeout" type="int">500</param>
                 <param name="downloadReadTimeout" type="int">1000</param>
                 <param name="recoverDeletedRecords" type="bool">true</param>
@@ -350,6 +352,7 @@
             </params>
         </parser>
         <parser class="iped.parsers.bittorrent.BitTorrentResumeDatParser"></parser>
+        <parser class="iped.parsers.bittorrent.BitTorrentGenericDatParser"></parser>
         <parser class="iped.parsers.bittorrent.TorrentFileParser"></parser>
         <parser class="iped.parsers.lnk.LNKShortcutParser"></parser>
         <parser class="iped.parsers.misc.GenericOLEParser"></parser>
@@ -373,6 +376,7 @@
         <parser class="iped.parsers.mail.win10.Win10MailParser"></parser>
         <parser class="iped.parsers.discord.DiscordParser"></parser>
         <parser class="iped.parsers.apk.APKParser"></parser>
+        <parser class="iped.parsers.vlc.VLCIniParser"></parser>
 
     </parsers>
 

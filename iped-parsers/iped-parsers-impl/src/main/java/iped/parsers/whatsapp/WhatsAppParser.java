@@ -169,6 +169,7 @@ public class WhatsAppParser extends SQLite3DBParser {
     private boolean extractMessages = true;
     private boolean linkMediasByNameAndApproxSizeFallback = true;
     private boolean mergeBackups = false;
+    private int linkMediasByLongPathFallback = 0;
     private int downloadConnectionTimeout = 500;
     private int downloadReadTimeout = 500;
     private boolean recoverDeletedRecords = true;
@@ -198,6 +199,11 @@ public class WhatsAppParser extends SQLite3DBParser {
     @Field
     public void setLinkMediasByNameAndApproxSizeFallback(boolean linkMediasByNameAndApproxSizeFallback) {
         this.linkMediasByNameAndApproxSizeFallback = linkMediasByNameAndApproxSizeFallback;
+    }
+
+    @Field
+    public void setLinkMediasByLongPathFallback(int linkMediasByLongPathFallback) {
+        this.linkMediasByLongPathFallback = linkMediasByLongPathFallback;
     }
 
     @Field
@@ -325,7 +331,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                     chatMetadata.add(ExtraProperties.PARTICIPANTS, local);
                 }
                 if (c.isGroupChat()) {
-                    for (WAContact member : c.getGroupmembers()) {
+                    for (WAContact member : c.getGroupMembers()) {
                         chatMetadata.add(ExtraProperties.PARTICIPANTS, formatContact(member, cache));
                     }
                     // string formatted as {creator's phone number}-{creation time}@g.us
@@ -884,7 +890,7 @@ public class WhatsAppParser extends SQLite3DBParser {
     }
 
     private void fillGroupRecipients(Metadata meta, Chat c, String from, Map<String, String> cache) {
-        for (WAContact member : c.getGroupmembers()) {
+        for (WAContact member : c.getGroupMembers()) {
             String gmb = formatContact(member, cache);
             if (!gmb.equals(from)) {
                 meta.add(org.apache.tika.metadata.Message.MESSAGE_TO, gmb);
@@ -966,7 +972,7 @@ public class WhatsAppParser extends SQLite3DBParser {
 
             if (m.isCall()) {
                 meta.set(StandardParser.INDEXER_CONTENT_TYPE, WHATSAPP_CALL.toString());
-                meta.set("duration", ReportGenerator.formatMMSS(m.getMediaDuration())); //$NON-NLS-1$
+                meta.set("duration", ReportGenerator.formatMMSS(m.getDuration())); //$NON-NLS-1$
             }
 
             if (meta.get(ExtraProperties.MESSAGE_BODY) == null) {
@@ -1179,7 +1185,7 @@ public class WhatsAppParser extends SQLite3DBParser {
 
                     if (extractor.shouldParseEmbedded(cMetadata)) {
                         ByteArrayInputStream chatStream = new ByteArrayInputStream(
-                                reportGenerator.genarateContactHtml(c));
+                                reportGenerator.generateContactHtml(c));
                         extractor.parseEmbedded(chatStream, handler, cMetadata, false);
                     }
                 }
@@ -1498,50 +1504,73 @@ public class WhatsAppParser extends SQLite3DBParser {
             }
         }
 
-        // fallback search for media items that have hash in database, but hashes were
-        // not found
-        // It is possible that the the file has been padded with zeros
-        // see https://github.com/sepinf-inc/IPED/issues/486
-        // try to to find by name and by approximate size, then check if it ends with
-        // zeros
-        if (linkMediasByNameAndApproxSizeFallback) {
-            if (!hashesToSearchFor.isEmpty()) {
-                Map<String, List<Message>> fallBackFileNamesToSearchFor = new HashMap<>();
-                for (List<Message> messageList : hashesToSearchFor.values()) {
-                    for (Message m : messageList) {
+        // ** linkMediasByNameAndApproxSizeFallback **
+        // Fallback search for media items that have hash in database, but hashes were
+        // not found. It is possible that the the file has been padded with zeros (see
+        // issue #486). Try to to find by name and by approximate size, then check if it
+        // ends with zeros.
+        
+        // ** linkMediasByLongPathFallback **
+        // Similar to the previous fallback, but file size is not used to match. Media
+        // path length must be at least the value specified in the parameter. 0 to
+        // disable this fallback.
+        
+        if (!hashesToSearchFor.isEmpty()
+                && (linkMediasByNameAndApproxSizeFallback || linkMediasByLongPathFallback > 0)) {
+            Map<String, List<Message>> fileNamesToSearchFor = new HashMap<>();
+            Map<String, List<Message>> pathsToSearchFor = new HashMap<>();
+
+            for (List<Message> messageList : hashesToSearchFor.values()) {
+                for (Message m : messageList) {
+                    if (linkMediasByNameAndApproxSizeFallback) {
                         String fileName = m.getMediaName();
                         if (fileName != null && !fileName.isEmpty()) {
                             if (fileName.contains("/")) { //$NON-NLS-1$
                                 fileName = fileName.substring(fileName.lastIndexOf('/') + 1); // $NON-NLS-1$
                             }
-                            List<Message> newMessageList = fallBackFileNamesToSearchFor.get(fileName);
+                            List<Message> newMessageList = fileNamesToSearchFor.get(fileName);
                             if (newMessageList == null) {
                                 newMessageList = new ArrayList<>();
-                                fallBackFileNamesToSearchFor.put(fileName, newMessageList);
+                                fileNamesToSearchFor.put(fileName, newMessageList);
+                            }
+                            newMessageList.add(m);
+                        }
+                    }
+
+                    if (linkMediasByLongPathFallback > 0) {
+                        // If media path contains at least one folder separator and is large enough
+                        String path = m.getMediaName();
+                        if (path != null && path.indexOf('/') > 0 && path.length() >= linkMediasByLongPathFallback) {
+                            List<Message> newMessageList = pathsToSearchFor.get(path);
+                            if (newMessageList == null) {
+                                pathsToSearchFor.put(path, newMessageList = new ArrayList<>());
                             }
                             newMessageList.add(m);
                         }
                     }
                 }
+            }
 
-                if (!fallBackFileNamesToSearchFor.isEmpty()) {
-                    StringBuilder fallBackQueryBuilder = new StringBuilder();
-                    fallBackQueryBuilder.append(BasicProps.NAME).append(":("); //$NON-NLS-1$
-                    for (String fileName : fallBackFileNamesToSearchFor.keySet()) {
-                        fileName = searcher.escapeQuery(fileName);
-                        fallBackQueryBuilder.append("\"").append(fileName).append("\" "); //$NON-NLS-1$ //$NON-NLS-2$
-                    }
-                    fallBackQueryBuilder.append(")"); //$NON-NLS-1$
+            if (!fileNamesToSearchFor.isEmpty() || !pathsToSearchFor.isEmpty()) {
+                StringBuilder fallBackQueryBuilder = new StringBuilder();
+                fallBackQueryBuilder.append(BasicProps.NAME).append(":("); //$NON-NLS-1$
+                for (String fileName : fileNamesToSearchFor.keySet()) {
+                    fileName = searcher.escapeQuery(fileName);
+                    fallBackQueryBuilder.append("\"").append(fileName).append("\" "); //$NON-NLS-1$ //$NON-NLS-2$
+                }
+                fallBackQueryBuilder.append(")"); //$NON-NLS-1$
 
-                    String fallBackQuery = fallBackQueryBuilder.toString();
-                    List<IItemReader> result = iped.parsers.util.Util.getItems(fallBackQuery, searcher);
-                    for (IItemReader item : result) {
-                        if (item.getName() != null && item.getLength() != null && item.getLength() > 0) {
-                            String fileName = item.getName();
+                String fallBackQuery = fallBackQueryBuilder.toString();
+                List<IItemReader> result = iped.parsers.util.Util.getItems(fallBackQuery, searcher);
+                for (IItemReader item : result) {
+                    if (!fileNamesToSearchFor.isEmpty()) {
+                        // Match by file name and approximate file size
+                        String fileName = item.getName();
+                        if (fileName != null && item.getLength() != null && item.getLength() > 0) {
                             if (fileName.contains("/")) { //$NON-NLS-1$
                                 fileName = fileName.substring(fileName.lastIndexOf('/') + 1); // $NON-NLS-1$
                             }
-                            List<Message> messageList = fallBackFileNamesToSearchFor.get(fileName);
+                            List<Message> messageList = fileNamesToSearchFor.get(fileName);
                             if (messageList != null) {
                                 messageList = messageList.stream().filter(m -> {
                                     long mediaSize = m.getMediaSize();
@@ -1549,14 +1578,37 @@ public class WhatsAppParser extends SQLite3DBParser {
                                     return (fileSize >= mediaSize + 1 && fileSize <= mediaSize + 15
                                             && itemStreamEndsWithZeros(item, mediaSize));
                                 }).collect(Collectors.toList());
+                                setItemToMessage(item, messageList, BasicProps.HASH + ":" + item.getHash(), true,
+                                        saveItemRef);
+                            }
+                        }
+                    }
 
-                                setItemToMessage(item, messageList, BasicProps.HASH + ":" + item.getHash(), true, saveItemRef);
+                    if (!pathsToSearchFor.isEmpty()) {
+                        // Match long paths
+                        String filePath = item.getPath();
+                        if (filePath != null) {
+                            for (String mediaPath : pathsToSearchFor.keySet()) {
+                                if (filePath.endsWith(mediaPath)) {
+                                    List<Message> messageList = pathsToSearchFor.get(mediaPath);
+                                    if (messageList != null) {
+                                        for (Message m : messageList) {
+                                            if (m.getMediaItem() == null) {
+                                                logger.info("Item matched by long path {}", mediaPath);
+                                                m.setMediaItem(item);
+                                                m.setMediaQuery(
+                                                        escapeQuery(BasicProps.HASH + ":" + item.getHash(), true));
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
         }
+
         // if download files from the internet is allowed
         ArrayList<Future<?>> futures = new ArrayList<>();
         if (isDownloadMediaFilesEnabled() && downloadedFiles != null) {

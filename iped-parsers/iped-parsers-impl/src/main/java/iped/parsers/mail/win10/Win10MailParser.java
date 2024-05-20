@@ -885,7 +885,7 @@ public class Win10MailParser extends AbstractParser {
      * @param body
      *            email body to replace inline images
      * @param attachments
-     *            list of email attachsments
+     *            list of email attachments
      * 
      * @return new body that handles cid images with associated attachments
      */
@@ -895,8 +895,8 @@ public class Win10MailParser extends AbstractParser {
                 if (attachment.getAttachCID() != null && attachment.getCaseItem() != null) {
                     String attachCid = attachment.getAttachCID().replaceAll("^<|>$", "");
                     // always convert to a jpeg with limited resolution
-                    try (InputStream is = attachment.getCaseItem().getBufferedInputStream()) {
-                        BufferedImage img = ImageUtil.getSubSampledImage(is, 1024, 1024);
+                    try {
+                        BufferedImage img = ImageUtil.getSubSampledImage(attachment.getCaseItem(), 1024);
                         if (img != null) {
                             img = ImageUtil.getOpaqueImage(img);
                             ByteArrayOutputStream baos = new ByteArrayOutputStream();

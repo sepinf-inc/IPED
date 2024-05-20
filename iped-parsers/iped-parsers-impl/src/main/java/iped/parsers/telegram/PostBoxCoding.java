@@ -436,7 +436,7 @@ public class PostBoxCoding {
             logger.debug("mimeType: {}", mimeType);
             m.setMediaMime(mimeType);
             if (files.size() == 1) {
-                m.setMediasize(files.get(0).getSize());
+                m.setMediaSize(files.get(0).getSize());
             }
             m.setNames(files);
             if (url != null) {
@@ -449,7 +449,7 @@ public class PostBoxCoding {
             }
 
             m.setType(MapTypeMSG.decodeMsg(action));
-            m.setMediasize(size);
+            m.setMediaSize(size);
         }
     }
 

@@ -13,6 +13,7 @@ public class Messages {
     private static final String BUNDLE_NAME = "iped-desktop-messages"; //$NON-NLS-1$
 
     private static ResourceBundle RESOURCE_BUNDLE;
+    public static final String TOOLTIP_NAME_SUFFIX = ".tooltip";
 
     private Messages() {
     }
@@ -53,7 +54,7 @@ public class Messages {
             throw e;
         }
     }
-    
+
     public static String getString(String key, Object... args) {
         String value = get(key);
         if (args != null)

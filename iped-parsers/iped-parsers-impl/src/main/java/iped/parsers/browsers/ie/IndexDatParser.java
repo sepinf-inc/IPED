@@ -129,7 +129,7 @@ public class IndexDatParser extends AbstractParser {
                     read.value = null;
                     read.notify();
                 }
-                String str = Util.decodeUnknowCharset(out);
+                String str = Util.decodeUnknownCharset(out);
                 xhtml.characters(str);
 
                 if (Thread.currentThread().isInterrupted())

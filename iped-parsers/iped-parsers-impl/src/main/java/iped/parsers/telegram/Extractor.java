@@ -113,16 +113,42 @@ public class Extractor {
         return this.userAccount;
     }
 
-    private List<Long> getParticipants(Connection conn, ChatGroup cg) throws SQLException {
-        List<Long> l = new ArrayList<>();
+    private void addParticipants(Connection conn, ChatGroup cg) throws SQLException {
         try (PreparedStatement stmt = conn.prepareStatement(MEMBERS_CHATS_SQL)) {
             stmt.setLong(1, cg.getId());
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                l.add(rs.getLong("uid"));
+                cg.addMember(rs.getLong("uid"));
             }
         }
-        return l;
+    }
+
+    private void addAdmins(Connection conn, ChatGroup cg) throws SQLException {
+        if (SQLite3DBParser.containsTable("channel_admins_v3", conn)) {
+            try (PreparedStatement stmt = conn.prepareStatement(SELECT_CHANNEL_ADMINS)) {
+                stmt.setLong(1, -cg.getId());
+                ResultSet rs = stmt.executeQuery();
+                while (rs.next()) {
+                    cg.addAdmin(rs.getLong("uid"));
+                }
+            }
+        }
+    }
+
+    private int getParticipantsCount(Connection conn, ChatGroup cg) throws SQLException {
+        int count = 0;
+        String table = "chat_settings_v2";
+        String column = "participants_count";
+        if (SQLite3DBParser.containsTable(table, conn) && SQLite3DBParser.checkIfColumnExists(conn, table, column)) {
+            try (PreparedStatement stmt = conn.prepareStatement(SELECT_CHATS_SETTINGS)) {
+                stmt.setLong(1, -cg.getId());
+                ResultSet rs = stmt.executeQuery();
+                if (rs.next()) {
+                    count = rs.getInt("participants_count");
+                }
+            }
+        }
+        return count;
     }
 
     protected List<Chat> extractChatList() throws Exception {
@@ -158,13 +184,20 @@ public class Extractor {
 
                     ChatGroup group = new ChatGroup(chatId, cont, chatName);
 
+                    Map<String, Object> m = androidDecoder.getAlltMetadata();
+                    if ("true".equals(m.get("broadcast")) || "true".equals(m.get("megagroup"))) {
+                        group.setGroup(false);
+                        group.setChannel(true);
+                    }
+
                     group.setDeleted(rs.getString("date") == null);
 
                     cg = group;
-                    List<Long> members = getParticipants(conn, group);
-                    if (members != null) {
-                        group.getMembers().addAll(members);
-                    }
+                    addParticipants(conn, group);
+                    addAdmins(conn, group);
+
+                    int participantsCount = getParticipantsCount(conn, group);
+                    group.setParticipantsCount(participantsCount);
                 }
                 if (cg != null) {
                     logger.debug("Telegram chat id ", cg.getId());
@@ -188,24 +221,22 @@ public class Extractor {
                     long chatId = key.readChatId();
 
                     Contact c = getContact(chatId);
-
                     Chat cg = null;
 
-                    if (c.isGroup()) {
-
+                    if (c.isGroupOrChannel()) {
                         cg = new ChatGroup(c.getId(), c, c.getName());
-
+                        if (c.isChannel()) {
+                            cg.setGroup(false);
+                            cg.setChannel(true);
+                        }
                     } else {
-
                         cg = new Chat(c.getId(), c, c.getFullname());
-
                     }
-                    if (cg != null) {
-                        cg.setDeleted(rs.getBoolean("deleted"));
 
-                        logger.debug("Telegram chat id ", cg.getId());
-                        l.add(cg);
-                    }
+                    cg.setDeleted(rs.getBoolean("deleted"));
+
+                    logger.debug("Telegram chat id ", cg.getId());
+                    l.add(cg);
                 }
             }
         }
@@ -220,7 +251,7 @@ public class Extractor {
             stmt.setLong(1, chat.getId());
             ResultSet rs = stmt.executeQuery();
             ChatGroup cg = null;
-            if (chat.isGroup()) {
+            if (chat.isGroupOrChannel()) {
                 cg = (ChatGroup) chat;
             }
             if (rs != null) {
@@ -293,7 +324,7 @@ public class Extractor {
         if (message.getFrom() == null) {
             if (userAccount != null && message.isFromMe()) {
                 message.setFrom(userAccount);
-            } else if (!message.isFromMe() && !chat.isGroup()) {
+            } else if (!message.isFromMe() && !chat.isGroupOrChannel()) {
                 message.setFrom(getContact(chat.getId()));
             } else {
                 // impossible to determine from
@@ -323,7 +354,7 @@ public class Extractor {
                 ResultSet rs = stmt.executeQuery();
                 if (rs != null) {
                     ChatGroup cg = null;
-                    if (chat.isGroup()) {
+                    if (chat.isGroupOrChannel()) {
                         cg = (ChatGroup) chat;
                     }
                     while (rs.next()) {
@@ -334,8 +365,8 @@ public class Extractor {
                         p.readMessage(rs.getBytes("key"), rs.getBytes("value"), message, mediaKey);
     
                         setFrom(message, chat);
-    
-                        if (!chat.isGroup()) {
+
+                        if (!chat.isGroupOrChannel()) {
                             if (message.isFromMe()) {
                                 message.setToId(chat.getId());
                             } else if (this.userAccount != null) {
@@ -609,6 +640,10 @@ public class Extractor {
             + "            order by date desc";
 
     private static final String MEMBERS_CHATS_SQL = "SELECT * from channel_users_v2 where did=?";
+
+    private static final String SELECT_CHATS_SETTINGS = "SELECT participants_count FROM chat_settings_v2 WHERE uid=?";
+
+    private static final String SELECT_CHANNEL_ADMINS = "SELECT uid FROM channel_admins_v3 WHERE did=?";
 
     private static final String CHATS_SQL_IOS = "select substr(key,16,8) as chatid, false as deleted from t9 "
             + "UNION SELECT  substr(t7.key,1,8) as chatid, true as deleted from t7  "

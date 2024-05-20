@@ -52,11 +52,6 @@
 	  		<artifactId>jfreechartextensions</artifactId>
 	  		<version>5d6b903557dac49a925a7a62d5c6592bd07482c5</version>
 	  	</dependency>
-	  	<dependency>
-            <groupId>org.roaringbitmap</groupId>
-            <artifactId>RoaringBitmap</artifactId>
-            <version>0.9.39</version>
-        </dependency>
     </dependencies>
     
     <build>
@@ -344,7 +339,7 @@
                                 <artifactItem>
                                     <groupId>tesseract</groupId>
                                     <artifactId>tesseract-zip</artifactId>
-                                    <version>5.3.2-24-g3922</version>
+                                    <version>5.3.2-24-g3922_1</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>

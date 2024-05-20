@@ -27,8 +27,6 @@ public class AD1Extractor implements Closeable {
     private static final long SIGNATURE_SIZE = 512; // 0x200
     private static final String charset = "UTF-8";
 
-    private static Object lock = new Object();
-
     private File file;
     private Map<Integer, List<ByteBuffer>> fcMap = new HashMap<>();
     private List<FileChannel> channels = new ArrayList<>();
@@ -322,20 +320,17 @@ public class AD1Extractor implements Closeable {
 
         try {
             List<ByteBuffer> bbList;
-            synchronized (lock) {
-                bbList = fcMap.get(ad1Ord);
-                if (bbList == null) {
-                    File newAd1 = new File(
-                            file.getAbsolutePath().substring(0, file.getAbsolutePath().lastIndexOf(".") + 3) + ad1Ord);
-                    FileChannel fc = FileChannel.open(newAd1.toPath(), StandardOpenOption.READ);
-                    channels.add(fc);
-                    bbList = new ArrayList<>();
-                    for (long pos = 0; pos < fc.size(); pos += Integer.MAX_VALUE) {
-                        int size = (int) Math.min(fc.size() - pos, Integer.MAX_VALUE);
-                        bbList.add(fc.map(MapMode.READ_ONLY, pos, size));
-                    }
-                    fcMap.put(ad1Ord, bbList);
+            bbList = fcMap.get(ad1Ord);
+            if (bbList == null) {
+                File newAd1 = new File(file.getAbsolutePath().substring(0, file.getAbsolutePath().lastIndexOf(".") + 3) + ad1Ord);
+                FileChannel fc = FileChannel.open(newAd1.toPath(), StandardOpenOption.READ);
+                channels.add(fc);
+                bbList = new ArrayList<>();
+                for (long pos = 0; pos < fc.size(); pos += Integer.MAX_VALUE) {
+                    int size = (int) Math.min(fc.size() - pos, Integer.MAX_VALUE);
+                    bbList.add(fc.map(MapMode.READ_ONLY, pos, size));
                 }
+                fcMap.put(ad1Ord, bbList);
             }
             ByteBuffer src = bbList.get((int) (seekOff / Integer.MAX_VALUE));
             int seek = (int) (seekOff % Integer.MAX_VALUE);
@@ -346,9 +341,7 @@ public class AD1Extractor implements Closeable {
             return size;
 
         } catch (ClosedChannelException e) {
-            synchronized (lock) {
-                fcMap.put(ad1Ord, null);
-            }
+            fcMap.put(ad1Ord, null);
             throw e;
         }
     }
