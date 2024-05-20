@@ -57,30 +57,36 @@ public class Bookmarks implements IBookmarks {
 
     static int bookmarkBits = Byte.SIZE;
 
-    private boolean[] selected;
-    private ArrayList<byte[]> bookmarks;
-    private TreeMap<Integer, String> bookmarkNames = new TreeMap<Integer, String>();
-    private TreeMap<Integer, String> bookmarkComments = new TreeMap<Integer, String>();
-    private TreeMap<Integer, KeyStroke> bookmarkKeyStrokes = new TreeMap<Integer, KeyStroke>();
-    private TreeMap<Integer, Color> bookmarkColors = new TreeMap<Integer, Color>();
-    private Set<Integer> reportBookmarks = new TreeSet<Integer>();
+    boolean[] selected;
+    ArrayList<byte[]> bookmarks;
+    TreeMap<Integer, String> bookmarkNames = new TreeMap<Integer, String>();
+    TreeMap<Integer, String> bookmarkComments = new TreeMap<Integer, String>();
+    TreeMap<Integer, KeyStroke> bookmarkKeyStrokes = new TreeMap<Integer, KeyStroke>();
+    TreeMap<Integer, Color> bookmarkColors = new TreeMap<Integer, Color>();
+    Set<Integer> reportBookmarks = new TreeSet<Integer>();
 
-    private int selectedItens = 0, totalItems, lastId;
+    int selectedItens = 0, totalItems, lastId;
 
-    private LinkedHashSet<String> typedWords = new LinkedHashSet<String>();
-    private File indexDir;
-    private File stateFile, cookie;
+    LinkedHashSet<String> typedWords = new LinkedHashSet<String>();
+    File indexDir;
+    File stateFile, cookie;
 
     // for future use when implementing extended bookmark types
     private Map<String, Serializable> extendedBookmarks;
 
     private transient IPEDSource ipedCase;
 
+    public Bookmarks(IPEDSource ipedCase) {
+        this(ipedCase, ipedCase.getModuleDir());
+    }
+
+    @Deprecated
     public Bookmarks(IPEDSource ipedCase, File modulePath) {
         this(ipedCase.getTotalItems(), ipedCase.getLastId(), modulePath);
         this.ipedCase = ipedCase;
     }
 
+    @Deprecated
     public Bookmarks(int totalItens, int lastId, final File modulePath) {
         this.totalItems = totalItens;
         this.lastId = lastId;
@@ -107,6 +113,7 @@ public class Bookmarks implements IBookmarks {
         return lastId;
     }
 
+    @Deprecated
     public int getTotalItens() {
         return this.totalItems;
     }
@@ -345,6 +352,10 @@ public class Bookmarks implements IBookmarks {
     public KeyStroke getBookmarkKeyStroke(int bookmarkId) {
         return bookmarkKeyStrokes.get(bookmarkId);
     }
+    
+    public synchronized void removeBookmarkKeyStroke(int bookmarkId) {
+    	bookmarkKeyStrokes.remove(bookmarkId);
+    }
 
     public synchronized void setInReport(int bookmarkId, boolean inReport) {
         if (inReport)
@@ -463,10 +474,10 @@ public class Bookmarks implements IBookmarks {
         }
     }
 
-    public synchronized void addToTypedWords(String texto) {
-
-        if (!texto.trim().isEmpty() && !typedWords.contains(texto)) {
-            typedWords.add(texto);
+    public synchronized void addToTypedWords(String text) {
+        if (!text.trim().isEmpty()) {
+            typedWords.remove(text); // Remove if present before adding, to update insertion order
+            typedWords.add(text);
             saveState();
         }
     }

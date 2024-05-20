@@ -90,8 +90,7 @@ public class ReferencingTableModel extends BaseTableModel {
 
         if (textQuery != null || query != null) {
             try {
-                IPEDSearcher task = query != null ? new IPEDSearcher(App.get().appCase, query, BasicProps.NAME)
-                        : new IPEDSearcher(App.get().appCase, textQuery.toString(), BasicProps.NAME);
+                IPEDSearcher task = query != null ? new IPEDSearcher(App.get().appCase, query, BasicProps.NAME) : new IPEDSearcher(App.get().appCase, textQuery.toString(), BasicProps.NAME);
                 task.setRewritequery(false);
                 results = MultiSearchResult.get(task.multiSearch(), App.get().appCase);
 
@@ -101,8 +100,7 @@ public class ReferencingTableModel extends BaseTableModel {
                     SwingUtilities.invokeLater(new Runnable() {
                         @Override
                         public void run() {
-                            App.get().referencesDock
-                                    .setTitleText(Messages.getString("ReferencesTab.Title") + " " + length);
+                            App.get().referencesDock.setTitleText(Messages.getString("ReferencesTab.Title") + " " + length);
                         }
                     });
                 }

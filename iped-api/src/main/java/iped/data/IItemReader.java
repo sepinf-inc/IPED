@@ -7,6 +7,8 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Map;
 
+import javax.imageio.stream.ImageInputStream;
+
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 
@@ -132,6 +134,8 @@ public interface IItemReader extends IStreamSource {
     public byte[] getThumb();
 
     public BufferedInputStream getBufferedInputStream() throws IOException;
+
+    public ImageInputStream getImageInputStream() throws IOException;
 
     /**
      * @return data da última modificação do arquivo

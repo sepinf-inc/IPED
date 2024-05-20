@@ -45,7 +45,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Property;
 import org.apache.tika.mime.MediaType;
@@ -76,6 +75,7 @@ import iped.engine.io.MetadataInputStreamFactory;
 import iped.engine.io.UFDRInputStreamFactory;
 import iped.engine.io.UFEDXMLWrapper;
 import iped.engine.localization.Messages;
+import iped.engine.search.QueryBuilder;
 import iped.engine.task.ImageThumbTask;
 import iped.engine.task.die.DIETask;
 import iped.engine.task.index.IndexItem;
@@ -115,17 +115,20 @@ public class UfedXmlReader extends DataSourceReader {
     public static final String UFED_CONTACTPHOTO_MIME = UFED_MIME_PREFIX + "contactphoto";
     public static final String MSISDN_PROP = "MSISDN";
 
-    private static final String ESCAPED_UFED_ID = QueryParserUtil.escape(UFED_ID);
+    private static final String ESCAPED_UFED_ID = QueryBuilder.escape(UFED_ID);
     private static final String EMPTY_EXTRACTION_STR = "-";
 
-    private final Set<String> supportedApps = new HashSet<String>(
-            Arrays.asList(WhatsAppParser.WHATSAPP, TelegramParser.TELEGRAM, WhatsAppParser.WHATSAPP + " Business"));
+    private static final String FILE_ID_ATTR = ExtraProperties.UFED_META_PREFIX + "file_id"; //$NON-NLS-1$
+    private static final String LOCAL_PATH_META = ExtraProperties.UFED_META_PREFIX + "local_path"; //$NON-NLS-1$
+
+    private Set<String> supportedApps = new HashSet<String>(Arrays.asList(WhatsAppParser.WHATSAPP,
+            TelegramParser.TELEGRAM, WhatsAppParser.WHATSAPP + " Business", WhatsAppParser.WHATSAPP + " (Dual App)"));
 
     private static Random random = new Random();
 
     private static HashMap<File, UFDRInputStreamFactory> uisfMap = new HashMap<>();
 
-    File root, ufdrFile;
+    File root, rootFolder, ufdrFile;
     UFDRInputStreamFactory uisf;
     FileInputStreamFactory fisf, previewFisf;
     IItem rootItem;
@@ -133,10 +136,11 @@ public class UfedXmlReader extends DataSourceReader {
     HashMap<String, IItem> pathToParent = new HashMap<>();
     boolean ignoreSupportedChats = false;
     HashMap<String, String> ufdrPathToUfedId = new HashMap<>();
+    HashMap<String, String> ufedFileIdToLocalPath = new HashMap<>();    // used to replace non-existent attachment extracted path by local path
     private final List<String[]> deviceInfoData = new ArrayList<String[]>();
     private HashSet<String> addedImUfedIds = new HashSet<>();
     private HashSet<String> addedTrackIds = new HashSet<>();
-    
+
     public UfedXmlReader(ICaseData caseData, File output, boolean listOnly) {
         super(caseData, output, listOnly);
     }
@@ -258,6 +262,12 @@ public class UfedXmlReader extends DataSourceReader {
 
         PhoneParsingConfig.setUfdrReaderName(UfedXmlReader.class.getSimpleName());
 
+        try {
+            supportedApps = new HashSet<String>(Arrays.asList(parsingConfig.getInternalParsersList().split("\\s*,\\s*")));
+        } catch (Exception e) {
+            LOGGER.warn("Failed to parse {} parameter from {}. Using default internal value: {}", ParsingTaskConfig.SOURCES_WITH_PARSERS, ParsingTaskConfig.CONF_FILE, supportedApps.toString());
+        }
+
         if (!TelegramParser.isEnabledForUfdr()) {
             supportedApps.remove(TelegramParser.TELEGRAM);
         }
@@ -365,7 +375,7 @@ public class UfedXmlReader extends DataSourceReader {
         DateFormat out = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
         private final DecimalFormat currencyFormat = LocalizedFormat.getDecimalInstance("#,##0.00");
-        
+
         ArrayList<XmlNode> nodeSeq = new ArrayList<>();
         ArrayList<Item> itemSeq = new ArrayList<>();
 
@@ -405,7 +415,6 @@ public class UfedXmlReader extends DataSourceReader {
         ));
 
         HashSet<String> ignoreNameAttrs = new HashSet<>(Arrays.asList("Tags", //$NON-NLS-1$
-                "Local Path", //$NON-NLS-1$
                 "CreationTime", //$NON-NLS-1$
                 "ModifyTime", //$NON-NLS-1$
                 "AccessTime", //$NON-NLS-1$
@@ -550,7 +559,8 @@ public class UfedXmlReader extends DataSourceReader {
                 item.setPath(path);
 
                 String name = path.substring(path.lastIndexOf('/') + 1);
-                item.setName(name);
+                // Check if the name is not too long (see issue #2107) 
+                updateName(item, name);
 
                 item.setParent(getParent(path));
 
@@ -721,7 +731,15 @@ public class UfedXmlReader extends DataSourceReader {
                     item.setCategory(chars.toString());
 
                 } else if ("Local Path".equals(nameAttr)) { //$NON-NLS-1$
-                    setContent(item, normalizePaths(chars.toString()));
+                    String normalizedPath = normalizePaths(chars.toString());
+                    setContent(item, normalizedPath);
+
+                    // Add "Local Path" to item metadata
+                    item.getMetadata().add(LOCAL_PATH_META, normalizedPath);
+
+                    // Add key to map item id to "Local Path"
+                    ufedFileIdToLocalPath.put(item.getMetadata().get(UFED_ID), normalizedPath);
+
                     if (item.getPath().endsWith("wireless/Library/Databases/CellularUsage.db")) {
                         parseIphoneSimSwitch(item);
                     }
@@ -1129,7 +1147,7 @@ public class UfedXmlReader extends DataSourceReader {
                     deviceInfoData.add(new String[] { nameAttr, value, extractiontName });
                 }
             }
-            
+
             chars = new StringBuilder();
             nameAttr = null;
 
@@ -1260,12 +1278,15 @@ public class UfedXmlReader extends DataSourceReader {
                 ufdrPathToUfedId.put(path, ufedId);
             }
             if (ufdrFile == null) {
+                if (rootFolder == null) {
+                    rootFolder = root.isDirectory() ? root : root.getParentFile();
+                }
                 if (fisf == null) {
-                    fisf = new FileInputStreamFactory(root.toPath());
+                    fisf = new FileInputStreamFactory(rootFolder.toPath());
                 }
                 item.setInputStreamFactory(fisf);
                 item.setIdInDataSource(path);
-                File file = new File(root, path);
+                File file = new File(rootFolder, path);
                 item.setLength(file.length());
             } else {
                 if (getUISF().entryExists(path)) {
@@ -1347,7 +1368,7 @@ public class UfedXmlReader extends DataSourceReader {
                             .filter(cat -> StringUtils.isNotBlank(cat.value)) //
                             .forEach(cat -> finalScorePerCat.put(cat.value, cat.score));
                 }
-                
+
                 // set scores
                 finalScorePerCat.entrySet().stream()
                         .forEach(e -> item.setExtraAttribute(MEDIA_CLASSES_SCORE_PREFIX + e.getKey(), e.getValue()));
@@ -1370,10 +1391,11 @@ public class UfedXmlReader extends DataSourceReader {
         private void updateName(IItem item, String newName) {
             // prevents error DocValuesField is too large
             int maxNameSize = 4096;
-            if (newName.length() > maxNameSize)
+            if (newName.length() > maxNameSize) {
                 newName = newName.substring(0, maxNameSize);
+                item.setPath(item.getPath().substring(0, item.getPath().lastIndexOf('/') + 1) + newName);
+            }
             item.setName(newName);
-            item.setPath(item.getPath().substring(0, item.getPath().lastIndexOf('/') + 1) + newName);
         }
 
         private String handleAttachment(Item item) {
@@ -1385,6 +1407,13 @@ public class UfedXmlReader extends DataSourceReader {
             if (extracted_path != null) {
                 extracted_path = normalizePaths(extracted_path);
                 ufedId = ufdrPathToUfedId.get(extracted_path);
+
+                // If extracted path doesn't exist, replace non-existent extracted path by attached file's local path
+                if (!getUISF().entryExists(extracted_path)) {
+                    // Replace extracted path by attached file's local path
+                    extracted_path = ufedFileIdToLocalPath.get(item.getMetadata().get(FILE_ID_ATTR));
+                }
+                
             }
             setContent(item, extracted_path);
             return ufedId;
@@ -1629,7 +1658,7 @@ public class UfedXmlReader extends DataSourceReader {
             deviceInfo.setHash(null);
             return file;
         }
-        
+
         @Override
         public void characters(char[] ch, int start, int length) throws SAXException {
             if (listOnly)

@@ -49,7 +49,7 @@ public class ExtraProperties {
 
     public static final Property MESSAGE_DATE = COMMUNICATION_DATE;
 
-    public static final String PARTICIPANTS = "Participants";
+    public static final String PARTICIPANTS = COMMUNICATION_PREFIX + "Participants";
 
     public static final String GROUP_ID = "GroupID";
 
@@ -149,7 +149,7 @@ public class ExtraProperties {
 
     public static final String FACE_ENCODINGS = "face_encodings";
 
-    public static final List<String> COMMUNICATION_BASIC_PROPS = Arrays.asList(MESSAGE_SUBJECT, COMMUNICATION_DATE.getName(),
-            MESSAGE_BODY, COMMUNICATION_FROM, COMMUNICATION_TO, Message.MESSAGE_CC, Message.MESSAGE_BCC,
-            Message.MESSAGE_RECIPIENT_ADDRESS, MESSAGE_IS_ATTACHMENT, MESSAGE_ATTACHMENT_COUNT.getName());
+    public static final List<String> COMMUNICATION_BASIC_PROPS = Arrays.asList(MESSAGE_SUBJECT, MESSAGE_BODY,
+            Message.MESSAGE_CC, Message.MESSAGE_BCC, Message.MESSAGE_RECIPIENT_ADDRESS, MESSAGE_IS_ATTACHMENT,
+            MESSAGE_ATTACHMENT_COUNT.getName());
 }

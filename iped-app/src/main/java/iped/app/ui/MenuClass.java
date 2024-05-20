@@ -45,15 +45,10 @@ public class MenuClass extends JPopupMenu {
 
     private static final long serialVersionUID = 1L;
 
-    JMenuItem exportHighlighted, copyHighlighted, checkHighlighted, uncheckHighlighted,
-            deepCheckHighlighted, deepUncheckHighlighted, readHighlighted, unreadHighlighted,
-            exportChecked, copyChecked, saveBookmarks, loadBookmarks, changeGalleryColCount, defaultLayout,
-            changeLayout, previewScreenshot, manageBookmarks, clearSearchHistory, importKeywords, navigateToParent,
-            exportTerms, manageFilters, manageColumns, exportCheckedToZip,
-            exportCheckedTreeToZip, exportTree, exportTreeChecked, similarDocs, openViewfile, createReport,
-            resetColLayout, lastColLayout, saveColLayout, addToGraph, navigateToParentChat, pinFirstColumns,
-            similarImagesCurrent, similarImagesExternal, similarFacesCurrent, similarFacesExternal, toggleTimelineView,
-            uiZoom, catIconSize, savePanelsLayout, loadPanelsLayout;
+    JMenuItem exportHighlighted, copyHighlighted, checkHighlighted, uncheckHighlighted, deepCheckHighlighted, deepUncheckHighlighted, readHighlighted, unreadHighlighted, exportChecked, copyChecked, saveBookmarks, loadBookmarks,
+            changeGalleryColCount, defaultLayout, changeLayout, previewScreenshot, manageBookmarks, clearSearchHistory, importKeywords, navigateToParent, exportTerms, manageFilters, manageColumns, exportCheckedToZip, exportCheckedTreeToZip,
+            exportTree, exportTreeChecked, similarDocs, openViewfile, createReport, resetColLayout, lastColLayout, saveColLayout, addToGraph, navigateToParentChat, pinFirstColumns, similarImagesCurrent, similarImagesExternal,
+            similarFacesCurrent, similarFacesExternal, toggleTimelineView, uiZoom, catIconSize, savePanelsLayout, loadPanelsLayout;
 
     MenuListener menuListener = new MenuListener(this);
     boolean isTreeMenu;
@@ -86,8 +81,7 @@ public class MenuClass extends JPopupMenu {
         deepCheckHighlighted.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, ActionEvent.CTRL_MASK));
         this.add(deepCheckHighlighted);
 
-        deepUncheckHighlighted = new JMenuItem(
-                Messages.getString("MenuClass.UnCheckRecursivelyHighlighted")); //$NON-NLS-1$
+        deepUncheckHighlighted = new JMenuItem(Messages.getString("MenuClass.UnCheckRecursivelyHighlighted")); //$NON-NLS-1$
         deepUncheckHighlighted.addActionListener(menuListener);
         deepUncheckHighlighted.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, ActionEvent.ALT_MASK));
         this.add(deepUncheckHighlighted);
@@ -193,7 +187,7 @@ public class MenuClass extends JPopupMenu {
 
         JMenu layoutAppearance = new JMenu(Messages.getString("MenuClass.LayoutAppearance")); //$NON-NLS-1$
         this.add(layoutAppearance);
-        
+
         defaultLayout = new JMenuItem(Messages.getString("MenuClass.ResetLayout")); //$NON-NLS-1$
         defaultLayout.addActionListener(menuListener);
         layoutAppearance.add(defaultLayout);
@@ -201,7 +195,7 @@ public class MenuClass extends JPopupMenu {
         savePanelsLayout = new JMenuItem(Messages.getString("MenuClass.SavePanelsLayout")); //$NON-NLS-1$
         savePanelsLayout.addActionListener(menuListener);
         layoutAppearance.add(savePanelsLayout);
-        
+
         loadPanelsLayout = new JMenuItem(Messages.getString("MenuClass.LoadPanelsLayout")); //$NON-NLS-1$
         loadPanelsLayout.addActionListener(menuListener);
         layoutAppearance.add(loadPanelsLayout);
@@ -209,7 +203,7 @@ public class MenuClass extends JPopupMenu {
         changeLayout = new JMenuItem(Messages.getString("MenuClass.ChangeLayout")); //$NON-NLS-1$
         changeLayout.addActionListener(menuListener);
         layoutAppearance.add(changeLayout);
-        
+
         changeGalleryColCount = new JMenuItem(Messages.getString("MenuClass.ChangeGalleryColCount")); //$NON-NLS-1$
         changeGalleryColCount.addActionListener(menuListener);
         layoutAppearance.add(changeGalleryColCount);
@@ -228,7 +222,7 @@ public class MenuClass extends JPopupMenu {
                 });
             }
         }
-        
+
         uiZoom = new JMenuItem(Messages.getString("MenuClass.UiZoom")); //$NON-NLS-1$
         uiZoom.addActionListener(menuListener);
         layoutAppearance.add(uiZoom);
@@ -236,7 +230,7 @@ public class MenuClass extends JPopupMenu {
         catIconSize = new JMenuItem(Messages.getString("MenuClass.IconSize")); //$NON-NLS-1$
         catIconSize.addActionListener(menuListener);
         layoutAppearance.add(catIconSize);
-        
+
         previewScreenshot = new JMenuItem(Messages.getString("MenuClass.CopyViewerImage")); //$NON-NLS-1$
         previewScreenshot.addActionListener(menuListener);
         this.add(previewScreenshot);
@@ -252,9 +246,7 @@ public class MenuClass extends JPopupMenu {
         boolean enableGoToChat = false;
         if (item != null) {
             enableGoToChat = MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.CHAT_MESSAGE_MIME)
-                    || (VCardParser.VCARD_MIME.equals(item.getMediaType())
-                            && item.getMetadata().get(ExtraProperties.COMMUNICATION_FROM) != null
-                            && item.getMetadata().get(ExtraProperties.COMMUNICATION_TO) != null);
+                    || (VCardParser.VCARD_MIME.equals(item.getMediaType()) && item.getMetadata().get(ExtraProperties.COMMUNICATION_FROM) != null && item.getMetadata().get(ExtraProperties.COMMUNICATION_TO) != null);
         }
         navigateToParentChat.setEnabled(enableGoToChat);
         this.add(navigateToParentChat);
@@ -287,8 +279,7 @@ public class MenuClass extends JPopupMenu {
 
         similarFacesCurrent = new JMenuItem(Messages.getString("MenuClass.FindSimilarFaces.Current")); //$NON-NLS-1$
         similarFacesCurrent.addActionListener(menuListener);
-        similarFacesCurrent
-                .setEnabled(item != null && item.getExtraAttribute(SimilarFacesSearch.FACE_FEATURES) != null);
+        similarFacesCurrent.setEnabled(item != null && item.getExtraAttribute(SimilarFacesSearch.FACE_FEATURES) != null);
         submenu.add(similarFacesCurrent);
 
         similarFacesExternal = new JMenuItem(Messages.getString("MenuClass.FindSimilarFaces.External")); //$NON-NLS-1$
@@ -305,9 +296,7 @@ public class MenuClass extends JPopupMenu {
 
         this.addSeparator();
         addToGraph = new JMenuItem(Messages.getString("MenuClass.AddToGraph")); //$NON-NLS-1$
-        addToGraph.setEnabled(App.get().appGraphAnalytics.isEnabled() && item != null
-                && item.getMetadata().get(ExtraProperties.COMMUNICATION_FROM) != null
-                && item.getMetadata().get(ExtraProperties.COMMUNICATION_TO) != null);
+        addToGraph.setEnabled(App.get().appGraphAnalytics.isEnabled() && item != null && item.getMetadata().get(ExtraProperties.COMMUNICATION_FROM) != null && item.getMetadata().get(ExtraProperties.COMMUNICATION_TO) != null);
         addToGraph.addActionListener(menuListener);
         this.add(addToGraph);
 

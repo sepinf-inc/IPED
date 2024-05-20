@@ -1,4 +1,4 @@
-﻿########################################################################
+﻿﻿########################################################################
 # Minimal configuration for fastest processing on triage scenarios.
 # Do not change the options, or the processing will became slower.
 ########################################################################
@@ -29,6 +29,7 @@ enableKnownMetCarving = false
 enableImageThumbs = false
 enableImageSimilarity = false
 enableFaceRecognition = false
+enableSearchHardwareWallets = false
 enableVideoThumbs = false
 enableDocThumbs = false
 enableHTMLReport = false

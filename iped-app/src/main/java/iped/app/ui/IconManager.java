@@ -79,13 +79,11 @@ public class IconManager {
                         if (e == null) {
                             break;
                         }
-                        String path = IconManager.class.getName().toString().replace(".", separator)
-                                .replace(IconManager.class.getSimpleName(), "") + iconPath + separator;
+                        String path = IconManager.class.getName().toString().replace(".", separator).replace(IconManager.class.getSimpleName(), "") + iconPath + separator;
                         String nameWithPath = e.getName();
                         String name = nameWithPath.replace(path, "");
                         if (nameWithPath.startsWith(path) && name.toLowerCase().endsWith(ICON_EXTENSION)) {
-                            BufferedImage img = ImageIO
-                                    .read(IconManager.class.getResource(iconPath + separator + name));
+                            BufferedImage img = ImageIO.read(IconManager.class.getResource(iconPath + separator + name));
                             map.put(name.replace(ICON_EXTENSION, "").toLowerCase(), new QualityIcon(img, size));
                         }
                     }
@@ -134,8 +132,7 @@ public class IconManager {
         return getFileIcon(mimeType, extension, mimeIconMap, extIconMap, defaultIcon);
     }
 
-    private static Icon getFileIcon(String mimeType, String extension, Map<String, QualityIcon> mimeIconMap,
-            Map<String, QualityIcon> extIconMap, Icon defaultIcon) {
+    private static Icon getFileIcon(String mimeType, String extension, Map<String, QualityIcon> mimeIconMap, Map<String, QualityIcon> extIconMap, Icon defaultIcon) {
         if (mimeType != null && !mimeType.isBlank()) {
             Icon icon = mimeIconMap.get(mimeType.strip());
             if (icon != null) {
@@ -336,6 +333,10 @@ public class IconManager {
             mimeIconMap.put("application/x-ufed-visitedpage", icon);
             mimeIconMap.put("application/x-safari-history-registry", icon);
             mimeIconMap.put("application/x-safari-history", icon);
+        }
+
+        icon = availableIconsMap.get("safari-sqlite");
+        if (icon != null) {
             mimeIconMap.put("application/x-safari-sqlite", icon);
         }
 
@@ -346,6 +347,10 @@ public class IconManager {
             mimeIconMap.put("application/x-chrome-downloads", icon);
             mimeIconMap.put("application/x-chrome-history", icon);
             mimeIconMap.put("application/x-chrome-searches", icon);
+        }
+
+        icon = availableIconsMap.get("chrome-sqlite");
+        if (icon != null) {
             mimeIconMap.put("application/x-chrome-sqlite", icon);
         }
 
@@ -603,6 +608,26 @@ public class IconManager {
         icon = availableIconsMap.get("usnjournal");
         if (icon != null) {
             mimeIconMap.put("application/x-usnjournal-$j", icon);
+        }
+
+        icon = availableIconsMap.get("vlc-ini");
+        if (icon != null) {
+            mimeIconMap.put("application/x-vlc-ini", icon);
+        }
+
+        icon = availableIconsMap.get("markdown");
+        if (icon != null) {
+            mimeIconMap.put("text/x-web-markdown", icon);
+        }
+
+        icon = availableIconsMap.get("notification");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-notification", icon);
+        }
+
+        icon = availableIconsMap.get("mobilecard");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-mobilecard", icon);
         }
 
         return mimeIconMap;

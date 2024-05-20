@@ -1585,10 +1585,30 @@
         <glob pattern="*.lzfse"/>
     </mime-type>
 
+    <mime-type type="audio/mp4">
+        <alias type="audio/x-m4a"/>
+        <alias type="audio/x-mp4a"/>
+        <magic priority="60">
+            <match value="ftypM4A " type="string" offset="4"/>
+            <match value="ftypM4B " type="string" offset="4"/>
+            <match value="ftypF4A " type="string" offset="4"/>
+            <match value="ftypF4B " type="string" offset="4"/>
+            <match value="ftypmp42" type="string" offset="4">
+                <match value="M4A" type="string" offset="16"/>
+                <match value="m4a" type="string" offset="16"/>
+            </match>
+        </magic>
+        <glob pattern="*.mp4a"/>
+        <glob pattern="*.m4a"/>
+        <glob pattern="*.m4b"/>
+        <sub-class-of type="application/quicktime" />
+    </mime-type>
+
     <mime-type type="application/x-ofx-v1">
         <magic priority="50">
-            <match value="OFXHEADER:100" type="string" offset="0"/>
+            <match value="OFXHEADER:100" type="string" offset="0:1"/>
         </magic>
+        <sub-class-of type="text/plain"/>
         <glob pattern="*.ofx"/>
     </mime-type>
 
@@ -1604,6 +1624,11 @@
             <match value="&lt;OFC&gt;" type="string" offset="0"/>
         </magic>
         <glob pattern="*.ofc"/>
+    </mime-type>
+    
+    <mime-type type="application/x-vlc-ini">
+        <sub-class-of type="text/x-ini"/>
+        <glob pattern="vlc-qt-interface.ini"/>
     </mime-type>
 
 </mime-info>
