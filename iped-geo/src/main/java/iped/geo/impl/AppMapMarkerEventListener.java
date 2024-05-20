@@ -54,9 +54,7 @@ public class AppMapMarkerEventListener implements MarkerEventListener {
             }
             String jsonFeature = mapaPanel.getSelectedJSONFeature();
             if (jsonFeature != null) {
-                mapaPanel.browserCanvas.drawJSONFeature(mid, jsonFeature);
-            } else {
-                mapaPanel.browserCanvas.drawJSONFeature(mid, "");
+                mapaPanel.browserCanvas.drawJSONFeature(jsonFeature);
             }
 
             mapViewer.desabilitaTemp = olddesabilitaTemp;
