@@ -629,12 +629,14 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
     }
 
     @Override
-    public void drawJSONFeature(String jsonFeature) {
+    public void drawJSONFeature(String mid, String jsonFeature) {
         Platform.runLater(new Runnable() {
             public void run() {
                 try {
                     if (jsonFeature != null && jsonFeature.length() > 3) {
-                        webEngine.executeScript("try{track.hideLastFeature();track.drawFeature(" + jsonFeature + ");}catch(e){alert(e);}");
+                        webEngine.executeScript("try{track.hideLastFeature();track.drawFeature('" + mid + "', "
+                                + jsonFeature
+                                + ");}catch(e){alert(e);}");
                     } else {
                         webEngine.executeScript("try{track.hideLastFeature();}catch(e){alert(e);}");
                     }

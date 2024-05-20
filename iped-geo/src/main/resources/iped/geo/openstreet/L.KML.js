@@ -275,12 +275,14 @@ L.KML = L.MarkerClusterGroup.extend({
 			this.addKML(kml, kmlOptions);
 		}
 	},
-    drawFeature(json){
-        let l = L.geoJSON(json);
-        this.geoJSONLayers.push(l);
-        this.addLayer(l);
+    drawFeature(mid, json){
+        if(this.markers[mid].selected == 'true'){
+            let l = L.geoJSON(json);
+            this.geoJSONLayers.push(l);
+            this.addLayer(l);
 
-        this._map.fitBounds(l.getBounds());
+            this._map.fitBounds(l.getBounds());
+        }        
     },
     hideLastFeature(json){
         while(this.geoJSONLayers.length>0){
@@ -775,6 +777,8 @@ L.KML = L.MarkerClusterGroup.extend({
         return this.curMark;
     },
     clearVisibleMarkers(){
+        this.hideLastFeature();
+        this.deselectAll();
         if(this.curMark){
             let mark=this.curMark;
             mark.hideDirectionLines();
@@ -1389,8 +1393,8 @@ L.KMLMarker = L.Marker.extend({
             }
             
             if(!e.originalEvent.ctrlKey && !e.originalEvent.shiftKey && this.selected == 'true'){
-		return; //does nothing as the item is already selected
-	    }
+		      return; //does nothing as the item is already selected
+	        }
             
     
             if(this.parent){
@@ -1428,7 +1432,9 @@ L.KMLMarker = L.Marker.extend({
                 window.app.markerMouseClickedBF(this.id, button, modf);
             }
             
-            this.parent.curMark=this;
+            this.parent.hideLastFeature();
+            this.parent.curMark = this;
+            
             
             var that = this;
         }catch(e){
