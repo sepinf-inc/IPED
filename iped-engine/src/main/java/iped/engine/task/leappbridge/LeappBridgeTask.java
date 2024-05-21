@@ -70,6 +70,7 @@ public class LeappBridgeTask extends AbstractPythonTask {
     private static final String DEVICE_DETAILS_HTML = "DeviceDetails.html";
 
     public static final MediaType ALEAPP_DUMP_REPORT_MEDIATYPE = MediaType.application("x-aleapp-dump-report");
+    public static final MediaType ALEAPP_UFDR_REPORT_MEDIATYPE = MediaType.application("x-aleapp-ufdr-report");
     public static final MediaType ALEAPP_ANDROID_BACKUP_REPORT_MEDIATYPE = MediaType
             .application("x-aleapp-android-backup-report");
 
@@ -306,14 +307,22 @@ public class LeappBridgeTask extends AbstractPythonTask {
     @Override
     public void process(IItem evidence) throws Exception {
         String realName = evidence.getName();
+        String realExt = evidence.getExt();
         if (evidence.isRoot()) {
             // if evidence is root, its realname can be changed via -dname parameter, so we
             // need to get it from other source.
             realName = evidence.getDataSource().getSourceFile().getName();
+            int index = realName.lastIndexOf(".");
+            if (index >= 0) {
+                realExt = realName.substring(index + 1);
+            } else {
+                realExt = null;
+            }
         }
         // first rule to check a supposed android Dump folder or android backup
         if (dumpStartFolderNames.contains(realName)
-                || AndroidBackupParser.SUPPORTED_TYPES.contains(evidence.getMediaType())) {
+                || AndroidBackupParser.SUPPORTED_TYPES.contains(evidence.getMediaType())
+                || (realExt != null && realExt.toLowerCase().equals("ufdr"))) {
             // if true, creates a subitem to represent the ALeapp report
             Item subItem = (Item) evidence.createChildItem();
             ParentInfo parentInfo = new ParentInfo(evidence);
@@ -331,6 +340,8 @@ public class LeappBridgeTask extends AbstractPythonTask {
                 subItem.setMediaType(ALEAPP_ANDROID_BACKUP_REPORT_MEDIATYPE);
             } else if (dumpStartFolderNames.contains(evidence.getName())) {
                 subItem.setMediaType(ALEAPP_DUMP_REPORT_MEDIATYPE);
+            } else if (realExt != null && realExt.toLowerCase().equals("ufdr")) {
+                subItem.setMediaType(ALEAPP_UFDR_REPORT_MEDIATYPE);
             }
 
             worker.processNewItem(subItem);
@@ -351,7 +362,9 @@ public class LeappBridgeTask extends AbstractPythonTask {
         if (isReport) {
             // check additional rules to confirm that the item is inside an Android Dump
             // Folder
-            if (ALEAPP_ANDROID_BACKUP_REPORT_MEDIATYPE.equals(evidence.getMediaType()) || isInsideRealDump(evidence)) {
+            if (ALEAPP_UFDR_REPORT_MEDIATYPE.equals(evidence.getMediaType())
+                    || ALEAPP_ANDROID_BACKUP_REPORT_MEDIATYPE.equals(evidence.getMediaType())
+                    || isInsideRealDump(evidence)) {
                 ParentInfo parentInfo = new ParentInfo(evidence);
 
                 // creates one subitem for each plugin execution
