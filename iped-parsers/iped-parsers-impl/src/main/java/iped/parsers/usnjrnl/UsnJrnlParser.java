@@ -55,6 +55,8 @@ public class UsnJrnlParser extends AbstractParser {
     public static final MediaType USNJRNL_REPORT_CSV = MediaType.parse("application/x-usnjournal-report-csv");
     public static final MediaType USNJRNL_REGISTRY = MediaType.parse("application/x-usnjournal-registry");
 
+    private static final String USN_REASON_PREFIX = "ntfs_usn_reason";
+
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(USNJRNL_$J);
 
     @Override
@@ -179,12 +181,12 @@ public class UsnJrnlParser extends AbstractParser {
 
                 String[] props = ReportGenerator.cols;
 
-                metadataItem.set(TikaCoreProperties.CREATED, rg.timeFormat.format(entry.getFileTime()));
                 metadataItem.set(ReportGenerator.cols[0], String.format("0x%016X", entry.getOffset()));
                 metadataItem.set(props[1], entry.getFileName());
                 metadataItem.set(props[2], entry.getFullPath());
                 metadataItem.set(props[3], Long.toString(entry.getUSN()));
                 for (String value : entry.getReasons()) {
+                    metadataItem.set(USN_REASON_PREFIX + ":" + value, rg.timeFormat.format(entry.getFileTime()));
                     metadataItem.add(props[5], value);
                 }
                 metadataItem.set(props[6], "0x" + Util.byteArrayToHex(entry.getMftRef()));
