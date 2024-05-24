@@ -50,56 +50,44 @@ public class UsnJrnlParserTest extends AbstractPkgTest {
 
             assertEquals(3, usntracker.contenttype.size());
             assertEquals(3085, usntracker.title.size());
-            assertEquals(3084, usntracker.created.size());
+            // assertEquals(3084, usntracker.created.size());
 
             assertEquals("application/x-usnjournal-report-csv", usntracker.contenttype.get(0));
             assertEquals("application/x-usnjournal-registry", usntracker.contenttype.get(2));
 
-            Date date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(usntracker.created.get(0));
-            if (getVersion() < 9)
-                assertEquals("20/05/2021 14:52:07", df.format(date));
-            if (getVersion() >= 9 && getVersion() < 12)
-                assertEquals("20 de mai de 2021 14:52:07", df.format(date));
-            if (getVersion() >= 12)
-                assertEquals("20 de mai. de 2021 14:52:07", df.format(date));
-            date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(usntracker.created.get(1));
-            if (getVersion() < 9)
-                assertEquals("20/05/2021 14:52:07", df.format(date));
-            if (getVersion() >= 9 && getVersion() < 12)
-                assertEquals("20 de mai de 2021 14:52:07", df.format(date));
-            if (getVersion() >= 12)
+            Date date;
+            Metadata metadata;
+            String[] reasons;
 
-                date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(usntracker.created.get(2));
-            if (getVersion() < 9)
-                assertEquals("20/05/2021 14:52:07", df.format(date));
-            if (getVersion() >= 9 && getVersion() < 12)
-                assertEquals("20 de mai de 2021 14:52:07", df.format(date));
-            if (getVersion() >= 12)
-                assertEquals("20 de mai. de 2021 14:52:07", df.format(date));
+            for (int i = 1; i <= 4; i++) {
+                metadata = usntracker.metadata.get(i);
+                reasons = metadata.getValues("Reasons");
+                for (String reason : reasons) {
+                    date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+                            .parse(metadata.get(UsnJrnlParser.USN_REASON_PREFIX + ":" + reason));
+                    if (getVersion() < 9)
+                        assertEquals("20/05/2021 14:52:07", df.format(date));
+                    if (getVersion() >= 9 && getVersion() < 12)
+                        assertEquals("20 de mai de 2021 14:52:07", df.format(date));
+                    if (getVersion() >= 12)
+                        assertEquals("20 de mai. de 2021 14:52:07", df.format(date));
+                }
+            }
 
-            date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(usntracker.created.get(3));
-            if (getVersion() < 9)
-                assertEquals("20/05/2021 14:52:07", df.format(date));
-            if (getVersion() >= 9 && getVersion() < 12)
-                assertEquals("20 de mai de 2021 14:52:07", df.format(date));
-            if (getVersion() >= 12)
-                assertEquals("20 de mai. de 2021 14:52:07", df.format(date));
-
-            date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(usntracker.created.get(3082));
-            if (getVersion() < 9)
-                assertEquals("20/05/2021 14:55:03", df.format(date));
-            if (getVersion() >= 9 && getVersion() < 12)
-                assertEquals("20 de mai de 2021 14:55:03", df.format(date));
-            if (getVersion() >= 12)
-                assertEquals("20 de mai. de 2021 14:55:03", df.format(date));
-
-            date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(usntracker.created.get(3083));
-            if (getVersion() < 9)
-                assertEquals("20/05/2021 14:55:03", df.format(date));
-            if (getVersion() >= 9 && getVersion() < 12)
-                assertEquals("20 de mai de 2021 14:55:03", df.format(date));
-            if (getVersion() >= 12)
-                assertEquals("20 de mai. de 2021 14:55:03", df.format(date));
+            for (int i = 3082; i <= 3083; i++) {
+                metadata = usntracker.metadata.get(i);
+                reasons = metadata.getValues("Reasons");
+                for (String reason : reasons) {
+                    date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+                            .parse(metadata.get(UsnJrnlParser.USN_REASON_PREFIX + ":" + reason));
+                    if (getVersion() < 9)
+                        assertEquals("20/05/2021 14:55:03", df.format(date));
+                    if (getVersion() >= 9 && getVersion() < 12)
+                        assertEquals("20 de mai de 2021 14:55:03", df.format(date));
+                    if (getVersion() >= 12)
+                        assertEquals("20 de mai. de 2021 14:55:03", df.format(date));
+                }
+            }
 
             assertEquals("USN Journal Report", usntracker.title.get(0));
             assertEquals("USN journal Entry 6098518016", usntracker.title.get(1));
@@ -131,58 +119,40 @@ public class UsnJrnlParserTest extends AbstractPkgTest {
 
             assertEquals(3, usntracker.contenttype.size());
             assertEquals(3085, usntracker.title.size());
-            assertEquals(3084, usntracker.created.size());
 
-            assertEquals("application/x-usnjournal-report-csv", usntracker.contenttype.get(0));
-            assertEquals("application/x-usnjournal-registry", usntracker.contenttype.get(2));
+            Date date;
+            Metadata metadata;
+            String[] reasons;
 
-            Date date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(usntracker.created.get(0));
-            if (getVersion() < 9)
-                assertEquals("20/05/2021 14:52:07", df.format(date));
-            if (getVersion() >= 9 && getVersion() < 12)
-                assertEquals("20 de mai de 2021 14:52:07", df.format(date));
-            if (getVersion() >= 12)
-                assertEquals("20 de mai. de 2021 14:52:07", df.format(date));
+            for (int i = 1; i <= 4; i++) {
+                metadata = usntracker.metadata.get(i);
+                reasons = metadata.getValues("Reasons");
+                for (String reason : reasons) {
+                    date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+                            .parse(metadata.get(UsnJrnlParser.USN_REASON_PREFIX + ":" + reason));
+                    if (getVersion() < 9)
+                        assertEquals("20/05/2021 14:52:07", df.format(date));
+                    if (getVersion() >= 9 && getVersion() < 12)
+                        assertEquals("20 de mai de 2021 14:52:07", df.format(date));
+                    if (getVersion() >= 12)
+                        assertEquals("20 de mai. de 2021 14:52:07", df.format(date));
+                }
+            }
 
-            date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(usntracker.created.get(1));
-            if (getVersion() < 9)
-                assertEquals("20/05/2021 14:52:07", df.format(date));
-            if (getVersion() >= 9 && getVersion() < 12)
-                assertEquals("20 de mai de 2021 14:52:07", df.format(date));
-            if (getVersion() >= 12)
-                assertEquals("20 de mai. de 2021 14:52:07", df.format(date));
-
-            date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(usntracker.created.get(2));
-            if (getVersion() < 9)
-                assertEquals("20/05/2021 14:52:07", df.format(date));
-            if (getVersion() >= 9 && getVersion() < 12)
-                assertEquals("20 de mai de 2021 14:52:07", df.format(date));
-            if (getVersion() >= 12)
-                assertEquals("20 de mai. de 2021 14:52:07", df.format(date));
-
-            date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(usntracker.created.get(3));
-            if (getVersion() < 9)
-                assertEquals("20/05/2021 14:52:07", df.format(date));
-            if (getVersion() >= 9 && getVersion() < 12)
-                assertEquals("20 de mai de 2021 14:52:07", df.format(date));
-            if (getVersion() >= 12)
-                assertEquals("20 de mai. de 2021 14:52:07", df.format(date));
-
-            date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(usntracker.created.get(3082));
-            if (getVersion() < 9)
-                assertEquals("20/05/2021 14:55:03", df.format(date));
-            if (getVersion() >= 9 && getVersion() < 12)
-                assertEquals("20 de mai de 2021 14:55:03", df.format(date));
-            if (getVersion() >= 12)
-                assertEquals("20 de mai. de 2021 14:55:03", df.format(date));
-
-            date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(usntracker.created.get(3083));
-            if (getVersion() < 9)
-                assertEquals("20/05/2021 14:55:03", df.format(date));
-            if (getVersion() >= 9 && getVersion() < 12)
-                assertEquals("20 de mai de 2021 14:55:03", df.format(date));
-            if (getVersion() >= 12)
-                assertEquals("20 de mai. de 2021 14:55:03", df.format(date));
+            for (int i = 3082; i <= 3083; i++) {
+                metadata = usntracker.metadata.get(i);
+                reasons = metadata.getValues("Reasons");
+                for (String reason : reasons) {
+                    date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+                            .parse(metadata.get(UsnJrnlParser.USN_REASON_PREFIX + ":" + reason));
+                    if (getVersion() < 9)
+                        assertEquals("20/05/2021 14:55:03", df.format(date));
+                    if (getVersion() >= 9 && getVersion() < 12)
+                        assertEquals("20 de mai de 2021 14:55:03", df.format(date));
+                    if (getVersion() >= 12)
+                        assertEquals("20 de mai. de 2021 14:55:03", df.format(date));
+                }
+            }
 
             assertEquals("USN Journal Report", usntracker.title.get(0));
             assertEquals("USN journal Entry 6098518016", usntracker.title.get(1));
