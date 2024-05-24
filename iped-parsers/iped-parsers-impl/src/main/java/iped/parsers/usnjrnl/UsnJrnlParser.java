@@ -3,6 +3,7 @@ package iped.parsers.usnjrnl;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -25,6 +26,7 @@ import org.xml.sax.SAXException;
 import iped.data.IItemReader;
 import iped.io.SeekableInputStream;
 import iped.parsers.standard.StandardParser;
+import iped.parsers.util.MetadataUtil;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
@@ -138,7 +140,8 @@ public class UsnJrnlParser extends AbstractParser {
         return null;
     }
 
-    private void createReport(ArrayList<UsnJrnlEntry> entries, int n, ParseContext context, ContentHandler handler)
+    private void createReport(ArrayList<UsnJrnlEntry> entries, int n, ParseContext context, ContentHandler handler,
+            Exception entriesReadError)
             throws SAXException, IOException {
         ReportGenerator rg = new ReportGenerator();
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
@@ -151,11 +154,11 @@ public class UsnJrnlParser extends AbstractParser {
         try (TemporaryResources tmp = new TemporaryResources()) {
             if (reportType == ReportType.CSV) {
                 cMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, USNJRNL_REPORT_CSV.toString());
-                is = rg.createCSVReport(entries, tmp);
+                is = rg.createCSVReport(entries, tmp, entriesReadError);
 
             } else if (reportType == ReportType.HTML) {
                 cMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, USNJRNL_REPORT_HTML.toString());
-                is = rg.createHTMLReport(entries);
+                is = rg.createHTMLReport(entries, entriesReadError);
                 name += " " + n;
             }
 
@@ -186,6 +189,7 @@ public class UsnJrnlParser extends AbstractParser {
                 metadataItem.set(props[2], entry.getFullPath());
                 metadataItem.set(props[3], Long.toString(entry.getUSN()));
                 for (String value : entry.getReasons()) {
+                    MetadataUtil.setMetadataType(USN_REASON_PREFIX + ":" + value, Date.class);
                     metadataItem.set(USN_REASON_PREFIX + ":" + value, rg.timeFormat.format(entry.getFileTime()));
                     metadataItem.add(props[5], value);
                 }
@@ -233,28 +237,33 @@ public class UsnJrnlParser extends AbstractParser {
         int n = 1;
         IItemSearcher searcher = context.get(IItemSearcher.class);
         IItemReader item = context.get(IItemReader.class);
+        Exception entriesReadError = null;
         try (SeekableInputStream sis = item.getSeekableInputStream()) {
             jumpZeros(sis, 0, sis.size());
-            while (findNextEntry(sis)) {
-                UsnJrnlEntry u = readEntry(sis);
-                // do not insert empty registries in the list
-                if (u == null) {
-                    continue;
-                }
-                
-                entries.add(u);
+            try {
+                while (findNextEntry(sis)) {
+                    UsnJrnlEntry u = readEntry(sis);
+                    // do not insert empty registries in the list
+                    if (u == null) {
+                        continue;
+                    }
 
-                if (entries.size() % MAX_ENTRIES == 0) {
-                    int baseIndex = ((entries.size() / MAX_ENTRIES) - 1) * MAX_ENTRIES;
-                    rebuildFullPaths(entries.subList(baseIndex, baseIndex + MAX_ENTRIES), searcher, item);
-                }
+                    entries.add(u);
 
-                // limits the html table size
-                if (entries.size() == MAX_ENTRIES && reportType == ReportType.HTML) {
-                    createReport(entries, n, context, handler);
-                    entries.clear();
-                    n++;
+                    if (entries.size() % MAX_ENTRIES == 0) {
+                        int baseIndex = ((entries.size() / MAX_ENTRIES) - 1) * MAX_ENTRIES;
+                        rebuildFullPaths(entries.subList(baseIndex, baseIndex + MAX_ENTRIES), searcher, item);
+                    }
+
+                    // limits the html table size
+                    if (entries.size() == MAX_ENTRIES && reportType == ReportType.HTML) {
+                        createReport(entries, n, context, handler, entriesReadError);
+                        entries.clear();
+                        n++;
+                    }
                 }
+            } catch (Exception e) {
+                entriesReadError = e;
             }
         }
 
@@ -263,7 +272,7 @@ public class UsnJrnlParser extends AbstractParser {
                 int baseIndex = (entries.size() / MAX_ENTRIES) * MAX_ENTRIES;
                 rebuildFullPaths(entries.subList(baseIndex, entries.size()), searcher, item);
             }
-            createReport(entries, n, context, handler);
+            createReport(entries, n, context, handler, entriesReadError);
         }
 
     }
