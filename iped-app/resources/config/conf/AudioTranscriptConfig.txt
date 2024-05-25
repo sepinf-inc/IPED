@@ -117,6 +117,7 @@ precision = int8
 # Batch size (number of parallel transcriptions). If you have a GPU with enough memory,
 # increasing this value to e.g. 16 can speed up transcribing long audios up to 10x.
 # Test what is the better value for your GPU before hitting OOM.
+# This works just if you are using whisperx library instead of faster_whisper
 batchSize = 1
 
 #########################################
