@@ -20,9 +20,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-import iped.engine.task.transcript.RemoteWav2Vec2Service.MESSAGES;
+import iped.engine.task.transcript.RemoteTranscriptionService.MESSAGES;
 
-public class RemoteWav2Vec2Discovery {
+public class RemoteTranscriptionDiscovery {
 
     private static final File statsFile = new File(System.getProperty("user.home"), "transcription.stats");
 

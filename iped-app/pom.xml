@@ -125,7 +125,7 @@
                                 <artifactItem>
                                     <groupId>org.python</groupId>
                                     <artifactId>python-jep-dlib</artifactId>
-                                    <version>3.9.12-4.0.3-19.23.1</version>
+                                    <version>3.9.12-4.0.3-19.23.1-2</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${release.dir}</outputDirectory>
