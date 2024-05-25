@@ -21,7 +21,12 @@ def main():
     if language == 'detect':
         language = None
 
-    import whisperx
+    try:
+        import whisperx
+        whisperx_found = True
+    except:
+        import faster_whisper
+        whisperx_found = False
     
     print(library_loaded, file=stdout, flush=True)
     
@@ -37,16 +42,22 @@ def main():
         deviceNum = 0
     
     try:
-        model = whisperx.load_model(modelName, device=deviceId, device_index=deviceNum, threads=threads, compute_type=compute_type, language=language)
-
+        if whisperx_found:
+            model = whisperx.load_model(modelName, device=deviceId, device_index=deviceNum, threads=threads, compute_type=compute_type, language=language)
+        else:
+            model = faster_whisper.WhisperModel(modelName, device=deviceId, device_index=deviceNum, cpu_threads=threads, compute_type=compute_type)
+            
     except Exception as e:
         if deviceId != 'cpu':
             # loading on GPU failed (OOM?), try on CPU
-            print('FAILED to load model on GPU, fallbacking to CPU!', file=sys.stderr)
+            print('FAILED to load model on GPU, OOM? Fallbacking to CPU...', file=sys.stderr)
             deviceId = 'cpu'
             if compute_type == 'float16': # not supported on CPU
                 compute_type = 'int8'
-            model = whisperx.load_model(modelName, device=deviceId, device_index=deviceNum, threads=threads, compute_type=compute_type, language=language)
+            if whisperx_found:
+                model = whisperx.load_model(modelName, device=deviceId, device_index=deviceNum, threads=threads, compute_type=compute_type, language=language)
+            else:
+                model = faster_whisper.WhisperModel(modelName, device=deviceId, cpu_threads=threads, compute_type=compute_type)
         else:
             raise e
     
@@ -66,12 +77,18 @@ def main():
         transcription = ''
         logprobs = []
         try:
-            audio = whisperx.load_audio(line)
-            result = model.transcribe(audio, batch_size=batch_size, language=language)
-            for segment in result['segments']:
-                transcription += segment['text']
-                if 'avg_logprob' in segment:
-                    logprobs.append(segment['avg_logprob'])
+            if whisperx_found:
+                audio = whisperx.load_audio(line)
+                result = model.transcribe(audio, batch_size=batch_size, language=language)
+                for segment in result['segments']:
+                    transcription += segment['text']
+                    if 'avg_logprob' in segment:
+                        logprobs.append(segment['avg_logprob'])
+            else:
+                segments, info = model.transcribe(audio=line, language=language, beam_size=5, vad_filter=True)
+                for segment in segments:
+                    transcription += segment.text
+                    logprobs.append(segment.avg_logprob)
 
         except Exception as e:
             msg = repr(e).replace('\n', ' ').replace('\r', ' ')
