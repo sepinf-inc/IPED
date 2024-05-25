@@ -17,7 +17,6 @@ import iped.configuration.IConfigurationDirectory;
 import iped.engine.config.AudioTranscriptConfig;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
-import iped.exception.IPEDException;
 
 public class WhisperTranscriptTask extends Wav2Vec2TranscriptTask {
 
@@ -35,7 +34,7 @@ public class WhisperTranscriptTask extends Wav2Vec2TranscriptTask {
             try {
                 Runtime.getRuntime().exec("ffmpeg");
             } catch (IOException e) {
-                throw new IPEDException("Error checking FFmpeg presence, is it on PATH?");
+                logger.warn("FFmpeg not found on PATH, transcription won't work if you switched to WhisperX library.");
             }
         }
         super.init(configurationManager);
