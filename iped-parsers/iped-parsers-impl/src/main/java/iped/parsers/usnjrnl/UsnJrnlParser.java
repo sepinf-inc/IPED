@@ -275,6 +275,17 @@ public class UsnJrnlParser extends AbstractParser {
             }
             createReport(entries, n, context, handler, entriesReadError);
         }
+        if (entriesReadError instanceof TikaException) {
+            throw (TikaException) entriesReadError;
+        } else if (entriesReadError instanceof IOException) {
+            throw (IOException) entriesReadError;
+        } else if (entriesReadError instanceof SAXException) {
+            throw (SAXException) entriesReadError;
+        } else if (entriesReadError instanceof RuntimeException) {
+            throw (RuntimeException) entriesReadError;
+        } else if (entriesReadError != null) {
+            throw new RuntimeException(entriesReadError);
+        }
 
     }
 
