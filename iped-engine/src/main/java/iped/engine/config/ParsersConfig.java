@@ -62,7 +62,6 @@ public class ParsersConfig implements Configurable<String> {
             parserConfigXml = new String(Files.readAllBytes(resource), StandardCharsets.UTF_8);
             parserConfigXml = parserConfigXml.trim().replaceFirst("^([\\W]+)<", "<");
         } else {
-            String changedParserConfigXml = new String(Files.readAllBytes(resource), StandardCharsets.UTF_8);
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newDefaultInstance();
             dbf.setNamespaceAware(false);
             DocumentBuilder db;
@@ -103,8 +102,7 @@ public class ParsersConfig implements Configurable<String> {
                 transformer.transform(new DOMSource(doc), new StreamResult(writer));
                 parserConfigXml = writer.getBuffer().toString();
             } catch (ParserConfigurationException | SAXException | XPathExpressionException | TransformerException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                throw new RuntimeException(e);
             }
         }
     }
