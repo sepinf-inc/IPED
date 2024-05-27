@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- this config is merged with default config XML -->
+<properties>
+
+    <parsers>
+        <parser class="org.apache.tika.parser.journal.JournalParser"></parser>
+    </parsers>
+
+</properties>
