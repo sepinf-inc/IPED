@@ -4,7 +4,11 @@
 <properties>
 
     <parsers>
-        <parser class="org.apache.tika.parser.journal.JournalParser"></parser>
+        <parser class="iped.parsers.usnjrnl.UsnJrnlParser">
+            <params>
+                <param name="extractEntries" type="bool">true</param>
+            </params>
+        </parser>
     </parsers>
 
 </properties>
