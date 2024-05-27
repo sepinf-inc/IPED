@@ -81,12 +81,10 @@ public class ParsersConfig implements Configurable<String> {
                             String className = element.getAttribute("class");
                             XPath xPath = XPathFactory.newInstance().newXPath();
                             String expression = "/properties/parsers/parser[@class='" + className + "']";
-                            NodeList nlParser = (NodeList) xPath.compile(expression).evaluate(doc,
-                                    XPathConstants.NODESET);
+                            NodeList nlParser = (NodeList) xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
 
                             expression = "/properties/parsers";
-                            NodeList nlParsers = (NodeList) xPath.compile(expression).evaluate(doc,
-                                    XPathConstants.NODESET);
+                            NodeList nlParsers = (NodeList) xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
                             Node newnode = doc.importNode(element, true);
                             for (int j = 0; j < nlParsers.getLength(); j++) {
                                 for (int k = 0; k < nlParser.getLength(); k++) {
@@ -120,23 +118,23 @@ public class ParsersConfig implements Configurable<String> {
     public void setConfiguration(String config) {
         parserConfigXml = config;
     }
-    
+
     public String removeDisabledParsers(String parserConfigXml) {
-        String[] slices = parserConfigXml.split(PARSER_DISABLED_ATTR+"=\"true\"");
-        StringBuffer result=new StringBuffer();
+        String[] slices = parserConfigXml.split(PARSER_DISABLED_ATTR + "=\"true\"");
+        StringBuffer result = new StringBuffer();
         for (int i = 0; i < slices.length; i++) {
             String part = slices[i];
-            if(i>0) {
+            if (i > 0) {
                 int disabledParserEndIndex = part.indexOf(">");
-                if(disabledParserEndIndex==0 || part.charAt(disabledParserEndIndex-1)!='/') {
+                if (disabledParserEndIndex == 0 || part.charAt(disabledParserEndIndex - 1) != '/') {
                     disabledParserEndIndex = part.indexOf("</parser>");
                 }
-                part=part.substring(disabledParserEndIndex+1);
+                part = part.substring(disabledParserEndIndex + 1);
             }
-            if(i<slices.length-1) {
+            if (i < slices.length - 1) {
                 int disabledParserIndex = part.lastIndexOf("<parser");
                 result.append(part.substring(0, disabledParserIndex));
-            }else {
+            } else {
                 result.append(part);
             }
         }
@@ -147,7 +145,7 @@ public class ParsersConfig implements Configurable<String> {
         if (tmp == null) {
             try {
                 tmp = Files.createTempFile("parser-config", ".xml");
-                
+
                 Files.write(tmp, removeDisabledParsers(parserConfigXml).getBytes(StandardCharsets.UTF_8));
                 tmp.toFile().deleteOnExit();
 
