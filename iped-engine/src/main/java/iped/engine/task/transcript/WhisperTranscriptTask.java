@@ -17,6 +17,7 @@ import iped.configuration.IConfigurationDirectory;
 import iped.engine.config.AudioTranscriptConfig;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
+import iped.exception.IPEDException;
 
 public class WhisperTranscriptTask extends Wav2Vec2TranscriptTask {
 
@@ -27,14 +28,16 @@ public class WhisperTranscriptTask extends Wav2Vec2TranscriptTask {
     private static final String MODEL_LOADED = "model_loaded";
 
     private static final AtomicBoolean ffmpegTested = new AtomicBoolean();
+    private static volatile boolean ffmpegFound;
 
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
         if (!ffmpegTested.getAndSet(true)) {
             try {
                 Runtime.getRuntime().exec("ffmpeg");
+                ffmpegFound = true;
             } catch (IOException e) {
-                logger.warn("FFmpeg not found on PATH, transcription won't work if you switched to WhisperX library.");
+                ffmpegFound = false;
             }
         }
         super.init(configurationManager);
@@ -79,7 +82,14 @@ public class WhisperTranscriptTask extends Wav2Vec2TranscriptTask {
         String line = reader.readLine();
 
         if (!LIBRARY_LOADED.equals(line)) {
-            throw new StartupException("Neither 'faster_whisper' nor 'whisperx' python libraries were loaded correctly. Have you installed one of them?");
+            throw new StartupException("Neither 'faster_whisper' nor 'whisperx' python libraries were loaded correctly. You need to install one of them!");
+        }
+
+        line = reader.readLine();
+        logger.info("Transcription library loaded: {}", line);
+
+        if ("whisperx".equals(line) && !ffmpegFound) {
+            throw new IPEDException("FFmpeg not found on PATH, it is needed by WhisperX python library.");
         }
 
         int cudaCount = Integer.valueOf(reader.readLine());

@@ -29,6 +29,7 @@ def main():
         whisperx_found = False
     
     print(library_loaded, file=stdout, flush=True)
+    print('whisperx' if whisperx_found else 'faster_whisper', file=stdout, flush=True)
     
     import GPUtil
     cudaCount = len(GPUtil.getGPUs())
