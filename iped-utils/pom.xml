@@ -17,6 +17,16 @@
     		<type>jar</type>
     	</dependency>
         <dependency>
+            <groupId>black.ninia</groupId>
+            <artifactId>jep</artifactId>
+            <version>4.0.3</version>
+        </dependency>
+        <dependency>
+            <groupId>me.jahnen</groupId>
+            <artifactId>java-fs</artifactId>
+            <version>0.1.4</version>
+        </dependency>
+        <dependency>
             <groupId>net.jpountz.lz4</groupId>
             <artifactId>lz4</artifactId>
             <version>1.3</version>

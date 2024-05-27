@@ -31,6 +31,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -103,11 +108,16 @@ public class JEPClassFinder implements ClassEnquirer {
         while (!queue.isEmpty()) {
             String el = queue.remove();
 
+            Boolean debugging = Boolean.valueOf(System.getProperty("Debugging"));
+            if (debugging && !el.toLowerCase().endsWith(".jar")) {
+                loadClassPath(new File(el));
+            }
+
             if (!el.toLowerCase().endsWith(".jar")) {
                 // ignore filesystem classpath
                 continue;
             }
-
+            
             // make sure it exists
             File file = new File(el);
             if (!file.exists() || !file.canRead())
@@ -166,6 +176,53 @@ public class JEPClassFinder implements ClassEnquirer {
                 // debugging only
                 e.printStackTrace();
             }
+        }
+    }
+
+    private void loadClassPath(File startdir) {
+        try {
+            Files.walkFileTree(startdir.toPath(), new FileVisitor<Path>() {
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
+                    String entry = path.toAbsolutePath().toString();
+                    if (!entry.toString().toLowerCase().endsWith(".class")) {
+                        // not a class file, so we don't care
+                        return FileVisitResult.CONTINUE;
+                    }
+                    int end = entry.lastIndexOf('/');
+                    if (end < 0) {
+                        // a class name without a package but inside a jar
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    String pname = entry.substring(startdir.getAbsolutePath().length() + 1, end).replace('/', '.');
+
+                    String cname = stripClassExt(entry.substring(end + 1));
+                    if (!cname.contains("$")) {
+                        addClass(pname, cname);
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                    return FileVisitResult.CONTINUE;
+                }
+
+            });
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
     }
 
