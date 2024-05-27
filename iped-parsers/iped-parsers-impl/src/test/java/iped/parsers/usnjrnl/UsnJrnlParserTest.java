@@ -64,7 +64,7 @@ public class UsnJrnlParserTest extends AbstractPkgTest {
                 reasons = metadata.getValues("Reasons");
                 for (String reason : reasons) {
                     date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-                            .parse(metadata.get(UsnJrnlParser.USN_REASON_PREFIX + ":" + reason));
+                            .parse(metadata.get(UsnJrnlParser.USN_REASON_PREFIX + reason));
                     if (getVersion() < 9)
                         assertEquals("20/05/2021 14:52:07", df.format(date));
                     if (getVersion() >= 9 && getVersion() < 12)
@@ -79,7 +79,7 @@ public class UsnJrnlParserTest extends AbstractPkgTest {
                 reasons = metadata.getValues("Reasons");
                 for (String reason : reasons) {
                     date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-                            .parse(metadata.get(UsnJrnlParser.USN_REASON_PREFIX + ":" + reason));
+                            .parse(metadata.get(UsnJrnlParser.USN_REASON_PREFIX + reason));
                     if (getVersion() < 9)
                         assertEquals("20/05/2021 14:55:03", df.format(date));
                     if (getVersion() >= 9 && getVersion() < 12)
@@ -129,7 +129,7 @@ public class UsnJrnlParserTest extends AbstractPkgTest {
                 reasons = metadata.getValues("Reasons");
                 for (String reason : reasons) {
                     date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-                            .parse(metadata.get(UsnJrnlParser.USN_REASON_PREFIX + ":" + reason));
+                            .parse(metadata.get(UsnJrnlParser.USN_REASON_PREFIX + reason));
                     if (getVersion() < 9)
                         assertEquals("20/05/2021 14:52:07", df.format(date));
                     if (getVersion() >= 9 && getVersion() < 12)
@@ -144,7 +144,7 @@ public class UsnJrnlParserTest extends AbstractPkgTest {
                 reasons = metadata.getValues("Reasons");
                 for (String reason : reasons) {
                     date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-                            .parse(metadata.get(UsnJrnlParser.USN_REASON_PREFIX + ":" + reason));
+                            .parse(metadata.get(UsnJrnlParser.USN_REASON_PREFIX + reason));
                     if (getVersion() < 9)
                         assertEquals("20/05/2021 14:55:03", df.format(date));
                     if (getVersion() >= 9 && getVersion() < 12)
