@@ -2012,7 +2012,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         public Query getQuery() {
             String searchText = queryComboBox.getSelectedItem().toString();
             try {
-                if (!SEARCH_TOOL_TIP.equals(searchText)) {
+                if (!SEARCH_TOOL_TIP.equals(searchText)
+                        && !("".equals(searchText) || "*".equals(searchText) || "*:*".equals(searchText))) {
                     return new QueryBuilder(appCase).getQuery(searchText);
                 } else {
                     return null;
