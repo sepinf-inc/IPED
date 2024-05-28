@@ -97,10 +97,12 @@ enableMinIO = false
 enableOCR = false
 
 # Enable audio transcription.
-# Default implementation uses VOSK transcription on local CPU (slow and not good accuracy).
-# You can change it to a local Facebook Wav2Vec2 implementation (slower on CPU, faster on GPU and good accuracy)
-# or remote Microsoft Azure or Google Cloud services (faster and good accuracy).
-# Configure it in conf/AudioTranscriptConfig.txt
+# Default implementation uses VOSK transcription on local CPU (faster but bad accuracy).
+# You can change the algorithm into conf/AudioTranscriptConfig.txt:
+# - Wav2Vec2 algorithm (slower and good accuracy)
+# - Whisper algorithm (much slower but better accuracy)
+# - Google Cloud (about $1.00 per hour cost)
+# - Microsoft Azure (about $1.00 per hour cost)
 enableAudioTranscription = false
 
 # Enables carving. "addUnallocated" must be enabled to scan unallocated space.
