@@ -188,7 +188,7 @@ public class FilterSelectedEdges implements IResultSetFilterer {
 
     @Override
     public boolean hasFiltersApplied() {
-        return false;
+        return selectedEdges.size() > 0;
     }
 
     @Override
