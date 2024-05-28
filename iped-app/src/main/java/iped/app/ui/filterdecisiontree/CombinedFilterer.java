@@ -545,7 +545,7 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
 
     @Override
     public boolean hasFiltersApplied() {
-        return false;
+        return rootNode.getChildren().size() > 0;
     }
 
     public void invertPreCached(IFilter op) {

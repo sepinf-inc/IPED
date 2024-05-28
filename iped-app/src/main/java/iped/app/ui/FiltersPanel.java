@@ -17,7 +17,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.net.URL;
-import java.util.List;
 import java.util.function.Predicate;
 
 import javax.swing.DropMode;
@@ -34,8 +33,6 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
-import org.apache.lucene.search.Query;
-
 import iped.app.ui.controls.CheckBoxTreeCellRenderer;
 import iped.app.ui.filterdecisiontree.CombinedFilterer;
 import iped.app.ui.filterdecisiontree.DecisionNode;
@@ -48,9 +45,8 @@ import iped.viewers.api.ClearFilterListener;
 import iped.viewers.api.IFilter;
 import iped.viewers.api.IFilterer;
 import iped.viewers.api.IMiniaturizable;
-import iped.viewers.api.IQueryFilterer;
 
-public class FiltersPanel extends JPanel implements ClearFilterListener, IQueryFilterer// internal combinedfilterer wrapper to reflect on panel color
+public class FiltersPanel extends JPanel implements ClearFilterListener
 {
     private JTree filtersTree;
     private JScrollPane filtersTreePane;
@@ -169,6 +165,12 @@ public class FiltersPanel extends JPanel implements ClearFilterListener, IQueryF
         filtersTree.setModel(new FiltersTreeModel(filterManager.getFilterers()));
 
         combinedFilterer = new CombinedFilterer();
+        combinedFilterer.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                App.get().setDockablesColors();
+            }
+        });
 
         filterManager.addResultSetFilterer(combinedFilterer);
         filterManager.setFilterEnabled(combinedFilterer, false);
@@ -386,32 +388,5 @@ public class FiltersPanel extends JPanel implements ClearFilterListener, IQueryF
 
     public CombinedFilterer getCombinedFilterer() {
         return combinedFilterer;
-    }
-
-    @Override
-    public List<IFilter> getDefinedFilters() {
-        // does not expose filters as it is not actually registered as result set
-        // filterer
-        return null;
-    }
-
-    @Override
-    public boolean hasFilters() {
-        // does not expose filters as it is not actually registered as result set
-        // filterer
-        return false;
-    }
-
-    @Override
-    public boolean hasFiltersApplied() {
-        // Wraps combofilterer
-        return ckStructuredFilterer != null && ckStructuredFilterer.isSelected();
-    }
-
-    @Override
-    public Query getQuery() {
-        // does not expose filters as it is not actually registered as result set
-        // filterer
-        return null;
     }
 }

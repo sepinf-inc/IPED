@@ -145,7 +145,7 @@ public class FilterTransferHandler extends TransferHandler {
 
             combinedFilterer.startSearchResult(App.get().getResults());
 
-            if (filtersPanel.hasFiltersApplied()) {
+            if (filtersPanel.getCombinedFilterer().hasFiltersApplied()) {
                 App.get().getAppListener().updateFileListing();
             }
         } catch (Exception e) {

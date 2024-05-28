@@ -1281,6 +1281,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             }
         }
 
+        setTabColor(filtersTabDock, !filterManager.isFiltererEnabled(filtersPanel.getCombinedFilterer())
+                || !filtersPanel.getCombinedFilterer().hasFilters());
         setTabColor(categoriesTabDock,
                 !filterManager.isFiltererEnabled(categoryListener) || !categoryListener.hasFilters());
         setTabColor(metadataTabDock, !filterManager.isFiltererEnabled(metadataPanel) || !metadataPanel.hasFilters());
