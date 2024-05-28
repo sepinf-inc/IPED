@@ -15,8 +15,18 @@ public interface IFilterer extends ClearFilterListener, ActionListenerControl {
 
     List<IFilter> getDefinedFilters();
 
+    /**
+     * Informs if there is at least one filter defined by the filterer
+     * 
+     * @return
+     */
     public boolean hasFilters();
 
+    /**
+     * Informs if the defined filters inside the filterer are to be applied (used)
+     * 
+     * @return
+     */
     public boolean hasFiltersApplied();
 
     default public String getFilterName() {
