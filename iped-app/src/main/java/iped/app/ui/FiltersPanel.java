@@ -41,12 +41,11 @@ import iped.app.ui.filterdecisiontree.OperandNode;
 import iped.app.ui.filterdecisiontree.OperandNode.Operand;
 import iped.app.ui.filterdecisiontree.OperandPopupMenu;
 import iped.app.ui.filters.FilterTransferHandler;
-import iped.viewers.api.ClearFilterListener;
 import iped.viewers.api.IFilter;
 import iped.viewers.api.IFilterer;
 import iped.viewers.api.IMiniaturizable;
 
-public class FiltersPanel extends JPanel implements ClearFilterListener
+public class FiltersPanel extends JPanel
 {
     private JTree filtersTree;
     private JScrollPane filtersTreePane;
@@ -165,6 +164,7 @@ public class FiltersPanel extends JPanel implements ClearFilterListener
         filtersTree.setModel(new FiltersTreeModel(filterManager.getFilterers()));
 
         combinedFilterer = new CombinedFilterer();
+        combinedFilterer.setFiltersPanel(this);
         combinedFilterer.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -377,7 +377,6 @@ public class FiltersPanel extends JPanel implements ClearFilterListener
 
     }
 
-    @Override
     public void clearFilter() {
         ckStructuredFilterer.setSelected(false);
         ckStructuredFilterer.setBackground(ckStructuredFilterer.getParent().getBackground());
@@ -388,5 +387,9 @@ public class FiltersPanel extends JPanel implements ClearFilterListener
 
     public CombinedFilterer getCombinedFilterer() {
         return combinedFilterer;
+    }
+
+    public boolean isCombinedFiltererApplied() {
+        return ckStructuredFilterer.isSelected();
     }
 }

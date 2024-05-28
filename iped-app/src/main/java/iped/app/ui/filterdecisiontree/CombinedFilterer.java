@@ -18,6 +18,7 @@ import org.roaringbitmap.RoaringBitmap;
 
 import iped.app.ui.App;
 import iped.app.ui.CaseSearcherFilter;
+import iped.app.ui.FiltersPanel;
 import iped.app.ui.filterdecisiontree.OperandNode.Operand;
 import iped.data.IItemId;
 import iped.engine.data.IPEDMultiSource;
@@ -47,6 +48,8 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
     int queueCount = 0;
 
     private CombinedBitSet cbs;
+
+    private FiltersPanel filtersPanel;
 
     @Override
     public List getDefinedFilters() {
@@ -545,7 +548,7 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
 
     @Override
     public boolean hasFiltersApplied() {
-        return rootNode.getChildren().size() > 0;
+        return rootNode.getChildren().size() > 0 && filtersPanel.isCombinedFiltererApplied();
     }
 
     public void invertPreCached(IFilter op) {
@@ -560,8 +563,7 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
 
     @Override
     public void clearFilter() {
-        // TODO Auto-generated method stub
-
+        filtersPanel.clearFilter();
     }
 
     public void invalidateCache() {
@@ -570,6 +572,10 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
 
     public void setRootNode(OperandNode rootNode) {
         this.rootNode = rootNode;
+    }
+
+    public void setFiltersPanel(FiltersPanel filtersPanel) {
+        this.filtersPanel = filtersPanel;
     }
 
 }

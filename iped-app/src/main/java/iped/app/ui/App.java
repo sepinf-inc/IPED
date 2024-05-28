@@ -826,6 +826,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         });
 
         filtersPanel.install(filterManager);
+        clearAllFilters.addClearListener(filtersPanel.getCombinedFilterer());
         filtersPanel.updateUI();
 
         hitsTable.getSelectionModel().addListSelectionListener(new HitsTableListener(TextViewer.font));
