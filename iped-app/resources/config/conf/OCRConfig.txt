@@ -5,7 +5,7 @@
 # You can use the parameter -ocr "bookmark_name" to restrict the OCR to a specific bookmark (just works when creating reports from cmd line).
 
 # Dictionary language to be used for OCR. You can specify multiple languages e.g. por+eng but you will pay an important processing cost.
-# Languages supported: eng, por, ita, deu, spa
+# Languages supported: eng, por, ita, deu, spa, fra
 OCRLanguage = por
 
 # Skip known files found in the hash lookup database.

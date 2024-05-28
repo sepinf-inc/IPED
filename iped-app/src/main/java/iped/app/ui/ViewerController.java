@@ -116,7 +116,7 @@ public class ViewerController {
                     URI jarUri = URLUtil.getURL(LibreOfficeViewer.class).toURI();
                     File moduledir = new File(jarUri).getParentFile().getParentFile();
                     LibreOfficeFinder loFinder = new LibreOfficeFinder(moduledir);
-                    final String pathLO = loFinder.getLOPath();
+                    final String pathLO = loFinder.getLOPath(false);
                     if (pathLO != null) {
                         SwingUtilities.invokeAndWait(new Runnable() {
                             @Override

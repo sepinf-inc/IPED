@@ -35,7 +35,7 @@ import iped.engine.task.transcript.AbstractTranscriptTask.TextAndScore;
 import iped.io.URLUtil;
 import iped.utils.IOUtil;
 
-public class RemoteWav2Vec2Service {
+public class RemoteTranscriptionService {
     
     static enum MESSAGES {
         ACCEPTED,
@@ -131,11 +131,11 @@ public class RemoteWav2Vec2Service {
             printHelpAndExit();
         }
 
-        File jar = new File(URLUtil.getURL(RemoteWav2Vec2Service.class).toURI());
+        File jar = new File(URLUtil.getURL(RemoteTranscriptionService.class).toURI());
         File root = jar.getParentFile().getParentFile();
 
         System.setProperty("org.apache.logging.log4j.level", "INFO");
-        logger = LoggerFactory.getLogger(RemoteWav2Vec2Service.class);
+        logger = LoggerFactory.getLogger(RemoteTranscriptionService.class);
 
         Configuration.getInstance().loadConfigurables(root.getAbsolutePath());
         ConfigurationManager cm = ConfigurationManager.get();
@@ -143,10 +143,10 @@ public class RemoteWav2Vec2Service {
         LocalConfig localConfig = new LocalConfig();
         cm.addObject(audioConfig);
         cm.addObject(localConfig);
-        cm.loadConfig(audioConfig);
         cm.loadConfig(localConfig);
+        cm.loadConfig(audioConfig);
 
-        Wav2Vec2TranscriptTask task = new Wav2Vec2TranscriptTask();
+        AbstractTranscriptTask task = (AbstractTranscriptTask) Class.forName(audioConfig.getClassName()).getDeclaredConstructor().newInstance();
         audioConfig.setEnabled(true);
         task.init(cm);
 
@@ -261,7 +261,7 @@ public class RemoteWav2Vec2Service {
         }
     }
 
-    private static void waitRequests(ServerSocket server, Wav2Vec2TranscriptTask task, String discoveryIp) {
+    private static void waitRequests(ServerSocket server, AbstractTranscriptTask task, String discoveryIp) {
         AtomicInteger jobs = new AtomicInteger();
         while (true) {
             try {
