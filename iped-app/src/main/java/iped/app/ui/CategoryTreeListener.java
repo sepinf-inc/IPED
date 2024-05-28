@@ -48,7 +48,6 @@ public class CategoryTreeListener implements TreeSelectionListener, TreeExpansio
             root = new TreePath(App.get().categoryTree.getModel().getRoot());
 
         if (System.currentTimeMillis() - collapsed < 100) {
-            // if(evt.getPath().getLastPathComponent().equals(App.get().categoryTree.getModel().getRoot()))
             App.get().categoryTree.setSelectionPaths(selection.toArray(new TreePath[0]));
             return;
         }
@@ -62,13 +61,11 @@ public class CategoryTreeListener implements TreeSelectionListener, TreeExpansio
         }
 
         if (selection.contains(root) || selection.isEmpty()) {
-            App.get().setCategoriesDefaultColor(true);
             categoryList.clear();
             query = null;
             queryStr = null;
 
         } else {
-            App.get().setCategoriesDefaultColor(false);
             queryStr = "";
 
             Builder builder = new Builder();
@@ -79,6 +76,8 @@ public class CategoryTreeListener implements TreeSelectionListener, TreeExpansio
             }
             query = builder.build();
         }
+
+        App.get().setDockablesColors();
 
         if (!clearing)
             App.get().appletListener.updateFileListing();

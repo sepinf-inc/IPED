@@ -1230,7 +1230,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         return dockable;
     }
 
-    private boolean categoriesDefaultColor = true;
     private boolean metadataDefaultColor = true;
     private boolean evidenceDefaultColor = true;
     private boolean bookmarksDefaultColor = true;
@@ -1251,12 +1250,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         }
     }
 
-    public void setCategoriesDefaultColor(boolean defaultColor) {
-        if (categoriesDefaultColor != defaultColor) {
-            categoriesDefaultColor = defaultColor;
-            setDockablesColors();
-        }
-    }
 
     public void setMetadataDefaultColor(boolean defaultColor) {
         if (metadataDefaultColor != defaultColor) {
