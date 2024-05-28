@@ -651,8 +651,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
 
     @Override
     public boolean hasFiltersApplied() {
-        // TODO Auto-generated method stub
-        return false;
+        return isFiltering();
     }
 
 }
