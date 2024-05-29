@@ -165,6 +165,8 @@ function process(e){
 				e.setCategory("Threema Calls");
 			} else if (source.contains("telegram")) {
 				e.setCategory("Telegram Calls");
+			} else if (source.contains("signal")) {
+				e.setCategory("Signal Calls");
 			} else {
 			    // New sub-categories may be created from other phone call apps handled by UFED
 				e.setCategory("Other Calls");
