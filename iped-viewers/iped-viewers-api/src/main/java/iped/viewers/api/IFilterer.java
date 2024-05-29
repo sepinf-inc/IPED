@@ -29,6 +29,16 @@ public interface IFilterer extends ClearFilterListener, ActionListenerControl {
      */
     public boolean hasFiltersApplied();
 
+    /**
+     * Restores internal state elements to represent the defined filters passed as
+     * parameter
+     * 
+     * @return
+     */
+    default public void restoreDefineFilters(List<IFilter> filtersToRestore) {
+        return;
+    }
+
     default public String getFilterName() {
         try {
             return Messages.get(this.getClass().getName().replace("$", ".") + ".filtererName");

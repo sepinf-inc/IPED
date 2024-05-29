@@ -17,6 +17,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.List;
 import java.util.function.Predicate;
 
 import javax.swing.DropMode;
@@ -64,6 +66,8 @@ public class FiltersPanel extends JPanel
     private FiltererMenu filtererMenu;
 
     private volatile TreePath lastClickedPath;
+
+    HashMap<IFilterer, List<IFilter>> lastFilters = new HashMap<IFilterer, List<IFilter>>();
 
     public FiltersPanel() {
         invertUrl = this.getClass().getResource("negative.png");
@@ -121,16 +125,22 @@ public class FiltersPanel extends JPanel
                 return result;
             }
         };
+
         treeCellRenderer.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 IFilterer filterer = (IFilterer) e.getSource();
                 if (filterer.hasFilters()) {
-                    filterManager.setFilterEnabled(filterer, !filterManager.isFiltererEnabled(filterer));
-                    App.get().filtersPanel.updateUI();
+                    lastFilters.put(filterer, filterer.getDefinedFilters());
+                    filterer.clearFilter();
                     App.get().getAppListener().updateFileListing();
                 } else {
-                    App.get().filtersPanel.updateUI();
+                    List<IFilter> clastFilters = lastFilters.get(filterer);
+                    if (clastFilters != null) {
+                        filterer.restoreDefineFilters(clastFilters);
+                        App.get().getAppListener().updateFileListing();
+                        App.get().filtersPanel.updateUI();
+                    }
                 }
             }
         });
