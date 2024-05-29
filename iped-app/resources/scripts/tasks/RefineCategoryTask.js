@@ -163,6 +163,8 @@ function process(e){
 				e.setCategory("Discord Calls");
 			} else if (source.contains("threema")) {
 				e.setCategory("Threema Calls");
+			} else if (source.contains("telegram")) {
+				e.setCategory("Telegram Calls");
 			} else {
 			    // New sub-categories may be created from other phone call apps handled by UFED
 				e.setCategory("Other Calls");
