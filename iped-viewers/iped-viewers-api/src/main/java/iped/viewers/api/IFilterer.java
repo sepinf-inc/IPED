@@ -35,8 +35,8 @@ public interface IFilterer extends ClearFilterListener, ActionListenerControl {
      * 
      * @return
      */
-    default public void restoreDefineFilters(List<IFilter> filtersToRestore) {
-        return;
+    default public void restoreDefinedFilters(List<IFilter> filtersToRestore){
+        
     }
 
     default public String getFilterName() {

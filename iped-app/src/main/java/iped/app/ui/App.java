@@ -811,7 +811,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         filterManager.addQueryFilterer(TableHeaderFilterManager.get());
         filterManager.addResultSetFilterer(bookmarksListener);
         filterManager.addResultSetFilterer(FilterSelectedEdges.getInstance());
-        filterManager.addResultSetFilterer(duplicatesFilterer, false);
+        filterManager.addResultSetFilterer(duplicatesFilterer);
         filterManager.addResultSetFilterer(similarImagesFilterer);
         filterManager.addResultSetFilterer(similarFacesSearchFilterer);
         filterManager.addResultSetFilterer(timelineListener);
@@ -1768,6 +1768,16 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             item = similarImagesFilterer;
             imageFilter = new SimilarImageFilter(itemId, item);
         }
+
+        @Override
+        public void restoreDefinedFilters(List<IFilter> filtersToRestore) {
+            for (IFilter filter : filtersToRestore) {
+                if (filter instanceof SimilarImageFilter) {
+                    imageFilter = (SimilarImageFilter) filter;
+                    break;
+                }
+            }
+        }
     };
 
     class DuplicateFilter implements IResultSetFilter, IMutableFilter {
@@ -1787,6 +1797,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     IResultSetFilter duplicateFilter = new DuplicateFilter();
 
     class DuplicatesFilterer implements IResultSetFilterer {
+
+        IResultSetFilter cduplicateFilter = duplicateFilter;
+
         @Override
         public List getDefinedFilters() {
             ArrayList<IFilter> result = new ArrayList<IFilter>();
@@ -1807,7 +1820,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         @Override
         public boolean hasFilters() {
-            return true;
+            return cduplicateFilter != null;
         }
 
         @Override
@@ -1818,9 +1831,18 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         @Override
         public void clearFilter() {
             appletListener.clearAllFilters = true;
+            cduplicateFilter = null;
             if (filterDuplicates.isSelected())
                 filterDuplicates.doClick();
             appletListener.clearAllFilters = false;
+            this.fireActionListener(new ActionEvent(this, IFilterer.DISABLE_FILTER_EVENT, "DESELECTED"));
+        }
+
+        @Override
+        public void restoreDefinedFilters(List<IFilter> filtersToRestore) {
+            cduplicateFilter = duplicateFilter;
+            filterDuplicates.setSelected(true);
+            this.fireActionListener(new ActionEvent(this, IFilterer.ENABLE_FILTER_EVENT, "SELECTED"));
         }
     }
 
@@ -1958,6 +1980,34 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             SimilarFacesFilterActions.clear(false);
         }
 
+        @Override
+        public void restoreDefinedFilters(List<IFilter> filtersToRestore) {
+            for (IFilter filter : filtersToRestore) {
+                if (filter instanceof SimilarFacesSearchFilter) {
+                    filter = (SimilarFacesSearchFilter) filter;
+                    break;
+                }
+            }
+        }
+
+    }
+
+    class SearchFilter implements IQueryFilter {
+        String filterText;
+
+        public SearchFilter(String filterText) {
+            this.filterText = filterText;
+        }
+
+        @Override
+        public Query getQuery() {
+            return query;
+        }
+
+        public String toString() {
+            return filterText;
+        }
+
     }
 
     class SearchFilterer implements IQueryFilterer {
@@ -1969,18 +2019,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 Query query;
                 try {
                     query = new QueryBuilder(appCase).getQuery(filterText);
-                    result.add(new IQueryFilter() {
-                        String title = filterText;
-
-                        @Override
-                        public Query getQuery() {
-                            return query;
-                        }
-
-                        public String toString() {
-                            return title;
-                        }
-                    });
+                    result.add(new SearchFilter(filterText));
                 } catch (ParseException | QueryNodeException e) {
                     e.printStackTrace();
                 }
@@ -2029,6 +2068,17 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             appletListener.clearAllFilters = true;
             queryComboBox.setSelectedItem(""); //$NON-NLS-1$
             appletListener.clearAllFilters = false;
+        }
+
+        @Override
+        public void restoreDefinedFilters(List<IFilter> filtersToRestore) {
+            for (IFilter filter : filtersToRestore) {
+                if (filter instanceof SearchFilter) {
+                    filter = (SearchFilter) filter;
+                    queryComboBox.setSelectedItem(((SearchFilter) filter).filterText);
+                    break;
+                }
+            }
         }
 
     }
@@ -2173,9 +2223,29 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             this.percent = percent;
             filter = null;
         }
+
+        @Override
+        public void restoreDefinedFilters(List<IFilter> filtersToRestore) {
+            for (IFilter filter : filtersToRestore) {
+                if (filter instanceof SimilarDocumentFilter) {
+                    filter = (SimilarDocumentFilter) filter;
+                    break;
+                }
+            }
+        }
     }
 
     public AppListener getAppletListener() {
         return appletListener;
+    }
+
+    public void selectFilterDuplicates(boolean selected) {
+        if (selected) {
+            duplicatesFilterer.cduplicateFilter = duplicateFilter;
+            duplicatesFilterer.fireActionListener(new ActionEvent(this, IFilterer.ENABLE_FILTER_EVENT, "SELECTED"));
+        } else {
+            duplicatesFilterer.cduplicateFilter = null;
+            duplicatesFilterer.fireActionListener(new ActionEvent(this, IFilterer.DISABLE_FILTER_EVENT, "DESELECTED"));
+        }
     }
 }

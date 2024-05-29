@@ -137,7 +137,7 @@ public class FiltersPanel extends JPanel
                 } else {
                     List<IFilter> clastFilters = lastFilters.get(filterer);
                     if (clastFilters != null) {
-                        filterer.restoreDefineFilters(clastFilters);
+                        filterer.restoreDefinedFilters(clastFilters);
                         App.get().getAppListener().updateFileListing();
                         App.get().filtersPanel.updateUI();
                     }

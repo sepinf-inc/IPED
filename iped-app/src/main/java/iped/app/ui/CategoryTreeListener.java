@@ -168,7 +168,7 @@ public class CategoryTreeListener implements TreeSelectionListener, TreeExpansio
     }
 
     @Override
-    public void restoreDefineFilters(List<IFilter> filtersToRestore) {
+    public void restoreDefinedFilters(List<IFilter> filtersToRestore) {
         if (filtersToRestore == null) {
             return;
         }
