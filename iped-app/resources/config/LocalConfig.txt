@@ -2,7 +2,7 @@
 # Local environment configuration
 ########################################################################
 
-# Defines program localization/language. Currently there are localizations for 'en', 'pt-BR', 'it-IT', 'de-DE' & 'es-AR'
+# Defines program localization/language. Currently there are localizations for 'en', 'pt-BR', 'it-IT', 'de-DE', 'es-AR' and 'fr-FR'.
 locale = en
 
 # Temporary directory for processing: "default" uses the system temporary folder.
