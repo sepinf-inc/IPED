@@ -152,8 +152,9 @@
     ]},
     {"name": "Extraction Summary", "mimes": ["application/x-ufed-html-summary"]},
     {"name": "Calls", "categories":[ 
+        {"name": "Discord Calls", "mimes":["call/x-discord-call"]},
         {"name": "Facebook Calls", "mimes":[]},
-        {"name": "Phone Calls", "mimes":["call/x-discord-call"]},
+        {"name": "Phone Calls", "mimes":[]},
         {"name": "Telegram Calls", "mimes":["call/x-telegram-call"]},
         {"name": "Threema Calls", "mimes":["call/x-threema-call"]},
         {"name": "WhatsApp Calls", "mimes":["call/x-whatsapp-call"]},
