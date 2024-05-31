@@ -372,9 +372,11 @@ public class TorrentFileParser extends AbstractParser {
 
             // Try to link files to case items by hash
             for (FileInTorrent file : files) {
-                linkTorrentToItem(searcher, metadata, file, "md5", file.md5, md5Len);
-                linkTorrentToItem(searcher, metadata, file, "sha-1", file.sha1, sha1Len);
-                linkTorrentToItem(searcher, metadata, file, "edonkey", file.ed2k, edonkeyLen);
+                if (file.length > 0) {
+                    linkTorrentToItem(searcher, metadata, file, "md5", file.md5, md5Len);
+                    linkTorrentToItem(searcher, metadata, file, "sha-1", file.sha1, sha1Len);
+                    linkTorrentToItem(searcher, metadata, file, "edonkey", file.ed2k, edonkeyLen);
+                }
             }
 
         } else {
