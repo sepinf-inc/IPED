@@ -277,6 +277,19 @@
             <mediaType>application/x-bittorrent-resume-dat</mediaType>
         </carverType>
 
+        <carverType>
+            <name>RESUME.DAT ENTRY</name>
+            <signatures>
+                <headerSignature>d8:added_oni</headerSignature>
+                <footerSignature>8:uploadedi</footerSignature>
+            </signatures>
+            <carverClass>iped.carvers.custom.ResumeDatEntryCarver</carverClass>
+            <minLength>256</minLength>
+            <maxLength>32768</maxLength>
+            <mediaType>application/x-bittorrent-resume-dat-entry</mediaType>
+            <stopOnNextHeader>true</stopOnNextHeader>
+        </carverType>
+
         <!--carverType>
             <name>PLIST</name>
             <signatures>

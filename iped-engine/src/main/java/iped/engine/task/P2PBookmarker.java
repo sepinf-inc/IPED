@@ -18,6 +18,7 @@ import iped.engine.localization.Messages;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.task.index.IndexItem;
 import iped.parsers.ares.AresParser;
+import iped.parsers.bittorrent.BitTorrentResumeDatEntryParser;
 import iped.parsers.bittorrent.BitTorrentResumeDatParser;
 import iped.parsers.emule.KnownMetParser;
 import iped.parsers.emule.PartMetParser;
@@ -104,6 +105,8 @@ public class P2PBookmarker {
         List<String> torrentHashes = Arrays.asList(IndexItem.HASH, HashTask.HASH.MD5.toString(),
                 HashTask.HASH.SHA1.toString(), HashTask.HASH.EDONKEY.toString());
         p2pPrograms.put(BitTorrentResumeDatParser.RESUME_DAT_MIME_TYPE,
+                new P2PProgram(torrentHashes, "Torrent", new Color(0, 160, 60)));
+        p2pPrograms.put(BitTorrentResumeDatEntryParser.RESUME_DAT_ENTRY_MIME_TYPE,
                 new P2PProgram(torrentHashes, "Torrent", new Color(0, 160, 60)));
 
         P2PProgram progGDrive = new P2PProgram(HashTask.HASH.MD5.toString(), "GoogleDrive");
