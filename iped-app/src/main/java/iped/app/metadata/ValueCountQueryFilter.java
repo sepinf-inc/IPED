@@ -102,4 +102,12 @@ public class ValueCountQueryFilter implements IQueryFilter {
         return query;
     }
 
+    public String getFilterField() {
+        return filterField;
+    }
+
+    public Set<ValueCount> getValues() {
+        return values;
+    }
+
 }

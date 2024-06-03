@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import javax.swing.Box;
@@ -27,6 +29,7 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
+import javax.swing.ListModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -99,10 +102,12 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
 
     ValueCount[] array, filteredArray;
 
-    boolean updatingProps = false, updatingList = false, clearing = false;
+    boolean updatingProps = false, updatingList = false, clearing = false, isRestoringFields = false;
     volatile boolean updatingResult = false;
 
     private MetadataSearch ms = new MetadataSearch();
+
+    private FuturePopulateList futurePopulateList;
 
     private static final long serialVersionUID = 1L;
 
@@ -273,16 +278,78 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         }.start();
     }
 
+    class FuturePopulateList implements Future<Boolean> {
+        Boolean listPopulatedEnded = false;
+        Semaphore sem = new Semaphore(1);
+        ArrayList<Runnable> actions = new ArrayList<Runnable>();
+
+        FuturePopulateList() {
+            try {
+                sem.acquire();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public boolean cancel(boolean mayInterruptIfRunning) {
+            sem.release();
+            return false;
+        }
+
+        @Override
+        public boolean isCancelled() {
+            return !listPopulatedEnded;
+        }
+
+        @Override
+        public boolean isDone() {
+            sem.release();
+            return listPopulatedEnded;
+        }
+
+        @Override
+        public Boolean get() throws InterruptedException, ExecutionException {
+            try {
+                sem.acquire();
+                sem.release();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            return listPopulatedEnded;
+        }
+
+        @Override
+        public Boolean get(long timeout, TimeUnit unit)
+                throws InterruptedException, ExecutionException {
+            return null;
+        }
+
+        public void finish() {
+            listPopulatedEnded = true;
+
+            sem.release();
+
+            for (Runnable action : actions) {
+                action.run();
+            }
+        }
+
+        public void addAction(Runnable r) {
+            actions.add(r);
+        }
+    };
+
     private void populateList() {
         setWaitVisible(true);
-        final boolean updateResult = !list.isSelectionEmpty();
+        final boolean updateResult = !list.isSelectionEmpty() || isRestoringFields;
         Future<MultiSearchResult> future = null;
         if (updateResult) {
             updatingResult = true;
             future = App.get().appletListener.futureUpdateFileListing();
         }
         Future<MultiSearchResult> finalfuture = future;
-
+        
         ms.setLogScale(scale.getValue() == 1);
         ms.setNoRanges(scale.getValue() == -1);
 
@@ -310,7 +377,9 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
                     countValues();
 
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    if (futurePopulateList != null) {
+                        futurePopulateList.cancel(true);
+                    }
                 } finally {
                     setWaitVisible(false);
                 }
@@ -322,7 +391,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
     private void updateList(final ValueCount[] sortedArray) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
-            public void run() {
+            public void run() {                
                 updatingList = true;
                 List<ValueCount> selection = list.getSelectedValuesList();
                 HashSet<ValueCount> selSet = new HashSet<ValueCount>();
@@ -337,6 +406,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
                     list.setSelectedIndices(selIdx);
                 }
                 updatingList = false;
+                futurePopulateList.finish();
 
                 // System.out.println("finish");
                 updateTabColor();
@@ -480,13 +550,13 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
     @Override
     public void clearFilter() {
         clearing = true;
+        groups.setSelectedIndex(-1);
         list.setListData(new ValueCount[0]);
         clearing = false;
     }
 
     @Override
     public void stateChanged(ChangeEvent e) {
-
         if (e.getSource() == sort) {
             if (!sort.getValueIsAdjusting())
                 sortAndUpdateList(filteredArray);
@@ -612,11 +682,6 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         if (isFiltering()) {
             ValueCount sample = selectedValues.iterator().next();
             result.add(new ValueCountQueryFilter(field, selectedValues));
-            /*
-             * if(sample instanceof RangeCount) { result.add(new ValueCountQueryFilter(field
-             * , selectedValues)); }else { result.add(new ValueCountFilter(field ,
-             * selectedValues)); }
-             */
         }
         return result;
     }
@@ -654,4 +719,95 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         return isFiltering();
     }
 
+    @Override
+    public void restoreDefinedFilters(List<IFilter> filtersToRestore) {
+        for (IFilter filter : filtersToRestore) {
+            if (filter instanceof ValueCountQueryFilter) {
+                ValueCountQueryFilter vcqFilter = (ValueCountQueryFilter) filter;
+                String field = vcqFilter.getFilterField();
+                int i = 0;
+                fields: for (String[] fieldsInGroup : ColumnsManager.getInstance().fieldGroups) {
+                    for (String fieldInGroup : fieldsInGroup) {
+                        if (fieldInGroup.equals(field)) {
+                            groups.setSelectedIndex(i);
+
+                            if (futurePopulateList != null) {
+                                FuturePopulateList oldFuturePopulateList = futurePopulateList;
+                                futurePopulateList = new FuturePopulateList();
+                                oldFuturePopulateList.cancel(true);
+                            } else {
+                                futurePopulateList = new FuturePopulateList();
+                            }
+
+                            futurePopulateList.addAction(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Thread t = new Thread(new Runnable() {
+
+                                        @Override
+                                        public void run() {
+                                            try {
+                                                if (futurePopulateList.get()) {
+                                                    SwingUtilities.invokeLater(new Runnable() {
+                                                        @Override
+                                                        public void run() {
+                                                            int[] is = new int[vcqFilter.getValues().size()];
+                                                            ListModel<ValueCount> dm = list.getModel();
+                                                            int j = 0;
+                                                            for (int k = 0, c = dm.getSize(); k < c
+                                                                    && j < is.length; k++) {
+                                                                if (vcqFilter.getValues()
+                                                                        .contains(dm.getElementAt(k))) {
+                                                                    is[j] = k;
+                                                                    j++;
+                                                                }
+                                                            }
+                                                            setSelectedIndices(is);
+                                                        }
+                                                    });
+                                                }
+                                                futurePopulateList = null;
+                                                App.get().filtersPanel.updateUI();
+                                            } catch (InterruptedException e) {
+                                                // TODO Auto-generated catch block
+                                                e.printStackTrace();
+                                            } catch (ExecutionException e) {
+                                                // TODO Auto-generated catch block
+                                                e.printStackTrace();
+                                            } finally {
+                                            }
+                                        }
+                                    });
+                                    t.start();
+                                }
+                            });
+
+                            isRestoringFields = true;
+                            props.setSelectedItem(field);
+                            isRestoringFields = false;
+
+                            break fields;
+                        }
+                    }
+                    i++;
+                }
+                break;
+            }
+        }
+
+    }
+
+    private void setSelectedIndices(int[] is) {
+        ArrayList<ListSelectionListener> temp = new ArrayList<ListSelectionListener>();
+        for (ListSelectionListener sl : list.getListSelectionListeners()) {
+            temp.add(sl);
+        }
+        for (ListSelectionListener sl : temp) {
+            list.removeListSelectionListener(sl);
+        }
+        list.setSelectedIndices(is);
+        for (ListSelectionListener sl : temp) {
+            list.addListSelectionListener(sl);
+        }
+    }
 }
