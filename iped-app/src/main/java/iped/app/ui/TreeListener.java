@@ -23,6 +23,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -54,6 +55,9 @@ import iped.viewers.api.IQueryFilterer;
 public class TreeListener extends MouseAdapter implements TreeSelectionListener, ActionListener, TreeExpansionListener, IQueryFilterer {
 
     private Query treeQuery, recursiveTreeQuery;
+    PathFilter currentFilter;
+    private PathFilter currentRecursiveFilter;
+
     boolean rootSelected = false;
     HashSet<TreePath> selection = new HashSet<TreePath>();
     private long collapsedTime = 0;
@@ -84,13 +88,20 @@ public class TreeListener extends MouseAdapter implements TreeSelectionListener,
             }
         }
 
-        definedFilters = null;
+        definedFilters = new ArrayList<IFilter>();
+
         if (rootSelected || selection.isEmpty()) {
+            currentFilter = null;
+
             treeQuery = new TermQuery(new Term(IndexItem.ISROOT, "true")); //$NON-NLS-1$
             recursiveTreeQuery = null;
         } else {
             String treeQueryStr = ""; //$NON-NLS-1$
             BooleanQuery.Builder recursiveQueryBuilder = new BooleanQuery.Builder();
+
+            currentFilter = new PathFilter();
+            currentRecursiveFilter = new PathFilter();
+            currentRecursiveFilter.setRecursive(true);
 
             for (TreePath path : selection) {
                 Document doc = ((Node) path.getLastPathComponent()).getDoc();
@@ -105,11 +116,25 @@ public class TreeListener extends MouseAdapter implements TreeSelectionListener,
                 subQuery.add(new TermQuery(new Term(IndexItem.PARENTIDs, parentId)), Occur.MUST);
                 subQuery.add(new TermQuery(new Term(IndexItem.EVIDENCE_UUID, sourceUUID)), Occur.MUST);
                 recursiveQueryBuilder.add(subQuery.build(), Occur.SHOULD);
+
+                currentFilter.addParentId(sourceUUID, parentId);
+                currentRecursiveFilter.addParentId(sourceUUID, parentId);
             }
             recursiveTreeQuery = recursiveQueryBuilder.build();
+            currentRecursiveFilter.setQuery(recursiveTreeQuery);
+
+            if (selection.size() > 0) {
+                if (App.get().recursiveTreeList.isSelected()) {
+                    definedFilters.add(currentRecursiveFilter);
+                } else {
+                    definedFilters.add(currentFilter);
+                }
+            }
 
             try {
                 treeQuery = new QueryBuilder(App.get().appCase).getQuery(treeQueryStr);
+                currentFilter.setQuery(recursiveTreeQuery);
+
             } catch (ParseException | QueryNodeException e) {
                 e.printStackTrace();
             }
@@ -205,29 +230,65 @@ public class TreeListener extends MouseAdapter implements TreeSelectionListener,
     @Override
     public void clearFilter() {
         clearing = true;
-        App.get().tree.clearSelection();
+
+        TreeSelectionListener[] listeners = App.get().tree.getTreeSelectionListeners();
+        for (TreeSelectionListener lis : listeners) {
+            App.get().tree.removeTreeSelectionListener(lis);
+        }
+
+        try {
+            definedFilters = null;
+            App.get().tree.clearSelection();
+        } finally {
+            for (TreeSelectionListener lis : listeners) {
+                App.get().tree.addTreeSelectionListener(lis);
+            }
+        }
         clearing = false;
+    }
+
+    class PathFilter extends QueryFilter {
+        boolean recursive = false;
+        HashMap<String, List<String>> evidenceParentIdMap = new HashMap<String, List<String>>();
+
+        public void setRecursive(boolean recursive) {
+            this.recursive = recursive;
+        }
+
+        public void setQuery(Query q) {
+            this.query = q;
+        }
+
+        public PathFilter(Query query) {
+            super(query);
+        }
+
+        public PathFilter() {
+            super(null);
+        }
+
+        public boolean isRecursive() {
+            return recursive;
+        }
+
+        public void addParentId(String evidenceUUID, String parentId) {
+            List<String> parentIds = evidenceParentIdMap.get(evidenceUUID);
+            if (parentIds == null) {
+                parentIds = new ArrayList<String>();
+                evidenceParentIdMap.put(evidenceUUID, parentIds);
+            }
+            parentIds.add(parentId);
+        }
     }
 
     @Override
     public List getDefinedFilters() {
-        TreeListener self = this;
-        if (definedFilters == null) {
-            definedFilters = new ArrayList<IFilter>();
-            if (selection.size() >= 1) {
-                if (App.get().recursiveTreeList.isSelected()) {
-                    definedFilters.add(new QueryFilter(self.recursiveTreeQuery));
-                } else {
-                    definedFilters.add(new QueryFilter(self.treeQuery));
-                }
-            }
-        }
         return definedFilters;
     }
 
     @Override
     public boolean hasFiltersApplied() {
-        return recursiveTreeQuery != null;
+        return definedFilters != null && ((PathFilter) definedFilters.get(0)).evidenceParentIdMap.size() > 0;
     }
 
     @Override
@@ -244,7 +305,53 @@ public class TreeListener extends MouseAdapter implements TreeSelectionListener,
 
     @Override
     public boolean hasFilters() {
-        return recursiveTreeQuery != null;
+        return definedFilters != null && ((PathFilter) definedFilters.get(0)).evidenceParentIdMap.size() > 0;
+    }
+
+    @Override
+    public void restoreDefinedFilters(List<IFilter> filtersToRestore) {
+        TreeSelectionListener[] listeners = App.get().tree.getTreeSelectionListeners();
+        for (TreeSelectionListener lis : listeners) {
+            App.get().tree.removeTreeSelectionListener(lis);
+        }
+
+        try {
+            definedFilters = new ArrayList<IFilter>();
+            App.get().tree.clearSelection();
+            for (IFilter filter : filtersToRestore) {
+                if (filter instanceof PathFilter) {
+                    PathFilter pathFilter = (PathFilter) filter;
+                    App.get().recursiveTreeList.setSelected(pathFilter.isRecursive());
+
+                    for (int i = 0; i < App.get().tree.getRowCount(); i++) {
+                        TreePath tp = App.get().tree.getPathForRow(i);
+                        Node node = (Node) tp.getLastPathComponent();
+                        if (checkSelection(node, pathFilter)) {
+                            App.get().tree.addSelectionPath(tp);
+                        }
+
+                    }
+
+                    definedFilters.add(pathFilter);
+
+                }
+            }
+        } finally {
+            for (TreeSelectionListener lis : listeners) {
+                App.get().tree.addTreeSelectionListener(lis);
+            }
+        }
+    }
+
+    private boolean checkSelection(Node node, PathFilter pathFilter) {
+        Document doc = node.getDoc();
+        String evidenceUUID = doc.get(IndexItem.EVIDENCE_UUID);
+        List<String> parentIds = pathFilter.evidenceParentIdMap.get(evidenceUUID);
+        if (parentIds != null) {
+            String parentId = doc.get(IndexItem.ID);
+            return parentIds.contains(parentId);
+        }
+        return false;
     }
 
 }
