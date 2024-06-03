@@ -36,20 +36,20 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
     private static final int MAX_TRANSCRIPTIONS = 100000;
     private static final byte[] NEW_LINE = "\n".getBytes();
 
-    private static volatile Integer numProcesses;
+    protected static volatile Integer numProcesses;
 
     private static LinkedBlockingDeque<Server> deque = new LinkedBlockingDeque<>();
 
-    private static volatile Level logLevel = Level.forName("MSG", 250);
+    protected static volatile Level logLevel = Level.forName("MSG", 250);
 
-    private static class Server {
+    static class Server {
         Process process;
         BufferedReader reader;
         int transcriptionsDone = 0;
         int device = 0;
     }
 
-    private static int getNumProcessors() {
+    protected static int getNumProcessors() {
         SystemInfo si = new SystemInfo();
         HardwareAbstractionLayer hal = si.getHardware();
         CentralProcessor cpu = hal.getProcessor();
@@ -96,7 +96,7 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
 
     }
 
-    private Server startServer(int device) throws StartupException {
+    protected Server startServer(int device) throws StartupException {
         try {
             return startServer0(device);
         } catch (Exception e) {
@@ -109,7 +109,7 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
         }
     }
 
-    private Server startServer0(int device) throws IOException {
+    protected Server startServer0(int device) throws IOException {
         if (numProcesses != null && device == numProcesses) {
             return null;
         }
@@ -172,7 +172,7 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
         return server;
     }
 
-    private void logInputStream(InputStream is) {
+    protected void logInputStream(InputStream is) {
         Thread t = new Thread() {
             public void run() {
                 byte[] buf = new byte[1024];

@@ -125,7 +125,7 @@
                                 <artifactItem>
                                     <groupId>org.python</groupId>
                                     <artifactId>python-jep-dlib</artifactId>
-                                    <version>3.9.12-4.0.3-19.23.1</version>
+                                    <version>3.9.12-4.0.3-19.23.1-2</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${release.dir}</outputDirectory>
@@ -315,7 +315,7 @@
                                 <artifactItem>
                                     <groupId>tesseract</groupId>
                                     <artifactId>tesseract-zip</artifactId>
-                                    <version>5.3.2-24-g3922</version>
+                                    <version>5.3.2-24-g3922_1</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
