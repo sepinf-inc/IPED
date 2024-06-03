@@ -238,6 +238,7 @@ public class TreeListener extends MouseAdapter implements TreeSelectionListener,
 
         try {
             definedFilters = null;
+            selection.clear();
             App.get().tree.clearSelection();
         } finally {
             for (TreeSelectionListener lis : listeners) {
@@ -288,7 +289,8 @@ public class TreeListener extends MouseAdapter implements TreeSelectionListener,
 
     @Override
     public boolean hasFiltersApplied() {
-        return definedFilters != null && ((PathFilter) definedFilters.get(0)).evidenceParentIdMap.size() > 0;
+        return definedFilters != null && definedFilters.size() > 0
+                && ((PathFilter) definedFilters.get(0)).evidenceParentIdMap.size() > 0;
     }
 
     @Override
@@ -305,7 +307,8 @@ public class TreeListener extends MouseAdapter implements TreeSelectionListener,
 
     @Override
     public boolean hasFilters() {
-        return definedFilters != null && ((PathFilter) definedFilters.get(0)).evidenceParentIdMap.size() > 0;
+        return definedFilters != null && definedFilters.size() > 0
+                && ((PathFilter) definedFilters.get(0)).evidenceParentIdMap.size() > 0;
     }
 
     @Override
