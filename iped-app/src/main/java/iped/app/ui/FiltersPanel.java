@@ -140,6 +140,11 @@ public class FiltersPanel extends JPanel
                         filterer.restoreDefinedFilters(clastFilters);
                         App.get().getAppListener().updateFileListing();
                         App.get().filtersPanel.updateUI();
+                    } else {
+                        CheckBoxTreeCellRenderer.TreeCellCheckBoxActionEvent te = (CheckBoxTreeCellRenderer.TreeCellCheckBoxActionEvent) e;
+                        if (te.getCheckBox().isSelected()) {
+                            te.getCheckBox().setSelected(false);
+                        }
                     }
                 }
             }

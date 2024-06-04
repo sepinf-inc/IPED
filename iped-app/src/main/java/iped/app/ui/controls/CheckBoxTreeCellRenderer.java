@@ -57,6 +57,20 @@ public class CheckBoxTreeCellRenderer extends DefaultTreeCellRenderer implements
         return value.toString();
     }
 
+    public class TreeCellCheckBoxActionEvent extends ActionEvent {
+        JCheckBox checkBox = null;
+
+        public TreeCellCheckBoxActionEvent(JCheckBox checkBox, Object source, int id, String command) {
+            super(source, id, command);
+            this.checkBox = checkBox;
+        }
+
+        public JCheckBox getCheckBox() {
+            return checkBox;
+        }
+
+    }
+
     @Override
     public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
 
@@ -87,8 +101,9 @@ public class CheckBoxTreeCellRenderer extends DefaultTreeCellRenderer implements
                 checkbox.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        e.setSource(value);
-                        al.actionPerformed(e);
+                        al.actionPerformed(
+                                new TreeCellCheckBoxActionEvent(checkbox, value, e.getID(),
+                                e.getActionCommand()));
                     }
                 });
             }
