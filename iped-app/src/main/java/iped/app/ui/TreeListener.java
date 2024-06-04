@@ -61,7 +61,6 @@ public class TreeListener extends MouseAdapter implements TreeSelectionListener,
     boolean rootSelected = false;
     HashSet<TreePath> selection = new HashSet<TreePath>();
     private long collapsedTime = 0;
-    private boolean clearing = false;
     private ArrayList<IFilter> definedFilters;
 
     @Override
@@ -185,8 +184,7 @@ public class TreeListener extends MouseAdapter implements TreeSelectionListener,
             App.get().setEvidenceDefaultColor(false);
         }
 
-        if (!clearing)
-            App.get().appletListener.updateFileListing();
+        App.get().appletListener.updateFileListing();
 
         if (selection.size() == 1 && selection.iterator().next().getPathCount() > 2) {
             int luceneId = ((Node) selection.iterator().next().getLastPathComponent()).docId;
@@ -229,8 +227,6 @@ public class TreeListener extends MouseAdapter implements TreeSelectionListener,
 
     @Override
     public void clearFilter() {
-        clearing = true;
-
         TreeSelectionListener[] listeners = App.get().tree.getTreeSelectionListeners();
         for (TreeSelectionListener lis : listeners) {
             App.get().tree.removeTreeSelectionListener(lis);
@@ -245,7 +241,6 @@ public class TreeListener extends MouseAdapter implements TreeSelectionListener,
                 App.get().tree.addTreeSelectionListener(lis);
             }
         }
-        clearing = false;
     }
 
     class PathFilter extends QueryFilter {
@@ -295,10 +290,13 @@ public class TreeListener extends MouseAdapter implements TreeSelectionListener,
 
     @Override
     public Query getQuery() {
-        if (App.get().recursiveTreeList.isSelected())
-            return recursiveTreeQuery;
-        else
-            return treeQuery;
+        if (definedFilters != null) {
+            if (App.get().recursiveTreeList.isSelected())
+                return recursiveTreeQuery;
+            else
+                return treeQuery;
+        }
+        return null;
     }
 
     public String toString() {
