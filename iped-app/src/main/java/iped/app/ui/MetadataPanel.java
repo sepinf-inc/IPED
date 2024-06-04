@@ -809,5 +809,6 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         for (ListSelectionListener sl : temp) {
             list.addListSelectionListener(sl);
         }
+        App.get().appletListener.updateFileListing();
     }
 }
