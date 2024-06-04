@@ -329,6 +329,7 @@ public class TreeListener extends MouseAdapter implements TreeSelectionListener,
                         Node node = (Node) tp.getLastPathComponent();
                         if (checkSelection(node, pathFilter)) {
                             App.get().tree.addSelectionPath(tp);
+                            selection.add(tp);
                         }
 
                     }
