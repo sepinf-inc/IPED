@@ -1820,7 +1820,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         @Override
         public boolean hasFilters() {
-            return cduplicateFilter != null;
+            return filterDuplicates.isSelected();
         }
 
         @Override
