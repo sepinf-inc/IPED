@@ -40,7 +40,7 @@ import iped.utils.QualityIcon;
  */
 public class IconManager {
 
-    public static final int defaultSize = 16;
+    public static final int defaultSize = 18;
     public static final int defaultGallerySize = 24;
     public static final int defaultCategorySize = 20;
 
@@ -194,6 +194,7 @@ public class IconManager {
         icon = availableIconsMap.get("torrent");
         if (icon != null) {
             mimeIconMap.put("application/x-bittorrent-resume-dat", icon);
+            mimeIconMap.put("application/x-bittorrent-settings-dat", icon);
             mimeIconMap.put("application/x-bittorrent", icon);
         }
 
