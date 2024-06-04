@@ -1774,6 +1774,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             for (IFilter filter : filtersToRestore) {
                 if (filter instanceof SimilarImageFilter) {
                     imageFilter = (SimilarImageFilter) filter;
+                    SimilarImageFilter simFilter = (SimilarImageFilter) filter;
+                    setItem(simFilter.getItemRefId(), simFilter.getItemRef());
                     break;
                 }
             }
