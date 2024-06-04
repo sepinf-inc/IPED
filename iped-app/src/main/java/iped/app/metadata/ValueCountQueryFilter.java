@@ -17,10 +17,12 @@ public class ValueCountQueryFilter implements IQueryFilter {
     StringBuffer textualDetail = null;
     Set<ValueCount> values = null;
     String filterField;
+    MetadataSearch metadataSearch;
     private Query query;
 
-    public ValueCountQueryFilter(String filterField, Set<ValueCount> selectedValues) {
+    public ValueCountQueryFilter(MetadataSearch metadataSearch, String filterField, Set<ValueCount> selectedValues) {
         this.filterField = filterField;
+        this.metadataSearch = metadataSearch;
         values = new HashSet<ValueCount>();
         if (selectedValues != null) {
             values.addAll(selectedValues);
@@ -108,6 +110,10 @@ public class ValueCountQueryFilter implements IQueryFilter {
 
     public Set<ValueCount> getValues() {
         return values;
+    }
+
+    public MetadataSearch getMetadataSearch() {
+        return metadataSearch;
     }
 
 }

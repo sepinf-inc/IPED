@@ -17,6 +17,7 @@ import iped.app.metadata.ValueCountQueryFilter;
 import iped.app.ui.controls.table.MetadataValueSearchList;
 import iped.app.ui.filters.EqualsFilter;
 import iped.app.ui.filters.StartsWithFilter;
+import iped.app.ui.filters.ValueFilter;
 import iped.engine.search.MultiSearchResult;
 import iped.engine.search.QueryBuilder;
 import iped.engine.task.index.IndexItem;
@@ -60,28 +61,46 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
         App.get().getFilterManager().notifyFilterChange();
     }
 
+    class TableHeaderFilter implements IQueryFilter {
+        private Query query;
+        private String filterExpression;
+        private String escapedField;
+        MetadataSearch metadataSearch;
+
+        public TableHeaderFilter(MetadataSearch metadataSearch, String escapedField, String filterExpression) {
+            this.filterExpression = filterExpression;
+            this.escapedField = escapedField;
+            this.metadataSearch = metadataSearch;
+        }
+
+        @Override
+        public Query getQuery() {
+            if (query == null) {
+                try {
+                    query = new QueryBuilder(App.get().appCase).getQuery(filterExpression);
+                } catch (ParseException | QueryNodeException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+            return query;
+        }
+
+        public String toString() {
+            return filterExpression;
+        }
+
+        public MetadataSearch getMetadataSearch() {
+            return metadataSearch;
+        }
+        // TODO Auto-generated method stub
+
+    }
+
     private void addQueryFilter(String escapedField, String filterExpression) {
         otherFilters.put(escapedField, filterExpression);
-        definedFilters.put(escapedField, new IQueryFilter() {
-            private Query query;
-
-            @Override
-            public Query getQuery() {
-                if (query == null) {
-                    try {
-                        query = new QueryBuilder(App.get().appCase).getQuery(filterExpression);
-                    } catch (ParseException | QueryNodeException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
-                }
-                return query;
-            }
-
-            public String toString() {
-                return filterExpression;
-            }
-        });
+        definedFilters.put(escapedField,
+                new TableHeaderFilter(panels.get(escapedField), escapedField, filterExpression));
         selectedValues.remove(escapedField);
         App.get().getFilterManager().notifyFilterChange();
     }
@@ -125,7 +144,7 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
     public void addFilter(String field, Set<ValueCount> selected) {
         field = escape(field);
         selectedValues.put(field, selected);
-        definedFilters.put(field, new ValueCountQueryFilter(field, selected));
+        definedFilters.put(field, new ValueCountQueryFilter(panels.get(field), field, selected));
 
         // clear any other filter defined
         otherFilters.remove(field);
@@ -295,4 +314,40 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
     public HashMap<String, String> getOtherFilters() {
         return otherFilters;
     }
+
+    @Override
+    public void restoreDefinedFilters(List<IFilter> filtersToRestore) {
+        definedFilters.clear();
+        otherFilters.clear();
+        selectedValues.clear();
+        panels.clear();
+        for (IFilter filter : filtersToRestore) {
+            String escapedField = null;
+            if (filter instanceof TableHeaderFilter) {
+                escapedField = ((TableHeaderFilter) filter).escapedField;
+                otherFilters.put(escapedField, ((TableHeaderFilter) filter).filterExpression);
+                definedFilters.put(escapedField, filter);
+                selectedValues.remove(escapedField);
+                panels.put(escapedField, ((TableHeaderFilter) filter).getMetadataSearch());
+            }
+
+            if (filter instanceof ValueCountQueryFilter) {
+                ValueCountQueryFilter vcqFilter = (ValueCountQueryFilter) filter;
+                escapedField = vcqFilter.getFilterField();
+                definedFilters.put(escapedField, filter);
+                selectedValues.put(escapedField, vcqFilter.getValues());
+                otherFilters.remove(escapedField);
+                panels.put(escapedField, vcqFilter.getMetadataSearch());
+            }
+
+            if (filter instanceof ValueFilter) {
+                ValueFilter eqFilter = (ValueFilter) filter;
+                escapedField = escape(eqFilter.getField());
+                definedFilters.put(escapedField, filter);
+                otherFilters.put(escapedField, eqFilter.getValue());
+            }
+        }
+        App.get().getFilterManager().notifyFilterChange();
+    }
+
 }

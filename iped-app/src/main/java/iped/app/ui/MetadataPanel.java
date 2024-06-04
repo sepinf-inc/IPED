@@ -681,7 +681,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         selectedValues.addAll(list.getSelectedValuesList());
         if (isFiltering()) {
             ValueCount sample = selectedValues.iterator().next();
-            result.add(new ValueCountQueryFilter(field, selectedValues));
+            result.add(new ValueCountQueryFilter(ms, field, selectedValues));
         }
         return result;
     }
