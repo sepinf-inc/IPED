@@ -763,6 +763,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
                                                                 }
                                                             }
                                                             setSelectedIndices(is);
+                                                            App.get().appletListener.updateFileListing();
                                                         }
                                                     });
                                                 }
@@ -809,6 +810,5 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         for (ListSelectionListener sl : temp) {
             list.addListSelectionListener(sl);
         }
-        App.get().appletListener.updateFileListing();
     }
 }
