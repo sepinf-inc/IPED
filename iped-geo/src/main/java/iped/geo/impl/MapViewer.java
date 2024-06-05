@@ -175,8 +175,7 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
                 Entry<IItemId, Boolean> entry = (Entry<IItemId, Boolean>) iterator.next();
                 IItemId item = entry.getKey();
                 if (mapaPanel.hasItem(item)) {
-                    String gid = GetResultsJSWorker.MARKER_PREFIX + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
-                    checked.put(gid, entry.getValue());
+                    mapaPanel.addSelection(checked, item, entry.getValue());
                 }
             }
             mapaPanel.browserCanvas.sendCheck(checked);

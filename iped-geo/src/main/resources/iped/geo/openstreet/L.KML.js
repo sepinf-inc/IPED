@@ -356,11 +356,7 @@ L.KML = L.MarkerClusterGroup.extend({
     checkMarcador: function (id, b, notify){
             for(i=0;i<id.length;i++){
                 mark=this.markers[id[i]];
-                if(b=='true'){
-                    mark.checked='true';
-                }else{
-                    mark.checked='false';
-                }
+                mark.toogleCheckedAllItems();
                 mark.atualizaIcone();
             }
     },
@@ -1236,12 +1232,7 @@ L.checkMarker = function(id){
                 marker=track.markers[ind];
         }
 
-        if(marker.checked=='true'){
-            marker.checked='false';
-        }else{
-            marker.checked='true';
-        }
-        marker.atualizaIcone();
+        marker.toogleCheckedAllItems();
         window.app.checkMarkerBF(marker.id, marker.checked=='true');
 };
 
@@ -1342,20 +1333,32 @@ L.KMLMarker = L.Marker.extend({
         this.directionLinesVisible=false;
     },
     toogleCheckedAllItems: function(){
-        checked = this.checked;
-        if(checked == 'true'){
-           checked='false'; 
+        bchecked = this.checked;
+        checked='false'; 
+        if(bchecked == 'true'){
+           checked='false';
+           bchecked = false; 
         }else{
            checked='true'; 
+           bchecked = true; 
         }
         if(this.bgid){
             subitems = this.itemMarkers[this.bgid];
             for(var i=0; i<subitems.length; i++){
                 subitems[i].checked = checked;
                 subitems[i].atualizaIcone();
+		let marker_checkbox = document.getElementById('marker_checkbox_'+subitems[i].id);
+		if(marker_checkbox){
+			marker_checkbox.checked = bchecked;
+		}
+
             }
         }else{
             this.checked = checked;
+	    let marker_checkbox = document.getElementById('marker_checkbox_'+this.id);
+	    if(marker_checkbox){
+		marker_checkbox.checked = bchecked;
+	    }
             this.atualizaIcone();
         }
     },

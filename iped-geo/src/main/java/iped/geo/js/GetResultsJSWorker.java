@@ -126,6 +126,8 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
             minlat = 190.0;
             maxlat = -190.0;
 
+            lastResultBitmap = createCasesEmptyBitmapArray(msource);
+
             IMultiSearchResult results = app.getResults();
             Document doc;
 
@@ -204,6 +206,7 @@ public class GetResultsJSWorker extends iped.viewers.api.CancelableWorker<KMLRes
             int finalMapOrder) throws IOException {
         int luceneId = app.getIPEDSource().getLuceneId(item);
         Document doc = app.getIPEDSource().getSearcher().doc(luceneId);
+        lastResultBitmap[item.getSourceId()].add(item.getId());
 
         String[] locations = doc.getValues(ExtraProperties.LOCATIONS);
 
