@@ -40,6 +40,7 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
 
     // store the filters defined by the FieldValuePopupMenu
     private HashMap<String, String> otherFilters = new HashMap<String, String>();
+    private HashMap<String, String> escapedFields = new HashMap<String, String>();
 
     static public TableHeaderFilterManager get() {
         return singleton;
@@ -189,7 +190,9 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
         MetadataSearch result = panels.get(field);
         if (result == null) {
             result = new MetadataSearch();
-            panels.put(field, result);
+            String escapedField = escape(field);
+            panels.put(escapedField, result);
+            escapedFields.put(escapedField, field);
         }
         return result;
     }
@@ -271,12 +274,12 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
                 for (String filterField : panels.keySet()) {
                     MetadataSearch internalMetadataSearch = panels.get(filterField);
                     Set<Integer> ords = new HashSet<>();
-                    Set<ValueCount> values = selectedValues.get(escape(filterField));
+                    Set<ValueCount> values = selectedValues.get(filterField);
                     if (values != null && values.size() > 0) {
                         for (ValueCount value : values) {
                             ords.add(value.getOrd());
                         }
-                        result = internalMetadataSearch.getIdsWithOrd(result, filterField, ords);
+                        result = internalMetadataSearch.getIdsWithOrd(result, escapedFields.get(filterField), ords);
                         if (result.getLength() <= 0) {
                             return result;
                         }
