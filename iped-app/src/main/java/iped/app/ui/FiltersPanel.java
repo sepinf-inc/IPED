@@ -134,12 +134,15 @@ public class FiltersPanel extends JPanel
                     lastFilters.put(filterer, filterer.getDefinedFilters());
                     filterer.clearFilter();
                     App.get().getAppListener().updateFileListing();
+                    App.get().filtersPanel.updateUI();
+                    App.get().setDockablesColors();
                 } else {
                     List<IFilter> clastFilters = lastFilters.get(filterer);
                     if (clastFilters != null) {
                         filterer.restoreDefinedFilters(clastFilters);
                         App.get().getAppListener().updateFileListing();
                         App.get().filtersPanel.updateUI();
+                        App.get().setDockablesColors();
                     } else {
                         CheckBoxTreeCellRenderer.TreeCellCheckBoxActionEvent te = (CheckBoxTreeCellRenderer.TreeCellCheckBoxActionEvent) e;
                         if (te.getCheckBox().isSelected()) {
