@@ -27,6 +27,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.Collections;
 import java.util.List;
 
+import javax.script.Bindings;
 import javax.script.Invocable;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
@@ -47,6 +48,7 @@ public class ScriptTask extends AbstractTask implements IScriptTask {
     private File scriptFile;
     private ScriptEngine engine;
     private Invocable inv;
+    private String scriptName;
 
     public ScriptTask(File scriptFile) {
         this.scriptFile = scriptFile;
@@ -66,6 +68,7 @@ public class ScriptTask extends AbstractTask implements IScriptTask {
             if(engine==null) {
                 throw new ScriptException("No engine configured for this file type."); 
             }else {
+                Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
                 engine.eval(reader);
                 inv = (Invocable) engine;
             }
@@ -90,6 +93,8 @@ public class ScriptTask extends AbstractTask implements IScriptTask {
         engine.put("moduleDir", this.output); //$NON-NLS-1$
         engine.put("worker", this.worker); //$NON-NLS-1$
         engine.put("stats", this.stats); //$NON-NLS-1$
+
+        scriptName = (String) inv.invokeFunction("getName"); //$NON-NLS-1$
 
         inv.invokeFunction("init", configurationManager); //$NON-NLS-1$
 
@@ -125,12 +130,7 @@ public class ScriptTask extends AbstractTask implements IScriptTask {
 
     @Override
     public String getName() {
-        try {
-            return (String) inv.invokeFunction("getName"); //$NON-NLS-1$
-
-        } catch (NoSuchMethodException | ScriptException e) {
-            throw new RuntimeException(e);
-        }
+        return scriptName;
     }
 
     @Override

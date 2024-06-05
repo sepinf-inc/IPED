@@ -34,6 +34,10 @@ import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.table.TableCellEditor;
 
+import iped.app.ui.bookmarks.BookmarkIcon;
+import iped.data.IMultiBookmarks;
+import iped.engine.util.Util;
+
 public class GalleryCellEditor extends AbstractCellEditor implements TableCellEditor, ActionListener {
 
     private static final long serialVersionUID = 1L;
@@ -59,23 +63,23 @@ public class GalleryCellEditor extends AbstractCellEditor implements TableCellEd
 
         label.setHorizontalAlignment(JLabel.CENTER);
         check.addActionListener(this);
-        
+
         updateUI();
     }
-    
+
     public void updateUI() {
         selColor = UIManager.getColor("Gallery.cellSelected");
         if (selColor == null)
             selColor = new Color(180, 200, 230);
-        
+
         background = UIManager.getColor("Gallery.background");
         if (background == null)
             background = new Color(240, 240, 242);
-        
+
         Color selBorderColor = UIManager.getColor("Gallery.cellSelectBorder");
         if (selBorderColor == null)
             selBorderColor = new Color(20, 50, 80);
-        selBorder = BorderFactory.createLineBorder(selBorderColor, 1);    
+        selBorder = BorderFactory.createLineBorder(selBorderColor, 1);
 
         warningColor = UIManager.getColor("Gallery.warning");
         if (warningColor == null)
@@ -99,8 +103,12 @@ public class GalleryCellEditor extends AbstractCellEditor implements TableCellEd
             return panel;
         }
 
-        check.setSelected(App.get().appCase.getMultiBookmarks().isChecked(cellValue.id));
+        IMultiBookmarks bookmarks = App.get().appCase.getMultiBookmarks();
+        check.setSelected(bookmarks.isChecked(cellValue.id));
         cLabel.setText(cellValue.name);
+        String itemBookmarksStr = Util.concatStrings(bookmarks.getBookmarkList(cellValue.id));
+        cLabel.setToolTipText(itemBookmarksStr.isEmpty() ? null : itemBookmarksStr);
+        cLabel.setIcon(BookmarkIcon.getIcon(bookmarks, itemBookmarksStr));
 
         GalleryCellRenderer.adjustGalleryCellContent(cellValue, label, warningColor, table);
 

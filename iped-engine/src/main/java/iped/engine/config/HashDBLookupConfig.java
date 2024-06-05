@@ -18,7 +18,7 @@ public class HashDBLookupConfig extends AbstractTaskConfig<Pair<Boolean, String>
      */
     private static final long serialVersionUID = 1L;
 
-    private static final String CONFIG_FILE = "HashDBLooupConfig.txt";
+    private static final String CONFIG_FILE = "HashDBLookupConfig.txt";
     public static final String NSRL_CONFIG_FILE = "NSRLConfig.json";
     private static final String ENABLE_PARAM = "enableHashDBLookup";
     private static final String EXCLUDE_KNOWN = "excludeKnown";

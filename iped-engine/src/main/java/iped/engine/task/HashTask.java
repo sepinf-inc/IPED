@@ -26,8 +26,11 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +39,6 @@ import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.HashTaskConfig;
 import iped.parsers.whatsapp.WhatsAppParser;
-import iped.utils.IOUtil;
 
 /**
  * Classe para calcular e manipular hashes.
@@ -44,6 +46,10 @@ import iped.utils.IOUtil;
 public class HashTask extends AbstractTask {
 
     private static Logger LOGGER = LoggerFactory.getLogger(HashTask.class);
+
+    private static final int HASH_BUFFER_LEN = 1024 * 1024;
+
+    private static final ExecutorService executorService = Executors.newCachedThreadPool();
 
     public enum HASH {
         MD5("md5"), //$NON-NLS-1$
@@ -91,7 +97,7 @@ public class HashTask extends AbstractTask {
             if (!algorithm.equalsIgnoreCase(HASH.EDONKEY.toString())) {
                 digest = MessageDigest.getInstance(algorithm.toUpperCase());
             } else {
-                digest = MessageDigest.getInstance("MD4", new BouncyCastleProvider()); //$NON-NLS-1$
+                digest = MessageDigest.getInstance("MD4"); //$NON-NLS-1$
             }
             digestMap.put(algorithm, digest);
             if (HASH.SHA256.toString().equals(algorithm)) {
@@ -103,8 +109,9 @@ public class HashTask extends AbstractTask {
 
     @Override
     public void finish() throws Exception {
-        // TODO Auto-generated method stub
-
+        if (!executorService.isShutdown()) {
+            executorService.shutdown();
+        }
     }
 
     public void process(IItem evidence) {
@@ -123,19 +130,54 @@ public class HashTask extends AbstractTask {
             return;
         }
 
-        InputStream in = null;
-        try {
-            in = evidence.getBufferedInputStream();
-            byte[] buf = new byte[1024 * 1024];
+        try (InputStream in = evidence.getBufferedInputStream()) {
+
+            byte[] readBuf = new byte[HASH_BUFFER_LEN];
+            byte[] hashBuf = new byte[HASH_BUFFER_LEN];
+            byte[] tempBuf = null;
             int len;
-            while ((len = in.read(buf)) >= 0 && !Thread.currentThread().isInterrupted()) {
-                for (String algo : digestMap.keySet()) {
-                    if (!algo.equals(HASH.EDONKEY.toString())) {
-                        digestMap.get(algo).update(buf, 0, len);
-                    } else {
-                        updateEd2k(buf, len);
-                    }
+
+            AtomicReference<CountDownLatch> countDown = new AtomicReference<>(null);
+            AtomicReference<Exception> ex = new AtomicReference<Exception>(null);
+
+            while ((len = in.read(readBuf)) >= 0 && !Thread.currentThread().isInterrupted()) {
+
+                if (countDown.get() != null) {
+                    countDown.get().await();
                 }
+
+                countDown.set(new CountDownLatch(digestMap.size()));
+
+                // swap hashBuf <-> readBuf
+                tempBuf = hashBuf;
+                hashBuf = readBuf;
+                readBuf = tempBuf;
+
+                final int currLen = len;
+                final byte[] currHashBuf = hashBuf;
+                for (String algo : digestMap.keySet()) {
+                    executorService.execute(() -> {
+                        try {
+                            if (!algo.equals(HASH.EDONKEY.toString())) {
+                                digestMap.get(algo).update(currHashBuf, 0, currLen);
+                            } else {
+                                updateEd2k(currHashBuf, currLen);
+                            }
+                        } catch (Exception e) {
+                            ex.set(e);
+                        } finally {
+                            countDown.get().countDown();
+                        }
+                    });
+                }
+
+                if (ex.get() != null) {
+                    throw ex.get();
+                }
+            }
+
+            if (countDown.get() != null) {
+                countDown.get().await();
             }
 
             boolean defaultHash = true;
@@ -165,8 +207,6 @@ public class HashTask extends AbstractTask {
                     e.toString());
             // e.printStackTrace();
 
-        } finally {
-            IOUtil.closeQuietly(in);
         }
 
     }

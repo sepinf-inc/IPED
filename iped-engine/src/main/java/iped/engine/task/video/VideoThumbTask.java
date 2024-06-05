@@ -598,7 +598,11 @@ public class VideoThumbTask extends ThumbTask {
             extractor.setWorker(worker);
 
             // export thumb data to internal database
-            BufferedImage img = adjustFrameDimension(ImageIO.read(frame), w, h);
+            BufferedImage img = ImageIO.read(frame);
+            if (img == null) {
+                continue;
+            }
+            img = adjustFrameDimension(img, w, h);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ImageIO.write(img, "jpg", baos);
             ByteArrayInputStream is = new ByteArrayInputStream(baos.toByteArray());
@@ -664,7 +668,7 @@ public class VideoThumbTask extends ThumbTask {
 
         } else if (mediaType.equals("image/gif")) {
             ImageReader reader = null;
-            try (BufferedInputStream is = evidence.getBufferedInputStream(); ImageInputStream iis = ImageIO.createImageInputStream(is)) {
+            try (ImageInputStream iis = evidence.getImageInputStream()) {
                 reader = ImageIO.getImageReaders(iis).next();
                 reader.setInput(iis, false, true);
                 numImages = reader.getNumImages(true);

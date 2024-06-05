@@ -56,6 +56,7 @@ import iped.app.home.configurables.popups.ExternalParserPopup;
 import iped.app.ui.CategoryMimeTreeModel;
 import iped.app.ui.Messages;
 import iped.app.ui.controls.CheckBoxTreeCellRenderer;
+import iped.app.ui.controls.ConfigCheckBoxTreeCellRenderer;
 import iped.configuration.Configurable;
 import iped.engine.config.CategoryConfig;
 import iped.engine.config.ConfigurationManager;
@@ -70,7 +71,7 @@ public class ParsersConfigurablePanel extends AdvancedTextConfigurablePanel {
     private JSplitPane splitPane;
     private CategoryConfig cc;
     private ParsersTreeModel parsersModel;
-    private CheckBoxTreeCellRenderer cellRenderer;
+    private ConfigCheckBoxTreeCellRenderer cellRenderer;
     private ParserTreeCellEditor cellEditor;
     private JScrollPane categoryPanel;
     private CategoryMimeTreeModel categoryTreeModel;
@@ -302,7 +303,7 @@ public class ParsersConfigurablePanel extends AdvancedTextConfigurablePanel {
         parserListPanel.setViewportView(parsersTree);
         parserListPanel.setAutoscrolls(true);
         parsersTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);        
-        cellRenderer = new CheckBoxTreeCellRenderer(parsersTree, new Predicate<Object>() {
+        cellRenderer = new ConfigCheckBoxTreeCellRenderer(parsersTree, new Predicate<Object>() {
             @Override
             public boolean apply(Object input) {
                 boolean result=false;

@@ -94,6 +94,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
     ArrayList<Date[]> definedFilters = new ArrayList<Date[]>();
     HashSet<String> excludedEvents = new HashSet<String>();
     HashSet<String> hiddenEvents = new HashSet<String>();
+    HashSet<String> selectedEvents = new HashSet<String>();
     private static final String resPath = '/' + App.class.getPackageName().replace('.', '/') + '/';
 
     Date startFilterDate = null;
@@ -113,6 +114,8 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
     boolean splitByCategory = false;
 
     private boolean zoomingStart;
+
+    boolean isClearing;
 
     public IpedChartPanel(IpedChart chart, IpedChartsPanel ipedChartsPanel) {
         super(chart, true);
@@ -828,13 +831,19 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
     }
 
     public void removeAllFilters() {
+        removeAllFilters(true);
+    }
+
+    public void removeAllFilters(boolean updateResult) {
         for (Date[] removedDates : definedFilters) {
             HighlightWorker sw = new HighlightWorker(ipedChartsPanel.getDomainAxis(), ipedChartsPanel.resultsProvider, removedDates[0], removedDates[1], false, false);
         }
         definedFilters.clear();
         excludedEvents.clear();
         ipedChartsPanel.setApplyFilters(false);
-        filterSelection();
+        if (updateResult) {
+            filterSelection();
+        }
         IpedCombinedDomainXYPlot rootPlot = ((IpedCombinedDomainXYPlot) getChart().getPlot());
         List<XYPlot> xyPlots = rootPlot.getSubplots();
 
@@ -906,7 +915,9 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
     public void filterSelection() {
         this.getIpedChartsPanel().setInternalUpdate(true);
         App app = (App) this.getIpedChartsPanel().getResultsProvider();
-        app.getAppListener().updateFileListing();
+        if (!isClearing) {
+            app.getAppListener().updateFileListing();
+        }
         app.setDockablesColors();
     }
 
@@ -998,6 +1009,14 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
         this.hiddenEvents = hiddenEvents;
     }
 
+    public HashSet<String> getSelectedEvents() {
+    	return selectedEvents;
+    }
+    
+    public void setSelectedEvents(HashSet<String> selectedEvents) {
+    	this.selectedEvents = selectedEvents;
+    }
+    
     @Override
     public void updateUI() {
         super.updateUI();

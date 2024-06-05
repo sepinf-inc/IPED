@@ -1,6 +1,6 @@
 /*
  * Copyright 2012-2014, Luis Filipe da Cruz Nassif
- * 
+ *
  * This file is part of Indexador e Processador de Evidências Digitais (IPED).
  *
  * IPED is free software: you can redistribute it and/or modify
@@ -49,6 +49,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.Deflater;
 
+import iped.properties.BasicProps;
+import iped.properties.ExtraProperties;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
@@ -125,7 +127,7 @@ public class ExportFileTask extends AbstractTask {
     private static final String INSERT_DATA = "INSERT INTO t1(id, data) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET data=? WHERE data IS NULL;";
 
     private static final String CHECK_HASH = "SELECT id FROM t1 WHERE id=? AND data IS NOT NULL;";
-    
+
     private static final String SELECT_IDS_WITH_DATA = "SELECT id FROM t1 WHERE data IS NOT NULL;";
 
     private static final String CLEAR_DATA = "DELETE FROM t1 WHERE id=?;";
@@ -135,7 +137,7 @@ public class ExportFileTask extends AbstractTask {
     private static HashMap<File, HashMap<Integer, Connection>> storageCon = new HashMap<>();
 
     private static AtomicInteger counter = new AtomicInteger();
-    
+
     private static AtomicBoolean warned = new AtomicBoolean();
 
     private static ArrayList<IHashValue> noContentHashes = new ArrayList<>();
@@ -545,7 +547,7 @@ public class ExportFileTask extends AbstractTask {
                             // catch exceptions here to extract some content, even runtime exceptions
                             exception = e;
                         }
-                        if ((i == -1 || exception != null) && storageCon.get(output) != null && total == 0) {
+                        if ((i == -1 || exception != null) && storageCon.get(output) != null && total == 0 && evidence.getMetadata().get(ExtraProperties.EXTRACTED_FILE) == null) {
                             if (baos.size() == 0) {
                                 evidence.setLength(0L);
                             } else {
@@ -827,7 +829,7 @@ public class ExportFileTask extends AbstractTask {
         }
         return deleted;
     }
-    
+
     private static int deleteIgnoredSubitemsFromStorage(IPEDSource ipedCase, File output) throws SQLException {
         final AtomicInteger deleted = new AtomicInteger();
         ArrayList<Future<?>> futures = new ArrayList<>();

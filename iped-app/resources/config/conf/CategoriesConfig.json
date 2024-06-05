@@ -78,18 +78,24 @@
     {"name": "Contacts", "mimes": ["text/x-vcard", "application/x-vcard-html", "application/windows-adress-book", "application/outlook-contact", "application/x-livecontacts", "application/x-livecontacts-table", "contact/x-skype-contact", "application/x-whatsapp-wadb", "application/x-whatsapp-contactsv2", "contact/x-whatsapp-contact", "application/x-ufed-html-contacts", "application/x-ufed-contact", "contact/x-telegram-contact", "application/x-ios-addressbook-db", "application/x-win10-mail-contact"]},
     {"name": "Chats", "categories":[
         {"name": "WhatsApp", "mimes":["application/x-whatsapp-db", "application/x-whatsapp-chatstorage", "application/x-whatsapp-chat","application/x-ufed-chat-whatsapp","application/x-ufed-chat-preview-whatsapp"]},
+        {"name": "Threema", "mimes":["application/x-threema-chat", "application/x-threema-chatstorage"]},
         {"name": "Messenger", "mimes":["application/messenger-plus", "application/messenger-chat"]},
         {"name": "Skype", "mimes":["application/sqlite-skype", "application/skype",  "application/x-skype-conversation","application/x-ufed-chat-preview-skype"]},
         {"name": "Telegram", "mimes":["application/x-telegram-chat","application/x-ufed-chat-telegram","application/x-ufed-chat-preview-telegram"]},
         {"name": "Jabber", "mimes":["application/x-jabber-chat"]},
         {"name": "Facebook", "mimes":["application/x-ufed-chat-preview-facebook"]},
         {"name": "Instagram", "mimes":["application/x-ufed-chat-preview-instagram"]},
-        {"name": "Discord", "mimes":["application/x-discord-index", "application/x-discord-chat"]},
+        {"name": "Discord", "mimes":["application/x-discord-chat"]},
         {"name": "Chat Activities", "mimes": ["application/x-ufed-chatactivity"]},
         {"name": "Others Chats", "mimes":["application/x-ufed-html-chats", "application/x-ufed-chats-txt", "application/x-ufed-chat", "application/x-ufed-chat-preview"]}
     ]},
+    {"name": "Open Financial Exchange", "mimes": ["application/x-ofx-v1","application/x-ofx-v2","application/x-ofc"]},
     {"name": "USN Journal", "mimes": ["application/x-usnjournal-$J", "application/x-usnjournal-report-html", "application/x-usnjournal-report-csv", "application/x-usnjournal-registry"]},
-    {"name": "Programs and Libraries", "mimes": ["application/java-archive", "application/x-dosexec", "application/x-msdownload", "application/x-bat", "application/vnd.ms-cab-compressed", "application/x-font-ttf", "application/pkcs7-signature", "application/vnd.ms-htmlhelp", "application/java-vm", "application/vnd.ms-pki.seccat", "application/x-ms-installer", "application/x-ufed-html-apps", "application/x-ufed-installedapplication"]},
+    {"name": "Programs and Libraries", 
+        "mimes": ["application/java-archive", "application/x-dosexec", "application/x-msdownload", "application/x-bat", "application/vnd.ms-cab-compressed", "application/x-font-ttf", "application/pkcs7-signature", "application/vnd.ms-htmlhelp", "application/java-vm", "application/vnd.ms-pki.seccat", "application/x-ms-installer", "application/x-ufed-html-apps", "application/x-ufed-installedapplication"],
+        "categories":[{"name": "Android Applications", "mimes": ["application/vnd.android.package-archive"]}]
+        },
+        
     {"name": "Unallocated", "mimes": ["application/x-unallocated"]},
     {"name": "File Slacks", "mimes": ["application/x-fileslack"]},
     {"name": "Plain Texts", "mimes": ["text"], "categories":[
@@ -102,7 +108,7 @@
       {"name": "Ares Galaxy", "mimes": ["application/x-ares-galaxy","application/x-ares-galaxy-entry"]},
       {"name": "E-Mule", "mimes": ["application/x-emule", "application/x-emule-part-met", "application/x-emule-searches", "application/x-emule-preferences-ini", "application/x-emule-preferences-dat", "application/x-emule-known-met-entry", "application/x-emule-part-met-entry"]},
       {"name": "Shareaza", "mimes": ["application/x-shareaza-searches-dat", "application/x-shareaza-library-dat", "application/x-shareaza-library-dat-entry", "application/x-shareaza-download"]},
-      {"name": "Torrent", "mimes": ["application/x-bittorrent-resume-dat", "application/x-bittorrent"]},
+      {"name": "Torrent", "mimes": ["application/x-bittorrent-resume-dat","application/x-bittorrent-settings-dat", "application/x-bittorrent"]},
       {"name": "Other Peer-to-peer", "mimes": ["application/x-p2p"]}
     ]},
     {"name": "Browser Artifacts", "categories":[
@@ -110,7 +116,8 @@
       {"name": "Internet History Entries", "mimes": ["application/x-ufed-visitedpage", "application/x-firefox-history-registry", "application/x-firefox-downloads-registry", "application/x-chrome-history-registry", "application/x-chrome-downloads-registry", "application/x-edge-history-registry", "application/x-safari-downloads-registry", "application/x-safari-history-registry"]},
       {"name": "Web Bookmarks", "mimes": ["application/x-ufed-html-bookmarks", "application/x-ufed-webbookmark", "application/x-firefox-bookmarks", "application/x-firefox-bookmarks-registry"]},
       {"name": "Mozilla Firefox Saved Session", "mimes": ["application/x-firefox-savedsession"]},
-      {"name": "TorTCFragment", "mimes": ["application/x-tor-tc-fragment"]}
+      {"name": "TorTCFragment", "mimes": ["application/x-tor-tc-fragment"]},
+      {"name": "Chrome Cache", "mimes": ["application/x-chrome-cache-index", "application/x-discord-index", "application/x-discord-chat+json"]}
     ]}, 
     
     {"name": "Image Disks", "categories":[
@@ -144,10 +151,19 @@
       ]}
     ]},
     {"name": "Extraction Summary", "mimes": ["application/x-ufed-html-summary"]},
-    {"name": "Calls", "mimes": ["application/x-ufed-html-calls", "application/x-ufed-call", "call/x-whatsapp-call", "call/x-telegram-call", "call/x-discord-call", "application/x-ios-calllog-db", "application/x-ios8-calllog-db"]},
+    {"name": "Calls", "categories":[ 
+        {"name": "Discord Calls", "mimes":["call/x-discord-call"]},
+        {"name": "Facebook Calls", "mimes":[]},
+        {"name": "Phone Calls", "mimes":[]},
+        {"name": "Signal Calls", "mimes":[]},
+        {"name": "Telegram Calls", "mimes":["call/x-telegram-call"]},
+        {"name": "Threema Calls", "mimes":["call/x-threema-call"]},
+        {"name": "WhatsApp Calls", "mimes":["call/x-whatsapp-call"]},
+        {"name": "Other Calls", "mimes":["application/x-ufed-html-calls", "application/x-ufed-call", "application/x-ios-calllog-db", "application/x-ios8-calllog-db"]}
+    ]},
     {"name": "SMS Messages", "mimes": ["application/x-ufed-html-sms", "application/x-ufed-sms", "application/x-ios-sms-db"]},
     {"name": "MMS Messages", "mimes": ["application/x-ufed-html-mms", "application/x-ufed-mms"]},
-    {"name": "Instant Messages", "mimes": ["message/x-chat-message", "application/x-ufed-instantmessage", "message/x-whatsapp-message", "message/x-skype-message", "message/x-skype-filetransfer", "message/x-telegram-message", "message/x-discord-message"]},
+    {"name": "Instant Messages", "mimes": ["message/x-chat-message", "message/x-threema-message", "application/x-ufed-instantmessage", "message/x-whatsapp-message", "message/x-skype-message", "message/x-skype-filetransfer", "message/x-telegram-message", "message/x-discord-message"]},
     {"name": "Bluetooth Devices", "mimes": ["application/x-ufed-html-bluetooth", "application/x-ufed-bluetoothdevice"]},
     {"name": "SIM Data", "mimes": ["application/x-ufed-html-simdata", "application/x-ufed-simdata"]},
     {"name": "Calendar", "mimes": ["application/x-ufed-html-calendar", "application/x-ufed-calendarentry", "application/x-ios-calendar-db"]},
@@ -177,6 +193,7 @@
     {"name": "File Downloads", "mimes": ["application/x-ufed-filedownload"]},
     {"name": "File Uploads", "mimes": ["application/x-ufed-fileupload"]},
     {"name": "Financial Accounts", "mimes": ["application/x-ufed-financialaccount"]},
+    {"name": "Transfers of Funds", "mimes": ["application/x-ufed-transferoffunds"]},
     {"name": "Fuzzy Data", "mimes": ["application/x-ufed-fuzzyentitymodel", "application/x-ufed-fuzzytimelinemodel"]},
     {"name": "Journeys", "mimes": ["application/x-ufed-journey"]},
     {"name": "Networks Usage", "mimes": ["application/x-ufed-networkusage"]},

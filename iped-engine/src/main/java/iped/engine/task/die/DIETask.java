@@ -360,12 +360,7 @@ public class DIETask extends AbstractTask {
             }
             int size = Die.getExpectedImageSize();
             if (img == null) {
-                BufferedInputStream stream = evidence.getBufferedInputStream();
-                try {
-                    img = ImageUtil.getSubSampledImage(stream, size, size);
-                } finally {
-                    IOUtil.closeQuietly(stream);
-                }
+                img = ImageUtil.getSubSampledImage(evidence, size);
             }
             if (img == null) {
                 BufferedInputStream stream = evidence.getBufferedInputStream();

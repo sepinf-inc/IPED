@@ -59,7 +59,7 @@ import iped.app.home.configurables.autocompletion.MimetypeAutoCompletionProvider
 import iped.app.home.configurables.popups.CategoryTreePopup;
 import iped.app.ui.CategoryMimeTreeModel;
 import iped.app.ui.Messages;
-import iped.app.ui.controls.CheckBoxTreeCellRenderer;
+import iped.app.ui.controls.ConfigCheckBoxTreeCellRenderer;
 import iped.engine.config.CategoryConfig;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.SignatureConfig;
@@ -139,7 +139,7 @@ public class SetCategoryConfigurablePanel extends ConfigurablePanel {
         };
         categoryTree.addMouseListener(popupMa);
         
-        categoryTree.setCellRenderer(new CheckBoxTreeCellRenderer(categoryTree, null, new Predicate<Object>() {
+        categoryTree.setCellRenderer(new ConfigCheckBoxTreeCellRenderer(categoryTree, null, new Predicate<Object>() {
             @Override
             public boolean test(Object t) {
                 return false;

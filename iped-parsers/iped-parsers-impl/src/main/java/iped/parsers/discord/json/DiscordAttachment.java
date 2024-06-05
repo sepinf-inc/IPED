@@ -1,7 +1,7 @@
 package iped.parsers.discord.json;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Collections;
+import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -42,7 +42,7 @@ public class DiscordAttachment {
 
     private String mediaHash;
 
-    private Set<String> childPornSets = new HashSet<>();
+    private List<String> childPornSets;
 
     public String getId() {
         return id;
@@ -122,15 +122,11 @@ public class DiscordAttachment {
 
     public void setMediaHash(String mediaHash) {
         this.mediaHash = mediaHash;
-        childPornSets.addAll(ChildPornHashLookup.lookupHash(mediaHash));
+        childPornSets = ChildPornHashLookup.lookupHashAndMerge(mediaHash, childPornSets);
     }
 
-    public Set<String> getChildPornSets() {
-        return childPornSets;
-    }
-
-    public void setChildPornSets(Set<String> childPornSets) {
-        this.childPornSets = childPornSets;
+    public List<String> getChildPornSets() {
+        return childPornSets == null ? Collections.emptyList() : childPornSets;
     }
 
     @Override

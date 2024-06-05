@@ -89,7 +89,6 @@ public class TelegramParser extends SQLite3DBParser {
     private static final String ATTACHMENT_MESSAGE = ATTACHMENT_PREFIX + "Attachment: ";
 
     private static boolean enabledForUfdr = false;
-    private static boolean enabledForIOSUfdr = false;
 
     private boolean extractMessages = true;
     private int minChatSplitSize = 6000000;
@@ -102,18 +101,9 @@ public class TelegramParser extends SQLite3DBParser {
         return enabledForUfdr;
     }
 
-    public static boolean isEnabledForIOSUfdr() {
-        return enabledForIOSUfdr;
-    }
-
     @Field
     public void setEnabledForUfdr(boolean enable) {
         enabledForUfdr = enable;
-    }
-
-    @Field
-    public void setEnabledForIOSUfdr(boolean enable) {
-        enabledForIOSUfdr = enable;
     }
 
     @Field
@@ -128,7 +118,7 @@ public class TelegramParser extends SQLite3DBParser {
 
     private void storeLinkedHashes(List<Message> messages, Metadata metadata) {
         for (Message m : messages) {
-            if (m.getMediaHash() != null) {
+            if (Util.isValidHash(m.getMediaHash())) {
                 metadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + m.getMediaHash()); //$NON-NLS-1$
                 if (m.isFromMe())
                     metadata.add(ExtraProperties.SHARED_HASHES, m.getMediaHash());
@@ -155,7 +145,7 @@ public class TelegramParser extends SQLite3DBParser {
                     byte[] bytes = r.genarateContactHtml(c);
                     Metadata cMetadata = new Metadata();
                     cMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, TELEGRAM_CONTACT.toString());
-                    cMetadata.set(TikaCoreProperties.TITLE, c.getName());
+                    cMetadata.set(TikaCoreProperties.TITLE, c.getTitle());
                     cMetadata.set(ExtraProperties.USER_NAME, c.getName());
                     cMetadata.set(ExtraProperties.USER_PHONE, c.getPhone());
                     cMetadata.set(ExtraProperties.USER_ACCOUNT, c.getId() + "");
@@ -211,12 +201,18 @@ public class TelegramParser extends SQLite3DBParser {
             chatMetadata.set(ExtraProperties.DELETED, Boolean.toString(c.isDeleted()));
             chatMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
-            if (c.isGroup()) {
+            if (c.isGroupOrChannel()) {
                 ChatGroup cg = (ChatGroup) c;
-                if (cg.getMembers() != null && !cg.getMembers().isEmpty()) {
-                    for (Long id : cg.getMembers()) {
-                        chatMetadata.add(ExtraProperties.PARTICIPANTS, e.getContact(id).toString());
-                    }
+                for (long id : cg.getMembers()) {
+                    chatMetadata.add(ExtraProperties.PARTICIPANTS, e.getContact(id).toString());
+                }
+                for (long id : cg.getAdmins()) {
+                    chatMetadata.add(ExtraProperties.COMMUNICATION_PREFIX + "ChannelAdmins",
+                            e.getContact(id).toString());
+                }
+                int participantsCount = cg.getParticipantsCount();
+                if (participantsCount > 0) {
+                    chatMetadata.add(ExtraProperties.PARTICIPANTS + "Count", String.valueOf(participantsCount));
                 }
             }
 
@@ -240,7 +236,9 @@ public class TelegramParser extends SQLite3DBParser {
 
     private String getChatNamePrefix(Chat c) {
         String title = "Telegram_";
-        if (c.isGroup()) {
+        if (c.isChannel()) {
+            title += "Channel";
+        } else if (c.isGroup()) {
             title += "Group";
         } else {
             title += "Chat";
@@ -266,7 +264,7 @@ public class TelegramParser extends SQLite3DBParser {
                 meta.set(ExtraProperties.LOCATIONS, m.getLatitude() + ";" + m.getLongitude());
             }
             meta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, m.getFrom().toString());
-            if (m.getChat().isGroup()) {
+            if (m.getChat().isGroupOrChannel()) {
                 ChatGroup groupChat = (ChatGroup) m.getChat();
                 for (Long id : groupChat.getMembers()) {
                     if (id != m.getFrom().getId())
@@ -290,10 +288,10 @@ public class TelegramParser extends SQLite3DBParser {
             if (m.getMediaMime() != null) {
                 meta.add(ExtraProperties.MESSAGE_BODY, ATTACHMENT_MESSAGE + m.getMediaMime());
             }
-            if (m.getMediasize() != 0) {
-                meta.set("mediaSize", Long.toString(m.getMediasize()));
+            if (m.getMediaSize() != 0) {
+                meta.set("mediaSize", Long.toString(m.getMediaSize()));
             }
-            if (m.getMediaHash() != null) {
+            if (Util.isValidHash(m.getMediaHash())) {
                 meta.set(StandardParser.INDEXER_CONTENT_TYPE, TELEGRAM_ATTACHMENT.toString());
                 meta.set(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + m.getMediaHash()); //$NON-NLS-1$
                 if (!m.getChildPornSets().isEmpty()) {
@@ -340,7 +338,7 @@ public class TelegramParser extends SQLite3DBParser {
                     byte[] bytes = r.genarateContactHtml(c);
                     Metadata cMetadata = new Metadata();
                     cMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, TELEGRAM_CONTACT.toString());
-                    cMetadata.set(TikaCoreProperties.TITLE, c.getName());
+                    cMetadata.set(TikaCoreProperties.TITLE, c.getTitle());
                     cMetadata.set(ExtraProperties.USER_NAME, c.getName());
                     cMetadata.set(ExtraProperties.USER_PHONE, c.getPhone());
                     cMetadata.set(ExtraProperties.USER_ACCOUNT, c.getId() + "");
@@ -480,23 +478,10 @@ public class TelegramParser extends SQLite3DBParser {
         String mimetype = metadata.get(StandardParser.INDEXER_CONTENT_TYPE);
         if (mimetype.equals(TELEGRAM_DB.toString())) {
             parseTelegramDBAndroid(stream, handler, metadata, context);
-        }
-        if (mimetype.equals(TELEGRAM_DB_IOS.toString())) {
-            if (!enabledForIOSUfdr && PhoneParsingConfig.isFromUfdrDatasourceReader(item)) {
-                return;
-            }
-            try {
-                parseTelegramDBIOS(stream, handler, metadata, context);
-            } catch (Exception e) {
-                // TODO: handle exception
-                e.printStackTrace(System.out);
-                throw e;
-            }
-        }
-        if (mimetype.equals(TELEGRAM_USER_CONF.toString())) {
+        } else if (mimetype.equals(TELEGRAM_DB_IOS.toString())) {
+            parseTelegramDBIOS(stream, handler, metadata, context);
+        } else if (mimetype.equals(TELEGRAM_USER_CONF.toString())) {
             parseAndroidAccount(stream, handler, metadata, context);
         }
-
     }
-
 }

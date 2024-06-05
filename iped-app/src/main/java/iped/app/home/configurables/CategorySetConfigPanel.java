@@ -16,7 +16,7 @@ import com.google.common.base.Predicate;
 import iped.app.home.MainFrame;
 import iped.app.home.configurables.api.ConfigurableValidationException;
 import iped.app.ui.CategoryMimeTreeModel;
-import iped.app.ui.controls.CheckBoxTreeCellRenderer;
+import iped.app.ui.controls.ConfigCheckBoxTreeCellRenderer;
 import iped.configuration.Configurable;
 import iped.engine.config.CategoryConfig;
 import iped.engine.config.ConfigurationManager;
@@ -26,7 +26,7 @@ public class CategorySetConfigPanel extends ConfigurablePanel {
     private JTree categoryTree;
     Configurable<Set<String>> ceConfig;
     private JScrollPane treeScrollPanel;
-    private CheckBoxTreeCellRenderer cellRenderer;
+    private ConfigCheckBoxTreeCellRenderer cellRenderer;
     Set<String> tempCatNames;
 
     protected CategorySetConfigPanel(Configurable<Set<String>> configurable, MainFrame mainFrame) {
@@ -44,7 +44,7 @@ public class CategorySetConfigPanel extends ConfigurablePanel {
         CategoryConfig cc = ConfigurationManager.get().findObject(CategoryConfig.class);
 
         categoryTree = new JTree(new CategoryMimeTreeModel(cc.getRoot()));
-        cellRenderer = new CheckBoxTreeCellRenderer(categoryTree, new Predicate<Object>() {
+        cellRenderer = new ConfigCheckBoxTreeCellRenderer(categoryTree, new Predicate<Object>() {
             @Override
             public boolean apply(Object input) {
                 return tempCatNames.contains(((Category)input).getName());

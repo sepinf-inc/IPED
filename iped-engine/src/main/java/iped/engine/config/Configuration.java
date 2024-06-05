@@ -222,9 +222,9 @@ public class Configuration {
             configManager.loadConfig(taskConfig);
 
             for (AbstractTask task : taskConfig.getNewTaskInstances()) {
-                if(task instanceof IScriptTask) {
-                    //delay script configurable loading
-                }else {
+                if (task instanceof IScriptTask) {
+                    // postpone script configurable loading
+                } else {
                     for (Configurable<?> configurable : task.getConfigurables()) {
                         configManager.addObject(configurable);
                     }
@@ -232,7 +232,6 @@ public class Configuration {
             }
 
             configManager.loadConfigs();
-
 
             // blocks internet access from html viewers
             DefaultPolicy policy = new DefaultPolicy();

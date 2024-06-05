@@ -98,7 +98,7 @@ public class DocThumbTask extends ThumbTask {
                         URL url = URLUtil.getURL(this.getClass());
                         File jarDir = new File(url.toURI()).getParentFile();
                         LibreOfficeFinder loFinder = new LibreOfficeFinder(jarDir);
-                        loPath = loFinder.getLOPath();
+                        loPath = loFinder.getLOPath(true);
                         logger.info("LibreOffice Path: " + loPath);
                     }
 

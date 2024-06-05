@@ -25,11 +25,11 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import iped.app.ui.Messages;
-import iped.app.ui.controls.IPEDSearchList;
+import iped.app.ui.controls.IPEDConfigSearchList;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.SignatureConfig;
 
-public class IPEDMimeSearchList extends IPEDSearchList {
+public class IPEDMimeSearchList extends IPEDConfigSearchList {
     private JCheckBox ckShowTika;
     
     public IPEDMimeSearchList() {

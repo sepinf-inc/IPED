@@ -17,7 +17,6 @@ import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
 
 public abstract class AbstractCarver implements Carver {
-    protected static String carvedNamePrefix = "Carved-";// esta propriedade não foi declarada estatica para permitir
     protected CarverType[] carverTypes = null;
 
     protected ArrayDeque<Hit> headersWaitingFooters = new ArrayDeque<>();
@@ -99,7 +98,7 @@ public abstract class AbstractCarver implements Carver {
         if ((!ignoreCorrupted && !isSpecificIgnoreCorrupted()) || isValid(parentEvidence, header, len)) {
             IItem offsetFile = parentEvidence.createChildItem();
 
-            String name = carvedNamePrefix + header.getOffset();
+            String name = getCarvedNamePrefix() + header.getOffset() + getCarvedNameSuffix();
             offsetFile.setName(name);
             offsetFile.setPath(parentEvidence.getPath() + ">>" + name);
 
@@ -150,7 +149,23 @@ public abstract class AbstractCarver implements Carver {
 
         return null;
     }
+    
+    /**
+     * @return The prefix to be used in carved item name. Use a function to allow
+     *         overriding.
+     */
+    protected String getCarvedNamePrefix() {
+        return "Carved-";
+    }
 
+    /**
+     * @return The suffix to be used in carved item name. Default is an empty
+     *         string.
+     */
+    protected String getCarvedNameSuffix() {
+        return "";
+    }
+    
     public boolean isValid(IItem parentEvidence, Hit headerOffset, long length) {
         try {
             // tenta parsear o conteudo

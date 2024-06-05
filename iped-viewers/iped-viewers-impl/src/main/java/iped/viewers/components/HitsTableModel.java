@@ -32,6 +32,11 @@ public class HitsTableModel extends AbstractTableModel {
 
     private String[] columnNames = { "", Messages.getString("HitsTableModel.ContentHits") }; //$NON-NLS-1$ //$NON-NLS-2$
 
+    // The <p> is used as a workaround to avoid weird line break. As it is a JDK
+    // bug, it may be removed when it is fixed there. See issue #2102.
+    public static final String htmlStartTag = "<html><p style=\"width:4000px;\">";
+    public static final String htmlEndTag = "</p></html>";
+    
     public HitsTableModel(ATextViewer textViewer) {
         this.textViewer = textViewer;
         textViewer.setHitsModel(this);
@@ -74,11 +79,9 @@ public class HitsTableModel extends AbstractTableModel {
             } while (nread != -1 && data.hasRemaining());
 
             data.flip();
-            return "<html><body>" + (new String(data.array(), ATextViewer.TEXT_ENCODING)) + "</body></html>"; //$NON-NLS-1$ //$NON-NLS-2$
+            return htmlStartTag + (new String(data.array(), ATextViewer.TEXT_ENCODING)) + htmlEndTag;
         } catch (Exception e) {
-            // e.printStackTrace();
-            return ""; //$NON-NLS-1$
         }
-
+        return "";
     }
 }

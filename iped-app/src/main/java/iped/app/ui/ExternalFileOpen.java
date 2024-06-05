@@ -25,9 +25,7 @@ public class ExternalFileOpen {
             public void run() {
                 IItem item = App.get().appCase.getItemByLuceneID(luceneId);
                 String itemReferenceQuery = item.getMetadata().get(ExtraProperties.LINKED_ITEMS);
-                if (itemReferenceQuery != null
-                        && (MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.METADATA_ENTRY)
-                            || MediaTypes.isInstanceOf(item.getMediaType(), Win10MailParser.WIN10_MAIL_ATTACH))) {
+                if (itemReferenceQuery != null && (MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.METADATA_ENTRY) || MediaTypes.isInstanceOf(item.getMediaType(), Win10MailParser.WIN10_MAIL_ATTACH))) {
                     item = new AttachmentSearcherImpl().getItem(itemReferenceQuery);
                     if (item == null)
                         return;
@@ -35,11 +33,7 @@ public class ExternalFileOpen {
                 try {
                     if (IOUtil.isToOpenExternally(item.getName(), item.getType())) {
                         LOGGER.info("Externally Opening file " + item.getPath()); //$NON-NLS-1$
-                        File file = Util.getFileRenamedToExt(item.getTempFile(), item.getType());
-                        file.setReadOnly();
-                        if (IOUtil.isTemporaryFile(file)) {
-                            file.deleteOnExit();
-                        }
+                        File file = Util.getFileWithRightExt(item);
                         open(file);
                     }
 

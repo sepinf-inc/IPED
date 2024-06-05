@@ -1,5 +1,6 @@
 package iped.engine.data;
 
+import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -53,6 +54,7 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
         return sum;
     }
 
+    @Deprecated
     public int getTotalItens() {
         int sum = 0;
         for (IBookmarks m : map.values())
@@ -120,7 +122,14 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
         return m.hasBookmark(item.getId(), bookmarkId);
     }
 
+    @Deprecated
     public void addBookmark(List<IItemId> ids, String bookmarkName) {
+        ItemIdSet set = new ItemIdSet();
+        set.addAll(ids);
+        addBookmark(set, bookmarkName);
+    }
+
+    public void addBookmark(Set<IItemId> ids, String bookmarkName) {
         HashMap<Integer, List<Integer>> itemsPerSource = getIdsPerSource(ids);
         for (Integer sourceId : itemsPerSource.keySet()) {
             IBookmarks m = map.get(sourceId);
@@ -131,7 +140,7 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
         }
     }
 
-    private HashMap<Integer, List<Integer>> getIdsPerSource(List<IItemId> ids) {
+    private HashMap<Integer, List<Integer>> getIdsPerSource(Set<IItemId> ids) {
         HashMap<Integer, List<Integer>> itemsPerSource = new HashMap<>();
         for (IItemId item : ids) {
             List<Integer> items = itemsPerSource.get(item.getSourceId());
@@ -144,7 +153,14 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
         return itemsPerSource;
     }
 
+    @Deprecated
     public void removeBookmark(List<IItemId> ids, String bookmarkName) {
+        ItemIdSet set = new ItemIdSet();
+        set.addAll(ids);
+        removeBookmark(set, bookmarkName);
+    }
+
+    public void removeBookmark(Set<IItemId> ids, String bookmarkName) {
         HashMap<Integer, List<Integer>> itemsPerSource = getIdsPerSource(ids);
         for (Integer sourceId : itemsPerSource.keySet()) {
             IBookmarks m = map.get(sourceId);
@@ -186,6 +202,36 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
         return null;
     }
 
+    public void setBookmarkColor(String bookmarkName, Color color) {
+        for (IBookmarks m : map.values()) {
+            int bid = m.getBookmarkId(bookmarkName);
+            if (bid != -1) {
+                m.setBookmarkColor(bid, color);
+            }
+        }
+
+    }
+
+    public Color getBookmarkColor(String bookmarkName) {
+        for (IBookmarks m : map.values()) {
+            int bid = m.getBookmarkId(bookmarkName);
+            if (bid != -1) {
+                Color color = m.getBookmarkColor(bid);
+                if (color != null)
+                    return color;
+            }
+        }
+        return null;
+    }
+
+    public Set<Color> getUsedColors() {
+        Set<Color> usedColors = new HashSet<Color>();
+        for (IBookmarks m : map.values()) {
+            usedColors.addAll(m.getUsedColors());
+        }
+        return usedColors;
+    }
+
     public void setBookmarkKeyStroke(String bookmarkName, KeyStroke key) {
         for (IBookmarks m : map.values())
             m.setBookmarkKeyStroke(m.getBookmarkId(bookmarkName), key);
@@ -200,15 +246,17 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
         return null;
     }
     
+    public void removeBookmarkKeyStroke(String bookmarkName) {
+        for (IBookmarks m : map.values())
+            m.removeBookmarkKeyStroke(m.getBookmarkId(bookmarkName));
+    }
+    
     public int getBookmarkCount(String bookmarkName) {
         int ret = 0;
         for (IBookmarks m : map.values()) {
-            Integer bookmarkId = m.getBookmarkId(bookmarkName);
-            if (bookmarkId != null) {
-                Integer cnt = m.getBookmarkCount(bookmarkId);
-                if (cnt != null) {
-                    ret += cnt;
-                }
+            int bookmarkId = m.getBookmarkId(bookmarkName);
+            if (bookmarkId != -1) {
+                ret += m.getBookmarkCount(bookmarkId);
             }
         }
         return ret;

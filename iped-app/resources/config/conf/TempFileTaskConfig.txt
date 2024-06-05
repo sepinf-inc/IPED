@@ -1,0 +1,3 @@
+# Maximum file size that TempFileTask will create a file in the temporary folder (when "indexTempOnSSD" is set to true). 
+# Default value is 1 GB. This limit exists to avoid using too much space in the temporary folder.
+maxFileSize = 1073741824
