@@ -6,9 +6,10 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Path;
 
+import iped.configuration.EnabledInterface;
 import iped.utils.UTF8Properties;
 
-public class OCRConfig extends AbstractPropertiesConfigurable {
+public class OCRConfig extends AbstractPropertiesConfigurable implements EnabledInterface {
     /**
      * 
      */
@@ -46,16 +47,7 @@ public class OCRConfig extends AbstractPropertiesConfigurable {
     @Override
     public void processProperties(UTF8Properties properties) {
 
-        String value = properties.getProperty("enableOCR"); //$NON-NLS-1$
-        if (value != null && !value.trim().isEmpty()) {
-            if (Boolean.valueOf(value.trim())) {
-                enableOCR = true;
-            } else if (enableOCR == null) {
-                enableOCR = false;
-            }
-        } else if (enableOCR == null) {
-            enableOCR = false;
-        }
+        String value;
 
         value = properties.getProperty("OCRLanguage"); //$NON-NLS-1$
         if (value != null && !value.trim().isEmpty()) {
@@ -181,6 +173,34 @@ public class OCRConfig extends AbstractPropertiesConfigurable {
         }catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public void processConfig(Path resource) throws IOException {
+        if (resource.getName(resource.getNameCount() - 1).toString().equals(CONFIG_FILE0)) {
+            String value = properties.getProperty("enableOCR"); //$NON-NLS-1$
+            if (value != null && !value.trim().isEmpty()) {
+                if (Boolean.valueOf(value.trim())) {
+                    enableOCR = true;
+                } else if (enableOCR == null) {
+                    enableOCR = false;
+                }
+            } else if (enableOCR == null) {
+                enableOCR = false;
+            }
+        } else {
+            super.processConfig(resource);
+        }
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return enableOCR;
+    }
+
+    @Override
+    public void setEnabled(boolean enabled) {
+        enableOCR = enabled;
     }
 
 }
