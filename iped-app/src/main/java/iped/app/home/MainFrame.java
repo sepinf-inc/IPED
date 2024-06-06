@@ -29,6 +29,7 @@ import iped.engine.Version;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.LocaleConfig;
+import iped.engine.task.ParsingTask;
 import iped.engine.util.Util;
 import iped.exception.UIException;
 import iped.utils.ui.ScreenUtils;
@@ -112,6 +113,8 @@ public class MainFrame extends JFrame {
         cardsContentPanel.add(new ConfigPanel(this), MainFrameCardsNames.CONFIG.getName());
         cardsContentPanel.add(new NewCaseContainerPanel(this), MainFrameCardsNames.NEW_CASE.getName());
         cardsContentPanel.add(new OpenCasePanel(this), MainFrameCardsNames.OPEN_CASE.getName());
+
+        ParsingTask.setupParsingOptions(ConfigurationManager.get());
 
         setHomeFrameSize();
         setFrameIcon();
