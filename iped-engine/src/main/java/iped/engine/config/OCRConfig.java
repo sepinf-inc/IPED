@@ -49,6 +49,19 @@ public class OCRConfig extends AbstractPropertiesConfigurable implements Enabled
 
         String value;
 
+        value = properties.getProperty("enableOCR"); //$NON-NLS-1$
+        if (enableOCR == null) {// if this value was not defined in IPEDConfig.txt it will be null, and its value in OCRConfig.txt will be ignored
+            if (value != null && !value.trim().isEmpty()) {
+                if (Boolean.valueOf(value.trim())) {
+                    enableOCR = true;
+                } else if (enableOCR == null) {
+                    enableOCR = false;
+                }
+            } else if (enableOCR == null) {
+                enableOCR = false;
+            }
+        }
+
         value = properties.getProperty("OCRLanguage"); //$NON-NLS-1$
         if (value != null && !value.trim().isEmpty()) {
             ocrLanguage = value.trim();
@@ -178,7 +191,10 @@ public class OCRConfig extends AbstractPropertiesConfigurable implements Enabled
     @Override
     public void processConfig(Path resource) throws IOException {
         if (resource.getName(resource.getNameCount() - 1).toString().equals(CONFIG_FILE0)) {
-            String value = properties.getProperty("enableOCR"); //$NON-NLS-1$
+            // loads only enableOCR if is IPEDConfig.txt
+            UTF8Properties lproperties = new UTF8Properties();
+            lproperties.load(resource.toFile());
+            String value = lproperties.getProperty("enableOCR"); //$NON-NLS-1$
             if (value != null && !value.trim().isEmpty()) {
                 if (Boolean.valueOf(value.trim())) {
                     enableOCR = true;
