@@ -50,18 +50,16 @@ public class OCRConfig extends AbstractPropertiesConfigurable implements Enabled
         String value;
 
         value = properties.getProperty("enableOCR"); //$NON-NLS-1$
-        if (enableOCR == null) {// if this value was not defined in IPEDConfig.txt it will be null, and its value in OCRConfig.txt will be ignored
-            if (value != null && !value.trim().isEmpty()) {
-                if (Boolean.valueOf(value.trim())) {
-                    enableOCR = true;
-                } else if (enableOCR == null) {
-                    enableOCR = false;
-                }
+        if (value != null && !value.trim().isEmpty()) {
+            if (Boolean.valueOf(value.trim())) {
+                enableOCR = true;
             } else if (enableOCR == null) {
                 enableOCR = false;
             }
+        } else if (enableOCR == null) {
+            enableOCR = false;
         }
-
+        
         value = properties.getProperty("OCRLanguage"); //$NON-NLS-1$
         if (value != null && !value.trim().isEmpty()) {
             ocrLanguage = value.trim();
