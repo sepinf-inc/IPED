@@ -130,6 +130,13 @@ public class ScriptTask extends AbstractTask implements IScriptTask {
 
     @Override
     public String getName() {
+        if (scriptName == null) {
+            try {
+                scriptName = (String) inv.invokeFunction("getName");
+            } catch (Exception e) {
+                scriptName = scriptFile.getName();
+            }
+        }
         return scriptName;
     }
 
