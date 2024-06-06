@@ -196,7 +196,7 @@ public class OCRConfig extends AbstractPropertiesConfigurable implements Enabled
             if (value != null && !value.trim().isEmpty()) {
                 if (Boolean.valueOf(value.trim())) {
                     enableOCR = true;
-                } else if (enableOCR == null) {
+                } else {
                     enableOCR = false;
                 }
             } else if (enableOCR == null) {
