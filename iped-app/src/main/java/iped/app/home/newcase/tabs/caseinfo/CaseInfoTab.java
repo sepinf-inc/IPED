@@ -4,6 +4,43 @@ package iped.app.home.newcase.tabs.caseinfo;/*
  * @author Thiago S. Figueiredo
  */
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Image;
+import java.awt.Insets;
+import java.awt.event.ItemEvent;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
+import javax.swing.JSeparator;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.filechooser.FileSystemView;
+import javax.swing.text.JTextComponent;
+
+import org.apache.commons.lang3.StringUtils;
+
 import iped.app.home.DefaultPanel;
 import iped.app.home.MainFrame;
 import iped.app.home.newcase.NewCaseContainerPanel;
@@ -16,23 +53,6 @@ import iped.app.ui.Messages;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.LocalConfig;
 import iped.engine.data.ReportInfo;
-import iped.utils.IconUtil;
-import org.apache.commons.lang3.StringUtils;
-
-import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.swing.filechooser.FileSystemView;
-import javax.swing.text.JTextComponent;
-import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.stream.Collectors;
 
 /**
  * Case info TAB
@@ -166,6 +186,10 @@ public class CaseInfoTab extends DefaultPanel {
             fileChooserDestino.setDialogTitle(Messages.get("Home.NewCase.ChooseCaseOutput"));
             fileChooserDestino.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
             fileChooserDestino.setAcceptAllFileFilterUsed(false);
+            String outputStr = textFieldCaseOutput.getText();
+            if (!outputStr.isBlank()) {
+                fileChooserDestino.setCurrentDirectory(new File(outputStr));
+            }
             if( fileChooserDestino.showOpenDialog(this) == JFileChooser.APPROVE_OPTION){
                 setCaseOutputValue(fileChooserDestino.getSelectedFile().toPath());
             }
