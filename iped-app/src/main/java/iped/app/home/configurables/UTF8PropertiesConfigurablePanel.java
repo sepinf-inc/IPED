@@ -96,9 +96,13 @@ public class UTF8PropertiesConfigurablePanel extends ConfigurablePanel implement
                 }
                 contentPanel.add(c, getGridBagConstraints(1, currentLine, 1, 1));
                 String tooltipKey = configurable.getClass().getName()+"."+propertie+Messages.TOOLTIP_SUFFIX;
-                String toolTipText = Messages.getString(tooltipKey ,config.getComments(propertie));
-                if(toolTipText!=null) {
-                    c.setToolTipText(toolTipText);
+                try {
+                    String toolTipText = Messages.getString(tooltipKey, config.getComments(propertie));
+                    if (toolTipText != null) {
+                        c.setToolTipText(toolTipText);
+                    }
+                } catch (Exception e) {
+                    // tooltip does not exists in resources
                 }
                 //
                 textFieldList.put(propertie, c);
