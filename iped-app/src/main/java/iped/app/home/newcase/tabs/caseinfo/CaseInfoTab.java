@@ -397,15 +397,17 @@ public class CaseInfoTab extends DefaultPanel {
             }
 
             File caseInfoSourceFile = showLoadCaseInfoFileChooser( Messages.get("Home.NewCase.ChooseCaseInfoFile") );
-            ReportInfo reportInfo = new ReportInfo();
-            try {
-                reportInfo.readJsonInfoFile(caseInfoSourceFile);
-            } catch (IOException ex) {
-                ex.printStackTrace();
-                return;
+            if (caseInfoSourceFile != null) {
+                ReportInfo reportInfo = new ReportInfo();
+                try {
+                    reportInfo.readJsonInfoFile(caseInfoSourceFile);
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                    return;
+                }
+                ipedProcess.setReportInfo(reportInfo);
+                populateFormCaseInfo();
             }
-            ipedProcess.setReportInfo(reportInfo);
-            populateFormCaseInfo();
         });
         panelCaseData.add(buttonSaveCaseData);
         panelCaseData.add(buttonLoadCaseData);
