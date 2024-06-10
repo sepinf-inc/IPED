@@ -383,8 +383,10 @@ public class CaseInfoTab extends DefaultPanel {
         JButton buttonSaveCaseData = new JButton(Messages.get("Home.NewCase.SaveCaseData"));
         buttonSaveCaseData.addActionListener( e -> {
             File destinationFile = showSaveCaseInfoFileChooser(Messages.get("Home.NewCase.ChooseCaseInfoFileOutput"));
-            populateCaseInfo();
-            ipedProcess.getReportInfo().saveJsonInfoFile(destinationFile);
+            if (destinationFile != null) {
+                populateCaseInfo();
+                ipedProcess.getReportInfo().saveJsonInfoFile(destinationFile);
+            }
         });
         JButton buttonLoadCaseData = new JButton(Messages.get("Home.NewCase.LoadCaseData"));
         buttonLoadCaseData.addActionListener(e -> {
