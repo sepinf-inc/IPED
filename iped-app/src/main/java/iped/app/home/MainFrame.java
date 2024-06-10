@@ -104,6 +104,7 @@ public class MainFrame extends JFrame {
 
         //Load configurables files
         Configuration configuration = Configuration.getInstance();
+        Configuration.getInstance().saveIpedRoot(CasePathManager.getInstance().getConfigPath().getAbsolutePath());
         configuration.loadConfigurables(CasePathManager.getInstance().getConfigPath().getAbsolutePath(), true);
 
 
