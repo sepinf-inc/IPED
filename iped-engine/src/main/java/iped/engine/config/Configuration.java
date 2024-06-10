@@ -222,12 +222,8 @@ public class Configuration {
             configManager.loadConfig(taskConfig);
 
             for (AbstractTask task : taskConfig.getNewTaskInstances()) {
-                if (task instanceof IScriptTask) {
-                    // postpone script configurable loading
-                } else {
-                    for (Configurable<?> configurable : task.getConfigurables()) {
-                        configManager.addObject(configurable);
-                    }
+                for (Configurable<?> configurable : task.getConfigurables()) {
+                    configManager.addObject(configurable);
                 }
             }
 
