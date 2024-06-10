@@ -1,5 +1,9 @@
 package iped.app.home.newcase.tabs.evidence.table;
 
+import java.util.ArrayList;
+
+import javax.swing.table.AbstractTableModel;
+
 /*
  * @created 12/09/2022
  * @project IPED
@@ -9,12 +13,6 @@ package iped.app.home.newcase.tabs.evidence.table;
 import iped.app.home.newcase.model.Evidence;
 import iped.app.home.newcase.tabs.evidence.EvidenceInfoDialog;
 import iped.app.ui.Messages;
-
-import javax.swing.*;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.DefaultTableModel;
-import java.awt.*;
-import java.util.ArrayList;
 
 public class EvidencesTableModel extends AbstractTableModel {
 
@@ -72,7 +70,7 @@ public class EvidencesTableModel extends AbstractTableModel {
 
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-        if(evidencesList == null || evidencesList.isEmpty())
+        if (evidencesList == null || evidencesList.isEmpty() || rowIndex >= evidencesList.size())
             return;
         Evidence currentEvidence = evidencesList.get(rowIndex);
         if (columnIndex == 1 ){
