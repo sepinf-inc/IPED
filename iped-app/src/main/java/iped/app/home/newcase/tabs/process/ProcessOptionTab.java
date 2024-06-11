@@ -52,7 +52,6 @@ import iped.app.home.newcase.model.ExistentCaseOptions;
 import iped.app.home.newcase.model.IPEDProcess;
 import iped.app.home.processmanager.ProcessManager;
 import iped.app.home.style.StyleManager;
-import iped.app.ui.App;
 import iped.app.ui.Messages;
 import iped.configuration.Configurable;
 import iped.configuration.EnabledInterface;
@@ -571,5 +570,6 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
     @Override
     public void onChange(Configurable<?> configurable) {
         showProfilePanel(CREATE_PROFILE_PANEL);
+        jtableTasks.updateUI();
     }
 }

@@ -108,7 +108,9 @@ public class TasksTableModel extends AbstractTableModel {
             //Task order column
             case 0: return rowIndex+1;
             //Task checkbox column
-            case 1: return enabled.get(rowIndex);
+            case 1:
+                return (enabledConfigurables.get(rowIndex) != null) ? enabledConfigurables.get(rowIndex).isEnabled()
+                        : enabled.get(rowIndex);
             //task name column
             case 2: return taskList.get(rowIndex);
             //options button column

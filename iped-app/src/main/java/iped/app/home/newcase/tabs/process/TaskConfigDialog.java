@@ -148,22 +148,24 @@ public class TaskConfigDialog extends JDialog {
         JButton btSave = new JButton(Messages.get("Home.Save"));
         btSave.addActionListener( e -> {
             try {
-                for (Iterator iterator = configurables.iterator(); iterator.hasNext();) {
-                    Configurable<?> configurable = (Configurable<?>)iterator.next();
-                    if(!(configurable instanceof EnableTaskProperty)) {
-                        IConfigurablePanel configPanel = configurablePanels.get(configurable);
-                        if(configPanel.hasChanged()) {
-                            configPanel.applyChanges();
-                            configPanel.fireChangeListener(new ChangeEvent(this));
-                        }
-                    }
-                }
-                if(changedEnabledProperties.size()>0) {
+                boolean hasOneEnabledChanged = false;
+                if (changedEnabledProperties.size() > 0) {
                     // apply checkbox states to respective configurables
                     for (Iterator iterator = changedEnabledProperties.keySet().iterator(); iterator.hasNext();) {
                         EnabledInterface enabledInterface = (EnabledInterface) iterator.next();
                         enabledInterface.setEnabled(changedEnabledProperties.get(enabledInterface).isSelected());
-                        configurationManager.notifyUpdate((Configurable<?>)enabledInterface);
+                        configurationManager.notifyUpdate((Configurable<?>) enabledInterface);
+                        hasOneEnabledChanged = true;
+                    }
+                }
+                for (Iterator iterator = configurables.iterator(); iterator.hasNext();) {
+                    Configurable<?> configurable = (Configurable<?>)iterator.next();
+                    if(!(configurable instanceof EnableTaskProperty)) {
+                        IConfigurablePanel configPanel = configurablePanels.get(configurable);
+                        if (configPanel.hasChanged() || hasOneEnabledChanged) {
+                            configPanel.applyChanges();
+                            configPanel.fireChangeListener(new ChangeEvent(this));
+                        }
                     }
                 }
                 if(task instanceof IScriptTask) {
