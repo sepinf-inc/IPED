@@ -1,4 +1,4 @@
-﻿########################################################################
+﻿﻿########################################################################
 # Processing Settings
 ########################################################################
 
@@ -92,16 +92,22 @@ enableIndexToElasticSearch = false
 # You must configure at least host/port options in conf/MinIOConfig.txt
 enableMinIO = false
 
+# Enables OCR on images and scanned PDF files. It can increase processing time a lot.
+# OCR language dictionary and other advanced configurations can be found in conf/OCRConfig.txt.
+enableOCR = false
+
 # Enable audio transcription.
-# Default implementation uses VOSK transcription [EXPERIMENTAL] on local CPU (slow and medium quality).
-# We include Vosk portable models for 'en' and 'pt-BR', the lang model is taken from 'locale' in LocalConfig.txt
-# You can change it from Vosk to Microsoft Azure or Google Cloud services (faster and better quality).
-# Configure it in conf/AudioTranscriptConfig.txt
+# Default implementation uses VOSK transcription on local CPU (faster but bad accuracy).
+# You can change the algorithm into conf/AudioTranscriptConfig.txt:
+# - Wav2Vec2 algorithm (slower and good accuracy)
+# - Whisper algorithm (much slower but better accuracy)
+# - Google Cloud (about $1.00 per hour cost)
+# - Microsoft Azure (about $1.00 per hour cost)
 enableAudioTranscription = false
 
-# Enables carving. "addUnallocated" must be enabled to unallocated area be searched.
-# By default carving runs on almost every item in the case. 
-# File types to be searched and retrieved can be set in file "conf/CarvingConfig.txt"
+# Enables carving. "addUnallocated" must be enabled to scan unallocated space.
+# By default, our carving module scans many places in the evidence for deleted or embedded files. 
+# Places to scan and file types to recover can be configured in "conf/CarverConfig.xml"
 enableCarving = false
 
 # Enables carving that retrieves known files from the LED base, based on the beginning (64K) of the file.
@@ -124,6 +130,9 @@ enableImageSimilarity = false
 # Advanced configuration options can be found in conf/FaceRecognitionConfig.txt.
 # If enabled, you can search for faces from the analysis interface, check the options menu.
 enableFaceRecognition = false
+
+# Enables searching for crypto hardware wallets.
+enableSearchHardwareWallets = true
 
 # Enables extraction of image frames from video files
 # Extraction settings can be modified in file "conf/VideoThumbsConfig.txt"

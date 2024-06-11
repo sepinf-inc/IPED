@@ -28,15 +28,37 @@ function process(e){
 	var name = e.getName().toLowerCase();
 	var path = e.getPath().toLowerCase().replace(/\\/g, "/");
 	
-	if(mime.equals("application/x-chrome-cache-index") && path.contains("/appdata/roaming/discord")){
-		if(e.getPath().toLowerCase().contains("gpucache")){
-			e.setMediaTypeStr("application/x-discord-gpucache-index");
-		} else {
-			e.setMediaTypeStr("application/x-discord-index");
+	// Workaround for Tika limitation: https://github.com/sepinf-inc/IPED/issues/1793
+	if(mime.equals("application/vnd.apple.unknown.13")){
+		if(ext.equals("pages")){
+			e.setType("pages");
+			e.setMediaTypeStr("application/vnd.apple.pages.13");
+			e.setCategory("Text Documents");
+		} else if(ext.equals("numbers")){
+			e.setType("numbers");
+			e.setMediaTypeStr("application/vnd.apple.numbers.13");
+			e.setCategory("Spreadsheets");
+		} else if(ext.equals("key")){
+			e.setType("key");
+			e.setMediaTypeStr("application/vnd.apple.keynote.13");
+			e.setCategory("Presentations");
 		}
 	}
 	
-	if(/.*(-delta|-flat|-(f|s)[0-9]{3})\.vmdk/i.test(e.getName())){
+	if(e.getMetadata().get("chromeCache:isChromeCacheEntry")){
+		e.addCategory("Chrome Cache");
+	}
+    cacheUrl = e.getMetadata().get("chromeCache:chromeCacheUrl");
+    if(cacheUrl != null && cacheUrl.contains("discord")){
+        if(e.getName().startsWith("messages")){
+            e.setMediaTypeStr("application/x-discord-chat+json")
+        }
+        if(e.getName().contains("@me")){
+            e.setMediaTypeStr("application/x-discord-account")
+        }            
+    }
+	
+	if(/.*(-delta|-flat|-(f|s)[0-9]{3})\.vmdk$/i.test(e.getName())){
 	    e.setMediaTypeStr("application/x-vmdk-data");
 	}
 	
@@ -55,7 +77,11 @@ function process(e){
 		e.setCategory(cat);
 	}
 	
-	if(mime.equals("application/dita+xml") && e.getName().equals("com.whatsapp_preferences.xml")){
+	if(mime.equals("application/dita+xml") && 
+		(e.getName().equals("com.whatsapp_preferences.xml") || 
+		 e.getName().equals("com.whatsapp_preferences_light.xml") ||
+		 e.getName().equals("com.whatsapp.w4b_preferences.xml") || 
+		 e.getName().equals("com.whatsapp.w4b_preferences_light.xml"))) {
 		e.setMediaTypeStr("application/x-whatsapp-user-xml");
 		e.setCategory("Contacts");
 	}
@@ -118,6 +144,32 @@ function process(e){
 	   			   name.indexOf("history") > -1 || 
 				   name.indexOf("journal") > -1)
 					e.setCategory("Internet History");
+			}
+		}
+	}
+
+	// Calls sub-categories
+	if (mime.equals("application/x-ufed-call")) {
+		source = e.getMetadata().get("ufed:Source");
+		if (source == null) {
+			e.setCategory("Phone Calls");
+		} else {
+			source = source.toLowerCase();
+			if (source.contains("whatsapp")) {
+				e.setCategory("WhatsApp Calls");
+			} else if (source.contains("facebook")) {
+				e.setCategory("Facebook Calls");
+			} else if (source.contains("discord")) {
+				e.setCategory("Discord Calls");
+			} else if (source.contains("threema")) {
+				e.setCategory("Threema Calls");
+			} else if (source.contains("telegram")) {
+				e.setCategory("Telegram Calls");
+			} else if (source.contains("signal")) {
+				e.setCategory("Signal Calls");
+			} else {
+			    // New sub-categories may be created from other phone call apps handled by UFED
+				e.setCategory("Other Calls");
 			}
 		}
 	}
@@ -185,6 +237,7 @@ function process(e){
 		(path.indexOf("dropbox/") !== -1)||
 		(path.indexOf("com.getdropbox") !== -1)||
 		(path.indexOf("onedrive/") !== -1)||
+		(path.indexOf("onedrive - ") !== -1)||   //onedrive - <OrganizationName> in the case of OneDrive for Business
 		(path.indexOf("skydrive/") !== -1)||
 		(path.indexOf("google drive/") !== -1)||
 		(path.indexOf("/my drive/") !== -1)||

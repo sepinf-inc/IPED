@@ -3,15 +3,15 @@ package iped.parsers.whatsapp;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -24,7 +24,7 @@ import iped.parsers.util.ChildPornHashLookup;
  *
  * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
  */
-public class Message {
+public class Message implements Comparable<Message> {
 
     private static File thumbsfile;
     private static FileChannel fileChannel;
@@ -41,6 +41,7 @@ public class Message {
     private String data;
     private boolean fromMe;
     private boolean deleted;
+    private boolean forwarded;
     private Date timeStamp;
     private String mediaUrl;
     private String mediaMime;
@@ -58,13 +59,27 @@ public class Message {
     private List<String> vcards;
     private String url;
     private String thumbpath;
-    private int mediaDuration;
+    private int duration;
     private MessageStatus messageStatus;
     private String recoveredFrom = null;
-    private Set<String> childPornSets = new HashSet<>();
+    private List<String> childPornSets;
     private IItemReader mediaItem = null;
     private String mediaQuery = null;
-    private List<MessageAddOn> addOns = new ArrayList<>();
+    private List<MessageAddOn> addOns;
+    private long idQuote;
+    private Message messageQuote = null;
+    private boolean quoted = false;
+    private String uuid = null;
+    private byte[] metaData;
+    private String groupInviteName;
+    private MessageTemplate messageTemplate;
+    private long sortId;
+    private List<PollOption> pollOptions;
+    private List<String> usersAction;
+    private String uiElements;
+    private MessageProduct product;
+    private Date editTimeStamp;
+    private String address;
 
     static {
         try {
@@ -76,7 +91,21 @@ public class Message {
         }
     }
 
-    public static void closeStaticResources() throws IOException {
+    private static synchronized void reOpenChannel() {
+        if (fileChannel.isOpen()) {
+            return;
+        }
+        try {
+            fileChannel = FileChannel.open(thumbsfile.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE);
+        } catch (NoSuchFileException e) {
+            // fix for https://github.com/sepinf-inc/IPED/issues/2051
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static synchronized void closeStaticResources() throws IOException {
         if (fileChannel.isOpen()) {
             fileChannel.truncate(0);
             fileChannel.close();
@@ -86,7 +115,6 @@ public class Message {
 
     public Message() {
         messageType = MessageType.TEXT_MESSAGE;
-        vcards = new ArrayList<>();
     }
 
     public long getId() {
@@ -206,7 +234,7 @@ public class Message {
         } else {
             this.mediaHash = mediaHash;
         }
-        childPornSets.addAll(ChildPornHashLookup.lookupHash(this.mediaHash));
+        childPornSets = ChildPornHashLookup.lookupHashAndMerge(this.mediaHash, childPornSets);
     }
 
     public byte[] getThumbData() {
@@ -217,6 +245,9 @@ public class Message {
             ByteBuffer bb = ByteBuffer.allocate(thumbSize);
             fileChannel.read(bb, thumbOffset);
             return bb.array();
+        } catch (ClosedChannelException e) {
+            reOpenChannel();
+            return getThumbData();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -231,7 +262,9 @@ public class Message {
             thumbSize = rawData.length;
             thumbOffset = fileOffset.getAndAdd(thumbSize);
             fileChannel.write(ByteBuffer.wrap(rawData), thumbOffset);
-
+        } catch (ClosedChannelException e) {
+            reOpenChannel();
+            setThumbData(rawData);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -285,6 +318,14 @@ public class Message {
         this.deleted = deleted;
     }
 
+    public boolean isForwarded() {
+        return forwarded;
+    }
+
+    public void setForwarded(boolean forwarded) {
+        this.forwarded = forwarded;
+    }
+
     public MessageType getMessageType() {
         return messageType;
     }
@@ -294,7 +335,7 @@ public class Message {
     }
 
     public List<String> getVcards() {
-        return vcards;
+        return vcards == null ? Collections.emptyList() : vcards;
     }
 
     public void setVcards(List<String> vcards) {
@@ -341,12 +382,12 @@ public class Message {
         this.thumbpath = thumbpath;
     }
 
-    public int getMediaDuration() {
-        return mediaDuration;
+    public int getDuration() {
+        return duration;
     }
 
-    public void setMediaDuration(int mediaDuration) {
-        this.mediaDuration = mediaDuration;
+    public void setDuration(int duration) {
+        this.duration = duration;
     }
 
     public MessageStatus getMessageStatus() {
@@ -359,20 +400,58 @@ public class Message {
 
     public boolean isSystemMessage() {
         switch (messageType) {
-            case MESSAGES_NOW_ENCRYPTED:
-            case ENCRIPTION_KEY_CHANGED:
+            case BLOCKED_CONTACT:
+            case BUSINESS_CHANGED_NAME:
+            case BUSINESS_CHAT:
+            case BUSINESS_META_SECURE_SERVICE:
+            case BUSINESS_OFFICIAL:
+            case BUSINESS_TO_STANDARD:
+            case CHANGED_DEVICE:
+            case CHANGED_NUMBER_CHATTING_WITH_NEW:
+            case CHANGED_NUMBER_CHATTING_WITH_OLD:
+            case CHANGED_NUMBER_TO:
+            case CHANNEL_ADDED_PRIVACY:
+            case CHANNEL_CREATED:
+            case COMMUNITY_MANAGEMENT_ACTION:
+            case DELETED_BY_ADMIN:
+            case DELETED_BY_SENDER:
+            case DELETED_MESSAGE:
+            case ENCRYPTION_KEY_CHANGED:
+            case EPHEMERAL_CHANGED:
+            case EPHEMERAL_DEFAULT:
+            case EPHEMERAL_DURATION_CHANGED:
+            case EPHEMERAL_SAVE:
+            case GROUP_ADDED_TO_COMMUNITY:
+            case GROUP_CHANGED_ALL_MEMBERS_CAN_EDIT:
+            case GROUP_CHANGED_ALL_MEMBERS_CAN_SEND:
+            case GROUP_CHANGED_ONLY_ADMINS_CAN_ADD:
+            case GROUP_CHANGED_ONLY_ADMINS_CAN_EDIT:
+            case GROUP_CHANGED_ONLY_ADMINS_CAN_SEND:
             case GROUP_CREATED:
-            case USER_JOINED_GROUP:
-            case USER_JOINED_GROUP_FROM_LINK:
-            case USERS_JOINED_GROUP:
-            case USER_LEFT_GROUP:
-            case USER_REMOVED_FROM_GROUP:
+            case GROUP_DESCRIPTION_CHANGED:
+            case GROUP_DESCRIPTION_DELETED:
             case GROUP_ICON_CHANGED:
             case GROUP_ICON_DELETED:
-            case GROUP_DESCRIPTION_CHANGED:
+            case GROUP_INVITE:
+            case GROUP_NAME_CHANGED:
+            case GROUP_ONLY_ADMINS_CAN_SEND:
+            case MESSAGES_ENCRYPTED:
+            case MESSAGES_NOW_ENCRYPTED:
+            case ORDER_MESSAGE:
+            case PINNED_MESSAGE:
+            case SENDER_ADDED_TO_CONTACTS:
+            case SENDER_IN_CONTACTS:
+            case STANDARD_CHAT:
             case SUBJECT_CHANGED:
+            case UNBLOCKED_CONTACT:
+            case USER_ADDED_TO_GROUP:
+            case USER_JOINED_GROUP_FROM_INVITATION:
+            case USER_JOINED_GROUP_FROM_LINK:
+            case USER_JOINED_WHATSAPP:
+            case USER_LEFT_GROUP:
+            case USER_REMOVED_FROM_GROUP:
             case YOU_ADMIN:
-            case UNKNOWN_MESSAGE:
+            case YOU_NOT_ADMIN:
                 return true;
             default:
         }
@@ -394,12 +473,12 @@ public class Message {
         this.recoveredFrom = recoveredFrom;
     }
 
-    public Set<String> getChildPornSets() {
-        return childPornSets;
+    public List<String> getChildPornSets() {
+        return childPornSets == null ? Collections.emptyList() : childPornSets;
     }
 
-    public void addChildPornSets(Collection<String> sets) {
-        this.childPornSets.addAll(sets);
+    public void lookupAndAddChildPornSets(String hash) {
+        childPornSets = ChildPornHashLookup.lookupHashAndMerge(hash, childPornSets);
     }
     
     public IItemReader getMediaItem() {
@@ -419,11 +498,36 @@ public class Message {
     }
 
     public boolean addMessageAddOn(MessageAddOn m) {
+        if (addOns == null) {
+            addOns = new ArrayList<MessageAddOn>(1);
+        }
         return addOns.add(m);
     }
 
     public List<MessageAddOn> getAddOns() {
-        return addOns;
+        return addOns == null ? Collections.emptyList() : addOns;
+    }
+
+    public boolean addPollOption(PollOption opt) {
+        if (pollOptions == null) {
+            pollOptions = new ArrayList<PollOption>(1);
+        }
+        return pollOptions.add(opt);
+    }
+
+    public List<PollOption> getPollOptions() {
+        return pollOptions == null ? Collections.emptyList() : pollOptions;
+    }
+    
+    public boolean addUserAction(String user) {
+        if (usersAction == null) {
+            usersAction = new ArrayList<String>(1);
+        }
+        return usersAction.add(user);
+    }
+
+    public List<String> getUsersAction() {
+        return usersAction == null ? Collections.emptyList() : usersAction;
     }
 
     public String getCallId() {
@@ -434,11 +538,124 @@ public class Message {
         this.callId = callId;
     }
 
+    public long getIdQuote() {
+        return idQuote;
+    }
+
+    public void setIdQuote(long idQuote) {
+        this.idQuote = idQuote;
+    }
+
+    public boolean isQuoted() {
+        return this.quoted;
+    }
+
+    public void setQuoted(boolean quoted) {
+        this.quoted = quoted;
+    }
+
+    public Message getMessageQuote(){
+        return this.messageQuote;
+    }
+
+    public void setMessageQuote(Message messageQuote){
+        this.messageQuote = messageQuote;
+    }
+
+    public String getUuid() {
+        return this.uuid;
+    }
+
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
+    }
+
+    public byte[] getMetaData() {
+        return metaData;
+    }
+
+    public void setMetaData(byte[] metaData) {
+        this.metaData = metaData;
+    }
+
+    public String getGroupInviteName() {
+        return groupInviteName;
+    }
+
+    public void setGroupInviteName(String groupInviteName) {
+        this.groupInviteName = groupInviteName;
+    }
+
+    public MessageTemplate getMessageTemplate() {
+        return messageTemplate;
+    }
+
+    public void setMessageTemplate(MessageTemplate messageTemplate) {
+        this.messageTemplate = messageTemplate;
+    }
+
+    public long getSortId() {
+        return sortId;
+    }
+
+    public void setSortId(long sortId) {
+        this.sortId = sortId;
+    }
+
+    public String getUiElements() {
+        return uiElements;
+    }
+
+    public void setUiElements(String uiElements) {
+        this.uiElements = uiElements;
+    }
+
+    public MessageProduct getProduct() {
+        return product;
+    }
+
+    public void setProduct(MessageProduct product) {
+        this.product = product;
+    }
+
+    public Date getEditTimeStamp() {
+        return editTimeStamp;
+    }
+
+    public void setEditTimeStamp(Date editTimeStamp) {
+        this.editTimeStamp = editTimeStamp;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
     public static enum MessageType {
-        TEXT_MESSAGE, IMAGE_MESSAGE, AUDIO_MESSAGE, VIDEO_MESSAGE, UNKNOWN_MEDIA_MESSAGE, CONTACT_MESSAGE, LOCATION_MESSAGE, SHARE_LOCATION_MESSAGE, VOICE_CALL, VIDEO_CALL, APP_MESSAGE, GIF_MESSAGE, MESSAGES_NOW_ENCRYPTED, ENCRIPTION_KEY_CHANGED, MISSED_VOICE_CALL, MISSED_VIDEO_CALL, DELETED_MESSAGE, DELETED_FROM_SENDER, GROUP_CREATED, USER_JOINED_GROUP, USER_JOINED_GROUP_FROM_LINK, USERS_JOINED_GROUP, USER_LEFT_GROUP, USER_REMOVED_FROM_GROUP, URL_MESSAGE, GROUP_ICON_CHANGED, GROUP_ICON_DELETED, GROUP_DESCRIPTION_CHANGED, SUBJECT_CHANGED, YOU_ADMIN, WAITING_MESSAGE, STICKER_MESSAGE, REFUSED_VIDEO_CALL, REFUSED_VOICE_CALL, UNKNOWN_VOICE_CALL, UNKNOWN_VIDEO_CALL, UNKNOWN_MESSAGE
+        TEXT_MESSAGE, IMAGE_MESSAGE, AUDIO_MESSAGE, VIDEO_MESSAGE, UNKNOWN_MEDIA_MESSAGE, CONTACT_MESSAGE, LOCATION_MESSAGE, SHARE_LOCATION_MESSAGE, VOICE_CALL, VIDEO_CALL, DOC_MESSAGE, GIF_MESSAGE, BLOCKED_CONTACT, UNBLOCKED_CONTACT, BUSINESS_CHAT, BUSINESS_TO_STANDARD, MESSAGES_ENCRYPTED, MESSAGES_NOW_ENCRYPTED, ENCRYPTION_KEY_CHANGED, MISSED_VOICE_CALL, MISSED_VIDEO_CALL, DELETED_MESSAGE, DELETED_BY_ADMIN, DELETED_BY_SENDER, GROUP_CREATED, USER_ADDED_TO_COMMUNITY, USER_ADDED_TO_GROUP, USER_JOINED_GROUP_FROM_COMMUNITY, USER_JOINED_GROUP_FROM_LINK, USER_JOINED_GROUP_FROM_INVITATION, USER_LEFT_GROUP, USER_REMOVED_FROM_GROUP, USER_COMMUNITY_ADMIN, URL_MESSAGE, GROUP_ICON_CHANGED, GROUP_ICON_DELETED, GROUP_DESCRIPTION_CHANGED, GROUP_DESCRIPTION_DELETED, SUBJECT_CHANGED, YOU_ADMIN, YOU_NOT_ADMIN, USER_ADMIN, WAITING_MESSAGE, STICKER_MESSAGE, REFUSED_VIDEO_CALL, REFUSED_VOICE_CALL, UNAVAILABLE_VIDEO_CALL, UNAVAILABLE_VOICE_CALL, UNKNOWN_VOICE_CALL, UNKNOWN_VIDEO_CALL, VIEW_ONCE_AUDIO_MESSAGE, VIEW_ONCE_IMAGE_MESSAGE, VIEW_ONCE_VIDEO_MESSAGE, CALL_MESSAGE, BUSINESS_META_SECURE_SERVICE, GROUP_INVITE, TEMPLATE_MESSAGE, TEMPLATE_QUOTE, POLL_MESSAGE, EPHEMERAL_DURATION_CHANGED, EPHEMERAL_SETTINGS_NOT_APPLIED, EPHEMERAL_CHANGED, EPHEMERAL_DEFAULT, EPHEMERAL_SAVE, GROUP_CHANGED_ONLY_ADMINS_CAN_ADD, GROUP_CHANGED_ONLY_ADMINS_CAN_SEND, GROUP_CHANGED_ALL_MEMBERS_CAN_SEND, GROUP_CHANGED_ONLY_ADMINS_CAN_EDIT, GROUP_CHANGED_ALL_MEMBERS_CAN_EDIT, GROUP_ONLY_ADMINS_CAN_SEND, CHANGED_DEVICE, CHANGED_NUMBER_TO, CHANGED_NUMBER_CHATTING_WITH_NEW, CHANGED_NUMBER_CHATTING_WITH_OLD, STANDARD_CHAT, SENDER_ADDED_TO_CONTACTS, SENDER_IN_CONTACTS, BUSINESS_OFFICIAL, GROUP_ADDED_TO_COMMUNITY, GROUP_REMOVED_FROM_COMMUNITY, COMMUNITY_MANAGEMENT_ACTION, COMMUNITY_WELCOME, UI_ELEMENTS, UI_ELEMENTS_QUOTE, CHAT_ADDED_PRIVACY, CHANNEL_ADDED_PRIVACY, CHANNEL_CREATED, ORDER_MESSAGE, PRODUCT_MESSAGE, BUSINESS_CHANGED_NAME, USER_JOINED_WHATSAPP, PINNED_MESSAGE, GROUP_NAME_CHANGED, AI_THIRD_PARTY, NEW_PARTICIPANTS_NEED_ADMIN_APPROVAL, RESET_GROUP_LINK, COMMUNITY_RENAMED, ANY_COMMUNITY_MEMBER_CAN_JOIN_GROUP, UNKNOWN_MESSAGE
     }
 
     public static enum MessageStatus {
         MESSAGE_UNSENT, MESSAGE_SENT, MESSAGE_DELIVERED, MESSAGE_VIEWED
+    }
+
+    @Override
+    public int compareTo(Message o) {
+        if (getSortId() != 0 && o.getSortId() != 0) {
+            int comp = Long.compare(getSortId(), o.getSortId());
+            if (comp != 0) {
+                return comp;
+            }
+        }
+        if (getTimeStamp() != null && o.getTimeStamp() != null) {
+            int comp = getTimeStamp().compareTo(o.getTimeStamp());
+            if (comp != 0) {
+                return comp;
+            }
+        }
+        return Long.compare(getId(), o.getId());
     }
 }

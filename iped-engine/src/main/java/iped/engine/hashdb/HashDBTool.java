@@ -911,7 +911,11 @@ public class HashDBTool {
             byte[][] prevHashes = new byte[hashTypes.length][];
             byte[][] hashes = new byte[hashTypes.length][];
             Map<Integer, Set<String>> properties = new HashMap<Integer, Set<String>>();
-            stmt.execute(nsrlDBSelectHashes);
+
+            // Sort by MD5, so records related to the same hashes are treated sequentially
+            // to speed up importing, specially for "full" versions of RDS hash sets.
+            // See issue #2160.
+            stmt.execute(nsrlDBSelectHashes + " order by md5");
             stmt.setFetchSize(65536);
             rs = stmt.getResultSet();
             int cnt = 0;

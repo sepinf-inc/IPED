@@ -48,6 +48,7 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.store.Directory;
+import org.apache.lucene.util.Bits;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.slf4j.Logger;
@@ -132,6 +133,8 @@ public class IPEDSource implements IIPEDSource {
 
     boolean isReport = false;
 
+    boolean askImagePathIfNotFound = true;
+
     public static boolean checkIfIsCaseFolder(File dir) {
         File module = new File(dir, MODULE_DIR);
         if (new File(module, INDEX_DIR).exists() && new File(module, LIB_DIR).exists() && new File(module, DATA_DIR).exists()) {
@@ -155,7 +158,11 @@ public class IPEDSource implements IIPEDSource {
     }
 
     public IPEDSource(File casePath, IndexWriter iw) {
+        this(casePath, iw, true);
+    }
 
+    public IPEDSource(File casePath, IndexWriter iw, boolean askImagePathIfNotFound) {
+        this.askImagePathIfNotFound = askImagePathIfNotFound;
         this.casePath = casePath;
         moduleDir = new File(casePath, MODULE_DIR);
         index = new File(moduleDir, INDEX_DIR);
@@ -234,11 +241,14 @@ public class IPEDSource implements IIPEDSource {
                 Item.getAllExtraAttributes().addAll(extraAttributes);
             }
 
-            bookmarks = new Bookmarks(this, moduleDir);
+            bookmarks = new BitmapBookmarks(this);
             bookmarks.loadState();
-            multiBookmarks = new MultiBookmarks(Collections.singletonList(this));
+            multiBookmarks = new MultiBitmapBookmarks(Collections.singletonList(this));
 
         } catch (Exception e) {
+            if (e instanceof RuntimeException) {
+                throw (RuntimeException) e;
+            }
             throw new RuntimeException(e.getMessage(), e);
         }
     }
@@ -281,8 +291,13 @@ public class IPEDSource implements IIPEDSource {
             return;
         }
 
+        Bits liveDocs = atomicReader.getLiveDocs();
+
         int i;
         while ((i = ndv.nextDoc()) != DocIdSetIterator.NO_MORE_DOCS) {
+            if (liveDocs != null && !liveDocs.get(i)) {
+                continue;
+            }
             ids[i] = (int) ndv.longValue();
             parentDocs.set(i);
             if (ids[i] > lastId)
@@ -601,8 +616,13 @@ public class IPEDSource implements IIPEDSource {
                 if (newPaths.size() > 0) {
                     testCanWriteToCase(sleuthFile);
                     sleuthCase.setImagePaths(id, newPaths);
-                } else if (iw == null)
-                    askNewImagePath(id, paths, sleuthFile);
+                } else if (iw == null) {
+                    if (askImagePathIfNotFound) {
+                        askNewImagePath(id, paths, sleuthFile);
+                    } else {
+                        throw new RuntimeException("Image not found: " + paths.get(0));
+                    }
+                }
         }
     }
 

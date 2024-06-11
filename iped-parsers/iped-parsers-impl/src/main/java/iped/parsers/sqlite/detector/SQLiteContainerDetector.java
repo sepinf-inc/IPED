@@ -28,6 +28,7 @@ import iped.parsers.eventtranscript.EventTranscriptParser;
 import iped.parsers.gdrive.GDriveMainParser;
 import iped.parsers.skype.SkypeParser;
 import iped.parsers.telegram.TelegramParser;
+import iped.parsers.threema.ThreemaParser;
 import iped.parsers.whatsapp.WhatsAppParser;
 import iped.parsers.winx.WinXTimelineParser;
 import iped.utils.IOUtil;
@@ -198,9 +199,11 @@ public class SQLiteContainerDetector implements Detector {
                         || tableNames.contains("media_v4")))
             return TelegramParser.TELEGRAM_DB;
         
-        if (tableNames.contains("t1") && tableNames.contains("t2") && tableNames.contains("t7")
-                && tableNames.contains("ft41") && tableNames.contains("t18"))
+        // detection for Telegram iOS DB
+        if (tableNames.contains("t0") && tableNames.contains("t2") && tableNames.contains("t6")
+                && tableNames.contains("t7") && tableNames.contains("t9")) {
             return TelegramParser.TELEGRAM_DB_IOS;
+        }
 
         // iOS backups databases below
 
@@ -261,6 +264,10 @@ public class SQLiteContainerDetector implements Detector {
             if (cols.contains("Latitude") && cols.contains("Longitude")) {
                 return MediaType.application("x-ios-locations-db");
             }
+        }
+        
+        if (tableNames.contains("ZCONVERSATION") && tableNames.contains("ZMESSAGE") && tableNames.contains("ZCONTACT") && tableNames.contains("ZFILEDATA") && tableNames.contains("ZIMAGEDATA")) {
+            return ThreemaParser.CHAT_STORAGE;
         }
 
         return SQLITE_MIME;

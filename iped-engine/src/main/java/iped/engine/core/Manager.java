@@ -21,10 +21,12 @@ package iped.engine.core;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
+import java.security.Security;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -47,6 +49,7 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.Directory;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import iped.data.ICaseData;
 import iped.data.IItem;
@@ -68,7 +71,6 @@ import iped.engine.graph.GraphFileWriter;
 import iped.engine.graph.GraphService;
 import iped.engine.graph.GraphServiceFactoryImpl;
 import iped.engine.graph.GraphTask;
-import iped.engine.io.ExeFileFilter;
 import iped.engine.io.ParsingReader;
 import iped.engine.localization.Messages;
 import iped.engine.lucene.ConfiguredFSDirectory;
@@ -125,7 +127,6 @@ public class Manager {
 
     private static long commitIntervalMillis = 30 * 60 * 1000;
     private static Logger LOGGER = LogManager.getLogger(Manager.class);
-    private static String FINISHED_FLAG = "data/processing_finished";
     private static Manager instance;
 
     private CaseData caseData;
@@ -153,7 +154,25 @@ public class Manager {
     AtomicLong partialCommitsTime = new AtomicLong();
 
     private final AtomicBoolean initSleuthkitServers = new AtomicBoolean(false);
-    
+
+    private static final String appWinExeFileName = "IPED-SearchApp.exe";
+
+    static {
+
+        // installs the AmazonCorrettoCryptoProvider if it is available
+        try {
+            Class<?> clazz = Class.forName("com.amazon.corretto.crypto.provider.AmazonCorrettoCryptoProvider");
+            Method method = clazz.getMethod("install");
+            method.invoke(null);
+        } catch (Exception e) {
+            LOGGER.debug("AmazonCorrettoCryptoProvider not installed", e);
+        }
+
+        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
+            Security.addProvider(new BouncyCastleProvider());
+        }
+    }
+
     public static Manager getInstance() {
         return instance;
     }
@@ -226,8 +245,6 @@ public class Manager {
 
         stats.printSystemInfo();
 
-        Files.deleteIfExists(getFinishedFileFlag(output).toPath());
-
         output = output.getCanonicalFile();
 
         args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
@@ -253,17 +270,22 @@ public class Manager {
             LOGGER.info("Evidence " + (i++) + ": '{}'", source.getAbsolutePath()); //$NON-NLS-1$ //$NON-NLS-2$
         }
 
+        EvidenceStatus status = new EvidenceStatus(output.getParentFile());
+
         try {
             openIndex();
 
             if (args.getEvidenceToRemove() != null) {
-                removeEvidence(args.getEvidenceToRemove());
+                removeEvidence(args.getEvidenceToRemove(), status);
                 return;
             }
 
             initWorkers();
 
             initSleuthkitServers();
+
+            status.addProcessingEvidences(args);
+            status.save();
 
             // apenas conta o número de arquivos a indexar
             counter = new ItemProducer(this, caseData, true, sources, output);
@@ -302,16 +324,9 @@ public class Manager {
 
         stats.logStatistics(this);
 
-        Files.createFile(getFinishedFileFlag(output).toPath());
+        status.addSuccessfulEvidences(args);
+        status.save();
 
-    }
-
-    private static File getFinishedFileFlag(File output) {
-        return new File(output, FINISHED_FLAG);
-    }
-
-    public static boolean isProcessingFinishedOK(File moduleDir) {
-        return getFinishedFileFlag(moduleDir).exists();
     }
 
     private void closeItemProducers() {
@@ -430,7 +445,7 @@ public class Manager {
         return conf;
     }
 
-    private void removeEvidence(String evidenceName) throws Exception {
+    private void removeEvidence(String evidenceName, EvidenceStatus status) throws Exception {
         Level CONSOLE = Level.getLevel("MSG"); //$NON-NLS-1$
         LOGGER.log(CONSOLE, "Removing evidence '{}' from case...", evidenceName);
 
@@ -442,7 +457,10 @@ public class Manager {
             IPEDSearcher searcher = new IPEDSearcher(ipedCase, query);
             SearchResult result = searcher.search();
             if (result.getLength() == 0) {
-                Files.createFile(getFinishedFileFlag(output).toPath());
+                if (status.removeEvidence(evidenceName)) {
+                    status.save();
+                    return;
+                }
                 throw new IPEDException("Evidence name '" + evidenceName + "' not found!");
             }
             Item item = (Item) ipedCase.getItemByID(result.getId(0));
@@ -481,11 +499,14 @@ public class Manager {
         LOGGER.log(CONSOLE, "Deleting connections from graph...");
         GraphService graphService = null;
         try {
-            graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
-            graphService.start(new File(output, GraphTask.DB_HOME_DIR));
-            int deletions = graphService.deleteRelationshipsFromDatasource(evidenceUUID);
-            LOGGER.log(CONSOLE, "Deleted {} graph connections.", deletions);
-
+            if (new File(output, GraphTask.DB_DATA_PATH).exists()) {
+                graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
+                graphService.start(new File(output, GraphTask.DB_HOME_DIR));
+                int deletions = graphService.deleteRelationshipsFromDatasource(evidenceUUID);
+                LOGGER.log(CONSOLE, "Deleted {} graph connections.", deletions);
+            } else {
+                LOGGER.log(CONSOLE, "Graph database not found.");
+            }
         } finally {
             if (graphService != null) {
                 graphService.stop();
@@ -498,7 +519,8 @@ public class Manager {
                 new File(output, GraphTask.CSVS_PATH));
         LOGGER.log(CONSOLE, "Deleted {} CSV connections.", deletions);
 
-        Files.createFile(getFinishedFileFlag(output).toPath());
+        status.removeEvidence(evidenceName);
+        status.save();
     }
 
     private void openIndex() throws IOException {
@@ -569,9 +591,7 @@ public class Manager {
                 UIPropertyListenerProvider.getInstance().firePropertyChange("decodingDir", 0, //$NON-NLS-1$
                         Messages.getString("Manager.Adding") + currentDir.trim() + "\""); //$NON-NLS-1$ //$NON-NLS-2$
             }
-            UIPropertyListenerProvider.getInstance().firePropertyChange("discovered", 0, caseData.getDiscoveredEvidences()); //$NON-NLS-1$
-            UIPropertyListenerProvider.getInstance().firePropertyChange("processed", -1, stats.getProcessed()); //$NON-NLS-1$
-            UIPropertyListenerProvider.getInstance().firePropertyChange("progresso", 0, (int) (stats.getVolume() / 1000000)); //$NON-NLS-1$
+            UIPropertyListenerProvider.getInstance().firePropertyChange("update", 0, 0);
 
             boolean changeToNextQueue = !producer.isAlive();
             for (int k = 0; k < workers.length; k++) {
@@ -896,9 +916,11 @@ public class Manager {
             if (binDir.exists())
                 IOUtil.copyDirectory(binDir, output.getParentFile()); // $NON-NLS-1$
             else {
-                for (File f : new File(Configuration.getInstance().appRoot).getParentFile()
-                        .listFiles(new ExeFileFilter()))
-                    IOUtil.copyFile(f, new File(output.getParentFile(), f.getName()));
+                // Copy only IPED Windows executable (#1698)
+                File exe = new File(new File(Configuration.getInstance().appRoot).getParentFile(), appWinExeFileName);
+                if (exe.exists()) {
+                    IOUtil.copyFile(exe, new File(output.getParentFile(), exe.getName()));
+                }
             }
         }
 

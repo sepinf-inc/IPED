@@ -20,7 +20,6 @@ import org.slf4j.LoggerFactory;
 
 import iped.configuration.Configurable;
 import iped.data.IItem;
-import iped.engine.CmdLineArgs;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.EnableTaskProperty;
@@ -138,13 +137,11 @@ public class DIETask extends AbstractTask {
                 File dieDat = new File(Configuration.getInstance().appRoot, DIE_MODEL_PATH);
                 if (!dieDat.exists() || !dieDat.canRead()) {
                     String msg = "Invalid DIE database file: " + dieDat.getAbsolutePath(); //$NON-NLS-1$
-                    CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-                    for (File source : args.getDatasources()) {
-                        if (source.getName().endsWith(".iped")) {
-                            logger.warn(msg);
-                            taskEnabled = false;
-                            return;
-                        }
+                    if (hasIpedDatasource()) {
+                        logger.warn(msg);
+                        taskEnabled = false;
+                        init.set(true);
+                        return;
                     }
                     throw new IPEDException(msg);
                 }
@@ -359,12 +356,7 @@ public class DIETask extends AbstractTask {
             }
             int size = Die.getExpectedImageSize();
             if (img == null) {
-                BufferedInputStream stream = evidence.getBufferedInputStream();
-                try {
-                    img = ImageUtil.getSubSampledImage(stream, size, size);
-                } finally {
-                    IOUtil.closeQuietly(stream);
-                }
+                img = ImageUtil.getSubSampledImage(evidence, size);
             }
             if (img == null) {
                 BufferedInputStream stream = evidence.getBufferedInputStream();

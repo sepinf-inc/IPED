@@ -37,9 +37,8 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-/* 
- * @author Wladimir Leite (GPINF/SP)
- */
+import iped.data.IItemReader;
+
 public class ImageUtil {
     private static final int[] orientations = new int[] { 1, 5, 3, 7 };
 
@@ -110,51 +109,54 @@ public class ImageUtil {
         return bufferedImage;
     }
 
-    public static BufferedImage getSubSampledImage(InputStream source, int w, int h) {
-        return doGetSubSampledImage(source, w, h, null, null);
+    public static BufferedImage getSubSampledImage(IItemReader itemReader, int size) {
+        return doGetSubSampledImage(itemReader, size, null, null);
     }
 
-    public static BufferedImage getSubSampledImage(InputStream source, int w, int h, String mimeType) {
-        return doGetSubSampledImage(source, w, h, null, mimeType);
+    public static BufferedImage getSubSampledImage(IItemReader itemReader, int size, String mimeType) {
+        return doGetSubSampledImage(itemReader, size, null, mimeType);
     }
 
-    public static BufferedImage getSubSampledImage(File source, int w, int h) {
-        return doGetSubSampledImage(source, w, h, null, null);
+    public static BufferedImage getSubSampledImage(InputStream inputStream, int size) {
+        return doGetSubSampledImage(inputStream, size, null, null);
     }
 
-    public static BufferedImage getSubSampledImage(File source, int w, int h, String mimeType) {
-        return doGetSubSampledImage(source, w, h, null, mimeType);
+    public static BufferedImage getSubSampledImage(File file, int size, String mimeType) {
+        return doGetSubSampledImage(file, size, null, mimeType);
+    }
+
+    public static BufferedImage getSubSampledImage(IItemReader source, int size, BooleanWrapper renderException,
+            String mimeType) {
+        return doGetSubSampledImage(source, size, renderException, mimeType);
     }
 
     public static class BooleanWrapper {
         public boolean value;
     }
 
-    public static final int getSamplingFactor(int w0, int h0, int w, int h) {
+    public static final int getSamplingFactor(int w0, int h0, int targetSize) {
         int sampling = 1;
-        if (w0 > w || h0 > h) {
-            if (w * h0 < w0 * h) {
-                sampling = w0 / w;
+        if (w0 > targetSize || h0 > targetSize) {
+            if (targetSize * h0 < w0 * targetSize) {
+                sampling = w0 / targetSize;
             } else {
-                sampling = h0 / h;
+                sampling = h0 / targetSize;
             }
         }
         return sampling;
     }
 
-    // Contribuição do PCF Wladimir e Nassif
-    public static BufferedImage getSubSampledImage(InputStream source, int w, int h, BooleanWrapper renderException,
-            String mimeType) {
-        return doGetSubSampledImage(source, w, h, renderException, mimeType);
-    }
-
-    private static BufferedImage doGetSubSampledImage(Object source, int w, int h, BooleanWrapper renderException,
+    private static BufferedImage doGetSubSampledImage(Object source, int targetSize, BooleanWrapper renderException,
             String mimeType) {
         ImageInputStream iis = null;
         ImageReader reader = null;
         BufferedImage image = null;
         try {
-            iis = ImageIO.createImageInputStream(source);
+            if (source instanceof IItemReader) {
+                iis = ((IItemReader) source).getImageInputStream();
+            } else {
+                iis = ImageIO.createImageInputStream(source);
+            }
             // JBIG2 needs that reader is get by mime type
             Iterator<ImageReader> iter = JBIG2.equals(mimeType) ? ImageIO.getImageReadersByMIMEType(mimeType)
                     : ImageIO.getImageReaders(iis);
@@ -184,7 +186,7 @@ public class ImageUtil {
 
             int w0 = reader.getWidth(idx);
             int h0 = reader.getHeight(idx);
-            int sampling = getSamplingFactor(w0, h0, w, h);
+            int sampling = getSamplingFactor(w0, h0, targetSize);
 
             int finalW = (int) Math.ceil((float) w0 / sampling);
             int finalH = (int) Math.ceil((float) h0 / sampling);
@@ -209,10 +211,7 @@ public class ImageUtil {
             if (reader != null) {
                 reader.dispose();
             }
-            try {
-                iis.close();
-            } catch (IOException e) {
-            }
+            IOUtil.closeQuietly(iis);
         }
 
         return image;
@@ -386,15 +385,24 @@ public class ImageUtil {
      * @return Array com {BufferedImage, String}
      */
     public static Object[] readJpegWithMetaData(File inFile) throws IOException {
-        ImageReader reader = ImageIO.getImageReadersBySuffix("jpeg").next(); //$NON-NLS-1$
-        ImageInputStream is = ImageIO.createImageInputStream(inFile);
-        reader.setInput(is);
-        BufferedImage img = reader.read(0);
-        IIOMetadata meta = reader.getImageMetadata(0);
-        IIOMetadataNode root = (IIOMetadataNode) meta.getAsTree("javax_imageio_jpeg_image_1.0"); //$NON-NLS-1$
-        is.close();
-        reader.dispose();
-        return new Object[] { img, findAttribute(root, "comment") }; //$NON-NLS-1$
+        ImageReader reader = null;
+        ImageInputStream iis = null;
+        try {
+            reader = ImageIO.getImageReadersBySuffix("jpeg").next();
+            iis = ImageIO.createImageInputStream(inFile);
+            reader.setInput(iis);
+            BufferedImage img = reader.read(0);
+            IIOMetadata meta = reader.getImageMetadata(0);
+            IIOMetadataNode root = (IIOMetadataNode) meta.getAsTree("javax_imageio_jpeg_image_1.0");
+            return new Object[] { img, findAttribute(root, "comment") };
+        } finally {
+            IOUtil.closeQuietly(iis);
+            try {
+                if (reader != null)
+                    reader.dispose();
+            } catch (Exception e) {
+            }
+        }
     }
 
     /**
@@ -402,7 +410,7 @@ public class ImageUtil {
      *
      * @return Comment metadata, or null if no metadata is present.
      */
-    public static String readJpegMetaDataComment(InputStream is) throws IOException {
+    public static String readJpegMetaDataComment(InputStream is) {
         ImageReader reader = null;
         ImageInputStream iis = null;
         String ret = null;
@@ -411,15 +419,11 @@ public class ImageUtil {
             iis = ImageIO.createImageInputStream(is);
             reader.setInput(iis);
             IIOMetadata meta = reader.getImageMetadata(0);
-            IIOMetadataNode root = (IIOMetadataNode) meta.getAsTree("javax_imageio_jpeg_image_1.0"); //$NON-NLS-1$
+            IIOMetadataNode root = (IIOMetadataNode) meta.getAsTree("javax_imageio_jpeg_image_1.0");
             ret = findAttribute(root, "comment");
         } catch (Exception e) {
         } finally {
-            try {
-                if (iis != null)
-                    iis.close();
-            } catch (Exception e) {
-            }
+            IOUtil.closeQuietly(iis);
             try {
                 if (reader != null)
                     reader.dispose();

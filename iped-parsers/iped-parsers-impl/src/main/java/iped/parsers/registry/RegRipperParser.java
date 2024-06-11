@@ -50,7 +50,6 @@ import iped.parsers.standard.RawStringParser;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.ItemInfo;
 import iped.parsers.util.MetadataUtil;
-import iped.parsers.util.Util;
 import iped.properties.ExtraProperties;
 import iped.utils.DateUtil;
 import iped.utils.IOUtil;
@@ -186,7 +185,7 @@ public class RegRipperParser extends AbstractParser {
                     command.addAll(Arrays.asList("-f", profiles + "/" + child.getName(), "-r", tempFile.getAbsolutePath()));
                     
                     reportName = filename + "_" + child.getName().replace("_", "") + "_Report";
-                    runCmdAndCreateReport(command, reportName, xhtml, extractor, tmp, metadata, context);                    
+                    runCmdAndCreateReport(command, reportName, xhtml, extractor, tmp, metadata, context);
                 }
             }
            
@@ -339,13 +338,13 @@ public class RegRipperParser extends AbstractParser {
             pb.directory(new File(TOOL_PATH));
         }
         Process p = pb.start();
-        IOUtil.ignoreInputStream(p.getErrorStream());
+        IOUtil.ignoreErrorStream(p);
         byte[] bytes = IOUtil.loadInputStream(p.getInputStream());
         return new String(bytes, StandardCharsets.ISO_8859_1).strip();
     }
 
     private File getHtml(File file, TemporaryResources tmp) throws IOException {
-        String content = Util.decodeMixedCharset(Files.readAllBytes(file.toPath()));
+        String content = new String(Files.readAllBytes(file.toPath()), "UTF-8");
         if (content == null || content.isBlank()) {
             return null;
         }
@@ -662,8 +661,8 @@ public class RegRipperParser extends AbstractParser {
                 Plugin lastPlugin = new Plugin();
                 int read = 0;
                 String remain="";
-                while (read != -1) {
-                    try {
+                try {
+                    while (read != -1) {
                         if (os != null) {
                             os.write(out, 0, read);
                             if(extractTimestamp && read>0) {
@@ -677,9 +676,9 @@ public class RegRipperParser extends AbstractParser {
                         if (msg != null)
                             msg.progress = true;
                         read = stream.read(out);
-
-                    } catch (Exception e) {
                     }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
                 if(extractTimestamp && !remain.equals("\n")) {//last line processing
                     remain+="\n\n";

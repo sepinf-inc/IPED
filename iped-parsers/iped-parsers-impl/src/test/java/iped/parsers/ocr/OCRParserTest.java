@@ -43,7 +43,7 @@ public class OCRParserTest {
     @BeforeClass
     public static void setUpTool() throws IOException {
         if (osName.startsWith("windows")) {
-            String repoPath = "tesseract/tesseract-zip/5.0.0-alpha/tesseract-zip-5.0.0-alpha.zip";
+            String repoPath = "tesseract/tesseract-zip/5.3.2-24-g3922_1/tesseract-zip-5.3.2-24-g3922_1.zip";
             RepoToolDownloader.unzipFromUrl(repoPath, testRoot + "/tmp_tools/");
             System.setProperty(OCRParser.TOOL_PATH_PROP, testRoot + "/tmp_tools/tesseract/");
         }
@@ -265,7 +265,7 @@ public class OCRParserTest {
         if (System.getProperty(ExternalImageConverter.enabledProp, "").isEmpty()) {
             System.setProperty(ExternalImageConverter.enabledProp, "true");
             if (osName.startsWith("windows")) {
-                String repoPath = "org/imagemagick/imagemagick-zip/7.1.0-q8-x64/imagemagick-zip-7.1.0-q8-x64.zip";
+                String repoPath = "org/imagemagick/imagemagick-zip/7.1.1-19-q8-x64/imagemagick-zip-7.1.1-19-q8-x64.zip";
                 RepoToolDownloader.unzipFromUrl(repoPath, testRoot + "/tmp_tools/tools");
                 System.setProperty(ExternalImageConverter.winToolPathPrefixProp, testRoot + "/tmp_tools");
             }

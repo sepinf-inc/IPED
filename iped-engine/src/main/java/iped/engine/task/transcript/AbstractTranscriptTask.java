@@ -271,7 +271,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         }
         pb.redirectErrorStream(true);
         Process p = pb.start();
-        IOUtil.ignoreInputStream(p.getInputStream());
+        IOUtil.ignoreInputStream(p);
         long timeoutSecs = MIN_TIMEOUT / 3 + TIMEOUT_PER_MB * input.length() / (1 << 20);
         boolean finished = p.waitFor(timeoutSecs, TimeUnit.SECONDS);
         if (!finished) {
@@ -377,6 +377,13 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         if (prevResult != null) {
             evidence.getMetadata().set(ExtraProperties.CONFIDENCE_ATTR, Double.toString(prevResult.score));
             evidence.getMetadata().set(ExtraProperties.TRANSCRIPT_ATTR, prevResult.text);
+            return;
+        }
+
+        try {
+            evidence.getTempFile();
+        } catch (IOException e) {
+            LOGGER.warn("Error creating temp file {} ({} bytes) {}", evidence.getPath(), evidence.getLength(), e.toString());
             return;
         }
 

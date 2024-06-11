@@ -1,9 +1,9 @@
 package iped.engine.data;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -21,6 +21,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.imageio.stream.FileImageInputStream;
+import javax.imageio.stream.ImageInputStream;
+import javax.imageio.stream.MemoryCacheImageInputStream;
+
+import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
@@ -32,6 +37,7 @@ import iped.data.IHashValue;
 import iped.data.IItem;
 import iped.datasource.IDataSource;
 import iped.engine.core.Statistics;
+import iped.engine.io.ReferencedFile;
 import iped.engine.lucene.analysis.CategoryTokenizer;
 import iped.engine.task.index.IndexItem;
 import iped.engine.tika.SyncMetadata;
@@ -40,6 +46,7 @@ import iped.engine.util.TextCache;
 import iped.engine.util.Util;
 import iped.io.ISeekableInputStreamFactory;
 import iped.io.SeekableInputStream;
+import iped.utils.ByteArrayImageInputStream;
 import iped.utils.EmptyInputStream;
 import iped.utils.HashValue;
 import iped.utils.IOUtil;
@@ -184,7 +191,9 @@ public class Item implements IItem {
 
     private File tmpFile, parentTmpFile;
 
-    private TemporaryResources tmpResources = new TemporaryResources();
+    private ReferencedFile refTmpFile;
+
+    private TemporaryResources tmpResources;
 
     private long startOffset = -1, parentOffset = -1;
 
@@ -194,9 +203,13 @@ public class Item implements IItem {
 
     private byte[] thumb;
 
+    private byte[] data;
+
     private ISeekableInputStreamFactory inputStreamFactory;
 
-    static final int BUF_LEN = 8 * 1024 * 1024;
+    private static final int BUF_LEN = 8 * 1024 * 1024;
+    
+    private static final int maxImageLength = 128 << 20;
 
     /**
      * Adiciona o item a uma categoria.
@@ -239,13 +252,18 @@ public class Item implements IItem {
     }
 
     public void dispose(boolean clearTextCache) {
-        try {
-            tmpResources.close();
-        } catch (Exception e) {
-            LOGGER.warn("Error closing resources of " + getPath(), e);
+        if (tmpResources != null) {
+            try {
+                tmpResources.close();
+            } catch (Exception e) {
+                LOGGER.warn("Error closing resources of " + getPath(), e);
+            }
+            tmpResources = null;
         }
+        data = null;
         tmpFile = null;
         tis = null;
+        parentTmpFile = null;
         try {
             if (textCache != null && clearTextCache) {
                 textCache.close();
@@ -263,12 +281,7 @@ public class Item implements IItem {
         return accessDate;
     }
 
-    /**
-     * @return um BufferedInputStream com o conteúdo do item
-     * @throws IOException
-     */
-    public BufferedInputStream getBufferedInputStream() throws IOException {
-
+    private int getBestBufferSize() {
         int len = 8192;
         if (length != null && length > len) {
             if (length < BUF_LEN) {
@@ -277,8 +290,48 @@ public class Item implements IItem {
                 len = BUF_LEN;
             }
         }
+        return len;
+    }
 
-        return new BufferedInputStream(getSeekableInputStream(), len);
+    /**
+     * @return um BufferedInputStream com o conteúdo do item
+     * @throws IOException
+     */
+    public BufferedInputStream getBufferedInputStream() throws IOException {
+        if (data != null) {
+            return new BufferedInputStream(new ByteArrayInputStream(data));
+        }
+        return new BufferedInputStream(getSeekableInputStream(), getBestBufferSize());
+    }
+
+    public ImageInputStream getImageInputStream() throws IOException {
+        if (data != null) {
+            return new ByteArrayImageInputStream(data);
+        }
+        if (tmpFile != null) {
+            return new FileImageInputStream(tmpFile);
+        }
+        File file = IOUtil.getFile(this);
+        if (file != null) {
+            return new FileImageInputStream(file);
+        }
+        if (length == null || length <= maxImageLength) {
+            BufferedInputStream bis = getBufferedInputStream();
+            return new MemoryCacheImageInputStream(bis) {
+                @Override
+                public void close() throws IOException {
+                    // This BufferedInputStream was created to be used by the returned
+                    // ImageInputStream, so it should be closed when the IIS is closed.
+                    IOUtil.closeQuietly(bis);
+                    super.close();
+                }
+            };
+        }
+
+        // If the file is too large, then create a temporary File, instead of using the
+        // InputStream to avoid excessive memory usage or even OOME (see issue #2033).
+        file = getTempFile();
+        return new FileImageInputStream(file);
     }
 
     /**
@@ -527,6 +580,10 @@ public class Item implements IItem {
     @Override
     public SeekableInputStream getSeekableInputStream() throws IOException {
 
+        if (data != null) {
+            return new SeekableFileInputStream(new SeekableInMemoryByteChannel(data));
+        }
+
         // block 1 (referenciado abaixo)
         if (tmpFile == null && tis != null && tis.hasFile()) {
             tmpFile = tis.getFile();
@@ -574,7 +631,39 @@ public class Item implements IItem {
 
     @Override
     public SeekableByteChannel getSeekableByteChannel() throws IOException {
+        if (data != null) {
+            return new SeekableInMemoryByteChannel(data);
+        }
         return new SeekableByteChannelImpl(this.getSeekableInputStream());
+    }
+
+    /**
+     *  Cache data in memory for small items to avoid:
+     *  1. multiple decompression of data from compressed evidences
+     *  2. multiple reads from evidences in network shares
+     *  3. writing small temp files in temp dir, when possible
+     *  4. decrease heavy IO calls into kernel space 
+     *  
+     * @return true if data was cached on memory, false otherwise
+     */
+    public boolean cacheDataInMemory() {
+        if (length == null || length > BUF_LEN) {
+            return false;
+        }
+        if (data != null) {
+            return true;
+        }
+        try (InputStream is = this.getSeekableInputStream()) {
+            data = new byte[length.intValue()];
+            int i, offset = 0;
+            while (offset < data.length && (i = is.read(data, offset, data.length - offset)) != -1) {
+                offset += i;
+            }
+            return true;
+        } catch (IOException e) {
+            // ignore
+        }
+        return false;
     }
 
     /**
@@ -593,23 +682,30 @@ public class Item implements IItem {
             if (tis != null && tis.hasFile()) {
                 tmpFile = tis.getFile();
             } else {
-                String ext = ".tmp"; //$NON-NLS-1$
-                if (type != null && !type.toString().isEmpty()) {
-                    ext = Util.getValidFilename("." + type.toString()); //$NON-NLS-1$
-                }
-                final Path path = Files.createTempFile("iped", ext); //$NON-NLS-1$
-                tmpResources.addResource(new Closeable() {
-                    public void close() throws IOException {
-                        Files.delete(path);
+                try (SeekableInputStream sis = getSeekableInputStream()) {
+                    if (sis instanceof SeekableFileInputStream) {
+                        File file = ((SeekableFileInputStream) sis).getFile();
+                        if (file != null && IOUtil.isTemporaryFile(file)) {
+                            tmpFile = file;
+                        }
                     }
-                });
-
-                try (InputStream in = getBufferedInputStream()) {
-                    Files.copy(in, path, StandardCopyOption.REPLACE_EXISTING);
+                    if (tmpFile == null) {
+                        String ext = ".tmp"; //$NON-NLS-1$
+                        if (type != null && !type.toString().isEmpty()) {
+                            ext = Util.getValidFilename("." + type.toString()); //$NON-NLS-1$
+                        }
+                        Path path = Files.createTempFile("iped", ext); //$NON-NLS-1$
+                        if (data != null) {
+                            Files.write(path, data);
+                        } else {
+                            Files.copy(new BufferedInputStream(sis, getBestBufferSize()), path, StandardCopyOption.REPLACE_EXISTING);
+                        }
+                        tmpFile = path.toFile();
+                    }
+                    refTmpFile = new ReferencedFile(tmpFile);
+                    addTmpResource(refTmpFile);
                 }
-                tmpFile = path.toFile();
             }
-
         }
         return tmpFile;
     }
@@ -636,18 +732,24 @@ public class Item implements IItem {
             if (tmpFile == null && tis != null && tis.hasFile()) {
                 tmpFile = tis.getFile();
             }
+            // reset tis, it may have been set (and consumed) by a previous call of this
+            // method
+            tis = null;
             if (tmpFile != null) {
                 try {
                     tis = TikaInputStream.get(tmpFile.toPath());
-                } catch (FileNotFoundException fnfe) {
+                } catch (IOException fnfe) {
                     tmpFile = null;
                 }
             }
-            if (tmpFile == null) {
+            if (tis == null && data != null) {
+                tis = TikaInputStream.get(data);
+            }
+            if (tis == null) {
                 tis = TikaInputStream.get(getBufferedInputStream());
             }
         }
-        tmpResources.addResource(tis);
+        addTmpResource(tis);
         return tis;
     }
 
@@ -1132,8 +1234,19 @@ public class Item implements IItem {
         return parentTmpFile != null && parentOffset != -1;
     }
 
-    public void setParentTmpFile(File parentTmpFile) {
+    public void setParentTmpFile(File parentTmpFile, Item parent) {
         this.parentTmpFile = parentTmpFile;
+        if (parent.refTmpFile != null) {
+            parent.refTmpFile.increment();
+            addTmpResource(parent.refTmpFile);
+        }
+    }
+
+    private void addTmpResource(Closeable c) {
+        if (tmpResources == null) {
+            tmpResources = new TemporaryResources(); 
+        }
+        tmpResources.addResource(c);
     }
 
     public void setParentOffset(long parentOffset) {

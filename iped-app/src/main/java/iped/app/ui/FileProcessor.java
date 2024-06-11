@@ -155,7 +155,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
         if (item.getMediaType() != null) {
             contentType = item.getMediaType().toString();
         }
-        
+
         boolean enabled = item.getExtraAttribute(ImageSimilarityTask.IMAGE_FEATURES) != null;
         App.get().setEnableGallerySimSearchButton(enabled);
 
@@ -180,24 +180,23 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
         App.get().getViewerController().loadFile(item, viewItem, contentType, highlights);
 
         if (listRelated) {
-            App.get().subItemModel.listSubItems(doc);
+            App.get().subItemModel.listItems(doc);
             if (Thread.currentThread().isInterrupted()) {
                 return;
             }
-            App.get().parentItemModel.listParents(doc);
+            App.get().parentItemModel.listItems(doc);
 
-            App.get().duplicatesModel.listDuplicates(doc);
+            App.get().duplicatesModel.listItems(doc);
 
-            App.get().referencedByModel.listReferencingItems(doc);
+            App.get().referencedByModel.listItems(doc);
 
-            App.get().referencesModel.listReferencingItems(doc);
+            App.get().referencesModel.listItems(doc);
         }
     }
 
     private void waitEvidenceOpening(final IItem item) throws InterruptedException {
         ISeekableInputStreamFactory factory = item.getInputStreamFactory();
-        if (!(factory instanceof SleuthkitInputStreamFactory) && !(factory instanceof ZIPInputStreamFactory)
-                && !(factory instanceof AD1InputStreamFactory)) {
+        if (!(factory instanceof SleuthkitInputStreamFactory) && !(factory instanceof ZIPInputStreamFactory) && !(factory instanceof AD1InputStreamFactory)) {
             return;
         }
         if (!dataSourceOpened.contains(item.getDataSource().getUUID())) {

@@ -1,11 +1,14 @@
 package iped.engine.search;
 
-import java.util.BitSet;
 import java.util.Iterator;
+import java.util.List;
+
+import org.roaringbitmap.RoaringBitmap;
 
 import iped.data.IIPEDSource;
 import iped.data.IItemId;
 import iped.engine.data.IPEDMultiSource;
+import iped.engine.data.IPEDSource;
 import iped.engine.data.ItemId;
 import iped.search.IMultiSearchResult;
 
@@ -15,7 +18,8 @@ public class MultiSearchResult implements IMultiSearchResult {
     private float[] scores;
     IPEDSearcher ipedSearcher;
     IIPEDSource ipedSource;
-    BitSet docids;
+    RoaringBitmap docids;
+    RoaringBitmap[] casesBitSet = null;
 
     public MultiSearchResult() {
         this.ids = new ItemId[0];
@@ -168,7 +172,11 @@ public class MultiSearchResult implements IMultiSearchResult {
     }
 
     public boolean hasDocId(int docId) {
-        return docids.get(docId);
+        return docids.contains(docId);
+    }
+
+    public RoaringBitmap getDocIdBitSet() {
+        return docids;
     }
 
     public IPEDSearcher getIpedSearcher() {
@@ -187,10 +195,44 @@ public class MultiSearchResult implements IMultiSearchResult {
     public void setIPEDSource(IIPEDSource ipedSource) {
         if (this.ipedSource == null || this.docids == null) {
             this.ipedSource = ipedSource;
-            this.docids = new BitSet(ids.length);
+            this.docids = new RoaringBitmap();
             for (int i = 0; i < ids.length; i++) {
-                docids.set(ipedSource.getLuceneId(ids[i]));
+                int lucId = ipedSource.getLuceneId(ids[i]);
+                docids.add(lucId);
             }
         }
+    }
+
+    public RoaringBitmap[] getCasesBitSets(IPEDMultiSource multiSource) {
+        if (casesBitSet == null) {
+            Integer lastSourceId = -1;
+            RoaringBitmap bitset = null;
+            int maxSrcId = 0;
+
+            List<IPEDSource> cases = multiSource.getAtomicSources();
+            for (Iterator iterator = cases.iterator(); iterator.hasNext();) {
+                IPEDSource ipedSource = (IPEDSource) iterator.next();
+                if (ipedSource.getSourceId() > maxSrcId) {
+                    maxSrcId = ipedSource.getSourceId();
+                }
+            }
+
+            casesBitSet = new RoaringBitmap[maxSrcId + 1];
+
+            for (Iterator iterator = cases.iterator(); iterator.hasNext();) {
+                IPEDSource ipedSource = (IPEDSource) iterator.next();
+                casesBitSet[ipedSource.getSourceId()] = new RoaringBitmap();
+            }
+
+            for (int i = 0; i < ids.length; i++) {
+                int sourceId = ids[i].getSourceId();
+                if (sourceId != lastSourceId) {
+                    bitset = casesBitSet[ids[i].getSourceId()];
+                    lastSourceId = sourceId;
+                }
+                bitset.add(ids[i].getId());
+            }
+        }
+        return casesBitSet;
     }
 }

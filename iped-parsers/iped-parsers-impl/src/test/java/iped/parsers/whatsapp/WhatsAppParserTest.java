@@ -68,7 +68,7 @@ public class WhatsAppParserTest extends AbstractPkgTest {
             assertEquals("Would you still say you love me", whatsapptracker.messagebody.get(2));
             assertEquals("The game is over", whatsapptracker.messagebody.get(3));
             assertEquals("Teste", whatsapptracker.messagebody.get(4));
-            assertEquals("! USER_JOINED_GROUP", whatsapptracker.messagebody.get(42));
+            assertEquals("! USER_ADDED_TO_GROUP", whatsapptracker.messagebody.get(42));
             assertEquals("! MESSAGES_NOW_ENCRYPTED", whatsapptracker.messagebody.get(43));
 
             assertEquals("Nickerida (556183125151@s.whatsapp.net)", whatsapptracker.messageto.get(0));
@@ -194,7 +194,7 @@ public class WhatsAppParserTest extends AbstractPkgTest {
 
             assertEquals(1, whatsapptracker.title.size());
             assertEquals(1, whatsapptracker.username.size());
-            assertEquals(0, whatsapptracker.userphone.size());
+            assertEquals(1, whatsapptracker.userphone.size());
             assertEquals(1, whatsapptracker.useraccount.size());
             assertEquals(1, whatsapptracker.usernotes.size());
             assertEquals(0, whatsapptracker.participants.size());
@@ -203,10 +203,10 @@ public class WhatsAppParserTest extends AbstractPkgTest {
             assertEquals(0, whatsapptracker.messageto.size());
             assertEquals(0, whatsapptracker.messagedate.size());
 
-            assertEquals("WhatsApp Account: ", whatsapptracker.title.get(0));
-            assertEquals("", whatsapptracker.username.get(0));
-            assertEquals("", whatsapptracker.useraccount.get(0));
-            assertEquals("", whatsapptracker.usernotes.get(0));
+            assertEquals("WhatsApp Account: Mr. Roboto", whatsapptracker.title.get(0));
+            assertEquals("Mr. Roboto", whatsapptracker.username.get(0));
+            assertEquals("554499887766@s.whatsapp.net", whatsapptracker.useraccount.get(0));
+            assertEquals("Domo arigato!", whatsapptracker.usernotes.get(0));
 
         }
     }

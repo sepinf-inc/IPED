@@ -31,6 +31,9 @@ import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.table.TableCellRenderer;
 
+import iped.app.ui.bookmarks.BookmarkIcon;
+import iped.data.IMultiBookmarks;
+import iped.engine.util.Util;
 import iped.utils.QualityIcon;
 
 public class GalleryCellRenderer implements TableCellRenderer {
@@ -45,8 +48,7 @@ public class GalleryCellRenderer implements TableCellRenderer {
     Color background;
     Color warningColor;
     private static int labelH;
-    static final String unsupportedIconText = "<html><center>" + Messages.getString("UnsupportedIcon.Unavailable")
-            + "</center></html>";
+    static final String unsupportedIconText = "<html><center>" + Messages.getString("UnsupportedIcon.Unavailable") + "</center></html>";
 
     // Limit how much images can be enlarged (usually thumbs are down sized, but
     // small images may be enlarged).
@@ -97,8 +99,7 @@ public class GalleryCellRenderer implements TableCellRenderer {
     }
 
     @Override
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
-            int row, int col) {
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
 
         GalleryValue cellValue = (GalleryValue) value;
         if (cellValue == null || cellValue.id == null) {
@@ -107,8 +108,12 @@ public class GalleryCellRenderer implements TableCellRenderer {
             return panel;
         }
 
-        check.setSelected(App.get().appCase.getMultiBookmarks().isChecked(cellValue.id));
+        IMultiBookmarks bookmarks = App.get().appCase.getMultiBookmarks();
+        check.setSelected(bookmarks.isChecked(cellValue.id));
         cLabel.setText(cellValue.name);
+        String itemBookmarksStr = Util.concatStrings(bookmarks.getBookmarkList(cellValue.id));
+        cLabel.setToolTipText(itemBookmarksStr.isEmpty() ? null : itemBookmarksStr);
+        cLabel.setIcon(BookmarkIcon.getIcon(bookmarks, itemBookmarksStr));
 
         labelH = label.getHeight();
         adjustGalleryCellContent(cellValue, label, warningColor, table);
@@ -127,8 +132,7 @@ public class GalleryCellRenderer implements TableCellRenderer {
         return panel;
     }
 
-    public static void adjustGalleryCellContent(GalleryValue cellValue, JLabel label, Color warningColor,
-            JTable table) {
+    public static void adjustGalleryCellContent(GalleryValue cellValue, JLabel label, Color warningColor, JTable table) {
         if (cellValue.icon == null && cellValue.image == null) {
             label.setForeground(null);
             label.setText("..."); //$NON-NLS-1$

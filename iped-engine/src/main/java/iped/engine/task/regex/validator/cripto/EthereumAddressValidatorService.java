@@ -7,7 +7,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.bouncycastle.jcajce.provider.digest.Keccak;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import iped.engine.task.regex.BasicAbstractRegexValidatorService;
 
@@ -23,7 +22,6 @@ public class EthereumAddressValidatorService extends BasicAbstractRegexValidator
     private static final int[] MASKS = { 128, 8 };
 
     static {
-        Security.addProvider(new BouncyCastleProvider());
         digest = new Keccak.Digest256();
     }
 
