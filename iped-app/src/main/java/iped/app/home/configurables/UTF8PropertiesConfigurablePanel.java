@@ -15,13 +15,16 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 
+import javax.swing.BorderFactory;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.text.JTextComponent;
@@ -102,10 +105,25 @@ public class UTF8PropertiesConfigurablePanel extends ConfigurablePanel implement
                             c = cb;
                         }
                     }
-                    if(c==null) {
-                        JTextField textField = new JTextField( (value != null) ? value.toString() : "" );
-                        textField.getDocument().addDocumentListener(this);
-                        c=textField;
+                    if (c == null) {
+                        if (value == null) {
+                            JTextField textField = new JTextField((value != null) ? value.toString() : "");
+                            textField.getDocument().addDocumentListener(this);
+                            c = textField;
+                        } else {
+                            if (value.toString().length() > 100) {
+                                JTextArea textArea = new JTextArea((value != null) ? value.toString() : "");
+                                textArea.getDocument().addDocumentListener(this);
+                                textArea.setLineWrap(true);
+                                Border border = BorderFactory.createLineBorder(Color.BLACK);
+                                textArea.setBorder(border);
+                                c = textArea;
+                            } else {
+                                JTextField textField = new JTextField((value != null) ? value.toString() : "");
+                                textField.getDocument().addDocumentListener(this);
+                                c = textField;
+                            }
+                        }
                     }
                 }
                 contentPanel.add(c, getGridBagConstraints(1, currentLine, 1, 1));
