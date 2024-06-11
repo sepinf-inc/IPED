@@ -1,5 +1,30 @@
 package iped.app.home.newcase.tabs.evidence;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.border.EmptyBorder;
+import javax.swing.filechooser.FileSystemView;
+
+import org.apache.commons.io.FileUtils;
+
 /*
  * @created 09/09/2022
  * @project IPED
@@ -15,19 +40,6 @@ import iped.app.home.newcase.tabs.evidence.table.TableEvidenceOptionsCellEditor;
 import iped.app.home.newcase.tabs.evidence.table.TableEvidenceOptionsCellRenderer;
 import iped.app.home.style.StyleManager;
 import iped.app.ui.Messages;
-import org.apache.commons.io.FileUtils;
-
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.filechooser.FileSystemView;
-import java.awt.*;
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 /**
  * A page to manage the evidences to be processed
@@ -143,7 +155,7 @@ public class EvidencesTab extends DefaultPanel implements EvidenceListListener {
             }
             Path path = Paths.get(pastaDeOrigem);
             try {
-                List<String> files = procurar(path, extensoesDeImagensSuportadas);
+                List<String> files = findEvidences(path, extensoesDeImagensSuportadas);
                 for( String arquivoAtual : files ){
                     File file = new File(arquivoAtual);
                     Evidence evidence = new Evidence();
@@ -215,21 +227,57 @@ public class EvidencesTab extends DefaultPanel implements EvidenceListListener {
         return panelButtons;
     }
 
-    public static List<String> procurar(Path path, String[] fileExtensions) {
+    public List<String> findEvidences(Path path, String[] fileExtensions) {
         if (!Files.isDirectory(path)) {
             throw new IllegalArgumentException(Messages.get("Home.Evidences.PathMustBeDirectory"));
         }
         File root = path.toFile();
         List<String> result = new ArrayList<>();
         try {
-            Collection<File> files = FileUtils.listFiles(root, fileExtensions, true);
+            List<Collection<File>> resultList = listFiles(root, fileExtensions);
+            Collection<File> files = resultList.get(0);
             for (File file : files) {
                 result.add( file.getAbsolutePath() );
+            }
+            Collection<File> skippedFolders = resultList.get(1);
+            if (skippedFolders.size() > 0) {
+                JOptionPane.showMessageDialog(this,
+                        Messages.get("Home.Evidences.SkippedFoldersOnRecursiveEvidenceFind"),
+                        Messages.get("Home.Evidences.SkippedFoldersOnRecursiveEvidenceFindAlertTitle"),
+                        JOptionPane.WARNING_MESSAGE);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
         return result;
+    }
+
+    private static List<Collection<File>> listFiles(File root, String[] fileExtensions) {
+        List<Collection<File>> result = new ArrayList<Collection<File>>();
+        Collection<File> filesFound = new ArrayList<File>();
+        result.add(filesFound);
+        Collection<File> skippedFolders = new ArrayList<File>();
+        result.add(skippedFolders);
+        listFiles(root, fileExtensions, result);
+        return result;
+    }
+
+    private static void listFiles(File root, String[] fileExtensions, List<Collection<File>> result) {
+        Collection<File> filesFound = result.get(0);
+        Collection<File> skippedFolders = result.get(1);
+        try {
+            Collection<File> files = FileUtils.listFiles(root, fileExtensions, false);
+            for (File file : files) {
+                filesFound.add(file);
+            }
+            for (File file : root.listFiles()) {
+                if (file.isDirectory()) {
+                    listFiles(file, fileExtensions, result);
+                }
+            }
+        } catch (Exception e) {
+            skippedFolders.add(root);
+        }
     }
 
     @Override
