@@ -11,11 +11,17 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.Iterator;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.Map.Entry;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
+import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.text.JTextComponent;
@@ -86,6 +92,14 @@ public class UTF8PropertiesConfigurablePanel extends ConfigurablePanel implement
                             cb.setSelected(bvalue);
                             cb.addItemListener(this);
                             c=cb;
+                        }
+                    } else {
+                        if (value.toString().trim().equals("true") || value.toString().trim().equals("false")) {
+                            boolean bvalue = value.toString().trim().equals("true");
+                            JCheckBox cb = new JCheckBox();
+                            cb.setSelected(bvalue);
+                            cb.addItemListener(this);
+                            c = cb;
                         }
                     }
                     if(c==null) {
