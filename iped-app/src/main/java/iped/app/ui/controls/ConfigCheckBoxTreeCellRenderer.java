@@ -74,16 +74,17 @@ public class ConfigCheckBoxTreeCellRenderer implements TreeCellRenderer {
         JComponent result = null;
 
         Icon icon = null;
+        label.setText(value.toString());
         if (value instanceof MediaType) {
             icon = IconManager.getFileIcon(value.toString().split("/")[0], "");
         }
         if (value instanceof Category) {
             icon = IconManager.getCategoryIcon(((Category) value).getName().toLowerCase());
+            label.setText(((Category) value).getName());
         }
 
         TreePath tp = tree.getPathForRow(row);
 
-        label.setText(value.toString());
         label.setIcon(icon);
 
         if (visiblePredicate == null || visiblePredicate.test(value)) {
