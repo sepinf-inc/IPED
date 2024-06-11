@@ -61,7 +61,8 @@ public class XMLCarverConfigurablePanel extends AdvancedTextConfigurablePanel {
     
     class ResizeListener extends ComponentAdapter {
         public void componentResized(ComponentEvent e) {
-            int ncols = (int) Math.ceil((carverListPanel.getSize().getWidth()-32)/cellRenderer.getMaxStringWidth());
+            int ncols = (int) Math
+                    .floor((carverListPanel.getSize().getWidth()) / cellRenderer.getMaxStringWidth());
             int nrows = (int) Math.ceil((double)carverTypeList.getModel().getSize()/(double)ncols);
             
             carverTypeList.setVisibleRowCount(nrows);
