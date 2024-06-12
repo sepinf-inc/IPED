@@ -23,10 +23,6 @@ public class Messages {
     public static final String BUNDLES_FOLDER = "localization";
     public static final String BUNDLES_FOLDER_PREFIX = "iped-app/resources/";
 
-    private static final String BUNDLE_NAME = "iped-basicprops"; //$NON-NLS-1$
-
-    private static ResourceBundle RESOURCE_BUNDLE;
-
     private Messages() {
     }
 
@@ -38,7 +34,6 @@ public class Messages {
         } catch (URISyntaxException e1) {
             e1.printStackTrace();
         }
-        file = new File(System.getProperty("user.dir")+ "/iped/localization");
         if (file != null && !file.exists()) {
             File baseFile = new File(System.getProperty("user.dir"));
             do {
@@ -53,15 +48,6 @@ public class Messages {
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public static String getString(String key) {
-        if (RESOURCE_BUNDLE == null) {
-            String localeStr = System.getProperty(LOCALE_SYS_PROP); // $NON-NLS-1$
-            Locale locale = localeStr != null ? Locale.forLanguageTag(localeStr) : Locale.getDefault();
-            RESOURCE_BUNDLE = getExternalBundle(BUNDLE_NAME, locale);
-        }
-        return RESOURCE_BUNDLE.getString(key);
     }
 
     private static class UTF8Control extends Control {
