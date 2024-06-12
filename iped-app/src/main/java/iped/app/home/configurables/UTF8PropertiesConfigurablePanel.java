@@ -89,7 +89,10 @@ public class UTF8PropertiesConfigurablePanel extends ConfigurablePanel implement
                             }catch(NumberFormatException ne) {                                
                             }
                         }
-                        if(t.getTypeName().equals("boolean")) {
+                        if (t.getTypeName().equals("boolean") || t.getTypeName().equals("java.lang.Boolean")
+                                || (t.getTypeName().equals("java.lang.String")
+                                        && (value.toString().trim().equals("true")
+                                                || value.toString().trim().equals("false")))) {
                             boolean bvalue = value.toString().trim().equals("true");
                             JCheckBox cb = new JCheckBox();
                             cb.setSelected(bvalue);
