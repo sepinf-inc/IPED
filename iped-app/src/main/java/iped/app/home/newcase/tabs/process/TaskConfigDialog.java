@@ -34,6 +34,7 @@ import iped.app.home.configurables.api.IConfigurablePanel;
 import iped.app.home.configurables.api.IConfigurablePanelFactory;
 import iped.app.home.style.StyleManager;
 import iped.app.ui.Messages;
+import iped.app.ui.controls.DisabledPanel;
 import iped.configuration.Configurable;
 import iped.configuration.EnabledInterface;
 import iped.engine.config.ConfigurationManager;
@@ -93,6 +94,10 @@ public class TaskConfigDialog extends JDialog {
             @Override protected int calculateTabHeight(int tabPlacement, int tabIndex, int fontHeight) {return 25;}
 
         });
+
+        String enabledStr = iped.engine.localization.Messages.getString("Home.Configurable.Enable", "Enable");
+        String disabledStr = iped.engine.localization.Messages.getString("Home.Configurable.Disnable", "Disable");
+
         if(configurables!=null) {
             for (Iterator iterator = configurables.iterator(); iterator.hasNext();) {
                 Configurable<?> configurable = (Configurable<?>) iterator.next();
@@ -110,21 +115,32 @@ public class TaskConfigDialog extends JDialog {
                     configurablePanels.put(configurable,configPanel);
                     String localizedName = iped.engine.localization.Messages.getString(configurable.getClass().getName(), configurable.getClass().getSimpleName());
                     String localizedTooltip = iped.engine.localization.Messages.getString(configurable.getClass().getName()+iped.engine.localization.Messages.TOOLTIP_SUFFIX, "");
-                    tabbedPane.addTab(localizedName, UIManager.getIcon("FileView.fileIcon"), configPanel.getPanel(), localizedTooltip);
                     if(configurable instanceof EnabledInterface) {
                         JPanel ckPanel = new JPanel();
                         ckPanel.setOpaque(false);
                         JCheckBox ck = new JCheckBox();
                         ckPanel.add(ck);
+                        DisabledPanel disablePanel = new DisabledPanel(configPanel.getPanel(),
+                                new Color(200, 200, 200, 150));
                         ck.addActionListener(new ActionListener() {
                             @Override
                             public void actionPerformed(ActionEvent e) {
                                 changedEnabledProperties.put((EnabledInterface)configurable, ck);
+                                disablePanel.setEnabled(ck.isSelected());
                             }
                         });
-                        ckPanel.add(new JLabel(localizedName));
+                        ckPanel.add(new JLabel(enabledStr + " " + localizedName));
                         ck.setSelected(((EnabledInterface)configurable).isEnabled());
-                        tabbedPane.setTabComponentAt(tabbedPane.getTabCount()-1, ckPanel);
+                        disablePanel.setEnabled(ck.isSelected());
+                        JPanel enabledConfigPanel = new JPanel();
+                        enabledConfigPanel.setLayout(new BorderLayout());
+                        enabledConfigPanel.add(ckPanel, BorderLayout.NORTH);
+                        enabledConfigPanel.add(disablePanel, BorderLayout.CENTER);
+                        tabbedPane.addTab(localizedName, UIManager.getIcon("FileView.fileIcon"), enabledConfigPanel,
+                                localizedTooltip);
+                    } else {
+                        tabbedPane.addTab(localizedName, UIManager.getIcon("FileView.fileIcon"), configPanel.getPanel(),
+                                localizedTooltip);
                     }
                 }
                 if(configurable instanceof EnableTaskProperty) {
