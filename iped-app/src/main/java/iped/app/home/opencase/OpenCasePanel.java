@@ -5,6 +5,27 @@ package iped.app.home.opencase;
  * @author Thiago S. Figueiredo
  */
 
+import java.awt.Color;
+import java.awt.Dimension;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.filechooser.FileSystemView;
+
 import iped.app.home.DefaultPanel;
 import iped.app.home.MainFrame;
 import iped.app.home.MainFrameCardsNames;
@@ -14,17 +35,6 @@ import iped.app.home.processmanager.ProcessListener;
 import iped.app.home.processmanager.ProcessManager;
 import iped.app.home.style.StyleManager;
 import iped.app.ui.Messages;
-
-import javax.swing.*;
-import javax.swing.filechooser.FileSystemView;
-import java.awt.*;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.PrintWriter;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
 
 /**
  * A panel to manage IPED cases to be opened
@@ -92,9 +102,11 @@ public class OpenCasePanel extends DefaultPanel implements ProcessListener {
         buttonPanel.add(addCaseButton);
         JButton removeCaseButton = new JButton(Messages.get("Home.OpenCase.RemoveCaseFromList"));
         removeCaseButton.addActionListener(e->{
-            caseList.remove(jTableCaseList.getSelectedRow());
-            casesTableModel.fireTableDataChanged();
-            jTableCaseList.doLayout();
+            if (jTableCaseList.getSelectedRow() > -1) {
+                caseList.remove(jTableCaseList.getSelectedRow());
+                casesTableModel.fireTableDataChanged();
+                jTableCaseList.doLayout();
+            }
         });
         buttonPanel.add(removeCaseButton);
         return buttonPanel;
