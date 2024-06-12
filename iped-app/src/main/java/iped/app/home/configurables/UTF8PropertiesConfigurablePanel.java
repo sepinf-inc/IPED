@@ -147,11 +147,17 @@ public class UTF8PropertiesConfigurablePanel extends ConfigurablePanel implement
             contentPanel.add(new JLabel("No content!!"), getGridBagConstraints(0, currentLine, 1, 1));
         }
 
+        JPanel backPanel = new JPanel();
+        backPanel.setBackground(contentPanel.getBackground());
+        backPanel.setLayout(new BorderLayout());
+        backPanel.add(contentPanel, BorderLayout.NORTH);
+
         JScrollPane contentScrollPanel = new JScrollPane();
-        contentScrollPanel.setViewportView(contentPanel);
+        contentScrollPanel.setAlignmentY(TOP_ALIGNMENT);
+        contentScrollPanel.setViewportView(backPanel);
         contentScrollPanel.setAutoscrolls(true);
         this.setLayout(new BorderLayout());
-        this.add(contentScrollPanel,BorderLayout.CENTER);
+        this.add(contentScrollPanel, BorderLayout.CENTER);
     }
 
     private Type getFieldType(Configurable<?> configurable, String propertyName) {
