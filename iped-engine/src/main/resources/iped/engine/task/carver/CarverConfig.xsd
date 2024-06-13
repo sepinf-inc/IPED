@@ -42,7 +42,8 @@
 						            </element>
 						            <element name="lengthOffset" type="int"></element>
 						            <element name="lengthSizeBytes" type="int"></element>
-						            <element name="lengthBigEndian" type="boolean"></element>
+                                    <element name="lengthBigEndian" type="boolean"></element>
+                                    <element name="stopOnNextHeader" type="boolean"></element>
 						        </choice>
 						        <attribute name="enabled" type="boolean"></attribute>
 						    </complexType>
