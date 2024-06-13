@@ -59,7 +59,6 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
     }
 
     private Map<ConfigurableWrapper, Boolean> loadedConfigurablesState = new LinkedHashMap<>();
-    private List<Configurable<?>> changedConfigurables = new ArrayList<Configurable<?>>();
 
     boolean changed=false;
 
@@ -301,7 +300,6 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
     }
 
     public void notifyUpdate(Configurable<?> configurable) {
-        changedConfigurables.add(configurable);
         for (Iterator<ConfigurableChangeListener> iterator = configurableChangeListeners.iterator(); iterator.hasNext();) {
             ConfigurableChangeListener ccl =  iterator.next();
             ccl.onChange(configurable);
