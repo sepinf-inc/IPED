@@ -63,9 +63,13 @@ public class TaskTableConfigurablesCellRenderer implements TableCellRenderer {
             GridBagConstraints gbc = new GridBagConstraints();
             JButton taskOptionButton = new JButton("...");
             if(configurableLoadException!=null) {
-                final Exception finalEx = configurableLoadException;
                 taskOptionButton.setBackground(Color.RED);
-                taskOptionButton.addActionListener( e -> JOptionPane.showMessageDialog(panel, "Error loading configurables: "+finalEx.getMessage()));
+                String errorMsg = configurableLoadException.getMessage();
+                if (errorMsg == null)
+                    errorMsg = configurableLoadException.getClass().getCanonicalName();
+                String finalErrorMsg = errorMsg;
+                taskOptionButton.addActionListener(
+                        e -> JOptionPane.showMessageDialog(panel, "Error loading configurables: " + finalErrorMsg));
             }else {
                 taskOptionButton.addActionListener( e -> new TaskConfigDialog(ConfigurationManager.get(), task, mainFrame).setVisible(true));
             }
