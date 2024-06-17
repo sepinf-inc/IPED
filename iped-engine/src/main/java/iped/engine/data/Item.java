@@ -21,6 +21,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.imageio.stream.FileImageInputStream;
+import javax.imageio.stream.ImageInputStream;
+import javax.imageio.stream.MemoryCacheImageInputStream;
+
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
@@ -33,6 +37,7 @@ import iped.data.IHashValue;
 import iped.data.IItem;
 import iped.datasource.IDataSource;
 import iped.engine.core.Statistics;
+import iped.engine.io.ReferencedFile;
 import iped.engine.lucene.analysis.CategoryTokenizer;
 import iped.engine.task.index.IndexItem;
 import iped.engine.tika.SyncMetadata;
@@ -41,6 +46,7 @@ import iped.engine.util.TextCache;
 import iped.engine.util.Util;
 import iped.io.ISeekableInputStreamFactory;
 import iped.io.SeekableInputStream;
+import iped.utils.ByteArrayImageInputStream;
 import iped.utils.EmptyInputStream;
 import iped.utils.HashValue;
 import iped.utils.IOUtil;
@@ -185,7 +191,9 @@ public class Item implements IItem {
 
     private File tmpFile, parentTmpFile;
 
-    private TemporaryResources tmpResources = new TemporaryResources();
+    private ReferencedFile refTmpFile;
+
+    private TemporaryResources tmpResources;
 
     private long startOffset = -1, parentOffset = -1;
 
@@ -199,7 +207,9 @@ public class Item implements IItem {
 
     private ISeekableInputStreamFactory inputStreamFactory;
 
-    static final int BUF_LEN = 8 * 1024 * 1024;
+    private static final int BUF_LEN = 8 * 1024 * 1024;
+    
+    private static final int maxImageLength = 128 << 20;
 
     private boolean reEnqueueItem = false;
 
@@ -246,14 +256,18 @@ public class Item implements IItem {
     }
 
     public void dispose(boolean clearTextCache) {
-        try {
-            tmpResources.close();
-        } catch (Exception e) {
-            LOGGER.warn("Error closing resources of " + getPath(), e);
+        if (tmpResources != null) {
+            try {
+                tmpResources.close();
+            } catch (Exception e) {
+                LOGGER.warn("Error closing resources of " + getPath(), e);
+            }
+            tmpResources = null;
         }
         data = null;
         tmpFile = null;
         tis = null;
+        parentTmpFile = null;
         try {
             if (textCache != null && clearTextCache) {
                 textCache.close();
@@ -292,6 +306,36 @@ public class Item implements IItem {
             return new BufferedInputStream(new ByteArrayInputStream(data));
         }
         return new BufferedInputStream(getSeekableInputStream(), getBestBufferSize());
+    }
+
+    public ImageInputStream getImageInputStream() throws IOException {
+        if (data != null) {
+            return new ByteArrayImageInputStream(data);
+        }
+        if (tmpFile != null) {
+            return new FileImageInputStream(tmpFile);
+        }
+        File file = IOUtil.getFile(this);
+        if (file != null) {
+            return new FileImageInputStream(file);
+        }
+        if (length == null || length <= maxImageLength) {
+            BufferedInputStream bis = getBufferedInputStream();
+            return new MemoryCacheImageInputStream(bis) {
+                @Override
+                public void close() throws IOException {
+                    // This BufferedInputStream was created to be used by the returned
+                    // ImageInputStream, so it should be closed when the IIS is closed.
+                    IOUtil.closeQuietly(bis);
+                    super.close();
+                }
+            };
+        }
+
+        // If the file is too large, then create a temporary File, instead of using the
+        // InputStream to avoid excessive memory usage or even OOME (see issue #2033).
+        file = getTempFile();
+        return new FileImageInputStream(file);
     }
 
     /**
@@ -662,12 +706,8 @@ public class Item implements IItem {
                         }
                         tmpFile = path.toFile();
                     }
-                    final File finalFile = tmpFile;
-                    tmpResources.addResource(new Closeable() {
-                        public void close() {
-                            finalFile.delete();
-                        }
-                    });
+                    refTmpFile = new ReferencedFile(tmpFile);
+                    addTmpResource(refTmpFile);
                 }
             }
         }
@@ -713,7 +753,7 @@ public class Item implements IItem {
                 tis = TikaInputStream.get(getBufferedInputStream());
             }
         }
-        tmpResources.addResource(tis);
+        addTmpResource(tis);
         return tis;
     }
 
@@ -1198,8 +1238,19 @@ public class Item implements IItem {
         return parentTmpFile != null && parentOffset != -1;
     }
 
-    public void setParentTmpFile(File parentTmpFile) {
+    public void setParentTmpFile(File parentTmpFile, Item parent) {
         this.parentTmpFile = parentTmpFile;
+        if (parent.refTmpFile != null) {
+            parent.refTmpFile.increment();
+            addTmpResource(parent.refTmpFile);
+        }
+    }
+
+    private void addTmpResource(Closeable c) {
+        if (tmpResources == null) {
+            tmpResources = new TemporaryResources(); 
+        }
+        tmpResources.addResource(c);
     }
 
     public void setParentOffset(long parentOffset) {

@@ -294,6 +294,7 @@
         </parser>
         <parser class="iped.parsers.telegram.TelegramParser">
             <params>
+                <param name="extractMessages" type="bool">false</param>
                 <param name="enabledForUfdr" type="bool">true</param>
                 <param name="minChatSplitSize" type="int">6000000</param>
             </params>
@@ -306,6 +307,8 @@
                 <param name="extractMessages" type="bool">false</param>
                 <param name="mergeBackups" type="bool">false</param>
                 <param name="linkMediasByNameAndApproxSizeFallback" type="bool">true</param>
+                <!--Set as 0 to disable long path matching fallback-->
+                <param name="linkMediasByLongPathFallback" type="int">40</param>
                 <param name="downloadConnectionTimeout" type="int">500</param>
                 <param name="downloadReadTimeout" type="int">1000</param>
                 <param name="minChatSplitSize" type="int">6000000</param>
@@ -328,11 +331,14 @@
         <parser class="iped.parsers.emule.PartMetParser"></parser>
         <parser class="iped.parsers.emule.PreferencesDatParser"></parser>
         <parser class="iped.parsers.ares.AresParser"></parser>
+        <parser class="iped.parsers.shareaza.ShareazaDownloadParser"></parser>
         <parser class="iped.parsers.shareaza.ShareazaSearchesDatParser"></parser>
         <parser class="iped.parsers.shareaza.ShareazaLibraryDatParser"></parser>
         <parser class="iped.parsers.bittorrent.BitTorrentResumeDatParser"></parser>
         <parser class="iped.parsers.bittorrent.TorrentFileParser"></parser>
         <parser class="iped.parsers.lnk.LNKShortcutParser"></parser>
+        <parser class="iped.parsers.misc.OFXParser"></parser>
+        <parser class="iped.parsers.misc.OFCParser"></parser>
         <!--parser class="iped.parsers.misc.GenericOLEParser"></parser>
         <parser class="iped.parsers.misc.PDFTextParser"></parser>
         <parser class="iped.parsers.video.FLVParserWrapper"></parser>
@@ -355,6 +361,7 @@
         <parser class="iped.parsers.mail.win10.Win10MailParser"></parser>
         <parser class="iped.parsers.discord.DiscordParser"></parser>
         <!--parser class="iped.parsers.apk.APKParser"></parser-->
+        <parser class="iped.parsers.vlc.VLCIniParser"></parser>
 
     </parsers>
 

@@ -25,10 +25,11 @@ import dpf.ap.gpinf.interfacetelegram.ContactInterface;
 
 public class Chat implements ChatInterface {
     private ArrayList<Message> messages = new ArrayList<>();
-    private Contact c;
+    private Contact contact;
     private String name;
-    private boolean group;
-    private boolean deleted = false;
+    private boolean isChannel;
+    private boolean isGroup;
+    private boolean isDeleted;
     private long id;
 
     public ArrayList<Message> getMessages() {
@@ -40,22 +41,22 @@ public class Chat implements ChatInterface {
     }
 
     public Contact getC() {
-        return c;
+        return contact;
     }
 
     public void setC(Contact c) {
-        this.c = c;
+        this.contact = c;
     }
 
     public void setC(ContactInterface c) {
-        this.c = (Contact) c;
+        this.contact = (Contact) c;
     }
 
     public String getName() {
         if (name != null && !name.trim().isEmpty())
             return name;
-        else if (c != null)
-            return c.toString();
+        else if (contact != null)
+            return contact.toString();
         else
             return null;
     }
@@ -64,12 +65,24 @@ public class Chat implements ChatInterface {
         this.name = name;
     }
 
-    public boolean isGroup() {
-        return group;
+    public boolean isGroupOrChannel() {
+        return isGroup || isChannel;
     }
 
-    public void setGroup(boolean isgroup) {
-        this.group = isgroup;
+    public boolean isGroup() {
+        return isGroup;
+    }
+
+    public void setGroup(boolean isGroup) {
+        this.isGroup = isGroup;
+    }
+
+    public boolean isChannel() {
+        return isChannel;
+    }
+
+    public void setChannel(boolean isChannel) {
+        this.isChannel = isChannel;
     }
 
     public long getId() {
@@ -82,17 +95,16 @@ public class Chat implements ChatInterface {
 
     public Chat(long id, Contact c, String name) {
         this.id = id;
-        this.c = c;
+        this.contact = c;
         this.name = name;
-        this.group = false;
     }
 
     public boolean isDeleted() {
-        return deleted;
+        return isDeleted;
     }
 
-    public void setDeleted(boolean deleted) {
-        this.deleted = deleted;
+    public void setDeleted(boolean isDeleted) {
+        this.isDeleted = isDeleted;
     }
 
 }

@@ -54,8 +54,7 @@ public class DynamicDuplicateFilter {
             }
             i++;
         }
-        return new MultiSearchResult(filteredItems.toArray(new IItemId[0]),
-                ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
+        return new MultiSearchResult(filteredItems.toArray(new IItemId[0]), ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
     }
 
 }

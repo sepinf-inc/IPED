@@ -148,19 +148,20 @@ public class ReportDialog implements ActionListener, TableModelListener {
         table = new JTable(tableModel);
         table.getColumnModel().getColumn(0).setMaxWidth(20);
         table.getColumnModel().getColumn(2).setMaxWidth(150);
+        table.setRowHeight(IconManager.getIconSize());
+
         tableModel.addTableModelListener(this);
         scrollPane = new JScrollPane(table);
 
-        ((JComponent) table.getDefaultRenderer(Boolean.class)).setOpaque(true);        
-        
+        ((JComponent) table.getDefaultRenderer(Boolean.class)).setOpaque(true);
+
         table.getColumnModel().getColumn(0).setHeaderRenderer(new DefaultTableCellRenderer() {
 
-			private static final long serialVersionUID = 1L;
-			private boolean listenerAdded = false;
+            private static final long serialVersionUID = 1L;
+            private boolean listenerAdded = false;
 
             @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-                    boolean hasFocus, int row, int col) {
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
                 JTableHeader header = table.getTableHeader();
                 if (!listenerAdded) {
                     header.addMouseListener(new MouseAdapter() {
@@ -182,8 +183,7 @@ public class ReportDialog implements ActionListener, TableModelListener {
             private static final long serialVersionUID = 1L;
 
             @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-                    boolean hasFocus, int row, int column) {
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                 setIcon(value == null ? null : BookmarkIcon.getIcon(multiBookmarks, value.toString()));
                 return this;
@@ -195,10 +195,10 @@ public class ReportDialog implements ActionListener, TableModelListener {
     }
 
     private class TableModel extends DefaultTableModel {
-		
+
         private static final long serialVersionUID = 1L;
 
-		TableModel(Object[][] data, Object[] columnNames) {
+        TableModel(Object[][] data, Object[] columnNames) {
             super(data, columnNames);
         }
 
@@ -281,21 +281,18 @@ public class ReportDialog implements ActionListener, TableModelListener {
         try {
             String classpath = new File(url.toURI()).getAbsolutePath();
             if (!classpath.endsWith(".jar")) //$NON-NLS-1$
-                classpath = App.get().appCase.getAtomicSources().get(0).getModuleDir().getAbsolutePath()
-                        + File.separator + "lib" + File.separator + "iped-search-app.jar"; //$NON-NLS-1$ //$NON-NLS-2$
+                classpath = App.get().appCase.getAtomicSources().get(0).getModuleDir().getAbsolutePath() + File.separator + "lib" + File.separator + "iped-search-app.jar"; //$NON-NLS-1$ //$NON-NLS-2$
 
             File input = File.createTempFile("report", ".iped"); //$NON-NLS-1$ //$NON-NLS-2$
             App.get().appCase.getMultiBookmarks().saveState(input);
 
             String javaBin = "java";
             if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
-                javaBin = new File(App.get().appCase.getAtomicSources().get(0).getModuleDir(), "jre\\bin\\java.exe")
-                        .getAbsolutePath();
+                javaBin = new File(App.get().appCase.getAtomicSources().get(0).getModuleDir(), "jre\\bin\\java.exe").getAbsolutePath();
             }
             List<String> cmd = new ArrayList<>();
             cmd.addAll(Arrays.asList(javaBin, "-cp", classpath, "-D" + Bootstrap.UI_REPORT_SYS_PROP, //$NON-NLS-1$ //$NON-NLS-2$
-                    Bootstrap.class.getCanonicalName(), 
-                    "-d", input.getAbsolutePath(), //$NON-NLS-1$
+                    Bootstrap.class.getCanonicalName(), "-d", input.getAbsolutePath(), //$NON-NLS-1$
                     "-o", output)); //$NON-NLS-1$
 
             if (!caseInfo.isEmpty())

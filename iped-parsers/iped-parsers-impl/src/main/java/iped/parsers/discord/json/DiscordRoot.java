@@ -1,5 +1,6 @@
 package iped.parsers.discord.json;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -41,6 +42,9 @@ public class DiscordRoot implements Comparable<DiscordRoot> {
 
     @JsonProperty("embeds")
     private List<DiscordEmbed> embeds;
+
+    @JsonProperty("sticker_items")
+    private List<DiscordSticker> stickers;
 
     @JsonProperty("mentions")
     private List<DiscordMention> mentions;
@@ -273,6 +277,17 @@ public class DiscordRoot implements Comparable<DiscordRoot> {
             return 1;
         }
         return this.timestamp.compareTo(o.timestamp);
+    }
+
+    public List<DiscordSticker> getStickers() {
+        if (stickers == null) {
+            stickers = new ArrayList<DiscordSticker>();
+        }
+        return stickers;
+    }
+
+    public void setStickers(List<DiscordSticker> stickers) {
+        this.stickers = stickers;
     }
 
 }

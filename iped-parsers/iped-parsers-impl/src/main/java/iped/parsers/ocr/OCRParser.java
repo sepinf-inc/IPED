@@ -504,7 +504,7 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
                     int w0 = reader.getWidth(page);
                     int h0 = reader.getHeight(page);
                     
-                    int sampling = ImageUtil.getSamplingFactor(w0, h0, MAX_CONV_IMAGE_SIZE * 2, MAX_CONV_IMAGE_SIZE * 2);
+                    int sampling = ImageUtil.getSamplingFactor(w0, h0, MAX_CONV_IMAGE_SIZE * 2);
                     int w1 = (int) Math.ceil((float) w0 / sampling);
                     int h1 = (int) Math.ceil((float) h0 / sampling);
                     
@@ -546,8 +546,7 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
             throws IOException, SAXException, TikaException {
         File imageFile = null;
         try {
-            BufferedImage img = ImageUtil.getSubSampledImage(input, MAX_CONV_IMAGE_SIZE * 2, MAX_CONV_IMAGE_SIZE * 2,
-                    mediaType);
+            BufferedImage img = ImageUtil.getSubSampledImage(input, MAX_CONV_IMAGE_SIZE * 2, mediaType);
             if (img == null) {
                 try (ExternalImageConverter converter = new ExternalImageConverter()) {
                     img = converter.getImage(input, MAX_CONV_IMAGE_SIZE, true, input.length());

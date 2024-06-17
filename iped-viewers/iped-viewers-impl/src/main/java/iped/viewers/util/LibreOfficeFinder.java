@@ -36,7 +36,7 @@ public class LibreOfficeFinder {
         baseDir = baseFolder;
     }
 
-    public String getLOPath() {
+    public String getLOPath(boolean isNogui) {
         if (detectedPath == null) {
             detectedPath = System.getProperty("libreOfficePath");
             if (detectedPath != null)
@@ -62,7 +62,7 @@ public class LibreOfficeFinder {
 
                 if (winPathLO.exists() || compressedLO.exists()) { // $NON-NLS-1$ //$NON-NLS-2$
                     LOExtractor extractor = new LOExtractor(compressedLO, winPathLO);
-                    if (extractor.decompressLO())
+                    if (extractor.decompressLO(isNogui))
                         detectedPath = winPathLO.getAbsolutePath();
                 }
             }

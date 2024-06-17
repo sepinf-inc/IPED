@@ -1,4 +1,4 @@
-package iped.app.ui;
+package iped.viewers.api;
 
 public interface ClearFilterListener {
 

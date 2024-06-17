@@ -22,8 +22,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
@@ -39,28 +41,24 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
 import iped.app.ui.TreeViewModel.Node;
+import iped.app.ui.filters.QueryFilter;
 import iped.engine.data.IPEDSource;
 import iped.engine.search.LuceneSearchResult;
 import iped.engine.search.QueryBuilder;
 import iped.engine.task.index.IndexItem;
 import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
+import iped.viewers.api.IFilter;
+import iped.viewers.api.IQueryFilterer;
 
-public class TreeListener extends MouseAdapter
-        implements TreeSelectionListener, ActionListener, TreeExpansionListener, ClearFilterListener {
+public class TreeListener extends MouseAdapter implements TreeSelectionListener, ActionListener, TreeExpansionListener, IQueryFilterer {
 
     private Query treeQuery, recursiveTreeQuery;
     boolean rootSelected = false;
     HashSet<TreePath> selection = new HashSet<TreePath>();
     private long collapsedTime = 0;
     private boolean clearing = false;
-
-    public Query getQuery() {
-        if (App.get().recursiveTreeList.isSelected())
-            return recursiveTreeQuery;
-        else
-            return treeQuery;
-    }
+    private ArrayList<IFilter> definedFilters;
 
     @Override
     public void valueChanged(TreeSelectionEvent evt) {
@@ -86,10 +84,10 @@ public class TreeListener extends MouseAdapter
             }
         }
 
+        definedFilters = null;
         if (rootSelected || selection.isEmpty()) {
             treeQuery = new TermQuery(new Term(IndexItem.ISROOT, "true")); //$NON-NLS-1$
             recursiveTreeQuery = null;
-
         } else {
             String treeQueryStr = ""; //$NON-NLS-1$
             BooleanQuery.Builder recursiveQueryBuilder = new BooleanQuery.Builder();
@@ -209,6 +207,44 @@ public class TreeListener extends MouseAdapter
         clearing = true;
         App.get().tree.clearSelection();
         clearing = false;
+    }
+
+    @Override
+    public List getDefinedFilters() {
+        TreeListener self = this;
+        if (definedFilters == null) {
+            definedFilters = new ArrayList<IFilter>();
+            if (selection.size() >= 1) {
+                if (App.get().recursiveTreeList.isSelected()) {
+                    definedFilters.add(new QueryFilter(self.recursiveTreeQuery));
+                } else {
+                    definedFilters.add(new QueryFilter(self.treeQuery));
+                }
+            }
+        }
+        return definedFilters;
+    }
+
+    @Override
+    public boolean hasFiltersApplied() {
+        return recursiveTreeQuery != null;
+    }
+
+    @Override
+    public Query getQuery() {
+        if (App.get().recursiveTreeList.isSelected())
+            return recursiveTreeQuery;
+        else
+            return treeQuery;
+    }
+
+    public String toString() {
+        return "Evidence panel";
+    }
+
+    @Override
+    public boolean hasFilters() {
+        return recursiveTreeQuery != null;
     }
 
 }
