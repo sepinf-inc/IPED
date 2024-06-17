@@ -1084,48 +1084,64 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         refreshChart(true);
     }
 
+    public class TimeRangeFilter implements IQueryFilter {
+        private Query query;
+        Date[] dates;
+
+        public TimeRangeFilter(Date[] dates) {
+            this.dates = dates;
+        }
+
+        public String toString() {
+            String timeFilter = domainAxis.ISO8601DateFormatUTC(dates[0]);
+            timeFilter += " TO ";
+            timeFilter += domainAxis.ISO8601DateFormatUTC(dates[1]);
+            return timeFilter;
+        }
+
+        @Override
+        public Query getQuery() {
+            if (query == null) {
+                String timeFilter = "timeStamp:[";
+                timeFilter += domainAxis.ISO8601DateFormatUTC(dates[0]);
+                timeFilter += " TO ";
+                timeFilter += domainAxis.ISO8601DateFormatUTC(dates[1]);
+                timeFilter += "]";
+
+                try {
+                    query = new QueryBuilder(App.get().appCase).getQuery(timeFilter);
+                } catch (ParseException | QueryNodeException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+            return query;
+        }
+    }
+
+    public class EventTypeFilter implements IFilter {
+        String event;
+
+        public EventTypeFilter(String event) {
+            this.event = event;
+        }
+
+        public String toString() {
+            return "-eventType:" + event;
+        }
+    }
+
     @Override
     public List getDefinedFilters() {
         ArrayList<IFilter> result = new ArrayList<IFilter>();
         if (chartPanel.definedFilters.size() > 0) {
             for (Date[] dates : chartPanel.definedFilters) {
-                result.add(new IQueryFilter() {
-                    private Query query;
-
-                    public String toString() {
-                        String timeFilter = domainAxis.ISO8601DateFormatUTC(dates[0]);
-                        timeFilter += " TO ";
-                        timeFilter += domainAxis.ISO8601DateFormatUTC(dates[1]);
-                        return timeFilter;
-                    }
-
-                    @Override
-                    public Query getQuery() {
-                        if (query == null) {
-                            String timeFilter = "timeStamp:[";
-                            timeFilter += domainAxis.ISO8601DateFormatUTC(dates[0]);
-                            timeFilter += " TO ";
-                            timeFilter += domainAxis.ISO8601DateFormatUTC(dates[1]);
-                            timeFilter += "]";
-
-                            try {
-                                query = new QueryBuilder(App.get().appCase).getQuery(timeFilter);
-                            } catch (ParseException | QueryNodeException e) {
-                                // TODO Auto-generated catch block
-                                e.printStackTrace();
-                            }
-                        }
-                        return query;
-                    }
-                });
+                result.add(new TimeRangeFilter(dates));
             }
         }
+
         for (String event : chartPanel.excludedEvents) {
-            result.add(new IFilter() {
-                public String toString() {
-                    return "-eventType:" + event;
-                }
-            });
+            result.add(new EventTypeFilter(event));
         }
 
         return result;
@@ -1144,4 +1160,22 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         return ordToEventName;
     }
     
+    public void restoreDefinedFilters(List<IFilter> filtersToRestore) {
+        boolean hasFilters = false;
+        for (IFilter filter : filtersToRestore) {
+            hasFilters = true;
+            if (filter instanceof TimeRangeFilter) {
+                chartPanel.definedFilters.add(((TimeRangeFilter) filter).dates);
+            }
+            if (filter instanceof EventTypeFilter) {
+                chartPanel.excludedEvents.add(((EventTypeFilter) filter).event);
+            }
+        }
+        if (hasFilters) {
+            applyFilters = true;
+            App.get().getFilterManager().setFilterEnabled(this, true);
+        }
+
+    }
+
 }
