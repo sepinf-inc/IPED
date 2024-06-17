@@ -199,6 +199,18 @@ public class FilterSelectedEdges implements IResultSetFilterer {
     public void setGraph(Graph graph) {
         this.graph = graph;
     }
+
+    @Override
+    public void restoreDefinedFilters(List<IFilter> filtersToRestore) {
+        for (Iterator iterator = filtersToRestore.iterator(); iterator.hasNext();) {
+            IFilter iFilter = (IFilter) iterator.next();
+            if (iFilter instanceof EdgeFilter) {
+                EdgeFilter efilter = (EdgeFilter) iFilter;
+                this.graph = efilter.graph;
+                this.selectedEdges = efilter.selectedEdges;
+            }
+        }
+    }
 }
 
 class EdgeFilter implements IResultSetFilter {
