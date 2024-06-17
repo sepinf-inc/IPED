@@ -210,6 +210,7 @@ public class FilterSelectedEdges implements IResultSetFilterer {
                 this.selectedEdges = efilter.selectedEdges;
             }
         }
+        updateResults();
     }
 }
 
