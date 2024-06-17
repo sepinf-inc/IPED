@@ -35,6 +35,11 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
     private static final String SKIP_KNOWN_FILES = "skipKnownFiles";
     private static final String PRECISION = "precision";
     private static final String BATCH_SIZE = "batchSize";
+    private static final String REQUEUE_HEURISTICS = "clientDynamicThreadRequeueHeuristics";
+    private static final String CLIENTE_HELP = "clientTranscriptHelp";
+    private static final String IMPL_CLASS_KEY_CLIENT = "clientTranscriptHelpImplementationClass";
+    private static final String REQUEUE_RATIO = "clientSplitQueueRatio";
+    private static final String REQUEUE_DELTA_TIME = "clientRequeueDeltaTime";    
 
     private List<String> languages = new ArrayList<>();
     private List<String> mimesToProcess = new ArrayList<>();
@@ -53,6 +58,11 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
     private boolean skipKnownFiles = true;
     private String precision = "int8";
     private int batchSize = 1;
+    private boolean requeueHeuristic = false;
+    private boolean clientTranscriptHelp = false;
+    private String classNameFallBack = "";
+    private int requeueRatio = 4;
+    private long requeueDeltaTime = 5000;    
 
     public String getPrecision() {
         return precision;
@@ -136,6 +146,26 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
         return googleModel;
     }
 
+    public boolean getRequeueHeuristic() {
+        return requeueHeuristic;
+    }
+
+    public boolean getClientTranscriptHelp() {
+        return clientTranscriptHelp;
+    }    
+
+    public String getClassNameFallBack() {
+        return classNameFallBack;
+    }    
+
+    public int getRequeueRatio() {
+        return requeueRatio;
+    }
+
+    public long getRequeueDeltaTime() {
+        return requeueDeltaTime;
+    }    
+
     @Override
     public void processProperties(UTF8Properties properties) {
 
@@ -199,6 +229,22 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
         value = properties.getProperty(BATCH_SIZE);
         if (value != null) {
             batchSize = Integer.parseInt(value.trim());
+        }
+        value = properties.getProperty(CLIENTE_HELP);
+        if (value != null) {
+            clientTranscriptHelp = Boolean.valueOf(value.trim());
+        }
+        value = properties.getProperty(IMPL_CLASS_KEY_CLIENT);
+        if (value != null) {
+            classNameFallBack = value.trim();
+        }
+        value = properties.getProperty(REQUEUE_RATIO);
+        if (value != null) {
+            requeueRatio = Integer.valueOf(value.trim());
+        }
+        value = properties.getProperty(REQUEUE_DELTA_TIME);
+        if (value != null) {
+            requeueDeltaTime = Long.valueOf(value.trim());
         }
     }
 
