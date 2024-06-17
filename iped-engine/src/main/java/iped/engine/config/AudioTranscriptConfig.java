@@ -31,6 +31,8 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
     private static final String GOOGLE_MODEL = "googleModel";
     private static final String LANG_AUTO_VAL = "auto";
     private static final String SKIP_KNOWN_FILES = "skipKnownFiles";
+    private static final String PRECISION = "precision";
+    private static final String BATCH_SIZE = "batchSize";    
 
     private static final String REQUEUE_HEURISTICS = "clientDynamicThreadRequeueHeuristics";
     private static final String CLIENTE_HELP = "clientTranscriptHelp";
@@ -52,12 +54,22 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
     private String wav2vec2Service;
     private String googleModel;
     private boolean skipKnownFiles = true;
+    private String precision = "int8";
+    private int batchSize = 1;    
 
     private boolean requeueHeuristic = false;
     private boolean clientTranscriptHelp = false;
     private String classNameFallBack = "";
     private int requeueRatio = 4;
     private long requeueDeltaTime = 5000;
+
+    public String getPrecision() {
+        return precision;
+    }
+
+    public int getBatchSize() {
+        return batchSize;
+    }
 
     public boolean getSkipKnownFiles() {
         return this.skipKnownFiles;
@@ -223,6 +235,13 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
         if (value != null) {
             requeueDeltaTime = Long.valueOf(value.trim());
         }
+        value = properties.getProperty(PRECISION);
+        if (value != null) {
+            precision = value.trim();
+        }
+        value = properties.getProperty(BATCH_SIZE);
+        if (value != null) {
+            batchSize = Integer.parseInt(value.trim());        
     }
 
     /**
