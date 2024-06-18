@@ -1,6 +1,7 @@
 XX/XX/2024: IPED-4.2.0:
 News:
-#1823: New transcription implementation using Whisper (@lfcnassif, @gfd2020, @marcus6n)
+#39:   Filter Manager (@patrickdalla, @lfcnassif)
+#1823: New transcription implementation using Whisper (@lfcnassif, @gfd2020, @marcus6n) 
 #2118: New table column header filter like Excel (@patrickdalla, @lfcnassif, @wladimirleite)
 #1182: Translation to French (Didier Meziat-Burdin, Christopher Etienne, @jelallt, @lfcnassif)
 #1969: Utility tool to scan a folder for cases and export files matching a search criteria (@lfcnassif)
