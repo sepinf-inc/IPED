@@ -70,6 +70,7 @@ public class Message implements Comparable<Message> {
     private Message messageQuote = null;
     private boolean quoted = false;
     private String uuid = null;
+    private long editId = -1;
     private byte[] metaData;
     private String groupInviteName;
     private MessageTemplate messageTemplate;
@@ -568,6 +569,14 @@ public class Message implements Comparable<Message> {
 
     public void setUuid(String uuid) {
         this.uuid = uuid;
+    }
+
+    public long getEditId() {
+        return this.editId;
+    }
+
+    public void setEditId(long editId) {
+        this.editId = editId;
     }
 
     public byte[] getMetaData() {
