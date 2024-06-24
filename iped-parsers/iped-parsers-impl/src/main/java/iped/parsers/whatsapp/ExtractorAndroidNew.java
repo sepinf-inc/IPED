@@ -552,7 +552,7 @@ public class ExtractorAndroidNew extends Extractor {
                                 mq.setDeleted(true);
                                 mq.setId(fakeIds--);
                                 m.setMessageQuote(mq);
-                            }else{ // If quoted message was edited, set reference to jump
+                            }else{ // If quoted message was edited,set reference to jump
                                 mq.setDeleted(false);
                                 mq.setId(editId);
                                 m.setMessageQuote(mq);
