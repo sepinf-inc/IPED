@@ -548,11 +548,11 @@ public class ExtractorAndroidNew extends Extractor {
                             // not found original message reference, get info from message_quotes table,
                             // less complete
                             long editId = mq.getEditId();
-                            if (editId <= 0){
+                            if (messagesMap.get(editId) == null){ // Quoted message cannot be found again
                                 mq.setDeleted(true);
                                 mq.setId(fakeIds--);
                                 m.setMessageQuote(mq);
-                            }else{ // If quoted message was edited,set reference to jump
+                            }else{ // If quoted message was edited, jump to the correct message
                                 mq.setDeleted(false);
                                 mq.setId(editId);
                                 m.setMessageQuote(mq);
