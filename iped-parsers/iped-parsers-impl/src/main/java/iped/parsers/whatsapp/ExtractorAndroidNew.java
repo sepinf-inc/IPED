@@ -882,7 +882,7 @@ public class ExtractorAndroidNew extends Extractor {
                 } else {
                     if (status == 0) {
                         result = DELETED_BY_SENDER;
-                    } else if (status == 4 || status == 5) {
+                    } else if (status == 4 || status == 5 || status == 13) {
                         result = DELETED_MESSAGE;
                     }
                 }
