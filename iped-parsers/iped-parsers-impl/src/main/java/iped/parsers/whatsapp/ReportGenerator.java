@@ -648,6 +648,14 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.YouNotAdmin") + "<br>");
                 break;
+            case OVER_256_MEMBERS_ONLY_ADMINS_CAN_EDIT:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.Over256MembersOnlyAdminsCanEdit") + "<br>");
+                break;
+            case SECURITY_NOTIFICATIONS_NO_LONGER_AVAILABLE:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.SecurityNotificationsNoLongerAvailable") + "<br>");
+                break;                
             case USER_ADMIN:
                 out.println("<div class=\"systemmessage\">");
                 out.print(name + " ");
