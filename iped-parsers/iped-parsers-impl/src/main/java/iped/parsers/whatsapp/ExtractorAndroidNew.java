@@ -88,6 +88,8 @@ import static iped.parsers.whatsapp.Message.MessageType.VOICE_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.WAITING_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.YOU_ADMIN;
 import static iped.parsers.whatsapp.Message.MessageType.YOU_NOT_ADMIN;
+import static iped.parsers.whatsapp.Message.MessageType.OVER_256_MEMBERS_ONLY_ADMINS_CAN_EDIT;
+import static iped.parsers.whatsapp.Message.MessageType.SECURITY_NOTIFICATIONS_NO_LONGER_AVAILABLE;
 
 import java.io.File;
 import java.sql.Connection;
@@ -733,6 +735,9 @@ public class ExtractorAndroidNew extends Extractor {
                         // Can be ignored as nothing was changed.
                         result = EPHEMERAL_SETTINGS_NOT_APPLIED;
                         break;
+                    case 63:
+                        result = SECURITY_NOTIFICATIONS_NO_LONGER_AVAILABLE;
+                        break;
                     // TODO: Handle business related notification (no extra tables/fields)
                     // case 63:
                     // result = ???;
@@ -810,6 +815,9 @@ public class ExtractorAndroidNew extends Extractor {
                         break;
                     case 136:
                         result = USER_JOINED_WHATSAPP;
+                        break;
+                    case 142:
+                        result = OVER_256_MEMBERS_ONLY_ADMINS_CAN_EDIT;
                         break;
                     case 155:
                         result = AI_THIRD_PARTY;
