@@ -417,7 +417,7 @@ public class ExtractorAndroidNew extends Extractor {
 
                 int actionType = rs.getInt("actionType");
                 m.setMessageType(decodeMessageType(type, status, edit_version, caption, actionType,
-                        rs.getInt("bizStateId"), m.getMediaMime()));
+                        rs.getInt("bizStateId"), rs.getInt("privacyType"),  m.getMediaMime()));
                 
                 if (m.getMessageType() == EPHEMERAL_SETTINGS_NOT_APPLIED) {
                     // Ignore this type of message, as it does nothing and it is not visible in the application itself.
@@ -604,7 +604,7 @@ public class ExtractorAndroidNew extends Extractor {
                 m.setMediaSize(media_size);
                 m.setLatitude(rs.getDouble("latitude")); //$NON-NLS-1$
                 m.setLongitude(rs.getDouble("longitude")); //$NON-NLS-1$
-                m.setMessageType(decodeMessageType(type, -1, -1, caption, -1, -1, m.getMediaMime()));
+                m.setMessageType(decodeMessageType(type, -1, -1, caption, -1, -1, -1, m.getMediaMime()));
                 m.setDuration(rs.getInt("media_duration")); //$NON-NLS-1$
                 if (m.getMessageType() == CONTACT_MESSAGE) {
                     m.setVcards(Arrays.asList(new String[] { Util.getUTF8String(rs, "vcard") }));
@@ -634,7 +634,7 @@ public class ExtractorAndroidNew extends Extractor {
     }
 
     protected Message.MessageType decodeMessageType(int messageType, int status, Integer edit_version, String caption,
-            int actionType, int bizStateId, String mediaMime) {
+            int actionType, int bizStateId, int privacyType, String mediaMime) {
         Message.MessageType result = UNKNOWN_MESSAGE;
         switch (messageType) {
             case 0:
@@ -753,7 +753,11 @@ public class ExtractorAndroidNew extends Extractor {
                         result = EPHEMERAL_DEFAULT;
                         break;
                     case 69:
-                        result = BUSINESS_META_SECURE_SERVICE;
+                        if (privacyType == 1) {
+                            result = MESSAGES_ENCRYPTED;
+                        } else {
+                            result = BUSINESS_META_SECURE_SERVICE;
+                        }                        
                         break;
                     case 70:
                         result = CALL_MESSAGE;
@@ -1022,6 +1026,13 @@ public class ExtractorAndroidNew extends Extractor {
             bizStateTableJoin = " left join message_system_initial_privacy_provider msipp on m._id=msipp.message_row_id";
         }
 
+        String privacyTypeCol = "0";
+        String privacyTypeTableJoin = "";
+        if (SQLite3DBParser.containsTable("message_system_business_state", conn)) {
+            privacyTypeCol = "msbs.privacy_message_type";
+            privacyTypeTableJoin = " left join message_system_business_state msbs on m._id=msbs.message_row_id";
+        }
+
         String grpInvCol = "null";
         String grpInvTableJoin = "";
         if (SQLite3DBParser.containsTable("message_group_invite", conn)) {
@@ -1053,6 +1064,7 @@ public class ExtractorAndroidNew extends Extractor {
                 + " (m.origination_flags & 1) as forwarded,"
                 + " " + mhtCol + " as thumbData2,"
                 + " " + bizStateCol + " as bizStateId,"
+                + " " + privacyTypeCol + " as privacyType,"
                 + " " + grpInvCol + " as groupInviteName,"
                 + " " + sortCol + " as sortId,"
                 + " " + uiElemCol + " as uiElem,"
@@ -1067,6 +1079,7 @@ public class ExtractorAndroidNew extends Extractor {
                 + " left join message_vcard mv on m._id=mv.message_row_id"
                 + mhtTableJoin
                 + bizStateTableJoin
+                + privacyTypeTableJoin
                 + grpInvTableJoin
                 + uiElemTableJoin
                 + editTableJoin
