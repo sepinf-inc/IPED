@@ -95,6 +95,7 @@ import iped.parsers.sqlite.SQLiteUndelete;
 import iped.parsers.sqlite.SQLiteUndeleteTable;
 import iped.parsers.whatsapp.Message.MessageStatus;
 import iped.parsers.whatsapp.Message.MessageType;
+import iped.parsers.whatsapp.Message.MessageQuotedType;
 import iped.parsers.whatsapp.ProtoBufDecoder.Part;
 
 /**
@@ -574,8 +575,19 @@ public class ExtractorIOS extends Extractor {
                         }
 
                         messageQuote.setMessageType(type);
-                        messageQuote.setDeleted(true);
+
+                        String status = ProtoBufDecoder.findString(main, 7);
+                        if (status!=null && status.compareTo(Message.STATUS_BROADCAST)==0){
+                            messageQuote.setMessageQuotedType(MessageQuotedType.QUOTE_STATUS);
+                        }else{
+                            messageQuote.setMessageQuotedType(MessageQuotedType.QUOTE_NOT_FOUND);
+                            messageQuote.setDeleted(true);                            
+                        }
+                    }else{
+                        messageQuote.setMessageQuotedType(MessageQuotedType.QUOTE_FOUND);
                     }
+
+
                     if (messageQuote.getThumbData() == null && childs != null) {
                         byte[] thumbData = null;
                         for (Part c : childs) {
