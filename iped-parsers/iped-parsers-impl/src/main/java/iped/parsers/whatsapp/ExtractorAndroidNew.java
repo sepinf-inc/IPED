@@ -108,6 +108,7 @@ import java.util.Map;
 import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.whatsapp.Message.MessageStatus;
 import iped.parsers.whatsapp.Message.MessageType;
+import iped.parsers.whatsapp.Message.MessageQuotedType;
 
 /**
  *
@@ -545,17 +546,21 @@ public class ExtractorAndroidNew extends Extractor {
                         Message original = messagesMapUuid.get(mq.getUuid());
                         if (original != null) {
                             // has found original message reference, more complete
+                            mq.setMessageQuotedType(MessageQuotedType.QUOTE_FOUND);
                             m.setMessageQuote(original);
                         } else {
                             // not found original message reference, get info from message_quotes table,
                             // less complete
                             long editId = mq.getEditId();
                             if (messagesMap.get(editId) == null){ // Quoted message cannot be found again
-                                mq.setDeleted(true);
+                                if (mq.getMessageQuotedType()==MessageQuotedType.QUOTE_NOT_FOUND){
+                                    mq.setDeleted(true);
+                                }
                                 mq.setId(fakeIds--);
                                 m.setMessageQuote(mq);
                             }else{ // If quoted message was edited, jump to the correct message
                                 mq.setDeleted(false);
+                                mq.setMessageQuotedType(MessageQuotedType.QUOTE_FOUND);
                                 mq.setId(editId);
                                 m.setMessageQuote(mq);
                             }
@@ -622,6 +627,15 @@ public class ExtractorAndroidNew extends Extractor {
                 m.setEditId(rs.getLong("edit_row_id"));
 
                 long chatId = rs.getLong("chatId");
+
+                String remoteId = rs.getString("remoteId");
+                if (remoteId !=null && remoteId.compareTo(Message.STATUS_BROADCAST)==0){
+                    chatId = rs.getLong("parent_message_chat_row_id");
+                    m.setMessageQuotedType(MessageQuotedType.QUOTE_STATUS);
+                }else{
+                    m.setMessageQuotedType(MessageQuotedType.QUOTE_NOT_FOUND); // just set for now
+                }
+
                 List<Message> messages = messagesPerChatId.get(chatId);
                 if (messages == null) {
                     messagesPerChatId.put(chatId, messages = new ArrayList<Message>());
@@ -1097,7 +1111,7 @@ public class ExtractorAndroidNew extends Extractor {
             editTableJoin = " left join message_edit_info mei on mei.original_key_id=mq.key_id";
         }                
         return "select mq.message_row_id as id,mq.chat_row_id as chatId, chatJid.raw_string as remoteId,"
-                + " jid.raw_string as remoteResource, mv.vcard, mq.text_data,"
+                + " jid.raw_string as remoteResource, mv.vcard, mq.text_data, mq.parent_message_chat_row_id,"
                 + " mq.from_me as fromMe, mq.timestamp as timestamp, message_url as mediaUrl,"
                 + " mm.mime_type as mediaMime, mm.file_length as mediaSize, media_name as mediaName,"
                 + " mq.message_type as messageType, latitude, longitude, mm.media_duration, " + captionCol
