@@ -30,6 +30,7 @@ public class Message implements Comparable<Message> {
     private static FileChannel fileChannel;
     private static AtomicLong fileOffset = new AtomicLong();
     private static AtomicInteger deletedCounter = new AtomicInteger();
+    public static String STATUS_BROADCAST = "status@broadcast";
 
     private long id;
     private int deletedId = -1;
@@ -69,6 +70,7 @@ public class Message implements Comparable<Message> {
     private long idQuote;
     private Message messageQuote = null;
     private boolean quoted = false;
+    private MessageQuotedType messageQuotedType;
     private String uuid = null;
     private long editId = -1;
     private byte[] metaData;
@@ -557,6 +559,14 @@ public class Message implements Comparable<Message> {
         this.quoted = quoted;
     }
 
+    public MessageQuotedType getMessageQuotedType() {
+        return messageQuotedType;
+    }
+
+    public void setMessageQuotedType(MessageQuotedType messageQuotedType) {
+        this.messageQuotedType = messageQuotedType;
+    }
+
     public Message getMessageQuote(){
         return this.messageQuote;
     }
@@ -651,6 +661,10 @@ public class Message implements Comparable<Message> {
 
     public static enum MessageStatus {
         MESSAGE_UNSENT, MESSAGE_SENT, MESSAGE_DELIVERED, MESSAGE_VIEWED
+    }
+
+    public static enum MessageQuotedType {
+        QUOTE_FOUND, QUOTE_NOT_FOUND, QUOTE_STATUS
     }
 
     @Override
