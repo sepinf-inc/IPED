@@ -22,6 +22,7 @@ import iped.data.IItemReader;
 import iped.parsers.util.Messages;
 import iped.parsers.vcard.VCardParser;
 import iped.parsers.whatsapp.Message.MessageType;
+import iped.parsers.whatsapp.Message.MessageQuotedType;
 import iped.properties.ExtraProperties;
 import iped.utils.EmojiUtil;
 import iped.utils.LocalizedFormat;
@@ -1251,9 +1252,12 @@ public class ReportGenerator {
             }
 
             String quoteEnd = "</span></div>";
-            if (messageQuote.isDeleted()) {
+            if (messageQuote.getMessageQuotedType()==MessageQuotedType.QUOTE_NOT_FOUND) {
                 quoteEnd = "</span><br><span style=\"float:none\" class=\"recovered\"><div class=\"deletedIcon\"></div><i>"
                         + Messages.getString("WhatsAppReport.QuoteNotFound") + "</i>" + quoteEnd;
+            }else if (messageQuote.getMessageQuotedType()==MessageQuotedType.QUOTE_STATUS) {
+                quoteEnd = "</span><br><span style=\"float:none\" class=\"recovered\"><div class=\"statusIcon\"></div><i>"
+                        + Messages.getString("WhatsAppReport.QuoteStaus") + "</i>" + quoteEnd;
             }
 
             switch (messageQuote.getMessageType()) {
