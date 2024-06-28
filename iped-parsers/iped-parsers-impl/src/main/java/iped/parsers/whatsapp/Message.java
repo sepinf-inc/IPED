@@ -31,6 +31,8 @@ public class Message implements Comparable<Message> {
     private static AtomicLong fileOffset = new AtomicLong();
     private static AtomicInteger deletedCounter = new AtomicInteger();
     public static String STATUS_BROADCAST = "status@broadcast";
+    public static String GROUP = "@g.us";
+    
 
     private long id;
     private int deletedId = -1;
@@ -70,9 +72,10 @@ public class Message implements Comparable<Message> {
     private long idQuote;
     private Message messageQuote = null;
     private boolean quoted = false;
-    private MessageQuotedType messageQuotedType;
+    private MessageQuotedType messageQuotedType = MessageQuotedType.QUOTE_FOUND;
     private String uuid = null;
     private long editId = -1;
+    private long quoteChatId = -1;
     private byte[] metaData;
     private String groupInviteName;
     private MessageTemplate messageTemplate;
@@ -591,6 +594,14 @@ public class Message implements Comparable<Message> {
         this.editId = editId;
     }
 
+    public long getQuoteChatId() {
+        return this.quoteChatId;
+    }
+
+    public void setQuoteChatId(long quoteChatId) {
+        this.quoteChatId = quoteChatId;
+    }
+
     public byte[] getMetaData() {
         return metaData;
     }
@@ -664,7 +675,7 @@ public class Message implements Comparable<Message> {
     }
 
     public static enum MessageQuotedType {
-        QUOTE_FOUND, QUOTE_NOT_FOUND, QUOTE_STATUS
+        QUOTE_NOT_FOUND, QUOTE_FOUND, QUOTE_STATUS, QUOTE_PRIVACY_GROUP, QUOTE_PRIVACY_GROUP_NOT_FOUND
     }
 
     @Override
