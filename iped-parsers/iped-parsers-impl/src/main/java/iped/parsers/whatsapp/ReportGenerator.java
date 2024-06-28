@@ -1252,12 +1252,29 @@ public class ReportGenerator {
             }
 
             String quoteEnd = "</span></div>";
-            if (messageQuote.getMessageQuotedType()==MessageQuotedType.QUOTE_NOT_FOUND) {
-                quoteEnd = "</span><br><span style=\"float:none\" class=\"recovered\"><div class=\"deletedIcon\"></div><i>"
+            switch(messageQuote.getMessageQuotedType()){
+                case QUOTE_NOT_FOUND:
+                    quoteEnd = "</span><br><span style=\"float:none\" class=\"recovered\"><div class=\"deletedIcon\"></div><i>"
                         + Messages.getString("WhatsAppReport.QuoteNotFound") + "</i>" + quoteEnd;
-            }else if (messageQuote.getMessageQuotedType()==MessageQuotedType.QUOTE_STATUS) {
-                quoteEnd = "</span><br><span style=\"float:none\" class=\"recovered\"><div class=\"statusIcon\"></div><i>"
+                    break;
+                case QUOTE_STATUS:
+                    quoteEnd = "</span><br><span style=\"float:none\" class=\"outside\"><div class=\"statusIcon\"></div><i>"
                         + Messages.getString("WhatsAppReport.QuoteStaus") + "</i>" + quoteEnd;
+                    break;
+                case QUOTE_PRIVACY_GROUP:
+                    quoteEnd = "</span><br><span style=\"float:none\" class=\"outside\"><div class=\"privacyIcon\"></div><i>"
+                        + Messages.getString("WhatsAppReport.QuotePrivacy") + "</i>" + quoteEnd;
+                    String messageQuoteRemoteId = messageQuote.getRemoteId();
+                    if (messageQuoteRemoteId != null){
+                        String ms = Messages.getString("WhatsAppReport.QuotePrivacyMessage") + ": "+  messageQuoteRemoteId +"</br> "
+                            + Messages.getString("WhatsAppReport.ReferenceId") + " " +messageQuote.getId();
+                        quoteClick = "onclick=\"showMessage('" + ms + "');\"";
+                    }
+                    break;
+                case QUOTE_PRIVACY_GROUP_NOT_FOUND:
+                    quoteEnd = "</span><br><span style=\"float:none\" class=\"recovered\"><div class=\"privacyDeleteIcon\"></div><i>"
+                        + Messages.getString("WhatsAppReport.QuotePrivacyNotFound") + "</i>" + quoteEnd;
+                    break;
             }
 
             switch (messageQuote.getMessageType()) {
