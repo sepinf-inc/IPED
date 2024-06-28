@@ -115,6 +115,24 @@ div.statusIcon {
     margin: 0;
 }
 
+div.privacyIcon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    vertical-align: bottom;
+    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAZhJREFUOE/Vk0FIWnEcxz/vpZk2dvQsHny0Q6DzIDvMIBFfGVgM2s2dxKOdAj2JN5nu7HlM6iRG+UhCNJCxUgMhGDIhzx5t1WONtxW8ZfaQrvsf///f58P3/4WfwNPjEkVxJxAIuB0Ox/1rv9+nVqt1NE3bBH6MI8IE77NarceFQsFss9lotVqIoojH42E0GhGPx29UVfUDJzo3Kejncjlnu92mWCz+cwuCQDQaxeVykUwmvwMLRoJXkiSd5/N5wuEwmqY9CneXRFEUYrEYg8FAAnp3A+MJVoPB4L7f7yeVShlUA9lslkqlQr1eDwGHk4KILMslr9dLJpMxFKTTaZrNJtVqNQKUxwUm4LMsy++fKfgCfABu9S+8dTtp7H5c4uULC8Ph0DCB3W5ndHnNxlaD7gVvgK+6ILTyGqX8yYdp1mwI65e36g3hxCmHZ9z38Eiwl/cwY5mfKvit/mRtq4PS+a8Fq4nOkw6WfRJHpewi5jnb1A6ur654t93lW48loKGXOAuU/i7JylT64fEAWAd+TS7TM/mHsT8WHKIRDu7JDgAAAABJRU5ErkJggg==");
+    margin: 0;
+}
+
+div.privacyDeleteIcon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    vertical-align: bottom;
+    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAHYYAAB2GAV2iE4EAAAGuSURBVDhPjZO/S0JRFMe/76mvtBCyMIRAjUhoyykaqsEhGqMIbHF07Z9wyj/AvaEgaBJyEWoJQkJbWhQagiAxKg2fmd7Oud5nPhXqA+fd8z3v3u/99Z6GUZZ1XT+NxWKroVBIFiqVCvL5/J0Q4oBkWRYVwwZrbrf7OpPJuDweDwqFAsgM0WgU9XodyWTSbLVam9Tvttd9lEo6nRbxeFxQ3g9N00QikRCpVIr1A8VYViKRiMhms3IAaVvQSkQulxPBYJD1MoVEVy0TppcoFougvarSL91uF6VSCeFwmKV8MIMGLofDAdM0lRyl2WzCMAxOJ2WBsAycFHzC/2Wfgsf0b2FjdRFXZ8db8E5PoFqtqrIdv9+PeqOJ3aMr3D9inUo30oXwBGZoY3MmnEYH894pVQZe955l6zsP0PMTPsME9yUDb21hSQyeATTxpbJRLCMNHei0bhp8ydpmMI7ezD0sk5OXJdkyfxowgybvhx8qA2afytq/DJhBE4YGb3NrGbRfG0D17Ru19/bYsJZvYZ2BdY38dVxQ7Eg1BHVWmZzZpsf9zjb4qlQq96xSVQd+AHevnpnE6uxJAAAAAElFTkSuQmCC");
+    margin: 0;
+}
+
 /********************
  * WhatsApp Top Bar *
  ********************/
@@ -491,6 +509,13 @@ div:target {
 }
 #conversation .recovered {
     color: #ff0000;
+    float: left;
+    padding-right: 10px;
+    font-size: small;
+}
+
+#conversation .outside {
+    color: #0000ff;
     float: left;
     padding-right: 10px;
     font-size: small;
