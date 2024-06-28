@@ -205,7 +205,11 @@ public class IndexItem extends BasicProps {
         UTF8Properties props = new UTF8Properties();
         for (Object o : typesMap.entrySet().toArray()) {
             Entry<String, Class<?>> e = (Entry<String, Class<?>>) o;
-            props.setProperty(e.getKey(), e.getValue().getCanonicalName());
+            if (e.getValue().isArray()) {
+                props.setProperty(e.getKey(), e.getValue().getName());
+            } else {
+                props.setProperty(e.getKey(), e.getValue().getCanonicalName());
+            }
         }
         props.store(metadataTypesFile);
         IOUtils.fsync(metadataTypesFile.toPath(), false);
@@ -624,6 +628,18 @@ public class IndexItem extends BasicProps {
             doc.add(new StoredField(key, byteArray));
             doc.add(new KnnVectorField(knnKey, floatArray));
 
+        } else if (oValue instanceof double[]) {
+            float[] floatArray = convDoubleToFloatArray((double[]) oValue);
+            byte[] byteArray = convFloatArrayToByteArray(floatArray);
+            int suffix = 0;
+            // KnnVectorField is not multivalued, must use other key if it exists
+            String knnKey = key;
+            while (doc.getField(knnKey) != null) {
+                knnKey = key + (++suffix);
+            }
+            doc.add(new SortedSetDocValuesField(key, new BytesRef(byteArray)));
+            doc.add(new StoredField(key, byteArray));
+            doc.add(new KnnVectorField(knnKey, floatArray));
         } else {
             // value is typed as string
             String value = oValue.toString();
