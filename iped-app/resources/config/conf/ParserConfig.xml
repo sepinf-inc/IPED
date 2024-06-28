@@ -351,6 +351,7 @@
             </params>
         </parser>
         <parser class="iped.parsers.bittorrent.BitTorrentResumeDatParser"></parser>
+        <parser class="iped.parsers.bittorrent.BitTorrentResumeDatEntryParser"></parser>
         <parser class="iped.parsers.bittorrent.BitTorrentGenericDatParser"></parser>
         <parser class="iped.parsers.bittorrent.TorrentFileParser"></parser>
         <parser class="iped.parsers.lnk.LNKShortcutParser"></parser>

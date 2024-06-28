@@ -10,4 +10,4 @@ supportedMimes = application/x-whatsapp-db; application/x-whatsapp-db-f; applica
 supportedMimes = application/x-prefetch; text/x-vcard; application/x-emule-preferences-dat; application/vnd.android.package-archive; application/x-bittorrent-settings-dat
 
 # List of mimetypes which parsers insert links to other case items into preview
-supportedMimesWithLinks = application/x-emule; application/x-emule-part-met; application/x-ares-galaxy; application/x-shareaza-library-dat; application/x-shareaza-download; application/x-bittorrent-resume-dat; application/x-bittorrent
+supportedMimesWithLinks = application/x-emule; application/x-emule-part-met; application/x-ares-galaxy; application/x-shareaza-library-dat; application/x-shareaza-download; application/x-bittorrent-resume-dat; application/x-bittorrent-resume-dat-entry; application/x-bittorrent

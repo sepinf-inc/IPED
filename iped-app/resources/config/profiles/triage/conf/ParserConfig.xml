@@ -335,6 +335,7 @@
         <parser class="iped.parsers.shareaza.ShareazaSearchesDatParser"></parser>
         <parser class="iped.parsers.shareaza.ShareazaLibraryDatParser"></parser>
         <parser class="iped.parsers.bittorrent.BitTorrentResumeDatParser"></parser>
+        <parser class="iped.parsers.bittorrent.BitTorrentResumeDatEntryParser"></parser>
         <parser class="iped.parsers.bittorrent.TorrentFileParser"></parser>
         <parser class="iped.parsers.lnk.LNKShortcutParser"></parser>
         <parser class="iped.parsers.misc.OFXParser"></parser>
