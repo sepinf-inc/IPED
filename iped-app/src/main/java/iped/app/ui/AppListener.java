@@ -87,7 +87,7 @@ public class AppListener implements ActionListener, MouseListener {
         try {
             UICaseSearcherFilter task;
             if (query == null)
-                task = new UICaseSearcherFilter(searchText);
+                task = new UICaseSearcherFilter("");
             else
                 task = new UICaseSearcherFilter(query);
 
@@ -141,11 +141,9 @@ public class AppListener implements ActionListener, MouseListener {
         }
 
         if (evt.getSource() == App.get().filterDuplicates) {
-            if (!App.get().filterDuplicates.isSelected())
-                App.get().filterDuplicates.setForeground(App.get().topPanel.getBackground());
-            else
-                App.get().filterDuplicates.setForeground(App.get().alertColor);
-
+            App.get().selectFilterDuplicates(App.get().filterDuplicates.isSelected());
+            updateFileListing();
+            App.get().filtersPanel.updateUI();
             updateFileList = true;
         }
 

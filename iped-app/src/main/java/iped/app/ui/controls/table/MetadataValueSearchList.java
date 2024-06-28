@@ -8,6 +8,7 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.swing.JButton;
@@ -53,7 +54,7 @@ public class MetadataValueSearchList extends IPEDSearchList<ValueCount> {
             }
             lastFilteredValuesPerField.put(field, selected);
 
-            metadataSearch = TableHeaderFilterManager.get().getMetadataSearch(field);
+            metadataSearch = fm.getMetadataSearch(field);
 
             Dimension minDim = new Dimension(150, 18);
             JMenuItem emptyMenu = new JCheckBoxMenuItem(FieldValuePopupMenu.EMPTY_STR);
@@ -92,6 +93,26 @@ public class MetadataValueSearchList extends IPEDSearchList<ValueCount> {
                 }
             });
             menu.add(nonEmptyMenu);
+
+            for (Entry<String, String> otherFilter : fm.getOtherFilters().entrySet()) {
+                JMenuItem otherFiltermenu = new JCheckBoxMenuItem(otherFilter.getValue());
+                otherFiltermenu.setMinimumSize(minDim);
+                otherFiltermenu.setPreferredSize(minDim);
+                otherFiltermenu.setSelected(true);
+                otherFiltermenu.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        if (!otherFiltermenu.isSelected()) {
+                            fm.removeFilter(otherFilter.getKey());
+                        }
+                        menu.setVisible(false);
+                        App.get().getAppListener().updateFileListing();
+                        App.get().setDockablesColors();
+                    }
+                });
+                menu.add(otherFiltermenu);
+            }
+
             menu.add(new JSeparator());
 
             menu.add(this);

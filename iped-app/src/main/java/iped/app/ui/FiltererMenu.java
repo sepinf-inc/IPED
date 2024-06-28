@@ -43,6 +43,7 @@ public class FiltererMenu extends JPopupMenu implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == clearMenuitem) {
             ((IFilterer) selected).clearFilter();
+            App.get().setDockablesColors();
         }
 
         JTable table;

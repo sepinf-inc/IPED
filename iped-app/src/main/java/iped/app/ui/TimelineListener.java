@@ -135,7 +135,7 @@ public class TimelineListener implements IResultSetFilterer {
 
     @Override
     public boolean hasFiltersApplied() {
-        return false;
+        return isTimelineViewEnabled();
     }
 
 }
