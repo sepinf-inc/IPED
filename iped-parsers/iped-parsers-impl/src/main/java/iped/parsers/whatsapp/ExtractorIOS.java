@@ -266,7 +266,7 @@ public class ExtractorIOS extends Extractor {
                     }
 
                     // Find quoted messages
-                    findQuotedMessages(c.getMessages(), messagesMap);
+                    findQuotedMessages(c.getMessages(), messagesMap, idToChat);
                 }
 
                 if (recoverDeletedRecords && !firstTry) {
@@ -387,7 +387,7 @@ public class ExtractorIOS extends Extractor {
         }
     }
 
-    private void findQuotedMessages(List<Message> messages, Map<String, Message> messagesMap) {
+    private void findQuotedMessages(List<Message> messages, Map<String, Message> messagesMap, Map<Long, Chat> idToChat) {
         long fakeIds = 2000000000L;
         for (Message m : messages) {
             byte[] metadata = m.getMetaData();
@@ -577,8 +577,51 @@ public class ExtractorIOS extends Extractor {
                         messageQuote.setMessageType(type);
 
                         String status = ProtoBufDecoder.findString(main, 7);
-                        if (status!=null && status.compareTo(Message.STATUS_BROADCAST)==0){
-                            messageQuote.setMessageQuotedType(MessageQuotedType.QUOTE_STATUS);
+                        if (status!=null){ // find quotes outside this chat 
+
+                            if (status.compareTo(Message.STATUS_BROADCAST)==0){
+
+                                messageQuote.setMessageQuotedType(MessageQuotedType.QUOTE_STATUS);
+
+                            }else if (status.contains(Message.GROUP)){
+
+                                messageQuote.setRemoteId(status);
+                                boolean found = false;
+                                String title = "";
+                                for (Chat cq : idToChat.values()) {
+
+                                    if(status.contains(cq.getPrintId()))
+                                        title = cq.getTitle();
+
+                                    for (Message mq : cq.getMessages()) {
+                                        if (mq.getUuid() != null && mq.getUuid().compareTo(uuidQuote)==0) {
+                                            messageQuote.setId(mq.getId());
+                                            found = true;
+                                            break;
+                                        }
+                                    }
+
+                                    if (found){
+                                        break;
+                                    }
+                                }
+                                
+                                if (!title.isEmpty())
+                                    messageQuote.setRemoteId(title);
+
+
+                                if (found){
+                                    messageQuote.setMessageQuotedType(MessageQuotedType.QUOTE_PRIVACY_GROUP);
+                                }else{
+                                    messageQuote.setMessageQuotedType(MessageQuotedType.QUOTE_PRIVACY_GROUP_NOT_FOUND);
+                                    messageQuote.setDeleted(true);
+                                }
+
+                            }else{
+                                messageQuote.setMessageQuotedType(MessageQuotedType.QUOTE_NOT_FOUND);
+                                messageQuote.setDeleted(true);    
+                            }                            
+
                         }else{
                             messageQuote.setMessageQuotedType(MessageQuotedType.QUOTE_NOT_FOUND);
                             messageQuote.setDeleted(true);                            

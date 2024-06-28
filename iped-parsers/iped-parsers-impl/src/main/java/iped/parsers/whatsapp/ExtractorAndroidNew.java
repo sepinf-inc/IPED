@@ -539,31 +539,51 @@ public class ExtractorAndroidNew extends Extractor {
                 // Find quote messages
                 for (Message mq : messagesQuotes) {
                     Message m = messagesMap.get(mq.getId());
-                    if (m != null) {
-                        // Has quote
-
+                    if (m != null) {// Has quote
                         // Try to find original message in messages
                         Message original = messagesMapUuid.get(mq.getUuid());
-                        if (original != null) {
-                            // has found original message reference, more complete
-                            mq.setMessageQuotedType(MessageQuotedType.QUOTE_FOUND);
+                        if (original != null) {//has found original message reference
                             m.setMessageQuote(original);
-                        } else {
-                            // not found original message reference, get info from message_quotes table,
-                            // less complete
-                            long editId = mq.getEditId();
-                            if (messagesMap.get(editId) == null){ // Quoted message cannot be found again
-                                if (mq.getMessageQuotedType()==MessageQuotedType.QUOTE_NOT_FOUND){
+                        } else {// not found original message reference
+                            mq.setMessageQuotedType(MessageQuotedType.QUOTE_NOT_FOUND);
+                            if (chatId == mq.getQuoteChatId()){// msgs In same chat
+                                long editId = mq.getEditId();                            
+                                if (messagesMap.get(editId) != null){ // Quoted was edited
+                                    mq.setDeleted(false);
+                                    mq.setMessageQuotedType(MessageQuotedType.QUOTE_FOUND);
+                                    mq.setId(editId);
+                                }else{ // Quoted message cannot be found again
+                                    mq.setId(fakeIds--);
+                                    mq.setDeleted(true);                                    
+                                }
+                            }else { //Exception, msgs not in the same chat
+                                String remoteId = mq.getRemoteId();
+                                if (remoteId !=null){
+                                    if (remoteId.compareTo(Message.STATUS_BROADCAST)==0){
+                                        mq.setMessageQuotedType(MessageQuotedType.QUOTE_STATUS);
+                                        mq.setId(fakeIds--);
+                                    }else if (remoteId.contains(Message.GROUP)){
+                                        mq.setMessageQuotedType(MessageQuotedType.QUOTE_PRIVACY_GROUP);
+
+                                        //Find friendly group name
+                                        for (Chat cq : idToChat.values()) {
+                                            if(remoteId.contains(cq.getPrintId())){
+                                                mq.setRemoteId(cq.getTitle());
+                                                break;
+                                            }
+                                        }
+
+                                    }else{
+                                        mq.setId(fakeIds--);
+                                        mq.setDeleted(true);    
+                                    }
+                                }else{
+                                    mq.setMessageQuotedType(MessageQuotedType.QUOTE_PRIVACY_GROUP_NOT_FOUND);
+                                    mq.setId(fakeIds--);
                                     mq.setDeleted(true);
                                 }
-                                mq.setId(fakeIds--);
-                                m.setMessageQuote(mq);
-                            }else{ // If quoted message was edited, jump to the correct message
-                                mq.setDeleted(false);
-                                mq.setMessageQuotedType(MessageQuotedType.QUOTE_FOUND);
-                                mq.setId(editId);
-                                m.setMessageQuote(mq);
-                            }
+                            } 
+                            m.setMessageQuote(mq);
                         }
                         m.setQuoted(true);
 
@@ -626,15 +646,11 @@ public class ExtractorAndroidNew extends Extractor {
 
                 m.setEditId(rs.getLong("edit_row_id"));
 
-                long chatId = rs.getLong("chatId");
+                m.setQuoteChatId(rs.getLong("chatId"));
 
-                String remoteId = rs.getString("remoteId");
-                if (remoteId !=null && remoteId.compareTo(Message.STATUS_BROADCAST)==0){
-                    chatId = rs.getLong("parent_message_chat_row_id");
-                    m.setMessageQuotedType(MessageQuotedType.QUOTE_STATUS);
-                }else{
-                    m.setMessageQuotedType(MessageQuotedType.QUOTE_NOT_FOUND); // just set for now
-                }
+                m.setRemoteId(rs.getString("remoteId"));
+
+                long chatId = rs.getLong("parent_message_chat_row_id");
 
                 List<Message> messages = messagesPerChatId.get(chatId);
                 if (messages == null) {
