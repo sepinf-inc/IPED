@@ -57,7 +57,7 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
     ArrayList<CaseSearchFilterListener> listeners = new ArrayList<CaseSearchFilterListener>();
     RoaringBitmap[] unionsArray;
     RoaringBitmap[] excludeUnionsArray;
-    
+
     public static SoftReference<MultiSearchResult> allItemsCache;
     private static IPEDSource ipedCase;
 
@@ -216,7 +216,7 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
                         result.setIPEDSource(ipedCase);
                     }
                 }
-                
+
             } catch (Throwable e) {
                 if (!(e instanceof CancellationException)) {
                     e.printStackTrace();
@@ -240,11 +240,11 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
 
             if (rsFilter != null) {
                 if (rsFilter instanceof IBitmapFilter) {// if the filter exposes a internal bitmap
-                	applyBitmapFilter((IBitmapFilter)rsFilter);
+                    applyBitmapFilter((IBitmapFilter) rsFilter);
                 } else {
                     RoaringBitmap[] cachedBitmaps = filterManager.getCachedBitmaps((IResultSetFilter) rsFilter);
                     if (cachedBitmaps != null) { // if filtermanager returned a cached bitmap
-                    	applyBitmapFilter(cachedBitmaps);
+                        applyBitmapFilter(cachedBitmaps);
                     } else {
                         MultiSearchResult newresult = filterManager.applyFilter((IResultSetFilter) rsFilter, result);
                         if (newresult != result) {
@@ -256,10 +256,10 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
                 }
             }
         }
-	}
+    }
 
-	private void applyBitmapFilter(RoaringBitmap[] cachedBitmaps) {
-		RoaringBitmap[] lunionsArray = result.getCasesBitSets((IPEDMultiSource) ipedCase);
+    private void applyBitmapFilter(RoaringBitmap[] cachedBitmaps) {
+        RoaringBitmap[] lunionsArray = result.getCasesBitSets((IPEDMultiSource) ipedCase);
         for (int i = 0; i < unionsArray.length; i++) {
             lunionsArray[i].and(cachedBitmaps[i]);
         }
@@ -270,10 +270,10 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
             result = newresult;
             result.setIPEDSource(ipedCase);
         }
-	}
+    }
 
-	private void applyBitmapFilter(IBitmapFilter rsFilter) {
-		RoaringBitmap[] lunionsArray = result.getCasesBitSets((IPEDMultiSource) ipedCase);
+    private void applyBitmapFilter(IBitmapFilter rsFilter) {
+        RoaringBitmap[] lunionsArray = result.getCasesBitSets((IPEDMultiSource) ipedCase);
         for (int i = 0; i < lunionsArray.length; i++) {
             if (rsFilter.isToFilterOut()) {
                 lunionsArray[i].andNot(((IBitmapFilter) rsFilter).getBitmap()[i]);
@@ -288,9 +288,9 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
             result = newresult;
             result.setIPEDSource(ipedCase);
         }
-	}
+    }
 
-	@Override
+    @Override
     public void done() {
         for (CaseSearchFilterListener caseSearchFilterListener : listeners) {
             if (isCancelled()) {
@@ -376,6 +376,6 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
             } else {
                 unionsArray[i].and(lunionsArray[i]);
             }
-        }	
+        }
     }
 }
