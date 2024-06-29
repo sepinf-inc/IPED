@@ -4,15 +4,6 @@ package iped.app.home.processmanager;/*
  * @author Thiago S. Figueiredo
  */
 
-import iped.app.home.newcase.model.Evidence;
-import iped.app.home.newcase.model.IPEDProcess;
-import iped.app.home.utils.CasePathManager;
-import iped.configuration.IConfigurationDirectory;
-import iped.engine.util.Util;
-import iped.exception.IPEDException;
-import org.apache.commons.lang3.StringUtils;
-
-import javax.swing.*;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -21,6 +12,17 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+
+import javax.swing.JTextArea;
+import javax.swing.SwingUtilities;
+
+import org.apache.commons.lang3.StringUtils;
+
+import iped.app.home.newcase.model.Evidence;
+import iped.app.home.newcase.model.IPEDProcess;
+import iped.configuration.IConfigurationDirectory;
+import iped.engine.util.Util;
+import iped.exception.IPEDException;
 
 public class ProcessManager {
 
@@ -139,10 +141,11 @@ public class ProcessManager {
         return rootPath;
     }
 
-    public void openMulticase(Path casePath,  File multiCaseFile){
-        ArrayList<String> commandList =  new ArrayList<>();
+    public void openMulticase(Path firstCase, File multiCaseFile) {
+        ArrayList<String> commandList = new ArrayList<>();
         commandList.add(getJreBinCommand());
-        commandList.addAll(getIpedSearchAppJarCommand(CasePathManager.getInstance().getCasePath().toPath()));
+        commandList.add("-jar");
+        commandList.add(firstCase + "/iped/lib/iped-search-app.jar");
         commandList.add("-multicases");
         commandList.add(multiCaseFile.getPath());
         StringBuffer output = new StringBuffer();
