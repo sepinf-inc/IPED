@@ -4,13 +4,15 @@ package iped.app.home.newcase.tabs.caseinfo;/*
  * @author Thiago S. Figueiredo
  */
 
-import iped.app.home.newcase.model.Evidence;
-import iped.app.ui.Messages;
-import iped.engine.data.ReportInfo;
-
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.List;
+
+import iped.app.home.newcase.model.Evidence;
+import iped.app.ui.Messages;
+import iped.engine.core.EvidenceStatus;
+import iped.engine.data.ReportInfo;
 
 public class CaseInfoManager {
 
@@ -19,7 +21,9 @@ public class CaseInfoManager {
             throw new CaseException(Messages.get("Home.OpenCase.InavlidCasePath"));
         if( ! Paths.get(casePath.toString(), "IPED-SearchApp.exe").toFile().exists() )
             throw new CaseException(Messages.get("Home.OpenCase.NoSearchApp"));
-        if( ! Paths.get(casePath.toString(), "iped", "data", "processing_finished").toFile().exists() )
+        EvidenceStatus status = new EvidenceStatus(casePath.toFile());
+        List<String> failedEvidences = status.getFailedEvidences();
+        if (failedEvidences == null || !failedEvidences.isEmpty())
             throw new CaseException(Messages.get("Home.OpenCase.CaseNotFinished"));
     }
 
