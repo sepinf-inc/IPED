@@ -12,6 +12,7 @@ import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JDialog;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -19,6 +20,7 @@ import javax.swing.JTable;
 import iped.app.home.newcase.model.Evidence;
 import iped.app.home.style.StyleManager;
 import iped.app.ui.Messages;
+import iped.utils.ProcessUtil;
 import oshi.hardware.HWDiskStore;
 
 public class DiskSelecionDialog extends JDialog {
@@ -60,7 +62,11 @@ public class DiskSelecionDialog extends JDialog {
         diskDialog.getContentPane().add(mainPanel);
 
         okButton.addActionListener(e -> {
-            addDiskToEvidenceList();
+            if (ProcessUtil.isRunningAsAdmin()) {
+                addDiskToEvidenceList();
+            } else {
+                JOptionPane.showMessageDialog(this, Messages.get("Home.Evidences.DisksDialog.NotAdmin"), "Error", JOptionPane.ERROR_MESSAGE);
+            }
             this.setVisible(false);
         });
     }
