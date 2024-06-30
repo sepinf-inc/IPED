@@ -9,9 +9,9 @@ import javax.swing.JComponent;
 import javax.swing.JList;
 import javax.swing.TransferHandler;
 
-public class MimeListTransferHandler extends TransferHandler{
+public class MimeListTransferHandler extends TransferHandler {
     private JList<String> list;
-    
+
     public MimeListTransferHandler(JList<String> list) {
         this.list = list;
     }
@@ -21,8 +21,8 @@ public class MimeListTransferHandler extends TransferHandler{
             return false;
         }
         return true;
-   }
-    
+    }
+
     public int getSourceActions(JComponent c) {
         return TransferHandler.MOVE;
     }
@@ -31,26 +31,26 @@ public class MimeListTransferHandler extends TransferHandler{
         if (!info.isDrop()) {
             return false;
         }
-        
+
         return true;
     }
 
     @Override
     protected Transferable createTransferable(JComponent c) {
-        return new Transferable() {            
+        return new Transferable() {
             public boolean isDataFlavorSupported(DataFlavor flavor) {
                 return flavor.equals(DataFlavor.stringFlavor);
             }
-            
+
             @Override
             public DataFlavor[] getTransferDataFlavors() {
                 DataFlavor[] dataFlavors = new DataFlavor[1];
-                dataFlavors[0]=DataFlavor.stringFlavor;
+                dataFlavors[0] = DataFlavor.stringFlavor;
                 return dataFlavors;
             }
-            
+
             @Override
-            public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {                    
+            public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
                 return list.getSelectedValues();
             }
         };

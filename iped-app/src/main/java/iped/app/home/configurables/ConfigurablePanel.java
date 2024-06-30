@@ -26,12 +26,12 @@ import iped.configuration.Configurable;
  * @author Patrick Dalla Bernardina
  */
 
-public abstract class ConfigurablePanel extends DefaultPanel implements DocumentListener, IConfigurablePanel, VetoableChangeListener{
+public abstract class ConfigurablePanel extends DefaultPanel implements DocumentListener, IConfigurablePanel, VetoableChangeListener {
     protected Configurable<?> configurable;
     protected SpringLayout layout;
-    protected boolean changed=false;
-    
-    List<ChangeListener> changeListeners = new ArrayList<ChangeListener>();    
+    protected boolean changed = false;
+
+    List<ChangeListener> changeListeners = new ArrayList<ChangeListener>();
 
     protected ConfigurablePanel(Configurable<?> configurable, MainFrame mainFrame) {
         super(mainFrame);
@@ -39,8 +39,8 @@ public abstract class ConfigurablePanel extends DefaultPanel implements Document
     }
 
     /**
-     * Creates the UI objects of the panel.
-     * Every editable UI must install "this" object as a DocumentListener to keep track of changes
+     * Creates the UI objects of the panel. Every editable UI must install "this"
+     * object as a DocumentListener to keep track of changes
      */
     abstract public void createConfigurableGUI();
 
@@ -58,7 +58,7 @@ public abstract class ConfigurablePanel extends DefaultPanel implements Document
 
     @Override
     public void insertUpdate(DocumentEvent e) {
-        changedUpdate(e);        
+        changedUpdate(e);
     }
 
     @Override
@@ -68,7 +68,7 @@ public abstract class ConfigurablePanel extends DefaultPanel implements Document
 
     @Override
     public void changedUpdate(DocumentEvent e) {
-        changed=true;
+        changed = true;
         fireChangeListener(new ChangeEvent(e.getDocument()));
     }
 
@@ -83,18 +83,18 @@ public abstract class ConfigurablePanel extends DefaultPanel implements Document
     public void setConfigurable(Configurable<?> configurable) {
         this.configurable = configurable;
     }
-    
+
     public void fireChangeListener(ChangeEvent e) {
         for (Iterator iterator = changeListeners.iterator(); iterator.hasNext();) {
             ChangeListener changeListener = (ChangeListener) iterator.next();
-            changeListener.stateChanged(e);            
+            changeListener.stateChanged(e);
         }
     }
-    
+
     public void addChangeListener(ChangeListener changeListener) {
         changeListeners.add(changeListener);
     }
-    
+
     public void removeChangeListener(ChangeListener changeListener) {
         changeListeners.remove(changeListener);
     }

@@ -16,7 +16,7 @@ import iped.configuration.Configurable;
 import iped.engine.config.RegexTaskConfig.RegexEntry;
 import iped.engine.localization.Messages;
 
-public class RegexConfigurablePanel extends ConfigurablePanel{
+public class RegexConfigurablePanel extends ConfigurablePanel {
     protected JTextPane textArea;
 
     protected RegexConfigurablePanel(Configurable<?> configurable, MainFrame mainFrame) {
@@ -32,24 +32,24 @@ public class RegexConfigurablePanel extends ConfigurablePanel{
     @Override
     public void createConfigurableGUI() {
         JCheckBox checkField = new JCheckBox();
-        Boolean b = ((Pair<Boolean,?>)configurable.getConfiguration()).getKey();
-        checkField.setText(Messages.getString(configurable.getClass().getName()+".formatMatches", ""));
-        checkField.setToolTipText(Messages.getString(configurable.getClass().getName()+".formatMatches.tooltip", ""));
-        checkField.addChangeListener(e->{
-            changed=true;
+        Boolean b = ((Pair<Boolean, ?>) configurable.getConfiguration()).getKey();
+        checkField.setText(Messages.getString(configurable.getClass().getName() + ".formatMatches", ""));
+        checkField.setToolTipText(Messages.getString(configurable.getClass().getName() + ".formatMatches.tooltip", ""));
+        checkField.addChangeListener(e -> {
+            changed = true;
         });
         this.setLayout(new BorderLayout());
         this.add(checkField, BorderLayout.NORTH);
-        
+
         textArea = new JTextPane();
         textArea.setAutoscrolls(true);
         JScrollPane txtAreaScroll = new JScrollPane();
         txtAreaScroll.setViewportView(textArea);
         txtAreaScroll.setAutoscrolls(true);
-        this.add(txtAreaScroll,BorderLayout.CENTER);
+        this.add(txtAreaScroll, BorderLayout.CENTER);
 
-        Collection<RegexEntry> col = (Collection<RegexEntry>) ((Pair)configurable.getConfiguration()).getValue();
-        StringBuffer output = new StringBuffer(); 
+        Collection<RegexEntry> col = (Collection<RegexEntry>) ((Pair) configurable.getConfiguration()).getValue();
+        StringBuffer output = new StringBuffer();
         for (Iterator iterator = col.iterator(); iterator.hasNext();) {
             RegexEntry o = (RegexEntry) iterator.next();
             output.append(o.toString());

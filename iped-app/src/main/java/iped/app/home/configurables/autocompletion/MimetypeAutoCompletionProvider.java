@@ -24,18 +24,18 @@ import org.xml.sax.SAXException;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.SignatureConfig;
 
-public class MimetypeAutoCompletionProvider extends DefaultCompletionProvider{
+public class MimetypeAutoCompletionProvider extends DefaultCompletionProvider {
 
     private ArrayList<String> keywords;
 
-    public MimetypeAutoCompletionProvider(){
+    public MimetypeAutoCompletionProvider() {
         super();
 
-        TreeSortedSet<String> mimes=null;
+        TreeSortedSet<String> mimes = null;
         try {
             mimes = getCustomMimetypes();
             keywords = new ArrayList<String>();
-            if(mimes!=null) {
+            if (mimes != null) {
                 keywords.addAll(mimes);
             }
             SortedSet<MediaType> mts = MediaTypeRegistry.getDefaultRegistry().getTypes();
@@ -44,17 +44,17 @@ public class MimetypeAutoCompletionProvider extends DefaultCompletionProvider{
                 keywords.add(mediaType.toString());
             }
             Collections.sort(keywords);
-            
+
             for (Iterator iterator = keywords.iterator(); iterator.hasNext();) {
                 String mediaType = (String) iterator.next();
-                this.addCompletion(new BasicCompletion(this, mediaType));   
+                this.addCompletion(new BasicCompletion(this, mediaType));
             }
         } catch (ParserConfigurationException | SAXException | IOException e) {
             e.printStackTrace();
         }
-        
+
     }
-    
+
     private TreeSortedSet<String> getCustomMimetypes() throws ParserConfigurationException, SAXException, IOException {
         SignatureConfig sc = ConfigurationManager.get().findObject(SignatureConfig.class);
 
@@ -64,19 +64,19 @@ public class MimetypeAutoCompletionProvider extends DefaultCompletionProvider{
         String xml = sc.getConfiguration();
         ByteArrayInputStream bis = new ByteArrayInputStream(xml.getBytes(Charset.forName("UTF-8")));
         Document doc = docBuilder.parse(bis);
-        
+
         TreeSortedSet<String> mimes = new TreeSortedSet<String>();
         NodeList nl = doc.getElementsByTagName("mime-type");
-        for(int i =0; i<nl.getLength(); i++) {
+        for (int i = 0; i < nl.getLength(); i++) {
             String mime = nl.item(i).getAttributes().getNamedItem("type").getNodeValue();
             mimes.add(mime);
         }
         return mimes;
     }
-    
+
     @Override
     protected boolean isValidChar(char ch) {
-        return super.isValidChar(ch) || ch=='/' || ch=='-' || ch=='.'|| ch=='-'|| ch=='='|| ch=='+'|| ch==';';
+        return super.isValidChar(ch) || ch == '/' || ch == '-' || ch == '.' || ch == '-' || ch == '=' || ch == '+' || ch == ';';
     }
 
     public boolean containsKeyword(String string) {

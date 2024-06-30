@@ -1,13 +1,16 @@
 package iped.app.home.newcase.model;/*
- * @created 27/09/2022
- * @project IPED
- * @author Thiago S. Figueiredo
- */
-
-import iped.engine.data.ReportInfo;
+                                    * @created 27/09/2022
+                                    * @project IPED
+                                    * @author Thiago S. Figueiredo
+                                    */
 
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import iped.engine.data.ReportInfo;
 
 public class IPEDProcess {
 
@@ -49,6 +52,7 @@ public class IPEDProcess {
 
     /**
      * A list to of iped command options
+     * 
      * @return ArrayList<String> - A list containing the options
      */
     private Map<String, String> getOptions() {
@@ -62,19 +66,19 @@ public class IPEDProcess {
         this.options = options;
     }
 
-    public void addOptionValue(String key, String value){
+    public void addOptionValue(String key, String value) {
         String currentKey = getOptions().get(key);
-        if( currentKey == null ){
+        if (currentKey == null) {
             getOptions().put(key, value);
-        }else{
+        } else {
             getOptions().putIfAbsent(key, value);
         }
 
     }
 
-    public List getOptionsAsList(){
+    public List getOptionsAsList() {
         ArrayList optionsList = new ArrayList();
-        for( Map.Entry<String, String> set : getOptions().entrySet() ){
+        for (Map.Entry<String, String> set : getOptions().entrySet()) {
             optionsList.add(set.getKey());
             optionsList.add(set.getValue());
         }

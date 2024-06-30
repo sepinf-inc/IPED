@@ -1,5 +1,11 @@
 package iped.app.home.opencase;
 
+import java.nio.file.Path;
+import java.util.ArrayList;
+
+import javax.swing.JPanel;
+import javax.swing.table.AbstractTableModel;
+
 /*
  * @created 12/09/2022
  * @project IPED
@@ -8,14 +14,9 @@ package iped.app.home.opencase;
 
 import iped.app.ui.Messages;
 
-import javax.swing.*;
-import javax.swing.table.AbstractTableModel;
-import java.nio.file.Path;
-import java.util.ArrayList;
-
 public class CasesTableModel extends AbstractTableModel {
 
-    private final String[] COLUMN_NAME = {Messages.get("Home.OpenCase.CaseTableHeader")};
+    private final String[] COLUMN_NAME = { Messages.get("Home.OpenCase.CaseTableHeader") };
     private final ArrayList<Path> caseList;
 
     public CasesTableModel(ArrayList<Path> caseList) {
@@ -24,7 +25,7 @@ public class CasesTableModel extends AbstractTableModel {
 
     @Override
     public int getRowCount() {
-        return (caseList != null)? caseList.size(): 0;
+        return (caseList != null) ? caseList.size() : 0;
     }
 
     @Override
@@ -39,9 +40,11 @@ public class CasesTableModel extends AbstractTableModel {
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        switch (columnIndex){
-            case 0: return caseList.get(rowIndex);
-            default: return "";
+        switch (columnIndex) {
+            case 0:
+                return caseList.get(rowIndex);
+            default:
+                return "";
         }
     }
 
@@ -59,7 +62,5 @@ public class CasesTableModel extends AbstractTableModel {
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
 
     }
-
-
 
 }

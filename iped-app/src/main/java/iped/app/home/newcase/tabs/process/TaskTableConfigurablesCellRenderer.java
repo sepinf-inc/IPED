@@ -24,31 +24,29 @@ import iped.engine.task.IScriptTask;
 public class TaskTableConfigurablesCellRenderer implements TableCellRenderer {
     ConfigurationManager configurationManager;
     MainFrame mainFrame;
-    
+
     public TaskTableConfigurablesCellRenderer(ConfigurationManager configurationManager, MainFrame mainFrame) {
         this.configurationManager = configurationManager;
-        this.mainFrame = mainFrame;        
+        this.mainFrame = mainFrame;
     }
 
     @Override
-    public Component getTableCellRendererComponent(JTable table, Object cellValue, boolean isSelected, boolean hasFocus,
-            int row, int column) {
+    public Component getTableCellRendererComponent(JTable table, Object cellValue, boolean isSelected, boolean hasFocus, int row, int column) {
 
         AbstractTask task = (AbstractTask) cellValue;
         int count = 0; // counts the number of non EnableTaskProperty configurables
         Exception configurableLoadException = null;
-        
+
         List<Configurable<?>> configurables = null;
         try {
             configurables = task.getConfigurables();
-        }catch (Exception e) {
+        } catch (Exception e) {
             configurableLoadException = e;
         }
 
-        if(configurables!=null) {
+        if (configurables != null) {
             for (Configurable<?> value : configurables) {
-                if (!(value instanceof EnableTaskProperty)
-                        && !(value instanceof HashDBLookupConfig)) {
+                if (!(value instanceof EnableTaskProperty) && !(value instanceof HashDBLookupConfig)) {
                     count++;
                 }
             }
@@ -58,20 +56,19 @@ public class TaskTableConfigurablesCellRenderer implements TableCellRenderer {
         panel.setBackground(TableCellRendererUtil.getBackground(table, row, isSelected));
 
         if (count > 0 || task instanceof IScriptTask) {
-            panel.setLayout( new GridBagLayout() );
+            panel.setLayout(new GridBagLayout());
 
             GridBagConstraints gbc = new GridBagConstraints();
             JButton taskOptionButton = new JButton("...");
-            if(configurableLoadException!=null) {
+            if (configurableLoadException != null) {
                 taskOptionButton.setBackground(Color.RED);
                 String errorMsg = configurableLoadException.getMessage();
                 if (errorMsg == null)
                     errorMsg = configurableLoadException.getClass().getCanonicalName();
                 String finalErrorMsg = errorMsg;
-                taskOptionButton.addActionListener(
-                        e -> JOptionPane.showMessageDialog(panel, "Error loading configurables: " + finalErrorMsg));
-            }else {
-                taskOptionButton.addActionListener( e -> new TaskConfigDialog(ConfigurationManager.get(), task, mainFrame).setVisible(true));
+                taskOptionButton.addActionListener(e -> JOptionPane.showMessageDialog(panel, "Error loading configurables: " + finalErrorMsg));
+            } else {
+                taskOptionButton.addActionListener(e -> new TaskConfigDialog(ConfigurationManager.get(), task, mainFrame).setVisible(true));
             }
             taskOptionButton.setVerticalAlignment(SwingConstants.CENTER);
 

@@ -21,8 +21,8 @@ import iped.app.home.processmanager.ProcessManagerContainer;
 import iped.app.ui.Messages;
 
 /**
- * New Case Page
- * here we got the main container for all necessary pages to start a new processing
+ * New Case Page here we got the main container for all necessary pages to start
+ * a new processing
  */
 public class NewCaseContainerPanel extends DefaultPanel {
 
@@ -33,7 +33,9 @@ public class NewCaseContainerPanel extends DefaultPanel {
 
     /**
      * Construc and save this instance reference to a static variable
-     * @param mainFrame - A reference of MainFrame instance
+     * 
+     * @param mainFrame
+     *            - A reference of MainFrame instance
      */
     public NewCaseContainerPanel(MainFrame mainFrame) {
         super(mainFrame);
@@ -42,25 +44,28 @@ public class NewCaseContainerPanel extends DefaultPanel {
     /**
      * Prepare everything to be displayed
      */
-    protected void createAndShowGUI(){
+    protected void createAndShowGUI() {
         instance = this;
-        this.setLayout( new BoxLayout( this, BoxLayout.PAGE_AXIS ) );
+        this.setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
         this.add(setupTabbedPanel());
     }
 
     /**
-     * Setup and create a new JTabbedPane instance
-     * Here is created a instance of all nested JPanels
+     * Setup and create a new JTabbedPane instance Here is created a instance of all
+     * nested JPanels
+     * 
      * @return JTabbedPane
      */
-    private JTabbedPane setupTabbedPanel(){
+    private JTabbedPane setupTabbedPanel() {
 
         tabbedPane = new JTabbedPane(JTabbedPane.LEFT);
-        //tabbedPane.setEnabled(false);
-
+        // tabbedPane.setEnabled(false);
 
         tabbedPane.setUI(new BasicTabbedPaneUI() {
-            @Override protected int calculateTabHeight(int tabPlacement, int tabIndex, int fontHeight) {return 45;}
+            @Override
+            protected int calculateTabHeight(int tabPlacement, int tabIndex, int fontHeight) {
+                return 45;
+            }
         });
 
         tabbedPane.addTab(Messages.get("Home.CaseInformation"), null, new CaseInfoTab(mainFrame), Messages.get("Home.CaseInformationTollTip"));
@@ -76,11 +81,11 @@ public class NewCaseContainerPanel extends DefaultPanel {
     /**
      * Display the next Tab available
      */
-    public void goToNextTab(){
+    public void goToNextTab() {
         int selectedIndex = tabbedPane.getSelectedIndex();
-        boolean isLastTabIndex =  (selectedIndex == tabbedPane.getTabCount()-1);
-        //if is in the last tab index, prevent to get a invalid index
-        int nextIndex = isLastTabIndex ? selectedIndex : selectedIndex+1;
+        boolean isLastTabIndex = (selectedIndex == tabbedPane.getTabCount() - 1);
+        // if is in the last tab index, prevent to get a invalid index
+        int nextIndex = isLastTabIndex ? selectedIndex : selectedIndex + 1;
         disableTabs();
         tabbedPane.setSelectedIndex(nextIndex);
         tabbedPane.setEnabledAt(nextIndex, true);
@@ -89,17 +94,17 @@ public class NewCaseContainerPanel extends DefaultPanel {
     /**
      * Display the previous Tab available
      */
-    public void goToPreviousTab(){
+    public void goToPreviousTab() {
         int selectedIndex = tabbedPane.getSelectedIndex();
         boolean isTheFirstTabIndex = selectedIndex == 0;
-        int previousIndex = isTheFirstTabIndex ? selectedIndex : selectedIndex-1 ;
+        int previousIndex = isTheFirstTabIndex ? selectedIndex : selectedIndex - 1;
         disableTabs();
         tabbedPane.setSelectedIndex(previousIndex);
         tabbedPane.setEnabledAt(previousIndex, true);
     }
 
-    private void disableTabs(){
-        for( int i = 0; i < tabbedPane.getTabCount(); i++ ){
+    private void disableTabs() {
+        for (int i = 0; i < tabbedPane.getTabCount(); i++) {
             tabbedPane.setEnabledAt(i, false);
         }
     }
@@ -107,20 +112,21 @@ public class NewCaseContainerPanel extends DefaultPanel {
     /**
      * Go to HomePanel
      */
-    public void goHome(){
+    public void goHome() {
         mainFrame.showPanel(MainFrameCardsNames.HOME);
     }
 
     /**
      * Return NewCaseContainerPanel instance reference
+     * 
      * @return NewCaseContainerPanel - Current NewCaseContainerPanel instance
      */
-    public static NewCaseContainerPanel getInstance(){
+    public static NewCaseContainerPanel getInstance() {
         return instance;
     }
 
     public IPEDProcess getIpedProcess() {
-        if( ipedProcess == null )
+        if (ipedProcess == null)
             ipedProcess = new IPEDProcess();
         return ipedProcess;
     }

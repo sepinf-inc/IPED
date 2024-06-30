@@ -1,8 +1,8 @@
 package iped.app.home.newcase.tabs.caseinfo;/*
- * @created 08/09/2022
- * @project IPED
- * @author Thiago S. Figueiredo
- */
+                                            * @created 08/09/2022
+                                            * @project IPED
+                                            * @author Thiago S. Figueiredo
+                                            */
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -85,7 +85,7 @@ public class CaseInfoTab extends DefaultPanel {
     private JRadioButton radioCaseOutContinue;
     private JRadioButton radioCaseOutRestart;
     private ButtonGroup buttonGroupCaseOutOptions;
-    private FileNameExtensionFilter jsonFilter = new FileNameExtensionFilter("caseinfo.json", new String[]{"json", "JSON"});
+    private FileNameExtensionFilter jsonFilter = new FileNameExtensionFilter("caseinfo.json", new String[] { "json", "JSON" });
     private ArrayList<JTextComponent> caseInfoInputList;
 
     public CaseInfoTab(MainFrame mainFrame) {
@@ -95,9 +95,9 @@ public class CaseInfoTab extends DefaultPanel {
     /**
      * Prepare everything to be displayed
      */
-    protected void createAndShowGUI(){
+    protected void createAndShowGUI() {
         ipedProcess = NewCaseContainerPanel.getInstance().getIpedProcess();
-        this.setLayout( new BorderLayout() );
+        this.setLayout(new BorderLayout());
         this.add(createTitlePanel(), BorderLayout.NORTH);
         this.add(createFormPanel(), BorderLayout.CENTER);
         this.add(createNavigationButtonsPanel(), BorderLayout.SOUTH);
@@ -105,9 +105,10 @@ public class CaseInfoTab extends DefaultPanel {
 
     /**
      * Create a new JPanel instance containing the Page Title
+     * 
      * @return - JPanel containing the Page Title
      */
-    private JPanel createTitlePanel(){
+    private JPanel createTitlePanel() {
         JPanel panelTitle = new JPanel();
         panelTitle.setBackground(Color.white);
         JLabel labelTitle = new JLabel(Messages.get("Home.CaseInformation"));
@@ -116,7 +117,7 @@ public class CaseInfoTab extends DefaultPanel {
         return panelTitle;
     }
 
-    private void createFormComponentInstances(){
+    private void createFormComponentInstances() {
         localConfig = ConfigurationManager.get().findObject(LocalConfig.class);
         caseInfoInputList = new ArrayList<>();
 
@@ -169,19 +170,19 @@ public class CaseInfoTab extends DefaultPanel {
         checkBoxOutputOnSSD.setToolTipText(Messages.get("Home.NewCase.IsCaseOutputOnSSDToolTip"));
         checkBoxOutputOnSSD.setSelected(localConfig.isOutputOnSSD());
         checkBoxOutputOnSSD.setOpaque(false);
-        checkBoxOutputOnSSD.addItemListener(e->{
+        checkBoxOutputOnSSD.addItemListener(e -> {
             try {
                 Boolean isEnableOutputSSD = (e.getStateChange() == ItemEvent.SELECTED);
                 LocalConfig localConfig = ConfigurationManager.get().findObject(LocalConfig.class);
                 localConfig.getPropertie().setProperty(LocalConfig.OUTPUT_ON_SSD, isEnableOutputSSD.toString());
                 localConfig.getPropertie().saveOnFile(CasePathManager.getInstance().getLocalConfigFile());
                 ConfigurationManager.get().reloadConfigurable(LocalConfig.class);
-            }catch (IOException ex){
+            } catch (IOException ex) {
                 ex.printStackTrace();
             }
         });
         buttonSelectCaseOutput = new JButton("...");
-        buttonSelectCaseOutput.addActionListener( e -> {
+        buttonSelectCaseOutput.addActionListener(e -> {
             JFileChooser fileChooserDestino = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
             fileChooserDestino.setDialogTitle(Messages.get("Home.NewCase.ChooseCaseOutput"));
             fileChooserDestino.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -190,28 +191,28 @@ public class CaseInfoTab extends DefaultPanel {
             if (!outputStr.isBlank()) {
                 fileChooserDestino.setCurrentDirectory(new File(outputStr));
             }
-            if( fileChooserDestino.showOpenDialog(this) == JFileChooser.APPROVE_OPTION){
+            if (fileChooserDestino.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
                 setCaseOutputValue(fileChooserDestino.getSelectedFile().toPath());
             }
-        } );
+        });
         buttonCheckCaseOutput = new JButton("");
         Image img = (new ImageIcon(getClass().getResource("/iped/app/ui/refresh.png"))).getImage();
-        Image resizedIcon = img.getScaledInstance( 15, 15,  java.awt.Image.SCALE_SMOOTH ) ;
-        buttonCheckCaseOutput.setIcon( new ImageIcon(resizedIcon) );
+        Image resizedIcon = img.getScaledInstance(15, 15, java.awt.Image.SCALE_SMOOTH);
+        buttonCheckCaseOutput.setIcon(new ImageIcon(resizedIcon));
         buttonCheckCaseOutput.addActionListener(e -> {
-            if(ipedProcess.getCaseOutputPath() != null)
+            if (ipedProcess.getCaseOutputPath() != null)
                 setCaseOutputValue(ipedProcess.getCaseOutputPath());
 
         });
     }
 
-    private File showSaveCaseInfoFileChooser(String title){
+    private File showSaveCaseInfoFileChooser(String title) {
         JFileChooser fileChooser = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
         fileChooser.setDialogTitle(title);
         fileChooser.setAcceptAllFileFilterUsed(false);
         fileChooser.addChoosableFileFilter(jsonFilter);
         int returnValue = fileChooser.showSaveDialog(this);
-        if (returnValue == JFileChooser.APPROVE_OPTION){
+        if (returnValue == JFileChooser.APPROVE_OPTION) {
             File file = fileChooser.getSelectedFile();
             if (!file.getName().toLowerCase().endsWith(".json")) {
                 file = new File(file.getParentFile(), file.getName() + ".json");
@@ -221,43 +222,46 @@ public class CaseInfoTab extends DefaultPanel {
         return null;
     }
 
-    private File showLoadCaseInfoFileChooser(String title){
+    private File showLoadCaseInfoFileChooser(String title) {
         JFileChooser fileChooser = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
         fileChooser.setDialogTitle(title);
         fileChooser.setAcceptAllFileFilterUsed(false);
         fileChooser.addChoosableFileFilter(jsonFilter);
-        int returnValue = fileChooser.showOpenDialog (this);
-        if (returnValue == JFileChooser.APPROVE_OPTION){
+        int returnValue = fileChooser.showOpenDialog(this);
+        if (returnValue == JFileChooser.APPROVE_OPTION) {
             return fileChooser.getSelectedFile();
         }
         return null;
     }
 
-    private void setCaseOutputValue(Path caseOutput){
-        //first check if exists a case on selected output folder
+    private void setCaseOutputValue(Path caseOutput) {
+        // first check if exists a case on selected output folder
         boolean isExistsCase = Paths.get(caseOutput.toString(), "IPED-SearchApp.exe").toFile().exists();
         panelCaseOutputOptions.setVisible(isExistsCase);
-        if(isExistsCase) {
-            //check if the existent case is finished, if yes the user cannot choose the continue options
+        if (isExistsCase) {
+            // check if the existent case is finished, if yes the user cannot choose the
+            // continue options
             boolean isCaseFinished = Paths.get(caseOutput.toString(), "iped", "data", "processing_finished").toFile().exists();
-            radioCaseOutContinue.setVisible(! isCaseFinished);
+            radioCaseOutContinue.setVisible(!isCaseFinished);
         }
-        //when user reselect other path wee need to unselect the previously selected radio button
-        if( ! panelCaseOutputOptions.isVisible() ) {
+        // when user reselect other path wee need to unselect the previously selected
+        // radio button
+        if (!panelCaseOutputOptions.isVisible()) {
             ipedProcess.setExistentCaseOption(null);
             buttonGroupCaseOutOptions.clearSelection();
         }
 
         IPEDProcess ipedProcess = NewCaseContainerPanel.getInstance().getIpedProcess();
         ipedProcess.setCaseOutputPath(caseOutput);
-        textFieldCaseOutput.setText( caseOutput.toString() );
+        textFieldCaseOutput.setText(caseOutput.toString());
     }
 
     /**
      * Create a new JPanel instance containing all inputs
+     * 
      * @return JPanel - A JPanel containing all data input form itens
      */
-    private JScrollPane createFormPanel(){
+    private JScrollPane createFormPanel() {
         JPanel panelForm = new JPanel(new GridBagLayout());
         panelForm.setBackground(super.getCurrentBackGroundColor());
         createFormComponentInstances();
@@ -274,61 +278,61 @@ public class CaseInfoTab extends DefaultPanel {
 
         int currentLine = 0;
 
-        panelForm.add(new JLabel(Messages.get("ReportDialog.ReportNum")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
+        panelForm.add(new JLabel(Messages.get("ReportDialog.ReportNum") + ":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
         panelForm.add(textFieldReportNumber, getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
 
-        panelForm.add(new JLabel(Messages.get("ReportDialog.ReportDate")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
+        panelForm.add(new JLabel(Messages.get("ReportDialog.ReportDate") + ":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
         panelForm.add(textFieldReportDate, getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
 
-        panelForm.add(new JLabel(Messages.get("ReportDialog.ReportTitle")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
+        panelForm.add(new JLabel(Messages.get("ReportDialog.ReportTitle") + ":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
         panelForm.add(textFieldReportTitle, getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
 
-        panelForm.add(new JLabel(Messages.get("ReportDialog.Examiner")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
+        panelForm.add(new JLabel(Messages.get("ReportDialog.Examiner") + ":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
         panelForm.add(textAreaExaminerNames, getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
 
-        panelForm.add(new JLabel(Messages.get("ReportDialog.Investigation")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
+        panelForm.add(new JLabel(Messages.get("ReportDialog.Investigation") + ":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
         panelForm.add(textFieldCaseNumber, getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
 
-        panelForm.add(new JLabel(Messages.get("ReportDialog.Request")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
+        panelForm.add(new JLabel(Messages.get("ReportDialog.Request") + ":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
         panelForm.add(textFieldRequestForm, getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
 
-        panelForm.add(new JLabel(Messages.get("ReportDialog.RequestDate")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
+        panelForm.add(new JLabel(Messages.get("ReportDialog.RequestDate") + ":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
         panelForm.add(textFieldRequestDate, getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
 
-        panelForm.add(new JLabel(Messages.get("ReportDialog.Requester")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
+        panelForm.add(new JLabel(Messages.get("ReportDialog.Requester") + ":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
         panelForm.add(textFieldRequester, getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
 
-        panelForm.add(new JLabel(Messages.get("ReportDialog.Record")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
+        panelForm.add(new JLabel(Messages.get("ReportDialog.Record") + ":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
         panelForm.add(textFieldLabCaseNumber, getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
 
-        panelForm.add(new JLabel(Messages.get("ReportDialog.RecordDate")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
+        panelForm.add(new JLabel(Messages.get("ReportDialog.RecordDate") + ":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
         panelForm.add(textFieldLabCaseDate, getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
 
-        panelForm.add(new JLabel(Messages.get("ReportDialog.InvestigatedNames")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
+        panelForm.add(new JLabel(Messages.get("ReportDialog.InvestigatedNames") + ":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
         panelForm.add(textAreaInvestigatedNames, getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
 
-        panelForm.add(new JLabel(Messages.get("ReportDialog.organizationName")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
+        panelForm.add(new JLabel(Messages.get("ReportDialog.organizationName") + ":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
         panelForm.add(textFieldOrganization, getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
 
-        panelForm.add(new JLabel(Messages.get("ReportDialog.contact")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
+        panelForm.add(new JLabel(Messages.get("ReportDialog.contact") + ":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
         panelForm.add(textFieldContact, getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
 
-        panelForm.add(new JLabel(Messages.get("ReportDialog.caseNotes")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
+        panelForm.add(new JLabel(Messages.get("ReportDialog.caseNotes") + ":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
         panelForm.add(textAreaCaseNotes, getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
 
-        //----------------Case data buttons-----------------
-        panelForm.add(createCaseDataPanel(), getGridBagConstraints(column0, currentLine++, fullColumnWidth, fullWeightx, new Insets(10,10,0,10)));
+        // ----------------Case data buttons-----------------
+        panelForm.add(createCaseDataPanel(), getGridBagConstraints(column0, currentLine++, fullColumnWidth, fullWeightx, new Insets(10, 10, 0, 10)));
 
-        //----------------Line Separator-----------------
-        panelForm.add(new JSeparator(), getGridBagConstraints(column0, currentLine++, fullColumnWidth, fullWeightx, new Insets(10,10,10,10)));
+        // ----------------Line Separator-----------------
+        panelForm.add(new JSeparator(), getGridBagConstraints(column0, currentLine++, fullColumnWidth, fullWeightx, new Insets(10, 10, 10, 10)));
 
-        panelForm.add(new JLabel(Messages.get("Home.NewCase.CaseOutput")+":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
+        panelForm.add(new JLabel(Messages.get("Home.NewCase.CaseOutput") + ":"), getGridBagConstraints(column0, currentLine, column0Width, noWeightx));
         panelForm.add(createSetCaseOutputPanel(), getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
 
         panelForm.add(checkBoxOutputOnSSD, getGridBagConstraints(column1, currentLine++, column1width, fullWeightx));
 
         panelCaseOutputOptions = createCaseOutputOptionsPanel();
-        panelForm.add(panelCaseOutputOptions, getGridBagConstraints(column0, currentLine, fullColumnWidth, fullWeightx, new Insets(10,10,0,10)));
+        panelForm.add(panelCaseOutputOptions, getGridBagConstraints(column0, currentLine, fullColumnWidth, fullWeightx, new Insets(10, 10, 0, 10)));
 
         return new JScrollPane(panelForm);
 
@@ -336,9 +340,10 @@ public class CaseInfoTab extends DefaultPanel {
 
     /**
      * Create a JPanel with one textfield and a button to set the case output
+     * 
      * @return JPanel with a textfield and a button to set case output
      */
-    private JPanel createSetCaseOutputPanel(){
+    private JPanel createSetCaseOutputPanel() {
         JPanel panelCaseOutput = new JPanel();
         panelCaseOutput.setLayout(new BoxLayout(panelCaseOutput, BoxLayout.LINE_AXIS));
         panelCaseOutput.setBackground(Color.white);
@@ -348,7 +353,7 @@ public class CaseInfoTab extends DefaultPanel {
         return panelCaseOutput;
     }
 
-    private JPanel createCaseOutputOptionsPanel(){
+    private JPanel createCaseOutputOptionsPanel() {
         buttonGroupCaseOutOptions = new ButtonGroup();
         radioCaseOutAdd = new JRadioButton(Messages.get("Home.AppendExistentCase"), false);
         radioCaseOutAdd.setBackground(super.getCurrentBackGroundColor());
@@ -375,13 +380,14 @@ public class CaseInfoTab extends DefaultPanel {
 
     /**
      * Create a JPanel with Save and load buttons
+     * 
      * @return A new JPanel with Case Button
      */
-    private JPanel createCaseDataPanel(){
+    private JPanel createCaseDataPanel() {
         JPanel panelCaseData = new JPanel();
         panelCaseData.setBackground(super.getCurrentBackGroundColor());
         JButton buttonSaveCaseData = new JButton(Messages.get("Home.NewCase.SaveCaseData"));
-        buttonSaveCaseData.addActionListener( e -> {
+        buttonSaveCaseData.addActionListener(e -> {
             File destinationFile = showSaveCaseInfoFileChooser(Messages.get("Home.NewCase.ChooseCaseInfoFileOutput"));
             if (destinationFile != null) {
                 populateCaseInfo();
@@ -390,13 +396,13 @@ public class CaseInfoTab extends DefaultPanel {
         });
         JButton buttonLoadCaseData = new JButton(Messages.get("Home.NewCase.LoadCaseData"));
         buttonLoadCaseData.addActionListener(e -> {
-            if( isCaseInfoFormFilled() ){
+            if (isCaseInfoFormFilled()) {
                 int selectedOption = JOptionPane.showConfirmDialog(null, Messages.get("Home.NewCase.OpenCaseFileDialogMessage"), Messages.get("Home.NewCase.OpenCaseFileDialogTitle"), JOptionPane.YES_NO_OPTION);
-                if(selectedOption == 1)
+                if (selectedOption == 1)
                     return;
             }
 
-            File caseInfoSourceFile = showLoadCaseInfoFileChooser( Messages.get("Home.NewCase.ChooseCaseInfoFile") );
+            File caseInfoSourceFile = showLoadCaseInfoFileChooser(Messages.get("Home.NewCase.ChooseCaseInfoFile"));
             if (caseInfoSourceFile != null) {
                 ReportInfo reportInfo = new ReportInfo();
                 try {
@@ -416,11 +422,17 @@ public class CaseInfoTab extends DefaultPanel {
 
     /**
      * Create a new GridBagConstraints to be used on this page Form
-     * @param tableColumnIndex - The index number of table column
-     * @param tableLineIndex - The index number of table line
-     * @param cellWidth - The table Cell Width
-     * @param weightX - Cell Weight X
-     * @return GridBagConstraints - a new GridBagConstraints instance containing all parameter passed
+     * 
+     * @param tableColumnIndex
+     *            - The index number of table column
+     * @param tableLineIndex
+     *            - The index number of table line
+     * @param cellWidth
+     *            - The table Cell Width
+     * @param weightX
+     *            - Cell Weight X
+     * @return GridBagConstraints - a new GridBagConstraints instance containing all
+     *         parameter passed
      */
     private GridBagConstraints getGridBagConstraints(int tableColumnIndex, int tableLineIndex, int cellWidth, double weightX) {
         GridBagConstraints gbcons = new GridBagConstraints();
@@ -430,20 +442,27 @@ public class CaseInfoTab extends DefaultPanel {
         gbcons.gridy = tableLineIndex;
         gbcons.gridwidth = cellWidth;
         gbcons.gridheight = 1;
-        gbcons.insets = new Insets(2,10,2,10);
+        gbcons.insets = new Insets(2, 10, 2, 10);
         return gbcons;
     }
 
     /**
      * Create a new GridBagConstraints to be used on this page Form
-     * @param tableColumnIndex - The index number of table column
-     * @param tableLineIndex - The index number of table line
-     * @param cellWidth - The table Cell Width
-     * @param weightX - Cell Weight X
-     * @param insets - the Insets
-     * @return GridBagConstraints - a new GridBagConstraints instance containing all parameter passed
+     * 
+     * @param tableColumnIndex
+     *            - The index number of table column
+     * @param tableLineIndex
+     *            - The index number of table line
+     * @param cellWidth
+     *            - The table Cell Width
+     * @param weightX
+     *            - Cell Weight X
+     * @param insets
+     *            - the Insets
+     * @return GridBagConstraints - a new GridBagConstraints instance containing all
+     *         parameter passed
      */
-    private GridBagConstraints getGridBagConstraints(int tableColumnIndex, int tableLineIndex, int cellWidth, double weightX, Insets insets){
+    private GridBagConstraints getGridBagConstraints(int tableColumnIndex, int tableLineIndex, int cellWidth, double weightX, Insets insets) {
         GridBagConstraints gbcons = getGridBagConstraints(tableColumnIndex, tableLineIndex, cellWidth, weightX);
         gbcons.insets = insets;
         return gbcons;
@@ -451,33 +470,34 @@ public class CaseInfoTab extends DefaultPanel {
 
     /**
      * A JPanel containing "Cancel" and "Next" buttons
+     * 
      * @return JPanel - a new JPanel instance containing the bottom page Button
      */
     private JPanel createNavigationButtonsPanel() {
         JPanel panelButtons = new JPanel();
         panelButtons.setBackground(Color.white);
         JButton buttoCancel = new JButton(Messages.get("Home.Cancel"));
-        buttoCancel.addActionListener( e -> NewCaseContainerPanel.getInstance().goHome());
+        buttoCancel.addActionListener(e -> NewCaseContainerPanel.getInstance().goHome());
         JButton buttonNext = new JButton(Messages.get("Home.Next"));
-        buttonNext.addActionListener( e -> navigateToNextTab() );
+        buttonNext.addActionListener(e -> navigateToNextTab());
         panelButtons.add(buttoCancel);
         panelButtons.add(buttonNext);
         return panelButtons;
     }
 
-    private void navigateToNextTab(){
+    private void navigateToNextTab() {
         Path casePath = ipedProcess.getCaseOutputPath();
-        //check if output path exists
-        if( (casePath == null) || ( ! Files.isDirectory(casePath) ) ){
+        // check if output path exists
+        if ((casePath == null) || (!Files.isDirectory(casePath))) {
             JOptionPane.showMessageDialog(this, Messages.get("Home.NewCase.CaseOutputRequired"), Messages.get("Home.NewCase.CaseOutputRequiredTitle"), JOptionPane.WARNING_MESSAGE);
             return;
         }
-        //Check case output permissions
-        if( (! Files.isReadable(casePath)) || (! Files.isWritable(casePath)) ){
+        // Check case output permissions
+        if ((!Files.isReadable(casePath)) || (!Files.isWritable(casePath))) {
             JOptionPane.showMessageDialog(this, Messages.get("Home.NewCase.CaseOutputPermission"), Messages.get("Home.NewCase.CaseOutputPermissionTitle"), JOptionPane.WARNING_MESSAGE);
             return;
         }
-        if( panelCaseOutputOptions.isVisible() && (buttonGroupCaseOutOptions.getSelection() == null ) ){
+        if (panelCaseOutputOptions.isVisible() && (buttonGroupCaseOutOptions.getSelection() == null)) {
             JOptionPane.showMessageDialog(this, Messages.get("Home.NewCase.CaseOutPutOptionsRequired"), Messages.get("Home.NewCase.CaseOutputRequiredTitle"), JOptionPane.WARNING_MESSAGE);
             return;
         }
@@ -487,32 +507,32 @@ public class CaseInfoTab extends DefaultPanel {
         NewCaseContainerPanel.getInstance().goToNextTab();
     }
 
-    private void setCaseOutputOptions(){
-        if(radioCaseOutAdd.isSelected())
+    private void setCaseOutputOptions() {
+        if (radioCaseOutAdd.isSelected())
             ipedProcess.setExistentCaseOption(ExistentCaseOptions.APPEND);
         if (radioCaseOutContinue.isSelected())
             ipedProcess.setExistentCaseOption(ExistentCaseOptions.CONTINUE);
-        if( radioCaseOutRestart.isSelected())
+        if (radioCaseOutRestart.isSelected())
             ipedProcess.setExistentCaseOption(ExistentCaseOptions.RESTART);
     }
 
-    private void populateCaseInfo(){
+    private void populateCaseInfo() {
         ReportInfo reportInfo = ipedProcess.getReportInfo();
-        if( reportInfo == null ) {
+        if (reportInfo == null) {
             reportInfo = new ReportInfo();
             ipedProcess.setReportInfo(reportInfo);
         }
         reportInfo.reportNumber = textFieldReportNumber.getText();
         reportInfo.reportDate = textFieldReportDate.getText();
         reportInfo.reportTitle = textFieldReportTitle.getText();
-        reportInfo.examiners = new ArrayList<>( Arrays.asList(textAreaExaminerNames.getText().split("\n")) );
+        reportInfo.examiners = new ArrayList<>(Arrays.asList(textAreaExaminerNames.getText().split("\n")));
         reportInfo.caseNumber = textFieldCaseNumber.getText();
         reportInfo.requestForm = textFieldRequestForm.getText();
         reportInfo.requestDate = textFieldRequestDate.getText();
         reportInfo.requester = textFieldRequester.getText();
         reportInfo.labCaseNumber = textFieldLabCaseNumber.getText();
         reportInfo.labCaseDate = textFieldLabCaseDate.getText();
-        reportInfo.investigatedName = new ArrayList<>(Arrays.asList(textAreaInvestigatedNames.getText().split("\n") ));
+        reportInfo.investigatedName = new ArrayList<>(Arrays.asList(textAreaInvestigatedNames.getText().split("\n")));
         reportInfo.organizationName = textFieldOrganization.getText();
         reportInfo.contact = textFieldContact.getText();
         reportInfo.caseNotes = textAreaCaseNotes.getText();
@@ -521,11 +541,12 @@ public class CaseInfoTab extends DefaultPanel {
 
     /**
      * Check if there is any information filled in case info form
+     * 
      * @return
      */
-    private boolean isCaseInfoFormFilled(){
-        for(JTextComponent currentCaseInfoInput : caseInfoInputList ){
-            if(! StringUtils.isEmpty(currentCaseInfoInput.getText()) )
+    private boolean isCaseInfoFormFilled() {
+        for (JTextComponent currentCaseInfoInput : caseInfoInputList) {
+            if (!StringUtils.isEmpty(currentCaseInfoInput.getText()))
                 return true;
         }
         return false;
@@ -534,31 +555,31 @@ public class CaseInfoTab extends DefaultPanel {
     /**
      * Fill the form inputs with reportinfo class data
      */
-    private void populateFormCaseInfo(){
+    private void populateFormCaseInfo() {
         String emptyValue = "";
         ReportInfo reportInfo = ipedProcess.getReportInfo();
-        textFieldReportNumber.setText( reportInfo.reportNumber != null ? reportInfo.reportNumber : emptyValue );
-        textFieldReportDate.setText( reportInfo.reportDate != null ? reportInfo.reportDate : emptyValue );
-        textFieldReportTitle.setText(reportInfo.reportTitle != null ? reportInfo.reportTitle : emptyValue );
-        if( (reportInfo.examiners != null) && (!reportInfo.examiners.isEmpty())){
+        textFieldReportNumber.setText(reportInfo.reportNumber != null ? reportInfo.reportNumber : emptyValue);
+        textFieldReportDate.setText(reportInfo.reportDate != null ? reportInfo.reportDate : emptyValue);
+        textFieldReportTitle.setText(reportInfo.reportTitle != null ? reportInfo.reportTitle : emptyValue);
+        if ((reportInfo.examiners != null) && (!reportInfo.examiners.isEmpty())) {
             String examinerNames = reportInfo.examiners.stream().map(String::trim).collect(Collectors.joining("\n"));
             textAreaExaminerNames.append(examinerNames);
-        }else
+        } else
             textAreaExaminerNames.setText(emptyValue);
-        textFieldCaseNumber.setText( reportInfo.caseNumber != null ? reportInfo.caseNumber : emptyValue );
-        textFieldRequestForm.setText( reportInfo.requestForm != null ? reportInfo.requestForm : emptyValue );
-        textFieldRequestDate.setText(reportInfo.requestDate != null ? reportInfo.requestDate : emptyValue );
-        textFieldRequester.setText(reportInfo.requester != null? reportInfo.requester : emptyValue );
-        textFieldLabCaseNumber.setText(reportInfo.labCaseNumber != null? reportInfo.labCaseNumber : emptyValue );
-        textFieldLabCaseDate.setText(reportInfo.labCaseDate != null? reportInfo.labCaseDate : emptyValue );
-        if( (reportInfo.investigatedName != null) && (!reportInfo.investigatedName.isEmpty()) ){
+        textFieldCaseNumber.setText(reportInfo.caseNumber != null ? reportInfo.caseNumber : emptyValue);
+        textFieldRequestForm.setText(reportInfo.requestForm != null ? reportInfo.requestForm : emptyValue);
+        textFieldRequestDate.setText(reportInfo.requestDate != null ? reportInfo.requestDate : emptyValue);
+        textFieldRequester.setText(reportInfo.requester != null ? reportInfo.requester : emptyValue);
+        textFieldLabCaseNumber.setText(reportInfo.labCaseNumber != null ? reportInfo.labCaseNumber : emptyValue);
+        textFieldLabCaseDate.setText(reportInfo.labCaseDate != null ? reportInfo.labCaseDate : emptyValue);
+        if ((reportInfo.investigatedName != null) && (!reportInfo.investigatedName.isEmpty())) {
             String investigatedNames = reportInfo.investigatedName.stream().map(String::trim).collect(Collectors.joining("\n"));
             textAreaInvestigatedNames.setText(investigatedNames);
-        }else
+        } else
             textAreaInvestigatedNames.setText(emptyValue);
-        textFieldOrganization.setText(reportInfo.organizationName != null ? reportInfo.organizationName : emptyValue );
-        textFieldContact.setText(reportInfo.contact != null ? reportInfo.contact : emptyValue );
-        textAreaCaseNotes.setText(reportInfo.caseNotes != null ? reportInfo.caseNotes : emptyValue );
+        textFieldOrganization.setText(reportInfo.organizationName != null ? reportInfo.organizationName : emptyValue);
+        textFieldContact.setText(reportInfo.contact != null ? reportInfo.contact : emptyValue);
+        textAreaCaseNotes.setText(reportInfo.caseNotes != null ? reportInfo.caseNotes : emptyValue);
     }
 
 }

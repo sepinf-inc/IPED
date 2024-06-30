@@ -17,7 +17,9 @@ import iped.io.URLUtil;
 public class CasePathManager {
 
     private static CasePathManager casePathManager;
-    private final File testPath = null; // = new File("/home/patrick.pdb/ipedtimeline-workspace/iped-parent/target/release/iped-4.1-snapshot"); //new File("");
+    private final File testPath = null; // = new
+                                        // File("/home/patrick.pdb/ipedtimeline-workspace/iped-parent/target/release/iped-4.1-snapshot");
+                                        // //new File("");
     private File rootPath;
     private File libDir;
     static String IPED_MODULE_DIR = IIPEDSource.MODULE_DIR;
@@ -30,12 +32,11 @@ public class CasePathManager {
         }
     }
 
-    public static CasePathManager getInstance(){
-        if( casePathManager == null )
+    public static CasePathManager getInstance() {
+        if (casePathManager == null)
             casePathManager = new CasePathManager();
         return casePathManager;
     }
-
 
     private void detectCasePath() throws URISyntaxException {
         if (testPath != null) {
@@ -62,7 +63,7 @@ public class CasePathManager {
         return rootPath;
     }
 
-    public File getLocalConfigFile(){
+    public File getLocalConfigFile() {
         return new File(rootPath, LocalConfig.CONFIG_FILE);
     }
 

@@ -42,12 +42,12 @@ public class PositionalXMLReader {
 
             @Override
             public void setDocumentLocator(final Locator locator) {
-                this.locator = locator; // Save the locator, so that it can be used later for line tracking when traversing nodes.
+                this.locator = locator; // Save the locator, so that it can be used later for line tracking when
+                                        // traversing nodes.
             }
 
             @Override
-            public void startElement(final String uri, final String localName, final String qName, final Attributes attributes)
-                    throws SAXException {
+            public void startElement(final String uri, final String localName, final String qName, final Attributes attributes) throws SAXException {
                 addTextIfNeeded();
                 final Element el = doc.createElement(qName);
                 for (int i = 0; i < attributes.getLength(); i++) {

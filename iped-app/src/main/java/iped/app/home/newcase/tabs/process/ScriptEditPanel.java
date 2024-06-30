@@ -44,7 +44,7 @@ import iped.engine.task.ScriptTask;
 import iped.engine.task.ScriptTaskComplianceException;
 import iped.utils.IOUtil;
 
-public class ScriptEditPanel extends JPanel implements DocumentListener{
+public class ScriptEditPanel extends JPanel implements DocumentListener {
     protected RSyntaxTextArea textArea;
     protected RTextScrollPane txtAreaScroll;
     IScriptTask scriptTask;
@@ -64,20 +64,16 @@ public class ScriptEditPanel extends JPanel implements DocumentListener{
     private static final String JAVASCRIPT_TEMPLATE_DIR = "/jstemplates";
     private static final String PYTHON_TEMPLATE_DIR = "/pythontemplates";
     private boolean scriptChanged = false;
-    boolean isScriptEditable=false;
+    boolean isScriptEditable = false;
 
     public ScriptEditPanel(MainFrame mainFrame, IScriptTask scriptTask) {
         super();
         this.scriptTask = scriptTask;
-        File scriptDir = Paths
-                .get(System.getProperty(IConfigurationDirectory.IPED_APP_ROOT), TaskInstallerConfig.SCRIPT_BASE)
-                .toFile();
+        File scriptDir = Paths.get(System.getProperty(IConfigurationDirectory.IPED_APP_ROOT), TaskInstallerConfig.SCRIPT_BASE).toFile();
         File exampleScriptFile = new File(scriptDir, ScriptEditPanel.TEMPLATE_SCRIPT_NAME);
-        File customScriptDir = Paths
-                .get(System.getProperty(IConfigurationDirectory.IPED_APP_ROOT), TaskInstallerConfig.CUSTOM_SCRIPT_BASE)
-                .toFile();
+        File customScriptDir = Paths.get(System.getProperty(IConfigurationDirectory.IPED_APP_ROOT), TaskInstallerConfig.CUSTOM_SCRIPT_BASE).toFile();
         if (scriptTask.getScriptFileName().equals(exampleScriptFile.getAbsolutePath())) {
-            insertionMode=true;
+            insertionMode = true;
             isScriptEditable = true;
         } else {
             // is script file is in custom script path, enable edition
@@ -120,11 +116,11 @@ public class ScriptEditPanel extends JPanel implements DocumentListener{
             StringBuffer sb = new StringBuffer();
             String str;
             while ((str = in.readLine()) != null) {
-                sb.append(str+"\n");
+                sb.append(str + "\n");
             }
             in.close();
             textArea.setText(sb.toString());
-        }catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -143,24 +139,24 @@ public class ScriptEditPanel extends JPanel implements DocumentListener{
             @Override
             public void actionPerformed(ActionEvent e) {
                 int result = scriptChooser.showOpenDialog(self);
-                if(result == JFileChooser.APPROVE_OPTION) {
+                if (result == JFileChooser.APPROVE_OPTION) {
                     File selectedFile = scriptChooser.getSelectedFile();
 
                     try {
                         File scriptDir = Paths.get(System.getProperty(IConfigurationDirectory.IPED_APP_ROOT), TaskInstallerConfig.SCRIPT_BASE).toFile();
-                        File destFile = new File(scriptDir,selectedFile.getName());
+                        File destFile = new File(scriptDir, selectedFile.getName());
 
-                        if(destFile.exists()) {
+                        if (destFile.exists()) {
                             JOptionPane.showMessageDialog(self, Messages.get("Home.ProcOptions.ScriptAlreadyExists"));
-                        }else {
+                        } else {
                             try {
                                 setScriptTask(destFile);
-                            }catch (Exception ex) {
+                            } catch (Exception ex) {
                                 IOUtil.deleteDirectory(destFile);
                                 throw ex;
                             }
                         }
-                    }catch(Exception ex) {
+                    } catch (Exception ex) {
                         JOptionPane.showMessageDialog(self, ex.getLocalizedMessage());
                     }
                 }
@@ -175,7 +171,7 @@ public class ScriptEditPanel extends JPanel implements DocumentListener{
         textArea = new RSyntaxTextArea(20, 60);
         textArea.setEditable(isScriptEditable);
 
-        if(insertionMode) {
+        if (insertionMode) {
             textArea.setEnabled(false);
 
             titlePanel.add(templatePanel, BorderLayout.SOUTH);
@@ -206,44 +202,41 @@ public class ScriptEditPanel extends JPanel implements DocumentListener{
             });
 
             changeToJavascript();
-        }else {
-            titlePanel.setEnabled(false);//cannot modify existing script name
+        } else {
+            titlePanel.setEnabled(false);// cannot modify existing script name
             titleText.setEnabled(false);// cannot modify existing script name
         }
 
         try {
-            if(scriptTask!=null) {
+            if (scriptTask != null) {
                 String scriptName = scriptTask.getScriptFileName();
 
                 File scriptFile = new File(scriptName);
-                titleText.setText(scriptName.substring(0, scriptName.lastIndexOf("."))
-                        .substring(scriptName.lastIndexOf(File.separator) + 1));
+                titleText.setText(scriptName.substring(0, scriptName.lastIndexOf(".")).substring(scriptName.lastIndexOf(File.separator) + 1));
 
                 setScriptTask(scriptFile);
             }
 
             textArea.setAutoscrolls(true);
             textArea.getDocument().addDocumentListener(this);
-            ((AbstractDocument)textArea.getDocument()).setDocumentFilter(new DocumentFilter() {
+            ((AbstractDocument) textArea.getDocument()).setDocumentFilter(new DocumentFilter() {
                 @Override
                 public void remove(FilterBypass fb, int offset, int length) throws BadLocationException {
-                    if(scriptChanged || confirmChange()) {
+                    if (scriptChanged || confirmChange()) {
                         super.remove(fb, offset, length);
                     }
                 }
 
                 @Override
-                public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr)
-                        throws BadLocationException {
-                    if(scriptChanged || confirmChange()) {
+                public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr) throws BadLocationException {
+                    if (scriptChanged || confirmChange()) {
                         super.insertString(fb, offset, string, attr);
                     }
                 }
 
                 @Override
-                public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs)
-                        throws BadLocationException {
-                    if(scriptChanged || confirmChange()) {
+                public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs) throws BadLocationException {
+                    if (scriptChanged || confirmChange()) {
                         super.replace(fb, offset, length, text, attrs);
                     }
                 }
@@ -253,9 +246,9 @@ public class ScriptEditPanel extends JPanel implements DocumentListener{
             txtAreaScroll.setAutoscrolls(true);
             txtAreaScroll.setLineNumbersEnabled(true);
             this.setLayout(new BorderLayout());
-            this.add(titlePanel,BorderLayout.NORTH);
-            this.add(txtAreaScroll,BorderLayout.CENTER);
-        }catch (Exception e) {
+            this.add(titlePanel, BorderLayout.NORTH);
+            this.add(txtAreaScroll, BorderLayout.CENTER);
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -271,21 +264,21 @@ public class ScriptEditPanel extends JPanel implements DocumentListener{
     private void changeTo(String folderName) {
         templatePanel.removeAll();
         templatePanel.add(scriptLanguagePanel, BorderLayout.NORTH);
-        File scriptDir = Paths.get(System.getProperty(IConfigurationDirectory.IPED_APP_ROOT), TaskInstallerConfig.SCRIPT_BASE +folderName).toFile();            
-        if(scriptDir!=null) {
+        File scriptDir = Paths.get(System.getProperty(IConfigurationDirectory.IPED_APP_ROOT), TaskInstallerConfig.SCRIPT_BASE + folderName).toFile();
+        if (scriptDir != null) {
             File[] files = scriptDir.listFiles();
-            if(files!=null) {
+            if (files != null) {
                 cbTemplate = new JComboBox<File>(files);
                 cbTemplate.setSelectedIndex(-1);
                 templatePanel.add(new JLabel(Messages.get("ScriptEditPanel.SelectTemplateLabel")), BorderLayout.WEST);
                 templatePanel.add(cbTemplate, BorderLayout.CENTER);
                 cbTemplate.setRenderer(new ListCellRenderer<File>() {
                     JLabel result = new JLabel();
-                    public Component getListCellRendererComponent(JList<? extends File> list, File value, int index,
-                            boolean isSelected, boolean cellHasFocus) {
-                        if(value==null) {
+
+                    public Component getListCellRendererComponent(JList<? extends File> list, File value, int index, boolean isSelected, boolean cellHasFocus) {
+                        if (value == null) {
                             result.setText("");
-                        }else {
+                        } else {
                             result.setText(value.getName());
                         }
                         return result;
@@ -314,7 +307,7 @@ public class ScriptEditPanel extends JPanel implements DocumentListener{
                     textArea.setEnabled(true);
                 }
             });
-            
+
             JPanel templateButtons = new JPanel();
             templateButtons.add(btSelectTemplate);
             templateButtons.add(fileButton);
@@ -322,25 +315,24 @@ public class ScriptEditPanel extends JPanel implements DocumentListener{
 
             templatePanel.updateUI();
         }
-        if(textArea!=null) {
+        if (textArea != null) {
             textArea.setText("");
             textArea.clearParsers();
         }
     }
 
     public void applyChanges() throws ScriptTaskComplianceException {
-        if(scriptChanged) {            
-            
-            File scriptDir = Paths.get(System.getProperty(IConfigurationDirectory.IPED_APP_ROOT),
-                    TaskInstallerConfig.CUSTOM_SCRIPT_BASE).toFile();
-            String extension=".js";
-            if(scriptTask instanceof PythonTask) {
-                extension=".py";
-            }
-            File destFile = new File(scriptDir, titleText.getText()+extension);
+        if (scriptChanged) {
 
-            if(insertionMode) {
-                if(rbPython.isSelected()) {
+            File scriptDir = Paths.get(System.getProperty(IConfigurationDirectory.IPED_APP_ROOT), TaskInstallerConfig.CUSTOM_SCRIPT_BASE).toFile();
+            String extension = ".js";
+            if (scriptTask instanceof PythonTask) {
+                extension = ".py";
+            }
+            File destFile = new File(scriptDir, titleText.getText() + extension);
+
+            if (insertionMode) {
+                if (rbPython.isSelected()) {
                     scriptTask = new PythonTask(destFile);
                     scriptTask.checkTaskCompliance(textArea.getText());
 
@@ -351,7 +343,7 @@ public class ScriptEditPanel extends JPanel implements DocumentListener{
                         e.printStackTrace();
                     }
 
-                }else {
+                } else {
                     scriptTask.checkTaskCompliance(textArea.getText());
 
                     try {
@@ -364,10 +356,8 @@ public class ScriptEditPanel extends JPanel implements DocumentListener{
                     scriptTask = new ScriptTask(destFile);
                 }
             }
-            
 
-
-            scriptTaskToSave=scriptTask;
+            scriptTaskToSave = scriptTask;
         }
     }
 
@@ -375,9 +365,9 @@ public class ScriptEditPanel extends JPanel implements DocumentListener{
         return scriptTaskToSave;
     }
 
-    public boolean confirmChange(){
+    public boolean confirmChange() {
         int result = JOptionPane.showConfirmDialog(this, Messages.get("ScriptEditPanel.scriptScopeWarn"));
-        return result==JOptionPane.YES_OPTION;
+        return result == JOptionPane.YES_OPTION;
     }
 
 }

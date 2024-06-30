@@ -37,13 +37,13 @@ public class XMLCarverConfigurablePanel extends AdvancedTextConfigurablePanel {
     private CarverConfigCellRenderer cellRenderer;
 
     static {
-        AbstractTokenMakerFactory atmf = (AbstractTokenMakerFactory)TokenMakerFactory.getDefaultInstance();
+        AbstractTokenMakerFactory atmf = (AbstractTokenMakerFactory) TokenMakerFactory.getDefaultInstance();
         atmf.putMapping(XMLXSDTokenMaker.SYNTAX_STYLE_XMLXSD, "iped.app.ui.controls.textarea.XMLXSDTokenMaker");
     }
 
     protected XMLCarverConfigurablePanel(Configurable<XMLCarverConfiguration> configurable, MainFrame mainFrame) {
         super(configurable, mainFrame);
-        config=configurable.getConfiguration();
+        config = configurable.getConfiguration();
     }
 
     @Override
@@ -58,13 +58,12 @@ public class XMLCarverConfigurablePanel extends AdvancedTextConfigurablePanel {
         textArea.setText(config.getXMLString());
         textArea.getDocument().addDocumentListener(this);
     }
-    
+
     class ResizeListener extends ComponentAdapter {
         public void componentResized(ComponentEvent e) {
-            int ncols = (int) Math
-                    .floor((carverListPanel.getSize().getWidth()) / cellRenderer.getMaxStringWidth());
-            int nrows = (int) Math.ceil((double)carverTypeList.getModel().getSize()/(double)ncols);
-            
+            int ncols = (int) Math.floor((carverListPanel.getSize().getWidth()) / cellRenderer.getMaxStringWidth());
+            int nrows = (int) Math.ceil((double) carverTypeList.getModel().getSize() / (double) ncols);
+
             carverTypeList.setVisibleRowCount(nrows);
             carverListPanel.setViewportView(carverTypeList);
         }
@@ -74,7 +73,7 @@ public class XMLCarverConfigurablePanel extends AdvancedTextConfigurablePanel {
             componentResized(e);
         }
     }
-    
+
     public void createCarverListPanel() {
         carverListPanel = new JScrollPane();
         carverTypeList = new JList<CarverType>(config.getAvailableCarverTypes());
@@ -89,16 +88,16 @@ public class XMLCarverConfigurablePanel extends AdvancedTextConfigurablePanel {
         carverTypeList.addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
-                if(!carverTypeList.getValueIsAdjusting()) {
+                if (!carverTypeList.getValueIsAdjusting()) {
                     CarverType ct = (CarverType) carverTypeList.getSelectedValue();
-                    if(ct!=null) {
+                    if (ct != null) {
                         config.setEnableCarverType(ct, !ct.isEnabled());
                         textArea.setText(config.getXMLString());
-                        changed=true;
+                        changed = true;
                         carverTypeList.setValueIsAdjusting(true);
                         try {
                             carverTypeList.clearSelection();
-                        }finally {
+                        } finally {
                             carverTypeList.setValueIsAdjusting(false);
                         }
                     }
@@ -107,7 +106,7 @@ public class XMLCarverConfigurablePanel extends AdvancedTextConfigurablePanel {
         });
     }
 
-    class CarverTypeListModel extends AbstractListModel<CarverType>{
+    class CarverTypeListModel extends AbstractListModel<CarverType> {
         List<CarverType> source;
 
         public CarverTypeListModel(List<CarverType> source) {
@@ -126,13 +125,13 @@ public class XMLCarverConfigurablePanel extends AdvancedTextConfigurablePanel {
     }
 
     @Override
-    public void applyChanges() throws ConfigurableValidationException{
+    public void applyChanges() throws ConfigurableValidationException {
         try {
             config.loadXMLConfigFile(textArea.getText());
             carverTypeList.setModel(new CarverTypeListModel(config.getAvailableCarverTypesList()));
         } catch (IOException | SAXException | ParserConfigurationException e) {
             throw new ConfigurableValidationException("Erro de sintaxe no XML", e);
-        }        
+        }
     }
 
     protected String getBasicPaneTitle() {
@@ -141,7 +140,7 @@ public class XMLCarverConfigurablePanel extends AdvancedTextConfigurablePanel {
 
     @Override
     protected Component getBasicPane() {
-        if(carverListPanel==null) {
+        if (carverListPanel == null) {
             createCarverListPanel();
         }
         return carverListPanel;

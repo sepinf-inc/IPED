@@ -35,7 +35,7 @@ public class CategorySetConfigPanel extends ConfigurablePanel {
         tempCatNames = new HashSet<String>();
         Set<String> configCatNames = ceConfig.getConfiguration();
         for (Iterator<String> iterator = configCatNames.iterator(); iterator.hasNext();) {
-            tempCatNames.add(iterator.next());            
+            tempCatNames.add(iterator.next());
         }
     }
 
@@ -47,22 +47,22 @@ public class CategorySetConfigPanel extends ConfigurablePanel {
         cellRenderer = new ConfigCheckBoxTreeCellRenderer(categoryTree, new Predicate<Object>() {
             @Override
             public boolean apply(Object input) {
-                return tempCatNames.contains(((Category)input).getName());
+                return tempCatNames.contains(((Category) input).getName());
             }
         });
         cellRenderer.getCheckbox().addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
                 Category selectedCategory = ((Category) categoryTree.getLastSelectedPathComponent());
-                if(selectedCategory!=null) {
+                if (selectedCategory != null) {
                     Set<String> cats = tempCatNames;
                     String selectedCategoryName = selectedCategory.getName();
-                    if(cats.contains(selectedCategoryName)) {
+                    if (cats.contains(selectedCategoryName)) {
                         cats.remove(selectedCategoryName);
-                    }else {
+                    } else {
                         cats.add(selectedCategoryName);
                     }
-                    changed=true;
+                    changed = true;
                 }
             }
         });

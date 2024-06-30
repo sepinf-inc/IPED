@@ -9,7 +9,6 @@ import java.awt.dnd.DropTarget;
 import java.awt.dnd.DropTargetAdapter;
 import java.awt.dnd.DropTargetDragEvent;
 import java.awt.dnd.DropTargetDropEvent;
-import java.awt.dnd.DropTargetEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
@@ -47,13 +46,12 @@ public class MakePreviewConfigurablePanel extends ConfigurablePanel {
     private JList<String> dragSourceList;
     private MouseAdapter listMA;
 
-    List<String> supportedMimes=new ArrayList<String>();
+    List<String> supportedMimes = new ArrayList<String>();
     List<String> supportedMimesWithLinks = new ArrayList<String>();
-
 
     protected MakePreviewConfigurablePanel(MakePreviewConfig configurable, MainFrame mainFrame) {
         super(configurable, mainFrame);
-        this.previewConfig=configurable;
+        this.previewConfig = configurable;
         supportedMimes.addAll(this.previewConfig.getSupportedMimes());
         supportedMimesWithLinks.addAll(this.previewConfig.getSupportedMimesWithLinks());
     }
@@ -61,12 +59,12 @@ public class MakePreviewConfigurablePanel extends ConfigurablePanel {
     @Override
     public void createConfigurableGUI() {
         this.setLayout(new BorderLayout());
-        
+
         splitPane = new JSplitPane();
         splitPane.setDividerSize(4);
-        
+
         this.add(splitPane, BorderLayout.CENTER);
-        
+
         IPEDMimeSearchList slmime = new IPEDMimeSearchList();
         slmime.setBackground(this.getBackground());
         splitPane.setLeftComponent(slmime);
@@ -76,56 +74,56 @@ public class MakePreviewConfigurablePanel extends ConfigurablePanel {
         dtlistener = new DropTargetAdapter() {
             @Override
             public void drop(DropTargetDropEvent dtde) {
-                if(dtde.getDropTargetContext().getComponent()==slmime.getListComponent()) {
-                    if(dragSourceList==listSupportedMimes) {
+                if (dtde.getDropTargetContext().getComponent() == slmime.getListComponent()) {
+                    if (dragSourceList == listSupportedMimes) {
                         try {
-                            Object[] o = (Object[])dtde.getTransferable().getTransferData(DataFlavor.stringFlavor);
+                            Object[] o = (Object[]) dtde.getTransferable().getTransferData(DataFlavor.stringFlavor);
                             for (int i = 0; i < o.length; i++) {
-                                supportedMimes.remove((String)o[i]);
+                                supportedMimes.remove((String) o[i]);
                             }
                             JList supportList = new JList<String>(supportedMimes.toArray(new String[0]));
                             listSupportedMimes.setModel(supportList.getModel());
-                            changed=true;
+                            changed = true;
                         } catch (UnsupportedFlavorException | IOException e) {
                             e.printStackTrace();
                         }
                     }
-                    if(dragSourceList==listSupportedMimesWithLinks) {
+                    if (dragSourceList == listSupportedMimesWithLinks) {
                         try {
-                            Object[] o = (Object[])dtde.getTransferable().getTransferData(DataFlavor.stringFlavor);
+                            Object[] o = (Object[]) dtde.getTransferable().getTransferData(DataFlavor.stringFlavor);
                             for (int i = 0; i < o.length; i++) {
-                                supportedMimesWithLinks.remove((String)o[i]);
+                                supportedMimesWithLinks.remove((String) o[i]);
                             }
                             JList supportList = new JList<String>(supportedMimesWithLinks.toArray(new String[0]));
                             listSupportedMimesWithLinks.setModel(supportList.getModel());
-                            changed=true;
+                            changed = true;
                         } catch (UnsupportedFlavorException | IOException e) {
                             e.printStackTrace();
                         }
                     }
                 }
-                if(dtde.getDropTargetContext().getComponent()==listSupportedMimes) {
+                if (dtde.getDropTargetContext().getComponent() == listSupportedMimes) {
                     try {
-                        Object[] o = (Object[])dtde.getTransferable().getTransferData(DataFlavor.stringFlavor);
+                        Object[] o = (Object[]) dtde.getTransferable().getTransferData(DataFlavor.stringFlavor);
                         for (int i = 0; i < o.length; i++) {
-                            supportedMimes.add((String)o[i]);
+                            supportedMimes.add((String) o[i]);
                         }
                         JList supportList = new JList<String>(supportedMimes.toArray(new String[0]));
                         listSupportedMimes.setModel(supportList.getModel());
-                        changed=true;
+                        changed = true;
                     } catch (UnsupportedFlavorException | IOException e) {
                         e.printStackTrace();
                     }
                 }
-                if(dtde.getDropTargetContext().getComponent()==listSupportedMimesWithLinks) {
+                if (dtde.getDropTargetContext().getComponent() == listSupportedMimesWithLinks) {
                     try {
-                        Object[] o = (Object[])dtde.getTransferable().getTransferData(DataFlavor.stringFlavor);
+                        Object[] o = (Object[]) dtde.getTransferable().getTransferData(DataFlavor.stringFlavor);
                         for (int i = 0; i < o.length; i++) {
-                            supportedMimesWithLinks.add((String)o[i]);
+                            supportedMimesWithLinks.add((String) o[i]);
                         }
                         JList supportList = new JList<String>(supportedMimesWithLinks.toArray(new String[0]));
                         listSupportedMimesWithLinks.setModel(supportList.getModel());
-                        changed=true;
+                        changed = true;
                     } catch (UnsupportedFlavorException | IOException e) {
                         e.printStackTrace();
                     }
@@ -134,10 +132,10 @@ public class MakePreviewConfigurablePanel extends ConfigurablePanel {
 
             @Override
             public void dragEnter(DropTargetDragEvent dtde) {
-                Component srcComponent = ((DropTarget)dtde.getSource()).getComponent();
-                if(srcComponent == listSupportedMimes || srcComponent == listSupportedMimesWithLinks || srcComponent == slmime.getListComponent()) {
+                Component srcComponent = ((DropTarget) dtde.getSource()).getComponent();
+                if (srcComponent == listSupportedMimes || srcComponent == listSupportedMimesWithLinks || srcComponent == slmime.getListComponent()) {
                     dtde.acceptDrag(DnDConstants.ACTION_MOVE);
-                }else {
+                } else {
                     dtde.rejectDrag();
                 }
             }
@@ -149,7 +147,7 @@ public class MakePreviewConfigurablePanel extends ConfigurablePanel {
             e.printStackTrace();
         }
         slmime.setDropTarget(dtMime);
-        
+
         JSplitPane rightPanel = new JSplitPane();
         rightPanel.setDividerSize(4);
         rightPanel.setResizeWeight(.8);
@@ -159,17 +157,17 @@ public class MakePreviewConfigurablePanel extends ConfigurablePanel {
         listMA = new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                dragSourceList = (JList<String>)e.getSource();
+                dragSourceList = (JList<String>) e.getSource();
             }
         };
-        
+
         listSupportedMimes = new JList<String>(supportedMimes.toArray(new String[0]));
         JPanel textPanel = new JPanel(new BorderLayout());
         textPanel.setBackground(this.getBackground());
-        textPanel.add(new JLabel(Messages.getString(configurable.getClass().getName()+".supportedMimeTypes")),BorderLayout.NORTH);
+        textPanel.add(new JLabel(Messages.getString(configurable.getClass().getName() + ".supportedMimeTypes")), BorderLayout.NORTH);
         JScrollPane sp = new JScrollPane(listSupportedMimes);
         sp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        textPanel.add(sp,BorderLayout.CENTER);
+        textPanel.add(sp, BorderLayout.CENTER);
         rightPanel.setTopComponent(textPanel);
         listSupportedMimes.setDragEnabled(true);
         listSupportedMimes.setTransferHandler(new MimeListTransferHandler(listSupportedMimes));
@@ -186,10 +184,10 @@ public class MakePreviewConfigurablePanel extends ConfigurablePanel {
         listSupportedMimesWithLinks.setAutoscrolls(true);
         textPanel = new JPanel(new BorderLayout());
         textPanel.setBackground(this.getBackground());
-        textPanel.add(new JLabel(Messages.getString(configurable.getClass().getName()+".supportedMimeTypesWithLinks")),BorderLayout.NORTH);
+        textPanel.add(new JLabel(Messages.getString(configurable.getClass().getName() + ".supportedMimeTypesWithLinks")), BorderLayout.NORTH);
         sp = new JScrollPane(listSupportedMimesWithLinks);
         sp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        textPanel.add(sp,BorderLayout.CENTER);
+        textPanel.add(sp, BorderLayout.CENTER);
         rightPanel.setBottomComponent(textPanel);
         listSupportedMimesWithLinks.setDragEnabled(true);
         listSupportedMimesWithLinks.setTransferHandler(new MimeListTransferHandler(listSupportedMimesWithLinks));
@@ -205,7 +203,7 @@ public class MakePreviewConfigurablePanel extends ConfigurablePanel {
 
     @Override
     public void applyChanges() throws ConfigurableValidationException {
-        if(changed) {
+        if (changed) {
             previewConfig.getSupportedMimes().clear();
             previewConfig.getSupportedMimes().addAll(supportedMimes);
             previewConfig.getSupportedMimesWithLinks().clear();

@@ -12,28 +12,27 @@ public class TableTaskEnabledCellRenderer extends DefaultTableCellRenderer {
     TableCellRenderer wrapped;
     private JLabel emptyLabel;
     boolean showUnremovableCheckBox = true;
-    
+
     public TableTaskEnabledCellRenderer(TableCellRenderer wrapped) {
         this.wrapped = wrapped;
         this.emptyLabel = new JLabel();
     }
 
     @Override
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
-            int row, int column) {
-        if(column==1) {
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        if (column == 1) {
             TasksTableModel tm = (TasksTableModel) table.getModel();
-            if(tm.isCellEditable(row, column)) {
+            if (tm.isCellEditable(row, column)) {
                 JCheckBox checkbox = (JCheckBox) wrapped.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                 checkbox.setEnabled(true);
                 return checkbox;
-            }else {
-                if(showUnremovableCheckBox){
+            } else {
+                if (showUnremovableCheckBox) {
                     JCheckBox checkbox = (JCheckBox) wrapped.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                     checkbox.setEnabled(false);
                     checkbox.setSelected(true);
                     return checkbox;
-                }else{
+                } else {
                     return emptyLabel;
                 }
             }

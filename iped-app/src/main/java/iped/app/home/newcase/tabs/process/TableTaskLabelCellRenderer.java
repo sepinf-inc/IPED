@@ -30,7 +30,7 @@ public class TableTaskLabelCellRenderer extends DefaultTableCellRenderer {
     public TableTaskLabelCellRenderer() {
         super();
         Image img = (new ImageIcon(IconUtil.class.getResource(resPath + "cursor-hand-icon.png"))).getImage();
-        Image newimg = img.getScaledInstance( 16, 16,  java.awt.Image.SCALE_SMOOTH ) ;
+        Image newimg = img.getScaledInstance(16, 16, java.awt.Image.SCALE_SMOOTH);
         this.dragIcon = new ImageIcon(newimg);
     }
 
@@ -43,41 +43,40 @@ public class TableTaskLabelCellRenderer extends DefaultTableCellRenderer {
         panel.setLayout(new FlowLayout(FlowLayout.LEFT));
         JLabel nameLabel = new JLabel();
         String localizedName;
-        if(currentTask instanceof IScriptTask) {
-            localizedName = iped.engine.localization.Messages.getString(currentTask.getClass().getName()+"."+currentTask.getName(), currentTask.getName());
-        }else {
+        if (currentTask instanceof IScriptTask) {
+            localizedName = iped.engine.localization.Messages.getString(currentTask.getClass().getName() + "." + currentTask.getName(), currentTask.getName());
+        } else {
             localizedName = iped.engine.localization.Messages.getString(currentTask.getClass().getName(), currentTask.getName());
         }
         nameLabel.setText(localizedName);
         panel.add(nameLabel, BorderLayout.WEST);
-        
-        if((currentTask instanceof IScriptTask) && (table.getDragEnabled())) {
+
+        if ((currentTask instanceof IScriptTask) && (table.getDragEnabled())) {
             JButton taskStartDragButton = new JButton(dragIcon);
             taskStartDragButton.setVerticalAlignment(SwingConstants.CENTER);
 
-            taskStartDragButton.addActionListener( e -> {
+            taskStartDragButton.addActionListener(e -> {
                 Robot robot;
                 try {
-                    //simulate mouse click with shift pressed to start dragging
+                    // simulate mouse click with shift pressed to start dragging
                     robot = new Robot();
-                    Point point = panel.getLocationOnScreen(); //rect is my custom view
-                    robot.mouseMove(point.x,point.y);
+                    Point point = panel.getLocationOnScreen(); // rect is my custom view
+                    robot.mouseMove(point.x, point.y);
                     robot.mousePress(InputEvent.BUTTON1_MASK);
                 } catch (AWTException e1) {
                     e1.printStackTrace();
-                }            
+                }
             });
-            taskStartDragButton.setPreferredSize(new Dimension(20,25));
+            taskStartDragButton.setPreferredSize(new Dimension(20, 25));
             taskStartDragButton.setOpaque(false);
             taskStartDragButton.setContentAreaFilled(false);
             taskStartDragButton.setBorderPainted(false);
 
-            panel.add(taskStartDragButton,BorderLayout.WEST);
-        }        
-        
-        return panel;
-        
-    }
+            panel.add(taskStartDragButton, BorderLayout.WEST);
+        }
 
+        return panel;
+
+    }
 
 }

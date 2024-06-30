@@ -1,16 +1,29 @@
 package iped.app.home.newcase.tabs.evidence;/*
- * @created 27/09/2022
- * @project IPED
- * @author Thiago S. Figueiredo
- */
+                                            * @created 27/09/2022
+                                            * @project IPED
+                                            * @author Thiago S. Figueiredo
+                                            */
+
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Frame;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.util.ArrayList;
+
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
 
 import iped.app.home.newcase.model.Evidence;
 import iped.app.home.style.StyleManager;
 import iped.app.ui.Messages;
-
-import javax.swing.*;
-import java.awt.*;
-import java.util.ArrayList;
 
 public class EvidenceInfoDialog extends JDialog {
 
@@ -79,10 +92,10 @@ public class EvidenceInfoDialog extends JDialog {
 
         evidenceDialog.getContentPane().add(new JScrollPane(fullPanel));
 
-        okButton.addActionListener(e ->{
+        okButton.addActionListener(e -> {
             saveData();
             this.setVisible(false);
-        } );
+        });
     }
 
     private GridBagConstraints getGridBagConstraints(int x, int y, int width, int height) {
@@ -98,37 +111,37 @@ public class EvidenceInfoDialog extends JDialog {
         c.gridy = y;
         c.gridwidth = width;
         c.gridheight = height;
-        c.insets = new Insets(2, 10,2, 10);
+        c.insets = new Insets(2, 10, 2, 10);
         return c;
     }
 
-    public void showDialog(Evidence evidence){
+    public void showDialog(Evidence evidence) {
         this.evidence = evidence;
-        labelFileName.setText( evidence.getFileName() );
-        labelPath.setText( evidence.getPath() );
-        textFieldAlias.setText( evidence.getAlias() );
-        textFieldPassword.setText( evidence.getPassword() );
-        textFieldTimeZone.setText( evidence.getTimezone() );
-        textFieldBlocksize.setText( (evidence.getBlocksize() == null )? "0" : evidence.getBlocksize().toString() );
-        textAreaMaterial.setText( evidence.getMaterial() );
+        labelFileName.setText(evidence.getFileName());
+        labelPath.setText(evidence.getPath());
+        textFieldAlias.setText(evidence.getAlias());
+        textFieldPassword.setText(evidence.getPassword());
+        textFieldTimeZone.setText(evidence.getTimezone());
+        textFieldBlocksize.setText((evidence.getBlocksize() == null) ? "0" : evidence.getBlocksize().toString());
+        textAreaMaterial.setText(evidence.getMaterial());
         this.setVisible(true);
 
     }
 
     private void saveData() {
-        if(evidence == null)
+        if (evidence == null)
             return;
         evidence.setFileName(labelFileName.getText());
-        evidence.setPath(labelPath.getText() );
+        evidence.setPath(labelPath.getText());
         evidence.setAlias(textFieldAlias.getText());
-        evidence.setPassword( textFieldPassword.getText() );
+        evidence.setPassword(textFieldPassword.getText());
         evidence.setTimezone(textFieldTimeZone.getText());
         evidence.setBlocksize(Integer.parseInt(textFieldBlocksize.getText()));
         evidence.setMaterial(textAreaMaterial.getText());
-        evidenceListListener.forEach(e -> e.evidenceDataChange() );
+        evidenceListListener.forEach(e -> e.evidenceDataChange());
     }
 
-    public void addListener(EvidenceListListener listener){
+    public void addListener(EvidenceListListener listener) {
         evidenceListListener.add(listener);
     }
 

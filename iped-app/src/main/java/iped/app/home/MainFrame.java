@@ -39,7 +39,7 @@ import iped.utils.ui.ScreenUtils;
  * @project IPED
  * @author Thiago S. Figueiredo
  *
- * Home frame for IPED config and case start
+ *         Home frame for IPED config and case start
  */
 public class MainFrame extends JFrame {
 
@@ -81,10 +81,9 @@ public class MainFrame extends JFrame {
             System.exit(1);
         }
 
-        //show frame on first screen (if multiple monitors)
+        // show frame on first screen (if multiple monitors)
         ScreenUtils.showOnScreen(0, this);
     }
-
 
     /**
      * Adjust layout configurations, sizes and behaviors
@@ -93,8 +92,8 @@ public class MainFrame extends JFrame {
         UiScale.loadUserSetting();
         this.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.weightx=1.0;
-        gbc.weighty=1.0;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
         gbc.insets = StyleManager.getDefaultPanelInsets();
         gbc.anchor = GridBagConstraints.CENTER;
         gbc.fill = GridBagConstraints.BOTH;
@@ -102,14 +101,12 @@ public class MainFrame extends JFrame {
         cardsContentPanel.setLayout(new CardLayout());
         this.add(cardsContentPanel, gbc);
 
-        //Load configurables files
+        // Load configurables files
         Configuration configuration = Configuration.getInstance();
         Configuration.getInstance().saveIpedRoot(CasePathManager.getInstance().getConfigPath().getAbsolutePath());
         configuration.loadConfigurables(CasePathManager.getInstance().getConfigPath().getAbsolutePath(), true);
 
-
-
-        //Add panels to cardlayout
+        // Add panels to cardlayout
         cardsContentPanel.add(new HomePanel(this), MainFrameCardsNames.HOME.getName());
         cardsContentPanel.add(new ConfigPanel(this), MainFrameCardsNames.CONFIG.getName());
         cardsContentPanel.add(new NewCaseContainerPanel(this), MainFrameCardsNames.NEW_CASE.getName());
@@ -120,13 +117,14 @@ public class MainFrame extends JFrame {
         setHomeFrameSize();
         setFrameIcon();
 
-        //set tooltip delay
+        // set tooltip delay
         ToolTipManager.sharedInstance().setDismissDelay(15000);
 
         // Dark Theme is still not working properly with config UI...
         // ThemeManager.getInstance().setLookAndFeel();
 
-        // Set the locale used for docking frames, so texts and tool tips are localized (if available)
+        // Set the locale used for docking frames, so texts and tool tips are localized
+        // (if available)
         LocaleConfig localeConfig = ConfigurationManager.get().findObject(LocaleConfig.class);
         // Set the locale used by JFileChooser's
         JFileChooser.setDefaultLocale(localeConfig.getLocale());
@@ -136,7 +134,7 @@ public class MainFrame extends JFrame {
      * Check if all requisites to show frame are present
      */
     private void checkAppPreRequisites() throws UIException {
-        //check JavaFX
+        // check JavaFX
         if (!Util.isJavaFXPresent()) {
             throw new UIException(Messages.get("NoJavaFX.Error"));
         }
@@ -145,8 +143,8 @@ public class MainFrame extends JFrame {
     /**
      * Set application frame Icon
      */
-    private void setFrameIcon(){
-        //set frame icon
+    private void setFrameIcon() {
+        // set frame icon
         URL image = getClass().getResource("search.png"); //$NON-NLS-1$
         assert image != null;
         this.setIconImage(new ImageIcon(image).getImage());
@@ -155,21 +153,23 @@ public class MainFrame extends JFrame {
     /**
      * Set Home frame size
      */
-    private void setHomeFrameSize(){
+    private void setHomeFrameSize() {
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         Dimension preferredSize = new Dimension(1280, 1024);
         Dimension minimumSize = new Dimension(1024, 768);
-        this.setPreferredSize( preferredSize );
+        this.setPreferredSize(preferredSize);
         this.setMinimumSize(minimumSize);
         this.setMaximumSize(screenSize);
     }
 
     /**
-     * Manage the panel to be displayed on MainFrame based on card name
-     * this method is used by other class to navigate, don't change de public accessor method
-     * @param cardName - Card name of JPanel to be displayed
+     * Manage the panel to be displayed on MainFrame based on card name this method
+     * is used by other class to navigate, don't change de public accessor method
+     * 
+     * @param cardName
+     *            - Card name of JPanel to be displayed
      */
-    public void showPanel(MainFrameCardsNames cardName){
+    public void showPanel(MainFrameCardsNames cardName) {
         ((CardLayout) cardsContentPanel.getLayout()).show(cardsContentPanel, cardName.getName());
     }
 

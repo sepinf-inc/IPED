@@ -23,18 +23,18 @@ public class EnableTaskConfigurablePanel extends ConfigurablePanel {
     @Override
     public void createConfigurableGUI() {
         UTF8Properties config = (UTF8Properties) configurable.getConfiguration();
-        if(config!=null) {
+        if (config != null) {
             Set<Entry<Object, Object>> es = config.entrySet();
             for (Iterator<Entry<Object, Object>> iterator = es.iterator(); iterator.hasNext();) {
                 Entry<Object, Object> e = iterator.next();
-                if(e.getKey().equals(((EnableTaskProperty)configurable).getPropertyName())) {
-                    JLabel label = new JLabel(e.getKey() +":");
+                if (e.getKey().equals(((EnableTaskProperty) configurable).getPropertyName())) {
+                    JLabel label = new JLabel(e.getKey() + ":");
                     layout.putConstraint(SpringLayout.NORTH, label, 15, SpringLayout.NORTH, this);
                     this.add(label);
-                    Object o=e.getValue();
+                    Object o = e.getValue();
                     textField = new JTextField();
-                    if(o!=null) {
-                        textField.setText(o.toString());                    
+                    if (o != null) {
+                        textField.setText(o.toString());
                     }
                     textField.getDocument().addDocumentListener(this);
                     layout.putConstraint(SpringLayout.VERTICAL_CENTER, textField, 0, SpringLayout.VERTICAL_CENTER, label);
@@ -49,12 +49,12 @@ public class EnableTaskConfigurablePanel extends ConfigurablePanel {
     @Override
     public void applyChanges() {
         UTF8Properties config = (UTF8Properties) configurable.getConfiguration();
-        if(config!=null) {
+        if (config != null) {
             Set<Entry<Object, Object>> es = config.entrySet();
             for (Iterator<Entry<Object, Object>> iterator = es.iterator(); iterator.hasNext();) {
                 Entry<Object, Object> e = iterator.next();
-                if(e.getKey().equals(((EnableTaskProperty)configurable).getPropertyName())) {
-                    config.setProperty(e.getKey().toString(), textField.getText());                
+                if (e.getKey().equals(((EnableTaskProperty) configurable).getPropertyName())) {
+                    config.setProperty(e.getKey().toString(), textField.getText());
                 }
             }
         }

@@ -24,7 +24,7 @@ import iped.app.home.configurables.ConfigurablePanel;
 import iped.app.ui.controls.textarea.RegexTextPane;
 import iped.configuration.Configurable;
 
-public class BeanConfigurablePanel extends ConfigurablePanel{
+public class BeanConfigurablePanel extends ConfigurablePanel {
     private ArrayList<Component> comps;
     private JLabel largestLabel;
     private JLabel lastLabel;
@@ -36,29 +36,34 @@ public class BeanConfigurablePanel extends ConfigurablePanel{
 
     /**
      * Creates the suitable ui input to manipulate the specific property
-     * @param config - the instance of the bean which property will be manipulated by
-     *                  the input 
-     * @param pd - the property descriptor of the property for which will be created the
-     *              ui input  
+     * 
+     * @param config
+     *            - the instance of the bean which property will be manipulated by
+     *            the input
+     * @param pd
+     *            - the property descriptor of the property for which will be
+     *            created the ui input
      */
     private JComponent createInputForProperty(Object config, PropertyDescriptor pd) {
-        Object o=null;
+        Object o = null;
         try {
             o = pd.getReadMethod().invoke(config);
-        }catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return createInputForObject(o);
     }
-    
+
     /**
      * Creates an layout the UI fields for the bean manipulation
-     * @param config - the instance of the bean which property will be manipulated by
-     *                  the input 
+     * 
+     * @param config
+     *            - the instance of the bean which property will be manipulated by
+     *            the input
      */
     public void createBeanGUI(Object config) throws IntrospectionException {
-        if(config instanceof Collection<?>) {
-            Collection<?> col= (Collection<?>) config;
+        if (config instanceof Collection<?>) {
+            Collection<?> col = (Collection<?>) config;
             for (Iterator iterator = col.iterator(); iterator.hasNext();) {
                 Object object = (Object) iterator.next();
                 createBeanGUI(object);
@@ -67,39 +72,38 @@ public class BeanConfigurablePanel extends ConfigurablePanel{
             return;
         }
 
-        property:for (PropertyDescriptor pd : Introspector.getBeanInfo(config.getClass()).getPropertyDescriptors()) {
-            if(pd.getName().equals("class")) {
+        property: for (PropertyDescriptor pd : Introspector.getBeanInfo(config.getClass()).getPropertyDescriptors()) {
+            if (pd.getName().equals("class")) {
                 continue property;
             }
-            String localizedName = iped.engine.localization.Messages.getString(configurable.getClass().getName()+"."+pd.getDisplayName(), pd.getDisplayName());
-            JLabel label = new JLabel(localizedName+":");
+            String localizedName = iped.engine.localization.Messages.getString(configurable.getClass().getName() + "." + pd.getDisplayName(), pd.getDisplayName());
+            JLabel label = new JLabel(localizedName + ":");
             int width = pd.getDisplayName().length();
-            if(max<width) {
-                max=width;
-                largestLabel=label;
+            if (max < width) {
+                max = width;
+                largestLabel = label;
             }
             comps.add(label);
-            if(lastLabel!=null) {
+            if (lastLabel != null) {
                 layout.putConstraint(SpringLayout.NORTH, label, 15, SpringLayout.SOUTH, lastLabel);
             }
 
             JComponent uiField = createInputForProperty(config, pd);
 
-
             layout.putConstraint(SpringLayout.VERTICAL_CENTER, uiField, 0, SpringLayout.VERTICAL_CENTER, label);
             comps.add(uiField);
-            lastLabel=label;
+            lastLabel = label;
         }
     }
-    
+
     public void addCreatedObjects() {
         for (Iterator iterator = comps.iterator(); iterator.hasNext();) {
             Component component = (Component) iterator.next();
-            if(component!=largestLabel) {
-                if(component instanceof JLabel) {
+            if (component != largestLabel) {
+                if (component instanceof JLabel) {
                     layout.putConstraint(SpringLayout.EAST, component, 0, SpringLayout.EAST, largestLabel);
-                }else {
-                    layout.putConstraint(SpringLayout.WEST, component, 5,SpringLayout.EAST, largestLabel);
+                } else {
+                    layout.putConstraint(SpringLayout.WEST, component, 5, SpringLayout.EAST, largestLabel);
                 }
             }
             this.add(component);
@@ -108,34 +112,34 @@ public class BeanConfigurablePanel extends ConfigurablePanel{
 
     private JComponent createInputForObject(Object o) {
         JComponent uiField = null;
-        if(o!=null) {
-            if(o instanceof Boolean) {
+        if (o != null) {
+            if (o instanceof Boolean) {
                 JCheckBox checkField = new JCheckBox();
                 checkField.setText(o.toString());
-                checkField.addChangeListener(e->{
-                    changed=true;
+                checkField.addChangeListener(e -> {
+                    changed = true;
                 });
                 uiField = checkField;
-            }else {
+            } else {
                 uiField = createInputForString(o.toString());
             }
         }
         return uiField;
     }
-    
+
     public JComponent createInputForString(String strConfig) {
-        boolean isJson=false;
-        if(strConfig.trim().startsWith("{")) {
+        boolean isJson = false;
+        if (strConfig.trim().startsWith("{")) {
             JSONParser parser = new JSONParser();
             try {
                 parser.parse(strConfig);
-                isJson=true;
+                isJson = true;
             } catch (ParseException e) {
             }
         }
         JComponent uiField = null;
-        
-        if(isJson) {
+
+        if (isJson) {
             RegexTextPane textArea = new RegexTextPane();
             textArea.setAutoscrolls(true);
             textArea.setText(strConfig);
@@ -146,7 +150,7 @@ public class BeanConfigurablePanel extends ConfigurablePanel{
             uiField = txtAreaScroll;
             layout.putConstraint(SpringLayout.SOUTH, uiField, 0, SpringLayout.SOUTH, this);
             layout.putConstraint(SpringLayout.EAST, uiField, 0, SpringLayout.EAST, this);
-        }else {
+        } else {
             JTextField textField = new JTextField();
             textField.setText(strConfig);
             textField.getDocument().addDocumentListener(this);
@@ -154,20 +158,20 @@ public class BeanConfigurablePanel extends ConfigurablePanel{
         }
         return uiField;
     }
-    
+
     public void createObjectGUI(Object o, String strLabel) {
-        JLabel label = new JLabel(strLabel+":");
+        JLabel label = new JLabel(strLabel + ":");
         int width = strLabel.length();
-        if(max<width) {
-            max=width;
-            largestLabel=label;
+        if (max < width) {
+            max = width;
+            largestLabel = label;
         }
         comps.add(label);
-        if(lastLabel!=null) {
+        if (lastLabel != null) {
             layout.putConstraint(SpringLayout.NORTH, label, 15, SpringLayout.SOUTH, lastLabel);
         }
-        lastLabel=label;
-        
+        lastLabel = label;
+
         JComponent uiField = createInputForObject(o);
         layout.putConstraint(SpringLayout.NORTH, uiField, 0, SpringLayout.NORTH, label);
         comps.add(uiField);
@@ -178,18 +182,18 @@ public class BeanConfigurablePanel extends ConfigurablePanel{
             lastLabel = null;
             comps = new ArrayList<Component>();
             largestLabel = null;
-            max=0;
+            max = 0;
 
             Object config = configurable.getConfiguration();
-            if(config!=null) {
-                if(config instanceof Pair<?, ?>) {
-                    createObjectGUI(((Pair<?, ?>)config).getLeft(),"Left");
-                    createObjectGUI(((Pair<?, ?>)config).getRight(),"Right");
-                }else {
+            if (config != null) {
+                if (config instanceof Pair<?, ?>) {
+                    createObjectGUI(((Pair<?, ?>) config).getLeft(), "Left");
+                    createObjectGUI(((Pair<?, ?>) config).getRight(), "Right");
+                } else {
                     createBeanGUI(config);
                 }
                 addCreatedObjects();
-            }else {
+            } else {
                 System.out.print("null");
             }
         } catch (IllegalArgumentException | IntrospectionException e) {
@@ -201,7 +205,7 @@ public class BeanConfigurablePanel extends ConfigurablePanel{
     @Override
     public void applyChanges() {
         // TODO Auto-generated method stub
-        
+
     }
 
 }

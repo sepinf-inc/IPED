@@ -1,17 +1,25 @@
 package iped.app.home.newcase.tabs.evidence;/*
- * @created 10/12/2022
- * @project IPED
- * @author Thiago S. Figueiredo
- */
+                                            * @created 10/12/2022
+                                            * @project IPED
+                                            * @author Thiago S. Figueiredo
+                                            */
+
+import java.awt.Frame;
+import java.awt.Insets;
+import java.util.ArrayList;
+
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
 
 import iped.app.home.newcase.model.Evidence;
 import iped.app.home.style.StyleManager;
 import iped.app.ui.Messages;
 import oshi.hardware.HWDiskStore;
-
-import javax.swing.*;
-import java.awt.*;
-import java.util.ArrayList;
 
 public class DiskSelecionDialog extends JDialog {
 
@@ -37,7 +45,7 @@ public class DiskSelecionDialog extends JDialog {
         mainPanel.setBorder(BorderFactory.createEmptyBorder(inset.top, inset.left, inset.bottom, inset.right));
 
         tableModel = new DisksTableModel(evidencesList);
-        tableDiskSelection = new JTable( tableModel );
+        tableDiskSelection = new JTable(tableModel);
         tableDiskSelection.setFillsViewportHeight(true);
         tableDiskSelection.setRowHeight(30);
 
@@ -51,28 +59,28 @@ public class DiskSelecionDialog extends JDialog {
 
         diskDialog.getContentPane().add(mainPanel);
 
-        okButton.addActionListener(e ->{
+        okButton.addActionListener(e -> {
             addDiskToEvidenceList();
             this.setVisible(false);
-        } );
+        });
     }
 
-    private void addDiskToEvidenceList(){
-        for(int rowIndex : tableDiskSelection.getSelectedRows()){
+    private void addDiskToEvidenceList() {
+        for (int rowIndex : tableDiskSelection.getSelectedRows()) {
             HWDiskStore disk = ((DisksTableModel) tableDiskSelection.getModel()).getDiskAt(rowIndex);
             Evidence evidence = new Evidence();
             evidence.setFileName(disk.getModel());
             evidence.setPath(disk.getName());
             evidencesList.add(evidence);
         }
-        evidenceListListener.forEach(e -> e.evidenceDataChange() );
+        evidenceListListener.forEach(e -> e.evidenceDataChange());
     }
 
-    public void showDialog(){
+    public void showDialog() {
         this.setVisible(true);
     }
 
-    public void addListener(EvidenceListListener listener){
+    public void addListener(EvidenceListListener listener) {
         evidenceListListener.add(listener);
     }
 

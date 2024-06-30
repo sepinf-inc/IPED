@@ -5,11 +5,10 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 import javax.swing.AbstractSpinnerModel;
-import javax.swing.JDialog;
 import javax.swing.JFormattedTextField;
-import javax.swing.JSpinner;
 import javax.swing.JFormattedTextField.AbstractFormatter;
 import javax.swing.JFormattedTextField.AbstractFormatterFactory;
+import javax.swing.JSpinner;
 import javax.swing.JSpinner.DefaultEditor;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -18,15 +17,15 @@ public class AutoCalcSpinnerModel extends AbstractSpinnerModel {
     int value;
     JSpinner spinner;
     ArrayList<ChangeListener> listeners = new ArrayList<ChangeListener>();
-    private boolean isInternalChage; 
-    
+    private boolean isInternalChage;
+
     public AutoCalcSpinnerModel(JSpinner spinner) {
         this.spinner = spinner;
         DefaultEditor c = new DefaultEditor(spinner);
         c.getTextField().setEditable(true);
         c.getTextField().setEnabled(true);
         c.setEnabled(true);
-        c.getTextField().setFormatterFactory(new AbstractFormatterFactory() {            
+        c.getTextField().setFormatterFactory(new AbstractFormatterFactory() {
             @Override
             public AbstractFormatter getFormatter(JFormattedTextField tf) {
                 // TODO Auto-generated method stub
@@ -38,7 +37,7 @@ public class AutoCalcSpinnerModel extends AbstractSpinnerModel {
 
                     @Override
                     public Object stringToValue(String text) throws ParseException {
-                        if(text.equals("0")||text.trim().equals("")) {
+                        if (text.equals("0") || text.trim().equals("")) {
                             return "auto";
                         }
                         return text;
@@ -46,15 +45,15 @@ public class AutoCalcSpinnerModel extends AbstractSpinnerModel {
                 };
             }
         });
-        //spinner.setEditor();
+        // spinner.setEditor();
         spinner.setEditor(c);
     }
-    
+
     @Override
     public Object getValue() {
-        if(value==0) {
+        if (value == 0) {
             return "auto";
-        }else {
+        } else {
             return value;
         }
     }
@@ -62,25 +61,25 @@ public class AutoCalcSpinnerModel extends AbstractSpinnerModel {
     @Override
     public void setValue(Object value) {
         boolean valid = true;
-        if(value.toString().equals("auto")) {
+        if (value.toString().equals("auto")) {
             this.value = 0;
-        }else {
-            if(value instanceof String) {
+        } else {
+            if (value instanceof String) {
                 try {
-                    this.value = Integer.parseInt((String)value);
-                }catch (Exception e) {
+                    this.value = Integer.parseInt((String) value);
+                } catch (Exception e) {
                     valid = false;
                 }
-            }else {
-                this.value = (Integer)value;
+            } else {
+                this.value = (Integer) value;
             }
         }
-        if(!isInternalChage) {
+        if (!isInternalChage) {
             DefaultEditor c = (DefaultEditor) spinner.getEditor();
-            isInternalChage=true;
+            isInternalChage = true;
             c.getTextField().setValue(getValue());
-            isInternalChage=false;
-            if(valid) {
+            isInternalChage = false;
+            if (valid) {
                 for (Iterator iterator = listeners.iterator(); iterator.hasNext();) {
                     ChangeListener changeListener = (ChangeListener) iterator.next();
                     changeListener.stateChanged(new ChangeEvent(spinner));
@@ -91,13 +90,13 @@ public class AutoCalcSpinnerModel extends AbstractSpinnerModel {
 
     @Override
     public Object getNextValue() {
-        return value+1;
+        return value + 1;
     }
 
     @Override
     public Object getPreviousValue() {
-        if(value>0) {
-            return value-1;
+        if (value > 0) {
+            return value - 1;
         }
         return 0;
     }

@@ -19,7 +19,7 @@ public class ExternalParserPopup extends JPopupMenu implements ActionListener {
 
     public ExternalParserPopup(ParsersConfigurablePanel configPanel) {
         this.configPanel = configPanel;
-        this.parsersTree=configPanel.getParsersTree();
+        this.parsersTree = configPanel.getParsersTree();
         this.doc = configPanel.getDocument();
         createExternalParser = new JMenuItem("Create external parser");
         createExternalParser.addActionListener(this);

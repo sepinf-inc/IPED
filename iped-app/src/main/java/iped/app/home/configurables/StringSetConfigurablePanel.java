@@ -18,7 +18,7 @@ public class StringSetConfigurablePanel extends TextConfigurablePanel {
     public void createConfigurableGUI() {
         super.createConfigurableGUI();
         Collection<String> col = (Collection<String>) configurable.getConfiguration();
-        StringBuffer output = new StringBuffer(); 
+        StringBuffer output = new StringBuffer();
         for (Iterator iterator = col.iterator(); iterator.hasNext();) {
             String string = (String) iterator.next();
             output.append(string);
@@ -31,7 +31,7 @@ public class StringSetConfigurablePanel extends TextConfigurablePanel {
 
     @Override
     public void applyChanges() {
-        Collection<String> col =(Collection<String>) configurable.getConfiguration();
+        Collection<String> col = (Collection<String>) configurable.getConfiguration();
         col.removeAll(col);
 
         String content = textArea.getText();

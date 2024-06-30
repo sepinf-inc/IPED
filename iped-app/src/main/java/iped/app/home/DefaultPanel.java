@@ -1,13 +1,16 @@
 package iped.app.home;/*
- * @created 07/09/2022
- * @project IPED
- * @author Thiago S. Figueiredo
- */
+                      * @created 07/09/2022
+                      * @project IPED
+                      * @author Thiago S. Figueiredo
+                      */
+
+import java.awt.Color;
+import java.awt.Insets;
+
+import javax.swing.BorderFactory;
+import javax.swing.JPanel;
 
 import iped.app.home.style.StyleManager;
-
-import javax.swing.*;
-import java.awt.*;
 
 public abstract class DefaultPanel extends JPanel {
     protected MainFrame mainFrame;
@@ -22,7 +25,7 @@ public abstract class DefaultPanel extends JPanel {
         this.createAndShowGUI();
     }
 
-    public Color getCurrentBackGroundColor(){
+    public Color getCurrentBackGroundColor() {
         return currentBackGroundColor;
     }
 

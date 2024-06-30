@@ -98,7 +98,7 @@ public class ParsersConfigurablePanel extends AdvancedTextConfigurablePanel {
 
     protected ParsersConfigurablePanel(Configurable<String> configurable, MainFrame mainFrame) {
         super(configurable, mainFrame);
-        this.parsersConfig=configurable;
+        this.parsersConfig = configurable;
         cc = ConfigurationManager.get().findObject(CategoryConfig.class);
         categoryRoot = cc.getRoot().clone();
     }
@@ -111,43 +111,42 @@ public class ParsersConfigurablePanel extends AdvancedTextConfigurablePanel {
         textArea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_XML);
         textArea.setText(parsersConfig.getConfiguration());
         textArea.getDocument().addDocumentListener(this);
-        
-        if(parsersModel.isExternalParsers()) {
+
+        if (parsersModel.isExternalParsers()) {
             createNewExternalParserPanel();
         }
     }
 
     @Override
     protected Component getBasicPane() {
-        if(splitPane==null) {
+        if (splitPane == null) {
             createParserListPanel();
         }
         return splitPane;
     }
-    
+
     public void installField(String textLabel, Component component) {
         JLabel label = new JLabel(textLabel);
-        if(lastLabel!=null) {
+        if (lastLabel != null) {
             panelLayout.putConstraint(SpringLayout.NORTH, label, 15, SpringLayout.SOUTH, lastLabel);
-        }else {
+        } else {
             panelLayout.putConstraint(SpringLayout.NORTH, label, 15, SpringLayout.NORTH, createExternalParserPanel);
         }
         int width = label.getText().length();
-        if(max<width) {
-            max=width;
-            largestLabel=label;
+        if (max < width) {
+            max = width;
+            largestLabel = label;
         }
         comps.add(label);
         Component uiField;
-        if(component instanceof JTextField) {
+        if (component instanceof JTextField) {
             panelLayout.putConstraint(SpringLayout.VERTICAL_CENTER, component, 0, SpringLayout.VERTICAL_CENTER, label);
-        }else {
+        } else {
             panelLayout.putConstraint(SpringLayout.NORTH, component, 0, SpringLayout.NORTH, label);
         }
         comps.add(component);
-        lastLabel=component;
+        lastLabel = component;
     }
-    
 
     public void createNewExternalParserPanel() {
         createExternalParserPanel = new JPanel();
@@ -156,56 +155,56 @@ public class ParsersConfigurablePanel extends AdvancedTextConfigurablePanel {
         panelLayout = new SpringLayout();
         createExternalParserPanel.setLayout(panelLayout);
 
-        txName= new JTextField("");
-        installField("Parser name:", txName);        
-        txCheckCommand=new JTextField();
-        installField("Check command:",txCheckCommand);
-        
-        txCheckErroCodes=new JTextField("1");
-        installField("Check error codes:",txCheckErroCodes);
-        
-        txCommand=new JTextField("${INPUT}");
-        installField("Command:",txCommand);
-        
-        txMimetypes=new RSyntaxTextArea(5,80);
+        txName = new JTextField("");
+        installField("Parser name:", txName);
+        txCheckCommand = new JTextField();
+        installField("Check command:", txCheckCommand);
+
+        txCheckErroCodes = new JTextField("1");
+        installField("Check error codes:", txCheckErroCodes);
+
+        txCommand = new JTextField("${INPUT}");
+        installField("Command:", txCommand);
+
+        txMimetypes = new RSyntaxTextArea(5, 80);
         txMimetypes.setHighlightCurrentLine(false);
         mtac = new MimetypeAutoCompletionProvider();
         AutoCompletion ac = new AutoCompletion(mtac);
         ac.install(txMimetypes);
-        installField("Mime-types:",new RTextScrollPane(txMimetypes));
-        
+        installField("Mime-types:", new RTextScrollPane(txMimetypes));
+
         txCharset = new RSyntaxTextArea();
         txCharset.setHighlightCurrentLine(false);
         RTextScrollPane charsetPanel = new RTextScrollPane(txCharset);
         charsetPanel.setLineNumbersEnabled(false);
         charsetPanel.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
-        installField("Charset:",charsetPanel );
+        installField("Charset:", charsetPanel);
         csac = new CharsetCompletionProvider();
         ac = new AutoCompletion(csac);
         ac.install(txCharset);
-        
-        txLines= new JTextField("0");
-        installField("First lines to ignore:",txLines);
+
+        txLines = new JTextField("0");
+        installField("First lines to ignore:", txLines);
 
         for (Iterator iterator = comps.iterator(); iterator.hasNext();) {
             Component component = (Component) iterator.next();
-            if(component!=largestLabel) {
-                if(component instanceof JLabel) {
+            if (component != largestLabel) {
+                if (component instanceof JLabel) {
                     panelLayout.putConstraint(SpringLayout.EAST, component, 0, SpringLayout.EAST, largestLabel);
-                }else {
-                    panelLayout.putConstraint(SpringLayout.WEST, component, 5,SpringLayout.EAST, largestLabel);
-                    panelLayout.putConstraint(SpringLayout.EAST, component, -15,SpringLayout.EAST, createExternalParserPanel);
+                } else {
+                    panelLayout.putConstraint(SpringLayout.WEST, component, 5, SpringLayout.EAST, largestLabel);
+                    panelLayout.putConstraint(SpringLayout.EAST, component, -15, SpringLayout.EAST, createExternalParserPanel);
                 }
             }
             createExternalParserPanel.add(component);
         }
         ParsersConfigurablePanel self = this;
-        
+
         JButton cancelExternalParserBtn = new JButton(Messages.get("Home.Cancel"));
         cancelExternalParserBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                ((VetoableSingleSelectionModel)tabbedPane.getModel()).removeVetoableChangeListener(externalParserEditingVeto);
+                ((VetoableSingleSelectionModel) tabbedPane.getModel()).removeVetoableChangeListener(externalParserEditingVeto);
                 tabbedPane.setSelectedIndex(0);
                 tabbedPane.removeTabAt(2);
             }
@@ -214,63 +213,63 @@ public class ParsersConfigurablePanel extends AdvancedTextConfigurablePanel {
         createExternalParserBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if(txName.getText().trim().equals("")) {
+                if (txName.getText().trim().equals("")) {
                     JOptionPane.showMessageDialog(createExternalParserPanel, Messages.get("iped.app.home.configurables.ParsersConfigurablePanel.EmptyNameError"));
                     return;
                 }
-                if(txCommand.getText().trim().equals("${INPUT}")) {
+                if (txCommand.getText().trim().equals("${INPUT}")) {
                     JOptionPane.showMessageDialog(createExternalParserPanel, Messages.get("iped.app.home.configurables.ParsersConfigurablePanel.EmptyCommandError"));
                     return;
                 }
-                if(txMimetypes.getText().trim().equals("")) {
+                if (txMimetypes.getText().trim().equals("")) {
                     JOptionPane.showMessageDialog(createExternalParserPanel, Messages.get("iped.app.home.configurables.ParsersConfigurablePanel.EmptyMimeTypeError"));
                 }
                 SortedSet<MediaType> mts = MediaTypeRegistry.getDefaultRegistry().getTypes();
-                String[] mimetypes= txMimetypes.getText().split("\n");
+                String[] mimetypes = txMimetypes.getText().split("\n");
                 for (int i = 0; i < mimetypes.length; i++) {
-                    String[] mimeparts=mimetypes[i].trim().split("/");
-                    if(mimeparts.length<2) {
-                        JOptionPane.showMessageDialog(createExternalParserPanel, Messages.get("iped.app.home.configurables.ParsersConfigurablePanel.InvalidMimeTypeError")+": "+mimetypes[i]+".");
+                    String[] mimeparts = mimetypes[i].trim().split("/");
+                    if (mimeparts.length < 2) {
+                        JOptionPane.showMessageDialog(createExternalParserPanel, Messages.get("iped.app.home.configurables.ParsersConfigurablePanel.InvalidMimeTypeError") + ": " + mimetypes[i] + ".");
                     }
                     MediaType mt = new MediaType(mimeparts[0], mimeparts[1]);
-                    if(!mtac.containsKeyword(mt.toString())) {
-                        JOptionPane.showMessageDialog(createExternalParserPanel,  Messages.get("iped.app.home.configurables.ParsersConfigurablePanel.UnregisteredMimeTypeError")+": "+mimetypes[i]+".");
+                    if (!mtac.containsKeyword(mt.toString())) {
+                        JOptionPane.showMessageDialog(createExternalParserPanel, Messages.get("iped.app.home.configurables.ParsersConfigurablePanel.UnregisteredMimeTypeError") + ": " + mimetypes[i] + ".");
                         return;
                     }
                 }
-                if(txCharset.getText().trim().equals("")) {
+                if (txCharset.getText().trim().equals("")) {
                     JOptionPane.showMessageDialog(createExternalParserPanel, Messages.get("iped.app.home.configurables.ParsersConfigurablePanel.EmptyCharsetError"));
                     return;
                 }
-                
-                try{
+
+                try {
                     Integer.parseInt(txLines.getText().trim());
-                }catch (NumberFormatException ex) {
+                } catch (NumberFormatException ex) {
                     JOptionPane.showMessageDialog(createExternalParserPanel, Messages.get("iped.app.home.configurables.ParsersConfigurablePanel.InvalidFirstLinesToSkipError"));
                 }
-                
+
                 List<Completion> cs = csac.getCompletionByInputText(txCharset.getText().trim());
-                if(cs==null || cs.size()!=1) {
-                    JOptionPane.showMessageDialog(createExternalParserPanel,  Messages.get("iped.app.home.configurables.ParsersConfigurablePanel.InvalidCharsetError"));
+                if (cs == null || cs.size() != 1) {
+                    JOptionPane.showMessageDialog(createExternalParserPanel, Messages.get("iped.app.home.configurables.ParsersConfigurablePanel.InvalidCharsetError"));
                     return;
                 }
                 createExternalParserElement();
-                ((VetoableSingleSelectionModel)tabbedPane.getModel()).removeVetoableChangeListener(externalParserEditingVeto);
+                ((VetoableSingleSelectionModel) tabbedPane.getModel()).removeVetoableChangeListener(externalParserEditingVeto);
                 tabbedPane.setSelectedIndex(0);
                 tabbedPane.remove(createExternalParserPanel);
                 self.changed = true;
-                                
+
             }
         });
         JPanel btnPanel = new JPanel();
         btnPanel.setBackground(this.getBackground());
         btnPanel.add(createExternalParserBtn);
         btnPanel.add(cancelExternalParserBtn);
-        panelLayout.putConstraint(SpringLayout.SOUTH, btnPanel, -30,SpringLayout.SOUTH, createExternalParserPanel);
-        panelLayout.putConstraint(SpringLayout.HORIZONTAL_CENTER, btnPanel, 0,SpringLayout.HORIZONTAL_CENTER, createExternalParserPanel);
+        panelLayout.putConstraint(SpringLayout.SOUTH, btnPanel, -30, SpringLayout.SOUTH, createExternalParserPanel);
+        panelLayout.putConstraint(SpringLayout.HORIZONTAL_CENTER, btnPanel, 0, SpringLayout.HORIZONTAL_CENTER, createExternalParserPanel);
         createExternalParserPanel.add(btnPanel);
     }
-    
+
     public void createExternalParserElement() {
         Document doc = parsersModel.getDocument();
         doc.getDocumentElement().getChildNodes().getLength();
@@ -279,18 +278,19 @@ public class ParsersConfigurablePanel extends AdvancedTextConfigurablePanel {
         Element parserNameEl = (Element) parserEl.appendChild(doc.createElement("name"));
         parserNameEl.setTextContent(txName.getText());
         Element checkEl = (Element) parserEl.appendChild(doc.createElement("check"));
-        checkEl.appendChild(doc.createElement("command")).setTextContent(txCheckCommand.getText());;
+        checkEl.appendChild(doc.createElement("command")).setTextContent(txCheckCommand.getText());
+        ;
         checkEl.appendChild(doc.createElement("error-codes")).setTextContent(txCheckErroCodes.getText());
         parserEl.appendChild(doc.createElement("command")).setTextContent(txCommand.getText());
         parserEl.appendChild(doc.createElement("output-charset")).setTextContent(txCharset.getText());
         parserEl.appendChild(doc.createElement("firstLinesToIgnore")).setTextContent(txLines.getText());
-        String[] mimetypes= txMimetypes.getText().split("\n");
+        String[] mimetypes = txMimetypes.getText().split("\n");
         Element mimeTypesEl = (Element) parserEl.appendChild(doc.createElement("mime-types"));
         for (int i = 0; i < mimetypes.length; i++) {
             mimeTypesEl.appendChild(doc.createElement("mime")).setTextContent(mimetypes[i]);
         }
         doc.getDocumentElement().appendChild(parserEl);
-        
+
         refreshParsersModel();
     }
 
@@ -302,17 +302,17 @@ public class ParsersConfigurablePanel extends AdvancedTextConfigurablePanel {
         parsersTree.setShowsRootHandles(true);
         parserListPanel.setViewportView(parsersTree);
         parserListPanel.setAutoscrolls(true);
-        parsersTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);        
+        parsersTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
         cellRenderer = new ConfigCheckBoxTreeCellRenderer(parsersTree, new Predicate<Object>() {
             @Override
             public boolean apply(Object input) {
-                boolean result=false;
-                if(input instanceof ParserElementName) {
-                    Element elem = ((ParserElementName)input).getElement();                    
-                    Attr attr = (Attr)elem.getAttributes().getNamedItem(ParsersConfig.PARSER_DISABLED_ATTR);
-                    
-                    if(attr==null) {
-                        result=true;
+                boolean result = false;
+                if (input instanceof ParserElementName) {
+                    Element elem = ((ParserElementName) input).getElement();
+                    Attr attr = (Attr) elem.getAttributes().getNamedItem(ParsersConfig.PARSER_DISABLED_ATTR);
+
+                    if (attr == null) {
+                        result = true;
                     }
                 }
                 return result;
@@ -326,31 +326,31 @@ public class ParsersConfigurablePanel extends AdvancedTextConfigurablePanel {
         cellRenderer.getCheckbox().addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
-                Object o = parsersTree.getLastSelectedPathComponent();                
-                if(o!=null) {
-                    if(o instanceof ParserElementName) {
-                        Element elem = ((ParserElementName)o).getElement();
-                        if(elem!=null) {
-                            Attr attr = (Attr)elem.getAttributes().getNamedItem(ParsersConfig.PARSER_DISABLED_ATTR);
-                            
-                            if(attr==null) {
+                Object o = parsersTree.getLastSelectedPathComponent();
+                if (o != null) {
+                    if (o instanceof ParserElementName) {
+                        Element elem = ((ParserElementName) o).getElement();
+                        if (elem != null) {
+                            Attr attr = (Attr) elem.getAttributes().getNamedItem(ParsersConfig.PARSER_DISABLED_ATTR);
+
+                            if (attr == null) {
                                 elem.setAttribute(ParsersConfig.PARSER_DISABLED_ATTR, "true");
-                            }else {
+                            } else {
                                 elem.removeAttribute(ParsersConfig.PARSER_DISABLED_ATTR);
                             }
 
                             textArea.setText(parsersModel.getXMLString());
 
                             try {
-                                //moves the caret to the line of the changed parser declaration
-                                int lineNumber = Integer.parseInt((String) elem.getUserData(PositionalXMLReader.LINE_NUMBER_KEY_NAME))-1;
+                                // moves the caret to the line of the changed parser declaration
+                                int lineNumber = Integer.parseInt((String) elem.getUserData(PositionalXMLReader.LINE_NUMBER_KEY_NAME)) - 1;
                                 int offset = textArea.getDocument().getDefaultRootElement().getElement(lineNumber).getStartOffset();
                                 textArea.setCaretPosition(offset);
-                            }catch(Exception ex) {
+                            } catch (Exception ex) {
                                 ex.printStackTrace();
                             }
 
-                            changed=true;
+                            changed = true;
                         }
                     }
                 }
@@ -358,25 +358,25 @@ public class ParsersConfigurablePanel extends AdvancedTextConfigurablePanel {
         });
         parsersTree.setCellRenderer(cellRenderer);
         parsersTree.setEditable(true);
-        
+
         categoryTreeModel = new CategoryMimeTreeModel(categoryRoot);
         categoryTreeModel.setToShowUncategorizable(true);
         categoryTreeModel.hideCategories(new java.util.function.Predicate<Category>() {
             @Override
             public boolean test(Category cat) {
-                if(cat.equals(categoryRoot)) {
+                if (cat.equals(categoryRoot)) {
                     return false;
-                }else {
+                } else {
                     List<ParserElementName> parsers = parsersModel.getCategoryMediaTypesNames(cat);
-                    return parsers!=null && parsers.size()<=0;
+                    return parsers != null && parsers.size() <= 0;
                 }
             }
-        });        
+        });
         categoryTree = new JTree(categoryTreeModel);
         categoryTree.setCellRenderer(new CheckBoxTreeCellRenderer(categoryTree, null, new Predicate<Object>() {
             @Override
             public boolean apply(@Nullable Object input) {
-                return false;//never shows checkbox
+                return false;// never shows checkbox
             }
         }));
         categoryTree.setRootVisible(false);
@@ -386,10 +386,10 @@ public class ParsersConfigurablePanel extends AdvancedTextConfigurablePanel {
             @Override
             public void valueChanged(TreeSelectionEvent e) {
                 Object cat = e.getNewLeadSelectionPath().getLastPathComponent();
-                if(cat==CategoryMimeTreeModel.uncategorizableName) {
+                if (cat == CategoryMimeTreeModel.uncategorizableName) {
                     parsersModel.setCategory(null);
                 }
-                if(cat instanceof Category) {
+                if (cat instanceof Category) {
                     parsersModel.setCategory((Category) cat);
                 }
                 parsersTree.setModel(parsersModel.copy());
@@ -403,15 +403,15 @@ public class ParsersConfigurablePanel extends AdvancedTextConfigurablePanel {
         splitPane = new JSplitPane();
         splitPane.setRightComponent(parserListPanel);
         splitPane.setLeftComponent(categoryPanel);
-        if(parsersModel.isExternalParsers()) {
+        if (parsersModel.isExternalParsers()) {
             externalParserPopup = new ExternalParserPopup(this);
             popupMouseAdapter = new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
-                    if (SwingUtilities.isRightMouseButton(e)) {            
+                    if (SwingUtilities.isRightMouseButton(e)) {
                         int row = categoryTree.getClosestRowForLocation(e.getX(), e.getY());
                         categoryTree.setLeadSelectionPath(categoryTree.getPathForRow(row));
-                        if(categoryTree.getLeadSelectionPath().getLastPathComponent() instanceof Category) {
+                        if (categoryTree.getLeadSelectionPath().getLastPathComponent() instanceof Category) {
                             externalParserPopup.show(e.getComponent(), e.getX(), e.getY());
                         }
                     }
@@ -420,14 +420,14 @@ public class ParsersConfigurablePanel extends AdvancedTextConfigurablePanel {
             parsersTree.addMouseListener(popupMouseAdapter);
         }
     }
-    
+
     public void refreshParsersModel() {
-        //update tree model
+        // update tree model
         Enumeration<TreePath> exps = parsersTree.getExpandedDescendants(parsersTree.getPathForRow(0));
         parsersModel = new ParsersTreeModel(parsersConfig, categoryRoot, getDocument());
         parsersTree.setModel(parsersModel);
-        if(exps!=null) {
-            while(exps.hasMoreElements()) {
+        if (exps != null) {
+            while (exps.hasMoreElements()) {
                 TreePath curpath = exps.nextElement();
                 parsersTree.expandPath(curpath);
             }
@@ -469,7 +469,7 @@ public class ParsersConfigurablePanel extends AdvancedTextConfigurablePanel {
                 throw pve;
             }
         };
-        ((VetoableSingleSelectionModel)tabbedPane.getModel()).addVetoableChangeListener(externalParserEditingVeto);
+        ((VetoableSingleSelectionModel) tabbedPane.getModel()).addVetoableChangeListener(externalParserEditingVeto);
     }
 
     protected String getBasicPaneTitle() {

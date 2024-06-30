@@ -1,8 +1,8 @@
 package iped.app.home.processmanager;/*
- * @created 29/09/2022
- * @project IPED
- * @author Thiago S. Figueiredo
- */
+                                     * @created 29/09/2022
+                                     * @project IPED
+                                     * @author Thiago S. Figueiredo
+                                     */
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -29,25 +29,25 @@ public class ProcessManager {
     private Process process;
     private final ArrayList<ProcessListener> processListener = new ArrayList<>();
 
-    public ArrayList<String> getEvidencesCommandList(ArrayList<Evidence> evidenceList){
+    public ArrayList<String> getEvidencesCommandList(ArrayList<Evidence> evidenceList) {
         ArrayList<String> commandArgs = new ArrayList<>();
-        for(Evidence currentEvidence : evidenceList ){
+        for (Evidence currentEvidence : evidenceList) {
             commandArgs.add("-d");
             commandArgs.add("\"" + currentEvidence.getPath() + "\"");
 
-            if( (currentEvidence.getAlias() != null) && (! currentEvidence.getAlias().trim().isEmpty()) ) {
+            if ((currentEvidence.getAlias() != null) && (!currentEvidence.getAlias().trim().isEmpty())) {
                 commandArgs.add("-dname");
                 commandArgs.add("\"" + currentEvidence.getAlias().trim() + "\"");
             }
-            if( (currentEvidence.getTimezone() != null) && (! currentEvidence.getTimezone().trim().isEmpty()) ) {
+            if ((currentEvidence.getTimezone() != null) && (!currentEvidence.getTimezone().trim().isEmpty())) {
                 commandArgs.add("-tz");
                 commandArgs.add(currentEvidence.getTimezone());
             }
-            if( (currentEvidence.getPassword() != null) && (! currentEvidence.getPassword().trim().isEmpty()) ){
+            if ((currentEvidence.getPassword() != null) && (!currentEvidence.getPassword().trim().isEmpty())) {
                 commandArgs.add("-p");
                 commandArgs.add("\"" + currentEvidence.getPassword() + "\"");
             }
-            if( (currentEvidence.getBlocksize() != null) && (currentEvidence.getBlocksize() > 0 ) ){
+            if ((currentEvidence.getBlocksize() != null) && (currentEvidence.getBlocksize() > 0)) {
                 commandArgs.add("-b");
                 commandArgs.add(currentEvidence.getBlocksize().toString());
             }
@@ -55,46 +55,46 @@ public class ProcessManager {
         return commandArgs;
     }
 
-    public ArrayList<String> getCaseOutputCommand(Path caseOutput){
+    public ArrayList<String> getCaseOutputCommand(Path caseOutput) {
         ArrayList<String> commandArgs = new ArrayList<>();
         commandArgs.add("-o");
-        commandArgs.add( "\"" + caseOutput.toString() + "\"" );
+        commandArgs.add("\"" + caseOutput.toString() + "\"");
         return commandArgs;
     }
 
-    public ArrayList<String> getProfileCommand(String profileName){
+    public ArrayList<String> getProfileCommand(String profileName) {
         ArrayList<String> commandArgs = new ArrayList<>();
-        if( StringUtils.isEmpty(profileName) )
+        if (StringUtils.isEmpty(profileName))
             return commandArgs;
         commandArgs.add("-profile");
-        commandArgs.add( profileName );
+        commandArgs.add(profileName);
         return commandArgs;
     }
 
-    public ArrayList<String> getAsapParameter(IPEDProcess ipp){
+    public ArrayList<String> getAsapParameter(IPEDProcess ipp) {
         ArrayList<String> commandArgs = new ArrayList<>();
-        if( ipp != null && ipp.getAsapFile() != null && ipp.getAsapFile().toFile().exists() ) {
+        if (ipp != null && ipp.getAsapFile() != null && ipp.getAsapFile().toFile().exists()) {
             commandArgs.add("-asap");
-            commandArgs.add("\"" + ipp.getAsapFile().toAbsolutePath().toString() +"\"");
+            commandArgs.add("\"" + ipp.getAsapFile().toAbsolutePath().toString() + "\"");
         }
         return commandArgs;
     }
 
-    public ArrayList<String> getIpedSearchAppJarCommand(Path caseOutput){
+    public ArrayList<String> getIpedSearchAppJarCommand(Path caseOutput) {
         ArrayList<String> cmds = new ArrayList<>();
         cmds.add("-jar");
-        cmds.add(Paths.get(caseOutput.toString(), "iped", "lib", "iped-search-app.jar").toString() );
+        cmds.add(Paths.get(caseOutput.toString(), "iped", "lib", "iped-search-app.jar").toString());
         return cmds;
     }
 
-    public ArrayList<String> getIpedJarCommand(){
+    public ArrayList<String> getIpedJarCommand() {
         ArrayList<String> cmds = new ArrayList<>();
         cmds.add("-jar");
-        cmds.add(Paths.get(System.getProperty(IConfigurationDirectory.IPED_APP_ROOT), "iped.jar").toString() );
+        cmds.add(Paths.get(System.getProperty(IConfigurationDirectory.IPED_APP_ROOT), "iped.jar").toString());
         return cmds;
     }
 
-    public String getJreBinCommand(){
+    public String getJreBinCommand() {
         String javaBin = "java";
         File embeddedJRE = Paths.get(getRootPath(), "jre").toFile();
         File javaHome = new File(System.getProperty("java.home"));
@@ -110,19 +110,20 @@ public class ProcessManager {
         return javaBin;
     }
 
-    public static void validateCaseOutput(Path caseOutput) throws IPEDException{
+    public static void validateCaseOutput(Path caseOutput) throws IPEDException {
         boolean isExistsCase = Paths.get(caseOutput.toString(), "IPED-SearchApp.exe").toFile().exists();
-        if(isExistsCase) {
-            //check if the existent case is finished, if yes the user cannot choose the continue options
+        if (isExistsCase) {
+            // check if the existent case is finished, if yes the user cannot choose the
+            // continue options
             boolean isCaseFinished = Paths.get(caseOutput.toString(), "iped", "data", "processing_finished").toFile().exists();
-            if( isCaseFinished )
+            if (isCaseFinished)
                 throw new IPEDException("There is already a finished case in the output directory");
             else
                 throw new IPEDException("There is already a unfinished case in the output directory");
         }
     }
 
-    private String getRootPath(){
+    private String getRootPath() {
         String rootPath = null;
         try {
             URL url = ProcessManager.class.getProtectionDomain().getCodeSource().getLocation();
@@ -135,7 +136,7 @@ public class ProcessManager {
                     rootPath = new File(url.toURI()).getParentFile().getParent();
                 }
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return rootPath;
@@ -153,16 +154,16 @@ public class ProcessManager {
         startIpedSearchAppProcess(commandList, output);
     }
 
-    public void openSingleCase(Path casePath){
-        ArrayList<String> commandList =  new ArrayList<>();
+    public void openSingleCase(Path casePath) {
+        ArrayList<String> commandList = new ArrayList<>();
         commandList.add(getJreBinCommand());
         commandList.addAll(getIpedSearchAppJarCommand(casePath));
         StringBuffer output = new StringBuffer();
         startIpedSearchAppProcess(commandList, output);
     }
 
-    private void startIpedSearchAppProcess(ArrayList<String> commandList, StringBuffer output){
-        try{
+    private void startIpedSearchAppProcess(ArrayList<String> commandList, StringBuffer output) {
+        try {
             System.out.println("IPED Search command: " + String.join(" ", commandList.toArray(new String[0])));
             process = Runtime.getRuntime().exec(commandList.toArray(new String[0]));
             fireCaseIsOpening();
@@ -171,34 +172,34 @@ public class ProcessManager {
             if (process.exitValue() != 0) {
                 throw new Exception(output.toString());
             }
-        }catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
-        }finally {
+        } finally {
             fireCaseWasClosed();
         }
     }
 
     public void startIpedProcess(IPEDProcess ipedProcess, JTextArea logTextArea) throws IpedStartException {
         try {
-            ArrayList<String> commandList =  new ArrayList<>();
-            if (org.apache.tika.utils.SystemUtils.IS_OS_WINDOWS){
-                commandList.add( Paths.get(System.getProperty(IConfigurationDirectory.IPED_APP_ROOT), "iped.exe").toString() );
-            }else {
+            ArrayList<String> commandList = new ArrayList<>();
+            if (org.apache.tika.utils.SystemUtils.IS_OS_WINDOWS) {
+                commandList.add(Paths.get(System.getProperty(IConfigurationDirectory.IPED_APP_ROOT), "iped.exe").toString());
+            } else {
                 commandList.add(getJreBinCommand());
                 commandList.addAll(getIpedJarCommand());
             }
-            commandList.addAll(getEvidencesCommandList(ipedProcess.getEvidenceList()) );
+            commandList.addAll(getEvidencesCommandList(ipedProcess.getEvidenceList()));
             commandList.addAll(getCaseOutputCommand(ipedProcess.getCaseOutputPath()));
             commandList.addAll(getProfileCommand(ipedProcess.getProfile()));
             commandList.addAll(ipedProcess.getOptionsAsList());
             commandList.addAll(getAsapParameter(ipedProcess));
-            if(ipedProcess.getExistentCaseOption() != null)
+            if (ipedProcess.getExistentCaseOption() != null)
                 commandList.add(ipedProcess.getExistentCaseOption().getCommand());
             System.out.println("IPED command: " + String.join(" ", commandList.toArray(new String[0])));
             process = Runtime.getRuntime().exec(commandList.toArray(new String[0]));
             fireProcessStartListener();
             readProcessOutput(process, logTextArea);
-            //wait process finish
+            // wait process finish
             process.waitFor();
             int exitVal = process.exitValue();
             if (exitVal != 0) {
@@ -206,7 +207,7 @@ public class ProcessManager {
             }
         } catch (final IOException | InterruptedException e) {
             throw new IpedStartException("Exception on Iped start", e);
-        }finally {
+        } finally {
             fireProcessFinishedListener();
         }
     }
@@ -266,22 +267,23 @@ public class ProcessManager {
             outputText.append(line).append("\n");
     }
 
-    private void fireProcessStartListener(){
-        for( ProcessListener listener : processListener )
+    private void fireProcessStartListener() {
+        for (ProcessListener listener : processListener)
             listener.processStarted();
     }
 
-    private void fireProcessFinishedListener(){
-        for( ProcessListener listener : processListener )
+    private void fireProcessFinishedListener() {
+        for (ProcessListener listener : processListener)
             listener.processFinished();
     }
 
-    public void fireCaseIsOpening(){
-        for( ProcessListener listener : processListener )
+    public void fireCaseIsOpening() {
+        for (ProcessListener listener : processListener)
             listener.caseIsOpening();
     }
-    public void fireCaseWasClosed(){
-        for( ProcessListener listener : processListener )
+
+    public void fireCaseWasClosed() {
+        for (ProcessListener listener : processListener)
             listener.caseWasClosed();
     }
 
@@ -290,5 +292,3 @@ public class ProcessManager {
     }
 
 }
-
-

@@ -1,8 +1,8 @@
 package iped.app.home.newcase.model;/*
- * @created 12/09/2022
- * @project IPED
- * @author Thiago S. Figueiredo
- */
+                                    * @created 12/09/2022
+                                    * @project IPED
+                                    * @author Thiago S. Figueiredo
+                                    */
 
 public class Evidence implements Cloneable {
 

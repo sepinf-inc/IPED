@@ -16,7 +16,7 @@ import iped.app.ui.Messages;
 
 public class EvidencesTableModel extends AbstractTableModel {
 
-    private final String[] COLUMN_NAME = {Messages.get("Home.Evidences.Table.FileName"), Messages.get("Home.Evidences.Table.Alias"), Messages.get("Home.Evidences.Table.Path"), Messages.get("Home.Evidences.Table.Options")};
+    private final String[] COLUMN_NAME = { Messages.get("Home.Evidences.Table.FileName"), Messages.get("Home.Evidences.Table.Alias"), Messages.get("Home.Evidences.Table.Path"), Messages.get("Home.Evidences.Table.Options") };
     private final ArrayList<Evidence> evidencesList;
     private EvidenceInfoDialog evidenceInfoDialog;
 
@@ -32,7 +32,7 @@ public class EvidencesTableModel extends AbstractTableModel {
 
     @Override
     public int getRowCount() {
-        return (evidencesList != null)? evidencesList.size(): 0;
+        return (evidencesList != null) ? evidencesList.size() : 0;
     }
 
     @Override
@@ -42,24 +42,31 @@ public class EvidencesTableModel extends AbstractTableModel {
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        if(evidencesList == null)
+        if (evidencesList == null)
             return "";
-        switch (columnIndex){
-            case 0: return evidencesList.get(rowIndex).getFileName();
-            case 1: return evidencesList.get(rowIndex).getAlias();
-            case 2: return evidencesList.get(rowIndex).getPath();
-            case 3: return  evidencesList.get(rowIndex);
-            default: return "";
+        switch (columnIndex) {
+            case 0:
+                return evidencesList.get(rowIndex).getFileName();
+            case 1:
+                return evidencesList.get(rowIndex).getAlias();
+            case 2:
+                return evidencesList.get(rowIndex).getPath();
+            case 3:
+                return evidencesList.get(rowIndex);
+            default:
+                return "";
         }
     }
 
-
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-        switch (columnIndex){
-            case 1: return true;
-            case 3: return true;
-            default: return false;
+        switch (columnIndex) {
+            case 1:
+                return true;
+            case 3:
+                return true;
+            default:
+                return false;
         }
     }
 
@@ -73,11 +80,9 @@ public class EvidencesTableModel extends AbstractTableModel {
         if (evidencesList == null || evidencesList.isEmpty() || rowIndex >= evidencesList.size())
             return;
         Evidence currentEvidence = evidencesList.get(rowIndex);
-        if (columnIndex == 1 ){
+        if (columnIndex == 1) {
             currentEvidence.setAlias(String.valueOf(aValue));
         }
     }
-
-
 
 }

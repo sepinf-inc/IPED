@@ -1,21 +1,18 @@
 package iped.app.home.config;/*
- * @created 22/09/2022
- * @project IPED
- * @author Thiago S. Figueiredo
- */
-
-import iped.app.ui.Messages;
+                             * @created 22/09/2022
+                             * @project IPED
+                             * @author Thiago S. Figueiredo
+                             */
 
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import iped.app.ui.Messages;
+
 public enum Languages {
 
-    PT_BR(0, Messages.get("Home.LanguagePtBR"), "pt-BR"),
-    EN(1, Messages.get("Home.LanguageEN"), "en"),
-    IT(2, Messages.get("Home.LanguageIT"), "it-IT"),
-    DE(3, Messages.get("Home.LanguageDE"), "de-DE"),
-    ES(4, Messages.get("Home.LanguageEsAr"), "es-AR");
+    PT_BR(0, Messages.get("Home.LanguagePtBR"), "pt-BR"), EN(1, Messages.get("Home.LanguageEN"), "en"), IT(2, Messages.get("Home.LanguageIT"), "it-IT"), DE(3, Messages.get("Home.LanguageDE"), "de-DE"), ES(4,
+            Messages.get("Home.LanguageEsAr"), "es-AR");
 
     private int value;
     private String description;
@@ -51,15 +48,15 @@ public enum Languages {
         this.languageTag = languageTag;
     }
 
-    public static ArrayList<String> getListOfDescription(){
+    public static ArrayList<String> getListOfDescription() {
         ArrayList<String> listOfDescriptions = new ArrayList<>();
-        Arrays.stream(Languages.values()).forEach(languages -> listOfDescriptions.add( languages.getDescription() ) );
+        Arrays.stream(Languages.values()).forEach(languages -> listOfDescriptions.add(languages.getDescription()));
         return listOfDescriptions;
     }
 
-    public static Languages getByLanguageTag(String languageTag){
+    public static Languages getByLanguageTag(String languageTag) {
         for (Languages language : Languages.values()) {
-            if( language.getLanguageTag().equalsIgnoreCase(languageTag) )
+            if (language.getLanguageTag().equalsIgnoreCase(languageTag))
                 return language;
         }
         return null;

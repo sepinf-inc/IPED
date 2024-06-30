@@ -53,8 +53,7 @@ public class EvidencesTab extends DefaultPanel implements EvidenceListListener {
     private JTable jtableEvidences;
     private EvidencesTableModel evidencesTableModel;
     private ArrayList<Evidence> evidencesList;
-    private final String[] extensoesDeImagensSuportadas = {"raw","RAW","udf","UDF","vhdx","VHDX","dd","DD","ex01","EX01","E01","e01","aff","AFF","iso","ISO","vhd","VHD","vmdk","VMDK","ad1","AD1","ufdr","UFDR"};
-
+    private final String[] extensoesDeImagensSuportadas = { "raw", "RAW", "udf", "UDF", "vhdx", "VHDX", "dd", "DD", "ex01", "EX01", "E01", "e01", "aff", "AFF", "iso", "ISO", "vhd", "VHD", "vmdk", "VMDK", "ad1", "AD1", "ufdr", "UFDR" };
 
     public EvidencesTab(MainFrame mainFrame) {
         super(mainFrame);
@@ -64,8 +63,8 @@ public class EvidencesTab extends DefaultPanel implements EvidenceListListener {
      * Prepare everything to be displayed
      */
     protected void createAndShowGUI() {
-        this.setLayout( new BorderLayout() );
-        setBorder(new EmptyBorder(10,10,10,10));
+        this.setLayout(new BorderLayout());
+        setBorder(new EmptyBorder(10, 10, 10, 10));
         createFormComponentInstances();
         this.add(createTitlePanel(), BorderLayout.NORTH);
         this.add(createFormPanel(), BorderLayout.CENTER);
@@ -74,9 +73,10 @@ public class EvidencesTab extends DefaultPanel implements EvidenceListListener {
 
     /**
      * Create a new JPanel instance containing the Page Title
+     * 
      * @return - JPanel containing the Page Title
      */
-    private JPanel createTitlePanel(){
+    private JPanel createTitlePanel() {
         JPanel panelTitle = new JPanel();
         panelTitle.setBackground(Color.white);
         JLabel labelTitle = new JLabel(Messages.get("Home.Evidences.Title"));
@@ -87,19 +87,20 @@ public class EvidencesTab extends DefaultPanel implements EvidenceListListener {
 
     /**
      * Create a new JPanel instance containing all inputs
+     * 
      * @return JPanel - A JPanel containing all data input form itens
      */
-    private JPanel createFormPanel(){
+    private JPanel createFormPanel() {
         JPanel panelForm = new JPanel();
-        panelForm.setLayout(new BoxLayout( panelForm, BoxLayout.PAGE_AXIS ));
+        panelForm.setLayout(new BoxLayout(panelForm, BoxLayout.PAGE_AXIS));
         panelForm.setBackground(Color.white);
         setupTableButtonsPanel(panelForm);
-        panelForm.add( Box.createRigidArea( new Dimension(10, 10) ) );
+        panelForm.add(Box.createRigidArea(new Dimension(10, 10)));
         setupEvidenceTables(panelForm);
         return panelForm;
     }
 
-    private void createFormComponentInstances(){
+    private void createFormComponentInstances() {
         buttonAddFolder = new JButton(Messages.get("Home.Evidences.AddFolder"));
         buttonAddFile = new JButton(Messages.get("Home.Evidences.AddFile"));
         buttonAddImages = new JButton(Messages.get("Home.Evidences.AddImagesRecursively"));
@@ -108,28 +109,30 @@ public class EvidencesTab extends DefaultPanel implements EvidenceListListener {
 
     /**
      * Create and setup a JPanel containing all buttons to add Evidences to Table
-     * @param panel - JPanel containing JButtons
+     * 
+     * @param panel
+     *            - JPanel containing JButtons
      */
-    private void setupTableButtonsPanel(JPanel panel){
+    private void setupTableButtonsPanel(JPanel panel) {
         JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new BoxLayout( buttonPanel, BoxLayout.LINE_AXIS ));
+        buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.LINE_AXIS));
         buttonPanel.setBackground(Color.white);
-        buttonPanel.add( buttonAddFolder );
-        buttonAddFolder.addActionListener( e -> {
+        buttonPanel.add(buttonAddFolder);
+        buttonAddFolder.addActionListener(e -> {
             JFileChooser fileChooserDestino = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
             fileChooserDestino.setDialogTitle(Messages.get("Home.Evidences.SelectFolder"));
             fileChooserDestino.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
             fileChooserDestino.setAcceptAllFileFilterUsed(false);
-            if( fileChooserDestino.showOpenDialog(this) == JFileChooser.APPROVE_OPTION){
+            if (fileChooserDestino.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
                 Evidence evidence = new Evidence();
                 evidence.setFileName(fileChooserDestino.getSelectedFile().getName());
                 evidence.setPath(fileChooserDestino.getSelectedFile().getPath());
-                evidencesList.add( evidence );
+                evidencesList.add(evidence);
                 evidencesTableModel.fireTableDataChanged();
             }
-        } );
-        buttonPanel.add( buttonAddFile );
-        buttonAddFile.addActionListener( e -> {
+        });
+        buttonPanel.add(buttonAddFile);
+        buttonAddFile.addActionListener(e -> {
             JFileChooser fileChooser = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
             fileChooser.setDialogTitle(Messages.get("Home.Evidences.SelectFile"));
             fileChooser.setAcceptAllFileFilterUsed(false);
@@ -140,23 +143,23 @@ public class EvidencesTab extends DefaultPanel implements EvidenceListListener {
                 evidencesList.add(evidence);
                 evidencesTableModel.fireTableDataChanged();
             }
-        } );
-        buttonPanel.add( buttonAddImages );
+        });
+        buttonPanel.add(buttonAddImages);
         buttonAddImages.addActionListener(e -> {
             JFileChooser fileChooserProcurarImagens = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
             fileChooserProcurarImagens.setDialogTitle(Messages.get("Home.Evidences.ChooseSourceFolder"));
             fileChooserProcurarImagens.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
             fileChooserProcurarImagens.setAcceptAllFileFilterUsed(false);
             String pastaDeOrigem;
-            if( fileChooserProcurarImagens.showOpenDialog(this) == JFileChooser.APPROVE_OPTION){
+            if (fileChooserProcurarImagens.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
                 pastaDeOrigem = fileChooserProcurarImagens.getSelectedFile().toString();
-            }else{
+            } else {
                 return;
             }
             Path path = Paths.get(pastaDeOrigem);
             try {
                 List<String> files = findEvidences(path, extensoesDeImagensSuportadas);
-                for( String arquivoAtual : files ){
+                for (String arquivoAtual : files) {
                     File file = new File(arquivoAtual);
                     Evidence evidence = new Evidence();
                     evidence.setFileName(file.getName());
@@ -164,11 +167,11 @@ public class EvidencesTab extends DefaultPanel implements EvidenceListListener {
                     evidencesList.add(evidence);
                 }
                 evidencesTableModel.fireTableDataChanged();
-            }catch(Exception ex){
+            } catch (Exception ex) {
                 System.out.println(Messages.get("Home.Evidences.ImageSearchError"));
             }
         });
-        buttonPanel.add( buttonAddPhysicalDrive );
+        buttonPanel.add(buttonAddPhysicalDrive);
         buttonAddPhysicalDrive.addActionListener(e -> {
             DiskSelecionDialog diskSelecionDialog = new DiskSelecionDialog(this.mainFrame, evidencesList);
             diskSelecionDialog.addListener(this);
@@ -180,9 +183,11 @@ public class EvidencesTab extends DefaultPanel implements EvidenceListListener {
 
     /**
      * Create and setup a JTable do manage all Evidences to be processed
-     * @param panel - A JPanel to add JTable
+     * 
+     * @param panel
+     *            - A JPanel to add JTable
      */
-    private void setupEvidenceTables(JPanel panel){
+    private void setupEvidenceTables(JPanel panel) {
         evidencesList = NewCaseContainerPanel.getInstance().getIpedProcess().getEvidenceList();
         EvidenceInfoDialog infoDialog = new EvidenceInfoDialog(mainFrame);
         infoDialog.addListener(this);
@@ -196,27 +201,28 @@ public class EvidencesTab extends DefaultPanel implements EvidenceListListener {
     /**
      * Adjusts the JTable layout
      */
-    private void setupTableLayout(EvidenceInfoDialog infoDialog){
+    private void setupTableLayout(EvidenceInfoDialog infoDialog) {
         jtableEvidences.setFillsViewportHeight(true);
         jtableEvidences.setRowHeight(30);
         StyleManager.setTableHeaderStyle(jtableEvidences);
-        jtableEvidences.getColumn( jtableEvidences.getColumnName(3)).setCellRenderer( new TableEvidenceOptionsCellRenderer() );
-        jtableEvidences.getColumn( jtableEvidences.getColumnName(3)).setCellEditor( new TableEvidenceOptionsCellEditor(evidencesList, infoDialog) );
-        jtableEvidences.getColumn( jtableEvidences.getColumnName(3)).setMaxWidth(70);
+        jtableEvidences.getColumn(jtableEvidences.getColumnName(3)).setCellRenderer(new TableEvidenceOptionsCellRenderer());
+        jtableEvidences.getColumn(jtableEvidences.getColumnName(3)).setCellEditor(new TableEvidenceOptionsCellEditor(evidencesList, infoDialog));
+        jtableEvidences.getColumn(jtableEvidences.getColumnName(3)).setMaxWidth(70);
     }
 
     /**
      * A JPanel containing "Back" and "Next" buttons
+     * 
      * @return JPanel - a new JPanel instance containing the bottom page Button
      */
     private JPanel createNavigationButtonsPanel() {
         JPanel panelButtons = new JPanel();
         panelButtons.setBackground(Color.white);
         JButton buttoCancel = new JButton(Messages.get("Home.Back"));
-        buttoCancel.addActionListener( e -> NewCaseContainerPanel.getInstance().goToPreviousTab());
+        buttoCancel.addActionListener(e -> NewCaseContainerPanel.getInstance().goToPreviousTab());
         JButton buttonNext = new JButton(Messages.get("Home.Next"));
-        buttonNext.addActionListener( e -> {
-            if(evidencesList == null || evidencesList.isEmpty()){
+        buttonNext.addActionListener(e -> {
+            if (evidencesList == null || evidencesList.isEmpty()) {
                 JOptionPane.showMessageDialog(this, Messages.get("Home.Evidences.NoEvidencesAlert"), Messages.get("Home.Evidences.NoEvidencesAlertTitle"), JOptionPane.WARNING_MESSAGE);
                 return;
             }
@@ -237,14 +243,11 @@ public class EvidencesTab extends DefaultPanel implements EvidenceListListener {
             List<Collection<File>> resultList = listFiles(root, fileExtensions);
             Collection<File> files = resultList.get(0);
             for (File file : files) {
-                result.add( file.getAbsolutePath() );
+                result.add(file.getAbsolutePath());
             }
             Collection<File> skippedFolders = resultList.get(1);
             if (skippedFolders.size() > 0) {
-                JOptionPane.showMessageDialog(this,
-                        Messages.get("Home.Evidences.SkippedFoldersOnRecursiveEvidenceFind"),
-                        Messages.get("Home.Evidences.SkippedFoldersOnRecursiveEvidenceFindAlertTitle"),
-                        JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, Messages.get("Home.Evidences.SkippedFoldersOnRecursiveEvidenceFind"), Messages.get("Home.Evidences.SkippedFoldersOnRecursiveEvidenceFindAlertTitle"), JOptionPane.WARNING_MESSAGE);
             }
         } catch (Exception e) {
             e.printStackTrace();

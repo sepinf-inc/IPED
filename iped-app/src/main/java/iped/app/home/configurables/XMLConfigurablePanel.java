@@ -23,18 +23,18 @@ import iped.app.home.configurables.api.ConfigurableValidationException;
 import iped.app.ui.controls.textarea.XmlEditorKit;
 import iped.configuration.Configurable;
 
-public class XMLConfigurablePanel  extends TextConfigurablePanel {
+public class XMLConfigurablePanel extends TextConfigurablePanel {
     String xml;
     URL schemaUrl;
 
     protected XMLConfigurablePanel(Configurable<String> configurable, MainFrame mainFrame) {
-        this(configurable, null, mainFrame);        
+        this(configurable, null, mainFrame);
     }
 
     protected XMLConfigurablePanel(Configurable<String> configurable, URL schemaUrl, MainFrame mainFrame) {
         super(configurable, mainFrame);
-        xml=configurable.getConfiguration();
-        this.schemaUrl=schemaUrl;
+        xml = configurable.getConfiguration();
+        this.schemaUrl = schemaUrl;
     }
 
     @Override
@@ -42,13 +42,13 @@ public class XMLConfigurablePanel  extends TextConfigurablePanel {
         super.createConfigurableGUI();
         textArea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_XML);
         textArea.setCodeFoldingEnabled(true);
-        
+
         XmlEditorKit xek = new XmlEditorKit();
-        if(this.schemaUrl!=null) {
+        if (this.schemaUrl != null) {
             xek.setSchema(schemaUrl);
         }
-        //textArea.setEditorKitForContentType("text/xml", xek);
-        //textArea.setContentType("text/xml");
+        // textArea.setEditorKitForContentType("text/xml", xek);
+        // textArea.setContentType("text/xml");
         textArea.getDocument().removeDocumentListener(this);
         textArea.setText(xml);
         textArea.getDocument().addDocumentListener(this);
@@ -56,10 +56,9 @@ public class XMLConfigurablePanel  extends TextConfigurablePanel {
     }
 
     public DocumentBuilder getDocBuilder() throws SAXException, ParserConfigurationException {
-        SchemaFactory factory = 
-                SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+        SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        if(schemaUrl!=null) {
+        if (schemaUrl != null) {
             Schema schema = factory.newSchema(schemaUrl);
             dbf.setSchema(schema);
         }
@@ -69,21 +68,21 @@ public class XMLConfigurablePanel  extends TextConfigurablePanel {
             @Override
             public void warning(SAXParseException exception) throws SAXException {
             }
-            
+
             @Override
             public void fatalError(SAXParseException exception) throws SAXException {
             }
-            
+
             @Override
             public void error(SAXParseException exception) throws SAXException {
-                throw exception;                
+                throw exception;
             }
         });
         return docBuilder;
     }
 
     @Override
-    public void applyChanges() throws ConfigurableValidationException{
+    public void applyChanges() throws ConfigurableValidationException {
         try {
             xml = textArea.getText();
             ByteArrayInputStream bis = new ByteArrayInputStream(xml.getBytes(Charset.forName("UTF-8")));
@@ -91,7 +90,7 @@ public class XMLConfigurablePanel  extends TextConfigurablePanel {
             ((Configurable<String>) configurable).setConfiguration(xml);
         } catch (IOException | SAXException | ParserConfigurationException e) {
             throw new ConfigurableValidationException("Erro de sintaxe no XML", e);
-        }        
+        }
     }
 
 }

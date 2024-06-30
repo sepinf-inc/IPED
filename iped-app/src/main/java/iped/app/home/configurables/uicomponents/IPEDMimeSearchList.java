@@ -31,7 +31,7 @@ import iped.engine.config.SignatureConfig;
 
 public class IPEDMimeSearchList extends IPEDConfigSearchList {
     private JCheckBox ckShowTika;
-    
+
     public IPEDMimeSearchList() {
         this(null);
     }
@@ -39,7 +39,7 @@ public class IPEDMimeSearchList extends IPEDConfigSearchList {
     public IPEDMimeSearchList(Predicate<String> availablePredicate) {
         super(availablePredicate);
         try {
-            this.availableItems=getAvailableMimetypes();
+            this.availableItems = getAvailableMimetypes();
         } catch (ParserConfigurationException | SAXException | IOException e) {
             e.printStackTrace();
         }
@@ -55,26 +55,26 @@ public class IPEDMimeSearchList extends IPEDConfigSearchList {
         String xml = sc.getConfiguration();
         ByteArrayInputStream bis = new ByteArrayInputStream(xml.getBytes(Charset.forName("UTF-8")));
         Document doc = docBuilder.parse(bis);
-        
+
         SortedSet<String> mimes = new TreeSortedSet<String>();
         NodeList nl = doc.getElementsByTagName("mime-type");
-        for(int i =0; i<nl.getLength(); i++) {
+        for (int i = 0; i < nl.getLength(); i++) {
             String mime = nl.item(i).getAttributes().getNamedItem("type").getNodeValue();
-            if(availablePredicate==null || availablePredicate.test(mime)) {
+            if (availablePredicate == null || availablePredicate.test(mime)) {
                 mimes.add(mime);
             }
         }
-        
-        if(ckShowTika!=null && ckShowTika.isSelected()) {
+
+        if (ckShowTika != null && ckShowTika.isSelected()) {
             SortedSet<MediaType> mts = MediaTypeRegistry.getDefaultRegistry().getTypes();
             for (Iterator iterator = mts.iterator(); iterator.hasNext();) {
                 MediaType mediaType = (MediaType) iterator.next();
-                if(availablePredicate==null || availablePredicate.test(mediaType.toString())) {
+                if (availablePredicate == null || availablePredicate.test(mediaType.toString())) {
                     mimes.add(mediaType.toString());
                 }
             }
         }
-        
+
         this.availableItems = new ArrayList<String>();
         this.availableItems.addAll(mimes);
 
@@ -97,7 +97,7 @@ public class IPEDMimeSearchList extends IPEDConfigSearchList {
                 list.setModel(new MimeListModel(availableItems, checkTypedContent));
             }
         });
-        this.add(ckShowTika,BorderLayout.SOUTH);
+        this.add(ckShowTika, BorderLayout.SOUTH);
     }
 
 }

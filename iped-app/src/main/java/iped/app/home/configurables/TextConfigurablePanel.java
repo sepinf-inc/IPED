@@ -9,9 +9,9 @@ import iped.app.home.MainFrame;
 import iped.app.home.configurables.api.ConfigurableValidationException;
 import iped.configuration.Configurable;
 
-public class TextConfigurablePanel extends ConfigurablePanel{
+public class TextConfigurablePanel extends ConfigurablePanel {
 
-    //protected RegexTextPane textArea;
+    // protected RegexTextPane textArea;
     protected RSyntaxTextArea textArea;
     protected RTextScrollPane txtAreaScroll;
 
@@ -30,12 +30,12 @@ public class TextConfigurablePanel extends ConfigurablePanel{
         txtAreaScroll.setAutoscrolls(true);
         txtAreaScroll.setLineNumbersEnabled(true);
         this.setLayout(new BorderLayout());
-        this.add(txtAreaScroll,BorderLayout.CENTER);
+        this.add(txtAreaScroll, BorderLayout.CENTER);
     }
 
     @Override
     public void applyChanges() throws ConfigurableValidationException {
-        ((Configurable<String>)configurable).setConfiguration(textArea.getText());        
+        ((Configurable<String>) configurable).setConfiguration(textArea.getText());
     }
 
 }

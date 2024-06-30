@@ -51,7 +51,7 @@ public class ProcessManagerContainer extends DefaultPanel implements ProcessList
     private JTextArea logTextArea;
     private JButton buttonOpenCase;
 
-    //Constants to change content view
+    // Constants to change content view
     private final String STARTING_PROCESS = "startingProcess";
     private final String RUNNING_PROCESS = "runningProcess";
     private final String FAILED_PROCESS = "failedProcess";
@@ -75,7 +75,7 @@ public class ProcessManagerContainer extends DefaultPanel implements ProcessList
         this.add(createSuccessOptionsButtonpanel());
     }
 
-    private JPanel createTitlePanel(){
+    private JPanel createTitlePanel() {
         JPanel panelTitle = new JPanel();
         panelTitle.setBackground(Color.white);
         labelTitle = new JLabel(Messages.get("Home.ProcessManager.StartingProcess"));
@@ -84,14 +84,14 @@ public class ProcessManagerContainer extends DefaultPanel implements ProcessList
         return panelTitle;
     }
 
-    private void createLabelIcons(){
+    private void createLabelIcons() {
         startingIcon = createNewButtonIcon("plug-in.png");
         runningIcon = createNewButtonIcon("pluged-in.png");
         errorIcon = createNewButtonIcon("plug_error.png");
         successIcon = createNewButtonIcon("success.png");
     }
 
-    private JPanel createProcessRunningPanel(){
+    private JPanel createProcessRunningPanel() {
         processRunningPanel = new JPanel();
         processRunningPanel.setLayout(new BorderLayout());
         processRunningPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -101,13 +101,13 @@ public class ProcessManagerContainer extends DefaultPanel implements ProcessList
         logTextArea.setPreferredSize(new Dimension(700, 600));
         logTextArea.setMaximumSize(new Dimension(Short.MAX_VALUE, Short.MAX_VALUE));
         logTextArea.setEditable(false);
-        logTextArea.setBorder(BorderFactory.createLineBorder(Color.black,1));
+        logTextArea.setBorder(BorderFactory.createLineBorder(Color.black, 1));
         processRunningPanel.add(new JScrollPane(logTextArea), BorderLayout.CENTER);
         processRunningPanel.setVisible(false);
         return processRunningPanel;
     }
 
-    private JPanel createErrorOptionsButtonpanel(){
+    private JPanel createErrorOptionsButtonpanel() {
         errorOptionsButtonPanel = new JPanel();
         errorOptionsButtonPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         errorOptionsButtonPanel.setBackground(super.getCurrentBackGroundColor());
@@ -117,8 +117,8 @@ public class ProcessManagerContainer extends DefaultPanel implements ProcessList
         });
         errorOptionsButtonPanel.add(buttonBack);
         JButton buttonShowLog = new JButton(Messages.get("Home.ProcessManager.ShowTerminalLog"));
-        buttonShowLog.addActionListener(e->{
-            if(ipedStartException != null) {
+        buttonShowLog.addActionListener(e -> {
+            if (ipedStartException != null) {
                 JTextArea textArea = new JTextArea();
                 textArea.setText(ExceptionUtils.getStackTrace(ipedStartException));
                 JOptionPane.showMessageDialog(this, new JScrollPane(textArea), ipedStartException.getMessage(), JOptionPane.PLAIN_MESSAGE);
@@ -129,7 +129,7 @@ public class ProcessManagerContainer extends DefaultPanel implements ProcessList
         return errorOptionsButtonPanel;
     }
 
-    private JPanel createSuccessOptionsButtonpanel(){
+    private JPanel createSuccessOptionsButtonpanel() {
         successOptionsButtonPanel = new JPanel();
         successOptionsButtonPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         successOptionsButtonPanel.setBackground(super.getCurrentBackGroundColor());
@@ -141,7 +141,7 @@ public class ProcessManagerContainer extends DefaultPanel implements ProcessList
         successOptionsButtonPanel.add(buttonBackCase);
 
         buttonOpenCase = new JButton(Messages.get("Home.ProcessManager.OpenCase"));
-        buttonOpenCase.addActionListener(e->{
+        buttonOpenCase.addActionListener(e -> {
             Thread t = new Thread(() -> {
                 ProcessManager pm = new ProcessManager();
                 pm.addProcessListener(ProcessManagerContainer.this);
@@ -152,37 +152,38 @@ public class ProcessManagerContainer extends DefaultPanel implements ProcessList
         successOptionsButtonPanel.add(buttonOpenCase);
 
         JButton buttonShowLog = new JButton(Messages.get("Home.ProcessManager.ShowTerminalLog"));
-        buttonShowLog.addActionListener(e-> JOptionPane.showMessageDialog(this, new JScrollPane(logTextArea), Messages.get("Home.ProcessManager.TerminalLog"), JOptionPane.PLAIN_MESSAGE));
+        buttonShowLog.addActionListener(e -> JOptionPane.showMessageDialog(this, new JScrollPane(logTextArea), Messages.get("Home.ProcessManager.TerminalLog"), JOptionPane.PLAIN_MESSAGE));
         successOptionsButtonPanel.add(buttonShowLog);
 
         JButton buttonExit = new JButton(Messages.get("Home.ProcessManager.ExitApplication"));
-        buttonExit.addActionListener(e-> System.exit(0));
+        buttonExit.addActionListener(e -> System.exit(0));
         successOptionsButtonPanel.add(buttonExit);
 
         successOptionsButtonPanel.setVisible(false);
         return successOptionsButtonPanel;
     }
 
-
-    private void saveCaseInfoJsonOnCaseOutputPath(){
+    private void saveCaseInfoJsonOnCaseOutputPath() {
         CaseInfoManager ciManager = new CaseInfoManager();
         ipedProcess.getEvidenceList();
-        //Populate caseinfo materials with evidences info
+        // Populate caseinfo materials with evidences info
         ciManager.castEvidenceListToReportInfo(ipedProcess.getReportInfo(), ipedProcess.getEvidenceList());
-        //Save the CaseInfo.json on case output
+        // Save the CaseInfo.json on case output
         Path caseinfoPath = Paths.get(ipedProcess.getCaseOutputPath().toString(), "CaseInfo.json");
         ipedProcess.getReportInfo().saveJsonInfoFile(caseinfoPath.toFile());
-        //ipedProcess.addOptionValue("-asap", caseinfoPath.toAbsolutePath().toString());
+        // ipedProcess.addOptionValue("-asap",
+        // caseinfoPath.toAbsolutePath().toString());
         ipedProcess.setAsapFile(caseinfoPath);
     }
 
-    public void startProcess(){
+    public void startProcess() {
         switchPanelTo(STARTING_PROCESS);
         saveCaseInfoJsonOnCaseOutputPath();
 
         Thread t = new Thread(() -> {
             try {
-                //After complete the execution the user can back to case info and start the process again, so wee need to clean the previous log
+                // After complete the execution the user can back to case info and start the
+                // process again, so wee need to clean the previous log
                 logTextArea.setText("");
                 ProcessManager processManager = new ProcessManager();
                 processManager.addProcessListener(ProcessManagerContainer.this);
@@ -196,8 +197,8 @@ public class ProcessManagerContainer extends DefaultPanel implements ProcessList
         t.start();
     }
 
-    private void switchPanelTo(String panelName){
-        switch (panelName){
+    private void switchPanelTo(String panelName) {
+        switch (panelName) {
             case STARTING_PROCESS: {
                 labelTitle.setText(Messages.get("Home.ProcessManager.StartingProcess"));
                 currentLabelIcon.setIcon(startingIcon);
@@ -237,10 +238,10 @@ public class ProcessManagerContainer extends DefaultPanel implements ProcessList
         }
     }
 
-    private ImageIcon createNewButtonIcon(String imageFilename){
-        Dimension iconDimension = new Dimension(400,400);
+    private ImageIcon createNewButtonIcon(String imageFilename) {
+        Dimension iconDimension = new Dimension(400, 400);
         ImageIcon icon = new ImageIcon(Objects.requireNonNull(getClass().getResource(imageFilename)));
-        Image resizedImage = icon.getImage().getScaledInstance( iconDimension.width, iconDimension.height, java.awt.Image.SCALE_SMOOTH);
+        Image resizedImage = icon.getImage().getScaledInstance(iconDimension.width, iconDimension.height, java.awt.Image.SCALE_SMOOTH);
         return new ImageIcon(resizedImage);
     }
 

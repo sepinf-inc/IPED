@@ -23,7 +23,7 @@ import org.w3c.dom.NodeList;
 import iped.app.home.configurables.ParsersTreeModel.ParserElementName;
 
 public class ParserTreeCellEditor extends JPanel implements javax.swing.tree.TreeCellEditor {
-    
+
     private JComboBox<Boolean> booleanCombo;
     private JTextField textEditor;
     private JLabel label;
@@ -36,20 +36,23 @@ public class ParserTreeCellEditor extends JPanel implements javax.swing.tree.Tre
         booleanCombo.addItem(false);
         textEditor = new JTextField();
         label = new JLabel();
-        
+
         textEditor.addKeyListener(new KeyListener() {
             @Override
-            public void keyTyped(KeyEvent e) {}
+            public void keyTyped(KeyEvent e) {
+            }
+
             @Override
-            public void keyReleased(KeyEvent e) {}
-            
+            public void keyReleased(KeyEvent e) {
+            }
+
             @Override
             public void keyPressed(KeyEvent e) {
-                if(e.getKeyCode()==e.VK_ENTER) {
+                if (e.getKeyCode() == e.VK_ENTER) {
                     JTree tree = (JTree) e.getComponent().getParent().getParent();
                     tree.stopEditing();
                 }
-                if(e.getKeyCode()==e.VK_ESCAPE) {
+                if (e.getKeyCode() == e.VK_ESCAPE) {
                     JTree tree = (JTree) e.getComponent().getParent().getParent();
                     tree.cancelEditing();
                 }
@@ -64,16 +67,16 @@ public class ParserTreeCellEditor extends JPanel implements javax.swing.tree.Tre
 
     @Override
     public boolean isCellEditable(EventObject anEvent) {
-        if(anEvent instanceof MouseEvent) {
+        if (anEvent instanceof MouseEvent) {
             JTree tree = (JTree) anEvent.getSource();
-            MouseEvent me = (MouseEvent)anEvent;
-            
+            MouseEvent me = (MouseEvent) anEvent;
+
             tp = tree.getPathForLocation(me.getX(), me.getY());
 
-            if(tp!=null) {
+            if (tp != null) {
                 Object value = tp.getLastPathComponent();
                 return value instanceof Field;
-            }else {
+            } else {
                 return false;
             }
         }
@@ -89,12 +92,12 @@ public class ParserTreeCellEditor extends JPanel implements javax.swing.tree.Tre
     public boolean stopCellEditing() {
         Element element = ((ParserElementName) tp.getParentPath().getLastPathComponent()).getElement();
         NodeList nlParamss = element.getElementsByTagName("params");
-        if(nlParamss!=null) {
+        if (nlParamss != null) {
             Element el = (Element) nlParamss.item(0);
             NodeList nlParams = el.getElementsByTagName("param");
-            for(int i=0; i<nlParams.getLength(); i++) {
+            for (int i = 0; i < nlParams.getLength(); i++) {
                 Element param = (Element) nlParams.item(i);
-                if(param.getAttribute("name").equals(f.getName())) {
+                if (param.getAttribute("name").equals(f.getName())) {
                     param.getFirstChild().setNodeValue(textEditor.getText());
                     break;
                 }
@@ -121,43 +124,43 @@ public class ParserTreeCellEditor extends JPanel implements javax.swing.tree.Tre
     }
 
     @Override
-    public Component getTreeCellEditorComponent(JTree tree, Object value, boolean isSelected, boolean expanded,
-            boolean leaf, int row) {
-        if(value instanceof Field) {
+    public Component getTreeCellEditorComponent(JTree tree, Object value, boolean isSelected, boolean expanded, boolean leaf, int row) {
+        if (value instanceof Field) {
             f = (Field) value;
-            
-            Object tpValue=tree.getPathForRow(row).getParentPath().getLastPathComponent();
-            if(!(tpValue instanceof ParserElementName)) return null;
-            
+
+            Object tpValue = tree.getPathForRow(row).getParentPath().getLastPathComponent();
+            if (!(tpValue instanceof ParserElementName))
+                return null;
+
             this.removeAll();
             this.setLayout(new FlowLayout());
-            
-            label.setText(f.getName()+":");
+
+            label.setText(f.getName() + ":");
             this.add(label);
-            
+
             String fieldValue = null;
             Element element = ((ParserElementName) tpValue).getElement();
             NodeList nlParamss = element.getElementsByTagName("params");
-            if(nlParamss!=null) {
+            if (nlParamss != null) {
                 Element el = (Element) nlParamss.item(0);
                 NodeList nlParams = el.getElementsByTagName("param");
-                for(int i=0; i<nlParams.getLength(); i++) {
+                for (int i = 0; i < nlParams.getLength(); i++) {
                     Element param = (Element) nlParams.item(i);
-                    if(param.getAttribute("name").equals(f.getName())) {
-                        fieldValue=param.getFirstChild().getNodeValue();
+                    if (param.getAttribute("name").equals(f.getName())) {
+                        fieldValue = param.getFirstChild().getNodeValue();
                         break;
                     }
                 }
             }
 
-            if(f.getType()==Boolean.class) {
+            if (f.getType() == Boolean.class) {
                 this.removeAll();
                 this.add(booleanCombo);
-            }else {
-                textEditor.setPreferredSize(new Dimension(200,32));
-                if(fieldValue!=null) {
+            } else {
+                textEditor.setPreferredSize(new Dimension(200, 32));
+                if (fieldValue != null) {
                     textEditor.setText(fieldValue);
-                }else {
+                } else {
                     textEditor.setText("");
                 }
                 this.add(textEditor);
