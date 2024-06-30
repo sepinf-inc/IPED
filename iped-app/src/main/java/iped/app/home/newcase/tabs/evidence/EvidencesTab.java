@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import javax.swing.Box;
@@ -53,7 +54,7 @@ public class EvidencesTab extends DefaultPanel implements EvidenceListListener {
     private JTable jtableEvidences;
     private EvidencesTableModel evidencesTableModel;
     private ArrayList<Evidence> evidencesList;
-    private final String[] extensoesDeImagensSuportadas = { "raw", "RAW", "udf", "UDF", "vhdx", "VHDX", "dd", "DD", "ex01", "EX01", "E01", "e01", "aff", "AFF", "iso", "ISO", "vhd", "VHD", "vmdk", "VMDK", "ad1", "AD1", "ufdr", "UFDR" };
+    private final String[] extensoesDeImagensSuportadas = { "raw", "RAW", "000", "001", "vhdx", "VHDX", "dd", "DD", "ex01", "EX01", "E01", "e01", "aff", "AFF", "iso", "ISO", "vhd", "VHD", "vmdk", "VMDK", "ad1", "AD1", "ufdr", "UFDR" };
 
     public EvidencesTab(MainFrame mainFrame) {
         super(mainFrame);
@@ -159,12 +160,21 @@ public class EvidencesTab extends DefaultPanel implements EvidenceListListener {
             Path path = Paths.get(pastaDeOrigem);
             try {
                 List<String> files = findEvidences(path, extensoesDeImagensSuportadas);
-                for (String arquivoAtual : files) {
-                    File file = new File(arquivoAtual);
+                Collections.sort(files);
+                String prev = null;
+                for (String current : files) {
+                    if (current.endsWith(".001")) {
+                        String zeroSegment = current.substring(0, current.length() - 3) + "000";
+                        if (prev != null && prev.equals(zeroSegment)) {
+                            continue;
+                        }
+                    }
+                    File file = new File(current);
                     Evidence evidence = new Evidence();
                     evidence.setFileName(file.getName());
                     evidence.setPath(file.getPath());
                     evidencesList.add(evidence);
+                    prev = current;
                 }
                 evidencesTableModel.fireTableDataChanged();
             } catch (Exception ex) {
