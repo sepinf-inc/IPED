@@ -22,6 +22,7 @@ import iped.data.IItemReader;
 import iped.parsers.util.Messages;
 import iped.parsers.vcard.VCardParser;
 import iped.parsers.whatsapp.Message.MessageType;
+import iped.parsers.whatsapp.Message.MessageQuotedType;
 import iped.properties.ExtraProperties;
 import iped.utils.EmojiUtil;
 import iped.utils.LocalizedFormat;
@@ -648,6 +649,14 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.YouNotAdmin") + "<br>");
                 break;
+            case OVER_256_MEMBERS_ONLY_ADMINS_CAN_EDIT:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.Over256MembersOnlyAdminsCanEdit") + "<br>");
+                break;
+            case SECURITY_NOTIFICATIONS_NO_LONGER_AVAILABLE:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.SecurityNotificationsNoLongerAvailable") + "<br>");
+                break;                
             case USER_ADMIN:
                 out.println("<div class=\"systemmessage\">");
                 out.print(name + " ");
@@ -1243,9 +1252,29 @@ public class ReportGenerator {
             }
 
             String quoteEnd = "</span></div>";
-            if (messageQuote.isDeleted()) {
-                quoteEnd = "</span><br><span style=\"float:none\" class=\"recovered\"><div class=\"deletedIcon\"></div><i>"
+            switch(messageQuote.getMessageQuotedType()){
+                case QUOTE_NOT_FOUND:
+                    quoteEnd = "</span><br><span style=\"float:none\" class=\"recovered\"><div class=\"deletedIcon\"></div><i>"
                         + Messages.getString("WhatsAppReport.QuoteNotFound") + "</i>" + quoteEnd;
+                    break;
+                case QUOTE_STATUS:
+                    quoteEnd = "</span><br><span style=\"float:none\" class=\"outside\"><div class=\"statusIcon\"></div><i>"
+                        + Messages.getString("WhatsAppReport.QuoteStaus") + "</i>" + quoteEnd;
+                    break;
+                case QUOTE_PRIVACY_GROUP:
+                    quoteEnd = "</span><br><span style=\"float:none\" class=\"outside\"><div class=\"privacyIcon\"></div><i>"
+                        + Messages.getString("WhatsAppReport.QuotePrivacy") + "</i>" + quoteEnd;
+                    String messageQuoteRemoteId = messageQuote.getRemoteId();
+                    if (messageQuoteRemoteId != null){
+                        String ms = Messages.getString("WhatsAppReport.QuotePrivacyMessage") + ": "+  messageQuoteRemoteId +"</br> "
+                            + Messages.getString("WhatsAppReport.ReferenceId") + " " +messageQuote.getId();
+                        quoteClick = "onclick=\"showMessage('" + ms + "');\"";
+                    }
+                    break;
+                case QUOTE_PRIVACY_GROUP_NOT_FOUND:
+                    quoteEnd = "</span><br><span style=\"float:none\" class=\"recovered\"><div class=\"privacyDeleteIcon\"></div><i>"
+                        + Messages.getString("WhatsAppReport.QuotePrivacyNotFound") + "</i>" + quoteEnd;
+                    break;
             }
 
             switch (messageQuote.getMessageType()) {
