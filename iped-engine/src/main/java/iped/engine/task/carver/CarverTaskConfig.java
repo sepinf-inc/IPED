@@ -1,7 +1,10 @@
 package iped.engine.task.carver;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream.Filter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import iped.engine.config.AbstractTaskConfig;
@@ -64,6 +67,26 @@ public class CarverTaskConfig extends AbstractTaskConfig<XMLCarverConfiguration>
             carverConfiguration.loadXMLConfigFile(resource.toFile());
         }
 
+    }
+
+    @Override
+    public void save(Path resource) {
+        try {
+            String output = carverConfiguration.getXMLString();
+            if(output!=null) {
+                File confDir = new File(resource.toFile(), Configuration.CONF_DIR);
+                confDir.mkdirs();
+                File confFile = new File(confDir, GLOBAL_CARVER_CONFIG);
+                Files.write(confFile.toPath(),output.toString().getBytes(StandardCharsets.UTF_8));
+            }
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void reset() {
+        carverConfiguration.reset();        
     }
 
 }

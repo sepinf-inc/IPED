@@ -21,6 +21,7 @@ package iped.utils;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.prefs.Preferences;
 
 public class ProcessUtil {
 
@@ -211,6 +212,18 @@ public class ProcessUtil {
             e1.printStackTrace();
         } catch (InterruptedException e) {
             e.printStackTrace();
+        }
+    }
+
+    public static boolean isRunningAsAdmin() {
+        try {
+            Preferences preferences = Preferences.systemRoot();
+            preferences.put("adminPrefTest", "value"); // SecurityException on Windows
+            preferences.remove("adminPrefTest");
+            preferences.flush(); // BackingStoreException on Linux
+            return true;
+        } catch (Exception exception) {
+            return false;
         }
     }
 }

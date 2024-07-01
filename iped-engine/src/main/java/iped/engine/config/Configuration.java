@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import iped.configuration.Configurable;
 import iped.configuration.IConfigurationDirectory;
 import iped.engine.task.AbstractTask;
+import iped.engine.task.IScriptTask;
 import iped.engine.util.Util;
 import iped.utils.UTF8Properties;
 import iped.viewers.util.DefaultPolicy;
@@ -55,7 +56,7 @@ public class Configuration {
     private static Configuration singleton;
     private static AtomicBoolean loaded = new AtomicBoolean();
 
-    private ConfigurationDirectory configDirectory;
+    private IConfigurationDirectory configDirectory;
     public Logger logger;
     public UTF8Properties properties = new UTF8Properties();
     public String configPath, appRoot;
@@ -71,7 +72,10 @@ public class Configuration {
         return singleton;
     }
 
-    private Configuration() {
+    /**
+     * The config UI must have access to configuration constructor to create a specific configuration.
+     */
+    public Configuration() {
     }
 
     private String getAppRoot(String configPath) {
@@ -169,69 +173,80 @@ public class Configuration {
             logger.info("Loading configuration from " + configPath); //$NON-NLS-1$
         }
 
-        configDirectory = new ConfigurationDirectory(Paths.get(appRoot, LOCAL_CONFIG));
-
-        File defaultProfile = new File(appRoot);
-        File currentProfile = new File(configPathStr);
-        File caseProfile = new File(appRoot, CASE_PROFILE_DIR);
-        addProfileToConfigDirectory(configDirectory, defaultProfile);
-        if (!currentProfile.equals(defaultProfile)) {
-            addProfileToConfigDirectory(configDirectory, currentProfile);
-        } else if (caseProfile.exists()) {
-            addProfileToConfigDirectory(configDirectory, caseProfile);
-        }
-
-        ConfigurationManager configManager = ConfigurationManager.createInstance(configDirectory);
-        LocaleConfig lc = new LocaleConfig();
-        configManager.addObject(lc);
-        configManager.loadConfig(lc);
-
-        PluginConfig pluginConfig = new PluginConfig();
-        configManager.addObject(pluginConfig);
-        configManager.loadConfig(pluginConfig);
-        addPluginJarsToConfigurationLookup(configDirectory, pluginConfig);
-
-        configManager.addObject(new SplashScreenConfig());
+        File configFile = new File(configPathStr);
+        ConfigurationManager configManager = null;
         
-        if (!loadAll) {
+        if(configFile.isDirectory()) {
+            ConfigurationDirectory localconfigDirectory = new ConfigurationDirectory(Paths.get(appRoot, LOCAL_CONFIG));
+            File defaultProfile = new File(appRoot);
+            File currentProfile = new File(configPathStr);
+            File caseProfile = new File(appRoot, CASE_PROFILE_DIR);
+            addProfileToConfigDirectory(localconfigDirectory, defaultProfile);
+            if (!currentProfile.equals(defaultProfile)) {
+                addProfileToConfigDirectory(localconfigDirectory, currentProfile);
+            } else if (caseProfile.exists()) {
+                addProfileToConfigDirectory(localconfigDirectory, caseProfile);
+            }
+            
+            configDirectory = localconfigDirectory;
+            configManager = ConfigurationManager.createInstance(configDirectory);
+
+
+            configManager.addObject(new LocaleConfig());
+
+            PluginConfig pluginConfig = new PluginConfig();
+            configManager.addObject(pluginConfig);
+            configManager.loadConfig(pluginConfig);
+            if(configDirectory instanceof ConfigurationDirectory) {
+                addPluginJarsToConfigurationLookup((ConfigurationDirectory)configDirectory, pluginConfig);
+            }
+
+            configManager.addObject(new SplashScreenConfig());
+            
+            if (!loadAll) {
+                configManager.loadConfigs();
+                return;
+            }
+
+            loadNativeLibs();
+
+            configManager.addObject(new LocalConfig());
+            configManager.addObject(new OCRConfig());
+            configManager.addObject(new FileSystemConfig());
+            configManager.addObject(new AnalysisConfig());
+
+            TaskInstallerConfig taskConfig = new TaskInstallerConfig();
+            configManager.addObject(taskConfig);
+
+            // must load taskConfig before using it
+            configManager.loadConfig(taskConfig);
+
+            for (AbstractTask task : taskConfig.getNewTaskInstances()) {
+                for (Configurable<?> configurable : task.getConfigurables()) {
+                    configManager.addObject(configurable);
+                }
+            }
+
             configManager.loadConfigs();
-            return;
-        }
 
-        loadNativeLibs();
-
-        configManager.addObject(new LocalConfig());
-        configManager.addObject(new OCRConfig());
-        configManager.addObject(new FileSystemConfig());
-        configManager.addObject(new AnalysisConfig());
-
-        TaskInstallerConfig taskConfig = new TaskInstallerConfig();
-        configManager.addObject(taskConfig);
-
-        // must load taskConfig before using it
-        configManager.loadConfig(taskConfig);
-
-        for (AbstractTask task : taskConfig.getNewTaskInstances()) {
-            for (Configurable<?> configurable : task.getConfigurables()) {
-                configManager.addObject(configurable);
+            // blocks internet access from html viewers
+            DefaultPolicy policy = new DefaultPolicy();
+            MinIOConfig minIOConfig = configManager.findObject(MinIOConfig.class);
+            if (minIOConfig.isEnabled()) {
+                String host = minIOConfig.getHostAndPort();
+                if (host.startsWith("http://") || host.startsWith("https://")) {
+                    host = host.substring(host.indexOf("://") + 3);
+                }
+                policy.addAllowedPermission(new SocketPermission(host, "connect,resolve"));
             }
+            Policy.setPolicy(policy);
+            System.setSecurityManager(new SecurityManager());
+        
+        }else {
+            configDirectory = new SerializedConfigurationDirectory(configFile.toPath());
+            configManager = ConfigurationManager.createInstance(configDirectory);
+            configManager.loadConfigs(true);
         }
-
-        configManager.loadConfigs();
-
-
-        // blocks internet access from html viewers
-        DefaultPolicy policy = new DefaultPolicy();
-        MinIOConfig minIOConfig = configManager.findObject(MinIOConfig.class);
-        if (minIOConfig.isEnabled()) {
-            String host = minIOConfig.getHostAndPort();
-            if (host.startsWith("http://") || host.startsWith("https://")) {
-                host = host.substring(host.indexOf("://") + 3);
-            }
-            policy.addAllowedPermission(new SocketPermission(host, "connect,resolve"));
-        }
-        Policy.setPolicy(policy);
-        System.setSecurityManager(new SecurityManager());
     }
 
     // add plugin jars to the configuration resource look up engine

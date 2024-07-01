@@ -178,5 +178,4 @@ public class HtmlReportTaskConfig extends AbstractTaskPropertiesConfig {
         info.reportTitle = properties.getProperty("Title"); //$NON-NLS-1$
 
     }
-
 }

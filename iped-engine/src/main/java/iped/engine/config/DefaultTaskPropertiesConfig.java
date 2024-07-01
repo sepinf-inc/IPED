@@ -29,7 +29,7 @@ public class DefaultTaskPropertiesConfig extends AbstractTaskPropertiesConfig {
 
     @Override
     public void processProperties(UTF8Properties properties) {
-        // no op
+        this.properties.putAll(properties);
     }
 
 }
