@@ -35,7 +35,7 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
 
     public static final String OUTPUT_ON_SSD = "outputOnSSD";
 
-    private static final String DEFAULT_VAL = "default";
+    public static final String DEFAULT_VAL = "default";
 
     public static final DirectoryStream.Filter<Path> filter = new Filter<Path>() {
         @Override
@@ -164,6 +164,20 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
 
     public int getNumThreads() {
         return numThreads;
+    }
+
+    public void setNumThreads(Object numThreads) {
+        if (numThreads instanceof Integer) {
+            setNumThreads(((Integer) numThreads).intValue());
+            return;
+        } else {
+            if (numThreads instanceof String) {
+                if (numThreads.equals(DEFAULT_VAL)) {
+                    properties.setProperty(NUM_THREADS, DEFAULT_VAL);
+                    return;
+                }
+            }
+        }
     }
 
     public void setNumThreads(int numThreads){

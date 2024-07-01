@@ -19,6 +19,13 @@ public class AutoCalcSpinnerModel extends AbstractSpinnerModel {
     ArrayList<ChangeListener> listeners = new ArrayList<ChangeListener>();
     private boolean isInternalChage;
 
+    String autoString = "auto";
+
+    public AutoCalcSpinnerModel(JSpinner spinner, String autoString) {
+        this(spinner);
+        this.autoString = autoString;
+    }
+
     public AutoCalcSpinnerModel(JSpinner spinner) {
         this.spinner = spinner;
         DefaultEditor c = new DefaultEditor(spinner);
@@ -38,7 +45,7 @@ public class AutoCalcSpinnerModel extends AbstractSpinnerModel {
                     @Override
                     public Object stringToValue(String text) throws ParseException {
                         if (text.equals("0") || text.trim().equals("")) {
-                            return "auto";
+                            return autoString;
                         }
                         return text;
                     }
@@ -52,7 +59,7 @@ public class AutoCalcSpinnerModel extends AbstractSpinnerModel {
     @Override
     public Object getValue() {
         if (value == 0) {
-            return "auto";
+            return autoString;
         } else {
             return value;
         }
@@ -61,7 +68,7 @@ public class AutoCalcSpinnerModel extends AbstractSpinnerModel {
     @Override
     public void setValue(Object value) {
         boolean valid = true;
-        if (value.toString().equals("auto")) {
+        if (value.toString().equals(autoString)) {
             this.value = 0;
         } else {
             if (value instanceof String) {

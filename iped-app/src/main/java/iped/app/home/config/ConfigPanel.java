@@ -145,7 +145,7 @@ public class ConfigPanel extends DefaultPanel {
         // Create JSpinner to change the number of Threads and a button to set the
         // default thread value
         spinnerThreads = new JSpinner();
-        spinnerThreads.setModel(new AutoCalcSpinnerModel(spinnerThreads));
+        spinnerThreads.setModel(new AutoCalcSpinnerModel(spinnerThreads, LocalConfig.DEFAULT_VAL));
         ((JSpinner.DefaultEditor) spinnerThreads.getEditor()).getTextField().setEditable(false);
         buttonSetDefaultThread = getNewIconButton(ICON_SET_DEFAULT);
         buttonSetDefaultThread.setToolTipText(Messages.get("Home.DefaultThreadValue"));
@@ -414,7 +414,7 @@ public class ConfigPanel extends DefaultPanel {
     private void updateLocalConfigComponentsState() {
         defaultConfigurationManager.reloadConfigurable(LocalConfig.class);
         LocalConfig localConfig = defaultConfigurationManager.findObject(LocalConfig.class);
-        spinnerThreads.setValue(localConfig.getNumThreads());
+        spinnerThreads.setValue(localConfig.getPropertie().getProperty(LocalConfig.NUM_THREADS));
         textFieldIndexTemp.setText((localConfig.getPropertie().getProperty(LocalConfig.IPED_TEMP) == null) ? "Default" : localConfig.getPropertie().getProperty(LocalConfig.IPED_TEMP));
         checkBoxIndexTempOnSSD.setSelected(localConfig.isIndexTempOnSSD());
         File hashDbFile = localConfig.getHashDbFile();
@@ -470,7 +470,7 @@ public class ConfigPanel extends DefaultPanel {
             // Set changes on LocalConfig Configurable class
             localConfig.setIndexTempOnSSD(checkBoxIndexTempOnSSD.isSelected());
             localConfig.getPropertie().setProperty(LocalConfig.IPED_TEMP, textFieldIndexTemp.getText());
-            localConfig.setNumThreads((Integer) spinnerThreads.getValue());
+            localConfig.setNumThreads(spinnerThreads.getValue());
             localConfig.getPropertie().setProperty(LocalConfig.HASH_DB, textFieldHashesDB.getText());
             localConfig.getPropertie().enableOrDisablePropertie(CasePathManager.getInstance().getLocalConfigFile(), LocalConfig.HASH_DB, !isEnableHashDB);
             // Save LocalConfig modifications to file
