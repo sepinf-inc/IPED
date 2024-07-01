@@ -36,6 +36,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.TableModelEvent;
@@ -82,14 +83,16 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
 
     JFileChooser scriptChooser = new JFileChooser();
     private JComboBox<IConfigurationDirectory> profilesCombo;
-    private ConfigurationManager selectedConfigurationManager;// configuration manager corresponding to the current profile selected
+    private ConfigurationManager selectedConfigurationManager;// configuration manager corresponding to the current
+                                                              // profile selected
 
     /**
      * The default config manager will be used as the base line to create the task
      * list. Other profiles will only enable or disable these tasks, or add delete
      * Script tasks.
      */
-    private ConfigurationManager defaultConfigurationManager;// configuration manager corresponding to iped default distributed configuration
+    private ConfigurationManager defaultConfigurationManager;// configuration manager corresponding to iped default
+                                                             // distributed configuration
 
     private JPanel selectProfilePanel;
     private JPanel createProfilePanel;
@@ -181,6 +184,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         tabPane.setPreferredSize(new Dimension(600, 2000));
 
         panelForm.add(tabPane);
+
 
         ItemListener[] listeners = profilesCombo.getItemListeners();
         for (int i = 0; i < listeners.length; i++) {
@@ -293,6 +297,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         createProfilePanel.add(btCancel);
     }
 
+
     /**
      * A little function do control the display of create profile panel and select
      * profile panel
@@ -318,6 +323,7 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
             }
         }
     }
+
 
     /**
      * Update selected profile task installer configurable with the tasks states
@@ -407,7 +413,8 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         }
 
         tasksTableModel.updateData(selectedConfigurationManager, taskArrayList, enabled, enabledConfigurables);
-        jtableTasks.getColumn(jtableTasks.getColumnName(3)).setCellRenderer(new TaskTableConfigurablesCellRenderer(selectedConfigurationManager, mainFrame));
+        jtableTasks.getColumn(jtableTasks.getColumnName(3))
+                .setCellRenderer(new TaskTableConfigurablesCellRenderer(selectedConfigurationManager, mainFrame));
     }
 
     /**
@@ -429,8 +436,10 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
                 try {
                     if (rowIndex != 0) {
                         AbstractTask task = (AbstractTask) getValueAt(rowIndex, 2);
-                        String title = iped.engine.localization.Messages.getString(task.getClass().getName(), task.getName());
-                        tip = iped.engine.localization.Messages.getString(task.getClass().getName() + iped.engine.localization.Messages.TOOLTIP_SUFFIX, title);
+                        String title = iped.engine.localization.Messages.getString(task.getClass().getName(),
+                                task.getName());
+                        tip = iped.engine.localization.Messages.getString(
+                                task.getClass().getName() + iped.engine.localization.Messages.TOOLTIP_SUFFIX, title);
                     }
                 } catch (RuntimeException e1) {
                 }
@@ -478,13 +487,17 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
         jtableTasks.setFillsViewportHeight(true);
         jtableTasks.setRowHeight(30);
         jtableTasks.setModel(tasksTableModel);
-        jtableTasks.getColumn(jtableTasks.getColumnName(3)).setCellRenderer(new TaskTableConfigurablesCellRenderer(selectedConfigurationManager, mainFrame));
-        jtableTasks.getColumn(jtableTasks.getColumnName(3)).setCellEditor(new TableTaskOptionsCellEditor(new JCheckBox()));
+        jtableTasks.getColumn(jtableTasks.getColumnName(3))
+                .setCellRenderer(new TaskTableConfigurablesCellRenderer(selectedConfigurationManager, mainFrame));
+        jtableTasks.getColumn(jtableTasks.getColumnName(3))
+                .setCellEditor(new TableTaskOptionsCellEditor(new JCheckBox()));
 
-        jtableTasks.getColumn(jtableTasks.getColumnName(1)).setCellRenderer(new TableTaskEnabledCellRenderer(jtableTasks.getDefaultRenderer(jtableTasks.getColumnClass(1))));
+        jtableTasks.getColumn(jtableTasks.getColumnName(1)).setCellRenderer(
+                new TableTaskEnabledCellRenderer(jtableTasks.getDefaultRenderer(jtableTasks.getColumnClass(1))));
 
         jtableTasks.getColumn(jtableTasks.getColumnName(2)).setCellRenderer(new TableTaskLabelCellRenderer());
-        jtableTasks.getColumn(jtableTasks.getColumnName(2)).setCellEditor(new TableTaskOptionsCellEditor(new JCheckBox()));
+        jtableTasks.getColumn(jtableTasks.getColumnName(2))
+                .setCellEditor(new TableTaskOptionsCellEditor(new JCheckBox()));
 
         jtableTasks.getColumn(jtableTasks.getColumnName(0)).setMaxWidth(30);
         jtableTasks.getColumn(jtableTasks.getColumnName(1)).setMaxWidth(30);
@@ -503,7 +516,9 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
 
         JButton buttoAddScriptTask = new JButton(Messages.get("Home.ProcOptions.AddScriptTask"));
         buttoAddScriptTask.addActionListener(e -> {
-            File scriptDir = Paths.get(System.getProperty(IConfigurationDirectory.IPED_APP_ROOT), TaskInstallerConfig.SCRIPT_BASE).toFile();
+            File scriptDir = Paths
+                    .get(System.getProperty(IConfigurationDirectory.IPED_APP_ROOT), TaskInstallerConfig.SCRIPT_BASE)
+                    .toFile();
             File exampleScriptFile = new File(scriptDir, ScriptEditPanel.TEMPLATE_SCRIPT_NAME);
             TaskConfigDialog tcd = new TaskConfigDialog(selectedConfigurationManager, new ScriptTask(exampleScriptFile), mainFrame);
             tcd.setModalityType(ModalityType.APPLICATION_MODAL);
@@ -528,9 +543,13 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
                 // if already has a case in the output directory and the user do not select an
                 // option in the caseinfotab, show the options again!!
                 if (ipp.getExistentCaseOption() == null) {
-                    Object[] options = { Messages.get("Home.AppendExistentCase"), Messages.get("Home.ContinueExistentCase"), Messages.get("Home.RestartExistentCase"), Messages.get("Case.Cancel") };
-                    int result = JOptionPane.showOptionDialog(this, Messages.getString("Home.ProcessManager.ExistentCaseAlertMessage"), Messages.getString("Home.ProcessManager.ExistentCaseAlertTitle"), JOptionPane.YES_NO_CANCEL_OPTION,
-                            JOptionPane.QUESTION_MESSAGE, null, options, options[3]);
+                    Object[] options = { Messages.get("Home.AppendExistentCase"),
+                            Messages.get("Home.ContinueExistentCase"), Messages.get("Home.RestartExistentCase"),
+                            Messages.get("Case.Cancel") };
+                    int result = JOptionPane.showOptionDialog(this,
+                            Messages.getString("Home.ProcessManager.ExistentCaseAlertMessage"),
+                            Messages.getString("Home.ProcessManager.ExistentCaseAlertTitle"),
+                            JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[3]);
                     switch (result) {
                         case 0:
                             ipp.setExistentCaseOption(ExistentCaseOptions.APPEND);
@@ -583,7 +602,15 @@ public class ProcessOptionTab extends DefaultPanel implements TableModelListener
      */
     @Override
     public void onChange(Configurable<?> configurable) {
-        showProfilePanel(CREATE_PROFILE_PANEL);
-        jtableTasks.updateUI();
+        if (configurable != null) {
+            Runnable r = new Runnable() {
+                @Override
+                public void run() {
+                    showProfilePanel(CREATE_PROFILE_PANEL);
+                    jtableTasks.updateUI();
+                }
+            };
+            SwingUtilities.invokeLater(r);
+        }
     }
 }
