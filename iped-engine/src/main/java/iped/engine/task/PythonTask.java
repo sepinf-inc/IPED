@@ -210,22 +210,23 @@ public class PythonTask extends AbstractTask implements IScriptTask {
             List<Configurable<?>> configs = null;
             if (j != null) {
                 configs = (List<Configurable<?>>) j.invoke(getInstanceMethod("getConfigurables"));
-            }
-            Configurable[] configsArray = configs.toArray(new Configurable[0]);
-            for (int i=0; i<configsArray.length; i++) {
-                Configurable configurable = configsArray[i];
-                Configurable currentConfig = ConfigurationManager.get().findObject((Class<? extends Configurable<?>>)configurable.getClass());
-                if(currentConfig == null) {
-                    try {
-                        configurable.reset();
-                        ConfigurationManager.get().loadConfig(configurable, true);
-                    } catch (IOException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();                    
+                Configurable[] configsArray = configs.toArray(new Configurable[0]);
+                for (int i = 0; i < configsArray.length; i++) {
+                    Configurable configurable = configsArray[i];
+                    Configurable currentConfig = ConfigurationManager.get()
+                            .findObject((Class<? extends Configurable<?>>) configurable.getClass());
+                    if (currentConfig == null) {
+                        try {
+                            configurable.reset();
+                            ConfigurationManager.get().loadConfig(configurable, true);
+                        } catch (IOException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        }
+                    } else {
+                        configs.remove(configurable);
+                        configs.add(currentConfig);
                     }
-                } else {
-                    configs.remove(configurable);
-                    configs.add(currentConfig);
                 }
             }
             configurables = configs != null ? configs : Collections.emptyList();
