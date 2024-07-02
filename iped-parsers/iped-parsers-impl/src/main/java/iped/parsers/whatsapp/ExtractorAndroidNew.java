@@ -349,6 +349,17 @@ public class ExtractorAndroidNew extends Extractor {
         }
     }
 
+    private void extractQuotedProductInfo(Connection conn, Message m) throws SQLException {
+        try (PreparedStatement stmt = conn.prepareStatement(SELECT_QUOTED_PRODUCT)) {
+            stmt.setLong(1, m.getId());
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                m.setProduct(new MessageProduct(rs.getString("title"), rs.getString("seller"), rs.getString("currency"),
+                        rs.getInt("amount"), rs.getString("description")));
+            }
+        }
+    }
+
     private void extractEphemeralDuration(Connection conn, Message m) throws SQLException {
         try (PreparedStatement stmt = conn.prepareStatement(SELECT_EPHEMERAL_SETTING)) {
             stmt.setLong(1, m.getId());
@@ -543,9 +554,13 @@ public class ExtractorAndroidNew extends Extractor {
                         // Try to find original message in messages
                         Message original = messagesMapUuid.get(mq.getUuid());
                         if (original != null) {//has found original message reference
+                            original.setMessageQuotedType(MessageQuotedType.QUOTE_FOUND);
                             m.setMessageQuote(original);
+                        } else if (mq.getProduct() != null){ // Quoted Catalog
+                            mq.setMessageQuotedType(MessageQuotedType.QUOTE_CATALOG);
+                            mq.setId(fakeIds--);
+                            m.setMessageQuote(mq);
                         } else {// not found original message reference
-                            mq.setMessageQuotedType(MessageQuotedType.QUOTE_NOT_FOUND);
                             if (chatId == mq.getQuoteChatId()){// msgs In same chat
                                 long editId = mq.getEditId();                            
                                 if (messagesMap.get(editId) != null){ // Quoted was edited
@@ -553,6 +568,7 @@ public class ExtractorAndroidNew extends Extractor {
                                     mq.setMessageQuotedType(MessageQuotedType.QUOTE_FOUND);
                                     mq.setId(editId);
                                 }else{ // Quoted message cannot be found again
+                                    mq.setMessageQuotedType(MessageQuotedType.QUOTE_NOT_FOUND);
                                     mq.setId(fakeIds--);
                                     mq.setDeleted(true);                                    
                                 }
@@ -574,6 +590,7 @@ public class ExtractorAndroidNew extends Extractor {
                                         }
 
                                     }else{
+                                        mq.setMessageQuotedType(MessageQuotedType.QUOTE_NOT_FOUND);
                                         mq.setId(fakeIds--);
                                         mq.setDeleted(true);    
                                     }
@@ -603,6 +620,8 @@ public class ExtractorAndroidNew extends Extractor {
 
         Map<Long, List<Message>> messagesPerChatId = new HashMap<Long, List<Message>>();
         String query = getSelectMessagesQuotesQuery(conn);
+        boolean hasQuotedProductTable = SQLite3DBParser.containsTable("message_quoted_product", conn);
+
         try (PreparedStatement stmt = conn.prepareStatement(query)) {
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
@@ -651,6 +670,10 @@ public class ExtractorAndroidNew extends Extractor {
                 m.setRemoteId(rs.getString("remoteId"));
 
                 long chatId = rs.getLong("parent_message_chat_row_id");
+
+                if (hasQuotedProductTable && m.getMessageType() == PRODUCT_MESSAGE) {
+                    extractQuotedProductInfo(conn, m);
+                }
 
                 List<Message> messages = messagesPerChatId.get(chatId);
                 if (messages == null) {
@@ -792,6 +815,9 @@ public class ExtractorAndroidNew extends Extractor {
                     case 70:
                         result = CALL_MESSAGE;
                         break;
+                    case 76:
+                        result = CONTACTED_FIND_BUSINESSES;
+                        break;                        
                     case 75:
                     case 108:
                         result = GROUP_ADDED_TO_COMMUNITY;
@@ -1026,7 +1052,11 @@ public class ExtractorAndroidNew extends Extractor {
     private static final String SELECT_PRODUCT = "select raw_string as seller, title,"
             + " currency_code as currency, amount_1000 as amount, description"
             + " from message_product left join jid on business_owner_jid = jid._id where message_row_id=?";
-    
+
+    private static final String SELECT_QUOTED_PRODUCT = "select raw_string as seller, title,"
+            + " currency_code as currency, amount_1000 as amount, description"
+            + " from message_quoted_product left join jid on business_owner_jid = jid._id where message_row_id=?";    
+
     private static final String SELECT_POLL_OPTION = "SELECT option_name as name, vote_total as total FROM message_poll_option where message_row_id=? order by _id";
 
     private static final String SELECT_EPHEMERAL_SETTING = "SELECT setting_duration as duration FROM message_ephemeral_setting where message_row_id=?";
