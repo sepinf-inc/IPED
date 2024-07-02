@@ -460,6 +460,7 @@ public class Message implements Comparable<Message> {
             case YOU_NOT_ADMIN:
             case OVER_256_MEMBERS_ONLY_ADMINS_CAN_EDIT:
             case SECURITY_NOTIFICATIONS_NO_LONGER_AVAILABLE:
+            case CONTACTED_FIND_BUSINESSES:
                 return true;
             default:
         }
