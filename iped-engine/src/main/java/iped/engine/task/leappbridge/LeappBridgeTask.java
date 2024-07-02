@@ -322,7 +322,8 @@ public class LeappBridgeTask extends AbstractPythonTask {
         // first rule to check a supposed android Dump folder or android backup
         if (dumpStartFolderNames.contains(realName)
                 || AndroidBackupParser.SUPPORTED_TYPES.contains(evidence.getMediaType())
-                || (realExt != null && realExt.toLowerCase().equals("ufdr"))) {
+                || (realExt != null && realExt.toLowerCase().equals("ufdr"))
+                || (realExt != null && realExt.toLowerCase().equals("zip"))) {
             // if true, creates a subitem to represent the ALeapp report
             Item subItem = (Item) evidence.createChildItem();
             ParentInfo parentInfo = new ParentInfo(evidence);
