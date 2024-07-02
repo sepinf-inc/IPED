@@ -656,7 +656,11 @@ public class ReportGenerator {
             case SECURITY_NOTIFICATIONS_NO_LONGER_AVAILABLE:
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.SecurityNotificationsNoLongerAvailable") + "<br>");
-                break;                
+                break;
+            case CONTACTED_FIND_BUSINESSES:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.ContactedFindBusinesses") + "<br>");
+                break;
             case USER_ADMIN:
                 out.println("<div class=\"systemmessage\">");
                 out.print(name + " ");
@@ -1261,6 +1265,10 @@ public class ReportGenerator {
                     quoteEnd = "</span><br><span style=\"float:none\" class=\"outside\"><div class=\"statusIcon\"></div><i>"
                         + Messages.getString("WhatsAppReport.QuoteStaus") + "</i>" + quoteEnd;
                     break;
+                case QUOTE_CATALOG:
+                    quoteEnd = "</span><br><span style=\"float:none\" class=\"outside\"><div class=\"catalogIcon\"></div><i>"
+                        + Messages.getString("WhatsAppReport.QuoteCatalog") + "</i>" + quoteEnd;
+                    break;
                 case QUOTE_PRIVACY_GROUP:
                     quoteEnd = "</span><br><span style=\"float:none\" class=\"outside\"><div class=\"privacyIcon\"></div><i>"
                         + Messages.getString("WhatsAppReport.QuotePrivacy") + "</i>" + quoteEnd;
@@ -1381,7 +1389,20 @@ public class ReportGenerator {
                     }
                     out.print(quoteEnd);
                     break;
-
+                case PRODUCT_MESSAGE:
+                    MessageProduct product = messageQuote.getProduct();
+                    String seller = null;
+                    if (product != null) {
+                        seller = getBestContactName(false, product.getSeller(), contactsDirectory, account);
+                    }                    
+                    out.print("<div class=\"" + quoteClass + "\" " + quoteClick
+                            + "><div class=\"quoteTop\"><span class=\"quoteUser\">" + quoteUser
+                            + "</span><br><span class=\"quoteMsg\">" + formatProduct(product, seller) + quoteEnd);
+                    if (quoteThumb != null) {
+                        out.print("<div><img class=\"quoteImg\" src=\"");
+                        out.print("data:image/jpg;base64," + Util.encodeBase64(quoteThumb) + "\"></div>");
+                    }
+                    break;
                 default:
                     out.print("<div class=\"" + quoteClass + "\" " + quoteClick
                             + "><div style=\"display:table-cell;\"><span class=\"quoteUser\">" + quoteUser
