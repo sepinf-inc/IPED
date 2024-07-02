@@ -133,6 +133,14 @@ div.privacyDeleteIcon {
     margin: 0;
 }
 
+div.catalogIcon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    vertical-align: bottom;
+    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAeJJREFUOE+lkzFoE2EYhp/cHY1UEqUYrIFkMBYRC8olqNShktCOLVwEN60uoiAHvVqnbIlQ2kEILoKidNMhQZASEs3kUEocaoUOojYlCNVWuTRpq5eLRGxMyB0q/tv/fh8P3/t+/++g84SAGQu9IWlAobXmsGgcjkajmcioilOq4XFts/Dew1I+QSqVGgJyfwSoqpo5fznBm6KIXoXSuoC5PEEymbQFBADfL3JIVdXp3tNT9HlNDveaFN4KLGZuNQATLRaKwLtdCzNjvv3aKf+h5nRutxtd13/eXS4X5XK5WZsvfuTR6tdpYLIJGL86qzmdfpvs2uWt7RXu3LvYDkin09qJwQjKqsQFt8n1nhpjJQnBAQ+8Bnc3RB7rAmmfQSGfRVGUTkBwMEzsk0Rkr8moy2Tqs0hjxMkDNdK6wIuqQMJjMJ/PWQPC/UeR1koYy4tIx4OYayXqgkh9YAhEqekjl7MBnKlXKPqOUZl7wj7lEptLr+g2DfrkIInnWcqBECPrr9nac9B6gt0MWiM70lXnvtfg5tNnfAic5cbKHN+6PDYWwmHbLTy8FsH4voM8coWNbn8nIB6Pa7Is2wIWZm+zU63gPXmOL1IPsVisbQvDwMBfPYLfTS+BrNVn+ifOfwN+ANvFuxHI5I9YAAAAAElFTkSuQmCC");
+    margin: 0;
+}
 /********************
  * WhatsApp Top Bar *
  ********************/
