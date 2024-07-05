@@ -659,7 +659,7 @@ public class ReportGenerator {
                 break;
             case CONTACTED_FIND_BUSINESSES:
                 out.println("<div class=\"systemmessage\">");
-                out.println(Messages.getString("WhatsAppReport.ContactedFindBusinesses") + "<br>");
+                out.println(Messages.getString("WhatsAppReport.ContactedFindBusinesses", name) + "<br>");
                 break;
             case USER_ADMIN:
                 out.println("<div class=\"systemmessage\">");
