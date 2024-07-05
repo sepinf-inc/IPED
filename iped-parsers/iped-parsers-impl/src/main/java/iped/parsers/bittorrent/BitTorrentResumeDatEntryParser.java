@@ -68,7 +68,12 @@ public class BitTorrentResumeDatEntryParser extends AbstractParser {
         metadata.set(HttpHeaders.CONTENT_TYPE, RESUME_DAT_ENTRY_MIME_TYPE);
         metadata.remove(TikaCoreProperties.RESOURCE_NAME_KEY);
 
+        // Generally stream.readAllBytes() is not safe and should be avoided because it
+        // may cause OOME with large misdetected files. But in this specific case, just
+        // carved resume.dat entries, limited to 32KB by the carving configuration, are
+        // handled by this parser.
         byte[] bytes = stream.readAllBytes();
+
         char[] prev = "d1:X1:0".toCharArray();
         byte[] in = new byte[prev.length + bytes.length];
         for (int i = 0; i < prev.length; i++) {
