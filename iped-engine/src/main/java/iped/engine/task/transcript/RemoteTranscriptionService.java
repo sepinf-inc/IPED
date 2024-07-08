@@ -576,8 +576,20 @@ public class RemoteTranscriptionService {
             @Override
             public void run() {
                 while (true) {
+                    Boolean empty=true;
+                    synchronized (toTranscribe) {
+                        empty=toTranscribe.isEmpty();
+                    }
+                    if(empty) {
+                        try {
+                            Thread.sleep(100);
+                            
+                        }catch (Exception e) {
+                            // TODO: handle exception
+                        }
+                        continue;
+                    }     
                     try {
-                        Thread.sleep(100);
                         transcriptSemaphore.acquire();
                         transcribeAudios(task);
                         
