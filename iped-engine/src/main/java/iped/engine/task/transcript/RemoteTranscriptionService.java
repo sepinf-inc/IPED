@@ -16,6 +16,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -51,12 +53,23 @@ public class RemoteTranscriptionService {
         VERSION_1_0,
         PING
     }
-    
+    static class TranscribeRequest {
+        File wavAudio;
+        TextAndScore result=null;
+        
+
+        public TranscribeRequest(File wavAudio) {
+            this.wavAudio=wavAudio;
+        }
+    }
     static class OpenConnectons {
         Socket conn;
         BufferedInputStream bis;
         PrintWriter writer;
         Thread t;
+        File wavAudio;
+        TextAndScore result=null;
+        
 
         public OpenConnectons(Socket conn, BufferedInputStream bis, PrintWriter writer, Thread t) {
             this.conn = conn;
@@ -92,6 +105,8 @@ public class RemoteTranscriptionService {
      * Control number of simultaneous audio conversions to WAV.
      */
     private static Semaphore wavConvSemaphore;
+    
+    private static int BATCH_SIZE=1;
 
     private static final AtomicLong audiosTranscripted = new AtomicLong();
     private static final AtomicLong audiosDuration = new AtomicLong();
@@ -99,7 +114,9 @@ public class RemoteTranscriptionService {
     private static final AtomicLong transcriptionTime = new AtomicLong();
     private static final AtomicLong requestsReceived = new AtomicLong();
     private static final AtomicLong requestsAccepted = new AtomicLong();
-    private static List<OpenConnectons> beaconQueq = new LinkedList<>();
+    private static final List<OpenConnectons> beaconQueq = new LinkedList<>();
+    private static final Deque<TranscribeRequest> toTranscribe = new LinkedList<>();
+     
 
     private static Logger logger;
 
@@ -149,7 +166,7 @@ public class RemoteTranscriptionService {
         AbstractTranscriptTask task = (AbstractTranscriptTask) Class.forName(audioConfig.getClassName()).getDeclaredConstructor().newInstance();
         audioConfig.setEnabled(true);
         task.init(cm);
-
+        BATCH_SIZE=audioConfig.getBatchSize();
         int numConcurrentTranscriptions = Wav2Vec2TranscriptTask.getNumConcurrentTranscriptions();
         int numLogicalCores = Runtime.getRuntime().availableProcessors();
 
@@ -175,6 +192,10 @@ public class RemoteTranscriptionService {
             startSendStatsThread(discoveryIp, discoveryPort, localPort, numConcurrentTranscriptions, numLogicalCores);
 
             startBeaconThread();
+            for(int i=0;i<numConcurrentTranscriptions;i++) {
+                startTrancribeThreads(task);
+            }
+            
 
             waitRequests(server, task, discoveryIp);
 
@@ -208,7 +229,48 @@ public class RemoteTranscriptionService {
         });
     }
 
-
+    private static void transcribeAudios(AbstractTranscriptTask task ) throws Exception {
+        ArrayList<TranscribeRequest> transcribeRequests=new ArrayList<>();
+        ArrayList<File> files=new ArrayList<File>();
+        
+        if (executor.isShutdown()) {
+            throw new Exception("Shutting down service instance...");
+        }
+        
+        synchronized (toTranscribe) {
+            if(toTranscribe.size()==0)
+                return;
+            while(toTranscribe.size()>0 && transcribeRequests.size() <BATCH_SIZE) {
+                TranscribeRequest req=toTranscribe.poll();
+                transcribeRequests.add(req);
+                files.add(req.wavAudio);
+            }
+        }
+        logger.info("inicio da transcricao de "+files.size()+" audios");
+        
+        
+        long t2 = System.currentTimeMillis();
+        
+       
+        if(task instanceof WhisperTranscriptTask) {
+            List<TextAndScore> results = ((WhisperTranscriptTask)task).transcribeAudios(files);
+            for(int i=0;i<results.size();i++) {
+                transcribeRequests.get(i).result=results.get(i);
+                synchronized(transcribeRequests.get(i)) {
+                    transcribeRequests.get(i).notifyAll();
+                }
+            }
+        }else {
+            for(int i=0;i<files.size();i++) {
+                transcribeRequests.get(i).result=task.transcribeAudio(files.get(i));
+                synchronized(transcribeRequests.get(i)) {
+                    transcribeRequests.get(i).notifyAll();
+                }
+            }
+        }      
+        long t3 = System.currentTimeMillis();
+        transcriptionTime.addAndGet(t3 - t2);
+    }
 
     private static void registerThis(String discoveryIp, int discoveryPort, int localPort, int concurrentJobs, int concurrentWavConvs) throws Exception {
         try (Socket client = new Socket(discoveryIp, discoveryPort);
@@ -408,17 +470,18 @@ public class RemoteTranscriptionService {
                             }
                             long durationMillis = 1000 * wavFile.length() / (16000 * 2);
 
-                            TextAndScore result;
+                            TextAndScore result=null;
                             long t2, t3;
                             try {
-                                transcriptSemaphore.acquire();
-                                if (executor.isShutdown()) {
-                                    error = true;
-                                    throw new Exception("Shutting down service instance...");
+                                TranscribeRequest req=new TranscribeRequest(wavFile);
+                                synchronized (toTranscribe) {
+                                    toTranscribe.add(req);
                                 }
-                                t2 = System.currentTimeMillis();
-                                result = task.transcribeAudio(wavFile);
-                                t3 = System.currentTimeMillis();
+                                synchronized(req) {
+                                    req.wait();
+                                }
+                                result=req.result;
+                               
                             } catch (ProcessCrashedException e) {
                                 // retry audio
                                 error = true;
@@ -429,14 +492,12 @@ public class RemoteTranscriptionService {
                                 executor.shutdown();
                                 server.close();
                                 throw e;
-                            } finally {
-                                transcriptSemaphore.release();
-                            }
+                            } 
 
                             audiosTranscripted.incrementAndGet();
                             audiosDuration.addAndGet(durationMillis);
                             conversionTime.addAndGet(t1 - t0);
-                            transcriptionTime.addAndGet(t3 - t2);
+                            
                             logger.info(prefix + "Transcritpion done.");
 
                             // removes from the beacon queue to prevent beacons in the middle of the
@@ -508,5 +569,30 @@ public class RemoteTranscriptionService {
             }
         });
     }
+    
+    
+    private static void startTrancribeThreads(AbstractTranscriptTask task) {
+        executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    try {
+                        Thread.sleep(100);
+                        transcriptSemaphore.acquire();
+                        transcribeAudios(task);
+                        
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }finally {
+                        transcriptSemaphore.release();
+                    }
+                   
+
+                }
+            }
+        });
+    }
+    
+    
 
 }
