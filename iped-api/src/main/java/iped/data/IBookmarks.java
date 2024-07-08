@@ -5,6 +5,7 @@
  */
 package iped.data;
 
+import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -51,6 +52,7 @@ public interface IBookmarks extends Serializable {
 
     int getLastId();
 
+    @Deprecated
     int getTotalItens();
 
     int getTotalChecked();
@@ -91,9 +93,17 @@ public interface IBookmarks extends Serializable {
 
     String getBookmarkComment(int bookmarkId);
 
+    void setBookmarkColor(int bookmarkId, Color color);
+
+    Color getBookmarkColor(int bookmarkId);
+    
+    Set<Color> getUsedColors();
+    
     void setBookmarkKeyStroke(int bookmarkId, KeyStroke key);
 
     KeyStroke getBookmarkKeyStroke(int bookmarkId);
+    
+    void removeBookmarkKeyStroke(int bookmarkId);
     
     int getBookmarkCount(int bookmarkId);
     

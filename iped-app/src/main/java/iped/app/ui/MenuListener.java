@@ -18,7 +18,9 @@
  */
 package iped.app.ui;
 
+import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -28,6 +30,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.BorderFactory;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -39,8 +44,6 @@ import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.tree.TreePath;
 
-import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
-import org.apache.lucene.search.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +56,7 @@ import iped.data.IItemId;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.ItemId;
 import iped.engine.search.IPEDSearcher;
-import iped.engine.search.SimilarDocumentSearch;
+import iped.engine.search.QueryBuilder;
 import iped.parsers.ufed.UFEDChatParser;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
@@ -66,7 +69,9 @@ public class MenuListener implements ActionListener {
     private static Logger LOGGER = LoggerFactory.getLogger(MenuListener.class);
 
     static String CSV = ".csv"; //$NON-NLS-1$
-    static JFileChooser fileChooser;
+    static JFileChooser fileChooser, fileChooserImportKeywords;
+    static JCheckBox checkBookMarkList;
+    static JCheckBox checkBookMarkWords;
 
     FileFilter defaultFilter, csvFilter = new Filtro();
     MenuClass menu;
@@ -87,6 +92,53 @@ public class MenuListener implements ActionListener {
         if (dirDadosExportados.exists()) {
             fileChooser.setCurrentDirectory(dirDadosExportados);
         }
+    }
+
+    private void setupFileChooserImportKeywords() {
+        if (fileChooserImportKeywords != null)
+            return;
+
+        checkBookMarkList = new JCheckBox(Messages.getString("MenuListener.CheckAddKeywordsAsSingleBookmark"));
+        checkBookMarkWords = new JCheckBox(Messages.getString("MenuListener.CheckAddKeywordsAsMultipleBookmarks"));
+
+        fileChooserImportKeywords = new JFileChooser();
+        defaultFilter = fileChooserImportKeywords.getFileFilter();
+        File moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir();
+        fileChooserImportKeywords.setCurrentDirectory(moduleDir.getParentFile());
+
+        File dirDadosExportados = new File(Messages.getString("ExportToZIP.DefaultPath"));
+        if (dirDadosExportados.exists()) {
+            fileChooserImportKeywords.setCurrentDirectory(dirDadosExportados);
+        }
+
+        fileChooserImportKeywords.setFileFilter(defaultFilter);
+        fileChooserImportKeywords.setFileSelectionMode(JFileChooser.FILES_ONLY);
+
+        JComponent panel = new JPanel();
+        panel.setLayout(new BorderLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+        checkBookMarkList.setSelected(false);
+        panel.add(checkBookMarkList, BorderLayout.NORTH);
+        checkBookMarkWords.setSelected(false);
+        checkBookMarkWords.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
+        panel.add(checkBookMarkWords, BorderLayout.SOUTH);
+
+        int width = (int) fileChooserImportKeywords.getPreferredSize().getWidth();
+        int height = (int) fileChooserImportKeywords.getPreferredSize().getHeight();
+        height += (int) panel.getPreferredSize().getHeight();
+
+        fileChooserImportKeywords.setPreferredSize(new Dimension(width, height));
+
+        fileChooserImportKeywords.setAccessory(panel);
+        JComponent center = null;
+        BorderLayout layout = (BorderLayout) fileChooserImportKeywords.getLayout();
+        for (Component child : fileChooserImportKeywords.getComponents()) {
+            if (BorderLayout.CENTER == layout.getConstraints(child)) {
+                center = (JComponent) child;
+            }
+        }
+        if (center != null)
+            center.add(panel, BorderLayout.SOUTH);
     }
 
     private class Filtro extends FileFilter {
@@ -151,14 +203,12 @@ public class MenuListener implements ActionListener {
         }
 
         if (e.getSource() == menu.deepCheckHighlighted) {
-            KeyEvent keyCTRL_R_Pressed = new KeyEvent((Component) e.getSource(), KeyEvent.KEY_PRESSED,
-                    System.currentTimeMillis(), KeyEvent.CTRL_DOWN_MASK, KeyEvent.VK_R, KeyEvent.CHAR_UNDEFINED);
+            KeyEvent keyCTRL_R_Pressed = new KeyEvent((Component) e.getSource(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), KeyEvent.CTRL_DOWN_MASK, KeyEvent.VK_R, KeyEvent.CHAR_UNDEFINED);
             for (KeyListener kl : App.get().resultsTable.getListeners(KeyListener.class))
                 kl.keyPressed(keyCTRL_R_Pressed);
 
         } else if (e.getSource() == menu.deepUncheckHighlighted) {
-            KeyEvent keyCTRL_R_Pressed = new KeyEvent((Component) e.getSource(), KeyEvent.KEY_PRESSED,
-                    System.currentTimeMillis(), KeyEvent.ALT_DOWN_MASK, KeyEvent.VK_R, KeyEvent.CHAR_UNDEFINED);
+            KeyEvent keyCTRL_R_Pressed = new KeyEvent((Component) e.getSource(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), KeyEvent.ALT_DOWN_MASK, KeyEvent.VK_R, KeyEvent.CHAR_UNDEFINED);
             for (KeyListener kl : App.get().resultsTable.getListeners(KeyListener.class))
                 kl.keyPressed(keyCTRL_R_Pressed);
         }
@@ -269,16 +319,15 @@ public class MenuListener implements ActionListener {
             }
 
         } else if (e.getSource() == menu.importKeywords) {
-            setupFileChooser();
-            fileChooser.setFileFilter(defaultFilter);
-            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-            if (fileChooser.showOpenDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
-                File file = fileChooser.getSelectedFile();
-                new KeywordListImporter(file).execute();
+            setupFileChooserImportKeywords();
+            fileChooserImportKeywords.setFileFilter(defaultFilter);
+            fileChooserImportKeywords.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            if (fileChooserImportKeywords.showOpenDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
+                File file = fileChooserImportKeywords.getSelectedFile();
+                new KeywordListImporter(file, checkBookMarkList.isSelected(), checkBookMarkWords.isSelected()).execute();
             }
 
-        } else if (e.getSource() == menu.exportTree || e.getSource() == menu.exportTreeChecked
-                || e.getSource() == menu.exportCheckedTreeToZip) {
+        } else if (e.getSource() == menu.exportTree || e.getSource() == menu.exportTreeChecked || e.getSource() == menu.exportCheckedTreeToZip) {
 
             boolean onlyChecked = e.getSource() != menu.exportTree;
             boolean toZip = e.getSource() == menu.exportCheckedTreeToZip;
@@ -301,8 +350,7 @@ public class MenuListener implements ActionListener {
 
         } else if (e.getSource() == menu.changeGalleryColCount) {
 
-            SpinnerDialog dialog = new SpinnerDialog(App.get(), Messages.getString("MenuListener.Gallery"),
-                    Messages.getString("MenuListener.Cols"), App.get().galleryModel.getColumnCount(), 1, 40);
+            SpinnerDialog dialog = new SpinnerDialog(App.get(), Messages.getString("MenuListener.Gallery"), Messages.getString("MenuListener.Cols"), App.get().galleryModel.getColumnCount(), 1, 40);
             dialog.addChangeListener(new SpinnerListener());
             dialog.setVisible(true);
 
@@ -353,12 +401,14 @@ public class MenuListener implements ActionListener {
         } else if (e.getSource() == menu.similarDocs) {
             int selIdx = App.get().resultsTable.getSelectedRow();
             if (selIdx != -1) {
-                int percent = Integer
-                        .parseInt(JOptionPane.showInputDialog(Messages.getString("MenuListener.SimilarityLabel"), 70)); //$NON-NLS-1$
-                IItemId item = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(selIdx));
+                int percent = Integer.parseInt(JOptionPane.showInputDialog(Messages.getString("MenuListener.SimilarityLabel"), 70)); //$NON-NLS-1$
 
-                Query query = new SimilarDocumentSearch().getQueryForSimilarDocs(item, percent, App.get().appCase);
-                App.get().appletListener.updateFileListing(query);
+                IItemId item = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(selIdx));
+                App.get().similarDocumentFilterer.setPercent(percent);
+
+                App.get().similarDocumentFilterer.setItem(item, App.get().appCase.getItemByItemId(item));
+
+                App.get().appletListener.updateFileListing();
             }
 
         } else if (e.getSource() == menu.openViewfile) {
@@ -383,8 +433,7 @@ public class MenuListener implements ActionListener {
             int[] rows = App.get().resultsTable.getSelectedRows();
             List<ItemId> items = new ArrayList<>(rows.length);
             for (int selIdx : rows) {
-                ItemId itemId = (ItemId) App.get().ipedResult
-                        .getItem(App.get().resultsTable.convertRowIndexToModel(selIdx));
+                ItemId itemId = (ItemId) App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(selIdx));
                 items.add(itemId);
             }
             App.get().appGraphAnalytics.addEvidenceFilesToGraph(items);
@@ -398,7 +447,7 @@ public class MenuListener implements ActionListener {
                 chatId = atomicSource.getParentId(itemId.getId());
             } else {
                 IPEDSearcher searcher = new IPEDSearcher((IPEDSource) atomicSource);
-                searcher.setQuery(QueryParserUtil.escape(UFEDChatParser.CHILD_MSG_IDS) + ":" + itemId.getId());
+                searcher.setQuery(QueryBuilder.escape(UFEDChatParser.CHILD_MSG_IDS) + ":" + itemId.getId());
                 try {
                     SearchResult r = searcher.search();
                     if (r.getLength() == 1)
@@ -418,9 +467,7 @@ public class MenuListener implements ActionListener {
                 JOptionPane.showMessageDialog(App.get(), Messages.getString("MenuListener.ChatNotFound")); //$NON-NLS-1$
             }
         } else if (e.getSource() == menu.uiZoom) {
-            String value = JOptionPane.showInputDialog(App.get(),
-                    Messages.getString("MenuListener.UiScaleDialog").replace("{}", UiScale.AUTO),
-                    UiScale.loadUserSetting());
+            String value = JOptionPane.showInputDialog(App.get(), Messages.getString("MenuListener.UiScaleDialog").replace("{}", UiScale.AUTO), UiScale.loadUserSetting());
             double factor = 0;
             try {
                 factor = Double.parseDouble(value);
@@ -431,7 +478,7 @@ public class MenuListener implements ActionListener {
             }
         } else if (e.getSource() == menu.catIconSize) {
             JPanel panel = new JPanel(new GridLayout(2, 3, 5, 5));
-            panel.add(new JLabel(Messages.getString("CategoryTreeModel.RootName"))); 
+            panel.add(new JLabel(Messages.getString("CategoryTreeModel.RootName")));
             panel.add(new JLabel(Messages.getString("App.Gallery")));
             panel.add(new JLabel(Messages.getString("MenuListener.TableAndOthers")));
             int[] sizes = UiIconSize.loadUserSetting();

@@ -331,15 +331,18 @@ public class StandardParser extends CompositeParser {
 
                 String[] names = metadata.names();
                 Arrays.sort(names);
+                StringBuilder text = new StringBuilder();
                 for (String name : names) {
                     if (name != null && !name.equals(TikaCoreProperties.RESOURCE_NAME_KEY)
                             && !name.equals("PLTE PLTEEntry") && !name.equals("Chroma Palette PaletteEntry") //$NON-NLS-1$ //$NON-NLS-2$
                             && !name.equals(Metadata.CONTENT_TYPE)) {
-                        String text = name + ": "; //$NON-NLS-1$
-                        for (String value : metadata.getValues(name)) {
-                            text += value + " "; //$NON-NLS-1$
+                        text.setLength(0);
+                        text.append(name).append(':');
+                        String[] values = metadata.getValues(name);
+                        for (String value : values) {
+                            text.append(' ').append(value);
                         }
-                        noEndHandler.characters(text.toCharArray(), 0, text.length());
+                        noEndHandler.characters(text.toString().toCharArray(), 0, text.length());
                         noEndHandler.newLine();
                     }
                 }

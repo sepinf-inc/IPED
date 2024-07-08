@@ -249,6 +249,8 @@ public class MetadataUtil {
         generalKeys.add(ExtraProperties.USER_NOTES);
         generalKeys.add(ExtraProperties.THUMBNAIL_BASE64);
         generalKeys.add(ExtraProperties.DOWNLOADED_DATA);
+        generalKeys.add(ExtraProperties.TRANSCRIPT_ATTR);
+        generalKeys.add(ExtraProperties.CONFIDENCE_ATTR);
         generalKeys.add(OCRParser.OCR_CHAR_COUNT);
         generalKeys.add(RawStringParser.COMPRESS_RATIO);
 
@@ -390,10 +392,13 @@ public class MetadataUtil {
         normalizeGPSMeta(metadata);
         normalizeCase(metadata);
         prefixCommonMetadata(metadata);
-        prefixAudioMetadata(metadata);
-        prefixImageMetadata(metadata);
-        prefixVideoMetadata(metadata);
-        prefixPDFMetadata(metadata);
+        if (!prefixVideoMetadata(metadata)) {
+            if (!prefixAudioMetadata(metadata)) {
+                if (!prefixImageMetadata(metadata)) {
+                    prefixPDFMetadata(metadata);
+                }
+            }
+        }
         prefixDocMetadata(metadata);
         prefixBasicMetadata(metadata);
         removeDuplicateValues(metadata);
@@ -652,14 +657,20 @@ public class MetadataUtil {
         }
     }
 
-    private static void prefixAudioMetadata(Metadata metadata) {
-        if (metadata.get(Metadata.CONTENT_TYPE).startsWith("audio")) //$NON-NLS-1$
+    private static boolean prefixAudioMetadata(Metadata metadata) {
+        if (metadata.get(Metadata.CONTENT_TYPE).startsWith("audio")) {
             includePrefix(metadata, ExtraProperties.AUDIO_META_PREFIX);
+            return true;
+        }
+        return false;
     }
 
-    private static void prefixImageMetadata(Metadata metadata) {
-        if (metadata.get(Metadata.CONTENT_TYPE).startsWith("image")) //$NON-NLS-1$
+    private static boolean prefixImageMetadata(Metadata metadata) {
+        if (metadata.get(Metadata.CONTENT_TYPE).startsWith("image")) {
             includePrefix(metadata, ExtraProperties.IMAGE_META_PREFIX);
+            return true;
+        }
+        return false;
     }
 
     public static boolean isVideoType(MediaType mediaType) {
@@ -667,15 +678,21 @@ public class MetadataUtil {
                 || mediaType.getBaseType().toString().equals("application/vnd.rn-realmedia"); //$NON-NLS-1$
     }
 
-    private static void prefixVideoMetadata(Metadata metadata) {
+    private static boolean prefixVideoMetadata(Metadata metadata) {
         if (isVideoType(MediaType.parse(metadata.get(Metadata.CONTENT_TYPE)))
-                || isVideoType(MediaType.parse(metadata.get(StandardParser.INDEXER_CONTENT_TYPE))))
+                || isVideoType(MediaType.parse(metadata.get(StandardParser.INDEXER_CONTENT_TYPE)))) {
             includePrefix(metadata, ExtraProperties.VIDEO_META_PREFIX);
+            return true;
+        }
+        return false;
     }
 
-    private static void prefixPDFMetadata(Metadata metadata) {
-        if (metadata.get(Metadata.CONTENT_TYPE).equals("application/pdf")) //$NON-NLS-1$
+    private static boolean prefixPDFMetadata(Metadata metadata) {
+        if (metadata.get(Metadata.CONTENT_TYPE).equals("application/pdf")) {
             includePrefix(metadata, ExtraProperties.PDF_META_PREFIX);
+            return true;
+        }
+        return false;
     }
 
     private static void prefixDocMetadata(Metadata metadata) {

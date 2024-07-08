@@ -16,7 +16,7 @@ import iped.exception.QueryNodeException;
 import iped.utils.LocalizedFormat;
 import iped.viewers.util.ProgressDialog;
 
-public class UICaseSearchFilterListener implements CaseSearchFilterListener{
+public class UICaseSearchFilterListener implements CaseSearchFilterListener {
 
     private static Logger LOGGER = LoggerFactory.getLogger(UICaseSearchFilterListener.class);
     ProgressDialog progressDialog;
@@ -34,36 +34,41 @@ public class UICaseSearchFilterListener implements CaseSearchFilterListener{
     @Override
     public void onDone() {
         try {
-            saveHighlightTerms();
-        } catch (Exception e) {
-
-        }
-
-        App.get().clearAllFilters.setNumberOfFilters(caseSearcherFilter.getNumFilters());
-
-        if (!caseSearcherFilter.isCancelled())
             try {
-                App.get().ipedResult = caseSearcherFilter.get();
-
-                App.get().resultsTable.getColumnModel().getColumn(0).setHeaderValue(LocalizedFormat.format(caseSearcherFilter.get().getLength()));
-                App.get().resultsTable.getTableHeader().repaint();
-                if (App.get().ipedResult.getLength() < 1 << 24 && App.get().resultsTable.getRowSorter() != null) {
-                    App.get().resultsTable.getRowSorter().allRowsChanged();
-                    App.get().resultsTable.getRowSorter().setSortKeys(App.get().resultSortKeys);
-                    App.get().galleryModel.fireTableDataChanged();
-                } else {
-                    App.get().resultsModel.fireTableDataChanged();
-                    App.get().galleryModel.fireTableStructureChanged();
-                }
-                App.get().resultsModel.fireTableDataChanged();
-                ColumnsManager.getInstance().updateDinamicCols();
-                new ResultTotalSizeCounter().countVolume(App.get().ipedResult);
-
+                saveHighlightTerms();
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        if (progressDialog != null)
-            progressDialog.close();
+
+            App.get().clearAllFilters.setNumberOfFilters(caseSearcherFilter.getNumFilters());
+
+            if (!caseSearcherFilter.isCancelled())
+                try {
+                    App.get().ipedResult = caseSearcherFilter.get();
+
+                    App.get().resultsTable.getColumnModel().getColumn(0).setHeaderValue(LocalizedFormat.format(caseSearcherFilter.get().getLength()));
+                    App.get().resultsTable.getTableHeader().repaint();
+                    if (App.get().ipedResult.getLength() < 1 << 24 && App.get().resultsTable.getRowSorter() != null) {
+                        App.get().resultsTable.getRowSorter().allRowsChanged();
+                        App.get().resultsTable.getRowSorter().setSortKeys(App.get().resultSortKeys);
+                        App.get().galleryModel.fireTableDataChanged();
+                    } else {
+                        App.get().resultsModel.fireTableDataChanged();
+                        App.get().galleryModel.fireTableStructureChanged();
+                    }
+                    App.get().resultsModel.fireTableDataChanged();
+                    ColumnsManager.getInstance().updateDinamicCols();
+                    new ResultTotalSizeCounter().countVolume(App.get().ipedResult);
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+            App.get().filtersPanel.updateUI();
+        } finally {
+            if (progressDialog != null)
+                progressDialog.close();
+        }
     }
 
     private void saveHighlightTerms() throws ParseException, QueryNodeException {
@@ -89,9 +94,11 @@ public class UICaseSearchFilterListener implements CaseSearchFilterListener{
         caseSearcherFilter.searcher.cancel();
         try {
             App.get().appCase.reopen();
-
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            if (progressDialog != null)
+                progressDialog.close();
         }
     }
 

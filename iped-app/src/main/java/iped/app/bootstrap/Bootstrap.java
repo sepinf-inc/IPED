@@ -117,8 +117,8 @@ public class Bootstrap {
         }
 
         if (!XmxDefined) {
-            // if -Xmx is not specified, set it, up to 32GB
-            long memSize = Math.min((long) (physicalMemory * getRAMToHeapFactor()), 32L * 1024 * 1024 * 1024);
+            // if -Xmx is not specified, set it, up to 32500MB
+            long memSize = Math.min((long) (physicalMemory * getRAMToHeapFactor()), 32500L * 1024 * 1024);
             heapArgs.add("-Xmx" + (memSize / (1024 * 1024)) + "M");
         }
 
@@ -145,10 +145,7 @@ public class Bootstrap {
                 classpath += separator + pluginConfig.getPluginFolder().getAbsolutePath() + "/*";
             }
 
-            // user can't open analysis UI w/ --nogui, so no need to load libreoffice jars
-            if (!iped.getCmdLineArgs().isNogui()) {
-                classpath = fillClassPathWithLibreOfficeJars(iped, classpath);
-            }
+            classpath = fillClassPathWithLibreOfficeJars(iped, classpath, iped.getCmdLineArgs().isNogui());
 
             String javaBin = "java";
             if (SystemUtils.IS_OS_WINDOWS) {
@@ -278,14 +275,14 @@ public class Bootstrap {
         return props;
     }
 
-    private static String fillClassPathWithLibreOfficeJars(Main iped, String classpath)
+    private static String fillClassPathWithLibreOfficeJars(Main iped, String classpath, boolean isNogui)
             throws URISyntaxException, IOException {
         System.setProperty(IOfficeApplication.NOA_NATIVE_LIB_PATH,
                 new File(iped.getRootPath(), "lib/nativeview").getAbsolutePath());
         LibreOfficeFinder loFinder = new LibreOfficeFinder(new File(iped.getRootPath()));
-        if (loFinder.getLOPath() != null) {
+        if (loFinder.getLOPath(isNogui) != null) {
             List<File> jars = new ArrayList<>();
-            UNOLibFinder.addUNOJars(loFinder.getLOPath(), jars);
+            UNOLibFinder.addUNOJars(loFinder.getLOPath(isNogui), jars);
             for (File jar : jars) {
                 classpath += separator + jar.getCanonicalPath();
             }

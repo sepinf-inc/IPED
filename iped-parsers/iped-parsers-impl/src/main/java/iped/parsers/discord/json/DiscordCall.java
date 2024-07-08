@@ -34,7 +34,9 @@ public class DiscordCall {
         for (DiscordRoot dr : drl) {
             for (String name : participants) {
                 if (name.equals(dr.getAuthor().getId())) {
-                    participantsNames.add(dr.getAuthor().getFullUsername());
+                    String participant = dr.getAuthor().getFullUsername();
+                    if (!participantsNames.contains(participant))
+                        participantsNames.add(participant);
                 }
             }
         }

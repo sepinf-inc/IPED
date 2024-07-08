@@ -18,6 +18,7 @@ import iped.parsers.mail.win10.Win10MailParser;
 import iped.parsers.shareaza.ShareazaLibraryDatParser;
 import iped.parsers.skype.SkypeParser;
 import iped.parsers.telegram.TelegramParser;
+import iped.parsers.threema.ThreemaParser;
 import iped.parsers.whatsapp.WhatsAppParser;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
@@ -62,7 +63,8 @@ public class ReferencedFileViewer extends AbstractViewer {
                 || AresParser.ARES_ENTRY_MIME_TYPE.equals(contentType)
                 || ShareazaLibraryDatParser.LIBRARY_DAT_ENTRY_MIME_TYPE.equals(contentType)
                 || MediaTypes.UFED_MESSAGE_ATTACH_MIME.toString().equals(contentType)
-                || Win10MailParser.WIN10_MAIL_ATTACH.toString().equals(contentType);
+                || Win10MailParser.WIN10_MAIL_ATTACH.toString().equals(contentType)
+                || ThreemaParser.THREEMA_ATTACHMENT.toString().equals(contentType);
     }
 
     @Override
