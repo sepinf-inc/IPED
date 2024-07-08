@@ -1643,4 +1643,11 @@
         <glob pattern="vlc-qt-interface.ini"/>
     </mime-type>
 
+	<mime-type type="application/hikvisionfs">
+    	<magic priority="60">
+      		<match value="HIKVISION@HANGZHOU" type="string" offset="528"/>
+    	</magic>
+    	<sub-class-of type="application/octet-stream"/>
+  	</mime-type>
+
 </mime-info>
