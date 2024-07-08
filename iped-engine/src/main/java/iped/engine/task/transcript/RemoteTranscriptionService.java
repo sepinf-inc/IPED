@@ -489,7 +489,7 @@ public class RemoteTranscriptionService {
                                 }
                                 result=req.result;
                                 if(result==null) {
-                                    error=true;
+                                    error = false;
                                     throw new Exception("Error processing the audio");
                                 }
                                
