@@ -232,7 +232,7 @@ public class RemoteTranscriptionService {
     private static void transcribeAudios(AbstractTranscriptTask task ) throws Exception {
         ArrayList<TranscribeRequest> transcribeRequests=new ArrayList<>();
         ArrayList<File> files=new ArrayList<File>();
-        
+        Exception error=null;
         if (executor.isShutdown()) {
             throw new Exception("Shutting down service instance...");
         }
@@ -251,23 +251,30 @@ public class RemoteTranscriptionService {
         
         long t2 = System.currentTimeMillis();
         
-       
-        if(task instanceof WhisperTranscriptTask) {
-            List<TextAndScore> results = ((WhisperTranscriptTask)task).transcribeAudios(files);
-            for(int i=0;i<results.size();i++) {
-                transcribeRequests.get(i).result=results.get(i);
+       try {
+            if(task instanceof WhisperTranscriptTask) {
+                List<TextAndScore> results = ((WhisperTranscriptTask)task).transcribeAudios(files);
+                for(int i=0;i<results.size();i++) {
+                    transcribeRequests.get(i).result=results.get(i);
+                   
+                }
+            }else {
+                for(int i=0;i<files.size();i++) {
+                    transcribeRequests.get(i).result=task.transcribeAudio(files.get(i));
+                }
+            }
+        }catch (Exception e) {
+           error=e;
+        }finally {
+            for(int i=0;i<transcribeRequests.size();i++) {
                 synchronized(transcribeRequests.get(i)) {
                     transcribeRequests.get(i).notifyAll();
                 }
             }
-        }else {
-            for(int i=0;i<files.size();i++) {
-                transcribeRequests.get(i).result=task.transcribeAudio(files.get(i));
-                synchronized(transcribeRequests.get(i)) {
-                    transcribeRequests.get(i).notifyAll();
-                }
-            }
-        }      
+        }
+       if(error!=null) {
+           throw error;
+       }
         long t3 = System.currentTimeMillis();
         transcriptionTime.addAndGet(t3 - t2);
     }
@@ -481,6 +488,10 @@ public class RemoteTranscriptionService {
                                     req.wait();
                                 }
                                 result=req.result;
+                                if(result==null) {
+                                    error=true;
+                                    throw new Exception("Error processing the audio");
+                                }
                                
                             } catch (ProcessCrashedException e) {
                                 // retry audio
