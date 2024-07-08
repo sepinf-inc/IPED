@@ -56,6 +56,7 @@ public class RemoteTranscriptionService {
     static class TranscribeRequest {
         File wavAudio;
         TextAndScore result=null;
+        Exception error=null;
         
 
         public TranscribeRequest(File wavAudio) {
@@ -229,52 +230,57 @@ public class RemoteTranscriptionService {
         });
     }
 
-    private static void transcribeAudios(AbstractTranscriptTask task ) throws Exception {
-        ArrayList<TranscribeRequest> transcribeRequests=new ArrayList<>();
-        ArrayList<File> files=new ArrayList<File>();
-        Exception error=null;
+    private static void transcribeAudios(AbstractTranscriptTask task) throws Exception {
+        ArrayList<TranscribeRequest> transcribeRequests = new ArrayList<>();
+        ArrayList<File> files = new ArrayList<File>();
+
         if (executor.isShutdown()) {
             throw new Exception("Shutting down service instance...");
         }
-        
+
         synchronized (toTranscribe) {
-            if(toTranscribe.size()==0)
+            if (toTranscribe.size() == 0)
                 return;
-            while(toTranscribe.size()>0 && transcribeRequests.size() <BATCH_SIZE) {
-                TranscribeRequest req=toTranscribe.poll();
+            while (toTranscribe.size() > 0 && transcribeRequests.size() < BATCH_SIZE) {
+                TranscribeRequest req = toTranscribe.poll();
                 transcribeRequests.add(req);
                 files.add(req.wavAudio);
             }
         }
-        logger.info("inicio da transcricao de "+files.size()+" audios");
-        
-        
+        logger.info("inicio da transcricao de " + files.size() + " audios");
+
         long t2 = System.currentTimeMillis();
-        
-       try {
-            if(task instanceof WhisperTranscriptTask) {
-                List<TextAndScore> results = ((WhisperTranscriptTask)task).transcribeAudios(files);
-                for(int i=0;i<results.size();i++) {
-                    transcribeRequests.get(i).result=results.get(i);
-                   
+
+        boolean batchTrancribe = (task instanceof WhisperTranscriptTask);
+        if (batchTrancribe) {
+            try {
+                List<TextAndScore> results = ((WhisperTranscriptTask) task).transcribeAudios(files);
+                for (int i = 0; i < results.size(); i++) {
+                    transcribeRequests.get(i).result = results.get(i);
                 }
-            }else {
-                for(int i=0;i<files.size();i++) {
-                    transcribeRequests.get(i).result=task.transcribeAudio(files.get(i));
-                }
+            } catch (Exception e) {// case fail, try each audio individually
+                batchTrancribe = false;
+                logger.error("Error while doing batch transcribe " + e.toString());
             }
-        }catch (Exception e) {
-           error=e;
-        }finally {
-            for(int i=0;i<transcribeRequests.size();i++) {
-                synchronized(transcribeRequests.get(i)) {
-                    transcribeRequests.get(i).notifyAll();
+        }
+        if (!batchTrancribe) {// try each audio individually
+            for (int i = 0; i < files.size(); i++) {
+                try {
+                    transcribeRequests.get(i).result = task.transcribeAudio(files.get(i));
+                } catch (Exception e2) {
+                    transcribeRequests.get(i).result = null;
+                    transcribeRequests.get(i).error = e2;
+                    logger.error("Error while transcribing");
                 }
             }
         }
-       if(error!=null) {
-           throw error;
-       }
+
+        for (int i = 0; i < transcribeRequests.size(); i++) {
+            synchronized (transcribeRequests.get(i)) {
+                transcribeRequests.get(i).notifyAll();
+            }
+        }
+
         long t3 = System.currentTimeMillis();
         transcriptionTime.addAndGet(t3 - t2);
     }
@@ -490,7 +496,7 @@ public class RemoteTranscriptionService {
                                 result=req.result;
                                 if(result==null) {
                                     error = false;
-                                    throw new Exception("Error processing the audio");
+                                    throw new Exception("Error processing the audio", req.error);
                                 }
                                
                             } catch (ProcessCrashedException e) {
@@ -581,41 +587,38 @@ public class RemoteTranscriptionService {
         });
     }
     
-    
     private static void startTrancribeThreads(AbstractTranscriptTask task) {
         executor.execute(new Runnable() {
             @Override
             public void run() {
                 while (true) {
-                    Boolean empty=true;
+                    Boolean empty = true;
                     synchronized (toTranscribe) {
-                        empty=toTranscribe.isEmpty();
+                        empty = toTranscribe.isEmpty();
                     }
-                    if(empty) {
-                        try {
+                    if (empty) {
+                    try {
                             Thread.sleep(100);
-                            
-                        }catch (Exception e) {
+                        
+                        } catch (Exception e) {
                             // TODO: handle exception
-                        }
+                    }
                         continue;
-                    }     
+                    }
                     try {
                         transcriptSemaphore.acquire();
                         transcribeAudios(task);
-                        
+
                     } catch (Exception e) {
                         e.printStackTrace();
-                    }finally {
+                    } finally {
                         transcriptSemaphore.release();
                     }
-                   
 
-                }
+            }
             }
         });
     }
-    
     
 
 }
