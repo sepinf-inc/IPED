@@ -387,29 +387,24 @@ public class RemoteTranscriptionService {
 
                             logger.info(prefix + "Accepted connection.");
 
-                            int min = Math.min(MESSAGES.AUDIO_SIZE.toString().length(),
-                                    MESSAGES.VERSION_1_1.toString().length());
 
-                            bis.mark(min + 1);
-                            byte[] bytes = bis.readNBytes(min);
-                            String cmd = new String(bytes);
-                            if (!MESSAGES.AUDIO_SIZE.toString().startsWith(cmd)) {
-                                bis.reset();
-                                bytes = bis.readNBytes(MESSAGES.VERSION_1_1.toString().length());
-                                protocol = new String(bytes);
-                                bis.mark(min + 1);
-                                synchronized (beaconQueq) {
-                                    opc = new OpenConnectons(client, bis, writer, this);
-                                    beaconQueq.add(opc);
-                                }
 
+                            byte[] bytes = bis.readNBytes(MESSAGES.VERSION_1_2.toString().length());
+                            protocol = new String(bytes);
+                            synchronized (beaconQueq) {
+                                opc = new OpenConnectons(client, bis, writer, this);
+                                beaconQueq.add(opc);
                             }
+
+
                             logger.info("Protocol Version {}", protocol);
+                            if (protocol.compareTo(MESSAGES.VERSION_1_2.toString()) < 0) {
+                                throw new Exception("Procol version " + protocol + " not supported");
+                            }
 
                             // read the audio_size message
-                            bis.reset();
                             bytes = bis.readNBytes(MESSAGES.AUDIO_SIZE.toString().length());
-                            cmd = new String(bytes);
+                            String cmd = new String(bytes);
 
                             if (!MESSAGES.AUDIO_SIZE.toString().equals(cmd)) {
                                 error = true;
@@ -418,11 +413,8 @@ public class RemoteTranscriptionService {
 
                             DataInputStream dis = new DataInputStream(bis);
                             long size;
-                            if (protocol.compareTo(MESSAGES.VERSION_1_2.toString()) >= 0) {
-                                size = dis.readLong();
-                            } else {
-                                size = dis.readInt();
-                            }
+                            size = dis.readLong();
+
                             if (size < 0) {
                                 error = true;
                                 try {
@@ -531,17 +523,8 @@ public class RemoteTranscriptionService {
                             String errorMsg = "Exception while transcribing";
                             logger.warn(errorMsg, e);
                             if (writer != null) {
-                                if (e.getMessage() != null && e.getMessage().startsWith("Invalid file size:")
-                                        && protocol.compareTo(MESSAGES.VERSION_1_2.toString()) < 0) {
-                                    writer.println("0");
-                                    writer.println(
-                                            "Audios longer than 2GB are not supported by old clients, please update your client version!");
-                                    writer.println(MESSAGES.DONE);
-                                } else {
-                                    writer.println(error ? MESSAGES.ERROR : MESSAGES.WARN);
-                                    writer.println(
-                                            errorMsg + ": " + e.toString().replace('\n', ' ').replace('\r', ' '));
-                                }
+                                writer.println(error ? MESSAGES.ERROR : MESSAGES.WARN);
+                                writer.println(errorMsg + ": " + e.toString().replace('\n', ' ').replace('\r', ' '));
                                 writer.flush();
                             }
                         } finally {
