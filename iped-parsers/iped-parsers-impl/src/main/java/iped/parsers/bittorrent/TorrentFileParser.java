@@ -177,9 +177,9 @@ public class TorrentFileParser extends AbstractParser {
         outputInfo(xhtml, Messages.getString("TorrentFileDatParser.InfoHash"), info.infoHash, true);
         outputInfo(xhtml, Messages.getString("TorrentFileDatParser.PieceLength"), info.pieceLength);
         outputInfo(xhtml, Messages.getString("TorrentFileDatParser.NumberOfPieces"), info.numPieces);
-        outputInfo(xhtml, Messages.getString("TorrentFileDatParser.NumberOfFiles"), files.size() - paddingEntries);
+        outputInfo(xhtml, Messages.getString("TorrentFileDatParser.NumberOfFiles"), Long.valueOf(files.size() - paddingEntries));
         if (foundInCase > 0) {
-            outputInfo(xhtml, Messages.getString("TorrentFileDatParser.FilesFoundInCase"), foundInCase);
+            outputInfo(xhtml, Messages.getString("TorrentFileDatParser.FilesFoundInCase"), Long.valueOf(foundInCase));
         }
         outputInfo(xhtml, Messages.getString("TorrentFileDatParser.Announce"), info.announce);
         outputInfo(xhtml, Messages.getString("TorrentFileDatParser.Comment"), info.comment);
@@ -235,8 +235,8 @@ public class TorrentFileParser extends AbstractParser {
                     xhtml.startElement("td", "class", String.valueOf(colClass[col]));
                     if (str.length() == 0) {
                         str = " ";
-                    } else if (col == 2) {
-                        // File length column
+                    } else if (col == 0 || col == 2) {
+                        // Row number and File length columns
                         try {
                             str = LocalizedFormat.format(Long.parseLong(str));
                         } catch (Exception e) {
@@ -372,9 +372,11 @@ public class TorrentFileParser extends AbstractParser {
 
             // Try to link files to case items by hash
             for (FileInTorrent file : files) {
-                linkTorrentToItem(searcher, metadata, file, "md5", file.md5, md5Len);
-                linkTorrentToItem(searcher, metadata, file, "sha-1", file.sha1, sha1Len);
-                linkTorrentToItem(searcher, metadata, file, "edonkey", file.ed2k, edonkeyLen);
+                if (file.length > 0) {
+                    linkTorrentToItem(searcher, metadata, file, "md5", file.md5, md5Len);
+                    linkTorrentToItem(searcher, metadata, file, "sha-1", file.sha1, sha1Len);
+                    linkTorrentToItem(searcher, metadata, file, "edonkey", file.ed2k, edonkeyLen);
+                }
             }
 
         } else {
