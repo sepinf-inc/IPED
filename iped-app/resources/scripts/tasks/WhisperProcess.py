@@ -82,8 +82,7 @@ def main():
             logprobs.append([])
         try:
             if whisperx_found:
-                #audio = whisperx.load_audio(line)
-                result = model.transcribe(files, batch_size=batch_size, language=language)
+                result = model.transcribe(files, batch_size=batch_size, language=language,wav=True)
                 for segment in result['segments']:
                     idx=segment["audio"]
                     transcription[idx] += segment['text']
