@@ -1645,7 +1645,29 @@
 
 	<mime-type type="application/hikvisionfs">
     	<magic priority="60">
-      		<match value="HIKVISION@HANGZHOU" type="string" offset="528"/>
+      		<match value="HIKVISION@HANGZHOU" type="string" offset="0:1024"/>
+    	</magic>
+    	<sub-class-of type="application/octet-stream"/>
+  	</mime-type>
+
+	<mime-type type="application/wfs">
+    	<magic priority="50">
+      		<match value="WFS0.4" type="string" offset="0:1024"/>
+    	</magic>
+    	<sub-class-of type="application/octet-stream"/>
+  	</mime-type>
+
+	<mime-type type="application/wfs">
+        <sub-class-of type="application/wfs"/>
+    	<magic priority="50">
+      		<match value="WFS0.5" type="string" offset="0:1024"/>
+    	</magic>
+    	<sub-class-of type="application/octet-stream"/>
+  	</mime-type>
+
+	<mime-type type="application/dhfs">
+    	<magic priority="50">
+      		<match value="DHFS4.1" type="string" offset="0:1024"/>
     	</magic>
     	<sub-class-of type="application/octet-stream"/>
   	</mime-type>
