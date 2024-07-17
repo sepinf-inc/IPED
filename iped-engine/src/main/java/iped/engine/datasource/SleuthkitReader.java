@@ -95,6 +95,7 @@ import iped.utils.UTF8Properties;
 
 import iped.io.SeekableInputStream;
 import java.util.Arrays;
+import iped.engine.sleuthkit.SpecialFileSystem;
 
 public class SleuthkitReader extends DataSourceReader {
 
@@ -1104,14 +1105,14 @@ public class SleuthkitReader extends DataSourceReader {
         evidence.setIdInDataSource(Long.toString(content.getId()));
         SleuthkitInputStreamFactory objSleuthkitInputStreamFactory = new SleuthkitInputStreamFactory(sleuthCase, null,false);
         evidence.setInputStreamFactory(objSleuthkitInputStreamFactory);
-        boolean hasFSTask = FSTask(evidence.getSeekableInputStream());
+        boolean isSpecialFileSystem = SpecialFileSystem.isSpecialFileSystem(evidence.getSeekableInputStream());
 
-        if (hasFSTask) //Workaround for not call fragmentLargeBinaryTask task
+        if (isSpecialFileSystem) //Workaround for not call fragmentLargeBinaryTask task
             objSleuthkitInputStreamFactory.setPassthroughContent(true);
        
         if (content instanceof Image) {
             evidence.setRoot(true);
-            if (!hasFSTask)
+            if (!isSpecialFileSystem)
                 evidence.setMediaType(getMediaType(evidence.getExt()));
         } else {
             evidence.setIsDir(true);
@@ -1121,7 +1122,7 @@ public class SleuthkitReader extends DataSourceReader {
 
         // evidence.setSleuthFile(content);
         evidence.setHash(""); //$NON-NLS-1$
-        if (!hasFSTask){
+        if (!isSpecialFileSystem){
             evidence.setIdInDataSource(Long.toString(content.getId()));
             // below is used to don't process images, partitions or file systems raw data
             evidence.setInputStreamFactory(new SleuthkitInputStreamFactory(sleuthCase, null));
@@ -1146,7 +1147,7 @@ public class SleuthkitReader extends DataSourceReader {
 
         addToProcessingQueue(caseData, evidence);
 
-        if (hasFSTask) //Workaround for not call entropy task
+        if (isSpecialFileSystem) //Workaround for not call entropy task
             evidence.setExtraAttribute(ThumbTask.HAS_THUMB, true);
 
         return evidence;
@@ -1197,79 +1198,5 @@ public class SleuthkitReader extends DataSourceReader {
         }
         return false;
     }
-
-    private boolean FSTask(SeekableInputStream fis) {
-
-
-        try {
-            byte[] header = new byte[1 * 1024];
-			byte HVFS_SIG [] = {(byte)0x48,(byte)0x49,(byte)0x4B,(byte)0x56,(byte)0x49,(byte)0x53,(byte)0x49,(byte)0x4F,
-							(byte)0x4E,(byte)0x40,(byte)0x48,(byte)0x41,(byte)0x4E,(byte)0x47,(byte)0x5A,(byte)0x48,
-							(byte)0x4F,(byte)0x55};  //HIKVISION@HANGZHOU signature 			
-
-			if (fis==null)
-				return false;
-
-            int read = 0, off = 0;
-            while (read != -1 && (off += read) < header.length) {
-                read = fis.read(header, off, header.length - off);
-            }
-
-			if ( indexOf(header,HVFS_SIG,0)!=-1){
-				return true;
-            }
-
-        } catch (Exception e) {
-
-        } finally {
-            IOUtil.closeQuietly(fis);
-        }
-        return false;
-    }
-
-    /**
-     * Search the data byte array for the first occurrence 
-     * of the byte array pattern.
-     */
-    public int indexOf(byte[] data, byte[] pattern, int index) {
-        int[] failure = computeFailure(pattern);
-
-        int j = 0;
-
-        for (int i = index; i < data.length; i++) {
-            while (j > 0 && pattern[j] != data[i]) {
-                j = failure[j - 1];
-            }
-            if (pattern[j] == data[i]) { 
-                j++; 
-            }
-            if (j == pattern.length) {
-                return i - pattern.length + 1;
-            }
-        }
-        return -1;
-    }
-
-    /**
-     * Computes the failure function using a boot-strapping process,
-     * where the pattern is matched against itself.
-     */
-    private int[] computeFailure(byte[] pattern) {
-        int[] failure = new int[pattern.length];
-
-        int j = 0;
-        for (int i = 1; i < pattern.length; i++) {
-            while (j>0 && pattern[j] != pattern[i]) {
-                j = failure[j - 1];
-            }
-            if (pattern[j] == pattern[i]) {
-                j++;
-            }
-            failure[i] = j;
-        }
-
-        return failure;
-    }
-
 
 }
