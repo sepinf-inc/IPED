@@ -134,14 +134,36 @@ public class SleuthkitInputStreamFactory extends SeekableInputStreamFactory {
             return new EmptyInputStream();
         }
         FileSystemConfig fsConfig = ConfigurationManager.get().findObject(FileSystemConfig.class);
-        long tskId = Long.valueOf(identifier);
+
+        boolean isSpecialFileSystem = false;
+        long identifier_number = Long.valueOf(identifier);
+        long type = (identifier_number >> 63) & 1L;
+        String address = "0";
+        long tskId = 0;
+       
+        if (type == 0){
+            tskId = identifier_number;
+        }else{
+            tskId = (identifier_number & (8191L << 50)) >> 50;
+            address = Long.toString((identifier_number & (1125899906842623L)));
+            isSpecialFileSystem = true;
+        }      
+       
         Content tskContent = getContentById(tskId);
         if (SleuthkitReader.sleuthCase == null || !fsConfig.isRobustImageReading()) {
-            return new SleuthkitInputStream(tskContent);
+            if (!isSpecialFileSystem){
+                return new SleuthkitInputStream(tskContent);
+            }else{
+                    return SpecialFileSystem.getSeekableInputStream(new SleuthkitInputStream(tskContent),tskId,address);
+            }
         } else {
             SleuthkitClient sleuthProcess = SleuthkitClient.get();
             try {
-                return sleuthProcess.getInputStream((int) tskId, tskContent.getUniquePath());
+                if (!isSpecialFileSystem){
+                    return sleuthProcess.getInputStream((int) tskId, tskContent.getUniquePath());
+                }else{
+                    return SpecialFileSystem.getSeekableInputStream(sleuthProcess.getInputStream((int) tskId, tskContent.getUniquePath()),tskId,address);
+                }
             } catch (TskCoreException e) {
                 throw new IOException(e);
             }
