@@ -15,7 +15,7 @@ public class SpecialFileSystem {
         HVFS, WFS, DHFS, NONE
     }
 
-    public static SeekableInputStream getSeekableInputStream(SeekableInputStream sis, long tskId, String identifier) throws IOException{
+    public synchronized static  SeekableInputStream getSeekableInputStream(SeekableInputStream sis, long tskId, String identifier) throws IOException{
 
         FSType fsType = getFSType(sis);        
         SeekableInputStream ret = null;
