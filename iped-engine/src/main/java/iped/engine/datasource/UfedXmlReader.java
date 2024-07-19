@@ -1413,6 +1413,11 @@ public class UfedXmlReader extends DataSourceReader {
                     // Replace extracted path by attached file's local path
                     extracted_path = ufedFileIdToLocalPath.get(item.getMetadata().get(FILE_ID_ATTR));
                 }
+
+                // if extracted_path does not reference a ufedId, use the ufedId of attached file
+                if (ufedId == null && ufedFileIdToLocalPath.containsKey(item.getMetadata().get(FILE_ID_ATTR))) {
+                    ufedId = item.getMetadata().get(FILE_ID_ATTR);
+                }
                 
             }
             setContent(item, extracted_path);
