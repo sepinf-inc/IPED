@@ -7,6 +7,14 @@ import iped.utils.SeekableInputStreamFactory;
 import iped.engine.io.WFSInputStreamFactory;
 import java.io.IOException;
 
+/*
+
+ * WFSExtractor.
+ *
+ * @author guilherme.dutra
+
+*/
+
 public class SpecialFileSystem {
 
     private static HashMap<Long, SeekableInputStreamFactory> mapInputStreamFactory = new HashMap<Long, SeekableInputStreamFactory>();

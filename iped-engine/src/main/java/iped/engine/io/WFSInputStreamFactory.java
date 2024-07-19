@@ -6,6 +6,14 @@ import iped.utils.SeekableFileInputStream;
 import iped.io.SeekableInputStream;
 import java.io.IOException;
 
+/*
+
+ * WFSExtractor.
+ *
+ * @author guilherme.dutra
+
+*/
+
 public class WFSInputStreamFactory extends SeekableInputStreamFactory {
 
     WFSExtractor wfs;
