@@ -2,6 +2,14 @@ package iped.engine.config;
 
 import iped.utils.UTF8Properties;
 
+/*
+
+ * WFSExtractor.
+ *
+ * @author guilherme.dutra
+
+*/
+
 public class DVRTaskConfig extends AbstractTaskPropertiesConfig {
 
     private static final long serialVersionUID = 1L;
