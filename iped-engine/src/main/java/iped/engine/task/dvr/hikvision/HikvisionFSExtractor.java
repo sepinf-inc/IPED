@@ -22,7 +22,6 @@ https://github.com/theAtropos4n6/HikvisionLogAnalyzer
 
  */
 
-
 public class HikvisionFSExtractor{  
 	
 	private SeekableInputStream is = null;
@@ -69,8 +68,11 @@ public class HikvisionFSExtractor{
 		DataBlockEntry objDBEInit = null;		
 
 		//Search for HIKVISION DVR signature - usualy is on byte 528
-		readBytesFromAbsoluteFilePos(is, vetor_4096, 0, 4096);
-		found = Util.indexOfKPM(vetor_4096, HVFS_SIG, 0);
+        if(Util.readBytesFromAbsoluteFilePos(is, vetor_4096, 0, 4096)==-1){
+            throw new HikvisionFSExtractorException("Cannot read data to find HVFS signature");
+        }
+
+		found = Util.indexOf(vetor_4096, HVFS_SIG, 0);
 
 		if (found == -1){ 
 			throw new HikvisionFSExtractorException("HIKVISON Header not found. Expected signature:"+Arrays.toString(HVFS_SIG));
@@ -78,51 +80,61 @@ public class HikvisionFSExtractor{
 
 		System.arraycopy(vetor_4096, found, hvfs.masterSector.signature, 0, 18);	
 		
-		readBytesFromAbsoluteFilePos(is, vetor_240, found, 240);
+        if(Util.readBytesFromAbsoluteFilePos(is, vetor_240, found, 240)==-1){
+            throw new HikvisionFSExtractorException("Cannot read data from Master Sector");
+        }		
 		
-		hvfs.masterSector.hddSize = readLongFromBufLE(vetor_240, 64, 8);
-		hvfs.masterSector.systemLogOffsetEnd =  readLongFromBufLE(vetor_240, 88, 8);
-		hvfs.masterSector.systemLogSize =  readLongFromBufLE(vetor_240, 96, 8);
-		hvfs.masterSector.videoDataAreaOffset =  readLongFromBufLE(vetor_240, 112, 8);
-		hvfs.masterSector.dataBlockSize =  readLongFromBufLE(vetor_240, 128, 8);
-		hvfs.masterSector.numDataBlocks =  readLongFromBufLE(vetor_240, 136, 8);
-		hvfs.masterSector.hikBtree1Offset =  readLongFromBufLE(vetor_240, 144, 8);
-		hvfs.masterSector.hikBtree1Size =  readLongFromBufLE(vetor_240, 152, 8);
-		hvfs.masterSector.hikBtree2Offset =  readLongFromBufLE(vetor_240, 160, 8);
-		hvfs.masterSector.hikBtree2Size =  readLongFromBufLE(vetor_240, 168, 8);
-		hvfs.masterSector.systemTime =  readLongFromBufLE(vetor_240, 232, 8);
+		hvfs.masterSector.hddSize = Util.readLongFromBufLE(vetor_240, 64, 8);
+		hvfs.masterSector.systemLogOffsetEnd =  Util.readLongFromBufLE(vetor_240, 88, 8);
+		hvfs.masterSector.systemLogSize =  Util.readLongFromBufLE(vetor_240, 96, 8);
+		hvfs.masterSector.videoDataAreaOffset =  Util.readLongFromBufLE(vetor_240, 112, 8);
+		hvfs.masterSector.dataBlockSize =  Util.readLongFromBufLE(vetor_240, 128, 8);
+		hvfs.masterSector.numDataBlocks =  Util.readLongFromBufLE(vetor_240, 136, 8);
+		hvfs.masterSector.hikBtree1Offset =  Util.readLongFromBufLE(vetor_240, 144, 8);
+		hvfs.masterSector.hikBtree1Size =  Util.readLongFromBufLE(vetor_240, 152, 8);
+		hvfs.masterSector.hikBtree2Offset =  Util.readLongFromBufLE(vetor_240, 160, 8);
+		hvfs.masterSector.hikBtree2Size =  Util.readLongFromBufLE(vetor_240, 168, 8);
+		hvfs.masterSector.systemTime =  Util.readLongFromBufLE(vetor_240, 232, 8);
 		
 
 		//Read first tree
-		readBytesFromAbsoluteFilePos(is, vetor_4096, hvfs.masterSector.hikBtree1Offset, 4096);
+        if(Util.readBytesFromAbsoluteFilePos(is, vetor_4096, hvfs.masterSector.hikBtree1Offset, 4096)==-1){
+            throw new HikvisionFSExtractorException("Cannot read data from hikBTree1");
+        }
 		System.arraycopy(vetor_4096, 16, hvfs.hikBtree1.signature, 0, 8);		
-		hvfs.hikBtree1.createTime = readLongFromBufLE(vetor_4096, 64, 4);
-		hvfs.hikBtree1.footerOffset =  readLongFromBufLE(vetor_4096, 80, 8);
-		hvfs.hikBtree1.pageListOffset =  readLongFromBufLE(vetor_4096, 88, 8);
-		hvfs.hikBtree1.pageOneOffset =  readLongFromBufLE(vetor_4096, 96, 8);		
+		hvfs.hikBtree1.createTime = Util.readLongFromBufLE(vetor_4096, 64, 4);
+		hvfs.hikBtree1.footerOffset =  Util.readLongFromBufLE(vetor_4096, 80, 8);
+		hvfs.hikBtree1.pageListOffset =  Util.readLongFromBufLE(vetor_4096, 88, 8);
+		hvfs.hikBtree1.pageOneOffset =  Util.readLongFromBufLE(vetor_4096, 96, 8);		
 
-		//Read second tree
-		readBytesFromAbsoluteFilePos(is, vetor_4096, hvfs.masterSector.hikBtree2Offset, 4096);			
+		//Read second tree		
+        if(Util.readBytesFromAbsoluteFilePos(is, vetor_4096, hvfs.masterSector.hikBtree2Offset, 4096)==-1){
+            throw new HikvisionFSExtractorException("Cannot read data from hikBTree2");
+        }
 		System.arraycopy(vetor_4096, 16, hvfs.hikBtree2.signature, 0, 8);		
-		hvfs.hikBtree2.createTime = readLongFromBufLE(vetor_4096, 64, 4);
-		hvfs.hikBtree2.footerOffset =  readLongFromBufLE(vetor_4096, 80, 8);
-		hvfs.hikBtree2.pageListOffset =  readLongFromBufLE(vetor_4096, 88, 8);
-		hvfs.hikBtree2.pageOneOffset =  readLongFromBufLE(vetor_4096, 96, 8);			
+		hvfs.hikBtree2.createTime = Util.readLongFromBufLE(vetor_4096, 64, 4);
+		hvfs.hikBtree2.footerOffset =  Util.readLongFromBufLE(vetor_4096, 80, 8);
+		hvfs.hikBtree2.pageListOffset =  Util.readLongFromBufLE(vetor_4096, 88, 8);
+		hvfs.hikBtree2.pageOneOffset =  Util.readLongFromBufLE(vetor_4096, 96, 8);			
 
 		//Verify hikbtree signature
-		if (Util.indexOfKPM(hvfs.hikBtree1.signature, HIKBTREE_SIG, 0) >= 0){
+		if (Util.indexOf(hvfs.hikBtree1.signature, HIKBTREE_SIG, 0) >= 0){
 
 			//SET total pages and page one from hikbtree 1
-			readBytesFromAbsoluteFilePos(is, vetor_4096, hvfs.hikBtree1.pageListOffset, 4096);				
-			hvfs.totalPages = readLongFromBufLE(vetor_4096, 20, 4);
-			hvfs.pageOneOffset =  readLongFromBufLE(vetor_4096, 32, 8);		
+			if(Util.readBytesFromAbsoluteFilePos(is, vetor_4096, hvfs.hikBtree1.pageListOffset, 4096)==-1){
+				throw new HikvisionFSExtractorException("Cannot read data from Page info 1");
+			}			
+			hvfs.totalPages = Util.readLongFromBufLE(vetor_4096, 20, 4);
+			hvfs.pageOneOffset =  Util.readLongFromBufLE(vetor_4096, 32, 8);		
 			
-		} else if (Util.indexOfKPM(hvfs.hikBtree2.signature, HIKBTREE_SIG, 0) >= 0){
+		} else if (Util.indexOf(hvfs.hikBtree2.signature, HIKBTREE_SIG, 0) >= 0){
 
 			//SET total pages and page one from hikbtree 2
-			readBytesFromAbsoluteFilePos(is, vetor_4096, hvfs.hikBtree2.pageListOffset, 4096);				
-			hvfs.totalPages = readLongFromBufLE(vetor_4096, 20, 4);
-			hvfs.pageOneOffset =  readLongFromBufLE(vetor_4096, 32, 8);		
+			if(Util.readBytesFromAbsoluteFilePos(is, vetor_4096, hvfs.hikBtree2.pageListOffset, 4096)==-1){
+				throw new HikvisionFSExtractorException("Cannot read data from Page info 2");
+			}			
+			hvfs.totalPages = Util.readLongFromBufLE(vetor_4096, 20, 4);
+			hvfs.pageOneOffset =  Util.readLongFromBufLE(vetor_4096, 32, 8);		
 			
 		} else{
 			throw new HikvisionFSExtractorException("Invalid hikbtree1 and hikbtree2");
@@ -139,7 +151,7 @@ public class HikvisionFSExtractor{
 		//Load page list info
 		for (long i=0; i < hvfs.totalPages; i++){
 			objPage = new Page();
-			objPage.pageOffset = readLongFromBufLE(vetor_4096, pageOffset+auxOffset+8, 8);
+			objPage.pageOffset = Util.readLongFromBufLE(vetor_4096, pageOffset+auxOffset+8, 8);
 			hvfs.pageList.add(objPage);		
 			auxOffset += pageSize;
 			objPage = null;
@@ -155,8 +167,10 @@ public class HikvisionFSExtractor{
 			
 		
 		for (Page p : hvfs.pageList) {
-			readBytesFromAbsoluteFilePos(is, vetor_4096, p.pageOffset, 4096);
-			p.totalDataBlockEntries = readLongFromBufLE(vetor_4096, 20, 4);
+			if(Util.readBytesFromAbsoluteFilePos(is, vetor_4096, p.pageOffset, 4096)==-1){
+				throw new HikvisionFSExtractorException("Cannot read data from Page Offset");
+			}
+			p.totalDataBlockEntries = Util.readLongFromBufLE(vetor_4096, 20, 4);
 			
 			auxOffset = 0;			
 			for (long i=0; i < p.totalDataBlockEntries; i++){
@@ -164,11 +178,11 @@ public class HikvisionFSExtractor{
 
 				objDBEInit = new DataBlockEntry();
 				
-				objDBEInit.hasVideoData = readLongFromBufLE(vetor_4096, dataBlockEntryOffset+auxOffset+16, 8);
-				objDBEInit.channelNumber = readLongFromBufLE(vetor_4096, dataBlockEntryOffset+auxOffset+18, 1);
-				objDBEInit.startTime = readLongFromBufLE(vetor_4096, dataBlockEntryOffset+auxOffset+28, 4);
-				objDBEInit.endTime = readLongFromBufLE(vetor_4096, dataBlockEntryOffset+auxOffset+32, 4);
-				objDBEInit.dataOffset = readLongFromBufLE(vetor_4096, dataBlockEntryOffset+auxOffset+40, 8);
+				objDBEInit.hasVideoData = Util.readLongFromBufLE(vetor_4096, dataBlockEntryOffset+auxOffset+16, 8);
+				objDBEInit.channelNumber = Util.readLongFromBufLE(vetor_4096, dataBlockEntryOffset+auxOffset+18, 1);
+				objDBEInit.startTime = Util.readLongFromBufLE(vetor_4096, dataBlockEntryOffset+auxOffset+28, 4);
+				objDBEInit.endTime = Util.readLongFromBufLE(vetor_4096, dataBlockEntryOffset+auxOffset+32, 4);
+				objDBEInit.dataOffset = Util.readLongFromBufLE(vetor_4096, dataBlockEntryOffset+auxOffset+40, 8);
 				
 				hvfs.dataBlockEntryList.add(objDBEInit);		
 				auxOffset += dataBlockEntrySize;
@@ -206,7 +220,6 @@ public class HikvisionFSExtractor{
 		int found = 0;
 		int next = 0;		
 
-
 		SimpleDateFormat DateFor = new SimpleDateFormat("dd-MM-yyyy EEE HH'h'-mm'm'-ss's'");
 		DateFor.setTimeZone(TimeZone.getTimeZone("GMT+0"));
 
@@ -215,8 +228,6 @@ public class HikvisionFSExtractor{
 		String st = "";
 		String et = "";		
 		String nameType = "";
-
-
 
 		byte vetor_51 [] = new byte [56];	
 		byte ONFI8_SIG [] = {(byte)0x4F,(byte)0x46,(byte)0x4E,(byte)0x49,(byte)0x38};  //ONFI8 signature				
@@ -233,25 +244,28 @@ public class HikvisionFSExtractor{
 		
 
 		//Load ONFI8 table
-		readBytesFromAbsoluteFilePos(is, dataBlockArrayBuffer, objDBE.dataOffset, dataBlockArraySize);
+        if(Util.readBytesFromAbsoluteFilePos(is, dataBlockArrayBuffer, objDBE.dataOffset, dataBlockArraySize)==-1){
+            throw new HikvisionFSExtractorException("Cannot read data from ONFI8 table");
+        }
+
 		
 		found = 0;
 		while ( found != -1){
 			
-			found = Util.indexOfKPM(dataBlockArrayBuffer, ONFI8_SIG, next);
+			found = Util.indexOf(dataBlockArrayBuffer, ONFI8_SIG, next);
 			
 			if (found != -1){
 				
 			
 				//Search for onfi8 no starnd size of 56 bytes
 				System.arraycopy(dataBlockArrayBuffer, found+5, vetor_51, 0, 51);
-				if (Util.indexOfKPM(vetor_51, ONFI8_SIG, 0)==-1){	
+				if (Util.indexOf(vetor_51, ONFI8_SIG, 0)==-1){	
 
 					auxONFI8 = new ONFI8();
 				
 					auxONFI8.headerOffset = found;
-					auxONFI8.startTime = readLongFromBufLE(dataBlockArrayBuffer, found+28, 4);
-					auxONFI8.dataOffset = readLongFromBufLE(dataBlockArrayBuffer, found+40, 4);
+					auxONFI8.startTime = Util.readLongFromBufLE(dataBlockArrayBuffer, found+28, 4);
+					auxONFI8.dataOffset = Util.readLongFromBufLE(dataBlockArrayBuffer, found+40, 4);
 
 					objDBE.onfi8List.add(auxONFI8);
 
@@ -533,8 +547,9 @@ public class HikvisionFSExtractor{
 		ArrayList<SystemLogHeader> systemLogHeaderList =  new ArrayList<SystemLogHeader>() ;	
 
 		//Load RATS table
-		readBytesFromAbsoluteFilePos(is, logArrayBuffer, systemLogOffsetStart, logArraySize);
-
+        if(Util.readBytesFromAbsoluteFilePos(is, logArrayBuffer, systemLogOffsetStart, logArraySize)==-1){
+            throw new HikvisionFSExtractorException("Cannot read data from RATS table");
+        }
 
 		String temp = "";
 
@@ -542,8 +557,8 @@ public class HikvisionFSExtractor{
 		next = 0;
 		while ( next !=  (logArraySize-1)){
 			
-			foundIni = Util.indexOfKPM(logArrayBuffer, RATS_SIG, next);
-			foundEnd = Util.indexOfKPM(logArrayBuffer, RATS_SIG, foundIni + sigLength);
+			foundIni = Util.indexOf(logArrayBuffer, RATS_SIG, next);
+			foundEnd = Util.indexOf(logArrayBuffer, RATS_SIG, foundIni + sigLength);
 			
 			if (foundIni == -1 && foundEnd == -1)
 				break;
@@ -560,11 +575,11 @@ public class HikvisionFSExtractor{
 
 			SystemLogHeader objSystemLogHeader = new SystemLogHeader();
 		
-			objSystemLogHeader.setCreatedTime(readLongFromBufLE(variableArray, sigLength + 4, 4));
+			objSystemLogHeader.setCreatedTime(Util.readLongFromBufLE(variableArray, sigLength + 4, 4));
 
 
-			objSystemLogHeader.setMajorType(readLongFromBufLE(variableArray, sigLength + 4 + 2, 2));
-			objSystemLogHeader.setMinorType(readLongFromBufLE(variableArray, sigLength + 4 + 2 + 2, 2));
+			objSystemLogHeader.setMajorType(Util.readLongFromBufLE(variableArray, sigLength + 4 + 2, 2));
+			objSystemLogHeader.setMinorType(Util.readLongFromBufLE(variableArray, sigLength + 4 + 2 + 2, 2));
 
 			sTime = DateFor.format(objSystemLogHeader.getCreationDate());
 
@@ -596,38 +611,9 @@ public class HikvisionFSExtractor{
 		
 		return systemLogHeaderList;
 
-	}
-	
-	private long readLongFromBufLE(byte [] cbuf, int pos, int tam) {
-	
-		long r = 0L;
-		
-		for (int i = (pos-1); i > ((pos-1) - tam); i--){
-			r = (r << 8) + (cbuf[i] & 0xFF);
-		}
-		
-		return r;
-	
-	}
-
-
-
-    private int readBytesFromAbsoluteFilePos(SeekableInputStream is,byte[] cbuf, long off, long len)  throws IOException  {
-				
-		int r = -1;
-		
-		is.seek(off);
-		r = is.readNBytes(cbuf, 0, (int) len);
-	
-		return r;
-		
-	}
-	
-		
-		   
+	}	   
  
 }
-
 
 class HVFS {
 	
@@ -708,7 +694,6 @@ class MasterSector {
 	public long hikBtree2Size = 0L;
 	public long systemTime = 0L;
 	
-
 	public MasterSector(){
 	}
 	
@@ -737,13 +722,8 @@ class MasterSector {
 		}
 		
 	}
-	
-
-	
+		
 }
-
-
-
 
 class HikBTree  {
 
@@ -753,7 +733,6 @@ class HikBTree  {
 	public long pageOneOffset = 0L;
 	byte signature [] = new byte [8];
 	
-
 	public HikBTree(){
 		
 	}
@@ -775,19 +754,14 @@ class HikBTree  {
 			;
 		}		
 	}
-	
-
-	
+		
 }
-
 
 class Page {
 
 	public long pageOffset = 0L;
 	public long totalDataBlockEntries = 0L;
 	
-	
-
 	public Page(){
 		
 	}
@@ -802,7 +776,6 @@ class Page {
 		System.out.println("totalDataBlockEntries:       "+this.totalDataBlockEntries+" | "+String.format("0x%08X", totalDataBlockEntries));		
 		
 	}
-	
 	
 }
 
@@ -824,8 +797,7 @@ class ONFI8 {
 		
 		
 	}
-	
-	
+		
 }
 
 class DataBlockEntryComparator implements Comparator<DataBlockEntry> {
