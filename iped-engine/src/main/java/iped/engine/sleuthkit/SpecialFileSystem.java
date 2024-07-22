@@ -6,6 +6,7 @@ import iped.utils.IOUtil;
 import iped.utils.SeekableInputStreamFactory;
 import iped.engine.io.WFSInputStreamFactory;
 import java.io.IOException;
+import iped.engine.task.dvr.Util;
 
 /*
 
@@ -86,13 +87,13 @@ public class SpecialFileSystem {
                 read = fis.read(header, off, header.length - off);
             }
 
-            if ( indexOf(header,HVFS_SIG,0)!=-1){
+            if ( Util.indexOf(header,HVFS_SIG,0)!=-1){
                 ret = FSType.HVFS;
             }
-            if ( indexOf(header,WFS04_SIG,0)!=-1 || indexOf(header,WFS05_SIG,0)!=-1){
+            if ( Util.indexOf(header,WFS04_SIG,0)!=-1 || Util.indexOf(header,WFS05_SIG,0)!=-1){
                 ret = FSType.WFS;
             }
-            if ( indexOf(header,DHFS_SIG,0)!=-1){
+            if ( Util.indexOf(header,DHFS_SIG,0)!=-1){
                 ret = FSType.DHFS;
             }
 
@@ -111,51 +112,5 @@ public class SpecialFileSystem {
         return false;
 
     }
-
-    /**
-     * Search the data byte array for the first occurrence 
-     * of the byte array pattern.
-     */
-    private static int indexOf(byte[] data, byte[] pattern, int index) {
-        int[] failure = computeFailure(pattern);
-
-        int j = 0;
-
-        for (int i = index; i < data.length; i++) {
-            while (j > 0 && pattern[j] != data[i]) {
-                j = failure[j - 1];
-            }
-            if (pattern[j] == data[i]) { 
-                j++; 
-            }
-            if (j == pattern.length) {
-                return i - pattern.length + 1;
-            }
-        }
-        return -1;
-    }
-
-    /**
-     * Computes the failure function using a boot-strapping process,
-     * where the pattern is matched against itself.
-     */
-    private static int[] computeFailure(byte[] pattern) {
-        int[] failure = new int[pattern.length];
-
-        int j = 0;
-        for (int i = 1; i < pattern.length; i++) {
-            while (j>0 && pattern[j] != pattern[i]) {
-                j = failure[j - 1];
-            }
-            if (pattern[j] == pattern[i]) {
-                j++;
-            }
-            failure[i] = j;
-        }
-
-        return failure;
-    }
-
-
 
 }
