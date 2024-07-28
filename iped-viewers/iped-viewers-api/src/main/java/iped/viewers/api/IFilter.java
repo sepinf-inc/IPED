@@ -6,4 +6,7 @@ package iped.viewers.api;
  * @author patrick.pdb
  */
 public interface IFilter {
+    public default String getTextualDetails() {
+        return null;
+    };
 }

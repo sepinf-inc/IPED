@@ -9,6 +9,7 @@ import javax.swing.JSeparator;
 import javax.swing.JTree;
 
 import iped.app.ui.App;
+import iped.app.ui.CombinedFilterTreeModel;
 import iped.app.ui.FiltererMenu;
 import iped.app.ui.Messages;
 import iped.app.ui.SliderMenuItem;
@@ -97,7 +98,9 @@ public class OperandPopupMenu extends JPopupMenu implements ActionListener {
         if (e.getSource() == removeMenuitem) {
             ((DecisionNode) op).getParent().remove(op);
             if (op instanceof FilterNode) {
-                logicFilterer.removePreCachedFilter((IFilter) ((FilterNode) op).getFilter());
+                if (!((CombinedFilterTreeModel) filtersTree.getModel()).hasFilter((IFilter) ((FilterNode) op).getFilter())) {
+                    logicFilterer.removePreCachedFilter((IFilter) ((FilterNode) op).getFilter());
+                }
             }
         }
         if (e.getSource() == inverMenuitem) {

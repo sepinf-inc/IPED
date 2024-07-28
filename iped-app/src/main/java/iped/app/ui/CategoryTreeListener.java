@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 
+import javax.swing.JTree;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeSelectionEvent;
@@ -48,7 +49,6 @@ public class CategoryTreeListener implements TreeSelectionListener, TreeExpansio
             root = new TreePath(App.get().categoryTree.getModel().getRoot());
 
         if (System.currentTimeMillis() - collapsed < 100) {
-            // if(evt.getPath().getLastPathComponent().equals(App.get().categoryTree.getModel().getRoot()))
             App.get().categoryTree.setSelectionPaths(selection.toArray(new TreePath[0]));
             return;
         }
@@ -62,13 +62,11 @@ public class CategoryTreeListener implements TreeSelectionListener, TreeExpansio
         }
 
         if (selection.contains(root) || selection.isEmpty()) {
-            App.get().setCategoriesDefaultColor(true);
             categoryList.clear();
             query = null;
             queryStr = null;
 
         } else {
-            App.get().setCategoriesDefaultColor(false);
             queryStr = "";
 
             Builder builder = new Builder();
@@ -79,6 +77,8 @@ public class CategoryTreeListener implements TreeSelectionListener, TreeExpansio
             }
             query = builder.build();
         }
+
+        App.get().setDockablesColors();
 
         if (!clearing)
             App.get().appletListener.updateFileListing();
@@ -131,42 +131,85 @@ public class CategoryTreeListener implements TreeSelectionListener, TreeExpansio
         }
     }
 
+    class CategoryFilter implements IQueryFilter {
+        private Category category;
+
+        public CategoryFilter(Category category) {
+            this.category = category;
+
+        }
+
+        @Override
+        public Query getQuery() {
+            String name = IndexItem.normalize(category.getName(), true);
+            StringBuffer queryStr = new StringBuffer();
+            queryStr.append(" category:\"");
+            queryStr.append(name);
+            queryStr.append("\"");
+            recursiveCategoryQuery(category, queryStr);
+
+            Query query;
+            try {
+                query = new QueryBuilder(App.get().appCase).getQuery(queryStr.toString());
+                return query;
+            } catch (ParseException | QueryNodeException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        public String toString() {
+            return IndexItem.normalize(category.getName(), true);
+        }
+
+        public Category getCategory() {
+            return category;
+        }
+    }
+
+    @Override
+    public void restoreDefinedFilters(List<IFilter> filtersToRestore) {
+        if (filtersToRestore == null) {
+            return;
+        }
+        categoryList.clear();
+        selection.clear();
+
+        for (IFilter filter : filtersToRestore) {
+            if (filter instanceof CategoryFilter) {
+                CategoryFilter catFilter = (CategoryFilter) filter;
+                categoryList.add(catFilter.getCategory());
+                select(catFilter.getCategory());
+            }
+        }
+    }
+
+    private void select(Category category) {
+        JTree tree = (JTree) App.get().categoryTree;
+        int rowCount = tree.getRowCount();
+        for (int i = 0; i < rowCount; i++) {
+            TreePath path = tree.getPathForRow(i);
+            if (path.getLastPathComponent().equals(category)) {
+                tree.addSelectionRow(i);
+                selection.add(path);
+                break;
+            }
+        }
+    }
+
     @Override
     public List<IFilter> getDefinedFilters() {
         CategoryTreeListener self = this;
         List<IFilter> result = new ArrayList<IFilter>();
         for (Category category : categoryList) {
-            result.add(new IQueryFilter() {
-                @Override
-                public Query getQuery() {
-                    String name = IndexItem.normalize(category.getName(), true);
-                    StringBuffer queryStr = new StringBuffer();
-                    queryStr.append(" category:\"");
-                    queryStr.append(name);
-                    queryStr.append("\"");
-                    recursiveCategoryQuery(category, queryStr);
-
-                    Query query;
-                    try {
-                        query = new QueryBuilder(App.get().appCase).getQuery(queryStr.toString());
-                        return query;
-                    } catch (ParseException | QueryNodeException e) {
-                        e.printStackTrace();
-                    }
-                    return null;
-                }
-
-                public String toString() {
-                    return IndexItem.normalize(category.getName(), true);
-                }
-            });
+            result.add(new CategoryFilter(category));
         }
         return result;
     }
 
     @Override
     public boolean hasFiltersApplied() {
-        return false;
+        return categoryList.size() > 0;
     }
 
     public String toString() {

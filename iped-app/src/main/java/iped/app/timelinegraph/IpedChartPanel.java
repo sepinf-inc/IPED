@@ -69,6 +69,7 @@ import iped.app.ui.themes.ThemeManager;
 import iped.jfextensions.chart.ChartPanel;
 import iped.jfextensions.model.Minute;
 import iped.utils.IconUtil;
+import iped.viewers.api.IFilterer;
 
 public class IpedChartPanel extends ChartPanel implements KeyListener {
     private Rectangle2D filterIntervalRectangle; // represents the filter selection rectangle while drawing/defining a interval
@@ -83,7 +84,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
 
     HashMap<Class<? extends TimePeriod>, ChartTimePeriodConstraint> timePeriodConstraints = new HashMap<Class<? extends TimePeriod>, ChartTimePeriodConstraint>();
 
-    JButton apllyFilters;
+    JButton applyFilters;
 
     private int filterMask = InputEvent.SHIFT_DOWN_MASK;
     private int panMask = InputEvent.CTRL_DOWN_MASK;
@@ -157,18 +158,32 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
 
         IpedChartPanel self = this;
 
+        ipedChartsPanel.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                App.get().setDockablesColors();
+                if (e.getID() == IFilterer.ENABLE_FILTER_EVENT) {
+                    ipedChartsPanel.setApplyFilters(true);
+                } else {
+                    ipedChartsPanel.setApplyFilters(false);
+                }
+                App.get().filtersPanel.updateUI();
+            }
+        });
+
         this.setLayout(new FlowLayout(FlowLayout.LEFT));
         ImageIcon icon = new ImageIcon(IconUtil.class.getResource(resPath + "down.png"));
         Image img = icon.getImage();
-        apllyFilters = new JButton(new ImageIcon(img.getScaledInstance(12, 12, java.awt.Image.SCALE_SMOOTH)));
-        apllyFilters.setMaximumSize(new Dimension(16, 16));
-        apllyFilters.addActionListener(new ActionListener() {
+        applyFilters = new JButton(new ImageIcon(img.getScaledInstance(12, 12, java.awt.Image.SCALE_SMOOTH)));
+        applyFilters.setMaximumSize(new Dimension(16, 16));
+        applyFilters.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                chartPanelPopupMenu.show(apllyFilters, apllyFilters.getX() - 2, apllyFilters.getY() + apllyFilters.getHeight() - 8);
+                chartPanelPopupMenu.show(applyFilters, applyFilters.getX() - 2,
+                        applyFilters.getY() + applyFilters.getHeight() - 8);
             }
         });
-        this.add(apllyFilters);
+        this.add(applyFilters);
 
         this.addChartMouseListener(new ChartMouseListener() {
             @Override
@@ -855,7 +870,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
         }
 
         App app = (App) ipedChartsPanel.getGUIProvider();
-        app.setDockablesColors();
+
         this.repaint();
     }
 
@@ -918,7 +933,6 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
         if (!isClearing) {
             app.getAppListener().updateFileListing();
         }
-        app.setDockablesColors();
     }
 
     public HashSet<String> getExcludedEvents() {
@@ -1029,5 +1043,11 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
                 xyPlot.changeTheme(theme);
             }
         }
+    }
+
+    public void applyFilters(boolean selected) {
+        App app = (App) this.getIpedChartsPanel().getGUIProvider();
+        app.getFilterManager().setFilterEnabled(this.getIpedChartsPanel(), selected);
+        this.filterSelection();
     }
 }
