@@ -582,24 +582,24 @@ public class ExtractorIOS extends Extractor {
 
                         messageQuote.setMessageType(type);
 
-                        String status = ProtoBufDecoder.findString(main, 7);
-                        if (status!=null){ // find quotes outside this chat 
+                        String contactQuote = ProtoBufDecoder.findString(main, 7);
+                        if (contactQuote!=null){ // find quotes outside this chat 
 
-                            if (status.compareTo(Message.STATUS_BROADCAST)==0){
+                            if (contactQuote.compareTo(Message.STATUS_BROADCAST)==0){
 
                                 messageQuote.setMessageQuotedType(MessageQuotedType.QUOTE_STATUS);
 
-                            }else if (status.contains(Message.GROUP)){
+                            }else if (contactQuote.contains(Message.GROUP)){
 
-                                messageQuote.setRemoteId(status);
+                                messageQuote.setRemoteId(contactQuote);
                                 boolean found = false;
                                 for (Chat cq : idToChat.values()) { //Search for the message in chat groups
 
                                     if(!cq.isGroupChat())
                                         continue;
 
-                                    if(cq.getPrintId()!=null && status.contains(cq.getPrintId()))
-                                        messageQuote.setRemoteId(cq.getTitle());
+                                    if(cq.getPrintId()!=null && contactQuote.contains(cq.getPrintId()))
+                                        messageQuote.setQuotePrivateGroupName(cq.getTitle());
 
                                     for (Message mq : cq.getMessages()) {
                                         if (mq.getUuid() != null && mq.getUuid().compareTo(uuidQuote)==0) {
