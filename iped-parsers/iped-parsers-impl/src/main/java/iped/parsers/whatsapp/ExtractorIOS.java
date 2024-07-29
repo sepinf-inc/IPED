@@ -592,8 +592,9 @@ public class ExtractorIOS extends Extractor {
                             }else if (contactQuote.contains(Message.GROUP)){
 
                                 messageQuote.setRemoteId(contactQuote);
+                                messageQuote.setQuotePrivateGroupName(contactQuote);
                                 boolean found = false;
-                                for (Chat cq : idToChat.values()) { //Search for the message in chat groups
+                                for (Chat cq : idToChat.values()) { //Find friendly group name
 
                                     if(!cq.isGroupChat())
                                         continue;

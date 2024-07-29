@@ -581,6 +581,7 @@ public class ExtractorAndroidNew extends Extractor {
                                         mq.setId(fakeIds--);
                                     }else if (remoteId.contains(Message.GROUP)){
                                         mq.setMessageQuotedType(MessageQuotedType.QUOTE_PRIVACY_GROUP);
+                                        mq.setQuotePrivateGroupName(remoteId);
 
                                         //Find friendly group name
                                         for (Chat cq : idToChat.values()) {
