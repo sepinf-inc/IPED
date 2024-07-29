@@ -571,8 +571,12 @@ public class ExtractorIOS extends Extractor {
                                         break;
                                     case 30:
                                         type = MessageType.PRODUCT_MESSAGE;
-                                        messageQuote.setProduct(decodeQuotedProductInfo(c, messageQuote));
+                                        MessageProduct mp = decodeQuotedProductInfo(c, messageQuote);
+                                        messageQuote.setProduct(mp);
                                         messageQuote.setMessageQuotedType(MessageQuotedType.QUOTE_CATALOG);
+                                        messageQuote.setFromMe(false);
+                                        if (mp != null)
+                                            messageQuote.setRemoteResource(mp.getSeller());
                                         break;
                                     default:
                                         break;
@@ -591,8 +595,8 @@ public class ExtractorIOS extends Extractor {
 
                             }else if (contactQuote.contains(Message.GROUP)){
 
-                                messageQuote.setRemoteId(contactQuote);
                                 messageQuote.setQuotePrivateGroupName(contactQuote);
+                                messageQuote.setFromMe(true);
                                 boolean found = false;
                                 for (Chat cq : idToChat.values()) { //Find friendly group name
 
