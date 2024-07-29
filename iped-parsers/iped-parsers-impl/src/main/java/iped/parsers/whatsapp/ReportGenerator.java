@@ -1256,7 +1256,7 @@ public class ReportGenerator {
             }
 
             String quoteEnd = "</span></div>";
-            String messageQuoteRemoteId;
+            String privateGroupName = messageQuote.getQuotePrivateGroupName();
             switch(messageQuote.getMessageQuotedType()){
                 case QUOTE_NOT_FOUND:
                     quoteEnd = "</span><br><span style=\"float:none\" class=\"recovered\"><div class=\"deletedIcon\"></div><i>"
@@ -1273,9 +1273,8 @@ public class ReportGenerator {
                 case QUOTE_PRIVACY_GROUP:
                     quoteEnd = "</span><br><span style=\"float:none\" class=\"outside\"><div class=\"privacyIcon\"></div><i>"
                         + Messages.getString("WhatsAppReport.QuotePrivacy") + "</i>" + quoteEnd;
-                    messageQuoteRemoteId = messageQuote.getRemoteId();
-                    if (messageQuoteRemoteId != null && !messageQuoteRemoteId.isEmpty()){
-                        String ms = Messages.getString("WhatsAppReport.QuotePrivacyMessage") + ": "+  messageQuoteRemoteId +"</br> "
+                    if (privateGroupName != null && !privateGroupName.isEmpty()){
+                        String ms = Messages.getString("WhatsAppReport.QuotePrivacyMessage") + ": "+  privateGroupName +"</br> "
                             + Messages.getString("WhatsAppReport.ReferenceId") + " " +messageQuote.getId();
                         quoteClick = "onclick=\"showMessage('" + ms + "');\"";
                     }
@@ -1283,10 +1282,9 @@ public class ReportGenerator {
                 case QUOTE_PRIVACY_GROUP_NOT_FOUND:
                     quoteEnd = "</span><br><span style=\"float:none\" class=\"recovered\"><div class=\"privacyDeleteIcon\"></div><i>"
                         + Messages.getString("WhatsAppReport.QuotePrivacyNotFound") + "</i>" + quoteEnd;
-                    messageQuoteRemoteId = messageQuote.getRemoteId();
                     String ms = "";
-                    if (messageQuoteRemoteId != null && !messageQuoteRemoteId.isEmpty()){
-                        ms = Messages.getString("WhatsAppReport.QuotePrivacyMessage") + ": "+  messageQuoteRemoteId +"</br> ";
+                    if (privateGroupName != null && !privateGroupName.isEmpty()){
+                        ms = Messages.getString("WhatsAppReport.QuotePrivacyMessage") + ": "+  privateGroupName +"</br> ";
                     }
                     ms += Messages.getString("WhatsAppReport.QuoteNotFound");
                     quoteClick = "onclick=\"showMessage('" + ms + "');\"";
