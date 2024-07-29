@@ -76,6 +76,7 @@ public class Message implements Comparable<Message> {
     private String uuid = null;
     private long editId = -1;
     private long quoteChatId = -1;
+    private String quotePrivateGroupName;
     private byte[] metaData;
     private String groupInviteName;
     private MessageTemplate messageTemplate;
@@ -617,6 +618,14 @@ public class Message implements Comparable<Message> {
 
     public void setGroupInviteName(String groupInviteName) {
         this.groupInviteName = groupInviteName;
+    }
+
+    public String getQuotePrivateGroupName() {
+        return quotePrivateGroupName;
+    }
+
+    public void setQuotePrivateGroupName(String quotePrivateGroupName) {
+        this.quotePrivateGroupName = quotePrivateGroupName;
     }
 
     public MessageTemplate getMessageTemplate() {
