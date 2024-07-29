@@ -593,11 +593,13 @@ public class ExtractorIOS extends Extractor {
 
                                 messageQuote.setRemoteId(status);
                                 boolean found = false;
-                                String title = "";
-                                for (Chat cq : idToChat.values()) {
+                                for (Chat cq : idToChat.values()) { //Search for the message in chat groups
 
-                                    if(status.contains(cq.getPrintId()))
-                                        title = cq.getTitle();
+                                    if(!cq.isGroupChat())
+                                        continue;
+
+                                    if(cq.getPrintId()!=null && status.contains(cq.getPrintId()))
+                                        messageQuote.setRemoteId(cq.getTitle());
 
                                     for (Message mq : cq.getMessages()) {
                                         if (mq.getUuid() != null && mq.getUuid().compareTo(uuidQuote)==0) {
@@ -611,10 +613,6 @@ public class ExtractorIOS extends Extractor {
                                         break;
                                     }
                                 }
-                                
-                                if (!title.isEmpty())
-                                    messageQuote.setRemoteId(title);
-
 
                                 if (found){
                                     messageQuote.setMessageQuotedType(MessageQuotedType.QUOTE_PRIVACY_GROUP);
