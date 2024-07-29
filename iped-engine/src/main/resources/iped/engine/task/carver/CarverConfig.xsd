@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema xmlns="http://www.w3.org/2001/XMLSchema" >
+    
+    <element name="carverconfig">
+    
+    <complexType>
+    	<choice maxOccurs="unbounded">
+    		<element name="typesToNotProcess" type="string">
+    		</element>
+    		<element name="ignoreCorrupted" type="boolean">
+    		</element>
+    		<element name="carverTypes">
+			    <complexType>
+			        <sequence>
+			            <element name="carverType" maxOccurs="unbounded" minOccurs="1">
+						    <complexType>
+						        <choice maxOccurs="unbounded">
+						            <element name="name" type="string" maxOccurs="1"
+						                minOccurs="1">
+						            </element>
+						            <element name="mediaType" type="string" maxOccurs="1"
+						                minOccurs="1">
+						            </element>
+						            <element name="carverClass" type="string" maxOccurs="1"
+						                minOccurs="0">
+						            </element>
+						            <element name="minLength" type="int" maxOccurs="1"
+						                minOccurs="0">
+						            </element>
+						            <element name="maxLength" type="int" maxOccurs="1"
+						                minOccurs="0">
+						            </element>
+						            <element name="signatures" maxOccurs="1" minOccurs="0">
+									    <complexType>
+									        <choice maxOccurs="unbounded">
+									            <element name="headerSignature" type="string"></element>
+									            <element name="footerSignature" type="string"></element>
+									            <element name="escapeFooterSignature" type="string"></element>
+									            <element name="lengthRefSignature" type="string" maxOccurs="1" minOccurs="0"></element>
+									        </choice>
+									    </complexType>
+						            </element>
+						            <element name="lengthOffset" type="int"></element>
+						            <element name="lengthSizeBytes" type="int"></element>
+                                    <element name="lengthBigEndian" type="boolean"></element>
+                                    <element name="stopOnNextHeader" type="boolean"></element>
+						        </choice>
+						        <attribute name="enabled" type="boolean"></attribute>
+						    </complexType>
+			            </element>
+			        </sequence>
+			    </complexType>
+                <unique name="oneCarverTypeName">
+                  <selector xpath="carverType"/>
+                  <field xpath="@name"/>
+                </unique>
+    		</element>
+    	</choice>
+    </complexType>
+    </element>
+    
+    
+
+
+</schema>

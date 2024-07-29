@@ -7,8 +7,10 @@ import json
 import os
 import re
 
-from iped.parsers.registry import RegRipperParser
-reportSuffix = RegRipperParser.FULL_REPORT_SUFFIX
+# this constant must coincide with the value of 
+# iped.parsers.registry.RegRipperParser.FULL_REPORT_SUFFIX script 
+reportSuffix = '_Full_Report'
+
 
 configFile = 'hardwarewallets.json'
 hwFound = 'Hardware-Wallet-Found'
