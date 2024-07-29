@@ -584,8 +584,8 @@ public class ExtractorAndroidNew extends Extractor {
 
                                         //Find friendly group name
                                         for (Chat cq : idToChat.values()) {
-                                            if(remoteId.contains(cq.getPrintId())){
-                                                mq.setRemoteId(cq.getTitle());
+                                            if(cq.getPrintId()!=null && remoteId.contains(cq.getPrintId())){
+                                                mq.setQuotePrivateGroupName(cq.getTitle());
                                                 break;
                                             }
                                         }
