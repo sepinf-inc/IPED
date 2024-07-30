@@ -441,7 +441,6 @@ public class ExtractorAndroid extends Extractor {
                     m.setMessageQuote(original);
                 }else{// not found original message reference, get info from message_quotes table, less complete
                     mq.setMessageQuotedType(MessageQuotedType.QUOTE_NOT_FOUND);
-                    mq.setDeleted(true);
                     mq.setId(fakeIds--);
                     m.setMessageQuote(mq);
                 }
