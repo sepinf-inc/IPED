@@ -565,45 +565,44 @@ public class ExtractorAndroidNew extends Extractor {
                             if (chatId == mq.getQuoteChatId()){// msgs In same chat
                                 long editId = mq.getEditId();                            
                                 if (messagesMap.get(editId) != null){ // Quoted was edited
-                                    mq.setDeleted(false);
                                     mq.setMessageQuotedType(MessageQuotedType.QUOTE_FOUND);
                                     mq.setId(editId);
-                                }else{ // Quoted message cannot be found again
+                                }else{ // Quoted message cannot be found again ( maybe deleted or not in the DB)
                                     mq.setMessageQuotedType(MessageQuotedType.QUOTE_NOT_FOUND);
                                     mq.setId(fakeIds--);
-                                    mq.setDeleted(true);                                    
                                 }
-                            }else { //Exception, msgs not in the same chat
+                            }else { // Msgs is quoted private group or quoted status
+                                mq.setMessageQuotedType(MessageQuotedType.QUOTE_PRIVACY_GROUP_NOT_FOUND); // just set default case if does not match order cases ...
+                                mq.setId(fakeIds--);
                                 String remoteId = mq.getRemoteId();
                                 if (remoteId !=null){
                                     if (remoteId.compareTo(Message.STATUS_BROADCAST)==0){
                                         mq.setMessageQuotedType(MessageQuotedType.QUOTE_STATUS);
-                                        mq.setId(fakeIds--);
                                     }else if (remoteId.contains(Message.GROUP)){
-                                        mq.setMessageQuotedType(MessageQuotedType.QUOTE_PRIVACY_GROUP);
-                                        mq.setQuotePrivateGroupName(remoteId);
-
-                                        //Find friendly group name
-                                        for (Chat cq : idToChat.values()) {
+                                        mq.setQuotePrivateGroupName(remoteId); // set it first in case if not found
+                                        boolean found = false;
+                                        for (Chat cq : idToChat.values()) { // Find friendly group name and message Id
 
                                             if(!cq.isGroupChat())
                                                 continue;
 
                                             if(cq.getPrintId()!=null && remoteId.contains(cq.getPrintId())){
                                                 mq.setQuotePrivateGroupName(cq.getTitle());
-                                                break;
                                             }
+
+                                            for (Message ori : cq.getMessages()) {
+                                                if (ori.getUuid() != null && mq.getUuid()!= null && ori.getUuid().compareTo(mq.getUuid())==0) {
+                                                    mq.setId(ori.getId());
+                                                    mq.setMessageQuotedType(MessageQuotedType.QUOTE_PRIVACY_GROUP);
+                                                    found = true;
+                                                    break;
+                                                }
+                                            }
+                                            if (found)
+                                                break;
                                         }
 
-                                    }else{
-                                        mq.setMessageQuotedType(MessageQuotedType.QUOTE_NOT_FOUND);
-                                        mq.setId(fakeIds--);
-                                        mq.setDeleted(true);    
                                     }
-                                }else{
-                                    mq.setMessageQuotedType(MessageQuotedType.QUOTE_PRIVACY_GROUP_NOT_FOUND);
-                                    mq.setId(fakeIds--);
-                                    mq.setDeleted(true);
                                 }
                             } 
                             m.setMessageQuote(mq);
