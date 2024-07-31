@@ -896,6 +896,7 @@ public class UfedXmlReader extends DataSourceReader {
                     item.getMetadata().set(ExtraProperties.MESSAGE_BODY, body);
                 }
                 int numInstantMsgAttachs = 0;
+                boolean ignoreItemLocal = false;
                 if ("InstantMessage".equals(type)) {
                     numInstantMsgAttachs = this.numAttachments;
                     if (numInstantMsgAttachs > 0) {
@@ -904,6 +905,13 @@ public class UfedXmlReader extends DataSourceReader {
                                 UFEDChatParser.ATTACHED_MEDIA_MSG + numInstantMsgAttachs);
                     }
                     this.numAttachments = 0;
+                    if (!itemSeq.isEmpty()) {
+                        IItem parentItem = itemSeq.get(itemSeq.size() - 1);
+                        // See https://github.com/sepinf-inc/IPED/issues/2264#issuecomment-2254192462
+                        if (parentItem.getName().startsWith("ReplyMessageData_")) {
+                            ignoreItemLocal = true;
+                        }
+                    }
                 }
                 if (mergeInParentNode.contains(type) && itemSeq.size() > 0) {
                     IItem parentItem = itemSeq.get(itemSeq.size() - 1);
@@ -1067,7 +1075,11 @@ public class UfedXmlReader extends DataSourceReader {
                             String ufedId = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "id");
                             // add items if not ignoring already added instant message xml tree
                             if (ignoreItemTree == null) {
-                                processItem(item);
+                                if (!ignoreItemLocal) {
+                                    processItem(item);
+                                } else {
+                                    caseData.incDiscoveredEvidences(-1);
+                                }
                                 if ("InstantMessage".equals(type)) {
                                     // remember IM ids to not add them again later
                                     addedImUfedIds.add(ufedId);
