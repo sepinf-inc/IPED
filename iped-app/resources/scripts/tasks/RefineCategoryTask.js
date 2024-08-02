@@ -1,4 +1,4 @@
-﻿/*
+﻿﻿/*
  * Script of Category Specialization based on item properties.
  * Uses javascript language to allow flexibility in definitions.
  */
@@ -182,6 +182,18 @@ function process(e){
 
 	if(length == 0)
 		e.addCategory("Empty Files");
+
+
+        if (mime.equals("application/x-lnk")){
+            if (path.endsWith(".customdestinations-ms>>"+e.getName())){
+                e.setMediaTypeStr("application/x-customdestinations-entry");
+                e.addCategory("Custom Destinations");
+            }
+            if (path.endsWith(".automaticdestinations-ms>>"+e.getName())){
+                e.setMediaTypeStr("application/x-automaticdestinations-entry");
+                e.addCategory("Automatic Destinations");
+            }
+        }
 
 	if(inRecycle(e)){
 		e.addCategory("Windows Recycle");
@@ -459,6 +471,7 @@ function process(e){
 			e.addCategory("E-Mule");
 		}
 	}
+
 	
 	// Custom Regripper Reports
 
