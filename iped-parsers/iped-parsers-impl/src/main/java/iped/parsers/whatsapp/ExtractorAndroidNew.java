@@ -220,9 +220,9 @@ public class ExtractorAndroidNew extends Extractor {
                     m.setMessageType(UNKNOWN_VIDEO_CALL);
                     if (call_result == 5) {
                         m.setMessageType(VIDEO_CALL);
-                    } else if (call_result == 4) {
-                        m.setMessageType(MISSED_VIDEO_CALL);
                     } else if (call_result == 2) {
+                        m.setMessageType(MISSED_VIDEO_CALL);
+                    } else if (call_result == 4) {
                         m.setMessageType(REFUSED_VIDEO_CALL);
                     } else if (call_result == 3) {
                         m.setMessageType(UNAVAILABLE_VIDEO_CALL);
@@ -231,9 +231,9 @@ public class ExtractorAndroidNew extends Extractor {
                     m.setMessageType(UNKNOWN_VOICE_CALL);
                     if (call_result == 5) {
                         m.setMessageType(VOICE_CALL);
-                    } else if (call_result == 4) {
-                        m.setMessageType(MISSED_VOICE_CALL);
                     } else if (call_result == 2) {
+                        m.setMessageType(MISSED_VOICE_CALL);
+                    } else if (call_result == 4) {
                         m.setMessageType(REFUSED_VOICE_CALL);
                     } else if (call_result == 3) {
                         m.setMessageType(UNAVAILABLE_VOICE_CALL);
