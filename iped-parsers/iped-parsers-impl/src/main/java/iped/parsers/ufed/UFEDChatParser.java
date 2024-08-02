@@ -65,6 +65,21 @@ public class UFEDChatParser extends AbstractParser {
 
     public static final String ATTACHED_MEDIA_MSG = "ATTACHED_MEDIA: ";
 
+    protected static final String WHATSAPP = "WhatsApp";
+    protected static final String TELEGRAM = "Telegram";
+
+    protected static final String CHAT_ACCOUNT = "Account";
+
+    protected static final String CHATTYPE_ONEONONE = "OneOnOne";
+    protected static final String CHATTYPE_ONEONONE_TITLE = "Private";
+    protected static final String CHATTYPE_GROUP = "Group";
+    protected static final String CHATTYPE_GROUP_TITLE = "Group";
+    protected static final String CHATTYPE_BROADCAST = "Broadcast";
+    protected static final String CHATTYPE_BROADCAST_TITLE = "Broadcast";
+    protected static final String CHATTYPE_BROADCAST_STATUS_TITLE = "Status";
+    protected static final String CHATTYPE_UNKNOWN = "Unknown";
+    protected static final String CHATTYPE_UNKNOWN_TITLE = "Unknown";
+
     private int minChatSplitSize = 6000000;
 
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(UFED_CHAT_MIME, UFED_CHAT_WA_MIME,
@@ -259,6 +274,43 @@ public class UFEDChatParser extends AbstractParser {
             if (parties.length > 1)
                 name += "_" + parties[1]; //$NON-NLS-1$
         }
+
+        // Replace standard chat name by one that is more informative and allows for chat sorting by account
+        // Targeted apps: WhatsApp, Telegram
+        if ((source != null) && ((UFEDChatParser.WHATSAPP.equals(source) || UFEDChatParser.TELEGRAM.equals(source)))) {
+            name = "Chat" + "_" + source;
+            String account = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Account"); //$NON-NLS-1$
+            if (account != null)
+                name += "_" + CHAT_ACCOUNT + "_" + account; //$NON-NLS-1$
+
+                if (CHATTYPE_ONEONONE.equals(item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "ChatType"))) {
+                name += "_" + CHATTYPE_ONEONONE_TITLE;
+                if ((item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants").length > 1) &&
+                    (item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants")[0].equals(item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "phoneOwner"))))
+                    name += "_" + item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants")[1];
+                else
+                    name += "_" + item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants")[0];
+            }
+            else if (CHATTYPE_GROUP.equals(item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "ChatType"))) {
+                name += "_" + CHATTYPE_GROUP_TITLE;
+                name += "_" + (item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name") == null ? "" : item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name"));
+            }
+            else if (CHATTYPE_BROADCAST.equals(item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "ChatType"))) {
+                if (item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants").length == 1) {
+                    name += "_" + CHATTYPE_BROADCAST_STATUS_TITLE;
+                    name += "_" + item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants")[0];
+                }
+                else {
+                    name += "_" + CHATTYPE_BROADCAST_TITLE;
+                    name += "_" + (item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name") == null ? "" : item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name"));
+                }
+            }
+            else if (UFEDChatParser.CHATTYPE_UNKNOWN.equals(item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "ChatType"))) {
+                name += "_" + CHATTYPE_UNKNOWN_TITLE;
+                name += "_" + item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "id");
+            }
+        }
+
         return name;
     }
 
