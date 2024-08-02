@@ -27,7 +27,6 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Random;
@@ -1176,43 +1175,36 @@ public class UfedXmlReader extends DataSourceReader {
             }
         }
 
-        private HashMap<String, String[]> toCache = new LinkedHashMap<String, String[]>(16, 0.75f, true) {
-
-            private static final long serialVersionUID = 1L;
-
-            @Override
-            protected boolean removeEldestEntry(Entry<String, String[]> eldest) {
-                return this.size() > 1000;
-            }
-        };
-
         private Property toProperty = Property.internalText(ExtraProperties.COMMUNICATION_TO);
 
         private void fillMissingInfo(Item item) {
             String from = item.getMetadata().get(ExtraProperties.COMMUNICATION_FROM);
-            String to = item.getMetadata().get(ExtraProperties.COMMUNICATION_TO);
+            String[] to = item.getMetadata().getValues(ExtraProperties.COMMUNICATION_TO);
             boolean fromOwner = Boolean.valueOf(item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "fromOwner"));
-            if (to == null) {
+            if (to == null || to.length != 1) {
                 if (item.getMediaType() != null
                         && MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.UFED_MESSAGE_MIME)) {
                     // we have seen ufed messages without parent chat
                     if (itemSeq.size() == 0)
                         return;
                     IItem parentChat = itemSeq.get(itemSeq.size() - 1);
-                    String[] parties = parentChat.getMetadata()
-                            .getValues(ExtraProperties.UFED_META_PREFIX + "Participants");
-                    ArrayList<String> toList = new ArrayList<>();
-                    for (String party : parties) {
-                        if ((from != null && !party.equals(from)) || (fromOwner && !ownerParties.contains(party)))
-                            toList.add(party);
+                    List<String> toList = new ArrayList<>();
+                    if (to != null && to.length > 0) {
+                        toList = Arrays.asList(to);
+                    } else {
+                        String[] parties = parentChat.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants");
+                        for (String party : parties) {
+                            if ((from != null && !party.equals(from)) || (fromOwner && !ownerParties.contains(party)))
+                                toList.add(party);
+                        }
                     }
-                    String key = toList.toString();
-                    String[] val = toCache.get(key);
-                    if (val == null) {
-                        val = toList.toArray(new String[toList.size()]);
-                        toCache.put(key, val);
+                    if (toList.size() == 1) {
+                        item.getMetadata().set(toProperty, toList.get(0));
+                    } else if (toList.size() > 1) {
+                        item.getMetadata().set(toProperty, parentChat.getName());
+                        item.getMetadata().set(ExtraProperties.IS_GROUP_MESSAGE, "true");
                     }
-                    item.getMetadata().set(toProperty, val);
+
                 }
             }
             if (!msisdns.isEmpty() && (MediaTypes.UFED_CALL_MIME.equals(item.getMediaType())

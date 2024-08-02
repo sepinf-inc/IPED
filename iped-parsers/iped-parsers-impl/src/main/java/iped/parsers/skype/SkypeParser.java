@@ -7,7 +7,6 @@ import java.util.Base64;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -253,13 +252,8 @@ public class SkypeParser extends AbstractParser {
                     tMetadata.set(ExtraProperties.MESSAGE_DATE, t.getStart());
                     tMetadata.set(ExtraProperties.MESSAGE_BODY, name);
                     tMetadata.set(Metadata.MESSAGE_FROM, formatSkypeName(contactMap, t.getFrom()));
-                    if (t.getType() == 3 && t.getConversation().getParticipantes() != null) {
-                        for (Iterator<String> iterator = t.getConversation().getParticipantes().iterator(); iterator
-                                .hasNext();) {
-                            String recip = formatSkypeName(contactMap, iterator.next());
-                            if (recip != null)
-                                tMetadata.add(Metadata.MESSAGE_TO, recip);
-                        }
+                    if (t.getType() == 3 && t.getConversation().getParticipantes() != null && t.getConversation().getParticipantes().size() > 1) {
+                        tMetadata.set(Metadata.MESSAGE_TO, t.getConversation().getTitle());
                     } else {
                         tMetadata.set(Metadata.MESSAGE_TO, formatSkypeName(contactMap, t.getTo()));
                     }
