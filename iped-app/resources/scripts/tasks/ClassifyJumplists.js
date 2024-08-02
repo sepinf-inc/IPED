@@ -838,10 +838,13 @@ function process(item){
             id = id.substring(path.lastIndexOf("/")+1).toUpperCase();
             item.getMetadata().add("Application ID", id);
 
-            var pos = IdsList.indexOf(id) + 19;
-            if(pos>19){
-                item.getMetadata().add("Application Name", IdsList.substring(pos,IdsList.indexOf('"',pos)));
-            }
+            var pos = IdsList.indexOf(id);
+            if(pos>-1){
+	            pos = IdsList.indexOf('"|"', pos)+3;
+        	    if(pos>19){
+                	item.getMetadata().add("Application Name", IdsList.substring(pos,IdsList.indexOf('"',pos)));
+	            }
+	    }
         }
     }
 }
