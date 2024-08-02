@@ -837,9 +837,9 @@ function process(item){
             id = path.substring(0,i);
             id = id.substring(path.lastIndexOf("/")+1).toUpperCase();
             item.getMetadata().add("Application ID", id);
-                    
+
             var pos = IdsList.indexOf(id) + 19;
-            if(pos>18){
+            if(pos>19){
                 item.getMetadata().add("Application Name", IdsList.substring(pos,IdsList.indexOf('"',pos)));
             }
         }
