@@ -446,6 +446,8 @@ public class MetadataUtil {
             lon = metadata.get(ExtraProperties.UFED_META_PREFIX + "Longitude");
         boolean invalid = lat == null || lon == null;
         if (!invalid) {
+            lat = lat.replace(',', '.');
+            lon = lon.replace(',', '.');
             try {
                 Float lati = Float.valueOf(lat);
                 Float longit = Float.valueOf(lon);
