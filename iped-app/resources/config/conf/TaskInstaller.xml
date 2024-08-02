@@ -15,6 +15,7 @@
     <task class="iped.engine.task.SetTypeTask"></task>
     <task class="iped.engine.task.SetCategoryTask"></task>
     <task script="RefineCategoryTask.js"></task>
+    <task script="ClassifyJumplists.js"></task>
     
     <!--tasks that ignore items should be after SetCategoryTask, so category of ignored items will be included in CSV properties file-->
     <task class="iped.engine.task.HashDBLookupTask"></task>
