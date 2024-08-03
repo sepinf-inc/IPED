@@ -68,6 +68,12 @@ function createMediaControls() {
     });
 }
 
+function showMessage(message){
+    var fragMessageClose = document.getElementById('fragMessageClose').value;
+    show_prompt("",message,false,fragMessageClose);
+    return false;
+}
+
 function goToAnchorId(id){
     var scroll_padding_top = document.getElementById('topbar').getBoundingClientRect().height;
     var r = document.querySelector(':root');
