@@ -472,8 +472,6 @@ public class MetadataUtil {
             metadata.remove(ExtraProperties.UFED_META_PREFIX + "Longitude");
             metadata.remove(ExtraProperties.UFED_META_PREFIX + "Associated Location Latitude");
             metadata.remove(ExtraProperties.UFED_META_PREFIX + "Associated Location Longitude");
-            metadata.remove(ExtraProperties.UFED_META_PREFIX + "Associated Location Latitude:number");
-            metadata.remove(ExtraProperties.UFED_META_PREFIX + "Associated Location Longitude:number");
         } else {
             metadata.remove(Metadata.ALTITUDE.getName());
         }
