@@ -27,18 +27,18 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
     private static Logger logger = LogManager.getLogger(Wav2Vec2TranscriptTask.class);
 
     private static final String SCRIPT_PATH = "/scripts/tasks/Wav2Vec2Process.py";
-    private static final String TRANSCRIPTION_FINISHED = "transcription_finished";
+    protected static final String TRANSCRIPTION_FINISHED = "transcription_finished";
     private static final String MODEL_LOADED = "wav2vec2_model_loaded";
     private static final String HUGGINGSOUND_LOADED = "huggingsound_loaded";
     private static final String TERMINATE = "terminate_process";
     private static final String PING = "ping";
 
-    private static final int MAX_TRANSCRIPTIONS = 100000;
-    private static final byte[] NEW_LINE = "\n".getBytes();
+    protected static final int MAX_TRANSCRIPTIONS = 100000;
+    protected static final byte[] NEW_LINE = "\n".getBytes();
 
     protected static volatile Integer numProcesses;
 
-    private static LinkedBlockingDeque<Server> deque = new LinkedBlockingDeque<>();
+    protected static LinkedBlockingDeque<Server> deque = new LinkedBlockingDeque<>();
 
     protected static volatile Level logLevel = Level.forName("MSG", 250);
 
@@ -199,7 +199,7 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
         deque.clear();
     }
 
-    private void terminateServer(Server server) throws InterruptedException {
+    protected void terminateServer(Server server) throws InterruptedException {
         Process process = server.process;
         try {
             process.getOutputStream().write(TERMINATE.getBytes(Charsets.UTF8_CHARSET));
@@ -216,7 +216,7 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
         }
     }
 
-    private boolean ping(Server server) {
+    protected boolean ping(Server server) {
         try {
             server.process.getOutputStream().write(PING.getBytes(Charsets.UTF8_CHARSET));
             server.process.getOutputStream().write(NEW_LINE);

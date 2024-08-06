@@ -16,6 +16,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -51,12 +53,24 @@ public class RemoteTranscriptionService {
         VERSION_1_0,
         PING
     }
-    
+    static class TranscribeRequest {
+        File wavAudio;
+        TextAndScore result=null;
+        Exception error=null;
+        
+
+        public TranscribeRequest(File wavAudio) {
+            this.wavAudio=wavAudio;
+        }
+    }
     static class OpenConnectons {
         Socket conn;
         BufferedInputStream bis;
         PrintWriter writer;
         Thread t;
+        File wavAudio;
+        TextAndScore result=null;
+        
 
         public OpenConnectons(Socket conn, BufferedInputStream bis, PrintWriter writer, Thread t) {
             this.conn = conn;
@@ -92,6 +106,8 @@ public class RemoteTranscriptionService {
      * Control number of simultaneous audio conversions to WAV.
      */
     private static Semaphore wavConvSemaphore;
+    
+    private static int BATCH_SIZE=1;
 
     private static final AtomicLong audiosTranscripted = new AtomicLong();
     private static final AtomicLong audiosDuration = new AtomicLong();
@@ -99,7 +115,9 @@ public class RemoteTranscriptionService {
     private static final AtomicLong transcriptionTime = new AtomicLong();
     private static final AtomicLong requestsReceived = new AtomicLong();
     private static final AtomicLong requestsAccepted = new AtomicLong();
-    private static List<OpenConnectons> beaconQueq = new LinkedList<>();
+    private static final List<OpenConnectons> beaconQueq = new LinkedList<>();
+    private static final Deque<TranscribeRequest> toTranscribe = new LinkedList<>();
+     
 
     private static Logger logger;
 
@@ -149,7 +167,7 @@ public class RemoteTranscriptionService {
         AbstractTranscriptTask task = (AbstractTranscriptTask) Class.forName(audioConfig.getClassName()).getDeclaredConstructor().newInstance();
         audioConfig.setEnabled(true);
         task.init(cm);
-
+        BATCH_SIZE=audioConfig.getBatchSize();
         int numConcurrentTranscriptions = Wav2Vec2TranscriptTask.getNumConcurrentTranscriptions();
         int numLogicalCores = Runtime.getRuntime().availableProcessors();
 
@@ -175,6 +193,10 @@ public class RemoteTranscriptionService {
             startSendStatsThread(discoveryIp, discoveryPort, localPort, numConcurrentTranscriptions, numLogicalCores);
 
             startBeaconThread();
+            for(int i=0;i<numConcurrentTranscriptions;i++) {
+                startTrancribeThreads(task);
+            }
+            
 
             waitRequests(server, task, discoveryIp);
 
@@ -208,7 +230,60 @@ public class RemoteTranscriptionService {
         });
     }
 
+    private static void transcribeAudios(AbstractTranscriptTask task) throws Exception {
+        ArrayList<TranscribeRequest> transcribeRequests = new ArrayList<>();
+        ArrayList<File> files = new ArrayList<File>();
 
+        if (executor.isShutdown()) {
+            throw new Exception("Shutting down service instance...");
+        }
+
+        synchronized (toTranscribe) {
+            if (toTranscribe.size() == 0)
+                return;
+            while (toTranscribe.size() > 0 && transcribeRequests.size() < BATCH_SIZE) {
+                TranscribeRequest req = toTranscribe.poll();
+                transcribeRequests.add(req);
+                files.add(req.wavAudio);
+            }
+        }
+        logger.info("inicio da transcricao de " + files.size() + " audios");
+
+        long t2 = System.currentTimeMillis();
+
+        boolean batchTrancribe = (task instanceof WhisperTranscriptTask);
+        if (batchTrancribe) {
+            try {
+                List<TextAndScore> results = ((WhisperTranscriptTask) task).transcribeAudios(files);
+                for (int i = 0; i < results.size(); i++) {
+                    transcribeRequests.get(i).result = results.get(i);
+                }
+            } catch (Exception e) {// case fail, try each audio individually
+                batchTrancribe = false;
+                logger.error("Error while doing batch transcribe " + e.toString());
+            }
+        }
+        if (!batchTrancribe) {// try each audio individually
+            for (int i = 0; i < files.size(); i++) {
+                try {
+                    transcribeRequests.get(i).result = task.transcribeAudio(files.get(i));
+                } catch (Exception e2) {
+                    transcribeRequests.get(i).result = null;
+                    transcribeRequests.get(i).error = e2;
+                    logger.error("Error while transcribing");
+                }
+            }
+        }
+
+        for (int i = 0; i < transcribeRequests.size(); i++) {
+            synchronized (transcribeRequests.get(i)) {
+                transcribeRequests.get(i).notifyAll();
+            }
+        }
+
+        long t3 = System.currentTimeMillis();
+        transcriptionTime.addAndGet(t3 - t2);
+    }
 
     private static void registerThis(String discoveryIp, int discoveryPort, int localPort, int concurrentJobs, int concurrentWavConvs) throws Exception {
         try (Socket client = new Socket(discoveryIp, discoveryPort);
@@ -312,29 +387,24 @@ public class RemoteTranscriptionService {
 
                             logger.info(prefix + "Accepted connection.");
 
-                            int min = Math.min(MESSAGES.AUDIO_SIZE.toString().length(),
-                                    MESSAGES.VERSION_1_1.toString().length());
 
-                            bis.mark(min + 1);
-                            byte[] bytes = bis.readNBytes(min);
-                            String cmd = new String(bytes);
-                            if (!MESSAGES.AUDIO_SIZE.toString().startsWith(cmd)) {
-                                bis.reset();
-                                bytes = bis.readNBytes(MESSAGES.VERSION_1_1.toString().length());
-                                protocol = new String(bytes);
-                                bis.mark(min + 1);
-                                synchronized (beaconQueq) {
-                                    opc = new OpenConnectons(client, bis, writer, this);
-                                    beaconQueq.add(opc);
-                                }
 
+                            byte[] bytes = bis.readNBytes(MESSAGES.VERSION_1_2.toString().length());
+                            protocol = new String(bytes);
+                            synchronized (beaconQueq) {
+                                opc = new OpenConnectons(client, bis, writer, this);
+                                beaconQueq.add(opc);
                             }
+
+
                             logger.info("Protocol Version {}", protocol);
+                            if (protocol.compareTo(MESSAGES.VERSION_1_2.toString()) < 0) {
+                                throw new Exception("Procol version " + protocol + " not supported");
+                            }
 
                             // read the audio_size message
-                            bis.reset();
                             bytes = bis.readNBytes(MESSAGES.AUDIO_SIZE.toString().length());
-                            cmd = new String(bytes);
+                            String cmd = new String(bytes);
 
                             if (!MESSAGES.AUDIO_SIZE.toString().equals(cmd)) {
                                 error = true;
@@ -343,11 +413,8 @@ public class RemoteTranscriptionService {
 
                             DataInputStream dis = new DataInputStream(bis);
                             long size;
-                            if (protocol.compareTo(MESSAGES.VERSION_1_2.toString()) >= 0) {
-                                size = dis.readLong();
-                            } else {
-                                size = dis.readInt();
-                            }
+                            size = dis.readLong();
+
                             if (size < 0) {
                                 error = true;
                                 try {
@@ -408,17 +475,22 @@ public class RemoteTranscriptionService {
                             }
                             long durationMillis = 1000 * wavFile.length() / (16000 * 2);
 
-                            TextAndScore result;
+                            TextAndScore result=null;
                             long t2, t3;
                             try {
-                                transcriptSemaphore.acquire();
-                                if (executor.isShutdown()) {
-                                    error = true;
-                                    throw new Exception("Shutting down service instance...");
+                                TranscribeRequest req=new TranscribeRequest(wavFile);
+                                synchronized (toTranscribe) {
+                                    toTranscribe.add(req);
                                 }
-                                t2 = System.currentTimeMillis();
-                                result = task.transcribeAudio(wavFile);
-                                t3 = System.currentTimeMillis();
+                                synchronized(req) {
+                                    req.wait();
+                                }
+                                result=req.result;
+                                if(result==null) {
+                                    error = false;
+                                    throw new Exception("Error processing the audio", req.error);
+                                }
+                               
                             } catch (ProcessCrashedException e) {
                                 // retry audio
                                 error = true;
@@ -429,14 +501,12 @@ public class RemoteTranscriptionService {
                                 executor.shutdown();
                                 server.close();
                                 throw e;
-                            } finally {
-                                transcriptSemaphore.release();
-                            }
+                            } 
 
                             audiosTranscripted.incrementAndGet();
                             audiosDuration.addAndGet(durationMillis);
                             conversionTime.addAndGet(t1 - t0);
-                            transcriptionTime.addAndGet(t3 - t2);
+                            
                             logger.info(prefix + "Transcritpion done.");
 
                             // removes from the beacon queue to prevent beacons in the middle of the
@@ -453,17 +523,8 @@ public class RemoteTranscriptionService {
                             String errorMsg = "Exception while transcribing";
                             logger.warn(errorMsg, e);
                             if (writer != null) {
-                                if (e.getMessage() != null && e.getMessage().startsWith("Invalid file size:")
-                                        && protocol.compareTo(MESSAGES.VERSION_1_2.toString()) < 0) {
-                                    writer.println("0");
-                                    writer.println(
-                                            "Audios longer than 2GB are not supported by old clients, please update your client version!");
-                                    writer.println(MESSAGES.DONE);
-                                } else {
-                                    writer.println(error ? MESSAGES.ERROR : MESSAGES.WARN);
-                                    writer.println(
-                                            errorMsg + ": " + e.toString().replace('\n', ' ').replace('\r', ' '));
-                                }
+                                writer.println(error ? MESSAGES.ERROR : MESSAGES.WARN);
+                                writer.println(errorMsg + ": " + e.toString().replace('\n', ' ').replace('\r', ' '));
                                 writer.flush();
                             }
                         } finally {
@@ -508,5 +569,39 @@ public class RemoteTranscriptionService {
             }
         });
     }
+    
+    private static void startTrancribeThreads(AbstractTranscriptTask task) {
+        executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    Boolean empty = true;
+                    synchronized (toTranscribe) {
+                        empty = toTranscribe.isEmpty();
+                    }
+                    if (empty) {
+                    try {
+                            Thread.sleep(100);
+                        
+                        } catch (Exception e) {
+                            // TODO: handle exception
+                    }
+                        continue;
+                    }
+                    try {
+                        transcriptSemaphore.acquire();
+                        transcribeAudios(task);
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    } finally {
+                        transcriptSemaphore.release();
+                    }
+
+            }
+            }
+        });
+    }
+    
 
 }
