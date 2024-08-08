@@ -267,7 +267,7 @@ public class TelegramParser extends SQLite3DBParser {
             if (m.getChat().isGroupOrChannel()) {
                 ChatGroup groupChat = (ChatGroup) m.getChat();
                 String to = groupChat.isGroup() ? "Group " : "Channel ";
-                to += groupChat.getName() + " (id:" + groupChat.getId() + ")";
+                to += groupChat.getName() + " (ID:" + groupChat.getId() + ")";
                 meta.add(org.apache.tika.metadata.Message.MESSAGE_TO, to);
                 meta.set(ExtraProperties.IS_GROUP_MESSAGE, "true");
             }

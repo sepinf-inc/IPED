@@ -926,8 +926,8 @@ public class UfedXmlReader extends DataSourceReader {
 
                         String identifier = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Identifier"); //$NON-NLS-1$
                         String name = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name"); //$NON-NLS-1$
-                        String value = name == null || name.equals(identifier) ? identifier
-                                : identifier == null ? name : name + "(" + identifier + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+                        String value = name == null || name.equals(identifier) ? "ID:" + identifier
+                                : identifier == null ? name : name + " (ID:" + identifier + ")"; //$NON-NLS-1$ //$NON-NLS-2$
                         if (value != null) {
                             if ("From".equalsIgnoreCase(role)) //$NON-NLS-1$
                                 parentItem.getMetadata().add(ExtraProperties.COMMUNICATION_FROM, value);

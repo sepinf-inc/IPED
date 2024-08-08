@@ -179,14 +179,16 @@ public class Contact implements ContactInterface {
         String number = getPhone();
         if (number != null && number.length() > 0) {
             if (sb.length() > 0) {
-                sb.append(' ');
+                sb.append(" (phone: ").append(number).append(')');
+            } else {
+                sb.append("phone: ").append(number);
             }
-            sb.append("(phone: ").append(number).append(')');
         } else if (getId() > 0) {
             if (sb.length() > 0) {
-                sb.append(' ');
+                sb.append(" (ID:").append(getId()).append(')');
+            } else {
+                sb.append("ID:").append(getId());
             }
-            sb.append("(ID:").append(getId()).append(')');
         }
         if (sb.length() == 0) {
             sb.append("[unknown]");
