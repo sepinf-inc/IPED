@@ -60,7 +60,10 @@ public class ReferencedByTableModel extends BaseTableModel {
         }
 
         if (nameToScroll != null) {
-            App.get().getViewerController().getHtmlLinkViewer().setElementNameToScroll(nameToScroll);
+            if (!nameToScroll.equals(""))
+                App.get().getViewerController().getHtmlLinkViewer().setElementNameToScroll(nameToScroll);
+            else
+                App.get().getViewerController().getHtmlLinkViewer().setElementIDToScroll(refDoc.get(BasicProps.ID));
         }
 
         FileProcessor parsingTask = new FileProcessor(id, false);
@@ -76,12 +79,20 @@ public class ReferencedByTableModel extends BaseTableModel {
         String edonkey = doc.get(HashTask.HASH.EDONKEY.toString());
         String hashes = Arrays.asList(md5, sha1, sha256, edonkey).stream().filter(a -> a != null).collect(Collectors.joining(" "));
 
-        if (hashes.isEmpty()) {
+        if (hashes.isEmpty() &&
+            !doc.get(BasicProps.CONTENTTYPE).equals("application/x-ufed-instantmessage") &&
+            !doc.get(BasicProps.CONTENTTYPE).equals("message/x-ufed-attachment")) {
             results = new LuceneSearchResult(0);
             refDoc = null;
         } else {
-            String textQuery = ExtraProperties.LINKED_ITEMS + ":(" + hashes + ") ";
-            textQuery += ExtraProperties.SHARED_HASHES + ":(" + hashes + ")";
+            String textQuery;
+            if (!hashes.isEmpty()) {
+                textQuery = ExtraProperties.LINKED_ITEMS + ":(" + hashes + ") ";
+                textQuery += ExtraProperties.SHARED_HASHES + ":(" + hashes + ")";
+            }
+            else {
+                textQuery = "ufed\\:msgChildIds" + ":" + doc.get(BasicProps.ID);
+            }
 
             try {
                 IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery, BasicProps.NAME);
