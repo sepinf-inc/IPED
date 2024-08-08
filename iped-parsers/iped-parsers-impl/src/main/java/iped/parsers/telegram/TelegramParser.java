@@ -215,6 +215,9 @@ public class TelegramParser extends SQLite3DBParser {
                 if (participantsCount > 0) {
                     chatMetadata.add(ExtraProperties.PARTICIPANTS + "Count", String.valueOf(participantsCount));
                 }
+            } else {
+                addParticipantFields(chatMetadata, e, ExtraProperties.PARTICIPANTS, c.getId());
+                addParticipantFields(chatMetadata, e, ExtraProperties.PARTICIPANTS, e.getUserAccount().getId());
             }
 
             List<Message> msgSubset = c.getMessages().subList(firstMsg, nextMsg);
