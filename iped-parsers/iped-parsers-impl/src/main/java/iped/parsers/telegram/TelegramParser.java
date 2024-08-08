@@ -240,7 +240,10 @@ public class TelegramParser extends SQLite3DBParser {
         chatMetadata.add(field, contact.toString());
         chatMetadata.add(field + ":ID", Long.toString(id));
         if (StringUtils.isNotBlank(contact.getPhone())) {
-            chatMetadata.add(field + ":Phone",contact.getPhone());
+            chatMetadata.add(field + ":Phone", contact.getPhone());
+        }
+        if (StringUtils.isNotBlank(contact.getUsername())) {
+            chatMetadata.add(field + ":Username", contact.getUsername());
         }
     }
 
