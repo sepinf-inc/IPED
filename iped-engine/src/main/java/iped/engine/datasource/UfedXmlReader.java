@@ -28,6 +28,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
@@ -81,6 +82,7 @@ import iped.engine.task.index.IndexItem;
 import iped.engine.util.Util;
 import iped.parsers.telegram.TelegramParser;
 import iped.parsers.ufed.UFEDChatParser;
+import iped.parsers.util.CommunicationConstants;
 import iped.parsers.util.MetadataUtil;
 import iped.parsers.util.PhoneParsingConfig;
 import iped.parsers.whatsapp.WhatsAppParser;
@@ -126,6 +128,16 @@ public class UfedXmlReader extends DataSourceReader {
     private static Random random = new Random();
 
     private static HashMap<File, UFDRInputStreamFactory> uisfMap = new HashMap<>();
+
+    private static final Map<String, String> CHAT_TYPE_MAP;
+    static {
+        HashMap<String, String> chatTypeMap = new HashMap<>();
+        chatTypeMap.put("OneOnOne", CommunicationConstants.TYPE_PRIVATE);
+        chatTypeMap.put("Group", CommunicationConstants.TYPE_GROUP);
+        chatTypeMap.put("Broadcast", CommunicationConstants.TYPE_BROADCAST);
+
+        CHAT_TYPE_MAP = Collections.unmodifiableMap(chatTypeMap);
+    }
 
     File root, rootFolder, ufdrFile;
     UFDRInputStreamFactory uisf;
@@ -875,6 +887,13 @@ public class UfedXmlReader extends DataSourceReader {
                         item.setMediaType(UFEDChatParser.UFED_CHAT_TELEGRAM);
 
                     item.setExtraAttribute(IndexItem.TREENODE, "true"); //$NON-NLS-1$
+
+                    String ufedChatType = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "ChatType");
+                    if (ufedChatType != null && CHAT_TYPE_MAP.containsKey(ufedChatType)) {
+                        item.setExtraAttribute(ExtraProperties.COMMUNICATION_TYPE, CHAT_TYPE_MAP.get(ufedChatType));
+                    } else {
+                        item.setExtraAttribute(ExtraProperties.COMMUNICATION_TYPE, CommunicationConstants.TYPE_UNKONWN);
+                    }
                 }
                 if ("InstantMessage".equals(type) || "Email".equals(type) || "Call".equals(type) || "SMS".equals(type) //$NON-NLS-4$
                         || "MMS".equals(type)) { //$NON-NLS-1$

@@ -55,6 +55,7 @@ import dpf.ap.gpinf.interfacetelegram.DecoderTelegramInterface;
 import iped.data.IItemReader;
 import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.standard.StandardParser;
+import iped.parsers.util.CommunicationConstants;
 import iped.parsers.util.ItemInfo;
 import iped.parsers.util.PhoneParsingConfig;
 import iped.properties.BasicProps;
@@ -218,6 +219,14 @@ public class TelegramParser extends SQLite3DBParser {
             } else {
                 addParticipantFields(chatMetadata, e, ExtraProperties.PARTICIPANTS, c.getId());
                 addParticipantFields(chatMetadata, e, ExtraProperties.PARTICIPANTS, e.getUserAccount().getId());
+            }
+
+            if (c.isChannel()) {
+                chatMetadata.add(ExtraProperties.COMMUNICATION_TYPE, CommunicationConstants.TYPE_BROADCAST);
+            } else if (c.isGroup()) {
+                chatMetadata.add(ExtraProperties.COMMUNICATION_TYPE, CommunicationConstants.TYPE_GROUP);
+            } else {
+                chatMetadata.add(ExtraProperties.COMMUNICATION_TYPE, CommunicationConstants.TYPE_PRIVATE);
             }
 
             List<Message> msgSubset = c.getMessages().subList(firstMsg, nextMsg);

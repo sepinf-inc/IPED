@@ -36,7 +36,8 @@ public class TelegramParserTest extends AbstractPkgTest {
             assertEquals(236, telegramtracker.userphone.size());
             assertEquals(261, telegramtracker.useraccount.size());
             assertEquals(118, telegramtracker.usernotes.size());
-            assertEquals(32, telegramtracker.participants.size());
+            assertEquals(32, telegramtracker.groupParticipants.size());
+            assertEquals(69, telegramtracker.privateParticipants.size());
             assertEquals(151, telegramtracker.messagefrom.size());
             assertEquals(151, telegramtracker.messagebody.size());
             assertEquals(151, telegramtracker.messageto.size());
@@ -67,9 +68,13 @@ public class TelegramParserTest extends AbstractPkgTest {
             assertEquals("RafaelCampos", telegramtracker.usernotes.get(1));
             assertEquals("gif", telegramtracker.usernotes.get(3));
 
-            assertEquals("Bruno Chaves (ID:141491912 | phone:33667514279)", telegramtracker.participants.get(0));
-            assertEquals("Nake Douglas (ID:26851249 | phone:5561982616052)", telegramtracker.participants.get(1));
-            assertEquals("Guilherme Andreúce (ID:140478504 | phone:5561986143035)", telegramtracker.participants.get(2));
+            assertEquals("Bruno Chaves (ID:141491912 | phone:33667514279)", telegramtracker.groupParticipants.get(0));
+            assertEquals("Nake Douglas (ID:26851249 | phone:5561982616052)", telegramtracker.groupParticipants.get(1));
+            assertEquals("Guilherme Andreúce (ID:140478504 | phone:5561986143035)", telegramtracker.groupParticipants.get(2));
+
+            assertEquals("Telegram (ID:777000 | phone:42777)", telegramtracker.privateParticipants.get(0));
+            assertEquals("Nickerida (ID:339236411 | phone:5561983125151)", telegramtracker.privateParticipants.get(1));
+            assertEquals("Yan Victor (ID:301575622 | phone:5561995328012)", telegramtracker.privateParticipants.get(2));
 
             assertEquals("Telegram (ID:777000 | phone:42777)", telegramtracker.messagefrom.get(0));
             assertEquals("Nickerida (ID:339236411 | phone:5561983125151)", telegramtracker.messagefrom.get(1));

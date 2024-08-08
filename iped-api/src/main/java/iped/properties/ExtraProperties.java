@@ -53,6 +53,8 @@ public class ExtraProperties {
 
     public static final String COMMUNICATION_ADMINS = COMMUNICATION_PREFIX + "Admins";
 
+    public static final String COMMUNICATION_TYPE = COMMUNICATION_PREFIX + "Type";
+
     public static final String GROUP_ID = "GroupID";
 
     public static final String IS_GROUP_MESSAGE = "isGroupMessage";
