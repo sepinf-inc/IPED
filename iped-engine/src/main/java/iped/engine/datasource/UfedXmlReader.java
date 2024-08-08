@@ -940,8 +940,10 @@ public class UfedXmlReader extends DataSourceReader {
                             else if ("Participants".equalsIgnoreCase(role)) {
                                 if (Boolean.parseBoolean(item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "IsGroupAdmin"))) {
                                     parentItem.getMetadata().add(ExtraProperties.COMMUNICATION_ADMINS, value);
+                                    parentItem.getMetadata().add(ExtraProperties.COMMUNICATION_ADMINS + ":ID", identifier);
                                 }
                                 parentItem.getMetadata().add(ExtraProperties.PARTICIPANTS, value);
+                                parentItem.getMetadata().add(ExtraProperties.PARTICIPANTS + ":ID", identifier);
                             }
                             else
                                 parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + role, value);

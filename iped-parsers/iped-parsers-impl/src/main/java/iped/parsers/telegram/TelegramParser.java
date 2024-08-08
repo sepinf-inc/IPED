@@ -36,6 +36,7 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
@@ -203,12 +204,12 @@ public class TelegramParser extends SQLite3DBParser {
 
             if (c.isGroupOrChannel()) {
                 ChatGroup cg = (ChatGroup) c;
-                for (long id : cg.getMembers()) {
-                    chatMetadata.add(ExtraProperties.PARTICIPANTS, e.getContact(id).toString());
-                }
                 for (long id : cg.getAdmins()) {
-                    chatMetadata.add(ExtraProperties.COMMUNICATION_ADMINS, e.getContact(id).toString());
-                    chatMetadata.add(ExtraProperties.PARTICIPANTS, e.getContact(id).toString());
+                    addParticipantFields(chatMetadata, e, ExtraProperties.COMMUNICATION_ADMINS, id);
+                    addParticipantFields(chatMetadata, e, ExtraProperties.PARTICIPANTS, id);
+                }
+                for (long id : cg.getMembers()) {
+                    addParticipantFields(chatMetadata, e, ExtraProperties.PARTICIPANTS, id);
                 }
                 int participantsCount = cg.getParticipantsCount();
                 if (participantsCount > 0) {
@@ -231,6 +232,15 @@ public class TelegramParser extends SQLite3DBParser {
             }
 
             firstMsg = nextMsg;
+        }
+    }
+
+    private void addParticipantFields(Metadata chatMetadata, Extractor e, String field, long id) {
+        Contact contact = e.getContact(id);
+        chatMetadata.add(field, contact.toString());
+        chatMetadata.add(field + ":ID", Long.toString(id));
+        if (StringUtils.isNotBlank(contact.getPhone())) {
+            chatMetadata.add(field + ":Phone",contact.getPhone());
         }
     }
 
