@@ -20,6 +20,8 @@ package iped.parsers.telegram;
 
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+
 import dpf.ap.gpinf.interfacetelegram.ContactInterface;
 import dpf.ap.gpinf.interfacetelegram.DecoderTelegramInterface;
 import dpf.ap.gpinf.interfacetelegram.PhotoData;
@@ -177,17 +179,28 @@ public class Contact implements ContactInterface {
             sb.append(name.trim());
         }
         String number = getPhone();
-        if (number != null && number.length() > 0) {
-            if (sb.length() > 0) {
-                sb.append(" (phone: ").append(number).append(')');
-            } else {
-                sb.append("phone: ").append(number);
+        if (getId() > 0) {
+            if (StringUtils.isNotBlank(name)) {
+                sb.append(" (");
             }
-        } else if (getId() > 0) {
-            if (sb.length() > 0) {
-                sb.append(" (ID:").append(getId()).append(')');
-            } else {
-                sb.append("ID:").append(getId());
+
+            sb.append("ID:").append(getId());
+
+            if (StringUtils.isNotBlank(number)) {
+                sb.append(" | phone:").append(number);
+            }
+            if (StringUtils.isNotBlank(name)) {
+                sb.append(")");
+            }
+        } else if (StringUtils.isNotBlank(number)) {
+            if (StringUtils.isNotBlank(name)) {
+                sb.append(" (");
+            }
+
+            sb.append("phone:").append(number);
+
+            if (StringUtils.isNotBlank(name)) {
+                sb.append(")");
             }
         }
         if (sb.length() == 0) {
