@@ -306,6 +306,12 @@ public class TelegramParser extends SQLite3DBParser {
                 }
             }
 
+            if (m.isFromMe()) {
+                meta.set(ExtraProperties.COMMUNICATION_DIRECTION, CommunicationConstants.DIRECTION_OUTGOING);
+            } else {
+                meta.set(ExtraProperties.COMMUNICATION_DIRECTION, CommunicationConstants.DIRECTION_INCOMING);
+            }
+
             meta.set(ExtraProperties.MESSAGE_BODY, m.getData());
 
             meta.set("mediaName", m.getMediaName());

@@ -55,6 +55,8 @@ public class ExtraProperties {
 
     public static final String COMMUNICATION_TYPE = COMMUNICATION_PREFIX + "Type";
 
+    public static final String COMMUNICATION_DIRECTION = COMMUNICATION_PREFIX + "Direction";
+
     public static final String GROUP_ID = "GroupID";
 
     public static final String IS_GROUP_MESSAGE = "isGroupMessage";

@@ -968,14 +968,18 @@ public class UfedXmlReader extends DataSourceReader {
                                 parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + role, value);
                         }
                         boolean isOwner = Boolean
-                                .valueOf(item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "IsPhoneOwner")); //$NON-NLS-1$
+                                .parseBoolean(item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "IsPhoneOwner")); //$NON-NLS-1$
                         if (value != null && isOwner) { // $NON-NLS-1$
                             ownerParties.add(value);
                             if (parentItem.getMediaType().toString().contains("chat"))
                                 parentItem.getMetadata().add(UFEDChatParser.META_PHONE_OWNER, value);
                         }
-                        if (isOwner && "From".equals(role)) //$NON-NLS-1$
+                        if (isOwner && "From".equals(role)) { //$NON-NLS-1$
                             parentItem.getMetadata().add(UFEDChatParser.META_FROM_OWNER, Boolean.TRUE.toString());
+                            parentItem.getMetadata().set(ExtraProperties.COMMUNICATION_DIRECTION, CommunicationConstants.DIRECTION_OUTGOING);
+                        } else if (isOwner && "To".equals(role) && parentItem.getMetadata().get(ExtraProperties.COMMUNICATION_DIRECTION) == null) {
+                            parentItem.getMetadata().set(ExtraProperties.COMMUNICATION_DIRECTION, CommunicationConstants.DIRECTION_INCOMING);
+                        }
 
                     } else if ("PhoneNumber".equals(type) || "EmailAddress".equals(type)) { //$NON-NLS-1$ //$NON-NLS-2$
                         String category = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Category"); //$NON-NLS-1$
@@ -1207,7 +1211,7 @@ public class UfedXmlReader extends DataSourceReader {
         private void fillMissingInfo(Item item) {
             String from = item.getMetadata().get(ExtraProperties.COMMUNICATION_FROM);
             String[] to = item.getMetadata().getValues(ExtraProperties.COMMUNICATION_TO);
-            boolean fromOwner = Boolean.valueOf(item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "fromOwner"));
+            boolean fromOwner = Boolean.parseBoolean(item.getMetadata().get(UFEDChatParser.META_FROM_OWNER));
             if (to == null || to.length != 1) {
                 if (item.getMediaType() != null
                         && MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.UFED_MESSAGE_MIME)) {
