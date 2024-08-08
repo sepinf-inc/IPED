@@ -56,6 +56,39 @@ public class ReportGenerator {
 
         String[] split = c.getName().split("_", 3); //$NON-NLS-1$
         String title = split[split.length - 1];
+
+        // Replace standard chat title by a meaningful one
+        // Targeted apps: WhatsApp, Telegram
+        if (UFEDChatParser.WHATSAPP.equals(c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source")) ||
+            UFEDChatParser.TELEGRAM.equals(c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source"))) {
+            if (UFEDChatParser.CHATTYPE_ONEONONE.equals(c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "ChatType"))) {
+                if ((c.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants").length > 1) &&
+                    (c.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants")[0].equals(c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "phoneOwner"))))
+                    title = UFEDChatParser.CHATTYPE_ONEONONE_TITLE + ": '" + c.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants")[1] + "'";
+                else
+                    title = UFEDChatParser.CHATTYPE_ONEONONE_TITLE + ": '" + c.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants")[0] + "'";
+            }
+            else if (UFEDChatParser.CHATTYPE_GROUP.equals(c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "ChatType"))) {
+                if (c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name") == null)
+                    title = UFEDChatParser.CHATTYPE_GROUP_TITLE + ":";
+                else
+                    title = UFEDChatParser.CHATTYPE_GROUP_TITLE + ": '" + c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name") + "'";
+            }
+            else if (UFEDChatParser.CHATTYPE_BROADCAST.equals(c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "ChatType"))) {
+                if (c.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants").length == 1)
+                    title = UFEDChatParser.CHATTYPE_BROADCAST_STATUS_TITLE + ": '" + c.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants")[0] + "'";
+                else {
+                    if (c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name") == null)
+                        title = UFEDChatParser.CHATTYPE_BROADCAST_TITLE + ":";
+                    else
+                        title = UFEDChatParser.CHATTYPE_BROADCAST_TITLE + ": '" + c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name") + "'";
+                }
+            }
+            else if (UFEDChatParser.CHATTYPE_UNKNOWN.equals(c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "ChatType"))) {
+                title = UFEDChatParser.CHATTYPE_UNKNOWN_TITLE + ": '" + c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "id") + "'";
+            }
+        }
+
         printMessageFileHeader(out, title, c.getName(), null);
         if (currentMsg > 0)
             out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
