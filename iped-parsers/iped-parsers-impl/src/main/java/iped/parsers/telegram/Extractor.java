@@ -641,11 +641,11 @@ public class Extractor {
             + "           from dialogs d LEFT join users u on u.uid=d.did  WHERE d.did NOT IN (SELECT -uid FROM chats) "
             + "            order by date desc";
 
-    private static final String MEMBERS_CHATS_SQL = "SELECT * from channel_users_v2 where did=?";
+    private static final String MEMBERS_CHATS_SQL = "SELECT * from channel_users_v2 where did=? AND uid > 0";
 
     private static final String SELECT_CHATS_SETTINGS = "SELECT participants_count FROM chat_settings_v2 WHERE uid=?";
 
-    private static final String SELECT_CHANNEL_ADMINS = "SELECT uid FROM channel_admins_v3 WHERE did=?";
+    private static final String SELECT_CHANNEL_ADMINS = "SELECT uid FROM channel_admins_v3 WHERE did=? AND uid > 0";
 
     private static final String CHATS_SQL_IOS = "select substr(key,16,8) as chatid, false as deleted from t9 "
             + "UNION SELECT  substr(t7.key,1,8) as chatid, true as deleted from t7  "
