@@ -207,8 +207,8 @@ public class TelegramParser extends SQLite3DBParser {
                     chatMetadata.add(ExtraProperties.PARTICIPANTS, e.getContact(id).toString());
                 }
                 for (long id : cg.getAdmins()) {
-                    chatMetadata.add(ExtraProperties.COMMUNICATION_PREFIX + "ChannelAdmins",
-                            e.getContact(id).toString());
+                    chatMetadata.add(ExtraProperties.COMMUNICATION_ADMINS, e.getContact(id).toString());
+                    chatMetadata.add(ExtraProperties.PARTICIPANTS, e.getContact(id).toString());
                 }
                 int participantsCount = cg.getParticipantsCount();
                 if (participantsCount > 0) {

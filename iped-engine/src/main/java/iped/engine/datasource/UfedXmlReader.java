@@ -937,6 +937,12 @@ public class UfedXmlReader extends DataSourceReader {
                                 parentItem.getMetadata().add(Message.MESSAGE_CC, value);
                             else if ("Bcc".equalsIgnoreCase(role)) //$NON-NLS-1$
                                 parentItem.getMetadata().add(Message.MESSAGE_BCC, value);
+                            else if ("Participants".equalsIgnoreCase(role)) {
+                                if (Boolean.parseBoolean(item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "IsGroupAdmin"))) {
+                                    parentItem.getMetadata().add(ExtraProperties.COMMUNICATION_ADMINS, value);
+                                }
+                                parentItem.getMetadata().add(ExtraProperties.PARTICIPANTS, value);
+                            }
                             else
                                 parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + role, value);
                         }
@@ -1192,7 +1198,7 @@ public class UfedXmlReader extends DataSourceReader {
                     if (to != null && to.length > 0) {
                         toList = Arrays.asList(to);
                     } else {
-                        String[] parties = parentChat.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants");
+                        String[] parties = parentChat.getMetadata().getValues(ExtraProperties.PARTICIPANTS);
                         for (String party : parties) {
                             if ((from != null && !party.equals(from)) || (fromOwner && !ownerParties.contains(party)))
                                 toList.add(party);
