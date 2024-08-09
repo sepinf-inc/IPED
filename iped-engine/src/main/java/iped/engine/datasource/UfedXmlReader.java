@@ -894,6 +894,11 @@ public class UfedXmlReader extends DataSourceReader {
                     } else {
                         item.getMetadata().set(ExtraProperties.COMMUNICATION_TYPE, CommunicationConstants.TYPE_UNKONWN);
                     }
+
+                    String ufedAccount = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Account");
+                    if (ufedAccount != null) {
+                        item.getMetadata().set(ExtraProperties.COMMUNICATION_ACCOUNT, ufedAccount);
+                    }
                 }
                 if ("InstantMessage".equals(type) || "Email".equals(type) || "Call".equals(type) || "SMS".equals(type) //$NON-NLS-4$
                         || "MMS".equals(type)) { //$NON-NLS-1$
