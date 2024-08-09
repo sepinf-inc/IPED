@@ -64,6 +64,7 @@ Communication:To = java.lang.String
 Communication:Type = java.lang.String
 Communication:Direction = java.lang.String
 Communication:Account = java.lang.String
+Communication:MessagesCount = java.lang.Integer
 Communication:ParticipantsCount = java.lang.Integer
 Communication:Participants = java.lang.String
 Communication:Participants:ID = java.lang.String

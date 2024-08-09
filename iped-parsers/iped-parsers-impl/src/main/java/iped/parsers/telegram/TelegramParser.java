@@ -231,6 +231,8 @@ public class TelegramParser extends SQLite3DBParser {
 
             chatMetadata.set(ExtraProperties.COMMUNICATION_ID, Long.toString(c.getId()));
             chatMetadata.set(ExtraProperties.COMMUNICATION_ACCOUNT, e.getUserAccount().toString());
+            chatMetadata.set(ExtraProperties.COMMUNICATION_MESSAGES_COUNT,
+                    Long.toString(c.getMessages().stream().filter(m -> m.getType() == null).count()));
 
             List<Message> msgSubset = c.getMessages().subList(firstMsg, nextMsg);
 

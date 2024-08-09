@@ -404,6 +404,7 @@ public class UfedXmlReader extends DataSourceReader {
         Object ignoreItemTree = null;
         boolean inChat = false;
         int numAttachments = 0;
+        int numMessages = 0;
         String prevUfedId = null;
 
         private class XmlNode {
@@ -592,8 +593,10 @@ public class UfedXmlReader extends DataSourceReader {
                     Item item = new Item();
                     item.setExtraAttribute(ExtraProperties.DATASOURCE_READER, UfedXmlReader.class.getSimpleName());
                     String type = atts.getValue("type"); //$NON-NLS-1$
-                    if (type.equals("Chat"))
+                    if (type.equals("Chat")) {
                         inChat = true;
+                        numMessages = 0;
+                    }
                     String name = type + "_" + atts.getValue("id"); //$NON-NLS-1$ //$NON-NLS-2$
                     item.setName(name);
                     String path = decodedFolder.getPath() + "/" + type + "/" + name; //$NON-NLS-1$ //$NON-NLS-2$
@@ -896,6 +899,7 @@ public class UfedXmlReader extends DataSourceReader {
                     }
 
                     item.getMetadata().set(ExtraProperties.COMMUNICATION_ID, item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Id"));
+                    item.getMetadata().set(ExtraProperties.COMMUNICATION_MESSAGES_COUNT, Integer.toString(numMessages));
 
                     String ufedAccount = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Account");
                     if (ufedAccount != null) {
@@ -919,6 +923,10 @@ public class UfedXmlReader extends DataSourceReader {
                         item.getMetadata().remove(ExtraProperties.UFED_META_PREFIX + "Snippet"); //$NON-NLS-1$
                     }
                     item.getMetadata().set(ExtraProperties.MESSAGE_BODY, body);
+
+                    if (!"System message".equals(item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Identifier"))) {
+                        numMessages++;
+                    }
                 }
                 int numInstantMsgAttachs = 0;
                 boolean ignoreItemLocal = false;
