@@ -976,8 +976,8 @@ public class UfedXmlReader extends DataSourceReader {
                                     parentItem.getMetadata().add(ExtraProperties.COMMUNICATION_ADMINS, value);
                                     parentItem.getMetadata().add(ExtraProperties.COMMUNICATION_ADMINS + ":ID", identifier);
                                 }
-                                parentItem.getMetadata().add(ExtraProperties.PARTICIPANTS, value);
-                                parentItem.getMetadata().add(ExtraProperties.PARTICIPANTS + ":ID", identifier);
+                                parentItem.getMetadata().add(ExtraProperties.COMMUNICATION_PARTICIPANTS, value);
+                                parentItem.getMetadata().add(ExtraProperties.COMMUNICATION_PARTICIPANTS + ":ID", identifier);
                             }
                             else
                                 parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + role, value);
@@ -1238,7 +1238,7 @@ public class UfedXmlReader extends DataSourceReader {
                     if (to != null && to.length > 0) {
                         toList = Arrays.asList(to);
                     } else {
-                        String[] parties = parentChat.getMetadata().getValues(ExtraProperties.PARTICIPANTS);
+                        String[] parties = parentChat.getMetadata().getValues(ExtraProperties.COMMUNICATION_PARTICIPANTS);
                         for (String party : parties) {
                             if ((from != null && !party.equals(from)) || (fromOwner && !ownerParties.contains(party)))
                                 toList.add(party);

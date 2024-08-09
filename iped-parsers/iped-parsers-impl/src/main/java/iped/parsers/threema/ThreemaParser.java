@@ -281,16 +281,16 @@ public class ThreemaParser extends SQLite3DBParser {
                 }
                 if (account != null) {
                     String local = account.getFullId();
-                    chatMetadata.add(ExtraProperties.PARTICIPANTS, local);
+                    chatMetadata.add(ExtraProperties.COMMUNICATION_PARTICIPANTS, local);
                 }
                 if (c.isGroupChat()) {
                     for (ThreemaContact member : c.getParticipants()) {
-                        chatMetadata.add(ExtraProperties.PARTICIPANTS, member.getFullId());
+                        chatMetadata.add(ExtraProperties.COMMUNICATION_PARTICIPANTS, member.getFullId());
                     }
                     chatMetadata.add(ExtraProperties.GROUP_ID, "Conversation_" + c.getId());
                 } else {
                     if (c.getContact() != null) {
-                        chatMetadata.add(ExtraProperties.PARTICIPANTS, c.getContact().getFullId());
+                        chatMetadata.add(ExtraProperties.COMMUNICATION_PARTICIPANTS, c.getContact().getFullId());
                     }
                 }
 

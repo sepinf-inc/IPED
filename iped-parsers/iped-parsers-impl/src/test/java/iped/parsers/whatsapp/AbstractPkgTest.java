@@ -66,8 +66,8 @@ public abstract class AbstractPkgTest extends BaseItemSearchContext {
                 useraccount.add(metadata.get(ExtraProperties.USER_ACCOUNT));
             if (metadata.get(ExtraProperties.USER_NOTES) != null)
                 usernotes.add(metadata.get(ExtraProperties.USER_NOTES));
-            if (metadata.get(ExtraProperties.PARTICIPANTS) != null) {
-                participants.add(Arrays.asList(metadata.getValues(ExtraProperties.PARTICIPANTS)));
+            if (metadata.get(ExtraProperties.COMMUNICATION_PARTICIPANTS) != null) {
+                participants.add(Arrays.asList(metadata.getValues(ExtraProperties.COMMUNICATION_PARTICIPANTS)));
                 admins.add(Arrays.asList(metadata.getValues(ExtraProperties.COMMUNICATION_ADMINS)));
             }
             if (metadata.get(org.apache.tika.metadata.Message.MESSAGE_FROM) != null)

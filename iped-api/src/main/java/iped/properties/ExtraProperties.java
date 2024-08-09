@@ -51,7 +51,7 @@ public class ExtraProperties {
 
     public static final Property MESSAGE_DATE = COMMUNICATION_DATE;
 
-    public static final String PARTICIPANTS = COMMUNICATION_PREFIX + "Participants";
+    public static final String COMMUNICATION_PARTICIPANTS = COMMUNICATION_PREFIX + "Participants";
 
     public static final String COMMUNICATION_ADMINS = COMMUNICATION_PREFIX + "Admins";
 

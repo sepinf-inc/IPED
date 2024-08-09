@@ -332,7 +332,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                 }
                 if (c.isGroupChat()) {
                     for (WAContact member : c.getGroupMembers()) {
-                        addParticipantFields(chatMetadata, ExtraProperties.PARTICIPANTS, member, cache);
+                        addParticipantFields(chatMetadata, ExtraProperties.COMMUNICATION_PARTICIPANTS, member, cache);
                     }
                     for (WAContact admin : c.getGroupAdmins()) {
                         addParticipantFields(chatMetadata, ExtraProperties.COMMUNICATION_ADMINS, admin, cache);
@@ -344,10 +344,10 @@ public class WhatsAppParser extends SQLite3DBParser {
                     chatMetadata.add(ExtraProperties.COMMUNICATION_TYPE, CommunicationConstants.TYPE_BROADCAST);
                 } else {
                     if (c.getRemote() != null) {
-                        addParticipantFields(chatMetadata, ExtraProperties.PARTICIPANTS, c.getRemote(), cache);
+                        addParticipantFields(chatMetadata, ExtraProperties.COMMUNICATION_PARTICIPANTS, c.getRemote(), cache);
                     }
                     if (account != null) {
-                        addParticipantFields(chatMetadata, ExtraProperties.PARTICIPANTS, account, cache);
+                        addParticipantFields(chatMetadata, ExtraProperties.COMMUNICATION_PARTICIPANTS, account, cache);
                     }
                     chatMetadata.add(ExtraProperties.COMMUNICATION_TYPE, CommunicationConstants.TYPE_PRIVATE);
                 }

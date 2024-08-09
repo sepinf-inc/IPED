@@ -251,7 +251,7 @@ public class UFEDChatParser extends AbstractParser {
         String source = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source"); //$NON-NLS-1$
         if (source != null)
             name += "_" + source; //$NON-NLS-1$
-        String[] parties = item.getMetadata().getValues(ExtraProperties.PARTICIPANTS); //$NON-NLS-1$
+        String[] parties = item.getMetadata().getValues(ExtraProperties.COMMUNICATION_PARTICIPANTS); //$NON-NLS-1$
         if (parties != null && parties.length > 2) {
             name += "_Group_" + item.getName().split("_")[1]; //$NON-NLS-1$ //$NON-NLS-2$
         } else if (parties != null && parties.length > 0) {

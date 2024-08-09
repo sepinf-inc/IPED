@@ -207,18 +207,18 @@ public class TelegramParser extends SQLite3DBParser {
                 ChatGroup cg = (ChatGroup) c;
                 for (long id : cg.getAdmins()) {
                     addParticipantFields(chatMetadata, c, e, ExtraProperties.COMMUNICATION_ADMINS, id);
-                    addParticipantFields(chatMetadata, c, e, ExtraProperties.PARTICIPANTS, id);
+                    addParticipantFields(chatMetadata, c, e, ExtraProperties.COMMUNICATION_PARTICIPANTS, id);
                 }
                 for (long id : cg.getMembers()) {
-                    addParticipantFields(chatMetadata, c, e, ExtraProperties.PARTICIPANTS, id);
+                    addParticipantFields(chatMetadata, c, e, ExtraProperties.COMMUNICATION_PARTICIPANTS, id);
                 }
                 int participantsCount = cg.getParticipantsCount();
                 if (participantsCount > 0) {
-                    chatMetadata.add(ExtraProperties.PARTICIPANTS + "Count", String.valueOf(participantsCount));
+                    chatMetadata.add(ExtraProperties.COMMUNICATION_PARTICIPANTS + "Count", String.valueOf(participantsCount));
                 }
             } else {
-                addParticipantFields(chatMetadata, c, e, ExtraProperties.PARTICIPANTS, c.getId());
-                addParticipantFields(chatMetadata, c, e, ExtraProperties.PARTICIPANTS, e.getUserAccount().getId());
+                addParticipantFields(chatMetadata, c, e, ExtraProperties.COMMUNICATION_PARTICIPANTS, c.getId());
+                addParticipantFields(chatMetadata, c, e, ExtraProperties.COMMUNICATION_PARTICIPANTS, e.getUserAccount().getId());
             }
 
             if (c.isChannel()) {
