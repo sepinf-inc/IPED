@@ -270,7 +270,7 @@ public class TelegramParser extends SQLite3DBParser {
     }
 
     private String getChatNamePrefix(Chat c) {
-        String title = "Telegram_";
+        String title = "Telegram ";
         if (c.isChannel()) {
             title += "Channel";
         } else if (c.isGroup()) {
@@ -278,7 +278,7 @@ public class TelegramParser extends SQLite3DBParser {
         } else {
             title += "Chat";
         }
-        title += "_" + c.getName();
+        title += " - " + c.getC().toString();
         return title;
     }
 
