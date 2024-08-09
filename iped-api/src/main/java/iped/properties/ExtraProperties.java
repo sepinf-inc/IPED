@@ -41,6 +41,8 @@ public class ExtraProperties {
 
     public static final String COMMUNICATION_PREFIX = "Communication:";
 
+    public static final String COMMUNICATION_ID = COMMUNICATION_PREFIX + "ID";
+
     public static final String COMMUNICATION_FROM = COMMUNICATION_PREFIX + "From";
 
     public static final String COMMUNICATION_TO = COMMUNICATION_PREFIX + "To";
@@ -50,6 +52,16 @@ public class ExtraProperties {
     public static final Property MESSAGE_DATE = COMMUNICATION_DATE;
 
     public static final String PARTICIPANTS = COMMUNICATION_PREFIX + "Participants";
+
+    public static final String COMMUNICATION_ADMINS = COMMUNICATION_PREFIX + "Admins";
+
+    public static final String COMMUNICATION_TYPE = COMMUNICATION_PREFIX + "Type";
+
+    public static final String COMMUNICATION_DIRECTION = COMMUNICATION_PREFIX + "Direction";
+
+    public static final String COMMUNICATION_ACCOUNT = COMMUNICATION_PREFIX + "Account";
+
+    public static final String COMMUNICATION_MESSAGES_COUNT = COMMUNICATION_PREFIX + "MessagesCount";
 
     public static final String GROUP_ID = "GroupID";
 

@@ -71,7 +71,7 @@ public class ReportGenerator {
                         + thisDate + "</div></div>"); //$NON-NLS-1$
                 lastDate = thisDate;
             }
-            boolean isGroup = c.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants").length > 2; //$NON-NLS-1$
+            boolean isGroup = c.getMetadata().getValues(ExtraProperties.PARTICIPANTS).length > 2; //$NON-NLS-1$
             printMessage(out, m, isGroup, c.isDeleted());
 
             if (currentMsg++ != msgs.size() - 1 && bout.size() >= minChatSplitSize) {

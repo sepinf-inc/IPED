@@ -28,6 +28,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
@@ -81,6 +82,7 @@ import iped.engine.task.index.IndexItem;
 import iped.engine.util.Util;
 import iped.parsers.telegram.TelegramParser;
 import iped.parsers.ufed.UFEDChatParser;
+import iped.parsers.util.CommunicationConstants;
 import iped.parsers.util.MetadataUtil;
 import iped.parsers.util.PhoneParsingConfig;
 import iped.parsers.whatsapp.WhatsAppParser;
@@ -126,6 +128,16 @@ public class UfedXmlReader extends DataSourceReader {
     private static Random random = new Random();
 
     private static HashMap<File, UFDRInputStreamFactory> uisfMap = new HashMap<>();
+
+    private static final Map<String, String> CHAT_TYPE_MAP;
+    static {
+        HashMap<String, String> chatTypeMap = new HashMap<>();
+        chatTypeMap.put("OneOnOne", CommunicationConstants.TYPE_PRIVATE);
+        chatTypeMap.put("Group", CommunicationConstants.TYPE_GROUP);
+        chatTypeMap.put("Broadcast", CommunicationConstants.TYPE_BROADCAST);
+
+        CHAT_TYPE_MAP = Collections.unmodifiableMap(chatTypeMap);
+    }
 
     File root, rootFolder, ufdrFile;
     UFDRInputStreamFactory uisf;
@@ -392,6 +404,7 @@ public class UfedXmlReader extends DataSourceReader {
         Object ignoreItemTree = null;
         boolean inChat = false;
         int numAttachments = 0;
+        int numMessages = 0;
         String prevUfedId = null;
 
         private class XmlNode {
@@ -580,8 +593,10 @@ public class UfedXmlReader extends DataSourceReader {
                     Item item = new Item();
                     item.setExtraAttribute(ExtraProperties.DATASOURCE_READER, UfedXmlReader.class.getSimpleName());
                     String type = atts.getValue("type"); //$NON-NLS-1$
-                    if (type.equals("Chat"))
+                    if (type.equals("Chat")) {
                         inChat = true;
+                        numMessages = 0;
+                    }
                     String name = type + "_" + atts.getValue("id"); //$NON-NLS-1$ //$NON-NLS-2$
                     item.setName(name);
                     String path = decodedFolder.getPath() + "/" + type + "/" + name; //$NON-NLS-1$ //$NON-NLS-2$
@@ -875,6 +890,21 @@ public class UfedXmlReader extends DataSourceReader {
                         item.setMediaType(UFEDChatParser.UFED_CHAT_TELEGRAM);
 
                     item.setExtraAttribute(IndexItem.TREENODE, "true"); //$NON-NLS-1$
+
+                    String ufedChatType = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "ChatType");
+                    if (ufedChatType != null && CHAT_TYPE_MAP.containsKey(ufedChatType)) {
+                        item.getMetadata().set(ExtraProperties.COMMUNICATION_TYPE, CHAT_TYPE_MAP.get(ufedChatType));
+                    } else {
+                        item.getMetadata().set(ExtraProperties.COMMUNICATION_TYPE, CommunicationConstants.TYPE_UNKONWN);
+                    }
+
+                    item.getMetadata().set(ExtraProperties.COMMUNICATION_ID, item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Id"));
+                    item.getMetadata().set(ExtraProperties.COMMUNICATION_MESSAGES_COUNT, Integer.toString(numMessages));
+
+                    String ufedAccount = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Account");
+                    if (ufedAccount != null) {
+                        item.getMetadata().set(ExtraProperties.COMMUNICATION_ACCOUNT, ufedAccount);
+                    }
                 }
                 if ("InstantMessage".equals(type) || "Email".equals(type) || "Call".equals(type) || "SMS".equals(type) //$NON-NLS-4$
                         || "MMS".equals(type)) { //$NON-NLS-1$
@@ -893,6 +923,10 @@ public class UfedXmlReader extends DataSourceReader {
                         item.getMetadata().remove(ExtraProperties.UFED_META_PREFIX + "Snippet"); //$NON-NLS-1$
                     }
                     item.getMetadata().set(ExtraProperties.MESSAGE_BODY, body);
+
+                    if (!"System message".equals(item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Identifier"))) {
+                        numMessages++;
+                    }
                 }
                 int numInstantMsgAttachs = 0;
                 boolean ignoreItemLocal = false;
@@ -926,8 +960,8 @@ public class UfedXmlReader extends DataSourceReader {
 
                         String identifier = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Identifier"); //$NON-NLS-1$
                         String name = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name"); //$NON-NLS-1$
-                        String value = name == null || name.equals(identifier) ? identifier
-                                : identifier == null ? name : name + "(" + identifier + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+                        String value = name == null || name.equals(identifier) ? "ID:" + identifier
+                                : identifier == null ? name : name + " (ID:" + identifier + ")"; //$NON-NLS-1$ //$NON-NLS-2$
                         if (value != null) {
                             if ("From".equalsIgnoreCase(role)) //$NON-NLS-1$
                                 parentItem.getMetadata().add(ExtraProperties.COMMUNICATION_FROM, value);
@@ -937,18 +971,30 @@ public class UfedXmlReader extends DataSourceReader {
                                 parentItem.getMetadata().add(Message.MESSAGE_CC, value);
                             else if ("Bcc".equalsIgnoreCase(role)) //$NON-NLS-1$
                                 parentItem.getMetadata().add(Message.MESSAGE_BCC, value);
+                            else if ("Participants".equalsIgnoreCase(role)) {
+                                if (Boolean.parseBoolean(item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "IsGroupAdmin"))) {
+                                    parentItem.getMetadata().add(ExtraProperties.COMMUNICATION_ADMINS, value);
+                                    parentItem.getMetadata().add(ExtraProperties.COMMUNICATION_ADMINS + ":ID", identifier);
+                                }
+                                parentItem.getMetadata().add(ExtraProperties.PARTICIPANTS, value);
+                                parentItem.getMetadata().add(ExtraProperties.PARTICIPANTS + ":ID", identifier);
+                            }
                             else
                                 parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + role, value);
                         }
                         boolean isOwner = Boolean
-                                .valueOf(item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "IsPhoneOwner")); //$NON-NLS-1$
+                                .parseBoolean(item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "IsPhoneOwner")); //$NON-NLS-1$
                         if (value != null && isOwner) { // $NON-NLS-1$
                             ownerParties.add(value);
                             if (parentItem.getMediaType().toString().contains("chat"))
                                 parentItem.getMetadata().add(UFEDChatParser.META_PHONE_OWNER, value);
                         }
-                        if (isOwner && "From".equals(role)) //$NON-NLS-1$
+                        if (isOwner && "From".equals(role)) { //$NON-NLS-1$
                             parentItem.getMetadata().add(UFEDChatParser.META_FROM_OWNER, Boolean.TRUE.toString());
+                            parentItem.getMetadata().set(ExtraProperties.COMMUNICATION_DIRECTION, CommunicationConstants.DIRECTION_OUTGOING);
+                        } else if (isOwner && "To".equals(role) && parentItem.getMetadata().get(ExtraProperties.COMMUNICATION_DIRECTION) == null) {
+                            parentItem.getMetadata().set(ExtraProperties.COMMUNICATION_DIRECTION, CommunicationConstants.DIRECTION_INCOMING);
+                        }
 
                     } else if ("PhoneNumber".equals(type) || "EmailAddress".equals(type)) { //$NON-NLS-1$ //$NON-NLS-2$
                         String category = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Category"); //$NON-NLS-1$
@@ -1180,7 +1226,7 @@ public class UfedXmlReader extends DataSourceReader {
         private void fillMissingInfo(Item item) {
             String from = item.getMetadata().get(ExtraProperties.COMMUNICATION_FROM);
             String[] to = item.getMetadata().getValues(ExtraProperties.COMMUNICATION_TO);
-            boolean fromOwner = Boolean.valueOf(item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "fromOwner"));
+            boolean fromOwner = Boolean.parseBoolean(item.getMetadata().get(UFEDChatParser.META_FROM_OWNER));
             if (to == null || to.length != 1) {
                 if (item.getMediaType() != null
                         && MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.UFED_MESSAGE_MIME)) {
@@ -1192,7 +1238,7 @@ public class UfedXmlReader extends DataSourceReader {
                     if (to != null && to.length > 0) {
                         toList = Arrays.asList(to);
                     } else {
-                        String[] parties = parentChat.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants");
+                        String[] parties = parentChat.getMetadata().getValues(ExtraProperties.PARTICIPANTS);
                         for (String party : parties) {
                             if ((from != null && !party.equals(from)) || (fromOwner && !ownerParties.contains(party)))
                                 toList.add(party);

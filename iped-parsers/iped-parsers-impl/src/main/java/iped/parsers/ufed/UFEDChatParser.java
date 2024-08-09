@@ -161,7 +161,7 @@ public class UFEDChatParser extends AbstractParser {
 
                     // copy parent metadata
                     for (String meta : chat.getMetadata().names()) {
-                        if (meta.contains(ExtraProperties.UFED_META_PREFIX))
+                        if (meta.contains(ExtraProperties.UFED_META_PREFIX) || meta.startsWith(ExtraProperties.COMMUNICATION_PREFIX))
                             for (String val : chat.getMetadata().getValues(meta))
                                 chatMetadata.add(meta, val);
                     }
@@ -251,7 +251,7 @@ public class UFEDChatParser extends AbstractParser {
         String source = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source"); //$NON-NLS-1$
         if (source != null)
             name += "_" + source; //$NON-NLS-1$
-        String[] parties = item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants"); //$NON-NLS-1$
+        String[] parties = item.getMetadata().getValues(ExtraProperties.PARTICIPANTS); //$NON-NLS-1$
         if (parties != null && parties.length > 2) {
             name += "_Group_" + item.getName().split("_")[1]; //$NON-NLS-1$ //$NON-NLS-2$
         } else if (parties != null && parties.length > 0) {

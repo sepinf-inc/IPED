@@ -36,6 +36,7 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
@@ -54,6 +55,7 @@ import dpf.ap.gpinf.interfacetelegram.DecoderTelegramInterface;
 import iped.data.IItemReader;
 import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.standard.StandardParser;
+import iped.parsers.util.CommunicationConstants;
 import iped.parsers.util.ItemInfo;
 import iped.parsers.util.PhoneParsingConfig;
 import iped.properties.BasicProps;
@@ -203,18 +205,34 @@ public class TelegramParser extends SQLite3DBParser {
 
             if (c.isGroupOrChannel()) {
                 ChatGroup cg = (ChatGroup) c;
-                for (long id : cg.getMembers()) {
-                    chatMetadata.add(ExtraProperties.PARTICIPANTS, e.getContact(id).toString());
-                }
                 for (long id : cg.getAdmins()) {
-                    chatMetadata.add(ExtraProperties.COMMUNICATION_PREFIX + "ChannelAdmins",
-                            e.getContact(id).toString());
+                    addParticipantFields(chatMetadata, c, e, ExtraProperties.COMMUNICATION_ADMINS, id);
+                    addParticipantFields(chatMetadata, c, e, ExtraProperties.PARTICIPANTS, id);
+                }
+                for (long id : cg.getMembers()) {
+                    addParticipantFields(chatMetadata, c, e, ExtraProperties.PARTICIPANTS, id);
                 }
                 int participantsCount = cg.getParticipantsCount();
                 if (participantsCount > 0) {
                     chatMetadata.add(ExtraProperties.PARTICIPANTS + "Count", String.valueOf(participantsCount));
                 }
+            } else {
+                addParticipantFields(chatMetadata, c, e, ExtraProperties.PARTICIPANTS, c.getId());
+                addParticipantFields(chatMetadata, c, e, ExtraProperties.PARTICIPANTS, e.getUserAccount().getId());
             }
+
+            if (c.isChannel()) {
+                chatMetadata.set(ExtraProperties.COMMUNICATION_TYPE, CommunicationConstants.TYPE_BROADCAST);
+            } else if (c.isGroup()) {
+                chatMetadata.set(ExtraProperties.COMMUNICATION_TYPE, CommunicationConstants.TYPE_GROUP);
+            } else {
+                chatMetadata.set(ExtraProperties.COMMUNICATION_TYPE, CommunicationConstants.TYPE_PRIVATE);
+            }
+
+            chatMetadata.set(ExtraProperties.COMMUNICATION_ID, Long.toString(c.getId()));
+            chatMetadata.set(ExtraProperties.COMMUNICATION_ACCOUNT, e.getUserAccount().toString());
+            chatMetadata.set(ExtraProperties.COMMUNICATION_MESSAGES_COUNT,
+                    Long.toString(c.getMessages().stream().filter(m -> m.getType() == null).count()));
 
             List<Message> msgSubset = c.getMessages().subList(firstMsg, nextMsg);
 
@@ -231,6 +249,23 @@ public class TelegramParser extends SQLite3DBParser {
             }
 
             firstMsg = nextMsg;
+        }
+    }
+
+    private void addParticipantFields(Metadata chatMetadata, Chat c, Extractor e, String field, long id) {
+
+        // avoid the own chat as participant (happens in Channels)
+        if (c.getId() == id && c.isGroupOrChannel())
+            return;
+
+        Contact contact = e.getContact(id);
+        chatMetadata.add(field, contact.toString());
+        chatMetadata.add(field + ":ID", Long.toString(id));
+        if (StringUtils.isNotBlank(contact.getPhone())) {
+            chatMetadata.add(field + ":Phone", contact.getPhone());
+        }
+        if (StringUtils.isNotBlank(contact.getUsername())) {
+            chatMetadata.add(field + ":Username", contact.getUsername());
         }
     }
 
@@ -267,7 +302,7 @@ public class TelegramParser extends SQLite3DBParser {
             if (m.getChat().isGroupOrChannel()) {
                 ChatGroup groupChat = (ChatGroup) m.getChat();
                 String to = groupChat.isGroup() ? "Group " : "Channel ";
-                to += groupChat.getName() + " (id:" + groupChat.getId() + ")";
+                to += groupChat.getName() + " (ID:" + groupChat.getId() + ")";
                 meta.add(org.apache.tika.metadata.Message.MESSAGE_TO, to);
                 meta.set(ExtraProperties.IS_GROUP_MESSAGE, "true");
             }
@@ -279,6 +314,12 @@ public class TelegramParser extends SQLite3DBParser {
                 } else if (account != null) {
                     meta.set(org.apache.tika.metadata.Message.MESSAGE_TO, account.toString());
                 }
+            }
+
+            if (m.isFromMe()) {
+                meta.set(ExtraProperties.COMMUNICATION_DIRECTION, CommunicationConstants.DIRECTION_OUTGOING);
+            } else {
+                meta.set(ExtraProperties.COMMUNICATION_DIRECTION, CommunicationConstants.DIRECTION_INCOMING);
             }
 
             meta.set(ExtraProperties.MESSAGE_BODY, m.getData());
