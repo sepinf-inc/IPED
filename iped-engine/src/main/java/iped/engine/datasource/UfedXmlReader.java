@@ -895,6 +895,8 @@ public class UfedXmlReader extends DataSourceReader {
                         item.getMetadata().set(ExtraProperties.COMMUNICATION_TYPE, CommunicationConstants.TYPE_UNKONWN);
                     }
 
+                    item.getMetadata().set(ExtraProperties.COMMUNICATION_ID, item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Id"));
+
                     String ufedAccount = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Account");
                     if (ufedAccount != null) {
                         item.getMetadata().set(ExtraProperties.COMMUNICATION_ACCOUNT, ufedAccount);

@@ -57,6 +57,7 @@ common:meta:last-author = java.lang.String
 common:w:Comments = java.lang.String
 common:xmp:CreatorTool = java.lang.String
 Manager = java.lang.Integer
+Communication:ID = java.lang.String
 Communication:Date = java.util.Date
 Communication:From = java.lang.String
 Communication:To = java.lang.String

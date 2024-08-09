@@ -41,6 +41,8 @@ public class ExtraProperties {
 
     public static final String COMMUNICATION_PREFIX = "Communication:";
 
+    public static final String COMMUNICATION_ID = COMMUNICATION_PREFIX + "ID";
+
     public static final String COMMUNICATION_FROM = COMMUNICATION_PREFIX + "From";
 
     public static final String COMMUNICATION_TO = COMMUNICATION_PREFIX + "To";
