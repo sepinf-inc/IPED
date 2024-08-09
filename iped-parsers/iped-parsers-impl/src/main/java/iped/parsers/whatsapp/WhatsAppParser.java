@@ -72,6 +72,7 @@ import iped.parsers.plist.detector.PListDetector;
 import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.sqlite.SQLite3Parser;
 import iped.parsers.standard.StandardParser;
+import iped.parsers.util.CommunicationConstants;
 import iped.parsers.util.ItemInfo;
 import iped.parsers.util.PhoneParsingConfig;
 import iped.parsers.vcard.VCardParser;
@@ -327,20 +328,33 @@ public class WhatsAppParser extends SQLite3DBParser {
                     chatMetadata.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
                 }
                 if (account != null) {
-                    String local = formatContact(account, cache);
-                    chatMetadata.add(ExtraProperties.PARTICIPANTS, local);
+                    chatMetadata.add(ExtraProperties.COMMUNICATION_ACCOUNT, account.getFullId());
                 }
                 if (c.isGroupChat()) {
                     for (WAContact member : c.getGroupMembers()) {
-                        chatMetadata.add(ExtraProperties.PARTICIPANTS, formatContact(member, cache));
+                        addParticipantFields(chatMetadata, ExtraProperties.PARTICIPANTS, member, cache);
+                    }
+                    for (WAContact admin : c.getGroupAdmins()) {
+                        addParticipantFields(chatMetadata, ExtraProperties.COMMUNICATION_ADMINS, admin, cache);
                     }
                     // string formatted as {creator's phone number}-{creation time}@g.us
                     chatMetadata.add(ExtraProperties.GROUP_ID, c.getRemote().getFullId());
+                    chatMetadata.add(ExtraProperties.COMMUNICATION_TYPE, CommunicationConstants.TYPE_GROUP);
+                } else if (c.isChannelChat()) {
+                    chatMetadata.add(ExtraProperties.COMMUNICATION_TYPE, CommunicationConstants.TYPE_BROADCAST);
                 } else {
                     if (c.getRemote() != null) {
-                        chatMetadata.add(ExtraProperties.PARTICIPANTS, formatContact(c.getRemote(), cache));
+                        addParticipantFields(chatMetadata, ExtraProperties.PARTICIPANTS, c.getRemote(), cache);
                     }
+                    if (account != null) {
+                        addParticipantFields(chatMetadata, ExtraProperties.PARTICIPANTS, account, cache);
+                    }
+                    chatMetadata.add(ExtraProperties.COMMUNICATION_TYPE, CommunicationConstants.TYPE_PRIVATE);
                 }
+
+                chatMetadata.add(ExtraProperties.COMMUNICATION_ID, c.getRemote() != null ? c.getRemote().getFullId() : c.getPrintId());
+                chatMetadata.add(ExtraProperties.COMMUNICATION_MESSAGES_COUNT,
+                        Long.toString(c.getMessages().stream().filter(m -> !m.isSystemMessage()).count()));
 
                 ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
                 extractor.parseEmbedded(chatStream, handler, chatMetadata, false);
@@ -355,6 +369,12 @@ public class WhatsAppParser extends SQLite3DBParser {
             c.getMessages().stream().forEach(m -> m.setMediaItem(null));
         }
 
+    }
+
+    private void addParticipantFields(Metadata chatMetadata, String field, WAContact member, HashMap<String, String> cache) {
+        chatMetadata.add(field, formatContact(member, cache));
+        chatMetadata.add(field + ":ID", member.getFullId());
+        chatMetadata.add(field + ":Phone", member.getId());
     }
 
     private void parseWhatsappMessages(InputStream stream, ContentHandler handler, Metadata metadata,
@@ -943,6 +963,12 @@ public class WhatsAppParser extends SQLite3DBParser {
             }
             meta.set(ExtraProperties.MESSAGE_BODY, m.getData());
             meta.set(ExtraProperties.URL, m.getUrl());
+
+            if (m.isFromMe()) {
+                meta.set(ExtraProperties.COMMUNICATION_DIRECTION, CommunicationConstants.DIRECTION_OUTGOING);
+            } else {
+                meta.set(ExtraProperties.COMMUNICATION_DIRECTION, CommunicationConstants.DIRECTION_INCOMING);
+            }
 
             meta.set("mediaName", m.getMediaName()); //$NON-NLS-1$
             meta.set("mediaMime", m.getMediaMime()); //$NON-NLS-1$

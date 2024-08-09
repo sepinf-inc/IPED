@@ -1,7 +1,11 @@
 package iped.parsers.whatsapp;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.CoreMatchers.*;
+
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
@@ -13,6 +17,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import iped.parsers.standard.StandardParser;
+import iped.parsers.util.CommunicationConstants;
 
 public class WhatsAppParserTest extends AbstractPkgTest {
 
@@ -42,6 +47,11 @@ public class WhatsAppParserTest extends AbstractPkgTest {
             assertEquals(4, whatsapptracker.messageto.size());
             assertEquals(74, whatsapptracker.messagedate.size());
 
+            assertEquals(11, Collections.frequency(whatsapptracker.type, CommunicationConstants.TYPE_PRIVATE));
+            assertEquals(18, Collections.frequency(whatsapptracker.type, CommunicationConstants.TYPE_GROUP));
+            assertEquals(0, Collections.frequency(whatsapptracker.type, CommunicationConstants.TYPE_BROADCAST));
+            assertEquals(0, Collections.frequency(whatsapptracker.type, CommunicationConstants.TYPE_UNKONWN));
+
             assertEquals("WhatsApp Chat - Nickerida - 556183125151", whatsapptracker.title.get(0));
             assertEquals("WhatsApp Chat - Nickerida - 556183125151_message_0", whatsapptracker.title.get(1));
             assertEquals("WhatsApp Chat - Nickerida - 556183125151_message_1", whatsapptracker.title.get(2));
@@ -50,13 +60,52 @@ public class WhatsAppParserTest extends AbstractPkgTest {
             assertEquals("WhatsApp Group - Lar - 556185747642-1461964508_message_1", whatsapptracker.title.get(61));
             assertEquals("WhatsApp Group - Lar - 556185747642-1461964508_message_2", whatsapptracker.title.get(62));
 
-            assertEquals("unknownAccount", whatsapptracker.participants.get(0));
-            assertEquals("unknownAccount", whatsapptracker.participants.get(1));
-            assertEquals("unknownAccount", whatsapptracker.participants.get(2));
-            assertEquals("unknownAccount", whatsapptracker.participants.get(3));
-            assertEquals("unknownAccount", whatsapptracker.participants.get(4));
-            assertEquals("unknownAccount", whatsapptracker.participants.get(17));
-            assertEquals("unknownAccount", whatsapptracker.participants.get(18));
+            // Test Private Chats
+
+            assertEquals(CommunicationConstants.TYPE_PRIVATE, whatsapptracker.type.get(0));
+            assertEquals(CommunicationConstants.TYPE_PRIVATE, whatsapptracker.type.get(19));
+            assertEquals(CommunicationConstants.TYPE_PRIVATE, whatsapptracker.type.get(20));
+            assertEquals(CommunicationConstants.TYPE_PRIVATE, whatsapptracker.type.get(21));
+
+            assertEquals(2, whatsapptracker.participants.get(0).size());
+            assertEquals(2, whatsapptracker.participants.get(19).size());
+            assertEquals(2, whatsapptracker.participants.get(20).size());
+            assertEquals(2, whatsapptracker.participants.get(21).size());
+
+            assertThat(whatsapptracker.participants.get(0), hasItems("unknownAccount", "Nickerida (556183125151@s.whatsapp.net)"));
+            assertThat(whatsapptracker.participants.get(19), hasItems("unknownAccount", "Hotdog412 (556181704627@s.whatsapp.net)"));
+            assertThat(whatsapptracker.participants.get(20), hasItems("unknownAccount", "Nwi Fibra Ótica (556133223200@s.whatsapp.net)"));
+            assertThat(whatsapptracker.participants.get(21), hasItems("unknownAccount", "Xavier (556135952111@s.whatsapp.net)"));
+
+            assertEquals(0, whatsapptracker.admins.get(0).size());
+            assertEquals(0, whatsapptracker.admins.get(19).size());
+            assertEquals(0, whatsapptracker.admins.get(20).size());
+            assertEquals(0, whatsapptracker.admins.get(21).size());
+
+            // Test Group Chats
+
+            assertEquals(CommunicationConstants.TYPE_GROUP, whatsapptracker.type.get(1));
+            assertEquals(CommunicationConstants.TYPE_GROUP, whatsapptracker.type.get(2));
+            assertEquals(CommunicationConstants.TYPE_GROUP, whatsapptracker.type.get(3));
+            assertEquals(CommunicationConstants.TYPE_GROUP, whatsapptracker.type.get(4));
+
+            assertEquals(23, whatsapptracker.participants.get(1).size());
+            assertEquals(21, whatsapptracker.participants.get(2).size());
+            assertEquals(5, whatsapptracker.participants.get(3).size());
+            assertEquals(3, whatsapptracker.participants.get(4).size());
+
+            assertThat(whatsapptracker.participants.get(1), hasItems("unknownAccount"));
+            assertThat(whatsapptracker.participants.get(2), hasItems("unknownAccount"));
+            assertThat(whatsapptracker.participants.get(3), hasItems("unknownAccount"));
+            assertThat(whatsapptracker.participants.get(4), hasItems("unknownAccount"));
+
+            assertEquals(21, whatsapptracker.admins.get(1).size());
+            assertEquals(19, whatsapptracker.admins.get(2).size());
+            assertEquals(1, whatsapptracker.admins.get(3).size());
+            assertEquals(0, whatsapptracker.admins.get(4).size());
+
+            assertThat(whatsapptracker.admins.get(1), hasItems("556192644086@s.whatsapp.net"));
+            assertThat(whatsapptracker.admins.get(2), hasItems("Pedro Gonzaga (556199351995@s.whatsapp.net)"));
 
             assertEquals("unknownAccount", whatsapptracker.messagefrom.get(0));
             assertEquals("unknownAccount", whatsapptracker.messagefrom.get(1));
@@ -127,6 +176,7 @@ public class WhatsAppParserTest extends AbstractPkgTest {
             assertEquals(384, whatsapptracker.useraccount.size());
             assertEquals(166, whatsapptracker.usernotes.size());
             assertEquals(0, whatsapptracker.participants.size());
+            assertEquals(0, whatsapptracker.admins.size());
             assertEquals(0, whatsapptracker.messagefrom.size());
             assertEquals(0, whatsapptracker.messagebody.size());
             assertEquals(0, whatsapptracker.messageto.size());

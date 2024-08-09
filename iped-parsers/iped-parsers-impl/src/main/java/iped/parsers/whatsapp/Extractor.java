@@ -46,17 +46,20 @@ public abstract class Extractor {
         return DriverManager.getConnection("jdbc:sqlite:" + databaseFile.getAbsolutePath());
     }
 
-    protected void setGroupMembers(Chat c, Connection conn, String SELECT_GROUP_MEMBERS) throws SQLException {
+    protected void setGroupMembers(Chat c, Connection conn, String selectGroupMembersQuery) throws SQLException {
         // adds all contacts that sent at least one message
         for (Message m : c.getMessages()) {
             if (m.getRemoteResource() != null)
                 c.getGroupMembers().add(contacts.getContact(m.getRemoteResource()));
         }
-        if (SELECT_GROUP_MEMBERS == null) {
+        // add account as member
+        c.getGroupMembers().add(contacts.getContact(account.getFullId()));
+
+        if (selectGroupMembersQuery == null) {
             return;
         }
         // adds all contacts which is a member of the group now
-        try (PreparedStatement stmt = conn.prepareStatement(SELECT_GROUP_MEMBERS)) {
+        try (PreparedStatement stmt = conn.prepareStatement(selectGroupMembersQuery)) {
             stmt.setString(1, c.getRemote().getFullId());
             try (ResultSet rs = stmt.executeQuery()) {
 

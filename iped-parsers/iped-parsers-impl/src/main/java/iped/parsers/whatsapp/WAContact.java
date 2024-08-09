@@ -160,4 +160,9 @@ public class WAContact {
         return this.getFullId().hashCode();
     }
 
+    @Override
+    public String toString() {
+        return getName() + "(" + getFullId() + ")";
+    }
+
 }
