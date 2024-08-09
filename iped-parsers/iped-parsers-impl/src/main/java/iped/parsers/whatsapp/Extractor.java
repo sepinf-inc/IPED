@@ -64,6 +64,9 @@ public abstract class Extractor {
                     String memberId = rs.getString("member");
                     if (memberId != null && !memberId.trim().isEmpty()) {
                         c.getGroupMembers().add(contacts.getContact(memberId));
+                        if (rs.getBoolean("admin")) {
+                            c.getGroupAdmins().add(contacts.getContact(memberId));
+                        }
                     }
                 }
             }

@@ -23,6 +23,7 @@ public class Chat {
     private String recoveredFrom;
 
     private Set<WAContact> groupMembers = new HashSet<>();
+    private Set<WAContact> groupAdmins = new HashSet<>();
 
     public Chat(WAContact remote) {
         this.remote = remote;
@@ -141,6 +142,10 @@ public class Chat {
 
     public Set<WAContact> getGroupMembers() {
         return groupMembers;
+    }
+
+    public Set<WAContact> getGroupAdmins() {
+        return groupAdmins;
     }
 
     public void setGroupMembers(Set<WAContact> groupmembers) {
