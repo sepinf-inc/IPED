@@ -924,7 +924,7 @@ public class UfedXmlReader extends DataSourceReader {
                     }
                     item.getMetadata().set(ExtraProperties.MESSAGE_BODY, body);
 
-                    if (!"System message".equals(item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Identifier"))) {
+                    if (!"System message".equalsIgnoreCase(item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Identifier"))) {
                         numMessages++;
                     }
                 }
