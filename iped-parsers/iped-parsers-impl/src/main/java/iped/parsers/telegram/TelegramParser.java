@@ -206,19 +206,19 @@ public class TelegramParser extends SQLite3DBParser {
             if (c.isGroupOrChannel()) {
                 ChatGroup cg = (ChatGroup) c;
                 for (long id : cg.getAdmins()) {
-                    addParticipantFields(chatMetadata, e, ExtraProperties.COMMUNICATION_ADMINS, id);
-                    addParticipantFields(chatMetadata, e, ExtraProperties.PARTICIPANTS, id);
+                    addParticipantFields(chatMetadata, c, e, ExtraProperties.COMMUNICATION_ADMINS, id);
+                    addParticipantFields(chatMetadata, c, e, ExtraProperties.PARTICIPANTS, id);
                 }
                 for (long id : cg.getMembers()) {
-                    addParticipantFields(chatMetadata, e, ExtraProperties.PARTICIPANTS, id);
+                    addParticipantFields(chatMetadata, c, e, ExtraProperties.PARTICIPANTS, id);
                 }
                 int participantsCount = cg.getParticipantsCount();
                 if (participantsCount > 0) {
                     chatMetadata.add(ExtraProperties.PARTICIPANTS + "Count", String.valueOf(participantsCount));
                 }
             } else {
-                addParticipantFields(chatMetadata, e, ExtraProperties.PARTICIPANTS, c.getId());
-                addParticipantFields(chatMetadata, e, ExtraProperties.PARTICIPANTS, e.getUserAccount().getId());
+                addParticipantFields(chatMetadata, c, e, ExtraProperties.PARTICIPANTS, c.getId());
+                addParticipantFields(chatMetadata, c, e, ExtraProperties.PARTICIPANTS, e.getUserAccount().getId());
             }
 
             if (c.isChannel()) {
@@ -249,7 +249,12 @@ public class TelegramParser extends SQLite3DBParser {
         }
     }
 
-    private void addParticipantFields(Metadata chatMetadata, Extractor e, String field, long id) {
+    private void addParticipantFields(Metadata chatMetadata, Chat c, Extractor e, String field, long id) {
+
+        // avoid the own chat as participant (happens in Channels)
+        if (c.getId() == id && c.isGroupOrChannel())
+            return;
+
         Contact contact = e.getContact(id);
         chatMetadata.add(field, contact.toString());
         chatMetadata.add(field + ":ID", Long.toString(id));
