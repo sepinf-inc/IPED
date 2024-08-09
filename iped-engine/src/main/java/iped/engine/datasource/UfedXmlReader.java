@@ -890,9 +890,9 @@ public class UfedXmlReader extends DataSourceReader {
 
                     String ufedChatType = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "ChatType");
                     if (ufedChatType != null && CHAT_TYPE_MAP.containsKey(ufedChatType)) {
-                        item.setExtraAttribute(ExtraProperties.COMMUNICATION_TYPE, CHAT_TYPE_MAP.get(ufedChatType));
+                        item.getMetadata().set(ExtraProperties.COMMUNICATION_TYPE, CHAT_TYPE_MAP.get(ufedChatType));
                     } else {
-                        item.setExtraAttribute(ExtraProperties.COMMUNICATION_TYPE, CommunicationConstants.TYPE_UNKONWN);
+                        item.getMetadata().set(ExtraProperties.COMMUNICATION_TYPE, CommunicationConstants.TYPE_UNKONWN);
                     }
                 }
                 if ("InstantMessage".equals(type) || "Email".equals(type) || "Call".equals(type) || "SMS".equals(type) //$NON-NLS-4$

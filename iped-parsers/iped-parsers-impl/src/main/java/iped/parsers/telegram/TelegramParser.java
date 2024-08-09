@@ -222,11 +222,11 @@ public class TelegramParser extends SQLite3DBParser {
             }
 
             if (c.isChannel()) {
-                chatMetadata.add(ExtraProperties.COMMUNICATION_TYPE, CommunicationConstants.TYPE_BROADCAST);
+                chatMetadata.set(ExtraProperties.COMMUNICATION_TYPE, CommunicationConstants.TYPE_BROADCAST);
             } else if (c.isGroup()) {
-                chatMetadata.add(ExtraProperties.COMMUNICATION_TYPE, CommunicationConstants.TYPE_GROUP);
+                chatMetadata.set(ExtraProperties.COMMUNICATION_TYPE, CommunicationConstants.TYPE_GROUP);
             } else {
-                chatMetadata.add(ExtraProperties.COMMUNICATION_TYPE, CommunicationConstants.TYPE_PRIVATE);
+                chatMetadata.set(ExtraProperties.COMMUNICATION_TYPE, CommunicationConstants.TYPE_PRIVATE);
             }
 
             List<Message> msgSubset = c.getMessages().subList(firstMsg, nextMsg);
