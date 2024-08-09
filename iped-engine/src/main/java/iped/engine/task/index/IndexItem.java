@@ -124,6 +124,8 @@ public class IndexItem extends BasicProps {
 
     static HashSet<String> ignoredMetadata = new HashSet<String>();
 
+    static HashSet<String> countMetadata = new HashSet<String>();
+
     private static Map<String, SeekableInputStreamFactory> inputStreamFactories = new HashMap<>();
 
     private static Map<String, Class<?>> typesMap = MetadataUtil.getMetadataTypes();
@@ -153,6 +155,9 @@ public class IndexItem extends BasicProps {
         ignoredMetadata.add("File Size"); //$NON-NLS-1$
         // ocrCharCount is already copied to an extra attribute
         ignoredMetadata.add(OCRParser.OCR_CHAR_COUNT);
+
+        countMetadata.add(ExtraProperties.PARTICIPANTS);
+        countMetadata.add(ExtraProperties.COMMUNICATION_ADMINS);
 
         BasicProps.SET.add(ID_IN_SOURCE);
         BasicProps.SET.add(SOURCE_PATH);
@@ -676,6 +681,11 @@ public class IndexItem extends BasicProps {
                     addMetadataKeyToDoc(doc, key, val, isMultiValued, mimetype, timeEventSet);
             }
 
+            if (countMetadata.contains(key)) {
+                String newKey = key + ":count";
+                MetadataUtil.setMetadataType(newKey, Integer.class);
+                addExtraAttributeToDoc(doc, newKey, metadata.getValues(key).length, false, timeEventSet);
+            }
         }
     }
 
