@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -32,6 +33,7 @@ import com.google.common.collect.ImmutableMap;
 
 import iped.data.IItemReader;
 import iped.parsers.standard.StandardParser;
+import iped.parsers.util.CommunicationConstants;
 import iped.parsers.whatsapp.Message;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
@@ -69,6 +71,16 @@ public class UFEDChatParser extends AbstractParser {
 
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(UFED_CHAT_MIME, UFED_CHAT_WA_MIME,
             UFED_CHAT_TELEGRAM);
+
+    private static final Map<String, String> chatTypeMap;
+    static {
+        HashMap<String, String> map = new HashMap<>();
+        map.put("OneOnOne", CommunicationConstants.TYPE_PRIVATE);
+        map.put("Group", CommunicationConstants.TYPE_GROUP);
+        map.put("Broadcast", CommunicationConstants.TYPE_BROADCAST);
+
+        chatTypeMap = Collections.unmodifiableMap(map);
+    }
 
     public static void setSupportedTypes(Set<MediaType> supportedTypes) {
         SUPPORTED_TYPES = supportedTypes;
@@ -173,6 +185,23 @@ public class UFEDChatParser extends AbstractParser {
                     chatMetadata.set(TikaCoreProperties.TITLE, chatName);
                     chatMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, previewMime.toString());
                     chatMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+
+                    // Communication:Type
+                    String ufedChatType = chat.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "ChatType");
+                    if (ufedChatType != null && chatTypeMap.containsKey(ufedChatType)) {
+                        chatMetadata.set(ExtraProperties.COMMUNICATION_TYPE, chatTypeMap.get(ufedChatType));
+                    } else {
+                        chatMetadata.set(ExtraProperties.COMMUNICATION_TYPE, CommunicationConstants.TYPE_UNKONWN);
+                    }
+
+                    // Communication:ID
+                    chatMetadata.set(ExtraProperties.COMMUNICATION_ID, chat.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Id"));
+
+                    // Communication:Account
+                    String ufedAccount = chat.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Account");
+                    if (ufedAccount != null) {
+                        chatMetadata.set(ExtraProperties.COMMUNICATION_ACCOUNT, ufedAccount);
+                    }
 
                     ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
                     extractor.parseEmbedded(chatStream, handler, chatMetadata, false);

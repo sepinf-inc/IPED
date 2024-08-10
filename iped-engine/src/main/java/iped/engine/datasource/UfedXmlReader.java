@@ -28,7 +28,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
@@ -128,16 +127,6 @@ public class UfedXmlReader extends DataSourceReader {
     private static Random random = new Random();
 
     private static HashMap<File, UFDRInputStreamFactory> uisfMap = new HashMap<>();
-
-    private static final Map<String, String> CHAT_TYPE_MAP;
-    static {
-        HashMap<String, String> chatTypeMap = new HashMap<>();
-        chatTypeMap.put("OneOnOne", CommunicationConstants.TYPE_PRIVATE);
-        chatTypeMap.put("Group", CommunicationConstants.TYPE_GROUP);
-        chatTypeMap.put("Broadcast", CommunicationConstants.TYPE_BROADCAST);
-
-        CHAT_TYPE_MAP = Collections.unmodifiableMap(chatTypeMap);
-    }
 
     File root, rootFolder, ufdrFile;
     UFDRInputStreamFactory uisf;
@@ -891,20 +880,7 @@ public class UfedXmlReader extends DataSourceReader {
 
                     item.setExtraAttribute(IndexItem.TREENODE, "true"); //$NON-NLS-1$
 
-                    String ufedChatType = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "ChatType");
-                    if (ufedChatType != null && CHAT_TYPE_MAP.containsKey(ufedChatType)) {
-                        item.getMetadata().set(ExtraProperties.COMMUNICATION_TYPE, CHAT_TYPE_MAP.get(ufedChatType));
-                    } else {
-                        item.getMetadata().set(ExtraProperties.COMMUNICATION_TYPE, CommunicationConstants.TYPE_UNKONWN);
-                    }
-
-                    item.getMetadata().set(ExtraProperties.COMMUNICATION_ID, item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Id"));
                     item.getMetadata().set(ExtraProperties.COMMUNICATION_MESSAGES_COUNT, Integer.toString(numMessages));
-
-                    String ufedAccount = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Account");
-                    if (ufedAccount != null) {
-                        item.getMetadata().set(ExtraProperties.COMMUNICATION_ACCOUNT, ufedAccount);
-                    }
                 }
                 if ("InstantMessage".equals(type) || "Email".equals(type) || "Call".equals(type) || "SMS".equals(type) //$NON-NLS-4$
                         || "MMS".equals(type)) { //$NON-NLS-1$
