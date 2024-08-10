@@ -179,9 +179,9 @@ public class UFEDChatParser extends AbstractParser {
                     }
 
                     String chatName = getChatName(chat);
-                    
                     if (frag > 0 || nextBytes != null)
                         chatName += "_" + frag++; //$NON-NLS-1$
+
                     chatMetadata.set(TikaCoreProperties.TITLE, chatName);
                     chatMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, previewMime.toString());
                     chatMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
@@ -276,19 +276,46 @@ public class UFEDChatParser extends AbstractParser {
     }
 
     public static String getChatName(IItemReader item) {
-        String name = "Chat"; //$NON-NLS-1$
-        String source = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source"); //$NON-NLS-1$
-        if (source != null)
-            name += "_" + source; //$NON-NLS-1$
-        String[] parties = item.getMetadata().getValues(ExtraProperties.COMMUNICATION_PARTICIPANTS); //$NON-NLS-1$
-        if (parties != null && parties.length > 2) {
-            name += "_Group_" + item.getName().split("_")[1]; //$NON-NLS-1$ //$NON-NLS-2$
-        } else if (parties != null && parties.length > 0) {
-            name += "_" + parties[0]; //$NON-NLS-1$
-            if (parties.length > 1)
-                name += "_" + parties[1]; //$NON-NLS-1$
+
+        String source = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source");
+        String chatType = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "ChatType");
+        String name = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name");
+        String id = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "id");
+        String[] participants = item.getMetadata().getValues(ExtraProperties.COMMUNICATION_PARTICIPANTS);
+        String account = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Account");
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(source).append(' ');
+
+        if (!"Unknown".equalsIgnoreCase(chatType)) {
+            if ("OneOnOne".equalsIgnoreCase(chatType)) {
+                sb.append("Chat");
+            } else if (chatTypeMap.containsKey(chatType)) {
+                sb.append(chatTypeMap.get(chatType));
+            } else {
+                sb.append(chatType);
+            }
+            sb.append(' ');
         }
-        return name;
+        sb.append("- ");
+
+        if (name != null) {
+            sb.append(name);
+        } else if (participants.length == 2) {
+            if (participants[0].contains(account)) {
+                sb.append(participants[1]);
+            } else if (participants[1].contains(account)) {
+                sb.append(participants[0]);
+            } else {
+                sb.append(participants[0]).append('_').append(participants[1]);
+            }
+        } else if (participants.length == 1) {
+            sb.append(participants[0]);
+        } else {
+            sb.append(id);
+        }
+
+        return sb.toString();
     }
 
     private void storeMsgIds(List<UfedMessage> messages, Metadata metadata) {
