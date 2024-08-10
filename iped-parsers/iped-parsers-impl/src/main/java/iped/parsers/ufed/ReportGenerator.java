@@ -57,35 +57,46 @@ public class ReportGenerator {
         String[] split = c.getName().split("_", 3); //$NON-NLS-1$
         String title = split[split.length - 1];
 
-        // Replace standard chat title by a meaningful one
-        // Targeted apps: WhatsApp, Telegram
-        if (UFEDChatParser.WHATSAPP.equals(c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source")) ||
-            UFEDChatParser.TELEGRAM.equals(c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source"))) {
-            if (UFEDChatParser.CHATTYPE_ONEONONE.equals(c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "ChatType"))) {
-                if ((c.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants").length > 1) &&
-                    (c.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants")[0].equals(c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "phoneOwner"))))
-                    title = UFEDChatParser.CHATTYPE_ONEONONE_TITLE + ": '" + c.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants")[1] + "'";
+        String source = c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source"); //$NON-NLS-1$
+        String phoneOwner = c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "phoneOwner"); //$NON-NLS-1$
+        String idProperty = c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "id"); //$NON-NLS-1$
+        String nameProperty = c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name"); //$NON-NLS-1$
+        String chatType = c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "ChatType");
+        String[] parties = c.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants"); //$NON-NLS-1$
+
+        if ((source != null) && (source.equals(UFEDChatParser.WHATSAPP) || source.equals(UFEDChatParser.TELEGRAM))) {
+            // WhatsApp and Telegram chats specifics, since they make use of different chat types
+            if (chatType.equals(UFEDChatParser.CHATTYPE_ONEONONE)) {
+                title = UFEDChatParser.CHATTYPE_ONEONONE_TITLE;
+                if (parties != null)
+                    title += ": " + ((parties.length > 1) && (parties[0].equals(phoneOwner)) ? parties[1] : parties[0]);
                 else
-                    title = UFEDChatParser.CHATTYPE_ONEONONE_TITLE + ": '" + c.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants")[0] + "'";
+                    title += ": " + idProperty;
             }
-            else if (UFEDChatParser.CHATTYPE_GROUP.equals(c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "ChatType"))) {
-                if (c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name") == null)
-                    title = UFEDChatParser.CHATTYPE_GROUP_TITLE + ":";
-                else
-                    title = UFEDChatParser.CHATTYPE_GROUP_TITLE + ": '" + c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name") + "'";
-            }
-            else if (UFEDChatParser.CHATTYPE_BROADCAST.equals(c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "ChatType"))) {
-                if (c.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants").length == 1)
-                    title = UFEDChatParser.CHATTYPE_BROADCAST_STATUS_TITLE + ": '" + c.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants")[0] + "'";
-                else {
-                    if (c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name") == null)
-                        title = UFEDChatParser.CHATTYPE_BROADCAST_TITLE + ":";
+            else if (chatType.equals(UFEDChatParser.CHATTYPE_GROUP))
+                title = UFEDChatParser.CHATTYPE_GROUP_TITLE + ": " + (nameProperty != null ? nameProperty : idProperty);
+            else if (chatType.equals(UFEDChatParser.CHATTYPE_BROADCAST)) {
+                if (parties != null) {
+                    if (parties.length == 1)
+                        title = UFEDChatParser.CHATTYPE_BROADCAST_STATUS_TITLE + ": " + parties[0];
                     else
-                        title = UFEDChatParser.CHATTYPE_BROADCAST_TITLE + ": '" + c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name") + "'";
+                        title = UFEDChatParser.CHATTYPE_BROADCAST_TITLE + ": " + (nameProperty != null ? nameProperty : idProperty);
                 }
+                else
+                    title = UFEDChatParser.CHATTYPE_BROADCAST_TITLE + ": " + idProperty;
             }
-            else if (UFEDChatParser.CHATTYPE_UNKNOWN.equals(c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "ChatType"))) {
-                title = UFEDChatParser.CHATTYPE_UNKNOWN_TITLE + ": '" + c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "id") + "'";
+            else if (chatType.equals(UFEDChatParser.CHATTYPE_UNKNOWN))
+                title = UFEDChatParser.CHATTYPE_UNKNOWN_TITLE + ": " + idProperty;
+            else
+                title = chatType + ": " + idProperty;
+        }
+        else {
+            // Other chat apps
+            if (parties != null) {
+                if (parties.length > 2)
+                    title = UFEDChatParser.CHATTYPE_GROUP_TITLE + ": " + idProperty;
+                else if (parties.length > 0)
+                    title = UFEDChatParser.CHATTYPE_ONEONONE_TITLE + ": " + ((parties.length > 1) && (parties[0].equals(phoneOwner)) ? parties[1] : parties[0]);
             }
         }
 
