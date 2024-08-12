@@ -291,6 +291,11 @@
                 <param name="extractEntries" type="bool">false</param>
             </params>
         </parser>
+        <parser class="iped.parsers.ufed.UFEDChatParser">
+            <params>
+				<param name="extractMessages" type="bool">true</param>
+            </params>
+        </parser>
         <parser class="iped.parsers.telegram.TelegramParser">
             <params>
 				<param name="extractMessages" type="bool">true</param>
