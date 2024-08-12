@@ -29,7 +29,9 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.text.Collator;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.swing.JTable;
 import javax.swing.RowSorter.SortKey;
@@ -37,6 +39,12 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableColumnModel;
 
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,8 +52,15 @@ import iped.app.ui.popups.FieldValuePopupMenu;
 import iped.data.IItem;
 import iped.data.IItemId;
 import iped.engine.search.IPEDSearcher;
+import iped.engine.search.LuceneSearchResult;
 import iped.engine.search.MultiSearchResult;
+import iped.engine.task.HashTask;
+import iped.engine.task.index.IndexItem;
+import iped.parsers.ares.AresParser;
+import iped.parsers.emule.KnownMetParser;
+import iped.parsers.shareaza.ShareazaLibraryDatParser;
 import iped.properties.BasicProps;
+import iped.properties.ExtraProperties;
 import iped.viewers.ATextViewer;
 import iped.viewers.components.HitsTableModel;
 
@@ -243,28 +258,52 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
             clipboard.setContents(selection, null);
             evt.consume();
         } else if (evt.getKeyCode() == KeyEvent.VK_SPACE) {
-            itemSelection();
+            itemSelectionToggle();
             evt.consume();
         } else if (evt.getKeyCode() == KeyEvent.VK_R && ((evt.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) != 0)) {
-            // Shortcut to Deep-Selection (Item plus sub-items)
-            recursiveItemSelection(true);
+            itemSelectionAndSubItems(true);
             evt.consume();
         } else if (evt.getKeyCode() == KeyEvent.VK_R && ((evt.getModifiersEx() & KeyEvent.ALT_DOWN_MASK) != 0)) {
-            // Shortcut to Deep-Selection Remove (Item plus sub-items)
-            recursiveItemSelection(false);
+            itemSelectionAndSubItems(false);
+            evt.consume();
+        } else if (evt.getKeyCode() == KeyEvent.VK_P && ((evt.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) != 0)) {
+            itemSelectionAndParent(true);
+            evt.consume();
+        } else if (evt.getKeyCode() == KeyEvent.VK_P && ((evt.getModifiersEx() & KeyEvent.ALT_DOWN_MASK) != 0)) {
+            itemSelectionAndParent(false);
+            evt.consume();
+        } else if (evt.getKeyCode() == KeyEvent.VK_D && ((evt.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) != 0)) {
+            itemSelectionAndReferencedBy(true);
+            evt.consume();
+        } else if (evt.getKeyCode() == KeyEvent.VK_D && ((evt.getModifiersEx() & KeyEvent.ALT_DOWN_MASK) != 0)) {
+            itemSelectionAndReferencedBy(false);
+            evt.consume();
+        } else if (evt.getKeyCode() == KeyEvent.VK_F && ((evt.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) != 0)) {
+            itemSelectionAndReferences(true);
+            evt.consume();
+        } else if (evt.getKeyCode() == KeyEvent.VK_F && ((evt.getModifiersEx() & KeyEvent.ALT_DOWN_MASK) != 0)) {
+            itemSelectionAndReferences(false);
             evt.consume();
         } else
             BookmarksManager.get().keyPressed(evt);
 
     }
 
-    public void itemSelection() {
+    public void itemSelectionToggle() {
+
         int col = App.get().resultsTable.convertColumnIndexToView(1);
         int firstRow = App.get().resultsTable.getSelectedRow();
         boolean value = true;
         if (firstRow != -1 && (Boolean) App.get().resultsTable.getValueAt(firstRow, col)) {
             value = false;
         }
+
+        itemSelection(value);
+    }
+
+    public void itemSelection(boolean value) {
+
+        int col = App.get().resultsTable.convertColumnIndexToView(1);
 
         BookmarksController.get().setMultiSetting(true);
         App.get().resultsTable.setUpdateSelectionOnSort(false);
@@ -276,9 +315,11 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
             }
             App.get().resultsTable.setValueAt(value, selectedRows[i], col);
         }
+        BookmarksController.get().updateUI();
+        App.get().subItemTable.repaint();
     }
 
-    public void recursiveItemSelection(boolean value) {
+    public void itemSelectionAndSubItems(boolean value) {
         int col = App.get().resultsTable.convertColumnIndexToView(1);
         BookmarksController.get().setMultiSetting(true);
         App.get().resultsTable.setUpdateSelectionOnSort(false);
@@ -292,6 +333,63 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
             int modelIndex = App.get().resultsTable.convertRowIndexToModel(selectedRows[i]);
             selectAllSubitems(value, App.get().ipedResult.getItem(modelIndex));
+        }
+        BookmarksController.get().updateUI();
+        App.get().subItemTable.repaint();
+    }
+
+    public void itemSelectionAndParent(boolean value) {
+        int col = App.get().resultsTable.convertColumnIndexToView(1);
+        BookmarksController.get().setMultiSetting(true);
+        App.get().resultsTable.setUpdateSelectionOnSort(false);
+        int[] selectedRows = App.get().resultsTable.getSelectedRows();
+        for (int i = 0; i < selectedRows.length; i++) {
+            if (i == selectedRows.length - 1) {
+                BookmarksController.get().setMultiSetting(false);
+                App.get().resultsTable.setUpdateSelectionOnSort(true);
+            }
+            App.get().resultsTable.setValueAt(value, selectedRows[i], col);
+
+            int modelIndex = App.get().resultsTable.convertRowIndexToModel(selectedRows[i]);
+            selectReferencedParent(value, App.get().ipedResult.getItem(modelIndex));
+        }
+        BookmarksController.get().updateUI();
+        App.get().subItemTable.repaint();
+    }
+
+    public void itemSelectionAndReferences(boolean value) {
+        int col = App.get().resultsTable.convertColumnIndexToView(1);
+        BookmarksController.get().setMultiSetting(true);
+        App.get().resultsTable.setUpdateSelectionOnSort(false);
+        int[] selectedRows = App.get().resultsTable.getSelectedRows();
+        for (int i = 0; i < selectedRows.length; i++) {
+            if (i == selectedRows.length - 1) {
+                BookmarksController.get().setMultiSetting(false);
+                App.get().resultsTable.setUpdateSelectionOnSort(true);
+            }
+            App.get().resultsTable.setValueAt(value, selectedRows[i], col);
+
+            int modelIndex = App.get().resultsTable.convertRowIndexToModel(selectedRows[i]);
+            selectReferencetems(value, App.get().ipedResult.getItem(modelIndex));
+        }
+        BookmarksController.get().updateUI();
+        App.get().subItemTable.repaint();
+    }
+
+    public void itemSelectionAndReferencedBy(boolean value) {
+        int col = App.get().resultsTable.convertColumnIndexToView(1);
+        BookmarksController.get().setMultiSetting(true);
+        App.get().resultsTable.setUpdateSelectionOnSort(false);
+        int[] selectedRows = App.get().resultsTable.getSelectedRows();
+        for (int i = 0; i < selectedRows.length; i++) {
+            if (i == selectedRows.length - 1) {
+                BookmarksController.get().setMultiSetting(false);
+                App.get().resultsTable.setUpdateSelectionOnSort(true);
+            }
+            App.get().resultsTable.setValueAt(value, selectedRows[i], col);
+
+            int modelIndex = App.get().resultsTable.convertRowIndexToModel(selectedRows[i]);
+            selectReferencedByItems(value, App.get().ipedResult.getItem(modelIndex));
         }
         BookmarksController.get().updateUI();
         App.get().subItemTable.repaint();
@@ -323,6 +421,128 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
         } catch (Exception e) {
             logger.debug("Error :" + e.getLocalizedMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void selectReferencedParent(boolean state, IItemId rootId) {
+
+        try {
+            final int docId = App.get().appCase.getLuceneId(rootId);
+            Document doc = App.get().appCase.getSearcher().doc(docId);
+
+            String parentId = doc.get(IndexItem.PARENTID);
+            if (parentId == null) {
+                return;
+            }
+            String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
+
+            String textQuery = IndexItem.ID + ":" + parentId + " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID;
+
+            IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery, BasicProps.NAME);
+            LuceneSearchResult results = MultiSearchResult.get(task.multiSearch(), App.get().appCase);
+
+            if (results.getLength() > 0) {
+                for (int resDocId : results.getLuceneIds()) {
+                    App.get().appCase.getMultiBookmarks().setChecked((Boolean) state, App.get().appCase.getItemId(resDocId));
+                }
+            }
+
+        } catch (Exception e) {
+            logger.error("Error :" + e.getLocalizedMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void selectReferencedByItems(boolean state, IItemId rootId) {
+
+        try {
+            final int docId = App.get().appCase.getLuceneId(rootId);
+            Document doc = App.get().appCase.getSearcher().doc(docId);
+
+            String md5 = doc.get(HashTask.HASH.MD5.toString());
+            String sha1 = doc.get(HashTask.HASH.SHA1.toString());
+            String sha256 = doc.get(HashTask.HASH.SHA256.toString());
+            String edonkey = doc.get(HashTask.HASH.EDONKEY.toString());
+            String hashes = Arrays.asList(md5, sha1, sha256, edonkey).stream().filter(a -> a != null)
+                    .collect(Collectors.joining(" "));
+
+            if (hashes.isEmpty()) {
+                return;
+            }
+
+            String textQuery = ExtraProperties.LINKED_ITEMS + ":(" + hashes + ") ";
+            textQuery += ExtraProperties.SHARED_HASHES + ":(" + hashes + ")";
+
+            IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery, BasicProps.NAME);
+            LuceneSearchResult results = MultiSearchResult.get(task.multiSearch(), App.get().appCase);
+
+            if (results.getLength() > 0) {
+                for (int resDocId : results.getLuceneIds()) {
+                    App.get().appCase.getMultiBookmarks().setChecked((Boolean) state,
+                            App.get().appCase.getItemId(resDocId));
+                }
+            }
+
+        } catch (Exception e) {
+            logger.error("Error :" + e.getLocalizedMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void selectReferencetems(boolean state, IItemId rootId) {
+        try {
+
+            final int docId = App.get().appCase.getLuceneId(rootId);
+            Document doc = App.get().appCase.getSearcher().doc(docId);
+
+            StringBuilder textQuery = null;
+            Query query = null;
+
+            String[] linkedItems = doc.getValues(ExtraProperties.LINKED_ITEMS);
+            if (linkedItems != null && linkedItems.length > 0) {
+                textQuery = new StringBuilder();
+                for (String q : linkedItems) {
+                    textQuery.append("(").append(q).append(") ");
+                }
+            } else {
+                linkedItems = doc.getValues(ExtraProperties.SHARED_HASHES);
+                if (linkedItems != null && linkedItems.length > 0) {
+                    String term;
+                    String mediaType = doc.get(BasicProps.CONTENTTYPE);
+                    if (KnownMetParser.EMULE_MIME_TYPE.equals(mediaType)) {
+                        term = HashTask.HASH.EDONKEY.toString();
+                    } else if (AresParser.ARES_MIME_TYPE.equals(mediaType)) {
+                        term = HashTask.HASH.SHA1.toString();
+                    } else if (ShareazaLibraryDatParser.LIBRARY_DAT_MIME_TYPE.equals(mediaType)) {
+                        term = HashTask.HASH.MD5.toString();
+                    } else {
+                        term = BasicProps.HASH;
+                    }
+                    BooleanQuery.Builder builder = new BooleanQuery.Builder();
+                    for (String hash : linkedItems) {
+                        builder.add(new TermQuery(new Term(term, hash)), Occur.SHOULD);
+                    }
+                    query = builder.build();
+                }
+            }
+
+            if (textQuery != null || query != null) {
+
+                IPEDSearcher task = query != null ? new IPEDSearcher(App.get().appCase, query, BasicProps.NAME)
+                        : new IPEDSearcher(App.get().appCase, textQuery.toString(), BasicProps.NAME);
+                task.setRewritequery(false);
+                LuceneSearchResult results = MultiSearchResult.get(task.multiSearch(), App.get().appCase);
+
+                if (results.getLength() > 0) {
+                    for (int resDocId : results.getLuceneIds()) {
+                        App.get().appCase.getMultiBookmarks().setChecked((Boolean) state,
+                                App.get().appCase.getItemId(resDocId));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Error :" + e.getLocalizedMessage());
             e.printStackTrace();
         }
     }
