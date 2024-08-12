@@ -47,10 +47,10 @@ public class TelegramParserTest extends AbstractPkgTest {
             assertEquals("Karol Braz", telegramtracker.title.get(1));
             assertEquals("Budi", telegramtracker.title.get(2));
             assertEquals("Nickerida", telegramtracker.title.get(3));
-            assertEquals("Telegram_Chat_Marcoscachos", telegramtracker.title.get(505));
-            assertEquals("Telegram_Chat_Marcoscachos_message_0", telegramtracker.title.get(506));
-            assertEquals("Telegram_Group_Mixirica e noronhe-se", telegramtracker.title.get(507));
-            assertEquals("Telegram_Group_Mixirica e noronhe-se_message_0", telegramtracker.title.get(508));
+            assertEquals("Telegram Chat - Marcoscachos (ID:837873104 | phone:5561983468805)", telegramtracker.title.get(505));
+            assertEquals("Telegram Chat - Marcoscachos (ID:837873104 | phone:5561983468805)_message_0", telegramtracker.title.get(506));
+            assertEquals("Telegram Group - Mixirica e noronhe-se (ID:136232058)", telegramtracker.title.get(507));
+            assertEquals("Telegram Group - Mixirica e noronhe-se (ID:136232058)_message_0", telegramtracker.title.get(508));
 
             assertEquals("Tiago", telegramtracker.username.get(0));
             assertEquals("Karol Braz", telegramtracker.username.get(1));
