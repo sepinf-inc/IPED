@@ -290,6 +290,8 @@ public class UFEDChatParser extends AbstractParser {
         if (!"Unknown".equalsIgnoreCase(chatType)) {
             if ("OneOnOne".equalsIgnoreCase(chatType)) {
                 sb.append("Chat");
+            } else if ("Telegram".equalsIgnoreCase(source) && "Broadcast".equalsIgnoreCase(chatType)) {
+                sb.append("Channel");
             } else if (chatTypeMap.containsKey(chatType)) {
                 sb.append(chatTypeMap.get(chatType));
             } else {
