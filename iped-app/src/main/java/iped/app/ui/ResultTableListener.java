@@ -37,7 +37,6 @@ import javax.swing.JTable;
 import javax.swing.RowSorter.SortKey;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.table.TableColumnModel;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.Term;
@@ -198,12 +197,6 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
             int rowIndex = resultsTable.rowAtPoint(evt.getPoint());
 
             IItemId id = getSelectedItemId(rowIndex);
-
-            TableColumnModel cm = resultsTable.getTableHeader().getColumnModel();
-            int pos = 0;
-            for (int i = 0; i < colIndex; i++) {
-                pos += cm.getColumn(i).getWidth();
-            }
 
             String value = (String) resultsTable.getValueAt(rowIndex, colIndex);
             colIndex = resultsTable.convertColumnIndexToModel(colIndex);
