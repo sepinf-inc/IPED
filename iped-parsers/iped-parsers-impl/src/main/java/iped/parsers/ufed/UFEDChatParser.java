@@ -276,14 +276,8 @@ public class UFEDChatParser extends AbstractParser {
             name += "_" + source; //$NON-NLS-1$
         if (account != null)
             name += "_" + CHAT_ACCOUNT + "_" + account; //$NON-NLS-1$
-        if (phoneOwner != null) {
-            name += "_" + CHAT_PHONE_OWNER;
-            // remove identifier from phoneOwner if it is equal to account
-            if ((account != null) && (phoneOwner.endsWith("(" + account + ")")))
-                name += "_" + phoneOwner.substring(0, phoneOwner.lastIndexOf("(" + account + ")"));
-            else
-                name += "_" + phoneOwner; //$NON-NLS-1$
-        }
+        if (phoneOwner != null)
+            name += "_" + CHAT_PHONE_OWNER + "_" + phoneOwner; //$NON-NLS-1$
         if ((source != null) && (source.equals(UFEDChatParser.WHATSAPP) || source.equals(UFEDChatParser.TELEGRAM))) {
             // WhatsApp and Telegram chats specifics, since they make use of different chat types
             if (chatType.equals(CHATTYPE_ONEONONE)) {

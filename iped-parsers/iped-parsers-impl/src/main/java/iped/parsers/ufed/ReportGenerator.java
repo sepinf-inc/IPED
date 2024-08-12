@@ -59,7 +59,7 @@ public class ReportGenerator {
 
         String source = c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source"); //$NON-NLS-1$
         String phoneOwner = c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "phoneOwner"); //$NON-NLS-1$
-        String idProperty = c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "id"); //$NON-NLS-1$
+        String idProperty = "ufedId=" + c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "id"); //$NON-NLS-1$
         String nameProperty = c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name"); //$NON-NLS-1$
         String chatType = c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "ChatType");
         String[] parties = c.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants"); //$NON-NLS-1$
@@ -98,6 +98,8 @@ public class ReportGenerator {
                 else if (parties.length > 0)
                     title = UFEDChatParser.CHATTYPE_ONEONONE_TITLE + ": " + ((parties.length > 1) && (parties[0].equals(phoneOwner)) ? parties[1] : parties[0]);
             }
+            else
+                title = chatType + ": " + idProperty;
         }
 
         printMessageFileHeader(out, title, c.getName(), null);
