@@ -921,6 +921,8 @@ public class UfedXmlReader extends DataSourceReader {
                             ignoreItemLocal = true;
                         }
                     }
+                    // InstantMessage items are indexed in UFEDChatParser
+                    item.setAddToCase(false);
                 }
                 if (mergeInParentNode.contains(type) && itemSeq.size() > 0) {
                     IItem parentItem = itemSeq.get(itemSeq.size() - 1);

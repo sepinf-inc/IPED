@@ -14,6 +14,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import org.apache.tika.config.Field;
@@ -34,12 +35,12 @@ import com.google.common.collect.ImmutableMap;
 import iped.data.IItemReader;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.CommunicationConstants;
-import iped.parsers.whatsapp.Message;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
 import iped.search.IItemSearcher;
 import iped.utils.DateUtil;
+import iped.utils.EmptyInputStream;
 
 public class UFEDChatParser extends AbstractParser {
 
@@ -70,7 +71,7 @@ public class UFEDChatParser extends AbstractParser {
     private int minChatSplitSize = 6000000;
 
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(UFED_CHAT_MIME, UFED_CHAT_WA_MIME,
-            UFED_CHAT_TELEGRAM);
+            UFED_CHAT_TELEGRAM, MediaTypes.UFED_MESSAGE_MIME);
 
     private static final Map<String, String> chatTypeMap;
     static {
@@ -81,6 +82,10 @@ public class UFEDChatParser extends AbstractParser {
 
         chatTypeMap = Collections.unmodifiableMap(map);
     }
+
+    private static final Map<Integer, List<IItemReader>> messagesMap = new ConcurrentHashMap<>();
+
+    private boolean extractMessages = true;
 
     public static void setSupportedTypes(Set<MediaType> supportedTypes) {
         SUPPORTED_TYPES = supportedTypes;
@@ -97,6 +102,11 @@ public class UFEDChatParser extends AbstractParser {
     }
 
     @Field
+    public void setExtractMessages(boolean extractMessages) {
+        this.extractMessages = extractMessages;
+    }
+
+    @Field
     public void setMinChatSplitSize(int minChatSplitSize) {
         this.minChatSplitSize = minChatSplitSize;
     }
@@ -110,6 +120,14 @@ public class UFEDChatParser extends AbstractParser {
     public void parse(InputStream inputStream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
 
+        // add InstantMessage to map
+        IItemReader item = context.get(IItemReader.class);
+        if (item.getMediaType() != null && MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.UFED_MESSAGE_MIME)) {
+            messagesMap.computeIfAbsent(item.getParentId(), k -> Collections.synchronizedList(new ArrayList<>())).add(item);
+            return;
+        }
+
+        // process Chat
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
         xhtml.startDocument();
         try {
@@ -121,37 +139,40 @@ public class UFEDChatParser extends AbstractParser {
             if (chat == null || searcher == null)
                 return;
 
-            String query = BasicProps.PARENTID + ":" + chat.getId(); //$NON-NLS-1$
-
             List<UfedMessage> messages = new ArrayList<>();
+            List<IItemReader> itemMgs = messagesMap.remove(chat.getId());
 
-            for (IItemReader msg : searcher.searchIterable(query)) {
-                Iterator<IItemReader> subItems = null;
-                String[] attachRefs = msg.getMetadata().getValues(ExtraProperties.LINKED_ITEMS);
-                if (attachRefs.length > 0) {
-                    String attachQuery = Arrays.asList(attachRefs).stream().collect(Collectors.joining(" ")); //$NON-NLS-1$
-                    subItems = searcher.searchIterable(attachQuery).iterator();
-                } else if (msg.hasChildren()) {
-                    String contactQuery = BasicProps.PARENTID + ":" + msg.getId() + " && " + BasicProps.CONTENTTYPE
-                            + ":\"" + MediaTypes.UFED_CONTACT_MIME.toString() + "\"";
-                    subItems = searcher.searchIterable(contactQuery).iterator();
-                }
-                if (subItems == null || !subItems.hasNext()) {
-                    UfedMessage m = createMessage(msg);
-                    messages.add(m);
-                } else {
-                    HashSet<String> uuids = new HashSet<>();
-                    while (subItems.hasNext()) {
-                        IItemReader subitem = subItems.next();
-                        if (uuids.add(subitem.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "id"))) {
-                            UfedMessage m = createMessage(msg, subitem);
-                            messages.add(m);
+            if (itemMgs != null) {
+                for (IItemReader msg : itemMgs) {
+                    Iterator<IItemReader> subItems = null;
+                    String[] attachRefs = msg.getMetadata().getValues(ExtraProperties.LINKED_ITEMS);
+                    if (attachRefs.length > 0) {
+                        String attachQuery = Arrays.asList(attachRefs).stream().collect(Collectors.joining(" ")); //$NON-NLS-1$
+                        subItems = searcher.searchIterable(attachQuery).iterator();
+                    } else if (msg.hasChildren()) {
+                        String contactQuery = BasicProps.PARENTID + ":" + msg.getId() + " && " + BasicProps.CONTENTTYPE
+                                + ":\"" + MediaTypes.UFED_CONTACT_MIME.toString() + "\"";
+                        subItems = searcher.searchIterable(contactQuery).iterator();
+                    }
+                    if (subItems == null || !subItems.hasNext()) {
+                        UfedMessage m = createMessage(msg);
+                        messages.add(m);
+                    } else {
+                        HashSet<String> uuids = new HashSet<>();
+                        while (subItems.hasNext()) {
+                            IItemReader subitem = subItems.next();
+                            if (uuids.add(subitem.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "id"))) {
+                                UfedMessage m = createMessage(msg, subitem);
+                                messages.add(m);
+                            }
                         }
                     }
                 }
             }
 
             Collections.sort(messages, new MessageComparator());
+
+            String virtualId = chat.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "id");
 
             if (extractor.shouldParseEmbedded(metadata)) {
                 ReportGenerator reportGenerator = new ReportGenerator(searcher);
@@ -183,6 +204,7 @@ public class UFEDChatParser extends AbstractParser {
                         chatName += "_" + frag++; //$NON-NLS-1$
 
                     chatMetadata.set(TikaCoreProperties.TITLE, chatName);
+                    chatMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, virtualId);
                     chatMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, previewMime.toString());
                     chatMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
@@ -203,10 +225,18 @@ public class UFEDChatParser extends AbstractParser {
                         chatMetadata.set(ExtraProperties.COMMUNICATION_ACCOUNT, ufedAccount);
                     }
 
+                    if (extractMessages && !subList.isEmpty()) {
+                        chatMetadata.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
+                    }
+
                     ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
                     extractor.parseEmbedded(chatStream, handler, chatMetadata, false);
                     bytes = nextBytes;
                 }
+            }
+
+            if (extractMessages) {
+                extractMessages(itemMgs, virtualId, handler, extractor);
             }
 
         } catch (Exception e) {
@@ -217,6 +247,27 @@ public class UFEDChatParser extends AbstractParser {
             xhtml.endDocument();
         }
 
+    }
+
+    private void extractMessages(List<IItemReader> messages, String virtualId, ContentHandler handler,
+            EmbeddedDocumentExtractor extractor) throws SAXException, IOException {
+        for (IItemReader msg : messages) {
+            Metadata meta = msg.getMetadata();
+            meta.set(TikaCoreProperties.TITLE, msg.getName()); // $NON-NLS-1$
+            meta.set(StandardParser.INDEXER_CONTENT_TYPE, msg.getMediaType().toString());
+            meta.set(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(msg.getId()));
+            meta.set(ExtraProperties.PARENT_VIRTUAL_ID, virtualId);
+            meta.set(ExtraProperties.PARENT_VIEW_POSITION, String.valueOf(msg.getIdInDataSource()));
+            meta.set(ExtraProperties.MESSAGE_DATE, msg.getCreationDate());
+            meta.set(TikaCoreProperties.CREATED, msg.getCreationDate());
+            meta.set(BasicProps.LENGTH, "");
+
+            if (msg.isDeleted()) {
+                meta.set(ExtraProperties.DELETED, Boolean.toString(true));
+            }
+
+            extractor.parseEmbedded(new EmptyInputStream(), handler, meta, false);
+        }
     }
 
     private UfedMessage createMessage(IItemReader msg) {
@@ -321,13 +372,13 @@ public class UFEDChatParser extends AbstractParser {
     }
 
     private void storeMsgIds(List<UfedMessage> messages, Metadata metadata) {
-        for (Message m : messages) {
+        for (UfedMessage m : messages) {
             metadata.add(CHILD_MSG_IDS, Long.toString(m.getId()));
         }
     }
 
     private void storeLinkedHashes(List<UfedMessage> messages, Metadata metadata) {
-        for (Message m : messages) {
+        for (UfedMessage m : messages) {
             if (m.getMediaHash() != null) {
                 metadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + m.getMediaHash());
                 if (m.isFromMe())
@@ -336,10 +387,10 @@ public class UFEDChatParser extends AbstractParser {
         }
     }
 
-    private class MessageComparator implements Comparator<Message> {
+    private class MessageComparator implements Comparator<UfedMessage> {
 
         @Override
-        public int compare(Message o1, Message o2) {
+        public int compare(UfedMessage o1, UfedMessage o2) {
             if (o1.getTimeStamp() == null) {
                 if (o2.getTimeStamp() == null)
                     return 0;
