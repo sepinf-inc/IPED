@@ -19,6 +19,7 @@
 package iped.app.ui;
 
 import java.awt.Component;
+import java.awt.Dialog;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
@@ -31,10 +32,13 @@ import java.awt.event.MouseListener;
 import java.text.Collator;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import javax.swing.JTable;
 import javax.swing.RowSorter.SortKey;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -62,6 +66,7 @@ import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.viewers.ATextViewer;
 import iped.viewers.components.HitsTableModel;
+import iped.viewers.util.ProgressDialog;
 
 public class ResultTableListener implements ListSelectionListener, MouseListener, KeyListener {
 
@@ -72,6 +77,8 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
     private long lastKeyTime = -1;
     private String lastKeyString = ""; //$NON-NLS-1$
     private Collator collator = Collator.getInstance();
+
+    private Executor executor = Executors.newSingleThreadExecutor();
 
     public ResultTableListener() {
         collator.setStrength(Collator.PRIMARY);
@@ -282,6 +289,12 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
     }
 
+    private ProgressDialog createProgressDialog() {
+        ProgressDialog d = new ProgressDialog(App.get(), null, true, 200, Dialog.ModalityType.APPLICATION_MODAL);
+        d.setNote(Messages.getString("App.Wait")); //$NON-NLS-1$
+        return d;
+    }
+
     public void itemSelectionToggle() {
 
         int col = App.get().resultsTable.convertColumnIndexToView(1);
@@ -313,63 +326,107 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
     }
 
     public void itemSelectionAndSubItems(boolean value) {
-        int col = App.get().resultsTable.convertColumnIndexToView(1);
-        BookmarksController.get().setMultiSetting(true);
-        App.get().resultsTable.setUpdateSelectionOnSort(false);
-        int[] selectedRows = App.get().resultsTable.getSelectedRows();
-        for (int i = 0; i < selectedRows.length; i++) {
-            if (i == selectedRows.length - 1) {
-                BookmarksController.get().setMultiSetting(false);
-                App.get().resultsTable.setUpdateSelectionOnSort(true);
-            }
-            App.get().resultsTable.setValueAt(value, selectedRows[i], col);
 
-            int modelIndex = App.get().resultsTable.convertRowIndexToModel(selectedRows[i]);
-            selectAllSubitems(value, App.get().ipedResult.getItem(modelIndex));
-        }
-        BookmarksController.get().updateUI();
-        App.get().subItemTable.repaint();
+        ProgressDialog dialog = createProgressDialog();
+        executor.execute(() -> {
+            try {
+                int col = App.get().resultsTable.convertColumnIndexToView(1);
+                BookmarksController.get().setMultiSetting(true);
+                App.get().resultsTable.setUpdateSelectionOnSort(false);
+                int[] selectedRows = App.get().resultsTable.getSelectedRows();
+                dialog.setMaximum(selectedRows.length);
+                for (int i = 0; i < selectedRows.length; i++) {
+                    if (i == selectedRows.length - 1) {
+                        BookmarksController.get().setMultiSetting(false);
+                        App.get().resultsTable.setUpdateSelectionOnSort(true);
+                    }
+                    App.get().resultsTable.setValueAt(value, selectedRows[i], col);
+
+                    int modelIndex = App.get().resultsTable.convertRowIndexToModel(selectedRows[i]);
+                    selectAllSubitems(value, App.get().ipedResult.getItem(modelIndex));
+                    dialog.setProgress(i);
+                    if (dialog.isCanceled()) {
+                        return;
+                    }
+                }
+            } finally {
+                SwingUtilities.invokeLater(() -> {
+                    dialog.close();
+                    BookmarksController.get().updateUI();
+                    App.get().subItemTable.repaint();
+                });
+            }
+        });
     }
 
     public void itemSelectionAndParent(boolean value) {
-        int col = App.get().resultsTable.convertColumnIndexToView(1);
-        BookmarksController.get().setMultiSetting(true);
-        App.get().resultsTable.setUpdateSelectionOnSort(false);
-        int[] selectedRows = App.get().resultsTable.getSelectedRows();
-        for (int i = 0; i < selectedRows.length; i++) {
-            if (i == selectedRows.length - 1) {
-                BookmarksController.get().setMultiSetting(false);
-                App.get().resultsTable.setUpdateSelectionOnSort(true);
-            }
-            App.get().resultsTable.setValueAt(value, selectedRows[i], col);
+        ProgressDialog dialog = createProgressDialog();
+        executor.execute(() -> {
+            try {
+                int col = App.get().resultsTable.convertColumnIndexToView(1);
+                BookmarksController.get().setMultiSetting(true);
+                App.get().resultsTable.setUpdateSelectionOnSort(false);
+                int[] selectedRows = App.get().resultsTable.getSelectedRows();
+                for (int i = 0; i < selectedRows.length; i++) {
+                    if (i == selectedRows.length - 1) {
+                        BookmarksController.get().setMultiSetting(false);
+                        App.get().resultsTable.setUpdateSelectionOnSort(true);
+                    }
+                    App.get().resultsTable.setValueAt(value, selectedRows[i], col);
 
-            int modelIndex = App.get().resultsTable.convertRowIndexToModel(selectedRows[i]);
-            selectReferencedParent(value, App.get().ipedResult.getItem(modelIndex));
-        }
-        BookmarksController.get().updateUI();
-        App.get().subItemTable.repaint();
+                    int modelIndex = App.get().resultsTable.convertRowIndexToModel(selectedRows[i]);
+                    selectReferencedParent(value, App.get().ipedResult.getItem(modelIndex));
+                    dialog.setProgress(i);
+                    if (dialog.isCanceled()) {
+                        return;
+                    }
+                }
+            } finally {
+                SwingUtilities.invokeLater(() -> {
+                    dialog.close();
+                    BookmarksController.get().updateUI();
+                    App.get().subItemTable.repaint();
+                });
+            }
+        });
     }
 
     public void itemSelectionAndReferences(boolean value) {
-        int col = App.get().resultsTable.convertColumnIndexToView(1);
-        BookmarksController.get().setMultiSetting(true);
-        App.get().resultsTable.setUpdateSelectionOnSort(false);
-        int[] selectedRows = App.get().resultsTable.getSelectedRows();
-        for (int i = 0; i < selectedRows.length; i++) {
-            if (i == selectedRows.length - 1) {
-                BookmarksController.get().setMultiSetting(false);
-                App.get().resultsTable.setUpdateSelectionOnSort(true);
-            }
-            App.get().resultsTable.setValueAt(value, selectedRows[i], col);
+        ProgressDialog dialog = createProgressDialog();
+        executor.execute(() -> {
+            try {
+                int col = App.get().resultsTable.convertColumnIndexToView(1);
+                BookmarksController.get().setMultiSetting(true);
+                App.get().resultsTable.setUpdateSelectionOnSort(false);
+                int[] selectedRows = App.get().resultsTable.getSelectedRows();
+                for (int i = 0; i < selectedRows.length; i++) {
+                    if (i == selectedRows.length - 1) {
+                        BookmarksController.get().setMultiSetting(false);
+                        App.get().resultsTable.setUpdateSelectionOnSort(true);
+                    }
+                    App.get().resultsTable.setValueAt(value, selectedRows[i], col);
 
-            int modelIndex = App.get().resultsTable.convertRowIndexToModel(selectedRows[i]);
-            selectReferencetems(value, App.get().ipedResult.getItem(modelIndex));
-        }
-        BookmarksController.get().updateUI();
-        App.get().subItemTable.repaint();
+                    int modelIndex = App.get().resultsTable.convertRowIndexToModel(selectedRows[i]);
+                    selectReferencetems(value, App.get().ipedResult.getItem(modelIndex));
+                    dialog.setProgress(i);
+                    if (dialog.isCanceled()) {
+                        return;
+                    }
+                }
+            } finally {
+                SwingUtilities.invokeLater(() -> {
+                    dialog.close();
+                    BookmarksController.get().updateUI();
+                    App.get().subItemTable.repaint();
+                });
+            }
+        });
     }
 
     public void itemSelectionAndReferencedBy(boolean value) {
+        ProgressDialog dialog = createProgressDialog();
+        executor.execute(() -> {
+            try {
         int col = App.get().resultsTable.convertColumnIndexToView(1);
         BookmarksController.get().setMultiSetting(true);
         App.get().resultsTable.setUpdateSelectionOnSort(false);
@@ -383,9 +440,19 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
             int modelIndex = App.get().resultsTable.convertRowIndexToModel(selectedRows[i]);
             selectReferencedByItems(value, App.get().ipedResult.getItem(modelIndex));
+            dialog.setProgress(i);
+            if (dialog.isCanceled()) {
+                return;
+            }
         }
-        BookmarksController.get().updateUI();
-        App.get().subItemTable.repaint();
+    } finally {
+        SwingUtilities.invokeLater(() -> {
+            dialog.close();
+            BookmarksController.get().updateUI();
+            App.get().subItemTable.repaint();
+        });
+    }
+});
     }
 
     /**
