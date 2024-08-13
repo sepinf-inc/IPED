@@ -225,6 +225,10 @@ public class UFEDChatParser extends AbstractParser {
                         chatMetadata.set(ExtraProperties.COMMUNICATION_ACCOUNT, ufedAccount);
                     }
 
+                    // Communication:MessagesCount
+                    chatMetadata.set(ExtraProperties.COMMUNICATION_MESSAGES_COUNT,
+                            Long.toString(messages.stream().filter(m -> !m.isSystemMessage()).count()));
+
                     if (extractMessages && !subList.isEmpty()) {
                         chatMetadata.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
                     }

@@ -393,7 +393,6 @@ public class UfedXmlReader extends DataSourceReader {
         Object ignoreItemTree = null;
         boolean inChat = false;
         int numAttachments = 0;
-        int numMessages = 0;
         String prevUfedId = null;
 
         private class XmlNode {
@@ -584,7 +583,6 @@ public class UfedXmlReader extends DataSourceReader {
                     String type = atts.getValue("type"); //$NON-NLS-1$
                     if (type.equals("Chat")) {
                         inChat = true;
-                        numMessages = 0;
                     }
                     String name = type + "_" + atts.getValue("id"); //$NON-NLS-1$ //$NON-NLS-2$
                     item.setName(name);
@@ -879,8 +877,6 @@ public class UfedXmlReader extends DataSourceReader {
                         item.setMediaType(UFEDChatParser.UFED_CHAT_TELEGRAM);
 
                     item.setExtraAttribute(IndexItem.TREENODE, "true"); //$NON-NLS-1$
-
-                    item.getMetadata().set(ExtraProperties.COMMUNICATION_MESSAGES_COUNT, Integer.toString(numMessages));
                 }
                 if ("InstantMessage".equals(type) || "Email".equals(type) || "Call".equals(type) || "SMS".equals(type) //$NON-NLS-4$
                         || "MMS".equals(type)) { //$NON-NLS-1$
@@ -899,10 +895,6 @@ public class UfedXmlReader extends DataSourceReader {
                         item.getMetadata().remove(ExtraProperties.UFED_META_PREFIX + "Snippet"); //$NON-NLS-1$
                     }
                     item.getMetadata().set(ExtraProperties.MESSAGE_BODY, body);
-
-                    if (!"System message".equalsIgnoreCase(item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Identifier"))) {
-                        numMessages++;
-                    }
                 }
                 int numInstantMsgAttachs = 0;
                 boolean ignoreItemLocal = false;
