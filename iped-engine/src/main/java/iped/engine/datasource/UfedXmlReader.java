@@ -1198,15 +1198,14 @@ public class UfedXmlReader extends DataSourceReader {
             List<String> from = Arrays.asList(item.getMetadata().getValues(ExtraProperties.COMMUNICATION_FROM));
             String[] to = item.getMetadata().getValues(ExtraProperties.COMMUNICATION_TO);
             boolean fromOwner = Boolean.parseBoolean(item.getMetadata().get(UFEDChatParser.META_FROM_OWNER));
-            if (to == null || to.length != 1) {
-                if (item.getMediaType() != null
-                        && MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.UFED_MESSAGE_MIME)) {
+            if (to.length != 1) {
+                if (MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.UFED_MESSAGE_MIME)) {
                     // we have seen ufed messages without parent chat
                     if (itemSeq.size() == 0)
                         return;
                     IItem parentChat = itemSeq.get(itemSeq.size() - 1);
                     List<String> toList = new ArrayList<>();
-                    if (to != null && to.length > 0) {
+                    if (to.length > 0) {
                         toList = Arrays.asList(to);
                     } else {
                         String[] parties = parentChat.getMetadata().getValues(ExtraProperties.COMMUNICATION_PARTICIPANTS);
