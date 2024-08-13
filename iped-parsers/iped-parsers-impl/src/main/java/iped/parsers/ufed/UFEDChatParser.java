@@ -271,6 +271,12 @@ public class UFEDChatParser extends AbstractParser {
             meta.set(TikaCoreProperties.CREATED, msg.getCreationDate());
             meta.set(BasicProps.LENGTH, "");
 
+            if (Boolean.parseBoolean(meta.get(META_FROM_OWNER))) {
+                meta.set(ExtraProperties.COMMUNICATION_DIRECTION, CommunicationConstants.DIRECTION_OUTGOING);
+            } else {
+                meta.set(ExtraProperties.COMMUNICATION_DIRECTION, CommunicationConstants.DIRECTION_INCOMING);
+            }
+
             if (msg.isDeleted()) {
                 meta.set(ExtraProperties.DELETED, Boolean.toString(true));
             }

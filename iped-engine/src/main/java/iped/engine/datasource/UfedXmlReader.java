@@ -81,7 +81,6 @@ import iped.engine.task.index.IndexItem;
 import iped.engine.util.Util;
 import iped.parsers.telegram.TelegramParser;
 import iped.parsers.ufed.UFEDChatParser;
-import iped.parsers.util.CommunicationConstants;
 import iped.parsers.util.MetadataUtil;
 import iped.parsers.util.PhoneParsingConfig;
 import iped.parsers.whatsapp.WhatsAppParser;
@@ -962,9 +961,6 @@ public class UfedXmlReader extends DataSourceReader {
                         }
                         if (isOwner && "From".equals(role)) { //$NON-NLS-1$
                             parentItem.getMetadata().add(UFEDChatParser.META_FROM_OWNER, Boolean.TRUE.toString());
-                            parentItem.getMetadata().set(ExtraProperties.COMMUNICATION_DIRECTION, CommunicationConstants.DIRECTION_OUTGOING);
-                        } else if (isOwner && "To".equals(role) && parentItem.getMetadata().get(ExtraProperties.COMMUNICATION_DIRECTION) == null) {
-                            parentItem.getMetadata().set(ExtraProperties.COMMUNICATION_DIRECTION, CommunicationConstants.DIRECTION_INCOMING);
                         }
 
                     } else if ("PhoneNumber".equals(type) || "EmailAddress".equals(type)) { //$NON-NLS-1$ //$NON-NLS-2$
