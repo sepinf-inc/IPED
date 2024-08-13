@@ -1195,7 +1195,7 @@ public class UfedXmlReader extends DataSourceReader {
         private Property toProperty = Property.internalText(ExtraProperties.COMMUNICATION_TO);
 
         private void fillMissingInfo(Item item) {
-            String from = item.getMetadata().get(ExtraProperties.COMMUNICATION_FROM);
+            List<String> from = Arrays.asList(item.getMetadata().getValues(ExtraProperties.COMMUNICATION_FROM));
             String[] to = item.getMetadata().getValues(ExtraProperties.COMMUNICATION_TO);
             boolean fromOwner = Boolean.parseBoolean(item.getMetadata().get(UFEDChatParser.META_FROM_OWNER));
             if (to == null || to.length != 1) {
@@ -1211,7 +1211,7 @@ public class UfedXmlReader extends DataSourceReader {
                     } else {
                         String[] parties = parentChat.getMetadata().getValues(ExtraProperties.COMMUNICATION_PARTICIPANTS);
                         for (String party : parties) {
-                            if ((from != null && !party.equals(from)) || (fromOwner && !ownerParties.contains(party)))
+                            if (!from.contains(party) || (fromOwner && !ownerParties.contains(party)))
                                 toList.add(party);
                         }
                     }
