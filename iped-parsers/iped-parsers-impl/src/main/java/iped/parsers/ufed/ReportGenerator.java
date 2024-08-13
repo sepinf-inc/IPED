@@ -86,7 +86,7 @@ public class ReportGenerator {
                 else
                     title = UFEDChatParser.CHATTYPE_BROADCAST_TITLE + ": " + (nameProperty != null ? nameProperty : idProperty);
             }
-            else if (chatType.equals(UFEDChatParser.CHATTYPE_UNKNOWN))
+            else if (chatType.equals(UFEDChatParser.CHATTYPE_UNKNOWN)) {
                 if ((source != null) && (source.equals(UFEDChatParser.WHATSAPP) || source.equals(UFEDChatParser.TELEGRAM)))
                     // "Unknown" chat type regarding apps for which there are specific chat types
                     // NOTE: Apps with similar behaviour should be added to this if condition
@@ -103,6 +103,7 @@ public class ReportGenerator {
                     else
                         title = UFEDChatParser.CHATTYPE_UNKNOWN_TITLE + ": " + idProperty;
                 }
+            }
             else
                 title = chatType + ": " + idProperty;
         }
