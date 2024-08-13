@@ -912,9 +912,10 @@ public class UfedXmlReader extends DataSourceReader {
                         if (parentItem.getName().startsWith("ReplyMessageData_")) {
                             ignoreItemLocal = true;
                         }
+
+                        // InstantMessage items contained in Chats are indexed in UFEDChatParser
+                        item.setAddToCase(false);
                     }
-                    // InstantMessage items are indexed in UFEDChatParser
-                    item.setAddToCase(false);
                 }
                 if (mergeInParentNode.contains(type) && itemSeq.size() > 0) {
                     IItem parentItem = itemSeq.get(itemSeq.size() - 1);

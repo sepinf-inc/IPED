@@ -32,6 +32,7 @@ import org.xml.sax.SAXException;
 
 import com.google.common.collect.ImmutableMap;
 
+import iped.data.IItem;
 import iped.data.IItemReader;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.CommunicationConstants;
@@ -120,10 +121,14 @@ public class UFEDChatParser extends AbstractParser {
     public void parse(InputStream inputStream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
 
-        // add InstantMessage to map
         IItemReader item = context.get(IItemReader.class);
-        if (item.getMediaType() != null && MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.UFED_MESSAGE_MIME)) {
-            messagesMap.computeIfAbsent(item.getParentId(), k -> Collections.synchronizedList(new ArrayList<>())).add(item);
+        if (MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.UFED_MESSAGE_MIME)) {
+
+            // add InstantMessage to map (if child of a Chat)
+            if (item instanceof IItem && !((IItem) item).isToAddToCase()) {
+                messagesMap.computeIfAbsent(item.getParentId(), k -> Collections.synchronizedList(new ArrayList<>())).add(item);
+                ((IItem) item).setToIgnore(true, false);
+            }
             return;
         }
 
@@ -132,7 +137,7 @@ public class UFEDChatParser extends AbstractParser {
         xhtml.startDocument();
         try {
             IItemSearcher searcher = context.get(IItemSearcher.class);
-            IItemReader chat = context.get(IItemReader.class);
+            IItemReader chat = item;
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                     new ParsingEmbeddedDocumentExtractor(context));
 
