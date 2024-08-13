@@ -1192,8 +1192,6 @@ public class UfedXmlReader extends DataSourceReader {
             }
         }
 
-        private Property toProperty = Property.internalText(ExtraProperties.COMMUNICATION_TO);
-
         private void fillMissingInfo(Item item) {
             List<String> from = Arrays.asList(item.getMetadata().getValues(ExtraProperties.COMMUNICATION_FROM));
             String[] to = item.getMetadata().getValues(ExtraProperties.COMMUNICATION_TO);
@@ -1215,9 +1213,9 @@ public class UfedXmlReader extends DataSourceReader {
                         }
                     }
                     if (toList.size() == 1) {
-                        item.getMetadata().set(toProperty, toList.get(0));
+                        item.getMetadata().set(ExtraProperties.COMMUNICATION_TO, toList.get(0));
                     } else if (toList.size() > 1) {
-                        item.getMetadata().set(toProperty, parentChat.getName());
+                        item.getMetadata().set(ExtraProperties.COMMUNICATION_TO, parentChat.getName());
                         item.getMetadata().set(ExtraProperties.IS_GROUP_MESSAGE, "true");
                     }
 
