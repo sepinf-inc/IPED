@@ -272,7 +272,7 @@ public class UfedXmlReader extends DataSourceReader {
         }
 
         if (parsingConfig.getPhoneParsersToUse().equalsIgnoreCase("internal")) { //$NON-NLS-1$
-            UFEDChatParser.setSupportedTypes(Collections.singleton(UFEDChatParser.UFED_CHAT_MIME));
+            UFEDChatParser.ignoreSupportedChats();
             ignoreSupportedChats = true;
 
         } else if (parsingConfig.getPhoneParsersToUse().equalsIgnoreCase("external")) { //$NON-NLS-1$

@@ -71,7 +71,7 @@ public class UFEDChatParser extends AbstractParser {
 
     private int minChatSplitSize = 6000000;
 
-    private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(UFED_CHAT_MIME, UFED_CHAT_WA_MIME,
+    private static Set<MediaType> supportedTypes = MediaType.set(UFED_CHAT_MIME, UFED_CHAT_WA_MIME,
             UFED_CHAT_TELEGRAM, MediaTypes.UFED_MESSAGE_MIME);
 
     private static final Map<String, String> chatTypeMap;
@@ -88,8 +88,8 @@ public class UFEDChatParser extends AbstractParser {
 
     private boolean extractMessages = true;
 
-    public static void setSupportedTypes(Set<MediaType> supportedTypes) {
-        SUPPORTED_TYPES = supportedTypes;
+    public static void ignoreSupportedChats() {
+        supportedTypes = MediaType.set(UFED_CHAT_MIME, MediaTypes.UFED_MESSAGE_MIME);
     }
 
     public static MediaType getMediaType(String source) {
@@ -114,7 +114,7 @@ public class UFEDChatParser extends AbstractParser {
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
-        return SUPPORTED_TYPES;
+        return supportedTypes;
     }
 
     @Override
