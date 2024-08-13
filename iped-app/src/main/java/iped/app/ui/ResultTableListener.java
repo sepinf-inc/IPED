@@ -290,7 +290,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
     }
 
     private ProgressDialog createProgressDialog() {
-        ProgressDialog d = new ProgressDialog(App.get(), null, true, 200, Dialog.ModalityType.APPLICATION_MODAL);
+        ProgressDialog d = new ProgressDialog(App.get(), null, false, 200, Dialog.ModalityType.APPLICATION_MODAL);
         d.setNote(Messages.getString("App.Wait")); //$NON-NLS-1$
         return d;
     }
@@ -367,6 +367,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
                 BookmarksController.get().setMultiSetting(true);
                 App.get().resultsTable.setUpdateSelectionOnSort(false);
                 int[] selectedRows = App.get().resultsTable.getSelectedRows();
+                dialog.setMaximum(selectedRows.length);
                 for (int i = 0; i < selectedRows.length; i++) {
                     if (i == selectedRows.length - 1) {
                         BookmarksController.get().setMultiSetting(false);
@@ -399,6 +400,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
                 BookmarksController.get().setMultiSetting(true);
                 App.get().resultsTable.setUpdateSelectionOnSort(false);
                 int[] selectedRows = App.get().resultsTable.getSelectedRows();
+                dialog.setMaximum(selectedRows.length);
                 for (int i = 0; i < selectedRows.length; i++) {
                     if (i == selectedRows.length - 1) {
                         BookmarksController.get().setMultiSetting(false);
@@ -427,32 +429,33 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
         ProgressDialog dialog = createProgressDialog();
         executor.execute(() -> {
             try {
-        int col = App.get().resultsTable.convertColumnIndexToView(1);
-        BookmarksController.get().setMultiSetting(true);
-        App.get().resultsTable.setUpdateSelectionOnSort(false);
-        int[] selectedRows = App.get().resultsTable.getSelectedRows();
-        for (int i = 0; i < selectedRows.length; i++) {
-            if (i == selectedRows.length - 1) {
-                BookmarksController.get().setMultiSetting(false);
-                App.get().resultsTable.setUpdateSelectionOnSort(true);
-            }
-            App.get().resultsTable.setValueAt(value, selectedRows[i], col);
+                int col = App.get().resultsTable.convertColumnIndexToView(1);
+                BookmarksController.get().setMultiSetting(true);
+                App.get().resultsTable.setUpdateSelectionOnSort(false);
+                int[] selectedRows = App.get().resultsTable.getSelectedRows();
+                dialog.setMaximum(selectedRows.length);
+                for (int i = 0; i < selectedRows.length; i++) {
+                    if (i == selectedRows.length - 1) {
+                        BookmarksController.get().setMultiSetting(false);
+                        App.get().resultsTable.setUpdateSelectionOnSort(true);
+                    }
+                    App.get().resultsTable.setValueAt(value, selectedRows[i], col);
 
-            int modelIndex = App.get().resultsTable.convertRowIndexToModel(selectedRows[i]);
-            selectReferencedByItems(value, App.get().ipedResult.getItem(modelIndex));
-            dialog.setProgress(i);
-            if (dialog.isCanceled()) {
-                return;
+                    int modelIndex = App.get().resultsTable.convertRowIndexToModel(selectedRows[i]);
+                    selectReferencedByItems(value, App.get().ipedResult.getItem(modelIndex));
+                    dialog.setProgress(i);
+                    if (dialog.isCanceled()) {
+                        return;
+                    }
+                }
+            } finally {
+                SwingUtilities.invokeLater(() -> {
+                    dialog.close();
+                    BookmarksController.get().updateUI();
+                    App.get().subItemTable.repaint();
+                });
             }
-        }
-    } finally {
-        SwingUtilities.invokeLater(() -> {
-            dialog.close();
-            BookmarksController.get().updateUI();
-            App.get().subItemTable.repaint();
         });
-    }
-});
     }
 
     /**
