@@ -929,6 +929,8 @@ public class UfedXmlReader extends DataSourceReader {
                             role = parentNameAttr;
                         if (role.equals("To") && (parentNameAttr.equals("Bcc") || parentNameAttr.equals("Cc"))) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                             role = parentNameAttr;
+                        if (role.equals("From") && (parentNameAttr.equals("OriginalSender"))) //$NON-NLS-1$ //$NON-NLS-2$
+                            role = parentNameAttr;
                         if (role.equals("Parties")) //$NON-NLS-1$
                             role = "Participants"; //$NON-NLS-1$
 
@@ -1016,10 +1018,24 @@ public class UfedXmlReader extends DataSourceReader {
                             for (String val : vals)
                                 parentItem.getMetadata().add(meta, val);
                         }
-                    } else if ("ForwardedMessageData".equals(type) || "ReplyMessageData".equals(type)) {
-                        for (String meta : item.getMetadata().names()) {
-                            if (meta.equals(ExtraProperties.UFED_META_PREFIX + "id"))
-                                continue;
+                    } else if ("ForwardedMessageData".equals(type)) {
+                        List<String> metasToMerge = Arrays.asList(ExtraProperties.UFED_META_PREFIX + "Label",
+                                ExtraProperties.UFED_META_PREFIX + "TimeCreated",
+                                ExtraProperties.UFED_META_PREFIX + "OriginalSender");
+                        for (String meta : metasToMerge) {
+                            String[] vals = item.getMetadata().getValues(meta);
+                            for (String val : vals) {
+                                parentItem.getMetadata().add(meta, val);
+                            }
+                        }
+                        boolean forwardedFromOwner = Boolean.parseBoolean(parentItem.getMetadata().get(UFEDChatParser.META_FROM_OWNER));
+                        if (forwardedFromOwner) {
+                            parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + "OriginalSenderIsOwner", Boolean.TRUE.toString());
+                        }
+                    } else if ("ReplyMessageData".equals(type)) {
+                        List<String> metasToMerge = Arrays.asList(ExtraProperties.UFED_META_PREFIX + "Label",
+                                ExtraProperties.UFED_META_PREFIX + "OriginalMessageID");
+                        for (String meta : metasToMerge) {
                             String[] vals = item.getMetadata().getValues(meta);
                             for (String val : vals) {
                                 parentItem.getMetadata().add(meta, val);
