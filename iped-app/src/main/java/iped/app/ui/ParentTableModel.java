@@ -25,10 +25,12 @@ import javax.swing.SwingUtilities;
 
 import org.apache.lucene.document.Document;
 
+import iped.data.IItem;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.LuceneSearchResult;
 import iped.engine.search.MultiSearchResult;
 import iped.engine.task.index.IndexItem;
+import iped.properties.ExtraProperties;
 
 public class ParentTableModel extends BaseTableModel {
 
@@ -36,7 +38,16 @@ public class ParentTableModel extends BaseTableModel {
 
     @Override
     public void valueChanged(ListSelectionModel lsm) {
-        App.get().getTextViewer().textTable.scrollRectToVisible(new Rectangle());
+
+        if (refDoc != null) {
+            IItem item = IndexItem.getItem(refDoc, App.get().appCase, false);
+            if (item != null) {
+                String parentViewPosition = item.getMetadata().get(ExtraProperties.PARENT_VIEW_POSITION);
+                if (parentViewPosition != null) {
+                    App.get().getViewerController().getHtmlLinkViewer().setElementIDToScroll(parentViewPosition);
+                }
+            }
+        }
 
         FileProcessor parsingTask = new FileProcessor(results.getLuceneIds()[selectedIndex], false);
         parsingTask.execute();
@@ -45,7 +56,7 @@ public class ParentTableModel extends BaseTableModel {
     }
 
     @Override
-    public void listItems(Document doc) {
+    protected void internalListItems(Document doc) {
 
         String textQuery = null;
         String parentId = doc.get(IndexItem.PARENTID);

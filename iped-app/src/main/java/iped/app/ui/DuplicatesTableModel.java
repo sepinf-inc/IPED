@@ -60,7 +60,7 @@ public class DuplicatesTableModel extends BaseTableModel {
     }
 
     @Override
-    public void listItems(Document doc) {
+    protected void internalListItems(Document doc) {
 
         String hash = doc.get(IndexItem.HASH);
         if (hash == null || hash.trim().isEmpty())

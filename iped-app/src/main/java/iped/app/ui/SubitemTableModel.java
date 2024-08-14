@@ -47,7 +47,7 @@ public class SubitemTableModel extends BaseTableModel {
     }
 
     @Override
-    public void listItems(Document doc) {
+    protected void internalListItems(Document doc) {
 
         String parentId = doc.get(IndexItem.ID);
 

@@ -68,7 +68,7 @@ public class ReferencedByTableModel extends BaseTableModel {
     }
 
     @Override
-    public void listItems(Document doc) {
+    protected void internalListItems(Document doc) {
 
         String md5 = doc.get(HashTask.HASH.MD5.toString());
         String sha1 = doc.get(HashTask.HASH.SHA1.toString());
@@ -78,7 +78,6 @@ public class ReferencedByTableModel extends BaseTableModel {
 
         if (hashes.isEmpty()) {
             results = new LuceneSearchResult(0);
-            refDoc = null;
         } else {
             String textQuery = ExtraProperties.LINKED_ITEMS + ":(" + hashes + ") ";
             textQuery += ExtraProperties.SHARED_HASHES + ":(" + hashes + ")";
@@ -96,14 +95,10 @@ public class ReferencedByTableModel extends BaseTableModel {
                             App.get().referencedByDock.setTitleText(Messages.getString("ReferencedByTab.Title") + " " + length);
                         }
                     });
-                    refDoc = doc;
-                } else {
-                    refDoc = null;
                 }
 
             } catch (Exception e) {
                 results = new LuceneSearchResult(0);
-                refDoc = null;
                 e.printStackTrace();
             }
         }

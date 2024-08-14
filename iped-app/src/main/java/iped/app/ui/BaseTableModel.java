@@ -138,5 +138,17 @@ public abstract class BaseTableModel extends AbstractTableModel implements Mouse
 
     public abstract void valueChanged(ListSelectionModel lsm);
 
-    public abstract void listItems(Document doc);
+    protected abstract void internalListItems(Document doc);
+
+    public final void listItems(Document doc) {
+        try {
+            internalListItems(doc);
+        } finally {
+            if (results != null && results.getLength() > 0) {
+                refDoc = doc;
+            } else {
+                refDoc = null;
+            }
+        }
+    }
 }

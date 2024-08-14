@@ -51,7 +51,7 @@ public class ReferencingTableModel extends BaseTableModel {
     }
 
     @Override
-    public void listItems(Document doc) {
+    protected void internalListItems(Document doc) {
 
         // clear table, searching for refs can take some time if they are thousands
         results = new LuceneSearchResult(0);
