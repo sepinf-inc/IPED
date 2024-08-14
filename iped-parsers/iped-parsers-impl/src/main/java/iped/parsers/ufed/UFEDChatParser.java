@@ -308,10 +308,10 @@ public class UFEDChatParser extends AbstractParser {
                 else {
                     // "Unknown" chat type regarding apps for which there aren't specific chat types
                     // Communication type is derived from the number of participants
-                    if (parties != null) {
+                    if ((parties != null) && (parties.length > 0)) {
                         if (parties.length > 2)
                             name += "_" + CHATTYPE_GROUP_TITLE + "_" + idProperty;
-                        else if (parties.length > 0)
+                        else
                             name += "_" + CHATTYPE_ONEONONE_TITLE + "_" + ((parties.length > 1) && (parties[0].equals(phoneOwner)) ? parties[1] : parties[0]);
                     }
                     else

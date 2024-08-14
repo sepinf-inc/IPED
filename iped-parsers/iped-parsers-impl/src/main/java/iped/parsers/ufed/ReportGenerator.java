@@ -94,10 +94,10 @@ public class ReportGenerator {
                 else {
                     // "Unknown" chat type regarding apps for which there aren't specific chat types
                     // Communication type is derived from the number of participants
-                    if (parties != null) {
+                    if ((parties != null) && (parties.length > 0)) {
                         if (parties.length > 2)
                             title = UFEDChatParser.CHATTYPE_GROUP_TITLE + ": " + idProperty;
-                        else if (parties.length > 0)
+                        else
                             title = UFEDChatParser.CHATTYPE_ONEONONE_TITLE + ": " + ((parties.length > 1) && (parties[0].equals(phoneOwner)) ? parties[1] : parties[0]);
                     }
                     else
