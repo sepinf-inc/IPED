@@ -856,8 +856,6 @@ public class UfedXmlReader extends DataSourceReader {
                         parentItem.getMetadata().add(EMAIL_ATTACH_KEY, item.getName());
                     else if (parentItem.getMediaType().equals(MediaTypes.UFED_MESSAGE_MIME)) {
                         this.numAttachments++;
-                        parentItem.getMetadata().add(ExtraProperties.LINKED_ITEMS,
-                                ESCAPED_UFED_ID + ":" + item.getMetadata().get(UFED_ID));
                         if (prevUfedId != null) {
                             seenAttachment = true;
                             List<Item> attachs = seenAttachsPerId.get(item.getParentId());
