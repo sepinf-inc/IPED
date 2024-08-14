@@ -685,6 +685,17 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             String embeddedId = metadata.get(ExtraProperties.ITEM_VIRTUAL_ID);
             metadata.remove(ExtraProperties.ITEM_VIRTUAL_ID);
 
+            // index id
+            String id = metadata.get(BasicProps.ID);
+            if (id != null) {
+                try {
+                    subItem.setId(Integer.parseInt(id));
+                } catch (NumberFormatException e) {
+                    LOGGER.warn("Invalid id in metadata: {}", id);
+                }
+                metadata.remove(BasicProps.ID);
+            }
+
             // pausa contagem de timeout do pai antes de extrair e processar subitem
             if (reader.setTimeoutPaused(true)) {
                 long start = System.nanoTime() / 1000;
