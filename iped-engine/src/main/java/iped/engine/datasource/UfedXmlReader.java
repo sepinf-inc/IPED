@@ -1405,8 +1405,8 @@ public class UfedXmlReader extends DataSourceReader {
             int maxNameSize = 4096;
             if (newName.length() > maxNameSize) {
                 newName = newName.substring(0, maxNameSize);
-                item.setPath(item.getPath().substring(0, item.getPath().lastIndexOf('/') + 1) + newName);
             }
+            item.setPath(item.getPath().substring(0, item.getPath().lastIndexOf('/') + 1) + newName);
             item.setName(newName);
         }
 
