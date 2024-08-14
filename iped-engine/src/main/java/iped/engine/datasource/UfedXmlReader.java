@@ -908,6 +908,12 @@ public class UfedXmlReader extends DataSourceReader {
                         // See https://github.com/sepinf-inc/IPED/issues/2264#issuecomment-2254192462
                         if (parentItem.getName().startsWith("ReplyMessageData_")) {
                             ignoreItemLocal = true;
+
+                            if (itemSeq.size() >= 2) {
+                                IItem messageItem = itemSeq.get(itemSeq.size() - 2);
+                                String repliedMessageId = item.getMetadata().get(UFED_ID);
+                                messageItem.getMetadata().add(ExtraProperties.LINKED_ITEMS, ESCAPED_UFED_ID + ":" + repliedMessageId);
+                            }
                         }
 
                         // InstantMessage items contained in Chats are indexed in UFEDChatParser
@@ -1106,7 +1112,7 @@ public class UfedXmlReader extends DataSourceReader {
                                     itemSeq.remove(itemSeq.size() - 1);
                                 } else if (seenAttachs != null && seenAttachs.size() == 1) {
                                     Item attach = seenAttachs.get(0);
-                                    item.getMetadata().set(ExtraProperties.LINKED_ITEMS, ESCAPED_UFED_ID + ":" + prevUfedId);
+                                    item.getMetadata().add(ExtraProperties.LINKED_ITEMS, ESCAPED_UFED_ID + ":" + prevUfedId);
                                     // Since this attach was already seen/added to case, skip it, but copy its props to parent message
                                     for (String key : attach.getMetadata().names()) {
                                         if (key.startsWith(ExtraProperties.UFED_META_PREFIX) && item.getMetadata().get(key) == null) {
