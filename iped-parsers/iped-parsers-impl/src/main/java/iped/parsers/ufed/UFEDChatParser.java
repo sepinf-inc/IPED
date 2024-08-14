@@ -265,9 +265,8 @@ public class UFEDChatParser extends AbstractParser {
             meta.set(TikaCoreProperties.TITLE, msg.getName()); // $NON-NLS-1$
             meta.set(BasicProps.ID, Integer.toString(msg.getId()));
             meta.set(StandardParser.INDEXER_CONTENT_TYPE, msg.getMediaType().toString());
-            meta.set(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(msg.getId()));
             meta.set(ExtraProperties.PARENT_VIRTUAL_ID, virtualId);
-            meta.set(ExtraProperties.PARENT_VIEW_POSITION, String.valueOf(msg.getIdInDataSource()));
+            meta.set(ExtraProperties.PARENT_VIEW_POSITION, String.valueOf(msg.getId()));
             meta.set(ExtraProperties.MESSAGE_DATE, msg.getCreationDate());
             meta.set(TikaCoreProperties.CREATED, msg.getCreationDate());
             meta.set(BasicProps.LENGTH, "");
