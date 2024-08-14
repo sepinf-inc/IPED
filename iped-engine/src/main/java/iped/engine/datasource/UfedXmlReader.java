@@ -135,7 +135,7 @@ public class UfedXmlReader extends DataSourceReader {
     HashMap<String, IItem> pathToParent = new HashMap<>();
     boolean ignoreSupportedChats = false;
     HashMap<String, String> ufdrPathToUfedId = new HashMap<>();
-    HashMap<String, String> ufedFileIdToLocalPath = new HashMap<>();    // used to replace non-existent attachment extracted path by local path
+    HashMap<String, String> ufedIdToUfdrPath = new HashMap<>();    // used to replace non-existent attachment extracted path by local path
     private final List<String[]> deviceInfoData = new ArrayList<String[]>();
     private HashSet<String> addedImUfedIds = new HashSet<>();
     private HashSet<String> addedTrackIds = new HashSet<>();
@@ -738,7 +738,7 @@ public class UfedXmlReader extends DataSourceReader {
                     item.getMetadata().add(LOCAL_PATH_META, normalizedPath);
 
                     // Add key to map item id to "Local Path"
-                    ufedFileIdToLocalPath.put(item.getMetadata().get(UFED_ID), normalizedPath);
+                    ufedIdToUfdrPath.put(item.getMetadata().get(UFED_ID), normalizedPath);
 
                     if (item.getPath().endsWith("wireless/Library/Databases/CellularUsage.db")) {
                         parseIphoneSimSwitch(item);
@@ -1099,9 +1099,11 @@ public class UfedXmlReader extends DataSourceReader {
                                 if (seenAttachs != null && numInstantMsgAttachs > 1) {
                                     // If msg has more than 1 (seen/added) attach, add all of them to the case again for now.
                                     // This duplicates those attachs, but today we can't update indexed items properties.
+                                    itemSeq.add(item);
                                     for (Item attach : seenAttachs) {
                                         processItem(attach);
                                     }
+                                    itemSeq.remove(itemSeq.size() - 1);
                                 } else if (seenAttachs != null && seenAttachs.size() == 1) {
                                     Item attach = seenAttachs.get(0);
                                     item.getMetadata().set(ExtraProperties.LINKED_ITEMS, ESCAPED_UFED_ID + ":" + prevUfedId);
@@ -1190,12 +1192,13 @@ public class UfedXmlReader extends DataSourceReader {
             List<String> from = Arrays.asList(item.getMetadata().getValues(ExtraProperties.COMMUNICATION_FROM));
             String[] to = item.getMetadata().getValues(ExtraProperties.COMMUNICATION_TO);
             boolean fromOwner = Boolean.parseBoolean(item.getMetadata().get(UFEDChatParser.META_FROM_OWNER));
-            if (to.length != 1) {
-                if (MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.UFED_MESSAGE_MIME)) {
-                    // we have seen ufed messages without parent chat
-                    if (itemSeq.size() == 0)
-                        return;
-                    IItem parentChat = itemSeq.get(itemSeq.size() - 1);
+            IItem parentChat = null;
+            if (!itemSeq.isEmpty()) {
+                parentChat = itemSeq.get(itemSeq.size() - 1);
+            }
+            if (parentChat != null && MediaTypes.isInstanceOf(parentChat.getMediaType(), UFEDChatParser.UFED_CHAT_MIME)
+                    && MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.UFED_MESSAGE_MIME)) {
+                if (to.length != 1) {
                     List<String> toList = new ArrayList<>();
                     if (to.length > 0) {
                         toList = Arrays.asList(to);
@@ -1212,7 +1215,6 @@ public class UfedXmlReader extends DataSourceReader {
                         item.getMetadata().set(ExtraProperties.COMMUNICATION_TO, parentChat.getName());
                         item.getMetadata().set(ExtraProperties.IS_GROUP_MESSAGE, "true");
                     }
-
                 }
             }
             if (!msisdns.isEmpty() && (MediaTypes.UFED_CALL_MIME.equals(item.getMediaType())
@@ -1289,6 +1291,7 @@ public class UfedXmlReader extends DataSourceReader {
             if (ufedId != null && !ufdrPathToUfedId.containsKey(path)) {
                 ufdrPathToUfedId.put(path, ufedId);
             }
+
             if (ufdrFile == null) {
                 if (rootFolder == null) {
                     rootFolder = root.isDirectory() ? root : root.getParentFile();
@@ -1414,21 +1417,54 @@ public class UfedXmlReader extends DataSourceReader {
             String name = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Filename"); //$NON-NLS-1$
             if (name != null)
                 updateName(item, name);
-            String extracted_path = item.getMetadata().get(ATTACH_PATH_META);
-            String ufedId = null;
-            if (extracted_path != null) {
-                extracted_path = normalizePaths(extracted_path);
-                ufedId = ufdrPathToUfedId.get(extracted_path);
 
-                // If extracted path doesn't exist, replace non-existent extracted path by attached file's local path
-                if (!getUISF().entryExists(extracted_path)) {
-                    // Replace extracted path by attached file's local path
-                    extracted_path = ufedFileIdToLocalPath.get(item.getMetadata().get(FILE_ID_ATTR));
-                }
-                
+            String extractedPath = item.getMetadata().get(ATTACH_PATH_META);
+            String fileId = item.getMetadata().get(FILE_ID_ATTR);
+
+            if (extractedPath == null && fileId != null) {
+                extractedPath = ufedIdToUfdrPath.get(fileId);
             }
-            setContent(item, extracted_path);
-            return ufedId;
+
+            if (extractedPath != null) {
+                extractedPath = normalizePaths(extractedPath);
+
+                 // If extracted path doesn't exist, replace non-existent extracted path by attached file's local path
+                if (fileId != null && !getUISF().entryExists(extractedPath)) {
+                    String seenExtractedPath = ufedIdToUfdrPath.get(fileId);
+                    if (seenExtractedPath != null && getUISF().entryExists(seenExtractedPath)) {
+                        // Replace extracted path by attached file's local path
+                        extractedPath = seenExtractedPath;
+                    }
+                }
+            }
+
+            if (extractedPath != null && (fileId == null || !ufedIdToUfdrPath.containsKey(fileId))) {
+                fileId = ufdrPathToUfedId.get(extractedPath);
+            }
+
+            if (fileId != null) {
+
+                // if fileId was seen, so it will be referenced by linkedItems.
+                item.setMediaType(MediaTypes.UFED_MESSAGE_ATTACH_MIME);
+                item.getMetadata().add(ExtraProperties.LINKED_ITEMS, ESCAPED_UFED_ID + ":" + fileId);
+
+            } else if (extractedPath != null) {
+
+                // file was not referenced previously, so set the content
+                setContent(item, extractedPath);
+
+            } else {
+
+                // doesn't have fileId neither extractedPath, so set mediaType at least
+                String ufedContentType = item.getMetadata().get(UFED_MIME_PREFIX + "ContentType");
+                if (ufedContentType != null) {
+                    item.setMediaType(MediaType.parse(ufedContentType));
+                } else {
+                    item.setMediaType(MediaTypes.UFED_MESSAGE_ATTACH_MIME);
+                }
+            }
+
+            return fileId;
         }
 
         private String normalizePaths(String path) {
