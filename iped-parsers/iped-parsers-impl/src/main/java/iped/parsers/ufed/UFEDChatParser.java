@@ -348,12 +348,12 @@ public class UFEDChatParser extends AbstractParser {
 
     public static String getChatName(IItemReader item) {
 
+        String owner = item.getMetadata().get(ExtraProperties.COMMUNICATION_OWNER);
         String source = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source");
         String chatType = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "ChatType");
         String name = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name");
         String id = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "id");
         String[] participants = item.getMetadata().getValues(ExtraProperties.COMMUNICATION_PARTICIPANTS);
-        String account = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Account");
 
         StringBuilder sb = new StringBuilder();
         sb.append(source).append(' ');
@@ -375,9 +375,9 @@ public class UFEDChatParser extends AbstractParser {
         if (name != null) {
             sb.append(name);
         } else if (participants.length == 2) {
-            if (participants[0].contains(account)) {
+            if (participants[0].equals(owner)) {
                 sb.append(participants[1]);
-            } else if (participants[1].contains(account)) {
+            } else if (participants[1].equals(owner)) {
                 sb.append(participants[0]);
             } else {
                 sb.append(participants[0]).append('_').append(participants[1]);
