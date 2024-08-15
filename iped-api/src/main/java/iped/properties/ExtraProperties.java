@@ -61,6 +61,10 @@ public class ExtraProperties {
 
     public static final String COMMUNICATION_ACCOUNT = COMMUNICATION_PREFIX + "Account";
 
+    public static final String COMMUNICATION_OWNER = COMMUNICATION_PREFIX + "Owner";
+
+    public static final String COMMUNICATION_IS_OWNER_ADMIN = COMMUNICATION_PREFIX + "IsOwnerAdmin";
+
     public static final String COMMUNICATION_MESSAGES_COUNT = COMMUNICATION_PREFIX + "MessagesCount";
 
     public static final String GROUP_ID = "GroupID";
