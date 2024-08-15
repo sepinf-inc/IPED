@@ -45,6 +45,7 @@ import iped.data.IItem;
 import iped.engine.CmdLineArgs;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.MinIOConfig;
+import iped.engine.io.UFDRInputStreamFactory;
 import iped.engine.task.index.ElasticSearchIndexTask;
 import iped.io.SeekableInputStream;
 import iped.utils.SeekableFileInputStream;
@@ -431,6 +432,17 @@ public class MinIOTask extends AbstractTask {
 
     }
 
+    private boolean isToUploadUfdr(IItem item) {
+        for (AbstractTask t : worker.tasks) {
+            if (t instanceof ExportFileTask) {
+                ExportFileTask exportFileTask = (ExportFileTask) t;
+                return !exportFileTask.isAutomaticExportEnabled()
+                        && caseData.getCaseObject(item.getDataSource().getUUID()) != null;
+            }
+        }
+        return false;
+    }
+
     @Override
     protected void process(IItem item) throws Exception {
 
@@ -438,13 +450,37 @@ public class MinIOTask extends AbstractTask {
             flushZipFile();
             return;
         }
-
+        
+        if (item.isRoot() && isToUploadUfdr(item)) {
+            String name = item.getDataSource().getUUID();
+            try (SeekableInputStream is = new SeekableFileInputStream((File) caseData.getCaseObject(name))) {
+                insertItem("", is, "application/x-zip-compressed", getBucket(item), name + ".zip");
+                updateDataSource(item, getBucket(item) + "/" + name + ".zip");
+            }
+            return;
+        }
+        
         if (caseData.isIpedReport() || !item.isToAddToCase())
             return;
 
         String hash = item.getHash();
         if (hash == null || hash.isEmpty() || item.getLength() == null)
             return;
+
+        if (!item.isSubItem() && isToUploadUfdr(item)) {
+            int idx = -1;
+            if (item.getIdInDataSource() != null) {
+                idx = item.getIdInDataSource().indexOf(UFDRInputStreamFactory.UFDR_PATH_PREFIX);
+            }
+            if (idx >= 0) {
+                idx += UFDRInputStreamFactory.UFDR_PATH_PREFIX.length();
+                String previousPath = item.getIdInDataSource().substring(idx);
+                String newPath = item.getDataSource().getUUID() + ".zip/" + previousPath;
+                logger.debug("Path org {} \n newPath {}", item.getIdInDataSource(), newPath);
+                updateDataSource(item, getBucket(item) + "/" + newPath);
+                return;
+            }
+        }
 
         try (SeekableInputStream is = item.getSeekableInputStream()) {
             insertWithZip(item, hash, is, item.getMediaType().toString(), false);

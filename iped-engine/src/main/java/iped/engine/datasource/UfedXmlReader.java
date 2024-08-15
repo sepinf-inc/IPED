@@ -233,6 +233,15 @@ public class UfedXmlReader extends DataSourceReader {
 
         this.root = root;
         addRootItem(parent);
+
+
+        if (this.rootItem != null && this.rootItem.getDataSource() != null) {
+            LOGGER.debug("DataSource {} root {}", this.rootItem.getDataSource(), root);
+            // save a reference to the ufdr file
+
+            caseData.putCaseObject(this.rootItem.getDataSource().getUUID(), root);
+        }
+
         addVirtualDecodedFolder();
         InputStream xmlStream = null;
         try {
