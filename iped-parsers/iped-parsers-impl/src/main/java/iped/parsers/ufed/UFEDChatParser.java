@@ -267,8 +267,6 @@ public class UFEDChatParser extends AbstractParser {
             meta.set(StandardParser.INDEXER_CONTENT_TYPE, msg.getMediaType().toString());
             meta.set(ExtraProperties.PARENT_VIRTUAL_ID, virtualId);
             meta.set(ExtraProperties.PARENT_VIEW_POSITION, String.valueOf(msg.getId()));
-            meta.set(ExtraProperties.MESSAGE_DATE, msg.getCreationDate());
-            meta.set(TikaCoreProperties.CREATED, msg.getCreationDate());
             meta.set(BasicProps.LENGTH, "");
 
             if (Boolean.parseBoolean(meta.get(META_FROM_OWNER))) {
