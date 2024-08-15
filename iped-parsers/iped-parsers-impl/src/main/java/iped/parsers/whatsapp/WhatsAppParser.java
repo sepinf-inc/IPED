@@ -356,6 +356,14 @@ public class WhatsAppParser extends SQLite3DBParser {
                 chatMetadata.add(ExtraProperties.COMMUNICATION_MESSAGES_COUNT,
                         Long.toString(c.getMessages().stream().filter(m -> !m.isSystemMessage()).count()));
 
+                if (c.getAccount() != null) {
+                    chatMetadata.add(ExtraProperties.COMMUNICATION_OWNER, c.getAccount().getFullId());
+                }
+
+                if (c.isOwnerAdmin()) {
+                    chatMetadata.add(ExtraProperties.COMMUNICATION_IS_OWNER_ADMIN, Boolean.TRUE.toString());
+                }
+
                 ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
                 extractor.parseEmbedded(chatStream, handler, chatMetadata, false);
                 bytes = nextBytes;
@@ -404,6 +412,12 @@ public class WhatsAppParser extends SQLite3DBParser {
                 extFactory.setConnectionParams(tis, metadata, context, this);
                 Extractor waExtractor = extFactory.createMessageExtractor(filePath, tempDbFile, contacts, account, recoverDeletedRecords);
                 List<Chat> chatList = waExtractor.getChatList();
+                for (Chat chat : chatList) {
+                    chat.setAccount(account);
+                    if (chat.getGroupAdmins().stream().map(WAContact::getFullId).anyMatch(account.getFullId()::equals)) {
+                        chat.setOwnerAdmin(true);
+                    }
+                }
                 createReport(chatList, searcher, contacts, handler, extractor, account, tis.getFile(), context);
 
             } catch (Exception e) {

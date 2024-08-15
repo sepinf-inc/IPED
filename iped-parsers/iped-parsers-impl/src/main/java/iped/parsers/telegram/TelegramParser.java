@@ -208,6 +208,9 @@ public class TelegramParser extends SQLite3DBParser {
                 for (long id : cg.getAdmins()) {
                     addParticipantFields(chatMetadata, c, e, ExtraProperties.COMMUNICATION_ADMINS, id);
                     addParticipantFields(chatMetadata, c, e, ExtraProperties.COMMUNICATION_PARTICIPANTS, id);
+                    if (id == e.getUserAccount().getId()) {
+                        chatMetadata.add(ExtraProperties.COMMUNICATION_IS_OWNER_ADMIN, Boolean.TRUE.toString());
+                    }
                 }
                 for (long id : cg.getMembers()) {
                     addParticipantFields(chatMetadata, c, e, ExtraProperties.COMMUNICATION_PARTICIPANTS, id);
@@ -233,6 +236,8 @@ public class TelegramParser extends SQLite3DBParser {
             chatMetadata.set(ExtraProperties.COMMUNICATION_ACCOUNT, e.getUserAccount().toString());
             chatMetadata.set(ExtraProperties.COMMUNICATION_MESSAGES_COUNT,
                     Long.toString(c.getMessages().stream().filter(m -> m.getType() == null).count()));
+
+            chatMetadata.add(ExtraProperties.COMMUNICATION_OWNER, e.getUserAccount().toString());
 
             List<Message> msgSubset = c.getMessages().subList(firstMsg, nextMsg);
 
