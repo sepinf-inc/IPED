@@ -889,13 +889,14 @@ public class WhatsAppParser extends SQLite3DBParser {
         return result;
     }
 
-    private void fillGroupRecipients(Metadata meta, Chat c, String from, Map<String, String> cache) {
-        for (WAContact member : c.getGroupMembers()) {
-            String gmb = formatContact(member, cache);
-            if (!gmb.equals(from)) {
-                meta.add(org.apache.tika.metadata.Message.MESSAGE_TO, gmb);
-            }
+    private void fillGroupRecipients(Metadata meta, Chat c) {
+        String to = c.isChannelChat() ? "Channel " : "Group ";
+        if (c.getSubject() != null) {
+            to += c.getSubject().strip();
         }
+        to += " (id:" + c.getId() + ")";
+        meta.add(org.apache.tika.metadata.Message.MESSAGE_TO, to);
+        meta.set(ExtraProperties.IS_GROUP_MESSAGE, "true");
     }
 
     private void extractMessages(String chatName, Chat c, List<Message> messages, WAAccount account,
@@ -926,15 +927,15 @@ public class WhatsAppParser extends SQLite3DBParser {
                 }
                 if (m.isFromMe()) {
                     meta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, local);
-                    if (c.isGroupChat()) {
-                        fillGroupRecipients(meta, c, local, cache);
+                    if (c.isGroupOrChannelChat()) {
+                        fillGroupRecipients(meta, c);
                     } else {
                         meta.add(org.apache.tika.metadata.Message.MESSAGE_TO, remote);
                     }
                 } else {
                     meta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, remote);
-                    if (c.isGroupChat()) {
-                        fillGroupRecipients(meta, c, remote, cache);
+                    if (c.isGroupOrChannelChat()) {
+                        fillGroupRecipients(meta, c);
                     } else {
                         meta.add(org.apache.tika.metadata.Message.MESSAGE_TO, local);
                     }
