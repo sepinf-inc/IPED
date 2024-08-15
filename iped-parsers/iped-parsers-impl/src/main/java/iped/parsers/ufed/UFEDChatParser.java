@@ -241,11 +241,11 @@ public class UFEDChatParser extends AbstractParser {
                     ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
                     extractor.parseEmbedded(chatStream, handler, chatMetadata, false);
                     bytes = nextBytes;
-                }
-            }
 
-            if (extractMessages) {
-                extractMessages(itemMgs, virtualId, handler, extractor);
+                    if (extractMessages) {
+                        extractMessages(itemMgs, subList, virtualId, handler, extractor);
+                    }
+                }
             }
 
         } catch (Exception e) {
@@ -258,9 +258,17 @@ public class UFEDChatParser extends AbstractParser {
 
     }
 
-    private void extractMessages(List<IItemReader> messages, String virtualId, ContentHandler handler,
+    private void extractMessages(List<IItemReader> messages, List<UfedMessage> subList, String virtualId, ContentHandler handler,
             EmbeddedDocumentExtractor extractor) throws SAXException, IOException {
+
+        HashSet<Long> idsInSubList = subList.stream().mapToLong(UfedMessage::getId).boxed().collect(Collectors.toCollection(HashSet::new));
+
         for (IItemReader msg : messages) {
+
+            if (!idsInSubList.contains((long) msg.getId())) {
+                continue;
+            }
+
             Metadata meta = msg.getMetadata();
             meta.set(TikaCoreProperties.TITLE, msg.getName()); // $NON-NLS-1$
             meta.set(BasicProps.ID, Integer.toString(msg.getId()));

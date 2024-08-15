@@ -291,11 +291,6 @@
                 <param name="extractEntries" type="bool">false</param>
             </params>
         </parser>
-        <parser class="iped.parsers.ufed.UFEDChatParser">
-            <params>
-				<param name="extractMessages" type="bool">true</param>
-            </params>
-        </parser>
         <parser class="iped.parsers.telegram.TelegramParser">
             <params>
 				<param name="extractMessages" type="bool">true</param>
@@ -328,6 +323,7 @@
         <parser class="iped.parsers.ufed.UFEDChatParser">
             <!--<mime-exclude>application/x-ufed-chat-whatsapp</mime-exclude>-->
             <params>
+            	<param name="extractMessages" type="bool">true</param>
                 <param name="minChatSplitSize" type="int">6000000</param>
             </params>
         </parser>
