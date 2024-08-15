@@ -39,14 +39,20 @@ public class ParentTableModel extends BaseTableModel {
     @Override
     public void valueChanged(ListSelectionModel lsm) {
 
+        boolean scrolled = false;
         if (refDoc != null) {
             IItem item = IndexItem.getItem(refDoc, App.get().appCase, false);
             if (item != null) {
                 String parentViewPosition = item.getMetadata().get(ExtraProperties.PARENT_VIEW_POSITION);
                 if (parentViewPosition != null) {
                     App.get().getViewerController().getHtmlLinkViewer().setElementIDToScroll(parentViewPosition);
+                    scrolled = true;
                 }
             }
+        }
+
+        if (!scrolled) {
+            App.get().getTextViewer().textTable.scrollRectToVisible(new Rectangle());
         }
 
         FileProcessor parsingTask = new FileProcessor(results.getLuceneIds()[selectedIndex], false);
