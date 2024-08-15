@@ -109,8 +109,13 @@ public class ReportGenerator {
                 isFrom = true;
                 name = message.getRemoteResource();
             }
-            if (name == null)
-                name = Messages.getString("ReportGenerator.Unknown"); //$NON-NLS-1$
+            if (name == null) {
+                if (message.isFromMe()) {
+                    name = Messages.getString("WhatsAppReport.Owner"); //$NON-NLS-1$
+                } else {
+                    name = Messages.getString("ReportGenerator.Unknown"); //$NON-NLS-1$
+                }
+            }
         }
 
 
