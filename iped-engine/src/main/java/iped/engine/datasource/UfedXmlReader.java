@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
 import java.util.TimeZone;
@@ -81,6 +82,7 @@ import iped.engine.task.index.IndexItem;
 import iped.engine.util.Util;
 import iped.parsers.telegram.TelegramParser;
 import iped.parsers.ufed.UFEDChatParser;
+import iped.parsers.ufed.UfedMessage;
 import iped.parsers.util.MetadataUtil;
 import iped.parsers.util.PhoneParsingConfig;
 import iped.parsers.whatsapp.WhatsAppParser;
@@ -936,8 +938,16 @@ public class UfedXmlReader extends DataSourceReader {
 
                         String identifier = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Identifier"); //$NON-NLS-1$
                         String name = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name"); //$NON-NLS-1$
-                        String value = name == null || name.equals(identifier) ? "ID:" + identifier
-                                : identifier == null ? name : name + " (ID:" + identifier + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+                        String value;
+                        if (identifier == null && name == null) {
+                            value = null;
+                        } else if (Arrays.asList(name, identifier).stream().filter(Objects::nonNull).allMatch(UfedMessage.SYSTEM_MESSAGE::equalsIgnoreCase)) {
+                            value = UfedMessage.SYSTEM_MESSAGE;
+                        } else if (name != null) {
+                            value = (identifier != null) ? name + " (ID:" + identifier + ")" : name;
+                        } else {
+                            value = "ID:" + identifier;
+                        }
                         if (value != null) {
                             if ("From".equalsIgnoreCase(role)) //$NON-NLS-1$
                                 parentItem.getMetadata().add(ExtraProperties.COMMUNICATION_FROM, value);
