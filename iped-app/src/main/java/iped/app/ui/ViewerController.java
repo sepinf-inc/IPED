@@ -289,7 +289,7 @@ public class ViewerController {
     }
 
     public void updateViewer(AbstractViewer viewer, boolean clean) {
-        if (viewer.getPanel().isShowing() || (viewer.equals(textViewer) && hasHits())) {
+        if (viewer.getPanel().isVisible() || (viewer.equals(textViewer) && hasHits())) {
             if (isInitialized())
                 loadInViewer(viewer);
             DefaultSingleCDockable dock = dockPerViewer.get(viewer);
