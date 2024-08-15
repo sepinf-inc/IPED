@@ -1426,6 +1426,13 @@ public class UfedXmlReader extends DataSourceReader {
         }
 
         private void updateName(IItem item, String newName) {
+
+            // when "ufed:ContentType" is "URL", the "ufed:Filename" value is a message, not a filename 
+            String contentType = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "ContentType");
+            if ("URL".equalsIgnoreCase(contentType)) {
+                return;
+            }
+
             // prevents error DocValuesField is too large
             int maxNameSize = 4096;
             if (newName.length() > maxNameSize) {
