@@ -164,9 +164,9 @@ public class P2PBookmarker {
                     String source = doc.get(ExtraProperties.UFED_META_PREFIX + "Source"); //$NON-NLS-1$
                     if (source != null)
                         bookmarkSufix = source;
-                    String phoneOwner = doc.get(UFEDChatParser.META_PHONE_OWNER);
-                    if (phoneOwner != null && !phoneOwner.isEmpty())
-                        bookmarkSufix += " by " + phoneOwner; //$NON-NLS-1$
+                    String owner = doc.get(ExtraProperties.COMMUNICATION_OWNER);
+                    if (owner != null && !owner.isEmpty())
+                        bookmarkSufix += " by " + owner; //$NON-NLS-1$
                 }
 
                 int labelId = ipedSrc.getBookmarks()

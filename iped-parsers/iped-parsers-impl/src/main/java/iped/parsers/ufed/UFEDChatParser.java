@@ -63,7 +63,6 @@ public class UFEDChatParser extends AbstractParser {
             MediaType.application("x-ufed-chat-preview-facebook"), "instagram",
             MediaType.application("x-ufed-chat-preview-instagram"));
 
-    public static final String META_PHONE_OWNER = ExtraProperties.UFED_META_PREFIX + "phoneOwner"; //$NON-NLS-1$
     public static final String META_FROM_OWNER = ExtraProperties.UFED_META_PREFIX + "fromOwner"; //$NON-NLS-1$
     public static final String CHILD_MSG_IDS = ExtraProperties.UFED_META_PREFIX + "msgChildIds"; //$NON-NLS-1$
 

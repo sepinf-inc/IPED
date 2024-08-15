@@ -948,6 +948,7 @@ public class UfedXmlReader extends DataSourceReader {
                         } else {
                             value = "ID:" + identifier;
                         }
+                        boolean isOwner = Boolean.parseBoolean(item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "IsPhoneOwner")); //$NON-NLS-1$
                         if (value != null) {
                             if ("From".equalsIgnoreCase(role)) //$NON-NLS-1$
                                 parentItem.getMetadata().add(ExtraProperties.COMMUNICATION_FROM, value);
@@ -961,6 +962,9 @@ public class UfedXmlReader extends DataSourceReader {
                                 if (Boolean.parseBoolean(item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "IsGroupAdmin"))) {
                                     parentItem.getMetadata().add(ExtraProperties.COMMUNICATION_ADMINS, value);
                                     parentItem.getMetadata().add(ExtraProperties.COMMUNICATION_ADMINS + ":ID", identifier);
+                                    if (isOwner) {
+                                        parentItem.getMetadata().set(ExtraProperties.COMMUNICATION_IS_OWNER_ADMIN, Boolean.TRUE.toString());
+                                    }
                                 }
                                 parentItem.getMetadata().add(ExtraProperties.COMMUNICATION_PARTICIPANTS, value);
                                 parentItem.getMetadata().add(ExtraProperties.COMMUNICATION_PARTICIPANTS + ":ID", identifier);
@@ -968,12 +972,12 @@ public class UfedXmlReader extends DataSourceReader {
                             else
                                 parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + role, value);
                         }
-                        boolean isOwner = Boolean
-                                .parseBoolean(item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "IsPhoneOwner")); //$NON-NLS-1$
+
                         if (value != null && isOwner) { // $NON-NLS-1$
                             ownerParties.add(value);
-                            if (parentItem.getMediaType().toString().contains("chat"))
-                                parentItem.getMetadata().add(UFEDChatParser.META_PHONE_OWNER, value);
+                            if (parentItem.getMediaType().toString().contains("chat")) {
+                                parentItem.getMetadata().add(ExtraProperties.COMMUNICATION_OWNER, value);
+                            }
                         }
                         if (isOwner && "From".equals(role)) { //$NON-NLS-1$
                             parentItem.getMetadata().add(UFEDChatParser.META_FROM_OWNER, Boolean.TRUE.toString());
