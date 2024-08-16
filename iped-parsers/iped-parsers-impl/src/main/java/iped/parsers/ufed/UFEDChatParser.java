@@ -151,11 +151,15 @@ public class UFEDChatParser extends AbstractParser {
                     Iterator<IItemReader> subItems = null;
                     String[] attachRefs = msg.getMetadata().getValues(ExtraProperties.LINKED_ITEMS);
                     if (attachRefs.length > 0) {
+                        // look for attachments in linkedItems, excluding replied message reference
                         String attachQuery = Arrays.asList(attachRefs).stream().collect(Collectors.joining(" ")); //$NON-NLS-1$
+                        attachQuery += " && -" + BasicProps.CONTENTTYPE + ":\"" + MediaTypes.UFED_MESSAGE_MIME.toString() + "\"";
                         subItems = searcher.searchIterable(attachQuery).iterator();
-                    } else if (msg.hasChildren()) {
-                        String contactQuery = BasicProps.PARENTID + ":" + msg.getId() + " && " + BasicProps.CONTENTTYPE
-                                + ":\"" + MediaTypes.UFED_CONTACT_MIME.toString() + "\"";
+                    }
+                    if ((subItems == null || !subItems.hasNext()) && msg.hasChildren()) {
+                        // look for attachments in children, considering contacts and attachment items
+                        String contactQuery = BasicProps.PARENTID + ":" + msg.getId() + " && " + BasicProps.CONTENTTYPE + ":(\""
+                                + MediaTypes.UFED_CONTACT_MIME.toString() + "\" \"" + MediaTypes.UFED_MESSAGE_ATTACH_MIME.toString() + "\")";
                         subItems = searcher.searchIterable(contactQuery).iterator();
                     }
                     if (subItems == null || !subItems.hasNext()) {
@@ -336,7 +340,7 @@ public class UFEDChatParser extends AbstractParser {
                 m.setDeleted(true);
             if (attach.getLength() != null)
                 m.setMediaSize(attach.getLength());
-            if (attach.getMediaType() != null && !attach.getMediaType().equals(MediaType.OCTET_STREAM))
+            if (attach.getMediaType() != null && !attach.getMediaType().equals(MediaTypes.UFED_MESSAGE_ATTACH_MIME))
                 m.setMediaMime(attach.getMediaType().toString());
             else
                 m.setMediaMime(getMetaFromAttachOrMsg(ExtraProperties.UFED_META_PREFIX + "ContentType", msg, attach)); //$NON-NLS-1$
