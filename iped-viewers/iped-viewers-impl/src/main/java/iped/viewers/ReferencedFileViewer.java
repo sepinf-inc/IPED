@@ -94,16 +94,21 @@ public class ReferencedFileViewer extends AbstractViewer {
         if (content instanceof IItem) {
             IItem item = (IItem) content;
             String query = item.getMetadata().get(ExtraProperties.LINKED_ITEMS);
-            lastItem = attachSearcher.getItem(query);
-            if (lastItem == null) {
-                typeNotSupported.setText(REFERENCE_NOT_FOUND + query);
+            if (query == null) {
+                typeNotSupported.setText(Messages.getString("HtmlLinkViewer.AttachNotFound"));
                 typeNotSupported.setVisible(true);
-            } else if (lastItem.getViewFile() != null) {
-                FileContentSource viewContent = new FileContentSource(lastItem.getViewFile());
-                String mediaType = detectType(lastItem.getViewFile());
-                load(viewContent, mediaType, highlightTerms);
-            } else
-                load(lastItem, lastItem.getMediaType().toString(), highlightTerms);
+            } else {
+                lastItem = attachSearcher.getItem(query);
+                if (lastItem == null) {
+                    typeNotSupported.setText(REFERENCE_NOT_FOUND + query);
+                    typeNotSupported.setVisible(true);
+                } else if (lastItem.getViewFile() != null) {
+                    FileContentSource viewContent = new FileContentSource(lastItem.getViewFile());
+                    String mediaType = detectType(lastItem.getViewFile());
+                    load(viewContent, mediaType, highlightTerms);
+                } else
+                    load(lastItem, lastItem.getMediaType().toString(), highlightTerms);
+            }
         }
 
     }
