@@ -642,6 +642,13 @@ public class UfedXmlReader extends DataSourceReader {
                     fillCommonMeta(item, atts);
                     itemSeq.add(item);
 
+                    if (parent.getName().startsWith("ReplyMessageData_")) {
+                        String ufedId = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "id");
+                        if (ignoreItemTree == null && addedImUfedIds.contains(ufedId)) {
+                            ignoreItemTree = item;
+                        }
+                    }
+
                     if ("InstantMessage".equals(type)) {
                         this.numAttachments = 0;
                     }
@@ -896,7 +903,6 @@ public class UfedXmlReader extends DataSourceReader {
                     item.getMetadata().set(ExtraProperties.MESSAGE_BODY, body);
                 }
                 int numInstantMsgAttachs = 0;
-                boolean ignoreItemLocal = false;
                 if ("InstantMessage".equals(type)) {
                     numInstantMsgAttachs = this.numAttachments;
                     if (numInstantMsgAttachs > 0) {
@@ -909,9 +915,9 @@ public class UfedXmlReader extends DataSourceReader {
                         IItem parentItem = itemSeq.get(itemSeq.size() - 1);
                         // See https://github.com/sepinf-inc/IPED/issues/2264#issuecomment-2254192462
                         if (parentItem.getName().startsWith("ReplyMessageData_")) {
-                            ignoreItemLocal = true;
 
                             if (itemSeq.size() >= 2) {
+                                // link to the replied message
                                 IItem messageItem = itemSeq.get(itemSeq.size() - 2);
                                 String repliedMessageId = item.getMetadata().get(UFED_ID);
                                 messageItem.getMetadata().add(ExtraProperties.LINKED_ITEMS, ESCAPED_UFED_ID + ":" + repliedMessageId);
@@ -1121,11 +1127,7 @@ public class UfedXmlReader extends DataSourceReader {
                             String ufedId = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "id");
                             // add items if not ignoring already added instant message xml tree
                             if (ignoreItemTree == null) {
-                                if (!ignoreItemLocal) {
-                                    processItem(item);
-                                } else {
-                                    caseData.incDiscoveredEvidences(-1);
-                                }
+                                processItem(item);
                                 if ("InstantMessage".equals(type)) {
                                     // remember IM ids to not add them again later
                                     addedImUfedIds.add(ufedId);
