@@ -170,7 +170,7 @@ public class ReportGenerator {
                     out.println("<div class=\"audioImg\" title=\"Audio\"></div>"); //$NON-NLS-1$
                 } else if (message.getMediaMime().startsWith("video")) { //$NON-NLS-1$
                     out.println("<div class=\"videoImg\" title=\"Video\"></div>"); //$NON-NLS-1$
-                } else if (message.getMediaMime().startsWith("image")) { //$NON-NLS-1$
+                } else if (message.getMediaMime().startsWith("image") || message.getMediaMime().startsWith("photo")) { //$NON-NLS-1$ //$NON-NLS-2$
                     out.println("<div class=\"imageImg\" title=\"Image\"></div>"); //$NON-NLS-1$
                 } else if (message.getMediaMime().contains("contact")) { //$NON-NLS-1$
                     out.println("<div class=\"contactImg\" title=\"Contact\"></div>"); //$NON-NLS-1$
