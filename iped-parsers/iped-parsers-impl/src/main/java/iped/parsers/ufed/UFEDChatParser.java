@@ -242,7 +242,9 @@ public class UFEDChatParser extends AbstractParser {
                     bytes = nextBytes;
 
                     if (extractMessages) {
-                        extractMessages(itemMgs, subList, virtualId, handler, extractor);
+                        if (itemMgs != null) {
+                            extractMessages(itemMgs, subList, virtualId, handler, extractor);
+                        }
                     }
                 }
             }
