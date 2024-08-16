@@ -923,9 +923,6 @@ public class UfedXmlReader extends DataSourceReader {
                                 messageItem.getMetadata().add(ExtraProperties.LINKED_ITEMS, ESCAPED_UFED_ID + ":" + repliedMessageId);
                             }
                         }
-
-                        // InstantMessage items contained in Chats are indexed in UFEDChatParser
-                        item.setAddToCase(false);
                     }
                 }
                 if (mergeInParentNode.contains(type) && itemSeq.size() > 0) {
@@ -1127,10 +1124,19 @@ public class UfedXmlReader extends DataSourceReader {
                             String ufedId = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "id");
                             // add items if not ignoring already added instant message xml tree
                             if (ignoreItemTree == null) {
-                                processItem(item);
                                 if ("InstantMessage".equals(type)) {
+                                    if (itemSeq.isEmpty()) {
+                                        // process messages without chat
+                                        processItem(item);
+                                    } else {
+                                        // messages will processed in UFEDChatParser
+                                        UFEDChatParser.addMessageToBeParsed(item);
+                                        caseData.incDiscoveredEvidences(-1);
+                                    }
                                     // remember IM ids to not add them again later
                                     addedImUfedIds.add(ufedId);
+                                } else {
+                                    processItem(item);
                                 }
                                 // If item is a MESSAGE with seen attachments, try to process them
                                 List<Item> seenAttachs = seenAttachsPerId.get(item.getId());

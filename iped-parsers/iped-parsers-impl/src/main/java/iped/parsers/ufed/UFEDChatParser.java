@@ -32,7 +32,6 @@ import org.xml.sax.SAXException;
 
 import com.google.common.collect.ImmutableMap;
 
-import iped.data.IItem;
 import iped.data.IItemReader;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.CommunicationConstants;
@@ -71,7 +70,7 @@ public class UFEDChatParser extends AbstractParser {
     private int minChatSplitSize = 6000000;
 
     private static Set<MediaType> supportedTypes = MediaType.set(UFED_CHAT_MIME, UFED_CHAT_WA_MIME,
-            UFED_CHAT_TELEGRAM, MediaTypes.UFED_MESSAGE_MIME);
+            UFED_CHAT_TELEGRAM);
 
     private static final Map<String, String> chatTypeMap;
     static {
@@ -88,7 +87,7 @@ public class UFEDChatParser extends AbstractParser {
     private boolean extractMessages = true;
 
     public static void ignoreSupportedChats() {
-        supportedTypes = MediaType.set(UFED_CHAT_MIME, MediaTypes.UFED_MESSAGE_MIME);
+        supportedTypes = MediaType.set(UFED_CHAT_MIME);
     }
 
     public static MediaType getMediaType(String source) {
@@ -99,6 +98,10 @@ public class UFEDChatParser extends AbstractParser {
             }
         }
         return UFED_CHAT_PREVIEW_MIME;
+    }
+
+    public static void addMessageToBeParsed(IItemReader item) {
+           messagesMap.computeIfAbsent(item.getParentId(), k -> Collections.synchronizedList(new ArrayList<>())).add(item);
     }
 
     @Field
@@ -120,23 +123,12 @@ public class UFEDChatParser extends AbstractParser {
     public void parse(InputStream inputStream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
 
-        IItemReader item = context.get(IItemReader.class);
-        if (MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.UFED_MESSAGE_MIME)) {
-
-            // add InstantMessage to map (if child of a Chat)
-            if (item instanceof IItem && !((IItem) item).isToAddToCase()) {
-                messagesMap.computeIfAbsent(item.getParentId(), k -> Collections.synchronizedList(new ArrayList<>())).add(item);
-                ((IItem) item).setToIgnore(true, false);
-            }
-            return;
-        }
-
         // process Chat
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
         xhtml.startDocument();
         try {
             IItemSearcher searcher = context.get(IItemSearcher.class);
-            IItemReader chat = item;
+            IItemReader chat = context.get(IItemReader.class);
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                     new ParsingEmbeddedDocumentExtractor(context));
 
