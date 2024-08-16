@@ -19,11 +19,13 @@
 package iped.app.ui;
 
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.Document;
 
 import iped.data.IItem;
@@ -74,7 +76,12 @@ public class ReferencedByTableModel extends BaseTableModel {
         String sha1 = doc.get(HashTask.HASH.SHA1.toString());
         String sha256 = doc.get(HashTask.HASH.SHA256.toString());
         String edonkey = doc.get(HashTask.HASH.EDONKEY.toString());
-        String hashes = Arrays.asList(md5, sha1, sha256, edonkey).stream().filter(a -> a != null).collect(Collectors.joining(" "));
+        String ufedId = doc.get(ExtraProperties.UFED_META_PREFIX + "id");
+        if (StringUtils.isNotBlank(ufedId)) {
+            ufedId = "\"" + ufedId + "\"";
+        }
+
+        String hashes = Arrays.asList(md5, sha1, sha256, edonkey).stream().filter(Objects::nonNull).collect(Collectors.joining(" "));
 
         if (hashes.isEmpty()) {
             results = new LuceneSearchResult(0);

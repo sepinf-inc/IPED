@@ -32,6 +32,7 @@ import java.awt.event.MouseListener;
 import java.text.Collator;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -42,6 +43,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause.Occur;
@@ -527,8 +529,11 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
             String sha1 = doc.get(HashTask.HASH.SHA1.toString());
             String sha256 = doc.get(HashTask.HASH.SHA256.toString());
             String edonkey = doc.get(HashTask.HASH.EDONKEY.toString());
-            String hashes = Arrays.asList(md5, sha1, sha256, edonkey).stream().filter(a -> a != null)
-                    .collect(Collectors.joining(" "));
+            String ufedId = doc.get(ExtraProperties.UFED_META_PREFIX + "id");
+            if (StringUtils.isNotBlank(ufedId)) {
+                ufedId = "\"" + ufedId + "\"";
+            }
+            String hashes = Arrays.asList(md5, sha1, sha256, edonkey).stream().filter(Objects::nonNull).collect(Collectors.joining(" "));
 
             if (hashes.isEmpty()) {
                 return;
