@@ -420,8 +420,13 @@ public class UFEDChatParser extends AbstractParser {
                     return -1;
             } else if (o2.getTimeStamp() == null)
                 return 1;
-            else
-                return o1.getTimeStamp().compareTo(o2.getTimeStamp());
+            else {
+                int ret = o1.getTimeStamp().compareTo(o2.getTimeStamp());
+                if (ret != 0) {
+                    return ret;
+                }
+                return (int) (o1.getId() - o2.getId());
+            }
         }
 
     }
