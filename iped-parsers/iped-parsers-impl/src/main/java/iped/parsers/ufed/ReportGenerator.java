@@ -59,8 +59,7 @@ public class ReportGenerator {
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, "UTF-8")); //$NON-NLS-1$
 
-        String[] split = c.getName().split("_", 3); //$NON-NLS-1$
-        String title = split[split.length - 1];
+        String title = UFEDChatParser.getChatName(c);
         printMessageFileHeader(out, title, c.getName(), null);
         if (currentMsg > 0)
             out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
