@@ -284,6 +284,10 @@ public class UFEDChatParser extends AbstractParser {
                 meta.set(ExtraProperties.COMMUNICATION_DIRECTION, CommunicationConstants.DIRECTION_INCOMING);
             }
 
+            if (msg.hasChildren()) {
+                meta.set(BasicProps.HASCHILD, Boolean.toString(true));
+            }
+
             if (msg.isDeleted()) {
                 meta.set(ExtraProperties.DELETED, Boolean.toString(true));
             }
