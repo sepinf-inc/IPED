@@ -43,7 +43,12 @@ public class ReportGenerator {
     }
 
     private static final String format(String text) {
-        return SimpleHTMLEncoder.htmlEncode(text);
+        String ret = SimpleHTMLEncoder.htmlEncode(text);
+
+        // Keep line breaks present in the content, converting to an HTML <br>
+        ret = ret.replaceAll("\n", "<br>\n");
+
+        return ret;
     }
 
     public byte[] generateNextChatHtml(IItemReader c, List<UfedMessage> msgs) throws UnsupportedEncodingException {
