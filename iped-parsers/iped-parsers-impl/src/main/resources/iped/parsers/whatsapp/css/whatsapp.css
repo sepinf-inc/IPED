@@ -479,6 +479,10 @@ div:target {
     padding-left: 10px;
     font-size: small;
 }
+#conversation .link {
+    color: #0000EE;
+    font-weight: bold
+}
 #conversation .recovered {
     color: #ff0000;
     float: left;

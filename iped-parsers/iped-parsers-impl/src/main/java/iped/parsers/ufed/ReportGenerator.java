@@ -181,6 +181,9 @@ public class ReportGenerator {
         if (message.getMediaCaption() != null)
             out.println("<br>" + format(message.getMediaCaption())); //$NON-NLS-1$
 
+        if (message.getMediaUrl() != null)
+            out.println("<p class=\"link\">" + format(message.getMediaUrl()) + "</p>"); //$NON-NLS-1$
+
         String transcription = message.getTranscription();
         if (transcription != null) {
             out.print("<br>");
