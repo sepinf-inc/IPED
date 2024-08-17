@@ -1129,6 +1129,7 @@ public class UfedXmlReader extends DataSourceReader {
                                         processItem(item);
                                     } else {
                                         // messages will processed in UFEDChatParser
+                                        Util.calctrackIDAndUpdateID((CaseData) caseData, item);
                                         UFEDChatParser.addMessageToBeParsed(item);
                                         caseData.incDiscoveredEvidences(-1);
                                     }
