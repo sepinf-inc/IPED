@@ -10,7 +10,6 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -140,27 +139,34 @@ public class UFEDChatParser extends AbstractParser {
 
             if (itemMgs != null) {
                 for (IItemReader msg : itemMgs) {
-                    Iterator<IItemReader> subItems = null;
+                    ArrayList<IItemReader> subitems = new ArrayList<IItemReader>();
                     String[] attachRefs = msg.getMetadata().getValues(ExtraProperties.LINKED_ITEMS);
                     if (attachRefs.length > 0) {
                         // look for attachments in linkedItems, excluding replied message reference
-                        String attachQuery = Arrays.asList(attachRefs).stream().collect(Collectors.joining(" ")); //$NON-NLS-1$
+                        String attachQuery = "(" + Arrays.asList(attachRefs).stream().collect(Collectors.joining(") (")) + ")";
                         attachQuery += " && -" + BasicProps.CONTENTTYPE + ":\"" + MediaTypes.UFED_MESSAGE_MIME.toString() + "\"";
-                        subItems = searcher.searchIterable(attachQuery).iterator();
+                        searcher.searchIterable(attachQuery).forEach(subitems::add);
                     }
-                    if ((subItems == null || !subItems.hasNext()) && msg.hasChildren()) {
+                    if (msg.hasChildren()) {
                         // look for attachments in children, considering contacts and attachment items
                         String contactQuery = BasicProps.PARENTID + ":" + msg.getId() + " && " + BasicProps.CONTENTTYPE + ":(\""
                                 + MediaTypes.UFED_CONTACT_MIME.toString() + "\" \"" + MediaTypes.UFED_MESSAGE_ATTACH_MIME.toString() + "\")";
-                        subItems = searcher.searchIterable(contactQuery).iterator();
+                        for (IItemReader attach : searcher.searchIterable(contactQuery)) {
+                            String[] subitemRefs = attach.getMetadata().getValues(ExtraProperties.LINKED_ITEMS);
+                            if (subitemRefs.length > 0) {
+                                String subitemRefsQuery = "(" + Arrays.asList(subitemRefs).stream().collect(Collectors.joining(") (")) + ")";
+                                searcher.searchIterable(subitemRefsQuery).forEach(subitems::add);
+                            } else {
+                                subitems.add(attach);
+                            }
+                        }
                     }
-                    if (subItems == null || !subItems.hasNext()) {
+                    if (subitems.isEmpty()) {
                         UfedMessage m = createMessage(msg);
                         messages.add(m);
                     } else {
                         HashSet<String> uuids = new HashSet<>();
-                        while (subItems.hasNext()) {
-                            IItemReader subitem = subItems.next();
+                        for (IItemReader subitem : subitems) {
                             if (uuids.add(subitem.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "id"))) {
                                 UfedMessage m = createMessage(msg, subitem);
                                 messages.add(m);
