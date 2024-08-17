@@ -394,7 +394,6 @@ public class UfedXmlReader extends DataSourceReader {
         Object ignoreItemTree = null;
         boolean inChat = false;
         int numAttachments = 0;
-        String prevUfedId = null;
 
         private class XmlNode {
             String element;
@@ -859,13 +858,13 @@ public class UfedXmlReader extends DataSourceReader {
                     createEmailPreview(item);
 
                 } else if ("Attachment".equals(type)) { //$NON-NLS-1$
-                    prevUfedId = handleAttachment(item);
+                    boolean wasFileSeen = handleAttachment(item);
                     IItem parentItem = itemSeq.get(itemSeq.size() - 1);
                     if (parentItem.getMediaType().equals(MediaTypes.UFED_EMAIL_MIME)) // $NON-NLS-1$
                         parentItem.getMetadata().add(EMAIL_ATTACH_KEY, item.getName());
                     else if (parentItem.getMediaType().equals(MediaTypes.UFED_MESSAGE_MIME)) {
                         this.numAttachments++;
-                        if (prevUfedId != null) {
+                        if (wasFileSeen) {
                             seenAttachment = true;
                             List<Item> attachs = seenAttachsPerId.get(item.getParentId());
                             if (attachs == null) {
@@ -1121,9 +1120,9 @@ public class UfedXmlReader extends DataSourceReader {
                     if (!ignoreItems) {
                         // Process seen attachments later. Process other item types now.
                         if (!seenAttachment) {
-                            String ufedId = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "id");
                             // add items if not ignoring already added instant message xml tree
                             if (ignoreItemTree == null) {
+                                String ufedId = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "id");
                                 if ("InstantMessage".equals(type)) {
                                     if (itemSeq.isEmpty()) {
                                         // process messages without chat
@@ -1466,7 +1465,7 @@ public class UfedXmlReader extends DataSourceReader {
             item.setName(newName);
         }
 
-        private String handleAttachment(Item item) {
+        private boolean handleAttachment(Item item) {
             String name = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Filename"); //$NON-NLS-1$
             if (name != null)
                 updateName(item, name);
@@ -1517,7 +1516,7 @@ public class UfedXmlReader extends DataSourceReader {
                 }
             }
 
-            return fileId;
+            return fileId != null;
         }
 
         private String normalizePaths(String path) {
