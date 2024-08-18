@@ -1092,7 +1092,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                             }
                         }
                         if (!validated && event.isShowingChanged()) {
-                            viewerController.updateViewer(viewer, false);
+                            viewerController.updateViewer(viewer, false, true);
                         }
                     }
                 }
