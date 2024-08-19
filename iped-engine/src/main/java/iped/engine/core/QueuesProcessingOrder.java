@@ -85,6 +85,8 @@ public class QueuesProcessingOrder {
         mediaTypes.put(MediaType.parse(BitTorrentResumeDatEntryParser.RESUME_DAT_ENTRY_MIME_TYPE), 3);
 
         mediaTypes.put(WhatsAppParser.WA_DB, 2);
+        mediaTypes.put(WhatsAppParser.WA_REGISTRATION_XML, 3);
+        mediaTypes.put(WhatsAppParser.WA_USER_XML, 3);
         mediaTypes.put(WhatsAppParser.MSG_STORE, 3);
         mediaTypes.put(WhatsAppParser.MSG_STORE_2, 4);
         mediaTypes.put(WhatsAppParser.CONTACTS_V2, 2);

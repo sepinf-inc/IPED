@@ -1418,6 +1418,11 @@
         <glob pattern="com.whatsapp.w4b_preferences_light.xml"/>
     </mime-type>
 
+    <mime-type type="application/x-whatsapp-registration-xml">
+        <sub-class-of type="application/dita+xml"/>
+        <glob pattern="registration.RegisterPhone.xml"/>
+    </mime-type>
+
     <mime-type type="application/x-whatsapp-user-plist">
         <sub-class-of type="application/x-bplist"/>
         <glob pattern="group.net.whatsapp.WhatsApp.shared.plist"/>

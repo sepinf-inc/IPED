@@ -83,8 +83,14 @@ function process(e){
 		 e.getName().equals("com.whatsapp.w4b_preferences.xml") || 
 		 e.getName().equals("com.whatsapp.w4b_preferences_light.xml"))) {
 		e.setMediaTypeStr("application/x-whatsapp-user-xml");
-		e.setCategory("Contacts");
+		e.setCategory("User Accounts");
 	}
+
+	if(mime.equals("application/dita+xml") && e.getName().equals("registration.RegisterPhone.xml")) {
+		e.setMediaTypeStr("application/x-whatsapp-registration-xml");
+		e.setCategory("User Accounts");
+	}
+
 	if(mime.equals("application/dita+xml") && e.getName().equals("userconfing.xml")){
 		e.setMediaTypeStr("application/x-telegram-user-conf");
 		//e.setCategory("Contacts");

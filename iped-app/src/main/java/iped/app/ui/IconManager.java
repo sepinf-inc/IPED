@@ -306,6 +306,7 @@ public class IconManager {
             mimeIconMap.put("application/x-whatsapp-account", icon);
             mimeIconMap.put("application/x-whatsapp-wadb", icon);
             mimeIconMap.put("application/x-whatsapp-user-xml", icon);
+            mimeIconMap.put("application/x-whatsapp-registration-xml", icon);
             mimeIconMap.put("contact/x-whatsapp-contact", icon);
             mimeIconMap.put("application/x-whatsapp-contactsv2", icon);
         }

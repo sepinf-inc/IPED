@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -48,6 +49,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
@@ -100,6 +102,8 @@ public class WhatsAppParser extends SQLite3DBParser {
     public static final String WHATSAPP = "WhatsApp";
 
     public static final MediaType WA_USER_XML = MediaType.application("x-whatsapp-user-xml"); //$NON-NLS-1$
+
+    public static final MediaType WA_REGISTRATION_XML = MediaType.application("x-whatsapp-registration-xml"); //$NON-NLS-1$
 
     public static final MediaType WA_USER_PLIST = PListDetector.WA_USER_PLIST;
 
@@ -160,7 +164,7 @@ public class WhatsAppParser extends SQLite3DBParser {
     private static int dbsSearchedForAndAdded = 0;
 
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(MSG_STORE, WA_DB, CHAT_STORAGE, CONTACTS_V2,
-            WA_USER_XML, WA_USER_PLIST, MSG_STORE_2, CHAT_STORAGE_2);
+            WA_USER_XML, WA_USER_PLIST, WA_REGISTRATION_XML, MSG_STORE_2, CHAT_STORAGE_2);
 
     private static final Map<String, WAContactsDirectory> contactsDirectoriesMap = new ConcurrentHashMap<>();
 
@@ -249,6 +253,8 @@ public class WhatsAppParser extends SQLite3DBParser {
 
             if (mimetype.equals(WA_USER_XML.toString())) {
                 parseWhatsAppAccount(stream, context, handler, true);
+            } else if (mimetype.equals(WA_REGISTRATION_XML.toString())) {
+                parseWhatsAppAccount(stream, context, handler, true);
             } else if (mimetype.equals(WA_USER_PLIST.toString())) {
                 parseWhatsAppAccount(stream, context, handler, false);
             } else if (mimetype.equals(MSG_STORE.toString())) {
@@ -274,7 +280,7 @@ public class WhatsAppParser extends SQLite3DBParser {
 
         } catch (Exception e) {
             // log all whatsapp exceptions
-            e.printStackTrace();
+           logger.error("Error parsing WhatsApp item: " + item, e);
             throw e;
         }
 
@@ -757,10 +763,13 @@ public class WhatsAppParser extends SQLite3DBParser {
     private void parseWhatsAppAccount(InputStream is, ParseContext context, ContentHandler handler, boolean isAndroid)
             throws SAXException, IOException, TikaException {
         WAAccount account = null;
-        if (isAndroid)
+        if (isAndroid) {
             account = WAAccount.getFromAndroidXml(is);
-        else
+            fillAccountWihContactData(account, context, handler);
+            fillAccountAvatar(account, context, handler);
+        } else {
             account = WAAccount.getFromIOSPlist(is);
+        }
 
         if (account == null) {
             // This may happen if the file does not contain WA account info, e.g. parsing a
@@ -793,6 +802,52 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
     }
 
+    private void fillAccountWihContactData(WAAccount account, ParseContext context, ContentHandler handler) {
+        if (account == null || account.getWaName() != null) {
+            return;
+        }
+        IItemSearcher searcher = context.get(IItemSearcher.class);
+        ItemInfo itemInfo = context.get(ItemInfo.class);
+        String filePath = null;
+        if (itemInfo != null) {
+            filePath = Paths.get(itemInfo.getPath()).getParent().resolveSibling("databases").resolve("wa.db").toString().replace("\\", "/");
+        }
+        try {
+            WAContactsDirectory contacts = getWAContactsDirectoryForPath(filePath, searcher, ExtractorAndroidFactory.class);
+            WAContact c = contacts.getContact(account.getFullId());
+            if (c != null) {
+                account.setWaName(c.getDisplayName());
+                account.setStatus(c.getStatus());
+            }
+        } catch (Exception e) {
+           logger.warn("Error filling WhatsApp account with contact data: " + account.getFullId(), e);
+        }
+    }
+
+    private void fillAccountAvatar(WAAccount account, ParseContext context, ContentHandler handler) {
+        if (account == null || account.getAvatar() != null || account.getAvatarPath() != null) {
+            return;
+        }
+        IItemSearcher searcher = context.get(IItemSearcher.class);
+        ItemInfo itemInfo = context.get(ItemInfo.class);
+        String filePath = null;
+        if (itemInfo != null) {
+            filePath = Paths.get(itemInfo.getPath()).getParent().resolveSibling("files").resolve("me.jpg").toString().replace("\\", "/");
+        }
+
+        String query = BasicProps.PATH + ":\"" + searcher.escapeQuery(filePath) + "\""; //$NON-NLS-1$ //$NON-NLS-2$
+        List<IItemReader> result = searcher.search(query);
+        if (!result.isEmpty()) {
+            try (InputStream is = result.get(0).getBufferedInputStream()) {
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                IOUtils.copy(is, bos);
+                account.setAvatar(bos.toByteArray());
+            } catch (IOException e) {
+                logger.warn("Error getting WhatsApp account avatar: " + account.getFullId(), e);
+            }
+        }
+    }
+
     private static final Pattern numbers = Pattern.compile("[0-9]+"); //$NON-NLS-1$
 
     private String getInternationalPhone(String id) {
@@ -812,7 +867,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             String[] names;
             if (isAndroid) {
                 names = new String[] { "com.whatsapp.w4b_preferences_light.xml", "com.whatsapp_preferences_light.xml",
-                        "com.whatsapp.w4b_preferences.xml", "com.whatsapp_preferences.xml" };
+                        "com.whatsapp.w4b_preferences.xml", "com.whatsapp_preferences.xml", "registration.RegisterPhone.xml" };
                 query.append(BasicProps.NAME).append(":(");
                 for (int i = 0; i < names.length; i++) {
                     query.append(" \"").append(names[i]).append('"');
@@ -834,7 +889,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                         break;
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    logger.warn("Error trying to get user account from {}: {}", item, e);
                 }
             }
         }
@@ -1080,7 +1135,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                     contact.setAvatar(bos.toByteArray());
 
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    logger.warn("Error setting avatar for contact {}: {}", contact.getFullId(), e);
                 }
             }
         }
