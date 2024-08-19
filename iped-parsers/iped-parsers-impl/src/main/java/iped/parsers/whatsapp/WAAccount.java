@@ -13,11 +13,9 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.tika.exception.TikaException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
-import org.xml.sax.SAXException;
 
 import com.dd.plist.NSDictionary;
 import com.dd.plist.NSObject;
@@ -37,7 +35,7 @@ public class WAAccount extends WAContact {
         return "WhatsApp Account: " + getName(); //$NON-NLS-1$
     }
 
-    public static WAAccount getFromAndroidXml(InputStream is) throws SAXException, IOException, TikaException {
+    public static WAAccount getFromAndroidXml(InputStream is) {
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();
