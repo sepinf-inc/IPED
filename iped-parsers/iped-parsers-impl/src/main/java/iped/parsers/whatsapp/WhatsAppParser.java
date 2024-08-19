@@ -62,6 +62,7 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
+import org.apache.xerces.impl.io.MalformedByteSequenceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
@@ -280,10 +281,14 @@ public class WhatsAppParser extends SQLite3DBParser {
 
         } catch (Exception e) {
             // log all whatsapp exceptions
-           logger.error("Error parsing WhatsApp item: " + item, e);
+            if (e.getCause() != null && (e.getCause() instanceof MalformedByteSequenceException)) {
+                logger.warn("Possibly corrupted file: {} > {}", item, e.getMessage());
+            } else {
+                logger.error("Error parsing WhatsApp: " + item, e);
+            }
+
             throw e;
         }
-
     }
 
     private void createReport(List<Chat> chatList, IItemSearcher searcher, WAContactsDirectory contacts,

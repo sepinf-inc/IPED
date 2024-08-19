@@ -1,29 +1,28 @@
 package iped.parsers.whatsapp;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.ParseException;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
 
 import com.dd.plist.NSDictionary;
 import com.dd.plist.NSObject;
+import com.dd.plist.PropertyListFormatException;
 import com.dd.plist.PropertyListParser;
 
 public class WAAccount extends WAContact {
-
-    private static final Logger logger = LoggerFactory.getLogger(WAAccount.class);
 
     private boolean isUnknown = false;
 
@@ -35,7 +34,7 @@ public class WAAccount extends WAContact {
         return "WhatsApp Account: " + getName(); //$NON-NLS-1$
     }
 
-    public static WAAccount getFromAndroidXml(InputStream is) {
+    public static WAAccount getFromAndroidXml(InputStream is) throws SAXException, IOException {
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();
@@ -85,14 +84,12 @@ public class WAAccount extends WAContact {
                     account.setStatus(value);
             }
             return account;
-
-        } catch (Exception e) {
-            logger.warn("Error parsing WhatsApp account xml for Android: {}", e);
-            return null;
+        } catch (ParserConfigurationException | XPathExpressionException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    public static WAAccount getFromIOSPlist(InputStream is) {
+    public static WAAccount getFromIOSPlist(InputStream is) throws SAXException, IOException {
         try {
             NSDictionary rootDict = (NSDictionary) PropertyListParser.parse(is);
             NSObject value = rootDict.get("OwnJabberID");
@@ -116,14 +113,21 @@ public class WAAccount extends WAContact {
                 account.setStatus(value.toString());
 
             return account;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
+        } catch ( PropertyListFormatException | ParseException | ParserConfigurationException  e) {
+            throw new RuntimeException(e);
         }
     }
 
-    public static void main(String[] args) {
+    public boolean isUnknown() {
+        return isUnknown;
+    }
+
+    public void setUnknown(boolean isUnknown) {
+        this.isUnknown = isUnknown;
+    }
+
+    /*
+    public static void main(String[] args) throws SAXException {
         try (FileInputStream fis = new FileInputStream(
                 "c:/users/nassif/downloads/group.net.whatsapp.WhatsApp.shared.plist")) {
             WAAccount a = getFromIOSPlist(fis);
@@ -138,13 +142,7 @@ public class WAAccount extends WAContact {
             e.printStackTrace();
         }
     }
+    */
 
-    public boolean isUnknown() {
-        return isUnknown;
-    }
-
-    public void setUnknown(boolean isUnknown) {
-        this.isUnknown = isUnknown;
-    }
 
 }
