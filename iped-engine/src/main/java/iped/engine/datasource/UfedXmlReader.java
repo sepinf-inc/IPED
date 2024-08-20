@@ -812,10 +812,10 @@ public class UfedXmlReader extends DataSourceReader {
                 // See https://github.com/sepinf-inc/IPED/issues/2299
                 String md5 = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "MD5");
                 String localPath = item.getMetadata().get(LOCAL_PATH_META);
-                if (StringUtils.isNotBlank(md5)) {
-                    if (item.getIdInDataSource() != null && !md5ToLocalPath.containsKey(md5) && StringUtils.isNotBlank(localPath)) {
+                if (StringUtils.isNotBlank(md5) && md5.length() == 32) {
+                    if (item.getInputStreamFactory() != null && !md5ToLocalPath.containsKey(md5) && StringUtils.isNotBlank(localPath)) {
                         md5ToLocalPath.put(md5, localPath);
-                    } else if (item.getIdInDataSource() == null && md5ToLocalPath.containsKey(md5)) {
+                    } else if (item.getInputStreamFactory() == null && md5ToLocalPath.containsKey(md5)) {
                         String seenPath = md5ToLocalPath.get(md5);
                         setContent(item, seenPath);
                     }
