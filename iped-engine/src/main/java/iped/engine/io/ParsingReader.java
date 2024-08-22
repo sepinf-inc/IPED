@@ -42,6 +42,7 @@ import org.xml.sax.SAXException;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.ParsingTaskConfig;
 import iped.engine.core.QueuesProcessingOrder;
+import iped.engine.datasource.UfedXmlReader;
 import iped.parsers.fork.ParsingTimeout;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.CorruptedCarvedException;
@@ -144,7 +145,13 @@ public class ParsingReader extends Reader {
         ParsingTaskConfig parsingConfig = ConfigurationManager.get().findObject(ParsingTaskConfig.class);
         timeOutBySize = (int) (length / 1000000) * parsingConfig.getTimeOutPerMB();
 
-        pipedReader = new FastPipedReader(128 * 1024, parsingConfig.getTimeOut(), timeOutBySize);
+        int timeOutByMessages = 0;
+        Integer messagesCount = metadata.getInt(UfedXmlReader.UFED_IM_COUNT);
+        if (messagesCount != null) {
+            timeOutByMessages = messagesCount * parsingConfig.getTimeOutPerHundredMessages() / 100;
+        }
+
+        pipedReader = new FastPipedReader(128 * 1024, parsingConfig.getTimeOut() + timeOutBySize + timeOutByMessages);
         this.reader = new BufferedReader(pipedReader);
         this.writer = new FastPipedWriter(pipedReader);
 

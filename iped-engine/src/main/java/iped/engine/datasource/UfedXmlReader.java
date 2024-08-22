@@ -123,6 +123,8 @@ public class UfedXmlReader extends DataSourceReader {
     private Set<String> supportedApps = new HashSet<String>(Arrays.asList(WhatsAppParser.WHATSAPP,
             TelegramParser.TELEGRAM, WhatsAppParser.WHATSAPP + " Business", WhatsAppParser.WHATSAPP + " (Dual App)"));
 
+    public static final Property UFED_IM_COUNT = Property.internalInteger(ExtraProperties.UFED_META_PREFIX + "InstantMessagesCount");
+
     private static Random random = new Random();
 
     private static HashMap<File, UFDRInputStreamFactory> uisfMap = new HashMap<>();
@@ -392,6 +394,7 @@ public class UfedXmlReader extends DataSourceReader {
         Object ignoreItemTree = null;
         boolean inChat = false;
         int numAttachments = 0;
+        int numInstantMessages = 0;
         String prevUfedId = null;
 
         private class XmlNode {
@@ -580,8 +583,10 @@ public class UfedXmlReader extends DataSourceReader {
                     Item item = new Item();
                     item.setExtraAttribute(ExtraProperties.DATASOURCE_READER, UfedXmlReader.class.getSimpleName());
                     String type = atts.getValue("type"); //$NON-NLS-1$
-                    if (type.equals("Chat"))
+                    if (type.equals("Chat")) {
                         inChat = true;
+                        numInstantMessages = 0;
+                    }
                     String name = type + "_" + atts.getValue("id"); //$NON-NLS-1$ //$NON-NLS-2$
                     item.setName(name);
                     String path = decodedFolder.getPath() + "/" + type + "/" + name; //$NON-NLS-1$ //$NON-NLS-2$
@@ -874,6 +879,7 @@ public class UfedXmlReader extends DataSourceReader {
                     if (TelegramParser.TELEGRAM.equalsIgnoreCase(source)) // $NON-NLS-1$
                         item.setMediaType(UFEDChatParser.UFED_CHAT_TELEGRAM);
 
+                    item.getMetadata().set(UFED_IM_COUNT, numInstantMessages);
                     item.setExtraAttribute(IndexItem.TREENODE, "true"); //$NON-NLS-1$
                 }
                 if ("InstantMessage".equals(type) || "Email".equals(type) || "Call".equals(type) || "SMS".equals(type) //$NON-NLS-4$
@@ -910,6 +916,9 @@ public class UfedXmlReader extends DataSourceReader {
                         if (parentItem.getName().startsWith("ReplyMessageData_")) {
                             ignoreItemLocal = true;
                         }
+                    }
+                    if (!ignoreItemLocal) {
+                        numInstantMessages++;
                     }
                 }
                 if (mergeInParentNode.contains(type) && itemSeq.size() > 0) {
@@ -1125,6 +1134,7 @@ public class UfedXmlReader extends DataSourceReader {
                     if (MediaTypes.isInstanceOf(item.getMediaType(), UFEDChatParser.UFED_CHAT_MIME)) {
                         inChat = false;
                         ignoreItems = false;
+                        numInstantMessages = 0;
                     }
                 }
 

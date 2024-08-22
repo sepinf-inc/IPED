@@ -25,8 +25,7 @@ public class FastPipedReader extends Reader {
 
     // utilizado para verificar se há comunicação entre reader e writer
     private int timer = 0;
-    private int timeOutBySize = 0;
-    private int minTimeout = 60;
+    private int totalTimeout = 60;
     private boolean timeoutPaused = false, timedOut = false;
 
     boolean closedByWriter = false;
@@ -123,10 +122,9 @@ public class FastPipedReader extends Reader {
      *                if <code>pipeSize less than 1</code>.
      * @since 1.6
      */
-    public FastPipedReader(int pipeSize, int minTimeout, int timeOutBySize) {
+    public FastPipedReader(int pipeSize, int totalTimeout) {
         initPipe(pipeSize);
-        this.minTimeout = minTimeout;
-        this.timeOutBySize = timeOutBySize;
+        this.totalTimeout = totalTimeout;
     }
 
     public synchronized boolean setTimeoutPaused(boolean paused) {
@@ -135,7 +133,7 @@ public class FastPipedReader extends Reader {
     }
 
     public int getTotalTimeout() {
-        return minTimeout + timeOutBySize;
+        return totalTimeout;
     }
 
     private void initPipe(int pipeSize) {
