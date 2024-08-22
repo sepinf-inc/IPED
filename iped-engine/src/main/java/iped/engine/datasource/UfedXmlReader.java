@@ -777,8 +777,8 @@ public class UfedXmlReader extends DataSourceReader {
                 if (parentNode.element.equals("field") || parentNode.element.equals("multiField")) { //$NON-NLS-1$ //$NON-NLS-2$
                     String parentNameAttr = parentNode.atts.get("name"); //$NON-NLS-1$
                     if (!ignoreNameAttrs.contains(parentNameAttr)) {
-                        // replace "ID" by "Identifier" to avoid conflict with "ufed:id" attribute
-                        if ("ID".equals(parentNameAttr)) {
+                        // replace "Id" by "Identifier" to avoid conflict with "ufed:id" attribute
+                        if ("Id".equalsIgnoreCase(parentNameAttr)) {
                             parentNameAttr = "Identifier";
                         }
                         String meta = ExtraProperties.UFED_META_PREFIX + parentNameAttr;
