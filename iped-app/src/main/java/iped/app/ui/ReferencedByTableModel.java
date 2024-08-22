@@ -81,7 +81,7 @@ public class ReferencedByTableModel extends BaseTableModel {
             ufedId = "\"" + ufedId + "\"";
         }
 
-        String hashes = Arrays.asList(md5, sha1, sha256, edonkey).stream().filter(Objects::nonNull).collect(Collectors.joining(" "));
+        String hashes = Arrays.asList(md5, sha1, sha256, edonkey, ufedId).stream().filter(Objects::nonNull).collect(Collectors.joining(" "));
 
         if (hashes.isEmpty()) {
             results = new LuceneSearchResult(0);

@@ -533,7 +533,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
             if (StringUtils.isNotBlank(ufedId)) {
                 ufedId = "\"" + ufedId + "\"";
             }
-            String hashes = Arrays.asList(md5, sha1, sha256, edonkey).stream().filter(Objects::nonNull).collect(Collectors.joining(" "));
+            String hashes = Arrays.asList(md5, sha1, sha256, edonkey, ufedId).stream().filter(Objects::nonNull).collect(Collectors.joining(" "));
 
             if (hashes.isEmpty()) {
                 return;
