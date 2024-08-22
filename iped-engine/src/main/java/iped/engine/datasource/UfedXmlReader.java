@@ -861,7 +861,7 @@ public class UfedXmlReader extends DataSourceReader {
                 } else if ("Email".equals(type)) { //$NON-NLS-1$
                     createEmailPreview(item);
 
-                } else if ("Attachment".equals(type)) { //$NON-NLS-1$
+                } else if ("Attachment".equals(type) && ignoreItemTree == null) { //$NON-NLS-1$
                     boolean wasFileSeen = handleAttachment(item);
                     IItem parentItem = itemSeq.get(itemSeq.size() - 1);
                     if (parentItem.getMediaType().equals(MediaTypes.UFED_EMAIL_MIME)) // $NON-NLS-1$
