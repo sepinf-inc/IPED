@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
@@ -38,7 +39,11 @@ import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.data.IItemReader;
 import iped.parsers.util.Messages;
+import iped.properties.BasicProps;
+import iped.properties.ExtraProperties;
+import iped.search.IItemSearcher;
 
 /**
  * Parser para arquivos de atalho (LNK) do Windows Referencias utilizadas sobre
@@ -55,6 +60,15 @@ public class LNKShortcutParser extends AbstractParser {
 
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.application("x-lnk")); //$NON-NLS-1$
     public static final String LNK_MIME_TYPE = "application/x-lnk"; //$NON-NLS-1$
+
+    public static final String LNK_METADATA_PREFIX = "lnk";
+    public static final String LNK_METADATA_LOCALPATHINFO = "localPathInfo";
+    public static final String LNK_METADATA_LOCALPATH = "localPath";
+    public static final String LNK_METADATA_COMMONPATH = "commonPath";
+    public static final String LNK_METADATA_NETWORKSHARE = "networkShare";
+    public static final String LNK_METADATA_VOLUMELABEL = "volumeLabel";
+    public static final String LNK_METADATA_FILEEXISTS = "fileExists";
+    public static final String LNK_METADATA_FILEMODIFIED = "modifiedAfterOpen";
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
@@ -95,8 +109,44 @@ public class LNKShortcutParser extends AbstractParser {
             showHeader(lnkObj, df, xhtml);
 
             // HasLinkInfo
-            if (lnkObj.hasLinkLocation())
+            if (lnkObj.hasLinkLocation()) {
                 showLinkLocation(lnkObj, df, xhtml);
+
+                // According to
+                // https://github.com/libyal/liblnk/blob/main/documentation/Windows%20Shortcut%20File%20(LNK)%20format.asciidoc#4-location-information
+                // the real local path is the concatenation of netshare, commonPath and
+                // localPath
+                String fullLocalPath = "";
+                LNKLinkLocation lnkLoc = lnkObj.getLinkLocation();
+
+                metadata.add(LNK_METADATA_PREFIX + TikaCoreProperties.NAMESPACE_PREFIX_DELIMITER + LNK_METADATA_LOCALPATHINFO, lnkLoc.getLocalPath());
+                metadata.add(LNK_METADATA_PREFIX + TikaCoreProperties.NAMESPACE_PREFIX_DELIMITER + LNK_METADATA_COMMONPATH, lnkLoc.getCommonPath());
+                metadata.add(LNK_METADATA_PREFIX + TikaCoreProperties.NAMESPACE_PREFIX_DELIMITER + LNK_METADATA_NETWORKSHARE, lnkLoc.getNetShare());
+                metadata.add(LNK_METADATA_PREFIX + TikaCoreProperties.NAMESPACE_PREFIX_DELIMITER + LNK_METADATA_VOLUMELABEL, lnkLoc.getVolumeLabel());
+
+                if (lnkLoc.getNetShare() != null) {
+                    fullLocalPath = fullLocalPath + lnkLoc.getNetShare();
+                    if (!fullLocalPath.endsWith("\\")) {
+                        fullLocalPath += "\\";
+                    }
+                }
+                if (lnkLoc.getCommonPath() != null) {
+                    fullLocalPath = fullLocalPath + lnkLoc.getCommonPath();
+                    if (!fullLocalPath.equals("") && !fullLocalPath.endsWith("\\")) {
+                        fullLocalPath += "\\";
+                    }
+                }
+                fullLocalPath = fullLocalPath + lnkLoc.getLocalPath();
+                metadata.add(LNK_METADATA_PREFIX + TikaCoreProperties.NAMESPACE_PREFIX_DELIMITER + LNK_METADATA_LOCALPATH, fullLocalPath);
+
+                try {
+                    makeReference(metadata, context, lnkObj, fullLocalPath, df);
+                } catch (Exception e) {
+                    // unpredictable error when making reference
+                    e.printStackTrace();
+                }
+
+            }
 
             // HasName HasRelativePath HasWorkingDir HasArguments HasIconLocation
             if (lnkObj.hasName() || lnkObj.hasRelativePath() || lnkObj.hasWorkingDir() || lnkObj.hasArguments()
@@ -117,6 +167,98 @@ public class LNKShortcutParser extends AbstractParser {
         xhtml.endElement("body"); //$NON-NLS-1$
         xhtml.endDocument();
     }
+
+    //
+    // Makes the reference to a found target if:
+    // 1) the metaAddress (mft idx in NTFS) and creation date is the same.
+    // - Only metaAddress can reference different file in other filesystem, as the
+    // number can in different FS may coincide. So creationDate is used to confirm.
+    // 2) the path is similar and creation date is the same
+    // - CreationDate is considerably reliable value, assuming no dates
+    // manipulation, as it is not probable 2 files created at same time. The path is
+    // used to confirm.
+    //
+    // If creation date is different, it still can mean that the file was moved to
+    // a different partition or drive (different file system).
+    // So here comes the question: should it still be considered the same file if
+    // only size and name is the same? Meanwhile, in this first version, it isn't.
+    private void makeReference(Metadata metadata, ParseContext context, LNKShortcut lnkObj, String fullLocalPath, DateFormat df) {
+        if (fullLocalPath.startsWith("file://")) {
+            fullLocalPath.substring(7);
+        }
+        LNKLinkLocation lnkLoc = lnkObj.getLinkLocation();
+        if (lnkLoc.getNetShare() == null) {
+            // tries to link to local file only if net info not defined
+            IItemSearcher searcher = context.get(IItemSearcher.class);
+            if (searcher != null) {
+
+                List<IItemReader> items = null;
+                boolean mftIdxFound = false;
+
+                if (lnkObj.hasTargetIDList() && lnkObj.getShellTargetIDList().size() > 0) {
+                    // search based on MFT entry index, if existent
+                    LNKShellItem lastTarget = lnkObj.getShellTargetIDList().get(lnkObj.getShellTargetIDList().size() - 1);
+                    if (lastTarget.hasFileEntry()) {
+                        LNKShellItemFileEntry fEntry = lastTarget.getFileEntry();
+                        items = searcher.search(BasicProps.META_ADDRESS + ":" + fEntry.getIndMft());
+                        if (items.size() <= 0) {
+                            items = null;
+                        } else {
+                            mftIdxFound = true;
+                        }
+                    }
+                }
+
+                if (items == null || makeReference(metadata, context, lnkObj, items, df) == null) {// if no reference could be done based on metaAddress
+                    // searches based on path
+                    String relLocalPath = fullLocalPath.replace("\\", "\\\\");
+                    int i = relLocalPath.indexOf(":");// search for drive letter separator
+                    if (i > 0) {
+                        relLocalPath = relLocalPath.substring(i + 1);// gets path starting from drive path separator
+                    }
+                    items = searcher.search(BasicProps.PATH + ":\"" + relLocalPath + "\"");
+
+                    makeReference(metadata, context, lnkObj, items, df);
+                }
+            }
+        }
+    }
+
+    private IItemReader makeReference(Metadata metadata, ParseContext context, LNKShortcut lnkObj, List<IItemReader> items, DateFormat df) {
+        for (IItemReader iReader : items) {
+            // creation date will confirm that the item is from the correct volume/path
+            Date created = iReader.getCreationDate();
+            if (created != null) {
+                if (df.format(created).equals(lnkObj.getCreateDate(df))) {
+                    metadata.add(LNK_METADATA_PREFIX + TikaCoreProperties.NAMESPACE_PREFIX_DELIMITER + LNK_METADATA_FILEEXISTS, "true");
+                    metadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.ID + ":" + iReader.getId());
+
+                    // if item with same path exists, mark it.
+                    boolean sizeMatches = false;
+                    if (iReader.getLength() == lnkObj.getFileSize()) {
+                        sizeMatches = true;
+                    }
+
+                    Date modifiedDate = iReader.getModDate();
+                    if (modifiedDate != null) {
+                        if (!df.format(modifiedDate).equals(lnkObj.getModifiedDate(df))) {
+                            // if item moddate is different than the registered in LNK file, informs that it
+                            // was modified after seen by this link
+                            metadata.add(LNK_METADATA_PREFIX + TikaCoreProperties.NAMESPACE_PREFIX_DELIMITER + LNK_METADATA_FILEMODIFIED, "true");
+                        }
+                    }
+                    if (!sizeMatches) {
+                        // if item size is different than the registered in LNK file, informs that it
+                        // was modified after seen by this link
+                        metadata.add(LNK_METADATA_PREFIX + TikaCoreProperties.NAMESPACE_PREFIX_DELIMITER + LNK_METADATA_FILEMODIFIED, "true");
+                    }
+                    return iReader;
+                }
+            }
+        }
+        return null;
+    }
+
 
     private void showHeader(LNKShortcut lnkObj, DateFormat df, XHTMLContentHandler xhtml) throws Exception {
         xhtml.startElement("table", "class", "t"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
