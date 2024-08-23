@@ -9,6 +9,7 @@ public class LNKShellItemFileEntry {
     private long fileSize, modifiedDate, createDate, accessDate;
     private int fileAttributeFlags, tipoShell;
     private String primaryName, secondaryName, guidShellFolder, ntfsRef, unknown;
+    private long indMft;
     private StringBuffer extensionSigs, localizedNames;
 
     public int getTipoShell() {
@@ -174,5 +175,13 @@ public class LNKShellItemFileEntry {
         calendar.set(year, month, day, hours, minutes, seconds);
 
         return df.format(calendar.getTime());
+    }
+
+    public long getIndMft() {
+        return indMft;
+    }
+
+    public void setIndMft(long indMft) {
+        this.indMft = indMft;
     }
 }
