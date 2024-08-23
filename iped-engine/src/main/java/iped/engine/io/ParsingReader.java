@@ -148,7 +148,7 @@ public class ParsingReader extends Reader {
         int timeOutByMessages = 0;
         Integer messagesCount = metadata.getInt(UfedXmlReader.UFED_IM_COUNT);
         if (messagesCount != null) {
-            timeOutByMessages = messagesCount * parsingConfig.getTimeOutPerHundredMessages() / 100;
+            timeOutByMessages = messagesCount * parsingConfig.getTimeOutPerThousandMessages() / 1000;
         }
 
         pipedReader = new FastPipedReader(128 * 1024, parsingConfig.getTimeOut() + timeOutBySize + timeOutByMessages);

@@ -19,7 +19,7 @@ parseCorruptedFiles = true
 
 # Minimum timeout (seconds) while parsing files. 
 # To this baseline will be added the result of timeOutPerMB * file size in MB
-# or timeOutPerHundredMessages * messages_count / 100  (see next parameters).
+# or timeOutPerThousandMessages * messages_count / 100  (see next parameters).
 # After the timeout, the file's raw strings will be indexed.
 timeOut = 180
 
@@ -27,9 +27,9 @@ timeOut = 180
 # Total_Timeout = timeOut + timeOutPerMB * <file_size_in_MB>
 timeOutPerMB = 2
 
-# Timeout (seconds) for each 100 messages in UFED Chat
-# Total_Timeout = timeOut + timeOutPerHundredMessages * <messages_count> / 100
-timeOutPerHundredMessages = 2
+# Timeout (seconds) for each 1000 messages in UFED Chat
+# Total_Timeout = timeOut + timeOutPerThousandMessages * <messages_count> / 1000
+timeOutPerThousandMessages = 4
 
 # Minimum size of raw strings extracted from unknown files for indexing.
 minRawStringSize = 4

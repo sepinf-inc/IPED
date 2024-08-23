@@ -22,7 +22,7 @@ public class ParsingTaskConfig extends AbstractTaskPropertiesConfig {
     private boolean parseUnknownFiles = true;
     private int timeOut = 180;
     private int timeOutPerMB = 2;
-    private int timeOutPerHundredMessages = 2;
+    private int timeOutPerThousandMessages = 4;
     private int minRawStringSize = 4;
     private boolean storeTextCacheOnDisk = true;
     private boolean sortPDFChars;
@@ -86,9 +86,9 @@ public class ParsingTaskConfig extends AbstractTaskPropertiesConfig {
             timeOutPerMB = Integer.valueOf(value.trim());
         }
 
-        value = properties.getProperty("timeOutPerHundredMessages"); //$NON-NLS-1$
+        value = properties.getProperty("timeOutPerThousandMessages"); //$NON-NLS-1$
         if (value != null) {
-            timeOutPerHundredMessages = Integer.valueOf(value.trim());
+            timeOutPerThousandMessages = Integer.valueOf(value.trim());
         }
 
         value = properties.getProperty("minRawStringSize"); //$NON-NLS-1$
@@ -151,8 +151,8 @@ public class ParsingTaskConfig extends AbstractTaskPropertiesConfig {
         return timeOutPerMB;
     }
 
-    public int getTimeOutPerHundredMessages() {
-        return timeOutPerHundredMessages;
+    public int getTimeOutPerThousandMessages() {
+        return timeOutPerThousandMessages;
     }
 
     public boolean isStoreTextCacheOnDisk() {
