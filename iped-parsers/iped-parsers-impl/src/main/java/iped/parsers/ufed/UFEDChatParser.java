@@ -66,6 +66,7 @@ public class UFEDChatParser extends AbstractParser {
     public static final String ATTACHED_MEDIA_MSG = "ATTACHED_MEDIA: ";
 
     protected static final String WHATSAPP = "WhatsApp";
+    protected static final String WHATSAPP_BUSINESS = "WhatsApp Business";
     protected static final String TELEGRAM = "Telegram";
 
     protected static final String CHAT_ACCOUNT = "Account";
@@ -290,7 +291,9 @@ public class UFEDChatParser extends AbstractParser {
                 name += "_" + CHATTYPE_GROUP_TITLE + "_" + (nameProperty != null ? nameProperty : idProperty);
             else if (chatType.equals(CHATTYPE_BROADCAST)) {
                 if (parties != null) {
-                    if ((parties.length == 1) && ((source != null) && (source.equals(WHATSAPP) || source.equals(TELEGRAM))))
+                    if ((parties.length == 1) && ((source != null) && (source.equals(WHATSAPP) || 
+                                                                       source.equals(WHATSAPP_BUSINESS) || 
+                                                                       source.equals(TELEGRAM))))
                         // "Status" chat type (known from behaviour)
                         // NOTE: Apps with this behaviour should be added to this if condition
                         name += "_" + CHATTYPE_BROADCAST_STATUS_TITLE + "_" + parties[0];
@@ -301,7 +304,9 @@ public class UFEDChatParser extends AbstractParser {
                     name += "_" + CHATTYPE_BROADCAST_TITLE + "_" + (nameProperty != null ? nameProperty : idProperty);
             }
             else if (chatType.equals(CHATTYPE_UNKNOWN)) {
-                if ((source != null) && (source.equals(WHATSAPP) || source.equals(TELEGRAM)))
+                if ((source != null) && (source.equals(WHATSAPP) || 
+                                         source.equals(WHATSAPP_BUSINESS) || 
+                                         source.equals(TELEGRAM)))
                     // "Unknown" chat type regarding apps for which there are specific chat types
                     // NOTE: Apps with similar behaviour should be added to this if condition
                     name += "_" + CHATTYPE_UNKNOWN_TITLE + "_" + idProperty;

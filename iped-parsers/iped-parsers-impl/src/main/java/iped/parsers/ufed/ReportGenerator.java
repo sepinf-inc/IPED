@@ -76,7 +76,9 @@ public class ReportGenerator {
                 title = UFEDChatParser.CHATTYPE_GROUP_TITLE + ": " + (nameProperty != null ? nameProperty : idProperty);
             else if (chatType.equals(UFEDChatParser.CHATTYPE_BROADCAST)) {
                 if (parties != null) {
-                    if ((parties.length == 1) && ((source != null) && (source.equals(UFEDChatParser.WHATSAPP) || source.equals(UFEDChatParser.TELEGRAM))))
+                    if ((parties.length == 1) && ((source != null) && (source.equals(UFEDChatParser.WHATSAPP) || 
+                                                                       source.equals(UFEDChatParser.WHATSAPP_BUSINESS) || 
+                                                                       source.equals(UFEDChatParser.TELEGRAM))))
                         // "Status" chat type (known from behaviour)
                         // NOTE: Apps with this behaviour should be added to this if condition
                         title = UFEDChatParser.CHATTYPE_BROADCAST_STATUS_TITLE + ": " + parties[0];
@@ -87,7 +89,9 @@ public class ReportGenerator {
                     title = UFEDChatParser.CHATTYPE_BROADCAST_TITLE + ": " + (nameProperty != null ? nameProperty : idProperty);
             }
             else if (chatType.equals(UFEDChatParser.CHATTYPE_UNKNOWN)) {
-                if ((source != null) && (source.equals(UFEDChatParser.WHATSAPP) || source.equals(UFEDChatParser.TELEGRAM)))
+                if ((source != null) && (source.equals(UFEDChatParser.WHATSAPP) || 
+                                         source.equals(UFEDChatParser.WHATSAPP_BUSINESS) || 
+                                         source.equals(UFEDChatParser.TELEGRAM)))
                     // "Unknown" chat type regarding apps for which there are specific chat types
                     // NOTE: Apps with similar behaviour should be added to this if condition
                     title = UFEDChatParser.CHATTYPE_UNKNOWN_TITLE + ": " + idProperty;
