@@ -84,10 +84,11 @@ public class LNKShortcutParser extends AbstractParser {
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
         synchronized (initialized) {
-            if (initialized.get()) {
+            if (!initialized.get()) {
                 MetadataUtil.setMetadataType(LNK_METADATA_PREFIX + TikaCoreProperties.NAMESPACE_PREFIX_DELIMITER + BasicProps.CREATED, Date.class);
                 MetadataUtil.setMetadataType(LNK_METADATA_PREFIX + TikaCoreProperties.NAMESPACE_PREFIX_DELIMITER + BasicProps.ACCESSED, Date.class);
                 MetadataUtil.setMetadataType(LNK_METADATA_PREFIX + TikaCoreProperties.NAMESPACE_PREFIX_DELIMITER + BasicProps.MODIFIED, Date.class);
+                initialized.set(true);
             }
         }
 
@@ -138,10 +139,6 @@ public class LNKShortcutParser extends AbstractParser {
                 metadata.add(LNK_METADATA_PREFIX + TikaCoreProperties.NAMESPACE_PREFIX_DELIMITER + LNK_METADATA_NETWORKSHARE, lnkLoc.getNetShare());
                 metadata.add(LNK_METADATA_PREFIX + TikaCoreProperties.NAMESPACE_PREFIX_DELIMITER + LNK_METADATA_VOLUMELABEL, lnkLoc.getVolumeLabel());
 
-                metadata.add(LNK_METADATA_PREFIX + TikaCoreProperties.NAMESPACE_PREFIX_DELIMITER + BasicProps.CREATED, lnkObj.getCreateDate(dfMetadata));
-                metadata.add(LNK_METADATA_PREFIX + TikaCoreProperties.NAMESPACE_PREFIX_DELIMITER + BasicProps.MODIFIED, lnkObj.getModifiedDate(dfMetadata));
-                metadata.add(LNK_METADATA_PREFIX + TikaCoreProperties.NAMESPACE_PREFIX_DELIMITER + BasicProps.ACCESSED, lnkObj.getAccessDate(dfMetadata));
-
                 if (lnkLoc.getNetShare() != null) {
                     fullLocalPath = fullLocalPath + lnkLoc.getNetShare();
                     if (!fullLocalPath.endsWith("\\")) {
@@ -156,9 +153,16 @@ public class LNKShortcutParser extends AbstractParser {
                 }
                 fullLocalPath = fullLocalPath + lnkLoc.getLocalPath();
                 metadata.add(LNK_METADATA_PREFIX + TikaCoreProperties.NAMESPACE_PREFIX_DELIMITER + LNK_METADATA_LOCALPATH, fullLocalPath);
+                metadata.add(LNK_METADATA_PREFIX + TikaCoreProperties.NAMESPACE_PREFIX_DELIMITER + BasicProps.LENGTH, Long.toString(lnkObj.getFileSize()));
 
                 try {
-                    makeReference(metadata, context, lnkObj, fullLocalPath, df);
+                    IItemReader refItem = makeReference(metadata, context, lnkObj, fullLocalPath, df, dfMetadata);
+                    if (refItem == null) {
+                        // if, and only if, the source wasn't found, register the timestamps
+                        metadata.add(LNK_METADATA_PREFIX + TikaCoreProperties.NAMESPACE_PREFIX_DELIMITER + BasicProps.CREATED, lnkObj.getCreateDate(dfMetadata));
+                        metadata.add(LNK_METADATA_PREFIX + TikaCoreProperties.NAMESPACE_PREFIX_DELIMITER + BasicProps.MODIFIED, lnkObj.getModifiedDate(dfMetadata));
+                        metadata.add(LNK_METADATA_PREFIX + TikaCoreProperties.NAMESPACE_PREFIX_DELIMITER + BasicProps.ACCESSED, lnkObj.getAccessDate(dfMetadata));
+                    }
                 } catch (Exception e) {
                     // unpredictable error when making reference
                     e.printStackTrace();
@@ -200,10 +204,11 @@ public class LNKShortcutParser extends AbstractParser {
     // a different partition or drive (different file system).
     // So here comes the question: should it still be considered the same file if
     // only size and name is the same? Meanwhile, in this first version, it isn't.
-    private void makeReference(Metadata metadata, ParseContext context, LNKShortcut lnkObj, String fullLocalPath, DateFormat df) {
+    private IItemReader makeReference(Metadata metadata, ParseContext context, LNKShortcut lnkObj, String fullLocalPath, DateFormat df, DateFormat dfMetadata) {
         if (fullLocalPath.startsWith("file://")) {
             fullLocalPath.substring(7);
         }
+        IItemReader result = null;
         LNKLinkLocation lnkLoc = lnkObj.getLinkLocation();
         if (lnkLoc.getNetShare() == null) {
             // tries to link to local file only if net info not defined
@@ -227,7 +232,11 @@ public class LNKShortcutParser extends AbstractParser {
                     }
                 }
 
-                if (items == null || makeReference(metadata, context, lnkObj, items, df) == null) {// if no reference could be done based on metaAddress
+                if (items != null) {
+                    result = makeReference(metadata, context, lnkObj, items, df, dfMetadata);
+                }
+
+                if (result == null) {// if no reference could be done based on metaAddress
                     // searches based on path
                     String relLocalPath = fullLocalPath.replace("\\", "\\\\");
                     int i = relLocalPath.indexOf(":");// search for drive letter separator
@@ -236,13 +245,16 @@ public class LNKShortcutParser extends AbstractParser {
                     }
                     items = searcher.search(BasicProps.PATH + ":\"" + relLocalPath + "\"");
 
-                    makeReference(metadata, context, lnkObj, items, df);
+                    if (items != null && items.size() > 0) {
+                        result = makeReference(metadata, context, lnkObj, items, df, dfMetadata);
+                    }
                 }
             }
         }
+        return result;
     }
 
-    private IItemReader makeReference(Metadata metadata, ParseContext context, LNKShortcut lnkObj, List<IItemReader> items, DateFormat df) {
+    private IItemReader makeReference(Metadata metadata, ParseContext context, LNKShortcut lnkObj, List<IItemReader> items, DateFormat df, DateFormat dfMetadata) {
         for (IItemReader iReader : items) {
             // creation date will confirm that the item is from the correct volume/path
             Date created = iReader.getCreationDate();
@@ -263,6 +275,19 @@ public class LNKShortcutParser extends AbstractParser {
                             // if item moddate is different than the registered in LNK file, informs that it
                             // was modified after seen by this link
                             metadata.add(LNK_METADATA_PREFIX + TikaCoreProperties.NAMESPACE_PREFIX_DELIMITER + LNK_METADATA_FILEMODIFIED, "true");
+
+                            // if LNK registered source last modified date is different from found source
+                            // last modified date, adds the metadata
+                            metadata.add(LNK_METADATA_PREFIX + TikaCoreProperties.NAMESPACE_PREFIX_DELIMITER + BasicProps.MODIFIED, lnkObj.getModifiedDate(dfMetadata));
+                        }
+                    }
+
+                    Date acessedDate = iReader.getAccessDate();
+                    if (acessedDate != null) {
+                        // if LNK registered source access date is different from found source access
+                        // date, adds the metadata
+                        if (!df.format(acessedDate).equals(lnkObj.getModifiedDate(df))) {
+                            metadata.add(LNK_METADATA_PREFIX + TikaCoreProperties.NAMESPACE_PREFIX_DELIMITER + BasicProps.ACCESSED, lnkObj.getAccessDate(dfMetadata));
                         }
                     }
                     if (!sizeMatches) {
