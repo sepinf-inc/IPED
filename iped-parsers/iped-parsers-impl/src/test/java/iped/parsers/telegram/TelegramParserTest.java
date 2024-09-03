@@ -77,7 +77,7 @@ public class TelegramParserTest extends AbstractPkgTest {
 
             assertEquals("Telegram (phone: 42777)", telegramtracker.messageto.get(0));
             assertEquals("Nickerida (phone: 5561983125151)", telegramtracker.messageto.get(1));
-            assertEquals("Guilherme Andreúce (phone: 5561986143035)", telegramtracker.messageto.get(150));
+            assertEquals("Group mixirica e noronhe-se (id:-136232058)", telegramtracker.messageto.get(150));
 
             assertTrue(telegramtracker.messagebody.get(0).contains(
                     "Código de login: 73632. Não envie esse código para ninguém, nem mesmo que eles digam que são do Telegram!"));

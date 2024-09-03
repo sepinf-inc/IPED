@@ -19,6 +19,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.metadata.IPTC;
 import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Metadata;
@@ -438,35 +439,42 @@ public class MetadataUtil {
     }
 
     private static void normalizeGPSMeta(Metadata metadata) {
-        String lat = metadata.get(Metadata.LATITUDE);
-        if (lat == null)
-            lat = metadata.get(ExtraProperties.UFED_META_PREFIX + "Latitude");
-        String lon = metadata.get(Metadata.LONGITUDE);
-        if (lon == null)
-            lon = metadata.get(ExtraProperties.UFED_META_PREFIX + "Longitude");
-        boolean invalid = lat == null || lon == null;
-        if (!invalid) {
+        String lat = StringUtils.firstNonBlank(metadata.get(Metadata.LATITUDE),
+                metadata.get(ExtraProperties.UFED_META_PREFIX + "Latitude"),
+                metadata.get(ExtraProperties.UFED_META_PREFIX + "Associated Location Latitude"));
+
+        String lon = StringUtils.firstNonBlank(metadata.get(Metadata.LONGITUDE),
+                metadata.get(ExtraProperties.UFED_META_PREFIX + "Longitude"),
+                metadata.get(ExtraProperties.UFED_META_PREFIX + "Associated Location Longitude"));
+
+        boolean valid = StringUtils.isNoneBlank(lat, lon);
+        if (valid) {
+            lat = lat.replace(',', '.');
+            lon = lon.replace(',', '.');
             try {
                 Float lati = Float.valueOf(lat);
                 Float longit = Float.valueOf(lon);
                 if ((lati < -90 || lati > 90 || longit < -180 || longit > 180 || Float.isNaN(lati)
                         || Float.isNaN(longit)) || (lati == 0.0 && longit == 0.0)) {
-                    invalid = true;
+                    valid = false;
                 }
             } catch (NumberFormatException e) {
-                invalid = true;
+                valid = false;
             }
         }
-        if (!invalid) {
+        if (valid) {
             metadata.add(ExtraProperties.LOCATIONS, lat + ";" + lon);
+
+            // always remove these, if valid, they were stored above
+            metadata.remove(Metadata.LATITUDE.getName());
+            metadata.remove(Metadata.LONGITUDE.getName());
+            metadata.remove(ExtraProperties.UFED_META_PREFIX + "Latitude");
+            metadata.remove(ExtraProperties.UFED_META_PREFIX + "Longitude");
+            metadata.remove(ExtraProperties.UFED_META_PREFIX + "Associated Location Latitude");
+            metadata.remove(ExtraProperties.UFED_META_PREFIX + "Associated Location Longitude");
         } else {
             metadata.remove(Metadata.ALTITUDE.getName());
         }
-        // always remove these, if valid, they were stored above
-        metadata.remove(Metadata.LATITUDE.getName());
-        metadata.remove(Metadata.LONGITUDE.getName());
-        metadata.remove(ExtraProperties.UFED_META_PREFIX + "Latitude");
-        metadata.remove(ExtraProperties.UFED_META_PREFIX + "Longitude");
     }
 
     private static void removeDuplicateValues(Metadata metadata) {
