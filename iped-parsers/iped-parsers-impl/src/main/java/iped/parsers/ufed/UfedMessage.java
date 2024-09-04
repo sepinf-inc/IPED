@@ -6,6 +6,7 @@ public class UfedMessage extends Message {
 
     public static final String SYSTEM_MESSAGE = "System Message"; //$NON-NLS-1$
 
+    private String identifier;
     private String transcription;
     private String transcriptConfidence;
     private String mediatrueExtension;
@@ -32,6 +33,14 @@ public class UfedMessage extends Message {
 
     public void setTranscriptConfidence(String transcriptConfidence) {
         this.transcriptConfidence = transcriptConfidence;
+    }
+
+    public String getIdentifier() {
+        return identifier;
+    }
+
+    public void setIdentifier(String identifier) {
+        this.identifier = identifier;
     }
 
     @Override

@@ -306,6 +306,7 @@ public class UFEDChatParser extends AbstractParser {
         UfedMessage m = new UfedMessage();
         m.setId(msg.getId());
         m.setDeleted(msg.isDeleted());
+        m.setIdentifier(msg.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Identifier"));
         for (String body : msg.getMetadata().getValues(ExtraProperties.MESSAGE_BODY)) {
             if (!body.startsWith(ATTACHED_MEDIA_MSG))
                 m.setData(body);
@@ -430,6 +431,16 @@ public class UFEDChatParser extends AbstractParser {
                 int ret = o1.getTimeStamp().compareTo(o2.getTimeStamp());
                 if (ret != 0) {
                     return ret;
+                }
+                // compare Identifier (example "1257970071:7180")
+                if (StringUtils.isNoneBlank(o1.getIdentifier(), o2.getIdentifier())) {
+                    String[] id1 = o1.getIdentifier().split(":");
+                    String[] id2 = o2.getIdentifier().split(":");
+                    if (id1.length == 2 && id2.length == 2) {
+                        if (id1[0].equals(id2[0]) && StringUtils.isNumeric(id1[1]) && StringUtils.isNumeric(id2[1])) {
+                            return Integer.parseInt(id1[1]) - Integer.parseInt(id2[1]);
+                        }
+                    }
                 }
                 return (int) (o1.getId() - o2.getId());
             }
