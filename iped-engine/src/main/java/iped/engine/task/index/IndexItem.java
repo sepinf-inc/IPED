@@ -40,6 +40,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.BinaryDocValuesField;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.DoubleDocValuesField;
@@ -696,6 +697,11 @@ public class IndexItem extends BasicProps {
 
         if (type == null && MetadataUtil.isHtmlMediaType(mimetype) && !key.startsWith(ExtraProperties.UFED_META_PREFIX))
             return;
+
+        // don't add in report generation (it will be calculated again) 
+        if (key.endsWith(":count") && countMetadata.contains(StringUtils.substringBeforeLast(key, ":count"))) {
+            return;
+        }
 
         if (type == null) {
             try {
