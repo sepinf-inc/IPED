@@ -28,6 +28,7 @@ import dpf.ap.gpinf.interfacetelegram.MessageInterface;
 import dpf.ap.gpinf.interfacetelegram.PhotoData;
 import iped.data.IItemReader;
 import iped.parsers.util.ChildPornHashLookup;
+import iped.parsers.util.HashUtils;
 
 public class Message implements MessageInterface {
     private long id;
@@ -70,8 +71,10 @@ public class Message implements MessageInterface {
     }
 
     public void setMediaHash(String mediaHash) {
-        this.mediaHash = mediaHash;
-        childPornSets = ChildPornHashLookup.lookupHashAndMerge(mediaHash, childPornSets);
+        if (HashUtils.isValidHash(mediaHash)) {
+            this.mediaHash = mediaHash;
+            childPornSets = ChildPornHashLookup.lookupHashAndMerge(mediaHash, childPornSets);
+        }
     }
 
     public String getMediaFile() {
