@@ -145,6 +145,7 @@ public class ReportGenerator {
         } else if (message.isSystemMessage()) {
             out.print("System Message"); //$NON-NLS-1$
         }
+        boolean addedMedia = false;
         if (message.getMediaHash() != null || message.getThumbData() != null || message.getMediaName() != null) {
             if (message.getMediaHash() != null) {
                 out.println("<input class=\"check\" type=\"checkbox\" onclick=app.check(\"hash:"
@@ -177,11 +178,12 @@ public class ReportGenerator {
                     out.println("Attachment:<br><div class=\"attachImg\" title=\"Doc\"></div>"); //$NON-NLS-1$
             }
             out.println("</a>"); //$NON-NLS-1$
+            addedMedia = true;
         }
         if (message.getMediaCaption() != null)
             out.println("<br>" + format(message.getMediaCaption())); //$NON-NLS-1$
 
-        if (message.getMediaUrl() != null)
+        if (!addedMedia && message.getMediaUrl() != null)
             out.println("<p class=\"link\">" + format(message.getMediaUrl()) + "</p>"); //$NON-NLS-1$
 
         String transcription = message.getTranscription();
