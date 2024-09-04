@@ -53,6 +53,8 @@ public class ExtraProperties {
 
     public static final String COMMUNICATION_PARTICIPANTS = COMMUNICATION_PREFIX + "Participants";
 
+    public static final String COMMUNICATION_PARTICIPANTS_COUNT = COMMUNICATION_PREFIX + "ParticipantsCount";
+
     public static final String COMMUNICATION_ADMINS = COMMUNICATION_PREFIX + "Admins";
 
     public static final String COMMUNICATION_TYPE = COMMUNICATION_PREFIX + "Type";
