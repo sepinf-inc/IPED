@@ -266,7 +266,10 @@ public class UFEDChatParser extends AbstractParser {
 
         HashSet<Long> idsInSubList = subList.stream().mapToLong(UfedMessage::getId).boxed().collect(Collectors.toCollection(HashSet::new));
 
-        for (IItemReader msg : messages) {
+        Iterator<IItemReader> messagesIter = messages.iterator();
+        while (messagesIter.hasNext()) {
+            IItemReader msg = messagesIter.next();
+            messagesIter.remove();
 
             if (!idsInSubList.contains((long) msg.getId())) {
                 continue;
