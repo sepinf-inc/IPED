@@ -10,12 +10,14 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
@@ -156,7 +158,7 @@ public class UFEDChatParser extends AbstractParser {
                             if (subitemRefs.length > 0) {
                                 String subitemRefsQuery = "(" + Arrays.asList(subitemRefs).stream().collect(Collectors.joining(") (")) + ")";
                                 searcher.searchIterable(subitemRefsQuery).forEach(subitems::add);
-                            } else {
+                            } else if (attach.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "ContentType") != null) {
                                 subitems.add(attach);
                             }
                         }
@@ -223,7 +225,10 @@ public class UFEDChatParser extends AbstractParser {
                     }
 
                     // Communication:ID
-                    chatMetadata.set(ExtraProperties.COMMUNICATION_ID, chat.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Id"));
+                    String id = chat.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Identifier");
+                    if (id != null) {
+                        chatMetadata.set(ExtraProperties.COMMUNICATION_ID, id);
+                    }
 
                     // Communication:Account
                     String ufedAccount = chat.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Account");
