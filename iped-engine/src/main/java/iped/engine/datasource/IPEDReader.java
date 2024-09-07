@@ -692,14 +692,6 @@ public class IPEDReader extends DataSourceReader {
                 }
             }
 
-            // translate old msg ids to new ones
-            String[] ufedMsgIds = evidence.getMetadata().getValues(UFEDChatParser.CHILD_MSG_IDS);
-            evidence.getMetadata().remove(UFEDChatParser.CHILD_MSG_IDS);
-            for (String msgId : ufedMsgIds) {
-                int newId = getId(msgId);
-                evidence.getMetadata().add(UFEDChatParser.CHILD_MSG_IDS, Integer.toString(newId));
-            }
-
             Manager.getInstance().addItemToQueue(evidence);
         }
 

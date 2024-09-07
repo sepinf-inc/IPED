@@ -25,6 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 import dpf.ap.gpinf.interfacetelegram.ContactInterface;
 import dpf.ap.gpinf.interfacetelegram.DecoderTelegramInterface;
 import dpf.ap.gpinf.interfacetelegram.PhotoData;
+import iped.parsers.util.ConversationUtils;
 
 public class Contact implements ContactInterface {
     private long id;
@@ -173,40 +174,11 @@ public class Contact implements ContactInterface {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        String name = getFullname();
-        if (name != null) {
-            sb.append(name.trim());
+        String str = ConversationUtils.buidPartyString(getFullname(), Long.toString(getId()), getPhone(), getUsername());
+        if (str.isEmpty()) {
+            str = "[unknown]";
         }
-        String number = getPhone();
-        if (getId() > 0) {
-            if (StringUtils.isNotBlank(name)) {
-                sb.append(" (");
-            }
-
-            sb.append("ID:").append(getId());
-
-            if (StringUtils.isNotBlank(number)) {
-                sb.append(" | phone:").append(number);
-            }
-            if (StringUtils.isNotBlank(name)) {
-                sb.append(")");
-            }
-        } else if (StringUtils.isNotBlank(number)) {
-            if (StringUtils.isNotBlank(name)) {
-                sb.append(" (");
-            }
-
-            sb.append("phone:").append(number);
-
-            if (StringUtils.isNotBlank(name)) {
-                sb.append(")");
-            }
-        }
-        if (sb.length() == 0) {
-            sb.append("[unknown]");
-        }
-        return sb.toString();
+        return str;
     }
 
 }

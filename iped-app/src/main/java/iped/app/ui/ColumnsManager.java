@@ -400,7 +400,8 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         for (int i = newColStart; i < App.get().resultsTable.getColumnCount(); i++) {
             TableColumn col = App.get().resultsTable.getColumnModel().getColumn(i);
             String colName = col.getHeaderValue().toString();
-            if (colName.startsWith(ExtraProperties.MESSAGE_PREFIX) || colName.startsWith(ExtraProperties.COMMUNICATION_PREFIX)) {
+            if (colName.startsWith(ExtraProperties.MESSAGE_PREFIX) || colName.startsWith(ExtraProperties.COMMUNICATION_PREFIX)
+                    || colName.startsWith(ExtraProperties.CONVERSATION_PREFIX)) {
                 App.get().resultsTable.moveColumn(i, newPosEmail++);
                 newPosOther++;
             } else if (colName.toLowerCase().startsWith(ExtraProperties.UFED_META_PREFIX)) {
@@ -414,7 +415,8 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         for (int i = newPosOther; i <= lastOldCol; i++) {
             TableColumn col = App.get().resultsTable.getColumnModel().getColumn(i);
             String colName = col.getHeaderValue().toString();
-            if (colName.startsWith(ExtraProperties.MESSAGE_PREFIX) || colName.startsWith(ExtraProperties.COMMUNICATION_PREFIX)) {
+            if (colName.startsWith(ExtraProperties.MESSAGE_PREFIX) || colName.startsWith(ExtraProperties.COMMUNICATION_PREFIX)
+                    || colName.startsWith(ExtraProperties.CONVERSATION_PREFIX)) {
                 App.get().resultsTable.moveColumn(i, newPosEmail++);
             }
         }
@@ -550,7 +552,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
                 p2pFields.add(f);
             else if (f.startsWith(ExtraProperties.UFED_META_PREFIX))
                 ufedFields.add(f);
-            else if (f.startsWith(Message.MESSAGE_PREFIX) || f.startsWith(ExtraProperties.COMMUNICATION_PREFIX)
+            else if (f.startsWith(Message.MESSAGE_PREFIX) || f.startsWith(ExtraProperties.COMMUNICATION_PREFIX) || f.startsWith(ExtraProperties.CONVERSATION_PREFIX)
                     || ExtraProperties.COMMUNICATION_BASIC_PROPS.contains(f))
                 communicationFields.add(f);
             else if (f.startsWith(ExtraProperties.COMMON_META_PREFIX))

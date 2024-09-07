@@ -157,8 +157,8 @@ public class IndexItem extends BasicProps {
         // ocrCharCount is already copied to an extra attribute
         ignoredMetadata.add(OCRParser.OCR_CHAR_COUNT);
 
-        countMetadata.add(ExtraProperties.COMMUNICATION_PARTICIPANTS);
-        countMetadata.add(ExtraProperties.COMMUNICATION_ADMINS);
+        countMetadata.add(ExtraProperties.CONVERSATION_PARTICIPANTS);
+        countMetadata.add(ExtraProperties.CONVERSATION_ADMINS);
 
         BasicProps.SET.add(ID_IN_SOURCE);
         BasicProps.SET.add(SOURCE_PATH);

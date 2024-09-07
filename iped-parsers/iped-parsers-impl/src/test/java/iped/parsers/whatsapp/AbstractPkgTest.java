@@ -56,8 +56,8 @@ public abstract class AbstractPkgTest extends BaseItemSearchContext {
                 throws IOException, SAXException, TikaException {
             if (metadata.get(TikaCoreProperties.TITLE) != null)
                 title.add(metadata.get(TikaCoreProperties.TITLE));
-            if (metadata.get(ExtraProperties.COMMUNICATION_TYPE) != null)
-                type.add(metadata.get(ExtraProperties.COMMUNICATION_TYPE));
+            if (metadata.get(ExtraProperties.CONVERSATION_TYPE) != null)
+                type.add(metadata.get(ExtraProperties.CONVERSATION_TYPE));
             if (metadata.get(ExtraProperties.USER_NAME) != null)
                 username.add(metadata.get(ExtraProperties.USER_NAME));
             if (metadata.get(ExtraProperties.USER_PHONE) != null)
@@ -66,9 +66,9 @@ public abstract class AbstractPkgTest extends BaseItemSearchContext {
                 useraccount.add(metadata.get(ExtraProperties.USER_ACCOUNT));
             if (metadata.get(ExtraProperties.USER_NOTES) != null)
                 usernotes.add(metadata.get(ExtraProperties.USER_NOTES));
-            if (metadata.get(ExtraProperties.COMMUNICATION_PARTICIPANTS) != null) {
-                participants.add(Arrays.asList(metadata.getValues(ExtraProperties.COMMUNICATION_PARTICIPANTS)));
-                admins.add(Arrays.asList(metadata.getValues(ExtraProperties.COMMUNICATION_ADMINS)));
+            if (metadata.get(ExtraProperties.CONVERSATION_PARTICIPANTS) != null) {
+                participants.add(Arrays.asList(metadata.getValues(ExtraProperties.CONVERSATION_PARTICIPANTS)));
+                admins.add(Arrays.asList(metadata.getValues(ExtraProperties.CONVERSATION_ADMINS)));
             }
             if (metadata.get(org.apache.tika.metadata.Message.MESSAGE_FROM) != null)
                 messagefrom.add(metadata.get(org.apache.tika.metadata.Message.MESSAGE_FROM));

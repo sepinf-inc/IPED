@@ -197,7 +197,6 @@ public class MetadataUtil {
         ignorePreviewMetas.add(Metadata.CONTENT_TYPE);
         ignorePreviewMetas.add(StandardParser.INDEXER_CONTENT_TYPE);
         ignorePreviewMetas.add(ExtraProperties.TIKA_PARSER_USED);
-        ignorePreviewMetas.add(UFEDChatParser.CHILD_MSG_IDS);
         return ignorePreviewMetas;
     }
 
@@ -637,6 +636,7 @@ public class MetadataUtil {
             if (generalKeys.contains(key) || key.toLowerCase().startsWith(prefix.toLowerCase())
                     || key.startsWith(ExtraProperties.UFED_META_PREFIX)
                     || key.startsWith(ExtraProperties.COMMON_META_PREFIX)
+                    || key.startsWith(ExtraProperties.CONVERSATION_PREFIX)
                     || key.startsWith(ExtraProperties.COMMUNICATION_PREFIX)
                     || key.startsWith(TikaCoreProperties.TIKA_META_PREFIX)) {
                 continue;

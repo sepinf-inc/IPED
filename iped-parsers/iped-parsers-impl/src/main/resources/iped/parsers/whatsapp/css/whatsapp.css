@@ -213,30 +213,26 @@ div:target {
     animation-duration: 2.5s; 
 }
 
+.quoteBlock {
+    border-radius: 5px;
+    border-left: 4px solid #01A280;
+    padding: 5px;
+    margin-top: 2px;
+    margin-bottom: 5px;
+    display:table;
+    width:-webkit-fill-available;
+}
+
+.quoteBlock:hover {
+	background-color: #AFD3F0 !important;
+}
+
 .quoteFrom {
       background:#F5F7F6;
-      border-radius: 5px;
-      border-left: 4px solid #01A280;
-      padding: 5px;
-      display:table;
-      width:-webkit-fill-available;
 }
 
 .quoteTo {
     background:#DEF6D4;
-    border-radius: 5px;
-    border-left: 4px solid #01A280;
-    padding: 5px;
-    display:table;
-    width:-webkit-fill-available;    
-}
-
-.quoteTo:hover {
-	background-color: #AFD3F0 !important;
-}
-
-.quoteFrom:hover {
-	background-color: #AFD3F0 !important;
 }
 
 .quoteUser {
@@ -250,8 +246,8 @@ div:target {
 }
 
 .quoteImg {
-    width: 33px;
-    height: 33px;
+    max-width: 100px;
+    max-height: 100px;
     display: table-cell;
 }
 
@@ -584,6 +580,7 @@ div:target {
     font-style: italic;
     color: #aaaaaa;
     font-size: small;
+    margin-bottom: 5px;
 }
 
 /** Modal window - Author: https://github.com/lecoa/Vanilla-JS-Prompt **/

@@ -17,7 +17,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import iped.parsers.standard.StandardParser;
-import iped.parsers.util.CommunicationConstants;
+import iped.parsers.util.ConversationUtils;
 
 public class WhatsAppParserTest extends AbstractPkgTest {
 
@@ -47,10 +47,10 @@ public class WhatsAppParserTest extends AbstractPkgTest {
             assertEquals(4, whatsapptracker.messageto.size());
             assertEquals(74, whatsapptracker.messagedate.size());
 
-            assertEquals(11, Collections.frequency(whatsapptracker.type, CommunicationConstants.TYPE_PRIVATE));
-            assertEquals(18, Collections.frequency(whatsapptracker.type, CommunicationConstants.TYPE_GROUP));
-            assertEquals(0, Collections.frequency(whatsapptracker.type, CommunicationConstants.TYPE_BROADCAST));
-            assertEquals(0, Collections.frequency(whatsapptracker.type, CommunicationConstants.TYPE_UNKONWN));
+            assertEquals(11, Collections.frequency(whatsapptracker.type, ConversationUtils.TYPE_PRIVATE));
+            assertEquals(18, Collections.frequency(whatsapptracker.type, ConversationUtils.TYPE_GROUP));
+            assertEquals(0, Collections.frequency(whatsapptracker.type, ConversationUtils.TYPE_BROADCAST));
+            assertEquals(0, Collections.frequency(whatsapptracker.type, ConversationUtils.TYPE_UNKONWN));
 
             assertEquals("WhatsApp Chat - Nickerida - 556183125151", whatsapptracker.title.get(0));
             assertEquals("WhatsApp Chat - Nickerida - 556183125151_message_0", whatsapptracker.title.get(1));
@@ -62,10 +62,10 @@ public class WhatsAppParserTest extends AbstractPkgTest {
 
             // Test Private Chats
 
-            assertEquals(CommunicationConstants.TYPE_PRIVATE, whatsapptracker.type.get(0));
-            assertEquals(CommunicationConstants.TYPE_PRIVATE, whatsapptracker.type.get(19));
-            assertEquals(CommunicationConstants.TYPE_PRIVATE, whatsapptracker.type.get(20));
-            assertEquals(CommunicationConstants.TYPE_PRIVATE, whatsapptracker.type.get(21));
+            assertEquals(ConversationUtils.TYPE_PRIVATE, whatsapptracker.type.get(0));
+            assertEquals(ConversationUtils.TYPE_PRIVATE, whatsapptracker.type.get(19));
+            assertEquals(ConversationUtils.TYPE_PRIVATE, whatsapptracker.type.get(20));
+            assertEquals(ConversationUtils.TYPE_PRIVATE, whatsapptracker.type.get(21));
 
             assertEquals(2, whatsapptracker.participants.get(0).size());
             assertEquals(2, whatsapptracker.participants.get(19).size());
@@ -84,10 +84,10 @@ public class WhatsAppParserTest extends AbstractPkgTest {
 
             // Test Group Chats
 
-            assertEquals(CommunicationConstants.TYPE_GROUP, whatsapptracker.type.get(1));
-            assertEquals(CommunicationConstants.TYPE_GROUP, whatsapptracker.type.get(2));
-            assertEquals(CommunicationConstants.TYPE_GROUP, whatsapptracker.type.get(3));
-            assertEquals(CommunicationConstants.TYPE_GROUP, whatsapptracker.type.get(4));
+            assertEquals(ConversationUtils.TYPE_GROUP, whatsapptracker.type.get(1));
+            assertEquals(ConversationUtils.TYPE_GROUP, whatsapptracker.type.get(2));
+            assertEquals(ConversationUtils.TYPE_GROUP, whatsapptracker.type.get(3));
+            assertEquals(ConversationUtils.TYPE_GROUP, whatsapptracker.type.get(4));
 
             assertEquals(23, whatsapptracker.participants.get(1).size());
             assertEquals(21, whatsapptracker.participants.get(2).size());

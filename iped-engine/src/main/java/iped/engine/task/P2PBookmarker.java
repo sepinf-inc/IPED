@@ -169,7 +169,7 @@ public class P2PBookmarker {
                         bookmarkSufix = source;
                 }
 
-                String owner = doc.get(ExtraProperties.COMMUNICATION_OWNER);
+                String owner = doc.get(ExtraProperties.CONVERSATION_ACCOUNT);
                 if (owner != null && !owner.isEmpty())
                     bookmarkSufix += " by " + owner; //$NON-NLS-1$
 

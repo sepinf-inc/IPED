@@ -39,39 +39,44 @@ public class ExtraProperties {
 
     public static final String MESSAGE_SUBJECT = MESSAGE_PREFIX + "Subject"; //$NON-NLS-1$
 
+    public static final String CONVERSATION_PREFIX = "Conversation:";
+
+    public static final String CONVERSATION_ID = CONVERSATION_PREFIX + "ID";
+
+    public static final String CONVERSATION_ACCOUNT = CONVERSATION_PREFIX + "Account";
+
+    public static final String CONVERSATION_NAME = CONVERSATION_PREFIX + "Name";
+
+    public static final String CONVERSATION_TYPE = CONVERSATION_PREFIX + "Type";
+
+    public static final Property CONVERSATION_IS_ADMIN = Property.internalBoolean(CONVERSATION_PREFIX + "IsAdmin");
+
+    public static final String CONVERSATION_ADMINS = CONVERSATION_PREFIX + "Admins";
+
+    public static final String CONVERSATION_PARTICIPANTS = CONVERSATION_PREFIX + "Participants";
+
+    public static final Property CONVERSATION_PARTICIPANTS_COUNT = Property.internalInteger(CONVERSATION_PREFIX + "ParticipantsCount");
+
+    public static final Property CONVERSATION_MESSAGES_COUNT = Property.internalInteger(CONVERSATION_PREFIX + "MessagesCount");
+
+    public static final String CONVERSATION_SUFFIX_NAME = ":Name";
+    public static final String CONVERSATION_SUFFIX_ID = ":ID";
+    public static final String CONVERSATION_SUFFIX_PHONE = ":Phone";
+    public static final String CONVERSATION_SUFFIX_USERNAME = ":Username";
+
     public static final String COMMUNICATION_PREFIX = "Communication:";
 
-    public static final String COMMUNICATION_ID = COMMUNICATION_PREFIX + "ID";
+    public static final String COMMUNICATION_DIRECTION = COMMUNICATION_PREFIX + "Direction";
+
+    public static final Property COMMUNICATION_IS_GROUP_MESSAGE = Property.internalBoolean(COMMUNICATION_PREFIX + "isGroupMessage");
+
+    public static final Property COMMUNICATION_DATE = Property.internalDate(COMMUNICATION_PREFIX + "Date"); //$NON-NLS-1$
 
     public static final String COMMUNICATION_FROM = COMMUNICATION_PREFIX + "From";
 
     public static final String COMMUNICATION_TO = COMMUNICATION_PREFIX + "To";
 
-    public static final Property COMMUNICATION_DATE = Property.internalDate(COMMUNICATION_PREFIX + "Date"); //$NON-NLS-1$
-
     public static final Property MESSAGE_DATE = COMMUNICATION_DATE;
-
-    public static final String COMMUNICATION_PARTICIPANTS = COMMUNICATION_PREFIX + "Participants";
-
-    public static final String COMMUNICATION_PARTICIPANTS_COUNT = COMMUNICATION_PREFIX + "ParticipantsCount";
-
-    public static final String COMMUNICATION_ADMINS = COMMUNICATION_PREFIX + "Admins";
-
-    public static final String COMMUNICATION_TYPE = COMMUNICATION_PREFIX + "Type";
-
-    public static final String COMMUNICATION_DIRECTION = COMMUNICATION_PREFIX + "Direction";
-
-    public static final String COMMUNICATION_ACCOUNT = COMMUNICATION_PREFIX + "Account";
-
-    public static final String COMMUNICATION_OWNER = COMMUNICATION_PREFIX + "Owner";
-
-    public static final String COMMUNICATION_IS_OWNER_ADMIN = COMMUNICATION_PREFIX + "IsOwnerAdmin";
-
-    public static final String COMMUNICATION_MESSAGES_COUNT = COMMUNICATION_PREFIX + "MessagesCount";
-
-    public static final String GROUP_ID = "GroupID";
-
-    public static final String IS_GROUP_MESSAGE = "isGroupMessage";
 
     public static final String MESSAGE_BODY = MESSAGE_PREFIX + "Body"; //$NON-NLS-1$
 
@@ -169,7 +174,6 @@ public class ExtraProperties {
 
     public static final String FACE_ENCODINGS = "face_encodings";
 
-    public static final List<String> COMMUNICATION_BASIC_PROPS = Arrays.asList(MESSAGE_SUBJECT, MESSAGE_BODY,
-            Message.MESSAGE_CC, Message.MESSAGE_BCC, Message.MESSAGE_RECIPIENT_ADDRESS, MESSAGE_IS_ATTACHMENT,
-            MESSAGE_ATTACHMENT_COUNT.getName());
+    public static final List<String> COMMUNICATION_BASIC_PROPS = Arrays.asList(MESSAGE_SUBJECT, MESSAGE_BODY, Message.MESSAGE_CC, Message.MESSAGE_BCC,
+            Message.MESSAGE_RECIPIENT_ADDRESS, MESSAGE_IS_ATTACHMENT, MESSAGE_ATTACHMENT_COUNT.getName());
 }
