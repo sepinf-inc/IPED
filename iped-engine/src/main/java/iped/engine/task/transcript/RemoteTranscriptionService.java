@@ -38,7 +38,9 @@ import iped.io.URLUtil;
 import iped.utils.IOUtil;
 
 public class RemoteTranscriptionService {
-    
+    // 30 minutos
+    private static final int MAX_WAV_TIME = 30 * 60;
+    private static final int MAX_WAV_SIZE = 16000 * 2 * MAX_WAV_TIME;
     static enum MESSAGES {
         ACCEPTED,
         AUDIO_SIZE,
@@ -364,6 +366,8 @@ public class RemoteTranscriptionService {
                         boolean error = false;
                         OpenConnectons opc = null;
                         String protocol = MESSAGES.VERSION_1_0.toString();
+                        ArrayList<TranscribeRequest> reqs = null;
+
                         try {
                             client.setSoTimeout(CLIENT_TIMEOUT_MILLIS);
                             bis = new BufferedInputStream(client.getInputStream());
@@ -475,22 +479,59 @@ public class RemoteTranscriptionService {
                             }
                             long durationMillis = 1000 * wavFile.length() / (16000 * 2);
 
-                            TextAndScore result=null;
-                            long t2, t3;
+                            TextAndScore result = new TextAndScore();
+                            result.text="";
+                            result.score=0;
                             try {
-                                TranscribeRequest req=new TranscribeRequest(wavFile);
-                                synchronized (toTranscribe) {
-                                    toTranscribe.add(req);
+                                reqs = new ArrayList<TranscribeRequest>();
+                                TranscribeRequest last=null;
+                                if (wavFile.length() <= MAX_WAV_SIZE) {
+                                    TranscribeRequest req = new TranscribeRequest(wavFile);
+                                    reqs.add(req);
+
+                                } else {
+
+                                    for (File wavPart : AbstractTranscriptTask.getAudioSplits(wavFile,
+                                            wavFile.getPath(), MAX_WAV_TIME)) {
+                                        TranscribeRequest req = new TranscribeRequest(wavPart);
+                                        reqs.add(req);
+                                    }
+                                    logger.info(prefix + "Audio breaked into {} parts", reqs.size());
+                                    wavFile.delete();
+
                                 }
-                                synchronized(req) {
-                                    req.wait();
+                                wavFile = null;
+                                
+                                // dispatch all parts to be executed
+                                for (TranscribeRequest req : reqs) {
+                                    synchronized (toTranscribe) {
+                                        toTranscribe.add(req);
+                                    }
+                                    last=req;
                                 }
-                                result=req.result;
-                                if(result==null) {
-                                    error = false;
-                                    throw new Exception("Error processing the audio", req.error);
+                                
+                                // wait until the last wav part is transcribed
+                                synchronized (last) {
+                                    last.wait();
                                 }
+
+                                for (TranscribeRequest req : reqs) {
+                                    TextAndScore partResult = req.result;
+                                    if (partResult == null) {
+                                        error = false;
+                                        throw new Exception("Error processing the audio", req.error);
+                                    }
+                                   
+                                    if (result.score > 0)
+                                        result.text += " ";
+                                    result.text += partResult.text;
+                                    result.score += partResult.score;
+                                    result = req.result;
+
+                                }
+                                result.score /= reqs.size();
                                
+
                             } catch (ProcessCrashedException e) {
                                 // retry audio
                                 error = true;
@@ -537,6 +578,13 @@ public class RemoteTranscriptionService {
                             }
                             if (wavFile != null) {
                                 wavFile.delete();
+                            }
+                            if (reqs != null) {
+                                for (TranscribeRequest req : reqs) {
+                                    if (req.wavAudio != null && req.wavAudio != wavFile) {
+                                        req.wavAudio.delete();
+                                    }
+                                }
                             }
                             removeFrombeaconQueq(opc);
                         }

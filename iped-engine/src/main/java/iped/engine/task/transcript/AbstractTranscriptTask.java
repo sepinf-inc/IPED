@@ -218,6 +218,10 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
     }
 
     protected static Collection<File> getAudioSplits(File inFile, String itemPath) {
+        return getAudioSplits(inFile, itemPath, MAX_WAV_TIME);
+    }
+
+    protected static Collection<File> getAudioSplits(File inFile, String itemPath, int max_wave_time) {
         List<File> splitFiles = new ArrayList<File>();
         AudioInputStream aIn = null;
         AudioInputStream aOut = null;
@@ -226,7 +230,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             outFile.delete();
             aIn = AudioSystem.getAudioInputStream(inFile);
             int bytesPerFrame = aIn.getFormat().getFrameSize();
-            int framesPerPart = Math.round(aIn.getFormat().getFrameRate() * MAX_WAV_TIME);
+            int framesPerPart = Math.round(aIn.getFormat().getFrameRate() * max_wave_time);
             byte[] partBytes = new byte[framesPerPart * bytesPerFrame];
             int numBytesRead = 0;
             int seq = 0;
