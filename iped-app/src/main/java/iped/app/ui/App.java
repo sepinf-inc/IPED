@@ -307,7 +307,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     private SimilarImagesQueryFilterer similarImagesFilterer;
 
-    private DuplicatesFilterer duplicatesFilterer;
+    public DuplicatesFilterer duplicatesFilterer;
 
     public FiltersPanel filtersPanel;
 
@@ -515,6 +515,12 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         filterComboBox.addItem(App.FILTRO_TODOS);
         filterComboBox.setToolTipText(Messages.getString("App.FilterTip")); //$NON-NLS-1$
         filterManager = new FilterManager(filterComboBox);
+        filterManager.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                setDockablesColors();
+            }
+        });
 
         similarDocumentFilterer = new SimilarDocumentFilterer();
 
@@ -783,6 +789,19 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         resultsTable.addKeyListener(new ResultTableListener());
 
         duplicatesFilterer = new DuplicatesFilterer();
+        duplicatesFilterer.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent event) {
+                if (event.getID() == IFilterer.DISABLE_FILTER_EVENT) {
+                    App.get().filterDuplicates.setForeground(App.get().topPanel.getBackground());
+                    filterDuplicates.setSelected(false);
+                }
+                if (event.getID() == IFilterer.ENABLE_FILTER_EVENT) {
+                    App.get().filterDuplicates.setForeground(App.get().alertColor);
+                    filterDuplicates.setSelected(true);
+                }
+            }
+        });
 
         filterManager.addQueryFilterer(new SearchFilterer());
         filterManager.addQueryFilterer(categoryListener);
@@ -807,6 +826,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         });
 
         filtersPanel.install(filterManager);
+        clearAllFilters.addClearListener(filtersPanel.getCombinedFilterer());
         filtersPanel.updateUI();
 
         hitsTable.getSelectionModel().addListSelectionListener(new HitsTableListener(TextViewer.font));
@@ -1210,7 +1230,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         return dockable;
     }
 
-    private boolean categoriesDefaultColor = true;
     private boolean metadataDefaultColor = true;
     private boolean evidenceDefaultColor = true;
     private boolean bookmarksDefaultColor = true;
@@ -1231,12 +1250,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         }
     }
 
-    public void setCategoriesDefaultColor(boolean defaultColor) {
-        if (categoriesDefaultColor != defaultColor) {
-            categoriesDefaultColor = defaultColor;
-            setDockablesColors();
-        }
-    }
 
     public void setMetadataDefaultColor(boolean defaultColor) {
         if (metadataDefaultColor != defaultColor) {
@@ -1263,17 +1276,23 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         for (int i = 0; i < dockingControl.getCDockableCount(); i++) {
             DefaultSingleCDockable tabDock = (DefaultSingleCDockable) dockingControl.getCDockable(i);
             Component c = tabDock.getContentPane().getComponent(0);
-            if (c instanceof IQueryFilterer) {
-                setTabColor(tabDock, !((IQueryFilterer) c).hasFiltersApplied());
+            if (c instanceof IFilterer) {
+                setTabColor(tabDock,
+                        !filterManager.isFiltererEnabled(((IFilterer) c)) || !((IFilterer) c).hasFilters());
             }
         }
 
-        setTabColor(categoriesTabDock, categoriesDefaultColor);
-        setTabColor(metadataTabDock, metadataDefaultColor);
-        setTabColor(evidenceTabDock, evidenceDefaultColor);
-        setTabColor(bookmarksTabDock, bookmarksDefaultColor);
+        setTabColor(filtersTabDock, !filterManager.isFiltererEnabled(filtersPanel.getCombinedFilterer())
+                || !filtersPanel.getCombinedFilterer().hasFilters());
+        setTabColor(categoriesTabDock,
+                !filterManager.isFiltererEnabled(categoryListener) || !categoryListener.hasFilters());
+        setTabColor(metadataTabDock, !filterManager.isFiltererEnabled(metadataPanel) || !metadataPanel.hasFilters());
+        setTabColor(evidenceTabDock, !filterManager.isFiltererEnabled(treeListener) || !treeListener.hasFilters());
+        setTabColor(bookmarksTabDock,
+                !filterManager.isFiltererEnabled(bookmarksListener) || !bookmarksListener.hasFilters());
         setTabColor(graphDock, graphDefaultColor);
-        setTabColor(tableTabDock, tableDefaultColor);
+        setTabColor(tableTabDock, !filterManager.isFiltererEnabled(TableHeaderFilterManager.get())
+                || !TableHeaderFilterManager.get().hasFilters());
     }
 
     private void setTabColor(DefaultSingleCDockable dock, boolean isDefault) {
@@ -1749,6 +1768,18 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             item = similarImagesFilterer;
             imageFilter = new SimilarImageFilter(itemId, item);
         }
+
+        @Override
+        public void restoreDefinedFilters(List<IFilter> filtersToRestore) {
+            for (IFilter filter : filtersToRestore) {
+                if (filter instanceof SimilarImageFilter) {
+                    imageFilter = (SimilarImageFilter) filter;
+                    SimilarImageFilter simFilter = (SimilarImageFilter) filter;
+                    setItem(simFilter.getItemRefId(), simFilter.getItemRef());
+                    break;
+                }
+            }
+        }
     };
 
     class DuplicateFilter implements IResultSetFilter, IMutableFilter {
@@ -1768,6 +1799,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     IResultSetFilter duplicateFilter = new DuplicateFilter();
 
     class DuplicatesFilterer implements IResultSetFilterer {
+
+        IResultSetFilter cduplicateFilter = duplicateFilter;
+
         @Override
         public List getDefinedFilters() {
             ArrayList<IFilter> result = new ArrayList<IFilter>();
@@ -1799,9 +1833,18 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         @Override
         public void clearFilter() {
             appletListener.clearAllFilters = true;
+            cduplicateFilter = null;
             if (filterDuplicates.isSelected())
                 filterDuplicates.doClick();
             appletListener.clearAllFilters = false;
+            this.fireActionListener(new ActionEvent(this, IFilterer.DISABLE_FILTER_EVENT, "DESELECTED"));
+        }
+
+        @Override
+        public void restoreDefinedFilters(List<IFilter> filtersToRestore) {
+            cduplicateFilter = duplicateFilter;
+            filterDuplicates.setSelected(true);
+            this.fireActionListener(new ActionEvent(this, IFilterer.ENABLE_FILTER_EVENT, "SELECTED"));
         }
     }
 
@@ -1939,30 +1982,49 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             SimilarFacesFilterActions.clear(false);
         }
 
+        @Override
+        public void restoreDefinedFilters(List<IFilter> filtersToRestore) {
+            for (IFilter filter : filtersToRestore) {
+                if (filter instanceof SimilarFacesSearchFilter) {
+                    filter = (SimilarFacesSearchFilter) filter;
+                    break;
+                }
+            }
+        }
+
+    }
+
+    class SearchFilter implements IQueryFilter {
+        String filterText;
+
+        public SearchFilter(String filterText) {
+            this.filterText = filterText;
+        }
+
+        @Override
+        public Query getQuery() {
+            return query;
+        }
+
+        public String toString() {
+            return filterText;
+        }
+
     }
 
     class SearchFilterer implements IQueryFilterer {
         @Override
         public List<IFilter> getDefinedFilters() {
             ArrayList<IFilter> result = new ArrayList<IFilter>();
-            String filterText = (String) queryComboBox.getSelectedItem();
-            Query query;
-            try {
-                query = new QueryBuilder(appCase).getQuery(filterText);
-                result.add(new IQueryFilter() {
-                    String title = filterText;
-
-                    @Override
-                    public Query getQuery() {
-                        return query;
-                    }
-
-                    public String toString() {
-                        return title;
-                    }
-                });
-            } catch (ParseException | QueryNodeException e) {
-                e.printStackTrace();
+            String filterText = queryComboBox.getSelectedItem().toString();
+            if (!SEARCH_TOOL_TIP.equals(filterText)) {
+                Query query;
+                try {
+                    query = new QueryBuilder(appCase).getQuery(filterText);
+                    result.add(new SearchFilter(filterText));
+                } catch (ParseException | QueryNodeException e) {
+                    e.printStackTrace();
+                }
             }
             return result;
         }
@@ -1970,7 +2032,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         @Override
         public boolean hasFilters() {
             if (App.get().queryComboBox.getSelectedItem() != null) {
-                String searchText = App.get().queryComboBox.getSelectedItem().toString();
+                String searchText = queryComboBox.getSelectedItem().toString();
                 if (searchText.equals(BookmarksController.HISTORY_DIV) || searchText.equals(App.SEARCH_TOOL_TIP)) {
                     return false;
                 }
@@ -1984,11 +2046,22 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         @Override
         public boolean hasFiltersApplied() {
-            return false;
+            return hasFilters();
         }
 
         @Override
         public Query getQuery() {
+            String searchText = queryComboBox.getSelectedItem().toString();
+            try {
+                if (!SEARCH_TOOL_TIP.equals(searchText)
+                        && !("".equals(searchText) || "*".equals(searchText) || "*:*".equals(searchText))) {
+                    return new QueryBuilder(appCase).getQuery(searchText);
+                } else {
+                    return null;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             return null;
         }
 
@@ -1997,6 +2070,17 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             appletListener.clearAllFilters = true;
             queryComboBox.setSelectedItem(""); //$NON-NLS-1$
             appletListener.clearAllFilters = false;
+        }
+
+        @Override
+        public void restoreDefinedFilters(List<IFilter> filtersToRestore) {
+            for (IFilter filter : filtersToRestore) {
+                if (filter instanceof SearchFilter) {
+                    filter = (SearchFilter) filter;
+                    queryComboBox.setSelectedItem(((SearchFilter) filter).filterText);
+                    break;
+                }
+            }
         }
 
     }
@@ -2102,7 +2186,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         @Override
         public boolean hasFiltersApplied() {
-            return false;
+            return filter != null;
         }
 
         @Override
@@ -2141,9 +2225,31 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             this.percent = percent;
             filter = null;
         }
+
+        @Override
+        public void restoreDefinedFilters(List<IFilter> filtersToRestore) {
+            for (IFilter filter : filtersToRestore) {
+                if (filter instanceof SimilarDocumentFilter) {
+                    filter = (SimilarDocumentFilter) filter;
+                    SimilarDocumentFilter simFilter = (SimilarDocumentFilter) filter;
+                    setItem(simFilter.getItemRefId(), simFilter.getItem());
+                    break;
+                }
+            }
+        }
     }
 
     public AppListener getAppletListener() {
         return appletListener;
+    }
+
+    public void selectFilterDuplicates(boolean selected) {
+        if (selected) {
+            duplicatesFilterer.cduplicateFilter = duplicateFilter;
+            duplicatesFilterer.fireActionListener(new ActionEvent(this, IFilterer.ENABLE_FILTER_EVENT, "SELECTED"));
+        } else {
+            duplicatesFilterer.cduplicateFilter = null;
+            duplicatesFilterer.fireActionListener(new ActionEvent(this, IFilterer.DISABLE_FILTER_EVENT, "DESELECTED"));
+        }
     }
 }
