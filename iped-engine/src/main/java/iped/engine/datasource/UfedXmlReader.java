@@ -146,6 +146,8 @@ public class UfedXmlReader extends DataSourceReader {
     private HashSet<String> addedImUfedIds = new HashSet<>();
     private HashSet<String> addedTrackIds = new HashSet<>();
 
+    HashMap<String, String> md5ToLocalPath = new HashMap<>();
+
     public UfedXmlReader(ICaseData caseData, File output, boolean listOnly) {
         super(caseData, output, listOnly);
     }
@@ -820,8 +822,23 @@ public class UfedXmlReader extends DataSourceReader {
             } else if (qName.equals("targetid") && parentNode.element.equals("jumptargets")) { //$NON-NLS-1$ //$NON-NLS-2$
                 item.getMetadata().add(ExtraProperties.UFED_META_PREFIX + parentNode.element, chars.toString().trim());
 
+            } else if (qName.equals("taggedFiles")) { //$NON-NLS-1$
+                md5ToLocalPath.clear();
+
             } else if (qName.equals("file")) { //$NON-NLS-1$
                 itemSeq.remove(itemSeq.size() - 1);
+
+                // See https://github.com/sepinf-inc/IPED/issues/2299
+                String md5 = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "MD5");
+                String localPath = item.getMetadata().get(LOCAL_PATH_META);
+                if (StringUtils.isNotBlank(md5) && md5.length() == 32) {
+                    if (item.getInputStreamFactory() != null && !md5ToLocalPath.containsKey(md5) && StringUtils.isNotBlank(localPath)) {
+                        md5ToLocalPath.put(md5, localPath);
+                    } else if (item.getInputStreamFactory() == null && md5ToLocalPath.containsKey(md5)) {
+                        String seenPath = md5ToLocalPath.get(md5);
+                        setContent(item, seenPath);
+                    }
+                }
 
                 // See https://github.com/sepinf-inc/IPED/issues/1685
                 boolean merged = false;
@@ -1309,10 +1326,12 @@ public class UfedXmlReader extends DataSourceReader {
                 if (fisf == null) {
                     fisf = new FileInputStreamFactory(rootFolder.toPath());
                 }
-                item.setInputStreamFactory(fisf);
-                item.setIdInDataSource(path);
                 File file = new File(rootFolder, path);
-                item.setLength(file.length());
+                if (file.exists()) {
+                    item.setInputStreamFactory(fisf);
+                    item.setIdInDataSource(path);
+                    item.setLength(file.length());
+                }
             } else {
                 if (getUISF().entryExists(path)) {
                     item.setLength(getUISF().getEntrySize(path));
