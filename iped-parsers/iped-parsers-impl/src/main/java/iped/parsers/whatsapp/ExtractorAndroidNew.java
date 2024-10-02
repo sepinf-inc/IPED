@@ -127,7 +127,7 @@ public class ExtractorAndroidNew extends Extractor {
         Map<Long, Chat> idToChat = new HashMap<Long, Chat>();
 
         try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
-            try (ResultSet rs = stmt.executeQuery(SELECT_CHAT_VIEW)) {
+            try (ResultSet rs = stmt.executeQuery(SELECT_CHATS)) {
 
                 while (rs.next()) {
                     String contactId = rs.getString("contact"); //$NON-NLS-1$
@@ -224,9 +224,9 @@ public class ExtractorAndroidNew extends Extractor {
                     m.setMessageType(UNKNOWN_VIDEO_CALL);
                     if (call_result == 5) {
                         m.setMessageType(VIDEO_CALL);
-                    } else if (call_result == 4) {
-                        m.setMessageType(MISSED_VIDEO_CALL);
                     } else if (call_result == 2) {
+                        m.setMessageType(MISSED_VIDEO_CALL);
+                    } else if (call_result == 4) {
                         m.setMessageType(REFUSED_VIDEO_CALL);
                     } else if (call_result == 3) {
                         m.setMessageType(UNAVAILABLE_VIDEO_CALL);
@@ -235,9 +235,9 @@ public class ExtractorAndroidNew extends Extractor {
                     m.setMessageType(UNKNOWN_VOICE_CALL);
                     if (call_result == 5) {
                         m.setMessageType(VOICE_CALL);
-                    } else if (call_result == 4) {
-                        m.setMessageType(MISSED_VOICE_CALL);
                     } else if (call_result == 2) {
+                        m.setMessageType(MISSED_VOICE_CALL);
+                    } else if (call_result == 4) {
                         m.setMessageType(REFUSED_VOICE_CALL);
                     } else if (call_result == 3) {
                         m.setMessageType(UNAVAILABLE_VOICE_CALL);
@@ -1028,8 +1028,8 @@ public class ExtractorAndroidNew extends Extractor {
         return result;
     }
 
-    private static final String SELECT_CHAT_VIEW = "SELECT _id as id, raw_string_jid AS contact," //$NON-NLS-1$
-            + " subject, created_timestamp as creation, sort_timestamp FROM chat_view ORDER BY sort_timestamp DESC"; //$NON-NLS-1$
+    private static final String SELECT_CHATS = "SELECT c._id as id, j.raw_string AS contact, c.subject, c.created_timestamp as creation,"
+            + " sort_timestamp FROM chat c, jid j WHERE c.jid_row_id = j._id ORDER BY c.sort_timestamp DESC";
 
     private static final String SELECT_ADD_ONS = "SELECT message_add_on_type as type,timestamp, status,jid.raw_string as remoteResource,from_me as fromMe FROM message_add_on m left join jid on jid._id=m.sender_jid_row_id where parent_message_row_id=?";
 
