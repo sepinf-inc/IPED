@@ -587,40 +587,43 @@ public class ExtractorIOS extends Extractor {
                         messageQuote.setMessageType(type);
 
                         String contactQuote = ProtoBufDecoder.findString(main, 7);
-                        if (contactQuote!=null){ // find quotes outside this chat 
-
-                            messageQuote.setFromMe(!m.isFromMe()); // is the reverse of real msg
-                            messageQuote.setRemoteResource(m.getRemoteResource()); // set remote resource if is no from me
-                            messageQuote.setMessageQuotedType(MessageQuotedType.QUOTE_PRIVACY_GROUP_NOT_FOUND); // just set default case if does not match order cases ...
-                            if (contactQuote.compareTo(Message.STATUS_BROADCAST)==0){
+                        if (contactQuote != null) {
+                            // find quotes outside this chat
+                            // is the reverse of real msg
+                            messageQuote.setFromMe(!m.isFromMe());
+                            // set remote resource if is not from me
+                            messageQuote.setRemoteResource(m.getRemoteResource());
+                            // just set default case if does not match order cases ...
+                            messageQuote.setMessageQuotedType(MessageQuotedType.QUOTE_PRIVACY_GROUP_NOT_FOUND);
+                            if (contactQuote.compareTo(Message.STATUS_BROADCAST) == 0) {
 
                                 messageQuote.setMessageQuotedType(MessageQuotedType.QUOTE_STATUS);
 
-                            }else if (contactQuote.contains(Message.GROUP)){
+                            } else if (contactQuote.contains(Message.GROUP)) {
 
-                                messageQuote.setQuotePrivateGroupName(contactQuote);// set it first in case if not found
+                                // set it first in case if not found
+                                messageQuote.setQuotePrivateGroupName(contactQuote);
                                 boolean found = false;
-                                for (Chat cq : idToChat.values()) { //Find friendly group name and message id
+                                for (Chat cq : idToChat.values()) {
+                                    // Find friendly group name and message id
 
-                                    if(!cq.isGroupChat())
+                                    if (!cq.isGroupChat())
                                         continue;
 
-                                    if(cq.getPrintId()!=null && contactQuote.contains(cq.getPrintId()))
+                                    if (cq.getPrintId() != null && contactQuote.contains(cq.getPrintId()))
                                         messageQuote.setQuotePrivateGroupName(cq.getTitle());
 
                                     for (Message origin : cq.getMessages()) {
-                                        if (origin.getUuid() != null && origin.getUuid().compareTo(uuidQuote)==0) {
+                                        if (origin.getUuid() != null && origin.getUuid().compareTo(uuidQuote) == 0) {
                                             messageQuote.setId(origin.getId());
                                             messageQuote.setMessageQuotedType(MessageQuotedType.QUOTE_PRIVACY_GROUP);
-                                            found = true;                                            
+                                            found = true;
                                             break;
                                         }
                                     }
-
                                     if (found)
                                         break;
                                 }
-
                             }
                         }
                     }
@@ -1019,7 +1022,7 @@ public class ExtractorIOS extends Extractor {
                     seller = p3.getString();
                 }
             }
-        }        
+        }
         if (title != null || currency != null || amount != 0 || seller != null) {
             return new MessageProduct(title, seller, currency, amount, observation);
         }
