@@ -102,7 +102,7 @@ div.deletedIcon {
     width: 16px;
     height: 16px;
     background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAACGElEQVR42pWTz2saQRTH39j9oWs09LQW2720ppRe9lQotJce+i/0EPIHBBIqBEJNDh6ChyaX4EEPPSpCTjn03oMBKY1kEdIt2I0FW4kYNdYUZd1dp2+XZnGrsfTBlxmGeZ958+Y7BP5Ep9NJE0Keww0xHo8hHo+/y+fzmcl1MgFQcJBhTiSTSdrtdtcKhUJmCtButxXLsmTDMGYm+/1+yOVy0Gw2KcMwa6lUKuMBtFotxTRNWdf1mYBgMOjOKaWaKIoxDwDJ/7zCRGiRSMQLaDQaCp4uD4fDuZmBQAB4ntei0agXUK/X/6sCSZK8gFqt5lQwGAxmZlDTBMIwIAgC8Bynvd/aevz64GDkAqrVqoI+kFFTyY10GgbHx3B/bw+IKIJ+enr1LZEgY4576+5WVdV5BZT3ZDTQ55UVuHVxAbclCe6srsKP3V3oX16CTsgHF1CpVBR8Htl23N8xOj+Hs40N2yzgwwrHlMKI0vJXw3jpAsrl8twmXh0dgbazAz67KkJoSBSfvVLVkgsolUqOE6+vYPeC4zhnrmsaqNvbYPb7zjpWCuzCQpMRxRcuoFgsOk2c6r5lwcflZRj1erC4tAQP1tfhC1YyaLWAE4QKyWazIYy74XD4DcuyTzGHRzEo3zXk++Eh+/PkhH+4udllQyH9F5rmbH//kT8WSxD8nvdwzxNUBLWICs6A2J2172Z/FNsoPVQT9ek3OcbuBA+nPxcAAAAASUVORK5CYII=");
-    margin: 0;
+    margin-left: 0 0 0 3px;
 }
 
 /********************
@@ -189,7 +189,9 @@ div.deletedIcon {
 }
 
 .name {
-    color: #B0C040;	
+    color: #B0C040;
+    display: inline-block;
+    padding-bottom: 3px;
 }
 
 .name_call {
@@ -474,6 +476,7 @@ div:target {
     text-align: right;
     padding-left: 10px;
     font-size: small;
+    margin-top: 4px;
 }
 #conversation .link {
     color: #0000EE;
@@ -581,6 +584,18 @@ div:target {
     color: #aaaaaa;
     font-size: small;
     margin-bottom: 5px;
+}
+
+.contact-table {
+    border-collapse: collapse;
+    border-style: groove;
+    border-color: black;
+    margin-top: 2px;
+}
+
+.contact-table td {
+    border: 1px solid black;
+    padding: 4px 8px;
 }
 
 /** Modal window - Author: https://github.com/lecoa/Vanilla-JS-Prompt **/

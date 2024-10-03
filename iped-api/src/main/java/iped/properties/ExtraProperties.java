@@ -112,6 +112,14 @@ public class ExtraProperties {
 
     public static final String UFED_META_PREFIX = "ufed:"; //$NON-NLS-1$
 
+    public static final String UFED_ID = UFED_META_PREFIX + "id"; //$NON-NLS-1$
+
+    public static final String UFED_FILE_ID = UFED_META_PREFIX + "file_id"; //$NON-NLS-1$
+
+    public static final String UFED_COORDINATE_ID = UFED_META_PREFIX + "coordinate_id"; //$NON-NLS-1$
+
+    public static final String UFED_JUMP_TARGETS = UFED_META_PREFIX + "jumptargets"; //$NON-NLS-1$
+
     public static final String P2P_META_PREFIX = "p2p:"; //$NON-NLS-1$
 
     public static final String ITEM_VIRTUAL_ID = "itemVirtualIdentifier"; //$NON-NLS-1$

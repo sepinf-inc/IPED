@@ -1,6 +1,6 @@
 package iped.parsers.ufed;
 
-import static iped.parsers.ufed.UfedUtils.readUfedMetadata;
+import static j2html.TagCreator.*;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 import java.io.ByteArrayOutputStream;
@@ -8,7 +8,9 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -16,9 +18,10 @@ import iped.data.IItemReader;
 import iped.parsers.util.Messages;
 import iped.parsers.whatsapp.Util;
 import iped.properties.ExtraProperties;
-import iped.search.IItemSearcher;
 import iped.utils.EmojiUtil;
 import iped.utils.SimpleHTMLEncoder;
+import j2html.tags.specialized.DivTag;
+import j2html.tags.specialized.TableTag;
 
 /**
  *
@@ -26,24 +29,19 @@ import iped.utils.SimpleHTMLEncoder;
  */
 public class ReportGenerator {
 
-    private int minChatSplitSize = 6000000;
+    private int minChatSplitSize;
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd"); //$NON-NLS-1$
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ"); //$NON-NLS-1$
-    private IItemSearcher searcher;
     private boolean firstHtml = true;
     private int currentMsg = 0;
 
-    public ReportGenerator(IItemSearcher searcher) {
-        this.searcher = searcher;
+    public ReportGenerator(int minChatSplitSize) {
+        this.minChatSplitSize = minChatSplitSize;
     }
 
     public int getNextMsgNum() {
         return currentMsg;
-    }
-
-    public void setMinChatSplitSize(int minChatSplitSize) {
-        this.minChatSplitSize = minChatSplitSize;
     }
 
     private static final String format(String text) {
@@ -55,40 +53,100 @@ public class ReportGenerator {
         return ret;
     }
 
-    private String formatLocation(Attachment attach) {
+    private String formatLocation(Message message) {
 
-        if (attach.getFile() == null) {
+        String lat = message.getLatitude();
+        String lon = message.getLongitude();
+        ReferencedLocalization localization = message.getReferencedLocalization();
+
+        if (lat == null && lon == null && localization == null) {
             return StringUtils.EMPTY;
         }
-        IItemReader fileItem = attach.getFile().getItem();
 
-        String type = readUfedMetadata(fileItem, "Type");
-        String description = readUfedMetadata(fileItem, "Description");
-        String name = readUfedMetadata(fileItem, "name");
-        String street = readUfedMetadata(fileItem, "Street1");
-        String coord = fileItem.getMetadata().get(ExtraProperties.LOCATIONS);
-        String key = "Shared".equals(type) ? "SharedLocationMessage" : "LocationMessage";
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("<b>").append("<img class=\"location\"/>").append(Messages.getString("WhatsAppReport." + key)).append("</b><br/>");
-
-        String[] coordSplit = coord.split(";");
-        sb.append(Messages.getString("WhatsAppReport.Latitude")).append(": ");
-        sb.append(coordSplit[0]).append("<br/>");
-
-        sb.append(Messages.getString("WhatsAppReport.Longitude")).append(": ");
-        sb.append(coordSplit[1]);
-
-        if (isNotBlank(name)) {
-            sb.append("<br/>").append(format(name));
+        if ((lat == null || lon == null) && localization != null) {
+            String coord = localization.getLocations();
+            String[] coordSplit = coord.split(";");
+            lat = StringUtils.firstNonBlank(lat, coordSplit[0]);
+            lon = StringUtils.firstNonBlank(lat, coordSplit[1]);
         }
-        if (isNotBlank(street)) {
-            sb.append("<br/>").append(format(street));
+        
+        lat = StringUtils.defaultString(lat).replace(",", ".");
+        lon = StringUtils.defaultString(lon).replace(",", ".");
+
+        DivTag div = div(img(attrs(".location")), b(Messages.getString("UfedChatReport.Location.Title")), br(),
+                table(attrs(".contact-table"), //
+                        tr(td(Messages.getString("UfedChatReport.Location.Latitude")), td(lat)),
+                        tr(td(Messages.getString("UfedChatReport.Location.Longitude")), td(lon))),
+                br());
+
+        if (localization != null) {
+            String name = localization.getName();
+            String description = localization.getDescription();
+            String street = localization.getStreet1();
+            String houseNumber = localization.getHouseNumber();
+            String city = localization.getCity();
+            String state = localization.getState();
+            String country = localization.getCountry();
+            String compliment = Arrays.asList(city, state, country).stream().filter(StringUtils::isNotBlank).collect(Collectors.joining(" - "));
+
+            if (isNotBlank(name)) {
+                div.with(span(name), br());
+            }
+            if (isNotBlank(street)) {
+                String fullStreet = street;
+                if (isNotBlank(houseNumber) && !"0".equals(houseNumber)) {
+                    fullStreet += ", " + houseNumber;
+                }
+                div.with(span(fullStreet), br());
+            }
+            if (isNotBlank(compliment)) {
+                div.with(span(compliment), br());
+            }
+            if (isNotBlank(description)) {
+                div.with(span(description), br());
+            }
         }
-        if (isNotBlank(description)) {
-            sb.append("<br/>").append(format(description));
+        return div.toString();
+    }
+
+    private String formatSharedContacts(Message message) {
+
+        if (message.getSharedContacts().isEmpty()) {
+            return StringUtils.EMPTY;
         }
-        return sb.toString();
+
+        DivTag div = div(b(Messages.getString("UfedChatReport.SharedContact.Title")), br());
+
+        for (MessageContact msgContact : message.getSharedContacts()) {
+
+            ReferencedContact contact = msgContact.getReferencedContact();
+            String name = StringUtils.firstNonBlank(msgContact.getName(), contact != null ? contact.getName() : null);
+
+            TableTag table = table(attrs(".contact-table"),
+                    tr(td(Messages.getString("UfedChatReport.SharedContact.Name")), td(name)));
+
+            if (contact != null) {
+
+                String userID = contact.getUserID();
+                String username = contact.getUsername();
+                String phone = contact.getPhoneNumber();
+
+                if (isNotBlank(userID)) {
+                    table.with(tr(td(Messages.getString("UfedChatReport.SharedContact.UserID")), td(userID)));
+                }
+
+                if (isNotBlank(username)) {
+                    table.with(tr(td(Messages.getString("UfedChatReport.SharedContact.Username")), td(username)));
+                }
+
+                if (isNotBlank(phone)) {
+                    table.with(tr(td(Messages.getString("UfedChatReport.SharedContact.PhoneNumber")), td(phone)));
+                }
+            }
+
+            div.with(table);
+        }
+        return div.render();
     }
 
     public byte[] generateNextChatHtml(IItemReader c, List<Message> msgs) throws UnsupportedEncodingException {
@@ -137,7 +195,7 @@ public class ReportGenerator {
         boolean isFrom = false;
         boolean isTo = false;
 
-        out.println("<div id=\"" + message.getId() + "\" class=\"linha\">"); //$NON-NLS-1$
+        out.println("<div id=\"" + message.getSourceIndex() + "\" class=\"linha\">"); //$NON-NLS-1$
         String name = null;
         if (message.isSystemMessage()) {
             out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
@@ -163,40 +221,48 @@ public class ReportGenerator {
             out.println("<span class=\"name\">" + format(name) + "</span><br/>"); //$NON-NLS-1$ //$NON-NLS-2$
 
         if (message.isForwarded()) {
-            out.println("<img class=\"fwd\"><span class=\"fwd\"/>" + Messages.getString("WhatsAppReport.Forwarded") + "</span><br/>");
+            String forwardedBy = "";
+            String originalSender = message.getOriginalSender();
+            if (isNotBlank(originalSender)) {
+                forwardedBy = Messages.getString("UfedChatReport.Forwarded.By") + " " + originalSender;
+            }
+            out.println("<img class=\"fwd\"><span class=\"fwd\"/>" + Messages.getString("UfedChatReport.Forwarded") + " " + forwardedBy + "</span><br/>");
         }
 
         if (message.isQuoted()) {
             printQuote(out, message);
         }
 
+        out.println(formatLocation(message));
+        out.println(formatSharedContacts(message));
+
         String body = message.getBody();
 
-        for (Attachment attachment : message.getAttachments()) {
+        for (MessageAttachment attachment : message.getAttachments()) {
 
             byte[] thumb = null;
-            if (attachment.getFile() != null) {
-                thumb = attachment.getFile().getThumb();
-            }
-            String contentType = attachment.getContentType();
-            if (contentType != null) {
-                contentType = contentType.toLowerCase();
-            }
-
             boolean startedLink = false;
-            if (attachment.getFile() != null) {
-                String fileHash = attachment.getFile().getHash();
+
+            if (attachment.getReferencedFile() != null) {
+                thumb = attachment.getReferencedFile().getThumb();
+ 
+                String fileHash = attachment.getReferencedFile().getHash();
                 if (fileHash != null) {
                     out.println("<input class=\"check\" type=\"checkbox\" onclick=app.check(\"hash:" + fileHash + "\",this.checked) name=\""
                             + fileHash + "\" />");
                     out.println("<a onclick=app.open(\"hash:" + fileHash + "\") "); //$NON-NLS-1$ //$NON-NLS-2$
-                    String ext = attachment.getFile().getTrueExt();
+                    String ext = attachment.getReferencedFile().getTrueExt();
                     String exportPath = iped.parsers.util.Util.getExportPath(fileHash, ext); // $NON-NLS-1$
                     if (!exportPath.isEmpty())
                         out.println("href=\"" + format(exportPath) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
                     out.println(">"); //$NON-NLS-1$
                     startedLink = true;
                 }
+            }
+            
+            String contentType = attachment.getContentType();
+            if (contentType != null) {
+                contentType = contentType.toLowerCase();
             }
 
             if (thumb != null) {
@@ -222,12 +288,12 @@ public class ReportGenerator {
                 out.println("</a>");
             }
 
-            if (attachment.getFile() != null) {
-                String transcription = attachment.getFile().getTranscription();
+            if (attachment.getReferencedFile() != null) {
+                String transcription = attachment.getReferencedFile().getTranscription();
                 if (transcription != null) {
                     out.print("<br/>");
                     out.print(Messages.getString("ReportGenerator.TranscriptionTitle")); //$NON-NLS-1$
-                    String confidence = attachment.getFile().getTranscriptConfidence();
+                    String confidence = attachment.getReferencedFile().getTranscriptConfidence();
                     if (confidence != null) {
                         float score = Float.valueOf(confidence) * 100;
                         out.print(" [" + (int) score + "%]"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -237,38 +303,27 @@ public class ReportGenerator {
                     out.println("</i><br/>"); //$NON-NLS-1$
                 }
 
-                if (!attachment.getFile().getChildPornSets().isEmpty()) {
+                if (!attachment.getReferencedFile().getChildPornSets().isEmpty()) {
                     out.print("<p><i>" + Messages.getString("WhatsAppReport.FoundInPedoHashDB") + " "
-                            + format(attachment.getFile().getChildPornSets().toString()) + "</i></p>");
+                            + format(attachment.getReferencedFile().getChildPornSets().toString()) + "</i></p>");
                 }
             } else {
-                // TODO: substituir url no texto
-                
+
                 String title = attachment.getTitle();
-                if (title != null && !StringUtils.contains(body, title))
+                if (isNotBlank(title) && !StringUtils.contains(body, title))
                     out.println("<br/>" + format(title));
 
                 String url = attachment.getUrl();
-                if (url != null && !StringUtils.contains(body, url))
+                if (isNotBlank(url) && !StringUtils.contains(body, url) // 
+                        && StringUtils.equalsAny(message.getSource(), "Telegram"))
                     out.println("<p class=\"link\">" + format(attachment.getUrl()) + "</p>"); //$NON-NLS-1$
             }
         }
 
         if (isNotBlank(body)) {
-            if (body.startsWith("BEGIN:VCARD")) { //$NON-NLS-1$
-                String[] lines = body.split("\n"); //$NON-NLS-1$
-                for (String line : lines) {
-                    if (line.startsWith("PHOTO;BASE64:")) { //$NON-NLS-1$
-                        out.print("PHOTO:<img src=\"data:image;BASE64," + format(line.substring(13)) + "\"/><br/>"); //$NON-NLS-1$ //$NON-NLS-2$
-                    } else {
-                        out.print(format(line) + "<br/>"); //$NON-NLS-1$
-                    }
-                }
-            } else {
-                out.print(format(body)); // $NON-NLS-1$
-                if (!message.isSystemMessage())
-                    out.print("<br/>");
-            }
+            out.print(format(body));
+            if (!message.isSystemMessage())
+                out.print("<br/>");
         } else if (message.isSystemMessage()) {
             out.print("System Message"); //$NON-NLS-1$
         }
@@ -327,7 +382,7 @@ public class ReportGenerator {
 
         if (messageQuote != null) {
             String body = messageQuote.getBody();
-            String quoteClick = "onclick=\"goToAnchorId(" + messageQuote.getId() + ");\"";
+            String quoteClick = "onclick=\"goToAnchorId(" + messageQuote.getSourceIndex() + ");\"";
             String quoteIcon = "";
             String quoteUser = messageQuote.getFrom();
 
@@ -340,21 +395,18 @@ public class ReportGenerator {
             StringBuilder msgStr = new StringBuilder();
             StringBuilder attachStr = new StringBuilder();
 
-            for (Attachment attach : messageQuote.getAttachments()) {
+            for (MessageAttachment attach : messageQuote.getAttachments()) {
 
                 boolean hasThumb = false;
-                if (attach.getFile() != null) {
-                    byte[] quoteThumb = attach.getFile().getThumb();
+                String quoteDuration = "";
+                if (attach.getReferencedFile() != null) {
+                    byte[] quoteThumb = attach.getReferencedFile().getThumb();
                     if (quoteThumb != null) {
                         attachStr.append("<div><img class=\"quoteImg\" src=\"");
                         attachStr.append("data:image/jpg;base64," + Util.encodeBase64(quoteThumb) + "\"/></div>");
                         hasThumb = true;
                     }
-                }
-                
-                String quoteDuration = "";
-                if (attach.getFile() != null) {
-                    Float duration = attach.getFile().getDuration();
+                    Float duration = attach.getReferencedFile().getDuration();
                     if (duration != null && duration > 0) {
                         quoteDuration = formatDuration(duration);
                     }
@@ -384,26 +436,23 @@ public class ReportGenerator {
                             attachStr.append("<div class=\"imageImg quoteImg\" title=\"Image\"></div>");
                         }
 
-                    } else if (attachContentType.startsWith("application")) {
+                    } else {
                         quoteIcon = "\uD83D\uDCC4";
                         out.print(quoteIcon);
                         if (!hasThumb) {
                             attachStr.append("<div class=\"attachImg quoteImg\" title=\"Doc\"></div>");
                         }
-//                    } else if (attachContentType.equals("application/x-ufed-location")) {
-//                        out.print("<div class=\"" + quoteClass + "\" " + quoteClick + "><div class=\"quoteTop\"><span class=\"quoteUser\">"
-//                                + quoteUser + "</span><br/><span class=\"quoteMsg\">" + formatLocation(messageQuote) + quoteEnd);
-//                        if (quoteThumb != null) {
-//                            out.print("<div><img class=\"quoteImg\" src=\"");
-//                            out.print("data:image/jpg;base64," + Util.encodeBase64(quoteThumb) + "\"/></div>");
-//                        }
                     }
+
                     break;
 
                 } else if (attach.getUrl() != null) {
                     msgStr.append(formatURL(attach, body));
                 }
             }
+
+            msgStr.append(formatLocation(messageQuote));
+            msgStr.append(formatSharedContacts(messageQuote));
 
             if (isNotBlank(body)) {
                 if (msgStr.length() > 0) {
@@ -436,7 +485,7 @@ public class ReportGenerator {
         return String.format("%02d:%02d", (int) duration / 60, (int) duration % 60);
     }
 
-    private String formatURL(Attachment attachment, String body) {
+    private String formatURL(MessageAttachment attachment, String body) {
 
         StringBuilder sb = new StringBuilder();
 
@@ -452,7 +501,7 @@ public class ReportGenerator {
     }
 
     private static String getTitle(Message message) {
-        for (Attachment attachment : message.getAttachments()) {
+        for (MessageAttachment attachment : message.getAttachments()) {
             if (attachment.getContentType() != null) {
                 String title = StringUtils.substringBefore(attachment.getContentType(), "/");
                 if (isNotBlank(title)) {

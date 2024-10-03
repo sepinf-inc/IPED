@@ -10,23 +10,17 @@ import iped.parsers.util.ChildPornHashLookup;
 import iped.parsers.util.HashUtils;
 import iped.properties.ExtraProperties;
 
-public class File {
-
-    private IItemReader item;
+public class ReferencedFile extends AbstractReferencedItem {
 
     private List<String> childPornSets = Collections.emptyList();
 
-    public File(IItemReader item) {
-        this.item = item;
+    public ReferencedFile(IItemReader item) {
+        super(item);
 
         String hash = getHash();
         if (hash != null) {
             childPornSets = ChildPornHashLookup.lookupHashAndMerge(hash, childPornSets);
         }
-    }
-
-    public IItemReader getItem() {
-        return item;
     }
 
     public List<String> getChildPornSets() {

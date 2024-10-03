@@ -487,11 +487,6 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             evidence.getMetadata().remove(EntropyTask.COMPRESS_RATIO);
             evidence.setExtraAttribute(EntropyTask.COMPRESS_RATIO, Double.valueOf(compressRatio));
         }
-        
-        if (MediaTypes.isInstanceOf(evidence.getMediaType(), MediaTypes.UFED_MESSAGE_MIME)) {
-            evidence.getMetadata().set(ExtraProperties.PARENT_VIEW_POSITION, String.valueOf(evidence.getId()));
-        }
-
     }
 
     @Override
@@ -684,17 +679,6 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             // subitem is populated, store its info now
             String embeddedId = metadata.get(ExtraProperties.ITEM_VIRTUAL_ID);
             metadata.remove(ExtraProperties.ITEM_VIRTUAL_ID);
-
-            // index id
-            String id = metadata.get(BasicProps.ID);
-            if (id != null) {
-                try {
-                    subItem.setId(Integer.parseInt(id));
-                } catch (NumberFormatException e) {
-                    LOGGER.warn("Invalid id in metadata: {}", id);
-                }
-                metadata.remove(BasicProps.ID);
-            }
 
             // pausa contagem de timeout do pai antes de extrair e processar subitem
             if (reader.setTimeoutPaused(true)) {

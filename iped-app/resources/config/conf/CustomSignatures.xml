@@ -1428,10 +1428,6 @@
         <glob pattern="group.ch.threema*.plist"/>
     </mime-type>
 
-    <mime-type type="message/x-ufed-attachment">
-        <sub-class-of type="application/x-ufed-instantmessage"/>
-    </mime-type>
-
     <mime-type type="application/x-ufed-instantmessage">
         <sub-class-of type="message/x-chat-message"/>
     </mime-type>

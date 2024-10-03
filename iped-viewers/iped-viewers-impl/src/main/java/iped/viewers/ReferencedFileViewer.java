@@ -62,7 +62,7 @@ public class ReferencedFileViewer extends AbstractViewer {
                 || PartMetParser.PART_MET_ENTRY_MIME_TYPE.equals(contentType)
                 || AresParser.ARES_ENTRY_MIME_TYPE.equals(contentType)
                 || ShareazaLibraryDatParser.LIBRARY_DAT_ENTRY_MIME_TYPE.equals(contentType)
-                || MediaTypes.UFED_MESSAGE_ATTACH_MIME.toString().equals(contentType)
+                || MediaTypes.UFED_ATTACH_MIME.toString().equals(contentType)
                 || Win10MailParser.WIN10_MAIL_ATTACH.toString().equals(contentType)
                 || ThreemaParser.THREEMA_ATTACHMENT.toString().equals(contentType);
     }

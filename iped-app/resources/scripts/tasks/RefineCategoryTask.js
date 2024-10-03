@@ -26,6 +26,7 @@ function process(e){
 	var ext = e.getExt().toLowerCase();
 	var mime = e.getMediaType().toString();
 	var name = e.getName().toLowerCase();
+	var rawPath = e.getPath();
 	var path = e.getPath().toLowerCase().replace(/\\/g, "/");
 	
 	// Workaround for Tika limitation: https://github.com/sepinf-inc/IPED/issues/1793
@@ -70,13 +71,37 @@ function process(e){
 		e.setMediaTypeStr("video/mp2t");
 		e.setCategory("Videos");
 	}
-	
-	if(mime.indexOf("x-ufed-") != -1 && categorias.indexOf("Other files") != -1){
+
+	if(mime.indexOf("x-ufed-") != -1 && categorias.indexOf("Other files") > -1){
 		var cat = mime.substring(mime.indexOf("x-ufed-") + 7);
 		cat = cat.substring(0, 1).toUpperCase() + cat.substring(1); 
 		e.setCategory(cat);
 	}
-	
+
+	if(mime.equals("application/x-ufed-location") && rawPath.indexOf("/InstantMessage_") > -1) {
+		e.setCategory("Shared Locations");
+	}
+
+	if(mime.equals("application/x-ufed-contact") && rawPath.indexOf("/InstantMessage_") > -1) {
+		e.setCategory("Shared Contacts");
+	}
+
+	if(mime.equals("application/x-ufed-attachment")) {
+		if (rawPath.indexOf("/InstantMessage/") > -1 || rawPath.indexOf("/Chat/") > -1) {
+			e.setCategory("Message Attachments");
+		} else if (rawPath.indexOf("/Email/") > -1) {
+			e.setCategory("Email Attachments");
+		} else if (rawPath.indexOf("/SocialMediaActivity/") > -1) {
+			e.setCategory("Social Media Activities");
+		} else if (rawPath.indexOf("/Note/") > -1) {
+			e.setCategory("Notes");
+		} else if (rawPath.indexOf("/CalendarEntry/") > -1) {
+			e.setCategory("Calendar");
+		} else if (rawPath.indexOf("/Notification/") > -1) {
+			e.setCategory("Notifications");
+		}
+	}
+
 	if(mime.equals("application/dita+xml") && 
 		(e.getName().equals("com.whatsapp_preferences.xml") || 
 		 e.getName().equals("com.whatsapp_preferences_light.xml") ||

@@ -17,7 +17,11 @@ import iped.utils.DateUtil;
 public class Message implements Comparable<Message> {
 
     private IItemReader item;
-    private List<Attachment> attachments = new ArrayList<>();
+
+    private List<MessageChatActivity> activityLog = new ArrayList<>();
+    private List<MessageAttachment> attachments = new ArrayList<>();
+    private ReferencedLocalization referencedLocalization;
+    private List<MessageContact> sharedContacts = new ArrayList<>();
 
     private boolean systemMessage;
     private boolean forwarded;
@@ -48,7 +52,8 @@ public class Message implements Comparable<Message> {
     public Message(IItemReader messageItem) {
         this.item = messageItem;
 
-        List<String> labels = Arrays.asList(messageItem.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Label"));
+        List<String> labels = Arrays
+                .asList(messageItem.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Label"));
         forwarded = labels.contains("Forwarded");
         quoted = labels.contains("Reply");
         edited = labels.contains("Edited");
@@ -61,6 +66,30 @@ public class Message implements Comparable<Message> {
 
     public long getId() {
         return item.getId();
+    }
+
+    public String getUfedId() {
+        return item.getMetadata().get(ExtraProperties.UFED_ID);
+    }
+
+    public String getSource() {
+        return readUfedMetadata(item, "Source");
+    }
+
+    public String getSourceIndex() {
+        return readUfedMetadata(item, "source_index");
+    }
+
+    public String getCoordinateId() {
+        return item.getMetadata().get(ExtraProperties.UFED_COORDINATE_ID);
+    }
+
+    public String getLatitude() {
+        return readUfedMetadata(item, "Latitude");
+    }
+
+    public String getLongitude() {
+        return readUfedMetadata(item, "Longitude");
     }
 
     public String getFrom() {
@@ -111,10 +140,6 @@ public class Message implements Comparable<Message> {
         return forwarded;
     }
 
-    public void setForwarded(boolean forwarded) {
-        this.forwarded = forwarded;
-    }
-
     public boolean isEdited() {
         return edited;
     }
@@ -131,25 +156,63 @@ public class Message implements Comparable<Message> {
         this.messageQuote = messageQuote;
     }
 
-    public List<Attachment> getAttachments() {
-        return attachments;
-    }
-
-    public Attachment addAttachment(IItemReader attachItem) {
-        if (attachItem.getParentId() != item.getId()) {
-            throw new IllegalArgumentException("Attachment parentId don't match: " + attachItem.getParentId() + " x " + item.getId());
-        }
-        Attachment attach = new Attachment(attachItem);
-        attachments.add(attach);
-        return attach;
-    }
-
     public String getIdentifier() {
         return readUfedMetadata(item, "Identifier");
     }
 
     public String getOriginalMessageID() {
         return readUfedMetadata(item, "OriginalMessageID");
+    }
+
+    public String getOriginalSender() {
+        return readUfedMetadata(item, "OriginalSender");
+    }
+
+    public List<MessageChatActivity> getActivityLog() {
+        return activityLog;
+    }
+
+    public MessageChatActivity addActivityLog(IItemReader activityLogItem) {
+        if (activityLogItem.getParentId() != item.getId()) {
+            throw new IllegalArgumentException(
+                    "ActivityLog parentId don't match: " + activityLogItem.getParentId() + " x " + item.getId());
+        }
+        MessageChatActivity activity = new MessageChatActivity(activityLogItem);
+        activityLog.add(activity);
+        return activity;
+    }
+
+    public List<MessageAttachment> getAttachments() {
+        return attachments;
+    }
+
+    public MessageAttachment addAttachment(IItemReader attachItem) {
+        if (attachItem.getParentId() != item.getId()) {
+            throw new IllegalArgumentException(
+                    "Attachment parentId don't match: " + attachItem.getParentId() + " x " + item.getId());
+        }
+        MessageAttachment attach = new MessageAttachment(attachItem);
+        attachments.add(attach);
+        return attach;
+    }
+
+    public ReferencedLocalization getReferencedLocalization() {
+        return referencedLocalization;
+    }
+
+    public ReferencedLocalization setReferencedLocalization(IItemReader localizationItem) {
+        referencedLocalization = new ReferencedLocalization(localizationItem);
+        return referencedLocalization;
+    }
+
+    public List<MessageContact> getSharedContacts() {
+        return sharedContacts;
+    }
+
+    public MessageContact addSharedContact(IItemReader contactItem) {
+        MessageContact contact = new MessageContact(contactItem);
+        sharedContacts.add(contact);
+        return contact;
     }
 
     @Override
@@ -178,7 +241,7 @@ public class Message implements Comparable<Message> {
                     }
                 }
             }
-            return (int) (this.getId() - o.getId());
+            return (int) (this.getItem().getId() - o.getItem().getId());
         }
     }
 }

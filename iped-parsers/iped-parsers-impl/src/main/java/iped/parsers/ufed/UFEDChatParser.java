@@ -1,17 +1,18 @@
 package iped.parsers.ufed;
 
+import static iped.parsers.ufed.UfedUtils.readUfedMetadata;
+import static iped.parsers.ufed.UfedUtils.readUfedMetadataArray;
+import static iped.parsers.ufed.UfedUtils.removeUfedMetadata;
 import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.config.Field;
@@ -56,7 +57,9 @@ public class UFEDChatParser extends AbstractParser {
 
     public static final MediaType UFED_CHAT_PREVIEW_MIME = MediaType.application("x-ufed-chat-preview");
 
-    public static final String UFED_REPLIED_MESSAGE_ATTR = "originalMessage";
+    public static final String UFED_CHILDREN_ATTR = "ufedChildren";
+
+    public static final String UFED_REPLIED_MESSAGE_ATTR = "ufedOriginalMessage";
 
     public static final Map<String, MediaType> appToMime = ImmutableMap.of( //
             "whatsapp", MediaType.application("x-ufed-chat-preview-whatsapp"), //
@@ -70,6 +73,11 @@ public class UFEDChatParser extends AbstractParser {
 
     public static final String ATTACHED_MEDIA_MSG = "ATTACHED_MEDIA: ";
 
+    private boolean extractMessages = true;
+    private boolean extractActivityLogs = true;
+    private boolean extractAttachments = true;
+    private boolean extractSharedContacts = true;
+    private boolean ignoreEmptyChats = false;
     private int minChatSplitSize = 6000000;
 
     private static Set<MediaType> supportedTypes = MediaType.set(UFED_CHAT_MIME, UFED_CHAT_WA_MIME,
@@ -79,10 +87,6 @@ public class UFEDChatParser extends AbstractParser {
             "OneOnOne", ConversationUtils.TYPE_PRIVATE, //
             "Group", ConversationUtils.TYPE_GROUP, //
             "Broadcast", ConversationUtils.TYPE_BROADCAST);
-
-    private static final Map<Integer, List<IItemReader>> messagesMap = new ConcurrentHashMap<>();
-
-    private boolean extractMessages = true;
 
     public static void ignoreSupportedChats() {
         supportedTypes = MediaType.set(UFED_CHAT_MIME);
@@ -98,13 +102,29 @@ public class UFEDChatParser extends AbstractParser {
         return UFED_CHAT_PREVIEW_MIME;
     }
 
-    public static void addMessageToBeParsed(IItemReader item) {
-        messagesMap.computeIfAbsent(item.getParentId(), k -> Collections.synchronizedList(new ArrayList<>())).add(item);
-    }
-
     @Field
     public void setExtractMessages(boolean extractMessages) {
         this.extractMessages = extractMessages;
+    }
+
+    @Field
+    public void setExtractActivityLogs(boolean extractActivityLogs) {
+        this.extractActivityLogs = extractActivityLogs;
+    }
+
+    @Field
+    public void setExtractAttachments(boolean extractAttachments) {
+        this.extractAttachments = extractAttachments;
+    }
+
+    @Field
+    public void setExtractSharedContacts(boolean extractSharedContacts) {
+        this.extractSharedContacts = extractSharedContacts;
+    }
+
+    @Field
+    public void setIgnoreEmptyChats(boolean ignoreEmptyChats) {
+        this.ignoreEmptyChats = ignoreEmptyChats;
     }
 
     @Field
@@ -117,6 +137,7 @@ public class UFEDChatParser extends AbstractParser {
         return supportedTypes;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void parse(InputStream inputStream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
@@ -134,31 +155,42 @@ public class UFEDChatParser extends AbstractParser {
                 return;
 
             List<Message> messages = new ArrayList<>();
-            List<IItemReader> messageItems = messagesMap.remove(chat.getId());
+            List<IItemReader> chatChildren = (List<IItemReader>) chat.getExtraAttributeMap().remove(UFED_CHILDREN_ATTR);
 
-            if (messageItems != null) {
-                for (IItemReader messageItem : messageItems) {
+            if (chatChildren != null) {
+                for (IItemReader chatChild : chatChildren) {
 
-                    updateMessageMetadata(metadata, messageItem.getMetadata(), searcher);
+                    if (chatChild.getMediaType().equals(MediaTypes.UFED_MESSAGE_MIME)) {
 
-                    Message message = createMessage(messageItem, searcher);
-                    updateQuotedMessage(message, searcher, messages);
-                    messages.add(message);
+                        updateMessageMetadata(metadata, chatChild.getMetadata(), searcher);
+
+                        Message message = createMessage(chatChild, searcher);
+                        updateQuotedMessage(message, searcher, messages);
+                        messages.add(message);
+                    } else {
+                        logger.error("Unknown chat child: {}", chatChild);
+                    }
                 }
+            }
+
+            int messagesCount = (int) messages.stream().filter(m -> !m.isSystemMessage()).count();
+            if (messagesCount == 0 && ignoreEmptyChats) {
+                return;
             }
 
             Collections.sort(messages);
 
-            String virtualId = metadata.get(ExtraProperties.UFED_META_PREFIX + "id");
+            updateChatMetadata(metadata, messagesCount, searcher);
+
+            String virtualId = readUfedMetadata(metadata, "id");
+            String chatPrefix = getChatName(metadata);
 
             if (extractor.shouldParseEmbedded(metadata)) {
-                ReportGenerator reportGenerator = new ReportGenerator(searcher);
-                reportGenerator.setMinChatSplitSize(this.minChatSplitSize);
+                ReportGenerator reportGenerator = new ReportGenerator(minChatSplitSize);
                 byte[] bytes = reportGenerator.generateNextChatHtml(chat, messages);
                 int frag = 0;
                 int firstMsg = 0;
-                MediaType previewMime = getMediaType(metadata.get(ExtraProperties.UFED_META_PREFIX + "Source"));
-                int messagesCount = (int) messages.stream().filter(m -> !m.isSystemMessage()).count();
+                MediaType previewMime = getMediaType(readUfedMetadata(metadata, "Source"));
                 while (bytes != null) {
                     Metadata chatMetadata = new Metadata();
                     int nextMsg = reportGenerator.getNextMsgNum();
@@ -169,13 +201,13 @@ public class UFEDChatParser extends AbstractParser {
                     byte[] nextBytes = reportGenerator.generateNextChatHtml(chat, messages);
 
                     // copy parent metadata
-                    for (String meta : metadata.names()) {
-                        if (meta.startsWith(ExtraProperties.UFED_META_PREFIX))
-                            for (String val : metadata.getValues(meta))
-                                chatMetadata.add(meta, val);
+                    for (String name : metadata.names()) {
+                        if (name.startsWith(ExtraProperties.UFED_META_PREFIX) || name.startsWith(ExtraProperties.CONVERSATION_PREFIX))
+                            for (String val : metadata.getValues(name))
+                                chatMetadata.add(name, val);
                     }
 
-                    String chatName = getChatName(metadata);
+                    String chatName = chatPrefix;
                     if (frag > 0 || nextBytes != null)
                         chatName += "_" + frag++; //$NON-NLS-1$
 
@@ -183,37 +215,6 @@ public class UFEDChatParser extends AbstractParser {
                     chatMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, virtualId);
                     chatMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, previewMime.toString());
                     chatMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
-
-                    // Communication:Account
-                    fillAccountInfo(searcher, chatMetadata);
-
-                    // Communication:{Participants, Admins}
-                    fillParticipantInfo(searcher, chatMetadata, chatMetadata, "Participants",
-                            ExtraProperties.CONVERSATION_PARTICIPANTS);
-                    fillParticipantInfo(searcher, chatMetadata, chatMetadata, "Admins",
-                            ExtraProperties.CONVERSATION_ADMINS);
-
-                    // Communication:IsAdmin
-                    if (Boolean
-                            .parseBoolean(chatMetadata.get(ExtraProperties.UFED_META_PREFIX + "IsOwnerGroupAdmin"))) {
-                        chatMetadata.set(ExtraProperties.CONVERSATION_IS_ADMIN, true);
-                    }
-                    chatMetadata.remove(ExtraProperties.UFED_META_PREFIX + "IsOwnerGroupAdmin");
-
-                    // Communication:Type
-                    String ufedChatType = metadata.get(ExtraProperties.UFED_META_PREFIX + "ChatType");
-                    if (ufedChatType != null && chatTypeMap.containsKey(ufedChatType)) {
-                        chatMetadata.set(ExtraProperties.CONVERSATION_TYPE, chatTypeMap.get(ufedChatType));
-                    } else {
-                        chatMetadata.set(ExtraProperties.CONVERSATION_TYPE, ConversationUtils.TYPE_UNKONWN);
-                    }
-
-                    // Communication:{ID, Name, MessagesCount}
-                    chatMetadata.set(ExtraProperties.CONVERSATION_ID,
-                            metadata.get(ExtraProperties.UFED_META_PREFIX + "Identifier"));
-                    chatMetadata.set(ExtraProperties.CONVERSATION_NAME,
-                            metadata.get(ExtraProperties.UFED_META_PREFIX + "Name"));
-                    chatMetadata.set(ExtraProperties.CONVERSATION_MESSAGES_COUNT, messagesCount);
 
                     if (extractMessages && !subList.isEmpty()) {
                         chatMetadata.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
@@ -224,9 +225,7 @@ public class UFEDChatParser extends AbstractParser {
                     bytes = nextBytes;
 
                     if (extractMessages) {
-                        if (messageItems != null) {
-                            extractMessages(subList, virtualId, handler, extractor);
-                        }
+                        extractMessages(subList, virtualId, handler, extractor);
                     }
                 }
             }
@@ -240,6 +239,35 @@ public class UFEDChatParser extends AbstractParser {
         }
     }
 
+    private void updateChatMetadata(Metadata chatMetadata, int messagesCount, IItemSearcher searcher) {
+
+        // Communication:Account
+        fillAccountInfo(searcher, chatMetadata);
+
+        // Communication:{Participants, Admins}
+        fillParticipantInfo(searcher, chatMetadata, chatMetadata, "Participants", ExtraProperties.CONVERSATION_PARTICIPANTS);
+        fillParticipantInfo(searcher, chatMetadata, chatMetadata, "Admins", ExtraProperties.CONVERSATION_ADMINS);
+
+        // Communication:IsAdmin
+        if (Boolean.parseBoolean(readUfedMetadata(chatMetadata, "IsOwnerGroupAdmin"))) {
+            chatMetadata.set(ExtraProperties.CONVERSATION_IS_ADMIN, true);
+        }
+        removeUfedMetadata(chatMetadata, "IsOwnerGroupAdmin");
+
+        // Communication:Type
+        String ufedChatType = readUfedMetadata(chatMetadata, "ChatType");
+        if (ufedChatType != null && chatTypeMap.containsKey(ufedChatType)) {
+            chatMetadata.set(ExtraProperties.CONVERSATION_TYPE, chatTypeMap.get(ufedChatType));
+        } else {
+            chatMetadata.set(ExtraProperties.CONVERSATION_TYPE, ConversationUtils.TYPE_UNKONWN);
+        }
+
+        // Communication:{ID, Name, MessagesCount}
+        chatMetadata.set(ExtraProperties.CONVERSATION_ID,                readUfedMetadata(chatMetadata,  "Identifier"));
+        chatMetadata.set(ExtraProperties.CONVERSATION_NAME,                readUfedMetadata(chatMetadata,  "Name"));
+        chatMetadata.set(ExtraProperties.CONVERSATION_MESSAGES_COUNT, messagesCount);
+    }
+
     private void updateMessageMetadata(Metadata chatMetadata, Metadata messageMetadata, IItemSearcher searcher) {
 
         // Communication:Direction
@@ -250,21 +278,21 @@ public class UFEDChatParser extends AbstractParser {
         }
 
         // Fix missing "ufed:To" metadata
-        List<String> fromIds = Arrays.asList(messageMetadata.getValues(ExtraProperties.UFED_META_PREFIX + "From:ID"));
-        String[] toIds = messageMetadata.getValues(ExtraProperties.UFED_META_PREFIX + "To:ID");
-        if (toIds.length != 1) {
+        List<String> fromIds = readUfedMetadataArray(messageMetadata, "From:ID");
+        List<String> toIds = readUfedMetadataArray(messageMetadata, "To:ID");
+        if (toIds.size() != 1) {
             List<String> toList;
             String toName = null;
-            if (toIds.length > 0) {
-                toList = Arrays.asList(toIds);
+            if (toIds.size() > 0) {
+                toList = toIds;
             } else {
                 toList = new ArrayList<>();
-                String[] partiesIds = chatMetadata.getValues(ExtraProperties.UFED_META_PREFIX + "Participants:ID");
-                for (int i = 0; i < partiesIds.length; i++) {
-                    String partyId = partiesIds[i];
+                List<String> partiesIds = readUfedMetadataArray( chatMetadata, "Participants:ID");
+                for (int i = 0; i < partiesIds.size(); i++) {
+                    String partyId = partiesIds.get(i);
                     if (!fromIds.contains(partyId)) {
                         toList.add(partyId);
-                        toName = chatMetadata.getValues(ExtraProperties.UFED_META_PREFIX + "Participants:Name")[i];
+                        toName = readUfedMetadataArray(chatMetadata, "Participants:Name").get(i);
                     }
                 }
             }
@@ -272,10 +300,8 @@ public class UFEDChatParser extends AbstractParser {
                 messageMetadata.set(ExtraProperties.UFED_META_PREFIX + "To:ID", defaultIfEmpty(toList.get(0), ""));
                 messageMetadata.set(ExtraProperties.UFED_META_PREFIX + "To:Name", defaultIfEmpty(toName, ""));
             } else if (toList.size() > 1) {
-                messageMetadata.set(ExtraProperties.UFED_META_PREFIX + "To:ID",
-                        defaultIfEmpty(chatMetadata.get(ExtraProperties.UFED_META_PREFIX + "Identifier"), ""));
-                messageMetadata.set(ExtraProperties.UFED_META_PREFIX + "To:Name",
-                        defaultIfEmpty(chatMetadata.get(ExtraProperties.UFED_META_PREFIX + "name"), ""));
+                messageMetadata.set(ExtraProperties.UFED_META_PREFIX + "To:ID", defaultIfEmpty(readUfedMetadata(chatMetadata, "Identifier"), ""));
+                messageMetadata.set(ExtraProperties.UFED_META_PREFIX + "To:Name", defaultIfEmpty(readUfedMetadata(chatMetadata, "name"), ""));
                 messageMetadata.set(ExtraProperties.COMMUNICATION_IS_GROUP_MESSAGE, true);
             }
 
@@ -287,12 +313,12 @@ public class UFEDChatParser extends AbstractParser {
     }
 
     private IItemReader lookupAccount(IItemSearcher searcher, Metadata chatMetadata) {
-        String account = chatMetadata.get(ExtraProperties.UFED_META_PREFIX + "Account");
+        String account = readUfedMetadata(chatMetadata, "Account");
         if (StringUtils.isBlank(account)) {
             return null;
         }
 
-        String source = chatMetadata.get(ExtraProperties.UFED_META_PREFIX + "Source");
+        String source = readUfedMetadata(chatMetadata, "Source");
         String query = BasicProps.CONTENTTYPE + ":\"" + MediaTypes.UFED_USER_ACCOUNT_MIME.toString() + "\"" //
                 + " && " + searcher.escapeQuery(ExtraProperties.UFED_META_PREFIX + "Source") + ":\"" + source + "\"" //
                 + " && (" + searcher.escapeQuery(ExtraProperties.UFED_META_PREFIX + "UserID") + ":\"" + account + "\"" //
@@ -316,22 +342,21 @@ public class UFEDChatParser extends AbstractParser {
         String name, id, phone = null, username = null;
         IItemReader account = lookupAccount(searcher, chatMetadata);
         if (account != null) {
-            name = account.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "name");
-            id = account.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "UserID");
-            phone = account.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "PhoneNumber");
-            username = account.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Username");
+            name = readUfedMetadata(account, "name");
+            id = readUfedMetadata(account, "UserID");
+            phone = readUfedMetadata(account, "PhoneNumber");
+            username = readUfedMetadata(account, "Username");
             if (phone != null) {
                 phone = StringUtils.substringBefore(phone, " ");
             }
 
             chatMetadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.ID + ":" + account.getId());
         } else {
-            id = chatMetadata.get(ExtraProperties.UFED_META_PREFIX + "Owner:ID");
-            name = chatMetadata.get(ExtraProperties.UFED_META_PREFIX + "Owner:Name");
+            id = readUfedMetadata(chatMetadata, "Owner:ID");
+            name = readUfedMetadata(chatMetadata, "Owner:Name");
         }
 
-        chatMetadata.add(ExtraProperties.CONVERSATION_ACCOUNT,
-                ConversationUtils.buidPartyString(name, id, phone, username));
+        chatMetadata.add(ExtraProperties.CONVERSATION_ACCOUNT, ConversationUtils.buidPartyString(name, id, phone, username));
         if (name != null)
             chatMetadata.add(ExtraProperties.CONVERSATION_ACCOUNT + ExtraProperties.CONVERSATION_SUFFIX_NAME, name);
         if (id != null)
@@ -339,11 +364,10 @@ public class UFEDChatParser extends AbstractParser {
         if (phone != null)
             chatMetadata.add(ExtraProperties.CONVERSATION_ACCOUNT + ExtraProperties.CONVERSATION_SUFFIX_PHONE, phone);
         if (username != null)
-            chatMetadata.add(ExtraProperties.CONVERSATION_ACCOUNT + ExtraProperties.CONVERSATION_SUFFIX_USERNAME,
-                    username);
+            chatMetadata.add(ExtraProperties.CONVERSATION_ACCOUNT + ExtraProperties.CONVERSATION_SUFFIX_USERNAME, username);
 
-        chatMetadata.remove(ExtraProperties.UFED_META_PREFIX + "Owner:ID");
-        chatMetadata.remove(ExtraProperties.UFED_META_PREFIX + "Owner:Name");
+        removeUfedMetadata(chatMetadata, "Owner:ID");
+        removeUfedMetadata(chatMetadata, "Owner:Name");
     }
 
     private IItemReader lookupParticipant(IItemSearcher searcher, Metadata chatMetadata, String userID) {
@@ -351,8 +375,8 @@ public class UFEDChatParser extends AbstractParser {
             return null;
         }
 
-        String account = chatMetadata.get(ExtraProperties.UFED_META_PREFIX + "Account");
-        String source = chatMetadata.get(ExtraProperties.UFED_META_PREFIX + "Source");
+        String account = readUfedMetadata(chatMetadata, "Account");
+        String source = readUfedMetadata(chatMetadata, "Source");
         String query = BasicProps.CONTENTTYPE + ":\"" + MediaTypes.UFED_CONTACT_MIME.toString() + "\"" //
                 + " && " + searcher.escapeQuery(ExtraProperties.UFED_META_PREFIX + "Account") + ":\"" + account + "\"" //
                 + " && " + searcher.escapeQuery(ExtraProperties.UFED_META_PREFIX + "Source") + ":\"" + source + "\"" //
@@ -372,30 +396,30 @@ public class UFEDChatParser extends AbstractParser {
 
     private void fillParticipantInfo(IItemSearcher searcher, Metadata chatMetadata, Metadata targetMetadata,
             String ufedProperty, String conversationProperty) {
-        String[] partyIDs = targetMetadata.getValues(ExtraProperties.UFED_META_PREFIX + ufedProperty + ":ID");
-        String[] partyNames = targetMetadata.getValues(ExtraProperties.UFED_META_PREFIX + ufedProperty + ":Name");
-        for (int i = 0; i < partyIDs.length; i++) {
-            String partyID = partyIDs[i];
+        List<String> partyIDs = readUfedMetadataArray(targetMetadata, ufedProperty + ":ID");
+        List<String> partyNames = readUfedMetadataArray(targetMetadata, ufedProperty + ":Name");
+        for (int i = 0; i < partyIDs.size(); i++) {
+            String partyID = partyIDs.get(i);
             String name = null, phone = null, username = null;
 
             IItemReader participant = lookupParticipant(searcher, chatMetadata, partyID);
             if (participant != null) {
-                name = participant.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "name");
-                String[] ids = participant.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "UserID");
-                phone = participant.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "PhoneNumber");
+                name = readUfedMetadata(participant, "name");
+                List<String> ids = readUfedMetadataArray(participant, "UserID");
+                phone = readUfedMetadata(participant, "PhoneNumber");
                 if (phone != null) {
                     phone = StringUtils.substringBefore(phone, " ");
                 }
-                if (ids.length >= 2) {
-                    if (ids[0].equals(partyID)) {
-                        username = ids[1];
+                if (ids.size() >= 2) {
+                    if (ids.get(0).equals(partyID)) {
+                        username = ids.get(1);
                     } else {
-                        username = ids[0];
+                        username = ids.get(0);
                     }
                 }
                 targetMetadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.ID + ":" + participant.getId());
             } else {
-                name = partyNames[i];
+                name = partyNames.get(i);
                 if (name.isEmpty())
                     name = null;
             }
@@ -410,23 +434,25 @@ public class UFEDChatParser extends AbstractParser {
             if (username != null)
                 targetMetadata.add(conversationProperty + ExtraProperties.CONVERSATION_SUFFIX_USERNAME, username);
         }
-        targetMetadata.remove(ExtraProperties.UFED_META_PREFIX + ufedProperty + ":ID");
-        targetMetadata.remove(ExtraProperties.UFED_META_PREFIX + ufedProperty + ":Name");
+
+        removeUfedMetadata(targetMetadata, ufedProperty + ":ID");
+        removeUfedMetadata(targetMetadata, ufedProperty + ":Name");
     }
 
-    private void extractMessages(List<Message> subList, String virtualId, ContentHandler handler,
+    private void extractMessages(List<Message> subList, String chatVirtualId, ContentHandler handler,
             EmbeddedDocumentExtractor extractor) throws SAXException, IOException {
 
         for (Message message : subList) {
 
             IItemReader messageItem = message.getItem();
+            String messageVirtualId = message.getUfedId();
 
             Metadata messageMetaData = messageItem.getMetadata();
             messageMetaData.set(TikaCoreProperties.TITLE, messageItem.getName());
-            messageMetaData.set(BasicProps.ID, Integer.toString(messageItem.getId()));
+            messageMetaData.set(ExtraProperties.ITEM_VIRTUAL_ID, messageVirtualId);
             messageMetaData.set(StandardParser.INDEXER_CONTENT_TYPE, messageItem.getMediaType().toString());
-            messageMetaData.set(ExtraProperties.PARENT_VIRTUAL_ID, virtualId);
-            messageMetaData.set(ExtraProperties.PARENT_VIEW_POSITION, Integer.toString(messageItem.getId()));
+            messageMetaData.set(ExtraProperties.PARENT_VIRTUAL_ID, chatVirtualId);
+            messageMetaData.set(ExtraProperties.PARENT_VIEW_POSITION, message.getSourceIndex());
             messageMetaData.set(BasicProps.LENGTH, "");
             if (!message.getAttachments().isEmpty()) {
                 messageMetaData.set(ExtraProperties.MESSAGE_ATTACHMENT_COUNT, message.getAttachments().size());
@@ -437,35 +463,140 @@ public class UFEDChatParser extends AbstractParser {
             }
 
             extractor.parseEmbedded(new EmptyInputStream(), handler, messageMetaData, false);
+
+            if (extractActivityLogs) {
+                extractActivityLog(message, messageVirtualId, handler, extractor);
+            }
+            if (extractAttachments) {
+                extractAttachments(message, messageVirtualId, handler, extractor);
+            }
+            if (extractSharedContacts) {
+                extractShareContacts(message, messageVirtualId, handler, extractor);
+            }
         }
     }
 
+    private void extractActivityLog(Message message, String messageVirtualId, ContentHandler handler,
+            EmbeddedDocumentExtractor extractor) throws SAXException, IOException {
+
+        for (MessageChatActivity activity : message.getActivityLog()) {
+            IItemReader activityItem = activity.getItem();
+            Metadata activityMeta = activityItem.getMetadata();
+            activityMeta.set(TikaCoreProperties.TITLE, activityItem.getName());
+            activityMeta.set(StandardParser.INDEXER_CONTENT_TYPE, activityItem.getMediaType().toString());
+            activityMeta.set(ExtraProperties.PARENT_VIRTUAL_ID, messageVirtualId);
+            activityMeta.set(BasicProps.LENGTH, "");
+            extractor.parseEmbedded(new EmptyInputStream(), handler, activityMeta, false);
+        }
+    }
+
+    private void extractAttachments(Message message, String messageVirtualId, ContentHandler handler,
+            EmbeddedDocumentExtractor extractor) throws SAXException, IOException {
+
+        for (MessageAttachment attach : message.getAttachments()) {
+            IItemReader attachItem = attach.getItem();
+            Metadata attachMeta = attachItem.getMetadata();
+            attachMeta.set(TikaCoreProperties.TITLE, attachItem.getName());
+            attachMeta.set(StandardParser.INDEXER_CONTENT_TYPE, attachItem.getMediaType().toString());
+            attachMeta.set(ExtraProperties.PARENT_VIRTUAL_ID, messageVirtualId);
+            attachMeta.set(BasicProps.LENGTH, "");
+            extractor.parseEmbedded(new EmptyInputStream(), handler, attachMeta, false);
+        }
+    }
+
+    private void extractShareContacts(Message message, String messageVirtualId, ContentHandler handler,
+            EmbeddedDocumentExtractor extractor) throws SAXException, IOException {
+
+        for (MessageContact shareContact : message.getSharedContacts()) {
+            IItemReader shareContactItem = shareContact.getItem();
+            Metadata shareContactMeta = shareContactItem.getMetadata();
+            shareContactMeta.set(TikaCoreProperties.TITLE, shareContact.getType() + shareContactItem.getName());
+            shareContactMeta.set(StandardParser.INDEXER_CONTENT_TYPE, shareContactItem.getMediaType().toString());
+            shareContactMeta.set(ExtraProperties.PARENT_VIRTUAL_ID, messageVirtualId);
+            shareContactMeta.set(BasicProps.LENGTH, "");
+            extractor.parseEmbedded(new EmptyInputStream(), handler, shareContactMeta, false);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
     private Message createMessage(IItemReader messageItem, IItemSearcher searcher) {
 
         Message message = new Message(messageItem);
+        handleMessagePosition(message, searcher);
 
-        String attachQuery = BasicProps.PARENTID + ":" + message.getId() + " && " //
-                + BasicProps.CONTENTTYPE + ":\"" + MediaTypes.UFED_MESSAGE_ATTACH_MIME.toString() + "\"";
-        for (IItemReader attachItem : searcher.searchIterable(attachQuery)) {
-            Attachment attach = message.addAttachment(attachItem);
-
-            String attachFileQuery = searcher.escapeQuery(ExtraProperties.UFED_META_PREFIX + "id") + ":\""
-                    + attach.getFileId() + "\"";
-            List<IItemReader> fileItems = searcher.search(attachFileQuery);
-            if (!fileItems.isEmpty()) {
-                if (fileItems.size() >= 2) {
-                    logger.warn("Found more than 2 files for attachment: {}", fileItems);
+        List<IItemReader> msgChildren = (List<IItemReader>) messageItem.getExtraAttributeMap()
+                .remove(UFED_CHILDREN_ATTR);
+        if (msgChildren != null) {
+            for (IItemReader msgChild : msgChildren) {
+                if (msgChild.getMediaType().equals(MediaTypes.UFED_CHATACTIVITY_MIME)) {
+                    handleActivityLog(message, msgChild, searcher);
+                } else if (msgChild.getMediaType().equals(MediaTypes.UFED_ATTACH_MIME)) {
+                    handleMessageAttachment(message, msgChild, searcher);
+                } else if (msgChild.getMediaType().equals(MediaTypes.UFED_CONTACT_MIME)) {
+                    handleMessageSharedContact(message, msgChild, searcher);
+                } else {
+                    logger.error("Unknown message child: {}", msgChild);
                 }
-                attach.setFile(fileItems.get(0));
             }
         }
 
         Collections.sort(message.getAttachments());
+        Collections.sort(message.getSharedContacts());
 
         return message;
     }
 
-    private void updateQuotedMessage(Message message, IItemSearcher searcher, List<Message> messageUntilNow) {
+    private void handleActivityLog(Message message, IItemReader activityItem, IItemSearcher searcher) {
+        message.addActivityLog(activityItem);
+    }
+
+    private void handleMessageAttachment(Message message, IItemReader attachmentItem, IItemSearcher searcher) {
+        MessageAttachment attach = message.addAttachment(attachmentItem);
+
+        // attachment "ufed:file_id" metadata contains the "ufed:id" metadata of the file
+        String query = searcher.escapeQuery(ExtraProperties.UFED_ID) + ":\"" + attach.getFileId() + "\"";
+        List<IItemReader> fileItems = searcher.search(query);
+        if (!fileItems.isEmpty()) {
+            if (fileItems.size() > 1) {
+                logger.warn("Found more than 1 file for attachment: {}", fileItems);
+            }
+            attach.setReferencedFile(fileItems.get(0));
+        }
+    }
+
+    private void handleMessageSharedContact(Message message, IItemReader sharedContactItem, IItemSearcher searcher) {
+
+        MessageContact contact = message.addSharedContact(sharedContactItem);
+
+        // shared contact and indexed contact have the same "ufed:id" metadata
+        String query = searcher.escapeQuery(ExtraProperties.UFED_ID) + ":\"" + contact.getUfedId() + "\"";
+        List<IItemReader> contactItems = searcher.search(query);
+        if (!contactItems.isEmpty()) {
+            if (contactItems.size() > 1) {
+                logger.warn("Found more than 1 contact for shared contact: {}", contactItems);
+            }
+            contact.setReferencedContact(contactItems.get(0));
+        }
+    }
+
+    private void handleMessagePosition(Message message, IItemSearcher searcher) {
+
+        if (StringUtils.isBlank(message.getCoordinateId())) {
+            return;
+        }
+
+        // the message and localizations shares the same "ufed:coordinate_id" that was added when merging in UfedXmlReader
+        String query = searcher.escapeQuery(ExtraProperties.UFED_COORDINATE_ID) + ":\"" + message.getCoordinateId() + "\"";
+        List<IItemReader> locatizationItems = searcher.search(query);
+        if (!locatizationItems.isEmpty()) {
+            if (locatizationItems.size() > 1) {
+                logger.warn("Found more than 1 localization for coordinate: {}", locatizationItems);
+            }
+            message.setReferencedLocalization(locatizationItems.get(0));
+        }
+    }
+
+    private void updateQuotedMessage(Message message, IItemSearcher searcher, List<Message> messagesSoFar) {
         if (!message.isQuoted()) {
             return;
         }
@@ -473,8 +604,8 @@ public class UFEDChatParser extends AbstractParser {
         // loookup in previous messages
         String originalMsgId = message.getOriginalMessageID();
         Message quotedMessage = null;
-        if (originalMsgId != null && messageUntilNow != null) {
-            for (Message prevMessage : messageUntilNow) {
+        if (originalMsgId != null && messagesSoFar != null) {
+            for (Message prevMessage : messagesSoFar) {
                 if (originalMsgId.equals(prevMessage.getIdentifier())) {
                     quotedMessage = prevMessage;
                     break;
@@ -497,12 +628,14 @@ public class UFEDChatParser extends AbstractParser {
 
     public static String getChatName(Metadata metadata) {
 
-        String account = metadata.get(ExtraProperties.CONVERSATION_ACCOUNT);
-        String source = metadata.get(ExtraProperties.UFED_META_PREFIX + "Source");
-        String chatType = metadata.get(ExtraProperties.UFED_META_PREFIX + "ChatType");
-        String name = metadata.get(ExtraProperties.UFED_META_PREFIX + "Name");
-        String id = metadata.get(ExtraProperties.UFED_META_PREFIX + "Identifier");
+        String accountId = metadata.get(ExtraProperties.CONVERSATION_ACCOUNT + ExtraProperties.CONVERSATION_SUFFIX_ID);
+        String source = readUfedMetadata(metadata, "Source");
+        String chatType = readUfedMetadata(metadata, "ChatType");
+        String name = readUfedMetadata(metadata, "Name");
+        String id = readUfedMetadata(metadata, "Identifier");
+        String ufedId = readUfedMetadata(metadata, "id");
         String[] participants = metadata.getValues(ExtraProperties.CONVERSATION_PARTICIPANTS);
+        String[] participantsIds = metadata.getValues(ExtraProperties.CONVERSATION_PARTICIPANTS + ExtraProperties.CONVERSATION_SUFFIX_ID);
 
         StringBuilder sb = new StringBuilder();
         sb.append(source).append(' ');
@@ -526,35 +659,40 @@ public class UFEDChatParser extends AbstractParser {
             if (id != null) {
                 sb.append(" (ID:").append(id).append(")");
             }
-        } else if (participants.length == 2) {
-            if (participants[0].equals(account)) {
+        } else if (participantsIds.length == 2) {
+            if (participantsIds[0].equals(accountId)) {
                 sb.append(participants[1]);
-            } else if (participants[1].equals(account)) {
+            } else if (participantsIds[1].equals(accountId)) {
                 sb.append(participants[0]);
             } else {
                 sb.append(participants[0]).append('_').append(participants[1]);
             }
         } else if (participants.length == 1) {
             sb.append(participants[0]);
-        } else {
+        } else if (id != null) {
             sb.append("ID:").append(id);
+        } else if (ufedId != null) {
+            sb.append(ufedId);
         }
 
         return sb.toString();
     }
 
-    private void storeLinkedHashes(List<Message> messages, Metadata metadata) {
+    private void storeLinkedHashes(List<Message> messages, Metadata chatMetadata) {
         for (Message message : messages) {
 
-            for (Attachment attachment : message.getAttachments()) {
+            for (MessageAttachment attachment : message.getAttachments()) {
 
-                if (attachment.getFile() != null) {
-                    String hash = attachment.getFile().getHash();
+                if (attachment.getReferencedFile() != null) {
+                    String hash = attachment.getReferencedFile().getHash();
 
                     if (hash != null) {
-                        metadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + hash);
+                        chatMetadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + hash);
                         if (message.isFromMe())
-                            metadata.add(ExtraProperties.SHARED_HASHES, hash);
+                            chatMetadata.add(ExtraProperties.SHARED_HASHES, hash);
+
+                        // replace linkedItems metadata that used "ufed:id" as linker
+                        attachment.getItem().getMetadata().set(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + hash);
                     }
                 }
             }
