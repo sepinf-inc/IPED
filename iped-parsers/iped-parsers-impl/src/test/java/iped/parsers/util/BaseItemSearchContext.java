@@ -53,6 +53,32 @@ public abstract class BaseItemSearchContext extends TestCase {
         File file = getFile(testFilePath);
         IItem item = new IItem() {
 
+
+           @Override
+            public void setReEnqueueItem(boolean val) {
+                // TODO Auto-generated method stub
+
+            }
+
+            @Override
+            public boolean isReEnqueueItem() {
+                // TODO Auto-generated method stub
+                return false;
+            }
+
+           @Override
+            public void setFallBackTask(boolean val) {
+                // TODO Auto-generated method stub
+
+            }
+
+            @Override
+            public boolean isFallBackTask() {
+                // TODO Auto-generated method stub
+                return false;
+            }            
+
+
             @Override
             public boolean isTimedOut() {
                 // TODO Auto-generated method stub
