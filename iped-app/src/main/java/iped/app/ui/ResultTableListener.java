@@ -30,12 +30,9 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.text.Collator;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
 
 import javax.swing.JTable;
 import javax.swing.RowSorter.SortKey;
@@ -43,13 +40,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.BooleanClause.Occur;
-import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TermQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,15 +49,7 @@ import iped.app.ui.popups.FieldValuePopupMenu;
 import iped.data.IItem;
 import iped.data.IItemId;
 import iped.engine.search.IPEDSearcher;
-import iped.engine.search.LuceneSearchResult;
 import iped.engine.search.MultiSearchResult;
-import iped.engine.task.HashTask;
-import iped.engine.task.index.IndexItem;
-import iped.parsers.ares.AresParser;
-import iped.parsers.emule.KnownMetParser;
-import iped.parsers.shareaza.ShareazaLibraryDatParser;
-import iped.properties.BasicProps;
-import iped.properties.ExtraProperties;
 import iped.viewers.ATextViewer;
 import iped.viewers.components.HitsTableModel;
 import iped.viewers.util.ProgressDialog;
@@ -327,8 +311,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
         App.get().subItemTable.repaint();
     }
 
-    public void itemSelectionAndSubItems(boolean value) {
-
+    public void itemSelectionAndResultsByQuery(boolean value, BaseTableModel tableModel) {
         ProgressDialog dialog = createProgressDialog();
         executor.execute(() -> {
             try {
@@ -338,19 +321,38 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
                 int[] selectedRows = App.get().resultsTable.getSelectedRows();
                 dialog.setMaximum(selectedRows.length);
                 for (int i = 0; i < selectedRows.length; i++) {
+
+                    // item selection
                     if (i == selectedRows.length - 1) {
                         BookmarksController.get().setMultiSetting(false);
                         App.get().resultsTable.setUpdateSelectionOnSort(true);
                     }
                     App.get().resultsTable.setValueAt(value, selectedRows[i], col);
 
-                    int modelIndex = App.get().resultsTable.convertRowIndexToModel(selectedRows[i]);
-                    selectAllSubitems(value, App.get().ipedResult.getItem(modelIndex));
+                    // query results selection
+                    int selectedIndex = App.get().resultsTable.convertRowIndexToModel(selectedRows[i]);
+                    IItemId selectedItemId = App.get().ipedResult.getItem(selectedIndex);
+                    final int selectedDocId = App.get().appCase.getLuceneId(selectedItemId);
+                    Document selectedDoc = App.get().appCase.getSearcher().doc(selectedDocId);
+                    Query query = tableModel.createQuery(selectedDoc);
+                    if (query != null) {
+                        IPEDSearcher task = new IPEDSearcher(App.get().appCase, query);
+                        MultiSearchResult result = task.multiSearch();
+                        if (result.getLength() > 0) {
+                            logger.debug("Found {} results of sourceId {} id {}", result.getLength(), selectedItemId.getSourceId(), selectedItemId.getId());
+                            for (IItemId subItem : result.getIterator()) {
+                                App.get().appCase.getMultiBookmarks().setChecked((Boolean) value, subItem);
+                            }
+                        }
+                    }
+
                     dialog.setProgress(i);
                     if (dialog.isCanceled()) {
                         return;
                     }
                 }
+            } catch (Exception e) {
+                logger.error("Error selecting item and its query results", e);
             } finally {
                 SwingUtilities.invokeLater(() -> {
                     dialog.close();
@@ -359,260 +361,22 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
                 });
             }
         });
+    }
+
+    public void itemSelectionAndSubItems(boolean value) {
+        itemSelectionAndResultsByQuery(value, App.get().subItemModel);
     }
 
     public void itemSelectionAndParent(boolean value) {
-        ProgressDialog dialog = createProgressDialog();
-        executor.execute(() -> {
-            try {
-                int col = App.get().resultsTable.convertColumnIndexToView(1);
-                BookmarksController.get().setMultiSetting(true);
-                App.get().resultsTable.setUpdateSelectionOnSort(false);
-                int[] selectedRows = App.get().resultsTable.getSelectedRows();
-                dialog.setMaximum(selectedRows.length);
-                for (int i = 0; i < selectedRows.length; i++) {
-                    if (i == selectedRows.length - 1) {
-                        BookmarksController.get().setMultiSetting(false);
-                        App.get().resultsTable.setUpdateSelectionOnSort(true);
-                    }
-                    App.get().resultsTable.setValueAt(value, selectedRows[i], col);
-
-                    int modelIndex = App.get().resultsTable.convertRowIndexToModel(selectedRows[i]);
-                    selectReferencedParent(value, App.get().ipedResult.getItem(modelIndex));
-                    dialog.setProgress(i);
-                    if (dialog.isCanceled()) {
-                        return;
-                    }
-                }
-            } finally {
-                SwingUtilities.invokeLater(() -> {
-                    dialog.close();
-                    BookmarksController.get().updateUI();
-                    App.get().subItemTable.repaint();
-                });
-            }
-        });
+        itemSelectionAndResultsByQuery(value, App.get().parentItemModel);
     }
 
     public void itemSelectionAndReferences(boolean value) {
-        ProgressDialog dialog = createProgressDialog();
-        executor.execute(() -> {
-            try {
-                int col = App.get().resultsTable.convertColumnIndexToView(1);
-                BookmarksController.get().setMultiSetting(true);
-                App.get().resultsTable.setUpdateSelectionOnSort(false);
-                int[] selectedRows = App.get().resultsTable.getSelectedRows();
-                dialog.setMaximum(selectedRows.length);
-                for (int i = 0; i < selectedRows.length; i++) {
-                    if (i == selectedRows.length - 1) {
-                        BookmarksController.get().setMultiSetting(false);
-                        App.get().resultsTable.setUpdateSelectionOnSort(true);
-                    }
-                    App.get().resultsTable.setValueAt(value, selectedRows[i], col);
-
-                    int modelIndex = App.get().resultsTable.convertRowIndexToModel(selectedRows[i]);
-                    selectReferencetems(value, App.get().ipedResult.getItem(modelIndex));
-                    dialog.setProgress(i);
-                    if (dialog.isCanceled()) {
-                        return;
-                    }
-                }
-            } finally {
-                SwingUtilities.invokeLater(() -> {
-                    dialog.close();
-                    BookmarksController.get().updateUI();
-                    App.get().subItemTable.repaint();
-                });
-            }
-        });
+        itemSelectionAndResultsByQuery(value, App.get().referencesModel);
     }
 
     public void itemSelectionAndReferencedBy(boolean value) {
-        ProgressDialog dialog = createProgressDialog();
-        executor.execute(() -> {
-            try {
-                int col = App.get().resultsTable.convertColumnIndexToView(1);
-                BookmarksController.get().setMultiSetting(true);
-                App.get().resultsTable.setUpdateSelectionOnSort(false);
-                int[] selectedRows = App.get().resultsTable.getSelectedRows();
-                dialog.setMaximum(selectedRows.length);
-                for (int i = 0; i < selectedRows.length; i++) {
-                    if (i == selectedRows.length - 1) {
-                        BookmarksController.get().setMultiSetting(false);
-                        App.get().resultsTable.setUpdateSelectionOnSort(true);
-                    }
-                    App.get().resultsTable.setValueAt(value, selectedRows[i], col);
-
-                    int modelIndex = App.get().resultsTable.convertRowIndexToModel(selectedRows[i]);
-                    selectReferencedByItems(value, App.get().ipedResult.getItem(modelIndex));
-                    dialog.setProgress(i);
-                    if (dialog.isCanceled()) {
-                        return;
-                    }
-                }
-            } finally {
-                SwingUtilities.invokeLater(() -> {
-                    dialog.close();
-                    BookmarksController.get().updateUI();
-                    App.get().subItemTable.repaint();
-                });
-            }
-        });
-    }
-
-    /**
-     * Perform selection of all subitems
-     * 
-     * @param state
-     *            - which state to set true or false
-     * @param rootID
-     *            - parent of the selection
-     */
-    private void selectAllSubitems(boolean state, IItemId rootID) {
-        try {
-            IItem item = App.get().appCase.getItemByItemId(rootID);
-            if (item.hasChildren() || item.isDir()) { // Filter subItems which have children or are directories.
-                logger.debug("Searching items with evidenceUUID {} id {}", item.getDataSource().getUUID(), item.getId());
-                String query = BasicProps.EVIDENCE_UUID + ":" + item.getDataSource().getUUID() + " AND " + BasicProps.PARENTIDs + ":" + rootID.getId();
-                IPEDSearcher task = new IPEDSearcher(App.get().appCase, query);
-                MultiSearchResult result = task.multiSearch();
-                if (result.getLength() > 0) {
-                    logger.debug("Found {} subitems of sourceId {} id {}", result.getLength(), rootID.getSourceId(), rootID.getId());
-                    for (IItemId subItem : result.getIterator()) {
-                        App.get().appCase.getMultiBookmarks().setChecked((Boolean) state, subItem);
-                    }
-                }
-            }
-
-        } catch (Exception e) {
-            logger.debug("Error :" + e.getLocalizedMessage());
-            e.printStackTrace();
-        }
-    }
-
-    private void selectReferencedParent(boolean state, IItemId rootId) {
-
-        try {
-            final int docId = App.get().appCase.getLuceneId(rootId);
-            Document doc = App.get().appCase.getSearcher().doc(docId);
-
-            String parentId = doc.get(IndexItem.PARENTID);
-            if (parentId == null) {
-                return;
-            }
-            String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
-
-            String textQuery = IndexItem.ID + ":" + parentId + " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID;
-
-            IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery, BasicProps.NAME);
-            LuceneSearchResult results = MultiSearchResult.get(task.multiSearch(), App.get().appCase);
-
-            if (results.getLength() > 0) {
-                for (int resDocId : results.getLuceneIds()) {
-                    App.get().appCase.getMultiBookmarks().setChecked((Boolean) state, App.get().appCase.getItemId(resDocId));
-                }
-            }
-
-        } catch (Exception e) {
-            logger.error("Error :" + e.getLocalizedMessage());
-            e.printStackTrace();
-        }
-    }
-
-    private void selectReferencedByItems(boolean state, IItemId rootId) {
-
-        try {
-            final int docId = App.get().appCase.getLuceneId(rootId);
-            Document doc = App.get().appCase.getSearcher().doc(docId);
-
-            String md5 = doc.get(HashTask.HASH.MD5.toString());
-            String sha1 = doc.get(HashTask.HASH.SHA1.toString());
-            String sha256 = doc.get(HashTask.HASH.SHA256.toString());
-            String edonkey = doc.get(HashTask.HASH.EDONKEY.toString());
-            String ufedId = doc.get(ExtraProperties.UFED_META_PREFIX + "id");
-            if (StringUtils.isNotBlank(ufedId)) {
-                ufedId = "\"" + ufedId + "\"";
-            }
-            String hashes = Arrays.asList(md5, sha1, sha256, edonkey, ufedId).stream().filter(Objects::nonNull).collect(Collectors.joining(" "));
-
-            if (hashes.isEmpty()) {
-                return;
-            }
-
-            String textQuery = ExtraProperties.LINKED_ITEMS + ":(" + hashes + ") ";
-            textQuery += ExtraProperties.SHARED_HASHES + ":(" + hashes + ")";
-
-            IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery, BasicProps.NAME);
-            LuceneSearchResult results = MultiSearchResult.get(task.multiSearch(), App.get().appCase);
-
-            if (results.getLength() > 0) {
-                for (int resDocId : results.getLuceneIds()) {
-                    App.get().appCase.getMultiBookmarks().setChecked((Boolean) state,
-                            App.get().appCase.getItemId(resDocId));
-                }
-            }
-
-        } catch (Exception e) {
-            logger.error("Error :" + e.getLocalizedMessage());
-            e.printStackTrace();
-        }
-    }
-
-    private void selectReferencetems(boolean state, IItemId rootId) {
-        try {
-
-            final int docId = App.get().appCase.getLuceneId(rootId);
-            Document doc = App.get().appCase.getSearcher().doc(docId);
-
-            StringBuilder textQuery = null;
-            Query query = null;
-
-            String[] linkedItems = doc.getValues(ExtraProperties.LINKED_ITEMS);
-            if (linkedItems != null && linkedItems.length > 0) {
-                textQuery = new StringBuilder();
-                for (String q : linkedItems) {
-                    textQuery.append("(").append(q).append(") ");
-                }
-            } else {
-                linkedItems = doc.getValues(ExtraProperties.SHARED_HASHES);
-                if (linkedItems != null && linkedItems.length > 0) {
-                    String term;
-                    String mediaType = doc.get(BasicProps.CONTENTTYPE);
-                    if (KnownMetParser.EMULE_MIME_TYPE.equals(mediaType)) {
-                        term = HashTask.HASH.EDONKEY.toString();
-                    } else if (AresParser.ARES_MIME_TYPE.equals(mediaType)) {
-                        term = HashTask.HASH.SHA1.toString();
-                    } else if (ShareazaLibraryDatParser.LIBRARY_DAT_MIME_TYPE.equals(mediaType)) {
-                        term = HashTask.HASH.MD5.toString();
-                    } else {
-                        term = BasicProps.HASH;
-                    }
-                    BooleanQuery.Builder builder = new BooleanQuery.Builder();
-                    for (String hash : linkedItems) {
-                        builder.add(new TermQuery(new Term(term, hash)), Occur.SHOULD);
-                    }
-                    query = builder.build();
-                }
-            }
-
-            if (textQuery != null || query != null) {
-
-                IPEDSearcher task = query != null ? new IPEDSearcher(App.get().appCase, query, BasicProps.NAME)
-                        : new IPEDSearcher(App.get().appCase, textQuery.toString(), BasicProps.NAME);
-                task.setRewritequery(false);
-                LuceneSearchResult results = MultiSearchResult.get(task.multiSearch(), App.get().appCase);
-
-                if (results.getLength() > 0) {
-                    for (int resDocId : results.getLuceneIds()) {
-                        App.get().appCase.getMultiBookmarks().setChecked((Boolean) state,
-                                App.get().appCase.getItemId(resDocId));
-                    }
-                }
-            }
-        } catch (Exception e) {
-            logger.error("Error :" + e.getLocalizedMessage());
-            e.printStackTrace();
-        }
+        itemSelectionAndResultsByQuery(value, App.get().referencedByModel);
     }
 
     /**
