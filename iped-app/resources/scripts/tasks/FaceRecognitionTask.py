@@ -7,11 +7,16 @@
 
 #import face_recognition as fr
 import os
+os.environ["OPENBLAS_NUM_THREADS"]="4"
 import time
 import subprocess
 import threading, queue
 import traceback
 import platform
+from sklearn.cluster import DBSCAN
+from iped.properties import ExtraProperties
+from java.lang import Integer
+import struct
 
 # configuration properties
 enableProp = 'enableFaceRecognition'
@@ -20,6 +25,7 @@ numFaceRecognitionProcessesProp = 'numFaceRecognitionProcesses'
 maxResolutionProp = 'maxResolution'
 faceDetectionModelProp = 'faceDetectionModel'
 upSamplingProp = 'upSampling'
+maxClusterDistProp = 'maxClusterDist'
 
 # External process script
 processScript = 'FaceRecognitionProcess.py'
@@ -45,6 +51,13 @@ cache = {}
 timeLock = threading.Lock()
 detectTime = 0
 featureTime = 0
+
+clusterExecuted=0
+clusterLock = threading.Lock()
+
+def byteArrayToFloatArray(face):
+    #convert bytes to float array
+    return struct.unpack(">128f",bytes(np.array(face,np.byte)))
 
 def createProcessQueue():
     global processQueue, maxProcesses
@@ -151,6 +164,15 @@ class FaceRecognitionTask:
         upSampling = extraProps.getProperty(upSamplingProp)
         if upSampling is not None:
             up_sampling = int(upSampling)
+            
+        global maxClusterDist
+        
+        maxClusterDist = extraProps.getProperty(maxClusterDistProp)
+        
+        if maxClusterDist is None:
+            maxClusterDist=0
+        else:
+            maxClusterDist=float(maxClusterDist)
         
         createProcessQueue()
         return
@@ -177,7 +199,58 @@ class FaceRecognitionTask:
                 logger.info('[FaceRecognitionTask] Time(s) to get face features: ' + str(featureTime / maxProcesses))
                 detectTime = -1
                 featureTime = -1
-    
+        global clusterExecuted,maxClusterDist
+        
+        with clusterLock:
+            if clusterExecuted==1 or maxClusterDist==0:
+                return
+            clusterExecuted=1
+        #compute the time spend grouping faces
+        groupTime=time.time()
+        searcher.setQuery(ExtraProperties.FACE_COUNT+" :[1 TO *]")
+        result=searcher.search()
+        ids=[]        
+        encodings=[]
+        
+        for id in result.getIds():
+            try:
+                encoding=ipedCase.getItemByID(id).getExtraAttribute(ExtraProperties.FACE_ENCODINGS)
+                if len(encoding)!=512:
+                    for face in encoding:
+                        encodings.append(byteArrayToFloatArray(face))
+                        ids.append(id)
+                else:
+                    encodings.append(byteArrayToFloatArray(encoding))
+                    ids.append(id)
+            except:
+                print(encoding)
+
+        if len(encodings)==0:
+            return
+        logger.info("[FaceRecognitionTask] Time(s) to extract "+str(len(ids))+ " faces "+str(time.time()-groupTime))
+        clt = DBSCAN(metric="euclidean",n_jobs=-1,eps=maxClusterDist)
+        clt.fit(encodings)
+        clusters={}
+                
+        for i in range(len(clt.labels_)):
+            if clt.labels_[i]<0:#-1 is an unknown cluster
+                continue
+            try:
+                clusters[clt.labels_[i]]["ids"].append(ids[i])
+            except:
+                clusters[clt.labels_[i]]={"ids":[ids[i]],"name":"Face_"+str(clt.labels_[i])}
+        tot=0
+        for c in clusters:
+            tot+=1
+            c=clusters[c]
+            bookmarkId=ipedCase.getBookmarks().newBookmark(c["name"])
+            ipedCase.getBookmarks().addBookmark([Integer(id) for id in c["ids"]] , bookmarkId)
+        
+        ipedCase.getBookmarks().saveState(True)
+        logger.info('[FaceRecognitionTask] Number of face groups founds: ' + str(tot))
+        logger.info('[FaceRecognitionTask] Time(s) to group similar faces: ' + str(time.time()-groupTime))
+        
+        
     # Needed because tuples cause ClassNotFoundException on java side later
     def convertTuplesToList(self, tuples):
         result = []
@@ -307,7 +380,6 @@ class FaceRecognitionTask:
         
         face_locations = self.convertTuplesToList(face_locations)
         
-        from iped.properties import ExtraProperties
         item.setExtraAttribute(ExtraProperties.FACE_LOCATIONS, face_locations)
         item.setExtraAttribute(ExtraProperties.FACE_ENCODINGS, face_encodings)
         item.setExtraAttribute(ExtraProperties.FACE_COUNT, len(face_locations))

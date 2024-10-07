@@ -18,3 +18,7 @@ faceDetectionModel = hog
 # Number of times the image will be upsampled before recognition. Default is 1x (doubles the image size).
 # This improves detection of small faces. But is limited by maxResolution setting.
 upSampling = 1
+
+# Maximum distance where faces can be grouped together
+# If set to 0 disable the clustering
+maxClusterDist=0.4
