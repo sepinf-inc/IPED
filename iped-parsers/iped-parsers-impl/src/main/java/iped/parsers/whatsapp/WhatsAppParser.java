@@ -770,7 +770,7 @@ public class WhatsAppParser extends SQLite3DBParser {
         WAAccount account = null;
         if (isAndroid) {
             account = WAAccount.getFromAndroidXml(is);
-            fillAccountWihContactData(account, context, handler);
+            fillAccountWithContactData(account, context, handler);
             fillAccountAvatar(account, context, handler);
         } else {
             account = WAAccount.getFromIOSPlist(is);
@@ -807,7 +807,7 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
     }
 
-    private void fillAccountWihContactData(WAAccount account, ParseContext context, ContentHandler handler) {
+    private void fillAccountWithContactData(WAAccount account, ParseContext context, ContentHandler handler) {
         if (account == null || account.getWaName() != null) {
             return;
         }
