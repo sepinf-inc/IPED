@@ -29,4 +29,8 @@ public class UfedUtils {
     public static void removeUfedMetadata(Metadata metadata, String property) {
         metadata.remove(ExtraProperties.UFED_META_PREFIX + property);
     }
+
+    public static void removeUfedMetadata(IItemReader item, String property) {
+        removeUfedMetadata(item.getMetadata(), property);
+    }
 }

@@ -20,8 +20,6 @@ package iped.parsers.telegram;
 
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
-
 import dpf.ap.gpinf.interfacetelegram.ContactInterface;
 import dpf.ap.gpinf.interfacetelegram.DecoderTelegramInterface;
 import dpf.ap.gpinf.interfacetelegram.PhotoData;
@@ -174,7 +172,7 @@ public class Contact implements ContactInterface {
 
     @Override
     public String toString() {
-        String str = ConversationUtils.buidPartyString(getFullname(), Long.toString(getId()), getPhone(), getUsername());
+        String str = ConversationUtils.buidPartyString(getFullname(), Long.toString(getId()), getPhone(), getUsername(), "Telegram");
         if (str.isEmpty()) {
             str = "[unknown]";
         }

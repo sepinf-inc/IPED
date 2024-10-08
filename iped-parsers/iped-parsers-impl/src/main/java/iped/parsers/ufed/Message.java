@@ -1,9 +1,9 @@
 package iped.parsers.ufed;
 
 import static iped.parsers.ufed.UfedUtils.readUfedMetadata;
+import static iped.parsers.ufed.UfedUtils.readUfedMetadataArray;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -30,6 +30,8 @@ public class Message implements Comparable<Message> {
 
     private Message messageQuote;
 
+    private String chatAccount;
+
     public static enum MessageStatus {
         Unknown, Default, Unsent, Sent, Delivered, Read, Unread;
 
@@ -49,15 +51,16 @@ public class Message implements Comparable<Message> {
         Unknown, NotEstablishedUnknownReason, Established, Missed, Rejected,
     }
 
-    public Message(IItemReader messageItem) {
+    public Message(IItemReader messageItem, Chat chat) {
         this.item = messageItem;
 
-        List<String> labels = Arrays
-                .asList(messageItem.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Label"));
+        List<String> labels = readUfedMetadataArray(messageItem, "Label");
         forwarded = labels.contains("Forwarded");
         quoted = labels.contains("Reply");
         edited = labels.contains("Edited");
         systemMessage = labels.contains("System");
+
+        chatAccount = chat.getItem().getMetadata().get(ExtraProperties.CONVERSATION_ACCOUNT);
     }
 
     public IItemReader getItem() {
@@ -93,7 +96,11 @@ public class Message implements Comparable<Message> {
     }
 
     public String getFrom() {
-        return item.getMetadata().get(ExtraProperties.COMMUNICATION_FROM);
+        String from = item.getMetadata().get(ExtraProperties.COMMUNICATION_FROM);
+        if (from == null && isFromMe()) {
+            from = chatAccount;
+        }
+        return from;
     }
 
     public String getTo() {

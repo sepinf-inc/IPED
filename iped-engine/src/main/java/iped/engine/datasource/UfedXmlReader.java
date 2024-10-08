@@ -813,6 +813,11 @@ public class UfedXmlReader extends DataSourceReader {
             } else if (qName.equals("taggedFiles")) { //$NON-NLS-1$
                 md5ToLocalPath.clear();
 
+            } else if (qName.equals("id") && parentNode.element.equals("nodeField")) { //$NON-NLS-1$
+                String name = currentNode.atts.get("name");
+                if (name != null) {
+                    item.getMetadata().add(ExtraProperties.UFED_META_PREFIX + name, chars.toString());
+                }
             } else if (qName.equals("file")) { //$NON-NLS-1$
                 itemSeq.remove(itemSeq.size() - 1);
 
@@ -951,7 +956,7 @@ public class UfedXmlReader extends DataSourceReader {
                         } else if (readUfedMetadataArray(item, "Label").contains("System")) {
                             value = identifier;
                         } else {
-                            value = ConversationUtils.buidPartyString(name, identifier, null, null);
+                            value = ConversationUtils.buidPartyString(name, identifier, null, null, readUfedMetadata(item, "Source"));
                         }
                         boolean isOwner = Boolean.parseBoolean(
                                 readUfedMetadata(item, "IsPhoneOwner")); //$NON-NLS-1$
@@ -1049,7 +1054,14 @@ public class UfedXmlReader extends DataSourceReader {
                         String avatarPath = item.getMetadata().get(AVATAR_PATH_META);
                         if (avatarPath != null) {
                             avatarPath = normalizePaths(avatarPath);
-                            parentItem.getMetadata().add(AVATAR_PATH_META, avatarPath);
+                            parentItem.getMetadata().set(AVATAR_PATH_META, avatarPath);
+                        } else {
+                            String photoNode = readUfedMetadata(item, "PhotoNode");
+                            if (photoNode != null && ufedIdToUfdrPath.containsKey(photoNode)) {
+                                avatarPath = ufedIdToUfdrPath.get(photoNode);
+                                parentItem.getMetadata().set(AVATAR_PATH_META, avatarPath);
+                                parentItem.getMetadata().set(ExtraProperties.UFED_META_PREFIX + "contactphoto_id", photoNode);
+                            }
                         }
                     } else if ("StreetAddress".equals(type)) { //$NON-NLS-1$
                         for (String meta : item.getMetadata().names()) {

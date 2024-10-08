@@ -14,10 +14,8 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
-import iped.data.IItemReader;
 import iped.parsers.util.Messages;
 import iped.parsers.whatsapp.Util;
-import iped.properties.ExtraProperties;
 import iped.utils.EmojiUtil;
 import iped.utils.SimpleHTMLEncoder;
 import j2html.tags.specialized.DivTag;
@@ -149,7 +147,7 @@ public class ReportGenerator {
         return div.render();
     }
 
-    public byte[] generateNextChatHtml(IItemReader c, List<Message> msgs) throws UnsupportedEncodingException {
+    public byte[] generateNextChatHtml(Chat chat, List<Message> msgs) throws UnsupportedEncodingException {
 
         if ((!firstHtml && currentMsg == 0) || (currentMsg > 0 && currentMsg == msgs.size()))
             return null;
@@ -157,8 +155,7 @@ public class ReportGenerator {
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, "UTF-8")); //$NON-NLS-1$
 
-        String title = UFEDChatParser.getChatName(c.getMetadata());
-        printMessageFileHeader(out, title, c.getName(), null);
+        printMessageFileHeader(out, chat.getTitle(), chat.getTitle(), chat.getContactPhotoThumb());
         if (currentMsg > 0)
             out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
                     + Messages.getString("WhatsAppReport.ChatContinuation") + "</div></div>"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -172,8 +169,7 @@ public class ReportGenerator {
                         + thisDate + "</div></div>"); //$NON-NLS-1$
                 lastDate = thisDate;
             }
-            boolean isGroup = c.getMetadata().getValues(ExtraProperties.CONVERSATION_PARTICIPANTS).length > 2; // $NON-NLS-1$
-            printMessage(out, m, isGroup, c.isDeleted());
+            printMessage(out, m, chat.isGroup(), chat.getItem().isDeleted());
 
             if (currentMsg++ != msgs.size() - 1 && bout.size() >= minChatSplitSize) {
                 out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
@@ -385,6 +381,13 @@ public class ReportGenerator {
             String quoteClick = "onclick=\"goToAnchorId(" + messageQuote.getSourceIndex() + ");\"";
             String quoteIcon = "";
             String quoteUser = messageQuote.getFrom();
+            if (quoteUser == null) {
+                if (message.isFromMe()) {
+                    quoteUser = Messages.getString("WhatsAppReport.Owner"); //$NON-NLS-1$
+                } else {
+                    quoteUser = Messages.getString("ReportGenerator.Unknown"); //$NON-NLS-1$
+                }
+            }
 
             String quoteEnd = "</span></div>";
             if (messageQuote.isDeleted()) {

@@ -135,21 +135,20 @@ public class UFEDChatParser extends AbstractParser {
         return supportedTypes;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public void parse(InputStream inputStream, ContentHandler handler, Metadata metadata, ParseContext context)
+    public void parse(InputStream inputStream, ContentHandler handler, Metadata chatMeta, ParseContext context)
             throws IOException, SAXException, TikaException {
 
         // process Chat
-        XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
+        XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, chatMeta);
         xhtml.startDocument();
         try {
             IItemSearcher searcher = context.get(IItemSearcher.class);
-            IItemReader chat = context.get(IItemReader.class);
+            IItemReader chatItem = context.get(IItemReader.class);
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                     new ParsingEmbeddedDocumentExtractor(context));
 
-            if (chat == null || searcher == null)
+            if (chatItem == null || searcher == null)
                 return;
 
             updateChatMetadata(chatMeta, searcher);
@@ -162,10 +161,10 @@ public class UFEDChatParser extends AbstractParser {
 
                     if (chatChild.getMediaType().equals(MediaTypes.UFED_MESSAGE_MIME)) {
 
-                        updateMessageMetadata(metadata, chatChild.getMetadata(), searcher);
+                        updateMessageMetadata(chatChild.getMetadata(), chatMeta, searcher);
 
-                        Message message = createMessage(chatChild, searcher);
-                        updateQuotedMessage(message, searcher, messages);
+                        Message message = createMessage(chatChild, chat, searcher);
+                        updateQuotedMessage(message, chat, searcher, messages);
                         messages.add(message);
                     } else {
                         logger.error("Unknown chat child: {}", chatChild);
@@ -181,48 +180,46 @@ public class UFEDChatParser extends AbstractParser {
 
             Collections.sort(messages);
 
-            updateChatMetadata(metadata, messagesCount, searcher);
+            String virtualId = readUfedMetadata(chatMeta, "id");
+            String chatPrefix = getChatName(chatMeta);
 
-            String virtualId = readUfedMetadata(metadata, "id");
-            String chatPrefix = getChatName(metadata);
-
-            if (extractor.shouldParseEmbedded(metadata)) {
+            if (extractor.shouldParseEmbedded(chatMeta)) {
                 ReportGenerator reportGenerator = new ReportGenerator(minChatSplitSize);
                 byte[] bytes = reportGenerator.generateNextChatHtml(chat, messages);
                 int frag = 0;
                 int firstMsg = 0;
-                MediaType previewMime = getMediaType(readUfedMetadata(metadata, "Source"));
+                MediaType previewMime = getMediaType(readUfedMetadata(chatMeta, "Source"));
                 while (bytes != null) {
-                    Metadata chatMetadata = new Metadata();
+                    Metadata chatPreviewMeta = new Metadata();
                     int nextMsg = reportGenerator.getNextMsgNum();
                     List<Message> subList = messages.subList(firstMsg, nextMsg);
-                    storeLinkedHashes(subList, chatMetadata);
+                    storeLinkedHashes(subList, chatPreviewMeta);
 
                     firstMsg = nextMsg;
                     byte[] nextBytes = reportGenerator.generateNextChatHtml(chat, messages);
 
                     // copy parent metadata
-                    for (String name : metadata.names()) {
+                    for (String name : chatMeta.names()) {
                         if (name.startsWith(ExtraProperties.UFED_META_PREFIX) || name.startsWith(ExtraProperties.CONVERSATION_PREFIX))
-                            for (String val : metadata.getValues(name))
-                                chatMetadata.add(name, val);
+                            for (String val : chatMeta.getValues(name))
+                                chatPreviewMeta.add(name, val);
                     }
 
                     String chatName = chatPrefix;
                     if (frag > 0 || nextBytes != null)
                         chatName += "_" + frag++; //$NON-NLS-1$
 
-                    chatMetadata.set(TikaCoreProperties.TITLE, chatName);
-                    chatMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, virtualId);
-                    chatMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, previewMime.toString());
-                    chatMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+                    chatPreviewMeta.set(TikaCoreProperties.TITLE, chatName);
+                    chatPreviewMeta.set(ExtraProperties.ITEM_VIRTUAL_ID, virtualId);
+                    chatPreviewMeta.set(StandardParser.INDEXER_CONTENT_TYPE, previewMime.toString());
+                    chatPreviewMeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                     if (extractMessages && !subList.isEmpty()) {
-                        chatMetadata.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
+                        chatPreviewMeta.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
                     }
 
                     ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
-                    extractor.parseEmbedded(chatStream, handler, chatMetadata, false);
+                    extractor.parseEmbedded(chatStream, handler, chatPreviewMeta, false);
                     bytes = nextBytes;
 
                     if (extractMessages) {
@@ -240,7 +237,7 @@ public class UFEDChatParser extends AbstractParser {
         }
     }
 
-    private void updateChatMetadata(Metadata chatMetadata, int messagesCount, IItemSearcher searcher) {
+    private void updateChatMetadata(Metadata chatMetadata, IItemSearcher searcher) {
 
         // Communication:Account
         fillAccountInfo(searcher, chatMetadata);
@@ -266,21 +263,20 @@ public class UFEDChatParser extends AbstractParser {
         // Communication:{ID, Name, MessagesCount}
         chatMetadata.set(ExtraProperties.CONVERSATION_ID,                readUfedMetadata(chatMetadata,  "Identifier"));
         chatMetadata.set(ExtraProperties.CONVERSATION_NAME,                readUfedMetadata(chatMetadata,  "Name"));
-        chatMetadata.set(ExtraProperties.CONVERSATION_MESSAGES_COUNT, messagesCount);
     }
 
-    private void updateMessageMetadata(Metadata chatMetadata, Metadata messageMetadata, IItemSearcher searcher) {
+    private void updateMessageMetadata(Metadata messageMeta, Metadata chatMeta, IItemSearcher searcher) {
 
         // Communication:Direction
-        if (Boolean.parseBoolean(messageMetadata.get(META_FROM_OWNER))) {
-            messageMetadata.set(ExtraProperties.COMMUNICATION_DIRECTION, ConversationUtils.DIRECTION_OUTGOING);
+        if (Boolean.parseBoolean(messageMeta.get(META_FROM_OWNER))) {
+            messageMeta.set(ExtraProperties.COMMUNICATION_DIRECTION, ConversationUtils.DIRECTION_OUTGOING);
         } else {
-            messageMetadata.set(ExtraProperties.COMMUNICATION_DIRECTION, ConversationUtils.DIRECTION_INCOMING);
+            messageMeta.set(ExtraProperties.COMMUNICATION_DIRECTION, ConversationUtils.DIRECTION_INCOMING);
         }
 
         // Fix missing "ufed:To" metadata
-        List<String> fromIds = readUfedMetadataArray(messageMetadata, "From:ID");
-        List<String> toIds = readUfedMetadataArray(messageMetadata, "To:ID");
+        List<String> fromIds = readUfedMetadataArray(messageMeta, "From:ID");
+        List<String> toIds = readUfedMetadataArray(messageMeta, "To:ID");
         if (toIds.size() != 1) {
             List<String> toList;
             String toName = null;
@@ -288,29 +284,29 @@ public class UFEDChatParser extends AbstractParser {
                 toList = toIds;
             } else {
                 toList = new ArrayList<>();
-                List<String> partiesIds = readUfedMetadataArray( chatMetadata, "Participants:ID");
+                List<String> partiesIds = readUfedMetadataArray( chatMeta, "Participants:ID");
                 for (int i = 0; i < partiesIds.size(); i++) {
                     String partyId = partiesIds.get(i);
                     if (!fromIds.contains(partyId)) {
                         toList.add(partyId);
-                        toName = readUfedMetadataArray(chatMetadata, "Participants:Name").get(i);
+                        toName = readUfedMetadataArray(chatMeta, "Participants:Name").get(i);
                     }
                 }
             }
             if (toList.size() == 1) {
-                messageMetadata.set(ExtraProperties.UFED_META_PREFIX + "To:ID", defaultIfEmpty(toList.get(0), ""));
-                messageMetadata.set(ExtraProperties.UFED_META_PREFIX + "To:Name", defaultIfEmpty(toName, ""));
+                messageMeta.set(ExtraProperties.UFED_META_PREFIX + "To:ID", defaultIfEmpty(toList.get(0), ""));
+                messageMeta.set(ExtraProperties.UFED_META_PREFIX + "To:Name", defaultIfEmpty(toName, ""));
             } else if (toList.size() > 1) {
-                messageMetadata.set(ExtraProperties.UFED_META_PREFIX + "To:ID", defaultIfEmpty(readUfedMetadata(chatMetadata, "Identifier"), ""));
-                messageMetadata.set(ExtraProperties.UFED_META_PREFIX + "To:Name", defaultIfEmpty(readUfedMetadata(chatMetadata, "name"), ""));
-                messageMetadata.set(ExtraProperties.COMMUNICATION_IS_GROUP_MESSAGE, true);
+                messageMeta.set(ExtraProperties.UFED_META_PREFIX + "To:ID", defaultIfEmpty(readUfedMetadata(chatMeta, "Identifier"), ""));
+                messageMeta.set(ExtraProperties.UFED_META_PREFIX + "To:Name", defaultIfEmpty(readUfedMetadata(chatMeta, "name"), ""));
+                messageMeta.set(ExtraProperties.COMMUNICATION_IS_GROUP_MESSAGE, true);
             }
 
         }
 
         // Communication:{From, To}
-        fillParticipantInfo(searcher, chatMetadata, messageMetadata, "From", ExtraProperties.COMMUNICATION_FROM);
-        fillParticipantInfo(searcher, chatMetadata, messageMetadata, "To", ExtraProperties.COMMUNICATION_TO);
+        fillParticipantInfo(searcher, chatMeta, messageMeta, "From", ExtraProperties.COMMUNICATION_FROM);
+        fillParticipantInfo(searcher, chatMeta, messageMeta, "To", ExtraProperties.COMMUNICATION_TO);
     }
 
     private IItemReader lookupAccount(IItemSearcher searcher, Metadata chatMetadata) {
@@ -358,7 +354,7 @@ public class UFEDChatParser extends AbstractParser {
             name = readUfedMetadata(chatMetadata, "Owner:Name");
         }
 
-        chatMetadata.add(ExtraProperties.CONVERSATION_ACCOUNT, ConversationUtils.buidPartyString(name, id, phone, username));
+        chatMetadata.add(ExtraProperties.CONVERSATION_ACCOUNT, ConversationUtils.buidPartyString(name, id, phone, username, source));
         if (name != null)
             chatMetadata.add(ExtraProperties.CONVERSATION_ACCOUNT + ExtraProperties.CONVERSATION_SUFFIX_NAME, name);
         if (id != null)
@@ -427,7 +423,7 @@ public class UFEDChatParser extends AbstractParser {
                     name = null;
             }
 
-            targetMetadata.add(conversationProperty, ConversationUtils.buidPartyString(name, partyID, phone, username));
+            targetMetadata.add(conversationProperty, ConversationUtils.buidPartyString(name, partyID, phone, username, source));
             if (!partyID.isEmpty())
                 targetMetadata.add(conversationProperty + ExtraProperties.CONVERSATION_SUFFIX_ID, partyID);
             if (name != null)
@@ -521,10 +517,29 @@ public class UFEDChatParser extends AbstractParser {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private Message createMessage(IItemReader messageItem, IItemSearcher searcher) {
+    private Chat createChat(IItemReader chatItem, IItemSearcher searcher) {
 
-        Message message = new Message(messageItem);
+        Chat chat = new Chat(chatItem);
+
+        // look for chat photo thumb
+        String contactPhotoId = readUfedMetadata(chatItem, "contactphoto_id");
+        if (contactPhotoId != null) {
+            String query = searcher.escapeQuery(ExtraProperties.UFED_ID) + ":\"" + contactPhotoId + "\"";
+            List<IItemReader> result = searcher.search(query);
+            if (!result.isEmpty()) {
+                IItemReader contactPhoto = result.get(0);
+                chat.setContactPhotoThumb(contactPhoto.getThumb());
+                removeUfedMetadata(chatItem, "contactphoto_extracted_path");
+                removeUfedMetadata(chatItem, "contactphoto_id");
+            }
+        }
+
+        return chat;
+    }
+
+    private Message createMessage(IItemReader messageItem, Chat chat, IItemSearcher searcher) {
+
+        Message message = new Message(messageItem, chat);
         handleMessagePosition(message, searcher);
 
         List<IItemReader> msgChildren = messageItem.getChildren();
@@ -598,7 +613,7 @@ public class UFEDChatParser extends AbstractParser {
         }
     }
 
-    private void updateQuotedMessage(Message message, IItemSearcher searcher, List<Message> messagesSoFar) {
+    private void updateQuotedMessage(Message message, Chat chat, IItemSearcher searcher, List<Message> messagesSoFar) {
         if (!message.isQuoted()) {
             return;
         }
@@ -619,7 +634,7 @@ public class UFEDChatParser extends AbstractParser {
         if (quotedMessage == null) {
             IItemReader repliedMessage = (IItemReader) message.getItem().getExtraAttribute(UFED_REPLIED_MESSAGE_ATTR);
             if (repliedMessage != null) {
-                quotedMessage = createMessage(repliedMessage, searcher);
+                quotedMessage = createMessage(repliedMessage, chat, searcher);
             }
         }
 

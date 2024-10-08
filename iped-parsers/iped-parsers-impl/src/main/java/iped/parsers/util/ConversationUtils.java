@@ -1,8 +1,5 @@
 package iped.parsers.util;
 
-import java.util.Arrays;
-import java.util.Objects;
-
 import org.apache.commons.lang3.StringUtils;
 
 public class ConversationUtils {
@@ -20,7 +17,7 @@ public class ConversationUtils {
     private ConversationUtils() {
     }
 
-    public static String buidPartyString(String name, String id, String phone, String username) {
+    public static String buidPartyString(String name, String id, String phone, String username, String source) {
         StringBuilder sb = new StringBuilder();
         if (name != null) {
             sb.append(name);
@@ -33,22 +30,27 @@ public class ConversationUtils {
             }
             sb.append("(");
             boolean needToSeparate = false;
-            if (id != null) {
-                sb.append("ID:").append(id);
-                needToSeparate = true;
-            }
-            if (phone != null) {
-                if (needToSeparate) {
-                    sb.append(FIELD_SEPARATOR);
+            if ("WhatsApp".equalsIgnoreCase(source)) {
+                String phoneFromId = StringUtils.substringBeforeLast(id, "@");
+                sb.append("+").append(StringUtils.firstNonBlank(phone, phoneFromId));
+            } else {
+                if (id != null) {
+                    sb.append("ID:").append(id);
+                    needToSeparate = true;
                 }
-                sb.append("tel:").append(phone);
-                needToSeparate = true;
-            }
-            if (username != null) {
-                if (needToSeparate) {
-                    sb.append(FIELD_SEPARATOR);
+                if (phone != null) {
+                    if (needToSeparate) {
+                        sb.append(FIELD_SEPARATOR);
+                    }
+                    sb.append("tel:").append(phone);
+                    needToSeparate = true;
                 }
-                sb.append("@").append(username);
+                if (username != null) {
+                    if (needToSeparate) {
+                        sb.append(FIELD_SEPARATOR);
+                    }
+                    sb.append("@").append(username);
+                }
             }
             sb.append(")");
         }
