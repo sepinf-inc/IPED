@@ -444,6 +444,11 @@ public class ReportGenerator {
                         }
                     }
 
+                    String title = attach.getTitle();
+                    if (isNotBlank(title)) {
+                        msgStr.append(format(title));
+                    }
+
                     break;
 
                 } else if (attach.getUrl() != null) {
