@@ -41,38 +41,28 @@ public class RemoteTranscriptionService {
     // 30 minutos
     private static final int MAX_WAV_TIME = 30 * 60;
     private static final int MAX_WAV_SIZE = 16000 * 2 * MAX_WAV_TIME;
+
     static enum MESSAGES {
-        ACCEPTED,
-        AUDIO_SIZE,
-        BUSY,
-        DISCOVER,
-        DONE,
-        ERROR,
-        REGISTER,
-        STATS,
-        WARN, VERSION_1_1,
-        VERSION_1_2,
-        VERSION_1_0,
-        PING
+        ACCEPTED, AUDIO_SIZE, BUSY, DISCOVER, DONE, ERROR, REGISTER, STATS, WARN, VERSION_1_1, VERSION_1_2, VERSION_1_0, PING
     }
+
     static class TranscribeRequest {
         File wavAudio;
-        TextAndScore result=null;
-        Exception error=null;
-        
+        TextAndScore result = null;
+        Exception error = null;
 
         public TranscribeRequest(File wavAudio) {
-            this.wavAudio=wavAudio;
+            this.wavAudio = wavAudio;
         }
     }
+
     static class OpenConnectons {
         Socket conn;
         BufferedInputStream bis;
         PrintWriter writer;
         Thread t;
         File wavAudio;
-        TextAndScore result=null;
-        
+        TextAndScore result = null;
 
         public OpenConnectons(Socket conn, BufferedInputStream bis, PrintWriter writer, Thread t) {
             this.conn = conn;
@@ -108,8 +98,8 @@ public class RemoteTranscriptionService {
      * Control number of simultaneous audio conversions to WAV.
      */
     private static Semaphore wavConvSemaphore;
-    
-    private static int BATCH_SIZE=1;
+
+    private static int BATCH_SIZE = 1;
 
     private static final AtomicLong audiosTranscripted = new AtomicLong();
     private static final AtomicLong audiosDuration = new AtomicLong();
@@ -119,16 +109,11 @@ public class RemoteTranscriptionService {
     private static final AtomicLong requestsAccepted = new AtomicLong();
     private static final List<OpenConnectons> beaconQueq = new LinkedList<>();
     private static final Deque<TranscribeRequest> toTranscribe = new LinkedList<>();
-     
 
     private static Logger logger;
 
     private static void printHelpAndExit() {
-        System.out.println(
-                "Params: IP:Port [LocalPort]\n"
-                + "IP:Port    IP and port of the naming node.\n"
-                + "LocalPort  [optional] local port to listen for connections.\n"
-                + "           If not provided, a random port will be used.");
+        System.out.println("Params: IP:Port [LocalPort]\n" + "IP:Port    IP and port of the naming node.\n" + "LocalPort  [optional] local port to listen for connections.\n" + "           If not provided, a random port will be used.");
         System.exit(1);
     }
 
@@ -169,7 +154,7 @@ public class RemoteTranscriptionService {
         AbstractTranscriptTask task = (AbstractTranscriptTask) Class.forName(audioConfig.getClassName()).getDeclaredConstructor().newInstance();
         audioConfig.setEnabled(true);
         task.init(cm);
-        BATCH_SIZE=audioConfig.getBatchSize();
+        BATCH_SIZE = audioConfig.getBatchSize();
         int numConcurrentTranscriptions = Wav2Vec2TranscriptTask.getNumConcurrentTranscriptions();
         int numLogicalCores = Runtime.getRuntime().availableProcessors();
 
@@ -195,10 +180,9 @@ public class RemoteTranscriptionService {
             startSendStatsThread(discoveryIp, discoveryPort, localPort, numConcurrentTranscriptions, numLogicalCores);
 
             startBeaconThread();
-            for(int i=0;i<numConcurrentTranscriptions;i++) {
+            for (int i = 0; i < numConcurrentTranscriptions; i++) {
                 startTrancribeThreads(task);
             }
-            
 
             waitRequests(server, task, discoveryIp);
 
@@ -219,7 +203,7 @@ public class RemoteTranscriptionService {
                         Thread.sleep(60000);
                         logger.info("Send beacons to {} clients", beaconQueq.size());
                         synchronized (beaconQueq) {
-                            for( var cliente:beaconQueq) {
+                            for (var cliente : beaconQueq) {
                                 cliente.sendBeacon();
                             }
                         }
@@ -291,8 +275,7 @@ public class RemoteTranscriptionService {
         try (Socket client = new Socket(discoveryIp, discoveryPort);
                 InputStream is = client.getInputStream();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
-                PrintWriter writer = new PrintWriter(
-                        new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8), true)) {
+                PrintWriter writer = new PrintWriter(new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8), true)) {
 
             client.setSoTimeout(10000);
             writer.println(MESSAGES.REGISTER);
@@ -371,11 +354,9 @@ public class RemoteTranscriptionService {
                         try {
                             client.setSoTimeout(CLIENT_TIMEOUT_MILLIS);
                             bis = new BufferedInputStream(client.getInputStream());
-                            writer = new PrintWriter(
-                                    new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8), true);
+                            writer = new PrintWriter(new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8), true);
 
-                            String clientName = "Client " + client.getInetAddress().getHostAddress() + ":"
-                                    + client.getPort();
+                            String clientName = "Client " + client.getInetAddress().getHostAddress() + ":" + client.getPort();
                             String prefix = clientName + " - ";
                             writer.println(MESSAGES.ACCEPTED);
 
@@ -391,15 +372,12 @@ public class RemoteTranscriptionService {
 
                             logger.info(prefix + "Accepted connection.");
 
-
-
                             byte[] bytes = bis.readNBytes(MESSAGES.VERSION_1_2.toString().length());
                             protocol = new String(bytes);
                             synchronized (beaconQueq) {
                                 opc = new OpenConnectons(client, bis, writer, this);
                                 beaconQueq.add(opc);
                             }
-
 
                             logger.info("Protocol Version {}", protocol);
                             if (protocol.compareTo(MESSAGES.VERSION_1_2.toString()) < 0) {
@@ -480,19 +458,18 @@ public class RemoteTranscriptionService {
                             long durationMillis = 1000 * wavFile.length() / (16000 * 2);
 
                             TextAndScore result = new TextAndScore();
-                            result.text="";
-                            result.score=0;
+                            result.text = "";
+                            result.score = 0;
                             try {
                                 reqs = new ArrayList<TranscribeRequest>();
-                                TranscribeRequest last=null;
+                                TranscribeRequest last = null;
                                 if (wavFile.length() <= MAX_WAV_SIZE) {
                                     TranscribeRequest req = new TranscribeRequest(wavFile);
                                     reqs.add(req);
 
                                 } else {
 
-                                    for (File wavPart : AbstractTranscriptTask.getAudioSplits(wavFile,
-                                            wavFile.getPath(), MAX_WAV_TIME)) {
+                                    for (File wavPart : AbstractTranscriptTask.getAudioSplits(wavFile, wavFile.getPath(), MAX_WAV_TIME)) {
                                         TranscribeRequest req = new TranscribeRequest(wavPart);
                                         reqs.add(req);
                                     }
@@ -501,15 +478,15 @@ public class RemoteTranscriptionService {
 
                                 }
                                 wavFile = null;
-                                
+
                                 // dispatch all parts to be executed
                                 for (TranscribeRequest req : reqs) {
                                     synchronized (toTranscribe) {
                                         toTranscribe.add(req);
                                     }
-                                    last=req;
+                                    last = req;
                                 }
-                                
+
                                 // wait until the last wav part is transcribed
                                 synchronized (last) {
                                     last.wait();
@@ -521,7 +498,7 @@ public class RemoteTranscriptionService {
                                         error = false;
                                         throw new Exception("Error processing the audio", req.error);
                                     }
-                                   
+
                                     if (result.score > 0)
                                         result.text += " ";
                                     result.text += partResult.text;
@@ -530,7 +507,6 @@ public class RemoteTranscriptionService {
 
                                 }
                                 result.score /= reqs.size();
-                               
 
                             } catch (ProcessCrashedException e) {
                                 // retry audio
@@ -542,12 +518,12 @@ public class RemoteTranscriptionService {
                                 executor.shutdown();
                                 server.close();
                                 throw e;
-                            } 
+                            }
 
                             audiosTranscripted.incrementAndGet();
                             audiosDuration.addAndGet(durationMillis);
                             conversionTime.addAndGet(t1 - t0);
-                            
+
                             logger.info(prefix + "Transcritpion done.");
 
                             // removes from the beacon queue to prevent beacons in the middle of the
@@ -617,7 +593,7 @@ public class RemoteTranscriptionService {
             }
         });
     }
-    
+
     private static void startTrancribeThreads(AbstractTranscriptTask task) {
         executor.execute(new Runnable() {
             @Override
@@ -628,12 +604,12 @@ public class RemoteTranscriptionService {
                         empty = toTranscribe.isEmpty();
                     }
                     if (empty) {
-                    try {
+                        try {
                             Thread.sleep(100);
-                        
+
                         } catch (Exception e) {
                             // TODO: handle exception
-                    }
+                        }
                         continue;
                     }
                     try {
@@ -646,10 +622,9 @@ public class RemoteTranscriptionService {
                         transcriptSemaphore.release();
                     }
 
-            }
+                }
             }
         });
     }
-    
 
 }

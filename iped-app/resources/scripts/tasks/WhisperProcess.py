@@ -74,7 +74,7 @@ def main():
             print(ping, file=stdout, flush=True)
             continue
         
-        files=line.split(",")
+        files = line.split(",")
         transcription = []
         logprobs = []
         for file in files:
@@ -84,7 +84,7 @@ def main():
             if whisperx_found:
                 result = model.transcribe(files, batch_size=batch_size, language=language,wav=True)
                 for segment in result['segments']:
-                    idx=segment["audio"]
+                    idx = segment["audio"]
                     transcription[idx] += segment['text']
                     if 'avg_logprob' in segment:
                         logprobs[idx].append(segment['avg_logprob'])

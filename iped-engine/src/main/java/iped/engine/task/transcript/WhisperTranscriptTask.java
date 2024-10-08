@@ -130,11 +130,11 @@ public class WhisperTranscriptTask extends Wav2Vec2TranscriptTask {
     protected TextAndScore transcribeAudio(File tmpFile) throws Exception {
         return transcribeWavPart(tmpFile);
     }
-    
+
     protected List<TextAndScore> transcribeAudios(ArrayList<File> tmpFiles) throws Exception {
 
         ArrayList<TextAndScore> textAndScores = new ArrayList<>();
-        for(int i=0;i<tmpFiles.size();i++) {
+        for (int i = 0; i < tmpFiles.size(); i++) {
             textAndScores.add(null);
         }
 
@@ -146,13 +146,13 @@ public class WhisperTranscriptTask extends Wav2Vec2TranscriptTask {
             }
 
             StringBuilder filePaths = new StringBuilder();
-            for(int i=0;i<tmpFiles.size();i++) {
-                if(i>0) {
-                    filePaths.append(","); 
-                }                
+            for (int i = 0; i < tmpFiles.size(); i++) {
+                if (i > 0) {
+                    filePaths.append(",");
+                }
                 filePaths.append(tmpFiles.get(i).getAbsolutePath().replace('\\', '/'));
-                
-            }            
+
+            }
             server.process.getOutputStream().write(filePaths.toString().getBytes("UTF-8"));
             server.process.getOutputStream().write(NEW_LINE);
             server.process.getOutputStream().flush();
@@ -165,10 +165,10 @@ public class WhisperTranscriptTask extends Wav2Vec2TranscriptTask {
                     throw new RuntimeException("Transcription failed, returned: " + line);
                 }
             }
-            for(int i=0;i<tmpFiles.size();i++) {
+            for (int i = 0; i < tmpFiles.size(); i++) {
                 Double score = Double.valueOf(server.reader.readLine());
                 String text = server.reader.readLine();
-    
+
                 TextAndScore textAndScore = new TextAndScore();
                 textAndScore.text = text;
                 textAndScore.score = score;
@@ -182,17 +182,11 @@ public class WhisperTranscriptTask extends Wav2Vec2TranscriptTask {
 
         return textAndScores;
     }
-    
-    
 
     @Override
     protected void logInputStream(InputStream is) {
-        List<String> ignoreMsgs = Arrays.asList(
-                "With dispatcher enabled, this function is no-op. You can remove the function call.",
-                "torchvision is not available - cannot save figures",
-                "Lightning automatically upgraded your loaded checkpoint from",
-                "Model was trained with pyannote.audio 0.0.1, yours is",
-                "Model was trained with torch 1.10.0+cu102, yours is");
+        List<String> ignoreMsgs = Arrays.asList("With dispatcher enabled, this function is no-op. You can remove the function call.", "torchvision is not available - cannot save figures",
+                "Lightning automatically upgraded your loaded checkpoint from", "Model was trained with pyannote.audio 0.0.1, yours is", "Model was trained with torch 1.10.0+cu102, yours is");
         Thread t = new Thread() {
             public void run() {
                 byte[] buf = new byte[1024];
