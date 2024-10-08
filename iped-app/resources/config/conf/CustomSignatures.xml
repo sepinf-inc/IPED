@@ -1637,10 +1637,20 @@
         </magic>
         <glob pattern="*.ofc"/>
     </mime-type>
-    
+
     <mime-type type="application/x-vlc-ini">
         <sub-class-of type="text/x-ini"/>
         <glob pattern="vlc-qt-interface.ini"/>
+    </mime-type>
+
+    <mime-type type="application/x-automaticdestinations">
+        <glob pattern="*.automaticDestinations-ms"/>
+        <sub-class-of type="application/x-tika-msoffice"/>
+    </mime-type>
+
+    <mime-type type="application/x-customdestinations">
+        <glob pattern="*.customDestinations-ms"/>
+        <sub-class-of type="application/x-tika-msoffice"/>
     </mime-type>
 
 </mime-info>
