@@ -95,6 +95,7 @@ import iped.parsers.sqlite.SQLiteUndelete;
 import iped.parsers.sqlite.SQLiteUndeleteTable;
 import iped.parsers.whatsapp.Message.MessageStatus;
 import iped.parsers.whatsapp.Message.MessageType;
+import iped.parsers.whatsapp.Message.MessageQuotedType;
 import iped.parsers.whatsapp.ProtoBufDecoder.Part;
 
 /**
@@ -265,7 +266,7 @@ public class ExtractorIOS extends Extractor {
                     }
 
                     // Find quoted messages
-                    findQuotedMessages(c.getMessages(), messagesMap);
+                    findQuotedMessages(c.getMessages(), messagesMap, idToChat);
                 }
 
                 if (recoverDeletedRecords && !firstTry) {
@@ -386,7 +387,7 @@ public class ExtractorIOS extends Extractor {
         }
     }
 
-    private void findQuotedMessages(List<Message> messages, Map<String, Message> messagesMap) {
+    private void findQuotedMessages(List<Message> messages, Map<String, Message> messagesMap, Map<Long, Chat> idToChat) {
         long fakeIds = 2000000000L;
         for (Message m : messages) {
             byte[] metadata = m.getMetaData();
@@ -400,7 +401,9 @@ public class ExtractorIOS extends Extractor {
                     List<Part> childs = ProtoBufDecoder.findChilds(main, 19);
 
                     Message messageQuote = messagesMap.get(uuidQuote);
-                    if (messageQuote == null) {
+                    if (messageQuote != null) {
+                        messageQuote.setMessageQuotedType(MessageQuotedType.QUOTE_FOUND);
+                    }else {                        
                         // Referenced message was deleted, so create a new message and fill with data
                         // extracted from referencing message metadata.
                         messageQuote = new Message();
@@ -566,7 +569,15 @@ public class ExtractorIOS extends Extractor {
                                             }
                                         }
                                         break;
-
+                                    case 30:
+                                        type = MessageType.PRODUCT_MESSAGE;
+                                        MessageProduct mp = decodeQuotedProductInfo(c, messageQuote);
+                                        messageQuote.setProduct(mp);
+                                        messageQuote.setMessageQuotedType(MessageQuotedType.QUOTE_CATALOG);
+                                        messageQuote.setFromMe(false);
+                                        if (mp != null)
+                                            messageQuote.setRemoteResource(mp.getSeller());
+                                        break;
                                     default:
                                         break;
                                 }
@@ -574,8 +585,49 @@ public class ExtractorIOS extends Extractor {
                         }
 
                         messageQuote.setMessageType(type);
-                        messageQuote.setDeleted(true);
+
+                        String contactQuote = ProtoBufDecoder.findString(main, 7);
+                        if (contactQuote != null) {
+                            // find quotes outside this chat
+                            // is the reverse of real msg
+                            messageQuote.setFromMe(!m.isFromMe());
+                            // set remote resource if is not from me
+                            messageQuote.setRemoteResource(m.getRemoteResource());
+                            // just set default case if does not match order cases ...
+                            messageQuote.setMessageQuotedType(MessageQuotedType.QUOTE_PRIVACY_GROUP_NOT_FOUND);
+                            if (contactQuote.compareTo(Message.STATUS_BROADCAST) == 0) {
+
+                                messageQuote.setMessageQuotedType(MessageQuotedType.QUOTE_STATUS);
+
+                            } else if (contactQuote.contains(Message.GROUP)) {
+
+                                // set it first in case if not found
+                                messageQuote.setQuotePrivateGroupName(contactQuote);
+                                boolean found = false;
+                                for (Chat cq : idToChat.values()) {
+                                    // Find friendly group name and message id
+
+                                    if (!cq.isGroupChat())
+                                        continue;
+
+                                    if (cq.getPrintId() != null && contactQuote.contains(cq.getPrintId()))
+                                        messageQuote.setQuotePrivateGroupName(cq.getTitle());
+
+                                    for (Message origin : cq.getMessages()) {
+                                        if (origin.getUuid() != null && origin.getUuid().compareTo(uuidQuote) == 0) {
+                                            messageQuote.setId(origin.getId());
+                                            messageQuote.setMessageQuotedType(MessageQuotedType.QUOTE_PRIVACY_GROUP);
+                                            found = true;
+                                            break;
+                                        }
+                                    }
+                                    if (found)
+                                        break;
+                                }
+                            }
+                        }
                     }
+
                     if (messageQuote.getThumbData() == null && childs != null) {
                         byte[] thumbData = null;
                         for (Part c : childs) {
@@ -915,6 +967,59 @@ public class ExtractorIOS extends Extractor {
                     if (p3 != null) {
                         seller = p3.getString();
                     }
+                }
+            }
+        }
+        if (title != null || currency != null || amount != 0 || seller != null) {
+            return new MessageProduct(title, seller, currency, amount, observation);
+        }
+        return null;
+    }
+
+    private MessageProduct decodeQuotedProductInfo(Part p2, Message m) {
+        String title = null;
+        String observation = null;
+        String currency = null;
+        String seller = null;
+        int amount = 0;
+        if (p2 != null) {
+            Part p3 = p2.getChild(1);
+            if (p3 != null) {
+                Part p4 = p3.getChild(1);
+                if (p4 != null) {
+                    Part p5 = p4.getChild(16);
+                    if (p5 != null) {
+                        byte[] bytes = p5.getBytes();
+                        if (bytes != null) {
+                            m.setThumbData(bytes);
+                        }
+                    }
+                }
+                p4 = p3.getChild(3);
+                if (p4 != null) {
+                    title = p4.getString();
+                }
+                p4 = p3.getChild(4);
+                if (p4 != null) {
+                    observation = p4.getString();
+                }
+                p4 = p3.getChild(5);
+                if (p4 != null) {
+                    currency = p4.getString();
+                }
+                p4 = p3.getChild(6);
+                if (p4 != null) {
+                    String v = p4.getString();
+                    if (v != null && !v.isBlank()) {
+                        try {
+                            amount = Integer.parseInt(v);
+                        } catch (NumberFormatException e) {
+                        }
+                    }
+                }
+                p3 = p2.getChild(2);
+                if (p3 != null) {
+                    seller = p3.getString();
                 }
             }
         }
