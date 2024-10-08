@@ -31,7 +31,7 @@ public class WAAccount extends WAContact {
     }
 
     public String getTitle() {
-        return "WhatsApp Account: " + getName(); //$NON-NLS-1$
+        return "WhatsApp Account: " + getName();
     }
 
     public static WAAccount getFromAndroidXml(InputStream is) throws SAXException, IOException {
@@ -44,7 +44,8 @@ public class WAAccount extends WAContact {
 
             XPath xpath = XPathFactory.newInstance().newXPath();
 
-            XPathExpression expr = xpath.compile("/map/string[@name=\"com.whatsapp.registration.RegisterPhone.phone_number\"]");
+            XPathExpression expr = xpath
+                    .compile("/map/string[@name=\"com.whatsapp.registration.RegisterPhone.phone_number\"]");
             String value = (String) expr.evaluate(doc, XPathConstants.STRING);
             if (StringUtils.isNotBlank(value)) {
                 String phoneNumber = value;
@@ -113,7 +114,7 @@ public class WAAccount extends WAContact {
                 account.setStatus(value.toString());
 
             return account;
-        } catch ( PropertyListFormatException | ParseException | ParserConfigurationException  e) {
+        } catch (PropertyListFormatException | ParseException | ParserConfigurationException e) {
             throw new RuntimeException(e);
         }
     }
@@ -125,24 +126,4 @@ public class WAAccount extends WAContact {
     public void setUnknown(boolean isUnknown) {
         this.isUnknown = isUnknown;
     }
-
-    /*
-    public static void main(String[] args) throws SAXException {
-        try (FileInputStream fis = new FileInputStream(
-                "c:/users/nassif/downloads/group.net.whatsapp.WhatsApp.shared.plist")) {
-            WAAccount a = getFromIOSPlist(fis);
-            System.out.println(a.getId());
-            System.out.println(a.getWaName());
-            System.out.println(a.getStatus());
-        } catch (FileNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-    }
-    */
-
-
 }
