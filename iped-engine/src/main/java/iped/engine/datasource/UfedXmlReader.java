@@ -1153,11 +1153,9 @@ public class UfedXmlReader extends DataSourceReader {
                                     processItem(item);
                                 } else {
                                     // add chat subitems in the chat via UFED_CHILDREN_ATTR extraAttribute
-                                    IItem parent = itemSeq.get(itemSeq.size() - 1);
-                                    List<IItem> children = (List<IItem>) parent.getExtraAttributeMap().computeIfAbsent(
-                                            UFEDChatParser.UFED_CHILDREN_ATTR, (key) -> new ArrayList<IItem>());
+                                    Item parent = itemSeq.get(itemSeq.size() - 1);
                                     Util.calctrackIDAndUpdateID((CaseData) caseData, item);
-                                    children.add(item);
+                                    parent.addChild(item);
                                     caseData.incDiscoveredEvidences(-1);
                                 }
                             } else {

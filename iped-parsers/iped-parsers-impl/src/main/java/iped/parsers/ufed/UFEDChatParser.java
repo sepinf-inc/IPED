@@ -57,8 +57,6 @@ public class UFEDChatParser extends AbstractParser {
 
     public static final MediaType UFED_CHAT_PREVIEW_MIME = MediaType.application("x-ufed-chat-preview");
 
-    public static final String UFED_CHILDREN_ATTR = "ufedChildren";
-
     public static final String UFED_REPLIED_MESSAGE_ATTR = "ufedOriginalMessage";
 
     public static final Map<String, MediaType> appToMime = ImmutableMap.of( //
@@ -154,9 +152,11 @@ public class UFEDChatParser extends AbstractParser {
             if (chat == null || searcher == null)
                 return;
 
-            List<Message> messages = new ArrayList<>();
-            List<IItemReader> chatChildren = (List<IItemReader>) chat.getExtraAttributeMap().remove(UFED_CHILDREN_ATTR);
+            updateChatMetadata(chatMeta, searcher);
+            Chat chat = createChat(chatItem, searcher);
 
+            List<Message> messages = new ArrayList<>();
+            List<IItemReader> chatChildren = chatItem.getChildren();
             if (chatChildren != null) {
                 for (IItemReader chatChild : chatChildren) {
 
@@ -177,6 +177,7 @@ public class UFEDChatParser extends AbstractParser {
             if (messagesCount == 0 && ignoreEmptyChats) {
                 return;
             }
+            chatMeta.set(ExtraProperties.CONVERSATION_MESSAGES_COUNT, messagesCount);
 
             Collections.sort(messages);
 
@@ -340,6 +341,7 @@ public class UFEDChatParser extends AbstractParser {
 
     private void fillAccountInfo(IItemSearcher searcher, Metadata chatMetadata) {
         String name, id, phone = null, username = null;
+        String source = readUfedMetadata(chatMetadata, "Source");
         IItemReader account = lookupAccount(searcher, chatMetadata);
         if (account != null) {
             name = readUfedMetadata(account, "name");
@@ -396,6 +398,7 @@ public class UFEDChatParser extends AbstractParser {
 
     private void fillParticipantInfo(IItemSearcher searcher, Metadata chatMetadata, Metadata targetMetadata,
             String ufedProperty, String conversationProperty) {
+        String source = readUfedMetadata(chatMetadata, "Source");
         List<String> partyIDs = readUfedMetadataArray(targetMetadata, ufedProperty + ":ID");
         List<String> partyNames = readUfedMetadataArray(targetMetadata, ufedProperty + ":Name");
         for (int i = 0; i < partyIDs.size(); i++) {
@@ -524,8 +527,7 @@ public class UFEDChatParser extends AbstractParser {
         Message message = new Message(messageItem);
         handleMessagePosition(message, searcher);
 
-        List<IItemReader> msgChildren = (List<IItemReader>) messageItem.getExtraAttributeMap()
-                .remove(UFED_CHILDREN_ATTR);
+        List<IItemReader> msgChildren = messageItem.getChildren();
         if (msgChildren != null) {
             for (IItemReader msgChild : msgChildren) {
                 if (msgChild.getMediaType().equals(MediaTypes.UFED_CHATACTIVITY_MIME)) {
