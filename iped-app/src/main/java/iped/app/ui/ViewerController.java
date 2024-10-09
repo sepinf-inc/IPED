@@ -254,7 +254,7 @@ public class ViewerController {
         }
         for (AbstractViewer viewer : viewers) {
             if (!viewer.equals(requested)) {
-                updateViewer(viewer, true);
+                updateViewer(viewer, true, false);
             }
         }
     }
@@ -288,8 +288,8 @@ public class ViewerController {
         return highlightTerms != null && !highlightTerms.isEmpty();
     }
 
-    public void updateViewer(AbstractViewer viewer, boolean clean) {
-        if (viewer.getPanel().isShowing() || (viewer.equals(textViewer) && hasHits())) {
+    public void updateViewer(AbstractViewer viewer, boolean clean, boolean forceLoad) {
+        if (viewer.getPanel().isShowing() || (viewer.equals(textViewer) && hasHits()) || forceLoad) {
             if (isInitialized())
                 loadInViewer(viewer);
             DefaultSingleCDockable dock = dockPerViewer.get(viewer);
