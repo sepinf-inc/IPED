@@ -4202,6 +4202,7 @@ ufed:GlobalNumberOfFiles = java.lang.Integer
 ufed:Header offset = java.lang.String
 ufed:Height = java.lang.Integer
 ufed:Identifier = java.lang.String
+ufed:InstantMessagesCount = java.lang.Integer
 ufed:IsEmulatable = java.lang.String
 ufed:Label = java.lang.String
 ufed:LastAccessTime = java.util.Date
