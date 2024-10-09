@@ -48,6 +48,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.apache.commons.codec.binary.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
@@ -331,18 +332,18 @@ public class WhatsAppParser extends SQLite3DBParser {
 
                 if (c.isGroupOrChannelChat()) {
                     for (WAContact member : c.getGroupMembers()) {
-                        addParticipantFields(chatMetadata, ExtraProperties.CONVERSATION_PARTICIPANTS, member, cache);
+                        addParticipantFields(chatMetadata, ExtraProperties.CONVERSATION_PARTICIPANTS, member);
                     }
                     for (WAContact admin : c.getGroupAdmins()) {
-                        addParticipantFields(chatMetadata, ExtraProperties.CONVERSATION_ADMINS, admin, cache);
+                        addParticipantFields(chatMetadata, ExtraProperties.CONVERSATION_ADMINS, admin);
                     }
                     chatMetadata.set(ExtraProperties.CONVERSATION_TYPE, c.isGroupChat() ? ConversationUtils.TYPE_GROUP : ConversationUtils.TYPE_BROADCAST);
                 } else {
                     if (c.getRemote() != null) {
-                        addParticipantFields(chatMetadata, ExtraProperties.CONVERSATION_PARTICIPANTS, c.getRemote(), cache);
+                        addParticipantFields(chatMetadata, ExtraProperties.CONVERSATION_PARTICIPANTS, c.getRemote());
                     }
                     if (account != null) {
-                        addParticipantFields(chatMetadata, ExtraProperties.CONVERSATION_PARTICIPANTS, account, cache);
+                        addParticipantFields(chatMetadata, ExtraProperties.CONVERSATION_PARTICIPANTS, account);
                     }
                     chatMetadata.set(ExtraProperties.CONVERSATION_TYPE, ConversationUtils.TYPE_PRIVATE);
                 }
@@ -351,7 +352,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                 chatMetadata.set(ExtraProperties.CONVERSATION_ID, c.getRemote() != null ? c.getRemote().getFullId() : c.getPrintId());
                 chatMetadata.set(ExtraProperties.CONVERSATION_NAME, c.getRemote() != null ? c.getRemote().getName() : "<NA>");
                 if (account != null) {
-                    chatMetadata.set(ExtraProperties.CONVERSATION_ACCOUNT, account.getFullId());
+                    addParticipantFields(chatMetadata, ExtraProperties.CONVERSATION_ACCOUNT, account);
                 }
                 chatMetadata.set(ExtraProperties.CONVERSATION_MESSAGES_COUNT, messagesCount);
 
@@ -374,8 +375,8 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     }
 
-    private void addParticipantFields(Metadata chatMetadata, String field, WAContact member, HashMap<String, String> cache) {
-        chatMetadata.add(field, formatContact(member, cache));
+    private void addParticipantFields(Metadata chatMetadata, String field, WAContact member) {
+        chatMetadata.add(field, ConversationUtils.buidPartyString(member.getName(), member.getFullId(), member.getId(), null, "WhatsApp"));
         chatMetadata.add(field + ExtraProperties.CONVERSATION_SUFFIX_ID, member.getFullId());
         chatMetadata.add(field + ExtraProperties.CONVERSATION_SUFFIX_PHONE, member.getId());
     }

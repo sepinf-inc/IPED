@@ -19,6 +19,11 @@ public class ConversationUtils {
 
     public static String buidPartyString(String name, String id, String phone, String username, String source) {
         StringBuilder sb = new StringBuilder();
+
+        if (StringUtils.equals(name, phone)) {
+            name = null;
+        }
+
         if (name != null) {
             sb.append(name);
         }
@@ -30,9 +35,11 @@ public class ConversationUtils {
             }
             sb.append("(");
             boolean needToSeparate = false;
-            if ("WhatsApp".equalsIgnoreCase(source)) {
-                String phoneFromId = StringUtils.substringBeforeLast(id, "@");
-                sb.append("+").append(StringUtils.firstNonBlank(phone, phoneFromId));
+            if (StringUtils.startsWithIgnoreCase(source, "WhatsApp")) {
+                if ("unknownAccount".equalsIgnoreCase(id)) {
+                    return id;
+                }
+                sb.append(StringUtils.firstNonBlank(id, phone));
             } else {
                 if (id != null) {
                     sb.append("ID:").append(id);
