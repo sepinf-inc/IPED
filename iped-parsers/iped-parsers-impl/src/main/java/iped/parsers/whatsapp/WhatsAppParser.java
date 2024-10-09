@@ -872,7 +872,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             String[] names;
             if (isAndroid) {
                 names = new String[] { "com.whatsapp.w4b_preferences_light.xml", "com.whatsapp_preferences_light.xml",
-                        "com.whatsapp.w4b_preferences.xml", "com.whatsapp_preferences.xml", "registration.RegisterPhone.xml" };
+                        "com.whatsapp.w4b_preferences.xml", "com.whatsapp_preferences.xml", "registration.RegisterPhone.xml", "startup_prefs.xml" };
                 query.append(BasicProps.NAME).append(":(");
                 for (int i = 0; i < names.length; i++) {
                     query.append(" \"").append(names[i]).append('"');
@@ -890,8 +890,15 @@ public class WhatsAppParser extends SQLite3DBParser {
                 try (InputStream is = item.getBufferedInputStream()) {
                     WAAccount a = isAndroid ? WAAccount.getFromAndroidXml(is) : WAAccount.getFromIOSPlist(is);
                     if (a != null) {
-                        account = a;
-                        break;
+                        if (account == null && !a.getId().isEmpty()) {
+                            account = a;
+                        }
+                        if (account != null && account.getWaName() == null && a.getWaName() != null) {
+                            account.setWaName(a.getWaName());
+                        }
+                        if (account != null && account.getStatus() == null && a.getStatus() != null) {
+                            account.setStatus(a.getStatus());
+                        }
                     }
                 } catch (Exception e) {
                     logger.warn("Error trying to get user account from {}: {}", item, e);

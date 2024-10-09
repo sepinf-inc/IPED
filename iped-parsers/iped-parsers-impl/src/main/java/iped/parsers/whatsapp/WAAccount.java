@@ -40,7 +40,7 @@ public class WAAccount extends WAContact {
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document doc = builder.parse(is);
 
-            WAAccount account;
+            String id = null, name = null, status = null;
 
             XPath xpath = XPathFactory.newInstance().newXPath();
 
@@ -49,41 +49,44 @@ public class WAAccount extends WAContact {
             String value = (String) expr.evaluate(doc, XPathConstants.STRING);
             if (StringUtils.isNotBlank(value)) {
                 String phoneNumber = value;
-
                 expr = xpath.compile("/map/string[@name=\"com.whatsapp.registration.RegisterPhone.country_code\"]");
                 value = (String) expr.evaluate(doc, XPathConstants.STRING);
-                if (StringUtils.isBlank(value)) {
-                    return null;
+                if (StringUtils.isNotBlank(value)) {
+                    String countryCode = value;
+                    id = countryCode + phoneNumber + waSuffix;
                 }
-                String countryCode = value;
-
-                account = new WAAccount(countryCode + phoneNumber + waSuffix);
-
             } else {
-
                 expr = xpath.compile("/map/string[@name=\"registration_jid\"]");
                 value = (String) expr.evaluate(doc, XPathConstants.STRING);
                 if (StringUtils.isBlank(value)) {
                     expr = xpath.compile("/map/string[@name=\"ph\"]");
                     value = (String) expr.evaluate(doc, XPathConstants.STRING);
-                    if (StringUtils.isBlank(value))
-                        return null;
+                    if (StringUtils.isNotBlank(value)) {
+                        if (!value.endsWith(waSuffix))
+                            value += waSuffix;
+                        id = value;
+                    }
                 }
-                if (!value.endsWith(waSuffix))
-                    value += waSuffix;
-
-                account = new WAAccount(value);
-
-                expr = xpath.compile("/map/string[@name=\"push_name\"]");
-                value = (String) expr.evaluate(doc, XPathConstants.STRING);
-                if (value != null && !value.isBlank())
-                    account.setWaName(value);
-
-                expr = xpath.compile("/map/string[@name=\"my_current_status\"]");
-                value = (String) expr.evaluate(doc, XPathConstants.STRING);
-                if (value != null && !value.isBlank())
-                    account.setStatus(value);
             }
+
+            expr = xpath.compile("/map/string[@name=\"push_name\"]");
+            value = (String) expr.evaluate(doc, XPathConstants.STRING);
+            if (value != null && !value.isBlank())
+                name = value;
+
+            expr = xpath.compile("/map/string[@name=\"my_current_status\"]");
+            value = (String) expr.evaluate(doc, XPathConstants.STRING);
+            if (value != null && !value.isBlank())
+                status = value;
+
+            if (StringUtils.isAllBlank(id, name, status)) {
+                return null;
+            }
+
+            WAAccount account = new WAAccount(id);
+            account.setWaName(name);
+            account.setStatus(status);
+
             return account;
         } catch (ParserConfigurationException | XPathExpressionException e) {
             throw new RuntimeException(e);
