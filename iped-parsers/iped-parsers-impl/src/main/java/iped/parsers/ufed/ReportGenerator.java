@@ -90,7 +90,7 @@ public class ReportGenerator {
             String city = localization.getCity();
             String state = localization.getState();
             String country = localization.getCountry();
-            String compliment = Arrays.asList(city, state, country).stream().filter(StringUtils::isNotBlank).collect(Collectors.joining(" - "));
+            String complement = Arrays.asList(city, state, country).stream().filter(StringUtils::isNotBlank).collect(Collectors.joining(" - "));
 
             if (isNotBlank(name)) {
                 div.with(span(name), br());
@@ -102,8 +102,8 @@ public class ReportGenerator {
                 }
                 div.with(span(fullStreet), br());
             }
-            if (isNotBlank(compliment)) {
-                div.with(span(compliment), br());
+            if (isNotBlank(complement)) {
+                div.with(span(complement), br());
             }
             if (isNotBlank(description)) {
                 div.with(span(description), br());
@@ -532,7 +532,7 @@ public class ReportGenerator {
                 + " &nbsp; "); //$NON-NLS-1$
         if (avatar != null)
             out.println("<img src=\"data:image/jpg;base64," + Util.encodeBase64(avatar) //$NON-NLS-1$
-                    + "\" width=\"40\" height=\"40\"/>"); //$NON-NLS-1$
+                    + "\" width=\"72\" height=\"72\"/>"); //$NON-NLS-1$
         out.println(format(chatName) + "</span>\n" //$NON-NLS-1$
                 + "</div>\n" //$NON-NLS-1$
                 + "<div id=\"conversation\">\n" //$NON-NLS-1$
