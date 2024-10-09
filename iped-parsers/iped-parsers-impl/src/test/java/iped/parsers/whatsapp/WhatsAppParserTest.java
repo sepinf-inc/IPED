@@ -104,7 +104,7 @@ public class WhatsAppParserTest extends AbstractPkgTest {
             assertEquals(1, whatsapptracker.admins.get(3).size());
             assertEquals(0, whatsapptracker.admins.get(4).size());
 
-            assertThat(whatsapptracker.admins.get(1), hasItems("556192644086@s.whatsapp.net"));
+            assertThat(whatsapptracker.admins.get(1), hasItems("(556192644086@s.whatsapp.net)"));
             assertThat(whatsapptracker.admins.get(2), hasItems("Pedro Gonzaga (556199351995@s.whatsapp.net)"));
 
             assertEquals("unknownAccount", whatsapptracker.messagefrom.get(0));
