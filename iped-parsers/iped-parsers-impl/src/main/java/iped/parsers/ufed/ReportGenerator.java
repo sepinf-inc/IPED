@@ -42,6 +42,11 @@ public class ReportGenerator {
         return currentMsg;
     }
 
+    private static final String formatParty(String party) {
+        party = StringUtils.remove(party, "@s.whatsapp.net");
+        return format(party);
+    }
+
     private static final String format(String text) {
         String ret = SimpleHTMLEncoder.htmlEncode(text);
 
@@ -155,7 +160,8 @@ public class ReportGenerator {
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, "UTF-8")); //$NON-NLS-1$
 
-        printMessageFileHeader(out, chat.getTitle(), chat.getTitle(), chat.getContactPhotoThumb());
+        String title = UFEDChatParser.getChatName(chat);
+        printMessageFileHeader(out, title, title, chat.getContactPhotoThumb());
         if (currentMsg > 0)
             out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
                     + Messages.getString("WhatsAppReport.ChatContinuation") + "</div></div>"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -214,7 +220,7 @@ public class ReportGenerator {
         }
 
         if (name != null)
-            out.println("<span class=\"name\">" + format(name) + "</span><br/>"); //$NON-NLS-1$ //$NON-NLS-2$
+            out.println("<span class=\"name\">" + formatParty(name) + "</span><br/>"); //$NON-NLS-1$ //$NON-NLS-2$
 
         if (message.isForwarded()) {
             String forwardedBy = "";
@@ -266,7 +272,7 @@ public class ReportGenerator {
                     out.println(Messages.getString("WhatsAppReport.Video") + ":<br/>"); //$NON-NLS-1$ //$NON-NLS-2$
                 out.print("<img class=\"thumb\" src=\""); //$NON-NLS-1$
                 out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
-                out.println(" title=\"" + format(getTitle(message)) + "\"/><br/>"); //$NON-NLS-1$ //$NON-NLS-2$
+                out.println(" title=\"" + format(attachment.getTitle()) + "\"/><br/>"); //$NON-NLS-1$ //$NON-NLS-2$
 
             } else if (contentType != null) {
                 if (contentType.startsWith("audio")) { //$NON-NLS-1$
@@ -471,7 +477,7 @@ public class ReportGenerator {
 
             out.print("<div class=\"" + quoteClass + "\" " + quoteClick + ">" 
                     + "<div class=\"quoteTop\">"
-                    + "<span class=\"quoteUser\">" + quoteUser + "</span><br/>" 
+                    + "<span class=\"quoteUser\">" + formatParty(quoteUser) + "</span><br/>"
                     + "<span class=\"quoteMsg\">" + msgStr + quoteEnd
                     + attachStr + "</div>");
 
@@ -506,18 +512,6 @@ public class ReportGenerator {
             sb.append("<p class=\"link\">" + format(attachment.getUrl()) + "</p>"); //$NON-NLS-1$
 
         return sb.toString();
-    }
-
-    private static String getTitle(Message message) {
-        for (MessageAttachment attachment : message.getAttachments()) {
-            if (attachment.getContentType() != null) {
-                String title = StringUtils.substringBefore(attachment.getContentType(), "/");
-                if (isNotBlank(title)) {
-                    return title;
-                }
-            }
-        }
-        return "File"; //$NON-NLS-1$
     }
 
     private static void printMessageFileHeader(PrintWriter out, String chatName, String title, byte[] avatar) {

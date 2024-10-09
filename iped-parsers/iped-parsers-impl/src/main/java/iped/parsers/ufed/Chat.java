@@ -1,5 +1,7 @@
 package iped.parsers.ufed;
 
+import static iped.parsers.ufed.UfedUtils.readUfedMetadata;
+
 import iped.data.IItemReader;
 import iped.parsers.util.ConversationUtils;
 import iped.properties.ExtraProperties;
@@ -8,16 +10,14 @@ public class Chat {
 
     private IItemReader item;
 
-    private String title;
     private boolean isGroup;
     private byte[] contactPhotoThumb;
 
     public Chat(IItemReader item) {
         this.item = item;
 
-        title = UFEDChatParser.getChatName(item.getMetadata());
-
-        isGroup = ConversationUtils.TYPE_GROUP.equalsIgnoreCase(item.getMetadata().get(ExtraProperties.CONVERSATION_TYPE))
+        isGroup = ConversationUtils.TYPE_GROUP
+                .equalsIgnoreCase(item.getMetadata().get(ExtraProperties.CONVERSATION_TYPE))
                 || item.getMetadata().getValues(ExtraProperties.CONVERSATION_PARTICIPANTS).length > 2;
     }
 
@@ -25,8 +25,8 @@ public class Chat {
         return item;
     }
 
-    public String getTitle() {
-        return title;
+    public String getId() {
+        return readUfedMetadata(item, "id");
     }
 
     public boolean isGroup() {

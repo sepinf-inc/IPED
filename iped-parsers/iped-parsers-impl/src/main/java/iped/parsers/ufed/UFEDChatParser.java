@@ -180,8 +180,8 @@ public class UFEDChatParser extends AbstractParser {
 
             Collections.sort(messages);
 
-            String virtualId = readUfedMetadata(chatMeta, "id");
-            String chatPrefix = getChatName(chatMeta);
+            String virtualId = chat.getId();
+            String chatPrefix = getChatName(chat);
 
             if (extractor.shouldParseEmbedded(chatMeta)) {
                 ReportGenerator reportGenerator = new ReportGenerator(minChatSplitSize);
@@ -643,16 +643,17 @@ public class UFEDChatParser extends AbstractParser {
         message.setMessageQuote(quotedMessage);
     }
 
-    public static String getChatName(Metadata metadata) {
+    public static String getChatName(Chat chat) {
 
-        String accountId = metadata.get(ExtraProperties.CONVERSATION_ACCOUNT + ExtraProperties.CONVERSATION_SUFFIX_ID);
-        String source = readUfedMetadata(metadata, "Source");
-        String chatType = readUfedMetadata(metadata, "ChatType");
-        String name = readUfedMetadata(metadata, "Name");
-        String id = readUfedMetadata(metadata, "Identifier");
-        String ufedId = readUfedMetadata(metadata, "id");
-        String[] participants = metadata.getValues(ExtraProperties.CONVERSATION_PARTICIPANTS);
-        String[] participantsIds = metadata.getValues(ExtraProperties.CONVERSATION_PARTICIPANTS + ExtraProperties.CONVERSATION_SUFFIX_ID);
+        Metadata chatMeta = chat.getItem().getMetadata();
+        String accountId = chatMeta.get(ExtraProperties.CONVERSATION_ACCOUNT + ExtraProperties.CONVERSATION_SUFFIX_ID);
+        String source = readUfedMetadata(chatMeta, "Source");
+        String chatType = readUfedMetadata(chatMeta, "ChatType");
+        String name = readUfedMetadata(chatMeta, "Name");
+        String id = readUfedMetadata(chatMeta, "Identifier");
+        String ufedId = readUfedMetadata(chatMeta, "id");
+        String[] participants = chatMeta.getValues(ExtraProperties.CONVERSATION_PARTICIPANTS);
+        String[] participantsIds = chatMeta.getValues(ExtraProperties.CONVERSATION_PARTICIPANTS + ExtraProperties.CONVERSATION_SUFFIX_ID);
 
         StringBuilder sb = new StringBuilder();
         sb.append(source).append(' ');
@@ -692,7 +693,12 @@ public class UFEDChatParser extends AbstractParser {
             sb.append(ufedId);
         }
 
-        return sb.toString();
+        String result = sb.toString();
+        if ("WhatsApp".equalsIgnoreCase(source)) {
+            result = StringUtils.remove(result, "@s.whatsapp.net");
+        }
+
+        return result;
     }
 
     private void storeLinkedHashes(List<Message> messages, Metadata chatMetadata) {
