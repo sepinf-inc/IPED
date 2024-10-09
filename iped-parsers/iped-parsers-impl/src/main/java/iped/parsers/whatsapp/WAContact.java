@@ -1,5 +1,7 @@
 package iped.parsers.whatsapp;
 
+import org.apache.commons.lang3.StringUtils;
+
 public class WAContact {
 
     protected static final String waSuffix = "@s.whatsapp.net";
@@ -89,17 +91,7 @@ public class WAContact {
     }
 
     public String getName() {
-        if (displayName != null && !displayName.isBlank())
-            return displayName;
-        else if (waName != null && !waName.isBlank())
-            return waName;
-        else if (givenName != null && !givenName.isBlank())
-            return givenName;
-        else if (nickName != null && !nickName.isBlank())
-            return nickName;
-        else
-            return id;
-
+        return StringUtils.firstNonBlank(displayName, waName, givenName, nickName, id);
     }
 
     public String getTitle() {
@@ -158,6 +150,11 @@ public class WAContact {
     @Override
     public int hashCode() {
         return this.getFullId().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return getName() + "(" + getFullId() + ")";
     }
 
 }

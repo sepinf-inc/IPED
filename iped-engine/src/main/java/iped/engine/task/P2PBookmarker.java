@@ -7,8 +7,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map.Entry;
 
 import org.apache.lucene.document.Document;
+import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,6 +34,7 @@ import iped.parsers.threema.ThreemaParser;
 import iped.parsers.ufed.UFEDChatParser;
 import iped.parsers.whatsapp.WhatsAppParser;
 import iped.properties.ExtraProperties;
+import iped.properties.MediaTypes;
 import iped.search.SearchResult;
 
 public class P2PBookmarker {
@@ -122,7 +125,7 @@ public class P2PBookmarker {
                 int luceneId = ipedSrc.getLuceneId(p2pItems.getId(i));
                 Document doc = ipedSrc.getReader().document(luceneId);
                 String mediaType = doc.get(IndexItem.CONTENTTYPE);
-                P2PProgram program = p2pPrograms.get(mediaType);
+                P2PProgram program = lookupProgram(mediaType, p2pPrograms);
                 if (program == null) {
                     continue;
                 }
@@ -160,14 +163,15 @@ public class P2PBookmarker {
                     continue;
 
                 String bookmarkSufix = program.appName;
-                if (UFEDChatParser.UFED_CHAT_PREVIEW_MIME.toString().equals(mediaType)) {
+                if (MediaTypes.isInstanceOf(MediaType.parse(mediaType), UFEDChatParser.UFED_CHAT_PREVIEW_MIME)) {
                     String source = doc.get(ExtraProperties.UFED_META_PREFIX + "Source"); //$NON-NLS-1$
                     if (source != null)
                         bookmarkSufix = source;
-                    String phoneOwner = doc.get(UFEDChatParser.META_PHONE_OWNER);
-                    if (phoneOwner != null && !phoneOwner.isEmpty())
-                        bookmarkSufix += " by " + phoneOwner; //$NON-NLS-1$
                 }
+
+                String owner = doc.get(ExtraProperties.CONVERSATION_ACCOUNT);
+                if (owner != null && !owner.isEmpty())
+                    bookmarkSufix += " by " + owner; //$NON-NLS-1$
 
                 int labelId = ipedSrc.getBookmarks()
                         .newBookmark(Messages.getString("P2PBookmarker.P2PBookmarkPrefix") + bookmarkSufix); //$NON-NLS-1$
@@ -187,7 +191,28 @@ public class P2PBookmarker {
         } finally {
             ipedSrc.close();
         }
-
     }
 
+    private P2PProgram lookupProgram(String mediaTypeStr, HashMap<String, P2PProgram> p2pPrograms) {
+
+        if (p2pPrograms.containsKey(mediaTypeStr)) {
+            return p2pPrograms.get(mediaTypeStr);
+        }
+
+        MediaType mediaType = MediaType.parse(mediaTypeStr);
+        P2PProgram program = null;
+        for (Entry<String, P2PProgram> entry : p2pPrograms.entrySet()) {
+            MediaType entryMediaType = MediaType.parse(entry.getKey());
+            if (MediaTypes.isInstanceOf(mediaType, entryMediaType)) {
+                program = entry.getValue();
+                break;
+            }
+        }
+
+        if (program != null) {
+            p2pPrograms.put(mediaTypeStr, program);
+        }
+
+        return program;
+    }
 }

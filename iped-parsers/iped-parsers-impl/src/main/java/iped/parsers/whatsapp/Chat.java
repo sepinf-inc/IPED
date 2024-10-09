@@ -23,6 +23,10 @@ public class Chat {
     private String recoveredFrom;
 
     private Set<WAContact> groupMembers = new HashSet<>();
+    private Set<WAContact> groupAdmins = new HashSet<>();
+
+    private WAAccount account;
+    private boolean isOwnerAdmin;
 
     public Chat(WAContact remote) {
         this.remote = remote;
@@ -143,10 +147,26 @@ public class Chat {
         return groupMembers;
     }
 
-    public void setGroupMembers(Set<WAContact> groupmembers) {
-        this.groupMembers = groupmembers;
+    public Set<WAContact> getGroupAdmins() {
+        return groupAdmins;
     }
-    
+
+    public WAAccount getAccount() {
+        return account;
+    }
+
+    public void setAccount(WAAccount account) {
+        this.account = account;
+    }
+
+    public boolean isOwnerAdmin() {
+        return isOwnerAdmin;
+    }
+
+    public void setOwnerAdmin(boolean isOwnerAdmin) {
+        this.isOwnerAdmin = isOwnerAdmin;
+    }
+
     public void setDeleted(boolean isDeleted) {
         this.isDeleted = isDeleted;
     }

@@ -21,7 +21,8 @@
       {"name": "Mailboxes", "mimes": ["application/vnd.ms-outlook-pst", "application/outlook-dbx", "application/mbox", "application/x-incredimail", "application/vnd.lotus-notes", "application/x-win10-mail-db"]},
       {"name": "Emails", "mimes": ["message/rfc822", "message/x-emlx", "application/vnd.ms-outlook", "message/outlook-pst", "application/x-ufed-html-mails", "message/x-ufed-email", "message/x-win10-mail-msg"]},
       {"name": "Appointments", "mimes": ["application/x-win10-mail-appointment"]},
-      {"name": "Win10 Mail Info", "mimes": ["application/x-win10-mail-store"]}
+      {"name": "Win10 Mail Info", "mimes": ["application/x-win10-mail-store"]},
+      {"name": "Email Attachments"}
     ]},
     {"name": "Multimedia", "categories":[
       {"name": "Audios", "mimes": ["audio"]},
@@ -86,7 +87,6 @@
         {"name": "Facebook", "mimes":["application/x-ufed-chat-preview-facebook"]},
         {"name": "Instagram", "mimes":["application/x-ufed-chat-preview-instagram"]},
         {"name": "Discord", "mimes":["application/x-discord-chat"]},
-        {"name": "Chat Activities", "mimes": ["application/x-ufed-chatactivity"]},
         {"name": "Others Chats", "mimes":["application/x-ufed-html-chats", "application/x-ufed-chats-txt", "application/x-ufed-chat", "application/x-ufed-chat-preview"]}
     ]},
     {"name": "Open Financial Exchange", "mimes": ["application/x-ofx-v1","application/x-ofx-v2","application/x-ofc"]},
@@ -163,7 +163,13 @@
     ]},
     {"name": "SMS Messages", "mimes": ["application/x-ufed-html-sms", "application/x-ufed-sms", "application/x-ios-sms-db"]},
     {"name": "MMS Messages", "mimes": ["application/x-ufed-html-mms", "application/x-ufed-mms"]},
-    {"name": "Instant Messages", "mimes": ["message/x-chat-message", "message/x-threema-message", "application/x-ufed-instantmessage", "message/x-whatsapp-message", "message/x-skype-message", "message/x-skype-filetransfer", "message/x-telegram-message", "message/x-discord-message"]},
+    {"name": "Messages", "categories":[
+      {"name": "Instant Messages", "mimes": ["message/x-chat-message", "message/x-threema-message", "application/x-ufed-instantmessage", "message/x-whatsapp-message", "message/x-skype-message", "message/x-skype-filetransfer", "message/x-telegram-message", "message/x-discord-message"]},
+      {"name": "Chat Activities", "mimes": ["application/x-ufed-chatactivity"]},
+      {"name": "Message Attachments"},
+      {"name": "Shared Contacts"},
+      {"name": "Shared Locations"}
+    ]},
     {"name": "Bluetooth Devices", "mimes": ["application/x-ufed-html-bluetooth", "application/x-ufed-bluetoothdevice"]},
     {"name": "SIM Data", "mimes": ["application/x-ufed-html-simdata", "application/x-ufed-simdata"]},
     {"name": "Calendar", "mimes": ["application/x-ufed-html-calendar", "application/x-ufed-calendarentry", "application/x-ios-calendar-db"]},

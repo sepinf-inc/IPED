@@ -19,6 +19,7 @@ import org.apache.commons.codec.binary.Hex;
 
 import iped.data.IItemReader;
 import iped.parsers.util.ChildPornHashLookup;
+import iped.parsers.util.HashUtils;
 
 /**
  *
@@ -233,15 +234,15 @@ public class Message implements Comparable<Message> {
     }
 
     public void setMediaHash(String mediaHash, boolean encoded) {
-        if (mediaHash == null || mediaHash.isEmpty())
-            return;
-        if (encoded) {
-            byte[] hash = Base64.getDecoder().decode(mediaHash);
-            this.mediaHash = new String(Hex.encodeHex(hash, false));
-        } else {
-            this.mediaHash = mediaHash;
+        if (HashUtils.isValidHash(mediaHash)) {
+            if (encoded) {
+                byte[] hash = Base64.getDecoder().decode(mediaHash);
+                this.mediaHash = new String(Hex.encodeHex(hash, false));
+            } else {
+                this.mediaHash = mediaHash;
+            }
+            childPornSets = ChildPornHashLookup.lookupHashAndMerge(this.mediaHash, childPornSets);
         }
-        childPornSets = ChildPornHashLookup.lookupHashAndMerge(this.mediaHash, childPornSets);
     }
 
     public byte[] getThumbData() {

@@ -1225,7 +1225,7 @@ public class ReportGenerator {
 
     private void printQuote(PrintWriter out, Message message, WAContactsDirectory contactsDirectory,
             WAAccount account) {
-        String quoteClass = message.isFromMe() ? "quoteTo" : "quoteFrom";
+        String quoteClass = "quoteBlock " + (message.isFromMe() ? "quoteTo" : "quoteFrom");
         Message messageQuote = message.getMessageQuote();
 
         if (messageQuote != null) {

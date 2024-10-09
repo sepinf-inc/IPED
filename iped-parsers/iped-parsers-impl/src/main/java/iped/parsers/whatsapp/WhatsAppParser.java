@@ -48,6 +48,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.apache.commons.codec.binary.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
@@ -72,6 +73,7 @@ import iped.parsers.plist.detector.PListDetector;
 import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.sqlite.SQLite3Parser;
 import iped.parsers.standard.StandardParser;
+import iped.parsers.util.ConversationUtils;
 import iped.parsers.util.ItemInfo;
 import iped.parsers.util.PhoneParsingConfig;
 import iped.parsers.vcard.VCardParser;
@@ -290,6 +292,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             searchMediaFilesForMessagesInBatches(c.getMessages(), searcher, handler, extractor, dbPath, context, null);
             int frag = 0;
             int firstMsg = 0;
+            int messagesCount = (int) c.getMessages().stream().filter(m -> !m.isSystemMessage()).count();
             ReportGenerator reportGenerator = new ReportGenerator();
             reportGenerator.setMinChatSplitSize(this.minChatSplitSize);
             StringBuilder histFrag = new StringBuilder ();
@@ -326,20 +329,35 @@ public class WhatsAppParser extends SQLite3DBParser {
                 if (extractMessages && msgSubset.size() > 0) {
                     chatMetadata.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
                 }
-                if (account != null) {
-                    String local = formatContact(account, cache);
-                    chatMetadata.add(ExtraProperties.PARTICIPANTS, local);
-                }
-                if (c.isGroupChat()) {
+
+                if (c.isGroupOrChannelChat()) {
                     for (WAContact member : c.getGroupMembers()) {
-                        chatMetadata.add(ExtraProperties.PARTICIPANTS, formatContact(member, cache));
+                        addParticipantFields(chatMetadata, ExtraProperties.CONVERSATION_PARTICIPANTS, member);
                     }
-                    // string formatted as {creator's phone number}-{creation time}@g.us
-                    chatMetadata.add(ExtraProperties.GROUP_ID, c.getRemote().getFullId());
+                    for (WAContact admin : c.getGroupAdmins()) {
+                        addParticipantFields(chatMetadata, ExtraProperties.CONVERSATION_ADMINS, admin);
+                    }
+                    chatMetadata.set(ExtraProperties.CONVERSATION_TYPE, c.isGroupChat() ? ConversationUtils.TYPE_GROUP : ConversationUtils.TYPE_BROADCAST);
                 } else {
                     if (c.getRemote() != null) {
-                        chatMetadata.add(ExtraProperties.PARTICIPANTS, formatContact(c.getRemote(), cache));
+                        addParticipantFields(chatMetadata, ExtraProperties.CONVERSATION_PARTICIPANTS, c.getRemote());
                     }
+                    if (account != null) {
+                        addParticipantFields(chatMetadata, ExtraProperties.CONVERSATION_PARTICIPANTS, account);
+                    }
+                    chatMetadata.set(ExtraProperties.CONVERSATION_TYPE, ConversationUtils.TYPE_PRIVATE);
+                }
+
+                // Communication:{ID, Name, Owner, MessagesCount} 
+                chatMetadata.set(ExtraProperties.CONVERSATION_ID, c.getRemote() != null ? c.getRemote().getFullId() : c.getPrintId());
+                chatMetadata.set(ExtraProperties.CONVERSATION_NAME, c.getRemote() != null ? c.getRemote().getName() : "<NA>");
+                if (account != null) {
+                    addParticipantFields(chatMetadata, ExtraProperties.CONVERSATION_ACCOUNT, account);
+                }
+                chatMetadata.set(ExtraProperties.CONVERSATION_MESSAGES_COUNT, messagesCount);
+
+                if (c.isOwnerAdmin()) {
+                    chatMetadata.set(ExtraProperties.CONVERSATION_IS_ADMIN, true);
                 }
 
                 ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
@@ -355,6 +373,12 @@ public class WhatsAppParser extends SQLite3DBParser {
             c.getMessages().stream().forEach(m -> m.setMediaItem(null));
         }
 
+    }
+
+    private void addParticipantFields(Metadata chatMetadata, String field, WAContact member) {
+        chatMetadata.add(field, ConversationUtils.buidPartyString(member.getName(), member.getFullId(), member.getId(), null, "WhatsApp"));
+        chatMetadata.add(field + ExtraProperties.CONVERSATION_SUFFIX_ID, member.getFullId());
+        chatMetadata.add(field + ExtraProperties.CONVERSATION_SUFFIX_PHONE, member.getId());
     }
 
     private void parseWhatsappMessages(InputStream stream, ContentHandler handler, Metadata metadata,
@@ -384,6 +408,12 @@ public class WhatsAppParser extends SQLite3DBParser {
                 extFactory.setConnectionParams(tis, metadata, context, this);
                 Extractor waExtractor = extFactory.createMessageExtractor(filePath, tempDbFile, contacts, account, recoverDeletedRecords);
                 List<Chat> chatList = waExtractor.getChatList();
+                for (Chat chat : chatList) {
+                    chat.setAccount(account);
+                    if (chat.getGroupAdmins().stream().map(WAContact::getFullId).anyMatch(account.getFullId()::equals)) {
+                        chat.setOwnerAdmin(true);
+                    }
+                }
                 createReport(chatList, searcher, contacts, handler, extractor, account, tis.getFile(), context);
 
             } catch (Exception e) {
@@ -896,7 +926,7 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
         to += " (id:" + c.getId() + ")";
         meta.add(org.apache.tika.metadata.Message.MESSAGE_TO, to);
-        meta.set(ExtraProperties.IS_GROUP_MESSAGE, "true");
+        meta.set(ExtraProperties.COMMUNICATION_IS_GROUP_MESSAGE, true);
     }
 
     private void extractMessages(String chatName, Chat c, List<Message> messages, WAAccount account,
@@ -943,6 +973,12 @@ public class WhatsAppParser extends SQLite3DBParser {
             }
             meta.set(ExtraProperties.MESSAGE_BODY, m.getData());
             meta.set(ExtraProperties.URL, m.getUrl());
+
+            if (m.isFromMe()) {
+                meta.set(ExtraProperties.COMMUNICATION_DIRECTION, ConversationUtils.DIRECTION_OUTGOING);
+            } else {
+                meta.set(ExtraProperties.COMMUNICATION_DIRECTION, ConversationUtils.DIRECTION_INCOMING);
+            }
 
             meta.set("mediaName", m.getMediaName()); //$NON-NLS-1$
             meta.set("mediaMime", m.getMediaMime()); //$NON-NLS-1$

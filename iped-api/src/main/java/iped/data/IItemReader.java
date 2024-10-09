@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 
 import javax.imageio.stream.ImageInputStream;
@@ -153,6 +154,8 @@ public interface IItemReader extends IStreamSource {
     public Map<String, Object> getExtraAttributeMap();
 
     public IDataSource getDataSource();
+
+    public List<IItemReader> getChildren();
 
     /**
      * @return Object containing the metadata of the item
