@@ -65,6 +65,23 @@ public class UFEDChatParser extends AbstractParser {
 
     public static final String ATTACHED_MEDIA_MSG = "ATTACHED_MEDIA: ";
 
+    protected static final String WHATSAPP = "WhatsApp";
+    protected static final String WHATSAPP_BUSINESS = "WhatsApp Business";
+    protected static final String TELEGRAM = "Telegram";
+
+    protected static final String CHAT_ACCOUNT = "Account";
+    protected static final String CHAT_PHONE_OWNER = "PhoneOwner";
+
+    protected static final String CHATTYPE_ONEONONE = "OneOnOne";
+    protected static final String CHATTYPE_ONEONONE_TITLE = "OneOnOne";
+    protected static final String CHATTYPE_GROUP = "Group";
+    protected static final String CHATTYPE_GROUP_TITLE = "Group";
+    protected static final String CHATTYPE_BROADCAST = "Broadcast";
+    protected static final String CHATTYPE_BROADCAST_TITLE = "Broadcast";
+    protected static final String CHATTYPE_BROADCAST_STATUS_TITLE = "Status";
+    protected static final String CHATTYPE_UNKNOWN = "Unknown";
+    protected static final String CHATTYPE_UNKNOWN_TITLE = "Unknown";
+
     private int minChatSplitSize = 6000000;
 
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(UFED_CHAT_MIME, UFED_CHAT_WA_MIME,
@@ -249,16 +266,70 @@ public class UFEDChatParser extends AbstractParser {
     public static String getChatName(IItemReader item) {
         String name = "Chat"; //$NON-NLS-1$
         String source = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source"); //$NON-NLS-1$
+        String account = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Account"); //$NON-NLS-1$
+        String phoneOwner = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "phoneOwner"); //$NON-NLS-1$
+        String idProperty = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "id"); //$NON-NLS-1$
+        String nameProperty = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name"); //$NON-NLS-1$
+        String chatType = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "ChatType");
+        String[] parties = item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants"); //$NON-NLS-1$
+
         if (source != null)
             name += "_" + source; //$NON-NLS-1$
-        String[] parties = item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants"); //$NON-NLS-1$
-        if (parties != null && parties.length > 2) {
-            name += "_Group_" + item.getName().split("_")[1]; //$NON-NLS-1$ //$NON-NLS-2$
-        } else if (parties != null && parties.length > 0) {
-            name += "_" + parties[0]; //$NON-NLS-1$
-            if (parties.length > 1)
-                name += "_" + parties[1]; //$NON-NLS-1$
+        if (account != null)
+            name += "_" + CHAT_ACCOUNT + "_" + account; //$NON-NLS-1$
+        if (phoneOwner != null)
+            name += "_" + CHAT_PHONE_OWNER + "_" + phoneOwner; //$NON-NLS-1$
+        if (chatType != null) {
+            if (chatType.equals(CHATTYPE_ONEONONE)) {
+                name += "_" + CHATTYPE_ONEONONE_TITLE;
+                if (parties != null)
+                    name += "_" + ((parties.length > 1) && (parties[0].equals(phoneOwner)) ? parties[1] : parties[0]);
+                else
+                    name += "_" + idProperty;
+            }
+            else if (chatType.equals(CHATTYPE_GROUP))
+                name += "_" + CHATTYPE_GROUP_TITLE + "_" + (nameProperty != null ? nameProperty : idProperty);
+            else if (chatType.equals(CHATTYPE_BROADCAST)) {
+                if (parties != null) {
+                    if ((parties.length == 1) && ((source != null) && (source.equals(WHATSAPP) || 
+                                                                       source.equals(WHATSAPP_BUSINESS) || 
+                                                                       source.equals(TELEGRAM))))
+                        // "Status" chat type (known from behaviour)
+                        // NOTE: Apps with this behaviour should be added to this if condition
+                        name += "_" + CHATTYPE_BROADCAST_STATUS_TITLE + "_" + parties[0];
+                    else
+                        name += "_" + CHATTYPE_BROADCAST_TITLE + "_" + (nameProperty != null ? nameProperty : idProperty);
+                }
+                else
+                    name += "_" + CHATTYPE_BROADCAST_TITLE + "_" + (nameProperty != null ? nameProperty : idProperty);
+            }
+            else if (chatType.equals(CHATTYPE_UNKNOWN)) {
+                if ((source != null) && (source.equals(WHATSAPP) || 
+                                         source.equals(WHATSAPP_BUSINESS) || 
+                                         source.equals(TELEGRAM)))
+                    // "Unknown" chat type regarding apps for which there are specific chat types
+                    // NOTE: Apps with similar behaviour should be added to this if condition
+                    name += "_" + CHATTYPE_UNKNOWN_TITLE + "_" + idProperty;
+                else {
+                    // "Unknown" chat type regarding apps for which there aren't specific chat types
+                    // Communication type is derived from the number of participants
+                    if ((parties != null) && (parties.length > 0)) {
+                        if (parties.length > 2)
+                            name += "_" + CHATTYPE_GROUP_TITLE + "_" + idProperty;
+                        else
+                            name += "_" + CHATTYPE_ONEONONE_TITLE + "_" + ((parties.length > 1) && (parties[0].equals(phoneOwner)) ? parties[1] : parties[0]);
+                    }
+                    else
+                        name += "_" + CHATTYPE_UNKNOWN_TITLE + "_" + idProperty;
+                }
+            }
+            else
+                name += "_" + chatType + "_" + idProperty;
         }
+        else {
+            name += "_" + idProperty;
+        }
+
         return name;
     }
 
