@@ -806,18 +806,12 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
     }
 
-    private void fillAccountWithContactData(WAAccount account, ParseContext context, ContentHandler handler) {
+    private void fillAccountWithContactData(WAAccount account, IItemSearcher searcher, String dbPath) {
         if (account == null || account.getWaName() != null) {
             return;
         }
-        IItemSearcher searcher = context.get(IItemSearcher.class);
-        ItemInfo itemInfo = context.get(ItemInfo.class);
-        String filePath = null;
-        if (itemInfo != null) {
-            filePath = Paths.get(itemInfo.getPath()).getParent().resolveSibling("databases").resolve("wa.db").toString().replace("\\", "/");
-        }
         try {
-            WAContactsDirectory contacts = getWAContactsDirectoryForPath(filePath, searcher, ExtractorAndroidFactory.class);
+            WAContactsDirectory contacts = getWAContactsDirectoryForPath(dbPath, searcher, ExtractorAndroidFactory.class);
             WAContact c = contacts.getContact(account.getFullId());
             if (c != null) {
                 account.setWaName(c.getDisplayName());
@@ -828,16 +822,11 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
     }
 
-    private void fillAccountAvatar(WAAccount account, ParseContext context, ContentHandler handler) {
+    private void fillAccountAvatar(WAAccount account, IItemSearcher searcher, String dbPath) {
         if (account == null || account.getAvatar() != null || account.getAvatarPath() != null) {
             return;
         }
-        IItemSearcher searcher = context.get(IItemSearcher.class);
-        ItemInfo itemInfo = context.get(ItemInfo.class);
-        String filePath = null;
-        if (itemInfo != null) {
-            filePath = Paths.get(itemInfo.getPath()).getParent().resolveSibling("files").resolve("me.jpg").toString().replace("\\", "/");
-        }
+        String filePath = Paths.get(dbPath).getParent().resolveSibling("files").resolve("me.jpg").toString().replace("\\", "/");
 
         String query = BasicProps.PATH + ":\"" + searcher.escapeQuery(filePath) + "\""; //$NON-NLS-1$ //$NON-NLS-2$
         List<IItemReader> result = searcher.search(query);
@@ -905,6 +894,12 @@ public class WhatsAppParser extends SQLite3DBParser {
                 }
             }
         }
+
+        if (isAndroid) {
+            fillAccountAvatar(account, searcher, dbPath);
+            fillAccountWithContactData(account, searcher, dbPath);
+        }
+
         return account;
     }
 
@@ -1260,8 +1255,8 @@ public class WhatsAppParser extends SQLite3DBParser {
                 }
 
                 if (isAndroid) {
-                    fillAccountAvatar(account, context, handler);
-                    fillAccountWithContactData(account, context, handler);
+                    fillAccountAvatar(account, searcher, dbPath);
+                    fillAccountWithContactData(account, searcher, dbPath);
                     parseEmbeddedWhatsAppAccount(account, context, handler);
                 }
 
