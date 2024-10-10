@@ -19,7 +19,6 @@
 package iped.app.ui;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.swing.ListSelectionModel;
@@ -29,11 +28,12 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TermInSetQuery;
-import org.apache.lucene.util.BytesRef;
 
 import iped.data.IItem;
+import iped.engine.search.QueryBuilder;
 import iped.engine.task.HashTask;
+import iped.exception.ParseException;
+import iped.exception.QueryNodeException;
 import iped.parsers.ares.AresParser;
 import iped.parsers.emule.KnownMetParser;
 import iped.parsers.shareaza.ShareazaLibraryDatParser;
@@ -83,11 +83,15 @@ public class ReferencedByTableModel extends BaseTableModel {
         String sha1 = doc.get(HashTask.HASH.SHA1.toString());
         String sha256 = doc.get(HashTask.HASH.SHA256.toString());
         String edonkey = doc.get(HashTask.HASH.EDONKEY.toString());
-        List<BytesRef> hashes = Arrays.asList(md5, sha1, sha256, edonkey).stream().filter(StringUtils::isNotBlank)
-                .map(h -> new BytesRef(h)).collect(Collectors.toList());
+        String hashes = Arrays.asList(md5, sha1, sha256, edonkey).stream().filter(StringUtils::isNotBlank).collect(Collectors.joining(" "));
         if (!hashes.isEmpty()) {
-            queryBuilder.add(new TermInSetQuery(ExtraProperties.LINKED_ITEMS, hashes), Occur.SHOULD);
-            queryBuilder.add(new TermInSetQuery(ExtraProperties.SHARED_HASHES, hashes), Occur.SHOULD);
+            QueryBuilder b = new QueryBuilder(App.get().appCase);
+            try {
+                queryBuilder.add(b.getQuery(ExtraProperties.LINKED_ITEMS + ":(" + hashes + ") "), Occur.SHOULD);
+                queryBuilder.add(b.getQuery(ExtraProperties.SHARED_HASHES + ":(" + hashes + ")"), Occur.SHOULD);
+            } catch (ParseException | QueryNodeException e) {
+                e.printStackTrace();
+            }
         }
 
         return queryBuilder.build();
