@@ -879,7 +879,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                     WAAccount a = isAndroid ? WAAccount.getFromAndroidXml(is) : WAAccount.getFromIOSPlist(is);
                     if (a != null) {
                         if (account.isUnknown() && !a.getId().isEmpty()) {
-                            account.setId(a.getId());
+                            account.updateId(a.getFullId());
                             account.setUnknown(false);
                         }
                         if (account.getWaName() == null && a.getWaName() != null) {

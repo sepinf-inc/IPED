@@ -30,10 +30,6 @@ public class WAAccount extends WAContact {
         super(id);
     }
 
-    public void setId(String id) {
-        this.id = id;
-    }
-
     public String getTitle() {
         return "WhatsApp Account: " + getName();
     }
