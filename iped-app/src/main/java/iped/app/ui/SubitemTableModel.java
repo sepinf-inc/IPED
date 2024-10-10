@@ -21,20 +21,24 @@ package iped.app.ui;
 import java.awt.Rectangle;
 
 import javax.swing.ListSelectionModel;
-import javax.swing.SwingUtilities;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.IntPoint;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
 
-import iped.engine.search.IPEDSearcher;
-import iped.engine.search.LuceneSearchResult;
-import iped.engine.search.MultiSearchResult;
-import iped.engine.task.index.IndexItem;
 import iped.properties.BasicProps;
 import iped.utils.LocalizedFormat;
 
 public class SubitemTableModel extends BaseTableModel {
 
     private static final long serialVersionUID = 1L;
+
+    public SubitemTableModel() {
+    }
 
     @Override
     public void valueChanged(ListSelectionModel lsm) {
@@ -47,35 +51,20 @@ public class SubitemTableModel extends BaseTableModel {
     }
 
     @Override
-    public void listItems(Document doc) {
+    public Query createQuery(Document doc) {
 
-        String parentId = doc.get(IndexItem.ID);
+        String id = doc.get(BasicProps.ID);
+        String sourceUUID = doc.get(BasicProps.EVIDENCE_UUID);
 
-        String textQuery = IndexItem.PARENTID + ":" + parentId;
+        BooleanQuery.Builder queryBuilder = new BooleanQuery.Builder();
+        queryBuilder.add(IntPoint.newExactQuery(BasicProps.PARENTID, Integer.parseInt(id)), Occur.MUST);
+        queryBuilder.add(new TermQuery(new Term(BasicProps.EVIDENCE_UUID, sourceUUID)), Occur.MUST);
 
-        String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
-        textQuery += " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID;
+        return queryBuilder.build();
+    }
 
-        try {
-            IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery, BasicProps.NAME);
-            results = MultiSearchResult.get(task.multiSearch(), App.get().appCase);
-
-            final int sumSubitens = results.getLength();
-
-            if (sumSubitens > 0) {
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        App.get().subitemDock.setTitleText(LocalizedFormat.format(sumSubitens) + Messages.getString("SubitemTableModel.Subitens"));
-                    }
-                });
-            }
-
-        } catch (Exception e) {
-            results = new LuceneSearchResult(0);
-            e.printStackTrace();
-        }
-
-        fireTableDataChanged();
+    @Override
+    public void onListItemsResultsComplete() {
+        App.get().subitemDock.setTitleText(LocalizedFormat.format(results.getLength()) + Messages.getString("SubitemTableModel.Subitens"));
     }
 }
