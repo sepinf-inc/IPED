@@ -57,4 +57,17 @@ public class SignatureConfig extends AbstractTaskConfig<String> {
         customSignaturesXml = new String(Files.readAllBytes(resource), StandardCharsets.UTF_8);
     }
 
+    @Override
+    public void save(Path resource) {
+        try {
+            File confDir = new File(resource.toFile(), Configuration.CONF_DIR);
+            confDir.mkdirs();
+            File confFile = new File(confDir, CUSTOM_MIMES_CONFIG);            
+
+            Files.write(confFile.toPath(), customSignaturesXml.getBytes(StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 }

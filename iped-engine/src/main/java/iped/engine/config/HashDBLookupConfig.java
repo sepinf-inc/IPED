@@ -1,5 +1,6 @@
 package iped.engine.config;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream.Filter;
@@ -56,7 +57,6 @@ public class HashDBLookupConfig extends AbstractTaskConfig<Pair<Boolean, String>
 
     @Override
     public void processTaskConfig(Path resource) throws IOException {
-
         if (resource.endsWith(CONFIG_FILE)) {
             UTF8Properties properties = new UTF8Properties();
             properties.load(resource.toFile());
@@ -67,7 +67,6 @@ public class HashDBLookupConfig extends AbstractTaskConfig<Pair<Boolean, String>
         } else if (resource.endsWith(NSRL_CONFIG_FILE)) {
             this.nsrlConfig = new String(Files.readAllBytes(resource), StandardCharsets.UTF_8);
         }
-
     }
 
     public boolean isExcludeKnown() {
@@ -87,6 +86,27 @@ public class HashDBLookupConfig extends AbstractTaskConfig<Pair<Boolean, String>
     public void setConfiguration(Pair<Boolean, String> config) {
         this.excludeKnown = config.getLeft();
         this.nsrlConfig = config.getRight();
+    }
+
+    @Override
+    public void save(Path resource) {
+        try {
+            File confDir = new File(resource.toFile(), Configuration.CONF_DIR);
+            confDir.mkdirs();
+
+            if (resource.endsWith(CONFIG_FILE)) {
+                File confFile = new File(confDir, CONFIG_FILE);            
+                UTF8Properties properties = new UTF8Properties();
+                properties.load(resource.toFile());
+                properties.setProperty(EXCLUDE_KNOWN, Boolean.toString(excludeKnown));
+                properties.store(confFile);
+            } else if (resource.endsWith(NSRL_CONFIG_FILE)) {
+                File confFile = new File(confDir, NSRL_CONFIG_FILE);            
+                Files.write(confFile.toPath(),this.nsrlConfig.getBytes(StandardCharsets.UTF_8));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }

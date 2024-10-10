@@ -172,5 +172,4 @@ public class IndexTaskConfig extends AbstractTaskPropertiesConfig {
     public int getCommitIntervalSeconds() {
         return commitIntervalSeconds;
     }
-
 }

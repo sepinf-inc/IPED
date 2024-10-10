@@ -1,20 +1,22 @@
 package iped.engine.config;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Path;
 
+import iped.configuration.EnabledInterface;
 import iped.utils.UTF8Properties;
 
-public class OCRConfig extends AbstractPropertiesConfigurable {
+public class OCRConfig extends AbstractPropertiesConfigurable implements EnabledInterface {
     /**
      * 
      */
     private static final long serialVersionUID = 1L;
 
     private static final String CONFIG_FILE0 = "IPEDConfig.txt"; //$NON-NLS-1$
-    public static final String CONFIG_FILE = "conf/OCRConfig.txt"; //$NON-NLS-1$
+    public static final String CONFIG_FILE = "OCRConfig.txt"; //$NON-NLS-1$
 
     private Boolean enableOCR;
     private boolean skipKnownFiles;
@@ -45,7 +47,9 @@ public class OCRConfig extends AbstractPropertiesConfigurable {
     @Override
     public void processProperties(UTF8Properties properties) {
 
-        String value = properties.getProperty("enableOCR"); //$NON-NLS-1$
+        String value;
+
+        value = properties.getProperty("enableOCR"); //$NON-NLS-1$
         if (value != null && !value.trim().isEmpty()) {
             if (Boolean.valueOf(value.trim())) {
                 enableOCR = true;
@@ -55,7 +59,7 @@ public class OCRConfig extends AbstractPropertiesConfigurable {
         } else if (enableOCR == null) {
             enableOCR = false;
         }
-
+        
         value = properties.getProperty("OCRLanguage"); //$NON-NLS-1$
         if (value != null && !value.trim().isEmpty()) {
             ocrLanguage = value.trim();
@@ -168,6 +172,49 @@ public class OCRConfig extends AbstractPropertiesConfigurable {
 
     public String getMaxConvImageSize() {
         return maxConvImageSize;
+    }
+
+    @Override
+    public void save(Path resource) {
+        try {
+            File confDir = new File(resource.toFile(), Configuration.CONF_DIR);
+            confDir.mkdirs();
+            File confFile = new File(confDir, CONFIG_FILE);            
+            properties.store(confFile);
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void processConfig(Path resource) throws IOException {
+        if (resource.getName(resource.getNameCount() - 1).toString().equals(CONFIG_FILE0)) {
+            // loads only enableOCR if is IPEDConfig.txt
+            UTF8Properties lproperties = new UTF8Properties();
+            lproperties.load(resource.toFile());
+            String value = lproperties.getProperty("enableOCR"); //$NON-NLS-1$
+            if (value != null && !value.trim().isEmpty()) {
+                if (Boolean.valueOf(value.trim())) {
+                    enableOCR = true;
+                } else {
+                    enableOCR = false;
+                }
+            } else if (enableOCR == null) {
+                enableOCR = false;
+            }
+        } else {
+            super.processConfig(resource);
+        }
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return enableOCR;
+    }
+
+    @Override
+    public void setEnabled(boolean enabled) {
+        enableOCR = enabled;
     }
 
 }

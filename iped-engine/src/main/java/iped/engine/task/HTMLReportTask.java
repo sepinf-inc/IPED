@@ -197,7 +197,11 @@ public class HTMLReportTask extends AbstractTask {
     }
 
     public List<Configurable<?>> getConfigurables() {
-        return Arrays.asList(new HtmlReportTaskConfig());
+        HtmlReportTaskConfig result = ConfigurationManager.get().findObject(HtmlReportTaskConfig.class);
+        if(result == null) {
+            result = new HtmlReportTaskConfig();
+        }
+        return Arrays.asList(result);
     }
 
     /**

@@ -116,23 +116,23 @@ public class ParsersConfig implements Configurable<String> {
     public void setConfiguration(String config) {
         parserConfigXml = config;
     }
-
+    
     public String removeDisabledParsers(String parserConfigXml) {
-        String[] slices = parserConfigXml.split(PARSER_DISABLED_ATTR + "=\"true\"");
-        StringBuffer result = new StringBuffer();
+        String[] slices = parserConfigXml.split(PARSER_DISABLED_ATTR+"=\"true\"");
+        StringBuffer result=new StringBuffer();
         for (int i = 0; i < slices.length; i++) {
             String part = slices[i];
-            if (i > 0) {
+            if(i>0) {
                 int disabledParserEndIndex = part.indexOf(">");
-                if (disabledParserEndIndex == 0 || part.charAt(disabledParserEndIndex - 1) != '/') {
+                if(disabledParserEndIndex==0 || part.charAt(disabledParserEndIndex-1)!='/') {
                     disabledParserEndIndex = part.indexOf("</parser>");
                 }
-                part = part.substring(disabledParserEndIndex + 1);
+                part=part.substring(disabledParserEndIndex+1);
             }
-            if (i < slices.length - 1) {
+            if(i<slices.length-1) {
                 int disabledParserIndex = part.lastIndexOf("<parser");
                 result.append(part.substring(0, disabledParserIndex));
-            } else {
+            }else {
                 result.append(part);
             }
         }
@@ -143,7 +143,6 @@ public class ParsersConfig implements Configurable<String> {
         if (tmp == null) {
             try {
                 tmp = Files.createTempFile("parser-config", ".xml");
-
                 Files.write(tmp, removeDisabledParsers(parserConfigXml).getBytes(StandardCharsets.UTF_8));
                 tmp.toFile().deleteOnExit();
 
@@ -154,4 +153,21 @@ public class ParsersConfig implements Configurable<String> {
         return tmp.toFile();
     }
 
+    @Override
+    public void save(Path resource) {
+        try {
+            File confDir = new File(resource.toFile(), Configuration.CONF_DIR);
+            confDir.mkdirs();
+            File confFile = new File(confDir, PARSER_CONFIG);            
+
+            Files.write(confFile.toPath(), parserConfigXml.getBytes(StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void reset() {
+        // TODO Auto-generated method stub        
+    }
 }

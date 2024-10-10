@@ -1,5 +1,6 @@
 package iped.engine.config;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Path;
@@ -8,7 +9,6 @@ import iped.configuration.EnabledInterface;
 import iped.utils.UTF8Properties;
 
 public class EnableTaskProperty extends AbstractPropertiesConfigurable implements EnabledInterface {
-
     /**
      * 
      */
@@ -54,6 +54,18 @@ public class EnableTaskProperty extends AbstractPropertiesConfigurable implement
     @Override
     public void setEnabled(boolean enabled) {
         this.value = enabled;
+    }
+
+    @Override
+    public void save(Path resource) {
+        try {
+            File confFile = new File(resource.toFile(), Configuration.CONFIG_FILE);
+            properties.load(confFile);
+            properties.setProperty(propertyName, Boolean.toString(value));
+            properties.store(confFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }
