@@ -168,7 +168,7 @@
     {"name": "SIM Data", "mimes": ["application/x-ufed-html-simdata", "application/x-ufed-simdata"]},
     {"name": "Calendar", "mimes": ["application/x-ufed-html-calendar", "application/x-ufed-calendarentry", "application/x-ios-calendar-db"]},
     {"name": "Logs", "mimes": ["application/x-ufed-html-logs", "application/x-ufed-logentry"]},
-    {"name": "User Accounts", "mimes": ["application/x-ufed-html-users", "application/x-ufed-useraccount", "application/x-ufed-user", "contact/x-skype-account", "application/x-whatsapp-account", "application/x-telegram-account", "application/x-gdrive-account-info"]},
+    {"name": "User Accounts", "mimes": ["application/x-ufed-html-users", "application/x-ufed-useraccount", "application/x-ufed-user", "contact/x-skype-account", "application/x-whatsapp-account", "application/x-telegram-account", "application/x-gdrive-account-info", "application/x-whatsapp-user-xml"]},
     {"name": "Searches", "mimes": ["application/x-ufed-html-searches", "application/x-ufed-searcheditem"]},
     {"name": "Notes", "mimes": ["application/x-ufed-html-notes", "application/x-ufed-note", "application/x-ios-oldnotes-db", "application/x-ios-notes-db"]},
     {"name": "Wireless Networks", "mimes": ["application/x-ufed-html-wifi", "application/x-ufed-wirelessnetwork"]},
