@@ -92,9 +92,6 @@ import iped.utils.SimpleHTMLEncoder;
  */
 public class WhatsAppParser extends SQLite3DBParser {
 
-    /**
-     * 
-     */
     private static Logger logger = LoggerFactory.getLogger(WhatsAppParser.class);
 
     private static final long serialVersionUID = 1L;
@@ -177,7 +174,6 @@ public class WhatsAppParser extends SQLite3DBParser {
     private boolean recoverDeletedRecords = true;
     private int minChatSplitSize = 6000000;
 
-
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
         if (!sha256Checked.getAndSet(true)) {
@@ -231,7 +227,6 @@ public class WhatsAppParser extends SQLite3DBParser {
     private boolean isDownloadMediaFilesEnabled() {
         return Boolean.valueOf(System.getProperty(DOWNLOAD_MEDIA_FILES_PROP));
     }
-
 
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
@@ -296,9 +291,9 @@ public class WhatsAppParser extends SQLite3DBParser {
             int firstMsg = 0;
             ReportGenerator reportGenerator = new ReportGenerator();
             reportGenerator.setMinChatSplitSize(this.minChatSplitSize);
-            StringBuilder histFrag = new StringBuilder ();
+            StringBuilder histFrag = new StringBuilder();
             int histFragCount = 0;
-            byte[] bytes = reportGenerator.generateNextChatHtml(c, contacts, account,histFragCount,histFrag);
+            byte[] bytes = reportGenerator.generateNextChatHtml(c, contacts, account, histFragCount, histFrag);
             while (bytes != null) {
                 histFragCount++;
                 Metadata chatMetadata = new Metadata();
@@ -312,7 +307,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                     storeLocations(msgSubset, chatMetadata);
                 }
                 firstMsg = nextMsg;
-                byte[] nextBytes = reportGenerator.generateNextChatHtml(c, contacts, account, histFragCount,histFrag);
+                byte[] nextBytes = reportGenerator.generateNextChatHtml(c, contacts, account, histFragCount, histFrag);
 
                 String chatName = c.getTitle();
                 if (frag > 0 || nextBytes != null)
@@ -386,7 +381,8 @@ public class WhatsAppParser extends SQLite3DBParser {
                 exportWalLog(tempDbFile, context, tmp);
                 exportRollbackJournal(tempDbFile, context, tmp);
                 extFactory.setConnectionParams(tis, metadata, context, this);
-                Extractor waExtractor = extFactory.createMessageExtractor(filePath, tempDbFile, contacts, account, recoverDeletedRecords);
+                Extractor waExtractor = extFactory.createMessageExtractor(filePath, tempDbFile, contacts, account,
+                        recoverDeletedRecords);
                 List<Chat> chatList = waExtractor.getChatList();
                 createReport(chatList, searcher, contacts, handler, extractor, account, tis.getFile(), context);
 
@@ -546,7 +542,8 @@ public class WhatsAppParser extends SQLite3DBParser {
             exportRollbackJournal(tempFile, context, tmp);
 
             extFactory.setConnectionParams(tis, metadata, context, this);
-            Extractor waExtractor = extFactory.createMessageExtractor(filePath, tempFile, contacts, account, recoverDeletedRecords);
+            Extractor waExtractor = extFactory.createMessageExtractor(filePath, tempFile, contacts, account,
+                    recoverDeletedRecords);
             return waExtractor.getChatList();
         }
     }
@@ -567,7 +564,8 @@ public class WhatsAppParser extends SQLite3DBParser {
         dbsSearchedFor = true;
     }
 
-    private void addBackupMessage(WhatsAppContext item, IItemReader main, XHTMLContentHandler xhtml) throws SAXException {
+    private void addBackupMessage(WhatsAppContext item, IItemReader main, XHTMLContentHandler xhtml)
+            throws SAXException {
         IItem i = (IItem) item.getItem();
         i.getMetadata().set(IS_BACKUP_FROM, main.getExtraAttribute(ExtraProperties.GLOBAL_ID).toString());
         xhtml.startDocument();
@@ -810,14 +808,15 @@ public class WhatsAppParser extends SQLite3DBParser {
             return;
         }
         try {
-            WAContactsDirectory contacts = getWAContactsDirectoryForPath(dbPath, searcher, ExtractorAndroidFactory.class);
+            WAContactsDirectory contacts = getWAContactsDirectoryForPath(dbPath, searcher,
+                    ExtractorAndroidFactory.class);
             WAContact c = contacts.getContact(account.getFullId());
             if (c != null) {
                 account.setWaName(c.getDisplayName());
                 account.setStatus(c.getStatus());
             }
         } catch (Exception e) {
-           logger.warn("Error filling WhatsApp account with contact data: " + account.getFullId(), e);
+            logger.warn("Error filling WhatsApp account with contact data: " + account.getFullId(), e);
         }
     }
 
@@ -870,7 +869,8 @@ public class WhatsAppParser extends SQLite3DBParser {
             String[] names;
             if (isAndroid) {
                 names = new String[] { "com.whatsapp.w4b_preferences_light.xml", "com.whatsapp_preferences_light.xml",
-                        "com.whatsapp.w4b_preferences.xml", "com.whatsapp_preferences.xml", "registration.RegisterPhone.xml", "startup_prefs.xml" };
+                        "com.whatsapp.w4b_preferences.xml", "com.whatsapp_preferences.xml",
+                        "registration.RegisterPhone.xml", "startup_prefs.xml" };
                 query.append(BasicProps.NAME).append(":(");
                 for (int i = 0; i < names.length; i++) {
                     query.append(" \"").append(names[i]).append('"');
@@ -922,7 +922,7 @@ public class WhatsAppParser extends SQLite3DBParser {
         List<IItemReader> bests = new ArrayList<IItemReader>();
         while (!result.isEmpty()) {
             int pos = path.lastIndexOf('/');
-            if (pos < 0) 
+            if (pos < 0)
                 break;
             path = path.substring(0, pos);
             for (int i = 0; i < names.length; i++) {
@@ -939,7 +939,7 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
         return bests;
     }
-    
+
     private static boolean isWABusiness(String path) {
         return path.contains(".w4b") || path.contains("WhatsApp Business");
     }
@@ -1221,7 +1221,8 @@ public class WhatsAppParser extends SQLite3DBParser {
             exportWalLog(contactDbFile, context, tmp);
             exportRollbackJournal(contactDbFile, context, tmp);
             try {
-                WAContactsExtractor waExtractor = extFactory.createContactsExtractor(contactDbFile, recoverDeletedRecords);
+                WAContactsExtractor waExtractor = extFactory.createContactsExtractor(contactDbFile,
+                        recoverDeletedRecords);
                 waExtractor.extractContactList();
 
                 ItemInfo itemInfo = context.get(ItemInfo.class);
@@ -1254,7 +1255,8 @@ public class WhatsAppParser extends SQLite3DBParser {
 
                     getAvatar(searcher, c);
                     if (c.getAvatar() != null) {
-                        cMetadata.set(ExtraProperties.THUMBNAIL_BASE64, Base64.getEncoder().encodeToString(c.getAvatar()));
+                        cMetadata.set(ExtraProperties.THUMBNAIL_BASE64,
+                                Base64.getEncoder().encodeToString(c.getAvatar()));
                     }
 
                     if (extractor.shouldParseEmbedded(cMetadata)) {
@@ -1321,7 +1323,8 @@ public class WhatsAppParser extends SQLite3DBParser {
 
         try (InputStream is = item.getBufferedInputStream()) {
             extFactory.setConnectionParams(is, null, context, this);
-            WAContactsExtractor waExtractor = extFactory.createContactsExtractor(item.getTempFile(), recoverDeletedRecords);
+            WAContactsExtractor waExtractor = extFactory.createContactsExtractor(item.getTempFile(),
+                    recoverDeletedRecords);
             waExtractor.extractContactList();
             return waExtractor.getContactsDirectory();
         }
@@ -1333,8 +1336,6 @@ public class WhatsAppParser extends SQLite3DBParser {
         Metadata metadata;
         ParseContext context;
         WhatsAppParser connFactory;
-
-
 
         abstract Extractor createMessageExtractor(String itemPath, File file, WAContactsDirectory directory,
                 WAAccount account, boolean recoverDeletedRecords);
@@ -1357,11 +1358,9 @@ public class WhatsAppParser extends SQLite3DBParser {
                 throw new SQLException(e);
             }
 
-
         }
 
         public abstract MediaType getType2();
-
 
     }
 
@@ -1370,7 +1369,6 @@ public class WhatsAppParser extends SQLite3DBParser {
     protected static class ExtractorAndroidFactory extends ExtractorFactory {
 
         private boolean new_db = false;
-
 
         @Override
         public Extractor createMessageExtractor(String itemPath, File file, WAContactsDirectory directory,
@@ -1410,19 +1408,17 @@ public class WhatsAppParser extends SQLite3DBParser {
 
         @Override
         public MediaType getType2() {
-            // TODO Auto-generated method stub
             return MSG_STORE_2;
         }
-
     }
 
     // must be static and non be private because of newInstance in getContacts()
     // method
     protected static class ExtractorIOSFactory extends ExtractorFactory {
 
-
         @Override
-        public Extractor createMessageExtractor(String itemPath, File file, WAContactsDirectory directory, WAAccount account, boolean recoverDeletedRecords) {
+        public Extractor createMessageExtractor(String itemPath, File file, WAContactsDirectory directory,
+                WAAccount account, boolean recoverDeletedRecords) {
             return new ExtractorIOS(itemPath, file, directory, account, recoverDeletedRecords) {
                 @Override
                 protected Connection getConnection() throws SQLException {
@@ -1443,10 +1439,8 @@ public class WhatsAppParser extends SQLite3DBParser {
 
         @Override
         public MediaType getType2() {
-            // TODO Auto-generated method stub
             return CHAT_STORAGE_2;
         }
-
     }
 
     private List<Future<?>> searchMediaFilesForMessagesInBatches(List<Message> messages, IItemSearcher searcher,
@@ -1483,7 +1477,8 @@ public class WhatsAppParser extends SQLite3DBParser {
         return futures;
     }
 
-    private void setItemToMessage(IItemReader item, List<Message> messageList, String query, boolean isHashQuery, boolean saveItemRef) {
+    private void setItemToMessage(IItemReader item, List<Message> messageList, String query, boolean isHashQuery,
+            boolean saveItemRef) {
         if (messageList != null && saveItemRef) {
             for (Message m : messageList) {
                 m.setMediaItem(item);
@@ -1491,7 +1486,6 @@ public class WhatsAppParser extends SQLite3DBParser {
             }
         }
     }
-
 
     private List<Future<?>> searchMediaFilesForMessages(List<Message> messages, IItemSearcher searcher,
             ContentHandler handler, EmbeddedDocumentExtractor extractor, File dbPath, ParseContext context,
@@ -1578,7 +1572,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                     Pair<String, Long> key = Pair.of(fileName, fileSize);
                     List<Message> messageList = fileNameAndSizeToSearchFor.get(key);
                     String query = BasicProps.NAME + ":\"" + searcher.escapeQuery(fileName) + "\" AND " //$NON-NLS-1$ //$NON-NLS-2$
-                            + BasicProps.LENGTH + ":" + fileSize; 
+                            + BasicProps.LENGTH + ":" + fileSize;
                     setItemToMessage(item, messageList, query, false, saveItemRef);
                 }
             }
@@ -1589,12 +1583,12 @@ public class WhatsAppParser extends SQLite3DBParser {
         // not found. It is possible that the the file has been padded with zeros (see
         // issue #486). Try to to find by name and by approximate size, then check if it
         // ends with zeros.
-        
+
         // ** linkMediasByLongPathFallback **
         // Similar to the previous fallback, but file size is not used to match. Media
         // path length must be at least the value specified in the parameter. 0 to
         // disable this fallback.
-        
+
         if (!hashesToSearchFor.isEmpty()
                 && (linkMediasByNameAndApproxSizeFallback || linkMediasByLongPathFallback > 0)) {
             Map<String, List<Message>> fileNamesToSearchFor = new HashMap<>();
@@ -1723,8 +1717,6 @@ public class WhatsAppParser extends SQLite3DBParser {
                                 ld.downloadUsingStream(f);
 
                                 ld.decript(f, fout);
-
-
 
                                 Metadata downloadMetadata = new Metadata();
 
