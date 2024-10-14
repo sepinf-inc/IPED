@@ -163,8 +163,8 @@
     ]},
     {"name": "SMS Messages", "mimes": ["application/x-ufed-html-sms", "application/x-ufed-sms", "application/x-ios-sms-db"]},
     {"name": "MMS Messages", "mimes": ["application/x-ufed-html-mms", "application/x-ufed-mms"]},
-    {"name": "Messages", "categories":[
-      {"name": "Instant Messages", "mimes": ["message/x-chat-message", "message/x-threema-message", "application/x-ufed-instantmessage", "message/x-whatsapp-message", "message/x-skype-message", "message/x-skype-filetransfer", "message/x-telegram-message", "message/x-discord-message"]},
+    {"name": "Instant Messages", "categories":[
+      {"name": "Messages", "mimes": ["message/x-chat-message", "message/x-threema-message", "application/x-ufed-instantmessage", "message/x-whatsapp-message", "message/x-skype-message", "message/x-skype-filetransfer", "message/x-telegram-message", "message/x-discord-message"]},
       {"name": "Chat Activities", "mimes": ["application/x-ufed-chatactivity"]},
       {"name": "Message Attachments"},
       {"name": "Shared Contacts"},
