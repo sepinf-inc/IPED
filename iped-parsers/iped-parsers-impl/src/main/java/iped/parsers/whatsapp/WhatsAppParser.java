@@ -26,7 +26,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -823,10 +822,21 @@ public class WhatsAppParser extends SQLite3DBParser {
     }
 
     private void fillAccountAvatar(WAAccount account, IItemSearcher searcher, String dbPath) {
-        if (account == null || account.getAvatar() != null || account.getAvatarPath() != null) {
+        if (account == null || account.getAvatar() != null || account.getAvatarPath() != null || dbPath == null) {
             return;
         }
-        String filePath = Paths.get(dbPath).getParent().resolveSibling("files").resolve("me.jpg").toString().replace("\\", "/");
+
+        // Goes up 2 levels (if possible)
+        String filePath = dbPath;
+        for (int i = 0; i < 2; i++) {
+            int p = filePath.lastIndexOf('/');
+            if (p > 0) {
+                filePath = filePath.substring(0, p);
+            }
+        }
+        // Append sub folder and expected filename
+        filePath += "/files/me.jpg";
+        logger.debug("AccountAvatar path: " + filePath);
 
         String query = BasicProps.PATH + ":\"" + searcher.escapeQuery(filePath) + "\""; //$NON-NLS-1$ //$NON-NLS-2$
         List<IItemReader> result = searcher.search(query);
