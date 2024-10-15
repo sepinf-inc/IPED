@@ -31,14 +31,14 @@ public class ShareazaDownloadParserTest extends TestCase {
         try (InputStream stream = getStream("test-files/test_shareazaDownload.sd")) {
             parser.parse(stream, handler, metadata, context);
 
-            String parsedText = handler.toString();
+            String hts = handler.toString();
 
-            assertTrue(parsedText.contains("Komodor - Electrize.mp3"));
-            assertTrue(parsedText.contains("File Length:             5,613,696 Bytes (5.4 MB)"));
-            assertTrue(parsedText.contains("Number of Fragments: 1"));
-            assertTrue(parsedText.contains("SHA1:                    6FC0E7F66C3B8059B2C3B485710FA4B09BAA4F86"));
-            assertTrue(parsedText.contains("Source Address:                 http://189.60.225.131:6346/uri-res/N2R?urn:sha1:N7AOP5TMHOAFTMWDWSCXCD5EWCN2UT4G"));
-            assertTrue(parsedText.contains("Server Name:                    04 - Artist - Komodor - electrize.mp3"));
+            assertTrue(hts.contains("Komodor - Electrize.mp3"));
+            assertTrue(hts.contains("File Length:             5,613,696 Bytes (5.4 MB)"));
+            assertTrue(hts.contains("Number of Fragments: 1"));
+            assertTrue(hts.contains("SHA1:                    6FC0E7F66C3B8059B2C3B485710FA4B09BAA4F86"));
+            assertTrue(hts.contains("Source Address:                 http://189.60.225.131:6346/uri-res/N2R?urn:sha1:N7AOP5TMHOAFTMWDWSCXCD5EWCN2UT4G"));
+            assertTrue(hts.contains("Server Name:                    04 - Artist - Komodor - electrize.mp3"));
         }
     }
 }
