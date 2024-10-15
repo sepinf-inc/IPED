@@ -3,6 +3,7 @@ package iped.parsers.shareaza;
 import java.io.IOException;
 import java.io.InputStream;
 
+import iped.parsers.image.TiffPageParserTest;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -11,34 +12,28 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import junit.framework.TestCase;
-
-public class ShareazaDownloadParserTest extends TestCase {
-
-    private static InputStream getStream(String name) {
-        return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
-    }
-
-
+public class ShareazaDownloadParserTest extends TiffPageParserTest {
     @Test
     public void testShareazaDownloadParser() throws IOException, SAXException, TikaException {
-        ShareazaDownloadParser parser = new ShareazaDownloadParser();
-        ToTextContentHandler handler = new ToTextContentHandler();
-        Metadata metadata = new Metadata();
-        ParseContext context = new ParseContext();
-        parser.getSupportedTypes(context);
 
-        try (InputStream stream = getStream("test-files/test_shareazaDownload.sd")) {
+        String file = "test-files/test_shareazaDownload.sd";
+        ParseContext context = getContext(file);
+        ShareazaDownloadParser parser = new ShareazaDownloadParser();
+        ContentHandler handler = new ToTextContentHandler();
+        Metadata metadata = new Metadata();
+
+        try (InputStream stream = getStream(file)) {
+            metadata.set(Metadata.CONTENT_TYPE, "application/x-shareaza-download");
             parser.parse(stream, handler, metadata, context);
 
             String hts = handler.toString();
 
-            assertTrue(hts.contains("Komodor - Electrize.mp3"));
-            assertTrue(hts.contains("File Length:             5,613,696 Bytes (5.4 MB)"));
-            assertTrue(hts.contains("Number of Fragments: 1"));
+            assertTrue(hts.contains("Magic:                   SDL"));
+            assertTrue(hts.contains("Version:                 42"));
+            assertTrue(hts.contains("File Name:               Komodor - Electrize.mp3"));
+            assertTrue(hts.contains("MD5:                     2A092D1BC6EC61272B2AF858B67FEAA0"));
             assertTrue(hts.contains("SHA1:                    6FC0E7F66C3B8059B2C3B485710FA4B09BAA4F86"));
-            assertTrue(hts.contains("Source Address:                 http://189.60.225.131:6346/uri-res/N2R?urn:sha1:N7AOP5TMHOAFTMWDWSCXCD5EWCN2UT4G"));
-            assertTrue(hts.contains("Server Name:                    04 - Artist - Komodor - electrize.mp3"));
+            assertTrue(hts.contains("Serial ID:               F599F476"));
         }
     }
 }
