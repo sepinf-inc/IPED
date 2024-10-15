@@ -637,7 +637,7 @@ public class Message implements Comparable<Message> {
     }
 
     public long getSortId() {
-        return sortId == 0 ? id : sortId;
+        return sortId == 0 ? timeStamp == null ? 0 : timeStamp.getTime() : sortId;
     }
 
     public void setSortId(long sortId) {
@@ -690,14 +690,6 @@ public class Message implements Comparable<Message> {
 
     @Override
     public int compareTo(Message o) {
-        int comp = Long.compare(getSortId(), o.getSortId());
-        if (comp != 0) {
-            return comp;
-        }
-        return Long.compare(getTime(), o.getTime());
-    }
-
-    private long getTime() {
-        return timeStamp == null ? 0 : timeStamp.getTime();
+        return Long.compare(getSortId(), o.getSortId());
     }
 }
