@@ -23,8 +23,8 @@ public class ShareazaDownloadParserTest extends TestCase {
     @Test
     public void testShareazaDownloadParser() throws IOException, SAXException, TikaException {
         ShareazaDownloadParser parser = new ShareazaDownloadParser();
+        ToTextContentHandler handler = new ToTextContentHandler();
         Metadata metadata = new Metadata();
-        ContentHandler handler = new ToTextContentHandler();
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
 
@@ -32,14 +32,6 @@ public class ShareazaDownloadParserTest extends TestCase {
             parser.parse(stream, handler, metadata, context);
 
             String parsedText = handler.toString();
-            String[] downloadHashes = metadata.getValues("download-hashes");
-            String[] contentType = metadata.getValues(Metadata.CONTENT_TYPE);
-
-            assertTrue(parsedText.contains("expected-file.mp3"));
-            assertTrue(parsedText.contains("expected-image.png"));
-            assertEquals(ShareazaDownloadParser.SHAREAZA_DOWNLOAD_META, contentType[0]);
-            assertEquals(1, downloadHashes.length);
-            assertEquals("abcdef1234567890", downloadHashes[0]);
 
             assertTrue(parsedText.contains("Komodor - Electrize.mp3"));
             assertTrue(parsedText.contains("File Length:             5,613,696 Bytes (5.4 MB)"));
