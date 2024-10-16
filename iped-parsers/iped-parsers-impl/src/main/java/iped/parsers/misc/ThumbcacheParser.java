@@ -2,10 +2,12 @@ package iped.parsers.misc;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
+import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
+import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
@@ -24,7 +26,10 @@ public class ThumbcacheParser extends AbstractParser {
 
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
-        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class);
+        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
+            new ParsingEmbeddedDocumentExtractor(context));
+        XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
+        xhtml.startDocument();
     }
 
 }
