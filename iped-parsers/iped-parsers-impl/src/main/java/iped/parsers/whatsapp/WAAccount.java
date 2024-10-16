@@ -61,23 +61,26 @@ public class WAAccount extends WAContact {
                 if (StringUtils.isBlank(value)) {
                     expr = xpath.compile("/map/string[@name=\"ph\"]");
                     value = (String) expr.evaluate(doc, XPathConstants.STRING);
-                    if (StringUtils.isNotBlank(value)) {
-                        if (!value.endsWith(waSuffix))
-                            value += waSuffix;
-                        id = value;
+                }
+                if (StringUtils.isNotBlank(value)) {
+                    if (!value.endsWith(waSuffix)) {
+                        value += waSuffix;
                     }
+                    id = value;
                 }
             }
 
             expr = xpath.compile("/map/string[@name=\"push_name\"]");
             value = (String) expr.evaluate(doc, XPathConstants.STRING);
-            if (value != null && !value.isBlank())
+            if (StringUtils.isNotBlank(value)) {
                 name = value;
+            }
 
             expr = xpath.compile("/map/string[@name=\"my_current_status\"]");
             value = (String) expr.evaluate(doc, XPathConstants.STRING);
-            if (value != null && !value.isBlank())
+            if (StringUtils.isNotBlank(value)) {
                 status = value;
+            }
 
             if (StringUtils.isAllBlank(id, name, status)) {
                 return null;
