@@ -4,22 +4,29 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.search.Query;
 
 import iped.app.ui.bookmarks.BookmarkIcon;
+import iped.engine.search.IPEDSearcher;
 import iped.engine.search.LuceneSearchResult;
 import iped.engine.search.MultiSearchResult;
 import iped.engine.task.index.IndexItem;
 import iped.engine.util.Util;
+import iped.properties.BasicProps;
 import iped.search.IMultiSearchResult;
 
 public abstract class BaseTableModel extends AbstractTableModel implements MouseListener, ListSelectionListener, SearchResultTableModel {
 
     private static final long serialVersionUID = 1L;
+
+    protected String sortResultsBy = BasicProps.NAME;
+    protected boolean cleanBeforeListItems;
 
     protected LuceneSearchResult results = new LuceneSearchResult(0);
     protected int selectedIndex = -1;
@@ -138,5 +145,52 @@ public abstract class BaseTableModel extends AbstractTableModel implements Mouse
 
     public abstract void valueChanged(ListSelectionModel lsm);
 
-    public abstract void listItems(Document doc);
+    public abstract Query createQuery(Document doc);
+
+    protected abstract void onListItemsResultsComplete();
+
+    public final void listItems(Document doc) {
+
+        if (cleanBeforeListItems) {
+            results = new LuceneSearchResult(0);
+            fireTableDataChanged();
+        }
+
+        Query query = createQuery(doc);
+
+        if (query != null) {
+
+            try {
+                IPEDSearcher task = new IPEDSearcher(App.get().appCase, query, sortResultsBy);
+                task.setRewritequery(false);
+                results = MultiSearchResult.get(task.multiSearch(), App.get().appCase);
+
+                final int length = results.getLength();
+
+                if (length > 0) {
+                    SwingUtilities.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            onListItemsResultsComplete();
+                        }
+                    });
+                    refDoc = doc;
+                } else {
+                    refDoc = null;
+                }
+
+            } catch (Exception e) {
+                results = new LuceneSearchResult(0);
+                refDoc = null;
+                e.printStackTrace();
+            }
+            if (cleanBeforeListItems) {
+                fireTableDataChanged();
+            }
+        }
+
+        if (!cleanBeforeListItems) {
+            fireTableDataChanged();
+        }
+    }
 }
