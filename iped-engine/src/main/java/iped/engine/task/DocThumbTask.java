@@ -79,7 +79,11 @@ public class DocThumbTask extends ThumbTask {
     private boolean tempSet;
 
     public List<Configurable<?>> getConfigurables() {
-        return Arrays.asList(new DocThumbTaskConfig());
+        DocThumbTaskConfig result = ConfigurationManager.get().findObject(DocThumbTaskConfig.class);
+        if(result == null) {
+            result = new DocThumbTaskConfig();
+        }
+        return Arrays.asList(result);
     }
 
     @Override

@@ -27,6 +27,8 @@ public class CarverType implements Serializable {
     boolean stopOnNextHeader = false;
     boolean hasFooter = false;
     boolean hasLengthRef = false;
+    boolean enabled = true;
+    public int id;
 
     @Override
     public boolean equals(Object o) {
@@ -213,6 +215,22 @@ public class CarverType implements Serializable {
 
     public boolean hasLengthRef() {
         return hasLengthRef;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
 }

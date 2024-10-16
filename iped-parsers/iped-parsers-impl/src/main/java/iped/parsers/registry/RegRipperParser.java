@@ -50,7 +50,9 @@ public class RegRipperParser extends AbstractParser {
      */
     private static final long serialVersionUID = 1L;
 
-    public static final String FULL_REPORT_SUFFIX = "_Full_Report";
+    public static final String FULL_REPORT_SUFFIX = "_Full_Report";// this constant is redeclared in
+                                                                   // SearchHardwareWallets.py script and must be the
+                                                                   // same value there
 
     private static Logger LOGGER = LoggerFactory.getLogger(RegRipperParser.class);
 
