@@ -21,7 +21,7 @@ import java.util.Set;
 
 public class ThumbcacheParser extends AbstractParser {
 
-    public static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -40,12 +40,11 @@ public class ThumbcacheParser extends AbstractParser {
         File file = tis.getFile();
         POIFSFileSystem poiFS = new POIFSFileSystem(file);
 
-        // Placeholder for the recursive method that will navigate through directories and process files extracting metadata and image
+        // Placeholder for the recursive method that will navigate through directories and process files extracting metadata and image.
         // TODO: Implement recurseDir method
         // recurseDir(poiFS.getRoot(), extractor, xhtml);
 
         xhtml.endDocument();
         tmp.close();
     }
-
 }
