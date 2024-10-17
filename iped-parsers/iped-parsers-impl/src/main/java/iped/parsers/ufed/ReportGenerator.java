@@ -71,27 +71,25 @@ public class ReportGenerator {
                     title += ": " + ((parties.length > 1) && (parties[0].equals(phoneOwner)) ? parties[1] : parties[0]);
                 else
                     title += ": " + idProperty;
-            }
-            else if (chatType.equals(UFEDChatParser.CHATTYPE_GROUP))
+            } else if (chatType.equals(UFEDChatParser.CHATTYPE_GROUP))
                 title = UFEDChatParser.CHATTYPE_GROUP_TITLE + ": " + (nameProperty != null ? nameProperty : idProperty);
             else if (chatType.equals(UFEDChatParser.CHATTYPE_BROADCAST)) {
                 if (parties != null) {
-                    if ((parties.length == 1) && ((source != null) && (source.equals(UFEDChatParser.WHATSAPP) || 
-                                                                       source.equals(UFEDChatParser.WHATSAPP_BUSINESS) || 
-                                                                       source.equals(UFEDChatParser.TELEGRAM))))
+                    if ((parties.length == 1) && ((source != null) && (source.equals(UFEDChatParser.WHATSAPP)
+                            || source.equals(UFEDChatParser.WHATSAPP_BUSINESS)
+                            || source.equals(UFEDChatParser.TELEGRAM))))
                         // "Status" chat type (known from behaviour)
                         // NOTE: Apps with this behaviour should be added to this if condition
                         title = UFEDChatParser.CHATTYPE_BROADCAST_STATUS_TITLE + ": " + parties[0];
                     else
-                        title = UFEDChatParser.CHATTYPE_BROADCAST_TITLE + ": " + (nameProperty != null ? nameProperty : idProperty);
-                }
-                else
-                    title = UFEDChatParser.CHATTYPE_BROADCAST_TITLE + ": " + (nameProperty != null ? nameProperty : idProperty);
-            }
-            else if (chatType.equals(UFEDChatParser.CHATTYPE_UNKNOWN)) {
-                if ((source != null) && (source.equals(UFEDChatParser.WHATSAPP) || 
-                                         source.equals(UFEDChatParser.WHATSAPP_BUSINESS) || 
-                                         source.equals(UFEDChatParser.TELEGRAM)))
+                        title = UFEDChatParser.CHATTYPE_BROADCAST_TITLE + ": "
+                                + (nameProperty != null ? nameProperty : idProperty);
+                } else
+                    title = UFEDChatParser.CHATTYPE_BROADCAST_TITLE + ": "
+                            + (nameProperty != null ? nameProperty : idProperty);
+            } else if (chatType.equals(UFEDChatParser.CHATTYPE_UNKNOWN)) {
+                if ((source != null) && (source.equals(UFEDChatParser.WHATSAPP)
+                        || source.equals(UFEDChatParser.WHATSAPP_BUSINESS) || source.equals(UFEDChatParser.TELEGRAM)))
                     // "Unknown" chat type regarding apps for which there are specific chat types
                     // NOTE: Apps with similar behaviour should be added to this if condition
                     title = UFEDChatParser.CHATTYPE_UNKNOWN_TITLE + ": " + idProperty;
@@ -102,19 +100,18 @@ public class ReportGenerator {
                         if (parties.length > 2)
                             title = UFEDChatParser.CHATTYPE_GROUP_TITLE + ": " + idProperty;
                         else
-                            title = UFEDChatParser.CHATTYPE_ONEONONE_TITLE + ": " + ((parties.length > 1) && (parties[0].equals(phoneOwner)) ? parties[1] : parties[0]);
-                    }
-                    else
+                            title = UFEDChatParser.CHATTYPE_ONEONONE_TITLE + ": "
+                                    + ((parties.length > 1) && (parties[0].equals(phoneOwner)) ? parties[1]
+                                            : parties[0]);
+                    } else
                         title = UFEDChatParser.CHATTYPE_UNKNOWN_TITLE + ": " + idProperty;
                 }
-            }
-            else
+            } else
                 title = chatType + ": " + idProperty;
-        }
-        else {
+        } else {
             title = idProperty;
         }
-    
+
         printMessageFileHeader(out, title, c.getName(), null);
         if (currentMsg > 0)
             out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
@@ -172,10 +169,8 @@ public class ReportGenerator {
                 name = Messages.getString("ReportGenerator.Unknown"); //$NON-NLS-1$
         }
 
-
         if (name != null)
-            out.println(
-                    "<span style=\"font-family: Arial; color: #b4c74b;\">" + format(name) + "</span><br/>"); //$NON-NLS-1$ //$NON-NLS-2$
+            out.println("<span style=\"font-family: Arial; color: #b4c74b;\">" + format(name) + "</span><br/>"); //$NON-NLS-1$ //$NON-NLS-2$
 
         if (message.getData() != null && !message.getData().trim().isEmpty()) {
             if (message.getData().startsWith("BEGIN:VCARD")) { //$NON-NLS-1$
@@ -261,11 +256,9 @@ public class ReportGenerator {
             out.println("</span>"); //$NON-NLS-1$
         }
         if (isTo)
-            out.println("</div><div class=\"aw\"><div class=\"awr\"></div></div>"); 
+            out.println("</div><div class=\"aw\"><div class=\"awr\"></div></div>");
         if (isFrom)
             out.println("</div>");
-
-
 
         out.println("</div></div>"); //$NON-NLS-1$
     }
@@ -309,5 +302,4 @@ public class ReportGenerator {
                 + "</body>\n" //$NON-NLS-1$
                 + "</html>"); //$NON-NLS-1$
     }
-
 }
