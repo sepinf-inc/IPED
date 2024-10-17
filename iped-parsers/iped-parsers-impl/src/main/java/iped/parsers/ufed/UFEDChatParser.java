@@ -43,9 +43,9 @@ public class UFEDChatParser extends AbstractParser {
 
     private static final long serialVersionUID = 1L;
 
-    public static final MediaType UFED_CHAT_MIME = MediaType.application("x-ufed-chat"); //$NON-NLS-1$
-    public static final MediaType UFED_CHAT_WA_MIME = MediaType.application("x-ufed-chat-whatsapp"); //$NON-NLS-1$
-    public static final MediaType UFED_CHAT_TELEGRAM = MediaType.application("x-ufed-chat-telegram"); //$NON-NLS-1$
+    public static final MediaType UFED_CHAT_MIME = MediaType.application("x-ufed-chat");
+    public static final MediaType UFED_CHAT_WA_MIME = MediaType.application("x-ufed-chat-whatsapp");
+    public static final MediaType UFED_CHAT_TELEGRAM = MediaType.application("x-ufed-chat-telegram");
 
     public static final MediaType UFED_CHAT_PREVIEW_MIME = MediaType.application("x-ufed-chat-preview");
 
@@ -56,9 +56,9 @@ public class UFEDChatParser extends AbstractParser {
             MediaType.application("x-ufed-chat-preview-facebook"), "instagram",
             MediaType.application("x-ufed-chat-preview-instagram"));
 
-    public static final String META_PHONE_OWNER = ExtraProperties.UFED_META_PREFIX + "phoneOwner"; //$NON-NLS-1$
-    public static final String META_FROM_OWNER = ExtraProperties.UFED_META_PREFIX + "fromOwner"; //$NON-NLS-1$
-    public static final String CHILD_MSG_IDS = ExtraProperties.UFED_META_PREFIX + "msgChildIds"; //$NON-NLS-1$
+    public static final String META_PHONE_OWNER = ExtraProperties.UFED_META_PREFIX + "phoneOwner";
+    public static final String META_FROM_OWNER = ExtraProperties.UFED_META_PREFIX + "fromOwner";
+    public static final String CHILD_MSG_IDS = ExtraProperties.UFED_META_PREFIX + "msgChildIds";
 
     public static final String ATTACHED_MEDIA_MSG = "ATTACHED_MEDIA: ";
 
@@ -123,7 +123,7 @@ public class UFEDChatParser extends AbstractParser {
             if (chat == null || searcher == null)
                 return;
 
-            String query = BasicProps.PARENTID + ":" + chat.getId(); //$NON-NLS-1$
+            String query = BasicProps.PARENTID + ":" + chat.getId();
 
             List<UfedMessage> messages = new ArrayList<>();
 
@@ -131,7 +131,7 @@ public class UFEDChatParser extends AbstractParser {
                 Iterator<IItemReader> subItems = null;
                 String[] attachRefs = msg.getMetadata().getValues(ExtraProperties.LINKED_ITEMS);
                 if (attachRefs.length > 0) {
-                    String attachQuery = Arrays.asList(attachRefs).stream().collect(Collectors.joining(" ")); //$NON-NLS-1$
+                    String attachQuery = Arrays.asList(attachRefs).stream().collect(Collectors.joining(" "));
                     subItems = searcher.searchIterable(attachQuery).iterator();
                 } else if (msg.hasChildren()) {
                     String contactQuery = BasicProps.PARENTID + ":" + msg.getId() + " && " + BasicProps.CONTENTTYPE
@@ -183,7 +183,7 @@ public class UFEDChatParser extends AbstractParser {
                     String chatName = getChatName(chat);
 
                     if (frag > 0 || nextBytes != null)
-                        chatName += "_" + frag++; //$NON-NLS-1$
+                        chatName += "_" + frag++;
                     chatMetadata.set(TikaCoreProperties.TITLE, chatName);
                     chatMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, previewMime.toString());
                     chatMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
@@ -235,8 +235,8 @@ public class UFEDChatParser extends AbstractParser {
             }
             m.setMediaName(attach.getName());
             m.setMediaTrueExt(attach.getType());
-            m.setMediaUrl(getMetaFromAttachOrMsg(ExtraProperties.UFED_META_PREFIX + "URL", msg, attach)); //$NON-NLS-1$
-            m.setMediaCaption(getMetaFromAttachOrMsg(ExtraProperties.UFED_META_PREFIX + "Title", msg, attach)); //$NON-NLS-1$
+            m.setMediaUrl(getMetaFromAttachOrMsg(ExtraProperties.UFED_META_PREFIX + "URL", msg, attach));
+            m.setMediaCaption(getMetaFromAttachOrMsg(ExtraProperties.UFED_META_PREFIX + "Title", msg, attach));
             m.setThumbData(attach.getThumb());
             m.setTranscription(attach.getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR));
             m.setTranscriptConfidence(attach.getMetadata().get(ExtraProperties.CONFIDENCE_ATTR));
@@ -247,7 +247,7 @@ public class UFEDChatParser extends AbstractParser {
             if (attach.getMediaType() != null && !attach.getMediaType().equals(MediaType.OCTET_STREAM))
                 m.setMediaMime(attach.getMediaType().toString());
             else
-                m.setMediaMime(getMetaFromAttachOrMsg(ExtraProperties.UFED_META_PREFIX + "ContentType", msg, attach)); //$NON-NLS-1$
+                m.setMediaMime(getMetaFromAttachOrMsg(ExtraProperties.UFED_META_PREFIX + "ContentType", msg, attach));
         }
         return m;
     }
@@ -261,21 +261,21 @@ public class UFEDChatParser extends AbstractParser {
     }
 
     public static String getChatName(IItemReader item) {
-        String name = "Chat"; //$NON-NLS-1$
-        String source = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source"); //$NON-NLS-1$
-        String account = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Account"); //$NON-NLS-1$
-        String phoneOwner = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "phoneOwner"); //$NON-NLS-1$
-        String idProperty = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "id"); //$NON-NLS-1$
-        String nameProperty = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name"); //$NON-NLS-1$
+        String name = "Chat";
+        String source = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source");
+        String account = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Account");
+        String phoneOwner = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "phoneOwner");
+        String idProperty = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "id");
+        String nameProperty = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name");
         String chatType = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "ChatType");
-        String[] parties = item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants"); //$NON-NLS-1$
+        String[] parties = item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants");
 
         if (source != null)
-            name += "_" + source; //$NON-NLS-1$
+            name += "_" + source;
         if (account != null)
-            name += "_" + CHAT_ACCOUNT + "_" + account; //$NON-NLS-1$
+            name += "_" + CHAT_ACCOUNT + "_" + account;
         if (phoneOwner != null)
-            name += "_" + CHAT_PHONE_OWNER + "_" + phoneOwner; //$NON-NLS-1$
+            name += "_" + CHAT_PHONE_OWNER + "_" + phoneOwner;
         if (chatType != null) {
             if (chatType.equals(CHATTYPE_ONEONONE)) {
                 name += "_" + CHATTYPE_ONEONONE_TITLE;
