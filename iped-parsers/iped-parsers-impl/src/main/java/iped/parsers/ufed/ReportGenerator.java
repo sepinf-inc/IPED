@@ -12,7 +12,6 @@ import iped.parsers.util.Messages;
 import iped.parsers.whatsapp.Message;
 import iped.parsers.whatsapp.Util;
 import iped.properties.ExtraProperties;
-import iped.search.IItemSearcher;
 import iped.utils.EmojiUtil;
 import iped.utils.SimpleHTMLEncoder;
 
@@ -25,13 +24,8 @@ public class ReportGenerator {
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ");
-    private IItemSearcher searcher;
     private boolean firstHtml = true;
     private int currentMsg = 0;
-
-    public ReportGenerator(IItemSearcher searcher) {
-        this.searcher = searcher;
-    }
 
     public int getNextMsgNum() {
         return currentMsg;

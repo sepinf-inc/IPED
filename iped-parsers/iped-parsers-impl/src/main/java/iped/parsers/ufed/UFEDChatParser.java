@@ -155,7 +155,7 @@ public class UFEDChatParser extends AbstractParser {
             Collections.sort(messages);
 
             if (extractor.shouldParseEmbedded(metadata)) {
-                ReportGenerator reportGenerator = new ReportGenerator(searcher);
+                ReportGenerator reportGenerator = new ReportGenerator();
                 reportGenerator.setMinChatSplitSize(this.minChatSplitSize);
                 byte[] bytes = reportGenerator.generateNextChatHtml(chat, messages);
                 int frag = 0;
@@ -269,54 +269,70 @@ public class UFEDChatParser extends AbstractParser {
         String chatType = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "ChatType");
         String[] parties = item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants");
 
-        if (source != null)
+        if (source != null) {
             name += "_" + source;
-        if (account != null)
+        }
+        
+        if (account != null) {
             name += "_" + CHAT_ACCOUNT + "_" + account;
-        if (phoneOwner != null)
+        }
+        
+        if (phoneOwner != null) {
             name += "_" + CHAT_PHONE_OWNER + "_" + phoneOwner;
+        }
+        
         if (chatType != null) {
             if (chatType.equals(CHATTYPE_ONEONONE)) {
                 name += "_" + CHATTYPE_ONEONONE_TITLE;
-                if (parties != null)
+                if (parties != null) {
                     name += "_" + ((parties.length > 1) && (parties[0].equals(phoneOwner)) ? parties[1] : parties[0]);
-                else
+                } else {
                     name += "_" + idProperty;
-            } else if (chatType.equals(CHATTYPE_GROUP))
+                }
+                
+            } else if (chatType.equals(CHATTYPE_GROUP)) {
                 name += "_" + CHATTYPE_GROUP_TITLE + "_" + (nameProperty != null ? nameProperty : idProperty);
-            else if (chatType.equals(CHATTYPE_BROADCAST)) {
+                
+            } else if (chatType.equals(CHATTYPE_BROADCAST)) {
                 if (parties != null) {
                     if ((parties.length == 1) && ((source != null) && (source.equals(WHATSAPP)
-                            || source.equals(WHATSAPP_BUSINESS) || source.equals(TELEGRAM))))
+                            || source.equals(WHATSAPP_BUSINESS) || source.equals(TELEGRAM)))) {
                         // "Status" chat type (known from behaviour)
                         // NOTE: Apps with this behaviour should be added to this if condition
                         name += "_" + CHATTYPE_BROADCAST_STATUS_TITLE + "_" + parties[0];
-                    else
+                    } else {
                         name += "_" + CHATTYPE_BROADCAST_TITLE + "_"
                                 + (nameProperty != null ? nameProperty : idProperty);
-                } else
+                    }
+                } else {
                     name += "_" + CHATTYPE_BROADCAST_TITLE + "_" + (nameProperty != null ? nameProperty : idProperty);
+                }
+                
             } else if (chatType.equals(CHATTYPE_UNKNOWN)) {
                 if ((source != null)
-                        && (source.equals(WHATSAPP) || source.equals(WHATSAPP_BUSINESS) || source.equals(TELEGRAM)))
+                        && (source.equals(WHATSAPP) || source.equals(WHATSAPP_BUSINESS) || source.equals(TELEGRAM))) {
                     // "Unknown" chat type regarding apps for which there are specific chat types
                     // NOTE: Apps with similar behaviour should be added to this if condition
                     name += "_" + CHATTYPE_UNKNOWN_TITLE + "_" + idProperty;
-                else {
+                } else {
                     // "Unknown" chat type regarding apps for which there aren't specific chat types
                     // Communication type is derived from the number of participants
                     if ((parties != null) && (parties.length > 0)) {
-                        if (parties.length > 2)
+                        if (parties.length > 2) {
                             name += "_" + CHATTYPE_GROUP_TITLE + "_" + idProperty;
-                        else
+                        } else {
                             name += "_" + CHATTYPE_ONEONONE_TITLE + "_"
                                     + ((parties.length > 1) && (parties[0].equals(phoneOwner)) ? parties[1]
                                             : parties[0]);
-                    } else
+                        }
+                    } else {
                         name += "_" + CHATTYPE_UNKNOWN_TITLE + "_" + idProperty;
+                    }
                 }
-            } else
+            } else {
                 name += "_" + chatType + "_" + idProperty;
+            }
+            
         } else {
             name += "_" + idProperty;
         }
