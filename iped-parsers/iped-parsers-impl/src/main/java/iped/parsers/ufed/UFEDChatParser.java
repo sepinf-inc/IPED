@@ -312,7 +312,7 @@ public class UFEDChatParser extends AbstractParser {
                 if ((source != null)
                         && (source.equals(WHATSAPP) || source.equals(WHATSAPP_BUSINESS) || source.equals(TELEGRAM))) {
                     // "Unknown" chat type regarding apps for which there are specific chat types
-                    // NOTE: Apps with similar behaviour should be added to this if condition
+                    // NOTE: Apps with similar behavior should be added to this if condition
                     name += "_" + CHATTYPE_UNKNOWN_TITLE + "_" + idProperty;
                 } else {
                     // "Unknown" chat type regarding apps for which there aren't specific chat types
