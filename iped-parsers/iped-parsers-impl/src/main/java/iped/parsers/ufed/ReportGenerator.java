@@ -56,6 +56,65 @@ public class ReportGenerator {
 
         String[] split = c.getName().split("_", 3); //$NON-NLS-1$
         String title = split[split.length - 1];
+
+        String source = c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source"); //$NON-NLS-1$
+        String phoneOwner = c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "phoneOwner"); //$NON-NLS-1$
+        String idProperty = "ufedId=" + c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "id"); //$NON-NLS-1$
+        String nameProperty = c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name"); //$NON-NLS-1$
+        String chatType = c.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "ChatType");
+        String[] parties = c.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants"); //$NON-NLS-1$
+
+        if (chatType != null) {
+            if (chatType.equals(UFEDChatParser.CHATTYPE_ONEONONE)) {
+                title = UFEDChatParser.CHATTYPE_ONEONONE_TITLE;
+                if (parties != null)
+                    title += ": " + ((parties.length > 1) && (parties[0].equals(phoneOwner)) ? parties[1] : parties[0]);
+                else
+                    title += ": " + idProperty;
+            }
+            else if (chatType.equals(UFEDChatParser.CHATTYPE_GROUP))
+                title = UFEDChatParser.CHATTYPE_GROUP_TITLE + ": " + (nameProperty != null ? nameProperty : idProperty);
+            else if (chatType.equals(UFEDChatParser.CHATTYPE_BROADCAST)) {
+                if (parties != null) {
+                    if ((parties.length == 1) && ((source != null) && (source.equals(UFEDChatParser.WHATSAPP) || 
+                                                                       source.equals(UFEDChatParser.WHATSAPP_BUSINESS) || 
+                                                                       source.equals(UFEDChatParser.TELEGRAM))))
+                        // "Status" chat type (known from behaviour)
+                        // NOTE: Apps with this behaviour should be added to this if condition
+                        title = UFEDChatParser.CHATTYPE_BROADCAST_STATUS_TITLE + ": " + parties[0];
+                    else
+                        title = UFEDChatParser.CHATTYPE_BROADCAST_TITLE + ": " + (nameProperty != null ? nameProperty : idProperty);
+                }
+                else
+                    title = UFEDChatParser.CHATTYPE_BROADCAST_TITLE + ": " + (nameProperty != null ? nameProperty : idProperty);
+            }
+            else if (chatType.equals(UFEDChatParser.CHATTYPE_UNKNOWN)) {
+                if ((source != null) && (source.equals(UFEDChatParser.WHATSAPP) || 
+                                         source.equals(UFEDChatParser.WHATSAPP_BUSINESS) || 
+                                         source.equals(UFEDChatParser.TELEGRAM)))
+                    // "Unknown" chat type regarding apps for which there are specific chat types
+                    // NOTE: Apps with similar behaviour should be added to this if condition
+                    title = UFEDChatParser.CHATTYPE_UNKNOWN_TITLE + ": " + idProperty;
+                else {
+                    // "Unknown" chat type regarding apps for which there aren't specific chat types
+                    // Communication type is derived from the number of participants
+                    if ((parties != null) && (parties.length > 0)) {
+                        if (parties.length > 2)
+                            title = UFEDChatParser.CHATTYPE_GROUP_TITLE + ": " + idProperty;
+                        else
+                            title = UFEDChatParser.CHATTYPE_ONEONONE_TITLE + ": " + ((parties.length > 1) && (parties[0].equals(phoneOwner)) ? parties[1] : parties[0]);
+                    }
+                    else
+                        title = UFEDChatParser.CHATTYPE_UNKNOWN_TITLE + ": " + idProperty;
+                }
+            }
+            else
+                title = chatType + ": " + idProperty;
+        }
+        else {
+            title = idProperty;
+        }
+    
         printMessageFileHeader(out, title, c.getName(), null);
         if (currentMsg > 0)
             out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
