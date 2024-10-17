@@ -6,7 +6,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -153,7 +152,7 @@ public class UFEDChatParser extends AbstractParser {
                 }
             }
 
-            Collections.sort(messages, new MessageComparator());
+            Collections.sort(messages);
 
             if (extractor.shouldParseEmbedded(metadata)) {
                 ReportGenerator reportGenerator = new ReportGenerator(searcher);
@@ -338,21 +337,6 @@ public class UFEDChatParser extends AbstractParser {
                 if (m.isFromMe())
                     metadata.add(ExtraProperties.SHARED_HASHES, m.getMediaHash());
             }
-        }
-    }
-
-    private class MessageComparator implements Comparator<Message> {
-        @Override
-        public int compare(Message o1, Message o2) {
-            if (o1.getTimeStamp() == null) {
-                if (o2.getTimeStamp() == null)
-                    return 0;
-                else
-                    return -1;
-            } else if (o2.getTimeStamp() == null)
-                return 1;
-            else
-                return o1.getTimeStamp().compareTo(o2.getTimeStamp());
         }
     }
 }
