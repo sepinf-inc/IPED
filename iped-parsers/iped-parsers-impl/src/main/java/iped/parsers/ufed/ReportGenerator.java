@@ -278,25 +278,27 @@ public class ReportGenerator {
 
         String topbarClass = " class=\"other\"";
         String backImage = " style=\"background-image:url(" + Util.getImageResourceAsEmbedded("img/other-chat-back.jpg") + ")\">\n";
+        String icon = "message";
         if (source != null) {
             if (source.equals(UFEDChatParser.TELEGRAM)) {
                 topbarClass = " class=\"telegram\"";
                 backImage = " style=\"background-image:url(" + Util.getImageResourceAsEmbedded("img/telegramwallpaper.jpg") + ")\">\n";
+                icon = "telegram";
             } else if (source.contains(UFEDChatParser.WHATSAPP)) {
                 topbarClass = "";
                 backImage = "";
+                icon = "whatsapp";
             }
         }
 
         out.println("<!DOCTYPE html>\n" 
                 + "<html>\n"
                 + "<head>\n"
-                + " <title>" + format(title) + "</title>\n"
-                + " <meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n"
-                + " <meta name=\"viewport\" content=\"width=device-width\" />\n"
-                + " <meta charset=\"UTF-8\" />\n"
-                + " <link rel=\"shortcut icon\" href=\"" + Util.getImageResourceAsEmbedded("img/favicon.ico")
-                + "\" />\n"
+                + "<title>" + format(title) + "</title>\n"
+                + "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n"
+                + "<meta name=\"viewport\" content=\"width=device-width\" />\n"
+                + "<meta charset=\"UTF-8\" />\n"
+                + "<link rel=\"icon\" href=\"" + Util.getImageResourceAsEmbedded("img/" + icon + ".png") + "\">\n"
                 + "<style>\n" + Util.readResourceAsString("css/whatsapp.css")
                 + "\n</style>\n" + "<style>.check {vertical-align: top;}</style>" + "</head>\n"
                 + "<body"+ backImage +">\n"
