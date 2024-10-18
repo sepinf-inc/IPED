@@ -169,6 +169,10 @@ public class UFEDChatParser extends AbstractParser {
                     } else {
                         logger.error("Unknown chat child: {}", chatChild);
                     }
+
+                    // reset timeout counter
+                    char[] nameChars = (chatChild.getName() + "\n").toCharArray();
+                    handler.characters(nameChars, 0, nameChars.length);
                 }
             }
 
