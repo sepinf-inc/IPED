@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -77,6 +78,8 @@ public class UFEDChatParser extends AbstractParser {
     private boolean extractSharedContacts = true;
     private boolean ignoreEmptyChats = false;
     private int minChatSplitSize = 6000000;
+
+    private Map<String, IItemReader> participantsCache = new HashMap<>();
 
     private static Set<MediaType> supportedTypes = MediaType.set(UFED_CHAT_MIME, UFED_CHAT_WA_MIME,
             UFED_CHAT_TELEGRAM_MIME);
@@ -238,6 +241,7 @@ public class UFEDChatParser extends AbstractParser {
 
         } finally {
             xhtml.endDocument();
+            participantsCache.clear();
         }
     }
 
@@ -377,6 +381,10 @@ public class UFEDChatParser extends AbstractParser {
             return null;
         }
 
+        if (participantsCache.containsKey(userID)) {
+            return participantsCache.get(userID);
+        }
+
         String account = readUfedMetadata(chatMetadata, "Account");
         String source = readUfedMetadata(chatMetadata, "Source");
         String query = BasicProps.CONTENTTYPE + ":\"" + MediaTypes.UFED_CONTACT_MIME.toString() + "\"" //
@@ -386,14 +394,16 @@ public class UFEDChatParser extends AbstractParser {
                 + " && " + searcher.escapeQuery(ExtraProperties.UFED_META_PREFIX + "UserID") + ":\"" + userID + "\"";
 
         List<IItemReader> results = searcher.search(query);
+        IItemReader result = null;
         if (!results.isEmpty()) {
             if (results.size() > 1) {
                 logger.warn("Found more than one participant for [{}]: {}", account, results);
             }
-            return results.get(0);
+            result = results.get(0);
         }
 
-        return null;
+        participantsCache.put(userID, result);
+        return result;
     }
 
     private void fillParticipantInfo(IItemSearcher searcher, Metadata chatMetadata, Metadata targetMetadata,
