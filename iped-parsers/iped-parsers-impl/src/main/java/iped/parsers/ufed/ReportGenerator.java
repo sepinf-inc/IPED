@@ -41,8 +41,9 @@ public class ReportGenerator {
 
     public byte[] generateNextChatHtml(IItemReader c, List<UfedMessage> msgs) throws UnsupportedEncodingException {
 
-        if ((!firstHtml && currentMsg == 0) || (currentMsg > 0 && currentMsg == msgs.size()))
+        if ((!firstHtml && currentMsg == 0) || (currentMsg > 0 && currentMsg == msgs.size())) {
             return null;
+        }
 
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, "UTF-8"));
@@ -60,47 +61,60 @@ public class ReportGenerator {
         if (chatType != null) {
             if (chatType.equals(UFEDChatParser.CHATTYPE_ONEONONE)) {
                 title = UFEDChatParser.CHATTYPE_ONEONONE_TITLE;
-                if (parties != null)
+                if (parties != null) {
                     title += ": " + ((parties.length > 1) && (parties[0].equals(phoneOwner)) ? parties[1] : parties[0]);
-                else
+                } else {
                     title += ": " + idProperty;
-            } else if (chatType.equals(UFEDChatParser.CHATTYPE_GROUP))
+                }
+
+            } else if (chatType.equals(UFEDChatParser.CHATTYPE_GROUP)) {
                 title = UFEDChatParser.CHATTYPE_GROUP_TITLE + ": " + (nameProperty != null ? nameProperty : idProperty);
-            else if (chatType.equals(UFEDChatParser.CHATTYPE_BROADCAST)) {
+
+            } else if (chatType.equals(UFEDChatParser.CHATTYPE_BROADCAST)) {
                 if (parties != null) {
                     if ((parties.length == 1) && ((source != null) && (source.equals(UFEDChatParser.WHATSAPP)
                             || source.equals(UFEDChatParser.WHATSAPP_BUSINESS)
-                            || source.equals(UFEDChatParser.TELEGRAM))))
+                            || source.equals(UFEDChatParser.TELEGRAM)))) {
                         // "Status" chat type (known from behaviour)
                         // NOTE: Apps with this behaviour should be added to this if condition
                         title = UFEDChatParser.CHATTYPE_BROADCAST_STATUS_TITLE + ": " + parties[0];
-                    else
+                    } else {
                         title = UFEDChatParser.CHATTYPE_BROADCAST_TITLE + ": "
                                 + (nameProperty != null ? nameProperty : idProperty);
-                } else
+                    }
+
+                } else {
                     title = UFEDChatParser.CHATTYPE_BROADCAST_TITLE + ": "
                             + (nameProperty != null ? nameProperty : idProperty);
+                }
+
             } else if (chatType.equals(UFEDChatParser.CHATTYPE_UNKNOWN)) {
                 if ((source != null) && (source.equals(UFEDChatParser.WHATSAPP)
-                        || source.equals(UFEDChatParser.WHATSAPP_BUSINESS) || source.equals(UFEDChatParser.TELEGRAM)))
+                        || source.equals(UFEDChatParser.WHATSAPP_BUSINESS) || source.equals(UFEDChatParser.TELEGRAM))) {
                     // "Unknown" chat type regarding apps for which there are specific chat types
                     // NOTE: Apps with similar behaviour should be added to this if condition
                     title = UFEDChatParser.CHATTYPE_UNKNOWN_TITLE + ": " + idProperty;
-                else {
+
+                } else {
                     // "Unknown" chat type regarding apps for which there aren't specific chat types
                     // Communication type is derived from the number of participants
                     if ((parties != null) && (parties.length > 0)) {
-                        if (parties.length > 2)
+                        if (parties.length > 2) {
                             title = UFEDChatParser.CHATTYPE_GROUP_TITLE + ": " + idProperty;
-                        else
+                        } else {
                             title = UFEDChatParser.CHATTYPE_ONEONONE_TITLE + ": "
                                     + ((parties.length > 1) && (parties[0].equals(phoneOwner)) ? parties[1]
                                             : parties[0]);
-                    } else
+                        }
+
+                    } else {
                         title = UFEDChatParser.CHATTYPE_UNKNOWN_TITLE + ": " + idProperty;
+                    }
                 }
-            } else
+            } else {
                 title = chatType + ": " + idProperty;
+            }
+
         } else {
             title = idProperty;
         }
