@@ -68,9 +68,6 @@ public class UFEDChatParser extends AbstractParser {
     protected static final String WHATSAPP_BUSINESS = "WhatsApp Business";
     protected static final String TELEGRAM = "Telegram";
 
-    protected static final String CHAT_ACCOUNT = "Account";
-    protected static final String CHAT_PHONE_OWNER = "PhoneOwner";
-
     // Types used by UFED
     protected static final String CHATTYPE_ONEONONE = "OneOnOne";
     protected static final String CHATTYPE_GROUP = "Group";
@@ -279,9 +276,9 @@ public class UFEDChatParser extends AbstractParser {
         }
 
         if (account != null) {
-            name += "_" + CHAT_ACCOUNT + "_" + clean(account);
+            name += "_" + clean(account);
         } else if (phoneOwner != null) {
-            name += "_" + CHAT_PHONE_OWNER + "_" + clean(phoneOwner);
+            name += "_" + clean(phoneOwner);
         }
 
         if (chatType != null) {
