@@ -18,9 +18,14 @@ import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Base64;
 import java.util.Set;
 
 public class ThumbcacheParser extends AbstractParser {
@@ -64,19 +69,30 @@ public class ThumbcacheParser extends AbstractParser {
                 xhtml.startElement("div", "class", "thumbcache-entry");
                 xhtml.element("h1", entry.getName()); // Nome do arquivo
 
-                xhtml.startElement("div", "class", "thumbcache-entry-content");
                 try (InputStream stream = new DocumentInputStream((DocumentNode) entry)) {
-                    // Extraímos o conteúdo incorporado do arquivo
-                    extractor.parseEmbedded(stream, xhtml, entryData, true);
-                } catch (Exception e) {
+                    BufferedImage image = ImageIO.read(stream);
+                    if (image != null) {
+                        // Converte a imagem para Base64
+                        String base64Image = convertImageToBase64(image);
+                        // Adiciona a imagem ao XHTML
+                        xhtml.startElement("img", "src", "data:image/png;base64," + base64Image);
+                        xhtml.endElement("img");
+                    }
+                } catch (IOException e) {
                     xhtml.startElement("p");
                     xhtml.characters("Error processing document: " + e.getMessage());
                     xhtml.endElement("p");
                 }
 
-                xhtml.endElement("div"); // Fecha "thumbcache-entry-content"
                 xhtml.endElement("div"); // Fecha "thumbcache-entry"
             }
         }
+    }
+
+    private String convertImageToBase64(BufferedImage image) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ImageIO.write(image, "png", baos);
+        byte[] imageBytes = baos.toByteArray();
+        return Base64.getEncoder().encodeToString(imageBytes);
     }
 }
