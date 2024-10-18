@@ -444,8 +444,8 @@ public class ReportGenerator {
                 + "	<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n" //$NON-NLS-1$
                 + "	<meta name=\"viewport\" content=\"width=device-width\" />\n" //$NON-NLS-1$
                 + "     <meta charset=\"UTF-8\" />\n" //$NON-NLS-1$
-                + "	<link rel=\"shortcut icon\" href=\"" //$NON-NLS-1$
-                + iped.parsers.whatsapp.Util.getImageResourceAsEmbedded("img/favicon.ico") + "\" />\n" //$NON-NLS-1$ //$NON-NLS-2$
+                + "<link rel=\"icon\" href=\""
+                + iped.parsers.whatsapp.Util.getImageResourceAsEmbedded("img/telegram.png") + "\">\n"
                 + "<style>\n" + iped.parsers.whatsapp.Util.readResourceAsString("css/whatsapp.css") //$NON-NLS-2$
                 + Util.readResourceAsString("css/tooltip.css") + "\n</style>\n" + "<script>"
                 + iped.parsers.whatsapp.Util.readResourceAsString("js/whatsapp.js") + "</script>"

@@ -22,7 +22,6 @@ import iped.data.IItemReader;
 import iped.parsers.util.Messages;
 import iped.parsers.vcard.VCardParser;
 import iped.parsers.whatsapp.Message.MessageType;
-import iped.parsers.whatsapp.Message.MessageQuotedType;
 import iped.properties.ExtraProperties;
 import iped.utils.EmojiUtil;
 import iped.utils.LocalizedFormat;
@@ -1630,6 +1629,7 @@ public class ReportGenerator {
         } else {
             deletedDiv = "";
         }
+        String favicon  = Util.getImageResourceAsEmbedded("img/whatsapp.png");
         StringSubstitutor interpolator = new StringSubstitutor(new StringLookup() {
 
             @Override
@@ -1649,6 +1649,8 @@ public class ReportGenerator {
                         return css;
                     case "deleted":
                         return deletedDiv;
+                    case "favicon":
+                        return favicon;
                 }
                 return StringLookupFactory.INSTANCE.interpolatorStringLookup().lookup(key);
             }
