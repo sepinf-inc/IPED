@@ -334,7 +334,9 @@ public class ReportGenerator {
         if (message.isEdited()) {
             out.print(Messages.getString("UfedChatReport.Edited") + " ");
         }
-        out.println(timeFormat.format(message.getTimeStamp())); // $NON-NLS-1$
+        if (message.getTimeStamp() != null) {
+            out.println(timeFormat.format(message.getTimeStamp())); // $NON-NLS-1$
+        }
 
         boolean hasStatus = false;
         if (message.isFromMe() && message.getStatus() != null) {
@@ -364,10 +366,15 @@ public class ReportGenerator {
         }
         out.println("</span>"); //$NON-NLS-1$
 
-        if (chatDeleted || message.isDeleted()) {
+        if (chatDeleted || message.getItem().isDeleted()) {
             out.println("<br/><span class=\"recovered\">"); //$NON-NLS-1$
-            out.println("<i>" + Messages.getString("WhatsAppReport.MessageDeletedRecovered") + "</i>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            out.println("<i>" + Messages.getString("UfedChatReport.MessageDeletedRecovered") + "</i>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             out.println("<div class=\"deletedIcon\"></div>"); //$NON-NLS-1$
+            out.println("</span>"); //$NON-NLS-1$
+        } else if (message.isTrash()) {
+            out.println("<br/><span class=\"recovered\">"); //$NON-NLS-1$
+            out.println("<i>" + Messages.getString("UfedChatReport.MessageRecovered") + "</i>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            out.println("<div class=\"trashIcon\"></div>"); //$NON-NLS-1$
             out.println("</span>"); //$NON-NLS-1$
         }
         if (isTo)
@@ -396,11 +403,11 @@ public class ReportGenerator {
             }
 
             String quoteEnd = "</span></div>";
-            if (messageQuote.isDeleted()) {
+            if (messageQuote.getItem().isDeleted()) {
                 quoteEnd = "</span><br/><span style=\"float:none\" class=\"recovered\"><div class=\"deletedIcon\"></div><i>"
-                        + Messages.getString("WhatsAppReport.QuoteNotFound") + "</i>" + quoteEnd;
+                        + Messages.getString("UfedChatReport.MessageDeletedRecovered") + "</i>" + quoteEnd;
             }
-            
+
             StringBuilder msgStr = new StringBuilder();
             StringBuilder attachStr = new StringBuilder();
 

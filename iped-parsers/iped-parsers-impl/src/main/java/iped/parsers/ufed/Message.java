@@ -131,10 +131,6 @@ public class Message implements Comparable<Message> {
         return null;
     }
 
-    public boolean isDeleted() {
-        return item.isDeleted();
-    }
-
     public MessageStatus getStatus() {
         return MessageStatus.parse(readUfedMetadata(item, "Status"));
     }
@@ -163,6 +159,10 @@ public class Message implements Comparable<Message> {
         this.messageQuote = messageQuote;
     }
 
+    public boolean isTrash() {
+        return Boolean.parseBoolean(readUfedMetadata(item, "deleted_trash"));
+    }
+
     public String getIdentifier() {
         return readUfedMetadata(item, "Identifier");
     }
@@ -182,7 +182,7 @@ public class Message implements Comparable<Message> {
     public MessageChatActivity addActivityLog(IItemReader activityLogItem) {
         if (activityLogItem.getParentId() != item.getId()) {
             throw new IllegalArgumentException(
-                    "ActivityLog parentId don't match: " + activityLogItem.getParentId() + " x " + item.getId());
+                    "ActivityLog parentId doesn't match: " + activityLogItem.getParentId() + " x " + item.getId());
         }
         MessageChatActivity activity = new MessageChatActivity(activityLogItem);
         activityLog.add(activity);
@@ -196,7 +196,7 @@ public class Message implements Comparable<Message> {
     public MessageAttachment addAttachment(IItemReader attachItem) {
         if (attachItem.getParentId() != item.getId()) {
             throw new IllegalArgumentException(
-                    "Attachment parentId don't match: " + attachItem.getParentId() + " x " + item.getId());
+                    "Attachment parentId doesn't match: " + attachItem.getParentId() + " x " + item.getId());
         }
         MessageAttachment attach = new MessageAttachment(attachItem);
         attachments.add(attach);

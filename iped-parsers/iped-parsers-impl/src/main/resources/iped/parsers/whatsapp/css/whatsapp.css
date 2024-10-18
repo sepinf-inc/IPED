@@ -106,6 +106,15 @@ div.deletedIcon {
     margin-left: 0 0 0 3px;
 }
 
+div.trashIcon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    vertical-align: bottom;
+    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACHUlEQVQ4jXWTP2haQRzHP09F8/SCvFPQwfCItEEbQRHagHTpFjp2EdwytEOFDiW7uhbBKQQnh2ydCu0iWTILBoIYiEXQRfOHiMgTUcHXockjJvpbjvvefT/3/R13CkAulwtJKX+HQqGEoiisqouLi7/A+0KhcPtUdzyM3zKZTMLv9680A9zd3b02DOPP4eHhh2KxOH7UbQCKogiPx7PWDKBpGul0+q3P5/uZy+UeD7YSAHB+fk6n0wEgGAySSqWsNcMwqNVq+Hy+j9fX19+BHy8AyWSSZDK5MsHBwQEA9/f3HB8fW70uAer1Ou12e20be3t7CCGWtCVANBple3t7LWBzc5PRaLQe0Ol06PV6K82TyYRoNIqmaesB8/mc6XT6wtxoNGi1WpydneFyuXC73asBkUgEXdeteT6fp1KpMJvNEELgcDgYDoeYpvlVCPHKMIxPS4Bms0m327XmsViM0WhENpvl9PQUXdfZ2dnh6OjIo6rqCTw8pMdSVRVN09A0jXA4TCaTASAejyOlZGtri0QiAYDL5eq/aEHXdQKBAABOpxNVVfF6vUynUzY2NpbuRUrZv7m5+Z/ANE1zsVjgdruRUiKlRAiBoigEg0EGgwFSSstss9kW+/v7t1YC0zR/VavVL7u7u47nv9Hr9XJ5ecl4PGY+n3N1dYXdbh+WSqUJgLU7n8+/AWI8q3K5/Lnf76eeak6nszmbzd4B/AO8yqrd8aktfgAAAABJRU5ErkJggg==");
+    margin-left: 0 0 0 3px;
+}
+
 div.statusIcon {
     display: inline-block;
     width: 16px;
