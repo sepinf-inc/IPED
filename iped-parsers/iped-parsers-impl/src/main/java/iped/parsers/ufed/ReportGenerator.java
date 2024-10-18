@@ -76,7 +76,7 @@ public class ReportGenerator {
                             || source.equals(UFEDChatParser.TELEGRAM)))) {
                         // "Status" chat type (known from behaviour)
                         // NOTE: Apps with this behaviour should be added to this if condition
-                        title = UFEDChatParser.CHATTYPE_BROADCAST_STATUS_TITLE + ": " + parties[0];
+                        title = UFEDChatParser.CHATTYPE_STATUS_TITLE + ": " + parties[0];
                     } else {
                         title = UFEDChatParser.CHATTYPE_BROADCAST_TITLE + ": "
                                 + (nameProperty != null ? nameProperty : idProperty);

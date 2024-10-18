@@ -31,6 +31,7 @@ import com.google.common.collect.ImmutableMap;
 
 import iped.data.IItemReader;
 import iped.parsers.standard.StandardParser;
+import iped.parsers.util.Messages;
 import iped.parsers.whatsapp.Message;
 import iped.parsers.whatsapp.WAContact;
 import iped.properties.BasicProps;
@@ -69,14 +70,17 @@ public class UFEDChatParser extends AbstractParser {
     protected static final String CHAT_ACCOUNT = "Account";
     protected static final String CHAT_PHONE_OWNER = "PhoneOwner";
 
+    // Types used by UFED
     protected static final String CHATTYPE_ONEONONE = "OneOnOne";
     protected static final String CHATTYPE_GROUP = "Group";
-    protected static final String CHATTYPE_GROUP_TITLE = "Group";
     protected static final String CHATTYPE_BROADCAST = "Broadcast";
-    protected static final String CHATTYPE_BROADCAST_TITLE = "Broadcast";
-    protected static final String CHATTYPE_BROADCAST_STATUS_TITLE = "Status";
     protected static final String CHATTYPE_UNKNOWN = "Unknown";
-    protected static final String CHATTYPE_UNKNOWN_TITLE = "Unknown";
+
+    // Strings used in item names and titles
+    protected static final String CHATTYPE_GROUP_TITLE = Messages.getString("UFEDChatParser.Group");
+    protected static final String CHATTYPE_BROADCAST_TITLE = Messages.getString("UFEDChatParser.Broadcast");
+    protected static final String CHATTYPE_STATUS_TITLE = Messages.getString("UFEDChatParser.Status");
+    protected static final String CHATTYPE_UNKNOWN_TITLE = Messages.getString("UFEDChatParser.Unknown");
 
     private int minChatSplitSize = 6000000;
 
@@ -297,7 +301,7 @@ public class UFEDChatParser extends AbstractParser {
                             || source.equals(WHATSAPP_BUSINESS) || source.equals(TELEGRAM)))) {
                         // "Status" chat type (known from behaviour)
                         // NOTE: Apps with this behaviour should be added to this if condition
-                        name += "_" + CHATTYPE_BROADCAST_STATUS_TITLE + "_" + clean(parties[0]);
+                        name += "_" + CHATTYPE_STATUS_TITLE + "_" + clean(parties[0]);
                     } else {
                         name += "_" + CHATTYPE_BROADCAST_TITLE + "_"
                                 + (nameProperty != null ? nameProperty : idProperty);
