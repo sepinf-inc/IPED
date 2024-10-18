@@ -45,7 +45,8 @@ public class MenuClass extends JPopupMenu {
 
     private static final long serialVersionUID = 1L;
 
-    JMenuItem exportHighlighted, copyHighlighted, checkHighlighted, uncheckHighlighted, deepCheckHighlighted, deepUncheckHighlighted, readHighlighted, unreadHighlighted, exportChecked, copyChecked, saveBookmarks, loadBookmarks,
+    JMenuItem exportHighlighted, copyHighlighted, checkHighlighted, uncheckHighlighted, readHighlighted, unreadHighlighted, exportChecked, copyChecked, saveBookmarks, loadBookmarks,
+            checkHighlightedAndSubItems, uncheckHighlightedAndSubItems, checkHighlightedAndParent, uncheckHighlightedAndParent, checkHighlightedAndReferences, uncheckHighlightedAndReferences, checkHighlightedAndReferencedBy, uncheckHighlightedAndReferencedBy,
             changeGalleryColCount, defaultLayout, changeLayout, previewScreenshot, manageBookmarks, clearSearchHistory, importKeywords, navigateToParent, exportTerms, manageFilters, manageColumns, exportCheckedToZip, exportCheckedTreeToZip,
             exportTree, exportTreeChecked, similarDocs, openViewfile, createReport, resetColLayout, lastColLayout, saveColLayout, addToGraph, navigateToParentChat, pinFirstColumns, similarImagesCurrent, similarImagesExternal,
             similarFacesCurrent, similarFacesExternal, toggleTimelineView, uiZoom, catIconSize, savePanelsLayout, loadPanelsLayout;
@@ -76,24 +77,55 @@ public class MenuClass extends JPopupMenu {
         uncheckHighlighted.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0));
         this.add(uncheckHighlighted);
 
-        deepCheckHighlighted = new JMenuItem(Messages.getString("MenuClass.CheckRecursivelyHighlighted")); //$NON-NLS-1$
-        deepCheckHighlighted.addActionListener(menuListener);
-        deepCheckHighlighted.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, ActionEvent.CTRL_MASK));
-        this.add(deepCheckHighlighted);
+        JMenu submenu = new JMenu(Messages.getString("MenuClass.CheckAdvanced")); //$NON-NLS-1$
+        this.add(submenu);
 
-        deepUncheckHighlighted = new JMenuItem(Messages.getString("MenuClass.UnCheckRecursivelyHighlighted")); //$NON-NLS-1$
-        deepUncheckHighlighted.addActionListener(menuListener);
-        deepUncheckHighlighted.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, ActionEvent.ALT_MASK));
-        this.add(deepUncheckHighlighted);
+        checkHighlightedAndSubItems = new JMenuItem(Messages.getString("MenuClass.CheckHighlightedAndSubItems")); //$NON-NLS-1$
+        checkHighlightedAndSubItems.addActionListener(menuListener);
+        checkHighlightedAndSubItems.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, ActionEvent.CTRL_MASK));
+        submenu.add(checkHighlightedAndSubItems);
 
-        /*
-         * readHighlighted = new JMenuItem("Marcar selecionados como lido");
-         * readHighlighted.addActionListener(menuListener); this.add(readHighlighted);
-         * 
-         * unreadHighlighted = new JMenuItem("Marcar selecionados como novo");
-         * unreadHighlighted.addActionListener(menuListener);
-         * this.add(unreadHighlighted);
-         */
+        uncheckHighlightedAndSubItems = new JMenuItem(Messages.getString("MenuClass.UncheckHighlightedAndSubItems")); //$NON-NLS-1$
+        uncheckHighlightedAndSubItems.addActionListener(menuListener);
+        uncheckHighlightedAndSubItems.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, ActionEvent.ALT_MASK));
+        submenu.add(uncheckHighlightedAndSubItems);
+
+        submenu.addSeparator();
+
+        checkHighlightedAndParent = new JMenuItem(Messages.getString("MenuClass.CheckHighlightedAndParent")); //$NON-NLS-1$
+        checkHighlightedAndParent.addActionListener(menuListener);
+        checkHighlightedAndParent.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, ActionEvent.CTRL_MASK));
+        submenu.add(checkHighlightedAndParent);
+
+        uncheckHighlightedAndParent = new JMenuItem(Messages.getString("MenuClass.UncheckHighlightedAndParent")); //$NON-NLS-1$
+        uncheckHighlightedAndParent.addActionListener(menuListener);
+        uncheckHighlightedAndParent.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, ActionEvent.ALT_MASK));
+        submenu.add(uncheckHighlightedAndParent);
+
+        submenu.addSeparator();
+
+        checkHighlightedAndReferences = new JMenuItem(Messages.getString("MenuClass.CheckHighlightedAndReferences")); //$NON-NLS-1$
+        checkHighlightedAndReferences.addActionListener(menuListener);
+        checkHighlightedAndReferences.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, ActionEvent.CTRL_MASK));
+        submenu.add(checkHighlightedAndReferences);
+
+        uncheckHighlightedAndReferences = new JMenuItem(Messages.getString("MenuClass.UncheckHighlightedAndReferences")); //$NON-NLS-1$
+        uncheckHighlightedAndReferences.addActionListener(menuListener);
+        uncheckHighlightedAndReferences.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, ActionEvent.ALT_MASK));
+        submenu.add(uncheckHighlightedAndReferences);
+
+        submenu.addSeparator();
+
+        checkHighlightedAndReferencedBy = new JMenuItem(Messages.getString("MenuClass.CheckHighlightedAndReferencedBy")); //$NON-NLS-1$
+        checkHighlightedAndReferencedBy.addActionListener(menuListener);
+        checkHighlightedAndReferencedBy.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, ActionEvent.CTRL_MASK));
+        submenu.add(checkHighlightedAndReferencedBy);
+
+        uncheckHighlightedAndReferencedBy = new JMenuItem(Messages.getString("MenuClass.UncheckHighlightedAndReferencedBy")); //$NON-NLS-1$
+        uncheckHighlightedAndReferencedBy.addActionListener(menuListener);
+        uncheckHighlightedAndReferencedBy.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, ActionEvent.ALT_MASK));
+        submenu.add(uncheckHighlightedAndReferencedBy);
+
         this.addSeparator();
 
         loadBookmarks = new JMenuItem(Messages.getString("MenuClass.LoadBookmarks")); //$NON-NLS-1$
@@ -113,7 +145,7 @@ public class MenuClass extends JPopupMenu {
         manageFilters.addActionListener(menuListener);
         this.add(manageFilters);
 
-        JMenu submenu = new JMenu(Messages.getString("MenuClass.ManageColumns")); //$NON-NLS-1$
+        submenu = new JMenu(Messages.getString("MenuClass.ManageColumns")); //$NON-NLS-1$
         this.add(submenu);
 
         manageColumns = new JMenuItem(Messages.getString("MenuClass.ManageVisibleCols")); //$NON-NLS-1$
