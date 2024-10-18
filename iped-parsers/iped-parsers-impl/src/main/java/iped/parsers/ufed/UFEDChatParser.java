@@ -274,9 +274,7 @@ public class UFEDChatParser extends AbstractParser {
 
         if (account != null) {
             name += "_" + CHAT_ACCOUNT + "_" + account;
-        }
-
-        if (phoneOwner != null) {
+        } else if (phoneOwner != null) {
             name += "_" + CHAT_PHONE_OWNER + "_" + phoneOwner;
         }
 
