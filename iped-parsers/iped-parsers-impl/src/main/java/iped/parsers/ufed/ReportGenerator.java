@@ -116,7 +116,7 @@ public class ReportGenerator {
             title = idProperty;
         }
 
-        printMessageFileHeader(out, title, c.getName(), null);
+        printMessageFileHeader(out, title, c.getName(), null, source);
         if (currentMsg > 0)
             out.println("<div class=\"linha\"><div class=\"date\">"
                     + Messages.getString("WhatsAppReport.ChatContinuation") + "</div></div>");
@@ -273,25 +273,42 @@ public class ReportGenerator {
             return "File";
     }
 
-    private static void printMessageFileHeader(PrintWriter out, String chatName, String title, byte[] avatar) {
+    private static void printMessageFileHeader(PrintWriter out, String chatName, String title, byte[] avatar,
+            String source) {
+
+        String topbarClass = " class=\"other\"";
+        String backImage = " style=\"background-image:url(" + Util.getImageResourceAsEmbedded("img/other-chat-back.jpg") + ")\">\n";
+        if (source != null) {
+            if (source.equals(UFEDChatParser.TELEGRAM)) {
+                topbarClass = " class=\"telegram\"";
+                backImage = " style=\"background-image:url(" + Util.getImageResourceAsEmbedded("img/telegramwallpaper.jpg") + ")\">\n";
+            } else if (source.contains(UFEDChatParser.WHATSAPP)) {
+                topbarClass = "";
+                backImage = "";
+            }
+        }
+
         out.println("<!DOCTYPE html>\n" 
                 + "<html>\n"
                 + "<head>\n"
                 + " <title>" + format(title) + "</title>\n"
                 + " <meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n"
                 + " <meta name=\"viewport\" content=\"width=device-width\" />\n"
-                + "     <meta charset=\"UTF-8\" />\n"
+                + " <meta charset=\"UTF-8\" />\n"
                 + " <link rel=\"shortcut icon\" href=\"" + Util.getImageResourceAsEmbedded("img/favicon.ico")
                 + "\" />\n"
                 + "<style>\n" + Util.readResourceAsString("css/whatsapp.css")
                 + "\n</style>\n" + "<style>.check {vertical-align: top;}</style>" + "</head>\n"
-                + "<body>\n"
-                + "<div id=\"topbar\">\n"
+                + "<body"+ backImage +">\n"
+                + "<div id=\"topbar\"" + topbarClass + ">\n"
                 + " <span class=\"left\">"
                 + " &nbsp; ");
-        if (avatar != null)
+
+        if (avatar != null) {
             out.println("<img src=\"data:image/jpg;base64," + Util.encodeBase64(avatar) 
                     + "\" width=\"40\" height=\"40\"/>");
+        }
+
         out.println(format(chatName) + "</span>\n"
                 + "</div>\n"
                 + "<div id=\"conversation\">\n"

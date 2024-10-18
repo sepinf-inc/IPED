@@ -149,16 +149,17 @@ div.catalogIcon {
     position: fixed;
     background: #475959;
     border: 1px solid #394d4d;
+    box-sizing: border-box;
     width: 640px;
     z-index: 100;
 }
 
-#topbar.telegram {
-    position: fixed;
+#topbar .telegram {
     background: #5682a3;
-    border: 1px solid #394d4d;
-    width: 640px;
-    z-index: 100;
+}
+
+#topbar .other {
+    background: #666677;
 }
 
 #topbar .left {
