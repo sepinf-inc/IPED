@@ -58,10 +58,7 @@ public class ThumbcacheParser extends AbstractParser {
                 recurseDir((DirectoryNode) entry, extractor, xhtml);
             } else {
                 Metadata entrydata = new Metadata();
-                entrydata.set(Metadata.SAMPLES_PER_PIXEL, "3"); // SAMPLES PER PIXEL é um metadado que indica a quantidade de canais de cor da imagem.
-                entrydata.set(Metadata.IMAGE_WIDTH, "100"); // IMAGE WIDTH é um metadado que indica a largura da imagem.
-                entrydata.set(Metadata.IMAGE_LENGTH, "100"); // IMAGE LENGTH é um metadado que indica a altura da imagem.
-                entrydata.set(Metadata.CONTENT_TYPE, "image/jpeg"); // CONTENT TYPE é um metadado que indica o tipo de conteúdo do arquivo.
+                entrydata.set(Metadata.CONTENT_TYPE, "thumbcache-entry");
 
                 xhtml.startElement("div", "class", "thumbcache-entry");
                 xhtml.element("h1", entry.getName());
