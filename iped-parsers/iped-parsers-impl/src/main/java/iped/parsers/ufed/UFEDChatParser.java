@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
@@ -360,9 +361,7 @@ public class UFEDChatParser extends AbstractParser {
                     }
                 }
             }
-            if (s.endsWith(WAContact.waSuffix)) {
-                s = s.substring(0, s.length() - WAContact.waSuffix.length());
-            }
+            s = StringUtils.remove(s, WAContact.waSuffix);
         }
         return s;
     }
