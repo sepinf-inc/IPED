@@ -32,6 +32,7 @@ import com.google.common.collect.ImmutableMap;
 import iped.data.IItemReader;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.whatsapp.Message;
+import iped.parsers.whatsapp.WAContact;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
@@ -273,15 +274,16 @@ public class UFEDChatParser extends AbstractParser {
         }
 
         if (account != null) {
-            name += "_" + CHAT_ACCOUNT + "_" + account;
+            name += "_" + CHAT_ACCOUNT + "_" + clean(account);
         } else if (phoneOwner != null) {
-            name += "_" + CHAT_PHONE_OWNER + "_" + phoneOwner;
+            name += "_" + CHAT_PHONE_OWNER + "_" + clean(phoneOwner);
         }
 
         if (chatType != null) {
             if (chatType.equals(CHATTYPE_ONEONONE)) {
                 if (parties != null) {
-                    name += "_" + ((parties.length > 1) && (parties[0].equals(phoneOwner)) ? parties[1] : parties[0]);
+                    name += "_" + clean(
+                            ((parties.length > 1) && (parties[0].equals(phoneOwner)) ? parties[1] : parties[0]));
                 } else {
                     name += "_" + idProperty;
                 }
@@ -295,7 +297,7 @@ public class UFEDChatParser extends AbstractParser {
                             || source.equals(WHATSAPP_BUSINESS) || source.equals(TELEGRAM)))) {
                         // "Status" chat type (known from behaviour)
                         // NOTE: Apps with this behaviour should be added to this if condition
-                        name += "_" + CHATTYPE_BROADCAST_STATUS_TITLE + "_" + parties[0];
+                        name += "_" + CHATTYPE_BROADCAST_STATUS_TITLE + "_" + clean(parties[0]);
                     } else {
                         name += "_" + CHATTYPE_BROADCAST_TITLE + "_"
                                 + (nameProperty != null ? nameProperty : idProperty);
@@ -318,8 +320,8 @@ public class UFEDChatParser extends AbstractParser {
                         if (parties.length > 2) {
                             name += "_" + CHATTYPE_GROUP_TITLE + "_" + idProperty;
                         } else {
-                            name += "_" + ((parties.length > 1) && (parties[0].equals(phoneOwner)) ? parties[1]
-                                    : parties[0]);
+                            name += "_" + clean(
+                                    (parties.length > 1) && (parties[0].equals(phoneOwner)) ? parties[1] : parties[0]);
                         }
                     } else {
                         name += "_" + CHATTYPE_UNKNOWN_TITLE + "_" + idProperty;
@@ -335,6 +337,30 @@ public class UFEDChatParser extends AbstractParser {
         }
 
         return name;
+    }
+
+    private static String clean(String s) {
+        if (s != null) {
+            s = s.trim();
+            if (s.endsWith(")")) {
+                int p = s.indexOf("(");
+                if (p > 0) {
+                    int cnt = 0;
+                    for (int i = p + 1; i < s.length() - 1; i++) {
+                        if (Character.isDigit(s.charAt(i))) {
+                            cnt++;
+                        }
+                    }
+                    if (cnt >= 5) {
+                        s = s.substring(0, p);
+                    }
+                }
+            }
+            if (s.endsWith(WAContact.waSuffix)) {
+                s = s.substring(0, s.length() - WAContact.waSuffix.length());
+            }
+        }
+        return s;
     }
 
     private void storeMsgIds(List<UfedMessage> messages, Metadata metadata) {
