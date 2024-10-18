@@ -52,22 +52,30 @@ public class ThumbcacheParser extends AbstractParser {
         tmp.close();
     }
 
-    private void recurseDir(DirectoryNode dir, EmbeddedDocumentExtractor extractor, XHTMLContentHandler xhtml) throws IOException, SAXException, TikaException {
+    private void recurseDir(DirectoryNode dir, EmbeddedDocumentExtractor extractor, XHTMLContentHandler xhtml)
+        throws IOException, SAXException, TikaException {
         for (Entry entry : dir) {
             if (entry instanceof DirectoryNode) {
                 recurseDir((DirectoryNode) entry, extractor, xhtml);
-            } else {
-                Metadata entrydata = new Metadata();
-                entrydata.set(Metadata.CONTENT_TYPE, "thumbcache-entry");
+            } else if (entry instanceof DocumentNode) {
+                Metadata entryData = new Metadata();
+                entryData.set(Metadata.CONTENT_TYPE, "thumbcache-entry");
 
                 xhtml.startElement("div", "class", "thumbcache-entry");
-                xhtml.element("h1", entry.getName());
+                xhtml.element("h1", entry.getName()); // Nome do arquivo
+
                 xhtml.startElement("div", "class", "thumbcache-entry-content");
                 try (InputStream stream = new DocumentInputStream((DocumentNode) entry)) {
-                    extractor.parseEmbedded(stream, xhtml, entrydata, true);
+                    // Extraímos o conteúdo incorporado do arquivo
+                    extractor.parseEmbedded(stream, xhtml, entryData, true);
+                } catch (Exception e) {
+                    xhtml.startElement("p");
+                    xhtml.characters("Error processing document: " + e.getMessage());
+                    xhtml.endElement("p");
                 }
-                xhtml.endElement("div");
-                xhtml.endElement("div");
+
+                xhtml.endElement("div"); // Fecha "thumbcache-entry-content"
+                xhtml.endElement("div"); // Fecha "thumbcache-entry"
             }
         }
     }
