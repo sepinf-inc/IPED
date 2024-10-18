@@ -69,7 +69,6 @@ public class UFEDChatParser extends AbstractParser {
     protected static final String CHAT_PHONE_OWNER = "PhoneOwner";
 
     protected static final String CHATTYPE_ONEONONE = "OneOnOne";
-    protected static final String CHATTYPE_ONEONONE_TITLE = "OneOnOne";
     protected static final String CHATTYPE_GROUP = "Group";
     protected static final String CHATTYPE_GROUP_TITLE = "Group";
     protected static final String CHATTYPE_BROADCAST = "Broadcast";
@@ -272,27 +271,26 @@ public class UFEDChatParser extends AbstractParser {
         if (source != null) {
             name += "_" + source;
         }
-        
+
         if (account != null) {
             name += "_" + CHAT_ACCOUNT + "_" + account;
         }
-        
+
         if (phoneOwner != null) {
             name += "_" + CHAT_PHONE_OWNER + "_" + phoneOwner;
         }
-        
+
         if (chatType != null) {
             if (chatType.equals(CHATTYPE_ONEONONE)) {
-                name += "_" + CHATTYPE_ONEONONE_TITLE;
                 if (parties != null) {
                     name += "_" + ((parties.length > 1) && (parties[0].equals(phoneOwner)) ? parties[1] : parties[0]);
                 } else {
                     name += "_" + idProperty;
                 }
-                
+
             } else if (chatType.equals(CHATTYPE_GROUP)) {
                 name += "_" + CHATTYPE_GROUP_TITLE + "_" + (nameProperty != null ? nameProperty : idProperty);
-                
+
             } else if (chatType.equals(CHATTYPE_BROADCAST)) {
                 if (parties != null) {
                     if ((parties.length == 1) && ((source != null) && (source.equals(WHATSAPP)
@@ -307,13 +305,14 @@ public class UFEDChatParser extends AbstractParser {
                 } else {
                     name += "_" + CHATTYPE_BROADCAST_TITLE + "_" + (nameProperty != null ? nameProperty : idProperty);
                 }
-                
+
             } else if (chatType.equals(CHATTYPE_UNKNOWN)) {
                 if ((source != null)
                         && (source.equals(WHATSAPP) || source.equals(WHATSAPP_BUSINESS) || source.equals(TELEGRAM))) {
                     // "Unknown" chat type regarding apps for which there are specific chat types
                     // NOTE: Apps with similar behavior should be added to this if condition
                     name += "_" + CHATTYPE_UNKNOWN_TITLE + "_" + idProperty;
+
                 } else {
                     // "Unknown" chat type regarding apps for which there aren't specific chat types
                     // Communication type is derived from the number of participants
@@ -321,18 +320,18 @@ public class UFEDChatParser extends AbstractParser {
                         if (parties.length > 2) {
                             name += "_" + CHATTYPE_GROUP_TITLE + "_" + idProperty;
                         } else {
-                            name += "_" + CHATTYPE_ONEONONE_TITLE + "_"
-                                    + ((parties.length > 1) && (parties[0].equals(phoneOwner)) ? parties[1]
-                                            : parties[0]);
+                            name += "_" + ((parties.length > 1) && (parties[0].equals(phoneOwner)) ? parties[1]
+                                    : parties[0]);
                         }
                     } else {
                         name += "_" + CHATTYPE_UNKNOWN_TITLE + "_" + idProperty;
                     }
                 }
+
             } else {
                 name += "_" + chatType + "_" + idProperty;
             }
-            
+
         } else {
             name += "_" + idProperty;
         }

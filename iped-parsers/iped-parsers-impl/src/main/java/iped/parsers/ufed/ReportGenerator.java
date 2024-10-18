@@ -60,11 +60,10 @@ public class ReportGenerator {
 
         if (chatType != null) {
             if (chatType.equals(UFEDChatParser.CHATTYPE_ONEONONE)) {
-                title = UFEDChatParser.CHATTYPE_ONEONONE_TITLE;
                 if (parties != null) {
-                    title += ": " + ((parties.length > 1) && (parties[0].equals(phoneOwner)) ? parties[1] : parties[0]);
+                    title = ((parties.length > 1) && (parties[0].equals(phoneOwner)) ? parties[1] : parties[0]);
                 } else {
-                    title += ": " + idProperty;
+                    title = idProperty;
                 }
 
             } else if (chatType.equals(UFEDChatParser.CHATTYPE_GROUP)) {
@@ -102,9 +101,7 @@ public class ReportGenerator {
                         if (parties.length > 2) {
                             title = UFEDChatParser.CHATTYPE_GROUP_TITLE + ": " + idProperty;
                         } else {
-                            title = UFEDChatParser.CHATTYPE_ONEONONE_TITLE + ": "
-                                    + ((parties.length > 1) && (parties[0].equals(phoneOwner)) ? parties[1]
-                                            : parties[0]);
+                            title = parties.length > 1 && parties[0].equals(phoneOwner) ? parties[1] : parties[0];
                         }
 
                     } else {
@@ -280,9 +277,9 @@ public class ReportGenerator {
         out.println("<!DOCTYPE html>\n" 
                 + "<html>\n"
                 + "<head>\n"
-                + "	<title>" + format(title) + "</title>\n"
-                + "	<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n"
-                + "	<meta name=\"viewport\" content=\"width=device-width\" />\n"
+                + " <title>" + format(title) + "</title>\n"
+                + " <meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n"
+                + " <meta name=\"viewport\" content=\"width=device-width\" />\n"
                 + "     <meta charset=\"UTF-8\" />\n"
                 + " <link rel=\"shortcut icon\" href=\"" + Util.getImageResourceAsEmbedded("img/favicon.ico")
                 + "\" />\n"
@@ -290,7 +287,7 @@ public class ReportGenerator {
                 + "\n</style>\n" + "<style>.check {vertical-align: top;}</style>" + "</head>\n"
                 + "<body>\n"
                 + "<div id=\"topbar\">\n"
-                + "	<span class=\"left\">"
+                + " <span class=\"left\">"
                 + " &nbsp; ");
         if (avatar != null)
             out.println("<img src=\"data:image/jpg;base64," + Util.encodeBase64(avatar) 
@@ -302,7 +299,7 @@ public class ReportGenerator {
     }
 
     private static void printMessageFileFooter(PrintWriter out) {
-        out.println("	<br /><br /><br />\n"
+        out.println("   <br /><br /><br />\n"
                 + "</div>\n"
                 + "<div id=\"lastmsg\">&nbsp;</div>\n"
                 + "</body>\n"
