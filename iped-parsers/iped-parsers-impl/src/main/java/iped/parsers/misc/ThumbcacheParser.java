@@ -5,7 +5,6 @@ import org.apache.poi.poifs.filesystem.DirectoryNode;
 import org.apache.poi.poifs.filesystem.DocumentInputStream;
 import org.apache.poi.poifs.filesystem.Entry;
 import org.apache.poi.poifs.filesystem.DocumentNode;
-import org.apache.tika.exception.TikaException;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
@@ -33,22 +32,21 @@ public class ThumbcacheParser extends AbstractParser {
     }
 
     @Override
-    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
-
+    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException {
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
         xhtml.startDocument();
 
-        TemporaryResources tmp = new TemporaryResources();
-        TikaInputStream tis = TikaInputStream.get(stream, tmp);
-        File file = tis.getFile();
-        POIFSFileSystem poiFS = new POIFSFileSystem(file);
+        try (TemporaryResources tmp = new TemporaryResources();
+             TikaInputStream tis = TikaInputStream.get(stream, tmp);
+             POIFSFileSystem poiFS = new POIFSFileSystem(tis.getFile())) {
 
-        // Placeholder for the recursive method that will navigate through directories and process files extracting metadata and image.
-        // TODO: Implement recurseDir method
-        recurseDir(poiFS.getRoot(), xhtml);
+            recurseDir(poiFS.getRoot(), xhtml);
 
-        xhtml.endDocument();
-        tmp.close();
+        } catch (IOException e) {
+            xhtml.characters("Error processing thumbcache file: " + e.getMessage() + "\n");
+        } finally {
+            xhtml.endDocument();
+        }
     }
 
     private void recurseDir(DirectoryNode dir, XHTMLContentHandler xhtml) throws SAXException {
@@ -56,43 +54,45 @@ public class ThumbcacheParser extends AbstractParser {
             if (entry instanceof DirectoryNode) {
                 recurseDir((DirectoryNode) entry, xhtml);
             } else {
-                try (DocumentInputStream docStream = new DocumentInputStream((DocumentNode) entry)) {
-                    byte[] buffer = new byte[80];
-                    int bytesRead = docStream.read(buffer);
-                    if (bytesRead != buffer.length) {
-                        continue;
-                    }
-
-                    ByteBuffer bb = ByteBuffer.wrap(buffer).order(ByteOrder.LITTLE_ENDIAN);
-
-                    int size = bb.getInt();
-                    long entryHash = bb.getLong();
-                    int identifierStringSize = bb.getInt();
-                    int paddingSize = bb.getInt();
-                    int dataSize = bb.getInt();
-                    int unknown1 = bb.getInt();
-                    long dataChecksum = bb.getInt() & 0xFFFFFFFFL;
-                    long headerChecksum = bb.getLong();
-
-                    xhtml.startElement("pre");
-
-                    xhtml.characters("size                           : " + size + "\n");
-                    xhtml.characters("entry hash                     : 0x" + Long.toHexString(entryHash) + "\n");
-                    xhtml.characters("identifier string size         : " + identifierStringSize + "\n");
-                    xhtml.characters("padding size                   : " + paddingSize + "\n");
-                    xhtml.characters("data size                      : " + dataSize + "\n");
-                    xhtml.characters("unknown1                       : 0x" + Integer.toHexString(unknown1) + "\n");
-                    xhtml.characters("data checksum                  : 0x" + Long.toHexString(dataChecksum) + "\n");
-                    xhtml.characters("header checksum                : 0x" + Long.toHexString(headerChecksum) + "\n");
-
-                    xhtml.characters("\nidentifier string              : " + Long.toHexString(entryHash) + "\n");
-
-                    xhtml.endElement("pre");
-
-                } catch (IOException e) {
-                    xhtml.characters("Error processing entry: " + entry.getName() + "\n");
-                }
+                processDocumentNode((DocumentNode) entry, xhtml);
             }
+        }
+    }
+
+    private void processDocumentNode(DocumentNode entry, XHTMLContentHandler xhtml) throws SAXException {
+        try (DocumentInputStream docStream = new DocumentInputStream(entry)) {
+            byte[] buffer = new byte[80];
+            int bytesRead = docStream.read(buffer);
+            if (bytesRead != buffer.length) {
+                xhtml.characters("Incomplete data for entry: " + entry.getName() + "\n");
+                return;
+            }
+
+            ByteBuffer bb = ByteBuffer.wrap(buffer).order(ByteOrder.LITTLE_ENDIAN);
+
+            int size = bb.getInt();
+            long entryHash = bb.getLong();
+            int identifierStringSize = bb.getInt();
+            int paddingSize = bb.getInt();
+            int dataSize = bb.getInt();
+            int unknown1 = bb.getInt();
+            long dataChecksum = bb.getInt() & 0xFFFFFFFFL;
+            long headerChecksum = bb.getLong();
+
+            xhtml.startElement("pre");
+            xhtml.characters("size                           : " + size + "\n");
+            xhtml.characters("entry hash                     : 0x" + Long.toHexString(entryHash) + "\n");
+            xhtml.characters("identifier string size         : " + identifierStringSize + "\n");
+            xhtml.characters("padding size                   : " + paddingSize + "\n");
+            xhtml.characters("data size                      : " + dataSize + "\n");
+            xhtml.characters("unknown1                       : 0x" + Integer.toHexString(unknown1) + "\n");
+            xhtml.characters("data checksum                  : 0x" + Long.toHexString(dataChecksum) + "\n");
+            xhtml.characters("header checksum                : 0x" + Long.toHexString(headerChecksum) + "\n");
+            xhtml.characters("\nidentifier string              : " + Long.toHexString(entryHash) + "\n");
+            xhtml.endElement("pre");
+
+        } catch (IOException e) {
+            xhtml.characters("Error processing entry: " + entry.getName() + " - " + e.getMessage() + "\n");
         }
     }
 }
