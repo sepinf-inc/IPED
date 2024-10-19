@@ -21,7 +21,6 @@ import iped.data.IItemReader;
 import iped.parsers.util.ChildPornHashLookup;
 
 /**
- *
  * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
  */
 public class Message implements Comparable<Message> {
@@ -214,8 +213,8 @@ public class Message implements Comparable<Message> {
     }
 
     public void setMediaMime(String mediaMime) {
-        if (mediaMime != null && mediaMime.contains(";")) { //$NON-NLS-1$
-            mediaMime = mediaMime.split(";")[0]; //$NON-NLS-1$
+        if (mediaMime != null && mediaMime.contains(";")) {
+            mediaMime = mediaMime.split(";")[0];
         }
         this.mediaMime = mediaMime;
     }
