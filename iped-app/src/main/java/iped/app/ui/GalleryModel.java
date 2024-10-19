@@ -23,7 +23,6 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -68,7 +67,7 @@ public class GalleryModel extends AbstractTableModel {
 
     public static final int defaultColCount = 10;
 
-    private static final double blurIntensity = 0.02d;
+    private static final double blurIntensity = 0.03;
 
     private int colCount = defaultColCount;
     private int thumbSize;
@@ -76,13 +75,21 @@ public class GalleryModel extends AbstractTableModel {
     private boolean logRendering = false;
     private ImageThumbTask imgThumbTask;
 
-    public Map<IItemId, GalleryValue> cache = Collections.synchronizedMap(new LinkedHashMap<IItemId, GalleryValue>());
-    private int maxCacheSize = 1000;
-    private ErrorIcon errorIcon = new ErrorIcon();
+    private final Map<IItemId, GalleryValue> cache = new LinkedHashMap<IItemId, GalleryValue>() {
+        private static final long serialVersionUID = -8265274824099487129L;
+
+        protected boolean removeEldestEntry(Map.Entry<IItemId, GalleryValue> eldest) {
+            return size() > 1000;
+        };
+    };
+
+    private static final ErrorIcon errorIcon = new ErrorIcon();
     private static final BufferedImage errorImg = new BufferedImage(1, 1, BufferedImage.TYPE_BYTE_BINARY);
     public static final ImageIcon unsupportedIcon = new ImageIcon();
     private ExecutorService executor;
     private ExternalImageConverter externalImageConverter;
+
+    private static final GalleryValue emptyValue = new GalleryValue("", null, null);
 
     private volatile boolean blurFilter;
     private volatile boolean grayFilter;
@@ -97,12 +104,16 @@ public class GalleryModel extends AbstractTableModel {
 
     public void setBlurFilter(boolean newBlurFilter) {
         blurFilter = newBlurFilter;
-        cache.clear();
+        synchronized (cache) {
+            cache.clear();
+        }
     }
 
     public void setGrayFilter(boolean newGrayFilter) {
         grayFilter = newGrayFilter;
-        cache.clear();
+        synchronized (cache) {
+            cache.clear();
+        }
     }
 
     @Override
@@ -143,6 +154,31 @@ public class GalleryModel extends AbstractTableModel {
     @Override
     public Object getValueAt(final int row, final int col) {
 
+        int idx = row * colCount + col;
+        if (idx >= App.get().ipedResult.getLength()) {
+            return emptyValue;
+        }
+
+        idx = App.get().resultsTable.convertRowIndexToModel(idx);
+        final IItemId id = App.get().ipedResult.getItem(idx);
+
+        GalleryValue ret = null;
+        synchronized (cache) {
+            ret = cache.get(id);
+        }
+        if (ret != null) {
+            return ret;
+        }
+
+        final int docId = App.get().appCase.getLuceneId(id);
+        final Document doc;
+        try {
+            doc = App.get().appCase.getSearcher().doc(docId);
+
+        } catch (IOException e) {
+            return new GalleryValue("", errorIcon, id); //$NON-NLS-1$
+        }
+
         if (imgThumbTask == null) {
             try {
                 imgThumbTask = new ImageThumbTask();
@@ -155,31 +191,36 @@ public class GalleryModel extends AbstractTableModel {
                 e.printStackTrace();
             }
         }
-
-        int idx = row * colCount + col;
-        if (idx >= App.get().ipedResult.getLength()) {
-            return new GalleryValue("", null, null); //$NON-NLS-1$
-        }
-
-        idx = App.get().resultsTable.convertRowIndexToModel(idx);
-        final IItemId id = App.get().ipedResult.getItem(idx);
-        final int docId = App.get().appCase.getLuceneId(id);
-
-        synchronized (cache) {
-            if (cache.containsKey(id)) {
-                return cache.get(id);
+        
+        final String mediaType = doc.get(IndexItem.CONTENTTYPE);
+        GalleryValue value = new GalleryValue(doc.get(IndexItem.NAME), null, id);
+        BytesRef bytesRef = doc.getBinaryValue(IndexItem.THUMB);
+        if (bytesRef != null && (App.get().useVideoThumbsInGallery
+                || (!isSupportedVideo(mediaType) && !isAnimationImage(doc, mediaType)))) {
+            byte[] thumb = bytesRef.bytes;
+            if (thumb.length > 0) {
+                try {
+                    value.image = ImageIO.read(new ByteArrayInputStream(thumb));
+                    if (blurFilter) {
+                        value.image = ImageUtil.blur(value.image, thumbSize, blurIntensity);
+                    }
+                    if (grayFilter) {
+                        value.image = ImageUtil.grayscale(value.image);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } else {
+                value.image = errorImg;
+                value.icon = errorIcon;
+            }
+            if (value.image != null) {
+                synchronized (cache) {
+                    cache.put(id, value);
+                }
+                return value;
             }
         }
-
-        final Document doc;
-        try {
-            doc = App.get().appCase.getSearcher().doc(docId);
-
-        } catch (IOException e) {
-            return new GalleryValue("", errorIcon, id); //$NON-NLS-1$
-        }
-
-        final String mediaType = doc.get(IndexItem.CONTENTTYPE);
 
         if (executor == null) {
             executor = Executors.newFixedThreadPool(galleryThreads);
@@ -194,12 +235,16 @@ public class GalleryModel extends AbstractTableModel {
                 InputStream stream = null;
                 GalleryValue value = new GalleryValue(doc.get(IndexItem.NAME), null, id);
                 try {
-                    if (cache.containsKey(id)) {
+
+                    if (!App.get().gallery.getVisibleRect()
+                            .intersects(App.get().gallery.getCellRect(row, col, false))) {
                         return;
                     }
 
-                    if (!App.get().gallery.getVisibleRect().intersects(App.get().gallery.getCellRect(row, col, false))) {
-                        return;
+                    synchronized (cache) {
+                        if (cache.containsKey(id)) {
+                            return;
+                        }
                     }
 
                     if (logRendering) {
@@ -207,19 +252,10 @@ public class GalleryModel extends AbstractTableModel {
                         LOGGER.info("Gallery rendering " + path); //$NON-NLS-1$
                     }
 
-                    BytesRef bytesRef = doc.getBinaryValue(IndexItem.THUMB);
-                    if (bytesRef != null && ((!isSupportedVideo(mediaType) && !isAnimationImage(doc, mediaType)) || App.get().useVideoThumbsInGallery)) {
-                        byte[] thumb = bytesRef.bytes;
-                        if (thumb.length > 0) {
-                            image = ImageIO.read(new ByteArrayInputStream(thumb));
-                        } else {
-                            image = errorImg;
-                        }
-                    }
-
                     String hash = doc.get(IndexItem.HASH);
                     if (image == null && hash != null && !hash.isEmpty()) {
-                        image = getViewImage(docId, hash, isSupportedVideo(mediaType) || isAnimationImage(doc, mediaType));
+                        image = getViewImage(docId, hash,
+                                isSupportedVideo(mediaType) || isAnimationImage(doc, mediaType));
                     }
 
                     if (Boolean.valueOf(doc.get(IndexItem.ISDIR))) {
@@ -241,7 +277,8 @@ public class GalleryModel extends AbstractTableModel {
                         stream.mark(10000000);
                     }
 
-                    if (image == null && stream != null && imgThumbTask.getImageThumbConfig().isExtractThumb() && mediaType.equals("image/jpeg")) { //$NON-NLS-1$
+                    if (image == null && stream != null && imgThumbTask.getImageThumbConfig().isExtractThumb()
+                            && mediaType.equals("image/jpeg")) { //$NON-NLS-1$
                         image = ImageMetadataUtil.getThumb(CloseShieldInputStream.wrap(stream));
                         stream.reset();
                     }
@@ -292,7 +329,9 @@ public class GalleryModel extends AbstractTableModel {
                     value.image = image;
                 }
 
-                cache.put(id, value);
+                synchronized (cache) {
+                    cache.put(id, value);
+                }
 
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override
@@ -300,15 +339,6 @@ public class GalleryModel extends AbstractTableModel {
                         App.get().galleryModel.fireTableCellUpdated(row, col);
                     }
                 });
-
-                synchronized (cache) {
-                    Iterator<IItemId> i = cache.keySet().iterator();
-                    while (cache.size() > maxCacheSize) {
-                        i.next();
-                        i.remove();
-                    }
-
-                }
             }
         });
 
