@@ -277,12 +277,12 @@ public class ReportGenerator {
             String source) {
 
         String topbarClass = " class=\"other\"";
-        String backImage = " style=\"background-image:url(" + Util.getImageResourceAsEmbedded("img/other-chat-back.jpg") + ")\">\n";
+        String backImage = " style=\"background-image:url(" + Util.getImageResourceAsEmbedded("img/other-chat-back.jpg") + ")\"";
         String icon = "message";
         if (source != null) {
             if (source.equals(UFEDChatParser.TELEGRAM)) {
                 topbarClass = " class=\"telegram\"";
-                backImage = " style=\"background-image:url(" + Util.getImageResourceAsEmbedded("img/telegramwallpaper.jpg") + ")\">\n";
+                backImage = " style=\"background-image:url(" + Util.getImageResourceAsEmbedded("img/telegramwallpaper.jpg") + ")\"";
                 icon = "telegram";
             } else if (source.contains(UFEDChatParser.WHATSAPP)) {
                 topbarClass = "";
