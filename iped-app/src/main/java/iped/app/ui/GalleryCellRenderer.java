@@ -130,9 +130,6 @@ class GalleryIcon extends JLabel {
 
     // Limit how much images can be enlarged (usually thumbs are down sized, but
     // small images may be enlarged).
-    // Thumbnail's dimensions are used instead of the original ones, to speed up
-    // (avoid querying original dimension), to reduce stored information (in gallery
-    // objects) and to simplify the code.
     private static final double maxEnlargeFactor = 2;
 
     private static final String unsupportedIconText = "<html><center>"
