@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.util.Set;
 
 public class ThumbcacheParser extends AbstractParser {
@@ -59,8 +60,8 @@ public class ThumbcacheParser extends AbstractParser {
             return;
         }
 
-        int formatVersion = fileHeader.getInt(4); //
-        int cacheType = fileHeader.getInt(8); //
+        int formatVersion = fileHeader.getInt(4);
+        int cacheType = fileHeader.getInt(8);
         int firstCacheEntryOffset = fileHeader.getInt(12);
         int firstAvailableCacheEntryOffset = fileHeader.getInt(16);
         int numberOfCacheEntries = fileHeader.getInt(20);
@@ -95,13 +96,12 @@ public class ThumbcacheParser extends AbstractParser {
         xhtml.characters("Seen on Windows version        : " + windowsVersion + "\n");
         xhtml.endElement("pre");
 
-        // Processando as entradas de cache
         while (stream.read(buffer) == buffer.length) {
             ByteBuffer bb = ByteBuffer.wrap(buffer).order(ByteOrder.LITTLE_ENDIAN);
 
-            String entrySignature = new String(buffer, 0, 4); //
+            String entrySignature = new String(buffer, 0, 4);
+
             if (!"CMMM".equals(entrySignature)) {
-                xhtml.characters("Error: Invalid entry signature, expected 'CMMM'. Skipping entry.\n");
                 continue;
             }
 
@@ -116,7 +116,7 @@ public class ThumbcacheParser extends AbstractParser {
             if (dataSize > 0 && identifierStringSize > 0) {
                 byte[] identifierBytes = new byte[identifierStringSize];
                 stream.read(identifierBytes);
-                String identifierString = new String(identifierBytes, "UTF-16LE");
+                String identifierString = new String(identifierBytes, StandardCharsets.UTF_16LE);
 
                 xhtml.startElement("pre");
                 xhtml.characters("Entry hash                    : 0x" + Long.toHexString(entryHash) + "\n");
