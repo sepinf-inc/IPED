@@ -163,23 +163,12 @@ public class GalleryModel extends AbstractTableModel {
 
         idx = App.get().resultsTable.convertRowIndexToModel(idx);
         final IItemId id = App.get().ipedResult.getItem(idx);
-        final int docId = App.get().appCase.getLuceneId(id);
 
         synchronized (cache) {
             if (cache.containsKey(id)) {
                 return cache.get(id);
             }
         }
-
-        final Document doc;
-        try {
-            doc = App.get().appCase.getSearcher().doc(docId);
-
-        } catch (IOException e) {
-            return new GalleryValue("", errorIcon, id); //$NON-NLS-1$
-        }
-
-        final String mediaType = doc.get(IndexItem.CONTENTTYPE);
 
         if (executor == null) {
             executor = Executors.newFixedThreadPool(galleryThreads);
@@ -192,7 +181,8 @@ public class GalleryModel extends AbstractTableModel {
 
                 BufferedImage image = null;
                 InputStream stream = null;
-                GalleryValue value = new GalleryValue(doc.get(IndexItem.NAME), null, id);
+                Document doc = null;
+                GalleryValue value = new GalleryValue("", null, id);
                 try {
                     if (cache.containsKey(id)) {
                         return;
@@ -202,10 +192,16 @@ public class GalleryModel extends AbstractTableModel {
                         return;
                     }
 
+                    int docId = App.get().appCase.getLuceneId(id);
+                    doc = App.get().appCase.getSearcher().doc(docId);
+                    value.name = doc.get(IndexItem.NAME);
+
                     if (logRendering) {
                         String path = doc.get(IndexItem.PATH);
                         LOGGER.info("Gallery rendering " + path); //$NON-NLS-1$
                     }
+
+                    final String mediaType = doc.get(IndexItem.CONTENTTYPE);
 
                     BytesRef bytesRef = doc.getBinaryValue(IndexItem.THUMB);
                     if (bytesRef != null && ((!isSupportedVideo(mediaType) && !isAnimationImage(doc, mediaType)) || App.get().useVideoThumbsInGallery)) {
@@ -312,7 +308,7 @@ public class GalleryModel extends AbstractTableModel {
             }
         });
 
-        return new GalleryValue(doc.get(IndexItem.NAME), null, id);
+        return new GalleryValue("...", null, id);
     }
 
     public void clearVideoThumbsInCache() {
