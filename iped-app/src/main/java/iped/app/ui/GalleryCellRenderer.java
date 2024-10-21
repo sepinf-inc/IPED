@@ -44,7 +44,7 @@ import iped.engine.util.Util;
 public class GalleryCellRenderer implements TableCellRenderer {
 
     private final JPanel top = new JPanel(), panel = new JPanel();
-    private final GalleryIcon label = new GalleryIcon();
+    private final GalleryThumbLabel label = new GalleryThumbLabel();
     private final JLabel cLabel = new JLabel();
     private final JCheckBox check = new JCheckBox();
     private Border selBorder;
@@ -125,7 +125,7 @@ public class GalleryCellRenderer implements TableCellRenderer {
     }
 }
 
-class GalleryIcon extends JLabel {
+class GalleryThumbLabel extends JLabel {
     private static final long serialVersionUID = 1L;
 
     // Limit how much images can be enlarged (usually thumbs are down sized, but

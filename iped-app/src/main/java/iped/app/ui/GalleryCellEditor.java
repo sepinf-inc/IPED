@@ -44,7 +44,7 @@ public class GalleryCellEditor extends AbstractCellEditor implements TableCellEd
 
     private int row, col;
     private final JPanel top = new JPanel(), panel = new JPanel();
-    private final GalleryIcon label = new GalleryIcon();
+    private final GalleryThumbLabel label = new GalleryThumbLabel();
     private final JLabel cLabel = new JLabel();
     private final JCheckBox check = new JCheckBox();
     private Border selBorder;
