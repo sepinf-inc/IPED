@@ -22,7 +22,6 @@ import iped.parsers.util.ChildPornHashLookup;
 import iped.parsers.util.HashUtils;
 
 /**
- *
  * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
  */
 public class Message implements Comparable<Message> {
@@ -215,8 +214,8 @@ public class Message implements Comparable<Message> {
     }
 
     public void setMediaMime(String mediaMime) {
-        if (mediaMime != null && mediaMime.contains(";")) { //$NON-NLS-1$
-            mediaMime = mediaMime.split(";")[0]; //$NON-NLS-1$
+        if (mediaMime != null && mediaMime.contains(";")) {
+            mediaMime = mediaMime.split(";")[0];
         }
         this.mediaMime = mediaMime;
     }
@@ -638,7 +637,7 @@ public class Message implements Comparable<Message> {
     }
 
     public long getSortId() {
-        return sortId;
+        return sortId != 0 ? sortId : timeStamp != null ? timeStamp.getTime() : id;
     }
 
     public void setSortId(long sortId) {
@@ -691,18 +690,6 @@ public class Message implements Comparable<Message> {
 
     @Override
     public int compareTo(Message o) {
-        if (getSortId() != 0 && o.getSortId() != 0) {
-            int comp = Long.compare(getSortId(), o.getSortId());
-            if (comp != 0) {
-                return comp;
-            }
-        }
-        if (getTimeStamp() != null && o.getTimeStamp() != null) {
-            int comp = getTimeStamp().compareTo(o.getTimeStamp());
-            if (comp != 0) {
-                return comp;
-            }
-        }
-        return Long.compare(getId(), o.getId());
+        return Long.compare(getSortId(), o.getSortId());
     }
 }

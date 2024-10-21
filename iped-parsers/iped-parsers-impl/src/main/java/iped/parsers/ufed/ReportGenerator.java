@@ -1,5 +1,6 @@
 package iped.parsers.ufed;
-
+import static iped.parsers.ufed.UfedUtils.readUfedMetadata;
+import static iped.parsers.ufed.UfedUtils.readUfedMetadataArray;
 import static j2html.TagCreator.*;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
@@ -29,8 +30,8 @@ public class ReportGenerator {
 
     private int minChatSplitSize;
 
-    private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd"); //$NON-NLS-1$
-    private final SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ"); //$NON-NLS-1$
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+    private final SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ");
     private boolean firstHtml = true;
     private int currentMsg = 0;
 
@@ -158,28 +159,30 @@ public class ReportGenerator {
             return null;
 
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, "UTF-8")); //$NON-NLS-1$
+        PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, "UTF-8"));
 
-        String title = UFEDChatParser.getChatName(chat);
-        printMessageFileHeader(out, title, title, chat.getContactPhotoThumb());
+        String title = getChatTitle(chat);
+        String source = readUfedMetadata(chat.getItem(), "Source");
+
+        printMessageFileHeader(out, title, title, chat.getContactPhotoThumb(), source);
         if (currentMsg > 0)
-            out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
-                    + Messages.getString("WhatsAppReport.ChatContinuation") + "</div></div>"); //$NON-NLS-1$ //$NON-NLS-2$
+            out.println("<div class=\"linha\"><div class=\"date\">"
+                    + Messages.getString("WhatsAppReport.ChatContinuation") + "</div></div>");
 
         String lastDate = null;
         while (currentMsg < msgs.size()) {
             Message m = msgs.get(currentMsg);
-            String thisDate = m.getTimeStamp() != null ? dateFormat.format(m.getTimeStamp()) : Messages.getString("ReportGenerator.UnknownDate"); //$NON-NLS-1$
+            String thisDate = m.getTimeStamp() != null ? dateFormat.format(m.getTimeStamp()) : Messages.getString("ReportGenerator.UnknownDate");
             if (lastDate == null || !lastDate.equals(thisDate)) {
-                out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
-                        + thisDate + "</div></div>"); //$NON-NLS-1$
+                out.println("<div class=\"linha\"><div class=\"date\">"
+                        + thisDate + "</div></div>");
                 lastDate = thisDate;
             }
             printMessage(out, m, chat.isGroup(), chat.getItem().isDeleted());
 
             if (currentMsg++ != msgs.size() - 1 && bout.size() >= minChatSplitSize) {
-                out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
-                        + Messages.getString("WhatsAppReport.ChatContinues") + "</div></div>"); //$NON-NLS-1$ //$NON-NLS-2$
+                out.println("<div class=\"linha\"><div class=\"date\">"
+                        + Messages.getString("WhatsAppReport.ChatContinues") + "</div></div>");
                 break;
             }
         }
@@ -192,35 +195,108 @@ public class ReportGenerator {
         return EmojiUtil.replaceByImages(bout.toByteArray());
     }
 
+    private String getChatTitle(Chat chat) {
+        
+        String[] split = chat.getItem().getName().split("_", 3);
+        String title = split[split.length - 1];
+
+        String source = readUfedMetadata(chat.getItem(), "Source");
+        String phoneOwner =readUfedMetadata(chat.getItem(), "phoneOwner");
+        String idProperty =  "ufedId=" + readUfedMetadata(chat.getItem(), "id");
+        String nameProperty = readUfedMetadata(chat.getItem(), "Name");
+        String chatType = readUfedMetadata(chat.getItem(), "ChatType");
+        List<String> parties = readUfedMetadataArray(chat.getItem(), "Participants");
+
+        if (chatType != null) {
+            if (chatType.equals(UFEDChatParser.CHATTYPE_ONEONONE)) {
+                if (parties != null) {
+                    title = ((parties.size() > 1) && (parties.get(0).equals(phoneOwner)) ? parties.get(0) : parties.get(1));
+                } else {
+                    title = idProperty;
+                }
+
+            } else if (chatType.equals(UFEDChatParser.CHATTYPE_GROUP)) {
+                title = UFEDChatParser.CHATTYPE_GROUP_TITLE + ": " + (nameProperty != null ? nameProperty : idProperty);
+
+            } else if (chatType.equals(UFEDChatParser.CHATTYPE_BROADCAST)) {
+                if (parties != null) {
+                    if ((parties.size() == 1) && ((source != null) && (source.equals(UFEDChatParser.WHATSAPP)
+                            || source.equals(UFEDChatParser.WHATSAPP_BUSINESS)
+                            || source.equals(UFEDChatParser.TELEGRAM)))) {
+                        // "Status" chat type (known from behaviour)
+                        // NOTE: Apps with this behaviour should be added to this if condition
+                        title = UFEDChatParser.CHATTYPE_STATUS_TITLE + ": " + parties.get(0);
+                    } else {
+                        title = UFEDChatParser.CHATTYPE_BROADCAST_TITLE + ": "
+                                + (nameProperty != null ? nameProperty : idProperty);
+                    }
+
+                } else {
+                    title = UFEDChatParser.CHATTYPE_BROADCAST_TITLE + ": "
+                            + (nameProperty != null ? nameProperty : idProperty);
+                }
+
+            } else if (chatType.equals(UFEDChatParser.CHATTYPE_UNKNOWN)) {
+                if ((source != null) && (source.equals(UFEDChatParser.WHATSAPP)
+                        || source.equals(UFEDChatParser.WHATSAPP_BUSINESS) || source.equals(UFEDChatParser.TELEGRAM))) {
+                    // "Unknown" chat type regarding apps for which there are specific chat types
+                    // NOTE: Apps with similar behaviour should be added to this if condition
+                    title = UFEDChatParser.CHATTYPE_UNKNOWN_TITLE + ": " + idProperty;
+
+                } else {
+                    // "Unknown" chat type regarding apps for which there aren't specific chat types
+                    // Communication type is derived from the number of participants
+                    if ((parties != null) && (parties.size() > 0)) {
+                        if (parties.size() > 2) {
+                            title = UFEDChatParser.CHATTYPE_GROUP_TITLE + ": " + idProperty;
+                        } else {
+                            title = parties.size() > 1 && parties.get(0).equals(phoneOwner) ? parties.get(1) : parties.get(0);
+                        }
+
+                    } else {
+                        title = UFEDChatParser.CHATTYPE_UNKNOWN_TITLE + ": " + idProperty;
+                    }
+                }
+            } else {
+                title = chatType + ": " + idProperty;
+            }
+
+        } else {
+            title = idProperty;
+        }
+
+        return title;
+    }
+
     private void printMessage(PrintWriter out, Message message, boolean group, boolean chatDeleted) {
 
         boolean isFrom = false;
         boolean isTo = false;
 
-        out.println("<div id=\"" + message.getSourceIndex() + "\" class=\"linha\">"); //$NON-NLS-1$
+        out.println("<div id=\"" + message.getSourceIndex() + "\" class=\"linha\">");
         String name = null;
         if (message.isSystemMessage()) {
-            out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
+            out.println("<div class=\"systemmessage\">");
         } else {
             if (message.isFromMe()) {
-                out.println("<div class=\"bbr\"><div class=\"outgoing to\">"); //$NON-NLS-1$
+                out.println("<div class=\"bbr\"><div class=\"outgoing to\">");
                 isTo = true;
             } else {
-                out.println("<div class=\"bbl\"><div class=\"aw\"><div class=\"awl\"></div></div><div class=\"incoming from\">"); //$NON-NLS-1$
+                out.println("<div class=\"bbl\"><div class=\"aw\"><div class=\"awl\"></div></div><div class=\"incoming from\">");
                 isFrom = true;
             }
             name = message.getFrom();
             if (name == null) {
                 if (message.isFromMe()) {
-                    name = Messages.getString("WhatsAppReport.Owner"); //$NON-NLS-1$
+                    name = Messages.getString("WhatsAppReport.Owner");
                 } else {
-                    name = Messages.getString("ReportGenerator.Unknown"); //$NON-NLS-1$
+                    name = Messages.getString("ReportGenerator.Unknown");
                 }
             }
         }
 
         if (name != null)
-            out.println("<span class=\"name\">" + formatParty(name) + "</span><br/>"); //$NON-NLS-1$ //$NON-NLS-2$
+            out.println("<span class=\"name\">" + formatParty(name) + "</span><br/>");
 
         if (message.isForwarded()) {
             String forwardedBy = "";
@@ -252,12 +328,12 @@ public class ReportGenerator {
                 if (fileHash != null) {
                     out.println("<input class=\"check\" type=\"checkbox\" onclick=app.check(\"hash:" + fileHash + "\",this.checked) name=\""
                             + fileHash + "\" />");
-                    out.println("<a onclick=app.open(\"hash:" + fileHash + "\") "); //$NON-NLS-1$ //$NON-NLS-2$
+                    out.println("<a onclick=app.open(\"hash:" + fileHash + "\") ");
                     String ext = attachment.getReferencedFile().getTrueExt();
                     String exportPath = iped.parsers.util.Util.getExportPath(fileHash, ext); // $NON-NLS-1$
                     if (!exportPath.isEmpty())
-                        out.println("href=\"" + format(exportPath) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
-                    out.println(">"); //$NON-NLS-1$
+                        out.println("href=\"" + format(exportPath) + "\"");
+                    out.println(">");
                     startedLink = true;
                 }
             }
@@ -268,23 +344,23 @@ public class ReportGenerator {
             }
 
             if (thumb != null) {
-                if (contentType != null && contentType.startsWith("video")) //$NON-NLS-1$
-                    out.println(Messages.getString("WhatsAppReport.Video") + ":<br/>"); //$NON-NLS-1$ //$NON-NLS-2$
-                out.print("<img class=\"thumb\" src=\""); //$NON-NLS-1$
-                out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
-                out.println(" title=\"" + format(attachment.getTitle()) + "\"/><br/>"); //$NON-NLS-1$ //$NON-NLS-2$
+                if (contentType != null && contentType.startsWith("video"))
+                    out.println(Messages.getString("WhatsAppReport.Video") + ":<br/>");
+                out.print("<img class=\"thumb\" src=\"");
+                out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\"");
+                out.println(" title=\"" + format(attachment.getTitle()) + "\"/><br/>");
 
             } else if (contentType != null) {
-                if (contentType.startsWith("audio")) { //$NON-NLS-1$
-                    out.println("<div class=\"audioImg\" title=\"Audio\"></div>"); //$NON-NLS-1$
-                } else if (contentType.startsWith("video")) { //$NON-NLS-1$
-                    out.println("<div class=\"videoImg\" title=\"Video\"></div>"); //$NON-NLS-1$
-                } else if (contentType.startsWith("image") || contentType.startsWith("photo")) { //$NON-NLS-1$ //$NON-NLS-2$
-                    out.println("<div class=\"imageImg\" title=\"Image\"></div>"); //$NON-NLS-1$
-                } else if (contentType.contains("contact")) { //$NON-NLS-1$
-                    out.println("<div class=\"contactImg\" title=\"Contact\"></div>"); //$NON-NLS-1$
+                if (contentType.startsWith("audio")) {
+                    out.println("<div class=\"audioImg\" title=\"Audio\"></div>");
+                } else if (contentType.startsWith("video")) {
+                    out.println("<div class=\"videoImg\" title=\"Video\"></div>");
+                } else if (contentType.startsWith("image") || contentType.startsWith("photo")) {
+                    out.println("<div class=\"imageImg\" title=\"Image\"></div>");
+                } else if (contentType.contains("contact")) {
+                    out.println("<div class=\"contactImg\" title=\"Contact\"></div>");
                 } else
-                    out.println("Attachment:<br/><div class=\"attachImg\" title=\"Doc\"></div>"); //$NON-NLS-1$
+                    out.println("Attachment:<br/><div class=\"attachImg\" title=\"Doc\"></div>");
             }
             if (startedLink) {
                 out.println("</a>");
@@ -294,15 +370,15 @@ public class ReportGenerator {
                 String transcription = attachment.getReferencedFile().getTranscription();
                 if (transcription != null) {
                     out.print("<br/>");
-                    out.print(Messages.getString("ReportGenerator.TranscriptionTitle")); //$NON-NLS-1$
+                    out.print(Messages.getString("ReportGenerator.TranscriptionTitle"));
                     String confidence = attachment.getReferencedFile().getTranscriptConfidence();
                     if (confidence != null) {
                         float score = Float.valueOf(confidence) * 100;
-                        out.print(" [" + (int) score + "%]"); //$NON-NLS-1$ //$NON-NLS-2$
+                        out.print(" [" + (int) score + "%]");
                     }
-                    out.println(": <i>"); //$NON-NLS-1$
+                    out.println(": <i>");
                     out.println(format(transcription));
-                    out.println("</i><br/>"); //$NON-NLS-1$
+                    out.println("</i><br/>");
                 }
 
                 if (!attachment.getReferencedFile().getChildPornSets().isEmpty()) {
@@ -318,7 +394,7 @@ public class ReportGenerator {
                 String url = attachment.getUrl();
                 if (isNotBlank(url) && !StringUtils.contains(body, url) // 
                         && StringUtils.equalsAny(message.getSource(), "Telegram"))
-                    out.println("<p class=\"link\">" + format(attachment.getUrl()) + "</p>"); //$NON-NLS-1$
+                    out.println("<p class=\"link\">" + format(attachment.getUrl()) + "</p>");
             }
         }
 
@@ -327,10 +403,10 @@ public class ReportGenerator {
             if (!message.isSystemMessage())
                 out.print("<br/>");
         } else if (message.isSystemMessage()) {
-            out.print("System Message"); //$NON-NLS-1$
+            out.print("System Message");
         }
 
-        out.println("<span class=\"time\">"); //$NON-NLS-1$
+        out.println("<span class=\"time\">");
         if (message.isEdited()) {
             out.print(Messages.getString("UfedChatReport.Edited") + " ");
         }
@@ -342,19 +418,19 @@ public class ReportGenerator {
         if (message.isFromMe() && message.getStatus() != null) {
             switch (message.getStatus()) {
             case Unsent:
-                out.print("<div class=\"unsent\"></div>"); //$NON-NLS-1$
+                out.print("<div class=\"unsent\"></div>");
                 hasStatus = true;
                 break;
             case Sent:
-                out.print("<div class=\"sent\"></div>"); //$NON-NLS-1$
+                out.print("<div class=\"sent\"></div>");
                 hasStatus = true;
                 break;
             case Delivered:
-                out.print("<div class=\"delivered\"></div>"); //$NON-NLS-1$
+                out.print("<div class=\"delivered\"></div>");
                 hasStatus = true;
                 break;
             case Read:
-                out.print("<div class=\"viewed\"></div>"); //$NON-NLS-1$
+                out.print("<div class=\"viewed\"></div>");
                 hasStatus = true;
                 break;
             default:
@@ -364,25 +440,25 @@ public class ReportGenerator {
         if (message.isEdited() && hasStatus) {
             out.print("<div class=\"edit\"></div>");
         }
-        out.println("</span>"); //$NON-NLS-1$
+        out.println("</span>");
 
         if (chatDeleted || message.getItem().isDeleted()) {
-            out.println("<br/><span class=\"recovered\">"); //$NON-NLS-1$
-            out.println("<i>" + Messages.getString("UfedChatReport.MessageDeletedRecovered") + "</i>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-            out.println("<div class=\"deletedIcon\"></div>"); //$NON-NLS-1$
-            out.println("</span>"); //$NON-NLS-1$
+            out.println("<br/><span class=\"recovered\">");
+            out.println("<i>" + Messages.getString("UfedChatReport.MessageDeletedRecovered") + "</i>");
+            out.println("<div class=\"deletedIcon\"></div>");
+            out.println("</span>");
         } else if (message.isTrash()) {
-            out.println("<br/><span class=\"recovered\">"); //$NON-NLS-1$
-            out.println("<i>" + Messages.getString("UfedChatReport.MessageRecovered") + "</i>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-            out.println("<div class=\"trashIcon\"></div>"); //$NON-NLS-1$
-            out.println("</span>"); //$NON-NLS-1$
+            out.println("<br/><span class=\"recovered\">");
+            out.println("<i>" + Messages.getString("UfedChatReport.MessageRecovered") + "</i>");
+            out.println("<div class=\"trashIcon\"></div>");
+            out.println("</span>");
         }
         if (isTo)
             out.println("</div><div class=\"aw\"><div class=\"awr\"></div></div>");
         if (isFrom)
             out.println("</div>");
 
-        out.println("</div></div>"); //$NON-NLS-1$
+        out.println("</div></div>");
     }
 
     private void printQuote(PrintWriter out, Message message) {
@@ -396,9 +472,9 @@ public class ReportGenerator {
             String quoteUser = messageQuote.getFrom();
             if (quoteUser == null) {
                 if (message.isFromMe()) {
-                    quoteUser = Messages.getString("WhatsAppReport.Owner"); //$NON-NLS-1$
+                    quoteUser = Messages.getString("WhatsAppReport.Owner");
                 } else {
-                    quoteUser = Messages.getString("ReportGenerator.Unknown"); //$NON-NLS-1$
+                    quoteUser = Messages.getString("ReportGenerator.Unknown");
                 }
             }
 
@@ -516,42 +592,60 @@ public class ReportGenerator {
 
         String url = attachment.getUrl();
         if (isNotBlank(url) && !StringUtils.contains(body, url))
-            sb.append("<p class=\"link\">" + format(attachment.getUrl()) + "</p>"); //$NON-NLS-1$
+            sb.append("<p class=\"link\">" + format(attachment.getUrl()) + "</p>");
 
         return sb.toString();
     }
 
-    private static void printMessageFileHeader(PrintWriter out, String chatName, String title, byte[] avatar) {
-        out.println("<!DOCTYPE html>\n" //$NON-NLS-1$
-                + "<html>\n" //$NON-NLS-1$
-                + "<head>\n" //$NON-NLS-1$
-                + "	<title>" + format(title) + "</title>\n" //$NON-NLS-1$ //$NON-NLS-2$
-                + "	<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n" //$NON-NLS-1$
-                + "	<meta name=\"viewport\" content=\"width=device-width\" />\n" //$NON-NLS-1$
-                + "     <meta charset=\"UTF-8\" />\n" //$NON-NLS-1$
-                + " <link rel=\"shortcut icon\" href=\"" + Util.getImageResourceAsEmbedded("img/favicon.ico") //$NON-NLS-1$ //$NON-NLS-2$
-                + "\" />\n" //$NON-NLS-1$
-                + "<style>\n" + Util.readResourceAsString("css/whatsapp.css") //$NON-NLS-2$
-                + "\n</style>\n" + "<style>.check {vertical-align: top;}</style>" + "</head>\n" //$NON-NLS-3$
-                + "<body>\n" //$NON-NLS-1$
-                + "<div id=\"topbar\">\n" //$NON-NLS-1$
-                + "	<span class=\"left\">" //$NON-NLS-1$
-                + " &nbsp; "); //$NON-NLS-1$
-        if (avatar != null)
-            out.println("<img src=\"data:image/jpg;base64," + Util.encodeBase64(avatar) //$NON-NLS-1$
-                    + "\" width=\"72\" height=\"72\"/>"); //$NON-NLS-1$
-        out.println(format(chatName) + "</span>\n" //$NON-NLS-1$
-                + "</div>\n" //$NON-NLS-1$
-                + "<div id=\"conversation\">\n" //$NON-NLS-1$
-                + "<br/><br/><br/>"); //$NON-NLS-1$
-    }
+    private static void printMessageFileHeader(PrintWriter out, String chatName, String title, byte[] avatar,
+            String source) {
 
+        String topbarClass = " class=\"other\"";
+        String backImage = " style=\"background-image:url(" + Util.getImageResourceAsEmbedded("img/other-chat-back.jpg") + ")\"";
+        String icon = "message";
+        if (source != null) {
+            if (source.equals(UFEDChatParser.TELEGRAM)) {
+                topbarClass = " class=\"telegram\"";
+                backImage = " style=\"background-image:url(" + Util.getImageResourceAsEmbedded("img/telegramwallpaper.jpg") + ")\"";
+                icon = "telegram";
+            } else if (source.contains(UFEDChatParser.WHATSAPP)) {
+                topbarClass = "";
+                backImage = "";
+                icon = "whatsapp";
+            }
+        }
+
+        out.println("<!DOCTYPE html>\n" 
+                + "<html>\n"
+                + "<head>\n"
+                + "<title>" + format(title) + "</title>\n"
+                + "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n"
+                + "<meta name=\"viewport\" content=\"width=device-width\" />\n"
+                + "<meta charset=\"UTF-8\" />\n"
+                + "<link rel=\"icon\" href=\"" + Util.getImageResourceAsEmbedded("img/" + icon + ".png") + "\">\n"
+                + "<style>\n" + Util.readResourceAsString("css/whatsapp.css")
+                + "\n</style>\n" + "<style>.check {vertical-align: top;}</style>" + "</head>\n"
+                + "<body"+ backImage +">\n"
+                + "<div id=\"topbar\"" + topbarClass + ">\n"
+                + " <span class=\"left\">"
+                + " &nbsp; ");
+
+        if (avatar != null) {
+            out.println("<img src=\"data:image/jpg;base64," + Util.encodeBase64(avatar) 
+                    + "\" width=\"72\" height=\"72\"/>");
+        }
+
+        out.println(format(chatName) + "</span>\n"
+                + "</div>\n"
+                + "<div id=\"conversation\">\n"
+                + "<br/><br/><br/>");
+    }
     private static void printMessageFileFooter(PrintWriter out) {
-        out.println("	<br /><br /><br />\n" //$NON-NLS-1$
-                + "</div>\n" //$NON-NLS-1$
-                + "<div id=\"lastmsg\">&nbsp;</div>\n" //$NON-NLS-1$
-                + "</body>\n" //$NON-NLS-1$
-                + "</html>"); //$NON-NLS-1$
+        out.println("	<br /><br /><br />\n"
+                + "</div>\n"
+                + "<div id=\"lastmsg\">&nbsp;</div>\n"
+                + "</body>\n"
+                + "</html>");
     }
 
 }

@@ -37,6 +37,8 @@ import com.google.common.collect.ImmutableMap;
 import iped.data.IItemReader;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.ConversationUtils;
+import iped.parsers.util.Messages;
+import iped.parsers.whatsapp.WAContact;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
@@ -52,9 +54,9 @@ public class UFEDChatParser extends AbstractParser {
 
     private static Logger logger = LoggerFactory.getLogger(UFEDChatParser.class);
 
-    public static final MediaType UFED_CHAT_MIME = MediaType.application("x-ufed-chat"); //$NON-NLS-1$
-    public static final MediaType UFED_CHAT_WA_MIME = MediaType.application("x-ufed-chat-whatsapp"); //$NON-NLS-1$
-    public static final MediaType UFED_CHAT_TELEGRAM_MIME = MediaType.application("x-ufed-chat-telegram"); //$NON-NLS-1$
+    public static final MediaType UFED_CHAT_MIME = MediaType.application("x-ufed-chat");
+    public static final MediaType UFED_CHAT_WA_MIME = MediaType.application("x-ufed-chat-whatsapp");
+    public static final MediaType UFED_CHAT_TELEGRAM_MIME = MediaType.application("x-ufed-chat-telegram");
 
     public static final MediaType UFED_CHAT_PREVIEW_MIME = MediaType.application("x-ufed-chat-preview");
 
@@ -68,9 +70,25 @@ public class UFEDChatParser extends AbstractParser {
             "instagram", MediaType.application("x-ufed-chat-preview-instagram"));
 
     public static final Property META_FROM_OWNER = Property
-            .internalBoolean(ExtraProperties.UFED_META_PREFIX + "fromOwner"); //$NON-NLS-1$
+            .internalBoolean(ExtraProperties.UFED_META_PREFIX + "fromOwner");
 
     public static final String ATTACHED_MEDIA_MSG = "ATTACHED_MEDIA: ";
+
+    protected static final String WHATSAPP = "WhatsApp";
+    protected static final String WHATSAPP_BUSINESS = "WhatsApp Business";
+    protected static final String TELEGRAM = "Telegram";
+
+    // Types used by UFED
+    protected static final String CHATTYPE_ONEONONE = "OneOnOne";
+    protected static final String CHATTYPE_GROUP = "Group";
+    protected static final String CHATTYPE_BROADCAST = "Broadcast";
+    protected static final String CHATTYPE_UNKNOWN = "Unknown";
+
+    // Strings used in item names and titles
+    protected static final String CHATTYPE_GROUP_TITLE = Messages.getString("UFEDChatParser.Group");
+    protected static final String CHATTYPE_BROADCAST_TITLE = Messages.getString("UFEDChatParser.Broadcast");
+    protected static final String CHATTYPE_STATUS_TITLE = Messages.getString("UFEDChatParser.Status");
+    protected static final String CHATTYPE_UNKNOWN_TITLE = Messages.getString("UFEDChatParser.Unknown");
 
     private boolean extractMessages = true;
     private boolean extractActivityLogs = true;
@@ -188,7 +206,7 @@ public class UFEDChatParser extends AbstractParser {
             Collections.sort(messages);
 
             String virtualId = chat.getId();
-            String chatPrefix = getChatName(chat);
+            String chatPrefix = getChatName(chat.getItem());
 
             if (extractor.shouldParseEmbedded(chatMeta)) {
                 ReportGenerator reportGenerator = new ReportGenerator(minChatSplitSize);
@@ -214,7 +232,7 @@ public class UFEDChatParser extends AbstractParser {
 
                     String chatName = chatPrefix;
                     if (frag > 0 || nextBytes != null)
-                        chatName += "_" + frag++; //$NON-NLS-1$
+                        chatName += "_" + frag++;
 
                     chatPreviewMeta.set(TikaCoreProperties.TITLE, chatName);
                     chatPreviewMeta.set(ExtraProperties.ITEM_VIRTUAL_ID, virtualId);
@@ -657,7 +675,109 @@ public class UFEDChatParser extends AbstractParser {
         message.setMessageQuote(quotedMessage);
     }
 
-    public static String getChatName(Chat chat) {
+    public static String getChatName(IItemReader item) {
+        String name = "Chat";
+        String source = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source");
+        String account = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Account");
+        String phoneOwner = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "phoneOwner");
+        String idProperty = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "id");
+        String nameProperty = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name");
+        String chatType = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "ChatType");
+        String[] parties = item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants");
+
+        if (source != null) {
+            name += "_" + source;
+        }
+
+        if (account != null) {
+            name += "_" + clean(account);
+        } else if (phoneOwner != null) {
+            name += "_" + clean(phoneOwner);
+        }
+
+        if (chatType != null) {
+            if (chatType.equals(CHATTYPE_ONEONONE)) {
+                if (parties != null) {
+                    name += "_" + clean(
+                            ((parties.length > 1) && (parties[0].equals(phoneOwner)) ? parties[1] : parties[0]));
+                } else {
+                    name += "_" + idProperty;
+                }
+
+            } else if (chatType.equals(CHATTYPE_GROUP)) {
+                name += "_" + CHATTYPE_GROUP_TITLE + "_" + (nameProperty != null ? nameProperty : idProperty);
+
+            } else if (chatType.equals(CHATTYPE_BROADCAST)) {
+                if (parties != null) {
+                    if ((parties.length == 1) && ((source != null) && (source.equals(WHATSAPP)
+                            || source.equals(WHATSAPP_BUSINESS) || source.equals(TELEGRAM)))) {
+                        // "Status" chat type (known from behaviour)
+                        // NOTE: Apps with this behaviour should be added to this if condition
+                        name += "_" + CHATTYPE_STATUS_TITLE + "_" + clean(parties[0]);
+                    } else {
+                        name += "_" + CHATTYPE_BROADCAST_TITLE + "_"
+                                + (nameProperty != null ? nameProperty : idProperty);
+                    }
+                } else {
+                    name += "_" + CHATTYPE_BROADCAST_TITLE + "_" + (nameProperty != null ? nameProperty : idProperty);
+                }
+
+            } else if (chatType.equals(CHATTYPE_UNKNOWN)) {
+                if ((source != null)
+                        && (source.equals(WHATSAPP) || source.equals(WHATSAPP_BUSINESS) || source.equals(TELEGRAM))) {
+                    // "Unknown" chat type regarding apps for which there are specific chat types
+                    // NOTE: Apps with similar behavior should be added to this if condition
+                    name += "_" + CHATTYPE_UNKNOWN_TITLE + "_" + idProperty;
+
+                } else {
+                    // "Unknown" chat type regarding apps for which there aren't specific chat types
+                    // Communication type is derived from the number of participants
+                    if ((parties != null) && (parties.length > 0)) {
+                        if (parties.length > 2) {
+                            name += "_" + CHATTYPE_GROUP_TITLE + "_" + idProperty;
+                        } else {
+                            name += "_" + clean(
+                                    (parties.length > 1) && (parties[0].equals(phoneOwner)) ? parties[1] : parties[0]);
+                        }
+                    } else {
+                        name += "_" + CHATTYPE_UNKNOWN_TITLE + "_" + idProperty;
+                    }
+                }
+
+            } else {
+                name += "_" + chatType + "_" + idProperty;
+            }
+
+        } else {
+            name += "_" + idProperty;
+        }
+
+        return name;
+    }
+
+    private static String clean(String s) {
+        if (s != null) {
+            s = s.trim();
+            if (s.endsWith(")")) {
+                int p = s.indexOf("(");
+                if (p > 0) {
+                    int cnt = 0;
+                    for (int i = p + 1; i < s.length() - 1; i++) {
+                        if (Character.isDigit(s.charAt(i))) {
+                            cnt++;
+                        }
+                    }
+                    if (cnt >= 5) {
+                        s = s.substring(0, p);
+                    }
+                }
+            }
+            s = StringUtils.remove(s, WAContact.waSuffix);
+        }
+        return s;
+    }
+    
+    public static String getChatName2(Chat chat) {
 
         Metadata chatMeta = chat.getItem().getMetadata();
         String accountId = chatMeta.get(ExtraProperties.CONVERSATION_ACCOUNT + ExtraProperties.CONVERSATION_SUFFIX_ID);
