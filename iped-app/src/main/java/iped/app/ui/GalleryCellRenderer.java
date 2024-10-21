@@ -149,6 +149,7 @@ class GalleryThumbLabel extends JLabel {
     }
 
     public void updateUI() {
+        super.updateUI();
         warningColor = UIManager.getColor("Gallery.warning");
         if (warningColor == null)
             warningColor = Color.red;
