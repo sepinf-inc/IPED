@@ -175,8 +175,9 @@ public class GalleryModel extends AbstractTableModel {
         final IItemId id = App.get().ipedResult.getItem(idx);
 
         synchronized (cache) {
-            if (cache.containsKey(id)) {
-                return cache.get(id);
+            GalleryValue value = cache.get(id);
+            if (value != null) {
+                return value;
             }
         }
 
