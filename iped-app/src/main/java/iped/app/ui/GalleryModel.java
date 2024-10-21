@@ -84,6 +84,8 @@ public class GalleryModel extends AbstractTableModel {
         }
     };
 
+    private static final GalleryValue emptyValue = new GalleryValue("", null, null);
+
     private ErrorIcon errorIcon = new ErrorIcon();
     private static final BufferedImage errorImg = new BufferedImage(1, 1, BufferedImage.TYPE_BYTE_BINARY);
     public static final ImageIcon unsupportedIcon = new ImageIcon();
@@ -168,7 +170,7 @@ public class GalleryModel extends AbstractTableModel {
 
         int idx = row * colCount + col;
         if (idx >= App.get().ipedResult.getLength()) {
-            return new GalleryValue("", null, null); //$NON-NLS-1$
+            return emptyValue;
         }
 
         idx = App.get().resultsTable.convertRowIndexToModel(idx);
