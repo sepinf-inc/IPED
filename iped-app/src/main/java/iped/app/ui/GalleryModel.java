@@ -23,7 +23,6 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -76,8 +75,15 @@ public class GalleryModel extends AbstractTableModel {
     private boolean logRendering = false;
     private ImageThumbTask imgThumbTask;
 
-    public final Map<IItemId, GalleryValue> cache = new LinkedHashMap<IItemId, GalleryValue>();
-    private int maxCacheSize = 1000;
+    private static final int maxCacheSize = 1000;
+    public final Map<IItemId, GalleryValue> cache = new LinkedHashMap<IItemId, GalleryValue>() {
+        private static final long serialVersionUID = 1L;
+
+        protected boolean removeEldestEntry(Map.Entry<IItemId,GalleryValue> eldest) {
+            return size() > maxCacheSize;
+        }
+    };
+
     private ErrorIcon errorIcon = new ErrorIcon();
     private static final BufferedImage errorImg = new BufferedImage(1, 1, BufferedImage.TYPE_BYTE_BINARY);
     public static final ImageIcon unsupportedIcon = new ImageIcon();
@@ -304,15 +310,6 @@ public class GalleryModel extends AbstractTableModel {
                         App.get().galleryModel.fireTableCellUpdated(row, col);
                     }
                 });
-
-                synchronized (cache) {
-                    Iterator<IItemId> i = cache.keySet().iterator();
-                    while (cache.size() > maxCacheSize) {
-                        i.next();
-                        i.remove();
-                    }
-
-                }
             }
         });
 
