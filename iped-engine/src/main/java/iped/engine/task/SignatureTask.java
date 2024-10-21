@@ -141,7 +141,11 @@ public class SignatureTask extends AbstractTask {
 
     @Override
     public List<Configurable<?>> getConfigurables() {
-        return Arrays.asList(new SignatureConfig());
+        SignatureConfig result = ConfigurationManager.get().findObject(SignatureConfig.class);
+        if(result == null) {
+            result = new SignatureConfig();
+        }
+        return Arrays.asList(result);
     }
 
     @Override

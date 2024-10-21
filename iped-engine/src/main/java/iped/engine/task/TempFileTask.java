@@ -40,7 +40,11 @@ public class TempFileTask extends AbstractTask {
 
     @Override
     public List<Configurable<?>> getConfigurables() {
-        return Arrays.asList(new TempFileTaskConfig());
+        TempFileTaskConfig result = ConfigurationManager.get().findObject(TempFileTaskConfig.class);
+        if (result == null) {
+            result = new TempFileTaskConfig();
+        }
+        return Arrays.asList(result);
     }
 
     @Override

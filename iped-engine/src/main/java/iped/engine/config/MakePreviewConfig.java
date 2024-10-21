@@ -1,9 +1,13 @@
 package iped.engine.config;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -74,6 +78,36 @@ public class MakePreviewConfig extends AbstractTaskConfig<List<Set<String>>> {
                 }
         }
 
+    }
+
+    @Override
+    public void save(Path resource) {
+        try {
+            StringBuffer output = new StringBuffer();
+            output.append(SUPPORTED_KEY+"=");
+            for (Iterator iterator = supportedMimes.iterator(); iterator.hasNext();) {
+                String string = (String) iterator.next();
+                output.append(string);
+                if(iterator.hasNext()) {
+                    output.append(";");
+                }
+            }
+            output.append(SUPPORTED_LINKS_KEY+"=");
+            for (Iterator iterator = supportedMimesWithLinks.iterator(); iterator.hasNext();) {
+                String string = (String) iterator.next();
+                output.append(string);
+                if(iterator.hasNext()) {
+                    output.append(";");
+                }
+            }
+            File confDir = new File(resource.toFile(), Configuration.CONF_DIR);
+            confDir.mkdirs();
+            File confFile = new File(confDir, CONFIG_FILE);            
+            
+            Files.write(confFile.toPath(),output.toString().getBytes(StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }

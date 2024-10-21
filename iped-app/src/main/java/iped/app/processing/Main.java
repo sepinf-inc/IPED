@@ -35,6 +35,7 @@ import iped.app.ui.splash.StartUpControlClient;
 import iped.app.ui.utils.UiScale;
 import iped.engine.Version;
 import iped.engine.config.Configuration;
+import iped.engine.config.ProfileManager;
 import iped.engine.core.Manager;
 import iped.engine.localization.Messages;
 import iped.engine.util.UIPropertyListenerProvider;
@@ -126,11 +127,19 @@ public class Main {
         System.setProperty(OCRParser.SUBSET_TO_OCR, list);
     }
 
+
+    /**
+     * Contrutor utilizado pela interface de configuração
+     */
+    public Main() {
+        lastInstance = this;
+    }
+
     /**
      * Contrutor utilizado pela execução via linha de comando
      */
     public Main(String[] args, boolean decodeArgs) {
-        lastInstance = this;
+        this();
         cmdLineParams = new CmdLineArgsImpl();
         if (decodeArgs) {
             cmdLineParams.takeArgs(args);
@@ -163,9 +172,15 @@ public class Main {
 
         configPath = rootPath;
 
-        String profile = cmdLineParams.getProfile();
-        if (profile != null) {
-            configPath = new File(configPath, Configuration.PROFILES_DIR + "/" + profile).getAbsolutePath(); //$NON-NLS-1$
+        if(cmdLineParams!=null) {
+            String profile = cmdLineParams.getProfile();
+            if (profile != null) {
+                File configFile = new File(configPath, Configuration.PROFILES_DIR + "/" + profile);
+                if(!configFile.exists()) {
+                    configFile = new File(configPath, Configuration.PROFILES_DIR + "/" + profile + ProfileManager.PROFILE_EXTENSION);
+                }
+                configPath = configFile.getAbsolutePath(); //$NON-NLS-1$
+            }
         }
         if (!new File(configPath).exists())
             throw new IPEDException("Profile not found " + configPath); //$NON-NLS-1$
