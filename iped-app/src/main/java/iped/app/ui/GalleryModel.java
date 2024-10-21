@@ -228,44 +228,48 @@ public class GalleryModel extends AbstractTableModel {
                         }
                     }
 
-                    String hash = doc.get(IndexItem.HASH);
-                    if (image == null && hash != null && !hash.isEmpty()) {
-                        image = getViewImage(docId, hash, isSupportedVideo(mediaType) || isAnimationImage(doc, mediaType));
-                    }
+                    if (image == null) {
+                        String hash = doc.get(IndexItem.HASH);
+                        if (image == null && hash != null && !hash.isEmpty()) {
+                            image = getViewImage(docId, hash,
+                                    isSupportedVideo(mediaType) || isAnimationImage(doc, mediaType));
+                        }
 
-                    if (Boolean.valueOf(doc.get(IndexItem.ISDIR))) {
-                        value.unsupportedType = true;
-                        value.icon = IconManager.getFolderIconGallery();
+                        if (Boolean.valueOf(doc.get(IndexItem.ISDIR))) {
+                            value.unsupportedType = true;
+                            value.icon = IconManager.getFolderIconGallery();
 
-                    } else if (image == null && !isSupportedImage(mediaType) && !isSupportedVideo(mediaType)) {
-                        value.unsupportedType = true;
-                        String type = doc.get(IndexItem.TYPE);
-                        String contentType = doc.get(IndexItem.CONTENTTYPE);
-                        value.icon = IconManager.getFileIconGallery(contentType, type);
-                    }
+                        } else if (image == null && !isSupportedImage(mediaType) && !isSupportedVideo(mediaType)) {
+                            value.unsupportedType = true;
+                            String type = doc.get(IndexItem.TYPE);
+                            String contentType = doc.get(IndexItem.CONTENTTYPE);
+                            value.icon = IconManager.getFileIconGallery(contentType, type);
+                        }
 
-                    if (image == null && value.icon == null && stream == null && isSupportedImage(mediaType)) {
-                        stream = App.get().appCase.getItemByLuceneID(docId).getBufferedInputStream();
-                    }
+                        if (image == null && value.icon == null && stream == null && isSupportedImage(mediaType)) {
+                            stream = App.get().appCase.getItemByLuceneID(docId).getBufferedInputStream();
+                        }
 
-                    if (stream != null) {
-                        stream.mark(10000000);
-                    }
+                        if (stream != null) {
+                            stream.mark(10000000);
+                        }
 
-                    if (image == null && stream != null && imgThumbTask.getImageThumbConfig().isExtractThumb() && mediaType.equals("image/jpeg")) { //$NON-NLS-1$
-                        image = ImageMetadataUtil.getThumb(CloseShieldInputStream.wrap(stream));
-                        stream.reset();
-                    }
+                        if (image == null && stream != null && imgThumbTask.getImageThumbConfig().isExtractThumb()
+                                && mediaType.equals("image/jpeg")) { //$NON-NLS-1$
+                            image = ImageMetadataUtil.getThumb(CloseShieldInputStream.wrap(stream));
+                            stream.reset();
+                        }
 
-                    if (image == null && stream != null) {
-                        image = ImageUtil.getSubSampledImage(stream, thumbSize);
-                        stream.reset();
-                    }
+                        if (image == null && stream != null) {
+                            image = ImageUtil.getSubSampledImage(stream, thumbSize);
+                            stream.reset();
+                        }
 
-                    if (image == null && stream != null) {
-                        String sizeStr = doc.get(IndexItem.LENGTH);
-                        Long size = sizeStr == null ? null : Long.parseLong(sizeStr);
-                        image = externalImageConverter.getImage(stream, thumbSize, false, size);
+                        if (image == null && stream != null) {
+                            String sizeStr = doc.get(IndexItem.LENGTH);
+                            Long size = sizeStr == null ? null : Long.parseLong(sizeStr);
+                            image = externalImageConverter.getImage(stream, thumbSize, false, size);
+                        }
                     }
 
                     if (image == null || image == errorImg) {
