@@ -76,7 +76,7 @@ public class GalleryModel extends AbstractTableModel {
     private boolean logRendering = false;
     private ImageThumbTask imgThumbTask;
 
-    public Map<IItemId, GalleryValue> cache = Collections.synchronizedMap(new LinkedHashMap<IItemId, GalleryValue>());
+    public final Map<IItemId, GalleryValue> cache = new LinkedHashMap<IItemId, GalleryValue>();
     private int maxCacheSize = 1000;
     private ErrorIcon errorIcon = new ErrorIcon();
     private static final BufferedImage errorImg = new BufferedImage(1, 1, BufferedImage.TYPE_BYTE_BINARY);
@@ -97,12 +97,16 @@ public class GalleryModel extends AbstractTableModel {
 
     public void setBlurFilter(boolean newBlurFilter) {
         blurFilter = newBlurFilter;
-        cache.clear();
+        synchronized (cache) {
+            cache.clear();
+        }
     }
 
     public void setGrayFilter(boolean newGrayFilter) {
         grayFilter = newGrayFilter;
-        cache.clear();
+        synchronized (cache) {
+            cache.clear();
+        }
     }
 
     @Override
@@ -184,8 +188,10 @@ public class GalleryModel extends AbstractTableModel {
                 Document doc = null;
                 GalleryValue value = new GalleryValue("", null, id);
                 try {
-                    if (cache.containsKey(id)) {
-                        return;
+                    synchronized (cache) {
+                        if (cache.containsKey(id)) {
+                            return;
+                        }
                     }
 
                     if (!App.get().gallery.getVisibleRect().intersects(App.get().gallery.getCellRect(row, col, false))) {
@@ -288,7 +294,9 @@ public class GalleryModel extends AbstractTableModel {
                     value.image = image;
                 }
 
-                cache.put(id, value);
+                synchronized (cache) {
+                    cache.put(id, value);
+                }
 
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override
