@@ -149,7 +149,7 @@ public class ExtractorAndroidNew extends Extractor {
                 for (Chat c : list) {
                     Collections.sort(c.getMessages());
                     if (c.isGroupChat()) {
-                        setGroupMembers(c, conn, SELECT_GROUP_MEMBERS);
+                        setGroupMembers(c, conn, ExtractorAndroid.SELECT_GROUP_MEMBERS_2);
                     }
                 }
 
@@ -1205,8 +1205,5 @@ public class ExtractorAndroidNew extends Extractor {
             + " left join jid on jid._id = log.jid_row_id"
             + " left join chat chat1 on chat1.jid_row_id = log.jid_row_id"
             + " left join chat chat2 on chat2.jid_row_id = log.group_jid_row_id";
-
-    private static final String SELECT_GROUP_MEMBERS = "select g._id as group_id, g.raw_string as group_name, u._id as user_id, u.raw_string as member "
-            + "FROM group_participant_user gp inner join jid g on g._id=gp.group_jid_row_id inner join jid u on u._id=gp.user_jid_row_id where u.server='s.whatsapp.net' and u.type=0 and group_name=?"; //$NON-NLS-1$
 
 }
