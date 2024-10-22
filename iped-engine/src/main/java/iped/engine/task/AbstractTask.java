@@ -18,6 +18,8 @@ import iped.engine.core.Worker.STATE;
 import iped.engine.data.CaseData;
 import iped.engine.io.TimeoutException;
 import iped.parsers.util.CorruptedCarvedException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Classe que representa uma tarefa de procesamento (assinatura, hash, carving,
@@ -245,6 +247,20 @@ public abstract class AbstractTask {
                 }
                 stats.addVolume(len);
             }
+        }
+    }
+
+    protected void reEnqueueItemSpaced(IItem item, int numWorkers, AtomicInteger lastQueueIndex, AtomicLong lastQueueTime, int queueSplit, long queueDeltaTime) throws InterruptedException {
+        reEnqueueItemSpaced(item, worker.manager.getProcessingQueues().getCurrentQueuePriority(), numWorkers, lastQueueIndex, lastQueueTime, queueSplit, queueDeltaTime);
+        throw new ItemReEnqueuedException();
+    }
+
+    private void reEnqueueItemSpaced(IItem item, int queue, int numWorkers, AtomicInteger lastQueueIndex, AtomicLong lastQueueTime, int queueSplit, long queueDeltaTime) throws InterruptedException {
+        item.dispose();
+        SkipCommitedTask.checkAgainLaterProcessedParents(item);
+        worker.manager.getProcessingQueues().addItemToQueueSpaced(item, queue, numWorkers, lastQueueIndex, lastQueueTime, queueSplit, queueDeltaTime);
+        if (!item.isQueueEnd()) {
+            worker.decItemsBeingProcessed();
         }
     }
 
