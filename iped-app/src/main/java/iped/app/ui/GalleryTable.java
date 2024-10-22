@@ -11,7 +11,6 @@ import javax.swing.InputMap;
 import javax.swing.JTable;
 import javax.swing.KeyStroke;
 import javax.swing.UIManager;
-import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableModel;
 
 public class GalleryTable extends JTable {
@@ -38,17 +37,6 @@ public class GalleryTable extends JTable {
     public void updateUI() {
         setBackground(UIManager.getColor("Gallery.background"));
         super.updateUI();
-    }
-
-    @Override
-    public void repaint() {
-        // When repainting the gallery table, sometimes the current selected cell was
-        // not repainted. Stopping the cell editing seems to minimize (fix?) this issue.
-        TableCellEditor editor = getCellEditor();
-        if (editor != null) {
-            editor.stopCellEditing();
-        }
-        super.repaint();
     }
 
     @Override

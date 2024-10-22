@@ -318,7 +318,7 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
             <!-- check https://github.com/sepinf-inc/IPED/issues/1068 when upgrading this -->
-            <version>1.25.0</version>
+            <version>1.27.1</version>
         </dependency>
         <dependency>
             <groupId>org.apache.tika</groupId>
