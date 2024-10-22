@@ -21,20 +21,27 @@ package iped.app.ui;
 import java.awt.Rectangle;
 
 import javax.swing.ListSelectionModel;
-import javax.swing.SwingUtilities;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.IntPoint;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
 
-import iped.engine.search.IPEDSearcher;
-import iped.engine.search.LuceneSearchResult;
-import iped.engine.search.MultiSearchResult;
 import iped.engine.task.index.IndexItem;
 import iped.properties.BasicProps;
-import iped.search.IIPEDSearcher;
 
 public class DuplicatesTableModel extends BaseTableModel {
 
     private static final long serialVersionUID = 1L;
+
+    public DuplicatesTableModel() {
+        sortResultsBy = BasicProps.PATH;
+    }
 
     @Override
     public Object getValueAt(int row, int col) {
@@ -60,40 +67,27 @@ public class DuplicatesTableModel extends BaseTableModel {
     }
 
     @Override
-    public void listItems(Document doc) {
+    public void onListItemsResultsComplete() {
+        App.get().duplicateDock.setTitleText(results.getLength() + Messages.getString("DuplicatesTableModel.Duplicates"));
+    }
 
+    @Override
+    public Query createQuery(Document doc) {
         String hash = doc.get(IndexItem.HASH);
-        if (hash == null || hash.trim().isEmpty())
-            return;
-
-        String textQuery = IndexItem.HASH + ":" + hash;
+        if (StringUtils.isBlank(hash)) {
+            return null;
+        }
 
         String id = doc.get(IndexItem.ID);
         String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
 
-        textQuery += " && NOT (" + IndexItem.ID + ":" + id;
-        textQuery += " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID + ")";
+        BooleanQuery.Builder queryBuilder = new BooleanQuery.Builder();
+        queryBuilder.add(new TermQuery(new Term(IndexItem.HASH, hash.toLowerCase())), Occur.MUST);
+        queryBuilder.add(new BooleanClause(new BooleanQuery.Builder()
+                .add(IntPoint.newExactQuery(IndexItem.ID, Integer.parseInt(id)), Occur.MUST)
+                .add(new TermQuery(new Term(IndexItem.EVIDENCE_UUID, sourceUUID)), Occur.MUST)
+                .build(), Occur.MUST_NOT));
 
-        try {
-            IIPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery, BasicProps.PATH);
-            results = MultiSearchResult.get(task.multiSearch(), App.get().appCase);
-
-            final int duplicates = results.getLength();
-
-            if (duplicates > 0) {
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        App.get().duplicateDock.setTitleText(duplicates + Messages.getString("DuplicatesTableModel.Duplicates"));
-                    }
-                });
-            }
-
-        } catch (Exception e) {
-            results = new LuceneSearchResult(0);
-            e.printStackTrace();
-        }
-
-        fireTableDataChanged();
+        return queryBuilder.build();
     }
 }
