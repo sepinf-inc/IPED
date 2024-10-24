@@ -116,11 +116,11 @@ public class PListParser extends AbstractParser {
             }
         }
 
-        xhtml.startElement("details", "open", "true");
         if (nso instanceof UID) {
-            xhtml.startElement("summary", "class", "nochild");
+            xhtml.startElement("li", "class", "nochild");
             xhtml.characters(((UID) nso).getName());
-            xhtml.endElement("summary");
+            xhtml.endElement("li");
+            return;
         }
         if (nso instanceof NSNumber) {
             NSNumber n = (NSNumber) nso;
@@ -130,46 +130,52 @@ public class PListParser extends AbstractParser {
                 try {
                     Date date = new Date(n.longValue() * 1000);
                     // check to see if it is a date information
-                    xhtml.startElement("summary", "class", "nochild");
+                    xhtml.startElement("li", "class", "nochild");
                     xhtml.characters(nso.toString() + "(" + DateUtil.dateToString(date) + ")");
-                    xhtml.endElement("summary");
+                    xhtml.endElement("li");
                     MetadataUtil.setMetadataType(path, Date.class);
                     String dateStr = DateUtil.dateToString(date);
                     metadata.add(path, dateStr);
                 } catch (Exception e) {
-                    xhtml.startElement("summary", "class", "nochild");
+                    xhtml.startElement("li", "class", "nochild");
                     xhtml.characters(nso.toString());
-                    xhtml.endElement("summary");
+                    xhtml.endElement("li");
                 }
             } else {
-                xhtml.startElement("summary", "class", "nochild");
+                xhtml.startElement("li", "class", "nochild");
                 xhtml.characters(nso.toString());
-                xhtml.endElement("summary");
+                xhtml.endElement("li");
             }
+            return;
         }
         if (nso instanceof NSString) {
-            xhtml.startElement("summary", "class", "nochild");
+            xhtml.startElement("li", "class", "nochild");
             xhtml.characters(nso.toString());
-            xhtml.endElement("summary");
+            xhtml.endElement("li");
+            return;
         }
         if (nso instanceof NSDate) {
             String dateStr = DateUtil.dateToString(((NSDate) nso).getDate());
-            xhtml.startElement("summary", "class", "nochild");
+            xhtml.startElement("li", "class", "nochild");
             xhtml.characters(dateStr);
-            xhtml.endElement("summary");
+            xhtml.endElement("li");
             MetadataUtil.setMetadataType(path, Date.class);
             metadata.add(path, dateStr);
+            return;
         }
         if ((nso instanceof NSData)) {
-            xhtml.startElement("summary", "class", "nochild");
+            xhtml.startElement("li", "class", "nochild");
             xhtml.characters(((NSData) nso).getBase64EncodedData());
-            xhtml.endElement("summary");
+            xhtml.endElement("li");
             try {
                 handleData(path, (NSData) nso, metadata, xhtml, extractor);
             } catch (IOException | SAXException e) {
                 e.printStackTrace();
             }
+            return;
         }
+
+        xhtml.startElement("details", "open", "true");
         if (nso instanceof NSArray) {
             if (((NSArray) nso).getArray().length > 0) {
                 xhtml.startElement("summary", "class", "is-expandable");
