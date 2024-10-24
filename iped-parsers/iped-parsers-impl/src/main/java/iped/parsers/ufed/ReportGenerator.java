@@ -61,7 +61,7 @@ public class ReportGenerator {
 
         String lat = message.getLatitude();
         String lon = message.getLongitude();
-        ReferencedLocalization localization = message.getReferencedLocalization();
+        ReferencedLocation localization = message.getReferencedLocation();
 
         if (lat == null && lon == null && localization == null) {
             return StringUtils.EMPTY;

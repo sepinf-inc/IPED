@@ -20,7 +20,7 @@ public class Message implements Comparable<Message> {
 
     private List<MessageChatActivity> activityLog = new ArrayList<>();
     private List<MessageAttachment> attachments = new ArrayList<>();
-    private ReferencedLocalization referencedLocalization;
+    private ReferencedLocation referencedLocation;
     private List<MessageContact> sharedContacts = new ArrayList<>();
 
     private boolean systemMessage;
@@ -93,6 +93,10 @@ public class Message implements Comparable<Message> {
 
     public String getLongitude() {
         return readUfedMetadata(item, "Longitude");
+    }
+
+    public boolean isLocationSharing() {
+        return Boolean.parseBoolean(readUfedMetadata(item, "IsLocationSharing"));
     }
 
     public String getFrom() {
@@ -203,13 +207,13 @@ public class Message implements Comparable<Message> {
         return attach;
     }
 
-    public ReferencedLocalization getReferencedLocalization() {
-        return referencedLocalization;
+    public ReferencedLocation getReferencedLocation() {
+        return referencedLocation;
     }
 
-    public ReferencedLocalization setReferencedLocalization(IItemReader localizationItem) {
-        referencedLocalization = new ReferencedLocalization(localizationItem);
-        return referencedLocalization;
+    public ReferencedLocation setReferencedLocation(IItemReader localizationItem) {
+        referencedLocation = new ReferencedLocation(localizationItem);
+        return referencedLocation;
     }
 
     public List<MessageContact> getSharedContacts() {

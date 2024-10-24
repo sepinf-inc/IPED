@@ -5,9 +5,9 @@ import static iped.parsers.ufed.UfedUtils.readUfedMetadata;
 import iped.data.IItemReader;
 import iped.properties.ExtraProperties;
 
-public class ReferencedLocalization extends AbstractReferencedItem {
+public class ReferencedLocation extends AbstractReferencedItem {
 
-    public ReferencedLocalization(IItemReader item) {
+    public ReferencedLocation(IItemReader item) {
         super(item);
     }
 

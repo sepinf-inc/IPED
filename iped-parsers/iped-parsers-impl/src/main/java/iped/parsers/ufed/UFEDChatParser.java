@@ -572,7 +572,7 @@ public class UFEDChatParser extends AbstractParser {
     private Message createMessage(IItemReader messageItem, Chat chat, IItemSearcher searcher) {
 
         Message message = new Message(messageItem, chat);
-        handleMessagePosition(message, searcher);
+        handleMessageLocation(message, searcher);
 
         List<IItemReader> msgChildren = messageItem.getChildren();
         if (msgChildren != null) {
@@ -628,20 +628,36 @@ public class UFEDChatParser extends AbstractParser {
         }
     }
 
-    private void handleMessagePosition(Message message, IItemSearcher searcher) {
+    private void handleMessageLocation(Message message, IItemSearcher searcher) {
 
-        if (StringUtils.isBlank(message.getCoordinateId())) {
-            return;
+        if (!StringUtils.isBlank(message.getCoordinateId())) {
+
+            // the message and location shares the same "ufed:coordinate_id" that was added when merging in UfedXmlReader
+            String query = searcher.escapeQuery(ExtraProperties.UFED_COORDINATE_ID) + ":\"" + message.getCoordinateId() + "\"";
+            List<IItemReader> locationItems = searcher.search(query);
+            if (!locationItems.isEmpty()) {
+                if (locationItems.size() > 1) {
+                    logger.warn("Found more than 1 location for coordinate: {}", locationItems);
+                }
+                message.setReferencedLocation(locationItems.get(0));
+            }
         }
 
-        // the message and localizations shares the same "ufed:coordinate_id" that was added when merging in UfedXmlReader
-        String query = searcher.escapeQuery(ExtraProperties.UFED_COORDINATE_ID) + ":\"" + message.getCoordinateId() + "\"";
-        List<IItemReader> locatizationItems = searcher.search(query);
-        if (!locatizationItems.isEmpty()) {
-            if (locatizationItems.size() > 1) {
-                logger.warn("Found more than 1 localization for coordinate: {}", locatizationItems);
+        if (message.isLocationSharing() && message.getReferencedLocation() == null) {
+
+            // the location item is reference by jumptargets
+            String[] jumpTargets = message.getItem().getMetadata().getValues(ExtraProperties.UFED_JUMP_TARGETS);
+            if (jumpTargets.length > 0) {
+                String query = BasicProps.CONTENTTYPE + ":\"application/x-ufed-location\" && " //
+                        + searcher.escapeQuery(ExtraProperties.UFED_ID) + ":(\"" + StringUtils.join(jumpTargets, "\" \"") + "\")";
+                List<IItemReader> locationItems = searcher.search(query);
+                if (!locationItems.isEmpty()) {
+                    if (locationItems.size() > 1) {
+                        logger.warn("Found more than 1 location for jumptargets: {}", locationItems);
+                    }
+                    message.setReferencedLocation(locationItems.get(0));
+                }
             }
-            message.setReferencedLocalization(locatizationItems.get(0));
         }
     }
 
