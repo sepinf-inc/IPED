@@ -380,6 +380,12 @@ public class HtmlViewer extends AbstractViewer {
                                 }
                             }
 
+                            // expands all parent elements of each hit
+                            for (int i = 0; i < totalHits; i++) {
+                                webEngine.executeScript("var a = document.getElementById(\"indexerHit-" + i + "\");\n" + "var els = [];\n" + "while (a) {\n" + "    a.open = 'true';\n"
+                                        + "    a = a.parentNode;\n" + "}"); //$NON-NLS-2$
+                            }
+
                         }
                     } while (term != null);
 
