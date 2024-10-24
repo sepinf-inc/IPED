@@ -5,7 +5,7 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
         <meta name="viewport" content="width=device-width" />
         <meta charset="UTF-8" />
-        <link rel="shortcut icon" href="${favicon}"" />
+        <link rel="icon" href="${favicon}"" />
         <style>
             ${css}
             .tab {display: inline-block; border-collapse: collapse; border: 1px solid black;}

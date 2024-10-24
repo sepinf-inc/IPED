@@ -648,6 +648,18 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.YouNotAdmin") + "<br>");
                 break;
+            case OVER_256_MEMBERS_ONLY_ADMINS_CAN_EDIT:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.Over256MembersOnlyAdminsCanEdit") + "<br>");
+                break;
+            case SECURITY_NOTIFICATIONS_NO_LONGER_AVAILABLE:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.SecurityNotificationsNoLongerAvailable") + "<br>");
+                break;
+            case CONTACTED_FIND_BUSINESSES:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.ContactedFindBusinesses", name) + "<br>");
+                break;
             case USER_ADMIN:
                 out.println("<div class=\"systemmessage\">");
                 out.print(name + " ");
@@ -1243,9 +1255,39 @@ public class ReportGenerator {
             }
 
             String quoteEnd = "</span></div>";
-            if (messageQuote.isDeleted()) {
-                quoteEnd = "</span><br><span style=\"float:none\" class=\"recovered\"><div class=\"deletedIcon\"></div><i>"
+            String privateGroupName = messageQuote.getQuotePrivateGroupName();
+            switch(messageQuote.getMessageQuotedType()){
+                case QUOTE_NOT_FOUND:
+                    quoteEnd = "</span><br><span style=\"float:none\" class=\"recovered\"><div class=\"deletedIcon\"></div><i>"
                         + Messages.getString("WhatsAppReport.QuoteNotFound") + "</i>" + quoteEnd;
+                    break;
+                case QUOTE_STATUS:
+                    quoteEnd = "</span><br><span style=\"float:none\" class=\"outside\"><div class=\"statusIcon\"></div><i>"
+                        + Messages.getString("WhatsAppReport.QuoteStaus") + "</i>" + quoteEnd;
+                    break;
+                case QUOTE_CATALOG:
+                    quoteEnd = "</span><br><span style=\"float:none\" class=\"outside\"><div class=\"catalogIcon\"></div><i>"
+                        + Messages.getString("WhatsAppReport.QuoteCatalog") + "</i>" + quoteEnd;
+                    break;
+                case QUOTE_PRIVACY_GROUP:
+                    quoteEnd = "</span><br><span style=\"float:none\" class=\"outside\"><div class=\"privacyIcon\"></div><i>"
+                        + Messages.getString("WhatsAppReport.QuotePrivacy") + "</i>" + quoteEnd;
+                    if (privateGroupName != null && !privateGroupName.isEmpty()){
+                        String ms = Messages.getString("WhatsAppReport.QuotePrivacyMessage") + ": "+  privateGroupName +"</br> "
+                            + Messages.getString("WhatsAppReport.ReferenceId") + " " +messageQuote.getId();
+                        quoteClick = "onclick=\"showMessage('" + ms + "');\"";
+                    }
+                    break;
+                case QUOTE_PRIVACY_GROUP_NOT_FOUND:
+                    quoteEnd = "</span><br><span style=\"float:none\" class=\"recovered\"><div class=\"privacyDeleteIcon\"></div><i>"
+                        + Messages.getString("WhatsAppReport.QuotePrivacyNotFound") + "</i>" + quoteEnd;
+                    String ms = "";
+                    if (privateGroupName != null && !privateGroupName.isEmpty()){
+                        ms = Messages.getString("WhatsAppReport.QuotePrivacyMessage") + ": "+  privateGroupName +"</br> ";
+                    }
+                    ms += Messages.getString("WhatsAppReport.QuoteNotFound");
+                    quoteClick = "onclick=\"showMessage('" + ms + "');\"";
+                    break;
             }
 
             switch (messageQuote.getMessageType()) {
@@ -1352,7 +1394,20 @@ public class ReportGenerator {
                     }
                     out.print(quoteEnd);
                     break;
-
+                case PRODUCT_MESSAGE:
+                    MessageProduct product = messageQuote.getProduct();
+                    String seller = null;
+                    if (product != null) {
+                        seller = getBestContactName(false, product.getSeller(), contactsDirectory, account);
+                    }                    
+                    out.print("<div class=\"" + quoteClass + "\" " + quoteClick
+                            + "><div class=\"quoteTop\"><span class=\"quoteUser\">" + quoteUser
+                            + "</span><br><span class=\"quoteMsg\">" + formatProduct(product, seller) + quoteEnd);
+                    if (quoteThumb != null) {
+                        out.print("<div><img class=\"quoteImg\" src=\"");
+                        out.print("data:image/jpg;base64," + Util.encodeBase64(quoteThumb) + "\"></div>");
+                    }
+                    break;
                 default:
                     out.print("<div class=\"" + quoteClass + "\" " + quoteClick
                             + "><div style=\"display:table-cell;\"><span class=\"quoteUser\">" + quoteUser
@@ -1574,6 +1629,7 @@ public class ReportGenerator {
         } else {
             deletedDiv = "";
         }
+        String favicon  = Util.getImageResourceAsEmbedded("img/whatsapp.png");
         StringSubstitutor interpolator = new StringSubstitutor(new StringLookup() {
 
             @Override
@@ -1593,6 +1649,8 @@ public class ReportGenerator {
                         return css;
                     case "deleted":
                         return deletedDiv;
+                    case "favicon":
+                        return favicon;
                 }
                 return StringLookupFactory.INSTANCE.interpolatorStringLookup().lookup(key);
             }

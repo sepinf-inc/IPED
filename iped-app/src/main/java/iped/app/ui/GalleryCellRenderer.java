@@ -21,6 +21,12 @@ package iped.app.ui;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.RenderingHints.Key;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.BorderFactory;
 import javax.swing.JCheckBox;
@@ -34,28 +40,18 @@ import javax.swing.table.TableCellRenderer;
 import iped.app.ui.bookmarks.BookmarkIcon;
 import iped.data.IMultiBookmarks;
 import iped.engine.util.Util;
-import iped.utils.QualityIcon;
 
 public class GalleryCellRenderer implements TableCellRenderer {
 
-    JPanel top = new JPanel(), panel = new JPanel();
-    JLabel label = new JLabel(), cLabel = new JLabel();
-    JCheckBox check = new JCheckBox();
-    Border selBorder;
-    Border border;
-    Color selColor;
-    Color color;
-    Color background;
-    Color warningColor;
-    private static int labelH;
-    static final String unsupportedIconText = "<html><center>" + Messages.getString("UnsupportedIcon.Unavailable") + "</center></html>";
-
-    // Limit how much images can be enlarged (usually thumbs are down sized, but
-    // small images may be enlarged).
-    // Thumbnail's dimensions are used instead of the original ones, to speed up
-    // (avoid querying original dimension), to reduce stored information (in gallery
-    // objects) and to simplify the code.
-    private static final double maxEnlargeFactor = 2;
+    private final JPanel top = new JPanel(), panel = new JPanel();
+    private final GalleryThumbLabel label = new GalleryThumbLabel();
+    private final JLabel cLabel = new JLabel();
+    private final JCheckBox check = new JCheckBox();
+    private Border selBorder;
+    private Border border;
+    private Color selColor;
+    private Color color;
+    private Color background;
 
     public GalleryCellRenderer() {
         super();
@@ -92,14 +88,11 @@ public class GalleryCellRenderer implements TableCellRenderer {
         if (selBorderColor == null)
             selBorderColor = new Color(20, 50, 80);
         selBorder = BorderFactory.createLineBorder(selBorderColor, 1);
-
-        warningColor = UIManager.getColor("Gallery.warning");
-        if (warningColor == null)
-            warningColor = Color.red;
     }
 
     @Override
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
+            int row, int col) {
 
         GalleryValue cellValue = (GalleryValue) value;
         if (cellValue == null || cellValue.id == null) {
@@ -115,8 +108,7 @@ public class GalleryCellRenderer implements TableCellRenderer {
         cLabel.setToolTipText(itemBookmarksStr.isEmpty() ? null : itemBookmarksStr);
         cLabel.setIcon(BookmarkIcon.getIcon(bookmarks, itemBookmarksStr));
 
-        labelH = label.getHeight();
-        adjustGalleryCellContent(cellValue, label, warningColor, table);
+        label.setValue(cellValue);
 
         Color c = null;
         if (isSelected) {
@@ -131,43 +123,90 @@ public class GalleryCellRenderer implements TableCellRenderer {
 
         return panel;
     }
+}
 
-    public static void adjustGalleryCellContent(GalleryValue cellValue, JLabel label, Color warningColor, JTable table) {
-        if (cellValue.icon == null && cellValue.image == null) {
-            label.setForeground(null);
-            label.setText("..."); //$NON-NLS-1$
-            label.setIcon(null);
-        } else if (cellValue.icon != null && cellValue.unsupportedType) {
-            label.setForeground(warningColor);
-            label.setText(unsupportedIconText);
-            label.setIcon(cellValue.icon);
+class GalleryThumbLabel extends JLabel {
+    private static final long serialVersionUID = 1L;
+
+    // Limit how much images can be enlarged (usually thumbs are down sized, but
+    // small images may be enlarged).
+    private static final double maxEnlargeFactor = 2;
+
+    private static final String unsupportedIconText = "<html><center>"
+            + Messages.getString("UnsupportedIcon.Unavailable") + "</center></html>";
+
+    private Color warningColor;
+
+    private GalleryValue value;
+
+    private static final RenderingHints renderingHints;
+    static {
+        Map<Key, Object> hints = new HashMap<Key, Object>();
+        hints.put(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        hints.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        hints.put(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
+        renderingHints = new RenderingHints(hints);
+    }
+
+    public void updateUI() {
+        super.updateUI();
+        warningColor = UIManager.getColor("Gallery.warning");
+        if (warningColor == null)
+            warningColor = Color.red;
+    }
+
+    public void setValue(GalleryValue value) {
+        this.value = value;
+        if (value.icon == null && value.image == null) {
+            setForeground(null);
+            setText("...");
+            setIcon(null);
+        } else if (value.icon != null && value.unsupportedType) {
+            setForeground(warningColor);
+            setText(unsupportedIconText);
+            setIcon(value.icon);
         } else {
-            label.setText(null);
-            if (cellValue.image != null) {
-                int labelW = table.getWidth() / table.getColumnCount() - 2;
-                int w = cellValue.image.getWidth();
-                int h = cellValue.image.getHeight();
-                if (w * labelH < labelW * h) {
-                    if (h * maxEnlargeFactor < labelH) {
-                        h *= maxEnlargeFactor;
-                        w *= maxEnlargeFactor;
-                    } else {
-                        w = w * labelH / h;
-                        h = labelH;
-                    }
-                } else {
-                    if (w * maxEnlargeFactor < labelW) {
-                        h *= maxEnlargeFactor;
-                        w *= maxEnlargeFactor;
-                    } else {
-                        h = h * labelW / w;
-                        w = labelW;
-                    }
-                }
-                label.setIcon(new QualityIcon(cellValue.image, w, h));
+            setText(null);
+            if (value.image != null) {
+                setIcon(null);
             } else {
-                label.setIcon(cellValue.icon);
+                setIcon(value.icon);
             }
+        }
+        repaint();
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        if (value != null && value.image != null) {
+            int labelW = getWidth();
+            int labelH = getHeight();
+            int w = value.image.getWidth();
+            int h = value.image.getHeight();
+            if (w * labelH < labelW * h) {
+                if (h * maxEnlargeFactor < labelH) {
+                    h *= maxEnlargeFactor;
+                    w *= maxEnlargeFactor;
+                } else {
+                    w = w * labelH / h;
+                    h = labelH;
+                }
+            } else {
+                if (w * maxEnlargeFactor < labelW) {
+                    h *= maxEnlargeFactor;
+                    w *= maxEnlargeFactor;
+                } else {
+                    h = h * labelW / w;
+                    w = labelW;
+                }
+            }
+            Graphics2D g2 = (Graphics2D) g;
+            RenderingHints oldHints = g2.getRenderingHints();
+            g2.setRenderingHints(renderingHints);
+            g2.drawImage(value.image, (labelW - w) / 2, (labelH - h) / 2, w, h, null);
+            g2.setRenderingHints(oldHints);
+        } else {
+            super.paintComponent(g);
         }
     }
 }

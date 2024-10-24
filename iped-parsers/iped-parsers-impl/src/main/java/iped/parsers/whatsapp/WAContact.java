@@ -2,11 +2,11 @@ package iped.parsers.whatsapp;
 
 public class WAContact {
 
-    protected static final String waSuffix = "@s.whatsapp.net";
-    
-    private final String id;
+    public static final String waSuffix = "@s.whatsapp.net";
 
-    private final String suffix;
+    private String id;
+
+    private String suffix;
 
     private String status;
 
@@ -27,6 +27,14 @@ public class WAContact {
     private boolean deleted = false;
 
     public WAContact(String id) {
+        updateId(id);
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void updateId(String id) {
         if (id != null) {
             String[] idSplit = id.split("@", 2);
             this.id = idSplit[0].trim();
@@ -34,10 +42,6 @@ public class WAContact {
         } else {
             this.id = this.suffix = "";
         }
-    }
-
-    public String getId() {
-        return id;
     }
 
     public String getStatus() {
