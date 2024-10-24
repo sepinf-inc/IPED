@@ -3,6 +3,7 @@ package iped.parsers.whatsapp;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -35,11 +36,13 @@ public abstract class AbstractPkgTest extends BaseItemSearchContext {
     @SuppressWarnings("serial")
     protected static class EmbeddedWhatsAppParser extends AbstractParser {
         protected List<String> title = new ArrayList<String>();
+        protected List<String> type = new ArrayList<String>();
         protected List<String> username = new ArrayList<String>();
         protected List<String> userphone = new ArrayList<String>();
         protected List<String> useraccount = new ArrayList<String>();
         protected List<String> usernotes = new ArrayList<String>();
-        protected List<String> participants = new ArrayList<String>();
+        protected List<List<String>> participants = new ArrayList<>();
+        protected List<List<String>> admins = new ArrayList<>();
         protected List<String> messagefrom = new ArrayList<String>();
         protected List<String> messagebody = new ArrayList<String>();
         protected List<String> messageto = new ArrayList<String>();
@@ -53,6 +56,8 @@ public abstract class AbstractPkgTest extends BaseItemSearchContext {
                 throws IOException, SAXException, TikaException {
             if (metadata.get(TikaCoreProperties.TITLE) != null)
                 title.add(metadata.get(TikaCoreProperties.TITLE));
+            if (metadata.get(ExtraProperties.CONVERSATION_TYPE) != null)
+                type.add(metadata.get(ExtraProperties.CONVERSATION_TYPE));
             if (metadata.get(ExtraProperties.USER_NAME) != null)
                 username.add(metadata.get(ExtraProperties.USER_NAME));
             if (metadata.get(ExtraProperties.USER_PHONE) != null)
@@ -61,8 +66,10 @@ public abstract class AbstractPkgTest extends BaseItemSearchContext {
                 useraccount.add(metadata.get(ExtraProperties.USER_ACCOUNT));
             if (metadata.get(ExtraProperties.USER_NOTES) != null)
                 usernotes.add(metadata.get(ExtraProperties.USER_NOTES));
-            if (metadata.get(ExtraProperties.PARTICIPANTS) != null)
-                participants.add(metadata.get(ExtraProperties.PARTICIPANTS));
+            if (metadata.get(ExtraProperties.CONVERSATION_PARTICIPANTS) != null) {
+                participants.add(Arrays.asList(metadata.getValues(ExtraProperties.CONVERSATION_PARTICIPANTS)));
+                admins.add(Arrays.asList(metadata.getValues(ExtraProperties.CONVERSATION_ADMINS)));
+            }
             if (metadata.get(org.apache.tika.metadata.Message.MESSAGE_FROM) != null)
                 messagefrom.add(metadata.get(org.apache.tika.metadata.Message.MESSAGE_FROM));
             if (metadata.get(ExtraProperties.MESSAGE_BODY) != null)
