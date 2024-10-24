@@ -767,8 +767,27 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
     }
 
     public List<Configurable<?>> getConfigurables() {
-        return Arrays.asList(new ParsingTaskConfig(), new CategoryToExpandConfig(), new OCRConfig(),
-                new ParsersConfig(), new ExternalParsersConfig());
+        ParsingTaskConfig result = ConfigurationManager.get().findObject(ParsingTaskConfig.class);
+        if(result == null) {
+            result = new ParsingTaskConfig();
+        }
+        CategoryToExpandConfig result1 = ConfigurationManager.get().findObject(CategoryToExpandConfig.class);
+        if(result1 == null) {
+            result1 = new CategoryToExpandConfig();
+        }
+        OCRConfig result2 = ConfigurationManager.get().findObject(OCRConfig.class);
+        if(result2 == null) {
+            result2 = new OCRConfig();
+        }
+        ParsersConfig result3 = ConfigurationManager.get().findObject(ParsersConfig.class);
+        if(result3 == null) {
+            result3 = new ParsersConfig();
+        }
+        ExternalParsersConfig result4 = ConfigurationManager.get().findObject(ExternalParsersConfig.class);
+        if(result4 == null) {
+            result4 = new ExternalParsersConfig();
+        }
+        return Arrays.asList(result,result1,result2,result3,result4);
     }
 
     @Override

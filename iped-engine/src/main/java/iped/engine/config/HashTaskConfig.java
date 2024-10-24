@@ -41,5 +41,4 @@ public class HashTaskConfig extends AbstractTaskPropertiesConfig {
         }
 
     }
-
 }

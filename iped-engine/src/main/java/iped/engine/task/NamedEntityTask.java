@@ -53,7 +53,11 @@ public class NamedEntityTask extends AbstractTask {
     }
 
     public List<Configurable<?>> getConfigurables() {
-        return Arrays.asList(new NamedEntityTaskConfig());
+        NamedEntityTaskConfig result = ConfigurationManager.get().findObject(NamedEntityTaskConfig.class);
+        if(result == null) {
+            result = new NamedEntityTaskConfig();
+        }
+        return Arrays.asList(result);
     }
 
     @Override
