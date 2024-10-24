@@ -115,8 +115,39 @@ public class PListParser extends AbstractParser {
                 return;
             }
         }
+
         xhtml.startElement("details", "open", "true");
-        if ((nso instanceof NSString) || (nso instanceof NSNumber) || (nso instanceof UID)) {
+        if (nso instanceof UID) {
+            xhtml.startElement("summary", "class", "nochild");
+            xhtml.characters(((UID) nso).getName());
+            xhtml.endElement("summary");
+        }
+        if (nso instanceof NSNumber) {
+            NSNumber n = (NSNumber) nso;
+            Date now = new Date();
+            // converts 30 years to now and 2 years from now timestamps
+            if (n.longValue() > (now.getTime() / 1000) - 3600 * 24 * 365 * 30 && n.longValue() < (now.getTime() / 1000) + 3600 * 24 * 365 * 2) {
+                try {
+                    Date date = new Date(n.longValue() * 1000);
+                    // check to see if it is a date information
+                    xhtml.startElement("summary", "class", "nochild");
+                    xhtml.characters(nso.toString() + "(" + DateUtil.dateToString(date) + ")");
+                    xhtml.endElement("summary");
+                    MetadataUtil.setMetadataType(path, Date.class);
+                    String dateStr = DateUtil.dateToString(date);
+                    metadata.add(path, dateStr);
+                } catch (Exception e) {
+                    xhtml.startElement("summary", "class", "nochild");
+                    xhtml.characters(nso.toString());
+                    xhtml.endElement("summary");
+                }
+            } else {
+                xhtml.startElement("summary", "class", "nochild");
+                xhtml.characters(nso.toString());
+                xhtml.endElement("summary");
+            }
+        }
+        if (nso instanceof NSString) {
             xhtml.startElement("summary", "class", "nochild");
             xhtml.characters(nso.toString());
             xhtml.endElement("summary");
