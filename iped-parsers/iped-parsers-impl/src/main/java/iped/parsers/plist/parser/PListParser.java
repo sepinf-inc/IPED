@@ -100,6 +100,21 @@ public class PListParser extends AbstractParser {
     }
 
     private void parseNSObject(NSObject nso, XHTMLContentHandler xhtml, Metadata metadata, String path, EmbeddedDocumentExtractor extractor) throws SAXException {
+        if (nso instanceof NSDictionary) {
+            if (((NSDictionary) nso).size() <= 0) {
+                return;
+            }
+        }
+        if (nso instanceof NSArray) {
+            if (((NSArray) nso).getArray().length <= 0) {
+                return;
+            }
+        }
+        if (nso instanceof NSSet) {
+            if (((NSSet) nso).allObjects().length <= 0) {
+                return;
+            }
+        }
         xhtml.startElement("details", "open", "true");
         if ((nso instanceof NSString) || (nso instanceof NSNumber) || (nso instanceof UID)) {
             xhtml.startElement("summary", "class", "nochild");
