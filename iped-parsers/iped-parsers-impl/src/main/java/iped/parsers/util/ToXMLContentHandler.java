@@ -80,6 +80,7 @@ public class ToXMLContentHandler extends ToTextContentHandler {
 
     protected boolean inStartElement = false;
     protected boolean inStyle = false;
+    protected boolean inScript = false;
 
     protected final Map<String, String> namespaces = new HashMap<String, String>();
 
@@ -149,6 +150,12 @@ public class ToXMLContentHandler extends ToTextContentHandler {
             inStyle = false;
         }
 
+        if (localName.toLowerCase().equals("script")) {
+            inScript = true;
+        } else {
+            inScript = false;
+        }
+
         write('<');
         write(currentElement.getQName(uri, localName));
 
@@ -203,7 +210,7 @@ public class ToXMLContentHandler extends ToTextContentHandler {
     @Override
     public void characters(char[] ch, int start, int length) throws SAXException {
         lazyCloseStartElement();
-        if (inStyle) {
+        if (inStyle || inScript) {
             super.characters(ch, start, length);
         } else {
             writeEscaped(ch, start, start + length, false);
