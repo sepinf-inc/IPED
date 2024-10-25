@@ -37,6 +37,7 @@ import com.dd.plist.PropertyListFormatException;
 import com.dd.plist.PropertyListParser;
 import com.dd.plist.UID;
 
+import iped.parsers.util.IgnoreContentHandler;
 import iped.parsers.util.MetadataUtil;
 import iped.properties.BasicProps;
 import iped.utils.DateUtil;
@@ -55,6 +56,7 @@ public class PListParser extends AbstractParser {
     private static final String BPLIST_METADATA_SUFFIX = "bplist";
 
     private static final String CSS = new String(readResourceAsBytes("/iped/parsers/css/treeview.css"), Charset.forName("UTF-8"));
+    private static final String UUIDJS = new String(readResourceAsBytes("/iped/parsers/css/uuidlink.js"), Charset.forName("UTF-8"));
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
@@ -86,11 +88,15 @@ public class PListParser extends AbstractParser {
                     EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
 
                     xhtml.startElement("nav");
-                    parseNSObject(oc, xhtml, metadata, BPLIST_METADATA_SUFFIX, extractor);
+                    parseNSObject(oc, xhtml, metadata, BPLIST_METADATA_SUFFIX, extractor, context);
                     xhtml.endElement("nav");
                 } catch (Exception e) {
                     // TODO: handle exception
                 }
+
+                xhtml.startElement("script");
+                xhtml.characters(PListParser.UUIDJS);
+                xhtml.endElement("script");
                 xhtml.endDocument();
             } catch (IOException | PropertyListFormatException | ParseException | ParserConfigurationException | SAXException e) {
                 // TODO Auto-generated catch block
@@ -99,7 +105,7 @@ public class PListParser extends AbstractParser {
         }
     }
 
-    private void parseNSObject(NSObject nso, XHTMLContentHandler xhtml, Metadata metadata, String path, EmbeddedDocumentExtractor extractor) throws SAXException {
+    private void parseNSObject(NSObject nso, XHTMLContentHandler xhtml, Metadata metadata, String path, EmbeddedDocumentExtractor extractor, ParseContext context) throws SAXException {
         if (nso instanceof NSDictionary) {
             if (((NSDictionary) nso).size() <= 0) {
                 return;
@@ -164,11 +170,16 @@ public class PListParser extends AbstractParser {
             return;
         }
         if ((nso instanceof NSData)) {
-            xhtml.startElement("li", "class", "nochild");
-            xhtml.characters(((NSData) nso).getBase64EncodedData());
-            xhtml.endElement("li");
             try {
-                handleData(path, (NSData) nso, metadata, xhtml, extractor);
+                if (path.contains("MSAppCenterPastDevices")) {
+                    System.out.println();
+                }
+                xhtml.startElement("li", "class", "uuidlink");
+                xhtml.characters("[Data was extracted as subitem]");
+                xhtml.endElement("li");
+
+                handleData(path, (NSData) nso, metadata, extractor);
+
             } catch (IOException | SAXException e) {
                 e.printStackTrace();
             }
@@ -182,7 +193,7 @@ public class PListParser extends AbstractParser {
                 xhtml.characters("Array");
                 xhtml.endElement("summary");
                 for (NSObject ao : ((NSArray) nso).getArray()) {
-                    parseNSObject(ao, xhtml, metadata, path, extractor);
+                    parseNSObject(ao, xhtml, metadata, path, extractor, context);
                 }
             }
         }
@@ -192,7 +203,7 @@ public class PListParser extends AbstractParser {
                 xhtml.characters("Set");
                 xhtml.endElement("summary");
                 for (NSObject ao : ((NSSet) nso).allObjects()) {
-                    parseNSObject(ao, xhtml, metadata, path, extractor);
+                    parseNSObject(ao, xhtml, metadata, path, extractor, context);
                 }
             }
         }
@@ -206,7 +217,7 @@ public class PListParser extends AbstractParser {
                     xhtml.startElement("summary", "class", "is-expandable");
                     xhtml.characters(d.getKey());
                     xhtml.endElement("summary");
-                    parseNSObject(d.getValue(), xhtml, metadata, path + ":" + d.getKey(), extractor);
+                    parseNSObject(d.getValue(), xhtml, metadata, path + ":" + d.getKey(), extractor, context);
                     xhtml.endElement("details");
 
                 }
@@ -215,7 +226,7 @@ public class PListParser extends AbstractParser {
         xhtml.endElement("details");
     }
 
-    private void handleData(String path, NSData value, Metadata metadata, XHTMLContentHandler xhtml, EmbeddedDocumentExtractor extractor) throws IOException, SAXException {
+    private void handleData(String path, NSData value, Metadata metadata, EmbeddedDocumentExtractor extractor) throws IOException, SAXException {
         if (!extractor.shouldParseEmbedded(metadata)) {
             return;
         }
@@ -225,7 +236,8 @@ public class PListParser extends AbstractParser {
             String name = path.substring(BPLIST_METADATA_SUFFIX.length() + 1);
             m2.add(BasicProps.NAME, name);
             m2.add(TikaCoreProperties.RESOURCE_NAME_KEY, name);
-            extractor.parseEmbedded(tis, xhtml, m2, true);
+
+            extractor.parseEmbedded(tis, new IgnoreContentHandler(), m2, true);
         }
     }
 
