@@ -337,6 +337,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
                     Query query = tableModel.createQuery(selectedDoc);
                     if (query != null) {
                         IPEDSearcher task = new IPEDSearcher(App.get().appCase, query);
+                        task.setRewritequery(false);
                         MultiSearchResult result = task.multiSearch();
                         if (result.getLength() > 0) {
                             logger.debug("Found {} results of sourceId {} id {}", result.getLength(), selectedItemId.getSourceId(), selectedItemId.getId());
