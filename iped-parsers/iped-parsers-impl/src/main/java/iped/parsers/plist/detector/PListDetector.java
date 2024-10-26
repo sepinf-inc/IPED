@@ -57,7 +57,6 @@ public class PListDetector implements Detector {
         if (archiver != null) {
             if (archiver instanceof NSString) {
                 if (archiver.toString().toLowerCase().equals("nskeyedarchiver")) {
-                    metadata.add(null, 0);
                     return NSKEYEDARCHIVER_PLIST;
                 }
             }
