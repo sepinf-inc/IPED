@@ -1,0 +1,41 @@
+summary {
+  cursor: pointer;
+  outline: 0; 
+}
+
+
+details {
+  white-space: nowrap;
+}
+details details {
+  margin-left: 1.4rem;
+}
+details li {
+  margin-left: 1.4rem;
+}
+details a {
+  margin-left: 1.4rem;
+}
+
+details[open] > details::before {
+  transform: rotate(90deg);
+}
+.uuidlink {
+  cursor: pointer;
+}
+.uuidlink::-webkit-details-marker{
+    display: none;
+}
+.uuidlink::marker {
+    content: "";
+}
+
+summary > details {
+  padding-left: 1.4rem;
+}
+summary.nochild::-webkit-details-marker{
+    display: none;
+}
+summary.nochild::marker {
+    content: "";
+}

@@ -380,6 +380,20 @@ public class HtmlViewer extends AbstractViewer {
                                 }
                             }
 
+                            if (totalHits > 0) {
+                                // expands all parent elements of each hit
+                                try {
+                                    Boolean isNavigableTree = (Boolean) webEngine.executeScript("window.containsNavigableTree");
+                                    if (isNavigableTree.booleanValue()) {
+                                        for (int i = 0; i < totalHits; i++) {
+                                            webEngine.executeScript("var a = document.getElementById(\"indexerHit-" + i + "\");\n" + "var els = [];\n" + "while (a) {\n" + "    a.open = 'true';\n"
+                                                    + "    a = a.parentNode;\n" + "}"); //$NON-NLS-2$
+                                        }
+                                    }
+                                } catch (ClassCastException e) {
+                                    // ignores as the value is not of required type
+                                }
+                            }
                         }
                     } while (term != null);
 
