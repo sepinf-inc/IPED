@@ -15,6 +15,7 @@ import org.xml.sax.SAXException;
 
 import com.dd.plist.NSDictionary;
 import com.dd.plist.NSObject;
+import com.dd.plist.NSString;
 import com.dd.plist.PropertyListFormatException;
 import com.dd.plist.PropertyListParser;
 
@@ -32,6 +33,7 @@ public class PListDetector implements Detector {
     public static MediaType BITUNES = MediaType.application("x-bplist-itunes");
     public static MediaType WA_USER_PLIST = MediaType.application("x-whatsapp-user-plist");
     public static MediaType THREEMA_USER_PLIST = MediaType.application("x-threema-user-plist");
+    public static MediaType NSKEYEDARCHIVER_PLIST = MediaType.application("x-apple-nskeyedarchiver");
 
     public static MediaType detectOnKeys(Set<String> keySet) {
         if (keySet.contains("nodes") && keySet.contains("edges") && keySet.contains("graphEncodingVersion")) {
@@ -46,7 +48,23 @@ public class PListDetector implements Detector {
         } else if (keySet.contains("Threema device ID")) {
             return THREEMA_USER_PLIST;
         }
+
         return BPLIST;
+    }
+
+    public static MediaType detectOnNodes(NSDictionary rootObj, Metadata metadata) {
+        NSObject archiver = rootObj.get("$archiver");
+        if (archiver != null) {
+            if (archiver instanceof NSString) {
+                if (archiver.toString().toLowerCase().equals("nskeyedarchiver")) {
+                    metadata.add(null, 0);
+                    return NSKEYEDARCHIVER_PLIST;
+                }
+            }
+        }
+
+        return detectOnKeys(rootObj.getHashMap().keySet());
+
     }
 
     /**
@@ -101,7 +119,7 @@ public class PListDetector implements Detector {
         }
 
         if (rootObj instanceof NSDictionary) {
-            return detectOnKeys(((NSDictionary) rootObj).getHashMap().keySet());
+            return detectOnNodes((NSDictionary) rootObj, metadata);
         }
         return BPLIST;
     }
