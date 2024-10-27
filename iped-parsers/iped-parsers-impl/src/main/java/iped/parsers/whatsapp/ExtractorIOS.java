@@ -383,7 +383,7 @@ public class ExtractorIOS extends Extractor {
                 }
             }
 
-            Collections.sort(chat.getMessages());
+            Message.sort(chat.getMessages());
         }
     }
 
