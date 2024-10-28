@@ -24,6 +24,7 @@
 
         <parser class="org.apache.tika.parser.apple.AppleSingleFileParser"></parser>
         <parser class="iped.parsers.plist.parser.PListParser"></parser>
+        <parser class="iped.parsers.plist.parser.NSKeyedArchiverParser"></parser>
         <!-- <parser class="org.apache.tika.parser.apple.PListParser"></parser> -->
         <parser class="org.apache.tika.parser.asm.ClassParser"></parser>
         <parser class="org.apache.tika.parser.audio.AudioParser"></parser>

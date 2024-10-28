@@ -63,7 +63,6 @@ public class PListParser extends AbstractParser {
         return SUPPORTED_TYPES;
     }
 
-
     @Override
     public void parse(InputStream is, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
         if (is instanceof TikaInputStream) {
@@ -88,10 +87,10 @@ public class PListParser extends AbstractParser {
                     EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
 
                     xhtml.startElement("nav");
-                    parseNSObject(oc, xhtml, metadata, BPLIST_METADATA_SUFFIX, extractor, context);
+                    parseNSObject(oc, xhtml, metadata, getBasePath(), extractor, context);
                     xhtml.endElement("nav");
                 } catch (Exception e) {
-                    // TODO: handle exception
+                    e.printStackTrace();
                 }
 
                 xhtml.startElement("script");
@@ -105,28 +104,14 @@ public class PListParser extends AbstractParser {
         }
     }
 
-    private void parseNSObject(NSObject nso, XHTMLContentHandler xhtml, Metadata metadata, String path, EmbeddedDocumentExtractor extractor, ParseContext context) throws SAXException {
-        if (nso instanceof NSDictionary) {
-            if (((NSDictionary) nso).size() <= 0) {
-                return;
-            }
-        }
-        if (nso instanceof NSArray) {
-            if (((NSArray) nso).getArray().length <= 0) {
-                return;
-            }
-        }
-        if (nso instanceof NSSet) {
-            if (((NSSet) nso).allObjects().length <= 0) {
-                return;
-            }
-        }
+    public String getBasePath() {
+        return BPLIST_METADATA_SUFFIX;
+    }
 
+    public boolean parseNSPrimitiveObject(NSObject nso, XHTMLContentHandler xhtml, Metadata metadata, String path, EmbeddedDocumentExtractor extractor, ParseContext context) throws SAXException {
         if (nso instanceof UID) {
-            xhtml.startElement("li", "class", "nochild");
-            xhtml.characters(((UID) nso).getName());
-            xhtml.endElement("li");
-            return;
+            parseUID((UID) nso, xhtml, metadata, path, extractor, context);
+            return true;
         }
         if (nso instanceof NSNumber) {
             NSNumber n = (NSNumber) nso;
@@ -144,21 +129,21 @@ public class PListParser extends AbstractParser {
                     metadata.add(path, dateStr);
                 } catch (Exception e) {
                     xhtml.startElement("li", "class", "nochild");
-                    xhtml.characters(nso.toString());
+                    xhtml.characters(escapeEmpty(nso.toString()));
                     xhtml.endElement("li");
                 }
             } else {
                 xhtml.startElement("li", "class", "nochild");
-                xhtml.characters(nso.toString());
+                xhtml.characters(escapeEmpty(nso.toString()));
                 xhtml.endElement("li");
             }
-            return;
+            return true;
         }
         if (nso instanceof NSString) {
             xhtml.startElement("li", "class", "nochild");
-            xhtml.characters(nso.toString());
+            xhtml.characters(escapeEmpty(nso.toString()));
             xhtml.endElement("li");
-            return;
+            return true;
         }
         if (nso instanceof NSDate) {
             String dateStr = DateUtil.dateToString(((NSDate) nso).getDate());
@@ -167,8 +152,46 @@ public class PListParser extends AbstractParser {
             xhtml.endElement("li");
             MetadataUtil.setMetadataType(path, Date.class);
             metadata.add(path, dateStr);
+            return true;
+        }
+        return false;
+    }
+
+    public String escapeEmpty(String str) {
+        // this method was implemented to avoid empty content inside tag was causing CSS
+        // not to correctly apply
+        if (str.equals("")) {
+            return " ";
+        }
+        return str;
+    }
+
+    public void parseUID(UID nso, XHTMLContentHandler xhtml, Metadata metadata, String path, EmbeddedDocumentExtractor extractor, ParseContext context) throws SAXException {
+        xhtml.startElement("li", "class", "nochild");
+        xhtml.characters(((UID) nso).getName());
+        xhtml.endElement("li");
+    }
+
+    public void parseNSObject(NSObject nso, XHTMLContentHandler xhtml, Metadata metadata, String path, EmbeddedDocumentExtractor extractor, ParseContext context) throws SAXException {
+        if (nso instanceof NSDictionary) {
+            if (((NSDictionary) nso).size() <= 0) {
+                return;
+            }
+        }
+        if (nso instanceof NSArray) {
+            if (((NSArray) nso).getArray().length <= 0) {
+                return;
+            }
+        }
+        if (nso instanceof NSSet) {
+            if (((NSSet) nso).allObjects().length <= 0) {
+                return;
+            }
+        }
+        if (parseNSPrimitiveObject(nso, xhtml, metadata, path, extractor, context)) {
             return;
         }
+
         if ((nso instanceof NSData)) {
             try {
                 if (path.contains("MSAppCenterPastDevices")) {
@@ -233,7 +256,7 @@ public class PListParser extends AbstractParser {
 
         try (TikaInputStream tis = TikaInputStream.get(value.bytes())) {
             Metadata m2 = new Metadata();
-            String name = path.substring(BPLIST_METADATA_SUFFIX.length() + 1);
+            String name = path.substring(getBasePath().length() + 1);
             m2.add(BasicProps.NAME, name);
             m2.add(TikaCoreProperties.RESOURCE_NAME_KEY, name);
 
