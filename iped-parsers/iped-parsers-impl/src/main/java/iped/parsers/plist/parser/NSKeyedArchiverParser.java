@@ -106,7 +106,7 @@ public class NSKeyedArchiverParser extends PListParser {
         return ((obj instanceof NSDictionary) && ((NSDictionary) obj).containsKey("$class") && !((NSDictionary) obj).containsKey("NS.keys") && (((NSDictionary) obj).containsKey("NS.objects")));
     }
 
-    private void parseObject(String name, NSObject object, NSArray objects, Set<NSObject> alreadyVisitedObjects, XHTMLContentHandler xhtml, Metadata metadata, String bplistMetadataSuffix,            
+    private void parseObject(String name, NSObject object, NSArray objects, Set<NSObject> alreadyVisitedObjects, XHTMLContentHandler xhtml, Metadata metadata, String path,
             EmbeddedDocumentExtractor extractor,
             ParseContext context) throws SAXException {
         try {
@@ -118,7 +118,7 @@ public class NSKeyedArchiverParser extends PListParser {
             }
 
             if (isPrimitive(obj)) {
-                parseNSPrimitiveObject(obj, xhtml, metadata, bplistMetadataSuffix, extractor, context);
+                parseNSPrimitiveObject(obj, xhtml, metadata, path, extractor, context);
             } else {
                 // checks if object was already written to avoid infinite loops
                 if (alreadyVisitedObjects.contains(obj)) {
@@ -140,7 +140,7 @@ public class NSKeyedArchiverParser extends PListParser {
                 }
 
                 if (isNSTime(obj)) {
-                    parseNSTime(((NSDictionary) obj).get("NS.time"), xhtml, metadata, bplistMetadataSuffix, extractor, context);
+                    parseNSTime(((NSDictionary) obj).get("NS.time"), xhtml, metadata, path, extractor, context);
                 } else if (isKAArray(obj)) {
                     NSObject[] arrayObjects = getNSObjects(obj, objects);
                     if (arrayObjects.length > 0) {
@@ -151,7 +151,7 @@ public class NSKeyedArchiverParser extends PListParser {
                         xhtml.endElement("summary");
                         String classname = getNSClassName(obj, objects);
                         for (NSObject member : arrayObjects) {
-                            parseObject(classname, member, objects, alreadyVisitedObjects, xhtml, metadata, bplistMetadataSuffix, extractor, context);
+                            parseObject(classname, member, objects, alreadyVisitedObjects, xhtml, metadata, path, extractor, context);
                         }
                         xhtml.endElement("details");
                     }
@@ -162,7 +162,7 @@ public class NSKeyedArchiverParser extends PListParser {
                     xhtml.characters(name);
                     xhtml.endElement("summary");
                     for (NSObject member : ((NSArray) obj).getArray()) {
-                        parseObject(name, member, objects, alreadyVisitedObjects, xhtml, metadata, bplistMetadataSuffix, extractor, context);
+                        parseObject(name, member, objects, alreadyVisitedObjects, xhtml, metadata, path, extractor, context);
                     }
                     xhtml.endElement("details");
                 } else if (isNSDictionary(obj)) {
@@ -179,7 +179,7 @@ public class NSKeyedArchiverParser extends PListParser {
                                 xhtml.startElement("summary", "class", "is-expandable");
                                 xhtml.characters(d.getKey());
                                 xhtml.endElement("summary");
-                                parseObject(d.getKey(), d.getValue(), objects, alreadyVisitedObjects, xhtml, metadata, bplistMetadataSuffix, extractor,
+                                parseObject(d.getKey(), d.getValue(), objects, alreadyVisitedObjects, xhtml, metadata, path + ":" + className + ":" + d.getKey(), extractor,
                                         context);
                                 xhtml.endElement("details");
                             }
@@ -187,7 +187,7 @@ public class NSKeyedArchiverParser extends PListParser {
                         xhtml.endElement("details");
                     }
                 } else if (isKADictionary(obj)) {
-                    parseKADictionary(name, uid, obj, objects, alreadyVisitedObjects, xhtml, metadata, bplistMetadataSuffix, extractor, context);
+                    parseKADictionary(name, uid, obj, objects, alreadyVisitedObjects, xhtml, metadata, path, extractor, context);
                 } else {
                     xhtml.startElement("details", attr);
                     xhtml.startElement("summary", "class", "is-expandable");
@@ -200,7 +200,7 @@ public class NSKeyedArchiverParser extends PListParser {
                             xhtml.startElement("summary", "class", "is-expandable");
                             xhtml.characters(e.getKey());
                             xhtml.endElement("summary");
-                            parseObject(e.getKey(), e.getValue(), objects, alreadyVisitedObjects, xhtml, metadata, bplistMetadataSuffix, extractor, context);
+                            parseObject(e.getKey(), e.getValue(), objects, alreadyVisitedObjects, xhtml, metadata, path + ":" + classname + ":" + e.getKey(), extractor, context);
                             xhtml.endElement("details");
                         }
                     }
@@ -223,7 +223,7 @@ public class NSKeyedArchiverParser extends PListParser {
         metadata.add(path, dateStr);
     }
 
-    public void parseKADictionary(String name, UID uid, NSObject obj, NSArray objects, Set<NSObject> alreadyVisitedObjects, XHTMLContentHandler xhtml, Metadata metadata, String bplistMetadataSuffix,
+    public void parseKADictionary(String name, UID uid, NSObject obj, NSArray objects, Set<NSObject> alreadyVisitedObjects, XHTMLContentHandler xhtml, Metadata metadata, String path,
             EmbeddedDocumentExtractor extractor,
             ParseContext context) throws SAXException {
 
@@ -247,7 +247,7 @@ public class NSKeyedArchiverParser extends PListParser {
         NSArray keys = (NSArray) ((NSDictionary) obj).get("NS.keys");
         int classIndex = -1;
         for (NSObject member : keys.getArray()) {
-            parseObject(name, member, objects, alreadyVisitedObjects, xhtml, metadata, bplistMetadataSuffix, extractor, context);
+            parseObject(name, member, objects, alreadyVisitedObjects, xhtml, metadata, path, extractor, context);
         }
         xhtml.endElement("details");
 
@@ -256,8 +256,10 @@ public class NSKeyedArchiverParser extends PListParser {
         xhtml.characters("NS.objects");
         xhtml.endElement("summary");
         NSArray objectsArray = (NSArray) ((NSDictionary) obj).get("NS.objects");
+        int i=0;
         for (NSObject member : objectsArray.getArray()) {
-            parseObject(name, member, objects, alreadyVisitedObjects, xhtml, metadata, bplistMetadataSuffix, extractor, context);
+            parseObject(name, member, objects, alreadyVisitedObjects, xhtml, metadata, path + ":" + classname, extractor, context);
+            i++;
         }
         xhtml.endElement("details");
         xhtml.endElement("details");
