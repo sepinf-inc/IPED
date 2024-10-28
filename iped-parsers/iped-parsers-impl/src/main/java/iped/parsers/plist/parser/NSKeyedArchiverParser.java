@@ -124,11 +124,12 @@ public class NSKeyedArchiverParser extends PListParser {
                 if (alreadyVisitedObjects.contains(obj)) {
                     xhtml.startElement("details", "open", "true");
                     xhtml.startElement("summary", "class", "is-expandable");
-                    xhtml.startElement("a", "onclick", "document.getElementById('myDiv').scrollIntoView(" + getUUIDInteger(uid) + ");");
+                    xhtml.startElement("a", "onclick", "clickUID(" + getUUIDInteger(uid) + ");");
                     xhtml.characters("[Object link]");
                     xhtml.endElement("a");
                     xhtml.endElement("summary");
-                    xhtml.startElement("details", "open", "true");
+                    xhtml.endElement("details");
+                    return;
                 } else {
                     alreadyVisitedObjects.add(obj);
                 }
