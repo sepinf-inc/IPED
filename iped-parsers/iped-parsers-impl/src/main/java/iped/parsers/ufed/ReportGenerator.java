@@ -70,18 +70,23 @@ public class ReportGenerator {
         if ((lat == null || lon == null) && localization != null) {
             String coord = localization.getLocations();
             String[] coordSplit = coord.split(";");
-            lat = StringUtils.firstNonBlank(lat, coordSplit[0]);
-            lon = StringUtils.firstNonBlank(lat, coordSplit[1]);
+            if (coordSplit.length == 2) {
+                lat = coordSplit[0];
+                lon = coordSplit[1];
+            }
         }
-        
-        lat = StringUtils.defaultString(lat).replace(",", ".");
-        lon = StringUtils.defaultString(lon).replace(",", ".");
 
-        DivTag div = div(img(attrs(".location")), b(Messages.getString("UfedChatReport.Location.Title")), br(),
-                table(attrs(".contact-table"), //
-                        tr(td(Messages.getString("UfedChatReport.Location.Latitude")), td(lat)),
-                        tr(td(Messages.getString("UfedChatReport.Location.Longitude")), td(lon))),
-                br());
+        lat = StringUtils.replace(lat, ",", ".");
+        lon = StringUtils.replace(lon, ",", ".");
+
+        DivTag div = div(img(attrs(".location")), b(Messages.getString("UfedChatReport.Location.Title")), br());
+
+        if (!StringUtils.isAllBlank(lat, lon)) {
+            div.with(table(attrs(".contact-table"), //
+                    tr(td(Messages.getString("UfedChatReport.Location.Latitude")), td(lat)), //
+                    tr(td(Messages.getString("UfedChatReport.Location.Longitude")), td(lon))), //
+                    br());
+        }
 
         if (localization != null) {
             String name = localization.getName();
