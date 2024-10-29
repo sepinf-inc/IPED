@@ -25,8 +25,6 @@ import com.dd.plist.NSObject;
 import com.dd.plist.UID;
 
 import iped.parsers.plist.detector.PListDetector;
-import iped.parsers.util.MetadataUtil;
-import iped.utils.DateUtil;
 import iped.utils.IOUtil;
 
 public class NSKeyedArchiverParser extends PListParser {
@@ -230,12 +228,7 @@ public class NSKeyedArchiverParser extends PListParser {
 
     private void parseNSTime(NSObject nso, XHTMLContentHandler xhtml, Metadata metadata, String path, EmbeddedDocumentExtractor extractor, ParseContext context) throws SAXException {
         Date date = new Date((((NSNumber) nso).longValue() + 978307200) * 1000);
-        xhtml.startElement("li", "class", "nochild");
-        xhtml.characters(nso.toString() + "(" + DateUtil.dateToString(date) + ")");
-        xhtml.endElement("li");
-        MetadataUtil.setMetadataType(path, Date.class);
-        String dateStr = DateUtil.dateToString(date);
-        metadata.add(path, dateStr);
+        parseDate(date, path, xhtml, metadata);
     }
 
     public void parseKADictionary(String name, UID uid, NSObject obj, NSArray objects, Set<NSObject> alreadyVisitedObjects, XHTMLContentHandler xhtml, Metadata metadata, String path,

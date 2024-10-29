@@ -4,8 +4,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.text.ParseException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -52,7 +54,8 @@ import iped.utils.IOUtil;
  */
 public class PListParser extends AbstractParser {
 
-    private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(BPListDetector.BPLIST);
+    private static final Set<MediaType> SUPPORTED_TYPES = Collections
+            .unmodifiableSet(new HashSet<>(Arrays.asList(BPListDetector.BITUNES, BPListDetector.BMEMGRAPH, BPListDetector.BPLIST, BPListDetector.BWEBARCHIVE, BPListDetector.PLIST)));
     private static final String BPLIST_METADATA_SUFFIX = "bplist";
 
     private static final String CSS = new String(readResourceAsBytes("/iped/parsers/css/treeview.css"), Charset.forName("UTF-8"));
@@ -83,10 +86,19 @@ public class PListParser extends AbstractParser {
                 xhtml.characters(PListParser.CSS);
                 xhtml.endElement("style");
 
+                String contentType = metadata.get(Metadata.CONTENT_TYPE);
+                if (BPListDetector.PLIST.toString().equals(contentType)) {
+                    if (oc instanceof NSDictionary) {
+                        MediaType subtype = BPListDetector.detectXMLOnKeys(((NSDictionary) oc).keySet());
+                        metadata.set(Metadata.CONTENT_TYPE, subtype.toString());
+                    }
+                }
+
                 try {
                     EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
 
                     xhtml.startElement("nav");
+
                     parseNSObject(oc, xhtml, metadata, getBasePath(), extractor, context);
                     xhtml.endElement("nav");
                 } catch (Exception e) {
@@ -121,12 +133,7 @@ public class PListParser extends AbstractParser {
                 try {
                     Date date = new Date(n.longValue() * 1000);
                     // check to see if it is a date information
-                    xhtml.startElement("li", "class", "nochild");
-                    xhtml.characters(nso.toString() + "(" + DateUtil.dateToString(date) + ")");
-                    xhtml.endElement("li");
-                    MetadataUtil.setMetadataType(path, Date.class);
-                    String dateStr = DateUtil.dateToString(date);
-                    metadata.add(path, dateStr);
+                    parseDate(date, path, xhtml, metadata);
                 } catch (Exception e) {
                     xhtml.startElement("li", "class", "nochild");
                     xhtml.characters(escapeEmpty(nso.toString()));
@@ -146,15 +153,24 @@ public class PListParser extends AbstractParser {
             return true;
         }
         if (nso instanceof NSDate) {
-            String dateStr = DateUtil.dateToString(((NSDate) nso).getDate());
-            xhtml.startElement("li", "class", "nochild");
-            xhtml.characters(dateStr);
-            xhtml.endElement("li");
-            MetadataUtil.setMetadataType(path, Date.class);
-            metadata.add(path, dateStr);
+            parseDate(((NSDate) nso).getDate(), path, xhtml, metadata);
             return true;
         }
         return false;
+    }
+
+    public void parseDate(Date date, String path, XHTMLContentHandler xhtml, Metadata metadata) throws SAXException {
+        String dateStr = DateUtil.dateToString(date);
+        xhtml.startElement("li", "class", "nochild");
+        xhtml.characters(dateStr);
+        xhtml.endElement("li");
+        String metadataName = getBasePath() + ":" + path.substring(path.lastIndexOf(":") + 1);
+        MetadataUtil.setMetadataType(metadataName, Date.class);
+        String currentValue = metadata.get(metadataName);
+        if (currentValue == null || (currentValue.length() + dateStr.length()) <= 32765) {
+            metadata.add(metadataName, dateStr);
+        }
+
     }
 
     public String escapeEmpty(String str) {
