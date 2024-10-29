@@ -156,18 +156,22 @@ public class NSKeyedArchiverParser extends PListParser {
                     parseNSTime(((NSDictionary) obj).get("NS.time"), xhtml, metadata, path, extractor, context);
                 } else if (isKAArray(obj)) {
                     NSObject[] arrayObjects = ((NSArray) ((NSDictionary) obj).get("NS.objects")).getArray();
+                    attr.addAttribute("", "open", "", "", "true");
+                    xhtml.startElement("details", attr);
+                    xhtml.startElement("summary", "class", "is-expandable");
+                    xhtml.characters("[ARRAY]");
+                    xhtml.endElement("summary");
                     if (arrayObjects.length > 0) {
-                        attr.addAttribute("", "open", "", "", "true");
-                        xhtml.startElement("details", attr);
-                        xhtml.startElement("summary", "class", "is-expandable");
-                        xhtml.characters("[ARRAY]");
-                        xhtml.endElement("summary");
                         String classname = getNSClassName(obj, objects);
                         for (NSObject member : arrayObjects) {
                             parseObject(classname, member, objects, alreadyVisitedObjects, xhtml, metadata, path, extractor, context);
                         }
-                        xhtml.endElement("details");
+                    } else {
+                        xhtml.startElement("li");
+                        xhtml.characters("[]");
+                        xhtml.endElement("li");
                     }
+                    xhtml.endElement("details");
                 } else if (obj instanceof NSArray) {
                     attr.addAttribute("", "open", "", "", "true");
                     xhtml.startElement("details", attr);
