@@ -46,30 +46,43 @@ public class NSKeyedArchiverParser extends PListParser {
     }
 
     public void parseNSObject(NSObject nso, XHTMLContentHandler xhtml, Metadata metadata, String path, EmbeddedDocumentExtractor extractor, ParseContext context) throws SAXException {
-        HashMap<String, NSObject> map = ((NSDictionary) nso).getHashMap();
-        NSObject top = map.get(TOPKEY);
-        NSObject objects = map.get(OBJECTSKEY);
-        NSObject root = null;
-        int rootIndex = 0;
-        HashMap<Integer, Object> objectsMap = new HashMap<Integer, Object>();
+        if (nso instanceof NSDictionary) {
+            HashMap<String, NSObject> map = ((NSDictionary) nso).getHashMap();
 
-        NSObject[] array = null;
-        if (objects instanceof NSArray) {
-            array = ((NSArray) objects).getArray();
-        }
-        NSObject rootObj = null;
-        if (top instanceof NSDictionary) {
-            if (((NSDictionary) top).size() > 0) {
-                root = ((NSDictionary) top).get("root");
-                if (root instanceof UID) {
-                    rootIndex = getUUIDInteger((UID) root);
-                    rootObj = array[rootIndex];
+            NSObject top = map.get(TOPKEY);
+            NSObject objects = map.get(OBJECTSKEY);
+
+            if (top != null && objects != null) {
+                NSObject root = null;
+                int rootIndex = 0;
+                HashMap<Integer, Object> objectsMap = new HashMap<Integer, Object>();
+
+                NSObject rootObj = null;
+                if (top instanceof NSDictionary) {
+                    if (((NSDictionary) top).size() > 0) {
+                        root = ((NSDictionary) top).get("root");
+                    }
                 }
-            }
-        }
 
-        Set<NSObject> alreadyVisitedObjects = new HashSet<>();// array to control already written objects and avoid infinite loops
-        parseObject("", rootObj, ((NSArray) objects), alreadyVisitedObjects, xhtml, metadata, getBasePath(), extractor, context);
+                if (root != null) {
+                    Set<NSObject> alreadyVisitedObjects = new HashSet<>();// array to control already written objects and avoid infinite loops
+                    parseObject("", root, ((NSArray) objects), alreadyVisitedObjects, xhtml, metadata, getBasePath(), extractor, context);
+                } else {
+                    // try to parse as a PList file
+                    parseAsPList(nso, xhtml, metadata, path, extractor, context);
+                }
+            } else {
+                // try to parse as a PList file
+                parseAsPList(nso, xhtml, metadata, path, extractor, context);
+            }
+        } else {
+            // try to parse as a PList file
+            parseAsPList(nso, xhtml, metadata, path, extractor, context);
+        }
+    }
+
+    public void parseAsPList(NSObject nso, XHTMLContentHandler xhtml, Metadata metadata, String path, EmbeddedDocumentExtractor extractor, ParseContext context) throws SAXException {
+        super.parseNSObject(nso, xhtml, metadata, path, extractor, context);
     }
 
     public int getUUIDInteger(UID uid) {
@@ -98,8 +111,9 @@ public class NSKeyedArchiverParser extends PListParser {
     public boolean isKADictionary(NSObject obj) {
         return ((obj instanceof NSDictionary) && (((NSDictionary) obj).containsKey("NS.keys")) && (((NSDictionary) obj).containsKey("NS.objects")));
     }
+
     public boolean isNSDictionary(NSObject obj) {
-        return ((obj instanceof NSDictionary) && ((NSDictionary) obj).containsKey("$class") && (!((NSDictionary) obj).containsKey("NS.objects")) && !(((NSDictionary) obj).containsKey("NS.keys")));
+        return ((obj instanceof NSDictionary) && (!((NSDictionary) obj).containsKey("NS.objects")) && !(((NSDictionary) obj).containsKey("NS.keys")));
     }
 
     public boolean isKAArray(NSObject obj) {
@@ -114,7 +128,7 @@ public class NSKeyedArchiverParser extends PListParser {
             UID uid = null;
             if(obj instanceof UID) {
                 uid = (UID) object;
-                obj = objects.objectAtIndex(getUUIDInteger((UID) obj));;
+                obj = objects.objectAtIndex(getUUIDInteger(uid));
             }
 
             if (isPrimitive(obj)) {
@@ -143,7 +157,7 @@ public class NSKeyedArchiverParser extends PListParser {
                 if (isNSTime(obj)) {
                     parseNSTime(((NSDictionary) obj).get("NS.time"), xhtml, metadata, path, extractor, context);
                 } else if (isKAArray(obj)) {
-                    NSObject[] arrayObjects = getNSObjects(obj, objects);
+                    NSObject[] arrayObjects = ((NSArray) ((NSDictionary) obj).get("NS.objects")).getArray();
                     if (arrayObjects.length > 0) {
                         attr.addAttribute("", "open", "", "", "true");
                         xhtml.startElement("details", attr);
@@ -266,18 +280,13 @@ public class NSKeyedArchiverParser extends PListParser {
         xhtml.endElement("details");
     }
 
-    public NSObject[] getNSObjects(NSObject obj, NSArray objects) {
-        NSArray uids = (NSArray) ((NSDictionary) obj).get("NS.objects");
-        NSObject[] objs = new NSObject[uids.count()];
-        for (int i = 0; i < objs.length; i++) {
-            objs[i] = objects.objectAtIndex(getUUIDInteger((UID)uids.objectAtIndex(i)));
-        }
-        return objs;
-    }
-
     public String getNSClassName(NSObject obj, NSArray objects) {
-        NSDictionary classObj = (NSDictionary) objects.getArray()[getUUIDInteger((UID) ((NSDictionary) obj).get("$class"))];
-        return classObj.get("$classname").toString();
+        try {
+            NSDictionary classObj = (NSDictionary) objects.getArray()[getUUIDInteger((UID) ((NSDictionary) obj).get("$class"))];
+            return classObj.get("$classname").toString();
+        } catch (Exception e) {
+            return obj.getClass().getName();
+        }
     }
 
     static public boolean isNSKeyedArchiver(NSObject oc) {
