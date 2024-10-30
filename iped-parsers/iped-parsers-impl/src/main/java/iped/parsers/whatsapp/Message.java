@@ -691,4 +691,57 @@ public class Message implements Comparable<Message> {
     public int compareTo(Message o) {
         return Long.compare(getSortId(), o.getSortId());
     }
+
+    public static void sort(List<Message> messages) {
+        Collections.sort(messages);
+
+        // Check if there are messages with sortId != 0 AND sortId == 0
+        boolean zero = false;
+        boolean notZero = false;
+        for (Message m : messages) {
+            if (m.sortId == 0) {
+                zero = true;
+            } else {
+                notZero = true;
+            }
+            if (zero && notZero) {
+                break;
+            }
+        }
+
+        // If both are present, merge these two groups
+        if (zero && notZero) {
+            List<Message> l0 = new ArrayList<Message>();
+            List<Message> l1 = new ArrayList<Message>();
+            for (Message m : messages) {
+                if (m.sortId == 0) {
+                    l0.add(m);
+                } else {
+                    l1.add(m);
+                }
+            }
+            messages.clear();
+            int idx0 = 0;
+            int idx1 = 0;
+            while (idx0 < l0.size() || idx1 < l1.size()) {
+                if (idx0 == l0.size()) {
+                    messages.add(l1.get(idx1++));
+                } else if (idx1 == l1.size()) {
+                    messages.add(l0.get(idx0++));
+                } else {
+                    Message m0 = l0.get(idx0);
+                    Message m1 = l1.get(idx1);
+                    long t0 = m0.timeStamp == null ? m0.id : m0.timeStamp.getTime();
+                    long t1 = m1.timeStamp == null ? m1.id : m1.timeStamp.getTime();
+                    if (t0 < t1) {
+                        messages.add(m0);
+                        idx0++;
+                    } else {
+                        messages.add(m1);
+                        idx1++;
+                    }
+                }
+            }
+        }
+    }
 }
