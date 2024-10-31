@@ -735,6 +735,11 @@ public class WhatsAppParser extends SQLite3DBParser {
                 logger.info("Creating separate report for {}", DB.getPath()); //$NON-NLS-1$
             }
 
+            // sort messages
+            for (Chat chat : dbChatList) {
+                Message.sort(chat.getMessages());
+            }
+
             // create report for main dbs and backups which main db was not found
             createReport(dbChatList, searcher, contacts, handler, extractor, account, tmpDB, context);
 
