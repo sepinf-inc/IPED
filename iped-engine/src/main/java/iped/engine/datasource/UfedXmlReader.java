@@ -566,6 +566,12 @@ public class UfedXmlReader extends DataSourceReader {
                 boolean deleted = "deleted".equalsIgnoreCase(atts.getValue("deleted")); //$NON-NLS-1$ //$NON-NLS-2$
                 item.setDeleted(deleted);
 
+                boolean trash = "trash".equalsIgnoreCase(atts.getValue("deleted"));
+                if (trash) {
+                    item.getMetadata().set(ExtraProperties.UFED_META_PREFIX + "deleted_trash", Boolean.toString(true));
+                    item.setDeleted(true);
+                }
+
                 fillCommonMeta(item, atts);
                 itemSeq.add(item);
 
@@ -601,6 +607,7 @@ public class UfedXmlReader extends DataSourceReader {
                     boolean trash = "trash".equalsIgnoreCase(atts.getValue("deleted_state"));
                     if (trash) {
                         item.getMetadata().set(ExtraProperties.UFED_META_PREFIX + "deleted_trash", Boolean.toString(true));
+                        item.setDeleted(true);
                     }
 
                     fillCommonMeta(item, atts);
@@ -645,6 +652,7 @@ public class UfedXmlReader extends DataSourceReader {
                     boolean trash = "trash".equalsIgnoreCase(atts.getValue("deleted_state"));
                     if (trash) {
                         item.getMetadata().set(ExtraProperties.UFED_META_PREFIX + "deleted_trash", Boolean.toString(true));
+                        item.setDeleted(true);
                     }
 
                     fillCommonMeta(item, atts);

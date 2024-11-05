@@ -448,15 +448,17 @@ public class ReportGenerator {
         out.println("</span>");
 
         if (chatDeleted || message.getItem().isDeleted()) {
-            out.println("<br/><span class=\"recovered\">");
-            out.println("<i>" + Messages.getString("UfedChatReport.MessageDeletedRecovered") + "</i>");
-            out.println("<div class=\"deletedIcon\"></div>");
-            out.println("</span>");
-        } else if (message.isTrash()) {
-            out.println("<br/><span class=\"recovered\">");
-            out.println("<i>" + Messages.getString("UfedChatReport.MessageRecovered") + "</i>");
-            out.println("<div class=\"trashIcon\"></div>");
-            out.println("</span>");
+            if (message.isTrash()) {
+                out.println("<br/><span class=\"recovered\">");
+                out.println("<i>" + Messages.getString("UFEDChatParser.MessageRecovered") + "</i>");
+                out.println("<div class=\"trashIcon\"></div>");
+                out.println("</span>");
+            } else {
+                out.println("<br/><span class=\"recovered\">");
+                out.println("<i>" + Messages.getString("UFEDChatParser.MessageDeletedRecovered") + "</i>");
+                out.println("<div class=\"deletedIcon\"></div>");
+                out.println("</span>");
+            }
         }
         if (isTo)
             out.println("</div><div class=\"aw\"><div class=\"awr\"></div></div>");
@@ -486,7 +488,7 @@ public class ReportGenerator {
             String quoteEnd = "</span></div>";
             if (messageQuote.getItem().isDeleted()) {
                 quoteEnd = "</span><br/><span style=\"float:none\" class=\"recovered\"><div class=\"deletedIcon\"></div><i>"
-                        + Messages.getString("UfedChatReport.MessageDeletedRecovered") + "</i>" + quoteEnd;
+                        + Messages.getString("UFEDChatParser.MessageDeletedRecovered") + "</i>" + quoteEnd;
             }
 
             StringBuilder msgStr = new StringBuilder();
