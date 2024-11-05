@@ -1747,7 +1747,7 @@ public class ExtractorIOS extends Extractor {
 
     private static final String SELECT_PUSH_NAMES = "select ZJID as jid, ZPUSHNAME as pushname from ZWAPROFILEPUSHNAME";
     
-    private static final String SELECT_GROUP_MEMBERS = "select CS.ZCONTACTJID as `group`, ZMEMBERJID as member from ZWAGROUPMEMBER GM "
+    private static final String SELECT_GROUP_MEMBERS = "select CS.ZCONTACTJID as `group`, ZMEMBERJID as member, ZISADMIN as admin from ZWAGROUPMEMBER GM "
             + "inner join ZWACHATSESSION CS on GM.ZCHATSESSION=CS.Z_PK where `group`=?";
 
     private static final String SELECT_MESSAGES_USER = "SELECT ZWAMESSAGE.Z_PK AS id, ZCHATSESSION " //$NON-NLS-1$

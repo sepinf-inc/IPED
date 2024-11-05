@@ -19,6 +19,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import iped.data.IItemReader;
+import iped.parsers.util.ConversationUtils;
 import iped.parsers.util.ItemInfo;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
@@ -80,7 +81,8 @@ public abstract class AbstractPkgTest extends TestCase {
         protected List<String> userphone = new ArrayList<String>();
         protected List<String> useraccount = new ArrayList<String>();
         protected List<String> usernotes = new ArrayList<String>();
-        protected List<String> participants = new ArrayList<String>();
+        protected List<String> groupParticipants = new ArrayList<String>();
+        protected List<String> privateParticipants = new ArrayList<String>();
         protected List<String> messagefrom = new ArrayList<String>();
         protected List<String> messagebody = new ArrayList<String>();
         protected List<String> messageto = new ArrayList<String>();
@@ -102,8 +104,13 @@ public abstract class AbstractPkgTest extends TestCase {
                 useraccount.add(metadata.get(ExtraProperties.USER_ACCOUNT));
             if (metadata.get(ExtraProperties.USER_NOTES) != null)
                 usernotes.add(metadata.get(ExtraProperties.USER_NOTES));
-            if (metadata.get(ExtraProperties.PARTICIPANTS) != null)
-                participants.add(metadata.get(ExtraProperties.PARTICIPANTS));
+            if (metadata.get(ExtraProperties.CONVERSATION_PARTICIPANTS) != null)
+                if (ConversationUtils.TYPE_GROUP.equals(metadata.get(ExtraProperties.CONVERSATION_TYPE))
+                        || ConversationUtils.TYPE_BROADCAST.equals(metadata.get(ExtraProperties.CONVERSATION_TYPE))) {
+                    groupParticipants.add(metadata.get(ExtraProperties.CONVERSATION_PARTICIPANTS));
+                } else {
+                    privateParticipants.add(metadata.get(ExtraProperties.CONVERSATION_PARTICIPANTS));
+                }
             if (metadata.get(org.apache.tika.metadata.Message.MESSAGE_FROM) != null)
                 messagefrom.add(metadata.get(org.apache.tika.metadata.Message.MESSAGE_FROM));
             if (metadata.get(ExtraProperties.MESSAGE_BODY) != null)
