@@ -52,13 +52,13 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
 
     protected static final MediaType wav = MediaType.audio("vnd.wave");
 
-    private static final String TEXT_STORAGE = "text/transcriptions.db"; //$NON-NLS-1$
+    private static final String TEXT_STORAGE = "text/transcriptions.db";
 
-    private static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS transcriptions(id TEXT PRIMARY KEY, text TEXT, score REAL);"; //$NON-NLS-1$
+    private static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS transcriptions(id TEXT PRIMARY KEY, text TEXT, score REAL)";
 
-    private static final String INSERT_DATA = "INSERT INTO transcriptions(id, text, score) VALUES(?,?,?) ON CONFLICT(id) DO NOTHING"; //$NON-NLS-1$
+    private static final String INSERT_TRANSCRIPTION = "INSERT INTO transcriptions(id, text, score) VALUES(?,?,?) ON CONFLICT(id) DO NOTHING";
 
-    private static final String SELECT_EXACT = "SELECT text, score FROM transcriptions WHERE id=?;"; //$NON-NLS-1$
+    private static final String SELECT_FROM_ID = "SELECT text, score FROM transcriptions WHERE id=?";
 
     protected static final int TIMEOUT_PER_MB = 100;
 
@@ -80,7 +80,10 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
     private static final AtomicInteger transcriptionFail = new AtomicInteger();
     private static final AtomicLong transcriptionChars = new AtomicLong();
 
-    private Connection conn;
+    // Use a single connection for all task instances
+    private static final Object lock = new Object();
+    private static Connection conn;
+    private static PreparedStatement psSelect, psInsert;
 
     protected IItem evidence;
 
@@ -109,7 +112,11 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
     }
 
     private void createConnection() {
-        this.conn = createConnection(output);
+        synchronized (lock) {
+            if (conn == null) {
+                conn = createConnection(output);
+            }
+        }
     }
 
     private Connection createConnection(File output) {
@@ -125,6 +132,9 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
                 stmt.executeUpdate(CREATE_TABLE);
             }
 
+            psSelect = conn.prepareStatement(SELECT_FROM_ID);
+            psInsert = conn.prepareStatement(INSERT_TRANSCRIPTION);
+
             return conn;
 
         } catch (SQLException e) {
@@ -138,32 +148,39 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
     }
 
     private TextAndScore getTextFromDb(String id) throws IOException {
-        TextAndScore result = getTextFromDb(this.conn, id);
-        return result;
-    }
-
-    private TextAndScore getTextFromDb(Connection conn, String id) throws IOException {
-        try (PreparedStatement ps = conn.prepareStatement(SELECT_EXACT)) {
-            ps.setString(1, id);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                TextAndScore result = new TextAndScore();
-                result.text = rs.getString(1);
-                result.score = rs.getDouble(2);
-                return result;
+        ResultSet rs = null;
+        try {
+            synchronized (lock) {
+                psSelect.setString(1, id);
+                rs = psSelect.executeQuery();
+                if (rs.next()) {
+                    TextAndScore result = new TextAndScore();
+                    result.text = rs.getString(1);
+                    result.score = rs.getDouble(2);
+                    return result;
+                }
             }
         } catch (SQLException e) {
             throw new IOException(e);
+        } finally {
+            if (rs != null) {
+                try {
+                    rs.close();
+                } catch (Exception e) {
+                }
+            }
         }
         return null;
     }
 
     private void storeTextInDb(String id, String text, double score) throws IOException {
-        try (PreparedStatement ps = conn.prepareStatement(INSERT_DATA)) {
-            ps.setString(1, id);
-            ps.setString(2, text);
-            ps.setDouble(3, score);
-            ps.executeUpdate();
+        try {
+            synchronized (lock) {
+                psInsert.setString(1, id);
+                psInsert.setString(2, text);
+                psInsert.setDouble(3, score);
+                psInsert.executeUpdate();
+            }
         } catch (SQLException e) {
             throw new IOException(e);
         }
@@ -310,9 +327,17 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
 
     @Override
     public void finish() throws Exception {
-        if (conn != null) {
-            conn.close();
-            conn = null;
+        synchronized (lock) {
+            if (conn != null) {
+                if (psInsert != null) {
+                    psInsert.close();
+                }
+                if (psSelect != null) {
+                    psSelect.close();
+                }
+                conn.close();
+                conn = null;
+            }
         }
 
         long totWavConversions = wavSuccess.longValue() + wavFail.longValue();
