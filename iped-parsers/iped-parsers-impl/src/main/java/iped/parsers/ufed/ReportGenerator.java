@@ -79,12 +79,12 @@ public class ReportGenerator {
         lat = StringUtils.replace(lat, ",", ".");
         lon = StringUtils.replace(lon, ",", ".");
 
-        DivTag div = div(img(attrs(".location")), b(Messages.getString("UfedChatReport.Location.Title")), br());
+        DivTag div = div(img(attrs(".location")), b(Messages.getString("UFEDChatParser.Location.Title")), br());
 
         if (!StringUtils.isAllBlank(lat, lon)) {
             div.with(table(attrs(".contact-table"), //
-                    tr(td(Messages.getString("UfedChatReport.Location.Latitude")), td(lat)), //
-                    tr(td(Messages.getString("UfedChatReport.Location.Longitude")), td(lon))), //
+                    tr(td(Messages.getString("UFEDChatParser.Location.Latitude")), td(lat)), //
+                    tr(td(Messages.getString("UFEDChatParser.Location.Longitude")), td(lon))), //
                     br());
         }
 
@@ -124,7 +124,7 @@ public class ReportGenerator {
             return StringUtils.EMPTY;
         }
 
-        DivTag div = div(b(Messages.getString("UfedChatReport.SharedContact.Title")), br());
+        DivTag div = div(b(Messages.getString("UFEDChatParser.SharedContact.Title")), br());
 
         for (MessageContact msgContact : message.getSharedContacts()) {
 
@@ -132,7 +132,7 @@ public class ReportGenerator {
             String name = StringUtils.firstNonBlank(msgContact.getName(), contact != null ? contact.getName() : null);
 
             TableTag table = table(attrs(".contact-table"),
-                    tr(td(Messages.getString("UfedChatReport.SharedContact.Name")), td(name)));
+                    tr(td(Messages.getString("UFEDChatParser.SharedContact.Name")), td(name)));
 
             if (contact != null) {
 
@@ -141,15 +141,15 @@ public class ReportGenerator {
                 String phone = contact.getPhoneNumber();
 
                 if (isNotBlank(userID)) {
-                    table.with(tr(td(Messages.getString("UfedChatReport.SharedContact.UserID")), td(userID)));
+                    table.with(tr(td(Messages.getString("UFEDChatParser.SharedContact.UserID")), td(userID)));
                 }
 
                 if (isNotBlank(username)) {
-                    table.with(tr(td(Messages.getString("UfedChatReport.SharedContact.Username")), td(username)));
+                    table.with(tr(td(Messages.getString("UFEDChatParser.SharedContact.Username")), td(username)));
                 }
 
                 if (isNotBlank(phone)) {
-                    table.with(tr(td(Messages.getString("UfedChatReport.SharedContact.PhoneNumber")), td(phone)));
+                    table.with(tr(td(Messages.getString("UFEDChatParser.SharedContact.PhoneNumber")), td(phone)));
                 }
             }
 
@@ -166,7 +166,7 @@ public class ReportGenerator {
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, "UTF-8"));
 
-        String title = getChatTitle(chat);
+        String title = UFEDChatParser.getChatName2(chat);
         String source = readUfedMetadata(chat.getItem(), "Source");
 
         printMessageFileHeader(out, title, title, chat.getContactPhotoThumb(), source);
@@ -307,9 +307,9 @@ public class ReportGenerator {
             String forwardedBy = "";
             String originalSender = message.getOriginalSender();
             if (isNotBlank(originalSender)) {
-                forwardedBy = Messages.getString("UfedChatReport.Forwarded.By") + " " + originalSender;
+                forwardedBy = Messages.getString("UFEDChatParser.Forwarded.By") + " " + originalSender;
             }
-            out.println("<img class=\"fwd\"><span class=\"fwd\"/>" + Messages.getString("UfedChatReport.Forwarded") + " " + forwardedBy + "</span><br/>");
+            out.println("<img class=\"fwd\"><span class=\"fwd\"/>" + Messages.getString("UFEDChatParser.Forwarded") + " " + forwardedBy + "</span><br/>");
         }
 
         if (message.isQuoted()) {
@@ -413,7 +413,7 @@ public class ReportGenerator {
 
         out.println("<span class=\"time\">");
         if (message.isEdited()) {
-            out.print(Messages.getString("UfedChatReport.Edited") + " ");
+            out.print(Messages.getString("UFEDChatParser.Edited") + " ");
         }
         if (message.getTimeStamp() != null) {
             out.println(timeFormat.format(message.getTimeStamp())); // $NON-NLS-1$

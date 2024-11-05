@@ -87,6 +87,7 @@ public class UFEDChatParser extends AbstractParser {
     // Strings used in item names and titles
     protected static final String CHATTYPE_GROUP_TITLE = Messages.getString("UFEDChatParser.Group");
     protected static final String CHATTYPE_BROADCAST_TITLE = Messages.getString("UFEDChatParser.Broadcast");
+    protected static final String CHATTYPE_CHANNEL_TITLE = Messages.getString("UFEDChatParser.Channel");
     protected static final String CHATTYPE_STATUS_TITLE = Messages.getString("UFEDChatParser.Status");
     protected static final String CHATTYPE_UNKNOWN_TITLE = Messages.getString("UFEDChatParser.Unknown");
 
@@ -206,7 +207,7 @@ public class UFEDChatParser extends AbstractParser {
             Collections.sort(messages);
 
             String virtualId = chat.getId();
-            String chatPrefix = getChatName(chat.getItem());
+            String chatPrefix = getChatName2(chat);
 
             if (extractor.shouldParseEmbedded(chatMeta)) {
                 ReportGenerator reportGenerator = new ReportGenerator(minChatSplitSize);
@@ -797,6 +798,7 @@ public class UFEDChatParser extends AbstractParser {
 
         Metadata chatMeta = chat.getItem().getMetadata();
         String accountId = chatMeta.get(ExtraProperties.CONVERSATION_ACCOUNT + ExtraProperties.CONVERSATION_SUFFIX_ID);
+        String accountUsername = chatMeta.get(ExtraProperties.CONVERSATION_ACCOUNT + ExtraProperties.CONVERSATION_SUFFIX_USERNAME);
         String source = readUfedMetadata(chatMeta, "Source");
         String chatType = readUfedMetadata(chatMeta, "ChatType");
         String name = readUfedMetadata(chatMeta, "Name");
@@ -808,17 +810,35 @@ public class UFEDChatParser extends AbstractParser {
         StringBuilder sb = new StringBuilder();
         sb.append(source).append(' ');
 
-        if (!"Unknown".equalsIgnoreCase(chatType)) {
-            if ("OneOnOne".equalsIgnoreCase(chatType)) {
-                sb.append("Chat");
-            } else if ("Telegram".equalsIgnoreCase(source) && "Broadcast".equalsIgnoreCase(chatType)) {
-                sb.append("Channel");
-            } else if (chatTypeMap.containsKey(chatType)) {
-                sb.append(chatTypeMap.get(chatType));
-            } else {
-                sb.append(chatType);
+        if (chatType != null) {
+            switch (chatType) {
+            case CHATTYPE_ONEONONE:
+                sb.append("Chat").append(' ');
+                break;
+
+            case CHATTYPE_GROUP:
+                sb.append(CHATTYPE_GROUP_TITLE).append(' ');
+                break;
+
+            case CHATTYPE_BROADCAST:
+                if (participants.length == 1 && StringUtils.containsAnyIgnoreCase(source, WHATSAPP, TELEGRAM)) {
+                    sb.append(CHATTYPE_STATUS_TITLE);
+                } else if (TELEGRAM.equalsIgnoreCase(source)) {
+                    sb.append(CHATTYPE_CHANNEL_TITLE);
+                } else {
+                    sb.append(CHATTYPE_BROADCAST_TITLE);
+                }
+                sb.append(' ');
+                break;
+
+            case CHATTYPE_UNKNOWN:
+                sb.append(CHATTYPE_UNKNOWN_TITLE).append(' ');
+                break;
+
+            default:
+                sb.append(chatType).append(' ');
+                break;
             }
-            sb.append(' ');
         }
         sb.append("- ");
 
@@ -828,9 +848,9 @@ public class UFEDChatParser extends AbstractParser {
                 sb.append(" (ID:").append(id).append(")");
             }
         } else if (participantsIds.length == 2) {
-            if (participantsIds[0].equals(accountId)) {
+            if (StringUtils.equalsAny(participantsIds[0], accountId, accountUsername)) {
                 sb.append(participants[1]);
-            } else if (participantsIds[1].equals(accountId)) {
+            } else if (StringUtils.equalsAny(participantsIds[1], accountId, accountUsername)) {
                 sb.append(participants[0]);
             } else {
                 sb.append(participants[0]).append('_').append(participants[1]);
@@ -844,8 +864,8 @@ public class UFEDChatParser extends AbstractParser {
         }
 
         String result = sb.toString();
-        if ("WhatsApp".equalsIgnoreCase(source)) {
-            result = StringUtils.remove(result, "@s.whatsapp.net");
+        if (StringUtils.containsIgnoreCase(source, WHATSAPP)) {
+            result = StringUtils.remove(result, WAContact.waSuffix);
         }
 
         return result;
