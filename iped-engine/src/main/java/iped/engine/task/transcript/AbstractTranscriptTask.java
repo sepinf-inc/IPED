@@ -117,7 +117,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         db.getParentFile().mkdirs();
         try {
             SQLiteConfig config = new SQLiteConfig();
-            config.setSynchronous(SynchronousMode.OFF);
+            config.setSynchronous(SynchronousMode.NORMAL);
             config.setBusyTimeout(3600000);
             Connection conn = config.createConnection("jdbc:sqlite:" + db.getAbsolutePath());
 
