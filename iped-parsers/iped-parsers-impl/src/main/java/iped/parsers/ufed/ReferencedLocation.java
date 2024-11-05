@@ -47,4 +47,7 @@ public class ReferencedLocation extends AbstractReferencedItem {
         return readUfedMetadata(item, "Country");
     }
 
+    public String getPositionAddress() {
+        return readUfedMetadata(item, "PositionAddress");
+    }
 }

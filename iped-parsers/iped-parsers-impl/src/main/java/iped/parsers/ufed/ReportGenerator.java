@@ -96,10 +96,14 @@ public class ReportGenerator {
             String city = localization.getCity();
             String state = localization.getState();
             String country = localization.getCountry();
+            String positionAddress = localization.getPositionAddress();
             String complement = Arrays.asList(city, state, country).stream().filter(StringUtils::isNotBlank).collect(Collectors.joining(" - "));
 
             if (isNotBlank(name)) {
                 div.with(span(name), br());
+            }
+            if (isNotBlank(positionAddress)) {
+                div.with(span(i(positionAddress)), br());
             }
             if (isNotBlank(street)) {
                 String fullStreet = street;
