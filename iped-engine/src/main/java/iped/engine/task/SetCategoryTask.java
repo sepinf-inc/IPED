@@ -40,7 +40,11 @@ public class SetCategoryTask extends AbstractTask {
 
     @Override
     public List<Configurable<?>> getConfigurables() {
-        return Arrays.asList(new CategoryConfig());
+        CategoryConfig result = ConfigurationManager.get().findObject(CategoryConfig.class);
+        if(result == null) {
+            result = new CategoryConfig();
+        }
+        return Arrays.asList(result);
     }
 
     @Override

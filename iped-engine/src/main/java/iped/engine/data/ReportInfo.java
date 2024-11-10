@@ -1,15 +1,8 @@
 package iped.engine.data;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +15,7 @@ import iped.engine.localization.Messages;
 public class ReportInfo implements Serializable {
 
     /**
-     * 
+     *
      */
     private static final long serialVersionUID = 1L;
 
@@ -44,12 +37,26 @@ public class ReportInfo implements Serializable {
     public List<String> examinersID = new ArrayList<>();
     public List<EvidenceDesc> evidences = new ArrayList<>();
     public String finalEvidenceDesc;
+    public List<String> investigatedName = new ArrayList<>();
+    public String organizationName;
+    public String contact;
+    public String caseNotes;
 
-    class EvidenceDesc implements Serializable {
+    public class EvidenceDesc implements Serializable {
 
         private static final long serialVersionUID = 1L;
 
         String id, desc;
+
+        public String getId() {
+            return id;
+        }
+
+        public String getDesc() {
+            return desc;
+        }
+
+
     }
 
     /**
@@ -149,12 +156,28 @@ public class ReportInfo implements Serializable {
         return mat.toString();
     }
 
+    public EvidenceDesc getEvidenceDescInstance(String id, String desc){
+        EvidenceDesc ed = new EvidenceDesc();
+        ed.id = id;
+        ed.desc = desc;
+        return ed;
+    }
+
     public String getExaminersText() {
         if (examiners.size() == 1)
             return examiners.get(0);
         String result = "";
         for (String examiner : examiners)
             result += examiner + "; ";
+        return result;
+    }
+
+    public String getInvestigatedNameText() {
+        if (investigatedName.size() == 1)
+            return investigatedName.get(0);
+        String result = "";
+        for (String name : investigatedName)
+            result += name + "; ";
         return result;
     }
 
@@ -169,30 +192,77 @@ public class ReportInfo implements Serializable {
         finalEvidenceDesc = text;
     }
 
+    public void saveJsonInfoFile(File targetFile){
+        try {
+            JSONObject reportInfoJson = new JSONObject();
+            reportInfoJson.put("reportNumber", this.reportNumber );
+            reportInfoJson.put("reportDate", this.reportDate);
+            reportInfoJson.put( "reportTitle", this.reportTitle );
+            reportInfoJson.put( "examiners", this.examiners );
+            reportInfoJson.put( "investigatedNames", this.investigatedName );
+            reportInfoJson.put("organizationName", this.organizationName );
+            reportInfoJson.put("contact", this.contact);
+            reportInfoJson.put("caseNotes", this.caseNotes);
+            reportInfoJson.put("caseNumber", this.caseNumber);
+            reportInfoJson.put("requestForm", this.requestForm);
+            reportInfoJson.put( "requestDate", this.requestDate );
+            reportInfoJson.put("requester", this.requester);
+            reportInfoJson.put("labCaseNumber", this.labCaseNumber);
+            reportInfoJson.put("labCaseDate", this.labCaseDate);
+            JSONArray evidecesArray = new JSONArray();
+            for( EvidenceDesc evidenceDesc : this.evidences ){
+                JSONObject jo = new JSONObject();
+                jo.put("id", evidenceDesc.id);
+                jo.put("desc", evidenceDesc.desc);
+                evidecesArray.put(jo);
+            }
+            reportInfoJson.put("evidences", evidecesArray );
+            FileWriter writer = new FileWriter(targetFile, StandardCharsets.UTF_8);
+            writer.write(reportInfoJson.toString());
+            writer.flush();
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public void readJsonInfoFile(File file) throws IOException {
         finalEvidenceDesc = null;
         String str = new String(Files.readAllBytes(file.toPath()), "UTF-8");
         JSONObject json = new JSONObject(str);
-        reportNumber = json.getString("reportNumber");
-        reportDate = json.getString("reportDate");
-        reportTitle = json.getString("reportTitle");
-        JSONArray array = json.getJSONArray("examiners");
-        for (int i = 0; i < array.length(); i++)
-            examiners.add(array.getString(i));
-        caseNumber = json.getString("caseNumber");
-        requestForm = json.getString("requestForm");
-        requestDate = json.getString("requestDate");
-        requester = json.getString("requester");
-        labCaseNumber = json.getString("labCaseNumber");
-        labCaseDate = json.getString("labCaseDate");
-        array = json.getJSONArray("evidences");
-        for (int i = 0; i < array.length(); i++) {
-            JSONObject evidence = array.getJSONObject(i);
-            EvidenceDesc e = new EvidenceDesc();
-            e.id = evidence.getString("id");
-            e.desc = evidence.getString("desc");
-            evidences.add(e);
+        reportNumber = json.has("reportNumber") ? json.getString("reportNumber") : "";
+        reportDate = json.has("reportDate") ? json.getString("reportDate") : "";
+        reportTitle = json.has("reportTitle") ? json.getString("reportTitle") : "";
+        JSONArray array = null;
+        if( json.has("examiners") ) {
+            array = json.getJSONArray("examiners");
+            for (int i = 0; i < array.length(); i++)
+                examiners.add(array.getString(i));
         }
+        caseNumber = json.has("caseNumber") ? json.getString("caseNumber") : "";
+        requestForm = json.has("requestForm") ? json.getString("requestForm") : "";
+        requestDate = json.has("requestDate") ? json.getString("requestDate") : "";
+        requester = json.has("requester") ? json.getString("requester") : "";
+        labCaseNumber = json.has("labCaseNumber") ? json.getString("labCaseNumber") : "";
+        labCaseDate = json.has("labCaseDate") ? json.getString("labCaseDate") : "";
+        if( json.has("evidences") ) {
+            array = json.getJSONArray("evidences");
+            for (int i = 0; i < array.length(); i++) {
+                JSONObject evidence = array.getJSONObject(i);
+                EvidenceDesc e = new EvidenceDesc();
+                e.id = evidence.getString("id");
+                e.desc = evidence.getString("desc");
+                evidences.add(e);
+            }
+        }
+        if( json.has("investigatedNames") ) {
+            array = json.getJSONArray("investigatedNames");
+            for (int i = 0; i < array.length(); i++)
+                investigatedName.add(array.getString(i));
+        }
+        organizationName = json.has("organizationName")? json.getString("organizationName") : "";
+        contact = json.has("contact") ? json.getString("contact") : "";
+        caseNotes = json.has("caseNotes") ? json.getString("caseNotes") : "";
     }
 
     public File writeReportInfoFile() throws IOException {

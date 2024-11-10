@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.util.Collections;
 import java.util.List;
@@ -39,7 +40,7 @@ import iped.engine.config.ConfigurationManager;
 import iped.engine.data.IPEDSource;
 import iped.engine.search.IPEDSearcher;
 
-public class ScriptTask extends AbstractTask {
+public class ScriptTask extends AbstractTask implements IScriptTask {
 
     private static IPEDSource ipedCase;
     private static int numInstances = 0;
@@ -59,20 +60,19 @@ public class ScriptTask extends AbstractTask {
         }
     }
 
-    public void loadScript(File file)
-            throws IOException, ScriptException, UnsupportedEncodingException, NoSuchMethodException {
-
+    public void loadScript(File file) throws IOException, ScriptException, UnsupportedEncodingException, NoSuchMethodException {
         try (InputStreamReader reader = new InputStreamReader(new FileInputStream(file), "UTF-8")) { //$NON-NLS-1$
-
             ScriptEngineManager manager = new ScriptEngineManager();
-            String ext = file.getName().substring(file.getName().lastIndexOf('.') + 1);
-            engine = manager.getEngineByExtension(ext);
-            Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
-            // bindings.put("polyglot.js.nashorn-compat", true);
-            engine.eval(reader);
-            inv = (Invocable) engine;
+            String ext = file.getName().substring(file.getName().lastIndexOf('.') + 1); // $NON-NLS-1$
+            engine = manager.getEngineByExtension(ext); // $NON-NLS-1$
+            if(engine==null) {
+                throw new ScriptException("No engine configured for this file type."); 
+            }else {
+                Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
+                engine.eval(reader);
+                inv = (Invocable) engine;
+            }
         }
-
     }
 
     @Override
@@ -130,7 +130,49 @@ public class ScriptTask extends AbstractTask {
 
     @Override
     public String getName() {
+        if (scriptName == null) {
+            try {
+                scriptName = (String) inv.invokeFunction("getName");
+            } catch (Exception e) {
+                scriptName = scriptFile.getName();
+            }
+        }
         return scriptName;
+    }
+
+    @Override
+    public String getScriptFileName() {
+        return scriptFile.getAbsolutePath();
+    }
+    
+    /**
+     * Stub interface to validate script code
+     * @author patrick.pdb
+     *
+     */
+    public interface ITask{
+        public abstract List<Configurable<?>> getConfigurables();
+        public abstract void init(ConfigurationManager configurationManager) throws Exception;
+        abstract public void finish() throws Exception;
+        abstract public void process(IItem evidence) throws Exception;        
+    }
+
+    @Override
+    public Class<? extends AbstractTask> checkTaskCompliance(String src) throws ScriptTaskComplianceException {
+        ITask task = null;
+        try {
+            ScriptEngineManager manager = new ScriptEngineManager();
+            engine = manager.getEngineByExtension("js"); // $NON-NLS-1$
+            engine.eval(new StringReader(src));
+            inv = (Invocable) engine;
+            task = inv.getInterface(ITask.class);
+        }catch (Exception e) {
+            throw new ScriptTaskComplianceException(e);
+        }
+        if(task==null) {
+            throw new ScriptTaskComplianceException("Not all methods implementations found. Required methods are: getConfigurables, init, finish and process.");
+        }
+        return null;
     }
 
 }

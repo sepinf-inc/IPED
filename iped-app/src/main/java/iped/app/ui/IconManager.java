@@ -19,6 +19,7 @@
 package iped.app.ui;
 
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.net.URL;
 import java.security.CodeSource;
 import java.util.HashMap;
@@ -28,6 +29,7 @@ import java.util.zip.ZipInputStream;
 
 import javax.imageio.ImageIO;
 import javax.swing.Icon;
+import javax.swing.ImageIcon;
 
 import iped.app.ui.utils.UiIconSize;
 import iped.utils.QualityIcon;
@@ -73,18 +75,35 @@ public class IconManager {
             CodeSource src = IconManager.class.getProtectionDomain().getCodeSource();
             if (src != null) {
                 URL jar = src.getLocation();
-                try (ZipInputStream zip = new ZipInputStream(jar.openStream())) {
-                    while (true) {
-                        ZipEntry e = zip.getNextEntry();
-                        if (e == null) {
-                            break;
+                File f = new File(jar.getPath());
+                if(f.isDirectory()) {
+                    File iconRoot = new File(f, IconManager.class.getName().toString().replace(".", separator)
+                            .replace(IconManager.class.getSimpleName(), "") + iconPath + separator);
+                    File[] icons = iconRoot.listFiles();
+                    for (int i = 0; i < icons.length; i++) {
+                        if(icons[i].getName().endsWith(ICON_EXTENSION)) {
+                            BufferedImage img = ImageIO.read(icons[i]);
+                            map.put(icons[i].getName().replace(ICON_EXTENSION, "").toLowerCase(),
+                                    new QualityIcon(new ImageIcon(img), size));
                         }
-                        String path = IconManager.class.getName().toString().replace(".", separator).replace(IconManager.class.getSimpleName(), "") + iconPath + separator;
-                        String nameWithPath = e.getName();
-                        String name = nameWithPath.replace(path, "");
-                        if (nameWithPath.startsWith(path) && name.toLowerCase().endsWith(ICON_EXTENSION)) {
-                            BufferedImage img = ImageIO.read(IconManager.class.getResource(iconPath + separator + name));
-                            map.put(name.replace(ICON_EXTENSION, "").toLowerCase(), new QualityIcon(img, size));
+                    }
+                } else {
+                    try (ZipInputStream zip = new ZipInputStream(jar.openStream())) {
+                        while (true) {
+                            ZipEntry e = zip.getNextEntry();
+                            if (e == null) {
+                                break;
+                            }
+                            String path = IconManager.class.getName().toString().replace(".", separator)
+                                    .replace(IconManager.class.getSimpleName(), "") + iconPath + separator;
+                            String nameWithPath = e.getName();
+                            String name = nameWithPath.replace(path, "");
+                            if (nameWithPath.startsWith(path) && name.toLowerCase().endsWith(ICON_EXTENSION)) {
+                                BufferedImage img = ImageIO
+                                        .read(IconManager.class.getResource(iconPath + separator + name));
+                                map.put(name.replace(ICON_EXTENSION, "").toLowerCase(),
+                                        new QualityIcon(new ImageIcon(img), size));
+                            }
                         }
                     }
                 }

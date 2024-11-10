@@ -1,6 +1,9 @@
 package iped.engine.task;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -23,7 +26,7 @@ import jep.Jep;
 import jep.JepException;
 import jep.NDArray;
 
-public class PythonTask extends AbstractTask {
+public class PythonTask extends AbstractTask implements IScriptTask {
 
     private static final String JEP_NOT_FOUND = PythonParser.JEP_NOT_FOUND;
     private static final String DISABLED = PythonParser.DISABLED;
@@ -45,6 +48,7 @@ public class PythonTask extends AbstractTask {
     private boolean isEnabled = true;
     private boolean sendToNextTaskExists = true;
     private boolean throwExceptionInsteadOfLogging = false;
+    private List<Configurable<?>> configurables;
 
     public PythonTask(File scriptFile) {
         this.scriptFile = scriptFile;
@@ -198,7 +202,7 @@ public class PythonTask extends AbstractTask {
     public String getName() {
         return scriptFile.getName();
     }
-
+    
     @Override
     public List<Configurable<?>> getConfigurables() {
         try {
@@ -206,8 +210,27 @@ public class PythonTask extends AbstractTask {
             List<Configurable<?>> configs = null;
             if (j != null) {
                 configs = (List<Configurable<?>>) j.invoke(getInstanceMethod("getConfigurables"));
+                Configurable[] configsArray = configs.toArray(new Configurable[0]);
+                for (int i = 0; i < configsArray.length; i++) {
+                    Configurable configurable = configsArray[i];
+                    Configurable currentConfig = ConfigurationManager.get()
+                            .findObject((Class<? extends Configurable<?>>) configurable.getClass());
+                    if (currentConfig == null) {
+                        try {
+                            configurable.reset();
+                            ConfigurationManager.get().loadConfig(configurable, true);
+                        } catch (IOException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        }
+                    } else {
+                        configs.remove(configurable);
+                        configs.add(currentConfig);
+                    }
+                }
             }
-            return configs != null ? configs : Collections.emptyList();
+            configurables = configs != null ? configs : Collections.emptyList();
+            return configurables;
 
         } catch (JepException e) {
             throw new RuntimeException(e);
@@ -320,6 +343,65 @@ public class PythonTask extends AbstractTask {
                 throw e;
             }
         }
+    }
+
+    @Override
+    public String getScriptFileName() {
+        return scriptFile.getAbsolutePath();
+    }
+
+    @Override
+    public Class<? extends AbstractTask> checkTaskCompliance(String src) throws ScriptTaskComplianceException {
+        try {
+            BufferedReader in = new BufferedReader(new StringReader(src)); //$NON-NLS-1$
+            String str = null;
+            boolean processMethodFound=false;
+            boolean initMethodFound=false;
+            boolean isEnabledMethodFound=false;
+            boolean getConfigurablesMethodFound=false;
+            while ((str = in.readLine()) != null) {
+                str=str.trim();
+                if (str.startsWith("class ")) {
+                    String className = str.substring(6, str.indexOf(":"));
+                    if (!this.getName().startsWith(className)) {
+                        throw new ScriptTaskComplianceException("Class name differs from file name.");
+                    }
+                }
+                if(str.startsWith("def")) {
+                    str=str.substring(3).trim();
+                    if(str.startsWith("process")) {
+                        processMethodFound=true;
+                    }
+                    if(str.startsWith("isEnabled")) {
+                        isEnabledMethodFound=true;
+                    }
+                    if(str.startsWith("init")) {
+                        initMethodFound=true;
+                    }
+                    if(str.startsWith("getConfigurables")) {
+                        getConfigurablesMethodFound=true;
+                    }
+                }
+                if(processMethodFound && initMethodFound && isEnabledMethodFound && getConfigurablesMethodFound) break;
+            }
+            in.close();
+            if(!processMethodFound) {
+                throw new ScriptTaskComplianceException("No 'process' method implementation found on script.");
+            }
+            if(!initMethodFound) {
+                throw new ScriptTaskComplianceException("No 'init' method implementation found on script.");
+            }
+            if(!isEnabledMethodFound) {
+                throw new ScriptTaskComplianceException("No 'isEnabled' method implementation found on script.");
+            }
+            if(!getConfigurablesMethodFound) {
+                throw new ScriptTaskComplianceException("No 'getConfigurables' method implementation found on script.");
+            }
+            in.close();
+        }catch(Exception e) {
+            throw new ScriptTaskComplianceException(e);
+        }
+        return null;
     }
 
 }

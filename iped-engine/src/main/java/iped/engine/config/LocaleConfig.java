@@ -1,5 +1,6 @@
 package iped.engine.config;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.DirectoryStream.Filter;
@@ -11,11 +12,12 @@ import iped.utils.UTF8Properties;
 public class LocaleConfig extends AbstractPropertiesConfigurable {
 
     /**
-     * 
+     *
      */
     private static final long serialVersionUID = 1L;
     public static final String CONFIG_FILE = "LocalConfig.txt"; //$NON-NLS-1$
     private static final String HOST_COUNTRY = "hostCountryCode";
+    private static final String LOCALE = "locale";
 
     public static final DirectoryStream.Filter<Path> filter = new Filter<Path>() {
         @Override
@@ -45,17 +47,33 @@ public class LocaleConfig extends AbstractPropertiesConfigurable {
 
     @Override
     public void processProperties(UTF8Properties properties) {
-
         String value;
+        value = properties.getProperty(LOCALE);
+        setLocale(value);
+    }
 
-        value = properties.getProperty("locale"); //$NON-NLS-1$
+    public void setLocale(String value){
         if (value != null && !value.trim().isEmpty())
             locale = Locale.forLanguageTag(value.trim());
 
-        System.setProperty(iped.localization.Messages.LOCALE_SYS_PROP, locale.toLanguageTag()); // $NON-NLS-1$
+        properties.setProperty(LOCALE, value);
+        System.setProperty(iped.localization.Messages.LOCALE_SYS_PROP, locale.toLanguageTag());
     }
 
     public Locale getLocale() {
         return locale;
     }
+
+    @Override
+    public void save(Path resource) {
+        try {
+            File confDir = new File(resource.toFile(), Configuration.CONF_DIR);
+            confDir.mkdirs();
+            File confFile = new File(confDir, CONFIG_FILE);
+            properties.store(confFile);
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 }

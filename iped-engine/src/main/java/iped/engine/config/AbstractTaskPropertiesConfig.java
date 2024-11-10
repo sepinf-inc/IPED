@@ -1,11 +1,12 @@
 package iped.engine.config;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 
 import iped.utils.UTF8Properties;
 
-public abstract class AbstractTaskPropertiesConfig extends AbstractTaskConfig<UTF8Properties> {
+public abstract class AbstractTaskPropertiesConfig extends AbstractTaskConfig<UTF8Properties> implements IPropertiesConfigurable {
 
     /**
      * 
@@ -29,6 +30,19 @@ public abstract class AbstractTaskPropertiesConfig extends AbstractTaskConfig<UT
         processProperties(properties);
     }
 
-    abstract void processProperties(UTF8Properties properties);
+    @Override
+    public abstract void processProperties(UTF8Properties properties);
+
+    @Override
+    public void save(Path resource) {
+        try {
+            File confDir = new File(resource.toFile(), Configuration.CONF_DIR);
+            confDir.mkdirs();
+            File confFile = new File(confDir, getTaskConfigFileName());            
+            properties.store(confFile);
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
 }

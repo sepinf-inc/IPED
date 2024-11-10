@@ -61,13 +61,7 @@ public class ParsingTaskConfig extends AbstractTaskPropertiesConfig {
         if (value != null && !value.trim().equalsIgnoreCase("auto")) { //$NON-NLS-1$
             numExternalParsers = Integer.valueOf(value.trim());
         } else {
-            OCRConfig ocrconfig = ConfigurationManager.get().findObject(OCRConfig.class);
-            if (ocrconfig.isOCREnabled() == null) {
-                throw new RuntimeException(OCRConfig.class.getSimpleName() + " must be loaded before "
-                        + this.getClass().getSimpleName());
-            }
-            int div = ocrconfig.isOCREnabled() ? 1 : 2;
-            numExternalParsers = Math.max((int) Math.ceil((float) Runtime.getRuntime().availableProcessors() / div), 2);
+            numExternalParsers = getDefaultNumExternalParsers();
         }
 
         value = properties.getProperty("externalParsingMaxMem"); //$NON-NLS-1$
@@ -164,6 +158,17 @@ public class ParsingTaskConfig extends AbstractTaskPropertiesConfig {
     public int getMinRawStringSize() {
         return minRawStringSize;
     }
+    
+    public int getDefaultNumExternalParsers() {
+        OCRConfig ocrconfig = ConfigurationManager.get().findObject(OCRConfig.class);
+        if (ocrconfig.isOCREnabled() == null) {
+            throw new RuntimeException(OCRConfig.class.getSimpleName() + " must be loaded before "
+                    + this.getClass().getSimpleName());
+        }
+        int div = ocrconfig.isOCREnabled() ? 1 : 2;
+        return Math.max((int) Math.ceil((float) Runtime.getRuntime().availableProcessors() / div), 2);
+    }
+    
 
     public String getInternalParsersList() {
         return internalParsersList;

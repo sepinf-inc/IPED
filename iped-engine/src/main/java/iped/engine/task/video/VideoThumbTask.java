@@ -207,7 +207,11 @@ public class VideoThumbTask extends ThumbTask {
     }
 
     public List<Configurable<?>> getConfigurables() {
-        return Arrays.asList(new VideoThumbsConfig());
+        VideoThumbsConfig result = ConfigurationManager.get().findObject(VideoThumbsConfig.class);
+        if(result == null) {
+            result = new VideoThumbsConfig();
+        }
+        return Arrays.asList(result);
     }
 
     /**

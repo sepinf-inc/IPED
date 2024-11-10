@@ -53,7 +53,11 @@ public class MakePreviewTask extends AbstractTask {
     private volatile Throwable exception;
 
     public List<Configurable<?>> getConfigurables() {
-        return Arrays.asList(new MakePreviewConfig());
+        MakePreviewConfig result = ConfigurationManager.get().findObject(MakePreviewConfig.class);
+        if(result == null) {
+            result = new MakePreviewConfig();
+        }
+        return Arrays.asList(result);
     }
 
     @Override

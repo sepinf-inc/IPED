@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,18 +25,19 @@ import org.xml.sax.SAXException;
 
 import iped.configuration.Configurable;
 import iped.engine.task.AbstractTask;
+import iped.engine.task.IScriptTask;
 import iped.engine.task.PythonTask;
 import iped.engine.task.ScriptTask;
 import iped.exception.IPEDException;
 
 public class TaskInstallerConfig implements Configurable<String> {
-
     /**
      * 
      */
     private static final long serialVersionUID = 1L;
     private static final String CONFIG_XML = "TaskInstaller.xml"; //$NON-NLS-1$
     public static final String SCRIPT_BASE = "scripts/tasks"; //$NON-NLS-1$
+    public static final String CUSTOM_SCRIPT_BASE = "scripts/tasks/custom"; //$NON-NLS-1$
 
     private String xml;
 
@@ -113,4 +115,49 @@ public class TaskInstallerConfig implements Configurable<String> {
         this.xml = config;
     }
 
+    @Override
+    public void save(Path resource) {
+        try {
+            File confDir = new File(resource.toFile(), Configuration.CONF_DIR);
+            confDir.mkdirs();
+            File confFile = new File(confDir, CONFIG_XML);            
+
+            Files.write(confFile.toPath(), xml.getBytes(StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    public void update(List<AbstractTask> tasks) {
+        StringBuffer output=new StringBuffer();
+        output.append(xml.substring(0,xml.indexOf("<tasks>")));
+        output.append("<tasks>\n");
+        for (Iterator iterator = tasks.iterator(); iterator.hasNext();) {
+            AbstractTask task = (AbstractTask) iterator.next();
+            if(task instanceof IScriptTask) {
+                output.append("<task script=\"");
+                String scriptFullPath = ((IScriptTask) task).getScriptFileName();
+                String scriptRelPath = "";
+                if (scriptFullPath.contains(CUSTOM_SCRIPT_BASE)) {
+                    scriptRelPath = "custom/"
+                            + scriptFullPath.substring(scriptFullPath.lastIndexOf(File.separator) + 1);
+                } else {
+                    scriptRelPath = scriptFullPath.substring(scriptFullPath.lastIndexOf(File.separator) + 1);
+                }
+                output.append(scriptRelPath);
+                output.append("\"></task>\n");
+            }else {
+                output.append("<task class=\"");
+                output.append(task.getClass().getCanonicalName());
+                output.append("\"></task>\n");
+            }
+        }
+        output.append("</tasks>");
+        xml = output.toString();
+    }
+
+    @Override
+    public void reset() {
+        // TODO Auto-generated method stub        
+    }
 }

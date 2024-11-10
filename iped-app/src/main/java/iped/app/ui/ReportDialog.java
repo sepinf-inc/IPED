@@ -49,7 +49,7 @@ public class ReportDialog implements ActionListener, TableModelListener {
     private static Logger logger = LoggerFactory.getLogger(ReportDialog.class);
 
     JDialog dialog = new JDialog(App.get());
-    ReportInfoDialog caseInfo = new ReportInfoDialog(dialog);
+    ReportInfoDialog reportInfoDialog = new ReportInfoDialog(dialog);
     JLabel top = new JLabel(Messages.getString("ReportDialog.ChooseLabel")); //$NON-NLS-1$
     Object[] header = { Boolean.FALSE, Messages.getString("ReportDialog.TableHeader1"), //$NON-NLS-1$ //$NON-NLS-2$
             Messages.getString("ReportDialog.TableHeader2") }; //$NON-NLS-1$
@@ -157,8 +157,8 @@ public class ReportDialog implements ActionListener, TableModelListener {
 
         table.getColumnModel().getColumn(0).setHeaderRenderer(new DefaultTableCellRenderer() {
 
-            private static final long serialVersionUID = 1L;
-            private boolean listenerAdded = false;
+			private static final long serialVersionUID = 1L;
+			private boolean listenerAdded = false;
 
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
@@ -195,7 +195,6 @@ public class ReportDialog implements ActionListener, TableModelListener {
     }
 
     private class TableModel extends DefaultTableModel {
-
         private static final long serialVersionUID = 1L;
 
         TableModel(Object[][] data, Object[] columnNames) {
@@ -229,7 +228,7 @@ public class ReportDialog implements ActionListener, TableModelListener {
         }
 
         if (e.getSource() == infoButton) {
-            caseInfo.setVisible(true);
+            reportInfoDialog.setVisible(true);
         }
 
         if (e.getSource() == keywordsButton) {
@@ -264,9 +263,9 @@ public class ReportDialog implements ActionListener, TableModelListener {
 
     private void generateReport() {
 
-        String caseInfo;
+        String tempReportInfoFilePath;
         try {
-            caseInfo = this.caseInfo.getReportInfo().writeReportInfoFile().getAbsolutePath();
+            tempReportInfoFilePath = this.reportInfoDialog.getReportInfo().writeReportInfoFile().getAbsolutePath();
         } catch (IOException e1) {
             e1.printStackTrace();
             JOptionPane.showMessageDialog(null, Messages.getString("ReportDialog.ReportError"), //$NON-NLS-1$
@@ -295,8 +294,8 @@ public class ReportDialog implements ActionListener, TableModelListener {
                     Bootstrap.class.getCanonicalName(), "-d", input.getAbsolutePath(), //$NON-NLS-1$
                     "-o", output)); //$NON-NLS-1$
 
-            if (!caseInfo.isEmpty())
-                cmd.addAll(Arrays.asList("-asap", caseInfo)); //$NON-NLS-1$
+            if (!tempReportInfoFilePath.isEmpty())
+                cmd.addAll(Arrays.asList("-asap", tempReportInfoFilePath)); //$NON-NLS-1$
 
             if (!keywords.isEmpty())
                 cmd.addAll(Arrays.asList("-l", keywords)); //$NON-NLS-1$

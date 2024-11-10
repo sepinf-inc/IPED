@@ -64,4 +64,22 @@ public interface Configurable<T> extends Serializable {
      */
     void setConfiguration(T config);
 
+    /**
+     * Writes a configuration resource found after applying the lookup filter.
+     * 
+     * @param resource
+     *            a configuration path where to save the necessary data.
+     */
+    public void save(Path resource);
+
+
+    /**
+     * Resets the configurable state. Configurables that implements loading tecniques from multiple
+     * sources should use this to reset before reload, clearing any old loaded source.
+     * 
+     * @param resource
+     *            a configuration path where to save the necessary data.
+     */
+    public void reset();
+
 }

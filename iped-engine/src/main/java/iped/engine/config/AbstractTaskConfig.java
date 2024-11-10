@@ -45,12 +45,20 @@ public abstract class AbstractTaskConfig<T> implements Configurable<T>, EnabledI
 
     @Override
     public boolean isEnabled() {
-        return enabledProp.isEnabled();
+        return enabledProp!=null && enabledProp.isEnabled();
     }
 
     @Override
     public void setEnabled(boolean enabled) {
+        if (enabledProp == null) {
+            enabledProp = new EnableTaskProperty(getTaskEnableProperty());
+        }
         enabledProp.setEnabled(enabled);
+    }
+
+    @Override
+    public void reset() {
+        
     }
 
 }
