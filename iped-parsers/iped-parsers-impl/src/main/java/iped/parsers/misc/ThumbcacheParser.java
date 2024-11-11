@@ -19,7 +19,6 @@ import java.util.Set;
 public class ThumbcacheParser extends AbstractParser {
 
     private static final long serialVersionUID = 1L;
-    private static final String OUTPUT_DIR = "output";
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -35,8 +34,16 @@ public class ThumbcacheParser extends AbstractParser {
              TikaInputStream tis = TikaInputStream.get(stream, tmp)) {
 
             File file = tis.getFile();
+            String outputDir = file.getParent();
+            String imagesDir = outputDir + File.separator + "images";
+
+            File imagesDirectory = new File(imagesDir);
+            if (!imagesDirectory.exists()) {
+                imagesDirectory.mkdirs();
+            }
+
             try (FileInputStream fis = new FileInputStream(file)) {
-                parseThumbcacheFile(fis, xhtml);
+                parseThumbcacheFile(fis, xhtml, imagesDir);
             }
 
         } catch (IOException e) {
@@ -46,7 +53,7 @@ public class ThumbcacheParser extends AbstractParser {
         }
     }
 
-    private void parseThumbcacheFile(InputStream stream, XHTMLContentHandler xhtml) throws IOException, SAXException {
+    private void parseThumbcacheFile(InputStream stream, XHTMLContentHandler xhtml, String imagesDir) throws IOException, SAXException {
         byte[] buffer = new byte[56];
 
         ByteBuffer fileHeader = ByteBuffer.allocate(24).order(ByteOrder.LITTLE_ENDIAN);
@@ -94,12 +101,6 @@ public class ThumbcacheParser extends AbstractParser {
         xhtml.characters("Seen on Windows version        : " + windowsVersion + "\n");
         xhtml.endElement("pre");
 
-        // Criação do diretório de saída para imagens
-        File dir = new File(OUTPUT_DIR);
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
-
         while (stream.read(buffer) == buffer.length) {
             ByteBuffer bb = ByteBuffer.wrap(buffer).order(ByteOrder.LITTLE_ENDIAN);
 
@@ -143,12 +144,11 @@ public class ThumbcacheParser extends AbstractParser {
                 String ext = detectImageExtension(imageData);
                 String fileName = "thumb_" + Long.toHexString(entryHash) + "." + ext;
 
-                saveImage(fileName, imageData);
+                saveImage(imagesDir, fileName, imageData);
             }
         }
     }
 
-    // Método para detectar a extensão da imagem com base nos primeiros bytes
     private String detectImageExtension(byte[] data) {
         if (data.length >= 4) {
             if (data[0] == (byte) 0x42 && data[1] == (byte) 0x4D) {
@@ -162,9 +162,8 @@ public class ThumbcacheParser extends AbstractParser {
         return "img";
     }
 
-    // Método para salvar a imagem em um arquivo
-    private void saveImage(String fileName, byte[] imageData) {
-        try (FileOutputStream fos = new FileOutputStream(OUTPUT_DIR + File.separator + fileName)) {
+    private void saveImage(String imagesDir, String fileName, byte[] imageData) {
+        try (FileOutputStream fos = new FileOutputStream(imagesDir + File.separator + fileName)) {
             fos.write(imageData);
             System.out.println("Saved image: " + fileName);
         } catch (IOException e) {
