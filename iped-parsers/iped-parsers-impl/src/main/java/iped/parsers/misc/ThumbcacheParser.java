@@ -10,10 +10,7 @@ import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
@@ -22,6 +19,7 @@ import java.util.Set;
 public class ThumbcacheParser extends AbstractParser {
 
     private static final long serialVersionUID = 1L;
+    private static final String OUTPUT_DIR = "output";
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -96,6 +94,12 @@ public class ThumbcacheParser extends AbstractParser {
         xhtml.characters("Seen on Windows version        : " + windowsVersion + "\n");
         xhtml.endElement("pre");
 
+        // Criação do diretório de saída para imagens
+        File dir = new File(OUTPUT_DIR);
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+
         while (stream.read(buffer) == buffer.length) {
             ByteBuffer bb = ByteBuffer.wrap(buffer).order(ByteOrder.LITTLE_ENDIAN);
 
@@ -109,7 +113,7 @@ public class ThumbcacheParser extends AbstractParser {
             long entryHash = bb.getLong(8);
             int identifierStringSize = bb.getInt(16);
             int paddingSize = bb.getInt(20);
-            int dataSize = bb.getInt(24); //
+            int dataSize = bb.getInt(24);
             long dataChecksum = bb.getLong(40);
             long headerChecksum = bb.getLong(48);
 
@@ -133,8 +137,38 @@ public class ThumbcacheParser extends AbstractParser {
             }
 
             if (dataSize > 0) {
-                stream.skip(dataSize);
+                byte[] imageData = new byte[dataSize];
+                stream.read(imageData);
+
+                String ext = detectImageExtension(imageData);
+                String fileName = "thumb_" + Long.toHexString(entryHash) + "." + ext;
+
+                saveImage(fileName, imageData);
             }
+        }
+    }
+
+    // Método para detectar a extensão da imagem com base nos primeiros bytes
+    private String detectImageExtension(byte[] data) {
+        if (data.length >= 4) {
+            if (data[0] == (byte) 0x42 && data[1] == (byte) 0x4D) {
+                return "bmp";
+            } else if (data[0] == (byte) 0xFF && data[1] == (byte) 0xD8) {
+                return "jpg";
+            } else if (data[0] == (byte) 0x89 && data[1] == (byte) 0x50) {
+                return "png";
+            }
+        }
+        return "img";
+    }
+
+    // Método para salvar a imagem em um arquivo
+    private void saveImage(String fileName, byte[] imageData) {
+        try (FileOutputStream fos = new FileOutputStream(OUTPUT_DIR + File.separator + fileName)) {
+            fos.write(imageData);
+            System.out.println("Saved image: " + fileName);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }
