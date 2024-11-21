@@ -5,6 +5,7 @@ import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
@@ -16,11 +17,15 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 public class ThumbcacheParser extends AbstractParser {
 
     private static final long serialVersionUID = 1L;
+    private List<byte[]> extractedImages = new ArrayList<>();
+    private List<String> extractedImageNames = new ArrayList<>();
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -29,6 +34,8 @@ public class ThumbcacheParser extends AbstractParser {
 
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException {
+        extractedImages.clear();
+        extractedImageNames.clear();
 
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
             new ParsingEmbeddedDocumentExtractor(context));
@@ -48,21 +55,20 @@ public class ThumbcacheParser extends AbstractParser {
                 imagesDirectory.mkdirs();
             }
 
-            byte[] imageData = null;
-            String fileName = null;
-
             try (FileInputStream fis = new FileInputStream(file)) {
-                imageData = parseThumbcacheFile(fis, xhtml, imagesDir);
-                fileName = getLastSavedFileName(imagesDir);
+                parseThumbcacheFile(fis, xhtml, imagesDir);
             }
 
-            if (extractor.shouldParseEmbedded(metadata) && imageData != null && fileName != null) {
-                Metadata imageMetadata = new Metadata();
-                imageMetadata.set(Metadata.CONTENT_TYPE, "image/" + detectImageExtension(imageData));
-                imageMetadata.set("resourceName", fileName);
+            for (int i = 0; i < extractedImages.size(); i++) {
+                if (extractor.shouldParseEmbedded(metadata)) {
+                    Metadata imageMetadata = new Metadata();
+                    String ext = detectImageExtension(extractedImages.get(i));
+                    imageMetadata.set(Metadata.CONTENT_TYPE, "image/" + ext);
+                    imageMetadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, extractedImageNames.get(i));
 
-                try (ByteArrayInputStream imageStream = new ByteArrayInputStream(imageData)) {
-                    extractor.parseEmbedded(imageStream, xhtml, imageMetadata, true);
+                    try (ByteArrayInputStream imageStream = new ByteArrayInputStream(extractedImages.get(i))) {
+                        extractor.parseEmbedded(imageStream, xhtml, imageMetadata, true);
+                    }
                 }
             }
 
@@ -73,9 +79,8 @@ public class ThumbcacheParser extends AbstractParser {
         }
     }
 
-    private byte[] parseThumbcacheFile(InputStream stream, XHTMLContentHandler xhtml, String imagesDir) throws IOException, SAXException {
+    private void parseThumbcacheFile(InputStream stream, XHTMLContentHandler xhtml, String imagesDir) throws IOException, SAXException {
         byte[] buffer = new byte[56];
-        byte[] imageData = null;
 
         ByteBuffer fileHeader = ByteBuffer.allocate(24).order(ByteOrder.LITTLE_ENDIAN);
         stream.read(fileHeader.array());
@@ -83,7 +88,7 @@ public class ThumbcacheParser extends AbstractParser {
         String signature = new String(fileHeader.array(), 0, 4);
         if (!"CMMM".equals(signature)) {
             xhtml.characters("Error processing cache file: Invalid header signature; expected 'CMMM'.\n");
-            return null;
+            return;
         }
 
         int formatVersion = fileHeader.getInt(4);
@@ -159,17 +164,18 @@ public class ThumbcacheParser extends AbstractParser {
             }
 
             if (dataSize > 0) {
-                imageData = new byte[dataSize];
+                byte[] imageData = new byte[dataSize];
                 stream.read(imageData);
 
                 String ext = detectImageExtension(imageData);
                 String fileName = "thumb_" + Long.toHexString(entryHash) + "." + ext;
 
                 saveImage(imagesDir, fileName, imageData);
+
+                extractedImages.add(imageData);
+                extractedImageNames.add(fileName);
             }
         }
-
-        return imageData;
     }
 
     private String detectImageExtension(byte[] data) {
@@ -192,15 +198,5 @@ public class ThumbcacheParser extends AbstractParser {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    private String getLastSavedFileName(String imagesDir) {
-        File directory = new File(imagesDir);
-        File[] files = directory.listFiles((dir, name) -> name.startsWith("thumb_"));
-
-        if (files != null && files.length > 0) {
-            return files[files.length - 1].getName();
-        }
-        return null;
     }
 }
