@@ -24,8 +24,6 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -181,37 +179,36 @@ public class MenuListener implements ActionListener {
             App.get().loadPanelLayout();
 
         } else if (e.getSource() == menu.checkHighlighted) {
-            BookmarksController.get().setMultiSetting(true);
-            int col = App.get().resultsTable.convertColumnIndexToView(1);
-            for (Integer row : App.get().resultsTable.getSelectedRows()) {
-                App.get().resultsTable.setValueAt(true, row, col);
-            }
-            BookmarksController.get().setMultiSetting(false);
-            App.get().appCase.getMultiBookmarks().saveState();
-            BookmarksController.get().updateUISelection();
+            App.get().resultTableListener.itemSelection(true);
 
         } else if (e.getSource() == menu.uncheckHighlighted) {
-            BookmarksController.get().setMultiSetting(true);
-            int col = App.get().resultsTable.convertColumnIndexToView(1);
-            for (Integer row : App.get().resultsTable.getSelectedRows()) {
-                App.get().resultsTable.setValueAt(false, row, col);
-            }
-            BookmarksController.get().setMultiSetting(false);
-            App.get().appCase.getMultiBookmarks().saveState();
-            BookmarksController.get().updateUISelection();
+            App.get().resultTableListener.itemSelection(false);
 
+        } else if (e.getSource() == menu.checkHighlightedAndSubItems) {
+            App.get().resultTableListener.itemSelectionAndSubItems(true);
+
+        } else if (e.getSource() == menu.uncheckHighlightedAndSubItems) {
+            App.get().resultTableListener.itemSelectionAndSubItems(false);
+
+        } else if (e.getSource() == menu.checkHighlightedAndParent) {
+            App.get().resultTableListener.itemSelectionAndParent(true);
+
+        } else if (e.getSource() == menu.uncheckHighlightedAndParent) {
+            App.get().resultTableListener.itemSelectionAndParent(false);
+
+        } else if (e.getSource() == menu.checkHighlightedAndReferences) {
+            App.get().resultTableListener.itemSelectionAndReferences(true);
+
+        } else if (e.getSource() == menu.uncheckHighlightedAndReferences) {
+            App.get().resultTableListener.itemSelectionAndReferences(false);
+
+        } else if (e.getSource() == menu.checkHighlightedAndReferencedBy) {
+            App.get().resultTableListener.itemSelectionAndReferencedBy(true);
+
+        } else if (e.getSource() == menu.uncheckHighlightedAndReferencedBy) {
+            App.get().resultTableListener.itemSelectionAndReferencedBy(false);
         }
 
-        if (e.getSource() == menu.deepCheckHighlighted) {
-            KeyEvent keyCTRL_R_Pressed = new KeyEvent((Component) e.getSource(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), KeyEvent.CTRL_DOWN_MASK, KeyEvent.VK_R, KeyEvent.CHAR_UNDEFINED);
-            for (KeyListener kl : App.get().resultsTable.getListeners(KeyListener.class))
-                kl.keyPressed(keyCTRL_R_Pressed);
-
-        } else if (e.getSource() == menu.deepUncheckHighlighted) {
-            KeyEvent keyCTRL_R_Pressed = new KeyEvent((Component) e.getSource(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), KeyEvent.ALT_DOWN_MASK, KeyEvent.VK_R, KeyEvent.CHAR_UNDEFINED);
-            for (KeyListener kl : App.get().resultsTable.getListeners(KeyListener.class))
-                kl.keyPressed(keyCTRL_R_Pressed);
-        }
         if (e.getSource() == menu.readHighlighted) {
             BookmarksController.get().setMultiSetting(true);
             int col = App.get().resultsTable.convertColumnIndexToView(2);
