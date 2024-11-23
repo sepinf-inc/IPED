@@ -51,7 +51,7 @@ implementationClass = iped.engine.task.transcript.VoskTranscriptTask
 language = auto
 
 # Command to convert audios to wav before transcription. Do not change $INPUT or $OUTPUT params.
-convertCommand = mplayer -benchmark -vo null -vc null -srate 16000 -af format=s16le,channels=1 -ao pcm:fast:file=$OUTPUT $INPUT
+convertCommand = mplayer -benchmark -vo null -vc null -srate 16000 -af format=s16le,resample=16000,channels=1 -ao pcm:fast:file=$OUTPUT $INPUT
 
 # Mime types or supertypes to process. If you want to add videos use ; as separator and update 'convertCommand'.
 mimesToProcess = audio/3gpp; audio/3gpp2; audio/vnd.3gpp.iufp; audio/x-aac; audio/x-aiff; audio/amr; audio/amr-wb; audio/amr-wb+; audio/mp4; audio/ogg; audio/vorbis; audio/x-oggflac; audio/x-oggpcm; audio/opus; audio/speex; audio/qcelp; audio/vnd.wave; audio/x-caf; audio/x-ms-wma; audio/x-opus+ogg; audio/ilbc
