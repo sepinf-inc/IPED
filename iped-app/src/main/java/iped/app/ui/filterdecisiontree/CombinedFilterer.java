@@ -18,6 +18,7 @@ import org.roaringbitmap.RoaringBitmap;
 
 import iped.app.ui.App;
 import iped.app.ui.CaseSearcherFilter;
+import iped.app.ui.FiltersPanel;
 import iped.app.ui.filterdecisiontree.OperandNode.Operand;
 import iped.data.IItemId;
 import iped.engine.data.IPEDMultiSource;
@@ -33,14 +34,22 @@ import iped.viewers.api.IQueryFilter;
 import iped.viewers.api.IResultSetFilter;
 import iped.viewers.api.IResultSetFilterer;
 
+/**
+ * A resultSet filterer that uses a defined decision tree made up of filters
+ * combined by logical operands to filter the resultSet.
+ * 
+ * @author patrick.pdb
+ */
 public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListener {
-    OperandNode rootNode = new OperandNode(Operand.OR);
+    OperandNode rootNode;
 
     private final Map<IFilter, FutureBitSetResult> cachedBitSet = new HashMap<IFilter, FutureBitSetResult>();
 
     int queueCount = 0;
 
     private CombinedBitSet cbs;
+
+    private FiltersPanel filtersPanel;
 
     @Override
     public List getDefinedFilters() {
@@ -164,14 +173,21 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
         public RoaringBitmap[] get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
             return null;
         }
-
     }
 
-    public void preCacheFilter(IFilter filter) {
-        cachedBitSet.put(filter, new FutureBitSetResult(this, filter));
+    public void preCacheFilter(IFilter filter, FutureBitSetResult fbs) {
+        cachedBitSet.put(filter, fbs);
         if (filter instanceof IMutableFilter) {
             ((IMutableFilter) filter).addFilterChangeListener(this);
         }
+    }
+
+    public void preCacheFilter(IFilter filter) {
+        preCacheFilter(filter, new FutureBitSetResult(this, filter));
+    }
+
+    public void preCacheFilterClone(IFilter filter, IFilter filterClonedSrc) {
+        preCacheFilter(filter, cachedBitSet.get(filterClonedSrc));
     }
 
     static public RoaringBitmap getAllSetBitSet(int length) {
@@ -288,6 +304,8 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
                 public void run() {
                     try {
                         result = getBitSet(input, op, self);
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     } finally {
                         resultFinished.release();
                     }
@@ -381,7 +399,7 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
             if (node instanceof FilterNode) {
                 try {
                     fbitset = cachedBitSet.get(((FilterNode) node).getFilter()).get();
-                } catch (InterruptedException | ExecutionException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             } else if (node instanceof OperandNode) {
@@ -530,7 +548,7 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
 
     @Override
     public boolean hasFiltersApplied() {
-        return false;
+        return rootNode.getChildren().size() > 0 && filtersPanel.isCombinedFiltererApplied();
     }
 
     public void invertPreCached(IFilter op) {
@@ -545,16 +563,19 @@ public class CombinedFilterer implements IResultSetFilterer, IFilterChangeListen
 
     @Override
     public void clearFilter() {
-        // TODO Auto-generated method stub
-
+        filtersPanel.clearFilter();
     }
 
     public void invalidateCache() {
         cbs = null;
     }
 
-    public void preCacheFilterClone(IFilter filter, IFilter filterClonedSrc) {
-        cachedBitSet.put(filter, cachedBitSet.get(filterClonedSrc));
+    public void setRootNode(OperandNode rootNode) {
+        this.rootNode = rootNode;
+    }
+
+    public void setFiltersPanel(FiltersPanel filtersPanel) {
+        this.filtersPanel = filtersPanel;
     }
 
 }

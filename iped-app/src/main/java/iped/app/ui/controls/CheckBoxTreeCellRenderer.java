@@ -15,12 +15,12 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTree;
 import javax.swing.event.CellEditorListener;
+import javax.swing.event.EventListenerList;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreeCellEditor;
 
 import org.apache.tika.mime.MediaType;
 
-import iped.app.ui.App;
 import iped.app.ui.IconManager;
 import iped.engine.data.Category;
 import iped.viewers.api.IFilterer;
@@ -34,6 +34,8 @@ public class CheckBoxTreeCellRenderer extends DefaultTreeCellRenderer implements
     private static final long serialVersionUID = 1L;
 
     public static final Color ENABLED_BK_COLOR = new Color(255, 150, 150);
+
+    protected EventListenerList listenerList = new EventListenerList();
 
     Predicate<Object> checkedPredicate;
     Predicate<Object> visiblePredicate;
@@ -53,6 +55,20 @@ public class CheckBoxTreeCellRenderer extends DefaultTreeCellRenderer implements
             return filterer.getFilterName();
         }
         return value.toString();
+    }
+
+    public class TreeCellCheckBoxActionEvent extends ActionEvent {
+        JCheckBox checkBox = null;
+
+        public TreeCellCheckBoxActionEvent(JCheckBox checkBox, Object source, int id, String command) {
+            super(source, id, command);
+            this.checkBox = checkBox;
+        }
+
+        public JCheckBox getCheckBox() {
+            return checkBox;
+        }
+
     }
 
     @Override
@@ -81,16 +97,17 @@ public class CheckBoxTreeCellRenderer extends DefaultTreeCellRenderer implements
         if (visiblePredicate == null || visiblePredicate.test(value)) {
             JCheckBox checkbox = new JCheckBox();
             checkbox.setSelected(checkedPredicate.test(value));
-            checkbox.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    ((IFilterer) value).clearFilter();
-                    App.get().filtersPanel.updateUI();
-                    App.get().getAppListener().updateFileListing();
-                }
-            });
+            for (ActionListener al : listenerList.getListeners(ActionListener.class)) {
+                checkbox.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        al.actionPerformed(
+                                new TreeCellCheckBoxActionEvent(checkbox, value, e.getID(),
+                                e.getActionCommand()));
+                    }
+                });
+            }
             JPanel ckPanel = new JPanel(new BorderLayout());
-            ckPanel.setBackground(checkbox.isSelected() ? ENABLED_BK_COLOR : Color.white);
             ckPanel.add(checkbox, BorderLayout.WEST);
             ckPanel.add(label, BorderLayout.CENTER);
             return ckPanel;
@@ -138,5 +155,9 @@ public class CheckBoxTreeCellRenderer extends DefaultTreeCellRenderer implements
     @Override
     public Component getTreeCellEditorComponent(JTree tree, Object value, boolean isSelected, boolean expanded, boolean leaf, int row) {
         return getTreeCellRendererComponent(tree, value, isSelected, expanded, leaf, row, true);
+    }
+
+    public void addActionListener(ActionListener actionListener) {
+        listenerList.add(ActionListener.class, actionListener);
     }
 }

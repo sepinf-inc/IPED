@@ -17,6 +17,7 @@ import iped.app.metadata.ValueCountQueryFilter;
 import iped.app.ui.controls.table.MetadataValueSearchList;
 import iped.app.ui.filters.EqualsFilter;
 import iped.app.ui.filters.StartsWithFilter;
+import iped.app.ui.filters.ValueFilter;
 import iped.engine.search.MultiSearchResult;
 import iped.engine.search.QueryBuilder;
 import iped.engine.task.index.IndexItem;
@@ -36,7 +37,10 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
     private HashMap<String, Set<ValueCount>> selectedValues = new HashMap<String, Set<ValueCount>>();
     private HashMap<String, MetadataSearch> panels = new HashMap<String, MetadataSearch>();
     private HashMap<String, IFilter> definedFilters = new HashMap<String, IFilter>();
+
+    // store the filters defined by the FieldValuePopupMenu
     private HashMap<String, String> otherFilters = new HashMap<String, String>();
+    private HashMap<String, String> escapedFields = new HashMap<String, String>();
 
     static public TableHeaderFilterManager get() {
         return singleton;
@@ -58,28 +62,46 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
         App.get().getFilterManager().notifyFilterChange();
     }
 
+    class TableHeaderFilter implements IQueryFilter {
+        private Query query;
+        private String filterExpression;
+        private String escapedField;
+        MetadataSearch metadataSearch;
+
+        public TableHeaderFilter(MetadataSearch metadataSearch, String escapedField, String filterExpression) {
+            this.filterExpression = filterExpression;
+            this.escapedField = escapedField;
+            this.metadataSearch = metadataSearch;
+        }
+
+        @Override
+        public Query getQuery() {
+            if (query == null) {
+                try {
+                    query = new QueryBuilder(App.get().appCase).getQuery(filterExpression);
+                } catch (ParseException | QueryNodeException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+            return query;
+        }
+
+        public String toString() {
+            return filterExpression;
+        }
+
+        public MetadataSearch getMetadataSearch() {
+            return metadataSearch;
+        }
+        // TODO Auto-generated method stub
+
+    }
+
     private void addQueryFilter(String escapedField, String filterExpression) {
         otherFilters.put(escapedField, filterExpression);
-        definedFilters.put(escapedField, new IQueryFilter() {
-            private Query query;
-
-            @Override
-            public Query getQuery() {
-                if (query == null) {
-                    try {
-                        query = new QueryBuilder(App.get().appCase).getQuery(filterExpression);
-                    } catch (ParseException | QueryNodeException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
-                }
-                return query;
-            }
-
-            public String toString() {
-                return filterExpression;
-            }
-        });
+        definedFilters.put(escapedField,
+                new TableHeaderFilter(panels.get(escapedField), escapedField, filterExpression));
         selectedValues.remove(escapedField);
         App.get().getFilterManager().notifyFilterChange();
     }
@@ -123,7 +145,9 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
     public void addFilter(String field, Set<ValueCount> selected) {
         field = escape(field);
         selectedValues.put(field, selected);
-        definedFilters.put(field, new ValueCountQueryFilter(field, selected));
+        definedFilters.put(field, new ValueCountQueryFilter(panels.get(field), field, selected));
+
+        // clear any other filter defined
         otherFilters.remove(field);
         App.get().getFilterManager().notifyFilterChange();
     }
@@ -133,7 +157,10 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
         field = escape(field);
         definedFilters.put(field, filter);
         selectedValues.remove(field);
+
+        // clear any other filter defined
         otherFilters.remove(field);
+        otherFilters.put(field, value);
         App.get().getFilterManager().notifyFilterChange();
     }
 
@@ -142,7 +169,10 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
         field = escape(field);
         definedFilters.put(field, filter);
         selectedValues.remove(field);
+
+        // clear any other filter defined
         otherFilters.remove(field);
+        otherFilters.put(field, value);
         App.get().getFilterManager().notifyFilterChange();
     }
 
@@ -160,7 +190,9 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
         MetadataSearch result = panels.get(field);
         if (result == null) {
             result = new MetadataSearch();
-            panels.put(field, result);
+            String escapedField = escape(field);
+            panels.put(escapedField, result);
+            escapedFields.put(escapedField, field);
         }
         return result;
     }
@@ -242,12 +274,12 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
                 for (String filterField : panels.keySet()) {
                     MetadataSearch internalMetadataSearch = panels.get(filterField);
                     Set<Integer> ords = new HashSet<>();
-                    Set<ValueCount> values = selectedValues.get(escape(filterField));
+                    Set<ValueCount> values = selectedValues.get(filterField);
                     if (values != null && values.size() > 0) {
                         for (ValueCount value : values) {
                             ords.add(value.getOrd());
                         }
-                        result = internalMetadataSearch.getIdsWithOrd(result, filterField, ords);
+                        result = internalMetadataSearch.getIdsWithOrd(result, escapedFields.get(filterField), ords);
                         if (result.getLength() <= 0) {
                             return result;
                         }
@@ -281,4 +313,44 @@ public class TableHeaderFilterManager implements IResultSetFilterer, IQueryFilte
         MetadataValueSearchList.clearSelectedValues();
         App.get().getFilterManager().notifyFilterChange();
     }
+
+    public HashMap<String, String> getOtherFilters() {
+        return otherFilters;
+    }
+
+    @Override
+    public void restoreDefinedFilters(List<IFilter> filtersToRestore) {
+        definedFilters.clear();
+        otherFilters.clear();
+        selectedValues.clear();
+        panels.clear();
+        for (IFilter filter : filtersToRestore) {
+            String escapedField = null;
+            if (filter instanceof TableHeaderFilter) {
+                escapedField = ((TableHeaderFilter) filter).escapedField;
+                otherFilters.put(escapedField, ((TableHeaderFilter) filter).filterExpression);
+                definedFilters.put(escapedField, filter);
+                selectedValues.remove(escapedField);
+                panels.put(escapedField, ((TableHeaderFilter) filter).getMetadataSearch());
+            }
+
+            if (filter instanceof ValueCountQueryFilter) {
+                ValueCountQueryFilter vcqFilter = (ValueCountQueryFilter) filter;
+                escapedField = vcqFilter.getFilterField();
+                definedFilters.put(escapedField, filter);
+                selectedValues.put(escapedField, vcqFilter.getValues());
+                otherFilters.remove(escapedField);
+                panels.put(escapedField, vcqFilter.getMetadataSearch());
+            }
+
+            if (filter instanceof ValueFilter) {
+                ValueFilter eqFilter = (ValueFilter) filter;
+                escapedField = escape(eqFilter.getField());
+                definedFilters.put(escapedField, filter);
+                otherFilters.put(escapedField, eqFilter.getValue());
+            }
+        }
+        App.get().getFilterManager().notifyFilterChange();
+    }
+
 }

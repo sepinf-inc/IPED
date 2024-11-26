@@ -17,7 +17,7 @@ public class CSelButton extends CButton {
     public boolean isSelected() {
         return isSelected;
     }
-    
+
     public void toggle() {
         setSelected(!isSelected);
     }

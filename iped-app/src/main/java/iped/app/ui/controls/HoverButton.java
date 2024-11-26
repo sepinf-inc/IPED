@@ -12,11 +12,10 @@ import javax.swing.UIManager;
 import iped.utils.UiUtil;
 
 /**
- * A flat button with no background or border. 
- * Border and background are only painted when the mouse is over it, 
- * and with a brighter color when it is pressed. 
- * It is "theme aware", so colors will change if a new theme is activated.
- * Currently it only displays icons, but it could handle text.  
+ * A flat button with no background or border. Border and background are only
+ * painted when the mouse is over it, and with a brighter color when it is
+ * pressed. It is "theme aware", so colors will change if a new theme is
+ * activated. Currently it only displays icons, but it could handle text.
  */
 public class HoverButton extends JButton {
     private static final long serialVersionUID = 7827182813873015956L;

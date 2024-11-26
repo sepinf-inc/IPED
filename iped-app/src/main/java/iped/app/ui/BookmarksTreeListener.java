@@ -32,7 +32,6 @@ public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansi
     private HashSet<Object> selection = new HashSet<>();
     private volatile boolean updatingSelection = false;
     private long collapsed = 0;
-    private boolean clearing = false;
 
     HashMap<Object, IFilter> definedFilters = new HashMap<Object, IFilter>();
 
@@ -76,8 +75,7 @@ public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansi
             }
         }
 
-        if (!clearing)
-            App.get().appletListener.updateFileListing();
+        App.get().appletListener.updateFileListing();
 
         if (selection.contains(BookmarksTreeModel.ROOT) || selection.isEmpty()) {
             App.get().setBookmarksDefaultColor(true);
@@ -149,9 +147,20 @@ public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansi
 
     @Override
     public void clearFilter() {
-        clearing = true;
-        App.get().bookmarksTree.clearSelection();
-        clearing = false;
+        TreeSelectionListener[] listeners = App.get().bookmarksTree.getTreeSelectionListeners();
+        for (TreeSelectionListener lis : listeners) {
+            App.get().bookmarksTree.removeTreeSelectionListener(lis);
+        }
+
+        try {
+            selection.clear();
+            definedFilters.clear();
+            App.get().bookmarksTree.clearSelection();
+        } finally {
+            for (TreeSelectionListener lis : listeners) {
+                App.get().bookmarksTree.addTreeSelectionListener(lis);
+            }
+        }
     }
 
     NoBookMarkFilter noBookMarkFilter = new NoBookMarkFilter();
@@ -162,12 +171,10 @@ public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansi
         BookmarksTreeListener self = this;
         Set<String> bookmarkSelection = getSelectedBookmarkNames();
         if ((!bookmarkSelection.isEmpty() || isNoBookmarksSelected()) && !isRootSelected()) {
-            if ((!bookmarkSelection.isEmpty() || isNoBookmarksSelected()) && !isRootSelected()) {
-                result.addAll(definedFilters.values());
+            result.addAll(definedFilters.values());
 
-                if (isNoBookmarksSelected()) {
-                    result.add(noBookMarkFilter);
-                }
+            if (isNoBookmarksSelected()) {
+                result.add(noBookMarkFilter);
             }
         }
         return result;
@@ -206,6 +213,51 @@ public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansi
     @Override
     public boolean hasFiltersApplied() {
         return selection.size() > 0 && !isRootSelected();
+    }
+
+    @Override
+    public void restoreDefinedFilters(List<IFilter> filtersToRestore) {
+        TreeSelectionListener[] listeners = App.get().bookmarksTree.getTreeSelectionListeners();
+        for (TreeSelectionListener lis : listeners) {
+            App.get().bookmarksTree.removeTreeSelectionListener(lis);
+        }
+
+        definedFilters.clear();
+
+        try {
+            for (IFilter filter : filtersToRestore) {
+                if (filter instanceof BookMarkFilter) {
+                    for (String bookmark : ((BookMarkFilter) filter).bookmark) {
+                        for (int i = 0; i < App.get().bookmarksTree.getRowCount(); i++) {
+                            TreePath tp = App.get().bookmarksTree.getPathForRow(i);
+                            Object node = (Object) tp.getLastPathComponent();
+                            if (bookmark.equals(node.toString())) {
+                                App.get().bookmarksTree.addSelectionPath(tp);
+                            }
+                        }
+                        HashSet<String> oneBookmark = new HashSet<>();
+                        oneBookmark.add(bookmark);
+                        definedFilters.put(bookmark, new BookMarkFilter(oneBookmark));
+                        selection.add(bookmark);
+                    }
+                }
+                if (filter.toString().equals(noBookMarkFilter.toString())) {
+                    for (int i = 0; i < App.get().bookmarksTree.getRowCount(); i++) {
+                        TreePath tp = App.get().bookmarksTree.getPathForRow(i);
+                        Object node = (Object) tp.getLastPathComponent();
+                        if (node.toString().equals(filter.toString())) {
+                            App.get().bookmarksTree.addSelectionPath(tp);
+                            selection.add(node);
+                        }
+                    }
+                }
+            }
+
+        } finally {
+            for (TreeSelectionListener lis : listeners) {
+                App.get().bookmarksTree.addTreeSelectionListener(lis);
+            }
+        }
     }
 }
 

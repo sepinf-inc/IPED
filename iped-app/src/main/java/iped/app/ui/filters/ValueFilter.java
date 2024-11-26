@@ -99,4 +99,12 @@ public abstract class ValueFilter extends MetadataSearchable implements IResultS
         return r;
     }
 
+    public String getField() {
+        return field;
+    }
+
+    public String getValue() {
+        return value;
+    }
+
 }

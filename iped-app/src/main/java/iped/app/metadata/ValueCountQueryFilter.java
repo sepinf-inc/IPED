@@ -14,16 +14,38 @@ import iped.viewers.api.IQueryFilter;
 public class ValueCountQueryFilter implements IQueryFilter {
     StringBuffer queryStr = null;
     StringBuffer name = null;
+    StringBuffer textualDetail = null;
     Set<ValueCount> values = null;
     String filterField;
+    MetadataSearch metadataSearch;
     private Query query;
 
-    public ValueCountQueryFilter(String filterField, Set<ValueCount> selectedValues) {
+    public ValueCountQueryFilter(MetadataSearch metadataSearch, String filterField, Set<ValueCount> selectedValues) {
         this.filterField = filterField;
+        this.metadataSearch = metadataSearch;
         values = new HashSet<ValueCount>();
         if (selectedValues != null) {
             values.addAll(selectedValues);
         }
+    }
+
+    @Override
+    public String getTextualDetails() {
+        if (textualDetail == null) {
+            textualDetail = new StringBuffer();
+            textualDetail.append(filterField);
+            textualDetail.append(":[");
+            boolean first = true;
+            for (ValueCount value : values) {
+                if (!first) {
+                    textualDetail.append(",");
+                }
+                textualDetail.append(value.getVal());
+                first = false;
+            }
+            textualDetail.append("]");
+        }
+        return textualDetail.toString();
     }
 
     public String toString() {
@@ -80,6 +102,18 @@ public class ValueCountQueryFilter implements IQueryFilter {
             }
         }
         return query;
+    }
+
+    public String getFilterField() {
+        return filterField;
+    }
+
+    public Set<ValueCount> getValues() {
+        return values;
+    }
+
+    public MetadataSearch getMetadataSearch() {
+        return metadataSearch;
     }
 
 }

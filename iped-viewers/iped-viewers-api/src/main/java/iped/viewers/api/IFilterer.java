@@ -8,13 +8,36 @@ import java.util.List;
  * @author patrick.pdb
  *
  */
-public interface IFilterer extends ClearFilterListener {
+public interface IFilterer extends ClearFilterListener, ActionListenerControl {
+
+    public static final int ENABLE_FILTER_EVENT = 0;
+    public static final int DISABLE_FILTER_EVENT = 1;
 
     List<IFilter> getDefinedFilters();
 
+    /**
+     * Informs if there is at least one filter defined by the filterer
+     * 
+     * @return
+     */
     public boolean hasFilters();
 
+    /**
+     * Informs if the defined filters inside the filterer are to be applied (used)
+     * 
+     * @return
+     */
     public boolean hasFiltersApplied();
+
+    /**
+     * Restores internal state elements to represent the defined filters passed as
+     * parameter
+     * 
+     * @return
+     */
+    default public void restoreDefinedFilters(List<IFilter> filtersToRestore){
+        
+    }
 
     default public String getFilterName() {
         try {
@@ -23,5 +46,6 @@ public interface IFilterer extends ClearFilterListener {
             return this.getClass().getName();
         }
     }
+
 
 }

@@ -1,15 +1,23 @@
 package iped.app.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
 import java.awt.Image;
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -22,10 +30,10 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTree;
+import javax.swing.ToolTipManager;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreePath;
-
-import org.apache.lucene.search.Query;
+import javax.swing.tree.TreeSelectionModel;
 
 import iped.app.ui.controls.CheckBoxTreeCellRenderer;
 import iped.app.ui.filterdecisiontree.CombinedFilterer;
@@ -35,18 +43,16 @@ import iped.app.ui.filterdecisiontree.OperandNode;
 import iped.app.ui.filterdecisiontree.OperandNode.Operand;
 import iped.app.ui.filterdecisiontree.OperandPopupMenu;
 import iped.app.ui.filters.FilterTransferHandler;
-import iped.viewers.api.ClearFilterListener;
 import iped.viewers.api.IFilter;
 import iped.viewers.api.IFilterer;
 import iped.viewers.api.IMiniaturizable;
-import iped.viewers.api.IQueryFilterer;
 
-public class FiltersPanel extends JPanel implements ClearFilterListener, IQueryFilterer// internal combinedfilterer wrapper to reflect on panel color
+public class FiltersPanel extends JPanel
 {
     private JTree filtersTree;
     private JScrollPane filtersTreePane;
-    private JTree structuredFiltererTree;
-    private JScrollPane structuredFiltererTreePane;
+    private JTree combinedFiltererTree;
+    private JScrollPane combinedFiltererTreePane;
     private JSplitPane splitPane;
 
     private CombinedFilterer combinedFilterer;
@@ -60,6 +66,8 @@ public class FiltersPanel extends JPanel implements ClearFilterListener, IQueryF
     private FiltererMenu filtererMenu;
 
     private volatile TreePath lastClickedPath;
+
+    HashMap<IFilterer, List<IFilter>> lastFilters = new HashMap<IFilterer, List<IFilter>>();
 
     public FiltersPanel() {
         invertUrl = this.getClass().getResource("negative.png");
@@ -75,21 +83,73 @@ public class FiltersPanel extends JPanel implements ClearFilterListener, IQueryF
     public void install(FilterManager filterManager) {
         this.filterManager = filterManager;
         filtersTree = new JTree();
-        CheckBoxTreeCellRenderer treeCellRenderer = new CheckBoxTreeCellRenderer(filtersTree, new Predicate<Object>() {
+
+        Predicate filtererEnabledPredicate = new Predicate<Object>() {
             @Override
             public boolean test(Object t) {
                 if (t instanceof IFilterer) {
-                    return filterManager.isFiltererEnabled((IFilterer) t);
+                    return filterManager.isFiltererEnabled((IFilterer) t) && (((IFilterer) t).hasFiltersApplied());
                 }
                 return false;
+            };
+        };
+
+        Predicate filtererVisiblePredicate = new Predicate<Object>() {
+            @Override
+            public boolean test(Object t) {
+                if (t instanceof IFilterer) {
+                    return true;
+                }
+                return false;
+            };
+        };
+        CheckBoxTreeCellRenderer treeCellRenderer = new CheckBoxTreeCellRenderer(filtersTree,
+                filtererEnabledPredicate, filtererVisiblePredicate) {
+            @Override
+            public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded,
+                    boolean leaf, int row, boolean hasFocus) {
+                Component result = super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
+                if (value instanceof IFilter) {
+                    IFilter filter = (IFilter) value;
+                    String toolTip = filter.getTextualDetails();
+                    ((JComponent)result).setToolTipText(toolTip);
+                }
+
+                if (value instanceof IFilterer) {
+                    result.setBackground(
+                            (((IFilterer) value).hasFilters() && filterManager.isFiltererEnabled((IFilterer) value))
+                                    ? ENABLED_BK_COLOR
+                                    : Color.white);
+                }
+
+                return result;
             }
-        }, new Predicate<Object>() {
+        };
+
+        treeCellRenderer.addActionListener(new ActionListener() {
             @Override
-            public boolean test(Object t) {
-                if (t instanceof IFilterer) {
-                    return ((IFilterer) t).hasFilters();
+            public void actionPerformed(ActionEvent e) {
+                IFilterer filterer = (IFilterer) e.getSource();
+                if (filterer.hasFilters()) {
+                    lastFilters.put(filterer, filterer.getDefinedFilters());
+                    filterer.clearFilter();
+                    App.get().getAppListener().updateFileListing();
+                    App.get().filtersPanel.updateUI();
+                    App.get().setDockablesColors();
+                } else {
+                    List<IFilter> clastFilters = lastFilters.get(filterer);
+                    if (clastFilters != null) {
+                        filterer.restoreDefinedFilters(clastFilters);
+                        App.get().getAppListener().updateFileListing();
+                        App.get().filtersPanel.updateUI();
+                        App.get().setDockablesColors();
+                    } else {
+                        CheckBoxTreeCellRenderer.TreeCellCheckBoxActionEvent te = (CheckBoxTreeCellRenderer.TreeCellCheckBoxActionEvent) e;
+                        if (te.getCheckBox().isSelected()) {
+                            te.getCheckBox().setSelected(false);
+                        }
+                    }
                 }
-                return false;
             }
         });
         filtersTree.setCellRenderer(treeCellRenderer);
@@ -122,12 +182,39 @@ public class FiltersPanel extends JPanel implements ClearFilterListener, IQueryF
         filtersTree.setModel(new FiltersTreeModel(filterManager.getFilterers()));
 
         combinedFilterer = new CombinedFilterer();
+        combinedFilterer.setFiltersPanel(this);
+        combinedFilterer.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                App.get().setDockablesColors();
+            }
+        });
 
         filterManager.addResultSetFilterer(combinedFilterer);
         filterManager.setFilterEnabled(combinedFilterer, false);
 
-        structuredFiltererTree = new JTree(new CombinedFilterTreeModel(combinedFilterer));
-        structuredFiltererTree.setCellRenderer(new DefaultTreeCellRenderer() {
+        combinedFiltererTree = new JTree(new CombinedFilterTreeModel(combinedFilterer)) {
+            String dragHereMsg = Messages.get("iped.app.ui.filterdecisiontree.CombinedFilterer.dragAndDropTooltip");
+
+            @Override
+            protected void paintComponent(Graphics g) {
+                // TODO Auto-generated method stub
+                super.paintComponent(g);
+                if (((CombinedFilterTreeModel) getModel()).getFiltersToNodeMap().size() == 0) {
+                    drawCenteredString(g, dragHereMsg, this.getBounds(), g.getFont());
+                }
+            }
+
+            public void drawCenteredString(Graphics g, String text, Rectangle rect, Font font) {
+                FontMetrics metrics = g.getFontMetrics(font);
+                int x = rect.x + (rect.width - metrics.stringWidth(text)) / 2;
+                int y = rect.y + ((rect.height - metrics.getHeight()) / 2) + metrics.getAscent();
+                g.setFont(font);
+                g.drawString(text, x, y);
+            }
+        };
+        combinedFiltererTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+        combinedFiltererTree.setCellRenderer(new DefaultTreeCellRenderer() {
 
             JLabel nlabel = new JLabel(invertIcon);
             JPanel p = new JPanel(new BorderLayout());
@@ -158,11 +245,16 @@ public class FiltersPanel extends JPanel implements ClearFilterListener, IQueryF
                         Image newimg = ((IMiniaturizable) filter).getThumb().getScaledInstance(16, 16, java.awt.Image.SCALE_SMOOTH);
                         label.setIcon(new ImageIcon(newimg));
                     }
+                    String toolTip = filter.getTextualDetails();
+                    p.setToolTipText(toolTip);
+                } else {
+                    p.setToolTipText(null);
                 }
                 return p;
             }
 
         });
+        ToolTipManager.sharedInstance().registerComponent(combinedFiltererTree);
 
         splitPane = new JSplitPane();
 
@@ -195,13 +287,13 @@ public class FiltersPanel extends JPanel implements ClearFilterListener, IQueryF
             }
         });
         structuredFiltererTreePanel.add(ckStructuredFilterer, BorderLayout.NORTH);
-        structuredFiltererTreePane = new JScrollPane(structuredFiltererTree);
-        structuredFiltererTreePanel.add(structuredFiltererTreePane, BorderLayout.CENTER);
+        combinedFiltererTreePane = new JScrollPane(combinedFiltererTree);
+        structuredFiltererTreePanel.add(combinedFiltererTreePane, BorderLayout.CENTER);
         splitPane.setBottomComponent(structuredFiltererTreePanel);
         this.setLayout(new BorderLayout());
         this.add(splitPane, BorderLayout.CENTER);
 
-        operandMenu = new OperandPopupMenu(structuredFiltererTree, combinedFilterer);
+        operandMenu = new OperandPopupMenu(combinedFiltererTree, combinedFilterer);
 
         filtererMenu = new FiltererMenu();
 
@@ -209,9 +301,12 @@ public class FiltersPanel extends JPanel implements ClearFilterListener, IQueryF
 
         filtersTree.addMouseListener(new MouseAdapter() {
             public void showPopupMenu(MouseEvent e) {
-                Object o = filtersTree.getPathForLocation(e.getX(), e.getY()).getLastPathComponent();
-                filtererMenu.setContext(o);
-                filtererMenu.show((JComponent) e.getSource(), e.getX(), e.getY());
+                TreePath tp = filtersTree.getPathForLocation(e.getX(), e.getY());
+                if (tp != null) {
+                    Object o = tp.getLastPathComponent();
+                    filtererMenu.setContext(o);
+                    filtererMenu.show((JComponent) e.getSource(), e.getX(), e.getY());
+                }
             }
 
             @Override
@@ -231,19 +326,26 @@ public class FiltersPanel extends JPanel implements ClearFilterListener, IQueryF
             }
         });
 
-        structuredFiltererTree.setDragEnabled(true);
-        structuredFiltererTree.setRootVisible(true);
+        combinedFiltererTree.setDragEnabled(true);
+        combinedFiltererTree.setRootVisible(true);
 
         FiltersPanel self = this;
 
         FilterTransferHandler fth = new FilterTransferHandler(this, combinedFilterer);
-        structuredFiltererTree.setTransferHandler(fth);
-        structuredFiltererTree.setDropMode(DropMode.ON);
+        combinedFiltererTree.setTransferHandler(fth);
+        combinedFiltererTree.setDropMode(DropMode.ON);
         filtersTree.setTransferHandler(fth);
 
-        structuredFiltererTree.addMouseListener(new MouseAdapter() {
+        combinedFiltererTree.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                lastClickedPath = combinedFiltererTree.getPathForLocation(e.getX(), e.getY());
+            }
+        });
+
+        combinedFiltererTree.addMouseListener(new MouseAdapter() {
             public void showPopupMenu(MouseEvent e) {
-                Object o = structuredFiltererTree.getPathForLocation(e.getX(), e.getY()).getLastPathComponent();
+                Object o = combinedFiltererTree.getPathForLocation(e.getX(), e.getY()).getLastPathComponent();
                 if (o instanceof CombinedFilterer || o instanceof DecisionNode) {
                     if (o instanceof CombinedFilterer) {
                         operandMenu.setDecisionNode(((CombinedFilterer) o).getRootNode());
@@ -293,7 +395,6 @@ public class FiltersPanel extends JPanel implements ClearFilterListener, IQueryF
 
     }
 
-    @Override
     public void clearFilter() {
         ckStructuredFilterer.setSelected(false);
         ckStructuredFilterer.setBackground(ckStructuredFilterer.getParent().getBackground());
@@ -306,30 +407,7 @@ public class FiltersPanel extends JPanel implements ClearFilterListener, IQueryF
         return combinedFilterer;
     }
 
-    @Override
-    public List<IFilter> getDefinedFilters() {
-        // does not expose filters as it is not actually registered as result set
-        // filterer
-        return null;
-    }
-
-    @Override
-    public boolean hasFilters() {
-        // does not expose filters as it is not actually registered as result set
-        // filterer
-        return false;
-    }
-
-    @Override
-    public boolean hasFiltersApplied() {
-        // Wraps combofilterer
-        return ckStructuredFilterer != null && ckStructuredFilterer.isSelected();
-    }
-
-    @Override
-    public Query getQuery() {
-        // does not expose filters as it is not actually registered as result set
-        // filterer
-        return null;
+    public boolean isCombinedFiltererApplied() {
+        return ckStructuredFilterer.isSelected();
     }
 }

@@ -7,7 +7,7 @@ import org.apache.lucene.search.Query;
 import iped.viewers.api.IQueryFilter;
 
 public class QueryFilter implements IQueryFilter {
-    Query query;
+    protected Query query;
     String title = null;
 
     public QueryFilter(Query query) {
