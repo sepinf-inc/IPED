@@ -1,4 +1,4 @@
-package iped.engine.task.regex.validator.cripto;
+package iped.engine.task.regex.validator.crypto;
 
 import java.io.File;
 import java.util.Arrays;
@@ -34,7 +34,7 @@ public class BCHAddressValidatorService extends BasicAbstractRegexValidatorServi
 
     @Override
     public List<String> getRegexNames() {
-        return Arrays.asList("CRIPTOCOIN_BITCOIN_CASH_CASHADDR");
+        return Arrays.asList("CRYPTOCOIN_BITCOIN_CASH_CASHADDR");
     }
 
     @Override

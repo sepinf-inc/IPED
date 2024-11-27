@@ -11,7 +11,7 @@
  * @returns String array with at least one regex name to be validated
  */
 function getRegexNames() {
-	return ["CRIPTO_POSSIBLE_SEED_PHRASE_EN","CRIPTO_POSSIBLE_SEED_PHRASE_PT"];
+	return ["CRYPTO_POSSIBLE_SEED_PHRASE_EN","CRYPTO_POSSIBLE_SEED_PHRASE_PT"];
 }
 
 /**
