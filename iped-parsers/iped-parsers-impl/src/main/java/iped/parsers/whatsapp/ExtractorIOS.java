@@ -1665,6 +1665,7 @@ public class ExtractorIOS extends Extractor {
             case 24:
             case 30:
             case 32:
+            case 41:
                 result = TEMPLATE_MESSAGE;
                 break;
 
