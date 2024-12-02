@@ -15,6 +15,7 @@ import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_CHANGED_ONLY_A
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_CHANGED_ALL_MEMBERS_CAN_ADD;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_DESCRIPTION_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_MANAGEMENT_ACTION;
+import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_NOT_AVAILABLE;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_WELCOME;
 import static iped.parsers.whatsapp.Message.MessageType.CONTACT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_SENDER;
@@ -37,6 +38,7 @@ import static iped.parsers.whatsapp.Message.MessageType.GROUP_ICON_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_ICON_DELETED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_INVITE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_NAME_CHANGED;
+import static iped.parsers.whatsapp.Message.MessageType.GROUP_NOT_PART_OF_COMMUNITY;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_REMOVED_FROM_COMMUNITY;
 import static iped.parsers.whatsapp.Message.MessageType.IMAGE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.LOCATION_MESSAGE;
@@ -1462,6 +1464,10 @@ public class ExtractorIOS extends Extractor {
                         result = GROUP_CREATED;
                         break;
 
+                    case 13:
+                        result = COMMUNITY_NOT_AVAILABLE;
+                        break;
+
                     case 15:
                         result = USER_JOINED_GROUP_FROM_LINK;
                         break;
@@ -1503,6 +1509,7 @@ public class ExtractorIOS extends Extractor {
                         break;
 
                     case 31:
+                    case 61:
                         result = GROUP_ADDED_TO_COMMUNITY;
                         break;
 
@@ -1516,6 +1523,10 @@ public class ExtractorIOS extends Extractor {
                         
                     case 42:
                         result = GROUP_CHANGED_ONLY_ADMINS_CAN_ADD;
+                        break;
+
+                    case 43:
+                        result = GROUP_NOT_PART_OF_COMMUNITY;
                         break;
 
                     case 50:

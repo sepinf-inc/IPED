@@ -523,6 +523,14 @@ public class ReportGenerator {
                 }
                 out.println("<br>");
                 break;
+            case COMMUNITY_NOT_AVAILABLE:
+                out.println("<div class=\"systemmessage\">");
+                out.println(name + " " + Messages.getString("WhatsAppReport.CommunityNotAvailable") + ".<br>");
+                break;
+            case GROUP_NOT_PART_OF_COMMUNITY:
+                out.println("<div class=\"systemmessage\">");
+                out.println(name + " " + Messages.getString("WhatsAppReport.GroupNotPartOfCommunity") + ".<br>");
+                break;
             case COMMUNITY_RENAMED:
                 out.println("<div class=\"systemmessage\">");
                 out.println(name + " " + Messages.getString("WhatsAppReport.CommunityRenamed") + ".<br>");
