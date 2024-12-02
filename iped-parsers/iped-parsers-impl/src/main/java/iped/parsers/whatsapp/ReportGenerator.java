@@ -539,6 +539,14 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.CommunityWelcome") + "<br>");
                 break;
+            case COMMUNITY_CHANGED_ONLY_ADMINS_CAN_ADD:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.CommunityChangedOnlyAdminsCanAdd") + "<br>");
+                break;
+            case COMMUNITY_CHANGED_ALL_MEMBERS_CAN_ADD:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.CommunityChangedAllMembersCanAdd") + "<br>");
+                break;
             case NEW_PARTICIPANTS_NEED_ADMIN_APPROVAL:
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.NewParticipantsNeedAdminApproval") + "<br>");

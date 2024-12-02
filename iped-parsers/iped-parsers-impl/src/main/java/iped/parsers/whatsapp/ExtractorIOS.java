@@ -10,7 +10,10 @@ import static iped.parsers.whatsapp.Message.MessageType.CHAT_ADDED_PRIVACY;
 import static iped.parsers.whatsapp.Message.MessageType.CHANGED_NUMBER_CHATTING_WITH_NEW;
 import static iped.parsers.whatsapp.Message.MessageType.CHANGED_NUMBER_CHATTING_WITH_OLD;
 import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_CREATED;                        
-import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_ADDED_PRIVACY;                        
+import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_ADDED_PRIVACY;
+import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_CHANGED_ONLY_ADMINS_CAN_ADD;
+import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_CHANGED_ALL_MEMBERS_CAN_ADD;
+import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_WELCOME;
 import static iped.parsers.whatsapp.Message.MessageType.CONTACT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_SENDER;
 import static iped.parsers.whatsapp.Message.MessageType.DOC_MESSAGE;
@@ -688,7 +691,7 @@ public class ExtractorIOS extends Extractor {
         }
         int gEventType = rs.getInt("gEventType"); //$NON-NLS-1$
         int messageType = rs.getInt("messageType"); //$NON-NLS-1$
-        m.setMessageType(decodeMessageType(messageType, gEventType));
+        m.setMessageType(decodeMessageType(messageType, gEventType, m.getData()));
         if (m.getMessageType() != CONTACT_MESSAGE) {
             if (m.getMessageType() != LOCATION_MESSAGE && m.getMessageType() != DELETED_BY_SENDER) {
                 m.setMediaMime(rs.getString("vCardString"));
@@ -1223,7 +1226,7 @@ public class ExtractorIOS extends Extractor {
         }
         int gEventType = (int) row.getIntValue("ZGROUPEVENTTYPE"); //$NON-NLS-1$
         int messageType = (int) row.getIntValue("ZMESSAGETYPE"); //$NON-NLS-1$
-        m.setMessageType(decodeMessageType(messageType, gEventType));
+        m.setMessageType(decodeMessageType(messageType, gEventType, m.getData()));
         SqliteRow mediaItem = mediaItems.get(m.getId());
         if (mediaItem != null) {
             try {
@@ -1384,7 +1387,7 @@ public class ExtractorIOS extends Extractor {
         return result;
     }
 
-    protected Message.MessageType decodeMessageType(int messageType, int gEventType) {
+    protected Message.MessageType decodeMessageType(int messageType, int gEventType, String data) {
         Message.MessageType result = UNKNOWN_MESSAGE;
         switch (messageType) {
             case 0:
@@ -1515,7 +1518,15 @@ public class ExtractorIOS extends Extractor {
                         break;
                         
                     case 60:
-                        result = MessageType.COMMUNITY_WELCOME;
+                        result = COMMUNITY_WELCOME;
+                        break;
+
+                    case 64:
+                        if ("1".equals(data)) {
+                            result = COMMUNITY_CHANGED_ALL_MEMBERS_CAN_ADD;
+                        } else {
+                            result = COMMUNITY_CHANGED_ONLY_ADMINS_CAN_ADD;
+                        }
                         break;
                 }
                 break;
