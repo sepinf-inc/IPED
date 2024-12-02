@@ -553,7 +553,8 @@ public class ReportGenerator {
                 break;
             case USER_ADDED_TO_GROUP:
             case USER_ADDED_TO_COMMUNITY:
-            case USER_COMMUNITY_ADMIN:                
+            case USER_COMMUNITY_ADMIN:
+            case USER_JOINED_GROUP_FROM_COMMUNITY:
             case USER_JOINED_GROUP_FROM_INVITATION:
             case USER_JOINED_GROUP_FROM_LINK:
             case USER_REMOVED_FROM_GROUP:
@@ -583,6 +584,8 @@ public class ReportGenerator {
                 if (!selfAction) {
                     if (message.getMessageType() == MessageType.USER_REMOVED_FROM_GROUP) {
                         out.print(Messages.getString("WhatsAppReport.UserRemovedGroup"));
+                    } else if (message.getMessageType() == MessageType.USER_JOINED_GROUP_FROM_COMMUNITY) {
+                        out.print(Messages.getString("WhatsAppReport.UserJoinedGroupCommunity"));
                     } else if (message.getMessageType() == MessageType.USER_JOINED_GROUP_FROM_INVITATION) {
                         out.print(Messages.getString("WhatsAppReport.UserJoinedGroupInvitation"));
                     } else if (message.getMessageType() == MessageType.USER_JOINED_GROUP_FROM_LINK) {
@@ -605,17 +608,6 @@ public class ReportGenerator {
                     out.print(format(message.getData()) + "<br>");
                 }
                 out.println();
-                break;
-            case USER_JOINED_GROUP_FROM_COMMUNITY:
-                users = message.getUsersAction();
-                out.println("<div class=\"systemmessage\">");
-                for (int i = 0; i < users.size(); i++) {
-                    out.print(i == 0 ? "" : ", ");
-                    String user = users.get(i);
-                    out.print(getBestContactName(user == null || user.isBlank(), user, contactsDirectory, account));
-                }
-                out.print(" "+ Messages.getString("WhatsAppReport.UserJoinedGroupCommunity"));
-                out.println(".<br>");
                 break;
             case USER_LEFT_GROUP:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
