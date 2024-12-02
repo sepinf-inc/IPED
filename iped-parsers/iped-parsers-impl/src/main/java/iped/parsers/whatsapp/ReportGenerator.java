@@ -629,6 +629,10 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
                 out.println(Messages.getString("WhatsAppReport.GroupIconDeleted") + "<br>"); //$NON-NLS-1$
                 break;
+            case COMMUNITY_DESCRIPTION_CHANGED:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.CommunityDescriptionChanged") + "<br>");
+                break;
             case GROUP_DESCRIPTION_CHANGED:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
                 out.println(Messages.getString("WhatsAppReport.GroupDescriptionChanged") + "<br>"); //$NON-NLS-1$

@@ -13,6 +13,7 @@ import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_CREATED;
 import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_ADDED_PRIVACY;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_CHANGED_ONLY_ADMINS_CAN_ADD;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_CHANGED_ALL_MEMBERS_CAN_ADD;
+import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_DESCRIPTION_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_MANAGEMENT_ACTION;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_WELCOME;
 import static iped.parsers.whatsapp.Message.MessageType.CONTACT_MESSAGE;
@@ -1525,6 +1526,10 @@ public class ExtractorIOS extends Extractor {
                         // new group name change, 
                         // DATA is {"previous_subject":"Old Name","new_subject":"New Name"}
                         result = GROUP_NAME_CHANGED;
+                        break;
+                        
+                    case 57:
+                        result = COMMUNITY_DESCRIPTION_CHANGED;
                         break;
                         
                     case 60:
