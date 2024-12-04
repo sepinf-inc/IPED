@@ -467,7 +467,7 @@ public class MinIOTask extends AbstractTask {
         if (hash == null || hash.isEmpty() || item.getLength() == null)
             return;
 
-        if (!item.isSubItem() && isToUploadUfdr(item)) {
+        if (!item.isSubItem() && !item.isCarved() && !item.isDeleted() && isToUploadUfdr(item)) {
             int idx = -1;
             if (item.getIdInDataSource() != null) {
                 idx = item.getIdInDataSource().indexOf(UFDRInputStreamFactory.UFDR_PATH_PREFIX);
