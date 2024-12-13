@@ -523,6 +523,14 @@ public class ReportGenerator {
                 }
                 out.println("<br>");
                 break;
+            case COMMUNITY_NOT_AVAILABLE:
+                out.println("<div class=\"systemmessage\">");
+                out.println(name + " " + Messages.getString("WhatsAppReport.CommunityNotAvailable") + ".<br>");
+                break;
+            case GROUP_NOT_PART_OF_COMMUNITY:
+                out.println("<div class=\"systemmessage\">");
+                out.println(name + " " + Messages.getString("WhatsAppReport.GroupNotPartOfCommunity") + ".<br>");
+                break;
             case COMMUNITY_RENAMED:
                 out.println("<div class=\"systemmessage\">");
                 out.println(name + " " + Messages.getString("WhatsAppReport.CommunityRenamed") + ".<br>");
@@ -539,13 +547,22 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.CommunityWelcome") + "<br>");
                 break;
+            case COMMUNITY_CHANGED_ONLY_ADMINS_CAN_ADD:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.CommunityChangedOnlyAdminsCanAdd") + "<br>");
+                break;
+            case COMMUNITY_CHANGED_ALL_MEMBERS_CAN_ADD:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.CommunityChangedAllMembersCanAdd") + "<br>");
+                break;
             case NEW_PARTICIPANTS_NEED_ADMIN_APPROVAL:
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.NewParticipantsNeedAdminApproval") + "<br>");
                 break;
             case USER_ADDED_TO_GROUP:
             case USER_ADDED_TO_COMMUNITY:
-            case USER_COMMUNITY_ADMIN:                
+            case USER_COMMUNITY_ADMIN:
+            case USER_JOINED_GROUP_FROM_COMMUNITY:
             case USER_JOINED_GROUP_FROM_INVITATION:
             case USER_JOINED_GROUP_FROM_LINK:
             case USER_REMOVED_FROM_GROUP:
@@ -575,6 +592,8 @@ public class ReportGenerator {
                 if (!selfAction) {
                     if (message.getMessageType() == MessageType.USER_REMOVED_FROM_GROUP) {
                         out.print(Messages.getString("WhatsAppReport.UserRemovedGroup"));
+                    } else if (message.getMessageType() == MessageType.USER_JOINED_GROUP_FROM_COMMUNITY) {
+                        out.print(Messages.getString("WhatsAppReport.UserJoinedGroupCommunity"));
                     } else if (message.getMessageType() == MessageType.USER_JOINED_GROUP_FROM_INVITATION) {
                         out.print(Messages.getString("WhatsAppReport.UserJoinedGroupInvitation"));
                     } else if (message.getMessageType() == MessageType.USER_JOINED_GROUP_FROM_LINK) {
@@ -598,17 +617,6 @@ public class ReportGenerator {
                 }
                 out.println();
                 break;
-            case USER_JOINED_GROUP_FROM_COMMUNITY:
-                users = message.getUsersAction();
-                out.println("<div class=\"systemmessage\">");
-                for (int i = 0; i < users.size(); i++) {
-                    out.print(i == 0 ? "" : ", ");
-                    String user = users.get(i);
-                    out.print(getBestContactName(user == null || user.isBlank(), user, contactsDirectory, account));
-                }
-                out.print(" "+ Messages.getString("WhatsAppReport.UserJoinedGroupCommunity"));
-                out.println(".<br>");
-                break;
             case USER_LEFT_GROUP:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
                 out.println(Messages.getString("WhatsAppReport.UserLeftGroup") + ": " + name + "<br>");
@@ -620,6 +628,10 @@ public class ReportGenerator {
             case GROUP_ICON_DELETED:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
                 out.println(Messages.getString("WhatsAppReport.GroupIconDeleted") + "<br>"); //$NON-NLS-1$
+                break;
+            case COMMUNITY_DESCRIPTION_CHANGED:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.CommunityDescriptionChanged") + "<br>");
                 break;
             case GROUP_DESCRIPTION_CHANGED:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
