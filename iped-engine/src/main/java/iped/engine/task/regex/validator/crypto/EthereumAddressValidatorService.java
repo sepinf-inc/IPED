@@ -1,4 +1,4 @@
-package iped.engine.task.regex.validator.cripto;
+package iped.engine.task.regex.validator.crypto;
 
 import java.io.File;
 import java.security.MessageDigest;
@@ -32,7 +32,7 @@ public class EthereumAddressValidatorService extends BasicAbstractRegexValidator
 
     @Override
     public List<String> getRegexNames() {
-        return Arrays.asList("CRIPTOCOIN_ETHEREUM");
+        return Arrays.asList("CRYPTOCOIN_ETHEREUM");
     }
 
     @Override

@@ -1,4 +1,4 @@
-package iped.engine.task.regex.validator.cripto;
+package iped.engine.task.regex.validator.crypto;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
