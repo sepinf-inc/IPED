@@ -1302,6 +1302,8 @@ public class ReportGenerator {
                     ms += Messages.getString("WhatsAppReport.QuoteNotFound");
                     quoteClick = "onclick=\"showMessage('" + ms + "');\"";
                     break;
+                default:
+                    break;
             }
 
             switch (messageQuote.getMessageType()) {
