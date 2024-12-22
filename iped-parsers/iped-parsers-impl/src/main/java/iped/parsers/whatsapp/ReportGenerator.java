@@ -600,11 +600,11 @@ public class ReportGenerator {
                         out.print(Messages.getString("WhatsAppReport.UserJoinedGroupLink"));
                     } else if (message.getMessageType() == MessageType.USER_ADDED_TO_COMMUNITY) {
                         out.print(Messages.getString("WhatsAppReport.UserAddedToCommunity"));
-                    } else  if (message.getMessageType() == MessageType.USER_ADDED_TO_GROUP) {
+                    } else if (message.getMessageType() == MessageType.USER_ADDED_TO_GROUP) {
                         out.print(Messages.getString("WhatsAppReport.UserAddedToGroup"));
-                    } else  if (message.getMessageType() == MessageType.USER_COMMUNITY_ADMIN) {
+                    } else if (message.getMessageType() == MessageType.USER_COMMUNITY_ADMIN) {
                         out.print(Messages.getString("WhatsAppReport.UserCommunityAdmin"));
-                    } 
+                    }
                     for (int i = 0; i < users.size(); i++) {
                         out.print(i == 0 ? ": " : ", ");
                         String user = users.get(i);
@@ -1042,7 +1042,7 @@ public class ReportGenerator {
                             }
                         }
                         if (thumb != null) {
-                            out.print("<br>");    
+                            out.print("<br>");
                         }
                         if (notNullNorBlank(message.getMediaCaption())) {
                             out.print(format(message.getMediaCaption()) + "<br>");
@@ -1268,34 +1268,36 @@ public class ReportGenerator {
 
             String quoteEnd = "</span></div>";
             String privateGroupName = messageQuote.getQuotePrivateGroupName();
-            switch(messageQuote.getMessageQuotedType()){
+            switch (messageQuote.getMessageQuotedType()) {
                 case QUOTE_NOT_FOUND:
                     quoteEnd = "</span><br><span style=\"float:none\" class=\"recovered\"><div class=\"deletedIcon\"></div><i>"
-                        + Messages.getString("WhatsAppReport.QuoteNotFound") + "</i>" + quoteEnd;
+                            + Messages.getString("WhatsAppReport.QuoteNotFound") + "</i>" + quoteEnd;
                     break;
                 case QUOTE_STATUS:
                     quoteEnd = "</span><br><span style=\"float:none\" class=\"outside\"><div class=\"statusIcon\"></div><i>"
-                        + Messages.getString("WhatsAppReport.QuoteStaus") + "</i>" + quoteEnd;
+                            + Messages.getString("WhatsAppReport.QuoteStaus") + "</i>" + quoteEnd;
                     break;
                 case QUOTE_CATALOG:
                     quoteEnd = "</span><br><span style=\"float:none\" class=\"outside\"><div class=\"catalogIcon\"></div><i>"
-                        + Messages.getString("WhatsAppReport.QuoteCatalog") + "</i>" + quoteEnd;
+                            + Messages.getString("WhatsAppReport.QuoteCatalog") + "</i>" + quoteEnd;
                     break;
                 case QUOTE_PRIVACY_GROUP:
                     quoteEnd = "</span><br><span style=\"float:none\" class=\"outside\"><div class=\"privacyIcon\"></div><i>"
-                        + Messages.getString("WhatsAppReport.QuotePrivacy") + "</i>" + quoteEnd;
-                    if (privateGroupName != null && !privateGroupName.isEmpty()){
-                        String ms = Messages.getString("WhatsAppReport.QuotePrivacyMessage") + ": "+  privateGroupName +"</br> "
-                            + Messages.getString("WhatsAppReport.ReferenceId") + " " +messageQuote.getId();
+                            + Messages.getString("WhatsAppReport.QuotePrivacy") + "</i>" + quoteEnd;
+                    if (privateGroupName != null && !privateGroupName.isEmpty()) {
+                        String ms = Messages.getString("WhatsAppReport.QuotePrivacyMessage") + ": " + privateGroupName
+                                + "</br> " + Messages.getString("WhatsAppReport.ReferenceId") + " "
+                                + messageQuote.getId();
                         quoteClick = "onclick=\"showMessage('" + ms + "');\"";
                     }
                     break;
                 case QUOTE_PRIVACY_GROUP_NOT_FOUND:
                     quoteEnd = "</span><br><span style=\"float:none\" class=\"recovered\"><div class=\"privacyDeleteIcon\"></div><i>"
-                        + Messages.getString("WhatsAppReport.QuotePrivacyNotFound") + "</i>" + quoteEnd;
+                            + Messages.getString("WhatsAppReport.QuotePrivacyNotFound") + "</i>" + quoteEnd;
                     String ms = "";
-                    if (privateGroupName != null && !privateGroupName.isEmpty()){
-                        ms = Messages.getString("WhatsAppReport.QuotePrivacyMessage") + ": "+  privateGroupName +"</br> ";
+                    if (privateGroupName != null && !privateGroupName.isEmpty()) {
+                        ms = Messages.getString("WhatsAppReport.QuotePrivacyMessage") + ": " + privateGroupName
+                                + "</br> ";
                     }
                     ms += Messages.getString("WhatsAppReport.QuoteNotFound");
                     quoteClick = "onclick=\"showMessage('" + ms + "');\"";
@@ -1411,7 +1413,7 @@ public class ReportGenerator {
                     String seller = null;
                     if (product != null) {
                         seller = getBestContactName(false, product.getSeller(), contactsDirectory, account);
-                    }                    
+                    }
                     out.print("<div class=\"" + quoteClass + "\" " + quoteClick
                             + "><div class=\"quoteTop\"><span class=\"quoteUser\">" + quoteUser
                             + "</span><br><span class=\"quoteMsg\">" + formatProduct(product, seller) + quoteEnd);
@@ -1641,7 +1643,7 @@ public class ReportGenerator {
         } else {
             deletedDiv = "";
         }
-        String favicon  = Util.getImageResourceAsEmbedded("img/whatsapp.png");
+        String favicon = Util.getImageResourceAsEmbedded("img/whatsapp.png");
         StringSubstitutor interpolator = new StringSubstitutor(new StringLookup() {
 
             @Override
