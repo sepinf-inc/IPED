@@ -81,7 +81,9 @@ public class RemoteTranscriptionTask extends AbstractTranscriptTask {
 
         super.init(configurationManager);
 
-
+        if (!isEnabled()) {
+            return;
+        }
         
         if (!servers.isEmpty()) {
             return;
