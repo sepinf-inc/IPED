@@ -250,7 +250,7 @@ public class Bootstrap {
                 throw new IllegalArgumentException(
                         "Please use -Xms/-Xmx arguments after iped.jar not after java command, since processing will occur in a forked process using those params.");
             }
-            if (arg.startsWith("-Xrunjdwp")) {
+            if ((arg.startsWith("-Xrunjdwp") || arg.startsWith("-agentlib:jdwp")) && arg.contains("server=y")) {
                 // workaround as discussed in PR #1119
                 Matcher matcher = Pattern.compile("address=(\\d+)").matcher(arg);
                 if (matcher.find()) {

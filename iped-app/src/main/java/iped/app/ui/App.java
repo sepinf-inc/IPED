@@ -211,6 +211,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     JButton searchButton, optionsButton, updateCaseData, helpButton, exportToZip;
     JCheckBox checkBox, recursiveTreeList, filterDuplicates;
     JTable resultsTable;
+    ResultTableListener resultTableListener;
     GalleryTable gallery;
     public HitsTable hitsTable;
     AppGraphAnalytics appGraphAnalytics;
@@ -556,6 +557,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         resultsModel = new ResultTableModel();
         resultsTable = new JTable(resultsModel);
+        resultTableListener = new ResultTableListener();
         resultsScroll = new JScrollPane(resultsTable);
         resultsTable.setFillsViewportHeight(true);
         resultsTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
@@ -778,9 +780,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         updateCaseData.addActionListener(appletListener);
         helpButton.addActionListener(appletListener);
         checkBox.addActionListener(appletListener);
-        resultsTable.getSelectionModel().addListSelectionListener(new ResultTableListener());
-        resultsTable.addMouseListener(new ResultTableListener());
-        resultsTable.addKeyListener(new ResultTableListener());
+        resultsTable.getSelectionModel().addListSelectionListener(resultTableListener);
+        resultsTable.addMouseListener(resultTableListener);
+        resultsTable.addKeyListener(resultTableListener);
 
         duplicatesFilterer = new DuplicatesFilterer();
 
@@ -1092,7 +1094,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                             }
                         }
                         if (!validated && event.isShowingChanged()) {
-                            viewerController.updateViewer(viewer, false);
+                            viewerController.updateViewer(viewer, false, true);
                         }
                     }
                 }

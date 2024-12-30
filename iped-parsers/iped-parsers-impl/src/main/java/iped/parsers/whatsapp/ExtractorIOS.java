@@ -10,7 +10,13 @@ import static iped.parsers.whatsapp.Message.MessageType.CHAT_ADDED_PRIVACY;
 import static iped.parsers.whatsapp.Message.MessageType.CHANGED_NUMBER_CHATTING_WITH_NEW;
 import static iped.parsers.whatsapp.Message.MessageType.CHANGED_NUMBER_CHATTING_WITH_OLD;
 import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_CREATED;                        
-import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_ADDED_PRIVACY;                        
+import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_ADDED_PRIVACY;
+import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_CHANGED_ONLY_ADMINS_CAN_ADD;
+import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_CHANGED_ALL_MEMBERS_CAN_ADD;
+import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_DESCRIPTION_CHANGED;
+import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_MANAGEMENT_ACTION;
+import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_NOT_AVAILABLE;
+import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_WELCOME;
 import static iped.parsers.whatsapp.Message.MessageType.CONTACT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_SENDER;
 import static iped.parsers.whatsapp.Message.MessageType.DOC_MESSAGE;
@@ -20,6 +26,7 @@ import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_DEFAULT;
 import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_SAVE;
 import static iped.parsers.whatsapp.Message.MessageType.GIF_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_ADDED_TO_COMMUNITY;
+import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_EDIT;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_SEND;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ONLY_ADMINS_CAN_ADD;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ONLY_ADMINS_CAN_SEND;
@@ -31,6 +38,7 @@ import static iped.parsers.whatsapp.Message.MessageType.GROUP_ICON_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_ICON_DELETED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_INVITE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_NAME_CHANGED;
+import static iped.parsers.whatsapp.Message.MessageType.GROUP_NOT_PART_OF_COMMUNITY;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_REMOVED_FROM_COMMUNITY;
 import static iped.parsers.whatsapp.Message.MessageType.IMAGE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.LOCATION_MESSAGE;
@@ -48,6 +56,7 @@ import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_MEDIA_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.URL_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.USER_ADDED_TO_GROUP;
+import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP_FROM_COMMUNITY;
 import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP_FROM_INVITATION;
 import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP_FROM_LINK;
 import static iped.parsers.whatsapp.Message.MessageType.USER_LEFT_GROUP;
@@ -95,6 +104,7 @@ import iped.parsers.sqlite.SQLiteUndelete;
 import iped.parsers.sqlite.SQLiteUndeleteTable;
 import iped.parsers.whatsapp.Message.MessageStatus;
 import iped.parsers.whatsapp.Message.MessageType;
+import iped.parsers.whatsapp.Message.MessageQuotedType;
 import iped.parsers.whatsapp.ProtoBufDecoder.Part;
 
 /**
@@ -265,7 +275,7 @@ public class ExtractorIOS extends Extractor {
                     }
 
                     // Find quoted messages
-                    findQuotedMessages(c.getMessages(), messagesMap);
+                    findQuotedMessages(c.getMessages(), messagesMap, idToChat);
                 }
 
                 if (recoverDeletedRecords && !firstTry) {
@@ -382,11 +392,11 @@ public class ExtractorIOS extends Extractor {
                 }
             }
 
-            Collections.sort(chat.getMessages());
+            Message.sort(chat.getMessages());
         }
     }
 
-    private void findQuotedMessages(List<Message> messages, Map<String, Message> messagesMap) {
+    private void findQuotedMessages(List<Message> messages, Map<String, Message> messagesMap, Map<Long, Chat> idToChat) {
         long fakeIds = 2000000000L;
         for (Message m : messages) {
             byte[] metadata = m.getMetaData();
@@ -400,7 +410,9 @@ public class ExtractorIOS extends Extractor {
                     List<Part> childs = ProtoBufDecoder.findChilds(main, 19);
 
                     Message messageQuote = messagesMap.get(uuidQuote);
-                    if (messageQuote == null) {
+                    if (messageQuote != null) {
+                        messageQuote.setMessageQuotedType(MessageQuotedType.QUOTE_FOUND);
+                    }else {                        
                         // Referenced message was deleted, so create a new message and fill with data
                         // extracted from referencing message metadata.
                         messageQuote = new Message();
@@ -566,7 +578,15 @@ public class ExtractorIOS extends Extractor {
                                             }
                                         }
                                         break;
-
+                                    case 30:
+                                        type = MessageType.PRODUCT_MESSAGE;
+                                        MessageProduct mp = decodeQuotedProductInfo(c, messageQuote);
+                                        messageQuote.setProduct(mp);
+                                        messageQuote.setMessageQuotedType(MessageQuotedType.QUOTE_CATALOG);
+                                        messageQuote.setFromMe(false);
+                                        if (mp != null)
+                                            messageQuote.setRemoteResource(mp.getSeller());
+                                        break;
                                     default:
                                         break;
                                 }
@@ -574,8 +594,49 @@ public class ExtractorIOS extends Extractor {
                         }
 
                         messageQuote.setMessageType(type);
-                        messageQuote.setDeleted(true);
+
+                        String contactQuote = ProtoBufDecoder.findString(main, 7);
+                        if (contactQuote != null) {
+                            // find quotes outside this chat
+                            // is the reverse of real msg
+                            messageQuote.setFromMe(!m.isFromMe());
+                            // set remote resource if is not from me
+                            messageQuote.setRemoteResource(m.getRemoteResource());
+                            // just set default case if does not match order cases ...
+                            messageQuote.setMessageQuotedType(MessageQuotedType.QUOTE_PRIVACY_GROUP_NOT_FOUND);
+                            if (contactQuote.compareTo(Message.STATUS_BROADCAST) == 0) {
+
+                                messageQuote.setMessageQuotedType(MessageQuotedType.QUOTE_STATUS);
+
+                            } else if (contactQuote.contains(Message.GROUP)) {
+
+                                // set it first in case if not found
+                                messageQuote.setQuotePrivateGroupName(contactQuote);
+                                boolean found = false;
+                                for (Chat cq : idToChat.values()) {
+                                    // Find friendly group name and message id
+
+                                    if (!cq.isGroupChat())
+                                        continue;
+
+                                    if (cq.getPrintId() != null && contactQuote.contains(cq.getPrintId()))
+                                        messageQuote.setQuotePrivateGroupName(cq.getTitle());
+
+                                    for (Message origin : cq.getMessages()) {
+                                        if (origin.getUuid() != null && origin.getUuid().compareTo(uuidQuote) == 0) {
+                                            messageQuote.setId(origin.getId());
+                                            messageQuote.setMessageQuotedType(MessageQuotedType.QUOTE_PRIVACY_GROUP);
+                                            found = true;
+                                            break;
+                                        }
+                                    }
+                                    if (found)
+                                        break;
+                                }
+                            }
+                        }
                     }
+
                     if (messageQuote.getThumbData() == null && childs != null) {
                         byte[] thumbData = null;
                         for (Part c : childs) {
@@ -636,7 +697,7 @@ public class ExtractorIOS extends Extractor {
         }
         int gEventType = rs.getInt("gEventType"); //$NON-NLS-1$
         int messageType = rs.getInt("messageType"); //$NON-NLS-1$
-        m.setMessageType(decodeMessageType(messageType, gEventType));
+        m.setMessageType(decodeMessageType(messageType, gEventType, m.getData()));
         if (m.getMessageType() != CONTACT_MESSAGE) {
             if (m.getMessageType() != LOCATION_MESSAGE && m.getMessageType() != DELETED_BY_SENDER) {
                 m.setMediaMime(rs.getString("vCardString"));
@@ -924,6 +985,59 @@ public class ExtractorIOS extends Extractor {
         return null;
     }
 
+    private MessageProduct decodeQuotedProductInfo(Part p2, Message m) {
+        String title = null;
+        String observation = null;
+        String currency = null;
+        String seller = null;
+        int amount = 0;
+        if (p2 != null) {
+            Part p3 = p2.getChild(1);
+            if (p3 != null) {
+                Part p4 = p3.getChild(1);
+                if (p4 != null) {
+                    Part p5 = p4.getChild(16);
+                    if (p5 != null) {
+                        byte[] bytes = p5.getBytes();
+                        if (bytes != null) {
+                            m.setThumbData(bytes);
+                        }
+                    }
+                }
+                p4 = p3.getChild(3);
+                if (p4 != null) {
+                    title = p4.getString();
+                }
+                p4 = p3.getChild(4);
+                if (p4 != null) {
+                    observation = p4.getString();
+                }
+                p4 = p3.getChild(5);
+                if (p4 != null) {
+                    currency = p4.getString();
+                }
+                p4 = p3.getChild(6);
+                if (p4 != null) {
+                    String v = p4.getString();
+                    if (v != null && !v.isBlank()) {
+                        try {
+                            amount = Integer.parseInt(v);
+                        } catch (NumberFormatException e) {
+                        }
+                    }
+                }
+                p3 = p2.getChild(2);
+                if (p3 != null) {
+                    seller = p3.getString();
+                }
+            }
+        }
+        if (title != null || currency != null || amount != 0 || seller != null) {
+            return new MessageProduct(title, seller, currency, amount, observation);
+        }
+        return null;
+    }
+
     private String decodeGroupInvite(byte[] metadata) {
         Part p1 = new ProtoBufDecoder(metadata).decode(28);
         if (p1 != null) {
@@ -1118,7 +1232,7 @@ public class ExtractorIOS extends Extractor {
         }
         int gEventType = (int) row.getIntValue("ZGROUPEVENTTYPE"); //$NON-NLS-1$
         int messageType = (int) row.getIntValue("ZMESSAGETYPE"); //$NON-NLS-1$
-        m.setMessageType(decodeMessageType(messageType, gEventType));
+        m.setMessageType(decodeMessageType(messageType, gEventType, m.getData()));
         SqliteRow mediaItem = mediaItems.get(m.getId());
         if (mediaItem != null) {
             try {
@@ -1279,7 +1393,7 @@ public class ExtractorIOS extends Extractor {
         return result;
     }
 
-    protected Message.MessageType decodeMessageType(int messageType, int gEventType) {
+    protected Message.MessageType decodeMessageType(int messageType, int gEventType, String data) {
         Message.MessageType result = UNKNOWN_MESSAGE;
         switch (messageType) {
             case 0:
@@ -1350,6 +1464,10 @@ public class ExtractorIOS extends Extractor {
                         result = GROUP_CREATED;
                         break;
 
+                    case 13:
+                        result = COMMUNITY_NOT_AVAILABLE;
+                        break;
+
                     case 15:
                         result = USER_JOINED_GROUP_FROM_LINK;
                         break;
@@ -1360,6 +1478,10 @@ public class ExtractorIOS extends Extractor {
 
                     case 18:
                         result = GROUP_CHANGED_ONLY_ADMINS_CAN_EDIT;
+                        break;
+
+                    case 19:
+                        result = GROUP_CHANGED_ALL_MEMBERS_CAN_EDIT;
                         break;
 
                     case 20:
@@ -1382,7 +1504,12 @@ public class ExtractorIOS extends Extractor {
                         result = EPHEMERAL_CHANGED;
                         break;
 
+                    case 30:
+                        result = USER_JOINED_GROUP_FROM_COMMUNITY;
+                        break;
+
                     case 31:
+                    case 61:
                         result = GROUP_ADDED_TO_COMMUNITY;
                         break;
 
@@ -1398,9 +1525,17 @@ public class ExtractorIOS extends Extractor {
                         result = GROUP_CHANGED_ONLY_ADMINS_CAN_ADD;
                         break;
 
+                    case 43:
+                        result = GROUP_NOT_PART_OF_COMMUNITY;
+                        break;
+
                     case 50:
                         // multiple users added to group
                         result = USER_ADDED_TO_GROUP;
+                        break;
+
+                    case 51:
+                        result = COMMUNITY_MANAGEMENT_ACTION;
                         break;
 
                     case 56:
@@ -1409,8 +1544,20 @@ public class ExtractorIOS extends Extractor {
                         result = GROUP_NAME_CHANGED;
                         break;
                         
+                    case 57:
+                        result = COMMUNITY_DESCRIPTION_CHANGED;
+                        break;
+                        
                     case 60:
-                        result = MessageType.COMMUNITY_WELCOME;
+                        result = COMMUNITY_WELCOME;
+                        break;
+
+                    case 64:
+                        if ("1".equals(data)) {
+                            result = COMMUNITY_CHANGED_ALL_MEMBERS_CAN_ADD;
+                        } else {
+                            result = COMMUNITY_CHANGED_ONLY_ADMINS_CAN_ADD;
+                        }
                         break;
                 }
                 break;
@@ -1526,8 +1673,10 @@ public class ExtractorIOS extends Extractor {
             case 19:
             case 20:
             case 23:
+            case 24:
             case 30:
             case 32:
+            case 41:
                 result = TEMPLATE_MESSAGE;
                 break;
 

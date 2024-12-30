@@ -70,7 +70,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
     private static final int MAX_WAV_SIZE = 16000 * 2 * MAX_WAV_TIME;
 
     protected AudioTranscriptConfig transcriptConfig;
-    
+
     // Variables to store some statistics
     private static final AtomicLong wavTime = new AtomicLong();
     private static final AtomicLong transcriptionTime = new AtomicLong();
@@ -111,8 +111,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
 
     protected boolean isToProcess(IItem evidence) {
 
-        if (evidence.getLength() == null || evidence.getLength() == 0 || !evidence.isToAddToCase()
-                || evidence.getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR) != null) {
+        if (evidence.getLength() == null || evidence.getLength() == 0 || !evidence.isToAddToCase() || evidence.getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR) != null) {
             return false;
         }
         if (transcriptConfig.getSkipKnownFiles() && evidence.getExtraAttribute(HashDBLookupTask.STATUS_ATTRIBUTE) != null) {
@@ -218,8 +217,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
 
     }
 
-    public static TextAndScore transcribeWavBreaking(File tmpFile, String itemPath,
-            Function<File, TextAndScore> transcribeWavPart) throws Exception {
+    public static TextAndScore transcribeWavBreaking(File tmpFile, String itemPath, Function<File, TextAndScore> transcribeWavPart) throws Exception {
         if (tmpFile.length() <= MAX_WAV_SIZE) {
             return transcribeWavPart.apply(tmpFile);
         } else {
@@ -244,6 +242,10 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
     }
 
     protected static Collection<File> getAudioSplits(File inFile, String itemPath) {
+        return getAudioSplits(inFile, itemPath, MAX_WAV_TIME);
+    }
+
+    protected static Collection<File> getAudioSplits(File inFile, String itemPath, int max_wave_time) {
         List<File> splitFiles = new ArrayList<File>();
         AudioInputStream aIn = null;
         AudioInputStream aOut = null;
@@ -252,7 +254,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             outFile.delete();
             aIn = AudioSystem.getAudioInputStream(inFile);
             int bytesPerFrame = aIn.getFormat().getFrameSize();
-            int framesPerPart = Math.round(aIn.getFormat().getFrameRate() * MAX_WAV_TIME);
+            int framesPerPart = Math.round(aIn.getFormat().getFrameRate() * max_wave_time);
             byte[] partBytes = new byte[framesPerPart * bytesPerFrame];
             int numBytesRead = 0;
             int seq = 0;
@@ -338,7 +340,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             conn.close();
             conn = null;
         }
-        
+
         long totWavConversions = wavSuccess.longValue() + wavFail.longValue();
         if (totWavConversions != 0) {
             LOGGER.info("Total conversions to WAV: " + totWavConversions);
@@ -362,8 +364,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         }
     }
 
-    protected File getTempFileToTranscript(IItem evidence, TemporaryResources tmp)
-            throws IOException, InterruptedException {
+    protected File getTempFileToTranscript(IItem evidence, TemporaryResources tmp) throws IOException, InterruptedException {
         long t = System.currentTimeMillis();
         File tempWav = null;
         try {
@@ -395,8 +396,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             return;
         }
 
-        if (evidence.getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR) != null
-                && evidence.getMetadata().get(ExtraProperties.CONFIDENCE_ATTR) != null)
+        if (evidence.getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR) != null && evidence.getMetadata().get(ExtraProperties.CONFIDENCE_ATTR) != null)
             return;
 
         TextAndScore prevResult = getTextFromDb(evidence.getHash());
