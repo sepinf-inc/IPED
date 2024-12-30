@@ -11,6 +11,7 @@ import javax.swing.InputMap;
 import javax.swing.JTable;
 import javax.swing.KeyStroke;
 import javax.swing.UIManager;
+import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableModel;
 
 public class GalleryTable extends JTable {
@@ -77,6 +78,25 @@ public class GalleryTable extends JTable {
         }
 
         super.changeSelection(rowIndex, columnIndex, toggle, extend);
+    }
+
+    @Override
+    public void repaint() {
+        // Before calling the actual repaint(), force the repaint of current selected
+        // cell. If a single cell is selected, sometimes its content is not refreshed
+        // after calling the regular repaint();
+        // See issue #2391.
+        if (getModel() != null && getSelectionModel() != null) {
+            int col = getSelectedColumn();
+            int row = getSelectedRow();
+            if (row >= 0 && col >= 0) {
+                TableCellEditor editor = getCellEditor(row, col);
+                if (editor != null) {
+                    editor.stopCellEditing();
+                }
+            }
+        }
+        super.repaint();
     }
 
     public int getLeadSelectionIndex() {
