@@ -39,11 +39,12 @@ import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import iped.app.ui.TreeViewModel.Node;
 import iped.app.ui.filters.QueryFilter;
 import iped.engine.data.IPEDSource;
-import iped.engine.search.LuceneSearchResult;
 import iped.engine.search.QueryBuilder;
 import iped.engine.task.index.IndexItem;
 import iped.exception.ParseException;
@@ -52,6 +53,8 @@ import iped.viewers.api.IFilter;
 import iped.viewers.api.IQueryFilterer;
 
 public class TreeListener extends MouseAdapter implements TreeSelectionListener, ActionListener, TreeExpansionListener, IQueryFilterer {
+
+    private static final Logger logger = LoggerFactory.getLogger(TreeListener.class);
 
     private Query treeQuery, recursiveTreeQuery;
     boolean rootSelected = false;
@@ -121,24 +124,27 @@ public class TreeListener extends MouseAdapter implements TreeSelectionListener,
     public void navigateToParent(int docId) {
 
         LinkedList<Node> path = new LinkedList<Node>();
-        LuceneSearchResult result = new LuceneSearchResult(0);
         String parentId = null;
-        do {
-            try {
+        try {
+            do {
                 Document doc = App.get().appCase.getReader().document(docId);
 
                 parentId = doc.get(IndexItem.PARENTID);
                 if (parentId != null) {
                     IPEDSource src = (IPEDSource) App.get().appCase.getAtomicSource(docId);
-                    docId = App.get().appCase.getBaseLuceneId(src) + src.getLuceneId(Integer.parseInt(parentId));
+                    docId = src.getLuceneId(Integer.parseInt(parentId));
+                    if (docId == -1) {
+                        throw new RuntimeException("Parent with id = " + parentId + " not found in the index");
+                    }
+                    docId += App.get().appCase.getBaseLuceneId(src);
                     path.addFirst(((TreeViewModel) App.get().tree.getModel()).new Node(docId));
                 }
+            } while (parentId != null);
 
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-        } while (parentId != null);
+        } catch (Exception e) {
+            logger.error("Navigate to parent failed!", e);
+            return;
+        }
 
         path.addFirst((Node) App.get().tree.getModel().getRoot());
 
