@@ -80,7 +80,7 @@ public class TransmissionResumeParser extends AbstractParser {
 
             IItemSearcher searcher = context.get(IItemSearcher.class);
             IItemReader item = context.get(IItemReader.class);
-            
+
             int filesFoundInCase = 0;
             IItemReader torrentItem = null;
 
