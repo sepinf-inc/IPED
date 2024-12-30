@@ -10,7 +10,13 @@ import static iped.parsers.whatsapp.Message.MessageType.CHAT_ADDED_PRIVACY;
 import static iped.parsers.whatsapp.Message.MessageType.CHANGED_NUMBER_CHATTING_WITH_NEW;
 import static iped.parsers.whatsapp.Message.MessageType.CHANGED_NUMBER_CHATTING_WITH_OLD;
 import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_CREATED;                        
-import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_ADDED_PRIVACY;                        
+import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_ADDED_PRIVACY;
+import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_CHANGED_ONLY_ADMINS_CAN_ADD;
+import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_CHANGED_ALL_MEMBERS_CAN_ADD;
+import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_DESCRIPTION_CHANGED;
+import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_MANAGEMENT_ACTION;
+import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_NOT_AVAILABLE;
+import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_WELCOME;
 import static iped.parsers.whatsapp.Message.MessageType.CONTACT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_SENDER;
 import static iped.parsers.whatsapp.Message.MessageType.DOC_MESSAGE;
@@ -20,6 +26,7 @@ import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_DEFAULT;
 import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_SAVE;
 import static iped.parsers.whatsapp.Message.MessageType.GIF_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_ADDED_TO_COMMUNITY;
+import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_EDIT;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_SEND;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ONLY_ADMINS_CAN_ADD;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ONLY_ADMINS_CAN_SEND;
@@ -31,6 +38,7 @@ import static iped.parsers.whatsapp.Message.MessageType.GROUP_ICON_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_ICON_DELETED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_INVITE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_NAME_CHANGED;
+import static iped.parsers.whatsapp.Message.MessageType.GROUP_NOT_PART_OF_COMMUNITY;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_REMOVED_FROM_COMMUNITY;
 import static iped.parsers.whatsapp.Message.MessageType.IMAGE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.LOCATION_MESSAGE;
@@ -48,6 +56,7 @@ import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_MEDIA_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.URL_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.USER_ADDED_TO_GROUP;
+import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP_FROM_COMMUNITY;
 import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP_FROM_INVITATION;
 import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP_FROM_LINK;
 import static iped.parsers.whatsapp.Message.MessageType.USER_LEFT_GROUP;
@@ -688,7 +697,7 @@ public class ExtractorIOS extends Extractor {
         }
         int gEventType = rs.getInt("gEventType"); //$NON-NLS-1$
         int messageType = rs.getInt("messageType"); //$NON-NLS-1$
-        m.setMessageType(decodeMessageType(messageType, gEventType));
+        m.setMessageType(decodeMessageType(messageType, gEventType, m.getData()));
         if (m.getMessageType() != CONTACT_MESSAGE) {
             if (m.getMessageType() != LOCATION_MESSAGE && m.getMessageType() != DELETED_BY_SENDER) {
                 m.setMediaMime(rs.getString("vCardString"));
@@ -1223,7 +1232,7 @@ public class ExtractorIOS extends Extractor {
         }
         int gEventType = (int) row.getIntValue("ZGROUPEVENTTYPE"); //$NON-NLS-1$
         int messageType = (int) row.getIntValue("ZMESSAGETYPE"); //$NON-NLS-1$
-        m.setMessageType(decodeMessageType(messageType, gEventType));
+        m.setMessageType(decodeMessageType(messageType, gEventType, m.getData()));
         SqliteRow mediaItem = mediaItems.get(m.getId());
         if (mediaItem != null) {
             try {
@@ -1384,7 +1393,7 @@ public class ExtractorIOS extends Extractor {
         return result;
     }
 
-    protected Message.MessageType decodeMessageType(int messageType, int gEventType) {
+    protected Message.MessageType decodeMessageType(int messageType, int gEventType, String data) {
         Message.MessageType result = UNKNOWN_MESSAGE;
         switch (messageType) {
             case 0:
@@ -1455,6 +1464,10 @@ public class ExtractorIOS extends Extractor {
                         result = GROUP_CREATED;
                         break;
 
+                    case 13:
+                        result = COMMUNITY_NOT_AVAILABLE;
+                        break;
+
                     case 15:
                         result = USER_JOINED_GROUP_FROM_LINK;
                         break;
@@ -1465,6 +1478,10 @@ public class ExtractorIOS extends Extractor {
 
                     case 18:
                         result = GROUP_CHANGED_ONLY_ADMINS_CAN_EDIT;
+                        break;
+
+                    case 19:
+                        result = GROUP_CHANGED_ALL_MEMBERS_CAN_EDIT;
                         break;
 
                     case 20:
@@ -1487,7 +1504,12 @@ public class ExtractorIOS extends Extractor {
                         result = EPHEMERAL_CHANGED;
                         break;
 
+                    case 30:
+                        result = USER_JOINED_GROUP_FROM_COMMUNITY;
+                        break;
+
                     case 31:
+                    case 61:
                         result = GROUP_ADDED_TO_COMMUNITY;
                         break;
 
@@ -1503,9 +1525,17 @@ public class ExtractorIOS extends Extractor {
                         result = GROUP_CHANGED_ONLY_ADMINS_CAN_ADD;
                         break;
 
+                    case 43:
+                        result = GROUP_NOT_PART_OF_COMMUNITY;
+                        break;
+
                     case 50:
                         // multiple users added to group
                         result = USER_ADDED_TO_GROUP;
+                        break;
+
+                    case 51:
+                        result = COMMUNITY_MANAGEMENT_ACTION;
                         break;
 
                     case 56:
@@ -1514,8 +1544,20 @@ public class ExtractorIOS extends Extractor {
                         result = GROUP_NAME_CHANGED;
                         break;
                         
+                    case 57:
+                        result = COMMUNITY_DESCRIPTION_CHANGED;
+                        break;
+                        
                     case 60:
-                        result = MessageType.COMMUNITY_WELCOME;
+                        result = COMMUNITY_WELCOME;
+                        break;
+
+                    case 64:
+                        if ("1".equals(data)) {
+                            result = COMMUNITY_CHANGED_ALL_MEMBERS_CAN_ADD;
+                        } else {
+                            result = COMMUNITY_CHANGED_ONLY_ADMINS_CAN_ADD;
+                        }
                         break;
                 }
                 break;
@@ -1631,8 +1673,10 @@ public class ExtractorIOS extends Extractor {
             case 19:
             case 20:
             case 23:
+            case 24:
             case 30:
             case 32:
+            case 41:
                 result = TEMPLATE_MESSAGE;
                 break;
 

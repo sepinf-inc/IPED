@@ -56,6 +56,8 @@ public class RemoteTranscriptionTask extends AbstractTranscriptTask {
 
     private static AtomicBoolean statsPrinted = new AtomicBoolean();
 
+    private static volatile AtomicBoolean init = new AtomicBoolean();
+
     private static long lastUpdateServersTime = 0;
 
     private static class Server {
@@ -81,7 +83,7 @@ public class RemoteTranscriptionTask extends AbstractTranscriptTask {
 
         super.init(configurationManager);
 
-        if (!this.isEnabled()) {
+        if (!isEnabled()) {
             return;
         }
         
@@ -115,8 +117,21 @@ public class RemoteTranscriptionTask extends AbstractTranscriptTask {
             return;
         }
 
-        requestServers(true);
-        
+        synchronized (init) {
+            if (!init.get()) {
+                try {
+                    requestServers(true);
+                } catch (Exception e) {
+                    if (hasIpedDatasource()) {
+                        transcriptConfig.setEnabled(false);
+                        logger.warn("Could not initialize remote transcription. Task disabled.");
+                    } else {
+                        throw e;
+                    }
+                }
+                init.set(true);
+            }
+        }
     }
 
     private static synchronized void requestServers(RemoteTranscriptionTask task, boolean now) throws IOException {
@@ -163,7 +178,7 @@ public class RemoteTranscriptionTask extends AbstractTranscriptTask {
     @Override
     public void finish() throws Exception {
         super.finish();
-        if (!statsPrinted.getAndSet(true)) {
+        if (isEnabled() && !statsPrinted.getAndSet(true)) {
             int numWorkers = this.worker.manager.getNumWorkers();
             DecimalFormat df = new DecimalFormat();
             logger.info("Time spent to send audios: {}s", df.format(audioSendingTime.get() / (1000 * numWorkers)));
