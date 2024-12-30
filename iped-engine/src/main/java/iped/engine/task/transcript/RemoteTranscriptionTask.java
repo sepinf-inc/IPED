@@ -88,7 +88,7 @@ public class RemoteTranscriptionTask extends AbstractTranscriptTask {
         this.setRequeueRatio(transcriptConfig.getRequeueRatio());        
         this.setRequeueDeltaTime(transcriptConfig.getRequeueDeltaTime()); 
 
-        if (!this.isEnabled()) {
+        if (!isEnabled()) {
             return;
         }
         
