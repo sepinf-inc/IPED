@@ -1,8 +1,10 @@
-package iped.engine.task.regex.validator.cripto;
+package iped.engine.task.regex.validator.crypto;
 
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
+
+import iped.engine.task.regex.validator.crypto.EthereumAddressValidatorService;
 
 public class EthereumAddressValidatorServiceTest {
 

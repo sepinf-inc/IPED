@@ -1,4 +1,4 @@
-package iped.engine.task.regex.validator.cripto;
+package iped.engine.task.regex.validator.crypto;
 
 import java.io.IOException;
 import java.security.MessageDigest;
@@ -7,7 +7,7 @@ import java.util.Arrays;
 
 /**
  * Utility class for validation of Base58Checked values used in various
- * criptocurrencies
+ * cryptocurrencies
  * 
  * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
  *
