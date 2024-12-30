@@ -106,7 +106,6 @@ public class TransmissionResumeParser extends AbstractParser {
                         query.append('"');
                     }
                     query.append(')');
-                    System.err.println("Q>>>" + query);
                     Iterable<IItemReader> items = searcher.searchIterable(query.toString());
                     for (IItemReader it : items) {
                         torrentItem = it;
