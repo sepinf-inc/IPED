@@ -121,10 +121,10 @@ precision = int8
 batchSize = 1
 
 #########################################
-# RemoteAudioTranscriptTask options
+# RemoteTranscriptionTask options
 #########################################
 
-# IP:PORT of the service/central node used by the RemoteWav2Vec2TranscriptTask implementation.
+# IP:PORT of the service/central node used by the RemoteTranscriptionTask implementation.
 # remoteServiceAddress = 127.0.0.1:11111
 
 #########################################
