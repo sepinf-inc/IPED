@@ -29,8 +29,8 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
 import iped.data.IItemReader;
-import iped.parsers.emule.KnownMetParser;
 import iped.parsers.util.ChildPornHashLookup;
+import iped.parsers.util.P2PUtil;
 import iped.search.IItemSearcher;
 
 /**
@@ -233,9 +233,9 @@ public class LibraryFile extends ShareazaEntity {
             html.startElement("td"); //$NON-NLS-1$
             if (o != null) {
                 if (col == 1) {
-                    IItemReader item = KnownMetParser.searchItemInCase(searcher, "md5", md5);
+                    IItemReader item = P2PUtil.searchItemInCase(searcher, "md5", md5);
                     if (item != null) {
-                        KnownMetParser.printNameWithLink(html, item, name);
+                        P2PUtil.printNameWithLink(html, item, name);
                         foundInCase = true;
                     } else {
                         html.characters(name);

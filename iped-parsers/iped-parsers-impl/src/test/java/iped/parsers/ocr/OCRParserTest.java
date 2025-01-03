@@ -43,7 +43,7 @@ public class OCRParserTest {
     @BeforeClass
     public static void setUpTool() throws IOException {
         if (osName.startsWith("windows")) {
-            String repoPath = "tesseract/tesseract-zip/5.3.2-24-g3922/tesseract-zip-5.3.2-24-g3922.zip";
+            String repoPath = "tesseract/tesseract-zip/5.3.2-24-g3922_1/tesseract-zip-5.3.2-24-g3922_1.zip";
             RepoToolDownloader.unzipFromUrl(repoPath, testRoot + "/tmp_tools/");
             System.setProperty(OCRParser.TOOL_PATH_PROP, testRoot + "/tmp_tools/tesseract/");
         }

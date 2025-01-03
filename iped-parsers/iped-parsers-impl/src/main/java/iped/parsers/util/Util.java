@@ -117,7 +117,7 @@ public class Util {
         return result;
     }
 
-    public static String decodeUnknowCharset(byte[] data) {
+    public static String decodeUnknownCharset(byte[] data) {
         try {
             return decodeUTF16OrUTF8(data);
 
@@ -161,7 +161,7 @@ public class Util {
 
         } catch (IOException | TikaException e) {
             if (useFallbackDetection) {
-                return decodeUnknowCharset(data);
+                return decodeUnknownCharset(data);
             } else {
                 return decodeWindows1252(data);
             }

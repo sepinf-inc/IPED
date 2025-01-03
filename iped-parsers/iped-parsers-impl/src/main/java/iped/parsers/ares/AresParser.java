@@ -44,10 +44,10 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
 import iped.data.IItemReader;
-import iped.parsers.emule.KnownMetParser;
 import iped.parsers.util.BeanMetadataExtraction;
 import iped.parsers.util.ChildPornHashLookup;
 import iped.parsers.util.Messages;
+import iped.parsers.util.P2PUtil;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
 import iped.utils.LocalizedFormat;
@@ -249,9 +249,9 @@ public class AresParser extends AbstractParser {
                     if (j != 1 || e == null)
                         xhtml.characters(s);
                     else {
-                        IItemReader item = KnownMetParser.searchItemInCase(searcher, "sha-1", e.getHash());
+                        IItemReader item = P2PUtil.searchItemInCase(searcher, "sha-1", e.getHash());
                         if (item != null) {
-                            KnownMetParser.printNameWithLink(xhtml, item, s);
+                            P2PUtil.printNameWithLink(xhtml, item, s);
                             cells.set(cells.size() - 1, strYes);
                         } else {
                             xhtml.characters(s);

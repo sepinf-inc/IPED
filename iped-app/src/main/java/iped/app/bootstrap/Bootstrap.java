@@ -145,10 +145,7 @@ public class Bootstrap {
                 classpath += separator + pluginConfig.getPluginFolder().getAbsolutePath() + "/*";
             }
 
-            // user can't open analysis UI w/ --nogui, so no need to load libreoffice jars
-            if (!iped.getCmdLineArgs().isNogui()) {
-                classpath = fillClassPathWithLibreOfficeJars(iped, classpath);
-            }
+            classpath = fillClassPathWithLibreOfficeJars(iped, classpath, iped.getCmdLineArgs().isNogui());
 
             String javaBin = "java";
             if (SystemUtils.IS_OS_WINDOWS) {
@@ -253,7 +250,7 @@ public class Bootstrap {
                 throw new IllegalArgumentException(
                         "Please use -Xms/-Xmx arguments after iped.jar not after java command, since processing will occur in a forked process using those params.");
             }
-            if (arg.startsWith("-Xrunjdwp")) {
+            if ((arg.startsWith("-Xrunjdwp") || arg.startsWith("-agentlib:jdwp")) && arg.contains("server=y")) {
                 // workaround as discussed in PR #1119
                 Matcher matcher = Pattern.compile("address=(\\d+)").matcher(arg);
                 if (matcher.find()) {
@@ -278,14 +275,14 @@ public class Bootstrap {
         return props;
     }
 
-    private static String fillClassPathWithLibreOfficeJars(Main iped, String classpath)
+    private static String fillClassPathWithLibreOfficeJars(Main iped, String classpath, boolean isNogui)
             throws URISyntaxException, IOException {
         System.setProperty(IOfficeApplication.NOA_NATIVE_LIB_PATH,
                 new File(iped.getRootPath(), "lib/nativeview").getAbsolutePath());
         LibreOfficeFinder loFinder = new LibreOfficeFinder(new File(iped.getRootPath()));
-        if (loFinder.getLOPath() != null) {
+        if (loFinder.getLOPath(isNogui) != null) {
             List<File> jars = new ArrayList<>();
-            UNOLibFinder.addUNOJars(loFinder.getLOPath(), jars);
+            UNOLibFinder.addUNOJars(loFinder.getLOPath(isNogui), jars);
             for (File jar : jars) {
                 classpath += separator + jar.getCanonicalPath();
             }

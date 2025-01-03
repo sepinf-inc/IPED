@@ -38,7 +38,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import iped.data.IItemReader;
 import iped.parsers.browsers.chrome.CacheIndexParser;
-import iped.parsers.discord.cache.CacheAddr.InputStreamNotAvailable;
 import iped.parsers.discord.cache.Index;
 import iped.parsers.discord.json.DiscordAttachment;
 import iped.parsers.discord.json.DiscordAuthor;
@@ -324,15 +323,18 @@ public class DiscordParser extends AbstractParser {
             meta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, d.getAuthor().getFullUsername());
             meta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
-            // Add "Message-TO" field
-            for (String participant : participants) {
-                if (participant.length() <= 1) {
-                    // In cases where only one participant sends messages, it is not possible to
-                    // determine the participants as only the participant list of the calls are
-                    // cached.
-                } else if (!participant.equals(d.getAuthor().getFullUsername())) {
-                    meta.add(org.apache.tika.metadata.Message.MESSAGE_TO, participant);
+            // Add "Message-TO" field.
+            // In cases where only one participant sends messages, it is not possible to
+            // determine the participants as only the participant list of the calls are cached.
+            if (participants.size() <= 2) {
+                for (String participant : participants) {
+                    if (!participant.equals(d.getAuthor().getFullUsername())) {
+                        meta.add(org.apache.tika.metadata.Message.MESSAGE_TO, participant);
+                    }
                 }
+            } else {
+                meta.set(org.apache.tika.metadata.Message.MESSAGE_TO, chatName);
+                meta.set(ExtraProperties.IS_GROUP_MESSAGE, "true");
             }
 
             for (DiscordAttachment da : d.getAttachments()) {

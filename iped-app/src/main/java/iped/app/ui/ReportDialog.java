@@ -148,6 +148,8 @@ public class ReportDialog implements ActionListener, TableModelListener {
         table = new JTable(tableModel);
         table.getColumnModel().getColumn(0).setMaxWidth(20);
         table.getColumnModel().getColumn(2).setMaxWidth(150);
+        table.setRowHeight(IconManager.getIconSize());
+
         tableModel.addTableModelListener(this);
         scrollPane = new JScrollPane(table);
 

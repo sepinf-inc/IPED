@@ -421,29 +421,27 @@ public class IPEDSource implements IIPEDSource {
         if (category.getNumItems() != -1)
             return category.getNumItems();
 
-        if (!category.getChildren().isEmpty()) {
-            int num = 0;
-            for (Category child : category.getChildren()) {
-                num += countNumItems(child);
-            }
-            category.setNumItems(num);
-
-        } else {
-            String query = IndexItem.CATEGORY + ":\"" + category.getName() + "\"";
-            IPEDSearcher searcher = new IPEDSearcher(this, query);
-            searcher.setNoScoring(true);
-            try {
-                if (this instanceof IPEDMultiSource) {
-                    category.setNumItems(searcher.multiSearch().getLength());
-                } else {
-                    category.setNumItems(searcher.search().getLength());
-                }
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        int num = 0;
+        for (Category child : category.getChildren()) {
+            num += countNumItems(child);
         }
-        return category.getNumItems();
+
+        String query = IndexItem.CATEGORY + ":\"" + category.getName() + "\"";
+        IPEDSearcher searcher = new IPEDSearcher(this, query);
+        searcher.setNoScoring(true);
+        try {
+            if (this instanceof IPEDMultiSource) {
+                num += searcher.multiSearch().getLength();
+            } else {
+                num += searcher.search().getLength();
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        category.setNumItems(num);
+        return num;
     }
 
     private void loadKeywords() {

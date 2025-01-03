@@ -185,9 +185,10 @@ class FaceRecognitionTask:
             result.append(list(i))
         return result
     
-    def cacheResults(self, hash, locations, encodings):
+    def cacheResults(self, hash, locations, encodings, count):
         cache[hash + '_locations'] = locations
         cache[hash + '_encodings'] = encodings
+        cache[hash + '_count'] = count
     
     # This function is executed on all case items
     def process(self, item):
@@ -197,15 +198,26 @@ class FaceRecognitionTask:
         if hash is None or not item.getExtraAttribute('hasThumb'):
             return
         
-        #reuse cached results
+        from iped.properties import ExtraProperties
+
+        # don't process it again (in the report generation for example)
+        face_count = item.getExtraAttribute(ExtraProperties.FACE_COUNT)
+        if face_count is not None:
+            return
+
+        # reuse cached results
         face_locations = cache.get(hash + '_locations')
         face_encodings = cache.get(hash + '_encodings')
-        if face_locations is not None and face_encodings is not None:
-            if len(face_locations) > 0 and len(face_encodings) > 0:
-                item.setExtraAttribute("face_locations", face_locations)
-                item.setExtraAttribute("face_encodings", face_encodings)
-                return
-    
+        face_count = cache.get(hash + '_count')
+        if face_count is not None:
+            if face_count >= 0:
+                item.setExtraAttribute(ExtraProperties.FACE_COUNT, face_count)
+                if face_locations is not None and face_encodings is not None:
+                    if len(face_locations) > 0 and len(face_encodings) > 0:
+                        item.setExtraAttribute(ExtraProperties.FACE_LOCATIONS, face_locations)
+                        item.setExtraAttribute(ExtraProperties.FACE_ENCODINGS, face_encodings)
+            return
+
         # Load absolute path
         isVideo = False
         mediaType = item.getMediaType().toString()
@@ -264,7 +276,7 @@ class FaceRecognitionTask:
 
             if line == imgError:
                 logger.info("[FaceRecognitionTask] Error loading image {} ({} bytes)", item.getPath(), item.getLength())
-                self.cacheResults(hash, [], [])
+                self.cacheResults(hash, [], [], -1)
                 return
                 
             num_faces = int(line)
@@ -275,7 +287,8 @@ class FaceRecognitionTask:
                 detectTime += t2 - t1
             
             if num_faces == 0:
-                self.cacheResults(hash, [], [])
+                item.setExtraAttribute(ExtraProperties.FACE_COUNT, 0)
+                self.cacheResults(hash, [], [], 0)
                 return
             
             face_locations = []
@@ -306,10 +319,10 @@ class FaceRecognitionTask:
             processQueue.put(proc, block=True)
         
         face_locations = self.convertTuplesToList(face_locations)
-        
-        from iped.properties import ExtraProperties
+        face_count = len(face_locations)
+
         item.setExtraAttribute(ExtraProperties.FACE_LOCATIONS, face_locations)
         item.setExtraAttribute(ExtraProperties.FACE_ENCODINGS, face_encodings)
-        item.setExtraAttribute(ExtraProperties.FACE_COUNT, len(face_locations))
+        item.setExtraAttribute(ExtraProperties.FACE_COUNT, face_count)
         
-        self.cacheResults(hash, face_locations, face_encodings)
+        self.cacheResults(hash, face_locations, face_encodings, face_count)

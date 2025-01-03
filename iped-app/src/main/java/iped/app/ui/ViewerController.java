@@ -116,7 +116,7 @@ public class ViewerController {
                     URI jarUri = URLUtil.getURL(LibreOfficeViewer.class).toURI();
                     File moduledir = new File(jarUri).getParentFile().getParentFile();
                     LibreOfficeFinder loFinder = new LibreOfficeFinder(moduledir);
-                    final String pathLO = loFinder.getLOPath();
+                    final String pathLO = loFinder.getLOPath(false);
                     if (pathLO != null) {
                         SwingUtilities.invokeAndWait(new Runnable() {
                             @Override
@@ -254,7 +254,7 @@ public class ViewerController {
         }
         for (AbstractViewer viewer : viewers) {
             if (!viewer.equals(requested)) {
-                updateViewer(viewer, true);
+                updateViewer(viewer, true, false);
             }
         }
     }
@@ -288,8 +288,8 @@ public class ViewerController {
         return highlightTerms != null && !highlightTerms.isEmpty();
     }
 
-    public void updateViewer(AbstractViewer viewer, boolean clean) {
-        if (viewer.getPanel().isShowing() || (viewer.equals(textViewer) && hasHits())) {
+    public void updateViewer(AbstractViewer viewer, boolean clean, boolean forceLoad) {
+        if (viewer.getPanel().isShowing() || (viewer.equals(textViewer) && hasHits()) || forceLoad) {
             if (isInitialized())
                 loadInViewer(viewer);
             DefaultSingleCDockable dock = dockPerViewer.get(viewer);

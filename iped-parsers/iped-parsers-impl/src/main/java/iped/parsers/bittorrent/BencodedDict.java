@@ -100,6 +100,10 @@ public class BencodedDict {
         return getUnknownCharsetString(buffer.array());
     }
 
+    public Map<String, Object> getDict() {
+        return dict;
+    }
+
     public BencodedDict getDict(String key) {
         Object obj = getObject(key);
         if (obj == null || !(obj instanceof Map)) {
@@ -199,7 +203,7 @@ public class BencodedDict {
     }
 
     private String getUnknownCharsetString(byte[] data) {
-        return Util.decodeUnknowCharset(data);
+        return Util.decodeUnknownCharset(data);
     }
 
     @Override

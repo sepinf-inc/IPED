@@ -32,7 +32,7 @@ public class AppMain {
 
     private static final String BUNDLED_JRE_VERSION = "11.0.13";
 
-    private static final String HOME_JRE_FOLDER = ".iped/jre-" + BUNDLED_JRE_VERSION;
+    public static final String HOME_JRE_FOLDER = ".iped/jre-" + BUNDLED_JRE_VERSION;
 
     File casePath;
 

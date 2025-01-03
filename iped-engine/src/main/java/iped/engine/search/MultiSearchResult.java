@@ -232,7 +232,18 @@ public class MultiSearchResult implements IMultiSearchResult {
                 }
                 bitset.add(ids[i].getId());
             }
+
         }
-        return casesBitSet;
+        return clone(casesBitSet);
     }
+
+    private RoaringBitmap[] clone(RoaringBitmap[] casesBitSet2) {
+        RoaringBitmap[] lcasesBitSet = new RoaringBitmap[casesBitSet.length];
+        for (int i = 0; i < casesBitSet.length; i++) {
+            lcasesBitSet[i] = new RoaringBitmap();
+            lcasesBitSet[i].or(casesBitSet[i]);
+        }
+        return lcasesBitSet;
+    }
+
 }

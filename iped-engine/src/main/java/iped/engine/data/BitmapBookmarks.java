@@ -185,6 +185,7 @@ public class BitmapBookmarks implements IBookmarks {
         RoaringBitmap bookmarkBitmap = bookmarks.get(bookmark);
         for (Integer id : ids) {
             bookmarkBitmap.add(id);
+            //updates cache
             if (unionAll != null) {
                 unionAll.add(id);
             }
@@ -265,6 +266,8 @@ public class BitmapBookmarks implements IBookmarks {
             bookmarkColors = new TreeMap<Integer, Color>();
         bookmarkColors.put(bookmarkId, null);
 
+        unionAll = null;// invalidates unionAll
+        
         return bookmarkId;
     }
 
@@ -279,6 +282,7 @@ public class BitmapBookmarks implements IBookmarks {
         bookmarkColors.remove(bookmark);
         reportBookmarks.remove(bookmark);
         bookmarks.remove(bookmark);
+        unionAll = null;// invalidates unionAll
     }
 
     public synchronized void renameBookmark(int bookmarkId, String newBookmark) {

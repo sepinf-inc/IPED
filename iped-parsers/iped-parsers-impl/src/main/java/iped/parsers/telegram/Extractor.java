@@ -185,7 +185,7 @@ public class Extractor {
                     ChatGroup group = new ChatGroup(chatId, cont, chatName);
 
                     Map<String, Object> m = androidDecoder.getAlltMetadata();
-                    if ("true".equals(m.get("broadcast")) || "true".equals(m.get("megagroup"))) {
+                    if ("true".equals(m.get("broadcast"))) {
                         group.setGroup(false);
                         group.setChannel(true);
                     }

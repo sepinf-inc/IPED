@@ -5,12 +5,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import iped.parsers.threema.ThreemaParser;
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MediaTypeRegistry;
 
 import iped.parsers.ares.AresParser;
+import iped.parsers.bittorrent.BitTorrentResumeDatEntryParser;
+import iped.parsers.bittorrent.BitTorrentResumeDatParser;
+import iped.parsers.bittorrent.TorrentFileParser;
 import iped.parsers.browsers.chrome.CacheIndexParser;
 import iped.parsers.discord.DiscordParser;
 import iped.parsers.emule.KnownMetParser;
@@ -23,6 +25,7 @@ import iped.parsers.shareaza.ShareazaLibraryDatParser;
 import iped.parsers.skype.SkypeParser;
 import iped.parsers.sqlite.SQLite3Parser;
 import iped.parsers.telegram.TelegramParser;
+import iped.parsers.threema.ThreemaParser;
 import iped.parsers.ufed.UFEDChatParser;
 import iped.parsers.usnjrnl.UsnJrnlParser;
 import iped.parsers.whatsapp.WhatsAppParser;
@@ -76,6 +79,10 @@ public class QueuesProcessingOrder {
         mediaTypes.put(MediaType.parse(AresParser.ARES_MIME_TYPE), 2);
         mediaTypes.put(MediaType.parse(ShareazaLibraryDatParser.LIBRARY_DAT_MIME_TYPE), 2);
         mediaTypes.put(MediaType.parse(ShareazaDownloadParser.SHAREAZA_DOWNLOAD_META), 2);
+
+        mediaTypes.put(MediaType.parse(TorrentFileParser.TORRENT_FILE_MIME_TYPE), 2);
+        mediaTypes.put(MediaType.parse(BitTorrentResumeDatParser.RESUME_DAT_MIME_TYPE), 3);
+        mediaTypes.put(MediaType.parse(BitTorrentResumeDatEntryParser.RESUME_DAT_ENTRY_MIME_TYPE), 3);
 
         mediaTypes.put(WhatsAppParser.WA_DB, 2);
         mediaTypes.put(WhatsAppParser.MSG_STORE, 3);

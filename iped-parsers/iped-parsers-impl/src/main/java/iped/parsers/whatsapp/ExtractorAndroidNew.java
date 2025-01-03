@@ -29,6 +29,7 @@ import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_SETTINGS_NOT_A
 import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_SAVE;
 import static iped.parsers.whatsapp.Message.MessageType.GIF_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_ADDED_TO_COMMUNITY;
+import static iped.parsers.whatsapp.Message.MessageType.CONTACTED_FIND_BUSINESSES;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_EDIT;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_SEND;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ONLY_ADMINS_CAN_ADD;
@@ -88,6 +89,8 @@ import static iped.parsers.whatsapp.Message.MessageType.VOICE_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.WAITING_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.YOU_ADMIN;
 import static iped.parsers.whatsapp.Message.MessageType.YOU_NOT_ADMIN;
+import static iped.parsers.whatsapp.Message.MessageType.OVER_256_MEMBERS_ONLY_ADMINS_CAN_EDIT;
+import static iped.parsers.whatsapp.Message.MessageType.SECURITY_NOTIFICATIONS_NO_LONGER_AVAILABLE;
 
 import java.io.File;
 import java.sql.Connection;
@@ -106,6 +109,7 @@ import java.util.Map;
 import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.whatsapp.Message.MessageStatus;
 import iped.parsers.whatsapp.Message.MessageType;
+import iped.parsers.whatsapp.Message.MessageQuotedType;
 
 /**
  *
@@ -123,7 +127,7 @@ public class ExtractorAndroidNew extends Extractor {
         Map<Long, Chat> idToChat = new HashMap<Long, Chat>();
 
         try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
-            try (ResultSet rs = stmt.executeQuery(SELECT_CHAT_VIEW)) {
+            try (ResultSet rs = stmt.executeQuery(SELECT_CHATS)) {
 
                 while (rs.next()) {
                     String contactId = rs.getString("contact"); //$NON-NLS-1$
@@ -143,7 +147,7 @@ public class ExtractorAndroidNew extends Extractor {
                 extractCalls(conn, idToChat);
 
                 for (Chat c : list) {
-                    Collections.sort(c.getMessages());
+                    Message.sort(c.getMessages());
                     if (c.isGroupChat()) {
                         setGroupMembers(c, conn, SELECT_GROUP_MEMBERS);
                     }
@@ -220,9 +224,9 @@ public class ExtractorAndroidNew extends Extractor {
                     m.setMessageType(UNKNOWN_VIDEO_CALL);
                     if (call_result == 5) {
                         m.setMessageType(VIDEO_CALL);
-                    } else if (call_result == 4) {
-                        m.setMessageType(MISSED_VIDEO_CALL);
                     } else if (call_result == 2) {
+                        m.setMessageType(MISSED_VIDEO_CALL);
+                    } else if (call_result == 4) {
                         m.setMessageType(REFUSED_VIDEO_CALL);
                     } else if (call_result == 3) {
                         m.setMessageType(UNAVAILABLE_VIDEO_CALL);
@@ -231,9 +235,9 @@ public class ExtractorAndroidNew extends Extractor {
                     m.setMessageType(UNKNOWN_VOICE_CALL);
                     if (call_result == 5) {
                         m.setMessageType(VOICE_CALL);
-                    } else if (call_result == 4) {
-                        m.setMessageType(MISSED_VOICE_CALL);
                     } else if (call_result == 2) {
+                        m.setMessageType(MISSED_VOICE_CALL);
+                    } else if (call_result == 4) {
                         m.setMessageType(REFUSED_VOICE_CALL);
                     } else if (call_result == 3) {
                         m.setMessageType(UNAVAILABLE_VOICE_CALL);
@@ -346,6 +350,17 @@ public class ExtractorAndroidNew extends Extractor {
         }
     }
 
+    private void extractQuotedProductInfo(Connection conn, Message m) throws SQLException {
+        try (PreparedStatement stmt = conn.prepareStatement(SELECT_QUOTED_PRODUCT)) {
+            stmt.setLong(1, m.getId());
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                m.setProduct(new MessageProduct(rs.getString("title"), rs.getString("seller"), rs.getString("currency"),
+                        rs.getInt("amount"), rs.getString("description")));
+            }
+        }
+    }
+
     private void extractEphemeralDuration(Connection conn, Message m) throws SQLException {
         try (PreparedStatement stmt = conn.prepareStatement(SELECT_EPHEMERAL_SETTING)) {
             stmt.setLong(1, m.getId());
@@ -415,7 +430,7 @@ public class ExtractorAndroidNew extends Extractor {
 
                 int actionType = rs.getInt("actionType");
                 m.setMessageType(decodeMessageType(type, status, edit_version, caption, actionType,
-                        rs.getInt("bizStateId"), m.getMediaMime()));
+                        rs.getInt("bizStateId"), rs.getInt("privacyType"),  m.getMediaMime()));
                 
                 if (m.getMessageType() == EPHEMERAL_SETTINGS_NOT_APPLIED) {
                     // Ignore this type of message, as it does nothing and it is not visible in the application itself.
@@ -538,17 +553,69 @@ public class ExtractorAndroidNew extends Extractor {
                     Message m = messagesMap.get(mq.getId());
                     if (m != null) {
                         // Has quote
-
                         // Try to find original message in messages
                         Message original = messagesMapUuid.get(mq.getUuid());
                         if (original != null) {
-                            // has found original message reference, more complete
+                            // Has found original message reference
+                            original.setMessageQuotedType(MessageQuotedType.QUOTE_FOUND);
                             m.setMessageQuote(original);
-                        } else {
-                            // not found original message reference, get info from message_quotes table,
-                            // less complete
-                            mq.setDeleted(true);
+                        } else if (mq.getProduct() != null) {
+                            // Quoted Catalog
+                            mq.setMessageQuotedType(MessageQuotedType.QUOTE_CATALOG);
                             mq.setId(fakeIds--);
+                            m.setMessageQuote(mq);
+                        } else {
+                            // Original message reference not found
+                            if (chatId == mq.getQuoteChatId()) {
+                                // Message in same chat
+                                long editId = mq.getEditId();
+                                if (messagesMap.get(editId) != null) {
+                                    // Quoted was edited
+                                    mq.setMessageQuotedType(MessageQuotedType.QUOTE_FOUND);
+                                    mq.setId(editId);
+                                } else {
+                                    // Quoted message cannot be found again ( maybe deleted or not in the DB)
+                                    mq.setMessageQuotedType(MessageQuotedType.QUOTE_NOT_FOUND);
+                                    mq.setId(fakeIds--);
+                                }
+                            } else {
+                                // Message is quoted private group or quoted status
+                                mq.setMessageQuotedType(MessageQuotedType.QUOTE_PRIVACY_GROUP_NOT_FOUND);
+                                // Just set default case if does not match order cases ...
+                                mq.setId(fakeIds--);
+                                String remoteId = mq.getRemoteId();
+                                if (remoteId != null) {
+                                    if (remoteId.compareTo(Message.STATUS_BROADCAST) == 0) {
+                                        mq.setMessageQuotedType(MessageQuotedType.QUOTE_STATUS);
+                                    } else if (remoteId.contains(Message.GROUP)) {
+                                        // Set it first in case if not found
+                                        mq.setQuotePrivateGroupName(remoteId);
+                                        boolean found = false;
+                                        for (Chat cq : idToChat.values()) {
+                                            // Find friendly group name and message Id
+                                            if (!cq.isGroupChat())
+                                                continue;
+
+                                            if (cq.getPrintId() != null && remoteId.contains(cq.getPrintId())) {
+                                                mq.setQuotePrivateGroupName(cq.getTitle());
+                                            }
+
+                                            for (Message ori : cq.getMessages()) {
+                                                if (ori.getUuid() != null && mq.getUuid() != null
+                                                        && ori.getUuid().compareTo(mq.getUuid()) == 0) {
+                                                    mq.setId(ori.getId());
+                                                    mq.setMessageQuotedType(MessageQuotedType.QUOTE_PRIVACY_GROUP);
+                                                    found = true;
+                                                    break;
+                                                }
+                                            }
+                                            if (found)
+                                                break;
+                                        }
+
+                                    }
+                                }
+                            }
                             m.setMessageQuote(mq);
                         }
                         m.setQuoted(true);
@@ -569,6 +636,8 @@ public class ExtractorAndroidNew extends Extractor {
 
         Map<Long, List<Message>> messagesPerChatId = new HashMap<Long, List<Message>>();
         String query = getSelectMessagesQuotesQuery(conn);
+        boolean hasQuotedProductTable = SQLite3DBParser.containsTable("message_quoted_product", conn);
+
         try (PreparedStatement stmt = conn.prepareStatement(query)) {
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
@@ -595,7 +664,7 @@ public class ExtractorAndroidNew extends Extractor {
                 m.setMediaSize(media_size);
                 m.setLatitude(rs.getDouble("latitude")); //$NON-NLS-1$
                 m.setLongitude(rs.getDouble("longitude")); //$NON-NLS-1$
-                m.setMessageType(decodeMessageType(type, -1, -1, caption, -1, -1, m.getMediaMime()));
+                m.setMessageType(decodeMessageType(type, -1, -1, caption, -1, -1, -1, m.getMediaMime()));
                 m.setDuration(rs.getInt("media_duration")); //$NON-NLS-1$
                 if (m.getMessageType() == CONTACT_MESSAGE) {
                     m.setVcards(Arrays.asList(new String[] { Util.getUTF8String(rs, "vcard") }));
@@ -610,7 +679,18 @@ public class ExtractorAndroidNew extends Extractor {
 
                 m.setUuid(rs.getString("uuid"));
 
-                long chatId = rs.getLong("chatId");
+                m.setEditId(rs.getLong("edit_row_id"));
+
+                m.setQuoteChatId(rs.getLong("chatId"));
+
+                m.setRemoteId(rs.getString("remoteId"));
+
+                long chatId = rs.getLong("parent_message_chat_row_id");
+
+                if (hasQuotedProductTable && m.getMessageType() == PRODUCT_MESSAGE) {
+                    extractQuotedProductInfo(conn, m);
+                }
+
                 List<Message> messages = messagesPerChatId.get(chatId);
                 if (messages == null) {
                     messagesPerChatId.put(chatId, messages = new ArrayList<Message>());
@@ -623,7 +703,7 @@ public class ExtractorAndroidNew extends Extractor {
     }
 
     protected Message.MessageType decodeMessageType(int messageType, int status, Integer edit_version, String caption,
-            int actionType, int bizStateId, String mediaMime) {
+            int actionType, int bizStateId, int privacyType, String mediaMime) {
         Message.MessageType result = UNKNOWN_MESSAGE;
         switch (messageType) {
             case 0:
@@ -724,6 +804,9 @@ public class ExtractorAndroidNew extends Extractor {
                         // Can be ignored as nothing was changed.
                         result = EPHEMERAL_SETTINGS_NOT_APPLIED;
                         break;
+                    case 63:
+                        result = SECURITY_NOTIFICATIONS_NO_LONGER_AVAILABLE;
+                        break;
                     // TODO: Handle business related notification (no extra tables/fields)
                     // case 63:
                     // result = ???;
@@ -739,11 +822,18 @@ public class ExtractorAndroidNew extends Extractor {
                         result = EPHEMERAL_DEFAULT;
                         break;
                     case 69:
-                        result = BUSINESS_META_SECURE_SERVICE;
+                        if (privacyType == 1) {
+                            result = MESSAGES_ENCRYPTED;
+                        } else {
+                            result = BUSINESS_META_SECURE_SERVICE;
+                        }                        
                         break;
                     case 70:
                         result = CALL_MESSAGE;
                         break;
+                    case 76:
+                        result = CONTACTED_FIND_BUSINESSES;
+                        break;                        
                     case 75:
                     case 108:
                         result = GROUP_ADDED_TO_COMMUNITY;
@@ -801,6 +891,9 @@ public class ExtractorAndroidNew extends Extractor {
                         break;
                     case 136:
                         result = USER_JOINED_WHATSAPP;
+                        break;
+                    case 142:
+                        result = OVER_256_MEMBERS_ONLY_ADMINS_CAN_EDIT;
                         break;
                     case 155:
                         result = AI_THIRD_PARTY;
@@ -865,7 +958,7 @@ public class ExtractorAndroidNew extends Extractor {
                 } else {
                     if (status == 0) {
                         result = DELETED_BY_SENDER;
-                    } else if (status == 4 || status == 5) {
+                    } else if (status == 4 || status == 5 || status == 13) {
                         result = DELETED_MESSAGE;
                     }
                 }
@@ -946,8 +1039,8 @@ public class ExtractorAndroidNew extends Extractor {
         return result;
     }
 
-    private static final String SELECT_CHAT_VIEW = "SELECT _id as id, raw_string_jid AS contact," //$NON-NLS-1$
-            + " subject, created_timestamp as creation, sort_timestamp FROM chat_view ORDER BY sort_timestamp DESC"; //$NON-NLS-1$
+    private static final String SELECT_CHATS = "SELECT c._id as id, j.raw_string AS contact, c.subject, c.created_timestamp as creation,"
+            + " sort_timestamp FROM chat c, jid j WHERE c.jid_row_id = j._id ORDER BY c.sort_timestamp DESC";
 
     private static final String SELECT_ADD_ONS = "SELECT message_add_on_type as type,timestamp, status,jid.raw_string as remoteResource,from_me as fromMe FROM message_add_on m left join jid on jid._id=m.sender_jid_row_id where parent_message_row_id=?";
 
@@ -975,7 +1068,11 @@ public class ExtractorAndroidNew extends Extractor {
     private static final String SELECT_PRODUCT = "select raw_string as seller, title,"
             + " currency_code as currency, amount_1000 as amount, description"
             + " from message_product left join jid on business_owner_jid = jid._id where message_row_id=?";
-    
+
+    private static final String SELECT_QUOTED_PRODUCT = "select raw_string as seller, title,"
+            + " currency_code as currency, amount_1000 as amount, description"
+            + " from message_quoted_product left join jid on business_owner_jid = jid._id where message_row_id=?";    
+
     private static final String SELECT_POLL_OPTION = "SELECT option_name as name, vote_total as total FROM message_poll_option where message_row_id=? order by _id";
 
     private static final String SELECT_EPHEMERAL_SETTING = "SELECT setting_duration as duration FROM message_ephemeral_setting where message_row_id=?";
@@ -1003,6 +1100,13 @@ public class ExtractorAndroidNew extends Extractor {
         if (SQLite3DBParser.containsTable("message_system_initial_privacy_provider", conn)) {
             bizStateCol = "msipp.biz_state_id";
             bizStateTableJoin = " left join message_system_initial_privacy_provider msipp on m._id=msipp.message_row_id";
+        }
+
+        String privacyTypeCol = "0";
+        String privacyTypeTableJoin = "";
+        if (SQLite3DBParser.containsTable("message_system_business_state", conn)) {
+            privacyTypeCol = "msbs.privacy_message_type";
+            privacyTypeTableJoin = " left join message_system_business_state msbs on m._id=msbs.message_row_id";
         }
 
         String grpInvCol = "null";
@@ -1036,6 +1140,7 @@ public class ExtractorAndroidNew extends Extractor {
                 + " (m.origination_flags & 1) as forwarded,"
                 + " " + mhtCol + " as thumbData2,"
                 + " " + bizStateCol + " as bizStateId,"
+                + " " + privacyTypeCol + " as privacyType,"
                 + " " + grpInvCol + " as groupInviteName,"
                 + " " + sortCol + " as sortId,"
                 + " " + uiElemCol + " as uiElem,"
@@ -1050,6 +1155,7 @@ public class ExtractorAndroidNew extends Extractor {
                 + " left join message_vcard mv on m._id=mv.message_row_id"
                 + mhtTableJoin
                 + bizStateTableJoin
+                + privacyTypeTableJoin
                 + grpInvTableJoin
                 + uiElemTableJoin
                 + editTableJoin
@@ -1060,20 +1166,27 @@ public class ExtractorAndroidNew extends Extractor {
         String captionCol = SQLite3DBParser.checkIfColumnExists(conn, "message_quoted_media", "media_caption")
                 ? "mm.media_caption"
                 : "null";
+        String editCol = "null as edit_row_id,";
+        String editTableJoin = "";
+        if (SQLite3DBParser.containsTable("message_edit_info", conn)) {
+            editCol = "mei.message_row_id as edit_row_id,";
+            editTableJoin = " left join message_edit_info mei on mei.original_key_id=mq.key_id";
+        }                
         return "select mq.message_row_id as id,mq.chat_row_id as chatId, chatJid.raw_string as remoteId,"
-                + " jid.raw_string as remoteResource, mv.vcard, mq.text_data,"
+                + " jid.raw_string as remoteResource, mv.vcard, mq.text_data, mq.parent_message_chat_row_id,"
                 + " mq.from_me as fromMe, mq.timestamp as timestamp, message_url as mediaUrl,"
                 + " mm.mime_type as mediaMime, mm.file_length as mediaSize, media_name as mediaName,"
                 + " mq.message_type as messageType, latitude, longitude, mm.media_duration, " + captionCol
-                + " as mediaCaption, mm.file_hash as mediaHash, mm.thumbnail as thumbData,"
-				+ " mq.key_id as uuid"
+                + " as mediaCaption, mm.file_hash as mediaHash, mm.thumbnail as thumbData, " + editCol
+                + " mq.key_id as uuid"
                 + " from message_quoted mq"
                 + " left join chat on mq.chat_row_id=chat._id"
                 + " left join jid chatJid on chatJid._id=chat.jid_row_id"
                 + " left join message_quoted_media mm on mm.message_row_id=mq.message_row_id"
                 + " left join jid on jid._id=mq.sender_jid_row_id"
                 + " left join message_quoted_location ml on mq.message_row_id=ml.message_row_id"
-                + " left join message_quoted_vcard mv on mq.message_row_id=mv.message_row_id";
+                + " left join message_quoted_vcard mv on mq.message_row_id=mv.message_row_id"
+                + editTableJoin;
     }
 
     private static String getSelectBlockedQuery(Connection conn) throws SQLException {

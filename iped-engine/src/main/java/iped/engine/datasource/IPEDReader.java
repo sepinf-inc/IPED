@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.net.URI;
+import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,6 +65,7 @@ import iped.engine.data.Item;
 import iped.engine.io.MetadataInputStreamFactory;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.LuceneSearchResult;
+import iped.engine.search.SimilarFacesSearch;
 import iped.engine.task.EmbeddedDiskProcessTask;
 import iped.engine.task.HashDBLookupTask;
 import iped.engine.task.HashTask;
@@ -87,6 +89,7 @@ import iped.search.SearchResult;
 import iped.utils.DateUtil;
 import iped.utils.HashValue;
 import iped.utils.SeekableInputStreamFactory;
+import jep.NDArray;
 
 /*
  * Enfileira para processamento os arquivos selecionados via interface de pesquisa de uma indexação anterior.
@@ -183,14 +186,14 @@ public class IPEDReader extends DataSourceReader {
         selectedLabels = new HashSet<Integer>();
         indexDir = state.getIndexDir().getCanonicalFile();
         basePath = indexDir.getParentFile().getParentFile().getAbsolutePath();
-        if(!listOnly) {
+        if (!listOnly) {
             List<File> reportingCases = (List<File>) caseData.getCaseObject(REPORTING_CASES);
             if (reportingCases == null) {
                 caseData.putCaseObject(REPORTING_CASES, reportingCases = new ArrayList<>());
             }
             reportingCases.add(new File(basePath));
         }
-        
+
         ipedCase = new IPEDSource(new File(basePath));
         ipedCase.checkImagePaths();
         /*
@@ -571,7 +574,7 @@ public class IPEDReader extends DataSourceReader {
                     if (!MinIOInputInputStreamFactory.class.getName().equals(className)) {
                         sourcePath = Util.getResolvedFile(basePath, sourcePath).toString();
                     }
-                    synchronized(inputStreamFactories) {
+                    synchronized (inputStreamFactories) {
                         SeekableInputStreamFactory sisf = inputStreamFactories.get(sourcePath);
                         if (sisf == null) {
                             Class<?> clazz = Class.forName(className);
@@ -700,9 +703,41 @@ public class IPEDReader extends DataSourceReader {
                 evidence.getMetadata().add(UFEDChatParser.CHILD_MSG_IDS, Integer.toString(newId));
             }
 
+            // restore "face_encodings" to NDArray
+            List<byte[]> features = (List<byte[]>) evidence.getExtraAttribute(SimilarFacesSearch.FACE_FEATURES);
+            if (features != null) {
+                List<NDArray<double[]>> featuresList = new ArrayList<>();
+                for (byte[] featureBytes : features) {
+                    float[] featureFloats = convByteArrayToFloatArray(featureBytes);
+                    featuresList.add(convFloatArrayToNDArray(featureFloats));
+                }
+                evidence.setExtraAttribute(SimilarFacesSearch.FACE_FEATURES, featuresList);
+            }
+
             Manager.getInstance().addItemToQueue(evidence);
         }
 
+    }
+
+    private static float[] convByteArrayToFloatArray(byte[] bytes) {
+        float[] result = new float[bytes.length / 4];
+        ByteBuffer bb = ByteBuffer.wrap(bytes);
+        for (int i = 0; i < result.length; i++) {
+            result[i] = bb.getFloat();
+        }
+        return result;
+    }
+
+    public static final NDArray<double[]> convFloatArrayToNDArray(float[] array) {
+        return new NDArray<double[]>(convFloatToDoubleArray(array));
+    }
+
+    public static final double[] convFloatToDoubleArray(float[] array) {
+        double[] result = new double[array.length];
+        for (int i = 0; i < array.length; i++) {
+            result[i] = array[i];
+        }
+        return result;
     }
 
     private boolean isExtraAttrMultiValued(String field) throws IOException {

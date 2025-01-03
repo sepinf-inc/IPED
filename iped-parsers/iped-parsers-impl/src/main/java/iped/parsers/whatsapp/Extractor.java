@@ -62,11 +62,10 @@ public abstract class Extractor {
 
                 while (rs.next()) {
                     String memberId = rs.getString("member");
-                    if (!memberId.trim().isEmpty()) {
+                    if (memberId != null && !memberId.trim().isEmpty()) {
                         c.getGroupMembers().add(contacts.getContact(memberId));
                     }
                 }
-
             }
         }
     }

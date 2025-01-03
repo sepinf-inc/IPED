@@ -331,13 +331,14 @@ public class ThreemaParser extends SQLite3DBParser {
         return account;
     }
 
-    private void fillGroupRecipients(Metadata meta, Chat c, String from) {
-        for (ThreemaContact member : c.getParticipants()) {
-            String gmb = member.getFullId();
-            if (!gmb.equals(from)) {
-                meta.add(org.apache.tika.metadata.Message.MESSAGE_TO, gmb);
-            }
+    private void fillGroupRecipients(Metadata meta, Chat c) {
+        String to = "Group";
+        if (c.getSubject() != null) {
+            to += " " + c.getSubject().strip();
         }
+        to += " (id:" + c.getId() + ")";
+        meta.add(org.apache.tika.metadata.Message.MESSAGE_TO, to);
+        meta.set(ExtraProperties.IS_GROUP_MESSAGE, "true");
     }
 
     private void extractMessages(String chatName, Chat c, List<Message> messages, ThreemaAccount account, int parentVirtualId, ContentHandler handler, EmbeddedDocumentExtractor extractor) throws SAXException, IOException {
@@ -360,14 +361,14 @@ public class ThreemaParser extends SQLite3DBParser {
             if (m.isFromMe()) {
                 meta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, local);
                 if (c.isGroupChat()) {
-                    fillGroupRecipients(meta, c, local);
+                    fillGroupRecipients(meta, c);
                 } else {
                     meta.add(org.apache.tika.metadata.Message.MESSAGE_TO, remote);
                 }
             } else {
                 meta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, remote);
                 if (c.isGroupChat()) {
-                    fillGroupRecipients(meta, c, remote);
+                    fillGroupRecipients(meta, c);
                 } else {
                     meta.add(org.apache.tika.metadata.Message.MESSAGE_TO, local);
                 }

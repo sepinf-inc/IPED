@@ -20,6 +20,7 @@ package iped.app.ui;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.RandomAccessFile;
@@ -207,7 +208,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
         }
 
         @Override
-        protected synchronized void afterRead(final int n) {
+        protected synchronized void afterRead(final int n) throws IOException {
             super.afterRead(n);
             progressMonitor.setProgress(this.getByteCount());
         }

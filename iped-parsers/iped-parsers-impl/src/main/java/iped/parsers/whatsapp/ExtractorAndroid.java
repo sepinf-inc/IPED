@@ -61,6 +61,7 @@ import iped.parsers.sqlite.SQLiteUndelete;
 import iped.parsers.sqlite.SQLiteUndeleteTable;
 import iped.parsers.sqlite.SQLiteUndeleteTableResultSetAdapter;
 import iped.parsers.whatsapp.Message.MessageStatus;
+import iped.parsers.whatsapp.Message.MessageQuotedType;
 
 /**
  *
@@ -426,7 +427,7 @@ public class ExtractorAndroid extends Extractor {
                 }
             }
     
-            Collections.sort(messages);
+            Message.sort(messages);
         }
 
         //Find quote messages
@@ -436,9 +437,10 @@ public class ExtractorAndroid extends Extractor {
             if (m != null){// Has quote
                 Message original = messagesMapUuid.get(mq.getUuid());//Try to find orginal message in messages
                 if (original != null){// has found original message reference, more complete
+                    original.setMessageQuotedType(MessageQuotedType.QUOTE_FOUND);
                     m.setMessageQuote(original);
                 }else{// not found original message reference, get info from message_quotes table, less complete
-                    mq.setDeleted(true);
+                    mq.setMessageQuotedType(MessageQuotedType.QUOTE_NOT_FOUND);
                     mq.setId(fakeIds--);
                     m.setMessageQuote(mq);
                 }

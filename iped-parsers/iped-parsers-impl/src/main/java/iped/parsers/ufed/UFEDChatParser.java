@@ -6,7 +6,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -15,6 +14,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
@@ -32,7 +32,9 @@ import com.google.common.collect.ImmutableMap;
 
 import iped.data.IItemReader;
 import iped.parsers.standard.StandardParser;
+import iped.parsers.util.Messages;
 import iped.parsers.whatsapp.Message;
+import iped.parsers.whatsapp.WAContact;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
@@ -41,14 +43,11 @@ import iped.utils.DateUtil;
 
 public class UFEDChatParser extends AbstractParser {
 
-    /**
-     * 
-     */
     private static final long serialVersionUID = 1L;
 
-    public static final MediaType UFED_CHAT_MIME = MediaType.application("x-ufed-chat"); //$NON-NLS-1$
-    public static final MediaType UFED_CHAT_WA_MIME = MediaType.application("x-ufed-chat-whatsapp"); //$NON-NLS-1$
-    public static final MediaType UFED_CHAT_TELEGRAM = MediaType.application("x-ufed-chat-telegram"); //$NON-NLS-1$
+    public static final MediaType UFED_CHAT_MIME = MediaType.application("x-ufed-chat");
+    public static final MediaType UFED_CHAT_WA_MIME = MediaType.application("x-ufed-chat-whatsapp");
+    public static final MediaType UFED_CHAT_TELEGRAM = MediaType.application("x-ufed-chat-telegram");
 
     public static final MediaType UFED_CHAT_PREVIEW_MIME = MediaType.application("x-ufed-chat-preview");
 
@@ -59,11 +58,27 @@ public class UFEDChatParser extends AbstractParser {
             MediaType.application("x-ufed-chat-preview-facebook"), "instagram",
             MediaType.application("x-ufed-chat-preview-instagram"));
 
-    public static final String META_PHONE_OWNER = ExtraProperties.UFED_META_PREFIX + "phoneOwner"; //$NON-NLS-1$
-    public static final String META_FROM_OWNER = ExtraProperties.UFED_META_PREFIX + "fromOwner"; //$NON-NLS-1$
-    public static final String CHILD_MSG_IDS = ExtraProperties.UFED_META_PREFIX + "msgChildIds"; //$NON-NLS-1$
+    public static final String META_PHONE_OWNER = ExtraProperties.UFED_META_PREFIX + "phoneOwner";
+    public static final String META_FROM_OWNER = ExtraProperties.UFED_META_PREFIX + "fromOwner";
+    public static final String CHILD_MSG_IDS = ExtraProperties.UFED_META_PREFIX + "msgChildIds";
 
     public static final String ATTACHED_MEDIA_MSG = "ATTACHED_MEDIA: ";
+
+    protected static final String WHATSAPP = "WhatsApp";
+    protected static final String WHATSAPP_BUSINESS = "WhatsApp Business";
+    protected static final String TELEGRAM = "Telegram";
+
+    // Types used by UFED
+    protected static final String CHATTYPE_ONEONONE = "OneOnOne";
+    protected static final String CHATTYPE_GROUP = "Group";
+    protected static final String CHATTYPE_BROADCAST = "Broadcast";
+    protected static final String CHATTYPE_UNKNOWN = "Unknown";
+
+    // Strings used in item names and titles
+    protected static final String CHATTYPE_GROUP_TITLE = Messages.getString("UFEDChatParser.Group");
+    protected static final String CHATTYPE_BROADCAST_TITLE = Messages.getString("UFEDChatParser.Broadcast");
+    protected static final String CHATTYPE_STATUS_TITLE = Messages.getString("UFEDChatParser.Status");
+    protected static final String CHATTYPE_UNKNOWN_TITLE = Messages.getString("UFEDChatParser.Unknown");
 
     private int minChatSplitSize = 6000000;
 
@@ -109,7 +124,7 @@ public class UFEDChatParser extends AbstractParser {
             if (chat == null || searcher == null)
                 return;
 
-            String query = BasicProps.PARENTID + ":" + chat.getId(); //$NON-NLS-1$
+            String query = BasicProps.PARENTID + ":" + chat.getId();
 
             List<UfedMessage> messages = new ArrayList<>();
 
@@ -117,7 +132,7 @@ public class UFEDChatParser extends AbstractParser {
                 Iterator<IItemReader> subItems = null;
                 String[] attachRefs = msg.getMetadata().getValues(ExtraProperties.LINKED_ITEMS);
                 if (attachRefs.length > 0) {
-                    String attachQuery = Arrays.asList(attachRefs).stream().collect(Collectors.joining(" ")); //$NON-NLS-1$
+                    String attachQuery = Arrays.asList(attachRefs).stream().collect(Collectors.joining(" "));
                     subItems = searcher.searchIterable(attachQuery).iterator();
                 } else if (msg.hasChildren()) {
                     String contactQuery = BasicProps.PARENTID + ":" + msg.getId() + " && " + BasicProps.CONTENTTYPE
@@ -139,10 +154,10 @@ public class UFEDChatParser extends AbstractParser {
                 }
             }
 
-            Collections.sort(messages, new MessageComparator());
+            Collections.sort(messages);
 
             if (extractor.shouldParseEmbedded(metadata)) {
-                ReportGenerator reportGenerator = new ReportGenerator(searcher);
+                ReportGenerator reportGenerator = new ReportGenerator();
                 reportGenerator.setMinChatSplitSize(this.minChatSplitSize);
                 byte[] bytes = reportGenerator.generateNextChatHtml(chat, messages);
                 int frag = 0;
@@ -167,9 +182,9 @@ public class UFEDChatParser extends AbstractParser {
                     }
 
                     String chatName = getChatName(chat);
-                    
+
                     if (frag > 0 || nextBytes != null)
-                        chatName += "_" + frag++; //$NON-NLS-1$
+                        chatName += "_" + frag++;
                     chatMetadata.set(TikaCoreProperties.TITLE, chatName);
                     chatMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, previewMime.toString());
                     chatMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
@@ -221,8 +236,8 @@ public class UFEDChatParser extends AbstractParser {
             }
             m.setMediaName(attach.getName());
             m.setMediaTrueExt(attach.getType());
-            m.setMediaUrl(getMetaFromAttachOrMsg(ExtraProperties.UFED_META_PREFIX + "URL", msg, attach)); //$NON-NLS-1$
-            m.setMediaCaption(getMetaFromAttachOrMsg(ExtraProperties.UFED_META_PREFIX + "Title", msg, attach)); //$NON-NLS-1$
+            m.setMediaUrl(getMetaFromAttachOrMsg(ExtraProperties.UFED_META_PREFIX + "URL", msg, attach));
+            m.setMediaCaption(getMetaFromAttachOrMsg(ExtraProperties.UFED_META_PREFIX + "Title", msg, attach));
             m.setThumbData(attach.getThumb());
             m.setTranscription(attach.getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR));
             m.setTranscriptConfidence(attach.getMetadata().get(ExtraProperties.CONFIDENCE_ATTR));
@@ -233,7 +248,7 @@ public class UFEDChatParser extends AbstractParser {
             if (attach.getMediaType() != null && !attach.getMediaType().equals(MediaType.OCTET_STREAM))
                 m.setMediaMime(attach.getMediaType().toString());
             else
-                m.setMediaMime(getMetaFromAttachOrMsg(ExtraProperties.UFED_META_PREFIX + "ContentType", msg, attach)); //$NON-NLS-1$
+                m.setMediaMime(getMetaFromAttachOrMsg(ExtraProperties.UFED_META_PREFIX + "ContentType", msg, attach));
         }
         return m;
     }
@@ -247,19 +262,105 @@ public class UFEDChatParser extends AbstractParser {
     }
 
     public static String getChatName(IItemReader item) {
-        String name = "Chat"; //$NON-NLS-1$
-        String source = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source"); //$NON-NLS-1$
-        if (source != null)
-            name += "_" + source; //$NON-NLS-1$
-        String[] parties = item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants"); //$NON-NLS-1$
-        if (parties != null && parties.length > 2) {
-            name += "_Group_" + item.getName().split("_")[1]; //$NON-NLS-1$ //$NON-NLS-2$
-        } else if (parties != null && parties.length > 0) {
-            name += "_" + parties[0]; //$NON-NLS-1$
-            if (parties.length > 1)
-                name += "_" + parties[1]; //$NON-NLS-1$
+        String name = "Chat";
+        String source = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source");
+        String account = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Account");
+        String phoneOwner = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "phoneOwner");
+        String idProperty = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "id");
+        String nameProperty = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name");
+        String chatType = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "ChatType");
+        String[] parties = item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants");
+
+        if (source != null) {
+            name += "_" + source;
         }
+
+        if (account != null) {
+            name += "_" + clean(account);
+        } else if (phoneOwner != null) {
+            name += "_" + clean(phoneOwner);
+        }
+
+        if (chatType != null) {
+            if (chatType.equals(CHATTYPE_ONEONONE)) {
+                if (parties != null) {
+                    name += "_" + clean(
+                            ((parties.length > 1) && (parties[0].equals(phoneOwner)) ? parties[1] : parties[0]));
+                } else {
+                    name += "_" + idProperty;
+                }
+
+            } else if (chatType.equals(CHATTYPE_GROUP)) {
+                name += "_" + CHATTYPE_GROUP_TITLE + "_" + (nameProperty != null ? nameProperty : idProperty);
+
+            } else if (chatType.equals(CHATTYPE_BROADCAST)) {
+                if (parties != null) {
+                    if ((parties.length == 1) && ((source != null) && (source.equals(WHATSAPP)
+                            || source.equals(WHATSAPP_BUSINESS) || source.equals(TELEGRAM)))) {
+                        // "Status" chat type (known from behaviour)
+                        // NOTE: Apps with this behaviour should be added to this if condition
+                        name += "_" + CHATTYPE_STATUS_TITLE + "_" + clean(parties[0]);
+                    } else {
+                        name += "_" + CHATTYPE_BROADCAST_TITLE + "_"
+                                + (nameProperty != null ? nameProperty : idProperty);
+                    }
+                } else {
+                    name += "_" + CHATTYPE_BROADCAST_TITLE + "_" + (nameProperty != null ? nameProperty : idProperty);
+                }
+
+            } else if (chatType.equals(CHATTYPE_UNKNOWN)) {
+                if ((source != null)
+                        && (source.equals(WHATSAPP) || source.equals(WHATSAPP_BUSINESS) || source.equals(TELEGRAM))) {
+                    // "Unknown" chat type regarding apps for which there are specific chat types
+                    // NOTE: Apps with similar behavior should be added to this if condition
+                    name += "_" + CHATTYPE_UNKNOWN_TITLE + "_" + idProperty;
+
+                } else {
+                    // "Unknown" chat type regarding apps for which there aren't specific chat types
+                    // Communication type is derived from the number of participants
+                    if ((parties != null) && (parties.length > 0)) {
+                        if (parties.length > 2) {
+                            name += "_" + CHATTYPE_GROUP_TITLE + "_" + idProperty;
+                        } else {
+                            name += "_" + clean(
+                                    (parties.length > 1) && (parties[0].equals(phoneOwner)) ? parties[1] : parties[0]);
+                        }
+                    } else {
+                        name += "_" + CHATTYPE_UNKNOWN_TITLE + "_" + idProperty;
+                    }
+                }
+
+            } else {
+                name += "_" + chatType + "_" + idProperty;
+            }
+
+        } else {
+            name += "_" + idProperty;
+        }
+
         return name;
+    }
+
+    private static String clean(String s) {
+        if (s != null) {
+            s = s.trim();
+            if (s.endsWith(")")) {
+                int p = s.indexOf("(");
+                if (p > 0) {
+                    int cnt = 0;
+                    for (int i = p + 1; i < s.length() - 1; i++) {
+                        if (Character.isDigit(s.charAt(i))) {
+                            cnt++;
+                        }
+                    }
+                    if (cnt >= 5) {
+                        s = s.substring(0, p);
+                    }
+                }
+            }
+            s = StringUtils.remove(s, WAContact.waSuffix);
+        }
+        return s;
     }
 
     private void storeMsgIds(List<UfedMessage> messages, Metadata metadata) {
@@ -277,22 +378,4 @@ public class UFEDChatParser extends AbstractParser {
             }
         }
     }
-
-    private class MessageComparator implements Comparator<Message> {
-
-        @Override
-        public int compare(Message o1, Message o2) {
-            if (o1.getTimeStamp() == null) {
-                if (o2.getTimeStamp() == null)
-                    return 0;
-                else
-                    return -1;
-            } else if (o2.getTimeStamp() == null)
-                return 1;
-            else
-                return o1.getTimeStamp().compareTo(o2.getTimeStamp());
-        }
-
-    }
-
 }
