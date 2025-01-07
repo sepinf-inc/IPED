@@ -877,7 +877,10 @@ public class ExtractorAndroidNew extends Extractor {
                     case 118:
                         result = PINNED_MESSAGE;
                         break;
+                    case 121:
+                    case 123:
                     case 124:
+                    case 131:
                         result = COMMUNITY_WELCOME;
                         break;
                     case 129:
