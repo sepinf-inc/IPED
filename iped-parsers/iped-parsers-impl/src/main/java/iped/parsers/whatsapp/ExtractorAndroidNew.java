@@ -13,6 +13,7 @@ import static iped.parsers.whatsapp.Message.MessageType.CHANGED_NUMBER_TO;
 import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_ADDED_PRIVACY;
 import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_CREATED;
 import static iped.parsers.whatsapp.Message.MessageType.CHAT_ADDED_PRIVACY;
+import static iped.parsers.whatsapp.Message.MessageType.CHAT_STARTED_FROM_AD;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_MANAGEMENT_ACTION;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_RENAMED;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_WELCOME;
@@ -913,6 +914,9 @@ public class ExtractorAndroidNew extends Extractor {
                         break;
                     case 155:
                         result = AI_THIRD_PARTY;
+                        break;
+                    case 158:
+                        result = CHAT_STARTED_FROM_AD;
                         break;
                     default:
                         break;

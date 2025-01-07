@@ -281,6 +281,10 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.AIThirdParty"));
                 break;
+            case CHAT_STARTED_FROM_AD:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.ChatStartedFromAd"));
+                break;
             case ENCRYPTION_KEY_CHANGED:
                 out.println("<div class=\"systemmessage\">");
                 out.print(lockedIcon);
