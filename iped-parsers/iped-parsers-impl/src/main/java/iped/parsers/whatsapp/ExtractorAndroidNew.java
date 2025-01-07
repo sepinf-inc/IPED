@@ -891,8 +891,8 @@ public class ExtractorAndroidNew extends Extractor {
                     case 120:
                         result = USER_REQUEST_TO_ADD_TO_GROUP;
                         break;
-                    case 121:
                     case 123:
+                    case 124:
                     case 125:
                     case 131:
                         result = COMMUNITY_WELCOME;
