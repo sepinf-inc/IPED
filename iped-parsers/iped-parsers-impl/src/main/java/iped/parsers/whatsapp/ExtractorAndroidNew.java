@@ -31,6 +31,7 @@ import static iped.parsers.whatsapp.Message.MessageType.GIF_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_ADDED_TO_COMMUNITY;
 import static iped.parsers.whatsapp.Message.MessageType.CONTACTED_FIND_BUSINESSES;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ADMIN_APPROVAL_OFF;
+import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_ADD;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_EDIT;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_SEND;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ONLY_ADMINS_CAN_ADD;
@@ -864,6 +865,9 @@ public class ExtractorAndroidNew extends Extractor {
                         break;
                     case 90:
                         result = USER_ADDED_TO_COMMUNITY;
+                        break;
+                    case 91:
+                        result = GROUP_CHANGED_ALL_MEMBERS_CAN_ADD;
                         break;
                     case 92:
                         result = GROUP_CHANGED_ONLY_ADMINS_CAN_ADD;
