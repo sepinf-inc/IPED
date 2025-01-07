@@ -893,7 +893,7 @@ public class ExtractorAndroidNew extends Extractor {
                         break;
                     case 121:
                     case 123:
-                    case 124:
+                    case 125:
                     case 131:
                         result = COMMUNITY_WELCOME;
                         break;
