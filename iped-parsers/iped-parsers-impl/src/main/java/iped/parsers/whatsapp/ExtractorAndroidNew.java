@@ -82,6 +82,7 @@ import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP_FROM_L
 import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_WHATSAPP;
 import static iped.parsers.whatsapp.Message.MessageType.USER_LEFT_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.USER_REMOVED_FROM_GROUP;
+import static iped.parsers.whatsapp.Message.MessageType.USER_REQUEST_TO_ADD_TO_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.VIDEO_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.VIEW_ONCE_AUDIO_MESSAGE;
@@ -495,7 +496,9 @@ public class ExtractorAndroidNew extends Extractor {
                 }
 
                 if (hasSystemChat
-                        && (m.getMessageType() == USER_ADDED_TO_COMMUNITY || m.getMessageType() == USER_ADDED_TO_GROUP
+                        && (m.getMessageType() == USER_ADDED_TO_COMMUNITY
+                                || m.getMessageType() == USER_ADDED_TO_GROUP
+                                || m.getMessageType() == USER_REQUEST_TO_ADD_TO_GROUP
                                 || m.getMessageType() == USER_COMMUNITY_ADMIN
                                 || m.getMessageType() == USER_REMOVED_FROM_GROUP
                                 || m.getMessageType() == USER_JOINED_GROUP_FROM_COMMUNITY
@@ -883,6 +886,9 @@ public class ExtractorAndroidNew extends Extractor {
                         break;
                     case 118:
                         result = PINNED_MESSAGE;
+                        break;
+                    case 120:
+                        result = USER_REQUEST_TO_ADD_TO_GROUP;
                         break;
                     case 121:
                     case 123:
