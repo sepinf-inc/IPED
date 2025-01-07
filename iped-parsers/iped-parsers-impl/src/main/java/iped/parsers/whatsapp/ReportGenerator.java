@@ -672,6 +672,11 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.ContactedFindBusinesses", name) + "<br>");
                 break;
+            case GROUP_CHANGED_ADMIN_APPROVAL_OFF:
+                out.println("<div class=\"systemmessage\">");
+                out.print(name + " ");
+                out.println(Messages.getString("WhatsAppReport.GroupChangedAdminApprovalOff") + "<br>");
+                break;
             case USER_ADMIN:
                 out.println("<div class=\"systemmessage\">");
                 out.print(name + " ");

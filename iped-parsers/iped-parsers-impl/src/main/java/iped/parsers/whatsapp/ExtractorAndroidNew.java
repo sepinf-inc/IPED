@@ -30,6 +30,7 @@ import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_SAVE;
 import static iped.parsers.whatsapp.Message.MessageType.GIF_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_ADDED_TO_COMMUNITY;
 import static iped.parsers.whatsapp.Message.MessageType.CONTACTED_FIND_BUSINESSES;
+import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ADMIN_APPROVAL_OFF;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_EDIT;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_SEND;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ONLY_ADMINS_CAN_ADD;
@@ -100,7 +101,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -108,7 +108,6 @@ import java.util.Map;
 
 import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.whatsapp.Message.MessageStatus;
-import iped.parsers.whatsapp.Message.MessageType;
 import iped.parsers.whatsapp.Message.MessageQuotedType;
 
 /**
@@ -853,6 +852,9 @@ public class ExtractorAndroidNew extends Extractor {
                     case 84:
                         result = NEW_PARTICIPANTS_NEED_ADMIN_APPROVAL;
                         break;
+                    case 85:
+                        result = GROUP_CHANGED_ADMIN_APPROVAL_OFF;
+                        break;
                     case 87:
                     case 88:
                     case 95:
@@ -905,7 +907,6 @@ public class ExtractorAndroidNew extends Extractor {
                     default:
                         break;
                 }
-
                 break;
             case 1:
                 result = IMAGE_MESSAGE;
