@@ -19,6 +19,7 @@ OLE files
 Georeferenced Files
 Peer-to-peer
 Chrome Cache
+Apple Configuration Files
 #Event Files
 
 # Generates registry reports:
