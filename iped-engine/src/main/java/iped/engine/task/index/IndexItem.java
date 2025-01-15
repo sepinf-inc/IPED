@@ -40,6 +40,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.BinaryDocValuesField;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.DoubleDocValuesField;
@@ -124,6 +125,8 @@ public class IndexItem extends BasicProps {
 
     static HashSet<String> ignoredMetadata = new HashSet<String>();
 
+    static HashSet<String> countMetadata = new HashSet<String>();
+
     private static Map<String, SeekableInputStreamFactory> inputStreamFactories = new HashMap<>();
 
     private static Map<String, Class<?>> typesMap = MetadataUtil.getMetadataTypes();
@@ -153,6 +156,9 @@ public class IndexItem extends BasicProps {
         ignoredMetadata.add("File Size"); //$NON-NLS-1$
         // ocrCharCount is already copied to an extra attribute
         ignoredMetadata.add(OCRParser.OCR_CHAR_COUNT);
+
+        countMetadata.add(ExtraProperties.CONVERSATION_PARTICIPANTS);
+        countMetadata.add(ExtraProperties.CONVERSATION_ADMINS);
 
         BasicProps.SET.add(ID_IN_SOURCE);
         BasicProps.SET.add(SOURCE_PATH);
@@ -676,6 +682,11 @@ public class IndexItem extends BasicProps {
                     addMetadataKeyToDoc(doc, key, val, isMultiValued, mimetype, timeEventSet);
             }
 
+            if (countMetadata.contains(key)) {
+                String newKey = key + ":count";
+                MetadataUtil.setMetadataType(newKey, Integer.class);
+                addExtraAttributeToDoc(doc, newKey, metadata.getValues(key).length, false, timeEventSet);
+            }
         }
     }
 
@@ -686,6 +697,11 @@ public class IndexItem extends BasicProps {
 
         if (type == null && MetadataUtil.isHtmlMediaType(mimetype) && !key.startsWith(ExtraProperties.UFED_META_PREFIX))
             return;
+
+        // don't add in report generation (it will be calculated again) 
+        if (key.endsWith(":count") && countMetadata.contains(StringUtils.substringBeforeLast(key, ":count"))) {
+            return;
+        }
 
         if (type == null) {
             try {

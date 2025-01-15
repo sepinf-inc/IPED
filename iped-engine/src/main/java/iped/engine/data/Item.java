@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 
 import iped.data.IHashValue;
 import iped.data.IItem;
+import iped.data.IItemReader;
 import iped.datasource.IDataSource;
 import iped.engine.core.Statistics;
 import iped.engine.io.ReferencedFile;
@@ -206,6 +207,8 @@ public class Item implements IItem {
     private byte[] data;
 
     private ISeekableInputStreamFactory inputStreamFactory;
+
+    private List<IItemReader> children;
 
     private static final int BUF_LEN = 8 * 1024 * 1024;
     
@@ -1315,5 +1318,24 @@ public class Item implements IItem {
 
     public void setTempAttribute(String key, Object value) {
         tempAttributes.put(key, value);
+    }
+
+    public void addChild(IItemReader child) {
+        if (children == null) {
+            children = new ArrayList<>();
+        }
+        children.add(child);
+    }
+
+    @Override
+    public List<IItemReader> getChildren() {
+        if (children == null) {
+            return null;
+        }
+        try {
+            return new ArrayList<>(children);
+        } finally {
+            children.clear();
+        }
     }
 }
