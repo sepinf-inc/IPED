@@ -308,12 +308,12 @@ public class ReportGenerator {
             out.println("<span class=\"name\">" + formatParty(name) + "</span><br/>");
 
         if (message.isForwarded()) {
-            String forwardedBy = "";
+            String forwardedFrom = "";
             String originalSender = message.getOriginalSender();
             if (isNotBlank(originalSender)) {
-                forwardedBy = Messages.getString("UFEDChatParser.Forwarded.By") + " " + originalSender;
+                forwardedFrom = Messages.getString("UFEDChatParser.Forwarded.From") + " " + originalSender;
             }
-            out.println("<img class=\"fwd\"><span class=\"fwd\"/>" + Messages.getString("UFEDChatParser.Forwarded") + " " + forwardedBy + "</span><br/>");
+            out.println("<img class=\"fwd\"><span class=\"fwd\"/>" + Messages.getString("UFEDChatParser.Forwarded") + " " + forwardedFrom + "</span><br/>");
         }
 
         if (message.isQuoted()) {
