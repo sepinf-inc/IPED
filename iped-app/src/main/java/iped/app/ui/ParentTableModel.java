@@ -30,7 +30,10 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
+import iped.data.IItem;
+import iped.engine.task.index.IndexItem;
 import iped.properties.BasicProps;
+import iped.properties.ExtraProperties;
 
 
 public class ParentTableModel extends BaseTableModel {
