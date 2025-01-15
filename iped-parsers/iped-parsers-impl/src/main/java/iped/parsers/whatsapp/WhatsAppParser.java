@@ -285,6 +285,9 @@ public class WhatsAppParser extends SQLite3DBParser {
         int chatVirtualId = 0;
         HashMap<String, String> cache = new HashMap<>();
         for (Chat c : chatList) {
+            // sort messages before generating the report
+            Message.sort(c.getMessages());
+
             getAvatar(searcher, c.getRemote());
             searchMediaFilesForMessagesInBatches(c.getMessages(), searcher, handler, extractor, dbPath, context, null);
             int frag = 0;
@@ -339,6 +342,14 @@ public class WhatsAppParser extends SQLite3DBParser {
                     if (c.getRemote() != null) {
                         chatMetadata.add(ExtraProperties.PARTICIPANTS, formatContact(c.getRemote(), cache));
                     }
+                }
+
+                // Set created and modified dates based on the first and last messages dates
+                if (!msgSubset.isEmpty()) {
+                    Message first = msgSubset.get(0);
+                    chatMetadata.set(TikaCoreProperties.CREATED, first.getTimeStamp());
+                    Message last = msgSubset.get(msgSubset.size() - 1);
+                    chatMetadata.set(TikaCoreProperties.MODIFIED, last.getTimeStamp());
                 }
 
                 ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
@@ -733,11 +744,6 @@ public class WhatsAppParser extends SQLite3DBParser {
             if (!wcontext.isMainDB() && !wcontext.isBackup()) {
                 // if this is a "backup" but its main db was not found
                 logger.info("Creating separate report for {}", DB.getPath()); //$NON-NLS-1$
-            }
-
-            // sort messages
-            for (Chat chat : dbChatList) {
-                Message.sort(chat.getMessages());
             }
 
             // create report for main dbs and backups which main db was not found
