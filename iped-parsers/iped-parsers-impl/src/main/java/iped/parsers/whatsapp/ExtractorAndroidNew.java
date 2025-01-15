@@ -147,7 +147,7 @@ public class ExtractorAndroidNew extends Extractor {
                 extractCalls(conn, idToChat);
 
                 for (Chat c : list) {
-                    Collections.sort(c.getMessages());
+                    Message.sort(c.getMessages());
                     if (c.isGroupChat()) {
                         setGroupMembers(c, conn, ExtractorAndroid.SELECT_GROUP_MEMBERS_2);
                     }

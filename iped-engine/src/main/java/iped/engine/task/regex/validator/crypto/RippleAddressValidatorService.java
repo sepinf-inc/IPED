@@ -1,4 +1,4 @@
-package iped.engine.task.regex.validator.cripto;
+package iped.engine.task.regex.validator.crypto;
 
 import java.io.File;
 import java.util.Arrays;
@@ -17,7 +17,7 @@ public class RippleAddressValidatorService extends BasicAbstractRegexValidatorSe
 
     @Override
     public List<String> getRegexNames() {
-        return Arrays.asList("CRIPTOCOIN_RIPPLE");
+        return Arrays.asList("CRYPTOCOIN_RIPPLE");
     }
 
     @Override

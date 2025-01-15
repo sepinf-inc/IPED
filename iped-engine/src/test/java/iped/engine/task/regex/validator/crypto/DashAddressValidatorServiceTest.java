@@ -1,9 +1,11 @@
-package iped.engine.task.regex.validator.cripto;
+package iped.engine.task.regex.validator.crypto;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
+
+import iped.engine.task.regex.validator.crypto.DashAddressValidatorService;
 
 public class DashAddressValidatorServiceTest {
 

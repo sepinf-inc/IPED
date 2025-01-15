@@ -76,6 +76,7 @@ public class TorrentFileParser extends AbstractParser {
     private static final int maxHitsCheck = 64;
     private static final int minPiecesMultiFile = 8;
     
+    // Length of valid hex-encoded hashes
     private static final int md5Len = 32;
     private static final int sha1Len = 40;
     private static final int edonkeyLen = 32;
@@ -389,6 +390,19 @@ public class TorrentFileParser extends AbstractParser {
         String s = dict.getString(key).trim();
         if (s.length() > 0 && s.length() != len) {
             s = dict.getHexEncodedBytes(key);
+            if (s.length() != len) {
+                // Discard if hex-encoded string length does not match the expected length
+                s = "";
+            }
+        } else {
+            for (int i = 0; i < s.length(); i++) {
+                char c = s.charAt(i);
+                if ((c < '0' || c > '9') && (c < 'a' || c > 'f') && (c < 'A' || c > 'F')) {
+                    // Discard if string has any non hexadecimal character
+                    s = "";
+                    break;
+                }
+            }
         }
         return s;
     }

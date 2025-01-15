@@ -286,6 +286,9 @@ public class WhatsAppParser extends SQLite3DBParser {
         int chatVirtualId = 0;
         HashMap<String, String> cache = new HashMap<>();
         for (Chat c : chatList) {
+            // sort messages before generating the report
+            Message.sort(c.getMessages());
+
             getAvatar(searcher, c.getRemote());
             searchMediaFilesForMessagesInBatches(c.getMessages(), searcher, handler, extractor, dbPath, context, null);
             int frag = 0;
@@ -356,6 +359,14 @@ public class WhatsAppParser extends SQLite3DBParser {
 
                 if (c.isOwnerAdmin()) {
                     chatMetadata.set(ExtraProperties.CONVERSATION_IS_ADMIN, true);
+                }
+
+                // Set created and modified dates based on the first and last messages dates
+                if (!msgSubset.isEmpty()) {
+                    Message first = msgSubset.get(0);
+                    chatMetadata.set(TikaCoreProperties.CREATED, first.getTimeStamp());
+                    Message last = msgSubset.get(msgSubset.size() - 1);
+                    chatMetadata.set(TikaCoreProperties.MODIFIED, last.getTimeStamp());
                 }
 
                 ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);

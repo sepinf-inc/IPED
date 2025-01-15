@@ -23,20 +23,15 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.swing.ListSelectionModel;
-import javax.swing.SwingUtilities;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermInSetQuery;
-import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.BytesRef;
 
-import iped.engine.search.IPEDSearcher;
-import iped.engine.search.LuceneSearchResult;
-import iped.engine.search.MultiSearchResult;
 import iped.engine.search.QueryBuilder;
 import iped.engine.task.HashTask;
 import iped.exception.ParseException;
@@ -51,6 +46,10 @@ public class ReferencingTableModel extends BaseTableModel {
 
     private static final long serialVersionUID = 1L;
 
+    public ReferencingTableModel() {
+        cleanBeforeListItems = true;
+    }
+
     @Override
     public void valueChanged(ListSelectionModel lsm) {
         int id = results.getLuceneIds()[selectedIndex];
@@ -60,12 +59,7 @@ public class ReferencingTableModel extends BaseTableModel {
     }
 
     @Override
-    protected void internalListItems(Document doc) {
-
-        // clear table, searching for refs can take some time if they are thousands
-        results = new LuceneSearchResult(0);
-        fireTableDataChanged();
-
+    public Query createQuery(Document doc) {
         BooleanQuery.Builder queryBuilder = new BooleanQuery.Builder();
 
         // linkedItems queries
@@ -101,44 +95,11 @@ public class ReferencingTableModel extends BaseTableModel {
             queryBuilder.add(new TermInSetQuery(field, hashes), Occur.SHOULD);
         }
 
-        // ufed:jumptargets
-        String[] ufedJumpTargets = doc.getValues(ExtraProperties.UFED_JUMP_TARGETS);
-        if (ufedJumpTargets.length > 0) {
-            Set<BytesRef> targets = Arrays.asList(ufedJumpTargets).stream().filter(StringUtils::isNotBlank)
-                    .map(h -> new BytesRef(h)).collect(Collectors.toSet());
-            queryBuilder.add(new TermInSetQuery(ExtraProperties.UFED_ID, targets), Occur.SHOULD);
-        }
+        return queryBuilder.build();
+    }
 
-        // ufed:file_id (needed? alrealdy contained in linkedItems)
-        String ufedFileId = doc.get(ExtraProperties.UFED_FILE_ID);
-        if (ufedFileId != null) {
-            queryBuilder.add(new TermQuery(new Term(ExtraProperties.UFED_ID, ufedFileId)), Occur.SHOULD);
-        }
-
-        BooleanQuery query = queryBuilder.build();
-
-        if (!query.clauses().isEmpty()) {
-            try {
-                IPEDSearcher task = new IPEDSearcher(App.get().appCase, query, BasicProps.NAME);
-                task.setRewritequery(false);
-                results = MultiSearchResult.get(task.multiSearch(), App.get().appCase);
-
-                final int length = results.getLength();
-
-                if (length > 0) {
-                    SwingUtilities.invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            App.get().referencesDock
-                                    .setTitleText(Messages.getString("ReferencesTab.Title") + " " + length);
-                        }
-                    });
-                }
-            } catch (Exception e) {
-                results = new LuceneSearchResult(0);
-                e.printStackTrace();
-            }
-            fireTableDataChanged();
-        }
+    @Override
+    public void onListItemsResultsComplete() {
+        App.get().referencesDock.setTitleText(Messages.getString("ReferencesTab.Title") + " " + results.getLength());
     }
 }
