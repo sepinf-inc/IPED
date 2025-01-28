@@ -29,7 +29,6 @@ import java.awt.Frame;
 import java.awt.Insets;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
-import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
@@ -39,7 +38,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
-import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -161,7 +159,6 @@ import iped.parsers.standard.StandardParser;
 import iped.search.IIPEDSearcher;
 import iped.search.IMultiSearchResult;
 import iped.utils.IconUtil;
-import iped.utils.ImageUtil;
 import iped.utils.UiUtil;
 import iped.viewers.ATextViewer;
 import iped.viewers.api.AbstractViewer;
@@ -183,7 +180,6 @@ import iped.viewers.api.ResultSetViewer;
 import iped.viewers.api.ResultSetViewerConfiguration;
 import iped.viewers.components.HitsTable;
 import iped.viewers.components.HitsTableModel;
-import iped.viewers.util.ImageMetadataUtil;
 
 public class App extends JFrame implements WindowListener, IMultiSearchResultProvider, GUIProvider {
     /**
@@ -1819,46 +1815,15 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             this.itemIdRef = itemIdRef;
             sfs = new SimilarFacesSearch(appCase, itemRef);
             if (itemRef != null) {
-                BufferedInputStream buff = null;
-                int orientation = 0;
-                try {
-                    buff = new BufferedInputStream(itemRef.getSeekableInputStream());
-                    orientation = ImageMetadataUtil.getOrientation(buff);
-
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
-                if (buff != null) {
-                    refName = itemRef.getName();
-                    List<String> location = sfs.getMatchLocations(itemRef, itemRef);
-                    String[] valuesStr = location.get(0).replace("[", "").replace("]", "").split(",");// first face only
+                refName = itemRef.getName();
+                if (itemRef.getThumb() != null) {
                     try {
-                        buff = new BufferedInputStream(itemRef.getSeekableInputStream());
-                        img = ImageIO.read(buff);
-                        if (orientation > 0) {
-                            img = ImageUtil.rotate(img, orientation);
-                        }
-
-                        int[] values = new int[valuesStr.length];
-                        for (int i = 0; i < valuesStr.length; i++) {
-                            values[i] = (int) Math.round(Integer.parseInt(valuesStr[i].trim()));
-                        }
-                        int top = values[0];
-                        int right = values[1];
-                        int bottom = values[2];
-                        int left = values[3];
-
-                        img = cropImage(img, new Rectangle(left, top, right - left, bottom - top));
+                        img = ImageIO.read(new ByteArrayInputStream(itemRef.getThumb()));
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
             }
-        }
-
-        private BufferedImage cropImage(BufferedImage src, Rectangle rect) {
-            BufferedImage dest = src.getSubimage(rect.x, rect.y, rect.width, rect.height);
-            return dest;
         }
 
         @Override
