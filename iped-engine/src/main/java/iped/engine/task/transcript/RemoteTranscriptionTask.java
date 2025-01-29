@@ -83,7 +83,14 @@ public class RemoteTranscriptionTask extends AbstractTranscriptTask {
 
         super.init(configurationManager);
 
-        if (!isEnabled()) {
+        this.setRemoteTask(true);
+        this.setRequeueHeuristic(transcriptConfig.getRequeueHeuristic());
+        this.setClientTranscriptHelp(transcriptConfig.getClientTranscriptHelp());        
+        this.setClassNameFallBack(transcriptConfig.getClassNameFallBack());
+        this.setRequeueRatio(transcriptConfig.getRequeueRatio());        
+        this.setRequeueDeltaTime(transcriptConfig.getRequeueDeltaTime()); 
+
+        if (!this.isEnabled()) {
             return;
         }
         
