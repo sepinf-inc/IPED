@@ -21,9 +21,10 @@ public class AppMapMarkerEventListener implements MarkerEventListener {
     @Override
     public void onClicked(String mid, MouseEvent e) {
         // procura pela posição correspondente na tabela do item clicado no mapa
-        mid = GetResultsKMLWorker.getBaseGID(mid);
+        String bmid = GetResultsKMLWorker.getBaseGID(mid);
+
         JTable t = mapaPanel.getResultsProvider().getResultsTable();
-        int pos = mapaPanel.getItemPositioninResultsTable(mid);
+        int pos = mapaPanel.getItemPositioninResultsTable(bmid);
         if (pos != -1) {
             boolean olddesabilitaTemp = mapViewer.desabilitaTemp;
             mapViewer.desabilitaTemp = true;
@@ -53,7 +54,9 @@ public class AppMapMarkerEventListener implements MarkerEventListener {
             }
             String jsonFeature = mapaPanel.getSelectedJSONFeature();
             if (jsonFeature != null) {
-                mapaPanel.browserCanvas.drawJSONFeature(jsonFeature);
+                mapaPanel.browserCanvas.drawJSONFeature(mid, jsonFeature);
+            } else {
+                mapaPanel.browserCanvas.drawJSONFeature(mid, "");
             }
 
             mapViewer.desabilitaTemp = olddesabilitaTemp;
