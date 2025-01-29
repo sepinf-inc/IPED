@@ -317,7 +317,7 @@ public class DiscordParser extends AbstractParser {
             meta.set(ExtraProperties.MESSAGE_DATE, d.getTimestamp());
             meta.set(ExtraProperties.MESSAGE_BODY, d.getMessageContent());
             meta.set(ExtraProperties.USER_NAME, d.getAuthor().getFullUsername());
-            meta.add(ExtraProperties.PARTICIPANTS, participants.toString());
+            meta.add(ExtraProperties.CONVERSATION_PARTICIPANTS, participants.toString());
             meta.set(ExtraProperties.PARENT_VIRTUAL_ID, Integer.toString(chatVirtualId));
             meta.set(ExtraProperties.PARENT_VIEW_POSITION, String.valueOf(d.getId()));
             meta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, d.getAuthor().getFullUsername());
@@ -334,7 +334,7 @@ public class DiscordParser extends AbstractParser {
                 }
             } else {
                 meta.set(org.apache.tika.metadata.Message.MESSAGE_TO, chatName);
-                meta.set(ExtraProperties.IS_GROUP_MESSAGE, "true");
+                meta.set(ExtraProperties.COMMUNICATION_IS_GROUP_MESSAGE, true);
             }
 
             for (DiscordAttachment da : d.getAttachments()) {

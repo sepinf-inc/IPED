@@ -78,7 +78,8 @@ public class ExtractorAndroid extends Extractor {
     private boolean hasMediaCaptionCol = false;
     private boolean hasSubjectCol = false;
     private boolean hasMediaDurationCol = false;
-    private boolean hasGroupParticiantsTable = true;
+    private boolean hasGroupParticipantsTable = true;
+    private boolean hasGroupParticipantUserTable = true;
     private boolean hasForwardedCol = false;
     private boolean hasQuoteCol = false;
     private SQLException parsingException = null;
@@ -148,7 +149,8 @@ public class ExtractorAndroid extends Extractor {
                     hasSortTimestamp = databaseHasSortTimestamp(conn);
                     hasChatView = databaseHasChatView(conn);
                     hasThumbTable = SQLite3DBParser.containsTable("message_thumbnails", conn); //$NON-NLS-1$
-                    hasGroupParticiantsTable = SQLite3DBParser.containsTable("group_participants", conn); //$NON-NLS-1$
+                    hasGroupParticipantsTable = SQLite3DBParser.containsTable("group_participants", conn); //$NON-NLS-1$
+                    hasGroupParticipantUserTable = SQLite3DBParser.containsTable("group_participant_user", conn); //$NON-NLS-1$
                     hasEditVersionCol = SQLite3DBParser.checkIfColumnExists(conn, "messages", "edit_version"); //$NON-NLS-1$ //$NON-NLS-2$
                     hasMediaCaptionCol = SQLite3DBParser.checkIfColumnExists(conn, "messages", "media_caption"); //$NON-NLS-1$ //$NON-NLS-2$
                     hasMediaDurationCol = SQLite3DBParser.checkIfColumnExists(conn, "messages", "media_duration"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -218,7 +220,9 @@ public class ExtractorAndroid extends Extractor {
                             undeletedMessagesTable, hasThumbTable, hasEditVersionCol, firstTry));
                     if (c.isGroupChat()) {
                         try {
-                            setGroupMembers(c, conn, hasGroupParticiantsTable ? SELECT_GROUP_MEMBERS : null);
+                            String query = hasGroupParticipantUserTable ? SELECT_GROUP_MEMBERS_2
+                                    : hasGroupParticipantsTable ? SELECT_GROUP_MEMBERS : null;
+                            setGroupMembers(c, conn, query);
                         } catch (SQLException ex) {
                             if (firstTry || !isSqliteCorruptException(ex)) {
                                 throw ex;
@@ -783,7 +787,10 @@ public class ExtractorAndroid extends Extractor {
             + "WHERE remoteId=? and status!=-1 ORDER BY timestamp"; //$NON-NLS-1$
 
     // to address a field must use ` instead of '
-    private static final String SELECT_GROUP_MEMBERS = "select gjid as 'group', jid as member FROM group_participants where `group`=?"; //$NON-NLS-1$
+    private static final String SELECT_GROUP_MEMBERS = "select gjid as 'group', jid as member, admin FROM group_participants where `group`=?"; //$NON-NLS-1$
+
+    static final String SELECT_GROUP_MEMBERS_2 = "select g._id as group_id, g.raw_string as group_name, u._id as user_id, u.raw_string as member, gp.rank > 0 as admin "
+            + "FROM group_participant_user gp inner join jid g on g._id=gp.group_jid_row_id inner join jid u on u._id=gp.user_jid_row_id where u.server='s.whatsapp.net' and u.type=0 and group_name=?"; //$NON-NLS-1$
 
     private static final String SELECT_QUOTES_NO_THUMBS_TABLE = "SELECT mq._id AS id, mq.key_remote_jid "
             + "as remoteId, mq.remote_resource AS remoteResource, mq.status, mq.data, "

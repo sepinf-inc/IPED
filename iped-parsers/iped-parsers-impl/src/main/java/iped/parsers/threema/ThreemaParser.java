@@ -281,16 +281,16 @@ public class ThreemaParser extends SQLite3DBParser {
                 }
                 if (account != null) {
                     String local = account.getFullId();
-                    chatMetadata.add(ExtraProperties.PARTICIPANTS, local);
+                    chatMetadata.add(ExtraProperties.CONVERSATION_PARTICIPANTS, local);
                 }
                 if (c.isGroupChat()) {
                     for (ThreemaContact member : c.getParticipants()) {
-                        chatMetadata.add(ExtraProperties.PARTICIPANTS, member.getFullId());
+                        chatMetadata.add(ExtraProperties.CONVERSATION_PARTICIPANTS, member.getFullId());
                     }
-                    chatMetadata.add(ExtraProperties.GROUP_ID, "Conversation_" + c.getId());
+                    chatMetadata.set(ExtraProperties.CONVERSATION_ID, Long.toString(c.getId()));
                 } else {
                     if (c.getContact() != null) {
-                        chatMetadata.add(ExtraProperties.PARTICIPANTS, c.getContact().getFullId());
+                        chatMetadata.add(ExtraProperties.CONVERSATION_PARTICIPANTS, c.getContact().getFullId());
                     }
                 }
 
@@ -338,7 +338,7 @@ public class ThreemaParser extends SQLite3DBParser {
         }
         to += " (id:" + c.getId() + ")";
         meta.add(org.apache.tika.metadata.Message.MESSAGE_TO, to);
-        meta.set(ExtraProperties.IS_GROUP_MESSAGE, "true");
+        meta.set(ExtraProperties.COMMUNICATION_IS_GROUP_MESSAGE, true);
     }
 
     private void extractMessages(String chatName, Chat c, List<Message> messages, ThreemaAccount account, int parentVirtualId, ContentHandler handler, EmbeddedDocumentExtractor extractor) throws SAXException, IOException {
