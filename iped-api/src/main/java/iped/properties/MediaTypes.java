@@ -34,6 +34,9 @@ public class MediaTypes {
     public static final MediaType VHDX = MediaType.application("x-vhdx"); //$NON-NLS-1$
     public static final MediaType VDI = MediaType.application("x-vdi"); //$NON-NLS-1$
     public static final MediaType MS_PUBLISHER = MediaType.application("x-mspublisher"); //$NON-NLS-1$
+    public static final MediaType HIKVISIONFS = MediaType.application("hikvisionfs"); //$NON-NLS-1$    
+    public static final MediaType WFS = MediaType.application("wfs"); //$NON-NLS-1$    
+    public static final MediaType DHFS = MediaType.application("dhfs"); //$NON-NLS-1$    
 
     public static final String UFED_MIME_PREFIX = "x-ufed-"; //$NON-NLS-1$
 
