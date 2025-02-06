@@ -1622,6 +1622,7 @@
         <magic priority="60">
             <match value="0xFFF15040" type="string" offset="0"/>
         </magic>
+        <glob pattern="*.aac"/>
     </mime-type>
 
     <mime-type type="application/x-ofx-v1">
