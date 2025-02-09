@@ -1,0 +1,13 @@
+<?php
+$target = "192.168.1.0/24"; // Target network
+
+// Run Nmap scan
+echo "<h3>Running Nmap Scan...</h3>";
+exec("nmap -sV -O $target", $nmap_output);
+echo "<pre>" . implode("\n", $nmap_output) . "</pre>";
+
+// Run Nessus scan (assuming Nessus CLI is configured)
+echo "<h3>Running Nessus Scan...</h3>";
+exec("nessus-cli scan --target $target", $nessus_output);
+echo "<pre>" . implode("\n", $nessus_output) . "</pre>";
+?>
