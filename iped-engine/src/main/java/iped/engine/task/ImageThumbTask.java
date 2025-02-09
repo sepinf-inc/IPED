@@ -287,8 +287,13 @@ public class ImageThumbTask extends ThumbTask {
     }
 
     private void createImageThumb(IItem evidence, File thumbFile) {
-        long[] performanceStats = new long[numStats];
         try {
+            if (evidence.getLength() != null && evidence.getLength().longValue() == 0) {
+                // If evidence length is zero, don't even try to create a thumb 
+                saveThumb(evidence, thumbFile);
+                return;
+            }
+            long[] performanceStats = new long[numStats];
             BufferedImage img = null;
             if (imgThumbConfig.isExtractThumb() && isJpeg(evidence)) { // $NON-NLS-1$
                 long t = System.currentTimeMillis();
