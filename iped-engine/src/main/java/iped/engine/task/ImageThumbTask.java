@@ -39,7 +39,7 @@ import iped.viewers.util.ImageMetadataUtil;
 public class ImageThumbTask extends ThumbTask {
 
     public static final String THUMB_TIMEOUT = "thumbTimeout"; //$NON-NLS-1$
-    
+
     private static final int TIMEOUT_DELTA = 5;
 
     private static final int samplingRatio = 3;
@@ -90,7 +90,7 @@ public class ImageThumbTask extends ThumbTask {
                     System.setProperty(ExternalImageConverter.winToolPathPrefixProp,
                             Configuration.getInstance().appRoot);
                 }
-                
+
                 File tmpDir = new File(System.getProperty("java.io.tmpdir"), "ext-conv"); //$NON-NLS-1$ //$NON-NLS-2$
                 tmpDir.mkdirs();
                 System.setProperty(ExternalImageConverter.tmpDirProp, tmpDir.getAbsolutePath());
