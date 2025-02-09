@@ -25,7 +25,7 @@ public class ImageThumbTaskConfig extends AbstractTaskPropertiesConfig {
     private int lowResDensity = 96;
     private int highResDensity = 250;
     private int maxMPixelsInMemory = 32;
-    private int maxViewImageSize = 3000;
+    private int maxViewImageSize = 2400;
     private final Set<String> mimesToCreateView = new HashSet<String>();
 
     public boolean isEnableExternalConv() {
