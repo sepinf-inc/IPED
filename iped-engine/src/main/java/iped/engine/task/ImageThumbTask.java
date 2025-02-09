@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -28,6 +29,7 @@ import iped.data.IItem;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.ImageThumbTaskConfig;
+import iped.engine.util.Util;
 import iped.properties.MediaTypes;
 import iped.utils.ExternalImageConverter;
 import iped.utils.ImageUtil;
@@ -58,6 +60,8 @@ public class ImageThumbTask extends ThumbTask {
     private static final AtomicBoolean extConvPropInit = new AtomicBoolean(false);
 
     private int thumbSize;
+    private int maxViewImageSize;
+    private Set<String> mimesToCreateView;
 
     public ImageThumbTaskConfig getImageThumbConfig() {
         return imgThumbConfig;
@@ -98,6 +102,8 @@ public class ImageThumbTask extends ThumbTask {
 
         externalImageConverter = new ExternalImageConverter(executor);
         thumbSize = imgThumbConfig.getThumbSize();
+        maxViewImageSize = imgThumbConfig.getMaxViewImageSize();
+        mimesToCreateView = imgThumbConfig.getMimesToCreateView();
 
         synchronized (logInit) {
             if (isEnabled() && !logInit.get()) {
@@ -229,6 +235,10 @@ public class ImageThumbTask extends ThumbTask {
 
         File thumbFile = getThumbFile(evidence);
         if (hasThumb(evidence, thumbFile)) {
+            File viewFile = getViewFile(evidence, "jpg");
+            if (viewFile.exists()) {
+                evidence.setViewFile(viewFile);
+            }
             return;
         }
 
@@ -300,15 +310,44 @@ public class ImageThumbTask extends ThumbTask {
                 performanceStats[img == null ? 7 : 5] += System.currentTimeMillis() - t;
             }
             if (img == null) {
+                // External Conversion
                 long t = System.currentTimeMillis();
-                try (BufferedInputStream stream = evidence.getBufferedInputStream()) {
-                    img = externalImageConverter.getImage(stream, thumbSize, false, evidence.getLength(), true);
-                    if (img != null)
-                        evidence.setExtraAttribute("externalThumb", "true"); //$NON-NLS-1$ //$NON-NLS-2$
-                } catch (TimeoutException e) {
-                    stats.incTimeouts();
-                    evidence.setExtraAttribute(THUMB_TIMEOUT, "true"); //$NON-NLS-1$
-                    logger.warn("Timeout creating thumb: " + evidence); //$NON-NLS-1$
+
+                // Create a high resolution view
+                String mime = MediaTypes.getMimeTypeString(evidence);
+                if (mime != null && mimesToCreateView.contains(mime)) {
+                    try (BufferedInputStream stream = evidence.getBufferedInputStream()) {
+                        img = externalImageConverter.getImage(stream, maxViewImageSize, true, evidence.getLength(),
+                                true);
+                    } catch (TimeoutException e) {
+                        stats.incTimeouts();
+                        evidence.setExtraAttribute(THUMB_TIMEOUT, "true");
+                        logger.warn("Timeout creating view: " + evidence);
+                    }
+                    if (img != null) {
+                        // Store view
+                        File viewTmpFile = getViewFile(evidence, "tmp");
+                        viewTmpFile.getParentFile().mkdirs();
+                        ImageIO.write(img, "jpg", viewTmpFile);
+                        File viewFile = getViewFile(evidence, "jpg");
+                        viewTmpFile.renameTo(viewFile);
+                        evidence.setViewFile(viewFile);
+                    }
+                }
+
+                if (img == null) {
+                    // No view was created through external conversion
+                    try (BufferedInputStream stream = evidence.getBufferedInputStream()) {
+                        img = externalImageConverter.getImage(stream, thumbSize, false, evidence.getLength(), true);
+                    } catch (TimeoutException e) {
+                        stats.incTimeouts();
+                        evidence.setExtraAttribute(THUMB_TIMEOUT, "true");
+                        logger.warn("Timeout creating thumb: " + evidence);
+                    }
+                }
+
+                if (img != null) {
+                    evidence.setExtraAttribute("externalThumb", "true");
                 }
                 performanceStats[img == null ? 10 : 8]++;
                 performanceStats[img == null ? 11 : 9] += System.currentTimeMillis() - t;
@@ -370,5 +409,9 @@ public class ImageThumbTask extends ThumbTask {
         } finally {
             updateHasThumb(evidence);
         }
+    }
+
+    private File getViewFile(IItem evidence, String ext) {
+        return Util.getFileFromHash(new File(output, MakePreviewTask.viewFolder), evidence.getHash(), ext);
     }
 }

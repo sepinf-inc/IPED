@@ -1,5 +1,9 @@
 package iped.engine.config;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 import iped.utils.UTF8Properties;
 
 public class ImageThumbTaskConfig extends AbstractTaskPropertiesConfig {
@@ -24,6 +28,8 @@ public class ImageThumbTaskConfig extends AbstractTaskPropertiesConfig {
     private int lowResDensity = 96;
     private int highResDensity = 250;
     private int maxMPixelsInMemory = 32;
+    private int maxViewImageSize = 3000;
+    private final Set<String> mimesToCreateView = new HashSet<String>();
 
     public boolean isEnableExternalConv() {
         return enableExternalConv;
@@ -67,6 +73,14 @@ public class ImageThumbTaskConfig extends AbstractTaskPropertiesConfig {
 
     public int getMaxMPixelsInMemory() {
         return maxMPixelsInMemory;
+    }
+
+    public int getMaxViewImageSize() {
+        return maxViewImageSize;
+    }
+
+    public Set<String> getMimesToCreateView() {
+        return Collections.unmodifiableSet(mimesToCreateView);
     }
 
     @Override
@@ -141,6 +155,17 @@ public class ImageThumbTaskConfig extends AbstractTaskPropertiesConfig {
             maxMPixelsInMemory = Integer.valueOf(value.trim());
         }
 
-    }
+        value = properties.getProperty("mimesToCreateView");
+        if (value != null) {
+            String[] mimes = value.split(";");
+            for (String mime : mimes) {
+                mimesToCreateView.add(mime.trim());
+            }
+        }
 
+        value = properties.getProperty("maxViewImageSize");
+        if (value != null && !value.trim().isEmpty()) {
+            maxViewImageSize = Integer.valueOf(value.trim());
+        }
+    }
 }
