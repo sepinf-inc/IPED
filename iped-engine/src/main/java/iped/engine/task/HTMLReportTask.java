@@ -81,6 +81,11 @@ import iped.utils.IOUtil;
 import iped.utils.ImageUtil;
 import iped.utils.LocalizedFormat;
 import iped.viewers.util.ImageMetadataUtil;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.InputStream;
+import java.util.LinkedHashMap;
 
 /**
  * Tarefa de geração de relatório no formato HTML do itens selecionados, gerado
@@ -183,6 +188,13 @@ public class HTMLReportTask extends AbstractTask {
 
     private boolean extractThumb;
 
+    /* List of report generated list files*/
+    private static final List<String> arqsHmltList = new ArrayList<String>();
+    private static boolean bookmarkPDFSet = false;
+    private static boolean categoryPDFSet = false;
+    private static boolean bookmarkThumbPDFSet = false;
+    private static boolean categoryThumbPDFSet = false;    
+
     private static Collator getCollator() {
         LocaleConfig localeConfig = ConfigurationManager.get().findObject(LocaleConfig.class);
 
@@ -281,8 +293,8 @@ public class HTMLReportTask extends AbstractTask {
             String codePath = Configuration.getInstance().appRoot;
             String reportRootModel = "relatorio.htm"; //$NON-NLS-1$
             File templatesFolder = new File(new File(codePath), "htmlreport"); //$NON-NLS-1$
+            LocaleConfig localeConf = ConfigurationManager.get().findObject(LocaleConfig.class);
             if (!new File(templatesFolder, reportRootModel).exists()) {
-                LocaleConfig localeConf = ConfigurationManager.get().findObject(LocaleConfig.class);
                 templatesFolder = new File(new File(codePath), "htmlreport/" + localeConf.getLocale().toLanguageTag()); //$NON-NLS-1$
             }
 
@@ -316,8 +328,8 @@ public class HTMLReportTask extends AbstractTask {
             if (htmlReportConfig.isThumbsPageEnabled() && !imageThumbsByLabel.isEmpty()) {
                 createThumbsPage();
             }
-            processCaseInfo(new File(templatesFolder, "caseinformation.htm"), //$NON-NLS-1$
-                    new File(reportSubFolder, "caseinformation.htm")); //$NON-NLS-1$
+            File caseInformation = new File(reportSubFolder, "caseinformation.htm");
+            processCaseInfo(new File(templatesFolder, "caseinformation.htm"), caseInformation ); //$NON-NLS-1$
             processContents(new File(templatesFolder, "contents.htm"), new File(reportSubFolder, "contents.htm")); //$NON-NLS-1$ //$NON-NLS-2$
 
             File reportRootModelFile = new File(templatesFolder, reportRootModel);
@@ -325,17 +337,248 @@ public class HTMLReportTask extends AbstractTask {
                 reportRootModelFile = new File(templatesFolder, "report.htm"); //$NON-NLS-1$
             Files.copy(reportRootModelFile.toPath(), new File(reportSubFolder.getParentFile(), reportRoot).toPath());
 
-            File help = new File(templatesFolder, "ajuda.htm"); //$NON-NLS-1$
+            File helpFolder = new File(new File(codePath), "help"); //$NON-NLS-1$            
+            File help = new File(helpFolder, "Help_"+localeConf.getLocale().toLanguageTag()+".htm"); //$NON-NLS-1$
             if (help.exists())
                 copyFile(help, reportSubFolder);
 
             copyFiles(new File(templatesFolder, "res"), new File(reportSubFolder, "res")); //$NON-NLS-1$ //$NON-NLS-2$
+
+            boolean PDFReport = true;
+            if (PDFReport){
+                HTMLtoPDF(caseInformation, reportSubFolder.getParentFile(),templatesFolder,reportSubFolder,help);
+            }
 
             t = (System.currentTimeMillis() - t + 500) / 1000;
             logger.info("Report creation time (seconds): " + t); //$NON-NLS-1$
 
             externalImageConverter.close();
         }
+    }
+
+    public void HTMLtoPDF(File caseInformation, File outputFolder, File templatesFolder, File reportSubFolder, File help ) throws Exception {
+
+        String wkhtmltopdf = "wkhtmltopdf";
+
+        File pdf_cmds = File.createTempFile("pdf_cmds", ".tmp");
+        pdf_cmds.deleteOnExit();
+
+        File pdfTempOutput = File.createTempFile("report", ".pdf");
+        pdfTempOutput.deleteOnExit();
+
+        List<String> arguments = new ArrayList<String>();
+        arguments.add("--run-script");
+        arguments.add("\"var a=document.getElementsByClassName('delpdf');for (var j=0;j<a.length;j++){a[j].textContent='';}\"");
+        arguments.add("--enable-local-file-access");
+
+        arguments.add("--header-html");
+        arguments.add(getWKHtmlToPDFPath(new File(templatesFolder, "templates/header.html")));
+
+        arguments.add("--footer-html");
+        arguments.add(getWKHtmlToPDFPath(new File(templatesFolder, "templates/footer.html")));
+
+        arguments.add("cover");
+        arguments.add(getWKHtmlToPDFPath(caseInformation));
+
+        arguments.add("toc");
+        arguments.add("--xsl-style-sheet");
+        arguments.add(getWKHtmlToPDFPath(new File(templatesFolder, "templates/toc.xml")));
+
+        arguments.add("page");
+
+        Collections.sort(arqsHmltList);
+        arqsHmltList.forEach(System.out::println);
+
+        String stag = "<title>";
+        String etag = ":";
+        List<String> keywords = new ArrayList<String>();
+        keywords.add(Messages.getString("HTMLReportTask.Category"));
+        keywords.add(Messages.getString("HTMLReportTask.Bookmark"));
+        keywords.add(Messages.getString("HTMLReportTask.GalleryTitle"));
+
+        Map<String, List<String>> groupedFilesKeyword = groupFilesByKeywords(arqsHmltList, keywords, stag, etag );
+        
+        for (Map.Entry<String, List<String>> entry : groupedFilesKeyword.entrySet()) {
+            String baseName = entry.getKey();
+            List<String> groupFiles = entry.getValue();
+            
+
+            Path tempFilePath = Files.createTempFile(reportSubFolder.toPath(), baseName + "_merged_", ".html");    
+            File tempFile = tempFilePath.toFile();
+            //tempFile.deleteOnExit();
+           
+            mergeFiles(groupFiles, tempFile);
+
+            arguments.add(getWKHtmlToPDFPath(tempFile));
+
+        }
+       
+        if (help.exists())
+            arguments.add(getWKHtmlToPDFPath(help));
+        arguments.add(getWKHtmlToPDFPath(pdfTempOutput));
+        
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(pdf_cmds))) {
+            for (String s : arguments) {
+                bw.write(s);
+                bw.write(" ");
+            }
+        }
+
+        Process p = null;
+        Thread readThread = null;
+        try {
+
+            //For Debug only            
+            try (BufferedReader br = new BufferedReader(new FileReader(pdf_cmds))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    System.out.println(line);
+                }
+            }
+
+            String[] cmd = { wkhtmltopdf, "--read-args-from-stdin"};
+            System.out.println(Arrays.toString(cmd));
+            ProcessBuilder pb = new ProcessBuilder(cmd);
+            pb.redirectErrorStream(true);
+            pb.redirectInput(pdf_cmds);
+            StringBuilder outResult = new StringBuilder();
+
+            p = pb.start();
+
+            InputStream is = p.getInputStream();
+            byte[] data = new byte[64 * 1024];
+            BytesRead read = new BytesRead();
+            
+            readThread = readStream(is, data, read);
+           
+            while (true) {
+                synchronized (read) {
+                    while (read.value == null)
+                        read.wait();
+                    if (read.value == -1)
+                        break;
+                }
+
+                byte[] out = new byte[read.value];
+                System.arraycopy(data, 0, out, 0, read.value);
+
+                synchronized (read) {
+                    read.value = null;
+                    read.notify();
+                }
+                outResult.append(new String(out, StandardCharsets.UTF_8));
+
+                if (Thread.currentThread().isInterrupted())
+                    throw new InterruptedException();
+            }
+            
+
+            if (p.waitFor() != 0)
+                throw new Exception("Html export to pdf" + " terminated with error code " + p.exitValue() + "\n"+ outResult.toString()); //$NON-NLS-1$
+
+        } catch (InterruptedException e) {
+            throw new Exception(this.getClass().getSimpleName() + " interrupted", e); //$NON-NLS-1$
+
+        } finally {
+            if (p != null)
+                p.destroyForcibly();
+            if (readThread != null)
+                readThread.interrupt();
+
+            copyFile(pdfTempOutput,outputFolder,"report.pdf");
+
+        }
+
+    }
+
+    public String getWKHtmlToPDFPath(File file){
+
+        String path = file.getAbsolutePath();
+        path = path.replace("\\","/");
+
+        if (path.startsWith("//")){
+            path = "file://" + path;
+        }
+
+        return "\"" + path + "\"";
+
+    }
+
+    public static Map<String, List<String>> groupFilesByKeywords(List<String> filePaths, List<String> keywords, String stag, String etag) throws IOException {
+        
+        Map<String, List<String>> keywordGroups = new LinkedHashMap<>();
+
+        for (String filePath : filePaths) {			
+            File file = new File(filePath);
+			boolean found = false;
+            if (file.exists()) {
+				for (String keyword : keywords) {
+					try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+						String line;						
+						while ((line = reader.readLine()) != null) {
+							if (line.contains(stag+keyword+etag)) {
+								keywordGroups.computeIfAbsent(keyword, k -> new ArrayList<>()).add(filePath);
+								found = true;
+								break;
+							}
+						}
+					}
+					if (found){
+						break;
+					}
+				}
+            } 
+        }
+		keywordGroups.forEach((key, value) -> System.out.println(key + ":" + value));
+		return keywordGroups;
+    }
+
+    public static void mergeFiles(List<String> filePaths, File outputFile) throws IOException {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile))) {
+            for (String filePath : filePaths) {
+                File file = new File(filePath);
+                if (file.exists()) {
+                    try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            writer.write(line);
+                            writer.newLine();
+                        }
+                    }
+                } 
+            }
+        }
+    }
+
+    private Thread readStream(final InputStream stream, final byte[] out, final BytesRead read) {
+        Thread t = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    while (!Thread.interrupted()) {
+                        int i = stream.read(out);
+                        synchronized (read) {
+                            read.value = i;
+                            read.notify();
+                            if (read.value == -1)
+                                break;
+                            while (read.value != null)
+                                read.wait();
+                        }
+                    }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        t.start();
+
+        return t;
+    }
+
+    class BytesRead {
+        Integer value = null;
     }
 
     /**
@@ -447,6 +690,10 @@ public class HTMLReportTask extends AbstractTask {
 
     private void copyFile(File src, File targetFolder) throws IOException {
         Files.copy(src.toPath(), new File(targetFolder, src.getName()).toPath());
+    }
+
+    private void copyFile(File src, File targetFolder, String rename) throws IOException {
+        Files.copy(src.toPath(), new File(targetFolder, rename).toPath());
     }
 
     private void processCaseInfo(File src, File target) throws Exception {
@@ -749,8 +996,27 @@ public class HTMLReportTask extends AbstractTask {
             items.append(it);
         }
 
+        String pdfSection = "";
+        if (pag==1){
+            if (isLabel){
+                if (!bookmarkPDFSet){
+                    pdfSection = "<div style=\"overflow:hidden;width:1px;height:1px\"><h1>"+Messages.getString("HTMLReportTask.Bookmark")+"</h1><h2>"+name+"</h2></div>";
+                    bookmarkPDFSet = true;
+                }else{
+                    pdfSection = "<div style=\"overflow:hidden;width:1px;height:1px\"><h2>"+name+"</h2></div>";
+                }
+            }else{
+                if (!categoryPDFSet){
+                    pdfSection = "<div style=\"overflow:hidden;width:1px;height:1px\"><h1>"+Messages.getString("HTMLReportTask.Category")+"</h1><h2>"+name+"</h2></div>";
+                    categoryPDFSet = true;
+                }else{
+                    pdfSection = "<div style=\"overflow:hidden;width:1px;height:1px\"><h2>"+name+"</h2></div>";
+                }
+            }            
+        }
+
         StringBuilder p = new StringBuilder();
-        p.append("<table width=\"100%\">\n"); //$NON-NLS-1$
+        p.append("<table class=\"delpdf\" width=\"100%\">\n"); //$NON-NLS-1$
         p.append("<tr><td>" + Messages.getString("HTMLReportTask.Page") + " %PAG%" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 + Messages.getString("HTMLReportTask.of") + "%TOTPAG%</td>"); //$NON-NLS-1$ //$NON-NLS-2$
         replace(p, "%PAG%", String.valueOf(pag)); //$NON-NLS-1$
@@ -775,11 +1041,13 @@ public class HTMLReportTask extends AbstractTask {
                 : Messages.getString("HTMLReportTask.Category")) + ": " + name); //$NON-NLS-1$ //$NON-NLS-2$
         replace(sb, "%COMMENTS%", getComments(name)); //$NON-NLS-1$
         replace(sb, "%TOTALCOUNT%", String.valueOf(totRegs)); //$NON-NLS-1$
-        replace(sb, "%ITEMS%", items.toString()); //$NON-NLS-1$
+        replace(sb, "%ITEMS%", pdfSection+items.toString()); //$NON-NLS-1$
         replace(sb, "%PAGS%", p.toString()); //$NON-NLS-1$
 
         EncodedFile ef = new EncodedFile(sb, Charset.forName("utf-8"), arq); //$NON-NLS-1$
         ef.write();
+
+        arqsHmltList.add(arq.getAbsolutePath());
     }
 
     private String getComments(String bookmark) {
@@ -1001,7 +1269,7 @@ public class HTMLReportTask extends AbstractTask {
 
     private void addPageControl(int page, int np, StringBuilder sb) {
         StringBuilder sp = new StringBuilder();
-        sp.append("<table width=\"100%\"><tr><td>" + Messages.getString("HTMLReportTask.Page") + " ").append(page) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        sp.append("<table width=\"100%\" class=\"delpdf\"><tr><td>" + Messages.getString("HTMLReportTask.Page") + " ").append(page) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 .append(Messages.getString("HTMLReportTask.of")).append(np).append("</td>"); //$NON-NLS-1$ //$NON-NLS-2$
 
         if (page > 1) {
@@ -1029,22 +1297,30 @@ public class HTMLReportTask extends AbstractTask {
 
     private void addBookmarkTitle(StringBuilder sb, String bookmark, int size, boolean isLabel) {
         sb.append("<table width=\"100%\"><tr><th class=\"columnHead\" colspan=\"1\" style=\"font-size:16px\">"); //$NON-NLS-1$
-        if (isLabel) {
-            sb.append(Messages.getString("HTMLReportTask.Bookmark") + ": "); //$NON-NLS-1$ //$NON-NLS-2$
-        } else {
-            sb.append(Messages.getString("HTMLReportTask.Category") + ": "); //$NON-NLS-1$ //$NON-NLS-2$
+
+        String pdfSection = "";
+
+        if (!bookmarkThumbPDFSet){
+            pdfSection = "<div style=\"overflow:hidden;width:1px;height:1px\"><h1>"+
+            Messages.getString("HTMLReportTask.GalleryLink")+
+            "</h1><h2>"+Messages.getString("HTMLReportTask.Bookmark")+"</h2><h3>"+bookmark+"</h3></div>";
+            bookmarkThumbPDFSet = true;
+        }else{
+            pdfSection = "<div style=\"overflow:hidden;width:1px;height:1px\"><h3>"+bookmark+"</h3></div>";
         }
         sb.append(bookmark);
         sb.append("</th></tr><tr><td class=\"clrBkgrnd\"><span style=\"font-weight:bold\">" //$NON-NLS-1$
                 + Messages.getString("HTMLReportTask.FileCount") + ": </span>"); //$NON-NLS-1$ //$NON-NLS-2$
         sb.append(size);
         sb.append("</td></tr></table>"); //$NON-NLS-1$
+        sb.append(pdfSection);
+
     }
 
     private void writeThumbsPage(StringBuilder sb, File f) {
         String header = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><html xmlns=\"http://www.w3.org/1999/xhtml\"><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"/><link rel=\"stylesheet\" type=\"text/css\" href=\"res/common.css\"/><link rel=\"stylesheet\" type=\"text/css\" href=\"res/bookmarks.css\"/><title>" //$NON-NLS-1$
                 + Messages.getString("HTMLReportTask.GalleryTitle") //$NON-NLS-1$
-                + "</title><style>\n.thumb {width:auto; height:auto; max-width:112px; max-height:112px;}\n</style></head><body>\n<p><img border=\"0\" src=\"res/header.gif\"/>\n\n"; //$NON-NLS-1$
+                + ":</title><style>\n.thumb {width:auto; height:auto; max-width:112px; max-height:112px;}\n</style></head><body>\n<p><img border=\"0\" src=\"res/header.gif\"/>\n\n"; //$NON-NLS-1$
         sb.insert(0, header);
         sb.append("\n<p><img border=\"0\" src=\"res/header.gif\"/></p></body></html>"); //$NON-NLS-1$
         EncodedFile ef = new EncodedFile(sb, Charset.forName("UTF-8"), f); //$NON-NLS-1$
@@ -1053,6 +1329,7 @@ public class HTMLReportTask extends AbstractTask {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        arqsHmltList.add(f.getAbsolutePath());
     }
 
 }
