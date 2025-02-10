@@ -26,7 +26,7 @@ public class OutlookDBXParserTest extends AbstractPkgTest {
         ContentHandler handler = new BodyContentHandler();
         parser.getSupportedTypes(trackingContext);
 
-        try (InputStream stream = getStream("test-files/test_entryBox.dbx")) {
+        try (InputStream stream = getStream("test-files/test_OutlookDBX.dbx")) {
             parser.parse(stream, handler, metadata, trackingContext);
             assertEquals(368, tracker.subitemCount);
             assertEquals(368, tracker.itensmd5.size());
