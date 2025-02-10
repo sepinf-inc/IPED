@@ -193,7 +193,8 @@ public class HTMLReportTask extends AbstractTask {
     private static boolean bookmarkPDFSet = false;
     private static boolean categoryPDFSet = false;
     private static boolean bookmarkThumbPDFSet = false;
-    private static boolean categoryThumbPDFSet = false;    
+    private static boolean categoryThumbPDFSet = false;   
+    private boolean PDFReport = false; 
 
     private static Collator getCollator() {
         LocaleConfig localeConfig = ConfigurationManager.get().findObject(LocaleConfig.class);
@@ -261,6 +262,11 @@ public class HTMLReportTask extends AbstractTask {
                         throw new RuntimeException("Error loading case info file: " + infoFile.getAbsolutePath()); //$NON-NLS-1$
                     }
                 }
+
+                if (args.isPdfReport()) {
+                    PDFReport = true;
+                }
+
             }
             externalImageConverter = new ExternalImageConverter();
 
@@ -343,8 +349,7 @@ public class HTMLReportTask extends AbstractTask {
                 copyFile(help, reportSubFolder);
 
             copyFiles(new File(templatesFolder, "res"), new File(reportSubFolder, "res")); //$NON-NLS-1$ //$NON-NLS-2$
-
-            boolean PDFReport = true;
+            
             if (PDFReport){
                 HTMLtoPDF(caseInformation, reportSubFolder.getParentFile(),templatesFolder,reportSubFolder,help);
             }
@@ -358,7 +363,7 @@ public class HTMLReportTask extends AbstractTask {
 
     public void HTMLtoPDF(File caseInformation, File outputFolder, File templatesFolder, File reportSubFolder, File help ) throws Exception {
 
-        String wkhtmltopdf = "wkhtmltopdf";
+        String wkhtmltopdf = resolveBinaryPath();
 
         File pdf_cmds = File.createTempFile("pdf_cmds", ".tmp");
         pdf_cmds.deleteOnExit();
@@ -491,6 +496,45 @@ public class HTMLReportTask extends AbstractTask {
 
     }
 
+    public String resolveBinaryPath() {
+        String path;
+        String toolName = "wkhtmltopdf";
+        if (isWindows()) {
+            path = Configuration.getInstance().appRoot + "/tools/wkhtmltopdf/" + toolName + ".exe";
+        } else {
+            path = toolName;
+        }
+        checkWKHtmlToPdfPresence(path);
+        return path;
+    }
+
+    private boolean isWindows() {
+        String os = System.getProperty("os.name");
+        if (os == null) {
+            throw new IllegalStateException("os.name");
+        }
+        os = os.toLowerCase();
+        return os.startsWith("windows");
+    }
+
+    private void checkWKHtmlToPdfPresence(String cmd) {
+        ProcessBuilder pb = new ProcessBuilder();
+        pb.redirectErrorStream(true);
+        pb.command(cmd, "-V");
+        try {
+            Process p = pb.start();
+            IOUtil.ignoreInputStream(p);
+            p.waitFor();
+            if (p.exitValue() != 0)
+                throw new IOException();
+
+        } catch (IOException | InterruptedException e) {
+            String errorMsg = "Error testing wkhtmltopdf tool. Is it installed?";
+            logger.error(errorMsg);
+            throw new RuntimeException(errorMsg, e);
+        }
+    }
+
     public String getWKHtmlToPDFPath(File file){
 
         String path = file.getAbsolutePath();
@@ -534,7 +578,9 @@ public class HTMLReportTask extends AbstractTask {
     }
 
     public static void mergeFiles(List<String> filePaths, File outputFile) throws IOException {
+        
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile))) {
+            String fixNewPagePDF = "<div style = \"display:block; clear:both; page-break-after:avoid;\"></div>";
             for (String filePath : filePaths) {
                 File file = new File(filePath);
                 if (file.exists()) {
@@ -547,6 +593,7 @@ public class HTMLReportTask extends AbstractTask {
                     }
                 } 
             }
+            writer.write(fixNewPagePDF);
         }
     }
 
@@ -931,7 +978,7 @@ public class HTMLReportTask extends AbstractTask {
                     StringBuilder img = new StringBuilder();
                     if (reg.export != null) {
                         img.append("<a href=\""); //$NON-NLS-1$
-                        img.append("../").append(reg.export); //$NON-NLS-1$
+                        img.append("../").append(reg.export.replace("\\","/")); //$NON-NLS-1$
                         img.append("\">"); //$NON-NLS-1$
                     }
                     img.append("<img src=\""); //$NON-NLS-1$
@@ -955,7 +1002,7 @@ public class HTMLReportTask extends AbstractTask {
                             "<div class=\"row\"><span class=\"bkmkColLeft bkmkValue labelBorderless clrBkgrnd\" width=\"100%\" border=\"1\">" //$NON-NLS-1$
                                     + Messages.getString("HTMLReportTask.VideoThumbs") //$NON-NLS-1$
                                     + "</span><span class=\"bkmkColRight bkmkValue\"><a href=\""); //$NON-NLS-1$
-                    it.append(getRelativePath(videoThumbsFile, reportSubFolder));
+                    it.append(getRelativePath(videoThumbsFile, reportSubFolder).replace("\\","/"));
                     it.append("\"><img src=\""); //$NON-NLS-1$
                     it.append(getRelativePath(stripeFile, reportSubFolder)).append("\""); //$NON-NLS-1$
                     if (dim != null) {
@@ -972,7 +1019,7 @@ public class HTMLReportTask extends AbstractTask {
                             "<div class=\"row\"><span class=\"bkmkColLeft bkmkValue labelBorderless clrBkgrnd\" width=\"100%\" border=\"1\">" //$NON-NLS-1$
                                     + Messages.getString("HTMLReportTask.PreviewReport") //$NON-NLS-1$
                                     + "</span><span class=\"bkmkColRight bkmkValue\"><a href=\""); //$NON-NLS-1$
-                    it.append(getRelativePath(view, reportSubFolder));
+                    it.append(getRelativePath(view, reportSubFolder).replace("\\","/"));
                     it.append("\">"); //$NON-NLS-1$
                     it.append(view.getName());
                     it.append("</a></span></div>\n"); //$NON-NLS-1$
@@ -988,7 +1035,7 @@ public class HTMLReportTask extends AbstractTask {
             replace(it, "%CARVED%", //$NON-NLS-1$
                     reg.carved ? Messages.getString("HTMLReportTask.Yes") : Messages.getString("HTMLReportTask.No")); //$NON-NLS-1$ //$NON-NLS-2$
             replace(it, "%HASH%", reg.hash); //$NON-NLS-1$
-            String export = reg.export == null ? "-" : "<a href=\"../" + reg.export + "\">" + reg.export + "</a>"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+            String export = reg.export == null ? "-" : "<a href=\"../" + reg.export.replace("\\","/") + "\">" + reg.export + "</a>"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
             replace(it, "%EXPORTED%", export); //$NON-NLS-1$
             replace(it, "%CREATED%", formatDate(reg.created, dateFormat)); //$NON-NLS-1$
             replace(it, "%MODIFIED%", formatDate(reg.modified, dateFormat)); //$NON-NLS-1$
@@ -997,6 +1044,7 @@ public class HTMLReportTask extends AbstractTask {
         }
 
         String pdfSection = "";
+        String pdfNewPage = "";
         if (pag==1){
             if (isLabel){
                 if (!bookmarkPDFSet){
@@ -1014,6 +1062,10 @@ public class HTMLReportTask extends AbstractTask {
                 }
             }            
         }
+        if (pag==totPags){
+            pdfNewPage = "<div style = \"display:block; clear:both; page-break-after:always;\"></div>";
+        }
+
 
         StringBuilder p = new StringBuilder();
         p.append("<table class=\"delpdf\" width=\"100%\">\n"); //$NON-NLS-1$
@@ -1043,6 +1095,7 @@ public class HTMLReportTask extends AbstractTask {
         replace(sb, "%TOTALCOUNT%", String.valueOf(totRegs)); //$NON-NLS-1$
         replace(sb, "%ITEMS%", pdfSection+items.toString()); //$NON-NLS-1$
         replace(sb, "%PAGS%", p.toString()); //$NON-NLS-1$
+        replace(sb, "%PDFNEWPAGE%", pdfNewPage); //$NON-NLS-1$
 
         EncodedFile ef = new EncodedFile(sb, Charset.forName("utf-8"), arq); //$NON-NLS-1$
         ef.write();
