@@ -180,13 +180,20 @@ public class ExportFileTask extends AbstractTask {
                 extractDir = new File(output, SUBITEM_DIR);
             }
         }
-        HtmlReportTaskConfig htmlReportConfig = ConfigurationManager.get()
-                .findObject(HtmlReportTaskConfig.class);
-        if (!caseData.containsReport() || new File(output, STORAGE_PREFIX).exists() || !htmlReportConfig.isEnabled()) {
+        if (storeInSQLite(caseData, output)) {
             if (storageCon.get(output) == null) {
                 configureSQLiteStorage(output);
             }
         }
+    }
+
+    private static boolean storeInSQLite(ICaseData caseData, File output) {
+        HtmlReportTaskConfig htmlReportConfig = ConfigurationManager.get().findObject(HtmlReportTaskConfig.class);
+        return !caseData.containsReport() || !htmlReportConfig.isEnabled();
+    }
+
+    private boolean storeInSQLite() {
+        return storeInSQLite(this.caseData, this.output);
     }
 
     public static Connection getSQLiteStorageCon(File output, byte[] hash) {
@@ -552,7 +559,7 @@ public class ExportFileTask extends AbstractTask {
                             // catch exceptions here to extract some content, even runtime exceptions
                             exception = e;
                         }
-                        if ((i == -1 || exception != null) && storageCon.get(output) != null && total == 0 && evidence.getMetadata().get(ExtraProperties.EXTRACTED_FILE) == null) {
+                        if ((i == -1 || exception != null) && storeInSQLite() && total == 0 && evidence.getMetadata().get(ExtraProperties.EXTRACTED_FILE) == null) {
                             if (baos.size() == 0) {
                                 evidence.setLength(0L);
                             } else {
