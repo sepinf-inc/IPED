@@ -190,6 +190,7 @@ public class HTMLReportTask extends AbstractTask {
 
     /* List of report generated list files*/
     private static final List<String> arqsHmltList = new ArrayList<String>();
+    private static final Object lock= new Object(); 
     private static boolean bookmarkPDFSet = false;
     private static boolean categoryPDFSet = false;
     private static boolean bookmarkThumbPDFSet = false;
@@ -803,7 +804,7 @@ public class HTMLReportTask extends AbstractTask {
             for (String marcador : entriesByLabel.keySet()) {
                 sb.append("\t\t<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"arq"); //$NON-NLS-1$
                 sb.append(String.format("%06d", idx)); //$NON-NLS-1$
-                sb.append("(1).html\" target=\"ReportPage\" class=\"MenuText\">"); //$NON-NLS-1$
+                sb.append("(000001).html\" target=\"ReportPage\" class=\"MenuText\">"); //$NON-NLS-1$
                 sb.append(marcador);
                 sb.append("</a>\n"); //$NON-NLS-1$
                 idx++;
@@ -817,7 +818,7 @@ public class HTMLReportTask extends AbstractTask {
             for (String categoria : entriesByCategory.keySet()) {
                 sb.append("\t\t<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"arq"); //$NON-NLS-1$
                 sb.append(String.format("%06d", idx)); //$NON-NLS-1$
-                sb.append("(1).html\" target=\"ReportPage\" class=\"MenuText\">"); //$NON-NLS-1$
+                sb.append("(000001).html\" target=\"ReportPage\" class=\"MenuText\">"); //$NON-NLS-1$
                 sb.append(categoria);
                 sb.append("</a>\n"); //$NON-NLS-1$
                 idx++;
@@ -955,7 +956,7 @@ public class HTMLReportTask extends AbstractTask {
     }
 
     private String getPageId(String id, int page) {
-        return id + "(" + page + ").html"; //$NON-NLS-1$ //$NON-NLS-2$
+        return id + "(" + String.format("%06d", page) + ").html"; //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     private void createBookmarkPage(DateFormat dateFormat, NumberFormat longFormat, String name, String id,
@@ -1112,7 +1113,9 @@ public class HTMLReportTask extends AbstractTask {
         EncodedFile ef = new EncodedFile(sb, Charset.forName("utf-8"), arq); //$NON-NLS-1$
         ef.write();
 
-        arqsHmltList.add(arq.getAbsolutePath());
+        synchronized (lock) {
+            arqsHmltList.add(arq.getAbsolutePath());
+        }
     }
 
     private String getComments(String bookmark) {
@@ -1308,7 +1311,8 @@ public class HTMLReportTask extends AbstractTask {
 
         for (String bookmark : imageThumbsByLabel.keySet()) {
             List<String> l = imageThumbsByLabel.get(bookmark);
-            addBookmarkTitle(sb, bookmark, l.size(), !entriesByLabel.isEmpty());
+            int bm = 0;
+            addBookmarkTitle(sb, bookmark, l.size(), !entriesByLabel.isEmpty(), ++bm);
             int cnt = 0;
             for (String s : l) {
                 n++;
@@ -1321,7 +1325,7 @@ public class HTMLReportTask extends AbstractTask {
                     n = 0;
                     sb.delete(0, sb.length());
                     if (++cnt < l.size()) {
-                        addBookmarkTitle(sb, bookmark, l.size(), !entriesByLabel.isEmpty());
+                        addBookmarkTitle(sb, bookmark, l.size(), !entriesByLabel.isEmpty(), ++bm);
                     }
                 }
             }
@@ -1360,19 +1364,21 @@ public class HTMLReportTask extends AbstractTask {
         return "thumbs_" + (page / 100) + "" + (page % 100 / 10) + "" + page % 10 + ".htm"; //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
     }
 
-    private void addBookmarkTitle(StringBuilder sb, String bookmark, int size, boolean isLabel) {
-        sb.append("<table width=\"100%\"><tr><th class=\"columnHead\" colspan=\"1\" style=\"font-size:16px\">"); //$NON-NLS-1$
+    private void addBookmarkTitle(StringBuilder sb, String bookmark, int size, boolean isLabel, int bm) {
 
         String pdfSection = "";
-
         if (!bookmarkThumbPDFSet){
             pdfSection = "<div style=\"overflow:hidden;width:1px;height:1px\"><h1>"+
             Messages.getString("HTMLReportTask.GalleryLink")+
             "</h1><h2>"+Messages.getString("HTMLReportTask.Bookmark")+"</h2><h3>"+bookmark+"</h3></div>";
             bookmarkThumbPDFSet = true;
         }else{
-            pdfSection = "<div style=\"overflow:hidden;width:1px;height:1px\"><h3>"+bookmark+"</h3></div>";
+            if (bm==1){
+                pdfSection = "<div style=\"overflow:hidden;width:1px;height:1px\"><h3>"+bookmark+"</h3></div>";
+            }
         }
+
+        sb.append("<table width=\"100%\"><tr><th class=\"columnHead\" colspan=\"1\" style=\"font-size:16px\">"); //$NON-NLS-1$        
         sb.append(bookmark);
         sb.append("</th></tr><tr><td class=\"clrBkgrnd\"><span style=\"font-weight:bold\">" //$NON-NLS-1$
                 + Messages.getString("HTMLReportTask.FileCount") + ": </span>"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -1387,14 +1393,16 @@ public class HTMLReportTask extends AbstractTask {
                 + Messages.getString("HTMLReportTask.GalleryTitle") //$NON-NLS-1$
                 + ":</title><style>\n.thumb {width:auto; height:auto; max-width:112px; max-height:112px;}\n</style></head><body>\n<p><img border=\"0\" src=\"res/header.gif\"/>\n\n"; //$NON-NLS-1$
         sb.insert(0, header);
-        sb.append("\n<p><img border=\"0\" src=\"res/header.gif\"/></p></body></html>"); //$NON-NLS-1$
+        sb.append("\n<p><img border=\"0\" src=\"res/header.gif\"/></p><div style = \"display:block; clear:both; page-break-after:always;\"></div></body></html>"); //$NON-NLS-1$
         EncodedFile ef = new EncodedFile(sb, Charset.forName("UTF-8"), f); //$NON-NLS-1$
         try {
             ef.write();
         } catch (Exception e) {
             e.printStackTrace();
         }
-        arqsHmltList.add(f.getAbsolutePath());
+        synchronized (lock) {
+            arqsHmltList.add(f.getAbsolutePath());
+        }
     }
 
 }
