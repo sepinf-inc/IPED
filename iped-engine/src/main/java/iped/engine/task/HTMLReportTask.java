@@ -385,9 +385,12 @@ public class HTMLReportTask extends AbstractTask {
         arguments.add("cover");
         arguments.add(getWKHtmlToPDFPath(caseInformation));
 
+        File tempTocFile = File.createTempFile("toc", ".xml");
+        tempTocFile.deleteOnExit();
+        Files.copy(new File(templatesFolder, "templates/toc.xml").toPath(),tempTocFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
         arguments.add("toc");
         arguments.add("--xsl-style-sheet");
-        arguments.add(getWKHtmlToPDFPath(new File(templatesFolder, "templates/toc.xml")));
+        arguments.add(getWKHtmlToPDFPath(tempTocFile));
 
         arguments.add("page");
 
