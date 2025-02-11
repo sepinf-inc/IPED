@@ -253,21 +253,21 @@ public class WhatsAppParser extends SQLite3DBParser {
                 if (mergeBackups || isDownloadMediaFilesEnabled())
                     parseAndCheckIfIsMainDb(stream, handler, metadata, context, new ExtractorAndroidFactory());
                 else
-                    parseWhatsappMessages(stream, handler, metadata, context, new ExtractorAndroidFactory());
+                    parseWhatsAppMessages(stream, handler, metadata, context, new ExtractorAndroidFactory());
             } else if (mimetype.equals(WA_DB.toString())) {
                 parseWhatsAppContacts(stream, handler, metadata, context, new ExtractorAndroidFactory());
             } else if (mimetype.equals(CHAT_STORAGE.toString())) {
                 if (isDownloadMediaFilesEnabled()) {
                     parseAndCheckIfIsMainDb(stream, handler, metadata, context, new ExtractorIOSFactory());
                 } else {
-                    parseWhatsappMessages(stream, handler, metadata, context, new ExtractorIOSFactory());
+                    parseWhatsAppMessages(stream, handler, metadata, context, new ExtractorIOSFactory());
                 }
             } else if (mimetype.equals(CONTACTS_V2.toString())) {
                 parseWhatsAppContacts(stream, handler, metadata, context, new ExtractorIOSFactory());
             } else if (mimetype.equals(MSG_STORE_2.toString())) {
                 mergeParsedDBsAndOutputResults(stream, handler, metadata, context, new ExtractorAndroidFactory());
             } else if (mimetype.equals(CHAT_STORAGE_2.toString())) {
-                parseWhatsappMessages(stream, handler, metadata, context, new ExtractorIOSFactory());
+                parseWhatsAppMessages(stream, handler, metadata, context, new ExtractorIOSFactory());
             }
 
         } catch (Exception e) {
@@ -377,7 +377,7 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     }
 
-    private void parseWhatsappMessages(InputStream stream, ContentHandler handler, Metadata metadata,
+    private void parseWhatsAppMessages(InputStream stream, ContentHandler handler, Metadata metadata,
             ParseContext context, ExtractorFactory extFactory) throws IOException, SAXException, TikaException {
 
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
