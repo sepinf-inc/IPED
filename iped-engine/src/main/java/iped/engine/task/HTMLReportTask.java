@@ -541,7 +541,7 @@ public class HTMLReportTask extends AbstractTask {
         path = path.replace("\\","/");
 
         if (path.startsWith("//")){
-            path = "file://" + path;
+            path = "file:" + path;
         }
 
         return "\"" + path + "\"";
