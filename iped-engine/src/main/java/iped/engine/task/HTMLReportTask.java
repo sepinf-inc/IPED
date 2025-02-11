@@ -1092,6 +1092,15 @@ public class HTMLReportTask extends AbstractTask {
         }
         p.append("</tr></table>\n"); //$NON-NLS-1$
 
+        String delpdf = "";
+        String delpdfNotLast = "";
+        if (pag!=1)
+            delpdf = "delpdf";
+        if (pag!=totPags)
+            delpdfNotLast = "delpdf";            
+        replace(sb, "%DELPDF%", delpdf); //$NON-NLS-1$
+        replace(sb, "%DELPDFNOTLAST%", delpdfNotLast); //$NON-NLS-1$
+
         replace(sb, "%CATEGORY%", (isLabel ? Messages.getString("HTMLReportTask.Bookmark") //$NON-NLS-1$ //$NON-NLS-2$
                 : Messages.getString("HTMLReportTask.Category")) + ": " + name); //$NON-NLS-1$ //$NON-NLS-2$
         replace(sb, "%COMMENTS%", getComments(name)); //$NON-NLS-1$
