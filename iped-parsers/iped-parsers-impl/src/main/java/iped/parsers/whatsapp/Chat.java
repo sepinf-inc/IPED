@@ -76,7 +76,7 @@ public class Chat {
     public void add(Message message) {
         messages.add(message);
     }
-    
+
     /**
      * @param messages
      *            the messages to set
@@ -163,11 +163,11 @@ public class Chat {
     public void setGroupMembers(Set<WAContact> groupmembers) {
         this.groupMembers = groupmembers;
     }
-    
+
     public void setDeleted(boolean isDeleted) {
         this.isDeleted = isDeleted;
     }
-    
+
     public boolean isDeleted() {
         return isDeleted;
     }
