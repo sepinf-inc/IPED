@@ -137,10 +137,8 @@ public class ExtractorAndroidNew extends Extractor {
                     c.setSubject(Util.getUTF8String(rs, "subject")); //$NON-NLS-1$
                     c.setGroupChat(contactId.endsWith("@g.us"));
                     c.setChannelChat(contactId.endsWith("@newsletter"));
-                    if (!(contactId.endsWith("@status") || contactId.endsWith("@broadcast"))) { //$NON-NLS-1$ //$NON-NLS-2$
-                        list.add(c);
-                        idToChat.put(c.getId(), c);
-                    }
+                    list.add(c);
+                    idToChat.put(c.getId(), c);
                 }
 
                 extractMessages(conn, idToChat);
@@ -407,7 +405,7 @@ public class ExtractorAndroidNew extends Extractor {
 
                 m.setId(rs.getLong("id")); //$NON-NLS-1$
                 String remoteResource = rs.getString("remoteResource");
-                if (remoteResource == null || remoteResource.isEmpty() || !c.isGroupOrChannelChat()) {
+                if (remoteResource == null || remoteResource.isEmpty() || (!c.isGroupOrChannelChat() && !c.isBroadcast())) {
                     remoteResource = c.getRemote().getFullId();
                 }
                 m.setRemoteResource(remoteResource); // $NON-NLS-1$
@@ -585,9 +583,9 @@ public class ExtractorAndroidNew extends Extractor {
                                 mq.setId(fakeIds--);
                                 String remoteId = mq.getRemoteId();
                                 if (remoteId != null) {
-                                    if (remoteId.compareTo(Message.STATUS_BROADCAST) == 0) {
+                                    if (remoteId.equals(WAContact.waStatusBroadcast)) {
                                         mq.setMessageQuotedType(MessageQuotedType.QUOTE_STATUS);
-                                    } else if (remoteId.contains(Message.GROUP)) {
+                                    } else if (remoteId.endsWith(WAContact.waGroupSuffix)) {
                                         // Set it first in case if not found
                                         mq.setQuotePrivateGroupName(remoteId);
                                         boolean found = false;
