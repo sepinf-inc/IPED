@@ -100,7 +100,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -108,7 +107,6 @@ import java.util.Map;
 
 import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.whatsapp.Message.MessageStatus;
-import iped.parsers.whatsapp.Message.MessageType;
 import iped.parsers.whatsapp.Message.MessageQuotedType;
 
 /**
@@ -135,8 +133,13 @@ public class ExtractorAndroidNew extends Extractor {
                     Chat c = new Chat(remote);
                     c.setId(rs.getLong("id"));
                     c.setSubject(Util.getUTF8String(rs, "subject")); //$NON-NLS-1$
-                    c.setGroupChat(contactId.endsWith("@g.us"));
-                    c.setChannelChat(contactId.endsWith("@newsletter"));
+                    if (contactId.endsWith(WAContact.waGroupSuffix)) {
+                        c.setGroupChat(true);
+                    } else if (contactId.endsWith(WAContact.waNewsletterSuffix)) {
+                        c.setChannelChat(true);
+                    } else if (contactId.endsWith(WAContact.waStatusSuffix)) {
+                        c.setBroadcast(true);
+                    }
                     list.add(c);
                     idToChat.put(c.getId(), c);
                 }
