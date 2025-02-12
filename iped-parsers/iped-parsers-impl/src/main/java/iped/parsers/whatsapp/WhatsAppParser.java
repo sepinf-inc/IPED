@@ -421,26 +421,16 @@ public class WhatsAppParser extends SQLite3DBParser {
     }
 
     private static void expandBroadcastChat(List<Chat> chatList, WAContactsDirectory contacts) {
-        System.err.println(">>chatList="+chatList.size());
         Map<String, Chat> statusChats = new HashMap<String, Chat>();
         for (int i = 0; i < chatList.size(); i++) {
             Chat c = chatList.get(i);
-            System.err.println("c.getRemote().getName() = " + c.getRemote().getFullId() + " : "  + i);
             if (c.getRemote().getFullId().equals(WAContact.waStatusBroadcast)) {
                 chatList.remove(i--);
                 for (Message m : c.getMessages()) {
                     String remote = m.getRemoteResource();
-                    System.err.println("remote="+remote);
-                    if (remote == null) {
-                        System.err.println("ID="+m.getId());
-                        System.err.println("1="+m.getRemoteId());
-                        System.err.println("2="+m.getLocalResource());
-                        System.err.println("3="+m.isFromMe());
-                    }
                     Chat newChat = statusChats.get(remote);
                     if (newChat == null) {
                         WAContact contact = contacts.getContact(remote);
-                        System.err.println("contact="+contact.getName());
                         newChat = new Chat(contact);
                         newChat.setBroadcast(true);
                         newChat.setDeleted(c.isDeleted());
@@ -449,7 +439,6 @@ public class WhatsAppParser extends SQLite3DBParser {
                         chatList.add(newChat);
                     }
                     newChat.add(m);
-                    System.err.println("m="+m.getData());
                 }
             }
         }
