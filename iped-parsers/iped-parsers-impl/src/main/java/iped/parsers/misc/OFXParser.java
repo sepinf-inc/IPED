@@ -3,8 +3,6 @@ package iped.parsers.misc;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -30,8 +28,6 @@ import org.apache.poi.ss.usermodel.CreationHelper;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
-import org.apache.tika.io.TemporaryResources;
-import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
@@ -68,10 +64,12 @@ import com.webcohesion.ofx4j.domain.data.signon.SignonResponse;
 import com.webcohesion.ofx4j.io.AggregateUnmarshaller;
 import com.webcohesion.ofx4j.io.DefaultStringConversion;
 
+import iped.data.IItemReader;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.Messages;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
+import iped.utils.IOUtil;
 
 /**
  * Extract OFX info to xls file
@@ -1065,12 +1063,11 @@ public class OFXParser extends AbstractParser {
 
     }
 
-    public Charset findCharset(File file) throws IOException {
+    private Charset findCharset(InputStream is) throws IOException {
         /* discover charset */
-        FileInputStream inputStream = new FileInputStream(file);
+        BufferedReader reader = null;
         try {
-            Reader reader = new InputStreamReader(inputStream, StandardCharsets.ISO_8859_1);
-            BufferedReader rd = new BufferedReader(reader);
+            reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.ISO_8859_1));
             Pattern patternV1 = Pattern.compile("^CHARSET\\:(.*)");
             Matcher matcherV1 = patternV1.matcher("\\D");
             Pattern patternV11 = Pattern.compile("^ENCODING\\:(.*)");
@@ -1081,7 +1078,7 @@ public class OFXParser extends AbstractParser {
             String cpage = "";
             String cpage2 = "";
             String line = null;
-            while ((line = rd.readLine()) != null) {
+            while ((line = reader.readLine()) != null) {
                 matcherV1.reset(line);
                 matcherV11.reset(line);
                 matcherV2.reset(line);
@@ -1101,7 +1098,7 @@ public class OFXParser extends AbstractParser {
                 return getCharsetFromCodePage(cpage2);
             }
         } finally {
-            inputStream.close();
+            IOUtil.closeQuietly(reader);
         }
         return StandardCharsets.ISO_8859_1;
     }
@@ -1113,69 +1110,90 @@ public class OFXParser extends AbstractParser {
             try {
                 return Charset.forName("Windows-" + cpage);
             } catch (Exception e2) {
-                e1.printStackTrace();
                 return StandardCharsets.ISO_8859_1;
             }
         }
     }
 
     @Override
-    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
-
-        TemporaryResources tmp = null;
-
+    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
+            throws IOException, SAXException, TikaException {
+        byte[] bytes = stream.readNBytes(1 << 24); // Valid OFX files should be much smaller than 16 MB
+        Charset cs = null;
+        ByteArrayInputStream bis = null;
         try {
-            tmp = new TemporaryResources();
-            TikaInputStream tis = TikaInputStream.get(stream, tmp);
-            File file = tis.getFile();
-
-            FileInputStream inputStream = new FileInputStream(file);
-            tmp.addResource(inputStream);// adds this resource to be closed when tmp is closed
-            Reader reader = new BufferedReader(new InputStreamReader(inputStream, findCharset(file)));
-            AggregateUnmarshaller aggregate = new AggregateUnmarshaller(ResponseEnvelope.class);
-
-            // Fix Timezone to the current system settings instead of GMT defalt
-            DefaultStringConversion conv = new DefaultStringConversion(TimeZone.getDefault().getID());
-
-            aggregate.setConversion(conv);
-
-            ResponseEnvelope re = (ResponseEnvelope) aggregate.unmarshal(reader);
-
-            Metadata meta = new Metadata();
-            meta.set(StandardParser.INDEXER_CONTENT_TYPE, MediaType.parse("application/vnd.ms-excel").toString());
-            meta.set(TikaCoreProperties.RESOURCE_NAME_KEY, getBaseName(file.getName()) + ".xls");
-            meta.set(TikaCoreProperties.TITLE, getBaseName(file.getName()) + " XLS Parsed");
-            meta.set(BasicProps.LENGTH, "");
-            meta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
-
-            HSSFWorkbook workbook = new HSSFWorkbook();
-
-            if (re != null) {
-                decodeSignon(re, workbook);
-                decodeBank(re, workbook);
-                decodeCreditCard(re, workbook);
-                decodeInvestimentWarn(re, workbook); // TODO - Finish implementing
-            }
-
-            ByteArrayOutputStream bout = new ByteArrayOutputStream();
-            workbook.write(bout);
-            workbook.close();
-            ByteArrayInputStream is1 = new ByteArrayInputStream(bout.toByteArray());
-
-            EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
-
-            if (extractor.shouldParseEmbedded(meta)) {
-                extractor.parseEmbedded(is1, handler, meta, true);
-            }
-
-        } catch (IOException | SAXException ex) {
-            throw ex;
+            bis = new ByteArrayInputStream(bytes);
+            cs = findCharset(bis);
         } catch (Exception e) {
-            throw new TikaException("Error decoding financial data", e);
+            throw new TikaException("Error decoding financial data.", e);
         } finally {
-            if (tmp != null)
-                tmp.close();
+            IOUtil.closeQuietly(bis);
+        }
+
+        // Fix TimeZone to the current system settings instead of GMT default
+        DefaultStringConversion conv = new DefaultStringConversion(TimeZone.getDefault().getID());
+        AggregateUnmarshaller<ResponseEnvelope> aggregate = new AggregateUnmarshaller<>(ResponseEnvelope.class);
+        aggregate.setConversion(conv);
+
+        Reader reader = null;
+        ResponseEnvelope re = null;
+        try {
+            reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(bytes), cs));
+            re = (ResponseEnvelope) aggregate.unmarshal(reader);
+
+        } catch (Exception e1) {
+            if (!StandardCharsets.UTF_8.equals(cs)) {
+                try {
+                    // Try again using UTF_8
+                    IOUtil.closeQuietly(reader);
+                    cs = StandardCharsets.UTF_8;
+                    reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(bytes), cs));
+                    re = (ResponseEnvelope) aggregate.unmarshal(reader);
+                    e1 = null; // Success
+                } catch (Exception e2) {
+                }
+            }
+            if (e1 != null) {
+                throw new TikaException("Error decoding financial data.", e1);
+            }
+        } finally {
+            IOUtil.closeQuietly(reader);
+        }
+
+        if (re == null) {
+            throw new TikaException("Error decoding financial data.");
+        }
+
+        Metadata meta = new Metadata();
+        meta.set(StandardParser.INDEXER_CONTENT_TYPE, MediaType.parse("application/vnd.ms-excel").toString());
+        IItemReader item = context.get(IItemReader.class);
+        if (item != null) {
+            String name = getBaseName(item.getName());
+            meta.set(TikaCoreProperties.RESOURCE_NAME_KEY, name + ".xls");
+            meta.set(TikaCoreProperties.TITLE, name + " XLS Parsed");
+        }
+        meta.set(BasicProps.LENGTH, "");
+        meta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+
+        HSSFWorkbook workbook = new HSSFWorkbook();
+
+        if (re != null) {
+            decodeSignon(re, workbook);
+            decodeBank(re, workbook);
+            decodeCreditCard(re, workbook);
+            decodeInvestimentWarn(re, workbook); // TODO - Finish implementing
+        }
+
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        workbook.write(bout);
+        workbook.close();
+        ByteArrayInputStream is1 = new ByteArrayInputStream(bout.toByteArray());
+
+        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
+                new ParsingEmbeddedDocumentExtractor(context));
+
+        if (extractor.shouldParseEmbedded(meta)) {
+            extractor.parseEmbedded(is1, handler, meta, true);
         }
     }
-
 }
