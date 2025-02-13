@@ -57,7 +57,6 @@ import com.webcohesion.ofx4j.domain.data.investment.statements.InvestmentStateme
 import com.webcohesion.ofx4j.domain.data.investment.statements.InvestmentStatementResponseTransaction;
 import com.webcohesion.ofx4j.domain.data.investment.transactions.BaseInvestmentTransaction;
 import com.webcohesion.ofx4j.domain.data.investment.transactions.InvestmentBankTransaction;
-import com.webcohesion.ofx4j.domain.data.investment.transactions.InvestmentTransaction;
 import com.webcohesion.ofx4j.domain.data.investment.transactions.InvestmentTransactionList;
 import com.webcohesion.ofx4j.domain.data.signon.FinancialInstitution;
 import com.webcohesion.ofx4j.domain.data.signon.SignonResponse;
@@ -1016,7 +1015,7 @@ public class OFXParser extends AbstractParser {
 
                                 for (BaseInvestmentTransaction list : listTransBase) {
 
-                                    InvestmentTransaction transaction = list.getInvestmentTransaction();
+                                    // InvestmentTransaction transaction = list.getInvestmentTransaction();
 
                                     cnt = 0;
                                     HSSFRow rowTrans = sheetTrans.createRow(rnt++);
