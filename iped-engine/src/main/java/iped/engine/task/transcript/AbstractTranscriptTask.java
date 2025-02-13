@@ -84,6 +84,26 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
 
     protected IItem evidence;
 
+    private boolean remoteTask = false;
+    private boolean requeueHeuristic = false;
+    private boolean clientTranscriptHelp = false;
+    private String classNameFallBack = "";
+    private int requeueRatio = 4;
+    private long requeueDeltaTime = 5000;
+
+    private static int numRemoteTasks = 1;
+    private static int minRemoteTasks = 2;
+    private static int maxRemoteTasks = 2;
+    private static int currentRemoteTasks = 0;
+    private static int queueTranscriptions = 0;
+    private static int tasksCount = 0;
+    private static int tasksChars = 0;
+    private static int tasksTime = 0;
+    private static int numWorkers = 1;
+    private static int currentFallBackTasks = 0;
+    private static AtomicInteger lastQueueIndex = new AtomicInteger(-1);
+    private static AtomicLong lastQueueTime = new AtomicLong(-1);    
+
     @Override
     public boolean isEnabled() {
         return transcriptConfig.isEnabled();
@@ -179,6 +199,12 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
 
         transcriptConfig = configurationManager.findObject(AudioTranscriptConfig.class);
         MIN_TIMEOUT = transcriptConfig.getMinTimeout();
+
+        numWorkers = this.worker.manager.getNumWorkers();
+        numRemoteTasks = (((int)numWorkers/2)>0)?(int)numWorkers/2:1;
+        minRemoteTasks = (numRemoteTasks>2)?2:1; // at leat 2 workers for remote tasks
+        maxRemoteTasks = (numWorkers>1)?numWorkers-1:1; // at leat 1 worker for client usage
+        tasksCount = numRemoteTasks;
 
         // clear default config service address in output
         this.transcriptConfig.clearTranscriptionServiceAddress(output);
@@ -380,6 +406,36 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             return;
         }
 
+        synchronized(this){
+            if (this.getRequeueHeuristic() && this.isRemoteTask() && !evidence.isFallBackTask()){
+
+                if (currentRemoteTasks >= numRemoteTasks){
+
+                    if (!evidence.isReEnqueueItem()){
+                        queueTranscriptions++;
+                    }
+
+                    int remaingQueues = this.worker.manager.getProcessingQueues().getCurrentQueueSize();
+
+                    if (this.getClientTranscriptHelp() && remaingQueues <= (queueTranscriptions + (numWorkers*2))){
+                        
+                        if (currentFallBackTasks==0){
+                            currentFallBackTasks++;
+                            evidence.setFallBackTask(true);
+                        }
+
+                    }
+
+                    evidence.setReEnqueueItem(true);
+                    super.reEnqueueItemSpaced(evidence, numWorkers, lastQueueIndex, lastQueueTime, this.getRequeueRatio(), this.getRequeueDeltaTime());
+                    return;         
+  
+                }else if (currentRemoteTasks < numRemoteTasks){
+                    currentRemoteTasks ++;
+                }
+            }
+        }
+
         try {
             evidence.getTempFile();
         } catch (IOException e) {
@@ -393,18 +449,22 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             return;
         }
 
+        int chars = 0;
+        long time = 0;
         try {
             this.evidence = evidence;
             long t = System.currentTimeMillis();
             TextAndScore result = transcribeAudio(tmpFile);
-            transcriptionTime.addAndGet(System.currentTimeMillis() - t);
+            time = System.currentTimeMillis() - t;
+            transcriptionTime.addAndGet(time);         
             if (result != null) {
                 evidence.getMetadata().set(ExtraProperties.CONFIDENCE_ATTR, Double.toString(result.score));
                 evidence.getMetadata().set(ExtraProperties.TRANSCRIPT_ATTR, result.text);
                 storeTextInDb(evidence.getHash(), result.text, result.score);
                 transcriptionSuccess.incrementAndGet();
                 if (result.text != null) {
-                    transcriptionChars.addAndGet(result.text.length());
+                    chars = result.text.length();
+                    transcriptionChars.addAndGet(chars);                
                 }
             } else {
                 transcriptionFail.incrementAndGet();
@@ -416,9 +476,91 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             }
             LOGGER.error("Unexpected exception while transcribing: " + evidence.getPath(), e);
         } finally {
+            synchronized(this){
+                if (this.getRequeueHeuristic() && this.isRemoteTask() && !evidence.isFallBackTask()){
+                    if (evidence.isReEnqueueItem()){
+                        queueTranscriptions--;
+                    }
+                    currentRemoteTasks--;
+                    tasksCount--;
+                    tasksChars += chars;
+                    tasksTime += time;
+                    if (tasksCount==0){
+                        String info = "";                        
+                        double speed = tasksChars;
+                        speed = speed/(tasksTime/1000)/numRemoteTasks;
+                        info = "Transcript "+tasksChars+" chars in "+(tasksTime/1000)+" seconds with "+numRemoteTasks+" tasks. Speed "+speed;
+                        if (speed < 0.9){
+                            numRemoteTasks--;
+                            numRemoteTasks = (minRemoteTasks < numRemoteTasks)?numRemoteTasks:minRemoteTasks;
+                            info += ". Decreasing number of tasks to "+numRemoteTasks;
+                        }else if (speed > 1.1){
+                            numRemoteTasks++;
+                            numRemoteTasks = (maxRemoteTasks > numRemoteTasks)?numRemoteTasks:maxRemoteTasks;
+                            info += ". Increasing number of tasks to "+numRemoteTasks;
+                        }
+                        LOGGER.info("{}", info);
+                        tasksCount = numRemoteTasks;
+                        tasksChars = 0;
+                        tasksTime = 0;
+                    }
+                }else {
+                    if (currentFallBackTasks > 0){
+                        currentFallBackTasks--;
+                    }
+                }
+            }            
             tmp.close();
         }
 
+    }
+
+    public void setRemoteTask(boolean remoteTask){
+        this.remoteTask = remoteTask;
+    }
+
+    public boolean isRemoteTask(){
+        return this.remoteTask;
+    }
+
+    public void setRequeueHeuristic(boolean requeueHeuristic){
+        this.requeueHeuristic = requeueHeuristic;
+    }
+    
+    public boolean getRequeueHeuristic(){
+        return this.requeueHeuristic;
+    }
+
+    public void setClientTranscriptHelp(boolean clientTranscriptHelp){
+        this.clientTranscriptHelp = clientTranscriptHelp;
+    }
+
+    public boolean getClientTranscriptHelp(){
+        return this.clientTranscriptHelp;
+    }
+
+    public void setClassNameFallBack(String classNameFallBack){
+        this.classNameFallBack = classNameFallBack;
+    }
+
+    public String getClassNameFallBack(){
+        return this.classNameFallBack;
+    }
+
+    public void setRequeueRatio(int requeueRatio){
+        this.requeueRatio = requeueRatio;
+    }
+
+    public int getRequeueRatio(){
+        return this.requeueRatio;
+    }
+
+    public void setRequeueDeltaTime(Long requeueDeltaTime){
+        this.requeueDeltaTime = requeueDeltaTime;
+    }
+
+    public Long getRequeueDeltaTime(){
+        return this.requeueDeltaTime;
     }
 
     protected abstract TextAndScore transcribeAudio(File tmpFile) throws Exception;
