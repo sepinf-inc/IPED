@@ -1,11 +1,13 @@
 package iped.parsers.misc;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
@@ -1117,11 +1119,11 @@ public class OFXParser extends AbstractParser {
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
-        byte[] bytes = stream.readNBytes(1 << 24); // Valid OFX files should be much smaller than 16 MB
+        byte[] orgBytes = stream.readNBytes(1 << 24); // Valid OFX files should be much smaller than 16 MB
         Charset cs = null;
         ByteArrayInputStream bis = null;
         try {
-            bis = new ByteArrayInputStream(bytes);
+            bis = new ByteArrayInputStream(orgBytes);
             cs = findCharset(bis);
         } catch (Exception e) {
             throw new TikaException("Error decoding financial data.", e);
@@ -1137,7 +1139,8 @@ public class OFXParser extends AbstractParser {
         Reader reader = null;
         ResponseEnvelope re = null;
         try {
-            reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(bytes), cs));
+            byte[] cleanBytes = clean(orgBytes, cs);
+            reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(cleanBytes), cs));
             re = (ResponseEnvelope) aggregate.unmarshal(reader);
 
         } catch (Exception e1) {
@@ -1146,7 +1149,8 @@ public class OFXParser extends AbstractParser {
                     // Try again using UTF_8
                     IOUtil.closeQuietly(reader);
                     cs = StandardCharsets.UTF_8;
-                    reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(bytes), cs));
+                    byte[] cleanBytes = clean(orgBytes, cs);
+                    reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(cleanBytes), cs));
                     re = (ResponseEnvelope) aggregate.unmarshal(reader);
                     e1 = null; // Success
                 } catch (Exception e2) {
@@ -1193,6 +1197,31 @@ public class OFXParser extends AbstractParser {
 
         if (extractor.shouldParseEmbedded(meta)) {
             extractor.parseEmbedded(is1, handler, meta, true);
+        }
+    }
+
+    private static byte[] clean(byte[] inBytes, Charset cs) {
+        BufferedReader reader = null;
+        BufferedWriter writer = null;
+        ByteArrayOutputStream bos = new ByteArrayOutputStream(inBytes.length);
+        try {
+            reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(inBytes), cs));
+            writer = new BufferedWriter(new OutputStreamWriter(bos, cs));
+            String line = null;
+            while ((line = reader.readLine()) != null) {
+                line = line.replaceAll("&(?![A-Za-z]+;|#[0-9]+;|#x[0-9a-fA-F]+;)", "&amp;");
+                writer.write(line);
+                writer.newLine();
+            }
+            writer.close();
+            return bos.toByteArray();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return inBytes;
+        } finally {
+            IOUtil.closeQuietly(reader);
+            IOUtil.closeQuietly(writer);
+            IOUtil.closeQuietly(bos);
         }
     }
 }
