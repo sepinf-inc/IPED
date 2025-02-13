@@ -1209,7 +1209,15 @@ public class OFXParser extends AbstractParser {
             writer = new BufferedWriter(new OutputStreamWriter(bos, cs));
             String line = null;
             while ((line = reader.readLine()) != null) {
+                // Replace non-escaped ampersands 
                 line = line.replaceAll("&(?![A-Za-z]+;|#[0-9]+;|#x[0-9a-fA-F]+;)", "&amp;");
+
+                // Replace common non-standard transaction types (see #2430)
+                line = line.replaceAll("<TRNTYPE>C<", "<TRNTYPE>CREDIT<");
+                line = line.replaceAll("<TRNTYPE>IN<", "<TRNTYPE>CREDIT<");
+                line = line.replaceAll("<TRNTYPE>D<", "<TRNTYPE>DEBIT<");
+                line = line.replaceAll("<TRNTYPE>OUT<", "<TRNTYPE>DEBIT<");
+
                 writer.write(line);
                 writer.newLine();
             }
