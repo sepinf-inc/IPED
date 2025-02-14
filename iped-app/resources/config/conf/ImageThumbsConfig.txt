@@ -46,7 +46,7 @@ logGalleryRendering = false
 
 # Create view images (to speed up rendering) for the following mime types.
 # Used only for images that require external conversion. Use ";" as separator. 
-mimesToCreateView = image/heic
+mimesToCreateView = image/heic; image/heif
 
 # Maximum size (in pixels) of generated view image
 maxViewImageSize = 2400
