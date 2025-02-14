@@ -65,6 +65,7 @@ public class ReportDialog implements ActionListener, TableModelListener {
     JButton generate = new JButton(Messages.getString("ReportDialog.Create")); //$NON-NLS-1$
     JCheckBox noAttachs = new JCheckBox(Messages.getString("ReportDialog.NoAttachments")); //$NON-NLS-1$
     JCheckBox noLinkedItems = new JCheckBox(Messages.getString("ReportDialog.noLinkedItems")); //$NON-NLS-1$
+    JCheckBox pdfReport = new JCheckBox(Messages.getString("ReportDialog.pdfReport")); //$NON-NLS-1$
     JCheckBox append = new JCheckBox(Messages.getString("ReportDialog.AddToReport")); //$NON-NLS-1$
     JCheckBox selectAll = new JCheckBox();
 
@@ -104,6 +105,7 @@ public class ReportDialog implements ActionListener, TableModelListener {
         Box footer = Box.createVerticalBox();
         footer.add(noAttachs);
         footer.add(noLinkedItems);
+        footer.add(pdfReport);
         footer.add(footer1);
         footer.add(append);
         footer.add(footer3);
@@ -306,6 +308,9 @@ public class ReportDialog implements ActionListener, TableModelListener {
 
             if (noLinkedItems.isSelected())
                 cmd.add(CmdLineArgsImpl.noLinkedItemsOption); // $NON-NLS-1$
+
+            if (pdfReport.isSelected())
+                cmd.add(CmdLineArgsImpl.pdfReportOption); // $NON-NLS-1$
 
             if (append.isSelected())
                 cmd.add("--append"); //$NON-NLS-1$
