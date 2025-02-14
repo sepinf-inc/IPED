@@ -18,7 +18,7 @@
         </script>
     </head>
     <body>
-        <div id="topbar">
+        <div id="topbar"${topbarclass}>
             <div style="display: inline-block; padding: 6px 0px 2px 6px;">
                 <img src="${avatar}" width="72" height="72">
             </div>
