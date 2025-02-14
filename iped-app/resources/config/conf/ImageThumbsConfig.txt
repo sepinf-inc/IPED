@@ -43,3 +43,10 @@ galleryThreads = default
 # Logs rendering of each image in gallery. Could generate huge logs or
 # slow down gallery rendering depending on log location.
 logGalleryRendering = false
+
+# Create view images (to speed up rendering) for the following mime types.
+# Used only for images that require external conversion. Use ";" as separator. 
+mimesToCreateView = image/heic; image/heif
+
+# Maximum size (in pixels) of generated view image
+maxViewImageSize = 2400

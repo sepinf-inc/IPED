@@ -222,7 +222,10 @@ class FaceRecognitionTask:
         isVideo = False
         mediaType = item.getMediaType().toString()
         if mediaType.startswith('image'):
-            img_path = item.getTempFile().getAbsolutePath()
+            if item.getViewFile() is not None and os.path.exists(item.getViewFile().getAbsolutePath()):
+                img_path = item.getViewFile().getAbsolutePath()
+            else:
+                img_path = item.getTempFile().getAbsolutePath()
         elif mediaType.startswith('video') and not FaceRecognitionTask.videoSubitems:
             img_path = item.getViewFile().getAbsolutePath()
             isVideo = True
