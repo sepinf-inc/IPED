@@ -30,11 +30,52 @@ import iped.engine.config.ConfigurationManager;
 import iped.engine.config.RemoteImageClassifierConfig;
 import iped.engine.task.index.IndexItem;
 
+class zipfile {
+    TemporaryResources tmp;
+    File zipFile;
+    FileOutputStream fos;
+    ZipOutputStream zos;
+    int size;
+
+    public zipfile() throws IOException {
+        tmp = new TemporaryResources();
+        zipFile = tmp.createTemporaryFile();
+        fos = new FileOutputStream(zipFile);
+        zos = new ZipOutputStream(fos);
+        size = 0;
+    }
+
+    public int size() {
+        return size;
+    }
+
+    public void addFileToZip(String filename, byte[] dados) throws IOException {
+
+        ZipEntry zipEntry = new ZipEntry(filename);
+        zos.putNextEntry(zipEntry);
+        zos.write(dados, 0, dados.length);
+        zos.closeEntry();
+        size++;
+
+    }
+
+    public File closeAndGetZip() throws IOException {
+        zos.close();
+        fos.close();
+        return zipFile;
+    }
+
+    public void clean() throws IOException {
+        tmp.close();
+    }
+}
+
 public class RemoteImageClassifier extends AbstractTask {
 
     private String url = "http://localhost:8000/zip";
     private int batch_size = 50;
     private Map<String, IItem> queue = new TreeMap<>();
+    private zipfile zip = null;
     private RemoteImageClassifierConfig config;
 
     @Override
@@ -51,6 +92,10 @@ public class RemoteImageClassifier extends AbstractTask {
         config = configurationManager.findObject(RemoteImageClassifierConfig.class);
         url = config.getUrl();
         batch_size = config.getBatchSize();
+        if (zip == null) {
+            zip = new zipfile();
+        }
+        
     }
 
     @Override
@@ -59,41 +104,37 @@ public class RemoteImageClassifier extends AbstractTask {
 
     }
 
-    private void addFileToZip(String filename, byte[] dados, ZipOutputStream zos) throws IOException {
-
-        ZipEntry zipEntry = new ZipEntry(filename);
-        zos.putNextEntry(zipEntry);
-        zos.write(dados, 0, dados.length);
-        zos.closeEntry();
-
-    }
-
     private void sendItemsToNextTask() throws Exception {
-        // criar zip um com i.getThumb() de todos os itens
-        System.out.println("Envia fila de tamanho" + queue.size());
-        try (TemporaryResources tmp = new TemporaryResources()) {
-            if (queue.size() > 0) {
-                File zipFile = tmp.createTemporaryFile();
-                try (FileOutputStream fos = new FileOutputStream(zipFile);
-                        ZipOutputStream zos = new ZipOutputStream(fos)) {
-                    for (String name : queue.keySet()) {
-                        addFileToZip(name, queue.get(name).getThumb(), zos);
-                    }
-
-                }
-                sendZipFile(zipFile);
+        for (IItem item : queue.values()) {
+            if (item != null) {
+                super.sendToNextTask(item);
             }
-        } finally {
-            for (IItem item : queue.values()) {
-                if (item != null) {
-                    super.sendToNextTask(item);
-                }
-            }
-            queue.clear();
         }
     }
 
+
+    protected void sendToNextTask(IItem item) throws Exception {
+        if (!isEnabled()) {
+            super.sendToNextTask(item);
+            return;
+        }
+
+        if (zip.size() > 0 && (zip.size() >= batch_size || item.isQueueEnd())) {
+            sendZipFile(zip.closeAndGetZip());
+            zip = new zipfile();
+            sendItemsToNextTask();
+        }
+        
+
+        if (!queue.containsValue(item) || item.isQueueEnd()) {
+            super.sendToNextTask(item);
+        }
+
+    }
+
+
     private void sendZipFile(File zipFile) throws IOException {
+        System.out.println("Envia zip de tamanho" + zip.size());
         try (CloseableHttpClient client = HttpClients.createDefault()) {
             HttpPost post = new HttpPost(url);
 
@@ -143,22 +184,7 @@ public class RemoteImageClassifier extends AbstractTask {
         }
     }
 
-    protected void sendToNextTask(IItem item) throws Exception {
-        if (!isEnabled()) {
-            super.sendToNextTask(item);
-            return;
-        }
-        if (queue.size() > 0 && (queue.size() >= batch_size || item.isQueueEnd())) {
-            sendItemsToNextTask();
-        }
-        if (!queue.containsValue(item) || item.isQueueEnd()) {
-            super.sendToNextTask(item);
-        }
-
-
-    }
-
-    @Override
+      @Override
     protected boolean processQueueEnd() {
         // TODO Auto-generated method stub
         return true;
@@ -166,7 +192,9 @@ public class RemoteImageClassifier extends AbstractTask {
 
     @Override
     protected void process(IItem evidence) throws Exception {
-        if (evidence.isQueueEnd() && queue.size() > 0) {
+        if (evidence.isQueueEnd() && zip.size() > 0) {
+            sendZipFile(zip.closeAndGetZip());
+            zip = new zipfile(); 
             sendItemsToNextTask();
             return;
         }
@@ -175,8 +203,7 @@ public class RemoteImageClassifier extends AbstractTask {
                 || evidence.getThumb() == null || evidence.isQueueEnd()) {
             return;
         }
-        queue.put(evidence.getExtraAttribute(IndexItem.TRACK_ID).toString() + ".jpg", evidence);
-
+        String name = evidence.getExtraAttribute(IndexItem.TRACK_ID).toString() + ".jpg";        zip.addFileToZip(name, evidence.getThumb());        queue.put(name, evidence);
     }
-
+        
 }
