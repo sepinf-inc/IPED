@@ -95,7 +95,7 @@ public class RemoteImageClassifier extends AbstractTask {
         if (zip == null) {
             zip = new zipfile();
         }
-        
+
     }
 
     @Override
@@ -112,7 +112,6 @@ public class RemoteImageClassifier extends AbstractTask {
         }
     }
 
-
     protected void sendToNextTask(IItem item) throws Exception {
         if (!isEnabled()) {
             super.sendToNextTask(item);
@@ -124,14 +123,12 @@ public class RemoteImageClassifier extends AbstractTask {
             zip = new zipfile();
             sendItemsToNextTask();
         }
-        
 
         if (!queue.containsValue(item) || item.isQueueEnd()) {
             super.sendToNextTask(item);
         }
 
     }
-
 
     private void sendZipFile(File zipFile) throws IOException {
         System.out.println("Envia zip de tamanho" + zip.size());
@@ -184,7 +181,7 @@ public class RemoteImageClassifier extends AbstractTask {
         }
     }
 
-      @Override
+    @Override
     protected boolean processQueueEnd() {
         // TODO Auto-generated method stub
         return true;
@@ -194,16 +191,18 @@ public class RemoteImageClassifier extends AbstractTask {
     protected void process(IItem evidence) throws Exception {
         if (evidence.isQueueEnd() && zip.size() > 0) {
             sendZipFile(zip.closeAndGetZip());
-            zip = new zipfile(); 
+            zip = new zipfile();
             sendItemsToNextTask();
             return;
         }
         // TODO Auto-generated method stub
-        if (!isEnabled() || !evidence.isToAddToCase() || evidence.getHashValue() == null
-                || evidence.getThumb() == null || evidence.isQueueEnd()) {
+        if (!isEnabled() || !evidence.isToAddToCase() || evidence.getHashValue() == null || evidence.getThumb() == null
+                || evidence.isQueueEnd()) {
             return;
         }
-        String name = evidence.getExtraAttribute(IndexItem.TRACK_ID).toString() + ".jpg";        zip.addFileToZip(name, evidence.getThumb());        queue.put(name, evidence);
+        String name = evidence.getExtraAttribute(IndexItem.TRACK_ID).toString() + ".jpg";
+        zip.addFileToZip(name, evidence.getThumb());
+        queue.put(name, evidence);
     }
-        
+
 }
