@@ -1618,6 +1618,18 @@
         <sub-class-of type="application/quicktime" />
     </mime-type>
 
+    <mime-type type="audio/x-aac">
+        <magic priority="60">
+            <match value="0xFC" type="string" offset="6">
+	            <match value="0xFFF15040" type="string" offset="0"/>
+	            <match value="0xFFF15080" type="string" offset="0"/>
+	            <match value="0xFFF15C40" type="string" offset="0"/>
+	            <match value="0xFFF15C80" type="string" offset="0"/>
+            </match>
+        </magic>
+        <glob pattern="*.aac"/>
+    </mime-type>
+
     <mime-type type="application/x-ofx-v1">
         <magic priority="50">
             <match value="OFXHEADER:100" type="string" offset="0:1"/>
