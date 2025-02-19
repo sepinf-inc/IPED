@@ -1,0 +1,10 @@
+##################################
+# remote image classifier Task configuration
+#################################
+
+# url running the classifier
+host = http://localhost:8000
+
+# max size number of thumbs to be included in the zip file sent to the server
+batch_size = 50
+
