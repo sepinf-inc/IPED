@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -30,13 +31,13 @@ import iped.engine.task.index.IndexItem;
 
 public class RemoteImageClassifier extends AbstractTask {
 
-    private String url = " http://localhost:8000/zip";
+    private String url = "http://localhost:8000/zip";
     private Map<String, IItem> queue = new TreeMap<>();
 
     @Override
     public List<Configurable<?>> getConfigurables() {
         // TODO Auto-generated method stub
-        return null;
+        return new ArrayList<Configurable<?>>();
     }
 
     public boolean isEnabled() {
@@ -66,6 +67,7 @@ public class RemoteImageClassifier extends AbstractTask {
 
     private void sendItemsToNextTask() throws Exception {
         // criar zip um com i.getThumb() de todos os itens
+        System.out.println("Envia fila de tamanho" + queue.size());
         try (TemporaryResources tmp = new TemporaryResources()) {
             File zipFile = tmp.createTemporaryFile();
             try (FileOutputStream fos = new FileOutputStream(zipFile); ZipOutputStream zos = new ZipOutputStream(fos)) {
@@ -75,15 +77,14 @@ public class RemoteImageClassifier extends AbstractTask {
 
             }
             sendZipFile(zipFile);
-        }
-
-        for (IItem item : queue.values()) {
-            if (item != null) {
-                super.sendToNextTask(item);
+        } finally {
+            for (IItem item : queue.values()) {
+                if (item != null) {
+                    super.sendToNextTask(item);
+                }
             }
+            queue.clear();
         }
-        queue.clear();
-
     }
 
     private void sendZipFile(File zipFile) throws IOException {
@@ -101,7 +102,7 @@ public class RemoteImageClassifier extends AbstractTask {
                     try (InputStream responseStream = response.getEntity().getContent()) {
                         ObjectMapper objectMapper = new ObjectMapper();
                         JsonNode jsonResponse = objectMapper.readTree(responseStream);
-                        System.out.println("Server Response: " + jsonResponse.toPrettyString());
+                        // System.out.println("Server Response: " + jsonResponse.toPrettyString());
                         JsonNode resultArray = jsonResponse.get("results");
                         if (resultArray != null && resultArray.isArray()) {
                             for (JsonNode item : resultArray) {
@@ -152,10 +153,20 @@ public class RemoteImageClassifier extends AbstractTask {
     }
 
     @Override
+    protected boolean processQueueEnd() {
+        // TODO Auto-generated method stub
+        return true;
+    }
+
+    @Override
     protected void process(IItem evidence) throws Exception {
+        if (evidence.isQueueEnd()) {
+            sendItemsToNextTask();
+            return;
+        }
         // TODO Auto-generated method stub
         if (!isEnabled() || !evidence.isToAddToCase() || evidence.getHashValue() == null
-                || evidence.getThumb() == null) {
+                || evidence.getThumb() == null || evidence.isQueueEnd()) {
             return;
         }
         queue.put(evidence.getExtraAttribute(IndexItem.TRACK_ID).toString() + ".jpg", evidence);
