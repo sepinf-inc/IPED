@@ -26,8 +26,6 @@ public class ShareazaDownloadParserTest extends BaseItemSearchContext {
         try (InputStream stream = getStream(file)) {
             parser.parse(stream, handler, metadata, context);
 
-            metadata.get(Metadata.CONTENT_TYPE);
-
             String hts = handler.toString();
 
             assertTrue(hts.contains("Magic:                   SDL"));
