@@ -18,6 +18,7 @@ public class Chat {
     private String title;
     private boolean isGroupChat;
     private boolean isChannelChat;
+    private boolean isBroadcast;
     private boolean isDeleted;
 
     private String recoveredFrom;
@@ -26,6 +27,9 @@ public class Chat {
 
     public Chat(WAContact remote) {
         this.remote = remote;
+        if (remote != null && remote.getFullId().equals(WAContact.waStatusBroadcast)) {
+            setBroadcast(true);
+        }
     }
 
     /**
@@ -72,7 +76,7 @@ public class Chat {
     public void add(Message message) {
         messages.add(message);
     }
-    
+
     /**
      * @param messages
      *            the messages to set
@@ -100,21 +104,34 @@ public class Chat {
     public boolean isGroupOrChannelChat() {
         return isGroupChat || isChannelChat;
     }
-    
+
+    public boolean isBroadcast() {
+        return isBroadcast;
+    }
+
+    public void setBroadcast(boolean isBroadcast) {
+        this.isBroadcast = isBroadcast;
+    }
+
     public String getTitle() {
         if (title == null) {
+            title = "WhatsApp ";
             if (isChannelChat()) {
-                title = "WhatsApp Channel";
+                title += "Channel";
                 if (getSubject() != null && !getSubject().isBlank()) {
                     title += " - " + getSubject().strip();
                 }
             } else if (isGroupChat()) {
-                title = "WhatsApp Group";
+                title += "Group";
                 if (getSubject() != null && !getSubject().isBlank()) {
                     title += " - " + getSubject().strip();
                 }
             } else {
-                title = "WhatsApp Chat"; //$NON-NLS-1$
+                if (isBroadcast()) {
+                    title += "Status";
+                } else {
+                    title += "Chat";
+                }
                 if (remote != null && remote.getName() != null
                         && (getPrintId() == null || !remote.getName().strip().equals(getPrintId().strip()))) {
                     title += " - " + remote.getName().strip(); //$NON-NLS-1$
@@ -146,11 +163,11 @@ public class Chat {
     public void setGroupMembers(Set<WAContact> groupmembers) {
         this.groupMembers = groupmembers;
     }
-    
+
     public void setDeleted(boolean isDeleted) {
         this.isDeleted = isDeleted;
     }
-    
+
     public boolean isDeleted() {
         return isDeleted;
     }

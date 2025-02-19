@@ -29,9 +29,6 @@ public class Message implements Comparable<Message> {
     private static FileChannel fileChannel;
     private static AtomicLong fileOffset = new AtomicLong();
     private static AtomicInteger deletedCounter = new AtomicInteger();
-    public static String STATUS_BROADCAST = "status@broadcast";
-    public static String GROUP = "@g.us";
-    
 
     private long id;
     private int deletedId = -1;
