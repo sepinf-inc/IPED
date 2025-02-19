@@ -69,14 +69,17 @@ public class RemoteImageClassifier extends AbstractTask {
         // criar zip um com i.getThumb() de todos os itens
         System.out.println("Envia fila de tamanho" + queue.size());
         try (TemporaryResources tmp = new TemporaryResources()) {
-            File zipFile = tmp.createTemporaryFile();
-            try (FileOutputStream fos = new FileOutputStream(zipFile); ZipOutputStream zos = new ZipOutputStream(fos)) {
-                for (String name : queue.keySet()) {
-                    addFileToZip(name, queue.get(name).getThumb(), zos);
-                }
+            if (queue.size() > 0) {
+                File zipFile = tmp.createTemporaryFile();
+                try (FileOutputStream fos = new FileOutputStream(zipFile);
+                        ZipOutputStream zos = new ZipOutputStream(fos)) {
+                    for (String name : queue.keySet()) {
+                        addFileToZip(name, queue.get(name).getThumb(), zos);
+                    }
 
+                }
+                sendZipFile(zipFile);
             }
-            sendZipFile(zipFile);
         } finally {
             for (IItem item : queue.values()) {
                 if (item != null) {
@@ -138,14 +141,14 @@ public class RemoteImageClassifier extends AbstractTask {
     }
 
     protected void sendToNextTask(IItem item) throws Exception {
-        if (!isEnabled() || !queue.containsValue(item)) {
+        if (!isEnabled()) {
             super.sendToNextTask(item);
             return;
         }
-        if (queue.size() >= 50 || item.isQueueEnd()) {
+        if (queue.size() > 0 && (queue.size() >= 50 || item.isQueueEnd())) {
             sendItemsToNextTask();
         }
-        if (item.isQueueEnd()) {
+        if (!queue.containsValue(item) || item.isQueueEnd()) {
             super.sendToNextTask(item);
         }
 
@@ -160,7 +163,7 @@ public class RemoteImageClassifier extends AbstractTask {
 
     @Override
     protected void process(IItem evidence) throws Exception {
-        if (evidence.isQueueEnd()) {
+        if (evidence.isQueueEnd() && queue.size() > 0) {
             sendItemsToNextTask();
             return;
         }
