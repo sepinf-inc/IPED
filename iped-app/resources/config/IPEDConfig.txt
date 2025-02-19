@@ -145,3 +145,7 @@ enableDocThumbs = false
 # Enables HTML report generation on automatic extractions or from selected items.
 # Generation settings can be modified in file "conf/HTMLReportConfig.txt"
 enableHTMLReport = true
+
+#Enables the remote image classifier task
+#this will set the thumbsize to 384x384
+enableRemoteImageClassifier = false

@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -27,27 +27,30 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import iped.configuration.Configurable;
 import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
+import iped.engine.config.RemoteImageClassifierConfig;
 import iped.engine.task.index.IndexItem;
 
 public class RemoteImageClassifier extends AbstractTask {
 
     private String url = "http://localhost:8000/zip";
+    private int batch_size = 50;
     private Map<String, IItem> queue = new TreeMap<>();
+    private RemoteImageClassifierConfig config;
 
     @Override
     public List<Configurable<?>> getConfigurables() {
-        // TODO Auto-generated method stub
-        return new ArrayList<Configurable<?>>();
+        return Arrays.asList(new RemoteImageClassifierConfig());
     }
 
     public boolean isEnabled() {
-        return true;
+        return config.isEnabled();
     }
 
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
-        // TODO Auto-generated method stub
-
+        config = configurationManager.findObject(RemoteImageClassifierConfig.class);
+        url = config.getUrl();
+        batch_size = config.getBatchSize();
     }
 
     @Override
@@ -145,7 +148,7 @@ public class RemoteImageClassifier extends AbstractTask {
             super.sendToNextTask(item);
             return;
         }
-        if (queue.size() > 0 && (queue.size() >= 50 || item.isQueueEnd())) {
+        if (queue.size() > 0 && (queue.size() >= batch_size || item.isQueueEnd())) {
             sendItemsToNextTask();
         }
         if (!queue.containsValue(item) || item.isQueueEnd()) {
