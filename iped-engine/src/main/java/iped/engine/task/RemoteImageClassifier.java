@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -62,6 +63,16 @@ public class RemoteImageClassifier extends AbstractTask {
         public void addFileToZip(String filename, byte[] dados) throws IOException {
 
             ZipEntry zipEntry = new ZipEntry(filename);
+
+            zipEntry.setMethod(ZipEntry.STORED);
+            CRC32 crc = new CRC32();
+            crc.update(dados);
+
+            zipEntry.setSize(dados.length);
+            zipEntry.setCompressedSize(dados.length);
+            zipEntry.setCrc(crc.getValue());
+
+
             zos.putNextEntry(zipEntry);
             zos.write(dados, 0, dados.length);
             zos.closeEntry();
@@ -112,6 +123,7 @@ public class RemoteImageClassifier extends AbstractTask {
                 super.sendToNextTask(item);
             }
         }
+        queue.clear();
     }
 
     protected void sendToNextTask(IItem item) throws Exception {
@@ -122,8 +134,11 @@ public class RemoteImageClassifier extends AbstractTask {
 
         if (zip.size() > 0 && (zip.size() >= batch_size || item.isQueueEnd())) {
             sendZipFile(zip.closeAndGetZip());
+            zip.clean();
             zip = new zipfile();
             sendItemsToNextTask();
+            if (!item.isQueueEnd())
+                return;
         }
 
         if (!queue.containsValue(item) || item.isQueueEnd()) {
