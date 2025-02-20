@@ -198,6 +198,14 @@
     {"name": "Journeys", "mimes": ["application/x-ufed-journey"]},
     {"name": "Networks Usage", "mimes": ["application/x-ufed-networkusage"]},
     {"name": "Recognized Devices", "mimes": ["application/x-ufed-recognizeddevice"]},
-    {"name": "Social Media Activities", "mimes": ["application/x-ufed-socialmediaactivity"]}
+    {"name": "Social Media Activities", "mimes": ["application/x-ufed-socialmediaactivity"]},
+	{"name": "Classified by AI", "categories":[
+      {"name": "AI Label: Child Sexual Abuse"},
+      {"name": "AI Label: Likely Child Sexual Abuse"},
+      {"name": "AI Label: Drawing"},
+      {"name": "AI Label: People"},
+      {"name": "AI Label: Pornography"},
+      {"name": "AI Label: Other"}
+    ]}
   ]
 }
