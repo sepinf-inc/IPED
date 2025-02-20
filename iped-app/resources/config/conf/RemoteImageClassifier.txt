@@ -9,4 +9,4 @@ url = http://192.168.160.208:8000/zip
 batch_size = 50
 
 # threshold used to decide if an image is labeled in one category
-categorization_threshold=0.99
+categorization_threshold=0.50

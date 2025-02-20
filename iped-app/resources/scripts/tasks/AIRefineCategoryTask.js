@@ -6,7 +6,6 @@
 /* Name of processing task
 */
 
-var categorizationThreshold=0.5;
 var RemoteImageClassifierConfig=Java.type("iped.engine.config.RemoteImageClassifierConfig")
 var Arrays=Java.type("java.util.Arrays")
 
@@ -21,7 +20,7 @@ function getConfigurables() {
 }
 
 function init(configurationManager) {
-	config=configurationManager.findObject(RemoteImageClassifierConfig.class)
+	var config=configurationManager.findObject(RemoteImageClassifierConfig.class)
 	categorizationThreshold=config.getCategorizationThreshold()	
 }
 
