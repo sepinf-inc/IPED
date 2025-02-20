@@ -20,7 +20,7 @@ function getConfigurables() {
 }
 
 function init(configurationManager) {
-	var config=configurationManager.findObject(RemoteImageClassifierConfig.class)
+	config=configurationManager.findObject(RemoteImageClassifierConfig.class)
 	categorizationThreshold=config.getCategorizationThreshold()	
 }
 
@@ -41,7 +41,7 @@ function process(e){
 		"Porn":"AI Label: Pornography",
 		}
 	for(cat in listcategories){
-		if (e.getExtraAttribute(cat)>0.5){
+		if (e.getExtraAttribute(cat)>categorizationThreshold){
 			e.addCategory(listcategories[cat]);
 		}		
 	}
