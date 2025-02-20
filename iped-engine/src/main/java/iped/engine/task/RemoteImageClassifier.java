@@ -20,6 +20,8 @@ import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.tika.io.TemporaryResources;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,54 +31,54 @@ import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.RemoteImageClassifierConfig;
 import iped.engine.task.index.IndexItem;
-
-class zipfile {
-    TemporaryResources tmp;
-    File zipFile;
-    FileOutputStream fos;
-    ZipOutputStream zos;
-    int size;
-
-    public zipfile() throws IOException {
-        tmp = new TemporaryResources();
-        zipFile = tmp.createTemporaryFile();
-        fos = new FileOutputStream(zipFile);
-        zos = new ZipOutputStream(fos);
-        size = 0;
-    }
-
-    public int size() {
-        return size;
-    }
-
-    public void addFileToZip(String filename, byte[] dados) throws IOException {
-
-        ZipEntry zipEntry = new ZipEntry(filename);
-        zos.putNextEntry(zipEntry);
-        zos.write(dados, 0, dados.length);
-        zos.closeEntry();
-        size++;
-
-    }
-
-    public File closeAndGetZip() throws IOException {
-        zos.close();
-        fos.close();
-        return zipFile;
-    }
-
-    public void clean() throws IOException {
-        tmp.close();
-    }
-}
-
 public class RemoteImageClassifier extends AbstractTask {
 
+    private static Logger logger = LoggerFactory.getLogger(MinIOTask.class);
     private String url = "http://localhost:8000/zip";
     private int batch_size = 50;
     private Map<String, IItem> queue = new TreeMap<>();
     private zipfile zip = null;
     private RemoteImageClassifierConfig config;
+
+    private static class zipfile {
+        TemporaryResources tmp;
+        File zipFile;
+        FileOutputStream fos;
+        ZipOutputStream zos;
+        int size;
+
+        public zipfile() throws IOException {
+            tmp = new TemporaryResources();
+            zipFile = tmp.createTemporaryFile();
+            fos = new FileOutputStream(zipFile);
+            zos = new ZipOutputStream(fos);
+            size = 0;
+        }
+
+        public int size() {
+            return size;
+        }
+
+        public void addFileToZip(String filename, byte[] dados) throws IOException {
+
+            ZipEntry zipEntry = new ZipEntry(filename);
+            zos.putNextEntry(zipEntry);
+            zos.write(dados, 0, dados.length);
+            zos.closeEntry();
+            size++;
+
+        }
+
+        public File closeAndGetZip() throws IOException {
+            zos.close();
+            fos.close();
+            return zipFile;
+        }
+
+        public void clean() throws IOException {
+            tmp.close();
+        }
+    }
 
     @Override
     public List<Configurable<?>> getConfigurables() {
@@ -131,7 +133,7 @@ public class RemoteImageClassifier extends AbstractTask {
     }
 
     private void sendZipFile(File zipFile) throws IOException {
-        System.out.println("Envia zip de tamanho" + zip.size());
+        logger.info("Envia zip de tamanho {}", zip.size());
         try (CloseableHttpClient client = HttpClients.createDefault()) {
             HttpPost post = new HttpPost(url);
 
@@ -146,14 +148,14 @@ public class RemoteImageClassifier extends AbstractTask {
                     try (InputStream responseStream = response.getEntity().getContent()) {
                         ObjectMapper objectMapper = new ObjectMapper();
                         JsonNode jsonResponse = objectMapper.readTree(responseStream);
-                        // System.out.println("Server Response: " + jsonResponse.toPrettyString());
+                        logger.debug("Server Response: {}", jsonResponse.toPrettyString());
                         JsonNode resultArray = jsonResponse.get("results");
                         if (resultArray != null && resultArray.isArray()) {
                             for (JsonNode item : resultArray) {
                                 String name = item.get("filename").asText();
                                 IItem evidence;
                                 if (name == null || (evidence = queue.get(name)) == null) {
-                                    System.out.println("Warning: No matching item found ");
+                                    logger.warn("Warning: No matching item found ");
                                     continue;
                                 }
 
@@ -166,16 +168,16 @@ public class RemoteImageClassifier extends AbstractTask {
 
                                     });
                                 } else {
-                                    System.out.println("Warning: 'class' field is missing for filename: " + name);
+                                    logger.warn("Warning: 'class' field is missing for filename: {}", name);
                                 }
                             }
                         } else {
-                            System.out.println("Warning: 'results' array is missing in JSON response.");
+                            logger.warn("Warning: 'results' array is missing in JSON response.");
                         }
                     }
 
                 } else {
-                    System.out.println("Failed to upload ZIP. HTTP Code: " + statusCode);
+                    logger.error("Failed to upload ZIP. HTTP Code: {}", statusCode);
                 }
             }
         }
