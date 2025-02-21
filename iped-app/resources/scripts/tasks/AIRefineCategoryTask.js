@@ -33,12 +33,12 @@ function finish(){}
 function process(e){
 
 	listcategories={
-		"ASI":"AI Label: Child Sexual Abuse",
-		"ASI_SUSP":"AI Label: Likely Child Sexual Abuse",
-		"Desenhos":"AI Label: Drawing",
-		"Outros":"AI Label: Other",
-		"Pessoas":"AI Label: People",
-		"Porn":"AI Label: Pornography",
+		"AI_CSAM":"AI Label: Child Sexual Abuse",
+		"AI_LIKELYCSAM":"AI Label: Likely Child Sexual Abuse",
+		"AI_Drawing":"AI Label: Drawing",
+		"AI_Other":"AI Label: Other",
+		"AI_People":"AI Label: People",
+		"AI_Porn":"AI Label: Pornography",
 		}
 	for(cat in listcategories){
 		if (e.getExtraAttribute(cat)>categorizationThreshold){
