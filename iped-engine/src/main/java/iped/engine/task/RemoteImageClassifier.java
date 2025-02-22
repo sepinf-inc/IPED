@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -192,7 +193,14 @@ public class RemoteImageClassifier extends AbstractTask {
                     }
 
                 } else {
-                    logger.error("Failed to upload ZIP. HTTP Code: {}", statusCode);
+                    String errorMessage;
+                    try (InputStream errorStream = response.getEntity().getContent()) {
+                        errorMessage = new String(errorStream.readAllBytes(), StandardCharsets.UTF_8);
+                    } catch (IOException e) {
+                        errorMessage = "Failed to read error message from response.";
+                    }
+
+                    logger.error("Failed to upload ZIP. HTTP Code: {} - Response: {}", statusCode, errorMessage);
                 }
             }
         }
@@ -212,9 +220,8 @@ public class RemoteImageClassifier extends AbstractTask {
             sendItemsToNextTask();
             return;
         }
-        // TODO Auto-generated method stub
         if (!isEnabled() || !evidence.isToAddToCase() || evidence.getHashValue() == null || evidence.getThumb() == null
-                || evidence.isQueueEnd()) {
+                || evidence.getThumb().length < 10 || evidence.isQueueEnd()) {
             return;
         }
         String name = evidence.getExtraAttribute(IndexItem.TRACK_ID).toString() + ".jpg";
