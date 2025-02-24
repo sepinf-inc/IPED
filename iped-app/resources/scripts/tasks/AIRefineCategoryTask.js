@@ -30,20 +30,45 @@ function finish(){}
  * Changes category of items based on their properties
  *
  */
+
+
+function addCategories(e, listcategories, default_cat) {
+    default_cat = (typeof default_cat !== "undefined") ? default_cat : null;
+	var tot=0;
+	for(var cat in listcategories){
+		if (e.getExtraAttribute(cat)>categorizationThreshold){
+			if(typeof listcategories[cat] ==='string'){
+				e.addCategory(listcategories[cat]);	 // Add category if it's a string
+				tot++;
+			}else{
+				tot+=addCategories(e,listcategories[cat]["subCategories"],listcategories[cat]["name"]);
+			}
+		}
+	}
+	if(tot===0 && default_cat !== null){
+		e.addCategory(default_cat);
+	}
+}
+
 function process(e){
 
-	listcategories={
+	var listcategories={
 		"AI_CSAM":"AI Label: Child Sexual Abuse",
 		"AI_LIKELYCSAM":"AI Label: Likely Child Sexual Abuse",
-		"AI_Drawing":"AI Label: Drawing",
-		"AI_Other":"AI Label: Other",
+		"AI_Drawing":{"name":"AI Label: Drawing","subCategories":{
+			"AI_Drawing_CSAM":"AI Label: Child Sexual Abuse Drawing",
+			"AI_Drawing_Porn":"AI Label: Explicit Drawing"}
+		},
+		"AI_Other":{"name":"AI Label: Other","subCategories":{
+			"AI_Other_Banknotes":"AI Label: Banknotes",
+			"AI_Other_Digitalization":"AI Label: Digitalization",
+			"AI_Other_Documents":"AI Label: Documents"}
+		},
 		"AI_People":"AI Label: People",
-		"AI_Porn":"AI Label: Pornography",
+		"AI_Porn":"AI Label: Pornography"
+		
 		}
-	for(cat in listcategories){
-		if (e.getExtraAttribute(cat)>categorizationThreshold){
-			e.addCategory(listcategories[cat]);
-		}		
-	}
+		
+	addCategories(e,listcategories);
 }
 

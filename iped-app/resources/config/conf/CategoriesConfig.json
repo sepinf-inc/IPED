@@ -202,10 +202,17 @@
 	{"name": "Classified by AI", "categories":[
       {"name": "AI Label: Child Sexual Abuse"},
       {"name": "AI Label: Likely Child Sexual Abuse"},
-      {"name": "AI Label: Drawing"},
+      {"name": "AI Label: Drawing", "categories":[
+      	{"name":"AI Label: Child Sexual Abuse Drawing"},
+      	{"name":"AI Label: AI Label: Explicit Drawing"}
+      ]},
       {"name": "AI Label: People"},
       {"name": "AI Label: Pornography"},
-      {"name": "AI Label: Other"}
+      {"name": "AI Label: Other", "categories":[
+      	{"name":"AI Label: Banknotes"},
+      	{"name":"AI Label: Digitalization"},
+      	{"name":"AI Label: Documents"}
+      ]}
     ]}
   ]
 }
