@@ -327,7 +327,7 @@ public class DIETask extends AbstractTask {
      * is executed.
      */
 
-    private static boolean isAnimationImage(IItem item) {
+    public static boolean isAnimationImage(IItem item) {
         return VideoThumbTask.isImageSequence(item.getMediaType().toString()) ||
                 item.getMetadata().get(VideoThumbTask.ANIMATION_FRAMES_PROP) != null;
     }
