@@ -162,14 +162,11 @@ public class RemoteImageClassifier extends AbstractTask {
             return;
         }
 
-        if (zip.size() > 0 && (zip.size() >= batch_size || item.isQueueEnd())) {
-            sendZipFile(zip.closeAndGetZip());
-            zip.clean();
-            zip = new zipfile();
-            sendItemsToNextTask();
-            if (!item.isQueueEnd())
-                return;
-        }
+        /*
+         * if (zip.size() > 0 && (zip.size() >= batch_size || item.isQueueEnd())) {
+         * sendZipFile(zip.closeAndGetZip()); zip.clean(); zip = new zipfile();
+         * sendItemsToNextTask(); if (!item.isQueueEnd()) return; }
+         */
 
         if (!queue.containsValue(item) || item.isQueueEnd()) {
             super.sendToNextTask(item);
@@ -272,41 +269,39 @@ public class RemoteImageClassifier extends AbstractTask {
 
     @Override
     protected void process(IItem evidence) throws Exception {
-        if (evidence.isQueueEnd() && zip.size() > 0) {
+        if (zip.size() >= batch_size || (evidence.isQueueEnd() && zip.size() > 0)) {
             sendZipFile(zip.closeAndGetZip());
+            zip.clean();
             zip = new zipfile();
             sendItemsToNextTask();
-            return;
         }
         if (!isEnabled() || !evidence.isToAddToCase() || evidence.getHashValue() == null || evidence.getThumb() == null
                 || evidence.getThumb().length < 10 || evidence.isQueueEnd()) {
             return;
         }
 
+        String name = evidence.getExtraAttribute(IndexItem.TRACK_ID).toString() + ".jpg";
         if (DIETask.isVideoType(evidence.getMediaType()) || DIETask.isAnimationImage(evidence)) {
 
             // For videos call the detection method for each extracted frame image
             // (VideoThumbsTask must be enabled)
             File viewFile = evidence.getViewFile();
             if (viewFile != null && viewFile.exists()) {
-
                 List<BufferedImage> frames = ImageUtil.getFrames(viewFile);
                 int i = 0;
-                String name = evidence.getExtraAttribute(IndexItem.TRACK_ID).toString() + ".jpg";
+
                 for (BufferedImage frame : frames) {
                     String name_i = (++i) + "_" + name;
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
                     ImageIO.write(frame, "jpeg", baos);
                     zip.addFileToZip(name_i, baos.toByteArray());
                 }
-                queue.put(name, evidence);
 
             }
         } else {
-            String name = evidence.getExtraAttribute(IndexItem.TRACK_ID).toString() + ".jpg";
             zip.addFileToZip(name, evidence.getThumb());
-            queue.put(name, evidence);
         }
+        queue.put(name, evidence);
 
     }
 
