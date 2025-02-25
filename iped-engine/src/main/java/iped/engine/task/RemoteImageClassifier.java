@@ -286,17 +286,17 @@ public class RemoteImageClassifier extends AbstractTask {
             // For videos call the detection method for each extracted frame image
             // (VideoThumbsTask must be enabled)
             File viewFile = evidence.getViewFile();
-            if (viewFile != null && viewFile.exists()) {
-                List<BufferedImage> frames = ImageUtil.getFrames(viewFile);
+            List<BufferedImage> frames;
+            if (viewFile != null && viewFile.exists() && (frames = ImageUtil.getFrames(viewFile)) != null) {
                 int i = 0;
-
                 for (BufferedImage frame : frames) {
                     String name_i = (++i) + "_" + name;
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
                     ImageIO.write(frame, "jpeg", baos);
                     zip.addFileToZip(name_i, baos.toByteArray());
                 }
-
+            } else {
+                zip.addFileToZip(name, evidence.getThumb());
             }
         } else {
             zip.addFileToZip(name, evidence.getThumb());
