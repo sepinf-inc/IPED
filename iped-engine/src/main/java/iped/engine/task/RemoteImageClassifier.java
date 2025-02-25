@@ -61,12 +61,11 @@ public class RemoteImageClassifier extends AbstractTask {
         }
 
         public double getClassProb(String classname) {
-            double resp = 0;
-            for (Double val : classes.get(classname)) {
-                if (val > resp)
-                    resp = val;
-            }
-            return resp;
+            /*
+             * double resp = 0; for (Double val : classes.get(classname)) { if (val > resp)
+             * resp = val; } return resp;
+             */
+            return DIETask.videoScore(classes.get(classname));
 
         }
     }
