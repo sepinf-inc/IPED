@@ -204,7 +204,7 @@
       {"name": "AI Label: Likely Child Sexual Abuse"},
       {"name": "AI Label: Drawing", "categories":[
       	{"name":"AI Label: Child Sexual Abuse Drawing"},
-      	{"name":"AI Label: AI Label: Explicit Drawing"}
+      	{"name":"AI Label: Explicit Drawing"}
       ]},
       {"name": "AI Label: People"},
       {"name": "AI Label: Pornography"},
