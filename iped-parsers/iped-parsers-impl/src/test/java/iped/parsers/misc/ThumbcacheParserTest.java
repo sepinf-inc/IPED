@@ -17,13 +17,13 @@ public class ThumbcacheParserTest extends TestCase {
     }
 
     @Test
-    public void testParse() throws Exception {
+    public void testThumbcacheParserTest() throws Exception {
         ThumbcacheParser parser = new ThumbcacheParser();
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
-        try (InputStream stream = getStream("test-files/test_mockDoc1.doc")) {
+        try (InputStream stream = getStream("test-files/test_Thumbcache.db")) {
             parser.parse(stream, handler, metadata, context);
             String hts = handler.toString();
 
