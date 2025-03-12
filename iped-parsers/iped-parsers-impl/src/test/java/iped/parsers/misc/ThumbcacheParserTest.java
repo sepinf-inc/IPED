@@ -1,14 +1,12 @@
 package iped.parsers.misc;
 
 import junit.framework.TestCase;
-import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.BodyContentHandler;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
-
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -19,7 +17,7 @@ public class ThumbcacheParserTest extends TestCase {
     }
 
     @Test
-    public void testThumbcacheParser() throws IOException, SAXException, TikaException {
+    public void testThumbcacheParser() throws IOException, SAXException {
         ThumbcacheParser parser = new ThumbcacheParser();
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
