@@ -18,7 +18,7 @@ jobs:
 
     - name: Load libagdb from cache
       id: libagdb
-      uses: actions/cache@v1
+      uses: actions/cache@v4
       with:
         path: libagdb
         key: libagdb
@@ -77,7 +77,7 @@ jobs:
 
     - name: Load libagdb from cache
       id: libagdb
-      uses: actions/cache@v1
+      uses: actions/cache@v4
       with:
         path: libagdb
         key: libagdb
