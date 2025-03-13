@@ -7,6 +7,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -17,15 +19,20 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import javax.imageio.ImageIO;
+import javax.net.ssl.SSLContext;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.tika.io.TemporaryResources;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +55,7 @@ public class RemoteImageClassifier extends AbstractTask {
     private Map<String, IItem> queue = new TreeMap<>();
     private zipfile zip = null;
     private RemoteImageClassifierConfig config;
-
+    private boolean validateSSL;
     private static class ResultItem {
         public String name;
         public TreeMap<String, ArrayList<Double>> classes = new TreeMap<>();
@@ -134,6 +141,7 @@ public class RemoteImageClassifier extends AbstractTask {
         config = configurationManager.findObject(RemoteImageClassifierConfig.class);
         url = config.getUrl();
         batch_size = config.getBatchSize();
+        validateSSL = config.getValidateSSL();
         if (zip == null) {
             zip = new zipfile();
         }
@@ -229,9 +237,34 @@ public class RemoteImageClassifier extends AbstractTask {
         }
     }
     
+    private CloseableHttpClient getClient() {
+        if (!validateSSL) {
+            SSLContext sslContext;
+            try {
+                sslContext = SSLContextBuilder.create().loadTrustMaterial(null, new TrustStrategy() {
+                    @Override
+                    public boolean isTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+                        // Trust all certs
+                        return true;
+                    }
+
+                }).build();
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to create a trusting SSL context", e);
+            }
+
+            // Use NoopHostnameVerifier to ignore host name verification
+            SSLConnectionSocketFactory sslSocketFactory = new SSLConnectionSocketFactory(sslContext,
+                    NoopHostnameVerifier.INSTANCE);
+            return HttpClients.custom().setSSLSocketFactory(sslSocketFactory).build();
+        } else {
+            return HttpClients.createDefault();
+        }
+    }
+
     private void sendZipFile(File zipFile) throws IOException {
         logger.info("Envia zip de tamanho {}", zip.size());
-        try (CloseableHttpClient client = HttpClients.createDefault()) {
+        try (CloseableHttpClient client = getClient()) {
             HttpPost post = new HttpPost(url);
 
             HttpEntity entity = MultipartEntityBuilder.create().setMode(HttpMultipartMode.BROWSER_COMPATIBLE)

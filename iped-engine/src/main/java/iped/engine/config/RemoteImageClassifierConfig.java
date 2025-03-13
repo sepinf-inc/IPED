@@ -10,17 +10,18 @@ public class RemoteImageClassifierConfig extends AbstractTaskPropertiesConfig {
     private static final String URL_KEY = "url";
     private static final String BATCH_SIZE_KEY = "batch_size";
     private static final String CATEGORIZATION_THRESHOLD = "categorization_threshold";
+    private static final String VALIDATE_SSL = "validateSSL";
 
+    private boolean validateSSL = true;
     private String url;
     private int batchSize;
     private double categorizationThreshold = 0.5;
     @Override
     void processProperties(UTF8Properties properties) {
-        // TODO Auto-generated method stub
         setUrl(properties.getProperty(URL_KEY).trim());
         setBatchSize(Integer.parseInt(properties.getProperty(BATCH_SIZE_KEY).trim()));
         setCategorizationThreshold(Double.parseDouble(properties.getProperty(CATEGORIZATION_THRESHOLD).trim()));
-
+        setValidateSSL(Boolean.valueOf(properties.getProperty(VALIDATE_SSL).trim()));
     }
 
     @Override
@@ -57,6 +58,14 @@ public class RemoteImageClassifierConfig extends AbstractTaskPropertiesConfig {
 
     public void setCategorizationThreshold(double categorizationThreshold) {
         this.categorizationThreshold = categorizationThreshold;
+    }
+
+    public boolean getValidateSSL() {
+        return validateSSL;
+    }
+
+    public void setValidateSSL(boolean validateSSL) {
+        this.validateSSL = validateSSL;
     }
 
 }
