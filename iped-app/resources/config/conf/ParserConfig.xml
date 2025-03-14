@@ -269,6 +269,7 @@
         <parser class="iped.parsers.compress.PackageParser"></parser>
         <parser class="iped.parsers.compress.SevenZipParser"></parser>
         <parser class="iped.parsers.compress.LZFSEParser"></parser>
+        <parser class="iped.parsers.android.backup.AndroidBackupParser"></parser>
         <parser class="iped.parsers.misc.XMLParser">
             <mime-exclude>image/svg+xml</mime-exclude>
         </parser>
