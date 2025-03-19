@@ -34,8 +34,6 @@ public class ThumbcacheParser extends AbstractParser {
 
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException {
-        extractedImages.clear();
-        extractedImageNames.clear();
 
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
             new ParsingEmbeddedDocumentExtractor(context));
@@ -47,23 +45,16 @@ public class ThumbcacheParser extends AbstractParser {
              TikaInputStream tis = TikaInputStream.get(stream, tmp)) {
 
             File file = tis.getFile();
-            String outputDir = file.getParent();
-            String imagesDir = outputDir + File.separator + "images";
-
-            File imagesDirectory = new File(imagesDir);
-            if (!imagesDirectory.exists()) {
-                imagesDirectory.mkdirs();
-            }
 
             try (FileInputStream fis = new FileInputStream(file)) {
-                parseThumbcacheFile(fis, xhtml, imagesDir);
+                parseThumbcacheFile(fis, xhtml);
             }
 
             for (int i = 0; i < extractedImages.size(); i++) {
                 if (extractor.shouldParseEmbedded(metadata)) {
                     Metadata imageMetadata = new Metadata();
-                    String ext = detectImageExtension(extractedImages.get(i));
-                    imageMetadata.set(Metadata.CONTENT_TYPE, "image/" + ext);
+                    String mimeType = detectImageMimeType(extractedImages.get(i));
+                    imageMetadata.set(Metadata.CONTENT_TYPE, mimeType);
                     imageMetadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, extractedImageNames.get(i));
 
                     try (ByteArrayInputStream imageStream = new ByteArrayInputStream(extractedImages.get(i))) {
@@ -79,7 +70,7 @@ public class ThumbcacheParser extends AbstractParser {
         }
     }
 
-    private void parseThumbcacheFile(InputStream stream, XHTMLContentHandler xhtml, String imagesDir) throws IOException, SAXException {
+    private void parseThumbcacheFile(InputStream stream, XHTMLContentHandler xhtml) throws IOException, SAXException {
         byte[] buffer = new byte[56];
 
         ByteBuffer fileHeader = ByteBuffer.allocate(24).order(ByteOrder.LITTLE_ENDIAN);
@@ -167,10 +158,8 @@ public class ThumbcacheParser extends AbstractParser {
                 byte[] imageData = new byte[dataSize];
                 stream.read(imageData);
 
-                String ext = detectImageExtension(imageData);
-                String fileName = "thumb_" + Long.toHexString(entryHash) + "." + ext;
-
-                saveImage(imagesDir, fileName, imageData);
+                String mimeType = detectImageMimeType(imageData);
+                String fileName = "thumb_" + Long.toHexString(entryHash) + "." + getFileExtension(mimeType);
 
                 extractedImages.add(imageData);
                 extractedImageNames.add(fileName);
@@ -178,25 +167,29 @@ public class ThumbcacheParser extends AbstractParser {
         }
     }
 
-    private String detectImageExtension(byte[] data) {
+    private String detectImageMimeType(byte[] data) {
         if (data.length >= 4) {
             if (data[0] == (byte) 0x42 && data[1] == (byte) 0x4D) {
-                return "bmp";
+                return "image/bmp";
             } else if (data[0] == (byte) 0xFF && data[1] == (byte) 0xD8) {
-                return "jpg";
+                return "image/jpeg";
             } else if (data[0] == (byte) 0x89 && data[1] == (byte) 0x50) {
-                return "png";
+                return "image/png";
             }
         }
-        return "img";
+        return "application/octet-stream";
     }
 
-    private void saveImage(String imagesDir, String fileName, byte[] imageData) {
-        try (FileOutputStream fos = new FileOutputStream(imagesDir + File.separator + fileName)) {
-            fos.write(imageData);
-            System.out.println("Saved image: " + fileName);
-        } catch (IOException e) {
-            e.printStackTrace();
+    private String getFileExtension(String mimeType) {
+        switch (mimeType) {
+            case "image/bmp":
+                return "bmp";
+            case "image/jpeg":
+                return "jpg";
+            case "image/png":
+                return "png";
+            default:
+                return "dat";
         }
     }
 }
