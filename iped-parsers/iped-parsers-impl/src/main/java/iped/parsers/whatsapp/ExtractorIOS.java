@@ -210,20 +210,23 @@ public class ExtractorIOS extends Extractor {
                 try (ResultSet rs = stmt.executeQuery(chatListQuery)) {
                     while (rs.next()) {
                         String contactId = rs.getString("contact"); //$NON-NLS-1$
-                        if (!(contactId.endsWith("@status") || contactId.endsWith("@broadcast"))) { //$NON-NLS-1$ //$NON-NLS-2$
-                            WAContact remote = contacts.getContact(contactId);
-                            Chat c = new Chat(remote);
-                            c.setId(rs.getLong("id")); //$NON-NLS-1$
-                            c.setSubject(Util.getUTF8String(rs, "subject")); //$NON-NLS-1$
-                            c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
-                            c.setChannelChat(contactId.endsWith("newsletter"));
-                            c.setDeleted(rs.getInt("ZREMOVED") != 0);
-                            remote.setAvatarPath(rs.getString("avatarPath")); //$NON-NLS-1$
-                            if (recoverDeletedRecords) {
-                                activeChats.add(c.getId());
-                            }
-                            list.add(c);
+                        WAContact remote = contacts.getContact(contactId);
+                        Chat c = new Chat(remote);
+                        c.setId(rs.getLong("id")); //$NON-NLS-1$
+                        c.setSubject(Util.getUTF8String(rs, "subject")); //$NON-NLS-1$
+                        if (contactId.endsWith(WAContact.waGroupSuffix)) {
+                            c.setGroupChat(true);
+                        } else if (contactId.endsWith(WAContact.waNewsletterSuffix)) {
+                            c.setChannelChat(true);
+                        } else if (contactId.endsWith(WAContact.waStatusSuffix)) {
+                            c.setBroadcast(true);
                         }
+                        c.setDeleted(rs.getInt("ZREMOVED") != 0);
+                        remote.setAvatarPath(rs.getString("avatarPath")); //$NON-NLS-1$
+                        if (recoverDeletedRecords) {
+                            activeChats.add(c.getId());
+                        }
+                        list.add(c);
                     }
                 } catch (SQLException ex) {
                     if (firstTry || !isSqliteCorruptException(ex)) {
@@ -604,11 +607,10 @@ public class ExtractorIOS extends Extractor {
                             messageQuote.setRemoteResource(m.getRemoteResource());
                             // just set default case if does not match order cases ...
                             messageQuote.setMessageQuotedType(MessageQuotedType.QUOTE_PRIVACY_GROUP_NOT_FOUND);
-                            if (contactQuote.compareTo(Message.STATUS_BROADCAST) == 0) {
-
+                            if (contactQuote.equals(WAContact.waStatusBroadcast)) {
                                 messageQuote.setMessageQuotedType(MessageQuotedType.QUOTE_STATUS);
 
-                            } else if (contactQuote.contains(Message.GROUP)) {
+                            } else if (contactQuote.endsWith(WAContact.waGroupSuffix)) {
 
                                 // set it first in case if not found
                                 messageQuote.setQuotePrivateGroupName(contactQuote);
@@ -1378,15 +1380,19 @@ public class ExtractorIOS extends Extractor {
         if (undeleteChatsSessions != null && !undeleteChatsSessions.getTableRows().isEmpty()) {
             for (SqliteRow row : undeleteChatsSessions.getTableRows()) {
                 String contactId = row.getTextValue("ZCONTACTJID"); //$NON-NLS-1$
-                if (!(contactId.endsWith("@status") || contactId.endsWith("@broadcast"))) { //$NON-NLS-1$ //$NON-NLS-2$
-                    WAContact contact = contacts.getContact(contactId);
-                    Chat c = new Chat(contact);
-                    c.setId(row.getIntValue("Z_PK")); //$NON-NLS-1$
-                    c.setDeleted(row.getIntValue("ZREMOVED") != 0 || row.isDeletedRow());
-                    c.setSubject(row.getTextValue("ZPARTNERNAME")); //$NON-NLS-1$
-                    c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
-                    result.add(c);
+                WAContact contact = contacts.getContact(contactId);
+                Chat c = new Chat(contact);
+                c.setId(row.getIntValue("Z_PK")); //$NON-NLS-1$
+                c.setDeleted(row.getIntValue("ZREMOVED") != 0 || row.isDeletedRow());
+                c.setSubject(row.getTextValue("ZPARTNERNAME")); //$NON-NLS-1$
+                if (contactId.endsWith(WAContact.waGroupSuffix)) {
+                    c.setGroupChat(true);
+                } else if (contactId.endsWith(WAContact.waNewsletterSuffix)) {
+                    c.setChannelChat(true);
+                } else if (contactId.endsWith(WAContact.waStatusSuffix)) {
+                    c.setBroadcast(true);
                 }
+                result.add(c);
             }
         }
 
@@ -1872,7 +1878,10 @@ public class ExtractorIOS extends Extractor {
                 }
 
                 String remoteId = row.getTextValue("ZFROMJID"); //$NON-NLS-1$
-                if (remoteId == null || !(remoteId.endsWith("whatsapp.net") || remoteId.endsWith("g.us"))) { //$NON-NLS-1$ //$NON-NLS-2$
+                if (remoteId == null
+                        || !(remoteId.endsWith(WAContact.waSuffix) || remoteId.endsWith(WAContact.waNewsletterSuffix)
+                                || remoteId.endsWith(WAContact.waStatusBroadcast)
+                                || remoteId.endsWith(WAContact.waStatusSuffix))) {
                     return false;
                 }
 
