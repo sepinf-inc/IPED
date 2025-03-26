@@ -468,4 +468,9 @@ public interface IItem extends IItemReader {
     @Override
     String toString();
 
+    void setReEnqueueItem(boolean val);
+    boolean isReEnqueueItem();
+    void setFallBackTask(boolean val);
+    boolean isFallBackTask();
+
 }

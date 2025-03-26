@@ -211,6 +211,10 @@ public class Item implements IItem {
     
     private static final int maxImageLength = 128 << 20;
 
+    private boolean reEnqueueItem = false;
+
+    private boolean fallBackTask = false;
+
     /**
      * Adiciona o item a uma categoria.
      *
@@ -1316,4 +1320,21 @@ public class Item implements IItem {
     public void setTempAttribute(String key, Object value) {
         tempAttributes.put(key, value);
     }
+
+    public void setReEnqueueItem(boolean val){
+        this.reEnqueueItem = val;
+    }
+
+    public boolean isReEnqueueItem(){
+        return this.reEnqueueItem;
+    }
+
+    public void setFallBackTask(boolean val){
+        this.fallBackTask = val;
+    }
+
+    public boolean isFallBackTask(){
+        return this.fallBackTask;
+    }
+
 }

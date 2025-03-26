@@ -6,6 +6,8 @@ import java.util.TreeMap;
 import iped.data.IItem;
 import iped.engine.data.CaseData;
 import iped.engine.util.Util;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class ProcessingQueues {
 
@@ -59,6 +61,48 @@ public class ProcessingQueues {
 
     public void addItemToQueue(IItem item, int queuePriority) throws InterruptedException {
         addItemToQueue(item, queuePriority, false, false);
+    }
+
+    public void addItemToQueueSpaced(IItem item, int queuePriority, int numWorkers, AtomicInteger lastQueueIndex, AtomicLong lastQueueTime, int queueSplit, long queueDeltaTime) throws InterruptedException {
+        addItemToQueueSpaced(item, queuePriority, true, numWorkers,  lastQueueIndex,  lastQueueTime, queueSplit,queueDeltaTime);
+    }
+
+    private void addItemToQueueSpaced(IItem item, int queuePriority, boolean blockIfFull, int numWorkers, AtomicInteger lastQueueIndex, AtomicLong lastQueueTime, int queueSplit, long queueDeltaTime)
+            throws InterruptedException {
+
+        Util.calctrackIDAndUpdateID(caseData, item);
+
+        LinkedList<IItem> queue = queues.get(queuePriority);
+        boolean sleep = false;
+        while (true) {
+            if (sleep) {
+                sleep = false;
+                Thread.sleep(1000);
+            }
+            synchronized (this) {
+                if (blockIfFull && queuePriority == 0 && queue.size() >= maxQueueSize) {
+                    sleep = true;
+                    continue;
+                } else {
+                    queueSplit = (queueSplit <= 0)?4:queueSplit;
+                    queueDeltaTime = (queueDeltaTime <= 0)?5000:queueDeltaTime;
+                    int queueSplitInteger = (int)(queue.size()/queueSplit);
+                    if (lastQueueIndex.get() == -1){
+                        lastQueueIndex.set(queueSplitInteger);
+                        lastQueueTime.set(System.currentTimeMillis());
+                    }else{
+                        if (lastQueueIndex.get() + numWorkers < queue.size() && ((System.currentTimeMillis() - lastQueueTime.get()) < queueDeltaTime)){
+                            lastQueueIndex.addAndGet(numWorkers);
+                        }else{                            
+                            lastQueueIndex.set(queueSplitInteger);
+                        }
+                        lastQueueTime.set(System.currentTimeMillis());
+                    }
+                    queue.add(lastQueueIndex.get(),item);                   
+                    break;
+                }
+            }
+        }
     }
 
     private void addItemToQueue(IItem item, int queuePriority, boolean addFirst, boolean blockIfFull)
