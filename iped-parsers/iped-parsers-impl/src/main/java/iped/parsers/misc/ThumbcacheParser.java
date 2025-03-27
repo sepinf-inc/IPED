@@ -74,7 +74,10 @@ public class ThumbcacheParser extends AbstractParser {
         byte[] buffer = new byte[56];
 
         ByteBuffer fileHeader = ByteBuffer.allocate(24).order(ByteOrder.LITTLE_ENDIAN);
-        stream.read(fileHeader.array());
+        if (stream.readNBytes(fileHeader.array(), 0, fileHeader.capacity()) != fileHeader.capacity()) {
+            xhtml.characters("Error processing cache file: Unable to read file header.\n");
+            return;
+        }
 
         String signature = new String(fileHeader.array(), 0, 4);
         if (!"CMMM".equals(signature)) {
@@ -95,7 +98,7 @@ public class ThumbcacheParser extends AbstractParser {
         xhtml.characters("Offset to first available entry: " + firstAvailableCacheEntryOffset + "\n");
         xhtml.characters("Number of cache entries        : " + numberOfCacheEntries + "\n");
 
-        String windowsVersion = "";
+        String windowsVersion;
         switch (formatVersion) {
             case 20:
                 windowsVersion = "Windows Vista";
@@ -118,7 +121,7 @@ public class ThumbcacheParser extends AbstractParser {
         xhtml.characters("Seen on Windows version        : " + windowsVersion + "\n");
         xhtml.endElement("pre");
 
-        while (stream.read(buffer) == buffer.length) {
+        while (stream.readNBytes(buffer, 0, buffer.length) == buffer.length) {
             ByteBuffer bb = ByteBuffer.wrap(buffer).order(ByteOrder.LITTLE_ENDIAN);
 
             String entrySignature = new String(buffer, 0, 4);
@@ -137,7 +140,10 @@ public class ThumbcacheParser extends AbstractParser {
 
             if (dataSize > 0 && identifierStringSize > 0) {
                 byte[] identifierBytes = new byte[identifierStringSize];
-                stream.read(identifierBytes);
+                if (stream.readNBytes(identifierBytes, 0, identifierBytes.length) != identifierBytes.length) {
+                    xhtml.characters("Error processing cache file: Unable to read identifier string.\n");
+                    return;
+                }
                 String identifierString = new String(identifierBytes, StandardCharsets.UTF_16LE);
 
                 xhtml.startElement("pre");
@@ -156,7 +162,10 @@ public class ThumbcacheParser extends AbstractParser {
 
             if (dataSize > 0) {
                 byte[] imageData = new byte[dataSize];
-                stream.read(imageData);
+                if (stream.readNBytes(imageData, 0, imageData.length) != imageData.length) {
+                    xhtml.characters("Error processing cache file: Unable to read image data.\n");
+                    return;
+                }
 
                 String mimeType = detectImageMimeType(imageData);
                 String fileName = "thumb_" + Long.toHexString(entryHash) + "." + getFileExtension(mimeType);
