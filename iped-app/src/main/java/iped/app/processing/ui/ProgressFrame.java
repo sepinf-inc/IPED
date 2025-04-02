@@ -23,6 +23,10 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.RenderingHints.Key;
+import java.awt.Taskbar;
+import java.awt.Taskbar.State;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -33,9 +37,9 @@ import java.io.File;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.text.NumberFormat;
-import java.util.Date;
-import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -62,6 +66,7 @@ import iped.engine.task.carver.BaseCarveTask;
 import iped.engine.util.UIPropertyListenerProvider;
 import iped.engine.util.Util;
 import iped.parsers.standard.StandardParser;
+import iped.utils.EmojiUtil;
 import iped.utils.IconUtil;
 import iped.utils.LocalizedFormat;
 
@@ -75,20 +80,41 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
     private JProgressBar progressBar;
     private JButton pause, openApp;
     private JLabel tasks, itens, stats, parsers;
-    int indexed = 0, discovered = 0;
-    long rate = 0, instantRate;
-    int volume, taskSize;
-    long secsToEnd;
-    private Date indexStart;
+    private int prevVolume;
+    private boolean discoverEnded;
+    private long rate, instantRate;
+    private long secsToEnd;
+    private long processingStart;
     private Worker[] workers;
+    private String[] lastWorkerTaskItemId;
+    private long[] lastWorkerTime;
     private static final NumberFormat nf = LocalizedFormat.getNumberInstance();
     private boolean paused = false;
     private String decodingDir = null;
     private long physicalMemory;
+    private static final Map<String, Long> timesPerParser = new TreeMap<String, Long>();
 
-    private class RestrictedSizeLabel extends JLabel {
+    private static class RestrictedSizeLabel extends JLabel {
 
         private static final long serialVersionUID = 1L;
+
+        private static final RenderingHints renderingHints;
+
+        static {
+            Map<Key, Object> hints = new HashMap<>();
+            try {
+                @SuppressWarnings("unchecked")
+                Map<Key, Object> desktopHints = (Map<Key, Object>) Toolkit.getDefaultToolkit()
+                        .getDesktopProperty("awt.font.desktophints");
+                if (desktopHints != null) {
+                    hints.putAll(desktopHints);
+                }
+            } catch (Exception e) {
+            }
+            hints.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            hints.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+            renderingHints = new RenderingHints(hints);
+        }
 
         public Dimension getMaximumSize() {
             return this.getPreferredSize();
@@ -96,10 +122,10 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
 
         public void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g;
-            g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+            RenderingHints saveHints = g2.getRenderingHints();
+            g2.setRenderingHints(renderingHints);
             super.paintComponent(g2);
+            g2.setRenderingHints(saveHints);
         }
     }
 
@@ -117,6 +143,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
 
         pause = new JButton(Messages.getString("ProgressFrame.Pause")); //$NON-NLS-1$
         pause.addActionListener(this);
+        pause.setEnabled(false);
 
         openApp = new JButton(Messages.getString("ProgressFrame.OpenApp")); //$NON-NLS-1$
         openApp.addActionListener(this);
@@ -166,50 +193,68 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         });
     }
 
-    private void updateString() {
-        String msg = progressBar.getString();
-        if (indexed > 0) {
-            msg = Messages.getString("ProgressFrame.Processing") + indexed + " / " + discovered; //$NON-NLS-1$ //$NON-NLS-2$
-        } else if (discovered > 0) {
-            msg = Messages.getString("ProgressFrame.Found") + discovered + Messages.getString("ProgressFrame.items"); //$NON-NLS-1$ //$NON-NLS-2$
+    private void update() {
+        Statistics s = Statistics.get();
+        if (s == null) {
+            return;
+        }
+        // Get volume/item processed/total 
+        int totalVolume = (int)(Statistics.get().getCaseData().getDiscoveredVolume() >>> 20); // Converted to MB
+        int totalItems = Statistics.get().getCaseData().getDiscoveredEvidences();
+        int processedVolume = (int)(Statistics.get().getVolume() >>> 20); // Converted to MB
+        int processedItems = Statistics.get().getProcessed();
+
+        progressBar.setMaximum(totalVolume);
+        
+        tasks.setText(getTaskTimes());
+        itens.setText(getItemList());
+        stats.setText(getStats());
+        parsers.setText(getParserTimes());
+        if (processedItems > 0)
+            openApp.setEnabled(true);
+
+        if (discoverEnded) {
+            progressBar.setValue(processedVolume);
         }
 
-        if (taskSize != 0 && indexStart != null) {
-            secsToEnd = ((long) taskSize - (long) volume) * ((new Date()).getTime() - indexStart.getTime())
-                    / (((long) volume + 1) * 1000);
-            msg += Messages.getString("ProgressFrame.FinishIn") + secsToEnd / 3600 + "h " + (secsToEnd / 60) % 60 + "m " //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                    + secsToEnd % 60 + "s"; //$NON-NLS-1$
+        long interval = (System.currentTimeMillis() - processingStart) / 1000 + 1;
+        rate = processedVolume * 3600L / ((1 << 10) * interval);
+        instantRate = (processedVolume - prevVolume) * 3600L / (1 << 10) + 1;
+
+        String msg = progressBar.getString();
+        if (processedItems > 0) {
+            msg = Messages.getString("ProgressFrame.Processing") + processedItems + " / " + totalItems;
+        } else if (totalItems > 0) {
+            msg = Messages.getString("ProgressFrame.Found") + totalItems + Messages.getString("ProgressFrame.items");
+        }
+
+        if (discoverEnded && processingStart != 0) {
+            secsToEnd = (totalVolume - processedVolume) * (System.currentTimeMillis() - processingStart)
+                    / ((processedVolume + 1) * 1000L);
+            msg += Messages.getString("ProgressFrame.FinishIn") + secsToEnd / 3600 + "h " + (secsToEnd / 60) % 60 + "m "
+                    + secsToEnd % 60 + "s";
         } else if (decodingDir != null) {
             msg += " - " + decodingDir;
         }
         progressBar.setString(msg);
-
+        updateTaskBar(totalVolume, processedVolume, discoverEnded);
+        prevVolume = processedVolume;
     }
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        if (indexStart == null) {
-            indexStart = new Date();
+        if (processingStart == 0) {
+            processingStart = System.currentTimeMillis();
             physicalMemory = Util.getPhysicalMemorySize();
+            updateTaskBar(0, 0, false);
         }
 
-        if ("processed".equals(evt.getPropertyName())) { //$NON-NLS-1$
-            indexed = (Integer) evt.getNewValue();
-            updateString();
-            tasks.setText(getTaskTimes());
-            itens.setText(getItemList());
-            stats.setText(getStats());
-            parsers.setText(getParserTimes());
-            if (indexed > 0)
-                openApp.setEnabled(true);
-
-        } else if ("taskSize".equals(evt.getPropertyName())) { //$NON-NLS-1$
-            taskSize = (Integer) evt.getNewValue();
-            progressBar.setMaximum(taskSize);
-
-        } else if ("discovered".equals(evt.getPropertyName())) { //$NON-NLS-1$
-            discovered = (Integer) evt.getNewValue();
-            updateString();
+        if ("discoverEnded".equals(evt.getPropertyName())) {
+            discoverEnded = true;
+            update();
+            
+        } else if ("update".equals(evt.getPropertyName())) {
+            update();
 
         } else if ("decodingDir".equals(evt.getPropertyName())) { //$NON-NLS-1$
             decodingDir = (String) evt.getNewValue();
@@ -221,22 +266,12 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
             stats.setText(getStats());
             parsers.setText(getParserTimes());
 
-        } else if ("progresso".equals(evt.getPropertyName())) { //$NON-NLS-1$
-            long prevVolume = volume;
-            volume = (Integer) evt.getNewValue();
-            if (taskSize != 0) {
-                progressBar.setValue((volume));
-            }
-
-            Date now = new Date();
-            long interval = (now.getTime() - indexStart.getTime()) / 1000 + 1;
-            rate = (long) volume * 1000000L * 3600L / ((1 << 30) * interval);
-            instantRate = (long) (volume - prevVolume) * 1000000L * 3600L / (1 << 30) + 1;
-
         } else if ("workers".equals(evt.getPropertyName())) { //$NON-NLS-1$
             workers = (Worker[]) evt.getNewValue();
+            lastWorkerTaskItemId = new String[workers.length];
+            lastWorkerTime = new long[workers.length];
+            pause.setEnabled(true);
         }
-
     }
 
     private String getItemList() {
@@ -244,32 +279,56 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
             return "";
         StringBuilder msg = new StringBuilder();
         startTable(msg);
-        addTitle(msg, 3, Messages.getString("ProgressFrame.CurrentItems"));
+        addTitle(msg, 4, Messages.getString("ProgressFrame.CurrentItems"));
 
+        long now = System.currentTimeMillis();
         boolean hasWorkerAlive = false;
-        for (Worker worker : workers) {
+        for (int i = 0; i < workers.length; i++) {
+            Worker worker = workers[i];
             if (!worker.isAlive())
                 continue;
             hasWorkerAlive = true;
-            startRow(msg, worker.getName(), worker.state != STATE.PAUSED);
 
             AbstractTask task = worker.runningTask;
+            String taskName = task == null ? null : task.getName();
+
+            IItem evidence = worker.evidence;
+
+            String wt = "-";
+            int pct = -1;
+            if (taskName != null && evidence != null) {
+                String taskId = taskName + evidence.getId();
+                if (!taskId.equals(lastWorkerTaskItemId[i])) {
+                    lastWorkerTime[i] = now;
+                    lastWorkerTaskItemId[i] = taskId;
+                } else if (worker.state != STATE.PAUSED) {
+                    long t = (now - lastWorkerTime[i]) / 1000;
+                    wt = t < 60 ? t + "s" : t / 60 + "m";
+                    pct = (int) Math.min(t / 30, 60);
+                }
+            } else {
+                lastWorkerTaskItemId[i] = null;
+            }
+
+            startRow(msg, worker.getName(), worker.state != STATE.PAUSED, pct);
+
             if (worker.state == STATE.PAUSED) {
                 addCell(msg, Messages.getString("ProgressFrame.Paused"), Align.CENTER);
             } else if (worker.state == STATE.PAUSING) {
                 addCell(msg, Messages.getString("ProgressFrame.Pausing"), Align.CENTER);
             } else if (task != null) {
-                addCell(msg, task.getName());
+                addCell(msg, taskName);
             } else {
                 addCell(msg, "-", Align.CENTER);
             }
 
-            IItem evidence = worker.evidence;
+            addCell(msg, wt, wt.equals("-") ? Align.CENTER : Align.RIGHT);
+
             if (evidence != null) {
-                String len = "";
+                String s = evidence.getPath();
                 if (evidence.getLength() != null && evidence.getLength() > 0)
-                    len = " (" + nf.format(evidence.getLength()) + " bytes)";
-                finishRow(msg, evidence.getPath() + len);
+                    s += " (" + nf.format(evidence.getLength()) + " bytes)";
+                finishRow(msg, clean(s));
             } else {
                 finishRow(msg, Messages.getString("ProgressFrame.WaitingItem"));
             }
@@ -305,7 +364,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
             if (task.isEnabled()) {
                 long time = taskTimes[i];
                 long sec = time / (1000000 * workers.length);
-                int pct = (int) ((100 * time) / totalTime);
+                int pct = (int) ((100 * time + totalTime / 2) / totalTime);  // Round percentage
 
                 startRow(msg, task.getName(), pct);
                 addCell(msg, nf.format(sec) + "s", Align.RIGHT);
@@ -322,28 +381,26 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
     }
 
     private String getParserTimes() {
-        if (ParsingTask.times.isEmpty())
+        ParsingTask.copyTimesPerParser(timesPerParser);
+        if (timesPerParser.isEmpty())
             return "";
         StringBuilder msg = new StringBuilder();
         startTable(msg);
         addTitle(msg, 3, Messages.getString("ProgressFrame.ParserTimes"));
 
         long totalTime = 0;
-        for (Worker worker : workers)
-            for (AbstractTask task : worker.tasks)
-                if (task.getClass().equals(ParsingTask.class))
-                    totalTime += task.getTaskTime();
+        for (long parserTime : timesPerParser.values()) {
+            totalTime += parserTime;
+        }
         if (totalTime < 1)
             totalTime = 1;
 
-        for (Object o : ParsingTask.times.entrySet().toArray()) {
-            @SuppressWarnings("unchecked")
-            Entry<String, AtomicLong> e = (Entry<String, AtomicLong>) o;
-            long time = e.getValue().get();
+        for (String parserName : timesPerParser.keySet()) {
+            long time = timesPerParser.get(parserName);
             long sec = time / (1000000 * workers.length);
-            int pct = (int) ((100 * time) / totalTime);
+            int pct = (int) ((100 * time + totalTime / 2) / totalTime); // Round percentage
 
-            startRow(msg, e.getKey(), pct);
+            startRow(msg, parserName, pct);
             addCell(msg, nf.format(sec) + "s", Align.RIGHT);
             finishRow(msg, pct + "%", Align.RIGHT);
         }
@@ -359,7 +416,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         startTable(msg);
         addTitle(msg, 2, Messages.getString("ProgressFrame.Statistics"));
 
-        long time = (System.currentTimeMillis() - indexStart.getTime()) / 1000;
+        long time = (System.currentTimeMillis() - processingStart) / 1000;
         startRow(msg, Messages.getString("ProgressFrame.ProcessingTime"));
         finishRow(msg, time / 3600 + "h " + (time / 60) % 60 + "m " + time % 60 + "s", Align.RIGHT);
 
@@ -558,7 +615,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         sb.append("<tr");
         if (pct >= 0) {
             // Color based on percentage can be adjusted here
-            int c = pct == 0 ? 255 : 245 - pct * 3 / 2;
+            int c = pct == 0 ? 255 : 245 - Math.min(75, pct) * 3 / 2;
             sb.append(" bgcolor=#").append(String.format("%02X%02X%02X", c, c, 255));
         }
         sb.append(" class=").append(enabled ? "a" : "d");
@@ -594,7 +651,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getSource().equals(pause)) {
+        if (e.getSource().equals(pause) && workers != null) {
             paused = !paused;
             if (paused)
                 pause.setText(Messages.getString("ProgressFrame.Continue")); //$NON-NLS-1$
@@ -616,6 +673,30 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
                 JOptionPane.showMessageDialog(this, Messages.getString("ProgressFrame.AlreadyOpen")); //$NON-NLS-1$
         }
 
+    }
+
+    /**
+     * This is a workaround to avoid weird line breaks caused by a JDK bug. It may
+     * be removed when it is fixed there. See issue #2102.
+     */
+    private String clean(String s) {
+        return EmojiUtil.clean(s, '?');
+    }
+
+    /**
+     * Show the current progress and state in system task bar.
+     */
+    private void updateTaskBar(int totalVolume, int processedVolume, boolean discoverEnded) {
+        if (Taskbar.isTaskbarSupported()) {
+            Taskbar taskbar = Taskbar.getTaskbar();
+            taskbar.setWindowProgressState(this,
+                    paused ? State.PAUSED : discoverEnded ? State.INDETERMINATE : State.NORMAL);
+            if (discoverEnded) {
+                // Start from 10%, otherwise "paused" in earlier stages would be hard to see
+                int pct = (int) Math.min(100, 10 + Math.round(90.0 * processedVolume / totalVolume));
+                taskbar.setWindowProgressValue(this, pct);
+            }
+        }
     }
 
     private static String formatMB(long value) {

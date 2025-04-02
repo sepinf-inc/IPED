@@ -31,4 +31,8 @@ public class TimeoutException extends IOException {
         super();
     }
 
+    public TimeoutException(String msg) {
+        super(msg);
+    }
+
 }

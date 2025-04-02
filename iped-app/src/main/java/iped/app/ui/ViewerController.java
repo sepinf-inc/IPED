@@ -76,7 +76,7 @@ public class ViewerController {
 
     public ViewerController() {
         Window owner = App.get();
-        
+
         // These viewers will have their own docking frame
         viewers.add(new HexViewerPlus(owner, new HexSearcherImpl()));
         viewers.add(textViewer = new TextViewer());
@@ -97,7 +97,7 @@ public class ViewerController {
         viewersRepository.addViewer(new ImageViewer());
         viewersRepository.addViewer(new CADViewer());
         viewersRepository.addViewer(new HtmlViewer());
-        viewersRepository.addViewer(new EmailViewer());
+        viewersRepository.addViewer(new EmailViewer(new AttachmentSearcherImpl()));
         viewersRepository.addViewer(new MsgViewer());
         linkViewer = new HtmlLinkViewer(new AttachmentSearcherImpl());
         viewersRepository.addViewer(linkViewer);
@@ -116,7 +116,7 @@ public class ViewerController {
                     URI jarUri = URLUtil.getURL(LibreOfficeViewer.class).toURI();
                     File moduledir = new File(jarUri).getParentFile().getParentFile();
                     LibreOfficeFinder loFinder = new LibreOfficeFinder(moduledir);
-                    final String pathLO = loFinder.getLOPath();
+                    final String pathLO = loFinder.getLOPath(false);
                     if (pathLO != null) {
                         SwingUtilities.invokeAndWait(new Runnable() {
                             @Override
@@ -194,8 +194,7 @@ public class ViewerController {
     public boolean validateViewer(AbstractViewer viewer) {
         if (viewer.equals(viewersRepository)) {
             if (viewersRepository.getPanel().isShowing()) {
-                if (officeViewer != null && viewersRepository.getCurrentViewer() != null
-                        && viewersRepository.getCurrentViewer().equals(officeViewer)) {
+                if (officeViewer != null && viewersRepository.getCurrentViewer() != null && viewersRepository.getCurrentViewer().equals(officeViewer)) {
                     new Thread() {
                         public void run() {
                             officeViewer.constructLOFrame();
@@ -219,7 +218,7 @@ public class ViewerController {
         boolean currFixed = isFixed;
         isFixed = true;
         loadFile(this.file, this.viewFile, this.contentType, this.highlightTerms);
-        isFixed = currFixed; 
+        isFixed = currFixed;
     }
 
     public void loadFile(IStreamSource file, IStreamSource viewFile, String contentType, Set<String> highlightTerms) {
@@ -255,7 +254,7 @@ public class ViewerController {
         }
         for (AbstractViewer viewer : viewers) {
             if (!viewer.equals(requested)) {
-                updateViewer(viewer, true);
+                updateViewer(viewer, true, false);
             }
         }
     }
@@ -289,14 +288,13 @@ public class ViewerController {
         return highlightTerms != null && !highlightTerms.isEmpty();
     }
 
-    public void updateViewer(AbstractViewer viewer, boolean clean) {
-        if (viewer.getPanel().isShowing() || (viewer.equals(textViewer) && hasHits())) {
+    public void updateViewer(AbstractViewer viewer, boolean clean, boolean forceLoad) {
+        if (viewer.getPanel().isShowing() || (viewer.equals(textViewer) && hasHits()) || forceLoad) {
             if (isInitialized())
                 loadInViewer(viewer);
             DefaultSingleCDockable dock = dockPerViewer.get(viewer);
             if (dock != null) {
-                boolean hitsEnabled = viewFile != null
-                        && ((hasHits() && viewer.getHitsSupported() == 0) || (viewer.getHitsSupported() == 1));
+                boolean hitsEnabled = viewFile != null && ((hasHits() && viewer.getHitsSupported() == 0) || (viewer.getHitsSupported() == 1));
 
                 ((CButton) dock.getAction("prevHit")).setEnabled(hitsEnabled);
                 ((CButton) dock.getAction("nextHit")).setEnabled(hitsEnabled);

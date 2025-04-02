@@ -74,8 +74,7 @@ class AutoCompleteKeyListener extends KeyAdapter {
                             for (int i = 0; i < cols.length; i++) {
                                 for (int j = 0; j < cols[i].length; j++) {
                                     String orgCol = cols[i][j];
-                                    if (orgCol.equals(ResultTableModel.BOOKMARK_COL)
-                                            || orgCol.equals(ResultTableModel.SCORE_COL))
+                                    if (orgCol.equals(ResultTableModel.BOOKMARK_COL) || orgCol.equals(ResultTableModel.SCORE_COL))
                                         continue;
                                     NEXT: for (int m = 0; m <= 1; m++) {
                                         String col = orgCol;
@@ -85,8 +84,7 @@ class AutoCompleteKeyListener extends KeyAdapter {
                                                 continue;
                                             }
                                         }
-                                        if ((step == 0 && col.toLowerCase().startsWith(base))
-                                                || (step == 1 && col.toLowerCase().indexOf(base) > 0)) {
+                                        if ((step == 0 && col.toLowerCase().startsWith(base)) || (step == 1 && col.toLowerCase().indexOf(base) > 0)) {
                                             for (int k = 0; k < l.size(); k++) {
                                                 if (l.get(k).equals(col)) {
                                                     continue NEXT;

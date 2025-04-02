@@ -18,30 +18,31 @@
  */
 package iped.app.ui;
 
+import java.awt.Color;
 import java.awt.Component;
 
 import javax.swing.JProgressBar;
 import javax.swing.JTable;
 import javax.swing.SwingConstants;
+import javax.swing.UIManager;
 import javax.swing.table.TableCellRenderer;
 
 public class ProgressCellRenderer extends JProgressBar implements TableCellRenderer {
 
-    /**
-     *
-     */
     private static final long serialVersionUID = 1L;
+
+    private Color alternateColor, backgroundColor;
 
     public ProgressCellRenderer() {
         super(SwingConstants.HORIZONTAL);
         setBorderPainted(false);
         setMaximum(100);
         setStringPainted(true);
+        setOpaque(true);
     }
 
     @Override
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
-            int row, int col) {
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
         int i = (int) Math.floor((Float) value);
         if (i == 1000) {
             setString("REF");
@@ -50,7 +51,24 @@ public class ProgressCellRenderer extends JProgressBar implements TableCellRende
             setString(null);
             this.setValue(i);
         }
+        if (isSelected) {
+            setBackground(table.getSelectionBackground());
+        } else if (alternateColor != null && row % 2 != 0) {
+            setBackground(alternateColor);
+        } else {
+            setBackground(backgroundColor);
+        }
         return this;
     }
 
+    @Override
+    public void updateUI() {
+        super.updateUI();
+        Color c = UIManager.getColor("Table.alternateRowColor");
+        if (c != null)
+            alternateColor = new Color(c.getRGB());
+        c = UIManager.getColor("Table.background");
+        if (c != null)
+            backgroundColor = new Color(c.getRGB());
+    }
 }

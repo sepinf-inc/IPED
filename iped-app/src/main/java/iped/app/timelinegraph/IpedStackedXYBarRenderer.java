@@ -128,6 +128,8 @@ public class IpedStackedXYBarRenderer extends StackedXYBarRenderer {
 
     int lastItem = -1;
     double lastY = 0;
+    Double maxStartX;
+    Double minEndX;
 
     /**
      * Draws the visual representation of a single data item.
@@ -184,15 +186,29 @@ public class IpedStackedXYBarRenderer extends StackedXYBarRenderer {
         if (Double.isNaN(endX)) {
             return;
         }
+
+        if (minEndX == null) {
+            minEndX = domainAxis.java2DToValue(0, dataArea, edgeD);
+        }
+        if (endX < minEndX) {
+            return;
+        }
+
         double translatedEndX = domainAxis.valueToJava2D(endX, dataArea, edgeD);
         if (translatedEndX < 0) {
             return;// out of chart visible area
         }
-        double translatedStartX = domainAxis.valueToJava2D(startX, dataArea, edgeD);
 
         double dataAreaWidth = dataArea.getWidth();
 
-        double translatedWidth = Math.max(1, Math.abs(translatedEndX - translatedStartX));
+        if (maxStartX == null) {
+            maxStartX = domainAxis.java2DToValue(dataAreaWidth + dataAreaWidth, dataArea, edgeD);
+        }
+        if (startX > maxStartX) {
+            return;
+        }
+
+        double translatedStartX = domainAxis.valueToJava2D(startX, dataArea, edgeD);
 
         if (translatedStartX > dataAreaWidth + dataAreaWidth) {
             return;// out of chart visible area
@@ -222,6 +238,8 @@ public class IpedStackedXYBarRenderer extends StackedXYBarRenderer {
         }
 
         double translatedHeight = Math.abs(translatedValue - translatedBase);
+        double translatedWidth = Math.max(1, Math.abs(translatedEndX - translatedStartX));
+
         if (getMargin() > 0.0) {
             double cut = translatedWidth * getMargin();
             translatedWidth = translatedWidth - cut;
@@ -272,6 +290,7 @@ public class IpedStackedXYBarRenderer extends StackedXYBarRenderer {
                 }
             }
         }
+
     }
 
     @Override

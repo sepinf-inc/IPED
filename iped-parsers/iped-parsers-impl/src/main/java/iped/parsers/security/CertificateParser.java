@@ -192,7 +192,7 @@ public class CertificateParser extends AbstractParser {
         xhtml.endElement("td");
         xhtml.endElement("tr");
 
-        DateFormat df = DateFormat.getDateInstance();
+        DateFormat df = DateFormat.getDateTimeInstance();
         xhtml.startElement("tr");
         xhtml.startElement("td");
         xhtml.characters("Valid from");

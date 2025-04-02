@@ -39,7 +39,7 @@ public class TextCache implements Closeable, Cloneable {
     private long size = 0;
     private boolean diskCacheEnabled = true;
     private long offset = -1;
-    private AtomicInteger refCount = new AtomicInteger();
+    private AtomicInteger refCount = new AtomicInteger(1);
 
     public void setSourceItem(IItem sourceItem) {
         this.sourceItem = sourceItem;

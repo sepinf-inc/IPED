@@ -8,7 +8,7 @@
     <parent>
         <groupId>iped</groupId>
         <artifactId>iped-carvers</artifactId>
-        <version>4.1-snapshot</version>
+        <version>4.2.0</version>
     </parent>
     <artifactId>iped-carvers-api</artifactId>
 
@@ -28,6 +28,11 @@
         	<groupId>org.apache.tika</groupId>
         	<artifactId>tika-core</artifactId>
         	<version>${tika.core.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.dampcake</groupId>
+            <artifactId>bencode</artifactId>
+            <version>${bencode.version}</version>
         </dependency>
         <dependency>
         	<groupId>iped</groupId>

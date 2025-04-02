@@ -24,9 +24,11 @@ import org.sqlite.SQLiteOpenMode;
 import iped.parsers.browsers.chrome.ChromeSqliteParser;
 import iped.parsers.browsers.firefox.FirefoxSqliteParser;
 import iped.parsers.browsers.safari.SafariSqliteParser;
+import iped.parsers.eventtranscript.EventTranscriptParser;
 import iped.parsers.gdrive.GDriveMainParser;
 import iped.parsers.skype.SkypeParser;
 import iped.parsers.telegram.TelegramParser;
+import iped.parsers.threema.ThreemaParser;
 import iped.parsers.whatsapp.WhatsAppParser;
 import iped.parsers.winx.WinXTimelineParser;
 import iped.utils.IOUtil;
@@ -131,12 +133,11 @@ public class SQLiteContainerDetector implements Detector {
                 tableNames.contains("Calls")) //$NON-NLS-1$
             return SkypeParser.SKYPE_MIME;
 
-        if ((tableNames.contains("chat_list") || tableNames.contains("chat")) && //$NON-NLS-1$
-                (tableNames.contains("messages") || tableNames.contains("message")) && //$NON-NLS-1$
-                tableNames.contains("group_participants") && //$NON-NLS-1$
-                tableNames.contains("media_refs") && //$NON-NLS-1$
-                tableNames.contains("receipts") && //$NON-NLS-1$
-                tableNames.contains("sqlite_sequence")) //$NON-NLS-1$
+        if ((tableNames.contains("chat_list") || tableNames.contains("chat")) &&
+                (tableNames.contains("messages") || tableNames.contains("message")) &&
+                (tableNames.contains("group_participants") || tableNames.contains("group_participant_user")) &&
+                tableNames.contains("media_refs") &&
+                tableNames.contains("sqlite_sequence"))
             return WhatsAppParser.MSG_STORE;
 
         if (tableNames.contains("wa_contacts") && //$NON-NLS-1$
@@ -168,9 +169,12 @@ public class SQLiteContainerDetector implements Detector {
                 tableNames.contains("downloads_url_chains")) //$NON-NLS-1$
             return ChromeSqliteParser.CHROME_SQLITE;
 
-        if (tableNames.contains("Activity") && tableNames.contains("Activity_PackageId")
-                && tableNames.contains("ActivityOperation"))
+        if (tableNames.contains("Activity") && tableNames.contains("Activity_PackageId") && tableNames.contains("ActivityOperation"))
             return WinXTimelineParser.WIN10_TIMELINE;
+
+        if (tableNames.contains("events_persisted") && tableNames.contains("tag_descriptions")
+                && tableNames.contains("provider_groups"))
+            return EventTranscriptParser.EVENT_TRANSCRIPT;
         
         if (tableNames.contains("cloud_graph_entry") &&
                 tableNames.contains("cloud_relations"))
@@ -194,9 +198,11 @@ public class SQLiteContainerDetector implements Detector {
                         || tableNames.contains("media_v4")))
             return TelegramParser.TELEGRAM_DB;
         
-        if (tableNames.contains("t1") && tableNames.contains("t2") && tableNames.contains("t7")
-                && tableNames.contains("ft41") && tableNames.contains("t18"))
+        // detection for Telegram iOS DB
+        if (tableNames.contains("t0") && tableNames.contains("t2") && tableNames.contains("t6")
+                && tableNames.contains("t7") && tableNames.contains("t9")) {
             return TelegramParser.TELEGRAM_DB_IOS;
+        }
 
         // iOS backups databases below
 
@@ -257,6 +263,10 @@ public class SQLiteContainerDetector implements Detector {
             if (cols.contains("Latitude") && cols.contains("Longitude")) {
                 return MediaType.application("x-ios-locations-db");
             }
+        }
+        
+        if (tableNames.contains("ZCONVERSATION") && tableNames.contains("ZMESSAGE") && tableNames.contains("ZCONTACT") && tableNames.contains("ZFILEDATA") && tableNames.contains("ZIMAGEDATA")) {
+            return ThreemaParser.CHAT_STORAGE;
         }
 
         return SQLITE_MIME;

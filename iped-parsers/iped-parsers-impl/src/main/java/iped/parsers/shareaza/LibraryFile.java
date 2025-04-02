@@ -20,7 +20,7 @@ package iped.parsers.shareaza;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -29,8 +29,8 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
 import iped.data.IItemReader;
-import iped.parsers.emule.KnownMetParser;
 import iped.parsers.util.ChildPornHashLookup;
+import iped.parsers.util.P2PUtil;
 import iped.search.IItemSearcher;
 
 /**
@@ -65,7 +65,7 @@ public class LibraryFile extends ShareazaEntity {
     private boolean cachedPreview;
     private boolean bogus;
     private final LibraryFolder parentFolder;
-    private HashSet<String> hashSetHits = new HashSet<>();
+    private List<String> hashSetHits;
 
     public LibraryFile(LibraryFolder parentFolder) {
         super("LIBRARY FILE"); //$NON-NLS-1$
@@ -208,14 +208,14 @@ public class LibraryFile extends ShareazaEntity {
 
     public void printTableRow(XHTMLContentHandler html, String path, IItemSearcher searcher, Map<Integer, List<String>> albunsForFiles) throws SAXException {
 
-        hashSetHits.addAll(ChildPornHashLookup.lookupHash(md5));
-        hashSetHits.addAll(ChildPornHashLookup.lookupHash(sha1));
+        hashSetHits = ChildPornHashLookup.lookupHashAndMerge(md5, hashSetHits);
+        hashSetHits = ChildPornHashLookup.lookupHashAndMerge(sha1, hashSetHits);
 
         AttributesImpl attributes = new AttributesImpl();
         if (md5 != null && !md5.isEmpty()) {
             attributes.addAttribute("", "name", "name", "CDATA", md5.toUpperCase());
         }
-        if (!hashSetHits.isEmpty()) {
+        if (hashSetHits != null && !hashSetHits.isEmpty()) {
             attributes.addAttribute("", "class", "class", "CDATA", "r");
         }
         html.startElement("tr", attributes);
@@ -233,9 +233,9 @@ public class LibraryFile extends ShareazaEntity {
             html.startElement("td"); //$NON-NLS-1$
             if (o != null) {
                 if (col == 1) {
-                    IItemReader item = KnownMetParser.searchItemInCase(searcher, "md5", md5);
+                    IItemReader item = P2PUtil.searchItemInCase(searcher, "md5", md5);
                     if (item != null) {
-                        KnownMetParser.printNameWithLink(html, item, name);
+                        P2PUtil.printNameWithLink(html, item, name);
                         foundInCase = true;
                     } else {
                         html.characters(name);
@@ -260,7 +260,7 @@ public class LibraryFile extends ShareazaEntity {
             col++;
         }
         html.startElement("td"); //$NON-NLS-1$
-        if (!hashSetHits.isEmpty()) {
+        if (hashSetHits != null && !hashSetHits.isEmpty()) {
             html.characters(hashSetHits.toString());
         }
         html.endElement("td"); //$NON-NLS-1$
@@ -270,7 +270,7 @@ public class LibraryFile extends ShareazaEntity {
     }
 
     public boolean isHashDBHit() {
-        return !hashSetHits.isEmpty();
+        return hashSetHits != null && !hashSetHits.isEmpty();
     }
 
     public long getSize() {
@@ -377,8 +377,8 @@ public class LibraryFile extends ShareazaEntity {
         return parentFolder;
     }
 
-    public HashSet<String> getHashSetHits() {
-        return hashSetHits;
+    public List<String> getHashSetHits() {
+        return hashSetHits == null ? Collections.emptyList() : hashSetHits;
     }
 
     public void setIndex(int index) {

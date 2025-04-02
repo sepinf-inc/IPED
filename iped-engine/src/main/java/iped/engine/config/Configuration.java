@@ -182,7 +182,9 @@ public class Configuration {
         }
 
         ConfigurationManager configManager = ConfigurationManager.createInstance(configDirectory);
-        configManager.addObject(new LocaleConfig());
+        LocaleConfig lc = new LocaleConfig();
+        configManager.addObject(lc);
+        configManager.loadConfig(lc);
 
         PluginConfig pluginConfig = new PluginConfig();
         configManager.addObject(pluginConfig);

@@ -116,13 +116,16 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
         if (content != null) {
             InputStream in = null;
             try {
-                in = new BufferedInputStream(content.getSeekableInputStream());
-                // needed for embedded jbig2
-                String mimeType = content instanceof IItemReader
-                        ? MediaTypes.getMimeTypeIfJBIG2((IItemReader) content)
-                        : null;
-                image = ImageUtil.getSubSampledImage(in, maxDim, maxDim, mimeType);
-
+                if (content instanceof IItemReader) {
+                    IItemReader item = (IItemReader) content;
+                    // needed for embedded jbig2
+                    String mimeType = MediaTypes.getMimeTypeString(item);
+                    image = ImageUtil.getSubSampledImage(item, maxDim, mimeType);
+                }
+                if (image == null) {
+                    in = new BufferedInputStream(content.getSeekableInputStream());
+                    image = ImageUtil.getSubSampledImage(in, maxDim);
+                }
                 if (image == null) {
                     IOUtil.closeQuietly(in);
                     SeekableInputStream sis = content.getSeekableInputStream();

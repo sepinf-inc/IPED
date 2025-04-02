@@ -1,6 +1,6 @@
 /*
  * Copyright 2012-2014, Luis Filipe da Cruz Nassif
- * 
+ *
  * This file is part of Indexador e Processador de Evidências Digitais (IPED).
  *
  * IPED is free software: you can redistribute it and/or modify
@@ -28,36 +28,46 @@ import java.util.zip.ZipInputStream;
 
 import javax.imageio.ImageIO;
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
-import javax.swing.UIManager;
 
 import iped.app.ui.utils.UiIconSize;
 import iped.utils.QualityIcon;
 
 /**
  * Load icons to memory
- * 
+ *
  * @author guilherme.dutra
  *
  */
 public class IconManager {
 
-    public static final Icon FOLDER_ICON = UIManager.getIcon("FileView.directoryIcon"); //$NON-NLS-1$
-    public static final Icon DISK_ICON = UIManager.getIcon("FileView.hardDriveIcon"); //$NON-NLS-1$
-
-    public static final int defaultSize = 16;
+    public static final int defaultSize = 18;
+    public static final int defaultGallerySize = 24;
+    public static final int defaultCategorySize = 20;
 
     private static final String ICON_EXTENSION = ".png";
 
-    private static final Map<String, Icon> extIconMap = loadIconsFromJar("file", defaultSize);
-    private static final Map<String, Icon> catIconMap = loadIconsFromJar("cat", UiIconSize.loadUserSetting());
-    private static final Map<String, Icon> mimeIconMap = initMimeToIconMap();
+    private static final int[] initialSizes = UiIconSize.loadUserSetting();
+    private static int currentIconSize = initialSizes[2];
 
-    private static final Icon DEFAULT_FILE_ICON = UIManager.getIcon("FileView.fileIcon"); //$NON-NLS-1$
-    private static final Icon DEFAULT_CATEGORY_ICON = catIconMap.get("blank"); //$NON-NLS-1$
+    private static final Map<String, QualityIcon> catIconMap = loadIconsFromJar("cat", initialSizes[0]);
 
-    private static Map<String, Icon> loadIconsFromJar(String iconPath, int size) {
-        Map<String, Icon> map = new HashMap<>();
+    private static final Map<String, QualityIcon> extIconMap = loadIconsFromJar("file", currentIconSize);
+    private static final Map<String, QualityIcon> treeIconMap = loadIconsFromJar("tree", currentIconSize);
+    private static final Map<String, QualityIcon> mimeIconMap = initMimeToIconMap(currentIconSize);
+
+    private static final Map<String, QualityIcon> extIconMapGallery = initIconsMapSize(extIconMap, initialSizes[1]);
+    private static final Map<String, QualityIcon> mimeIconMapGallery = initIconsMapSize(mimeIconMap, initialSizes[1]);
+    private static final Map<String, QualityIcon> treeIconMapGallery = initIconsMapSize(treeIconMap, initialSizes[1]);
+
+    private static final String folderOpenedKey = "folder-opened";
+    private static final String folderClosedKey = "folder-closed";
+    private static final String diskKey = "drive";
+    private static final String fileKey = "file";
+
+    private static final QualityIcon defaultCategoryIcon = catIconMap.get("blank");
+
+    private static Map<String, QualityIcon> loadIconsFromJar(String iconPath, int size) {
+        Map<String, QualityIcon> map = new HashMap<>();
         try {
             String separator = "/";
             CodeSource src = IconManager.class.getProtectionDomain().getCodeSource();
@@ -69,15 +79,12 @@ public class IconManager {
                         if (e == null) {
                             break;
                         }
-                        String path = IconManager.class.getName().toString().replace(".", separator)
-                                .replace(IconManager.class.getSimpleName(), "") + iconPath + separator;
+                        String path = IconManager.class.getName().toString().replace(".", separator).replace(IconManager.class.getSimpleName(), "") + iconPath + separator;
                         String nameWithPath = e.getName();
                         String name = nameWithPath.replace(path, "");
                         if (nameWithPath.startsWith(path) && name.toLowerCase().endsWith(ICON_EXTENSION)) {
-                            BufferedImage img = ImageIO
-                                    .read(IconManager.class.getResource(iconPath + separator + name));
-                            map.put(name.replace(ICON_EXTENSION, "").toLowerCase(),
-                                    new QualityIcon(new ImageIcon(img), size));
+                            BufferedImage img = ImageIO.read(IconManager.class.getResource(iconPath + separator + name));
+                            map.put(name.replace(ICON_EXTENSION, "").toLowerCase(), new QualityIcon(img, size));
                         }
                     }
                 }
@@ -85,10 +92,47 @@ public class IconManager {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+
         return map;
     }
 
+    public static Icon getDiskIcon() {
+        return getTreeIcon(diskKey);
+    }
+
+    public static Icon getDiskIconGallery() {
+        return getTreeIconGallery(diskKey);
+    }
+
+    public static Icon getFolderIcon() {
+        return getFolderIcon(false);
+    }
+
+    public static Icon getFolderIcon(boolean isOpened) {
+        return getTreeIcon(isOpened ? folderOpenedKey : folderClosedKey);
+    }
+
+    public static Icon getFolderIconGallery() {
+        return getFolderIconGallery(false);
+    }
+
+    public static Icon getFolderIconGallery(boolean isOpened) {
+        return getTreeIconGallery(isOpened ? folderOpenedKey : folderClosedKey);
+    }
+
+    public static Icon getFileIconGallery(String mimeType, String extension) {
+        return getFileIcon(mimeType, extension, mimeIconMapGallery, extIconMapGallery, extIconMapGallery.get(fileKey));
+    }
+
     public static Icon getFileIcon(String mimeType, String extension) {
+        return getFileIcon(mimeType, extension, extIconMap.get(fileKey));
+    }
+
+    public static Icon getFileIcon(String mimeType, String extension, Icon defaultIcon) {
+        return getFileIcon(mimeType, extension, mimeIconMap, extIconMap, defaultIcon);
+    }
+
+    private static Icon getFileIcon(String mimeType, String extension, Map<String, QualityIcon> mimeIconMap, Map<String, QualityIcon> extIconMap, Icon defaultIcon) {
         if (mimeType != null && !mimeType.isBlank()) {
             Icon icon = mimeIconMap.get(mimeType.strip());
             if (icon != null) {
@@ -96,31 +140,43 @@ public class IconManager {
             }
         }
         if (extension != null && !extension.isBlank()) {
-            return extIconMap.getOrDefault(extension.strip(), DEFAULT_FILE_ICON);
+            Icon icon = extIconMap.get(extension.strip());
+            if (icon != null) {
+                return icon;
+            }
         }
-        return DEFAULT_FILE_ICON;
+        return defaultIcon;
     }
 
     public static Icon getCategoryIcon(String category) {
         if (category != null && !category.isBlank()) {
-            return catIconMap.getOrDefault(category.strip(), DEFAULT_CATEGORY_ICON);
+            return catIconMap.getOrDefault(category.strip(), defaultCategoryIcon);
         }
-        return DEFAULT_CATEGORY_ICON;
+        return defaultCategoryIcon;
+    }
+
+    public static QualityIcon getTreeIcon(String key) {
+        return treeIconMap.get(key);
+    }
+
+    public static QualityIcon getTreeIconGallery(String key) {
+        return treeIconMapGallery.get(key);
     }
 
     /**
      * Icons associated to one or more mime types should be added here.
      */
-    private static Map<String, Icon> initMimeToIconMap() {
-        Map<String, Icon> availableIconsMap = loadIconsFromJar("mime", defaultSize);
-        Map<String, Icon> mimeIconMap = new HashMap<String, Icon>();
+    private static Map<String, QualityIcon> initMimeToIconMap(int size) {
+        Map<String, QualityIcon> availableIconsMap = loadIconsFromJar("mime", size);
+        Map<String, QualityIcon> mimeIconMap = new HashMap<>();
 
-        Icon icon = availableIconsMap.get("emule");
+        QualityIcon icon = availableIconsMap.get("emule");
         if (icon != null) {
             mimeIconMap.put("application/x-emule", icon);
             mimeIconMap.put("application/x-emule-part-met", icon);
-            mimeIconMap.put("application/x-emule-emule-searches", icon);
-            mimeIconMap.put("application/x-emule-emule-preferences-ini", icon);
+            mimeIconMap.put("application/x-emule-searches", icon);
+            mimeIconMap.put("application/x-emule-preferences-ini", icon);
+            mimeIconMap.put("application/x-emule-preferences-dat", icon);
         }
 
         icon = availableIconsMap.get("ares");
@@ -132,11 +188,14 @@ public class IconManager {
         if (icon != null) {
             mimeIconMap.put("application/x-shareaza-searches-dat", icon);
             mimeIconMap.put("application/x-shareaza-library-dat", icon);
+            mimeIconMap.put("application/x-shareaza-download", icon);
         }
 
         icon = availableIconsMap.get("torrent");
         if (icon != null) {
             mimeIconMap.put("application/x-bittorrent-resume-dat", icon);
+            mimeIconMap.put("application/x-bittorrent-resume-dat-entry", icon);
+            mimeIconMap.put("application/x-bittorrent-settings-dat", icon);
             mimeIconMap.put("application/x-bittorrent", icon);
         }
 
@@ -166,6 +225,13 @@ public class IconManager {
             mimeIconMap.put("application/x-whatsapp-chat", icon);
             mimeIconMap.put("application/x-ufed-chat-whatsapp", icon);
             mimeIconMap.put("application/x-ufed-chat-preview-whatsapp", icon);
+        }
+
+        icon = availableIconsMap.get("threema");
+        if (icon != null) {
+            mimeIconMap.put("application/x-threema-chat", icon);
+            mimeIconMap.put("application/x-threema-user-plist", icon);
+            mimeIconMap.put("application/x-threema-chatstorage", icon);
         }
 
         icon = availableIconsMap.get("facebook");
@@ -225,6 +291,7 @@ public class IconManager {
             mimeIconMap.put("application/windows-adress-book", icon);
             mimeIconMap.put("application/outlook-contact", icon);
             mimeIconMap.put("contact/x-skype-account", icon);
+            mimeIconMap.put("contact/x-skype-contact", icon);
         }
 
         icon = availableIconsMap.get("user-telegram");
@@ -248,6 +315,7 @@ public class IconManager {
             mimeIconMap.put("application/x-ufed-calendarentry", icon);
             mimeIconMap.put("application/x-ios-calendar-db", icon);
             mimeIconMap.put("application/x-ufed-html-calendar", icon);
+            mimeIconMap.put("application/x-win10-mail-appointment", icon);
         }
 
         icon = availableIconsMap.get("call");
@@ -255,8 +323,10 @@ public class IconManager {
             mimeIconMap.put("application/x-ufed-call", icon);
             mimeIconMap.put("call/x-whatsapp-call", icon);
             mimeIconMap.put("call/x-telegram-call", icon);
+            mimeIconMap.put("call/x-threema-call", icon);
             mimeIconMap.put("application/x-ios-calllog-db", icon);
             mimeIconMap.put("application/x-ios8-calllog-db", icon);
+            mimeIconMap.put("call/x-discord-call", icon);
         }
 
         icon = availableIconsMap.get("web");
@@ -265,6 +335,10 @@ public class IconManager {
             mimeIconMap.put("application/x-ufed-visitedpage", icon);
             mimeIconMap.put("application/x-safari-history-registry", icon);
             mimeIconMap.put("application/x-safari-history", icon);
+        }
+
+        icon = availableIconsMap.get("safari-sqlite");
+        if (icon != null) {
             mimeIconMap.put("application/x-safari-sqlite", icon);
         }
 
@@ -275,7 +349,18 @@ public class IconManager {
             mimeIconMap.put("application/x-chrome-downloads", icon);
             mimeIconMap.put("application/x-chrome-history", icon);
             mimeIconMap.put("application/x-chrome-searches", icon);
+        }
+
+        icon = availableIconsMap.get("chrome-sqlite");
+        if (icon != null) {
             mimeIconMap.put("application/x-chrome-sqlite", icon);
+        }
+
+        icon = availableIconsMap.get("edge");
+        if (icon != null) {
+            mimeIconMap.put("application/x-edge-history", icon);
+            mimeIconMap.put("application/x-edge-history-registry", icon);
+            mimeIconMap.put("application/x-edge-web-cache", icon);
         }
 
         icon = availableIconsMap.get("package");
@@ -302,12 +387,19 @@ public class IconManager {
             mimeIconMap.put("message/x-ufed-attachment", icon);
             mimeIconMap.put("application/x-ufed-chat-preview", icon);
             mimeIconMap.put("message/x-chat-message", icon);
+            mimeIconMap.put("message/x-discord-message", icon);
         }
 
         icon = availableIconsMap.get("message-whatsapp");
         if (icon != null) {
             mimeIconMap.put("message/x-whatsapp-message", icon);
             mimeIconMap.put("message/x-whatsapp-attachment", icon);
+        }
+
+        icon = availableIconsMap.get("message-threema");
+        if (icon != null) {
+            mimeIconMap.put("message/x-threema-message", icon);
+            mimeIconMap.put("message/x-threema-attachment", icon);
         }
 
         icon = availableIconsMap.get("message-telegram");
@@ -361,6 +453,9 @@ public class IconManager {
             mimeIconMap.put("message/x-ufed-email", icon);
             mimeIconMap.put("message/outlook-pst", icon);
             mimeIconMap.put("message/x-emlx", icon);
+            mimeIconMap.put("message/rfc822-partial", icon);
+            mimeIconMap.put("message/x-emlx-partial", icon);
+            mimeIconMap.put("message/x-rfc822-mac", icon);
         }
 
         icon = availableIconsMap.get("chat-activity");
@@ -388,6 +483,11 @@ public class IconManager {
         icon = availableIconsMap.get("download");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-filedownload", icon);
+        }
+
+        icon = availableIconsMap.get("upload");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-fileupload", icon);
         }
 
         icon = availableIconsMap.get("log");
@@ -426,16 +526,6 @@ public class IconManager {
             mimeIconMap.put("application/x-ufed-bluetoothdevice", icon);
         }
 
-        icon = availableIconsMap.get("video");
-        if (icon != null) {
-            mimeIconMap.put("video/quicktime", icon);
-            mimeIconMap.put("video/ts", icon);
-            mimeIconMap.put("video/webm", icon);
-            mimeIconMap.put("video/3gpp", icon);
-            mimeIconMap.put("video/mpeg", icon);
-            mimeIconMap.put("video/x-m4v", icon);
-        }
-
         icon = availableIconsMap.get("journey");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-journey", icon);
@@ -445,20 +535,144 @@ public class IconManager {
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-poweringevent", icon);
         }
-        
+
         icon = availableIconsMap.get("dictionary");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-dictionaryword", icon);
         }
 
+        icon = availableIconsMap.get("financial-account");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-financialaccount", icon);
+        }
+
+        icon = availableIconsMap.get("transfer-funds");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-transferoffunds", icon);
+        }
+
+        icon = availableIconsMap.get("fuzzy-object");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-fuzzyentitymodel", icon);
+        }
+
+        icon = availableIconsMap.get("fuzzy-event");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-fuzzytimelinemodel", icon);
+        }
+
+        icon = availableIconsMap.get("discord");
+        if (icon != null) {
+            mimeIconMap.put("application/x-discord-index", icon);
+            mimeIconMap.put("application/x-discord-chat", icon);
+        }
+
+        icon = availableIconsMap.get("discord-attachment");
+        if (icon != null) {
+            mimeIconMap.put("message/x-discord-attachment", icon);
+        }
+
+        icon = availableIconsMap.get("edb-table");
+        if (icon != null) {
+            mimeIconMap.put("application/x-edb-table", icon);
+        }
+
+        icon = availableIconsMap.get("live");
+        if (icon != null) {
+            mimeIconMap.put("application/x-livecontacts-table", icon);
+        }
+
+        icon = availableIconsMap.get("elf");
+        if (icon != null) {
+            mimeIconMap.put("application/x-elf-record", icon);
+        }
+
+        icon = availableIconsMap.get("plist");
+        if (icon != null) {
+            mimeIconMap.put("application/x-bplist", icon);
+        }
+
+        icon = availableIconsMap.get("drive");
+        if (icon != null) {
+            mimeIconMap.put("application/x-e01-image", icon);
+            mimeIconMap.put("application/x-ewf-image", icon);
+            mimeIconMap.put("application/x-ewf2-image", icon);
+            mimeIconMap.put("application/x-ex01-image", icon);
+            mimeIconMap.put("application/x-disk-image", icon);
+            mimeIconMap.put("application/x-raw-image", icon);
+        }
+
+        icon = availableIconsMap.get("rfb");
+        if (icon != null) {
+            mimeIconMap.put("application/irpf", icon);
+        }
+
+        icon = availableIconsMap.get("usnjournal");
+        if (icon != null) {
+            mimeIconMap.put("application/x-usnjournal-$j", icon);
+        }
+
+        icon = availableIconsMap.get("vlc-ini");
+        if (icon != null) {
+            mimeIconMap.put("application/x-vlc-ini", icon);
+        }
+
+        icon = availableIconsMap.get("markdown");
+        if (icon != null) {
+            mimeIconMap.put("text/x-web-markdown", icon);
+        }
+
+        icon = availableIconsMap.get("notification");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-notification", icon);
+        }
+
+        icon = availableIconsMap.get("mobilecard");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-mobilecard", icon);
+        }
+
         return mimeIconMap;
     }
 
-    public static void setCategoryIconSize(int size) {
-        for (Icon icon : catIconMap.values()) {
+    /**
+     * Create a new icons map, based on an existing map, for a different size.
+     */
+    private static Map<String, QualityIcon> initIconsMapSize(Map<String, QualityIcon> map, int size) {
+        Map<String, QualityIcon> newMap = new HashMap<>();
+        for (String key : map.keySet()) {
+            QualityIcon icon = map.get(key);
+            newMap.put(key, icon.getIconWidth() == size ? icon : new QualityIcon(icon, size));
+        }
+        return newMap;
+    }
+
+    private static void setMapIconSize(Map<String, QualityIcon> map, int size) {
+        for (Icon icon : map.values()) {
             if (icon instanceof QualityIcon) {
                 ((QualityIcon) icon).setSize(size);
             }
         }
+    }
+
+    public static void setCategoryIconSize(int size) {
+        setMapIconSize(catIconMap, size);
+    }
+
+    public static void setGalleryIconSize(int size) {
+        setMapIconSize(extIconMapGallery, size);
+        setMapIconSize(mimeIconMapGallery, size);
+        setMapIconSize(treeIconMapGallery, size);
+    }
+
+    public static void setIconSize(int size) {
+        currentIconSize = size;
+        setMapIconSize(extIconMap, size);
+        setMapIconSize(mimeIconMap, size);
+        setMapIconSize(treeIconMap, size);
+    }
+
+    public static int getIconSize() {
+        return currentIconSize;
     }
 }

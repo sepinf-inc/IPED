@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -707,14 +708,18 @@ public class Win10MailParser extends AbstractParser {
                     attach.setOriginalFileName(StringUtils.substringAfterLast(contentPath, "/"));
                     Pair<IItemReader, String> itemQueryPair = searchItemInCase(contentPath, attach.getAttachSize(), params);
                     attach.setCaseQuery(itemQueryPair.getRight());
+                    emailMetadata.add(ExtraProperties.LINKED_ITEMS, attach.getCaseQuery());
                     IItemReader item = itemQueryPair.getLeft();
+                    String desc = new DecimalFormat().format(attach.getAttachSize()) + " bytes";
+                    if (attach.getMimeTag() != null && !attach.getMimeTag().isBlank()) {
+                        desc += ", mime: " + SimpleHTMLEncoder.htmlEncode(attach.getMimeTag().strip());
+                    }
                     if (item != null) {
                         attach.setCaseItem(item);
                         String queryHTML = SimpleHTMLEncoder.htmlEncode(attach.getCaseQuery());
-                        preview.append("<a href=\"" + Util.getExportPath(item) + "\" onclick=\"app.open('" + queryHTML + "');\">"
-                                + SimpleHTMLEncoder.htmlEncode(attach.getFileName()) + "</a><br>");
+                        preview.append("<a href=\"" + Util.getExportPath(item) + "\" onclick=\"app.open('" + queryHTML + "');\">" + SimpleHTMLEncoder.htmlEncode(attach.getFileName()) + "</a> <i>(" + desc + ")</i><br>");
                     } else {
-                        preview.append(SimpleHTMLEncoder.htmlEncode(attach.getFileName()) + " <em>" + Messages.getString("Win10Mail.NotFound") + "<em><br>");
+                        preview.append(SimpleHTMLEncoder.htmlEncode(attach.getFileName()) + " <i>(" + Messages.getString("Win10Mail.NotFound") + ", " + desc + ")</i><br>");
                     }
                 }
                 emailMetadata.set(ExtraProperties.MESSAGE_ATTACHMENT_COUNT, noOfAttachments);
@@ -747,9 +752,10 @@ public class Win10MailParser extends AbstractParser {
                 params.extractor.parseEmbedded(stream, params.xhtml, emailMetadata, true);
             }
 
-            for (AttachmentEntry attach : emailAttachments) {
-                processAttachment(attach, email, params);
-            }
+            // See https://github.com/sepinf-inc/IPED/issues/1570 why this was turned off
+            // for (AttachmentEntry attach : emailAttachments) {
+            // processAttachment(attach, email, params);
+            // }
         } catch (Exception e) {
             LOGGER.warn("Exception extracting email: subject='" + email.getSubject() + "' rowid='" + email.getRowId() + "' DB='" + params.itemInfo.getPath() + "'", e);
         }
@@ -879,7 +885,7 @@ public class Win10MailParser extends AbstractParser {
      * @param body
      *            email body to replace inline images
      * @param attachments
-     *            list of email attachsments
+     *            list of email attachments
      * 
      * @return new body that handles cid images with associated attachments
      */
@@ -889,8 +895,8 @@ public class Win10MailParser extends AbstractParser {
                 if (attachment.getAttachCID() != null && attachment.getCaseItem() != null) {
                     String attachCid = attachment.getAttachCID().replaceAll("^<|>$", "");
                     // always convert to a jpeg with limited resolution
-                    try (InputStream is = attachment.getCaseItem().getBufferedInputStream()) {
-                        BufferedImage img = ImageUtil.getSubSampledImage(is, 1024, 1024);
+                    try {
+                        BufferedImage img = ImageUtil.getSubSampledImage(attachment.getCaseItem(), 1024);
                         if (img != null) {
                             img = ImageUtil.getOpaqueImage(img);
                             ByteArrayOutputStream baos = new ByteArrayOutputStream();

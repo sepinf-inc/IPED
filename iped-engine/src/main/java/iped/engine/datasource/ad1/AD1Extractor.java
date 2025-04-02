@@ -27,8 +27,6 @@ public class AD1Extractor implements Closeable {
     private static final long SIGNATURE_SIZE = 512; // 0x200
     private static final String charset = "UTF-8";
 
-    private static Object lock = new Object();
-
     private File file;
     private Map<Integer, List<ByteBuffer>> fcMap = new HashMap<>();
     private List<FileChannel> channels = new ArrayList<>();
@@ -322,20 +320,17 @@ public class AD1Extractor implements Closeable {
 
         try {
             List<ByteBuffer> bbList;
-            synchronized (lock) {
-                bbList = fcMap.get(ad1Ord);
-                if (bbList == null) {
-                    File newAd1 = new File(
-                            file.getAbsolutePath().substring(0, file.getAbsolutePath().lastIndexOf(".") + 3) + ad1Ord);
-                    FileChannel fc = FileChannel.open(newAd1.toPath(), StandardOpenOption.READ);
-                    channels.add(fc);
-                    bbList = new ArrayList<>();
-                    for (long pos = 0; pos < fc.size(); pos += Integer.MAX_VALUE) {
-                        int size = (int) Math.min(fc.size() - pos, Integer.MAX_VALUE);
-                        bbList.add(fc.map(MapMode.READ_ONLY, pos, size));
-                    }
-                    fcMap.put(ad1Ord, bbList);
+            bbList = fcMap.get(ad1Ord);
+            if (bbList == null) {
+                File newAd1 = new File(file.getAbsolutePath().substring(0, file.getAbsolutePath().lastIndexOf(".") + 3) + ad1Ord);
+                FileChannel fc = FileChannel.open(newAd1.toPath(), StandardOpenOption.READ);
+                channels.add(fc);
+                bbList = new ArrayList<>();
+                for (long pos = 0; pos < fc.size(); pos += Integer.MAX_VALUE) {
+                    int size = (int) Math.min(fc.size() - pos, Integer.MAX_VALUE);
+                    bbList.add(fc.map(MapMode.READ_ONLY, pos, size));
                 }
+                fcMap.put(ad1Ord, bbList);
             }
             ByteBuffer src = bbList.get((int) (seekOff / Integer.MAX_VALUE));
             int seek = (int) (seekOff % Integer.MAX_VALUE);
@@ -346,9 +341,7 @@ public class AD1Extractor implements Closeable {
             return size;
 
         } catch (ClosedChannelException e) {
-            synchronized (lock) {
-                fcMap.put(ad1Ord, null);
-            }
+            fcMap.put(ad1Ord, null);
             throw e;
         }
     }
@@ -423,6 +416,7 @@ public class AD1Extractor implements Closeable {
         private int compressed_size = 0;
         private byte[] uncompressed_buffer = new byte[(int) chunkSize];
         private int uncompressed_size = -1;
+        private volatile boolean closed;
 
         private FileHeader header;
         long position = 0;
@@ -435,6 +429,7 @@ public class AD1Extractor implements Closeable {
 
         @Override
         public void seek(long pos) throws IOException {
+            checkIfClosed();
             if (pos >= size())
                 throw new IOException("Position requested larger than size");
             position = pos;
@@ -442,16 +437,19 @@ public class AD1Extractor implements Closeable {
 
         @Override
         public long position() throws IOException {
+            checkIfClosed();
             return position;
         }
 
         @Override
         public long size() throws IOException {
+            // allow reading size even if closed
             return header.getFileSize();
         }
 
         @Override
         public int read() throws IOException {
+            checkIfClosed();
             byte[] b = new byte[1];
             int i;
             do {
@@ -465,11 +463,14 @@ public class AD1Extractor implements Closeable {
         }
 
         public long skip(long n) throws IOException {
+            checkIfClosed();
             this.seek(position + n);
             return n;
         }
 
         public int read(byte buf[], int off, int len) throws IOException {
+
+            checkIfClosed();
 
             if (position >= size())
                 return -1;
@@ -508,7 +509,16 @@ public class AD1Extractor implements Closeable {
 
         @Override
         public void close() {
-            inflater.end();
+            if (!closed) {
+                closed = true;
+                inflater.end();
+            }
+        }
+
+        private void checkIfClosed() throws IOException {
+            if (closed) {
+                throw new IOException("InputStream already closed.");
+            }
         }
 
     }

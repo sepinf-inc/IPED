@@ -72,8 +72,7 @@ public class CopyProperties extends SwingWorker<Boolean, Integer> implements Pro
         }
 
         for (int col = 0; col < fields.size(); col++) {
-            writer.write(
-                    "\"" + fields.get(col).toUpperCase() + "\"" + Messages.getString("CopyProperties.CSVDelimiter")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            writer.write("\"" + fields.get(col).toUpperCase() + "\"" + Messages.getString("CopyProperties.CSVDelimiter")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         }
         writer.write("\r\n"); //$NON-NLS-1$
 
@@ -101,9 +100,7 @@ public class CopyProperties extends SwingWorker<Boolean, Integer> implements Pro
                         for (String val : values)
                             val = val.replace("" + CategoryTokenizer.SEPARATOR, " | "); //$NON-NLS-1$ //$NON-NLS-2$
 
-                    if (values.length > 0 && !values[0].isEmpty()
-                            && (field.equals(IndexItem.ACCESSED) || field.equals(IndexItem.CREATED)
-                                    || field.equals(IndexItem.MODIFIED) || field.equals(IndexItem.CHANGED))) {
+                    if (values.length > 0 && !values[0].isEmpty() && (field.equals(IndexItem.ACCESSED) || field.equals(IndexItem.CREATED) || field.equals(IndexItem.MODIFIED) || field.equals(IndexItem.CHANGED))) {
                         values[0] = df.format(DateUtil.stringToDate(values[0]));
                     }
                     String value = ""; //$NON-NLS-1$

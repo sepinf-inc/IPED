@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import fqlite.base.SqliteRow;
+import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.sqlite.SQLiteRecordValidator;
 import iped.parsers.sqlite.SQLiteUndelete;
 import iped.parsers.sqlite.SQLiteUndeleteTable;
@@ -22,6 +23,8 @@ public class WAContactsExtractorAndroid extends WAContactsExtractor {
 
     private static final String SELECT_CONTACT_NAMES = "SELECT * FROM wa_contacts"; //$NON-NLS-1$
 
+    private static final String SELECT_VERIFIED_NAMES = "SELECT jid, verified_name FROM wa_vnames";
+    
     public WAContactsExtractorAndroid(File database, WAContactsDirectory directory, boolean recoverDeletedRecords) {
         super(database, directory, recoverDeletedRecords);
     }
@@ -42,10 +45,8 @@ public class WAContactsExtractorAndroid extends WAContactsExtractor {
             }
         }
 
-        try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
-
-            try (ResultSet rs = stmt.executeQuery(SELECT_CONTACT_NAMES)) {
-
+        try (Connection conn = getConnection()) {
+            try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(SELECT_CONTACT_NAMES)) {
                 while (rs.next()) {
                     WAContact c = directory.getContact(getString(rs, "jid")); //$NON-NLS-1$
                     c.setDisplayName(getString(rs, "display_name")); //$NON-NLS-1$
@@ -56,10 +57,25 @@ public class WAContactsExtractorAndroid extends WAContactsExtractor {
                     c.setStatus(getString(rs, "status")); //$NON-NLS-1$
                 }
             }
+
+            // Use verified names, if available, to replace undefined display names
+            if (SQLite3DBParser.containsTable("wa_vnames", conn)) {
+                try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(SELECT_VERIFIED_NAMES)) {
+                    while (rs.next()) {
+                        String verifiedName = getString(rs, "verified_name");
+                        if (verifiedName != null && !verifiedName.isBlank()) {
+                            WAContact c = directory.getContact(getString(rs, "jid"));
+                            if (c.getDisplayName() == null || c.getDisplayName().isBlank()) {
+                                c.setDisplayName(verifiedName);
+                            }
+                        }
+                    }
+                }
+            }
         } catch (SQLException ex) {
             throw new WAExtractorException(ex);
         }
-        
+
         if (undeletedContactsTable != null) {
             for (var row : undeletedContactsTable.getTableRows()) {
                 var jid = row.getTextValue("jid");

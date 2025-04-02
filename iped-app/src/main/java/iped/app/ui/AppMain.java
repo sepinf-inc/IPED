@@ -12,6 +12,7 @@ import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import iped.app.bootstrap.Bootstrap;
 import iped.app.config.LogConfiguration;
 import iped.app.ui.splash.StartUpControlClient;
 import iped.app.ui.utils.UiScale;
@@ -31,7 +32,7 @@ public class AppMain {
 
     private static final String BUNDLED_JRE_VERSION = "11.0.13";
 
-    private static final String HOME_JRE_FOLDER = ".iped/jre-" + BUNDLED_JRE_VERSION;
+    public static final String HOME_JRE_FOLDER = ".iped/jre-" + BUNDLED_JRE_VERSION;
 
     File casePath;
 
@@ -46,9 +47,9 @@ public class AppMain {
     public static void main(String[] args) {
         // Start up control client should be is created as soon as possible
         // and only when main is called (not when AppMain is instantiated directly).
-        startUpControlClient =  new StartUpControlClient();
+        startUpControlClient = new StartUpControlClient();
         startUpControlClient.start();
-        
+
         // Set the UiScale (must be before any UI-related code).
         UiScale.loadUserSetting();
 
@@ -164,6 +165,7 @@ public class AppMain {
                 libDir = detectLibDir();
 
             LogConfiguration logConfiguration = null;
+            PrintStream SystemOut = System.out; // this is redirected by LogConfiguration
 
             if (processingManager == null) {
                 logConfiguration = new LogConfiguration(libDir.getParentFile().getAbsolutePath(), logFile);
@@ -180,13 +182,23 @@ public class AppMain {
 
             Configuration.getInstance().loadConfigurables(libDir.getParentFile().getAbsolutePath(), true);
 
+            SystemOut.println(Bootstrap.SUB_PROCESS_TEMP_FOLDER + System.getProperty("java.io.tmpdir"));
+
             App.get().init(logConfiguration, isMultiCase, casesPathFile, processingManager, libDir.getAbsolutePath());
 
             if (startUpControlClient != null) {
                 startUpControlClient.finish();
                 startUpControlClient = null;
             }
-            
+
+            if (!App.get().isVisible()) {
+                if (processingManager != null) {
+                    return;
+                } else {
+                    System.exit(1);
+                }
+            }
+
             UICaseDataLoader init = new UICaseDataLoader(processingManager);
             init.execute();
 

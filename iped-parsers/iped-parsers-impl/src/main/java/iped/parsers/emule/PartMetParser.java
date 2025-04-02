@@ -8,7 +8,7 @@ import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
 
@@ -30,6 +30,7 @@ import iped.data.IItemReader;
 import iped.parsers.util.BeanMetadataExtraction;
 import iped.parsers.util.ChildPornHashLookup;
 import iped.parsers.util.Messages;
+import iped.parsers.util.P2PUtil;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
 import iped.utils.LocalizedFormat;
@@ -81,7 +82,7 @@ public class PartMetParser extends AbstractParser {
         }
 
         KnownMetEntry e = new KnownMetEntry();
-        int ret = iped.parsers.emule.KnownMetDecoder.parseEntry(e, 1, bytes);
+        int ret = iped.parsers.emule.KnownMetDecoder.parseEntry(e, 1, bytes, false);
         if (ret <= 0) {
             throw new TikaException("part.met file parsing returned error code " + ret);
         }
@@ -115,12 +116,11 @@ public class PartMetParser extends AbstractParser {
         xhtml.startElement("table", "class", "d");
 
         int hashDBHits = 0;
-        HashSet<String> hashSets = new HashSet<String>();
-        hashSets.addAll(ChildPornHashLookup.lookupHash(KnownMetParser.EDONKEY, e.getHash()));
-        IItemReader item = KnownMetParser.searchItemInCase(searcher, KnownMetParser.EDONKEY, e.getHash());
+        List<String> hashSets = ChildPornHashLookup.lookupHash(KnownMetParser.EDONKEY, e.getHash());
+        IItemReader item = P2PUtil.searchItemInCase(searcher, KnownMetParser.EDONKEY, e.getHash());
         if (item != null)
-            hashSets.addAll(ChildPornHashLookup.lookupHash(item.getHash()));
-        if (!hashSets.isEmpty())
+            hashSets = ChildPornHashLookup.lookupHashAndMerge(item.getHash(), hashSets);
+        if (hashSets != null && !hashSets.isEmpty())
             hashDBHits++;
 
         AttributesImpl attributes = new AttributesImpl();
@@ -132,7 +132,7 @@ public class PartMetParser extends AbstractParser {
         xhtml.endElement("td");
         xhtml.startElement("td", "class", "b");
         if (item != null)
-            KnownMetParser.printNameWithLink(xhtml, item, e.getName());
+            P2PUtil.printNameWithLink(xhtml, item, e.getName());
         else
             xhtml.characters(e.getName());
         xhtml.endElement("td");

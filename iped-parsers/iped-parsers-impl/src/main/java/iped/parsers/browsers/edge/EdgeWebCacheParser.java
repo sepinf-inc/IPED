@@ -7,9 +7,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -287,7 +287,7 @@ public class EdgeWebCacheParser extends AbstractParser {
 
     protected List<EdgeContainer> getHistory(String filePath, PointerByReference filePointerReference, ItemInfo itemInfo)
             throws EdgeWebCacheException {
-        List<EdgeContainer> history = new LinkedList<EdgeContainer>();
+        List<EdgeContainer> history = new ArrayList<EdgeContainer>();
 
         try {
             /*

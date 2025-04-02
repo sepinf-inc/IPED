@@ -95,6 +95,11 @@ public class ImageSimilarityTask extends AbstractTask {
             return;
         }
 
+        Object prev = evidence.getExtraAttribute(IMAGE_FEATURES);
+        if (prev != null && prev instanceof byte[]) {
+            return;
+        }
+
         try {
             byte[] thumb = evidence.getThumb();
             if (thumb == null) {

@@ -24,6 +24,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.util.concurrent.Future;
 
 import javax.swing.BorderFactory;
 import javax.swing.JOptionPane;
@@ -33,17 +34,21 @@ import org.apache.lucene.search.Query;
 import iped.engine.search.LuceneSearchResult;
 import iped.engine.search.MultiSearchResult;
 
-public class AppListener implements ActionListener, MouseListener, ClearFilterListener {
+public class AppListener implements ActionListener, MouseListener {
 
     private String searchText = ""; //$NON-NLS-1$
-    private boolean clearAllFilters = false;
-    private boolean clearSearchBox = false;
+    boolean clearAllFilters = false;
+    private boolean updateSearchBox = false;
 
     public void updateFileListing() {
         updateFileListing(null);
     }
 
-    public void updateFileListing(Query query) {
+    public Future<MultiSearchResult> futureUpdateFileListing() {
+        return updateFileListing(null);
+    }
+
+    public Future<MultiSearchResult> updateFileListing(Query query) {
 
         App.get().getTextViewer().textTable.scrollRectToVisible(new Rectangle());
         App.get().hitsTable.scrollRectToVisible(new Rectangle());
@@ -54,8 +59,7 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
         App.get().setEnableGallerySimSearchButton(false);
         App.get().ipedResult = new MultiSearchResult();
         App.get().setLastSelectedDoc(-1);
-        if (App.get().resultSortKeys == null || (App.get().resultsTable.getRowSorter() != null
-                && !App.get().resultsTable.getRowSorter().getSortKeys().isEmpty())) {
+        if (App.get().resultSortKeys == null || (App.get().resultsTable.getRowSorter() != null && !App.get().resultsTable.getRowSorter().getSortKeys().isEmpty())) {
             App.get().resultSortKeys = App.get().resultsTable.getRowSorter().getSortKeys();
         }
         App.get().resultsTable.getRowSorter().setSortKeys(null);
@@ -64,6 +68,7 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
         App.get().duplicateDock.setTitleText(Messages.getString("DuplicatesTableModel.Duplicates")); //$NON-NLS-1$
         App.get().parentDock.setTitleText(Messages.getString("ParentTableModel.ParentCount")); //$NON-NLS-1$
         App.get().referencesDock.setTitleText(Messages.getString("ReferencesTab.Title")); //$NON-NLS-1$
+        App.get().referencedByDock.setTitleText(Messages.getString("ReferencedByTab.Title")); //$NON-NLS-1$
         App.get().status.setText(" "); //$NON-NLS-1$
 
         App.get().getViewerController().clear();
@@ -75,6 +80,9 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
         App.get().parentItemModel.results = new LuceneSearchResult(0);
         App.get().parentItemModel.fireTableDataChanged();
         App.get().referencesModel.clear();
+        App.get().referencedByModel.clear();
+
+        App.get().getFilterManager().notifyFilterChange();
 
         try {
             UICaseSearcherFilter task;
@@ -86,8 +94,10 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
             task.applyUIQueryFilters();
             task.execute();
 
+            return task;
         } catch (Exception e) {
             e.printStackTrace();
+            return null;
         }
     }
 
@@ -108,17 +118,18 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
             updateFileList = true;
         }
 
-        if (evt.getSource() == App.get().queryComboBox && !clearSearchBox && evt.getActionCommand().equals("comboBoxChanged")
-                && !BookmarksController.get().isUpdatingHistory()) {
+        if (evt.getSource() == App.get().queryComboBox && !updateSearchBox && evt.getActionCommand().equals("comboBoxChanged") && !BookmarksController.get().isUpdatingHistory()) {
             if (App.get().queryComboBox.getSelectedItem() != null) {
                 searchText = App.get().queryComboBox.getSelectedItem().toString();
+                updateSearchBox = true;
                 if (searchText.equals(BookmarksController.HISTORY_DIV) || searchText.equals(App.SEARCH_TOOL_TIP)) {
                     searchText = ""; //$NON-NLS-1$
-                    clearSearchBox = true;
                     App.get().queryComboBox.setSelectedItem(""); //$NON-NLS-1$
+                } else {
+                    searchText = searchText.trim();
+                    BookmarksController.get().addToRecentSearches(searchText);
+                    App.get().queryComboBox.setSelectedItem(searchText);
                 }
-                searchText = searchText.trim();
-                BookmarksController.get().addToRecentSearches(searchText);
             }
 
             if (!searchText.isEmpty())
@@ -178,7 +189,7 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
             App.get().getContextMenu().menuListener.exportFileTree(true, true);
         }
 
-        clearSearchBox = false;
+        updateSearchBox = false;
 
     }
 
@@ -202,9 +213,8 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
     public void mousePressed(MouseEvent evt) {
 
         Object termo = App.get().queryComboBox.getSelectedItem();
-        if (termo != null && termo.equals(App.SEARCH_TOOL_TIP)
-                && App.get().queryComboBox.isAncestorOf((Component) evt.getSource())) {
-            clearSearchBox = true;
+        if (termo != null && termo.equals(App.SEARCH_TOOL_TIP) && App.get().queryComboBox.isAncestorOf((Component) evt.getSource())) {
+            updateSearchBox = true;
             App.get().queryComboBox.setSelectedItem(""); //$NON-NLS-1$
         }
 
@@ -214,16 +224,6 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
     public void mouseReleased(MouseEvent arg0) {
         // TODO Auto-generated method stub
 
-    }
-
-    @Override
-    public void clearFilter() {
-        clearAllFilters = true;
-        App.get().filterComboBox.setSelectedIndex(0);
-        App.get().queryComboBox.setSelectedItem(""); //$NON-NLS-1$
-        if (App.get().filterDuplicates.isSelected())
-            App.get().filterDuplicates.doClick();
-        clearAllFilters = false;
     }
 
 }

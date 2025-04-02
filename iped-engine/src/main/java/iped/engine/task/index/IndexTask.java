@@ -88,8 +88,8 @@ public class IndexTask extends AbstractTask {
     }
 
     public static void configureTreeNodeAttributes(IItem item) {
-        if (item.isSubItem()) {
-            item.dispose();
+        if (item.isSubItem() && item instanceof Item) {
+            ((Item) item).dispose(false);
         }
         item.setIdInDataSource(null);
         item.setInputStreamFactory(null);
@@ -255,11 +255,7 @@ public class IndexTask extends AbstractTask {
             }
         }
 
-        // Don't load default types if generating report, they will be loaded later.
-        // See https://github.com/sepinf-inc/IPED/issues/1258
-        if (!caseData.isIpedReport()) {
-            IndexItem.loadMetadataTypes(new File(output, "conf")); //$NON-NLS-1$
-        }
+        IndexItem.loadMetadataTypes(new File(output, "conf")); //$NON-NLS-1$
         loadExtraAttributes();
 
         this.autoParser = new StandardParser();

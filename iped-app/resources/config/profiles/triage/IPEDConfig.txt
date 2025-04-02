@@ -1,4 +1,4 @@
-﻿########################################################################
+﻿﻿########################################################################
 # Processing Settings
 ########################################################################
 
@@ -20,7 +20,6 @@ enableLanguageDetect = false
 enableNamedEntityRecogniton = false
 enableGraphGeneration = false
 entropyTest = false
-enableSplitLargeBinary = false
 indexFileContents = true
 enableAudioTranscription = false
 enableCarving = false
@@ -28,7 +27,8 @@ enableLedCarving = false
 enableKnownMetCarving = false
 enableImageThumbs = false
 enableImageSimilarity = false
-enableFaceRecognition = falsee
+enableFaceRecognition = false
+enableSearchHardwareWallets = false
 enableVideoThumbs = false
 enableDocThumbs = false
 enableHTMLReport = false

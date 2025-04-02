@@ -1,9 +1,12 @@
 package iped.app.bootstrap;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.net.URISyntaxException;
@@ -25,6 +28,7 @@ import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.PluginConfig;
 import iped.engine.util.Util;
+import iped.utils.IOUtil;
 import iped.viewers.util.LibreOfficeFinder;
 import iped.viewers.util.UNOLibFinder;
 
@@ -38,8 +42,11 @@ import iped.viewers.util.UNOLibFinder;
 public class Bootstrap {
 
     public static final String UI_REPORT_SYS_PROP = "iped.ui.report";
+    public static final String SUB_PROCESS_TEMP_FOLDER = "IpedSubProcessTempFolder: ";
 
     private static String separator = SystemUtils.IS_OS_WINDOWS ? ";" : ":";
+
+    private static volatile File subProcessTempFolder;
 
     public static void main(String args[]) {
         new Bootstrap().run(args);
@@ -60,16 +67,59 @@ public class Bootstrap {
         return Main.class.getCanonicalName();
     }
 
+    protected float getRAMToHeapFactor() {
+        return 0.25f;
+    }
+
     protected void run(String args[]) {
 
         List<String> heapArgs = new ArrayList<>();
         List<String> finalArgs = new ArrayList<>();
+        boolean XmxDefined = false;
+        long physicalMemory = ((com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean()).getTotalPhysicalMemorySize();
         for (String arg : args) {
             if (arg.startsWith("-Xms") || arg.startsWith("-Xmx")) {
-                heapArgs.add(arg);
+                if (arg.charAt(3) == 'x') {
+                    XmxDefined = true;
+                }
+                StringBuffer argStr = new StringBuffer();
+                int i = 4;
+                for (; i < arg.length(); i++) {
+                    if (Character.isDigit(arg.charAt(i))) {
+                        argStr.append(arg.charAt(i));
+                    } else {
+                        break;
+                    }
+                }
+                long parmSize = Integer.parseInt(argStr.toString());
+                switch (Character.toUpperCase(arg.charAt(i))) {
+                    case 'T':
+                        parmSize *= 1024;
+                    case 'G':
+                        parmSize *= 1024;
+                    case 'M':
+                        parmSize *= 1024;
+                    case 'K':
+                        parmSize *= 1024;
+                        break;
+                    default:
+                        break;
+                }
+                long memSize = parmSize;
+                if (memSize > physicalMemory) {
+                    memSize = physicalMemory;
+                    System.out.println("-Xms/-Xmx parameter value greater than physical memory. It was adjusted to the physical memory: " + memSize / (1024 * 1024) + "M");
+                }
+                heapArgs.add(arg.substring(0, 4) + memSize / (1024 * 1024) + "M");
             } else {
                 finalArgs.add(arg);
             }
+        }
+
+        if (!XmxDefined) {
+            // if -Xmx is not specified, set it, up to 32500MB
+            long memSize = Math.min((long) (physicalMemory * getRAMToHeapFactor()), 32500L * 1024 * 1024);
+            heapArgs.add("-Xmx" + (memSize / (1024 * 1024)) + "M");
         }
 
         Main iped = new Main(finalArgs.toArray(new String[0]), isToDecodeArgs());
@@ -95,10 +145,7 @@ public class Bootstrap {
                 classpath += separator + pluginConfig.getPluginFolder().getAbsolutePath() + "/*";
             }
 
-            // user can't open analysis UI w/ --nogui, so no need to load libreoffice jars
-            if (!iped.getCmdLineArgs().isNogui()) {
-                classpath = fillClassPathWithLibreOfficeJars(iped, classpath);
-            }
+            classpath = fillClassPathWithLibreOfficeJars(iped, classpath, iped.getCmdLineArgs().isNogui());
 
             String javaBin = "java";
             if (SystemUtils.IS_OS_WINDOWS) {
@@ -119,6 +166,9 @@ public class Bootstrap {
             cmd.addAll(getCurrentJVMArgs());
             cmd.addAll(getCustomJVMArgs());
             cmd.addAll(getSystemProperties());
+            if (SystemUtils.IS_OS_WINDOWS) {
+                cmd.add("-Djavax.net.ssl.trustStoreType=WINDOWS-ROOT"); // fix for #1719
+            }
             cmd.add("-Djava.net.useSystemProxies=true"); // fix for #1446
             cmd.add(getMainClassName());
             cmd.addAll(finalArgs);
@@ -152,9 +202,24 @@ public class Bootstrap {
             t.printStackTrace();
         }
 
+        cleanTempFolder();
+
         System.exit(exit);
     }
     
+    private static void cleanTempFolder() {
+        if (subProcessTempFolder != null && subProcessTempFolder.isDirectory()) {
+            for (File file : subProcessTempFolder.listFiles()) {
+                if (!file.getName().equals("index")) {
+                    IOUtil.deleteDirectory(file);
+                }
+            }
+            if (!new File(subProcessTempFolder, "index").exists()) {
+                subProcessTempFolder.delete();
+            }
+        }
+    }
+
     /**
      * Called when loadConfigurables is done, inside run. Allow subclasses do custom
      * actions at this execution point.
@@ -185,7 +250,7 @@ public class Bootstrap {
                 throw new IllegalArgumentException(
                         "Please use -Xms/-Xmx arguments after iped.jar not after java command, since processing will occur in a forked process using those params.");
             }
-            if (arg.startsWith("-Xrunjdwp")) {
+            if ((arg.startsWith("-Xrunjdwp") || arg.startsWith("-agentlib:jdwp")) && arg.contains("server=y")) {
                 // workaround as discussed in PR #1119
                 Matcher matcher = Pattern.compile("address=(\\d+)").matcher(arg);
                 if (matcher.find()) {
@@ -210,14 +275,14 @@ public class Bootstrap {
         return props;
     }
 
-    private static String fillClassPathWithLibreOfficeJars(Main iped, String classpath)
+    private static String fillClassPathWithLibreOfficeJars(Main iped, String classpath, boolean isNogui)
             throws URISyntaxException, IOException {
         System.setProperty(IOfficeApplication.NOA_NATIVE_LIB_PATH,
                 new File(iped.getRootPath(), "lib/nativeview").getAbsolutePath());
         LibreOfficeFinder loFinder = new LibreOfficeFinder(new File(iped.getRootPath()));
-        if (loFinder.getLOPath() != null) {
+        if (loFinder.getLOPath(isNogui) != null) {
             List<File> jars = new ArrayList<>();
-            UNOLibFinder.addUNOJars(loFinder.getLOPath(), jars);
+            UNOLibFinder.addUNOJars(loFinder.getLOPath(isNogui), jars);
             for (File jar : jars) {
                 classpath += separator + jar.getCanonicalPath();
             }
@@ -228,11 +293,16 @@ public class Bootstrap {
     private static void redirectStream(InputStream is, OutputStream os) {
         Thread t = new Thread() {
             public void run() {
-                int i;
-                byte[] buf = new byte[4096];
                 try {
-                    while ((i = is.read(buf)) != -1) {
-                        os.write(buf, 0, i);
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+                    PrintWriter writer = new PrintWriter(os, true);
+                    String line = null;
+                    while ((line = reader.readLine()) != null) {
+                        if (subProcessTempFolder == null && line.startsWith(SUB_PROCESS_TEMP_FOLDER)) {
+                            subProcessTempFolder = new File(line.substring(SUB_PROCESS_TEMP_FOLDER.length()));
+                        } else {
+                            writer.println(line);
+                        }
                     }
                 } catch (Exception e) {
                     // ignore

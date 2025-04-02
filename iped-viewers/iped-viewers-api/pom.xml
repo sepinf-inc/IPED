@@ -3,7 +3,7 @@
   <parent>
     <groupId>iped</groupId>
     <artifactId>iped-viewers</artifactId>
-    <version>4.1-snapshot</version>
+    <version>4.2.0</version>
   </parent>
   
   <artifactId>iped-viewers-api</artifactId>
@@ -18,6 +18,11 @@
             <groupId>iped</groupId>
             <artifactId>iped-api</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.roaringbitmap</groupId>
+            <artifactId>RoaringBitmap</artifactId>
+            <version>0.9.39</version>
         </dependency>
 	</dependencies>
   

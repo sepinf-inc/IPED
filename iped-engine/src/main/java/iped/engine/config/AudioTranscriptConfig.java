@@ -14,11 +14,12 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
      * 
      */
     private static final long serialVersionUID = 1L;
-    private static final String CONF_FILE = "AudioTranscriptConfig.txt";
+    public static final String CONF_FILE = "AudioTranscriptConfig.txt";
     private static final String ENABLE_KEY = "enableAudioTranscription";
     private static final String IMPL_CLASS_KEY = "implementationClass";
     private static final String REGION_KEY = "serviceRegion";
-    private static final String TIMEOUT_KEY = "timeout";
+    private static final String MIN_TIMEOUT_KEY = "minTimeout";
+    private static final String TIMEOUT_PER_SEC_KEY = "timeoutPerSec";
     private static final String LANG_KEY = "language";
     private static final String MIMES_KEY = "mimesToProcess";
     private static final String CONVERT_CMD_KEY = "convertCommand";
@@ -26,24 +27,40 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
     private static final String MAX_REQUESTS_KEY = "maxConcurrentRequests";
     private static final String MIN_WORD_SCORE = "minWordScore";
     public static final String HUGGING_FACE_MODEL = "huggingFaceModel";
+    public static final String WHISPER_MODEL = "whisperModel";
     public static final String WAV2VEC2_SERVICE = "wav2vec2Service";
+    public static final String REMOTE_SERVICE = "remoteServiceAddress";
     private static final String GOOGLE_MODEL = "googleModel";
     private static final String LANG_AUTO_VAL = "auto";
     private static final String SKIP_KNOWN_FILES = "skipKnownFiles";
+    private static final String PRECISION = "precision";
+    private static final String BATCH_SIZE = "batchSize";
 
     private List<String> languages = new ArrayList<>();
     private List<String> mimesToProcess = new ArrayList<>();
     private String className;
     private String serviceRegion;
-    private int timeoutPerSec;
+    private int minTimeout = 180; // seconds
+    private int timeoutPerSec = 3; // seconds
     private String convertCmd;
     private int requestIntervalMillis = 0;
     private int maxConcurrentRequests;
     private float minWordScore = 0.7f;
     private String huggingFaceModel;
-    private String wav2vec2Service;
+    private String whisperModel;
+    private String remoteService;
     private String googleModel;
     private boolean skipKnownFiles = true;
+    private String precision = "int8";
+    private int batchSize = 1;
+
+    public String getPrecision() {
+        return precision;
+    }
+
+    public int getBatchSize() {
+        return batchSize;
+    }
 
     public boolean getSkipKnownFiles() {
         return this.skipKnownFiles;
@@ -73,8 +90,16 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
         return className;
     }
 
+    public void setClassName(String clazz) {
+        this.className = clazz;
+    }
+
     public int getTimeoutPerSec() {
         return timeoutPerSec;
+    }
+
+    public int getMinTimeout() {
+        return minTimeout;
     }
 
     public String getConvertCmd() {
@@ -99,8 +124,12 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
         return huggingFaceModel;
     }
 
-    public String getWav2vec2Service() {
-        return wav2vec2Service;
+    public String getWhisperModel() {
+        return whisperModel;
+    }
+
+    public String getRemoteService() {
+        return remoteService;
     }
 
     public String getGoogleModel() {
@@ -127,7 +156,6 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
         className = properties.getProperty(IMPL_CLASS_KEY).trim();
         serviceRegion = properties.getProperty(REGION_KEY).trim();
         convertCmd = properties.getProperty(CONVERT_CMD_KEY).trim();
-        timeoutPerSec = Integer.valueOf(properties.getProperty(TIMEOUT_KEY).trim());
         requestIntervalMillis = Integer.valueOf(properties.getProperty(REQUEST_INTERVAL_KEY).trim());
         maxConcurrentRequests = Integer.valueOf(properties.getProperty(MAX_REQUESTS_KEY).trim());
         minWordScore = Float.valueOf(properties.getProperty(MIN_WORD_SCORE).trim());
@@ -135,9 +163,17 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
         if (huggingFaceModel != null) {
             huggingFaceModel = huggingFaceModel.trim();
         }
-        wav2vec2Service = properties.getProperty(WAV2VEC2_SERVICE);
-        if (wav2vec2Service != null) {
-            wav2vec2Service = wav2vec2Service.trim();
+        whisperModel = properties.getProperty(WHISPER_MODEL);
+        if (whisperModel != null) {
+            whisperModel = whisperModel.strip();
+        }
+
+        remoteService = properties.getProperty(REMOTE_SERVICE);
+        if (remoteService == null) {
+            remoteService = properties.getProperty(WAV2VEC2_SERVICE);
+        }
+        if (remoteService != null) {
+            remoteService = remoteService.trim();
         }
         googleModel = properties.getProperty(GOOGLE_MODEL);
         if (googleModel != null) {
@@ -148,7 +184,22 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
         if (skipKnown != null) {
             this.skipKnownFiles = Boolean.valueOf(skipKnown.trim());
         }
-
+        String value = properties.getProperty(MIN_TIMEOUT_KEY);
+        if (value != null) {
+            minTimeout = Integer.valueOf(value.trim());
+        }
+        value = properties.getProperty(TIMEOUT_PER_SEC_KEY);
+        if (value != null) {
+            timeoutPerSec = Integer.valueOf(value.trim());
+        }
+        value = properties.getProperty(PRECISION);
+        if (value != null) {
+            precision = value.trim();
+        }
+        value = properties.getProperty(BATCH_SIZE);
+        if (value != null) {
+            batchSize = Integer.parseInt(value.trim());
+        }
     }
 
     /**

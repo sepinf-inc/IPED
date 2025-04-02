@@ -5,7 +5,6 @@ import java.awt.Component;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Semaphore;
@@ -50,7 +49,7 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
     String lastGoogleApiKey = null;
     private boolean htmlloaded;
     private Semaphore sem;
-    private String themeScript;
+    private String themeScript = MapCanvasOpenStreet.LIGHT_THEME_SCRIPT;;
 
     public MapCanvasOpenStreet() {
         this.jfxPanel = new JFXPanel();
@@ -113,13 +112,7 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
                             JSObject window = (JSObject) webEngine.executeScript("window"); //$NON-NLS-1$
                             window.setMember("app", jsInterface); //$NON-NLS-1$
                             try {
-                                if (onLoadRunnables.size() > 0) {
-                                    for (Iterator iterator = onLoadRunnables.iterator(); iterator.hasNext();) {
-                                        Runnable runnable = (Runnable) iterator.next();
-                                        runnable.run();
-                                    }
-                                    onLoadRunnables.clear();
-                                }
+                                executeOnLoadRunnables();
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
@@ -182,7 +175,6 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
                 }
             });
 
-            onLoadRunnables.clear();
             clearAddPlacemarkLines();
 
             sem = new Semaphore(1);
@@ -240,7 +232,10 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
     }
 
     public String getMainHtml() throws IOException {
-        this.url = JMapOptionsPane.getSavedTilesSourceURL();
+        if(this.url == null) {
+            setUrl(JMapOptionsPane.getSavedTilesSourceURL());
+        }
+
         String html = IOUtils.toString(getClass().getResourceAsStream("main.html"), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$
         String js = IOUtils.toString(getClass().getResourceAsStream("L.KML.js"), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$
         String markerclusterjs = IOUtils.toString(getClass().getResourceAsStream("leaflet.markercluster.js"), //$NON-NLS-1$
@@ -360,14 +355,19 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
                 public void run() {
                     boolean marcadorselecionado = false;
                     StringBuffer script = new StringBuffer();
+
+                    if (marks.length > 0) {
+                        marcadorselecionado = true;
+                        script.append("track.deselectAll();");
+                    }
+
                     for (int i = 0; i < marks.length; i++) {
-                        Boolean b = selecoesAfazerCopy.get(marks[i]);
-                        if (b) {
-                            marcadorselecionado = true;
-                            script.append("track.deselectAll();");
+                        if ((marks[0].equals(ALLMARKERS_TAG))) {
+                            continue;
                         }
+                        Boolean b = selecoesAfazerCopy.get(marks[i]);
                         try {
-                            script.append("track.selecionaMarcador([\"" + marks[i] + "\"],'" + b + "');");
+                            script.append("track.selecionaMarcador([\"" + marks[i] + "\"],'" + b + "', false);");
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -387,6 +387,59 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
                 selecionaMarcadores.run();
             } else {
                 Platform.runLater(selecionaMarcadores);
+            }
+
+        }
+        if (self.checkMapToApply != null) {
+            // repinta selecoes alteradas
+            final String[] marks = new String[self.checkMapToApply.keySet().size()];
+            self.checkMapToApply.keySet().toArray(marks);
+            final HashMap<String, Boolean> selecoesAfazerCopy = checkMapToApply;
+            self.checkMapToApply = null;
+
+
+            Runnable checkMarkers = new Runnable() {
+                public void run() {
+                    try {
+                        boolean hasCheckedMarker = false;
+                        StringBuffer scriptCheck = new StringBuffer();
+                        StringBuffer scriptUnCheck = new StringBuffer();
+                        
+                        scriptCheck.append("track.checkMarcador([");
+                        scriptUnCheck.append("track.checkMarcador([");
+
+                        if (marks.length > 0) {
+                            hasCheckedMarker = true;
+                        }
+
+                        for (int i = 0; i < marks.length; i++) {
+                            if ((marks[0].equals(ALLMARKERS_TAG))) {
+                                continue;
+                            }
+                            Boolean b = selecoesAfazerCopy.get(marks[i]);
+                            if (b) {
+                                scriptCheck.append("\"" + marks[i] + "\",");
+                            } else {
+                                scriptUnCheck.append("\"" + marks[i] + "\",");
+                            }
+                        }
+                        if (hasCheckedMarker) {
+                            scriptCheck.append("],'true', false);");
+                            scriptUnCheck.append("],'false', false);");
+                            webEngine.executeScript(scriptCheck.toString()); // $NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                            webEngine.executeScript(scriptUnCheck.toString()); // $NON-NLS-1$ //$NON-NLS-2$
+                                                                               // //$NON-NLS-3$
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            };
+
+            if (Platform.isFxApplicationThread()) {
+                checkMarkers.run();
+            } else {
+                Platform.runLater(checkMarkers);
             }
 
         }
@@ -488,6 +541,7 @@ public class MapCanvasOpenStreet extends AbstractMapCanvas {
 
     @Override
     public boolean setTileServerUrl(String url) {
+        setUrl(url);
         if (url.contains("googleapis") && url.contains("key") && !url.substring(url.indexOf("key=")).equals(lastGoogleApiKey)) {
             lastGoogleApiKey = url.substring(url.indexOf("key="));
             return true;
