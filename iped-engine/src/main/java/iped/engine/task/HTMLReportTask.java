@@ -216,19 +216,15 @@ public class HTMLReportTask extends AbstractTask {
         return Arrays.asList(new HtmlReportTaskConfig());
     }
 
-    protected ArrayList<String> loadReportSelectedProps() {
+    protected ArrayList<String> loadReportSelectedProps() throws ClassNotFoundException, IOException {
         File reportCols = new File(Configuration.getInstance().appRoot, SELECTED_PROPERTIES_FILENAME);
 
-        Set<String> columnsReport = new HashSet<>();
-        ArrayList<String> selectedFields = null;
+        ArrayList<String> selectedFields = new ArrayList<>();
         if (reportCols.exists()) {
-            try {
-                columnsReport = (Set<String>) Util.readObject(reportCols.getAbsolutePath());
-            } catch (ClassNotFoundException | IOException e) {
-                e.printStackTrace();
-            }
-            selectedFields = new ArrayList<>();
+            Set<String> columnsReport = (Set<String>) Util.readObject(reportCols.getAbsolutePath());
             selectedFields.addAll(columnsReport);
+        } else {
+            selectedFields.addAll(basicReportProps);
         }
         return selectedFields;
     }
