@@ -259,7 +259,7 @@ public class MenuListener implements ActionListener {
                 selectedIds.add(luceneId);
             }
             setupColumnsSelector();
-            if (ColumnsSelectUI.getOkButtonClicked() == true) {
+            if (ColumnsSelectUI.getOkButtonClicked()) {
                 setupFileChooser();
                 fileChooser.setFileFilter(csvFilter);
                 fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -268,7 +268,7 @@ public class MenuListener implements ActionListener {
                     if (!file.getName().endsWith(CSV)) {
                         file = new File(file.getAbsolutePath() + CSV);
                     }
-                    ArrayList<String> loadedSelectedFields = ColumnsManager.loadSelectedFields(ColumnsManager.SELECTED_PROPERTIES_FILENAME);
+                    ArrayList<String> loadedSelectedFields = ColumnsSelectUI.loadSavedFields();
                     (new CopyProperties(file, selectedIds, loadedSelectedFields)).execute();
                 }
             }
@@ -282,7 +282,7 @@ public class MenuListener implements ActionListener {
                 }
             });
             setupColumnsSelector();
-            if (ColumnsSelectUI.getOkButtonClicked() == true) {
+            if (ColumnsSelectUI.getOkButtonClicked()) {
                 setupFileChooser();
                 fileChooser.setFileFilter(csvFilter);
                 fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -291,7 +291,7 @@ public class MenuListener implements ActionListener {
                     if (!file.getName().endsWith(CSV)) {
                         file = new File(file.getAbsolutePath() + CSV);
                     }
-                    ArrayList<String> loadedSelectedFields = ColumnsManager.loadSelectedFields(ColumnsManager.SELECTED_PROPERTIES_FILENAME);
+                    ArrayList<String> loadedSelectedFields = ColumnsSelectUI.loadSavedFields();
                     (new CopyProperties(file, uniqueSelectedIds, loadedSelectedFields)).execute();
                 }
             }
