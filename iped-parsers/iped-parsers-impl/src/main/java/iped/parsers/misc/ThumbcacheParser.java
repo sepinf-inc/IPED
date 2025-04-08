@@ -1,5 +1,17 @@
 package iped.parsers.misc;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.io.TemporaryResources;
@@ -13,19 +25,9 @@ import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import java.io.*;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-
 public class ThumbcacheParser extends AbstractParser {
 
     private static final long serialVersionUID = 1L;
-    private List<byte[]> extractedImages = new ArrayList<>();
-    private List<String> extractedImageNames = new ArrayList<>();
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -41,13 +43,16 @@ public class ThumbcacheParser extends AbstractParser {
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
         xhtml.startDocument();
 
+        List<byte[]> extractedImages = new ArrayList<>();
+        List<String> extractedImageNames = new ArrayList<>();
+
         try (TemporaryResources tmp = new TemporaryResources();
              TikaInputStream tis = TikaInputStream.get(stream, tmp)) {
 
             File file = tis.getFile();
 
             try (FileInputStream fis = new FileInputStream(file)) {
-                parseThumbcacheFile(fis, xhtml);
+                parseThumbcacheFile(fis, xhtml, extractedImages, extractedImageNames);
             }
 
             for (int i = 0; i < extractedImages.size(); i++) {
@@ -70,7 +75,7 @@ public class ThumbcacheParser extends AbstractParser {
         }
     }
 
-    private void parseThumbcacheFile(InputStream stream, XHTMLContentHandler xhtml) throws IOException, SAXException {
+    private void parseThumbcacheFile(InputStream stream, XHTMLContentHandler xhtml, List<byte[]> extractedImages, List<String> extractedImageNames) throws IOException, SAXException {
         byte[] buffer = new byte[56];
 
         ByteBuffer fileHeader = ByteBuffer.allocate(24).order(ByteOrder.LITTLE_ENDIAN);
