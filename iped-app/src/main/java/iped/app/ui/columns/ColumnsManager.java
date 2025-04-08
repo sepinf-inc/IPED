@@ -6,10 +6,8 @@ import java.io.Serializable;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -17,7 +15,6 @@ import javax.swing.table.TableColumn;
 
 import org.apache.lucene.document.Document;
 import org.apache.tika.metadata.Message;
-import org.neo4j.internal.kernel.api.security.AccessMode.Static;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +34,6 @@ import iped.engine.task.PhotoDNALookup;
 import iped.engine.task.index.IndexItem;
 import iped.engine.task.regex.RegexTask;
 import iped.engine.util.Util;
-import iped.localization.LocalizedProperties;
 import iped.parsers.evtx.EvtxParser;
 import iped.parsers.ocr.OCRParser;
 import iped.parsers.standard.StandardParser;
@@ -92,17 +88,13 @@ public class ColumnsManager implements Serializable, IColumnsManager {
             ExtraProperties.LINKED_ITEMS, ExtraProperties.TIKA_PARSER_USED, IndexItem.META_ADDRESS,
             IndexItem.MFT_SEQUENCE, IndexItem.FILESYSTEM_ID };
 
-    private static ColumnsManager instance;
-
-    private IPEDSource lastCase;
-
-    private static File moduleDir;
-    private File caseCols;
-
-    public static final String SELECTED_PROPERTIES_FILENAME = "data/selectedProps.dat";
-    public static final String SELECTED_REPORT_PROPERTIES_FILENAME = "data/reportProps.dat";
     public static final String VISIBLE_COLUMNS_FILENAME = "data/visiblecols.dat";
 
+    private static ColumnsManager instance;
+    private static File moduleDir;
+
+    private IPEDSource lastCase;
+    private File caseCols;
 
     String[] indexFields = null;
 
@@ -113,8 +105,6 @@ public class ColumnsManager implements Serializable, IColumnsManager {
     protected ArrayList<String> loadedFields = new ArrayList<String>();
 
     private boolean autoManageCols;
-
-    protected Map<String, CheckBoxState> allCheckBoxesState = new HashMap<>();
 
     public static ColumnsManager getInstance() {
         if (instance == null)
@@ -162,8 +152,6 @@ public class ColumnsManager implements Serializable, IColumnsManager {
     };
 
     protected ColumnsManager() {
-        allCheckBoxesState = new HashMap<>();
-
         AnalysisConfig analysisConfig = ConfigurationManager.get().findObject(AnalysisConfig.class);
         autoManageCols = analysisConfig.isAutoManageCols();
 
@@ -172,20 +160,6 @@ public class ColumnsManager implements Serializable, IColumnsManager {
         updateDinamicFields();
 
         loadSavedCols();
-        initializeAllCheckBoxesState();
-    }
-
-    protected void saveSelectedProps(String propsFileName) {
-        File propsFile = new File(moduleDir, propsFileName);
-        try {
-            Set<String> reportPropsSet = new HashSet<>();
-            reportPropsSet.addAll(getSelectedProperties());
-            if (reportPropsSet.size() > 0) {
-                Util.writeObject(reportPropsSet, propsFile.getAbsolutePath());
-            }
-        } catch (Exception e1) {
-            e1.printStackTrace();
-        }
     }
 
     public void saveColumnsState() {
@@ -256,22 +230,9 @@ public class ColumnsManager implements Serializable, IColumnsManager {
         }
     }
 
-    public static ArrayList<String> loadSelectedFields(String propsFileName) {
-        Set<String> columnsReport = new HashSet<>();
-        ArrayList<String> selectedFields = null;
-        File propsFile = new File(moduleDir, propsFileName);
-        if (propsFile.exists()) {
-            try {
-                columnsReport = (Set<String>) Util.readObject(propsFile.getAbsolutePath());
-            } catch (ClassNotFoundException | IOException e) {
-                e.printStackTrace();
-            }
-            selectedFields = new ArrayList<>();
-            selectedFields.addAll(columnsReport);
-        }
-        return selectedFields;
+    public Set<String> getVisibleColumns() {
+        return new TreeSet<String>(colState.visibleFields);
     }
-
 
     protected Set<String> getUsedCols(ProgressDialog progress) {
         Collator collator = Collator.getInstance();
@@ -409,45 +370,6 @@ public class ColumnsManager implements Serializable, IColumnsManager {
         for (String[] fields : fieldGroups)
             Arrays.sort(fields, Collator.getInstance());
 
-    }
-
-    private void initializeAllCheckBoxesState() {
-        for (int i = 0; i < fieldGroups.length; i++) {
-            List<String> fieldNames = Arrays.asList(fieldGroups[i]);
-            fieldNames.forEach(
-                f -> allCheckBoxesState.putIfAbsent(LocalizedProperties.getNonLocalizedField(f), new CheckBoxState(false)));
-        }
-    }
-
-    public List<String> getSelectedProperties() {
-        List<String> selectedProperties = new ArrayList<>();
-        for (Map.Entry<String, CheckBoxState> hmEntry : allCheckBoxesState.entrySet()) {
-            String fieldName = hmEntry.getKey();
-            Boolean isCheckBoxSelected = hmEntry.getValue().isSelected;
-            if (isCheckBoxSelected == true) {
-                selectedProperties.add(LocalizedProperties.getNonLocalizedField(fieldName));
-            }
-        }
-        return selectedProperties;
-    }
-    
-    protected void checkOnlySelectedProperties(List<String> props) {
-        for (Map.Entry<String, CheckBoxState> hmEntry : allCheckBoxesState.entrySet()) {
-            String nonLocalizedKey = LocalizedProperties.getNonLocalizedField(hmEntry.getKey());
-            if (props.contains(nonLocalizedKey)) {
-                allCheckBoxesState.put(nonLocalizedKey, new CheckBoxState(true));
-            } else {
-                allCheckBoxesState.put(nonLocalizedKey, new CheckBoxState(false));
-            }
-        }
-    }
-
-    protected void checkAllProperties() {
-        allCheckBoxesState.replaceAll((name, state) -> state = new CheckBoxState(true));
-    }
-
-    protected void uncheckAllProperties() {
-        allCheckBoxesState.replaceAll((name, state) -> state = new CheckBoxState(false));
     }
 
 }
