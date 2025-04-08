@@ -52,6 +52,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -99,9 +100,9 @@ public class HTMLReportTask extends AbstractTask {
     private static final String PROP_NAME_PLACEHOLDER = "%PROPERTY_NAME%";
     private static final String PROP_VALUE_PLACEHOLDER = "%PROPERTY_VALUE%";
 
-    private static final String SELECTED_PROPERTIES_FILENAME = "data/reportProps.dat";
+    public static final File SELECTED_PROPERTIES_FILE = new File(System.getProperty("user.home"), ".iped/reportProps.dat");
     
-    private static final List<String> basicReportProps = Arrays.asList(BasicProps.NAME, BasicProps.PATH, BasicProps.TYPE, BasicProps.LENGTH,
+    public static final List<String> basicReportProps = Arrays.asList(BasicProps.NAME, BasicProps.PATH, BasicProps.TYPE, BasicProps.LENGTH,
         BasicProps.CREATED, BasicProps.MODIFIED, BasicProps.ACCESSED, BasicProps.DELETED, BasicProps.CARVED,
         BasicProps.HASH, IndexItem.ID_IN_SOURCE);
 
@@ -197,7 +198,7 @@ public class HTMLReportTask extends AbstractTask {
 
     private boolean extractThumb;
 
-    private ArrayList<String> selectedProperties;
+    private Set<String> selectedProperties;
 
     private static Collator getCollator() {
         LocaleConfig localeConfig = ConfigurationManager.get().findObject(LocaleConfig.class);
@@ -216,12 +217,10 @@ public class HTMLReportTask extends AbstractTask {
         return Arrays.asList(new HtmlReportTaskConfig());
     }
 
-    protected ArrayList<String> loadReportSelectedProps() throws ClassNotFoundException, IOException {
-        File reportCols = new File(Configuration.getInstance().appRoot, SELECTED_PROPERTIES_FILENAME);
-
-        ArrayList<String> selectedFields = new ArrayList<>();
-        if (reportCols.exists()) {
-            Set<String> columnsReport = (Set<String>) Util.readObject(reportCols.getAbsolutePath());
+    protected Set<String> loadReportSelectedProps() throws ClassNotFoundException, IOException {
+        TreeSet<String> selectedFields = new TreeSet<>();
+        if (SELECTED_PROPERTIES_FILE.exists()) {
+            Set<String> columnsReport = (Set<String>) Util.readObject(SELECTED_PROPERTIES_FILE.getAbsolutePath());
             selectedFields.addAll(columnsReport);
         } else {
             selectedFields.addAll(basicReportProps);
@@ -317,8 +316,7 @@ public class HTMLReportTask extends AbstractTask {
                 templatesFolder = new File(new File(codePath), "htmlreport/" + localeConf.getLocale().toLanguageTag()); //$NON-NLS-1$
             }
 
-            if (!selectedProperties.isEmpty())
-                logger.info("First Selected property: " + selectedProperties.get(0));
+            logger.info("Selected report properties: " + selectedProperties.toString());
             logger.info("Report folder: " + reportSubFolder.getAbsolutePath()); //$NON-NLS-1$
             logger.info("Template folder: " + templatesFolder.getAbsolutePath()); //$NON-NLS-1$
             if (!templatesFolder.exists()) {
@@ -709,8 +707,6 @@ public class HTMLReportTask extends AbstractTask {
             ReportEntry reg = regs.get(i);
             it.delete(0, it.length());
             it.append("<div class='clrBkgrnd bkmkSeparator bkmkValue'></div>");
-            for (int j = 0; j < selectedProperties.size(); j++)
-                it.append(item);
 
             if (reg.isImage && htmlReportConfig.isImageThumbsEnabled() && reg.hash != null) {
                 File thumbFile = getImageThumbFile(reg.hash);
@@ -770,34 +766,34 @@ public class HTMLReportTask extends AbstractTask {
 
             // Fill Basic Properties if present
             if (selectedProperties.contains(BasicProps.NAME))
-                fillItemProperty(it, Messages.getString("HTMLReportTask.ItemName"), "<b>" + reg.name + "</b>");
+                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemName"), "<b>" + reg.name + "</b>");
             if (selectedProperties.contains(BasicProps.PATH))
-                fillItemProperty(it, Messages.getString("HTMLReportTask.ItemPath"), reg.path);
+                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemPath"), reg.path);
             if (selectedProperties.contains(BasicProps.TYPE))
-                fillItemProperty(it, Messages.getString("HTMLReportTask.ItemType"), reg.category);
+                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemType"), reg.category);
             if (selectedProperties.contains(BasicProps.LENGTH))
-                fillItemProperty(it, Messages.getString("HTMLReportTask.ItemSize"), formatNumber(reg.length, longFormat) + " Bytes");
+                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemSize"), formatNumber(reg.length, longFormat) + " Bytes");
             if (selectedProperties.contains(BasicProps.CREATED))
-                fillItemProperty(it, Messages.getString("HTMLReportTask.ItemCreated"), formatDate(reg.created, dateFormat));
+                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemCreated"), formatDate(reg.created, dateFormat));
             if (selectedProperties.contains(BasicProps.MODIFIED))
-                fillItemProperty(it, Messages.getString("HTMLReportTask.ItemModified"), formatDate(reg.modified, dateFormat));
+                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemModified"), formatDate(reg.modified, dateFormat));
             if (selectedProperties.contains(BasicProps.ACCESSED))
-                fillItemProperty(it, Messages.getString("HTMLReportTask.ItemAccessed"), formatDate(reg.accessed, dateFormat));
+                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemAccessed"), formatDate(reg.accessed, dateFormat));
             if (selectedProperties.contains(BasicProps.DELETED))
-                fillItemProperty(it, Messages.getString("HTMLReportTask.ItemDeleted"), String.valueOf(reg.deleted));
+                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemDeleted"), String.valueOf(reg.deleted));
             if (selectedProperties.contains(BasicProps.CARVED))
-                fillItemProperty(it, Messages.getString("HTMLReportTask.ItemCarved"), String.valueOf(reg.carved));
+                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemCarved"), String.valueOf(reg.carved));
             if (selectedProperties.contains(BasicProps.HASH))
-                fillItemProperty(it, Messages.getString("HTMLReportTask.ItemHash"), reg.hash);
+                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemHash"), reg.hash);
             for (String property : selectedProperties) {
                 if (!basicReportProps.contains(property)) {     // filter for additional properties selected by the user
                     String propertyValue = ipedCase.getItemProperty(reg.evidenceId, property);
-                    fillItemProperty(it, property, propertyValue);
+                    fillItemProperty(it, item, property, propertyValue);
                 }
             }
             if (selectedProperties.contains(IndexItem.ID_IN_SOURCE)) {
                 String export = reg.export == null ? "-" : "<b><a href=\"../" + reg.export + "\">" + reg.export + "</a></b>";
-                fillItemProperty(it, Messages.getString("HTMLReportTask.ItemIdInSource"), export);
+                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemIdInSource"), export);
             }
             items.append(it);
         }
@@ -835,15 +831,17 @@ public class HTMLReportTask extends AbstractTask {
         ef.write();
     }
 
-    private void fillItemProperty(StringBuilder it, String propertyName, String propertyValue) {
+    private void fillItemProperty(StringBuilder it, StringBuilder item, String propertyName, String propertyValue) {
         if (propertyValue != null && (propertyValue.equals(Boolean.TRUE.toString()) || propertyValue.equals(Boolean.FALSE.toString()))) {
             boolean boolProperty = Boolean.parseBoolean(propertyValue);
             propertyValue = boolProperty ? Messages.getString("HTMLReportTask.Yes")
                 : Messages.getString("HTMLReportTask.No");
         }
-
-        replaceFirst(it, PROP_NAME_PLACEHOLDER, propertyName);
-        replaceFirst(it, PROP_VALUE_PLACEHOLDER, propertyValue);
+        if (propertyValue != null && !propertyValue.isBlank()) {
+            it.append(item);
+            replaceFirst(it, PROP_NAME_PLACEHOLDER, propertyName);
+            replaceFirst(it, PROP_VALUE_PLACEHOLDER, propertyValue);
+        }
     }
 
     private String getComments(String bookmark) {
