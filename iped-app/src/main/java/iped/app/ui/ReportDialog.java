@@ -117,8 +117,8 @@ public class ReportDialog implements ActionListener, TableModelListener {
         footer.add(footer1);
         footer.add(append);
         footer.add(footer3);
-        footer.add(footer2);
         footer.add(propertiesFooter);
+        footer.add(footer2);
         footer.add(okPanel);
 
         for (Component c : footer.getComponents())
