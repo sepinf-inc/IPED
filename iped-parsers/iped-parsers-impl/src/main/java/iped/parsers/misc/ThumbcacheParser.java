@@ -44,9 +44,9 @@ public class ThumbcacheParser extends AbstractParser {
         List<byte[]> extractedImages = new ArrayList<>();
         List<String> extractedImageNames = new ArrayList<>();
 
-        try (TemporaryResources tmp = new TemporaryResources();
-             TikaInputStream tis = TikaInputStream.get(stream, tmp)) {
+        try (TemporaryResources tmp = new TemporaryResources()) {
 
+            TikaInputStream tis = TikaInputStream.get(stream, tmp);
             parseThumbcacheFile(tis, xhtml, extractedImages, extractedImageNames);
 
             for (int i = 0; i < extractedImages.size(); i++) {
