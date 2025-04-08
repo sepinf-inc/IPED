@@ -1,6 +1,9 @@
 package iped.app.ui.columns;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dialog.ModalityType;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -12,9 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.awt.Color;
-import java.awt.Rectangle;
-import java.awt.BorderLayout;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -44,8 +44,11 @@ import iped.properties.ExtraProperties;
 import iped.utils.StringUtil;
 import iped.viewers.util.ProgressDialog;
 
-
 public class ColumnsManagerUI implements ActionListener {
+
+    protected static ColumnsManager columnsManager;
+    private static ColumnsManagerUI instance;
+
     protected JCheckBox autoManage = new JCheckBox(Messages.getString("ColumnsManager.AutoManageCols")); //$NON-NLS-1$
     protected JComboBox<Object> combo;
     protected JScrollPane scrollList;
@@ -55,10 +58,7 @@ public class ColumnsManagerUI implements ActionListener {
     protected final JPanel listPanel;
     protected JPanel panel = new JPanel(new BorderLayout());
 
-    protected static ColumnsManager columnsManager;
-    private static ColumnsManagerUI instance;
-
-    protected int firstColsToPin = 7;
+    protected int firstColsToPin = 10;
 
     public static ColumnsManagerUI getInstance() {
         if (instance == null)
@@ -152,8 +152,6 @@ public class ColumnsManagerUI implements ActionListener {
 
         dialog.getContentPane().add(panel);
         dialog.setLocationRelativeTo(App.get());
-
-        updatePanelList();
     }
 
     public void moveTimelineColumns(int newPos) {
