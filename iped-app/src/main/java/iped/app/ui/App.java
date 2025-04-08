@@ -124,6 +124,8 @@ import iped.app.graph.AppGraphAnalytics;
 import iped.app.graph.FilterSelectedEdges;
 import iped.app.ui.bookmarks.BookmarkIcon;
 import iped.app.ui.bookmarks.BookmarkTreeCellRenderer;
+import iped.app.ui.columns.ColumnsManager;
+import iped.app.ui.columns.ColumnsManagerUI;
 import iped.app.ui.controls.CSelButton;
 import iped.app.ui.controls.CustomButton;
 import iped.app.ui.controls.table.FilterTableHeaderController;
@@ -430,7 +432,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 viewerController.dispose();
             }
             if (this.resultsTable != null) {
-                ColumnsManager.getInstance().dispose();
+                ColumnsManagerUI.getInstance().dispose();
             }
 
             appCase.close();

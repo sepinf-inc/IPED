@@ -44,6 +44,7 @@ import org.apache.lucene.search.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import iped.app.ui.columns.ColumnsManager;
 import iped.app.metadata.CountComparator;
 import iped.app.metadata.MetadataSearch;
 import iped.app.metadata.MoneyCount;
