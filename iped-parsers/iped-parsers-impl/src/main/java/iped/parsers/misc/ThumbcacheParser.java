@@ -58,8 +58,6 @@ public class ThumbcacheParser extends AbstractParser {
             for (int i = 0; i < extractedImages.size(); i++) {
                 if (extractor.shouldParseEmbedded(metadata)) {
                     Metadata imageMetadata = new Metadata();
-                    String mimeType = detectImageMimeType(extractedImages.get(i));
-                    imageMetadata.set(Metadata.CONTENT_TYPE, mimeType);
                     imageMetadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, extractedImageNames.get(i));
 
                     try (ByteArrayInputStream imageStream = new ByteArrayInputStream(extractedImages.get(i))) {
@@ -172,8 +170,7 @@ public class ThumbcacheParser extends AbstractParser {
                     return;
                 }
 
-                String mimeType = detectImageMimeType(imageData);
-                String fileName = "thumb_" + Long.toHexString(entryHash) + "." + getFileExtension(mimeType);
+                String fileName = "thumb_" + Long.toHexString(entryHash);
 
                 extractedImages.add(imageData);
                 extractedImageNames.add(fileName);
@@ -181,29 +178,4 @@ public class ThumbcacheParser extends AbstractParser {
         }
     }
 
-    private String detectImageMimeType(byte[] data) {
-        if (data.length >= 4) {
-            if (data[0] == (byte) 0x42 && data[1] == (byte) 0x4D) {
-                return "image/bmp";
-            } else if (data[0] == (byte) 0xFF && data[1] == (byte) 0xD8) {
-                return "image/jpeg";
-            } else if (data[0] == (byte) 0x89 && data[1] == (byte) 0x50) {
-                return "image/png";
-            }
-        }
-        return "application/octet-stream";
-    }
-
-    private String getFileExtension(String mimeType) {
-        switch (mimeType) {
-            case "image/bmp":
-                return "bmp";
-            case "image/jpeg":
-                return "jpg";
-            case "image/png":
-                return "png";
-            default:
-                return "dat";
-        }
-    }
 }
