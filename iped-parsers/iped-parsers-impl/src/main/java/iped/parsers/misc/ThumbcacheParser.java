@@ -1,8 +1,6 @@
 package iped.parsers.misc;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -49,11 +47,7 @@ public class ThumbcacheParser extends AbstractParser {
         try (TemporaryResources tmp = new TemporaryResources();
              TikaInputStream tis = TikaInputStream.get(stream, tmp)) {
 
-            File file = tis.getFile();
-
-            try (FileInputStream fis = new FileInputStream(file)) {
-                parseThumbcacheFile(fis, xhtml, extractedImages, extractedImageNames);
-            }
+            parseThumbcacheFile(tis, xhtml, extractedImages, extractedImageNames);
 
             for (int i = 0; i < extractedImages.size(); i++) {
                 if (extractor.shouldParseEmbedded(metadata)) {
