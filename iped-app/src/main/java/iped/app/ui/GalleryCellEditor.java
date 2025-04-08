@@ -42,15 +42,14 @@ public class GalleryCellEditor extends AbstractCellEditor implements TableCellEd
 
     private static final long serialVersionUID = 1L;
 
-    int row, col;
-    JPanel top = new JPanel(), panel = new JPanel();
-    // JLayeredPane panel = new JLayeredPane();
-    JLabel label = new JLabel(), cLabel = new JLabel();
-    JCheckBox check = new JCheckBox();
-    Border selBorder;
-    Color selColor;
-    Color background;
-    Color warningColor;
+    private int row, col;
+    private final JPanel top = new JPanel(), panel = new JPanel();
+    private final GalleryThumbLabel label = new GalleryThumbLabel();
+    private final JLabel cLabel = new JLabel();
+    private final JCheckBox check = new JCheckBox();
+    private Border selBorder;
+    private Color selColor;
+    private Color background;
 
     public GalleryCellEditor() {
         super();
@@ -80,10 +79,6 @@ public class GalleryCellEditor extends AbstractCellEditor implements TableCellEd
         if (selBorderColor == null)
             selBorderColor = new Color(20, 50, 80);
         selBorder = BorderFactory.createLineBorder(selBorderColor, 1);
-
-        warningColor = UIManager.getColor("Gallery.warning");
-        if (warningColor == null)
-            warningColor = Color.red;
     }
 
     @Override
@@ -110,7 +105,7 @@ public class GalleryCellEditor extends AbstractCellEditor implements TableCellEd
         cLabel.setToolTipText(itemBookmarksStr.isEmpty() ? null : itemBookmarksStr);
         cLabel.setIcon(BookmarkIcon.getIcon(bookmarks, itemBookmarksStr));
 
-        GalleryCellRenderer.adjustGalleryCellContent(cellValue, label, warningColor, table);
+        label.setValue(cellValue);
 
         panel.setBackground(selColor);
         top.setBackground(selColor);
@@ -132,5 +127,4 @@ public class GalleryCellEditor extends AbstractCellEditor implements TableCellEd
         this.stopCellEditing();
 
     }
-
 }

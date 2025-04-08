@@ -427,7 +427,7 @@ public class ExtractorAndroid extends Extractor {
                 }
             }
     
-            Collections.sort(messages);
+            Message.sort(messages);
         }
 
         //Find quote messages
