@@ -708,6 +708,40 @@ public class HTMLReportTask extends AbstractTask {
             it.delete(0, it.length());
             it.append("<div class='clrBkgrnd bkmkSeparator bkmkValue'></div>");
 
+            // Fill Basic Properties if present
+            if (selectedProperties.contains(BasicProps.NAME))
+                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemName"), "<b>" + reg.name + "</b>");
+            if (selectedProperties.contains(BasicProps.PATH))
+                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemPath"), reg.path);
+            if (selectedProperties.contains(BasicProps.TYPE))
+                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemType"), reg.category);
+            if (selectedProperties.contains(BasicProps.LENGTH))
+                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemSize"), formatNumber(reg.length, longFormat) + " Bytes");
+            if (selectedProperties.contains(BasicProps.CREATED))
+                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemCreated"), formatDate(reg.created, dateFormat));
+            if (selectedProperties.contains(BasicProps.MODIFIED))
+                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemModified"), formatDate(reg.modified, dateFormat));
+            if (selectedProperties.contains(BasicProps.ACCESSED))
+                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemAccessed"), formatDate(reg.accessed, dateFormat));
+            if (selectedProperties.contains(BasicProps.DELETED))
+                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemDeleted"), String.valueOf(reg.deleted));
+            if (selectedProperties.contains(BasicProps.CARVED))
+                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemCarved"), String.valueOf(reg.carved));
+            if (selectedProperties.contains(BasicProps.HASH))
+                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemHash"), reg.hash);
+
+            // Fill extra properties
+            for (String property : selectedProperties) {
+                if (!basicReportProps.contains(property)) { // filter for additional properties selected by the user
+                    String propertyValue = ipedCase.getItemProperty(reg.evidenceId, property);
+                    fillItemProperty(it, item, property, propertyValue);
+                }
+            }
+            if (selectedProperties.contains(IndexItem.ID_IN_SOURCE)) {
+                String export = reg.export == null ? "-" : "<b><a href=\"../" + reg.export + "\">" + reg.export + "</a></b>";
+                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemIdInSource"), export);
+            }
+
             if (reg.isImage && htmlReportConfig.isImageThumbsEnabled() && reg.hash != null) {
                 File thumbFile = getImageThumbFile(reg.hash);
                 if (thumbFile.exists() && thumbFile.length() > 0) {
@@ -764,37 +798,6 @@ public class HTMLReportTask extends AbstractTask {
                 }
             }
 
-            // Fill Basic Properties if present
-            if (selectedProperties.contains(BasicProps.NAME))
-                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemName"), "<b>" + reg.name + "</b>");
-            if (selectedProperties.contains(BasicProps.PATH))
-                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemPath"), reg.path);
-            if (selectedProperties.contains(BasicProps.TYPE))
-                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemType"), reg.category);
-            if (selectedProperties.contains(BasicProps.LENGTH))
-                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemSize"), formatNumber(reg.length, longFormat) + " Bytes");
-            if (selectedProperties.contains(BasicProps.CREATED))
-                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemCreated"), formatDate(reg.created, dateFormat));
-            if (selectedProperties.contains(BasicProps.MODIFIED))
-                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemModified"), formatDate(reg.modified, dateFormat));
-            if (selectedProperties.contains(BasicProps.ACCESSED))
-                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemAccessed"), formatDate(reg.accessed, dateFormat));
-            if (selectedProperties.contains(BasicProps.DELETED))
-                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemDeleted"), String.valueOf(reg.deleted));
-            if (selectedProperties.contains(BasicProps.CARVED))
-                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemCarved"), String.valueOf(reg.carved));
-            if (selectedProperties.contains(BasicProps.HASH))
-                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemHash"), reg.hash);
-            for (String property : selectedProperties) {
-                if (!basicReportProps.contains(property)) {     // filter for additional properties selected by the user
-                    String propertyValue = ipedCase.getItemProperty(reg.evidenceId, property);
-                    fillItemProperty(it, item, property, propertyValue);
-                }
-            }
-            if (selectedProperties.contains(IndexItem.ID_IN_SOURCE)) {
-                String export = reg.export == null ? "-" : "<b><a href=\"../" + reg.export + "\">" + reg.export + "</a></b>";
-                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemIdInSource"), export);
-            }
             items.append(it);
         }
 
