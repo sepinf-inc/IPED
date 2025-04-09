@@ -23,7 +23,7 @@ public class ThumbcacheParserTest extends TestCase {
     public void testThumbcacheParser() throws IOException, SAXException, TikaException {
         ThumbcacheParser parser = new ThumbcacheParser();
         Metadata metadata = new Metadata();
-        ContentHandler handler = new BodyContentHandler();
+        ContentHandler handler = new BodyContentHandler(1 << 20);
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
         try (InputStream stream = getStream("test-files/test_Thumbcache.db")) {
