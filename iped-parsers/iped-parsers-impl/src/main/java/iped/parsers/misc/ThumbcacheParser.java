@@ -8,6 +8,7 @@ import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.Set;
 
+import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.io.TemporaryResources;
@@ -31,7 +32,7 @@ public class ThumbcacheParser extends AbstractParser {
     }
 
     @Override
-    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException {
+    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
 
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
             new ParsingEmbeddedDocumentExtractor(context));
@@ -44,25 +45,21 @@ public class ThumbcacheParser extends AbstractParser {
             TikaInputStream tis = TikaInputStream.get(stream, tmp);
             parseThumbcacheFile(tis, xhtml, extractor);
 
-        } catch (IOException e) {
-            xhtml.characters("Error processing thumbcache file: " + e.getMessage() + "\n");
         } finally {
             xhtml.endDocument();
         }
     }
 
-    private void parseThumbcacheFile(InputStream stream, XHTMLContentHandler xhtml, EmbeddedDocumentExtractor extractor) throws IOException, SAXException {
+    private void parseThumbcacheFile(InputStream stream, XHTMLContentHandler xhtml, EmbeddedDocumentExtractor extractor) throws IOException, SAXException, TikaException {
 
         ByteBuffer fileHeader = ByteBuffer.allocate(24).order(ByteOrder.LITTLE_ENDIAN);
         if (stream.readNBytes(fileHeader.array(), 0, fileHeader.capacity()) != fileHeader.capacity()) {
-            xhtml.characters("Error processing cache file: Unable to read file header.\n");
-            return;
+            throw new IOException("Premature EOF reached reading header.");
         }
 
         String signature = new String(fileHeader.array(), 0, 4);
         if (!"CMMM".equals(signature)) {
-            xhtml.characters("Error processing cache file: Invalid header signature; expected 'CMMM'.\n");
-            return;
+            throw new TikaException("Invalid header signature '" + signature + "' expected 'CMMM'.");
         }
 
         int formatVersion = fileHeader.getInt(4);
@@ -109,7 +106,7 @@ public class ThumbcacheParser extends AbstractParser {
             String entrySignature = new String(buffer, 0, 4);
 
             if (!"CMMM".equals(entrySignature)) {
-                continue;
+                throw new TikaException("Invalid cache entry signature found '" + entrySignature + "' expected 'CMMM'.");
             }
 
             int i = formatVersion == 20 ? 8 : 0;
@@ -127,8 +124,7 @@ public class ThumbcacheParser extends AbstractParser {
             if (identifierStringSize > 0) {
                 byte[] identifierBytes = new byte[identifierStringSize];
                 if (stream.readNBytes(identifierBytes, 0, identifierBytes.length) != identifierBytes.length) {
-                    xhtml.characters("Error processing cache file: Unable to read identifier string.\n");
-                    return;
+                    throw new IOException("Premature EOF reached reading identifier string.");
                 }
                 identifierString = new String(identifierBytes, StandardCharsets.UTF_16LE);
             }
@@ -150,8 +146,7 @@ public class ThumbcacheParser extends AbstractParser {
 
                 byte[] imageData = new byte[dataSize];
                 if (stream.readNBytes(imageData, 0, imageData.length) != imageData.length) {
-                    xhtml.characters("Error processing cache file: Unable to read image data.\n");
-                    return;
+                    throw new IOException("Premature EOF reached reading image data.");
                 }
 
                 Metadata imageMetadata = new Metadata();
