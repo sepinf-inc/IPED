@@ -139,14 +139,22 @@ public class ThumbcacheParser extends AbstractParser {
             long dataChecksum = bb.getLong(40 - j);
             long headerChecksum = bb.getLong(48 - j);
 
-            if (dataSize > 0 && identifierStringSize > 0) {
+            String identifierString = "null";
+            if (identifierStringSize > 0) {
                 byte[] identifierBytes = new byte[identifierStringSize];
                 if (stream.readNBytes(identifierBytes, 0, identifierBytes.length) != identifierBytes.length) {
                     xhtml.characters("Error processing cache file: Unable to read identifier string.\n");
                     return;
                 }
-                String identifierString = new String(identifierBytes, StandardCharsets.UTF_16LE);
+                identifierString = new String(identifierBytes, StandardCharsets.UTF_16LE);
+            }
 
+            if (paddingSize > 0) {
+                // safer skip
+                stream.readNBytes(paddingSize);
+            }
+
+            if (dataSize > 0) {
                 xhtml.startElement("pre");
                 xhtml.characters("Entry hash                    : 0x" + Long.toHexString(entryHash) + "\n");
                 xhtml.characters("Entry size                    : " + entrySize + "\n");
@@ -155,13 +163,7 @@ public class ThumbcacheParser extends AbstractParser {
                 xhtml.characters("Data checksum                 : 0x" + Long.toHexString(dataChecksum) + "\n");
                 xhtml.characters("Header checksum               : 0x" + Long.toHexString(headerChecksum) + "\n");
                 xhtml.endElement("pre");
-            }
 
-            if (paddingSize > 0) {
-                stream.skip(paddingSize);
-            }
-
-            if (dataSize > 0) {
                 byte[] imageData = new byte[dataSize];
                 if (stream.readNBytes(imageData, 0, imageData.length) != imageData.length) {
                     xhtml.characters("Error processing cache file: Unable to read image data.\n");
