@@ -156,6 +156,11 @@ public class ThumbcacheParser extends AbstractParser {
                     extractor.parseEmbedded(imageStream, xhtml, imageMetadata, true);
                 }
             }
+
+            int remainder = entrySize - buffer.length - identifierStringSize - paddingSize - dataSize;
+            if (remainder > 0) {
+                stream.readNBytes(remainder);
+            }
         }
     }
 
