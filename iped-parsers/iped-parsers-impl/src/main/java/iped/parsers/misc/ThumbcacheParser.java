@@ -68,7 +68,6 @@ public class ThumbcacheParser extends AbstractParser {
     }
 
     private void parseThumbcacheFile(InputStream stream, XHTMLContentHandler xhtml, List<byte[]> extractedImages, List<String> extractedImageNames) throws IOException, SAXException {
-        byte[] buffer = new byte[56];
 
         ByteBuffer fileHeader = ByteBuffer.allocate(24).order(ByteOrder.LITTLE_ENDIAN);
         if (stream.readNBytes(fileHeader.array(), 0, fileHeader.capacity()) != fileHeader.capacity()) {
@@ -118,6 +117,8 @@ public class ThumbcacheParser extends AbstractParser {
         xhtml.characters("Seen on Windows version        : " + windowsVersion + "\n");
         xhtml.endElement("pre");
 
+        byte[] buffer = formatVersion == 21 ? new byte[48] : new byte[56];
+
         while (stream.readNBytes(buffer, 0, buffer.length) == buffer.length) {
             ByteBuffer bb = ByteBuffer.wrap(buffer).order(ByteOrder.LITTLE_ENDIAN);
 
@@ -127,13 +128,16 @@ public class ThumbcacheParser extends AbstractParser {
                 continue;
             }
 
+            int i = formatVersion == 20 ? 8 : 0;
+            int j = formatVersion == 21 ? 8 : 0;
+
             int entrySize = bb.getInt(4);
             long entryHash = bb.getLong(8);
-            int identifierStringSize = bb.getInt(16);
-            int paddingSize = bb.getInt(20);
-            int dataSize = bb.getInt(24);
-            long dataChecksum = bb.getLong(40);
-            long headerChecksum = bb.getLong(48);
+            int identifierStringSize = bb.getInt(16 + i);
+            int paddingSize = bb.getInt(20 + i);
+            int dataSize = bb.getInt(24 + i);
+            long dataChecksum = bb.getLong(40 - j);
+            long headerChecksum = bb.getLong(48 - j);
 
             if (dataSize > 0 && identifierStringSize > 0) {
                 byte[] identifierBytes = new byte[identifierStringSize];
