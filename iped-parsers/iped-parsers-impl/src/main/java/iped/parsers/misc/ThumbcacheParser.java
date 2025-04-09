@@ -6,8 +6,6 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
@@ -41,24 +39,10 @@ public class ThumbcacheParser extends AbstractParser {
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
         xhtml.startDocument();
 
-        List<byte[]> extractedImages = new ArrayList<>();
-        List<String> extractedImageNames = new ArrayList<>();
-
         try (TemporaryResources tmp = new TemporaryResources()) {
 
             TikaInputStream tis = TikaInputStream.get(stream, tmp);
-            parseThumbcacheFile(tis, xhtml, extractedImages, extractedImageNames);
-
-            for (int i = 0; i < extractedImages.size(); i++) {
-                if (extractor.shouldParseEmbedded(metadata)) {
-                    Metadata imageMetadata = new Metadata();
-                    imageMetadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, extractedImageNames.get(i));
-
-                    try (ByteArrayInputStream imageStream = new ByteArrayInputStream(extractedImages.get(i))) {
-                        extractor.parseEmbedded(imageStream, xhtml, imageMetadata, true);
-                    }
-                }
-            }
+            parseThumbcacheFile(tis, xhtml, extractor);
 
         } catch (IOException e) {
             xhtml.characters("Error processing thumbcache file: " + e.getMessage() + "\n");
@@ -67,7 +51,7 @@ public class ThumbcacheParser extends AbstractParser {
         }
     }
 
-    private void parseThumbcacheFile(InputStream stream, XHTMLContentHandler xhtml, List<byte[]> extractedImages, List<String> extractedImageNames) throws IOException, SAXException {
+    private void parseThumbcacheFile(InputStream stream, XHTMLContentHandler xhtml, EmbeddedDocumentExtractor extractor) throws IOException, SAXException {
 
         ByteBuffer fileHeader = ByteBuffer.allocate(24).order(ByteOrder.LITTLE_ENDIAN);
         if (stream.readNBytes(fileHeader.array(), 0, fileHeader.capacity()) != fileHeader.capacity()) {
@@ -170,10 +154,12 @@ public class ThumbcacheParser extends AbstractParser {
                     return;
                 }
 
-                String fileName = "thumb_" + Long.toHexString(entryHash);
+                Metadata imageMetadata = new Metadata();
+                imageMetadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, "thumb_" + Long.toHexString(entryHash));
 
-                extractedImages.add(imageData);
-                extractedImageNames.add(fileName);
+                try (ByteArrayInputStream imageStream = new ByteArrayInputStream(imageData)) {
+                    extractor.parseEmbedded(imageStream, xhtml, imageMetadata, true);
+                }
             }
         }
     }
