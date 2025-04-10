@@ -1624,10 +1624,14 @@ public class ReportGenerator {
     }
 
     private static String getTitle(Message message) {
-        if (message.getMediaMime() != null && !message.getMediaMime().isEmpty())
-            return format(message.getMediaMime().substring(0, message.getMediaMime().indexOf('/')));
-        else
-            return "File"; //$NON-NLS-1$
+        String mime = message.getMediaMime();
+        if (mime != null && !mime.isEmpty()) {
+            int pos = message.getMediaMime().indexOf('/');
+            if (pos > 0) {
+                return format(mime.substring(0, pos));
+            }
+        }
+        return "File";
     }
 
     private void printMessageFile(PrintWriter out, String title, String id, byte[] avatar, boolean isDeleted,
