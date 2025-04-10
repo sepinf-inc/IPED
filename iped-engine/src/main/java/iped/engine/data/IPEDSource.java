@@ -657,6 +657,17 @@ public class IPEDSource implements IIPEDSource {
         sleuthCase.setImagePaths(imgId, newPaths);
     }
 
+    public String getItemProperty(int id, String propertyName) {
+        String propertyValue = null;
+        try {
+            Document doc = searcher.doc(getLuceneId(id));
+            propertyValue = doc.get(propertyName);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return propertyValue;
+    }
+
     public int getSourceId() {
         return sourceId;
     }
