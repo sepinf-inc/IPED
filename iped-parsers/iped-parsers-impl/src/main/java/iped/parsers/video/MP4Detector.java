@@ -26,7 +26,7 @@ public class MP4Detector implements Detector {
      */
     private static final long serialVersionUID = 1L;
 
-    private static final String[] HEADERS = { "ftypmp41", "ftypmp42", "ftypisom" };
+    private static final String[] HEADERS = { "ftypmp41", "ftypmp42", "ftypiso" };
 
     private static byte[][] headers;
 
