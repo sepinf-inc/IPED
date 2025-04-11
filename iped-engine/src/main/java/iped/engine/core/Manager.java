@@ -911,6 +911,12 @@ public class Manager {
                 IOUtil.copyDirectory(currentProfile, new File(output, Configuration.CASE_PROFILE_DIR), true);
                 resetLocalConfigToPortable(new File(output, Configuration.CASE_PROFILE_DIR + "/" + Configuration.LOCAL_CONFIG));
             }
+            if (caseData.isIpedReport()) {
+                File caseProfile = new File(Configuration.getInstance().appRoot, Configuration.CASE_PROFILE_DIR);
+                if (caseProfile.exists()) {
+                    IOUtil.copyDirectory(caseProfile, new File(output, Configuration.CASE_PROFILE_DIR));
+                }
+            }
 
             File binDir = new File(Configuration.getInstance().appRoot, "bin"); //$NON-NLS-1$
             if (binDir.exists())
