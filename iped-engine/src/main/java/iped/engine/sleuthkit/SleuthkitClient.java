@@ -18,6 +18,7 @@ import java.util.PriorityQueue;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.tika.utils.SystemUtils;
@@ -29,6 +30,7 @@ import iped.engine.config.ConfigurationManager;
 import iped.engine.config.FileSystemConfig;
 import iped.engine.config.LocalConfig;
 import iped.engine.config.PluginConfig;
+import iped.engine.core.Manager;
 import iped.engine.datasource.SleuthkitReader;
 import iped.engine.sleuthkit.SleuthkitServer.FLAGS;
 import iped.io.SeekableInputStream;
@@ -51,6 +53,8 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
 
     static volatile String dbDirPath;
     static AtomicInteger idStart = new AtomicInteger();
+
+    private static final AtomicBoolean initSleuthkitServers = new AtomicBoolean(false);
 
     static {
         FileSystemConfig config = ConfigurationManager.get().findObject(FileSystemConfig.class);
@@ -131,7 +135,22 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
 
     }
 
-    public static void initSleuthkitServers(final String dbPath) throws InterruptedException {
+    public static void initSleuthkitServers(File tskDB) throws InterruptedException {
+        if (initSleuthkitServers.get()) {
+            return;
+        }
+        FileSystemConfig fsConfig = ConfigurationManager.get().findObject(FileSystemConfig.class);
+        if (tskDB.exists() && fsConfig.isRobustImageReading()) {
+            synchronized (SleuthkitClient.class) {
+                if (!initSleuthkitServers.get()) {
+                    SleuthkitClient.initSleuthkitServers(tskDB.getParent());
+                    initSleuthkitServers.set(true);
+                }
+            }
+        }
+    }
+
+    private static void initSleuthkitServers(final String dbPath) throws InterruptedException {
         dbDirPath = dbPath;
         ArrayList<Thread> initThreads = new ArrayList<>();
         for (int i = 0; i < NUM_TSK_SERVERS; i++) {
