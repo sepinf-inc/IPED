@@ -29,7 +29,6 @@ import java.nio.file.StandardOpenOption;
 import java.security.Security;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.logging.log4j.Level;
@@ -57,7 +56,6 @@ import iped.engine.CmdLineArgs;
 import iped.engine.config.AnalysisConfig;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
-import iped.engine.config.FileSystemConfig;
 import iped.engine.config.IndexTaskConfig;
 import iped.engine.config.LocalConfig;
 import iped.engine.config.SplashScreenConfig;
@@ -152,8 +150,6 @@ public class Manager {
 
     private Thread commitThread = null;
     AtomicLong partialCommitsTime = new AtomicLong();
-
-    private final AtomicBoolean initSleuthkitServers = new AtomicBoolean(false);
 
     private static final String appWinExeFileName = "IPED-SearchApp.exe";
 
@@ -282,7 +278,7 @@ public class Manager {
 
             initWorkers();
 
-            initSleuthkitServers();
+            SleuthkitClient.initSleuthkitServers(SleuthkitReader.getSleuthkitDB(output));
 
             status.addProcessingEvidences(args);
             status.save();
@@ -371,16 +367,6 @@ public class Manager {
         if (producer != null) {
             producer.interrupt();
             // produtor.join(5000);
-        }
-    }
-
-    public synchronized void initSleuthkitServers() throws InterruptedException {
-        File tskDB = SleuthkitReader.getSleuthkitDB(output);
-        FileSystemConfig fsConfig = ConfigurationManager.get().findObject(FileSystemConfig.class);
-        if (tskDB.exists() && fsConfig.isRobustImageReading()) {
-            if (!initSleuthkitServers.getAndSet(true)) {
-                SleuthkitClient.initSleuthkitServers(tskDB.getParent());
-            }
         }
     }
 
