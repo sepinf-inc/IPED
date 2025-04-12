@@ -118,9 +118,14 @@ public class SleuthkitInputStreamFactory extends SeekableInputStreamFactory {
         FileSystemConfig fsConfig = ConfigurationManager.get().findObject(FileSystemConfig.class);
         long tskId = Long.valueOf(identifier);
         Content tskContent = getContentById(tskId);
-        if (SleuthkitReader.sleuthCase == null || !fsConfig.isRobustImageReading()) {
+        if (!fsConfig.isRobustImageReading()) {
             return new SleuthkitInputStream(tskContent);
         } else {
+            try {
+                SleuthkitClient.initSleuthkitServers(new File(getSleuthkitCase().getDbDirPath(), SleuthkitReader.DB_NAME));
+            } catch (InterruptedException e) {
+                throw new IOException(e);
+            }
             SleuthkitClient sleuthProcess = SleuthkitClient.get();
             try {
                 return sleuthProcess.getInputStream((int) tskId, tskContent.getUniquePath());
