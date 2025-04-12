@@ -158,11 +158,6 @@ public class SQLite3DBParser extends AbstractDBParser {
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
-                        if (null != tmp) {
-                            tmp.addResource(() -> {
-                                relatedFileTemp.delete();
-                            });
-                        }
                         return relatedFileTemp;
                     }
                 }
