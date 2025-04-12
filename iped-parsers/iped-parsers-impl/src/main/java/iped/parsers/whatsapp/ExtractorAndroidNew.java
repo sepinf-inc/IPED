@@ -16,6 +16,7 @@ import static iped.parsers.whatsapp.Message.MessageType.CHAT_ADDED_PRIVACY;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_MANAGEMENT_ACTION;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_RENAMED;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_WELCOME;
+import static iped.parsers.whatsapp.Message.MessageType.CONTACTED_FIND_BUSINESSES;
 import static iped.parsers.whatsapp.Message.MessageType.CONTACT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_ADMIN;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_SENDER;
@@ -25,11 +26,10 @@ import static iped.parsers.whatsapp.Message.MessageType.ENCRYPTION_KEY_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_DEFAULT;
 import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_DURATION_CHANGED;
-import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_SETTINGS_NOT_APPLIED;
 import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_SAVE;
+import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_SETTINGS_NOT_APPLIED;
 import static iped.parsers.whatsapp.Message.MessageType.GIF_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_ADDED_TO_COMMUNITY;
-import static iped.parsers.whatsapp.Message.MessageType.CONTACTED_FIND_BUSINESSES;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_EDIT;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_SEND;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ONLY_ADMINS_CAN_ADD;
@@ -49,12 +49,14 @@ import static iped.parsers.whatsapp.Message.MessageType.MISSED_VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.MISSED_VOICE_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.NEW_PARTICIPANTS_NEED_ADMIN_APPROVAL;
 import static iped.parsers.whatsapp.Message.MessageType.ORDER_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.OVER_256_MEMBERS_ONLY_ADMINS_CAN_EDIT;
 import static iped.parsers.whatsapp.Message.MessageType.PINNED_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.POLL_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.PRODUCT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.REFUSED_VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.REFUSED_VOICE_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.RESET_GROUP_LINK;
+import static iped.parsers.whatsapp.Message.MessageType.SECURITY_NOTIFICATIONS_NO_LONGER_AVAILABLE;
 import static iped.parsers.whatsapp.Message.MessageType.SENDER_IN_CONTACTS;
 import static iped.parsers.whatsapp.Message.MessageType.SHARE_LOCATION_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.STANDARD_CHAT;
@@ -89,8 +91,6 @@ import static iped.parsers.whatsapp.Message.MessageType.VOICE_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.WAITING_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.YOU_ADMIN;
 import static iped.parsers.whatsapp.Message.MessageType.YOU_NOT_ADMIN;
-import static iped.parsers.whatsapp.Message.MessageType.OVER_256_MEMBERS_ONLY_ADMINS_CAN_EDIT;
-import static iped.parsers.whatsapp.Message.MessageType.SECURITY_NOTIFICATIONS_NO_LONGER_AVAILABLE;
 
 import java.io.File;
 import java.sql.Connection;
@@ -100,26 +100,26 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import iped.parsers.sqlite.SQLite3DBParser;
-import iped.parsers.whatsapp.Message.MessageStatus;
-import iped.parsers.whatsapp.Message.MessageType;
 import iped.parsers.whatsapp.Message.MessageQuotedType;
+import iped.parsers.whatsapp.Message.MessageStatus;
 
 /**
  *
  * @author Hauck
  */
-public class ExtractorAndroidNew extends Extractor {
+public abstract class ExtractorAndroidNew extends Extractor {
 
     public ExtractorAndroidNew(String itemPath, File databaseFile, WAContactsDirectory contacts, WAAccount account) {
         super(itemPath, databaseFile, contacts, account, false);
     }
+
+    protected abstract Connection getConnection() throws SQLException;
 
     @Override
     protected List<Chat> extractChatList() throws WAExtractorException {
