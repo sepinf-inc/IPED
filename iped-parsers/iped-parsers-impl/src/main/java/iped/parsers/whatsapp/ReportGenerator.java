@@ -199,8 +199,9 @@ public class ReportGenerator {
         ByteArrayOutputStream chatBytes = new ByteArrayOutputStream();
         PrintWriter printWriter = new PrintWriter(new OutputStreamWriter(chatBytes, StandardCharsets.UTF_8)); // $NON-NLS-1$
 
-        printMessageFile(printWriter, c.getTitle(), c.getPrintId(), c.getRemote().getAvatar(), c.isDeleted(), () -> {
-            ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        printMessageFile(printWriter, c.getTitle(), c.getPrintId(), c.getRemote().getAvatar(), c.isDeleted(),
+                c.isBroadcast(), () -> {
+                    ByteArrayOutputStream bout = new ByteArrayOutputStream();
             PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, StandardCharsets.UTF_8)); // $NON-NLS-1$
             if (c.getRecoveredFrom() != null) {
                 out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
@@ -1635,7 +1636,7 @@ public class ReportGenerator {
     }
 
     private void printMessageFile(PrintWriter out, String title, String id, byte[] avatar, boolean isDeleted,
-            Supplier<String> messages) {
+            boolean isBroadcast, Supplier<String> messages) {
         String strAvatar;
         if (avatar == null || avatar.length == 0) {
             strAvatar = Util.getImageResourceAsEmbedded("img/avatar.png");
@@ -1661,6 +1662,8 @@ public class ReportGenerator {
                         return id;
                     case "avatar":
                         return strAvatar;
+                    case "topbarclass":
+                        return isBroadcast ? " class=\"status\"" : "";
                     case "messages":
                         return messages.get();
                     case "javascript":
