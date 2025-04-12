@@ -7,10 +7,13 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.Stroke;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -71,6 +74,9 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
     private static final int maxDim = 2400;
     private static final int maxBlurDim = 512;
     private static final double blurIntensity = 0.02f;
+
+    private static final Color rectColorMain = new Color(255,0,0,200);
+    private static final Color rectColorBack = new Color(255,255,255,50);
     
     volatile protected BufferedImage image;
     volatile protected int rotation;
@@ -198,23 +204,39 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
     }
 
     private void drawRectangles(BufferedImage img, double zoom, Set<String> highlights) {
-        if (zoom <= 0) 
+        if (zoom <= 0)
             return;
-        Graphics2D graph = img.createGraphics();
-        graph.setColor(Color.RED);
-        graph.setStroke(new BasicStroke(4));
+
+        Graphics2D g = img.createGraphics();
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        // 1/300 of image's smallest dimension
+        int strokeWidth = Math.max(4, Math.min(img.getHeight(), img.getWidth()) / 300);
+
+        Stroke mainStroke = new BasicStroke(strokeWidth);
+        Stroke backStroke = new BasicStroke(strokeWidth * 2);
+        int arc = 4 * strokeWidth;
+
         for (String str : highlights) {
             if (str.startsWith(HIGHLIGHT_LOCATION + "[") && str.endsWith("]")) {
                 String[] vals = str.substring(HIGHLIGHT_LOCATION.length() + 1, str.length() - 1).split(", ");
-                int top = (int) Math.round(Integer.parseInt(vals[0]) * zoom);
-                int right = (int) Math.round(Integer.parseInt(vals[1]) * zoom);
-                int bottom = (int) Math.round(Integer.parseInt(vals[2]) * zoom);
-                int left = (int) Math.round(Integer.parseInt(vals[3]) * zoom);
-                graph.drawRect(left, top, right - left, bottom - top);
+                double top = Integer.parseInt(vals[0]) * zoom;
+                double right = Integer.parseInt(vals[1]) * zoom;
+                double bottom = Integer.parseInt(vals[2]) * zoom;
+                double left = Integer.parseInt(vals[3]) * zoom;
+
+                RoundRectangle2D rc = new RoundRectangle2D.Double(left, top, right - left, bottom - top, arc, arc);
+
+                g.setStroke(backStroke);
+                g.setColor(rectColorBack);
+                g.draw(rc);
+
+                g.setStroke(mainStroke);
+                g.setColor(rectColorMain);
+                g.draw(rc);
             }
         }
-        graph.dispose();
-
+        g.dispose();
     }
 
     protected void updatePanel(final BufferedImage img) {
