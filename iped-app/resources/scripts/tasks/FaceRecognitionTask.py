@@ -20,6 +20,7 @@ numFaceRecognitionProcessesProp = 'numFaceRecognitionProcesses'
 maxResolutionProp = 'maxResolution'
 faceDetectionModelProp = 'faceDetectionModel'
 upSamplingProp = 'upSampling'
+minSizeProp = 'minSize'
 
 # External process script
 processScript = 'FaceRecognitionProcess.py'
@@ -37,6 +38,7 @@ bin = 'python' if platform.system().lower() == 'windows' else 'python3'
 detection_model = 'hog'
 max_size = 1024
 up_sampling = 1
+min_size = 48
 
 firstInstance = True
 processQueue = None
@@ -67,7 +69,7 @@ def createExternalProcess():
     proc = None
     for i in range(3):
         if proc is None or proc.poll() is not None:
-            proc = subprocess.Popen([bin, os.path.join(ipedRoot, 'scripts', 'tasks', processScript), str(max_size), detection_model, str(up_sampling)], 
+            proc = subprocess.Popen([bin, os.path.join(ipedRoot, 'scripts', 'tasks', processScript), str(max_size), detection_model, str(up_sampling), str(min_size)], 
                                     stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
         
         if pingExternalProcess(proc):
@@ -142,7 +144,7 @@ class FaceRecognitionTask:
         if maxProcesses is None and numProcs is not None:
             maxProcesses = int(numProcs)
         maxResolution = extraProps.getProperty(maxResolutionProp)
-        global max_size, detection_model, up_sampling
+        global max_size, detection_model, up_sampling, min_size
         if maxResolution is not None:
             max_size = int(maxResolution)
         faceDetectionModel = extraProps.getProperty(faceDetectionModelProp)
@@ -151,6 +153,9 @@ class FaceRecognitionTask:
         upSampling = extraProps.getProperty(upSamplingProp)
         if upSampling is not None:
             up_sampling = int(upSampling)
+        minSize = extraProps.getProperty(minSizeProp)
+        if minSize is not None:
+            min_size = int(minSize)
         
         createProcessQueue()
         return
@@ -197,8 +202,17 @@ class FaceRecognitionTask:
         # Only image type items are processed
         if hash is None or not item.getExtraAttribute('hasThumb'):
             return
-        
+
         from iped.properties import ExtraProperties
+
+        # Ignore small images
+        try:
+            width = int(item.getMetadata().get(ExtraProperties.IMAGE_META_PREFIX + 'Width'))
+            height = int(item.getMetadata().get(ExtraProperties.IMAGE_META_PREFIX + 'Height'))
+            if width < min_size or height < min_size:
+                return
+        except:
+            pass
 
         # don't process it again (in the report generation for example)
         face_count = item.getExtraAttribute(ExtraProperties.FACE_COUNT)
@@ -239,7 +253,6 @@ class FaceRecognitionTask:
             # If item has no tiff:Orientation attribute
             tiff_orient = 1
 
-        
         # creates process in parallel
         numCreatedProcsLock.acquire()
         global numCreatedProcs
@@ -250,7 +263,6 @@ class FaceRecognitionTask:
             processQueue.put(proc, block=True)
         else:
             numCreatedProcsLock.release()
-        
         
         try:
             proc = processQueue.get(block=True)
