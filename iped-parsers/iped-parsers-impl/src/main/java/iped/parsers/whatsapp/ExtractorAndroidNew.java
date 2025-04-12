@@ -13,6 +13,7 @@ import static iped.parsers.whatsapp.Message.MessageType.CHANGED_NUMBER_TO;
 import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_ADDED_PRIVACY;
 import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_CREATED;
 import static iped.parsers.whatsapp.Message.MessageType.CHAT_ADDED_PRIVACY;
+import static iped.parsers.whatsapp.Message.MessageType.CHAT_STARTED_FROM_AD;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_MANAGEMENT_ACTION;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_RENAMED;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_WELCOME;
@@ -30,6 +31,8 @@ import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_SAVE;
 import static iped.parsers.whatsapp.Message.MessageType.GIF_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_ADDED_TO_COMMUNITY;
 import static iped.parsers.whatsapp.Message.MessageType.CONTACTED_FIND_BUSINESSES;
+import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ADMIN_APPROVAL_OFF;
+import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_ADD;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_EDIT;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_SEND;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ONLY_ADMINS_CAN_ADD;
@@ -80,6 +83,7 @@ import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP_FROM_L
 import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_WHATSAPP;
 import static iped.parsers.whatsapp.Message.MessageType.USER_LEFT_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.USER_REMOVED_FROM_GROUP;
+import static iped.parsers.whatsapp.Message.MessageType.USER_REQUEST_TO_ADD_TO_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.VIDEO_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.VIEW_ONCE_AUDIO_MESSAGE;
@@ -496,7 +500,9 @@ public class ExtractorAndroidNew extends Extractor {
                 }
 
                 if (hasSystemChat
-                        && (m.getMessageType() == USER_ADDED_TO_COMMUNITY || m.getMessageType() == USER_ADDED_TO_GROUP
+                        && (m.getMessageType() == USER_ADDED_TO_COMMUNITY
+                                || m.getMessageType() == USER_ADDED_TO_GROUP
+                                || m.getMessageType() == USER_REQUEST_TO_ADD_TO_GROUP
                                 || m.getMessageType() == USER_COMMUNITY_ADMIN
                                 || m.getMessageType() == USER_REMOVED_FROM_GROUP
                                 || m.getMessageType() == USER_JOINED_GROUP_FROM_COMMUNITY
@@ -854,14 +860,21 @@ public class ExtractorAndroidNew extends Extractor {
                     case 84:
                         result = NEW_PARTICIPANTS_NEED_ADMIN_APPROVAL;
                         break;
+                    case 85:
+                        result = GROUP_CHANGED_ADMIN_APPROVAL_OFF;
+                        break;
                     case 87:
                     case 88:
                     case 95:
                     case 110:
+                    case 115:
                         result = COMMUNITY_MANAGEMENT_ACTION;
                         break;
                     case 90:
                         result = USER_ADDED_TO_COMMUNITY;
+                        break;
+                    case 91:
+                        result = GROUP_CHANGED_ALL_MEMBERS_CAN_ADD;
                         break;
                     case 92:
                         result = GROUP_CHANGED_ONLY_ADMINS_CAN_ADD;
@@ -878,7 +891,13 @@ public class ExtractorAndroidNew extends Extractor {
                     case 118:
                         result = PINNED_MESSAGE;
                         break;
+                    case 120:
+                        result = USER_REQUEST_TO_ADD_TO_GROUP;
+                        break;
+                    case 123:
                     case 124:
+                    case 125:
+                    case 131:
                         result = COMMUNITY_WELCOME;
                         break;
                     case 129:
@@ -899,10 +918,12 @@ public class ExtractorAndroidNew extends Extractor {
                     case 155:
                         result = AI_THIRD_PARTY;
                         break;
+                    case 158:
+                        result = CHAT_STARTED_FROM_AD;
+                        break;
                     default:
                         break;
                 }
-
                 break;
             case 1:
                 result = IMAGE_MESSAGE;

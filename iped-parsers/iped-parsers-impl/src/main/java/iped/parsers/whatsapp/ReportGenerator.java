@@ -282,6 +282,10 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.AIThirdParty"));
                 break;
+            case CHAT_STARTED_FROM_AD:
+                out.println("<div class=\"systemmessage\">");
+                out.println(Messages.getString("WhatsAppReport.ChatStartedFromAd"));
+                break;
             case ENCRYPTION_KEY_CHANGED:
                 out.println("<div class=\"systemmessage\">");
                 out.print(lockedIcon);
@@ -566,6 +570,7 @@ public class ReportGenerator {
             case USER_JOINED_GROUP_FROM_COMMUNITY:
             case USER_JOINED_GROUP_FROM_INVITATION:
             case USER_JOINED_GROUP_FROM_LINK:
+            case USER_REQUEST_TO_ADD_TO_GROUP:
             case USER_REMOVED_FROM_GROUP:
                 List<String> users = message.getUsersAction();
                 out.println("<div class=\"systemmessage\">");
@@ -605,11 +610,19 @@ public class ReportGenerator {
                         out.print(Messages.getString("WhatsAppReport.UserAddedToGroup"));
                     } else if (message.getMessageType() == MessageType.USER_COMMUNITY_ADMIN) {
                         out.print(Messages.getString("WhatsAppReport.UserCommunityAdmin"));
+                    } else if (message.getMessageType() == MessageType.USER_REQUEST_TO_ADD_TO_GROUP) {
+                        out.print(Messages.getString("WhatsAppReport.UserRequestToAddToGroup"));
                     }
+                    boolean first = true;
                     for (int i = 0; i < users.size(); i++) {
-                        out.print(i == 0 ? ": " : ", ");
                         String user = users.get(i);
-                        out.print(getBestContactName(user == null || user.isBlank(), user, contactsDirectory, account));
+                        String contactName = getBestContactName(user == null || user.isBlank(), user, contactsDirectory,
+                                account);
+                        if (!name.equals(contactName)) {
+                            out.print(first ? ": " : ", ");
+                            out.print(contactName);
+                            first = false;
+                        }
                     }
                 }
                 out.print(".<br>");
@@ -673,10 +686,19 @@ public class ReportGenerator {
                 out.println("<div class=\"systemmessage\">");
                 out.println(Messages.getString("WhatsAppReport.ContactedFindBusinesses", name) + "<br>");
                 break;
+            case GROUP_CHANGED_ADMIN_APPROVAL_OFF:
+                out.println("<div class=\"systemmessage\">");
+                out.print(name + " ");
+                out.println(Messages.getString("WhatsAppReport.GroupChangedAdminApprovalOff") + "<br>");
+                break;
             case USER_ADMIN:
                 out.println("<div class=\"systemmessage\">");
                 out.print(name + " ");
                 out.println(Messages.getString("WhatsAppReport.UserAdmin") + "<br>");
+                break;
+            case GROUP_CHANGED_ALL_MEMBERS_CAN_ADD:
+                out.println("<div class=\"systemmessage\">");
+                out.println(name + " " + Messages.getString("WhatsAppReport.GroupChangedAllMembersCanAdd") + "<br>");
                 break;
             case GROUP_CHANGED_ONLY_ADMINS_CAN_ADD:
                 out.println("<div class=\"systemmessage\">");
