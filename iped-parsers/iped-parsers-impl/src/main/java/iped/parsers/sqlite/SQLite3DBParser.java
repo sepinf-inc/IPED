@@ -122,11 +122,11 @@ public class SQLite3DBParser extends AbstractDBParser {
         return connection;
     }
 
-    public static File exportWalLog(File dbFile, ParseContext context, TemporaryResources tmp) {
+    private static File exportWalLog(File dbFile, ParseContext context, TemporaryResources tmp) {
         return exportRelatedFile(dbFile, "-wal", context, tmp);
     }
     
-    public static File exportRollbackJournal(File dbFile, ParseContext context, TemporaryResources tmp) {
+    private static File exportRollbackJournal(File dbFile, ParseContext context, TemporaryResources tmp) {
         return exportRelatedFile(dbFile, "-journal", context, tmp);
     }
     
