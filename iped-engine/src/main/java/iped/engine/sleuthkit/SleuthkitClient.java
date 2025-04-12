@@ -57,8 +57,14 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
     private static final AtomicBoolean initSleuthkitServers = new AtomicBoolean(false);
 
     static {
-        FileSystemConfig config = ConfigurationManager.get().findObject(FileSystemConfig.class);
-        NUM_TSK_SERVERS = config.getNumImageReaders();
+        if (Manager.getInstance() != null) {
+            FileSystemConfig config = ConfigurationManager.get().findObject(FileSystemConfig.class);
+            NUM_TSK_SERVERS = config.getNumImageReaders();
+        } else {
+            // Analysis UI just needs 1 process in most scenarios (gallery could benefit of
+            // more processes just if thumbs are not pre-computed)
+            NUM_TSK_SERVERS = 1;
+        }
     }
 
     int id = idStart.getAndIncrement();;
