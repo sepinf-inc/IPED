@@ -163,8 +163,6 @@ public class ThreemaParser extends SQLite3DBParser {
                 File tempDbFile = tis.getFile();
                 ThreemaAccount account = getUserAccount(searcher);
 
-                exportWalLog(tempDbFile, context, tmp);
-                exportRollbackJournal(tempDbFile, context, tmp);
                 extractorIOSFactory.setConnectionParams(tis, metadata, context, this);
                 Extractor threemaExtractor = extractorIOSFactory.createMessageExtractor(tmp, filePath, tempDbFile, account, recoverDeletedRecords);
                 List<Chat> chatList = threemaExtractor.getChatList();
