@@ -58,6 +58,9 @@ public class SimilarFacesFilterActions {
 
     private static ExecutorService executor = Executors.newSingleThreadExecutor();
 
+    private static int minScore = 50;
+    private static int mode = 0;
+
     public static void clear() {
         clear(true);
     }
@@ -68,7 +71,8 @@ public class SimilarFacesFilterActions {
             app.similarFacesRefItem = null;
             app.similarFacesFilterPanel.setVisible(false);
             List<? extends SortKey> sortKeys = app.resultsTable.getRowSorter().getSortKeys();
-            if (sortKeys != null && !sortKeys.isEmpty() && sortKeys.get(0).getColumn() == 2 && app.similarFacesPrevSortKeys != null)
+            if (sortKeys != null && !sortKeys.isEmpty() && sortKeys.get(0).getColumn() == 2
+                    && app.similarFacesPrevSortKeys != null)
                 ((ResultTableRowSorter) app.resultsTable.getRowSorter()).setSortKeysSuper(app.similarFacesPrevSortKeys);
             app.similarFacesPrevSortKeys = null;
             if (updateResults)
@@ -108,7 +112,8 @@ public class SimilarFacesFilterActions {
 
                 // populates tif orientation if rotated
                 try (BufferedInputStream bis = new BufferedInputStream(Files.newInputStream(file.toPath()))) {
-                    App.get().getAutoParser().parse(bis, new IgnoreContentHandler(), app.similarFacesRefItem.getMetadata(), new ParseContext());
+                    App.get().getAutoParser().parse(bis, new IgnoreContentHandler(),
+                            app.similarFacesRefItem.getMetadata(), new ParseContext());
                 } catch (IOException | SAXException | TikaException e2) {
                     e2.printStackTrace();
                 }
@@ -124,7 +129,8 @@ public class SimilarFacesFilterActions {
 
                 final WaitDialog wait = new WaitDialog(app, Messages.getString("FaceSimilarity.LoadingFace"));
 
-                FaceFeatureExtractor callable = new FaceFeatureExtractor(app.similarFacesRefItem, app.appCase.getModuleDir()) {
+                FaceFeatureExtractor callable = new FaceFeatureExtractor(app.similarFacesRefItem,
+                        app.appCase.getModuleDir()) {
                     @Override
                     protected void onFinish() {
                         SwingUtilities.invokeLater(new Runnable() {
@@ -143,7 +149,8 @@ public class SimilarFacesFilterActions {
 
                 } catch (InterruptedException | ExecutionException e) {
                     e.printStackTrace();
-                    JOptionPane.showMessageDialog(App.get(), e.getMessage(), Messages.getString("FaceSimilarity.ExternalTitle"), JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(App.get(), e.getMessage(),
+                            Messages.getString("FaceSimilarity.ExternalTitle"), JOptionPane.ERROR_MESSAGE);
                     app.similarFacesRefItem = null;
                 }
             }
@@ -162,20 +169,16 @@ public class SimilarFacesFilterActions {
         }
 
         if (app.similarFacesRefItem != null) {
-            int minScore = 0;
-            while (minScore == 0) {
-                try {
-                    String input = JOptionPane.showInputDialog(app, Messages.getString("FaceSimilarity.MinScore"), SimilarFacesSearch.getMinScore());
-                    minScore = Integer.parseInt(input.trim());
-                    if (minScore < 1 || minScore > 100) {
-                        minScore = 0;
-                        continue;
-                    }
-                    SimilarFacesSearch.setMinScore(minScore);
-
-                } catch (NumberFormatException e) {
-                }
+            SimilarFacesOptionsDialog opt = new SimilarFacesOptionsDialog(app, app.similarFacesRefItem, minScore, mode);
+            opt.setVisible(true);
+            if (opt.isOk()) {
+                SimilarFacesSearch.setMinScore(minScore = opt.getMinScore());
+                SimilarFacesSearch.setMode(mode = opt.getMode());
+                SimilarFacesSearch.setSelectedIdxs(opt.getSelectedIdxs());
+            } else {
+                app.similarFacesRefItem = null;
             }
+            opt.dispose();
         }
 
         app.similarFacesSearchFilterer.setItem(itemId, app.similarFacesRefItem);
@@ -238,7 +241,8 @@ public class SimilarFacesFilterActions {
                     File script = new File(moduleDir, SCRIPT_PATH);
                     PythonTask task = new PythonTask(script);
                     task.setCaseData(new CaseData());
-                    AbstractTaskPropertiesConfig taskConfig = (AbstractTaskPropertiesConfig) ConfigurationManager.get().getTaskConfigurable(CONF_FILE);
+                    AbstractTaskPropertiesConfig taskConfig = (AbstractTaskPropertiesConfig) ConfigurationManager.get()
+                            .getTaskConfigurable(CONF_FILE);
 
                     // if jep is not found, no config is returned for python tasks
                     if (taskConfig != null) {
