@@ -210,8 +210,8 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
         Graphics2D g = img.createGraphics();
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        // 1/300 of image's smallest dimension
-        int strokeWidth = Math.max(4, Math.min(img.getHeight(), img.getWidth()) / 300);
+        // 0.5% of image's smallest dimension
+        int strokeWidth = Math.max(4, Math.min(img.getHeight(), img.getWidth()) / 200);
 
         Stroke mainStroke = new BasicStroke(strokeWidth);
         Stroke backStroke = new BasicStroke(strokeWidth * 2);
