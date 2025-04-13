@@ -42,6 +42,7 @@ import iped.data.IItem;
 import iped.data.IItemId;
 import iped.engine.config.AbstractTaskPropertiesConfig;
 import iped.engine.config.ConfigurationManager;
+import iped.engine.config.FaceRecognitionConfig;
 import iped.engine.config.TaskInstallerConfig;
 import iped.engine.data.CaseData;
 import iped.engine.data.Item;
@@ -286,7 +287,7 @@ public class SimilarFacesFilterActions {
     }
 
     public static boolean isFeatureEnabled() {
-        return true;
+        return ConfigurationManager.get().getEnableTaskProperty(FaceRecognitionConfig.enableParam);
     }
 
     private static class WaitDialog extends JDialog {
