@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeMap;
 
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
@@ -217,7 +218,7 @@ public class EvtxParser extends AbstractParser {
 
         if (extractor.shouldParseEmbedded(metadata)) {
 
-            HashMap<String, ArrayList<EvtxRecord>> subItens = new HashMap<String, ArrayList<EvtxRecord>>();
+            TreeMap<String, ArrayList<EvtxRecord>> subItens = new TreeMap<String, ArrayList<EvtxRecord>>();
 
             EvtxRecordConsumer co = new EvtxRecordConsumer() {
 

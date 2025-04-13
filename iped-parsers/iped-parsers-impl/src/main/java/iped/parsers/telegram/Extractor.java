@@ -32,6 +32,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FileUtils;
@@ -58,7 +59,7 @@ public class Extractor {
 
     private List<Chat> chatList = null;
 
-    private final HashMap<Long, Contact> contacts = new HashMap<>();
+    private final TreeMap<Long, Contact> contacts = new TreeMap<>();
     private final HashMap<String, byte[]> mediaKey = new HashMap<>();
 
     private DecoderTelegramInterface androidDecoder = null;

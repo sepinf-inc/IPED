@@ -3,9 +3,8 @@ package iped.parsers.mail.win10.tables;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Set;
+import java.util.TreeMap;
 
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
@@ -18,7 +17,7 @@ import iped.parsers.util.EsedbManager;
 public class FolderTable extends AbstractTable {
 
     // multiple ids may point to the same folder
-    private Map<Integer, FolderEntry> uniqueFoldersMap = new HashMap<>();
+    private Map<Integer, FolderEntry> uniqueFoldersMap = new TreeMap<>();
 
     private Map<Integer, ArrayList<FolderEntry>> parentFolderToSubfoldersMap = new HashMap<>();
     // auxiliary hashmaps for handling duplicate folders
@@ -71,8 +70,7 @@ public class FolderTable extends AbstractTable {
     }
 
     public ArrayList<FolderEntry> getFolders() {
-        Set<FolderEntry> uniqueFoldersSet = new LinkedHashSet<FolderEntry>(uniqueFoldersMap.values());
-        return new ArrayList<FolderEntry>(uniqueFoldersSet);
+        return new ArrayList<FolderEntry>(uniqueFoldersMap.values());
     }
 
 
