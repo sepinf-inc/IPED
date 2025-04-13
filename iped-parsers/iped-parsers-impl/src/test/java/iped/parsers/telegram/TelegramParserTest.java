@@ -42,30 +42,30 @@ public class TelegramParserTest extends AbstractPkgTest {
             assertEquals(151, telegramtracker.messageto.size());
             assertEquals(151, telegramtracker.messagedate.size());
 
-            assertEquals("Tiago", telegramtracker.title.get(0));
-            assertEquals("Karol Braz", telegramtracker.title.get(1));
-            assertEquals("Budi", telegramtracker.title.get(2));
-            assertEquals("Nickerida", telegramtracker.title.get(3));
+            assertEquals("Stickers", telegramtracker.title.get(0));
+            assertEquals("Telegram", telegramtracker.title.get(1));
+            assertEquals("Ana", telegramtracker.title.get(2));
+            assertEquals("Vitinho", telegramtracker.title.get(3));
             assertEquals("Telegram_Chat_Marcoscachos", telegramtracker.title.get(505));
             assertEquals("Telegram_Chat_Marcoscachos_message_0", telegramtracker.title.get(506));
             assertEquals("Telegram_Group_mixirica e noronhe-se", telegramtracker.title.get(507));
             assertEquals("Telegram_Group_mixirica e noronhe-se_message_0", telegramtracker.title.get(508));
 
-            assertEquals("Tiago", telegramtracker.username.get(0));
-            assertEquals("Karol Braz", telegramtracker.username.get(1));
-            assertEquals("Budi", telegramtracker.username.get(2));
+            assertEquals("Stickers", telegramtracker.username.get(0));
+            assertEquals("Telegram", telegramtracker.username.get(1));
+            assertEquals("Ana", telegramtracker.username.get(2));
 
-            assertEquals("5561981124921", telegramtracker.userphone.get(0));
-            assertEquals("5561992311125", telegramtracker.userphone.get(1));
-            assertEquals("5561983125151", telegramtracker.userphone.get(3));
+            assertEquals("42777", telegramtracker.userphone.get(0));
+            assertEquals("5561992150005", telegramtracker.userphone.get(1));
+            assertEquals("5561981472002", telegramtracker.userphone.get(3));
 
-            assertEquals("1289498844", telegramtracker.useraccount.get(0));
-            assertEquals("165119446", telegramtracker.useraccount.get(1));
-            assertEquals("53985588", telegramtracker.useraccount.get(3));
+            assertEquals("429000", telegramtracker.useraccount.get(0));
+            assertEquals("777000", telegramtracker.useraccount.get(1));
+            assertEquals("18331931", telegramtracker.useraccount.get(3));
 
-            assertEquals("maju_chuchu", telegramtracker.usernotes.get(0));
-            assertEquals("RafaelCampos", telegramtracker.usernotes.get(1));
-            assertEquals("gif", telegramtracker.usernotes.get(3));
+            assertEquals("Stickers", telegramtracker.usernotes.get(0));
+            assertEquals("biagouveia", telegramtracker.usernotes.get(1));
+            assertEquals("rodriggochaves", telegramtracker.usernotes.get(3));
 
             assertEquals("Bruno Chaves (phone: 33667514279)", telegramtracker.participants.get(0));
             assertEquals("Nake Douglas (phone: 5561982616052)", telegramtracker.participants.get(1));
