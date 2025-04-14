@@ -119,7 +119,6 @@ public class SimilarFacesOptionsDialog extends JDialog {
 
         JPanel top = new JPanel();
         JPanel bottom = new JPanel();
-        bottom.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
 
         MediaType mime = item.getMediaType();
         String mimeStr = null;
@@ -172,7 +171,7 @@ public class SimilarFacesOptionsDialog extends JDialog {
                     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                     g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
                     double sw = getWidth();
-                    double sh = getHeight();
+                    double sh = getHeight() - 16;
                     double zw = sw / img.getWidth();
                     double zh = sh / img.getHeight();
                     double zoom = Math.min(2, Math.min(zw, zh));
