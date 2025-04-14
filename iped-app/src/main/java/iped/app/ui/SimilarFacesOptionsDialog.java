@@ -146,11 +146,18 @@ public class SimilarFacesOptionsDialog extends JDialog {
         }
         if (img != null) {
             try {
-                Object locations = item.getExtraAttribute(SimilarFacesSearch.FACE_LOCATIONS);
-                double zoom = getZoom(item, img);
-                rects = toRectList(locations, zoom, img.getWidth(), img.getHeight());
-                for (int i = 0; i < rects.size(); i++) {
-                    selectedIdxs.add(i);
+                Dimension d = getDimension(item);
+                if (d != null) {
+                    Object locations = item.getExtraAttribute(SimilarFacesSearch.FACE_LOCATIONS);
+                    if (locations != null) {
+                        double zoom = getZoom(d, img);
+                        if (zoom != 0) {
+                            rects = toRectList(locations, zoom, d.width, d.height);
+                            for (int i = 0; i < rects.size(); i++) {
+                                selectedIdxs.add(i);
+                            }
+                        }
+                    }
                 }
             } catch (IOException e) {
             }
@@ -187,7 +194,7 @@ public class SimilarFacesOptionsDialog extends JDialog {
                         for (int i = 0; i < rects.size(); i++) {
                             Rectangle2D rc = rects.get(i);
                             RoundRectangle2D rr = new RoundRectangle2D.Double(x + rc.getX() * zoom,
-                                    y + rc.getY() * zoom, rc.getWidth() * zoom, rc.getWidth() * zoom, 10, 10);
+                                    y + rc.getY() * zoom, rc.getWidth() * zoom, rc.getHeight() * zoom, 10, 10);
                             screenRects.add(rr);
                         }
                     }
@@ -338,7 +345,16 @@ public class SimilarFacesOptionsDialog extends JDialog {
         return Messages.getString("FaceSimilarity.SelectedFaces") + ": " + selectedIdxs.size() + " / " + rects.size();
     }
 
-    private static double getZoom(IItem item, BufferedImage img) throws IOException {
+    private static double getZoom(Dimension d, BufferedImage img) throws IOException {
+        int original = Math.max(d.width, d.height);
+        int displayed = Math.max(img.getWidth(), img.getHeight());
+        if (original != 0 && displayed != 0) {
+            return displayed / (double) original;
+        }
+        return 0;
+    }
+
+    private static Dimension getDimension(IItem item) throws IOException {
         Dimension d = null;
         File view = item.getViewFile();
         if (view != null && view.exists()) {
@@ -349,14 +365,7 @@ public class SimilarFacesOptionsDialog extends JDialog {
                 d = ImageUtil.getImageFileDimension(is);
             }
         }
-        if (d != null) {
-            int original = Math.max(d.width, d.height);
-            int displayed = Math.max(img.getWidth(), img.getHeight());
-            if (original != 0 && displayed != 0) {
-                return displayed / (double) original;
-            }
-        }
-        return 0;
+        return d;
     }
 
     private static final List<Rectangle2D> toRectList(Object faceLocations, double zoom, int w, int h) {
@@ -380,18 +389,18 @@ public class SimilarFacesOptionsDialog extends JDialog {
 
     private static final Rectangle2D toRect(String s, double zoom, int w, int h) {
         String[] vals = s.substring(1, s.length() - 1).split(", ");
-        double top = Math.max(0,Integer.parseInt(vals[0]) * zoom);
-        double right = Math.min(w,Integer.parseInt(vals[1]) * zoom);
-        double bottom = Math.min(h,Integer.parseInt(vals[2]) * zoom);
-        double left = Math.max(0, Integer.parseInt(vals[3]) * zoom);
+        double top = Math.max(0, Integer.parseInt(vals[0])) * zoom;
+        double right = Math.min(w, Integer.parseInt(vals[1])) * zoom;
+        double bottom = Math.min(h, Integer.parseInt(vals[2])) * zoom;
+        double left = Math.max(0, Integer.parseInt(vals[3])) * zoom;
         return new Rectangle2D.Double(left, top, right - left, bottom - top);
     }
 
     private static final Rectangle2D toRect(List<?> l, double zoom, int w, int h) {
-        double top = Math.max(0,((Number) l.get(0)).intValue() * zoom);
-        double right = Math.min(w,((Number) l.get(1)).intValue() * zoom);
-        double bottom = Math.min(h,((Number) l.get(2)).intValue() * zoom);
-        double left = Math.max(0, ((Number) l.get(3)).intValue() * zoom);
+        double top = Math.max(0, ((Number) l.get(0)).intValue()) * zoom;
+        double right = Math.min(w, ((Number) l.get(1)).intValue()) * zoom;
+        double bottom = Math.min(h, ((Number) l.get(2)).intValue()) * zoom;
+        double left = Math.max(0, ((Number) l.get(3)).intValue()) * zoom;
         return new Rectangle2D.Double(left, top, right - left, bottom - top);
     }
 }
