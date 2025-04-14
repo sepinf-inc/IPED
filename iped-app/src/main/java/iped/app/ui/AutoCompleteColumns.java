@@ -27,6 +27,7 @@ import java.util.List;
 
 import javax.swing.text.JTextComponent;
 
+import iped.app.ui.columns.ColumnsManager;
 import iped.localization.LocalizedProperties;
 
 public class AutoCompleteColumns {

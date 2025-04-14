@@ -163,6 +163,10 @@ div.catalogIcon {
     z-index: 100;
 }
 
+#topbar.status {
+    background: #8EA48E;
+}
+
 #topbar.telegram {
     background: #5682a3;
 }

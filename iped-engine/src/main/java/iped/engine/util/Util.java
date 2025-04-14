@@ -577,13 +577,31 @@ public class Util {
     }
 
     public static long getPhysicalMemorySize() {
+        return getMemorySize("TotalPhysicalMemorySize");
+    }
+
+    public static long getFreeMemorySize() {
+        return getMemorySize("FreePhysicalMemorySize");
+    }
+
+    private static long getMemorySize(String key) {
         try {
             MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-            Object attribute = mBeanServer.getAttribute(new ObjectName("java.lang", "type", "OperatingSystem"),
-                    "TotalPhysicalMemorySize");
-            return Long.parseLong(attribute.toString());
+            Object attribute = mBeanServer.getAttribute(new ObjectName("java.lang", "type", "OperatingSystem"), key);
+            return (Long) attribute;
         } catch (Exception e) {
         }
         return 0;
+    }
+
+    public static double getSystemCpuLoad() {
+        try {
+            MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+            Object attribute = mBeanServer.getAttribute(new ObjectName("java.lang", "type", "OperatingSystem"),
+                    "SystemCpuLoad");
+            return (Double) attribute;
+        } catch (Exception e) {
+        }
+        return -1;
     }
 }

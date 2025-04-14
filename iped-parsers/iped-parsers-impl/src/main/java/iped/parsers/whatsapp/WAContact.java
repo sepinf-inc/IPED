@@ -5,6 +5,10 @@ import org.apache.commons.lang3.StringUtils;
 public class WAContact {
 
     public static final String waSuffix = "@s.whatsapp.net";
+    public static final String waStatusBroadcast = "status@broadcast";
+    public static final String waGroupSuffix = "@g.us";
+    public static final String waStatusSuffix = "@status";
+    public static final String waNewsletterSuffix = "@newsletter";
 
     private String id;
 
