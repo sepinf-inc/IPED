@@ -148,7 +148,7 @@ public class SimilarFacesOptionsDialog extends JDialog {
             try {
                 Object locations = item.getExtraAttribute(SimilarFacesSearch.FACE_LOCATIONS);
                 double zoom = getZoom(item, img);
-                rects = toRectList(locations, zoom);
+                rects = toRectList(locations, zoom, img.getWidth(), img.getHeight());
                 for (int i = 0; i < rects.size(); i++) {
                     selectedIdxs.add(i);
                 }
@@ -359,28 +359,39 @@ public class SimilarFacesOptionsDialog extends JDialog {
         return 0;
     }
 
-    private static final List<Rectangle2D> toRectList(Object faceLocations, double zoom) {
+    private static final List<Rectangle2D> toRectList(Object faceLocations, double zoom, int w, int h) {
         List<Rectangle2D> l = new ArrayList<Rectangle2D>();
         if (faceLocations instanceof List) {
             List<?> ol = (List<?>) faceLocations;
             for (Object obj : ol) {
                 if (obj instanceof String) {
                     String s = (String) obj;
-                    l.add(toRect(s, zoom));
+                    l.add(toRect(s, zoom, w, h));
+                } else if (obj instanceof List) {
+                    List<?> sl = (List<?>) obj;
+                    l.add(toRect(sl, zoom, w, h));
                 }
             }
         } else if (faceLocations instanceof String) {
-            l.add(toRect((String) faceLocations, zoom));
+            l.add(toRect((String) faceLocations, zoom, w, h));
         }
         return l;
     }
 
-    private static final Rectangle2D toRect(String s, double zoom) {
+    private static final Rectangle2D toRect(String s, double zoom, int w, int h) {
         String[] vals = s.substring(1, s.length() - 1).split(", ");
-        double top = Integer.parseInt(vals[0]) * zoom;
-        double right = Integer.parseInt(vals[1]) * zoom;
-        double bottom = Integer.parseInt(vals[2]) * zoom;
-        double left = Integer.parseInt(vals[3]) * zoom;
+        double top = Math.max(0,Integer.parseInt(vals[0]) * zoom);
+        double right = Math.min(w,Integer.parseInt(vals[1]) * zoom);
+        double bottom = Math.min(h,Integer.parseInt(vals[2]) * zoom);
+        double left = Math.max(0, Integer.parseInt(vals[3]) * zoom);
+        return new Rectangle2D.Double(left, top, right - left, bottom - top);
+    }
+
+    private static final Rectangle2D toRect(List<?> l, double zoom, int w, int h) {
+        double top = Math.max(0,((Number) l.get(0)).intValue() * zoom);
+        double right = Math.min(w,((Number) l.get(1)).intValue() * zoom);
+        double bottom = Math.min(h,((Number) l.get(2)).intValue() * zoom);
+        double left = Math.max(0, ((Number) l.get(3)).intValue() * zoom);
         return new Rectangle2D.Double(left, top, right - left, bottom - top);
     }
 }
