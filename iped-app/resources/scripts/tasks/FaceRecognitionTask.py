@@ -1,4 +1,4 @@
-﻿﻿'''
+﻿'''
 # Python face recognition feature based on Face Recognition Project (https://pypi.org/project/face-recognition/)
 # FaceRecognitionTask.py - By Rui Sant'Ana Junior and Luis Nassif
 # Requirements: See https://github.com/sepinf-inc/IPED/wiki/User-Manual#facerecognition
