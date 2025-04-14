@@ -290,6 +290,17 @@ public class SimilarFacesFilterActions {
         return ConfigurationManager.get().getEnableTaskProperty(FaceRecognitionConfig.enableParam);
     }
 
+    public static boolean isExternalSearchEnabled() {
+        if (System.getProperty("os.name").startsWith("Windows")) {
+            String ipedRoot = System.getProperty("iped.root");
+            if (ipedRoot != null && new File(ipedRoot).exists()) {
+                return true;
+            }
+            return false;
+        }
+        return true;
+    }
+
     private static class WaitDialog extends JDialog {
 
         /**
