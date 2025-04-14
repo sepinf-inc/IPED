@@ -85,7 +85,7 @@ public class SimilarFacesFilterActions {
         App app = App.get();
 
         IItemId itemId = null;
-
+        IItem newSimilarFacesRefItem = null;
         if (external) {
             JFileChooser fileChooser = new JFileChooser();
             fileChooser.setDialogTitle(Messages.getString("FaceSimilarity.ExternalTitle"));
@@ -103,18 +103,17 @@ public class SimilarFacesFilterActions {
             if (fileChooser.showOpenDialog(App.get()) != JFileChooser.APPROVE_OPTION) {
                 return;
             }
-            app.similarFacesRefItem = null;
             File file = fileChooser.getSelectedFile();
             if (file != null) {
-                app.similarFacesRefItem = new Item();
-                app.similarFacesRefItem.setName(file.getName());
-                app.similarFacesRefItem.setIdInDataSource("");
-                app.similarFacesRefItem.setInputStreamFactory(new FileInputStreamFactory(file.toPath()));
+                newSimilarFacesRefItem = new Item();
+                newSimilarFacesRefItem.setName(file.getName());
+                newSimilarFacesRefItem.setIdInDataSource("");
+                newSimilarFacesRefItem.setInputStreamFactory(new FileInputStreamFactory(file.toPath()));
 
                 // populates tif orientation if rotated
                 try (BufferedInputStream bis = new BufferedInputStream(Files.newInputStream(file.toPath()))) {
                     App.get().getAutoParser().parse(bis, new IgnoreContentHandler(),
-                            app.similarFacesRefItem.getMetadata(), new ParseContext());
+                            newSimilarFacesRefItem.getMetadata(), new ParseContext());
                 } catch (IOException | SAXException | TikaException e2) {
                     e2.printStackTrace();
                 }
@@ -123,14 +122,14 @@ public class SimilarFacesFilterActions {
                     BufferedImage img = ImageUtil.getSubSampledImage(is, 100);
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
                     ImageIO.write(img, "jpg", baos);
-                    app.similarFacesRefItem.setThumb(baos.toByteArray());
+                    newSimilarFacesRefItem.setThumb(baos.toByteArray());
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
 
                 final WaitDialog wait = new WaitDialog(app, Messages.getString("FaceSimilarity.LoadingFace"));
 
-                FaceFeatureExtractor callable = new FaceFeatureExtractor(app.similarFacesRefItem,
+                FaceFeatureExtractor callable = new FaceFeatureExtractor(newSimilarFacesRefItem,
                         app.appCase.getModuleDir()) {
                     @Override
                     protected void onFinish() {
@@ -146,45 +145,45 @@ public class SimilarFacesFilterActions {
 
                 try {
                     byte[] features = future.get();
-                    app.similarFacesRefItem.setExtraAttribute(SimilarFacesSearch.FACE_FEATURES, features);
+                    newSimilarFacesRefItem.setExtraAttribute(SimilarFacesSearch.FACE_FEATURES, features);
 
                 } catch (InterruptedException | ExecutionException e) {
                     e.printStackTrace();
                     JOptionPane.showMessageDialog(App.get(), e.getMessage(),
                             Messages.getString("FaceSimilarity.ExternalTitle"), JOptionPane.ERROR_MESSAGE);
-                    app.similarFacesRefItem = null;
+                    newSimilarFacesRefItem = null;
                 }
             }
         } else {
-            app.similarFacesRefItem = null;
             int selIdx = app.resultsTable.getSelectedRow();
             if (selIdx != -1) {
                 itemId = app.ipedResult.getItem(app.resultsTable.convertRowIndexToModel(selIdx));
                 if (itemId != null) {
-                    app.similarFacesRefItem = app.appCase.getItemByItemId(itemId);
-                    if (app.similarFacesRefItem.getExtraAttribute(SimilarFacesSearch.FACE_FEATURES) == null) {
-                        app.similarFacesRefItem = null;
+                    newSimilarFacesRefItem = app.appCase.getItemByItemId(itemId);
+                    if (newSimilarFacesRefItem.getExtraAttribute(SimilarFacesSearch.FACE_FEATURES) == null) {
+                        newSimilarFacesRefItem = null;
                     }
                 }
             }
         }
 
-        if (app.similarFacesRefItem != null) {
-            SimilarFacesOptionsDialog opt = new SimilarFacesOptionsDialog(app, app.similarFacesRefItem, minScore, mode);
+        if (newSimilarFacesRefItem != null) {
+            SimilarFacesOptionsDialog opt = new SimilarFacesOptionsDialog(app, newSimilarFacesRefItem, minScore, mode);
             opt.setVisible(true);
             if (opt.isOk()) {
                 SimilarFacesSearch.setMinScore(minScore = opt.getMinScore());
                 SimilarFacesSearch.setMode(mode = opt.getMode());
                 SimilarFacesSearch.setSelectedIdxs(opt.getSelectedIdxs());
             } else {
-                app.similarFacesRefItem = null;
+                newSimilarFacesRefItem = null;
             }
             opt.dispose();
         }
 
-        app.similarFacesSearchFilterer.setItem(itemId, app.similarFacesRefItem);
-
-        if (app.similarFacesRefItem != null) {
+        if (newSimilarFacesRefItem != null) {
+            app.similarFacesRefItem = newSimilarFacesRefItem;
+            app.similarFacesSearchFilterer.setItem(itemId, app.similarFacesRefItem);
+    
             List<? extends SortKey> sortKeys = app.resultsTable.getRowSorter().getSortKeys();
             if (sortKeys == null || sortKeys.isEmpty() || sortKeys.get(0).getColumn() != 2) {
                 app.similarFacesPrevSortKeys = sortKeys;
@@ -193,9 +192,10 @@ public class SimilarFacesFilterActions {
                 ((ResultTableRowSorter) app.resultsTable.getRowSorter()).setSortKeysSuper(sortScore);
             }
             app.appletListener.updateFileListing();
+
+            app.similarFacesFilterPanel.setCurrentItem(app.similarFacesRefItem, external);
+            app.similarFacesFilterPanel.setVisible(true);
         }
-        app.similarFacesFilterPanel.setCurrentItem(app.similarFacesRefItem, external);
-        app.similarFacesFilterPanel.setVisible(app.similarFacesRefItem != null);
     }
 
     private abstract static class FaceFeatureExtractor implements Callable<byte[]> {
