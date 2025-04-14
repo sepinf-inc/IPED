@@ -119,6 +119,7 @@ public class SimilarFacesOptionsDialog extends JDialog {
 
         JPanel top = new JPanel();
         JPanel bottom = new JPanel();
+        bottom.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
 
         MediaType mime = item.getMediaType();
         String mimeStr = null;
