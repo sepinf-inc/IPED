@@ -77,7 +77,6 @@ public class SimilarFacesSearch {
         int numThreads = Runtime.getRuntime().availableProcessors();
         Thread[] threads = new Thread[numThreads];
         int len = result.getLength();
-        System.err.println("LEN = " + len);
         int itemsPerThread = (len + numThreads - 1) / numThreads;
         for (int k = 0; k < numThreads; k++) {
             int threadIdx = k;
@@ -197,6 +196,9 @@ public class SimilarFacesSearch {
     }
 
     private static float[][] getFaceFeatures(IItem item, Set<Integer> idxs) {
+        if (item == null) {
+            return new float[0][0];
+        }
         Object value = item.getExtraAttribute(FACE_FEATURES);
         if (value instanceof Collection) {
             List<float[]> l = new ArrayList<float[]>();
