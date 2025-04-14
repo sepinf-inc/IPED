@@ -134,6 +134,16 @@ public class SimilarFacesOptionsDialog extends JDialog {
         }
         if (img == null) {
             img = ImageUtil.getSubSampledImage(item, 1024, mimeStr);
+            String str = item.getMetadata().get("image:tiff:Orientation");
+            if (str != null) {
+                try {
+                    int rot = Integer.parseInt(str);
+                    if (rot > 1) {
+                        img = ImageUtil.rotate(img, rot);
+                    }
+                } catch (Exception e) {
+                }
+            }
         }
         if (img != null) {
             try {
