@@ -215,8 +215,8 @@ public class SimilarFacesOptionsDialog extends JDialog {
                 }
             };
 
-            int w = Math.max(48, Math.min(480, img.getWidth()));
-            int h = Math.max(48, Math.min(480, w * img.getHeight() / img.getWidth()));
+            int w = Math.max(96, Math.min(480, img.getWidth()));
+            int h = Math.max(96, Math.min(480, w * img.getHeight() / img.getWidth()));
             center.setPreferredSize(new Dimension(w, h));
 
             JLabel labelSel = new JLabel();
