@@ -211,7 +211,7 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         // 0.5% of image's smallest dimension
-        int strokeWidth = Math.max(4, Math.min(img.getHeight(), img.getWidth()) / 200);
+        int strokeWidth = Math.max(2, Math.min(img.getHeight(), img.getWidth()) / 200);
 
         Stroke mainStroke = new BasicStroke(strokeWidth);
         Stroke backStroke = new BasicStroke(strokeWidth * 2);
