@@ -140,12 +140,11 @@ public class SimilarFacesFilterActions {
                         });
                     }
                 };
-                Future<byte[]> future = executor.submit(callable);
+                Future<Void> future = executor.submit(callable);
                 wait.setVisible(true);
 
                 try {
-                    byte[] features = future.get();
-                    newSimilarFacesRefItem.setExtraAttribute(SimilarFacesSearch.FACE_FEATURES, features);
+                    future.get();
 
                 } catch (InterruptedException | ExecutionException e) {
                     e.printStackTrace();
@@ -198,7 +197,7 @@ public class SimilarFacesFilterActions {
         }
     }
 
-    private abstract static class FaceFeatureExtractor implements Callable<byte[]> {
+    private abstract static class FaceFeatureExtractor implements Callable<Void> {
 
         private static final String SCRIPT_PATH = TaskInstallerConfig.SCRIPT_BASE + "/FaceRecognitionTask.py";
         private static final String CONF_FILE = "FaceRecognitionConfig.txt";
@@ -231,11 +230,10 @@ public class SimilarFacesFilterActions {
                     e.printStackTrace();
                 }
             }
-
         }
 
         @Override
-        public byte[] call() throws Exception {
+        public Void call() throws Exception {
 
             try {
                 if (FaceFeatureExtractor.task == null) {
@@ -270,20 +268,24 @@ public class SimilarFacesFilterActions {
                 // queueEnd.setQueueEnd(true);
                 // task.process(queueEnd);
 
-                List<NDArray> faces = (List<NDArray>) item.getExtraAttribute(SimilarFacesSearch.FACE_FEATURES);
-
-                if (faces != null && faces.size() > 0) {
-                    float[] array = IndexItem.convNDArrayToFloatArray(faces.get(0));
-                    return IndexItem.convFloatArrayToByteArray(array);
+                List<?> faces = (List<?>) item.getExtraAttribute(SimilarFacesSearch.FACE_FEATURES);
+                if (faces != null && !faces.isEmpty()) {
+                    List<byte[]> faceEncodings = new ArrayList<byte[]>();
+                    for (Object obj : faces) {
+                        NDArray<?> face = (NDArray<?>) obj;
+                        float[] array = IndexItem.convNDArrayToFloatArray(face);
+                        byte[] bytes = IndexItem.convFloatArrayToByteArray(array);
+                        faceEncodings.add(bytes);
+                    }
+                    item.setExtraAttribute(SimilarFacesSearch.FACE_FEATURES, faceEncodings);
                 } else {
                     throw new Exception(Messages.getString("FaceSimilarity.ExternalFaceNotFound"));
                 }
             } finally {
                 onFinish();
             }
-
+            return null;
         }
-
     }
 
     public static boolean isFeatureEnabled() {
@@ -303,9 +305,6 @@ public class SimilarFacesFilterActions {
 
     private static class WaitDialog extends JDialog {
 
-        /**
-         * 
-         */
         private static final long serialVersionUID = 1L;
 
         private JProgressBar progressBar;
@@ -325,7 +324,5 @@ public class SimilarFacesFilterActions {
             this.getContentPane().add(progressBar);
             this.setLocationRelativeTo(frame);
         }
-
     }
-
 }
