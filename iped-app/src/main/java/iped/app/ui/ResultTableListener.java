@@ -80,6 +80,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
         BookmarksManager.updateCounters();
 
         if (App.get().resultsTable.getSelectedRowCount() == 0) {
+            App.get().setEnableGalleryFaceSearchButton(false);
             App.get().setEnableGallerySimSearchButton(false);
             App.get().setLastSelectedDoc(-1);
             lastTableDoc = -1;
