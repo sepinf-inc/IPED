@@ -1,4 +1,4 @@
-﻿'''
+﻿﻿'''
 # Python face recognition feature based on Face Recognition Project (https://pypi.org/project/face-recognition/)
 # FaceRecognitionTask.py - By Rui Sant'Ana Junior and Luis Nassif
 # Requirements: See https://github.com/sepinf-inc/IPED/wiki/User-Manual#facerecognition
@@ -232,12 +232,20 @@ class FaceRecognitionTask:
                         item.setExtraAttribute(ExtraProperties.FACE_ENCODINGS, face_encodings)
             return
 
+        try:
+            # Get tiff:Orientation attribute
+            tiff_orient = int(item.getMetadata().get("image:tiff:Orientation"))
+        except:
+            # If item has no tiff:Orientation attribute
+            tiff_orient = 1
+
         # Load absolute path
         isVideo = False
         mediaType = item.getMediaType().toString()
         if mediaType.startswith('image'):
             if item.getViewFile() is not None and os.path.exists(item.getViewFile().getAbsolutePath()):
                 img_path = item.getViewFile().getAbsolutePath()
+                tiff_orient = 1
             else:
                 img_path = item.getTempFile().getAbsolutePath()
         elif mediaType.startswith('video') and not FaceRecognitionTask.videoSubitems:
@@ -245,13 +253,6 @@ class FaceRecognitionTask:
             isVideo = True
         else:
             return
-    
-        try:
-            # Get tiff:Orientation attribute
-            tiff_orient = int(item.getMetadata().get("image:tiff:Orientation"))
-        except:
-            # If item has no tiff:Orientation attribute
-            tiff_orient = 1
 
         # creates process in parallel
         numCreatedProcsLock.acquire()
