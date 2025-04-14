@@ -399,8 +399,6 @@ public class WhatsAppParser extends SQLite3DBParser {
                 WAAccount account = getUserAccount(searcher, dbPath, extFactory instanceof ExtractorAndroidFactory);
 
                 File tempDbFile = tis.getFile();
-                exportWalLog(tempDbFile, context, tmp);
-                exportRollbackJournal(tempDbFile, context, tmp);
                 extFactory.setConnectionParams(tis, metadata, context, this);
                 Extractor waExtractor = extFactory.createMessageExtractor(filePath, tempDbFile, contacts, account,
                         recoverDeletedRecords);
@@ -582,9 +580,6 @@ public class WhatsAppParser extends SQLite3DBParser {
 
             String filePath = null;
             filePath = wcontext.getItem().getPath();
-
-            exportWalLog(tempFile, context, tmp);
-            exportRollbackJournal(tempFile, context, tmp);
 
             extFactory.setConnectionParams(tis, metadata, context, this);
             Extractor waExtractor = extFactory.createMessageExtractor(filePath, tempFile, contacts, account,
@@ -1266,8 +1261,6 @@ public class WhatsAppParser extends SQLite3DBParser {
         if (extractor.shouldParseEmbedded(metadata)) {
             TikaInputStream tis = TikaInputStream.get(stream, tmp);
             File contactDbFile = tis.getFile();
-            exportWalLog(contactDbFile, context, tmp);
-            exportRollbackJournal(contactDbFile, context, tmp);
             try {
                 WAContactsExtractor waExtractor = extFactory.createContactsExtractor(contactDbFile,
                         recoverDeletedRecords);

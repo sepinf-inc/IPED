@@ -177,7 +177,7 @@ public class IPEDReader extends DataSourceReader {
             query.add(subitems.build(), Occur.MUST);
             IIPEDSearcher searcher = new IPEDSearcher(ipedCase, query.build());
             LuceneSearchResult result = LuceneSearchResult.get(ipedCase, searcher.search());
-            insertIntoProcessQueue(result, false);
+            insertIntoProcessQueue(result, false, false);
         }
     }
 
@@ -439,7 +439,12 @@ public class IPEDReader extends DataSourceReader {
         return id;
     }
 
+
     private void insertIntoProcessQueue(LuceneSearchResult result, boolean treeNode) throws Exception {
+        insertIntoProcessQueue(result, treeNode, true);
+    }
+
+    private void insertIntoProcessQueue(LuceneSearchResult result, boolean treeNode, boolean countVolume) throws Exception {
 
         for (int docID : result.getLuceneIds()) {
             Document doc = ipedCase.getReader().document(docID);
@@ -460,13 +465,13 @@ public class IPEDReader extends DataSourceReader {
             }
 
             evidence.setLength(len);
-            if (treeNode) {
+            if (treeNode || !countVolume) {
                 evidence.setSumVolume(false);
             }
 
             if (listOnly) {
                 caseData.incDiscoveredEvidences(1);
-                if (!treeNode) {
+                if (!treeNode && countVolume) {
                     caseData.incDiscoveredVolume(len);
                 }
                 continue;
