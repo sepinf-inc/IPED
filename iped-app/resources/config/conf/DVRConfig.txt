@@ -1,0 +1,24 @@
+###############################################
+# DVR Task Configuration   #
+###############################################
+
+#It is recommended to disable 'parseUnknownFiles' to speed up the processing time of this task
+
+###############################################
+# Hikvision FS Configuration   #
+###############################################
+
+#Video files are usually saved in 1GB blocks. The task will separate these videos based on the metadata data
+#To also index the entire video block, this option must be activated
+extractDataBlockHVFS = false
+
+# Parse and extract system logs as log files in text mode
+extractSystemLogsHVFS = true
+
+###############################################
+# WFS Configuration   #
+###############################################
+
+###############################################
+# DHFS Configuration   #
+###############################################

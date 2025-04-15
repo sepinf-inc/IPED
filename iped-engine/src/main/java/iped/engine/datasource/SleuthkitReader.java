@@ -83,6 +83,7 @@ import iped.engine.localization.Messages;
 import iped.engine.sleuthkit.SleuthkitClient;
 import iped.engine.sleuthkit.SleuthkitInputStreamFactory;
 import iped.engine.task.carver.BaseCarveTask;
+import iped.engine.task.ThumbTask;
 import iped.engine.task.index.IndexItem;
 import iped.engine.util.UIPropertyListenerProvider;
 import iped.engine.util.Util;
@@ -91,6 +92,10 @@ import iped.properties.BasicProps;
 import iped.properties.MediaTypes;
 import iped.utils.IOUtil;
 import iped.utils.UTF8Properties;
+
+import iped.io.SeekableInputStream;
+import java.util.Arrays;
+import iped.engine.sleuthkit.SpecialFileSystem;
 
 public class SleuthkitReader extends DataSourceReader {
 
@@ -1097,9 +1102,18 @@ public class SleuthkitReader extends DataSourceReader {
             evidence.setPath(inheritedPath + path);
         }
 
+        evidence.setIdInDataSource(Long.toString(content.getId()));
+        SleuthkitInputStreamFactory objSleuthkitInputStreamFactory = new SleuthkitInputStreamFactory(sleuthCase, null,false);
+        evidence.setInputStreamFactory(objSleuthkitInputStreamFactory);
+        boolean isSpecialFileSystem = SpecialFileSystem.isSpecialFileSystem(evidence.getSeekableInputStream());
+
+        if (isSpecialFileSystem) //Workaround for not call fragmentLargeBinaryTask task
+            objSleuthkitInputStreamFactory.setPassthroughContent(true);
+       
         if (content instanceof Image) {
             evidence.setRoot(true);
-            evidence.setMediaType(getMediaType(evidence.getExt()));
+            if (!isSpecialFileSystem)
+                evidence.setMediaType(getMediaType(evidence.getExt()));
         } else {
             evidence.setIsDir(true);
         }
@@ -1108,9 +1122,12 @@ public class SleuthkitReader extends DataSourceReader {
 
         // evidence.setSleuthFile(content);
         evidence.setHash(""); //$NON-NLS-1$
-        evidence.setIdInDataSource(Long.toString(content.getId()));
-        // below is used to don't process images, partitions or file systems raw data
-        evidence.setInputStreamFactory(new SleuthkitInputStreamFactory(sleuthCase, null));
+        if (!isSpecialFileSystem){
+            evidence.setIdInDataSource(Long.toString(content.getId()));
+            // below is used to don't process images, partitions or file systems raw data
+            evidence.setInputStreamFactory(new SleuthkitInputStreamFactory(sleuthCase, null));
+        }
+
 
         boolean first = true;
         Integer tskId = (int) content.getId();
@@ -1129,6 +1146,9 @@ public class SleuthkitReader extends DataSourceReader {
         }
 
         addToProcessingQueue(caseData, evidence);
+
+        if (isSpecialFileSystem) //Workaround for not call entropy task
+            evidence.setExtraAttribute(ThumbTask.HAS_THUMB, true);
 
         return evidence;
     }
