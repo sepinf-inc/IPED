@@ -62,7 +62,7 @@ public class ReferencedFileViewer extends AbstractViewer {
                 || PartMetParser.PART_MET_ENTRY_MIME_TYPE.equals(contentType)
                 || AresParser.ARES_ENTRY_MIME_TYPE.equals(contentType)
                 || ShareazaLibraryDatParser.LIBRARY_DAT_ENTRY_MIME_TYPE.equals(contentType)
-                || MediaTypes.UFED_MESSAGE_ATTACH_MIME.toString().equals(contentType)
+                || MediaTypes.UFED_ATTACH_MIME.toString().equals(contentType)
                 || Win10MailParser.WIN10_MAIL_ATTACH.toString().equals(contentType)
                 || ThreemaParser.THREEMA_ATTACHMENT.toString().equals(contentType);
     }
@@ -94,16 +94,21 @@ public class ReferencedFileViewer extends AbstractViewer {
         if (content instanceof IItem) {
             IItem item = (IItem) content;
             String query = item.getMetadata().get(ExtraProperties.LINKED_ITEMS);
-            lastItem = attachSearcher.getItem(query);
-            if (lastItem == null) {
-                typeNotSupported.setText(REFERENCE_NOT_FOUND + query);
+            if (query == null) {
+                typeNotSupported.setText(Messages.getString("HtmlLinkViewer.AttachNotFound"));
                 typeNotSupported.setVisible(true);
-            } else if (lastItem.getViewFile() != null) {
-                FileContentSource viewContent = new FileContentSource(lastItem.getViewFile());
-                String mediaType = detectType(lastItem.getViewFile());
-                load(viewContent, mediaType, highlightTerms);
-            } else
-                load(lastItem, lastItem.getMediaType().toString(), highlightTerms);
+            } else {
+                lastItem = attachSearcher.getItem(query);
+                if (lastItem == null) {
+                    typeNotSupported.setText(REFERENCE_NOT_FOUND + query);
+                    typeNotSupported.setVisible(true);
+                } else if (lastItem.getViewFile() != null) {
+                    FileContentSource viewContent = new FileContentSource(lastItem.getViewFile());
+                    String mediaType = detectType(lastItem.getViewFile());
+                    load(viewContent, mediaType, highlightTerms);
+                } else
+                    load(lastItem, lastItem.getMediaType().toString(), highlightTerms);
+            }
         }
 
     }

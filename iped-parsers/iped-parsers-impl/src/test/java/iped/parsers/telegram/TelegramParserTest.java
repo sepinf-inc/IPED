@@ -36,7 +36,8 @@ public class TelegramParserTest extends AbstractPkgTest {
             assertEquals(236, telegramtracker.userphone.size());
             assertEquals(261, telegramtracker.useraccount.size());
             assertEquals(118, telegramtracker.usernotes.size());
-            assertEquals(32, telegramtracker.participants.size());
+            assertEquals(32, telegramtracker.groupParticipants.size());
+            assertEquals(69, telegramtracker.privateParticipants.size());
             assertEquals(151, telegramtracker.messagefrom.size());
             assertEquals(151, telegramtracker.messagebody.size());
             assertEquals(151, telegramtracker.messageto.size());
@@ -46,10 +47,10 @@ public class TelegramParserTest extends AbstractPkgTest {
             assertEquals("Karol Braz", telegramtracker.title.get(1));
             assertEquals("Budi", telegramtracker.title.get(2));
             assertEquals("Nickerida", telegramtracker.title.get(3));
-            assertEquals("Telegram_Chat_Marcoscachos", telegramtracker.title.get(505));
-            assertEquals("Telegram_Chat_Marcoscachos_message_0", telegramtracker.title.get(506));
-            assertEquals("Telegram_Group_mixirica e noronhe-se", telegramtracker.title.get(507));
-            assertEquals("Telegram_Group_mixirica e noronhe-se_message_0", telegramtracker.title.get(508));
+            assertEquals("Telegram Chat - Marcoscachos (ID:837873104|tel:5561983468805|@Marquito93)", telegramtracker.title.get(505));
+            assertEquals("Telegram Chat - Marcoscachos (ID:837873104|tel:5561983468805|@Marquito93)_message_0", telegramtracker.title.get(506));
+            assertEquals("Telegram Group - Mixirica e noronhe-se (ID:136232058)", telegramtracker.title.get(507));
+            assertEquals("Telegram Group - Mixirica e noronhe-se (ID:136232058)_message_0", telegramtracker.title.get(508));
 
             assertEquals("Tiago", telegramtracker.username.get(0));
             assertEquals("Karol Braz", telegramtracker.username.get(1));
@@ -67,17 +68,21 @@ public class TelegramParserTest extends AbstractPkgTest {
             assertEquals("RafaelCampos", telegramtracker.usernotes.get(1));
             assertEquals("gif", telegramtracker.usernotes.get(3));
 
-            assertEquals("Bruno Chaves (phone: 33667514279)", telegramtracker.participants.get(0));
-            assertEquals("Nake Douglas (phone: 5561982616052)", telegramtracker.participants.get(1));
-            assertEquals("Guilherme Andreúce (phone: 5561986143035)", telegramtracker.participants.get(2));
+            assertEquals("Bruno Chaves (ID:141491912|tel:33667514279)", telegramtracker.groupParticipants.get(0));
+            assertEquals("Nake Douglas (ID:26851249|tel:5561982616052)", telegramtracker.groupParticipants.get(1));
+            assertEquals("Guilherme Andreúce (ID:140478504|tel:5561986143035|@guileb)", telegramtracker.groupParticipants.get(2));
 
-            assertEquals("Telegram (phone: 42777)", telegramtracker.messagefrom.get(0));
-            assertEquals("Nickerida (phone: 5561983125151)", telegramtracker.messagefrom.get(1));
-            assertEquals("Guilherme Andreúce (phone: 5561986143035)", telegramtracker.messagefrom.get(3));
+            assertEquals("Telegram (ID:777000|tel:42777)", telegramtracker.privateParticipants.get(0));
+            assertEquals("Nickerida (ID:339236411|tel:5561983125151)", telegramtracker.privateParticipants.get(1));
+            assertEquals("Yan Victor (ID:301575622|tel:5561995328012|@YanVictor)", telegramtracker.privateParticipants.get(2));
 
-            assertEquals("Telegram (phone: 42777)", telegramtracker.messageto.get(0));
-            assertEquals("Nickerida (phone: 5561983125151)", telegramtracker.messageto.get(1));
-            assertEquals("Group mixirica e noronhe-se (id:-136232058)", telegramtracker.messageto.get(150));
+            assertEquals("Telegram (ID:777000|tel:42777)", telegramtracker.messagefrom.get(0));
+            assertEquals("Nickerida (ID:339236411|tel:5561983125151)", telegramtracker.messagefrom.get(1));
+            assertEquals("Guilherme Andreúce (ID:140478504|tel:5561986143035|@guileb)", telegramtracker.messagefrom.get(3));
+
+            assertEquals("Telegram (ID:777000|tel:42777)", telegramtracker.messageto.get(0));
+            assertEquals("Nickerida (ID:339236411|tel:5561983125151)", telegramtracker.messageto.get(1));
+            assertEquals("Group Mixirica e noronhe-se (ID:136232058)", telegramtracker.messageto.get(150));
 
             assertTrue(telegramtracker.messagebody.get(0).contains(
                     "Código de login: 73632. Não envie esse código para ninguém, nem mesmo que eles digam que são do Telegram!"));

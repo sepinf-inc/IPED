@@ -321,8 +321,12 @@
             </params>
         </parser>
         <parser class="iped.parsers.ufed.UFEDChatParser">
-            <!--<mime-exclude>application/x-ufed-chat-whatsapp</mime-exclude>-->
             <params>
+            	<param name="extractMessages" type="bool">true</param>
+                <param name="extractActivityLogs" type="bool">true</param>
+                <param name="extractAttachments" type="bool">true</param>
+                <param name="extractSharedContacts" type="bool">true</param>
+                <param name="ignoreEmptyChats" type="bool">false</param>
                 <param name="minChatSplitSize" type="int">6000000</param>
             </params>
         </parser>

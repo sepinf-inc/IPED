@@ -659,6 +659,11 @@ public abstract class BaseItemSearchContext extends TestCase {
                 // TODO Auto-generated method stub
 
             }
+
+            @Override
+            public List<IItemReader> getChildren() {
+                return null;
+            }
         };
 
         ItemInfo itemInfo = new ItemInfo(0, item.getHash(), Collections.emptySet(), Collections.emptySet(),

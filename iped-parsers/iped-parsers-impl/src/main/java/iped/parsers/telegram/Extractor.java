@@ -35,6 +35,7 @@ import java.util.Map;
 
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -115,7 +116,7 @@ public class Extractor {
 
     private void addParticipants(Connection conn, ChatGroup cg) throws SQLException {
         try (PreparedStatement stmt = conn.prepareStatement(MEMBERS_CHATS_SQL)) {
-            stmt.setLong(1, cg.getId());
+            stmt.setLong(1, -cg.getId());
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 cg.addMember(rs.getLong("uid"));
@@ -126,7 +127,7 @@ public class Extractor {
     private void addAdmins(Connection conn, ChatGroup cg) throws SQLException {
         if (SQLite3DBParser.containsTable("channel_admins_v3", conn)) {
             try (PreparedStatement stmt = conn.prepareStatement(SELECT_CHANNEL_ADMINS)) {
-                stmt.setLong(1, -cg.getId());
+                stmt.setLong(1, cg.getId());
                 ResultSet rs = stmt.executeQuery();
                 while (rs.next()) {
                     cg.addAdmin(rs.getLong("uid"));
@@ -141,7 +142,7 @@ public class Extractor {
         String column = "participants_count";
         if (SQLite3DBParser.containsTable(table, conn) && SQLite3DBParser.checkIfColumnExists(conn, table, column)) {
             try (PreparedStatement stmt = conn.prepareStatement(SELECT_CHATS_SETTINGS)) {
-                stmt.setLong(1, -cg.getId());
+                stmt.setLong(1, cg.getId());
                 ResultSet rs = stmt.executeQuery();
                 if (rs.next()) {
                     count = rs.getInt("participants_count");
@@ -182,7 +183,8 @@ public class Extractor {
 
                     searchAvatarFileName(cont, androidDecoder.getPhotoData());
 
-                    ChatGroup group = new ChatGroup(chatId, cont, chatName);
+                    String chatNameToUse = StringUtils.firstNonBlank((String) androidDecoder.getAlltMetadata().get("title"), chatName);
+                    ChatGroup group = new ChatGroup(chatId, cont, chatNameToUse);
 
                     Map<String, Object> m = androidDecoder.getAlltMetadata();
                     if ("true".equals(m.get("broadcast"))) {
@@ -248,7 +250,7 @@ public class Extractor {
         ArrayList<Message> msgs = new ArrayList<Message>();
         String SQL = getAndroidExtractMessagesSQL();
         try (PreparedStatement stmt = conn.prepareStatement(SQL)) {
-            stmt.setLong(1, chat.getId());
+            stmt.setLong(1, chat.getId() * (chat.isGroupOrChannel() ? -1 : 1));
             ResultSet rs = stmt.executeQuery();
             ChatGroup cg = null;
             if (chat.isGroupOrChannel()) {
@@ -267,7 +269,7 @@ public class Extractor {
                     }
                     setFrom(message, chat);
 
-                    if (cg != null && message.getFrom().getId() != 0) {
+                    if (cg != null && message.getFrom().getId() != 0 && message.getFrom().getId() != cg.getId()) {
                         cg.addMember(message.getFrom().getId());
                     }
 
@@ -349,7 +351,7 @@ public class Extractor {
         if (conn != null) {
             try (PreparedStatement stmt = conn.prepareStatement(EXTRACT_MESSAGES_SQL_IOS)) {
                 ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
-                buffer.putLong(chat.getId());
+                buffer.putLong(chat.getId() * (chat.isGroupOrChannel() ? -1 : 1));
                 stmt.setBytes(1, buffer.array());
                 ResultSet rs = stmt.executeQuery();
                 if (rs != null) {
@@ -374,7 +376,7 @@ public class Extractor {
                             }
                         }
     
-                        if (cg != null && message.getFrom().getId() != 0) {
+                        if (cg != null && message.getFrom().getId() != 0 && message.getFrom().getId() != cg.getId()) {
                             cg.addMember(message.getFrom().getId());
                         }
     
@@ -501,6 +503,10 @@ public class Extractor {
                                 // TODO: handle exception
                                 e.printStackTrace();
                             }
+                        }
+
+                        if (Boolean.parseBoolean((String) androidDecoder.getAlltMetadata().get("self"))) {
+                            userAccount = c;
                         }
                     }
                 }
@@ -632,18 +638,18 @@ public class Extractor {
 
     private static final String EXTRACT_USERACCOUNT_SQL_IOS = "SELECT t0.value FROM T0 where key=2";
 
-    private static final String CHATS_SQL_V2 = "SELECT -c.uid as chatId,null as chatName,null as chatData, c.name as groupName, c.data as groupData ,d.date"
+    private static final String CHATS_SQL_V2 = "SELECT c.uid as chatId,null as chatName,null as chatData, c.name as groupName, c.data as groupData ,d.date"
             + "            from chats c  LEFT join dialogs d on c.uid=-d.did "
             + "            UNION "
             + " SELECT d.did as chatId,u.name as chatName,u.data as chatData, null as groupName, null as groupData, d.date"
             + "           from dialogs d LEFT join users u on u.uid=d.did  WHERE d.did NOT IN (SELECT -uid FROM chats) "
             + "            order by date desc";
 
-    private static final String MEMBERS_CHATS_SQL = "SELECT * from channel_users_v2 where did=?";
+    private static final String MEMBERS_CHATS_SQL = "SELECT * from channel_users_v2 where did=? AND uid > 0";
 
     private static final String SELECT_CHATS_SETTINGS = "SELECT participants_count FROM chat_settings_v2 WHERE uid=?";
 
-    private static final String SELECT_CHANNEL_ADMINS = "SELECT uid FROM channel_admins_v3 WHERE did=?";
+    private static final String SELECT_CHANNEL_ADMINS = "SELECT uid FROM channel_admins_v3 WHERE did=? AND uid > 0";
 
     private static final String CHATS_SQL_IOS = "select substr(key,16,8) as chatid, false as deleted from t9 "
             + "UNION SELECT  substr(t7.key,1,8) as chatid, true as deleted from t7  "
