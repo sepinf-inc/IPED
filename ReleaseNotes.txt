@@ -1,3 +1,22 @@
+15/04/2025: IPED-4.2.1:
+News:
+#2356: Better detection of audio/mp4 and video/mp4 (@lfcnassif)
+#2430: Improve OFX file type parser robustness (@wladimirleite)
+#2414: Upgrade ImageMagick for better HEIC support  (@wladimirleite, @lfcnassif)
+#2445: Upgrade Telegram decoder plugin to 1.0.13 (@aberenguel)
+#2396: Update translation to Spanish, Italian, German and French (@AburtoArielPM, @flates, @mobab-th, @jelallt)
+Fixes:
+#2468: Incorrect handling of image:tiff:orientation (@wladimirleite)
+#2257: Minor stats issue: Increased Volume Found after --continue (@lfcnassif)
+#2298: AccessDeniedException in read-only folder case  (@lfcnassif, @aberenguel)
+#2432: Decrypted WhatsApp databases named msgstore.db.crypt15.db not recognized (@wladimirleite)
+#2451: OCR search finds files in report but does not display OCR text in preview (@lfcnassif)
+#2390: Broken links on HTML reports when just sha256 is computed (@lfcnassif)
+#2460: Rare Error parsing iOS WhatsApp ChatStorage.sqlite (@wladimirleite)
+#2437: Aborting ConcurrentModificationException from PythonTask (@lfcnassif)
+#2415: External Face search not working on 4.2.0 (@lfcnassif)
+
+
 30/12/2024: IPED-4.2.0:
 News:
 #39:   Filter Manager (@patrickdalla, @lfcnassif)
