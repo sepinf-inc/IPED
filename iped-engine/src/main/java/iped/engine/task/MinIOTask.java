@@ -386,7 +386,9 @@ public class MinIOTask extends AbstractTask {
             throws Exception {
 
         try {
-            sendFile(PutObjectArgs.builder().bucket(bucket).object(bucketPath).contentType(mediatype), is, -1, 10 << 20);
+            long size = is.size();
+            sendFile(PutObjectArgs.builder().bucket(bucket).object(bucketPath).contentType(mediatype), is, size,
+                    Math.max(size / 1000, 10 << 20));
 
         } catch (Exception e) {
             throw new Exception("Error when uploading object ", e);
