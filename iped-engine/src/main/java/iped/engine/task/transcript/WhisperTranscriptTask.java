@@ -18,8 +18,6 @@ import iped.configuration.IConfigurationDirectory;
 import iped.engine.config.AudioTranscriptConfig;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
-import iped.engine.task.transcript.AbstractTranscriptTask.TextAndScore;
-import iped.engine.task.transcript.Wav2Vec2TranscriptTask.Server;
 import iped.exception.IPEDException;
 
 public class WhisperTranscriptTask extends Wav2Vec2TranscriptTask {
@@ -47,8 +45,8 @@ public class WhisperTranscriptTask extends Wav2Vec2TranscriptTask {
     }
 
     @Override
-    protected Server startServer0(int device) throws IOException {
-        if (numProcesses != null && device == numProcesses) {
+    protected Server startServer0(int deviceId) throws IOException {
+        if (numProcesses != null && deviceId == numProcesses) {
             return null;
         }
         ProcessBuilder pb = new ProcessBuilder();
@@ -73,8 +71,9 @@ public class WhisperTranscriptTask extends Wav2Vec2TranscriptTask {
 
         String precision = transcriptConfig.getPrecision();
         String batchSize = Integer.toString(transcriptConfig.getBatchSize());
+        String device = transcriptConfig.getDevice();
 
-        pb.command(python, script, model, Integer.toString(device), Integer.toString(threads), lang, precision, batchSize);
+        pb.command(python, script, model, device, Integer.toString(deviceId), Integer.toString(threads), lang, precision, batchSize);
 
         Process process = pb.start();
 
@@ -121,7 +120,7 @@ public class WhisperTranscriptTask extends Wav2Vec2TranscriptTask {
         Server server = new Server();
         server.process = process;
         server.reader = reader;
-        server.device = device;
+        server.device = deviceId;
 
         return server;
     }
