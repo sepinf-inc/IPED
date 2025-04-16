@@ -272,12 +272,13 @@ public class VideoThumbTask extends ThumbTask {
         videoThumbsMaker.setTimeoutProcess(videoConfig.getTimeoutProcess());
         videoThumbsMaker.setTimeoutInfo(videoConfig.getTimeoutInfo());
         videoThumbsMaker.setVideoThumbsOriginalDimension(videoConfig.getVideoThumbsOriginalDimension());
+        videoThumbsMaker.setCompression(videoConfig.getCompression()); 
         videoThumbsMaker.setMaxDimensionSize(videoConfig.getMaxDimensionSize());
         videoThumbsMaker.setNumFramesEquation(videoConfig.getNumFramesEquation());
 
         // Cria configurações de extração de cenas
         configs = new ArrayList<VideoThumbsOutputConfig>();
-        configs.add(mainConfig = new VideoThumbsOutputConfig(null, videoConfig.getWidth(), videoConfig.getColumns(), videoConfig.getRows(), 2));
+        configs.add(mainConfig = new VideoThumbsOutputConfig(null, videoConfig.getSize(), videoConfig.getColumns(), videoConfig.getRows(), 2));
 
         // Inicializa diretório de saída
         baseFolder = new File(output, "view"); //$NON-NLS-1$
@@ -460,24 +461,23 @@ public class VideoThumbTask extends ThumbTask {
 
             // If enabled (galleryThumbWidth > 0) create a thumb to be shown in the gallery,
             // with fewer frames
-            int galleryThumbWidth = videoConfig.getGalleryThumbWidth();
-            if (galleryThumbWidth > 0 && r.isSuccess()) {
+            int galleryThumbSize = videoConfig.getGalleryThumbSize();
+            if (galleryThumbSize > 0 && r.isSuccess()) {
                 try {
                     long t = System.currentTimeMillis();
                     Object[] read = ImageUtil.readJpegWithMetaData(mainOutFile);
                     BufferedImage fullImg = (BufferedImage) read[0];
                     String comment = (String) read[1];
-                    int galleryThumbHeight = galleryThumbWidth / 30 * 29;
-                    BufferedImage img = ImageUtil.getBestFramesFit(fullImg, comment, galleryThumbWidth,
-                            galleryThumbHeight, videoConfig.getGalleryMinThumbs(), videoConfig.getGalleryMaxThumbs());
+                    BufferedImage img = ImageUtil.getBestFramesFit(fullImg, comment, galleryThumbSize,
+                            galleryThumbSize, videoConfig.getGalleryMinThumbs(), videoConfig.getGalleryMaxThumbs());
 
                     if (img != null && !img.equals(fullImg)) {
-                        if (img.getWidth() > galleryThumbWidth || img.getHeight() > galleryThumbHeight) {
-                            img = ImageUtil.resizeImage(img, galleryThumbWidth, galleryThumbHeight);
+                        if (img.getWidth() > galleryThumbSize || img.getHeight() > galleryThumbSize) {
+                            img = ImageUtil.resizeImage(img, galleryThumbSize, galleryThumbSize);
                         }
                         img = ImageUtil.getOpaqueImage(img);
                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                        ImageIO.write(img, "jpg", baos); //$NON-NLS-1$
+                        ImageUtil.writeCompressedJPG(img, baos, videoConfig.getCompression());
                         evidence.setThumb(baos.toByteArray());
                         File thumbFile = getThumbFile(evidence);
                         saveThumb(evidence, thumbFile);
@@ -554,8 +554,13 @@ public class VideoThumbTask extends ThumbTask {
             w = dimension.width;
             h = dimension.height;
         } else {
-            w = config.getThumbWidth();
-            h = dimension.height * w / dimension.width;
+            if (dimension.width >= dimension.height) {
+                w = config.getThumbSize();
+                h = dimension.height * w / dimension.width;
+            } else {
+                h = config.getThumbSize();
+                w = dimension.width * h / dimension.height;
+            }
         }
         if (w > videoConfig.getMaxDimensionSize()) {
             w = videoConfig.getMaxDimensionSize();
@@ -568,6 +573,7 @@ public class VideoThumbTask extends ThumbTask {
 
         List<Double> framesNudityScore = new ArrayList<>();
 
+        int compression = videoConfig.getCompression();
         for (int i = 0; i < frames.size(); i++) {
 
             File frame = frames.get(i);
@@ -600,7 +606,7 @@ public class VideoThumbTask extends ThumbTask {
             }
             img = adjustFrameDimension(img, w, h);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ImageIO.write(img, "jpg", baos);
+            ImageUtil.writeCompressedJPG(img, baos, compression);
             ByteArrayInputStream is = new ByteArrayInputStream(baos.toByteArray());
             extractor.extractFile(is, newItem, item.getLength());
 
