@@ -59,6 +59,7 @@ public class ImageThumbTask extends ThumbTask {
     private ExternalImageConverter externalImageConverter;
     private static final AtomicBoolean extConvPropInit = new AtomicBoolean(false);
 
+    private int compression;
     private int thumbSize;
     private int maxViewImageSize;
     private Set<String> mimesToCreateView;
@@ -102,6 +103,7 @@ public class ImageThumbTask extends ThumbTask {
 
         externalImageConverter = new ExternalImageConverter(executor);
         thumbSize = imgThumbConfig.getThumbSize();
+        compression = imgThumbConfig.getCompression();
         maxViewImageSize = imgThumbConfig.getMaxViewImageSize();
         mimesToCreateView = imgThumbConfig.getMimesToCreateView();
 
@@ -386,7 +388,7 @@ public class ImageThumbTask extends ThumbTask {
                 t = System.currentTimeMillis();
                 performanceStats[18]++;
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                ImageIO.write(img, "jpg", baos); //$NON-NLS-1$
+                ImageUtil.writeCompressedJPG(img, baos, compression);
                 evidence.setThumb(baos.toByteArray());
                 performanceStats[19] += System.currentTimeMillis() - t;
             }
