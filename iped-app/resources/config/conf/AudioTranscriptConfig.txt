@@ -110,6 +110,10 @@ minWordScore = 0.5
 # 'language = detect' uses auto detection, but it can cause mistakes
 whisperModel = medium
 
+# Which device to use: 'cpu' or 'gpu'. For 'gpu', please see the official faster-whisper documentation
+# for the installation requirements: https://github.com/SYSTRAN/faster-whisper?tab=readme-ov-file#gpu  
+device = cpu
+
 # Compute type precision. This affects accuracy, speed and memory usage.
 # Possible values: float32 (better), float16 (recommended for GPU), int8 (faster)
 precision = int8
