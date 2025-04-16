@@ -69,6 +69,9 @@
 	      ]}
 	    ]}
     ]},
+    {"name": "Apple Artifacts", "categories":[
+        {"name": "Apple Configuration Files", "mimes": ["application/x-bplist"]}
+    ]},
     {"name": "Google Drive", "categories":[
       {"name": "GDrive Synced Files", "mimes": ["application/x-gdrive-cloud-graph", "application/x-gdrive-snapshot"]},
       {"name": "GDrive File Entries", "mimes": ["application/x-gdrive-cloud-graph-registry", "application/x-gdrive-snapshot-registry"]}
