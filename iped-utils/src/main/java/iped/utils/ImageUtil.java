@@ -627,14 +627,14 @@ public class ImageUtil {
         writer.dispose();
     }
 
-    public static BufferedImage rotatePos(BufferedImage src, int pos) {
+    public static BufferedImage rotate(BufferedImage src, int pos) {
         if (pos < 0 || pos > 3) {
             return src;
         }
-        return rotate(src, orientations[pos]);
+        return applyOrientation(src, orientations[pos]);
     }
 
-    public static BufferedImage rotate(BufferedImage src, int orientation) {
+    public static BufferedImage applyOrientation(BufferedImage src, int orientation) {
         if (orientation <= 1 || orientation > 8) {
             return src;
         }
