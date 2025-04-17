@@ -30,7 +30,7 @@ imgConvTimeout = 20
 imgConvTimeoutPerMB = 2
 
 # Pixel size of generated thumbnails.
-imgThumbSize = 256
+imgThumbSize = 384
 
 # Extract embedded thumbs from exif, faster than generating them again.
 # Eventually these thumbs may have lower quality or be different of the original image.
