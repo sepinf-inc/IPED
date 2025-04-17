@@ -370,16 +370,14 @@ public class ImageThumbTask extends ThumbTask {
                 performanceStats[14]++;
                 performanceStats[15] += System.currentTimeMillis() - t;
 
-                if (isJpeg(evidence)) {
-                    // Ajusta rotacao da miniatura a partir do metadado orientacao
-                    try (BufferedInputStream stream = evidence.getBufferedInputStream()) {
-                        int orientation = ImageMetadataUtil.getOrientation(stream);
-                        if (orientation > 0) {
-                            t = System.currentTimeMillis();
-                            img = ImageUtil.applyOrientation(img, orientation);
-                            performanceStats[16]++;
-                            performanceStats[17] += System.currentTimeMillis() - t;
-                        }
+                // Ajusta rotacao da miniatura a partir do metadado orientacao
+                try (BufferedInputStream stream = evidence.getBufferedInputStream()) {
+                    int orientation = ImageMetadataUtil.getOrientation(stream);
+                    if (orientation > 0) {
+                        t = System.currentTimeMillis();
+                        img = ImageUtil.applyOrientation(img, orientation);
+                        performanceStats[16]++;
+                        performanceStats[17] += System.currentTimeMillis() - t;
                     }
                 }
 
