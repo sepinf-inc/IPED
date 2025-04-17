@@ -233,7 +233,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     private List<DefaultSingleCDockable> viewerDocks;
     private ViewerController viewerController;
     private CCheckBox timelineButton;
-    private CButton butSimSearch;
+    private CButton butSimSearch, butFaceSearch;
     private CCheckBox galleryGrayButton;
     private CCheckBox galleryBlurButton;
 
@@ -968,13 +968,23 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         butSimSearch = new CButton(Messages.getString("MenuClass.FindSimilarImages"), IconUtil.getToolbarIcon("find", resPath));
         galleryTabDock.addAction(butSimSearch);
-        galleryTabDock.addSeparator();
         butSimSearch.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 SimilarImagesFilterActions.searchSimilarImages(false);
             }
         });
         butSimSearch.setEnabled(false);
+
+        butFaceSearch = new CButton(Messages.getString("MenuClass.FindSimilarFaces"), IconUtil.getToolbarIcon("face", resPath));
+        galleryTabDock.addAction(butFaceSearch);
+        butFaceSearch.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                SimilarFacesFilterActions.searchSimilarImages(false);
+            }
+        });
+        butFaceSearch.setEnabled(false);
+        
+        galleryTabDock.addSeparator();
 
         // Add buttons to control the thumbnails size / number of columns in the gallery
         CButton butDec = new CButton(Messages.getString("Gallery.DecreaseThumbsSize"), IconUtil.getToolbarIcon("minus", resPath));
@@ -1544,6 +1554,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     public void setEnableGallerySimSearchButton(boolean enabled) {
         this.butSimSearch.setEnabled(enabled);
+    }
+
+    public void setEnableGalleryFaceSearchButton(boolean enabled) {
+        this.butFaceSearch.setEnabled(enabled);
     }
 
     public List<ResultSetViewer> getResultSetViewers() {
