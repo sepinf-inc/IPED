@@ -1,7 +1,9 @@
 import sys
-import numpy
+sys.stdout.reconfigure(encoding='utf-8')
 stdout = sys.stdout
 sys.stdout = sys.stderr
+
+import numpy
 
 terminate = 'terminate_process'
 model_loaded = 'model_loaded'
