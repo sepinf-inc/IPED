@@ -29,11 +29,11 @@ import java.io.File;
 public class VideoThumbsOutputConfig {
 
     private File outFile;
-    private int thumbWidth, rows, columns, border;
+    private int thumbSize, rows, columns, border;
 
-    public VideoThumbsOutputConfig(File outFile, int thumbWidth, int columns, int rows, int border) {
+    public VideoThumbsOutputConfig(File outFile, int thumbSize, int columns, int rows, int border) {
         this.outFile = outFile;
-        this.thumbWidth = thumbWidth;
+        this.thumbSize = thumbSize;
         this.rows = rows;
         this.columns = columns;
         this.border = border;
@@ -43,8 +43,8 @@ public class VideoThumbsOutputConfig {
         return border;
     }
 
-    public int getThumbWidth() {
-        return thumbWidth;
+    public int getThumbSize() {
+        return thumbSize;
     }
 
     public File getOutFile() {
@@ -63,8 +63,8 @@ public class VideoThumbsOutputConfig {
         this.outFile = outFile;
     }
 
-    public void setThumbWidth(int thumbWidth) {
-        this.thumbWidth = thumbWidth;
+    public void setThumbSize(int thumbSize) {
+        this.thumbSize = thumbSize;
     }
 
     public void setRows(int rows) {
@@ -83,8 +83,8 @@ public class VideoThumbsOutputConfig {
         StringBuilder builder = new StringBuilder();
         builder.append("VideoThumbsOutputConfig [imageFile="); //$NON-NLS-1$
         builder.append(outFile);
-        builder.append(", thumbWidth="); //$NON-NLS-1$
-        builder.append(thumbWidth);
+        builder.append(", thumbSize="); //$NON-NLS-1$
+        builder.append(thumbSize);
         builder.append(", rows="); //$NON-NLS-1$
         builder.append(rows);
         builder.append(", columns="); //$NON-NLS-1$
