@@ -113,13 +113,16 @@ public class ImageThumbTask extends ThumbTask {
             }
         }
 
-        // use memory instead of files to cache image streams
-        // tests have shown up to 3x thumb creation speed up
+        // Use memory instead of files to cache image streams
+        // tests have shown up to 3x thumb creation speed up.
         ImageIO.setUseCache(false);
 
-        // install a new exif reader to read thumb data.
-        // must be installed at the beginning of the processing, see #532
+        // Install a new EXIF reader to read thumb data.
+        // must be installed at the beginning of the processing, see #532.
         ImageMetadataUtil.updateExifReaderToLoadThumbData();
+
+        // Set ImageIO plugins priority order.
+        ImageUtil.updateImageIOPluginsPriority();
     }
 
     private static void startTmpDirCleaner(File tmpDir) {
@@ -370,16 +373,14 @@ public class ImageThumbTask extends ThumbTask {
                 performanceStats[14]++;
                 performanceStats[15] += System.currentTimeMillis() - t;
 
-                if (isJpeg(evidence)) {
-                    // Ajusta rotacao da miniatura a partir do metadado orientacao
-                    try (BufferedInputStream stream = evidence.getBufferedInputStream()) {
-                        int orientation = ImageMetadataUtil.getOrientation(stream);
-                        if (orientation > 0) {
-                            t = System.currentTimeMillis();
-                            img = ImageUtil.rotate(img, orientation);
-                            performanceStats[16]++;
-                            performanceStats[17] += System.currentTimeMillis() - t;
-                        }
+                // Ajusta rotacao da miniatura a partir do metadado orientacao
+                try (BufferedInputStream stream = evidence.getBufferedInputStream()) {
+                    int orientation = ImageMetadataUtil.getOrientation(stream);
+                    if (orientation > 0) {
+                        t = System.currentTimeMillis();
+                        img = ImageUtil.applyOrientation(img, orientation);
+                        performanceStats[16]++;
+                        performanceStats[17] += System.currentTimeMillis() - t;
                     }
                 }
 
