@@ -16,6 +16,7 @@ import org.apache.tika.sax.XHTMLContentHandler;
 import com.drew.imaging.mp4.Mp4Reader;
 import com.drew.metadata.mp4.Mp4BoxHandler;
 import com.drew.metadata.mp4.Mp4Directory;
+import com.drew.metadata.mp4.media.Mp4SoundDirectory;
 import com.drew.metadata.mp4.media.Mp4VideoDirectory;
 
 import iped.parsers.util.IgnoreContentHandler;
@@ -70,9 +71,13 @@ public class MP4Detector implements Detector {
             Mp4Reader.extract(tis, boxHandler);
 
             boolean hasErrors = false;
+            boolean hasAudio = false;
             for (Mp4Directory mp4Directory : mp4Metadata.getDirectoriesOfType(Mp4Directory.class)) {
                 if (mp4Directory instanceof Mp4VideoDirectory) {
                     return MediaType.video("mp4");
+                }
+                if (mp4Directory instanceof Mp4SoundDirectory) {
+                    hasAudio = true;
                 }
                 if (!hasErrors && mp4Directory.hasErrors()) {
                     hasErrors = true;
@@ -87,9 +92,13 @@ public class MP4Detector implements Detector {
                         }
                     }
                 }
-                return MediaType.OCTET_STREAM;
             }
-            return MediaType.audio("mp4");
+            if (hasAudio) {
+                return MediaType.audio("mp4");
+            }
+
+            // fallback to the generic mp4 container mime
+            return MediaType.application("mp4");
         }
     }
 
