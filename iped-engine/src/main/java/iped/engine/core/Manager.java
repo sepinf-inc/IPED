@@ -278,8 +278,6 @@ public class Manager {
 
             initWorkers();
 
-            SleuthkitClient.initSleuthkitServers(SleuthkitReader.getSleuthkitDB(output));
-
             status.addProcessingEvidences(args);
             status.save();
 
