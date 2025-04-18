@@ -40,7 +40,7 @@ import org.w3c.dom.NodeList;
 import iped.data.IItemReader;
 
 public class ImageUtil {
-    private static final int[] orientations = new int[] { 1, 5, 3, 7 };
+    private static final int[] orientations = new int[] { 1, 6, 3, 8 };
 
     private static final String JBIG2 = "image/x-jbig2";
     private static final String ICO = "image/vnd.microsoft.icon";
@@ -627,27 +627,38 @@ public class ImageUtil {
         writer.dispose();
     }
 
-    public static BufferedImage rotatePos(BufferedImage src, int pos) {
+    public static BufferedImage rotate(BufferedImage src, int pos) {
         if (pos < 0 || pos > 3) {
             return src;
         }
-        return rotate(src, orientations[pos]);
+        return applyOrientation(src, orientations[pos]);
     }
 
-    public static BufferedImage rotate(BufferedImage src, int orientation) {
-        if (orientation <= 1 || orientation > 8)
+    public static BufferedImage applyOrientation(BufferedImage src, int orientation) {
+        if (orientation <= 1 || orientation > 8) {
             return src;
-        int angle = (orientation - 1) / 2;
+        }
         int w = src.getWidth();
         int h = src.getHeight();
-        BufferedImage dest = new BufferedImage(angle == 1 ? w : h, angle == 1 ? h : w, src.getType());
+        if (orientation > 4) {
+            int aux = w;
+            w = h;
+            h = aux;
+        }
+        BufferedImage dest = new BufferedImage(w, h, src.getType());
         Graphics2D g = dest.createGraphics();
-        double d = (h - w) / 2.0;
-        if (angle == 2)
-            g.translate(d, d);
-        else if (angle == 3)
-            g.translate(-d, -d);
-        g.rotate((angle == 1 ? 2 : angle == 2 ? 1 : 3) * Math.PI / 2, dest.getWidth() / 2.0, dest.getHeight() / 2.0);
+        if (orientation == 2 || orientation == 3 || orientation == 5 || orientation == 8) {
+            g.scale(-1, 1);
+            g.translate(-w, 0);
+        }
+        if (orientation == 3 || orientation == 4 || orientation == 7 || orientation == 8) {
+            g.scale(1, -1);
+            g.translate(0, -h);
+        }
+        if (orientation >= 5) {
+            g.rotate(Math.PI / 2);
+            g.translate(0, -w);
+        }
         g.drawRenderedImage(src, null);
         g.dispose();
         return dest;

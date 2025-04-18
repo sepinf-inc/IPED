@@ -379,7 +379,7 @@ public class SleuthkitReader extends DataSourceReader {
             }
             System.setProperties(sysProps);
 
-            Manager.getInstance().initSleuthkitServers();
+            SleuthkitClient.initSleuthkitServers(new File(dbPath));
 
             Long[] range = getDecodedRangeId(image, output);
             if (range != null && args.isContinue()) {

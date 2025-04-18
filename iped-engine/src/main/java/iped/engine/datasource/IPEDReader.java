@@ -56,6 +56,7 @@ import iped.datasource.IDataSource;
 import iped.engine.CmdLineArgs;
 import iped.engine.config.CategoryToExpandConfig;
 import iped.engine.config.ConfigurationManager;
+import iped.engine.config.FileSystemConfig;
 import iped.engine.core.Manager;
 import iped.engine.data.BitmapBookmarks;
 import iped.engine.data.Bookmarks;
@@ -148,6 +149,11 @@ public class IPEDReader extends DataSourceReader {
         Object obj = Util.readObject(file.getAbsolutePath());
         if (obj instanceof IMultiBookmarks) {
             IMultiBookmarks mm = (IMultiBookmarks) obj;
+            if (mm.getSingleBookmarks().size() > 1) {
+                // Currently robust Image reading does not work with multicases.
+                FileSystemConfig fsConfig = ConfigurationManager.get().findObject(FileSystemConfig.class);
+                fsConfig.setRobustImageReading(false);
+            }
             for (IBookmarks m : mm.getSingleBookmarks())
                 processBookmark(m);
         } else {
@@ -177,7 +183,7 @@ public class IPEDReader extends DataSourceReader {
             query.add(subitems.build(), Occur.MUST);
             IIPEDSearcher searcher = new IPEDSearcher(ipedCase, query.build());
             LuceneSearchResult result = LuceneSearchResult.get(ipedCase, searcher.search());
-            insertIntoProcessQueue(result, false);
+            insertIntoProcessQueue(result, false, false);
         }
     }
 
@@ -439,7 +445,12 @@ public class IPEDReader extends DataSourceReader {
         return id;
     }
 
+
     private void insertIntoProcessQueue(LuceneSearchResult result, boolean treeNode) throws Exception {
+        insertIntoProcessQueue(result, treeNode, true);
+    }
+
+    private void insertIntoProcessQueue(LuceneSearchResult result, boolean treeNode, boolean countVolume) throws Exception {
 
         for (int docID : result.getLuceneIds()) {
             Document doc = ipedCase.getReader().document(docID);
@@ -460,13 +471,13 @@ public class IPEDReader extends DataSourceReader {
             }
 
             evidence.setLength(len);
-            if (treeNode) {
+            if (treeNode || !countVolume) {
                 evidence.setSumVolume(false);
             }
 
             if (listOnly) {
                 caseData.incDiscoveredEvidences(1);
-                if (!treeNode) {
+                if (!treeNode && countVolume) {
                     caseData.incDiscoveredVolume(len);
                 }
                 continue;

@@ -194,7 +194,7 @@ public class TiffViewer extends ImageViewer {
                         image = getCompatibleImage(image);
                 }
                 if (rotation != 0) {
-                    imagePanel.setImage(ImageUtil.rotatePos(image, rotation));
+                    imagePanel.setImage(ImageUtil.rotate(image, rotation));
                 } else {
                     imagePanel.setImage(image);
                 }

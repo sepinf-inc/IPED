@@ -124,6 +124,8 @@ import iped.app.graph.AppGraphAnalytics;
 import iped.app.graph.FilterSelectedEdges;
 import iped.app.ui.bookmarks.BookmarkIcon;
 import iped.app.ui.bookmarks.BookmarkTreeCellRenderer;
+import iped.app.ui.columns.ColumnsManager;
+import iped.app.ui.columns.ColumnsManagerUI;
 import iped.app.ui.controls.CSelButton;
 import iped.app.ui.controls.CustomButton;
 import iped.app.ui.controls.table.FilterTableHeaderController;
@@ -137,6 +139,7 @@ import iped.data.IItemId;
 import iped.engine.Version;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
+import iped.engine.config.FileSystemConfig;
 import iped.engine.config.LocaleConfig;
 import iped.engine.core.Manager;
 import iped.engine.data.Category;
@@ -364,6 +367,11 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         this.isMultiCase = isMultiCase;
         this.casesPathFile = casesPathFile;
         this.processingManager = processingManager;
+        if (isMultiCase) {
+            // Currently robust Image reading does not work with multicases.
+            FileSystemConfig fsConfig = ConfigurationManager.get().findObject(FileSystemConfig.class);
+            fsConfig.setRobustImageReading(false);
+        }
 
         LOGGER = LoggerFactory.getLogger(App.class);
         LOGGER.info("Starting..."); //$NON-NLS-1$
@@ -430,7 +438,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 viewerController.dispose();
             }
             if (this.resultsTable != null) {
-                ColumnsManager.getInstance().dispose();
+                ColumnsManagerUI.getInstance().dispose();
             }
 
             appCase.close();

@@ -61,11 +61,11 @@ public class MultiBitmapBookmarks implements Serializable, IMultiBookmarks {
         return sum;
     }
 
-    private int getTotalItens() {
-        int sum = 0;
+    public int getLastId() {
+        int lastId = 0;
         for (IBookmarks m : map.values())
-            sum += m.getTotalItens();
-        return sum;
+            lastId = Math.max(lastId, m.getLastId());
+        return lastId;
     }
 
     public void clearChecked() {
@@ -427,18 +427,18 @@ public class MultiBitmapBookmarks implements Serializable, IMultiBookmarks {
         Object obj = Util.readObject(file.getAbsolutePath());
         if (obj instanceof MultiBitmapBookmarks) {
             MultiBitmapBookmarks state = (MultiBitmapBookmarks) obj;
-            if (state.getTotalItens() != this.getTotalItens())
-                throw new IllegalArgumentException("Incompatible state file! It has different number of items."); //$NON-NLS-1$
+            if (state.getLastId() != this.getLastId())
+                throw new IllegalArgumentException("Incompatible state file!");
             map = state.map;
         } else if (obj instanceof MultiBookmarks) {
             MultiBookmarks state = (MultiBookmarks) obj;
-            if (state.getTotalItens() != this.getTotalItens())
-                throw new IllegalArgumentException("Incompatible state file! It has different number of items."); //$NON-NLS-1$
+            if (state.getLastId() != this.getLastId())
+                throw new IllegalArgumentException("Incompatible state file!");
             map = state.map;
         } else if (obj instanceof IBookmarks) {
             IBookmarks m = (IBookmarks) obj;
-            if (map.size() > 1 || m.getTotalItens() != this.getTotalItens())
-                throw new IllegalArgumentException("Incompatible state file!"); //$NON-NLS-1$
+            if (map.size() > 1 || m.getLastId() != this.getLastId())
+                throw new IllegalArgumentException("Incompatible state file!");
             map.put(map.keySet().iterator().next(), m);
         }
         for (IBookmarks marcador : this.map.values())
