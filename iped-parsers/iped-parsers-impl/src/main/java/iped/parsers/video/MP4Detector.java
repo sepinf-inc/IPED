@@ -1,8 +1,6 @@
 package iped.parsers.video;
 
 import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -21,6 +19,7 @@ import com.drew.metadata.mp4.Mp4Directory;
 import com.drew.metadata.mp4.media.Mp4VideoDirectory;
 
 import iped.parsers.util.IgnoreContentHandler;
+import iped.utils.SimpleInputStreamFactory;
 
 public class MP4Detector implements Detector {
 
@@ -81,15 +80,15 @@ public class MP4Detector implements Detector {
             }
 
             if (hasErrors) {
-                File file = tis.getFile();
-                try (InputStream is = new BufferedInputStream(new FileInputStream(file))) {
-                    if (hasVideoBlock(is)) {
-                        return MediaType.video("mp4");
+                if (tis.getOpenContainer() instanceof SimpleInputStreamFactory) {
+                    try (InputStream is = new BufferedInputStream(((SimpleInputStreamFactory) tis.getOpenContainer()).getInputStream())) {
+                        if (hasVideoBlock(is)) {
+                            return MediaType.video("mp4");
+                        }
                     }
                 }
                 return MediaType.OCTET_STREAM;
             }
-
             return MediaType.audio("mp4");
         }
     }
