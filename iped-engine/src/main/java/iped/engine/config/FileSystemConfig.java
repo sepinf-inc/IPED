@@ -95,6 +95,10 @@ public class FileSystemConfig extends AbstractPropertiesConfigurable {
         return robustImageReading;
     }
 
+    public void setRobustImageReading(boolean value) {
+        this.robustImageReading = value;
+    }
+
     public int getNumImageReaders() {
         return numImageReaders;
     }
