@@ -469,6 +469,8 @@ public class MinIOTask extends AbstractTask {
         if (hash == null || hash.isEmpty() || item.getLength() == null)
             return;
 
+        // if ufdr is sent, only update the path if it is not a subitem, carved or
+        // deleted
         if (!item.isSubItem() && !item.isCarved() && !item.isDeleted() && isToUploadUfdr(item)) {
             int idx = -1;
             if (item.getIdInDataSource() != null) {
@@ -480,17 +482,17 @@ public class MinIOTask extends AbstractTask {
                 String newPath = item.getDataSource().getUUID() + ".zip/" + previousPath;
                 logger.debug("Path org {} \n newPath {}", item.getIdInDataSource(), newPath);
                 updateDataSource(item, getBucket(item) + "/" + newPath);
-                return;
             }
-        }
+        } else {
 
-        try (SeekableInputStream is = item.getSeekableInputStream()) {
-            insertWithZip(item, hash, is, item.getMediaType().toString(), false);
+            try (SeekableInputStream is = item.getSeekableInputStream()) {
+                insertWithZip(item, hash, is, item.getMediaType().toString(), false);
 
-        } catch (Exception e) {
-            // TODO: handle exception
-            logger.error(e.getMessage() + "File " + item.getPath() + " (" + item.getLength() + " bytes)", e);
-            throw e;
+            } catch (Exception e) {
+                // TODO: handle exception
+                logger.error(e.getMessage() + "File " + item.getPath() + " (" + item.getLength() + " bytes)", e);
+                throw e;
+            }
         }
         if (item.getViewFile() != null && item.getViewFile().length() > 0) {
             try (SeekableFileInputStream is = new SeekableFileInputStream(item.getViewFile())) {
