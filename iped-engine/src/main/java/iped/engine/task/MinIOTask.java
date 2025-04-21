@@ -27,6 +27,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.CountingOutputStream;
 import org.apache.tika.Tika;
 import org.apache.tika.io.TemporaryResources;
+import org.apache.tika.io.TikaInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -396,7 +397,7 @@ public class MinIOTask extends AbstractTask {
 
     }
 
-    private static String getMimeType(String name) {
+    private static String getMimeType(TikaInputStream tis) throws IOException {
         if (tika == null) {
             synchronized (MinIOTask.class) {
                 if (tika == null) {
@@ -404,7 +405,7 @@ public class MinIOTask extends AbstractTask {
                 }
             }
         }
-        return tika.detect(name);
+        return tika.detect(tis);
     }
 
     @Override
@@ -469,6 +470,24 @@ public class MinIOTask extends AbstractTask {
         if (hash == null || hash.isEmpty() || item.getLength() == null)
             return;
 
+        if (item.getViewFile() != null && item.getViewFile().length() > 0) {
+            try (SeekableFileInputStream is = new SeekableFileInputStream(item.getViewFile())) {
+                String mime = getMimeType(TikaInputStream.get(is));
+                is.seek(0);
+                String fullPath = insertWithZip(item, hash, is, mime, true);
+                if (fullPath != null) {
+                    item.getMetadata().add(ElasticSearchIndexTask.PREVIEW_IN_DATASOURCE,
+                            "idInDataSource" + ElasticSearchIndexTask.KEY_VAL_SEPARATOR + fullPath);
+                    item.getMetadata().add(ElasticSearchIndexTask.PREVIEW_IN_DATASOURCE,
+                            "type" + ElasticSearchIndexTask.KEY_VAL_SEPARATOR + mime);
+                }
+            } catch (Exception e) {
+                // TODO: handle exception
+                logger.error(e.getMessage() + "Preview " + item.getViewFile().getPath() + " ("
+                        + item.getViewFile().length() + " bytes)", e);
+                throw e;
+            }
+        }
         // if ufdr is sent, only update the path if it is not a subitem, carved or
         // deleted
         if (!item.isSubItem() && !item.isCarved() && !item.isDeleted() && isToUploadUfdr(item)) {
@@ -494,23 +513,7 @@ public class MinIOTask extends AbstractTask {
                 throw e;
             }
         }
-        if (item.getViewFile() != null && item.getViewFile().length() > 0) {
-            try (SeekableFileInputStream is = new SeekableFileInputStream(item.getViewFile())) {
-                String mime = getMimeType(item.getViewFile().getName());
-                String fullPath = insertWithZip(item, hash, is, mime, true);
-                if (fullPath != null) {
-                    item.getMetadata().add(ElasticSearchIndexTask.PREVIEW_IN_DATASOURCE,
-                            "idInDataSource" + ElasticSearchIndexTask.KEY_VAL_SEPARATOR + fullPath);
-                    item.getMetadata().add(ElasticSearchIndexTask.PREVIEW_IN_DATASOURCE,
-                            "type" + ElasticSearchIndexTask.KEY_VAL_SEPARATOR + mime);
-                }
-            } catch (Exception e) {
-                // TODO: handle exception
-                logger.error(e.getMessage() + "Preview " + item.getViewFile().getPath() + " ("
-                        + item.getViewFile().length() + " bytes)", e);
-                throw e;
-            }
-        }
+
         String bucket = getBucket(item);
         ZipRequest zp = zipRequests.get(bucket);
 
