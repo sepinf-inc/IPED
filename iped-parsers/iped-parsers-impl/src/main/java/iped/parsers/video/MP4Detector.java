@@ -40,6 +40,10 @@ public class MP4Detector implements Detector {
     @Override
     public MediaType detect(InputStream stream, Metadata metadata) throws IOException {
 
+        if (stream == null) {
+            return MediaType.OCTET_STREAM;
+        }
+
         try (TemporaryResources tmp = new TemporaryResources()) {
             TikaInputStream tis = TikaInputStream.get(stream, tmp);
 
