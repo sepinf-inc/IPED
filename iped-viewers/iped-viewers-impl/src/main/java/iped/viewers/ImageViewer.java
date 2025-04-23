@@ -149,7 +149,7 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
                     int orientation = ImageMetadataUtil.getOrientation(in);
                     boolean isVideo = false;
                     if (orientation > 0) {
-                        image = ImageUtil.rotate(image, orientation);
+                        image = ImageUtil.applyOrientation(image, orientation);
                     } else {
                         String videoComment = ImageUtil.readJpegMetaDataComment(content.getSeekableInputStream());
                         if (videoComment != null && videoComment.startsWith("Frames=")) {
@@ -417,7 +417,7 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
             updatePanel(null);
         } else {
             BufferedImage img = image;
-            img = rotation != 0 ? ImageUtil.rotatePos(img, rotation) : img;
+            img = rotation != 0 ? ImageUtil.rotate(img, rotation) : img;
             img = applyBlurFilter ? applyBlur(img) : img;
             img = applyGrayScale ? applyGrayScale(img) : img;
             updatePanel(img);
