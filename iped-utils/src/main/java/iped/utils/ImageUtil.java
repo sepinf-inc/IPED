@@ -680,6 +680,17 @@ public class ImageUtil {
         return true;
     }
 
+    public static void writeCompressedJPG(BufferedImage img, OutputStream baos, int compression) throws IOException {
+        ImageWriter jpgWriter = ImageIO.getImageWritersByFormatName("jpg").next();
+        ImageWriteParam jpgWriteParam = jpgWriter.getDefaultWriteParam();
+        jpgWriteParam.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+        jpgWriteParam.setCompressionQuality(compression / 100f);
+        jpgWriter.setOutput(new MemoryCacheImageOutputStream(baos));
+        IIOImage outputImage = new IIOImage(img, null, null);
+        jpgWriter.write(null, outputImage, jpgWriteParam);
+        jpgWriter.dispose();        
+    }
+
     /**
      * @param intensity
      *            A proportion between the blurring window and the image dimensions.
@@ -759,16 +770,5 @@ public class ImageUtil {
             return op.filter(image, null);
         }
         return getImageFromType(image, BufferedImage.TYPE_BYTE_GRAY);
-    }
-    
-    public static void writeCompressedJPG(BufferedImage img, OutputStream baos, int compression) throws IOException {
-        ImageWriter jpgWriter = ImageIO.getImageWritersByFormatName("jpg").next();
-        ImageWriteParam jpgWriteParam = jpgWriter.getDefaultWriteParam();
-        jpgWriteParam.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-        jpgWriteParam.setCompressionQuality(compression / 100f);
-        jpgWriter.setOutput(new MemoryCacheImageOutputStream(baos));
-        IIOImage outputImage = new IIOImage(img, null, null);
-        jpgWriter.write(null, outputImage, jpgWriteParam);
-        jpgWriter.dispose();        
     }
 }
