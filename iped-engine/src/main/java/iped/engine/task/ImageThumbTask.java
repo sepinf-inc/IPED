@@ -378,7 +378,7 @@ public class ImageThumbTask extends ThumbTask {
                         int orientation = ImageMetadataUtil.getOrientation(stream);
                         if (orientation > 0) {
                             t = System.currentTimeMillis();
-                            img = ImageUtil.rotate(img, orientation);
+                            img = ImageUtil.applyOrientation(img, orientation);
                             performanceStats[16]++;
                             performanceStats[17] += System.currentTimeMillis() - t;
                         }

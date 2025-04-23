@@ -35,6 +35,7 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
     private static final String SKIP_KNOWN_FILES = "skipKnownFiles";
     private static final String PRECISION = "precision";
     private static final String BATCH_SIZE = "batchSize";
+    private static final String DEVICE = "device";
 
     private List<String> languages = new ArrayList<>();
     private List<String> mimesToProcess = new ArrayList<>();
@@ -53,6 +54,11 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
     private boolean skipKnownFiles = true;
     private String precision = "int8";
     private int batchSize = 1;
+    private String device = "cpu";
+
+    public String getDevice() {
+        return device;
+    }
 
     public String getPrecision() {
         return precision;
@@ -199,6 +205,11 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
         value = properties.getProperty(BATCH_SIZE);
         if (value != null) {
             batchSize = Integer.parseInt(value.trim());
+        }
+
+        value = properties.getProperty(DEVICE);
+        if (value != null && !value.isBlank()) {
+            device = value.strip();
         }
     }
 

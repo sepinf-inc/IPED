@@ -139,6 +139,7 @@ import iped.data.IItemId;
 import iped.engine.Version;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
+import iped.engine.config.FileSystemConfig;
 import iped.engine.config.LocaleConfig;
 import iped.engine.core.Manager;
 import iped.engine.data.Category;
@@ -366,6 +367,11 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         this.isMultiCase = isMultiCase;
         this.casesPathFile = casesPathFile;
         this.processingManager = processingManager;
+        if (isMultiCase) {
+            // Currently robust Image reading does not work with multicases.
+            FileSystemConfig fsConfig = ConfigurationManager.get().findObject(FileSystemConfig.class);
+            fsConfig.setRobustImageReading(false);
+        }
 
         LOGGER = LoggerFactory.getLogger(App.class);
         LOGGER.info("Starting..."); //$NON-NLS-1$

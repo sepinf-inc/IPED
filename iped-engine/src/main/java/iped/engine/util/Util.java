@@ -27,6 +27,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -581,6 +582,21 @@ public class Util {
     }
 
     public static long getFreeMemorySize() {
+        if (SystemUtils.IS_OS_LINUX) {
+            // In Linux systems, "free memory" != "available memory" (the latter includes
+            // buff./cache), so "total" = "used" + "available" (not "free").
+            try (BufferedReader reader = new BufferedReader(new FileReader("/proc/meminfo"))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    if (line.startsWith("MemAvailable:")) {
+                        String[] parts = line.split("\\s+");
+                        return Long.parseLong(parts[1]) << 10;
+                    }
+                }
+            } catch (Exception e) {
+            }
+            return -1;
+        }
         return getMemorySize("FreePhysicalMemorySize");
     }
 

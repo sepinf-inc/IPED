@@ -42,7 +42,7 @@ import org.w3c.dom.NodeList;
 import iped.data.IItemReader;
 
 public class ImageUtil {
-    private static final int[] orientations = new int[] { 1, 5, 3, 7 };
+    private static final int[] orientations = new int[] { 1, 6, 3, 8 };
 
     private static final String JBIG2 = "image/x-jbig2";
     private static final String ICO = "image/vnd.microsoft.icon";
@@ -631,14 +631,14 @@ public class ImageUtil {
         writer.dispose();
     }
 
-    public static BufferedImage rotatePos(BufferedImage src, int pos) {
+    public static BufferedImage rotate(BufferedImage src, int pos) {
         if (pos < 0 || pos > 3) {
             return src;
         }
-        return rotate(src, orientations[pos]);
+        return applyOrientation(src, orientations[pos]);
     }
 
-    public static BufferedImage rotate(BufferedImage src, int orientation) {
+    public static BufferedImage applyOrientation(BufferedImage src, int orientation) {
         if (orientation <= 1 || orientation > 8) {
             return src;
         }

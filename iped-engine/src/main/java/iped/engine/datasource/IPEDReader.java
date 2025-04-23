@@ -56,6 +56,7 @@ import iped.datasource.IDataSource;
 import iped.engine.CmdLineArgs;
 import iped.engine.config.CategoryToExpandConfig;
 import iped.engine.config.ConfigurationManager;
+import iped.engine.config.FileSystemConfig;
 import iped.engine.core.Manager;
 import iped.engine.data.BitmapBookmarks;
 import iped.engine.data.Bookmarks;
@@ -148,6 +149,11 @@ public class IPEDReader extends DataSourceReader {
         Object obj = Util.readObject(file.getAbsolutePath());
         if (obj instanceof IMultiBookmarks) {
             IMultiBookmarks mm = (IMultiBookmarks) obj;
+            if (mm.getSingleBookmarks().size() > 1) {
+                // Currently robust Image reading does not work with multicases.
+                FileSystemConfig fsConfig = ConfigurationManager.get().findObject(FileSystemConfig.class);
+                fsConfig.setRobustImageReading(false);
+            }
             for (IBookmarks m : mm.getSingleBookmarks())
                 processBookmark(m);
         } else {
