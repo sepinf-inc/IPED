@@ -1,3 +1,8 @@
+21/04/2025: IPED-4.2.2:
+Fix:
+#2484: Name based file type detection stopped working in triage and fastmode profiles [4.2.1 regression] (@lfcnassif)
+
+
 21/04/2025: IPED-4.2.1:
 News:
 #2356: Better detection of audio/mp4 and video/mp4 (@lfcnassif, @wladimirleite)
