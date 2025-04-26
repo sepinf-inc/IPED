@@ -18,7 +18,7 @@ public class FileSystemConfig extends AbstractPropertiesConfigurable {
     private boolean toAddUnallocated = false;
     private boolean toAddFileSlacks = false;
     private boolean robustImageReading;
-    // Adjusted to 1/6 rounded up (see #2580)
+    // Adjusted to 1/6 rounded up (see #2480)
     private int numImageReaders = (Runtime.getRuntime().availableProcessors() + 5) / 6;
     private long unallocatedFragSize = 1 << 30;
     private long minOrphanSizeToIgnore = -1;
