@@ -494,9 +494,9 @@ public class RemoteTranscriptionService {
 
                                 for (TranscribeRequest req : reqs) {
                                     TextAndScore partResult = req.result;
-                                    if (partResult == null) {
+                                    if (partResult == null || req.error != null) {
                                         error = false;
-                                        throw new Exception("Error processing the audio", req.error);
+                                        throw req.error != null ? req.error : new Exception("Error processing the audio");
                                     }
 
                                     if (result.score > 0)
