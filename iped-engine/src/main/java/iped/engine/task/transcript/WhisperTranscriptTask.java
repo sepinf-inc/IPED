@@ -96,14 +96,14 @@ public class WhisperTranscriptTask extends Wav2Vec2TranscriptTask {
         }
         line = reader.readLine();
         if (line == null) {
-            throw new StartupException("Error getting the number of cuda devices '");
+            throw new StartupException("Error getting the number of cuda devices.");
         }
 
         int cudaCount = 0;
         try {
-            cudaCount=Integer.valueOf(line);
+            cudaCount = Integer.valueOf(line);
         } catch (NumberFormatException e) {
-            throw new StartupException("Error getting the number of cuda devices '");
+            throw new StartupException("Error converting the number of cuda devices: " + line);
         }
         if (numProcesses == null) {
             logger.info("Number of CUDA devices detected: {}", cudaCount);
