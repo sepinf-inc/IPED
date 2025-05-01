@@ -50,7 +50,7 @@ def createProcessQueue():
     global processQueue, maxProcesses
     if processQueue is None:
         if maxProcesses is None:
-            maxProcesses = numThreads
+            maxProcesses = int(max(1, numThreads / 2))
         processQueue = queue.Queue(maxProcesses)
 
 def log_stderr(proc):
