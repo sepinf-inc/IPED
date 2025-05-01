@@ -162,24 +162,36 @@ public class AudioViewer extends AbstractViewer {
                 double d = Double.parseDouble(duration);
                 int seconds = (int) d;
                 if (seconds > 0) {
-                    if (seconds >= 3600) {
-                        strDuration = String.format("%02d:%02d:%02d", seconds / 3600, seconds % 3600 / 60,
-                                seconds % 60);
+                    int h = seconds / 3600;
+                    int m = seconds % 3600 / 60;
+                    int s = seconds % 60;
+                    if (h > 0) {
+                        strDuration = String.format("%dh %dm %ds", h, m, s);
+                    } else if (m > 0) {
+                        strDuration = String.format("%dm %ds", m, s);
                     } else {
-                        strDuration = String.format("%02d:%02d", seconds / 60, seconds % 60);
+                        strDuration = String.format("%ds", s);
                     }
                 }
             } catch (Exception e) {
             }
         }
 
+        String type = item.getType();
+
         sb.append("<td class=\"s1\">");
         sb.append("<b>").append(Messages.getString("AudioViewer.TranscriptionTitle")).append("</b>");
         if (strConfidence != null) {
             sb.append(" [").append(strConfidence).append("]");
         }
-        if (strDuration != null) {
-            sb.append("<br>(").append(strDuration).append(")");
+        if (strDuration != null || type != null) {
+            sb.append("<br>");
+            if (strDuration != null) {
+                sb.append(strDuration).append(' ');
+            }
+            if (type != null) {
+                sb.append('(').append(type).append(')');
+            }
         }
         sb.append("</td></tr>");
 
