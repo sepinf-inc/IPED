@@ -177,13 +177,21 @@ public class AudioViewer extends AbstractViewer {
             }
         }
 
+        String type = item.getType();
+
         sb.append("<td class=\"s1\">");
         sb.append("<b>").append(Messages.getString("AudioViewer.TranscriptionTitle")).append("</b>");
         if (strConfidence != null) {
             sb.append(" [").append(strConfidence).append("]");
         }
-        if (strDuration != null) {
-            sb.append("<br>(").append(strDuration).append(")");
+        if (strDuration != null || type != null) {
+            sb.append("<br>");
+            if (strDuration != null) {
+                sb.append(strDuration).append(' ');
+            }
+            if (type != null) {
+                sb.append('(').append(type).append(')');
+            }
         }
         sb.append("</td></tr>");
 
