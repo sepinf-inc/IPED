@@ -151,6 +151,7 @@ public class AudioViewer extends AbstractViewer {
                     double c = Double.parseDouble(conf);
                     strConfidence = String.format("%.0f%%", c * 100);
                 } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         }
@@ -174,6 +175,7 @@ public class AudioViewer extends AbstractViewer {
                     }
                 }
             } catch (Exception e) {
+                e.printStackTrace();
             }
         }
 
