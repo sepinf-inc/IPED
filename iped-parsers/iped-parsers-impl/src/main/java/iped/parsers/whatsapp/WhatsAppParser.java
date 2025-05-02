@@ -362,6 +362,16 @@ public class WhatsAppParser extends SQLite3DBParser {
                     chatMetadata.set(TikaCoreProperties.MODIFIED, last.getTimeStamp());
                 }
 
+                // "isEmpty" = the chat is empty or contains only system messages
+                boolean isEmpty = true;
+                for (Message m : msgSubset) {
+                    if (!m.isSystemMessage()) {
+                        isEmpty = false;
+                        break;
+                    }
+                }
+                chatMetadata.set(ExtraProperties.COMMUNICATION_PREFIX + "isEmpty", Boolean.valueOf(isEmpty).toString());
+
                 ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
                 extractor.parseEmbedded(chatStream, handler, chatMetadata, false);
                 bytes = nextBytes;
