@@ -2,6 +2,7 @@ package iped.app.ui.controls;
 
 import java.awt.Insets;
 
+import javax.swing.Icon;
 import javax.swing.border.Border;
 
 import bibliothek.extension.gui.dock.theme.eclipse.stack.EclipseTabPane;
@@ -16,6 +17,8 @@ import bibliothek.gui.DockController;
 import bibliothek.gui.Dockable;
 
 public class CustomTabPainter implements TabPainter {
+    private static final Insets insets = new Insets(3, 2, 5, -2);
+
     public Border getFullBorder(BorderedComponent owner, DockController controller, Dockable dockable) {
         return RectGradientPainter.FACTORY.getFullBorder(owner, controller, dockable);
     }
@@ -24,9 +27,14 @@ public class CustomTabPainter implements TabPainter {
         return new RectGradientPainter(pane, dockable) {
             private static final long serialVersionUID = -9020339124009415001L;
 
+            @Override
+            public void setIcon(Icon icon) {
+                super.setIcon(null);
+            }
+
+            @Override
             public void setLabelInsets(Insets labelInsets) {
-                labelInsets = new Insets(labelInsets.top - 1, labelInsets.left - 3, labelInsets.bottom - 1, labelInsets.right - 3);
-                super.setLabelInsets(labelInsets);
+                super.setLabelInsets(insets);
             }
         };
     }
