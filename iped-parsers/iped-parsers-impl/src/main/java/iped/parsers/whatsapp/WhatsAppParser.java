@@ -424,7 +424,8 @@ public class WhatsAppParser extends SQLite3DBParser {
             Chat c = chatList.get(i);
             if (c.getRemote().getFullId().equals(WAContact.waStatusBroadcast)) {
                 chatList.remove(i--);
-                for (Message m : c.getMessages()) {
+                List<Message> msgs = new ArrayList<Message>(c.getMessages());
+                for (Message m : msgs) {
                     String remote = m.getRemoteResource();
                     Chat newChat = statusChats.get(remote);
                     if (newChat == null) {

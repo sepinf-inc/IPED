@@ -94,8 +94,17 @@ public class WhisperTranscriptTask extends Wav2Vec2TranscriptTask {
         if ("whisperx".equals(line) && !ffmpegFound) {
             throw new IPEDException("FFmpeg not found on PATH, it is needed by WhisperX python library.");
         }
+        line = reader.readLine();
+        if (line == null) {
+            throw new StartupException("Error getting the number of cuda devices.");
+        }
 
-        int cudaCount = Integer.valueOf(reader.readLine());
+        int cudaCount = 0;
+        try {
+            cudaCount = Integer.valueOf(line);
+        } catch (NumberFormatException e) {
+            throw new StartupException("Error converting the number of cuda devices: " + line);
+        }
         if (numProcesses == null) {
             logger.info("Number of CUDA devices detected: {}", cudaCount);
             logger.info("Number of CPU devices detected: {}", cpus);
