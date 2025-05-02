@@ -148,7 +148,7 @@ public class TreeListener extends MouseAdapter implements TreeSelectionListener,
 
         path.addFirst((Node) App.get().tree.getModel().getRoot());
 
-        App.get().moveEvidenveTabToFront();
+        App.get().moveEvidenceTabToFront();
 
         TreePath treePath = new TreePath(path.toArray());
         App.get().tree.setExpandsSelectedPaths(true);

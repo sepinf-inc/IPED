@@ -1270,7 +1270,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         dock.getColors().setColor(ColorMap.COLOR_KEY_TITLE_BACKGROUND_FOCUSED, colorFocused);
     }
 
-    public void moveEvidenveTabToFront() {
+    public void moveEvidenceTabToFront() {
         selectDockableTab(evidenceTabDock);
     }
 
