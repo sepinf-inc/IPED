@@ -84,10 +84,14 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
     }
 
     public ImageViewer(int initialFitMode) {
+        this(initialFitMode, false);
+    }
+    
+    public ImageViewer(int initialFitMode, boolean minimalToolbar) {
         super(new BorderLayout());
         isToolbarVisible = true;
         imagePanel = new ImageViewPanel(initialFitMode);
-        createToolBar();
+        createToolBar(minimalToolbar);
         getPanel().add(imagePanel, BorderLayout.CENTER);
         getPanel().add(toolBar, BorderLayout.NORTH);
     }
@@ -281,7 +285,7 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
         return 1;
     }
 
-    private void createToolBar() {
+    private void createToolBar(boolean minimalToolbar) {
         toolBar = new JToolBar();
         toolBar.setFloatable(false);
         Icon iconSeparator = IconUtil.getIcon("separator", resPath, 24);
@@ -296,8 +300,11 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
         createToolBarButton(actionFitWidth);
         toolBar.add(new JLabel(iconSeparator));
 
-        toolBar.setMinimumSize(new Dimension(64, 16));        
-        
+        toolBar.setMinimumSize(new Dimension(64, 16));
+        if (minimalToolbar) {
+            return;
+        }
+
         sliderBrightness = new JSlider(SwingConstants.HORIZONTAL, 0, 100, 0);
         sliderBrightness.setPreferredSize(new Dimension(60, 16));
         sliderBrightness.setMinimumSize(new Dimension(20, 16));
