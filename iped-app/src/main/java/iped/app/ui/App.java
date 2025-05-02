@@ -26,7 +26,6 @@ import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.FileDialog;
 import java.awt.Frame;
-import java.awt.Insets;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
 import java.awt.event.ActionEvent;
@@ -76,7 +75,6 @@ import javax.swing.SortOrder;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
-import javax.swing.border.Border;
 import javax.swing.table.JTableHeader;
 import javax.swing.text.JTextComponent;
 import javax.swing.tree.TreePath;
@@ -88,14 +86,6 @@ import org.slf4j.LoggerFactory;
 import bibliothek.extension.gui.dock.theme.EclipseTheme;
 import bibliothek.extension.gui.dock.theme.eclipse.stack.EclipseTabPane;
 import bibliothek.extension.gui.dock.theme.eclipse.stack.EclipseTabPaneContent;
-import bibliothek.extension.gui.dock.theme.eclipse.stack.tab.BorderedComponent;
-import bibliothek.extension.gui.dock.theme.eclipse.stack.tab.InvisibleTab;
-import bibliothek.extension.gui.dock.theme.eclipse.stack.tab.InvisibleTabPane;
-import bibliothek.extension.gui.dock.theme.eclipse.stack.tab.RectGradientPainter;
-import bibliothek.extension.gui.dock.theme.eclipse.stack.tab.TabComponent;
-import bibliothek.extension.gui.dock.theme.eclipse.stack.tab.TabPainter;
-import bibliothek.extension.gui.dock.theme.eclipse.stack.tab.TabPanePainter;
-import bibliothek.gui.DockController;
 import bibliothek.gui.Dockable;
 import bibliothek.gui.dock.StackDockStation;
 import bibliothek.gui.dock.action.ActionType;
@@ -128,6 +118,7 @@ import iped.app.ui.columns.ColumnsManager;
 import iped.app.ui.columns.ColumnsManagerUI;
 import iped.app.ui.controls.CSelButton;
 import iped.app.ui.controls.CustomButton;
+import iped.app.ui.controls.CustomTabPainter;
 import iped.app.ui.controls.table.FilterTableHeaderController;
 import iped.app.ui.controls.table.FilterTableHeaderRenderer;
 import iped.app.ui.themes.ThemeManager;
@@ -685,33 +676,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         dockingControl.setTheme(ThemeMap.KEY_ECLIPSE_THEME);
 
-        // This forces Eclipse theme to use rectangular tabs instead of curved ones, to
-        // save horizontal space.
-        dockingControl.putProperty(EclipseTheme.TAB_PAINTER, new TabPainter() {
-            public Border getFullBorder(BorderedComponent owner, DockController controller, Dockable dockable) {
-                return RectGradientPainter.FACTORY.getFullBorder(owner, controller, dockable);
-            }
-
-            public TabComponent createTabComponent(EclipseTabPane pane, Dockable dockable) {
-                // return RectGradientPainter.FACTORY.createTabComponent(pane, dockable);
-                return new RectGradientPainter(pane, dockable) {
-                    private static final long serialVersionUID = -9020339124009415001L;
-
-                    public void setLabelInsets(Insets labelInsets) {
-                        labelInsets = new Insets(labelInsets.top - 1, labelInsets.left - 3, labelInsets.bottom - 1, labelInsets.right - 3);
-                        super.setLabelInsets(labelInsets);
-                    }
-                };
-            }
-
-            public InvisibleTab createInvisibleTab(InvisibleTabPane pane, Dockable dockable) {
-                return RectGradientPainter.FACTORY.createInvisibleTab(pane, dockable);
-            }
-
-            public TabPanePainter createDecorationPainter(EclipseTabPane pane) {
-                return RectGradientPainter.FACTORY.createDecorationPainter(pane);
-            }
-        });
+        // Force Eclipse theme to use rectangular tabs instead of curved ones, to save
+        // horizontal space.
+        dockingControl.putProperty(EclipseTheme.TAB_PAINTER, new CustomTabPainter());
 
         // Customize appearance of buttons and check boxes shown in docking frames title
         // bar, so focus is not painted (avoiding intersection with buttons icons) and
