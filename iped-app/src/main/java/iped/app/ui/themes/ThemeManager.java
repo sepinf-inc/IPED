@@ -48,6 +48,7 @@ public class ThemeManager {
                 // Workaround JDK-8134828
                 defaults.put("ScrollBar.minimumThumbSize", new Dimension(30, 30));
                 fixTreeExpandIcons(defaults);
+                fixSplitPaneDivider(defaults);
                 for (Object key : defaults.keySet()) {
                     savedDefaults.put(key, defaults.get(key));
                 }
@@ -164,6 +165,17 @@ public class ThemeManager {
         defaults.put("Tree[Enabled].expandedIconPainter", new TreeIconPainter(true, false));
         defaults.put("Tree[Enabled+Selected].collapsedIconPainter", new TreeIconPainter(false, true));
         defaults.put("Tree[Enabled+Selected].expandedIconPainter", new TreeIconPainter(true, true));
+    }
+
+    private void fixSplitPaneDivider(UIDefaults defaults) {
+        defaults.put("SplitPane:SplitPaneDivider[Enabled+Vertical].foregroundPainter", new EmptyPainter());
+        defaults.put("SplitPane:SplitPaneDivider[Enabled].foregroundPainter", new EmptyPainter());
+    }
+
+    @SuppressWarnings("rawtypes")
+    private static class EmptyPainter implements Painter {
+        public void paint(Graphics2D g, Object object, int width, int height) {
+        }
     }
 
     @SuppressWarnings("rawtypes")
