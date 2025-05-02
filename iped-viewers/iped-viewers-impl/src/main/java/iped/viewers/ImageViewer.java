@@ -296,6 +296,8 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
         createToolBarButton(actionFitWidth);
         toolBar.add(new JLabel(iconSeparator));
 
+        toolBar.setMinimumSize(new Dimension(64, 16));        
+        
         sliderBrightness = new JSlider(SwingConstants.HORIZONTAL, 0, 100, 0);
         sliderBrightness.setPreferredSize(new Dimension(60, 16));
         sliderBrightness.setMinimumSize(new Dimension(20, 16));
