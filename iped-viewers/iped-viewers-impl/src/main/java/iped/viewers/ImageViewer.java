@@ -108,7 +108,9 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
 
     protected void cleanState(boolean cleanRotation) {
         image = null;
-        sliderBrightness.setValue(0);
+        if (sliderBrightness != null) {
+            sliderBrightness.setValue(0);
+        }
         if (cleanRotation) {
             rotation = 0;
         }
