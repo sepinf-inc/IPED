@@ -26,6 +26,7 @@ public class ImageThumbTaskConfig extends AbstractTaskPropertiesConfig {
     private int highResDensity = 250;
     private int maxMPixelsInMemory = 32;
     private int maxViewImageSize = 2400;
+    private int compression = 50;
     private final Set<String> mimesToCreateView = new HashSet<String>();
 
     public boolean isEnableExternalConv() {
@@ -74,6 +75,10 @@ public class ImageThumbTaskConfig extends AbstractTaskPropertiesConfig {
 
     public int getMaxViewImageSize() {
         return maxViewImageSize;
+    }
+
+    public int getCompression() {
+        return compression;
     }
 
     public Set<String> getMimesToCreateView() {
@@ -150,6 +155,11 @@ public class ImageThumbTaskConfig extends AbstractTaskPropertiesConfig {
         value = properties.getProperty("maxMPixelsInMemory"); //$NON-NLS-1$
         if (value != null && !value.trim().isEmpty()) {
             maxMPixelsInMemory = Integer.valueOf(value.trim());
+        }
+
+        value = properties.getProperty("compression");
+        if (value != null && !value.trim().isEmpty()) {
+            compression = Integer.valueOf(value.trim());
         }
 
         value = properties.getProperty("mimesToCreateView");

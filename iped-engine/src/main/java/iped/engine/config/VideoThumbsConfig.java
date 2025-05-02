@@ -32,10 +32,12 @@ public class VideoThumbsConfig extends AbstractTaskPropertiesConfig {
 
     private static final String NUM_FRAMES_EQUATION = "numFramesEquation";
 
+    private static final String COMPRESSION = "compression";
+
     /**
-     * Image width of extracted frame.
+     * Maximum size (width/height) of extracted frames.
      */
-    private int width = 200;
+    private int size = 240;
 
     /**
      * Number of image columns.
@@ -67,9 +69,11 @@ public class VideoThumbsConfig extends AbstractTaskPropertiesConfig {
      */
     private int timeoutProcess = 15000;
 
-    private int galleryThumbWidth = -1;
+    private int galleryThumbSize = -1;
     private int galleryMinThumbs = -1;
     private int galleryMaxThumbs = -1;
+
+    private int compression = 50;
 
     /**
      * Extracts video frames using original video resolution.
@@ -94,9 +98,8 @@ public class VideoThumbsConfig extends AbstractTaskPropertiesConfig {
      */
     private String numFramesEquation;
 
-
-    public int getWidth() {
-        return width;
+    public int getSize() {
+        return size;
     }
 
     public int getColumns() {
@@ -123,8 +126,8 @@ public class VideoThumbsConfig extends AbstractTaskPropertiesConfig {
         return timeoutProcess;
     }
 
-    public int getGalleryThumbWidth() {
-        return galleryThumbWidth;
+    public int getGalleryThumbSize() {
+        return galleryThumbSize;
     }
 
     public int getGalleryMinThumbs() {
@@ -145,6 +148,10 @@ public class VideoThumbsConfig extends AbstractTaskPropertiesConfig {
 
     public int getMaxDimensionSize() {
         return maxDimensionSize;
+    }
+
+    public int getCompression() {
+        return compression;
     }
 
     public String getNumFramesEquation() {
@@ -169,7 +176,7 @@ public class VideoThumbsConfig extends AbstractTaskPropertiesConfig {
         if (value != null) {
             String[] vals = value.trim().split(","); //$NON-NLS-1$
             if (vals.length == 3) {
-                width = Integer.parseInt(vals[0].trim());
+                size = Integer.parseInt(vals[0].trim());
                 columns = Integer.parseInt(vals[1].trim());
                 rows = Integer.parseInt(vals[2].trim());
             }
@@ -209,7 +216,7 @@ public class VideoThumbsConfig extends AbstractTaskPropertiesConfig {
         if (value != null) {
             String[] vals = value.trim().split(","); //$NON-NLS-1$
             if (vals.length == 3) {
-                galleryThumbWidth = Integer.parseInt(vals[0].trim());
+                galleryThumbSize = Integer.parseInt(vals[0].trim());
                 galleryMinThumbs = Integer.parseInt(vals[1].trim());
                 galleryMaxThumbs = Integer.parseInt(vals[2].trim());
             }
@@ -219,7 +226,17 @@ public class VideoThumbsConfig extends AbstractTaskPropertiesConfig {
         if (value != null) {
             maxDimensionSize = Integer.parseInt(value.trim());
         }
-        
+
+        value = properties.getProperty(COMPRESSION);
+        if (value != null) {
+            compression = Integer.parseInt(value.trim());
+            if (compression < 0) {
+                compression = 0;
+            } else if (compression > 100) {
+                compression = 100;
+            }
+        }
+
         value = properties.getProperty(NUM_FRAMES_EQUATION);
         if (value != null) {
             numFramesEquation = value.trim();
