@@ -24,4 +24,5 @@ public interface AttachmentSearcher {
 
     String escapeQuery(String query);
 
+    void view(String luceneQuery);
 }

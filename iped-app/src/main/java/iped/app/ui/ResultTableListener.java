@@ -79,6 +79,8 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
         BookmarksManager.updateCounters();
 
+        App.get().auxViewPanel.clear();
+
         if (App.get().resultsTable.getSelectedRowCount() == 0) {
             App.get().setEnableGallerySimSearchButton(false);
             App.get().setLastSelectedDoc(-1);

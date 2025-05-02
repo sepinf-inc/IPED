@@ -150,4 +150,8 @@ public class AttachmentSearcherImpl implements AttachmentSearcher {
         return QueryBuilder.escape(string);
     }
 
+    @Override
+    public void view(String luceneQuery) {
+        App.get().auxViewPanel.listItems(luceneQuery);
+    }
 }

@@ -57,7 +57,7 @@ public abstract class MetadataViewer extends AbstractViewer {
     private JFXPanel jfxPanel;
     private List<HtmlViewer> htmlViewers = new ArrayList<>();
     
-    private static final int minLenToCollapse = 128;
+    private static final int minLenToCollapse = 160;
     private static final int collapsedSubstringLen = 32;
 
     public static class FieldComparator implements Comparator<String> {
@@ -72,45 +72,54 @@ public abstract class MetadataViewer extends AbstractViewer {
     private FieldComparator comparator = new FieldComparator();
 
     public MetadataViewer() {
+        this(false);
+    }
+    
+    public MetadataViewer(boolean isBasicOnly) {
         super(new GridLayout());
 
         dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
 
         jfxPanel = new JFXPanel();
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < (isBasicOnly ? 1 : 3); i++)
             htmlViewers.add(new HtmlViewer());
 
         Platform.runLater(new Runnable() {
             @Override
             public void run() {
-                tabPane = new TabPane();
-                tabPane.setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
-                tabPane.setSide(Side.RIGHT);
-
-                Tab tab0 = new Tab();
-                tab0.setText(Messages.getString("MetadataViewer.BasicProps"));
-                tab0.setContent(htmlViewers.get(0).htmlViewer);
-                tabPane.getTabs().add(tab0);
-
-                Tab tab1 = new Tab();
-                tab1.setText(Messages.getString("MetadataViewer.AdvancedProps"));
-                tab1.setContent(htmlViewers.get(1).htmlViewer);
-                tabPane.getTabs().add(tab1);
-
-                Tab tab2 = new Tab();
-                tab2.setText(Messages.getString("MetadataViewer.Metadata"));
-                tab2.setContent(htmlViewers.get(2).htmlViewer);
-                tabPane.getTabs().add(tab2);
-
                 StackPane root = new StackPane();
-                root.getChildren().add(tabPane);
+
+                if (isBasicOnly) {
+                    root.getChildren().add(htmlViewers.get(0).htmlViewer);
+                } else {
+                    tabPane = new TabPane();
+                    tabPane.setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
+                    tabPane.setSide(Side.RIGHT);
+    
+                    Tab tab0 = new Tab();
+                    tab0.setText(Messages.getString("MetadataViewer.BasicProps"));
+                    tab0.setContent(htmlViewers.get(0).htmlViewer);
+                    tabPane.getTabs().add(tab0);
+    
+                    Tab tab1 = new Tab();
+                    tab1.setText(Messages.getString("MetadataViewer.AdvancedProps"));
+                    tab1.setContent(htmlViewers.get(1).htmlViewer);
+                    tabPane.getTabs().add(tab1);
+    
+                    Tab tab2 = new Tab();
+                    tab2.setText(Messages.getString("MetadataViewer.Metadata"));
+                    tab2.setContent(htmlViewers.get(2).htmlViewer);
+                    tabPane.getTabs().add(tab2);
+    
+                    root.getChildren().add(tabPane);
+                }
+
                 Scene scene = new Scene(root);
                 jfxPanel.setScene(scene);
             }
         });
 
         this.getPanel().add(jfxPanel);
-
     }
 
     public abstract boolean isNumeric(String field);
@@ -182,10 +191,9 @@ public abstract class MetadataViewer extends AbstractViewer {
                     }
                 }
 
-                if (!isFixed() && isMetadataEntry(contentType)) {
+                if (tabPane != null && !isFixed() && isMetadataEntry(contentType)) {
                     selectTab(2);
                 }
-
             }
         });
     }
@@ -213,8 +221,11 @@ public abstract class MetadataViewer extends AbstractViewer {
         sb.append("<style>table {border-collapse: collapse; font-size:11pt; font-family: arial, verdana, sans-serif; width:100%; align:center; } table.t {margin-bottom:20px;} td { padding: 2px; } th {");
         sb.append("background-color:").append(UiUtil.getHexRGB(color1)).append("; "); //$NON-NLS-1$ //$NON-NLS-2$
         sb.append("border: 1px solid ").append(borderColor).append("; padding: 3px; text-align: left; font-weight: normal;} td.s1 {font-size:10pt; "); //$NON-NLS-1$ //$NON-NLS-2$
-        sb.append("background-color:").append(UiUtil.getHexRGB(color2)).append("; "); //$NON-NLS-1$ //$NON-NLS-2$
-        sb.append("width:170px; border: 1px solid ").append(borderColor).append("; text-align:left;} td.s2 {font-size:10pt; "); //$NON-NLS-1$ //$NON-NLS-2$
+        sb.append("background-color:").append(UiUtil.getHexRGB(tabPane == null ? color1 : color2)).append("; "); //$NON-NLS-1$ //$NON-NLS-2$
+        if (tabPane != null) {
+            sb.append("width:170px; ");
+        }
+        sb.append("border: 1px solid ").append(borderColor).append("; text-align:left;} td.s2 {font-size:10pt; "); //$NON-NLS-1$ //$NON-NLS-2$
         sb.append("background-color:").append(UiUtil.getHexRGB(color3)).append("; "); //$NON-NLS-1$ //$NON-NLS-2$
         sb.append("border: 1px solid ").append(borderColor).append("; word-break: break-all; word-wrap: break-word; text-align:left;}\n"); //$NON-NLS-1$ //$NON-NLS-2$
         sb.append("textarea {readonly: readonly; height: 60px; width: 100%; resize: none;}\n"); //$NON-NLS-1$
@@ -303,7 +314,9 @@ public abstract class MetadataViewer extends AbstractViewer {
 
     private void fillBasicProps(StringBuilder sb, IItemReader item) {
         sb.append("<table class=\"t\">"); //$NON-NLS-1$
-        sb.append("<tr><th colspan=2>" + Messages.getString("MetadataViewer.BasicProps") + "</th></tr>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        if (tabPane != null) {
+            sb.append("<tr><th colspan=2>" + Messages.getString("MetadataViewer.BasicProps") + "</th></tr>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        }
         fillProp(sb, BasicProps.NAME, item.getName());
         fillProp(sb, BasicProps.LENGTH, item.getLength());
         fillProp(sb, BasicProps.EXT, item.getExt());
@@ -401,8 +414,7 @@ public abstract class MetadataViewer extends AbstractViewer {
 
     @Override
     public void scrollToNextHit(boolean forward) {
-        int tabIndex = tabPane.getSelectionModel().getSelectedIndex();
+        int tabIndex = tabPane == null ? 0 : tabPane.getSelectionModel().getSelectedIndex();
         htmlViewers.get(tabIndex).scrollToNextHit(forward);
     }
-
 }

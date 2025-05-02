@@ -63,7 +63,7 @@ function createMediaControls() {
         const mediaType = el.classList.contains("iped-audio") ? "audio" : "video";
         el.replaceWith(createMediaElement(mediaType, el));
     });
-    document.querySelectorAll("input.check").forEach((el) => {
+    document.querySelectorAll("input.check, a.view").forEach((el) => {
         el.remove();
     });
 }

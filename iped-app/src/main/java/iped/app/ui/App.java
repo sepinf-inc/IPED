@@ -112,6 +112,7 @@ import iped.app.config.LogConfiguration;
 import iped.app.config.XMLResultSetViewerConfiguration;
 import iped.app.graph.AppGraphAnalytics;
 import iped.app.graph.FilterSelectedEdges;
+import iped.app.ui.auxview.AuxViewPanel;
 import iped.app.ui.bookmarks.BookmarkIcon;
 import iped.app.ui.bookmarks.BookmarkTreeCellRenderer;
 import iped.app.ui.columns.ColumnsManager;
@@ -207,6 +208,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     AppGraphAnalytics appGraphAnalytics;
 
     HitsTable subItemTable, parentItemTable, duplicatesTable, referencesTable, referencedByTable;
+    public AuxViewPanel auxViewPanel;    
     JTree tree, bookmarksTree, categoryTree;
     MetadataPanel metadataPanel;
     JScrollPane categoriesPanel, bookmarksPanel;
@@ -220,7 +222,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     private List<DefaultSingleCDockable> rsTabDock = new ArrayList<DefaultSingleCDockable>();
 
     private DefaultSingleCDockable tableTabDock, galleryTabDock, graphDock;
-    public DefaultSingleCDockable hitsDock, subitemDock, parentDock, duplicateDock, referencesDock, referencedByDock;
+    public DefaultSingleCDockable hitsDock, subitemDock, parentDock, duplicateDock, referencesDock, referencedByDock, auxViewDock;
 
     private List<DefaultSingleCDockable> viewerDocks;
     private ViewerController viewerController;
@@ -632,6 +634,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         referencedByScroll = new JScrollPane(referencedByTable);
         setupItemTable(referencedByTable);
 
+        auxViewPanel = new AuxViewPanel();
+
         categoryTree = new JTree(new Object[0]);
         categoryTree.setCellRenderer(new CategoryTreeCellRenderer());
         categoryTree.setRootVisible(true);
@@ -803,7 +807,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         LOGGER.info("UI created"); //$NON-NLS-1$
     }
 
-    private void setupItemTable(HitsTable itemTable) {
+    public static void setupItemTable(HitsTable itemTable) {
         itemTable.getColumnModel().getColumn(0).setPreferredWidth(40);
         itemTable.getColumnModel().getColumn(1).setPreferredWidth(18);
         itemTable.getColumnModel().getColumn(3).setPreferredWidth(4096);
@@ -1002,6 +1006,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 duplicatesScroll);
         referencesDock = createDockable("referencestab", Messages.getString("ReferencesTab.Title"), referencesScroll);
         referencedByDock = createDockable("referencedbytab", Messages.getString("ReferencedByTab.Title"), referencedByScroll);
+        auxViewDock = createDockable("auxviewtab", Messages.getString("AuxViewTab.Title"), auxViewPanel);
 
         dockingControl.addDockable(categoriesTabDock);
         dockingControl.addDockable(filtersTabDock);
@@ -1027,6 +1032,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         dockingControl.addDockable(parentDock);
         dockingControl.addDockable(referencesDock);
         dockingControl.addDockable(referencedByDock);
+        dockingControl.addDockable(auxViewDock);
 
         List<AbstractViewer> viewers = viewerController.getViewers();
         viewerDocks = new ArrayList<DefaultSingleCDockable>();
@@ -1162,7 +1168,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         List<DefaultSingleCDockable> docks = new ArrayList<>();
         docks.addAll(Arrays.asList(hitsDock, subitemDock, duplicateDock, parentDock, tableTabDock, galleryTabDock, bookmarksTabDock, evidenceTabDock, metadataTabDock, categoriesTabDock, graphDock, referencesDock, referencedByDock,
-                filtersTabDock));
+                filtersTabDock, auxViewDock));
         docks.addAll(viewerDocks);
         docks.addAll(rsTabDock);
         rsTabDock.clear();
@@ -1346,6 +1352,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         referencedByDock.setLocationsAside(referencesDock);
         referencedByDock.setVisible(true);
 
+        auxViewDock.setLocationsAside(referencedByDock);
+        auxViewDock.setVisible(true);
+
         if (!verticalLayout)
             adjustViewerLayout();
 
@@ -1375,6 +1384,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         selectDockableTab(categoriesTabDock);
         selectDockableTab(bookmarksTabDock);
         selectDockableTab(tableTabDock);
+        selectDockableTab(hitsDock);
 
         setupViewerDocks();
         viewerController.validateViewers();
@@ -1455,6 +1465,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         updateIconContainerUI(duplicatesTable, size, updateUI);
         updateIconContainerUI(referencesTable, size, updateUI);
         updateIconContainerUI(referencedByTable, size, updateUI);
+
+        updateIconContainerUI(auxViewPanel.getTable(), size, updateUI);        
     }
 
     private void updateIconContainerUI(JComponent comp, int size, boolean updateUI) {
@@ -1576,9 +1588,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         duplicatesTable.repaint();
         referencesTable.repaint();
         referencedByTable.repaint();
+        auxViewPanel.getTable().repaint();
     }
 
-    private class SpaceKeyListener extends KeyAdapter {
+    private static class SpaceKeyListener extends KeyAdapter {
 
         @Override
         public void keyPressed(KeyEvent e) {
@@ -1598,7 +1611,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 table.repaint();
                 BookmarksController.get().setMultiSetting(false);
                 BookmarksController.get().updateUISelection();
-                appCase.getMultiBookmarks().saveState();
+                App.get().appCase.getMultiBookmarks().saveState();
             }
         }
     }

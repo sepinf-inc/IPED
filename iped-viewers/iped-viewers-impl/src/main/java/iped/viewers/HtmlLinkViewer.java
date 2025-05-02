@@ -180,6 +180,9 @@ public class HtmlLinkViewer extends HtmlViewer implements SelectionListener {
             return attachSearcher.isChecked(hash);
         }
 
+        public void view(String luceneQuery) {
+            attachSearcher.view(luceneQuery);
+        }
     }
 
     private void runScript(String script) {

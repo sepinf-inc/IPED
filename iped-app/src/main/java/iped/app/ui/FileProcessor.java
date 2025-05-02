@@ -194,7 +194,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
         }
     }
 
-    private void waitEvidenceOpening(final IItem item) throws InterruptedException {
+    public static void waitEvidenceOpening(final IItem item) throws InterruptedException {
         ISeekableInputStreamFactory factory = item.getInputStreamFactory();
         if (!(factory instanceof SleuthkitInputStreamFactory) && !(factory instanceof ZIPInputStreamFactory) && !(factory instanceof AD1InputStreamFactory)) {
             return;
@@ -217,7 +217,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
         }
     }
 
-    private void setWaitVisible(final boolean visible) {
+    private static void setWaitVisible(final boolean visible) {
         try {
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
