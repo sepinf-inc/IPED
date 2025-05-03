@@ -83,11 +83,11 @@ public class PanelsLayout {
                     CDockable dock = control.getCDockable(i);
                     if (dock.getBaseLocation() == null) {
                         changed = true;
-                        dock.setVisible(true);
-                        CDockable prevDock = asidePerDockable.get(dock);
+                        CDockable prevDock = asidePerDockable.get(dock); 
                         if (prevDock != null) {
                             dock.setLocationsAside(prevDock);
                         }
+                        dock.setVisible(true);
                     }
                 }
 
