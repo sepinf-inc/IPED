@@ -42,6 +42,9 @@ public class HtmlViewer extends AbstractViewer {
     private JFXPanel jfxPanel;
     private static int MAX_SIZE = 10000000;
 
+    private static final String hitStyle = "color:black; background-color:yellow";
+    private static final String selStyle = "color:white; background-color:blue";
+
     private static String LARGE_FILE_MSG = "<html><body>" //$NON-NLS-1$
             + Messages.getString("HtmlViewer.TooBigToOpen") //$NON-NLS-1$
             + "<br><br><a href=\"\" onclick=\"app.openExternal()\">" //$NON-NLS-1$
@@ -257,6 +260,30 @@ public class HtmlViewer extends AbstractViewer {
         return idToScroll == null && nameToScroll == null && !scrollToPositionDone;
     }
 
+    private String scrollIntoView(String var) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("margin = 32;");
+        sb.append("mTop = 96;");
+        sb.append("r = ").append(var).append(".getBoundingClientRect();");
+
+        sb.append("y = window.scrollY;");
+        sb.append("if (r.top < mTop) ");
+        sb.append("    y += r.top - mTop;");
+        sb.append("else if (r.bottom > window.innerHeight - margin) ");
+        sb.append("    y += r.bottom - window.innerHeight + margin;");
+
+        sb.append("x = window.scrollX;");
+        sb.append("if (r.left < margin) ");
+        sb.append("    x += r.left - margin;");
+        sb.append("else if (r.right > window.innerWidth - margin) ");
+        sb.append("    x += r.right - window.innerWidth + margin;");
+
+        sb.append("window.scrollTo(x, y);");
+
+        return sb.toString();
+    }
+
     protected void scrollToPosition() {
         boolean done = false;
         boolean exception = false;
@@ -266,7 +293,7 @@ public class HtmlViewer extends AbstractViewer {
                         + "function find(){"
                         + "  x = document.getElementById(\"" + idToScroll + "\");"
                         + "  if(x != null){"
-                        + "    x.scrollIntoView(false);"
+                        + "    " + scrollIntoView("x")
                         + "    return true;"
                         + "  }"
                         + "  return false;"
@@ -278,7 +305,7 @@ public class HtmlViewer extends AbstractViewer {
                         + "function find(){"
                         + "  var x = document.getElementsByName(\"" + nameToScroll + "\");"
                         + "  if(x != null && x.length > 0){"
-                        + "    x[0].scrollIntoView({block: \"center\", inline: \"nearest\"});"
+                        + "    " + scrollIntoView("x[0]")
                         + "    return true;"
                         + "  }"
                         + "  return false;"
@@ -364,7 +391,7 @@ public class HtmlViewer extends AbstractViewer {
                             node.insertBefore(preNode, subnode);
 
                             Element termNode = doc.createElement("b"); //$NON-NLS-1$
-                            termNode.setAttribute("style", "color:black; background-color:yellow"); //$NON-NLS-1$ //$NON-NLS-2$
+                            termNode.setAttribute("style", hitStyle);
                             termNode.appendChild(doc.createTextNode(value.substring(idx, idx + term.length())));
                             termNode.setAttribute("id", "indexerHit-" + totalHits); //$NON-NLS-1$ //$NON-NLS-2$
                             hits.add(termNode);
@@ -373,10 +400,9 @@ public class HtmlViewer extends AbstractViewer {
 
                             subnode.setNodeValue(value.substring(idx + term.length()));
                             if (totalHits == 1) {
-                                termNode.setAttribute("style", "color:white; background-color:blue"); //$NON-NLS-1$ //$NON-NLS-2$
+                                termNode.setAttribute("style", selStyle);
                                 if (shouldScrollToHit()) {
-                                    webEngine.executeScript("document.getElementById(\"indexerHit-" + ++currentHit //$NON-NLS-1$
-                                            + "\").scrollIntoView(false);"); //$NON-NLS-1$
+                                    webEngine.executeScript("x = document.getElementById(\"indexerHit-" + ++currentHit + "\"); " + scrollIntoView("x"));
                                 }
                             }
 
@@ -418,12 +444,11 @@ public class HtmlViewer extends AbstractViewer {
                         if (currentHit < totalHits - 1) {
                             if (currentHit >= 0) {
                                 Element termNode = (Element) hits.get(currentHit);
-                                termNode.setAttribute("style", "color:black; background-color:yellow"); //$NON-NLS-1$ //$NON-NLS-2$
+                                termNode.setAttribute("style", hitStyle);
                             }
                             Element termNode = (Element) hits.get(++currentHit);
-                            termNode.setAttribute("style", "color:white; background-color:blue"); //$NON-NLS-1$ //$NON-NLS-2$
-                            webEngine.executeScript("document.getElementById(\"indexerHit-" + (currentHit) //$NON-NLS-1$
-                                    + "\").scrollIntoView(false);"); //$NON-NLS-1$
+                            termNode.setAttribute("style", selStyle);
+                            webEngine.executeScript("x = document.getElementById(\"indexerHit-" + currentHit + "\"); " + scrollIntoView("x"));
                         }
                     } else {
                         while (currTerm < queryTerms.length && queryTerms.length > 0) {
@@ -446,11 +471,10 @@ public class HtmlViewer extends AbstractViewer {
                     if (doc != null) {
                         if (currentHit > 0) {
                             Element termNode = (Element) hits.get(currentHit);
-                            termNode.setAttribute("style", "color:black; background-color:yellow"); //$NON-NLS-1$ //$NON-NLS-2$
+                            termNode.setAttribute("style", hitStyle);
                             termNode = (Element) hits.get(--currentHit);
-                            termNode.setAttribute("style", "color:white; background-color:blue"); //$NON-NLS-1$ //$NON-NLS-2$
-                            webEngine.executeScript("document.getElementById(\"indexerHit-" + (currentHit) //$NON-NLS-1$
-                                    + "\").scrollIntoView(false);"); //$NON-NLS-1$
+                            termNode.setAttribute("style", selStyle);
+                            webEngine.executeScript("x = document.getElementById(\"indexerHit-" + currentHit + "\"); " + scrollIntoView("x"));
                         }
                     } else {
                         while (currTerm > -1) {
