@@ -138,7 +138,7 @@ public class SimilarFacesOptionsDialog extends JDialog {
                 try {
                     int rot = Integer.parseInt(str);
                     if (rot > 1) {
-                        img = ImageUtil.rotate(img, rot);
+                        img = ImageUtil.applyOrientation(img, rot);
                     }
                 } catch (Exception e) {
                 }
