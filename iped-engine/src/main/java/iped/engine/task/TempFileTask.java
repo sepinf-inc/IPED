@@ -49,7 +49,7 @@ public class TempFileTask extends AbstractTask {
         boolean indexTempOnSSD = localConfig.isIndexTempOnSSD();
 
         CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-        isEnabled = indexTempOnSSD && !"fastmode".equals(args.getProfile()) && !"triage".equals(args.getProfile());
+        isEnabled = indexTempOnSSD && !"fastmode".equals(args.getProfile()) && !"triage".equals(args.getProfile()) && !caseData.isIpedReport();
 
         if (isEnabled) {
             TempFileTaskConfig tempFileTaskConfig = configurationManager.findObject(TempFileTaskConfig.class);
