@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="ImageProcessingTest" time="4.682" tests="1" errors="1" skipped="0" failures="0">
+  <properties>
+    <property name="sun.desktop" value="windows"/>
+    <property name="awt.toolkit" value="sun.awt.windows.WToolkit"/>
+    <property name="java.specification.version" value="11"/>
+    <property name="sun.cpu.isalist" value="amd64"/>
+    <property name="sun.jnu.encoding" value="Cp1252"/>
+    <property name="java.class.path" value="C:\Users\Marcus\git\IPED\iped-tests\target\test-classes;C:\Users\Marcus\git\IPED\iped-tests\target\classes;C:\Users\Marcus\.m2\repository\org\apache\logging\log4j\log4j-api\2.17.1\log4j-api-2.17.1.jar;C:\Users\Marcus\.m2\repository\org\apache\logging\log4j\log4j-core\2.17.1\log4j-core-2.17.1.jar;C:\Users\Marcus\.m2\repository\org\apache\logging\log4j\log4j-web\2.17.1\log4j-web-2.17.1.jar;C:\Users\Marcus\.m2\repository\org\apache\logging\log4j\log4j-slf4j-impl\2.17.1\log4j-slf4j-impl-2.17.1.jar;C:\Users\Marcus\.m2\repository\org\slf4j\slf4j-api\1.7.25\slf4j-api-1.7.25.jar;C:\Users\Marcus\.m2\repository\org\slf4j\jul-to-slf4j\1.7.25\jul-to-slf4j-1.7.25.jar;C:\Users\Marcus\.m2\repository\junit\junit\4.13.1\junit-4.13.1.jar;C:\Users\Marcus\.m2\repository\org\hamcrest\hamcrest-core\1.3\hamcrest-core-1.3.jar;"/>
+    <property name="java.vm.vendor" value="BellSoft"/>
+    <property name="sun.arch.data.model" value="64"/>
+    <property name="user.variant" value=""/>
+    <property name="java.vendor.url" value="https://bell-sw.com/"/>
+    <property name="user.timezone" value="America/Sao_Paulo"/>
+    <property name="java.vm.specification.version" value="11"/>
+    <property name="os.name" value="Windows 11"/>
+    <property name="sun.java.launcher" value="SUN_STANDARD"/>
+    <property name="user.country" value="BR"/>
+    <property name="sun.boot.library.path" value="C:\Program Files\BellSoft\LibericaJDK-11-Full\bin"/>
+    <property name="sun.java.command" value="C:\Users\Marcus\AppData\Local\Temp\surefire8191241414192640541\surefirebooter-20250507173226429_14.jar C:\Users\Marcus\AppData\Local\Temp\surefire8191241414192640541 2025-05-07T17-28-22_261-jvmRun1 surefire-20250507173226429_12tmp surefire_2-20250507173226429_13tmp"/>
+    <property name="jdk.debug" value="release"/>
+    <property name="surefire.test.class.path" value="C:\Users\Marcus\git\IPED\iped-tests\target\test-classes;C:\Users\Marcus\git\IPED\iped-tests\target\classes;C:\Users\Marcus\.m2\repository\org\apache\logging\log4j\log4j-api\2.17.1\log4j-api-2.17.1.jar;C:\Users\Marcus\.m2\repository\org\apache\logging\log4j\log4j-core\2.17.1\log4j-core-2.17.1.jar;C:\Users\Marcus\.m2\repository\org\apache\logging\log4j\log4j-web\2.17.1\log4j-web-2.17.1.jar;C:\Users\Marcus\.m2\repository\org\apache\logging\log4j\log4j-slf4j-impl\2.17.1\log4j-slf4j-impl-2.17.1.jar;C:\Users\Marcus\.m2\repository\org\slf4j\slf4j-api\1.7.25\slf4j-api-1.7.25.jar;C:\Users\Marcus\.m2\repository\org\slf4j\jul-to-slf4j\1.7.25\jul-to-slf4j-1.7.25.jar;C:\Users\Marcus\.m2\repository\junit\junit\4.13.1\junit-4.13.1.jar;C:\Users\Marcus\.m2\repository\org\hamcrest\hamcrest-core\1.3\hamcrest-core-1.3.jar;"/>
+    <property name="sun.cpu.endian" value="little"/>
+    <property name="user.home" value="C:\Users\Marcus"/>
+    <property name="user.language" value="pt"/>
+    <property name="java.specification.vendor" value="Oracle Corporation"/>
+    <property name="java.version.date" value="2022-04-19"/>
+    <property name="java.home" value="C:\Program Files\BellSoft\LibericaJDK-11-Full"/>
+    <property name="file.separator" value="\"/>
+    <property name="basedir" value="C:\Users\Marcus\git\IPED\iped-tests"/>
+    <property name="java.vm.compressedOopsMode" value="Zero based"/>
+    <property name="line.separator" value="&#10;"/>
+    <property name="java.specification.name" value="Java Platform API Specification"/>
+    <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
+    <property name="java.awt.graphicsenv" value="sun.awt.Win32GraphicsEnvironment"/>
+    <property name="surefire.real.class.path" value="C:\Users\Marcus\AppData\Local\Temp\surefire8191241414192640541\surefirebooter-20250507173226429_14.jar"/>
+    <property name="user.script" value=""/>
+    <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
+    <property name="java.runtime.version" value="11.0.15+10-LTS"/>
+    <property name="user.name" value="Marcus"/>
+    <property name="path.separator" value=";"/>
+    <property name="os.version" value="10.0"/>
+    <property name="java.runtime.name" value="OpenJDK Runtime Environment"/>
+    <property name="file.encoding" value="Cp1252"/>
+    <property name="java.vm.name" value="OpenJDK 64-Bit Server VM"/>
+    <property name="localRepository" value="C:\Users\Marcus\.m2\repository"/>
+    <property name="java.vendor.url.bug" value="https://bell-sw.com/support"/>
+    <property name="java.io.tmpdir" value="C:\Users\Marcus\AppData\Local\Temp\"/>
+    <property name="java.version" value="11.0.15"/>
+    <property name="user.dir" value="C:\Users\Marcus\git\IPED\iped-tests"/>
+    <property name="os.arch" value="amd64"/>
+    <property name="java.vm.specification.name" value="Java Virtual Machine Specification"/>
+    <property name="java.awt.printerjob" value="sun.awt.windows.WPrinterJob"/>
+    <property name="sun.os.patch.level" value=""/>
+    <property name="java.library.path" value="C:\Program Files\BellSoft\LibericaJDK-11-Full\bin;C:\WINDOWS\Sun\Java\bin;C:\WINDOWS\system32;C:\WINDOWS;c:\Users\Marcus\AppData\Local\Programs\cursor\resources\app\bin;C:\Program Files\BellSoft\LibericaJDK-11-Full\bin\;C:\Program Files (x86)\Common Files\Oracle\Java\javapath;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;c:\Program Files (x86)\HP\HP Performance Advisor;C:\Program Files (x86)\Common Files\Apple\Apple Application Support;C:\Program Files (x86)\Common Files\Apple\Mobile Device Support;C:\Program Files\Common Files\Apple\Apple Application Support;C:\Program Files\Common Files\Apple\Mobile Device Support;C:\Program Files\nodejs\;C:\Program Files\dotnet;C:\Program Files (x86)\dotnet;C:\apache-maven-3.8.5\bin;C:\apache-ant-1.9.16\bin;C:\Users\Felipe Costa\git\IPED_UI_CONFIG\target\release\iped-4.1-snapshot\python\Scripts;C:\Users\Felipe Costa\git\IPED_UI_CONFIG\target\release\iped-4.1-snapshot\python;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\MinGW\bin;C:\Program Files\Git\cmd;C:\Progra;C:\Program Files\dotnet\;C:\MinGW\bin;C:\Users\Marcus\AppData\Local\Programs\Python\Python312\Scripts\;C:\Users\Marcus\AppData\Local\Programs\Python\Python312\;C:\Users\Marcus\AppData\Local\Microsoft\WindowsApps;C:\Users\Marcus\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\Marcus\AppData\Local\Programs\Git\cmd;C:\Users\Marcus\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-7.0.1-full_build\bin;C:\Users\Marcus\AppData\Roaming\npm;C:\Users\Marcus\.dotnet\tools;C:\Users\Marcus\AppData\Local\Programs\cursor\resources\app\bin;."/>
+    <property name="java.vm.info" value="mixed mode"/>
+    <property name="java.vendor" value="BellSoft"/>
+    <property name="java.vm.version" value="11.0.15+10-LTS"/>
+    <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
+    <property name="java.class.version" value="55.0"/>
+  </properties>
+  <testcase name="" classname="ImageProcessingTest" time="4.681">
+    <error message="IPED CLI directory not found: C:\Users\Marcus\git\IPED\iped-tests\..\target\release\iped-4.3.0-snapshot" type="java.lang.IllegalStateException"><![CDATA[java.lang.IllegalStateException: IPED CLI directory not found: C:\Users\Marcus\git\IPED\iped-tests\..\target\release\iped-4.3.0-snapshot
+	at IpedProcessor.process(IpedProcessor.java:14)
+	at ImageProcessingTest.setup(ImageProcessingTest.java:33)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:566)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)
+	at org.junit.internal.runners.statements.RunBefores.invokeMethod(RunBefores.java:33)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:24)
+	at org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:413)
+	at org.apache.maven.surefire.junit4.JUnit4Provider.execute(JUnit4Provider.java:316)
+	at org.apache.maven.surefire.junit4.JUnit4Provider.executeWithRerun(JUnit4Provider.java:240)
+	at org.apache.maven.surefire.junit4.JUnit4Provider.executeTestSet(JUnit4Provider.java:214)
+	at org.apache.maven.surefire.junit4.JUnit4Provider.invoke(JUnit4Provider.java:155)
+	at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:385)
+	at org.apache.maven.surefire.booter.ForkedBooter.execute(ForkedBooter.java:162)
+	at org.apache.maven.surefire.booter.ForkedBooter.run(ForkedBooter.java:507)
+	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:495)
+]]></error>
+    <system-out><![CDATA[======== Downloading test image... ========
+]]></system-out>
+  </testcase>
+</testsuite>

@@ -2,10 +2,10 @@ import java.io.File;
 import java.io.IOException;
 
 /**
- * Invokes the native IPED CLI located under iped-parent/target/release/iped-4.3.0-snapshot.
+ * Invokes the native IPED CLI located under iped-parent/target/release/iped-4.2.0.
  */
 public class IpedProcessor {
-    private static final String CLI_DIR = "../target/release/iped-4.3.0-snapshot";
+    private static final String CLI_DIR = "../target/release/iped-4.2.0";
     private static final String CLI_EXE = "iped.exe";
 
     public static void process(String imagePath, String outputDir) throws IOException, InterruptedException {
