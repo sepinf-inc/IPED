@@ -1,6 +1,6 @@
 name: Java CI
 
-on: [push]
+on: [ push ]
 
 jobs:
 
@@ -9,30 +9,30 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-    - uses: actions/checkout@v1
-    - name: Set up JDK 11
-      uses: actions/setup-java@v1
-      with:
-        java-version: 11
-        java-package: jdk+fx
+      - uses: actions/checkout@v1
+      - name: Set up JDK 11
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+          java-package: jdk+fx
 
-    - name: Load libagdb from cache
-      id: libagdb
-      uses: actions/cache@v4
-      with:
-        path: libagdb
-        key: libagdb
+      - name: Load libagdb from cache
+        id: libagdb
+        uses: actions/cache@v4
+        with:
+          path: libagdb
+          key: libagdb
 
-    - name: Compile libagdb
-      # libagdb (agdbinfo) needs to be built from source
-      if: steps.libagdb.outputs.cache-hit != 'true'
-      run: | 
-            sudo apt install git autoconf automake autopoint libtool pkg-config
-            git clone https://github.com/libyal/libagdb.git && cd libagdb/ && git checkout 667a782
-            sudo ./synclibs.sh && sudo ./autogen.sh && sudo ./configure
+      - name: Compile libagdb
+        # libagdb (agdbinfo) needs to be built from source
+        if: steps.libagdb.outputs.cache-hit != 'true'
+        run: |
+          sudo apt install git autoconf automake autopoint libtool pkg-config
+          git clone https://github.com/libyal/libagdb.git && cd libagdb/ && git checkout 667a782
+          sudo ./synclibs.sh && sudo ./autogen.sh && sudo ./configure
 
-    - name: Install External Tools
-      run: |
+      - name: Install External Tools
+        run: |
           sudo apt-get update && sudo apt-get install \
           libscca-utils rifiuti2 libevtx-utils libevt-utils \
           libmsiecf-utils=20181227-2build1 \
@@ -50,48 +50,55 @@ jobs:
           cd ..
           sudo apt-get install gsfonts
 
+      - name: Cache test images
+        uses: actions/cache@v4
+        with:
+          path: |
+            target/test-images
+          key: ${{ runner.os }}-test-images-${{ hashFiles('iped-tests/src/test/java/br/com/iped/tests/ImageProcessingTest.java') }}
 
-    - name: Build with Maven
-      run: mvn -B package --file pom.xml
-    - shell: bash
-      run:
-        cd target && mv release iped-snapshot-$GITHUB_SHA && tar -zcvf ../iped-snapshot.tar.gz iped-snapshot-$GITHUB_SHA
-    - name: Upload snapshot
-      uses: actions/upload-artifact@v4
-      with:
-        name: iped-snapshot-${{ github.sha }}
-        path: iped-snapshot.tar.gz
+
+      - name: Build with Maven
+        run: mvn -B package --file pom.xml
+      - shell: bash
+        run:
+          cd target && mv release iped-snapshot-$GITHUB_SHA && tar -zcvf ../iped-snapshot.tar.gz iped-snapshot-$GITHUB_SHA
+      - name: Upload snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: iped-snapshot-${{ github.sha }}
+          path: iped-snapshot.tar.gz
 
   build-java14:
     
     runs-on: ubuntu-22.04
 
     steps:
-    - uses: actions/checkout@v1
-    - run: curl -O "https://download.bell-sw.com/java/14.0.2+13/bellsoft-jdk14.0.2+13-linux-amd64-full.tar.gz"
-    - name: Set up JDK 14
-      uses: actions/setup-java@v1
-      with:
-        java-version: 14
-        jdkFile: ./bellsoft-jdk14.0.2+13-linux-amd64-full.tar.gz
+      - uses: actions/checkout@v1
+      - run: curl -O "https://download.bell-sw.com/java/14.0.2+13/bellsoft-jdk14.0.2+13-linux-amd64-full.tar.gz"
+      - name: Set up JDK 14
+        uses: actions/setup-java@v1
+        with:
+          java-version: 14
+          jdkFile: ./bellsoft-jdk14.0.2+13-linux-amd64-full.tar.gz
 
-    - name: Load libagdb from cache
-      id: libagdb
-      uses: actions/cache@v4
-      with:
-        path: libagdb
-        key: libagdb
+      - name: Load libagdb from cache
+        id: libagdb
+        uses: actions/cache@v4
+        with:
+          path: libagdb
+          key: libagdb
 
-    - name: Compile libagdb
-      # libagdb (agdbinfo) needs to be built from source
-      if: steps.libagdb.outputs.cache-hit != 'true'
-      run: | 
-            sudo apt install git autoconf automake autopoint libtool pkg-config
-            git clone https://github.com/libyal/libagdb.git && cd libagdb/ && git checkout 667a782
-            sudo ./synclibs.sh && sudo ./autogen.sh && sudo ./configure
+      - name: Compile libagdb
+        # libagdb (agdbinfo) needs to be built from source
+        if: steps.libagdb.outputs.cache-hit != 'true'
+        run: |
+          sudo apt install git autoconf automake autopoint libtool pkg-config
+          git clone https://github.com/libyal/libagdb.git && cd libagdb/ && git checkout 667a782
+          sudo ./synclibs.sh && sudo ./autogen.sh && sudo ./configure
 
-    - name: Install External Tools
-      run: |        
+      - name: Install External Tools
+        run: |
           sudo add-apt-repository ppa:alex-p/tesseract-ocr-devel && sudo apt-get update && sudo apt-get install \
           libscca-utils rifiuti2 libevtx-utils libevt-utils \
           libmsiecf-utils=20181227-2build1 \
@@ -109,5 +116,12 @@ jobs:
           cd ..
           sudo apt-get install gsfonts
 
-    - name: Build with Maven
-      run: mvn -B package --file pom.xml
+      - name: Cache test images
+        uses: actions/cache@v4
+        with:
+          path: |
+            target/test-images
+          key: ${{ runner.os }}-test-images-${{ hashFiles('iped-tests/src/test/java/br/com/iped/tests/ImageProcessingTest.java') }}
+
+      - name: Build with Maven
+        run: mvn -B package --file pom.xml
