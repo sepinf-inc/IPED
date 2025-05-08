@@ -2,7 +2,7 @@ import java.io.File;
 import java.io.IOException;
 
 /**
- * Invokes the native IPED CLI located under iped-parent/target/release/iped-4.2.0.
+ * Invokes the native IPED CLI located under iped-parent/target/release/iped-4.2.0
  */
 public class IpedProcessor {
     private static final String CLI_DIR = "../target/release/iped-4.2.0";
