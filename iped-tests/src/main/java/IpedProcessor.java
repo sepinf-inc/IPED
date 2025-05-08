@@ -7,6 +7,7 @@ import java.io.IOException;
 public class IpedProcessor {
     private static final String CLI_DIR = "../target/release/iped-4.2.0";
     private static final String CLI_EXE = "iped.exe";
+    private static final String CLI_JAR = "iped.jar";
 
     public static void process(String imagePath, String outputDir) throws IOException, InterruptedException {
         File cliDir = new File(CLI_DIR);
@@ -14,11 +15,27 @@ public class IpedProcessor {
             throw new IllegalStateException("IPED CLI directory not found: " + cliDir.getAbsolutePath());
         }
 
-        ProcessBuilder pb = new ProcessBuilder(
-            new File(cliDir, CLI_EXE).getAbsolutePath(),
-            "-d", imagePath,
-            "-o", outputDir
-        );
+        ProcessBuilder pb;
+        boolean isWindows = System.getProperty("os.name").toLowerCase().contains("win");
+
+        if (isWindows) {
+            pb = new ProcessBuilder(
+                new File(cliDir, CLI_EXE).getAbsolutePath(),
+                "-d", imagePath,
+                "-o", outputDir
+            );
+        } else {
+            File jarFile = new File(cliDir, CLI_JAR);
+            if (!jarFile.exists()) {
+                throw new IllegalStateException("IPED JAR not found: " + jarFile.getAbsolutePath());
+            }
+            pb = new ProcessBuilder(
+                "java", "-jar", jarFile.getAbsolutePath(),
+                "-d", imagePath,
+                "-o", outputDir
+            );
+        }
+
         pb.directory(cliDir);
         pb.redirectErrorStream(true);
 
