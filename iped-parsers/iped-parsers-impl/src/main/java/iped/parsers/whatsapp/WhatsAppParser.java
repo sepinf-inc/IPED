@@ -362,6 +362,16 @@ public class WhatsAppParser extends SQLite3DBParser {
                     chatMetadata.set(TikaCoreProperties.MODIFIED, last.getTimeStamp());
                 }
 
+                // "isEmpty" = the chat is empty or contains only system messages
+                boolean isEmpty = true;
+                for (Message m : msgSubset) {
+                    if (!m.isSystemMessage()) {
+                        isEmpty = false;
+                        break;
+                    }
+                }
+                chatMetadata.set(ExtraProperties.COMMUNICATION_PREFIX + "isEmpty", Boolean.valueOf(isEmpty).toString());
+
                 ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
                 extractor.parseEmbedded(chatStream, handler, chatMetadata, false);
                 bytes = nextBytes;
@@ -424,7 +434,8 @@ public class WhatsAppParser extends SQLite3DBParser {
             Chat c = chatList.get(i);
             if (c.getRemote().getFullId().equals(WAContact.waStatusBroadcast)) {
                 chatList.remove(i--);
-                for (Message m : c.getMessages()) {
+                List<Message> msgs = new ArrayList<Message>(c.getMessages());
+                for (Message m : msgs) {
                     String remote = m.getRemoteResource();
                     Chat newChat = statusChats.get(remote);
                     if (newChat == null) {

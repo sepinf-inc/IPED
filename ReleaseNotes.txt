@@ -1,3 +1,31 @@
+23/04/2025: IPED-4.2.2:
+Fix:
+#2484: Name based file type detection stopped working in triage and fastmode profiles [4.2.1 regression] (@lfcnassif)
+
+
+21/04/2025: IPED-4.2.1:
+News:
+#2356: Better detection of audio/mp4 and video/mp4 (@lfcnassif, @wladimirleite)
+#2430: Improve OFX file type parser robustness (@wladimirleite)
+#2414: Upgrade ImageMagick for better HEIC support  (@wladimirleite, @lfcnassif)
+#2445: Upgrade Telegram decoder plugin to 1.0.13 (@aberenguel)
+#2396: Update translation to Spanish, Italian, German and French (@AburtoArielPM, @flates, @mobab-th, @jelallt)
+Fixes:
+#2415: External Face search not working on 4.2.0 (@lfcnassif)
+#2451: OCR search finds files in report but does not display OCR text in preview (@lfcnassif)
+#2455: Error manually loading bookmarks (@wladimirleite)
+#2398: Remove GPU auto detection in Whisper transcription, externalize device param (@lfcnassif)
+#2458: Transcription issues with non Latin languages or if the SO encoding is not the default  (@lfcnassif)
+#2432: Decrypted WhatsApp databases named msgstore.db.crypt15.db not recognized (@wladimirleite)
+#2468: Incorrect handling of image:tiff:orientation (@wladimirleite)
+#2450: Report generation and UI might crash due to Sleuthkit bug in native code (@lfcnassif)
+#2390: Broken links on HTML reports when just sha256 is computed (@lfcnassif)
+#2460: Rare Error parsing iOS WhatsApp ChatStorage.sqlite (@wladimirleite)
+#2437: Aborting ConcurrentModificationException from PythonTask (@lfcnassif)
+#2298: AccessDeniedException in read-only folder case  (@lfcnassif, @aberenguel)
+#2257: Minor stats issue: Increased Volume Found after --continue (@lfcnassif)
+
+
 30/12/2024: IPED-4.2.0:
 News:
 #39:   Filter Manager (@patrickdalla, @lfcnassif)

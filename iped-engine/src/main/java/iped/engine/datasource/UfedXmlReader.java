@@ -450,7 +450,8 @@ public class UfedXmlReader extends DataSourceReader {
                 "ProfilePicture", //$NON-NLS-1$
                 "WebAddress", //$NON-NLS-1$
                 "Reaction", //$NON-NLS-1$
-                "Price"
+                "Price",
+                "QuotedMessageData"
         ));
 
         @Override
@@ -1091,6 +1092,11 @@ public class UfedXmlReader extends DataSourceReader {
                         String currency = item.getMetadata().get(prop);
                         if (currency != null) {
                             parentItem.getMetadata().add(prop, currency);
+                        }
+                    } else if ("QuotedMessageData".equals(type)) {
+                        String refId = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "ReferenceId");
+                        if (refId != null) {
+                            parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + "QuotedReferenceId", refId);
                         }
                     }
                 } else {
