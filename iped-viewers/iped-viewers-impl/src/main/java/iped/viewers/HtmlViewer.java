@@ -108,7 +108,6 @@ public class HtmlViewer extends AbstractViewer {
         });
 
         this.getPanel().add(jfxPanel);
-        // System.out.println("AbstractViewer " + getName() + " ok");
     }
 
     @Override
@@ -222,7 +221,6 @@ public class HtmlViewer extends AbstractViewer {
                             doc = webEngine.getDocument();
 
                             if (doc != null) {
-                                // System.out.println("Highlighting");
                                 currentHit = -1;
                                 totalHits = 0;
                                 hits = new ArrayList<Object>();
@@ -347,20 +345,10 @@ public class HtmlViewer extends AbstractViewer {
         if (subnode != null) {
             do {
 
-                if (parentVisible && (subnode
-                        .getNodeType() == Node.TEXT_NODE /*
-                                                          * || subnode . getNodeType ( ) == Node . CDATA_SECTION_NODE
-                                                          */)) {
+                if (parentVisible && (subnode.getNodeType() == Node.TEXT_NODE)) {
                     String term;
                     do {
                         String value = subnode.getNodeValue();
-
-                        // remove acentos, etc
-                        /*
-                         * char[] input = value.toLowerCase().toCharArray(); char[] output = new
-                         * char[input.length * 4]; int outLen = ASCIIFoldingFilter.foldToASCII(input, 0,
-                         * output, 0, input.length); String fValue = new String(output, 0, outLen);
-                         */
                         String fValue = value.toLowerCase();
 
                         int idx = Integer.MAX_VALUE;
@@ -370,17 +358,9 @@ public class HtmlViewer extends AbstractViewer {
                             do {
                                 i = fValue.indexOf(t, j);
                                 if (i != -1 && i < idx) {
-                                    /*
-                                     * if( (i == 0 || !Character.isLetterOrDigit( fValue.charAt(i - 1))) && (i ==
-                                     * fValue.length() - t.length() || !Character .isLetterOrDigit(fValue.charAt(i +
-                                     * t.length()))) )
-                                     */
-                                    {
-                                        idx = i;
-                                        term = t;
-                                        break;
-                                    }
-                                    // j = i + 1;
+                                    idx = i;
+                                    term = t;
+                                    break;
                                 }
                             } while (i != -1 && i < idx);
 
