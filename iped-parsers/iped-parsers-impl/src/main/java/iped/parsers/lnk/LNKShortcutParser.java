@@ -57,8 +57,8 @@ import iped.properties.BasicProps;
 public class LNKShortcutParser extends AbstractParser {
     private static final long serialVersionUID = -3156133141331973368L;
 
-    private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.application("x-lnk")); //$NON-NLS-1$
-    public static final String LNK_MIME_TYPE = "application/x-lnk"; //$NON-NLS-1$
+    public static final MediaType LNK_MEDIA_TYPE = MediaType.application("x-lnk");
+    private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(LNK_MEDIA_TYPE);
 
     public static final String LNK_META_PREFIX = "lnk:";
 
@@ -78,7 +78,7 @@ public class LNKShortcutParser extends AbstractParser {
         final DateFormat df = new SimpleDateFormat(Messages.getString("LNKShortcutParser.DateFormat")); //$NON-NLS-1$
         df.setTimeZone(TimeZone.getTimeZone("GMT+0")); //$NON-NLS-1$
 
-        metadata.set(HttpHeaders.CONTENT_TYPE, LNK_MIME_TYPE);
+        metadata.set(HttpHeaders.CONTENT_TYPE, LNK_MEDIA_TYPE.toString());
         metadata.remove(TikaCoreProperties.RESOURCE_NAME_KEY);
 
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
