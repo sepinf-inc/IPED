@@ -30,6 +30,7 @@ import java.util.TimeZone;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.Property;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
@@ -38,7 +39,10 @@ import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.data.IItem;
+import iped.data.IItemReader;
 import iped.parsers.util.Messages;
+import iped.properties.BasicProps;
 
 /**
  * Parser para arquivos de atalho (LNK) do Windows Referencias utilizadas sobre
@@ -55,6 +59,12 @@ public class LNKShortcutParser extends AbstractParser {
 
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.application("x-lnk")); //$NON-NLS-1$
     public static final String LNK_MIME_TYPE = "application/x-lnk"; //$NON-NLS-1$
+
+    public static final String LNK_META_PREFIX = "lnk:";
+
+    private static final Property LNK_CREATED_META = Property.internalDate(LNK_META_PREFIX + BasicProps.CREATED);
+    private static final Property LNK_MODIFIED_META = Property.internalDate(LNK_META_PREFIX + BasicProps.MODIFIED);
+    private static final Property LNK_ACCESSED_META = Property.internalDate(LNK_META_PREFIX + BasicProps.ACCESSED);
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
@@ -91,6 +101,9 @@ public class LNKShortcutParser extends AbstractParser {
         try {
             LNKShortcut lnkObj = LNKParser.parseFromStream(stream);
 
+            setMetadata(context, metadata, lnkObj);
+
+
             // Exibindo as informações obtidas a partir do header do lnk
             showHeader(lnkObj, df, xhtml);
 
@@ -116,6 +129,64 @@ public class LNKShortcutParser extends AbstractParser {
         }
         xhtml.endElement("body"); //$NON-NLS-1$
         xhtml.endDocument();
+    }
+
+    private void setMetadata(ParseContext context, Metadata metadata, LNKShortcut lnkObj) {
+
+        IItemReader lnkItemReader = context.get(IItemReader.class);
+        if (lnkItemReader instanceof IItem) {
+            IItem lnkItem = (IItem) lnkItemReader;
+            if (lnkItem.getCreationDate() == null) {
+                lnkItem.setCreationDate(lnkObj.getCreateDate());
+            }
+            if (lnkItem.getModDate() == null) {
+                lnkItem.setModificationDate(lnkObj.getModifiedDate());
+            }
+            if (lnkItem.getAccessDate() == null) {
+                lnkItem.setAccessDate(lnkObj.getAccessDate());
+            }
+        }
+        metadata.set(LNK_CREATED_META, lnkObj.getCreateDate());
+        metadata.set(LNK_MODIFIED_META, lnkObj.getModifiedDate());
+        metadata.set(LNK_ACCESSED_META, lnkObj.getAccessDate());
+
+        metadata.set(LNK_META_PREFIX + "targetSize", Long.toString(lnkObj.getFileSize()));
+        metadata.set(LNK_META_PREFIX + "targetAttr", LNKShortcut.getFileAttributeFlagStr(lnkObj.getFileAttributeFlags()));
+        for (String flagItem : LNKShortcut.getDataFlagArray(lnkObj.getDataLinkFlags())) {
+            metadata.add(LNK_META_PREFIX + "linkAttr", flagItem);
+        }
+        metadata.set(LNK_META_PREFIX + "iconIndex", String.valueOf(lnkObj.getIconIndex()));
+        metadata.set(LNK_META_PREFIX + "windowAttr", String.valueOf(lnkObj.getShowWindow()));
+        metadata.set(LNK_META_PREFIX + "hotKey", String.valueOf(lnkObj.getHotKey()));
+
+        metadata.set(LNK_META_PREFIX + "description", lnkObj.getDescription());
+        metadata.set(LNK_META_PREFIX + "relativePath", lnkObj.getRelativePath());
+        metadata.set(LNK_META_PREFIX + "getWorkingDir", lnkObj.getWorkingDir());
+        metadata.set(LNK_META_PREFIX + "cmdLineArgs", lnkObj.getCommandLineArgs());
+        metadata.set(LNK_META_PREFIX + "iconLocation", lnkObj.getIconLocation());
+
+        LNKLinkTracker lnkTracker = lnkObj.getLinkTracker();
+        if (lnkTracker != null) {
+            metadata.set(LNK_META_PREFIX + "machineId", lnkTracker.getMachineId());
+            metadata.set(LNK_META_PREFIX + "droidVolId", lnkTracker.getDroidVolumeId());
+            metadata.set(LNK_META_PREFIX + "droidFileId", lnkTracker.getDroidFileId());
+            metadata.set(LNK_META_PREFIX + "birthDroidVolId", lnkTracker.getBirthDroidVolumeId());
+            metadata.set(LNK_META_PREFIX + "birthDroidFileId", lnkTracker.getBirthDroidFileId());
+        }
+
+        LNKLinkLocation objItem = lnkObj.getLinkLocation();
+        if (objItem != null) {
+            boolean isUnicode = LNKShortcut.DataFlags.IsUnicode.match(lnkObj.getDataLinkFlags());
+            metadata.set(LNK_META_PREFIX + "driveType", objItem.getDriveTypeStr());
+            metadata.set(LNK_META_PREFIX + "driveSerial", objItem.getDriveSerial());
+            metadata.set(LNK_META_PREFIX + "volumeLabel", isUnicode ? objItem.getVolumeLabelUnicode() : objItem.getVolumeLabel());
+            metadata.set(LNK_META_PREFIX + "localPath", isUnicode ? objItem.getLocalPathUnicode() : objItem.getLocalPath());
+            metadata.set(LNK_META_PREFIX + "commonPath", isUnicode ? objItem.getCommonPathUnicode() : objItem.getCommonPath());
+            metadata.set(LNK_META_PREFIX + "netDeviceName", isUnicode ? objItem.getNetDevNameUnicode() : objItem.getNetDevName());
+            metadata.set(LNK_META_PREFIX + "netShare", isUnicode ? objItem.getNetShareUnicode() : objItem.getNetShare());
+            metadata.set(LNK_META_PREFIX + "netProviderType", String.format("0x%08x", objItem.getNetProviderType()));
+            metadata.set(LNK_META_PREFIX + "locationFlags", String.format("0x%08x", objItem.getFlagsLocation()));
+        }
     }
 
     private void showHeader(LNKShortcut lnkObj, DateFormat df, XHTMLContentHandler xhtml) throws Exception {
