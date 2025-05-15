@@ -40,6 +40,7 @@ public class JumpListTask extends AbstractTask {
     protected void process(IItem evidence) throws Exception {
 
         handleAutomaticDestinationsEntry(evidence);
+        handleExecutablesInProgramFiles(evidence);
     }
 
     private void handleAutomaticDestinationsEntry(IItem evidence) {
@@ -64,4 +65,21 @@ public class JumpListTask extends AbstractTask {
             }
         }
     }
+
+    private void handleExecutablesInProgramFiles(IItem evidence) {
+
+        if ("exe".equals(evidence.getExt()) && !evidence.isCarved() && !evidence.isDeleted() && !evidence.isSubItem()) {
+
+            String appID = AppIDCalculator.calculateAppID(evidence.getPath());
+
+            if (appID != null) {
+                String appName = evidence.getName();
+                evidence.getMetadata().set(JUMPLIST_META_PREFIX + "id", appID);
+                evidence.getMetadata().set(JUMPLIST_META_PREFIX + "name", appName);
+                jumpListAppIDsConfig.getConfiguration().put(appID, appName);
+            }
+        }
+
+    }
+
 }
