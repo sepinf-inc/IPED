@@ -103,44 +103,6 @@ public class AudioViewer extends AbstractViewer {
     }
 
     private String generatePreview(IItemReader item) {
-        Color color2 = new Color(0xD0D0D0);
-        Color color3 = new Color(0xF4F4F4);
-        Color background = UIManager.getColor("Viewer.background");
-        if (background != null) {
-            color3 = UiUtil.mix(background, Color.gray, 0.9);
-            color2 = UiUtil.mix(background, Color.gray, 0.7);
-        }
-        String borderColor = "black";
-        Color foreground = UIManager.getColor("Viewer.foreground");
-        if (foreground != null && background != null)
-            borderColor = UiUtil.getHexRGB(UiUtil.mix(background, foreground, 0.5));
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("<!DOCTYPE html>\n");
-        sb.append("<html>\n");
-        sb.append("<head>\n");
-        sb.append("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />\n");
-        sb.append(
-                "<style>table {border-collapse: collapse; font-size:10pt; font-family: arial, verdana, sans-serif; width:100%; align:center; } ");
-        sb.append("table.t {margin-bottom:20px;} td { padding: 2px; } ");
-        sb.append("td.s1 {background-color:").append(UiUtil.getHexRGB(color2)).append("; ");
-        sb.append("border: 1px solid ").append(borderColor).append("; text-align:left;} ");
-        sb.append("td.s2 {background-color:").append(UiUtil.getHexRGB(color3)).append("; ");
-        sb.append("border: 1px solid ").append(borderColor).append("; text-align:left;}\n");
-        sb.append("textarea {readonly: readonly; height: 60px; width: 100%; resize: none;}\n");
-        sb.append("*:focus {outline: none;}\n");
-        sb.append("</style></head>\n");
-        sb.append("<body style=\"");
-
-        if (background != null)
-            sb.append("background-color:").append(UiUtil.getHexRGB(background)).append(";");
-        if (foreground != null)
-            sb.append("color:").append(UiUtil.getHexRGB(foreground)).append(";");
-        sb.append("\">\n");
-
-        sb.append("<table class=\"t\">");
-        sb.append("<tr>");
-
         String transcription = item.getMetadata().get(transcriptionAttr);
 
         String strConfidence = null;
@@ -181,8 +143,46 @@ public class AudioViewer extends AbstractViewer {
 
         String type = item.getType();
 
+        Color color2 = new Color(0xD0D0D0);
+        Color color3 = new Color(0xF4F4F4);
+        Color background = UIManager.getColor("Viewer.background");
+        if (background != null) {
+            color3 = UiUtil.mix(background, Color.gray, 0.9);
+            color2 = UiUtil.mix(background, Color.gray, 0.7);
+        }
+        String borderColor = "black";
+        Color foreground = UIManager.getColor("Viewer.foreground");
+        if (foreground != null && background != null)
+            borderColor = UiUtil.getHexRGB(UiUtil.mix(background, foreground, 0.5));
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("<!DOCTYPE html>\n");
+        sb.append("<html>\n");
+        sb.append("<head>\n");
+        sb.append("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />\n");
+        sb.append(
+                "<style>table {border-collapse: collapse; font-size:10pt; font-family: arial, verdana, sans-serif; width:100%; align:center; } ");
+        sb.append("table.t {margin-bottom:20px;} td { padding: 2px; } ");
+        sb.append("td.s1 {background-color:").append(UiUtil.getHexRGB(color2)).append("; ");
+        sb.append("border: 1px solid ").append(borderColor).append("; text-align:left;} ");
+        sb.append("td.s2 {background-color:").append(UiUtil.getHexRGB(color3)).append("; ");
+        sb.append("border: 1px solid ").append(borderColor).append("; text-align:left;}\n");
+        sb.append("textarea {readonly: readonly; height: 60px; width: 100%; resize: none;}\n");
+        sb.append("*:focus {outline: none;}\n");
+        sb.append("</style></head>\n");
+        sb.append("<body style=\"");
+
+        if (background != null)
+            sb.append("background-color:").append(UiUtil.getHexRGB(background)).append(";");
+        if (foreground != null)
+            sb.append("color:").append(UiUtil.getHexRGB(foreground)).append(";");
+        sb.append("\">\n");
+
+        sb.append("<table class=\"t\">");
+        sb.append("<tr>");
+
         sb.append("<td class=\"s1\">");
-        sb.append("<b>").append(Messages.getString("AudioViewer.TranscriptionTitle")).append("</b>");
+        sb.append("<b>").append(SimpleHTMLEncoder.htmlEncode(Messages.getString("AudioViewer.TranscriptionTitle"))).append("</b>");
         if (strConfidence != null) {
             sb.append(" [").append(strConfidence).append("]");
         }
