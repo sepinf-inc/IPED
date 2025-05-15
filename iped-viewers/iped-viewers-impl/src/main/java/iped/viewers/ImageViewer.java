@@ -64,7 +64,6 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
     private static final String actionZoomOut = "zoom-out";
     private static final String actionFitWidth = "fit-width";
     private static final String actionFitWindow = "fit-window";
-    private static final String actionCopyImage = "copy-image";
     private static final String actionGrayScale = "gray-scale";
     private static final String actionBlur = "blur-image";
 
@@ -323,11 +322,6 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
         toolBar.add(panelAux);
         toolBar.add(new JLabel(iconSeparator));
 
-        JButton butCopyImage = createToolBarButton(actionCopyImage);
-        butCopyImage.setToolTipText(Messages.getString("ImageViewer.Copy"));
-
-        toolBar.add(new JLabel(iconSeparator));
-
         grayButton = createToolBarButton(actionGrayScale, true);
         grayButton.setToolTipText(Messages.getString("ImageViewer.GrayScale"));
         
@@ -376,8 +370,6 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
             imagePanel.fitToWindow();
         } else if (cmd.equals(actionFitWidth)) {
             imagePanel.fitToWidth();
-        } else if (cmd.equals(actionCopyImage)) {
-            copyScreen();
         } else if (cmd.equals(actionGrayScale)) {
             setGrayFilter(!applyGrayScale);
             update = true;
