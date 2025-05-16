@@ -19,6 +19,7 @@
 package iped.app.ui;
 
 import java.awt.Component;
+import java.awt.Dialog;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
@@ -30,13 +31,17 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.text.Collator;
 import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import javax.swing.JTable;
 import javax.swing.RowSorter.SortKey;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.table.TableColumnModel;
 
+import org.apache.lucene.document.Document;
+import org.apache.lucene.search.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,9 +50,9 @@ import iped.data.IItem;
 import iped.data.IItemId;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.MultiSearchResult;
-import iped.properties.BasicProps;
 import iped.viewers.ATextViewer;
 import iped.viewers.components.HitsTableModel;
+import iped.viewers.util.ProgressDialog;
 
 public class ResultTableListener implements ListSelectionListener, MouseListener, KeyListener {
 
@@ -58,6 +63,8 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
     private long lastKeyTime = -1;
     private String lastKeyString = ""; //$NON-NLS-1$
     private Collator collator = Collator.getInstance();
+
+    private Executor executor = Executors.newSingleThreadExecutor();
 
     public ResultTableListener() {
         collator.setStrength(Collator.PRIMARY);
@@ -184,12 +191,6 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
             IItemId id = getSelectedItemId(rowIndex);
 
-            TableColumnModel cm = resultsTable.getTableHeader().getColumnModel();
-            int pos = 0;
-            for (int i = 0; i < colIndex; i++) {
-                pos += cm.getColumn(i).getWidth();
-            }
-
             String value = (String) resultsTable.getValueAt(rowIndex, colIndex);
             colIndex = resultsTable.convertColumnIndexToModel(colIndex);
             String field = ((ResultTableModel) resultsTable.getModel()).getColumnFieldName(colIndex);
@@ -243,22 +244,45 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
             clipboard.setContents(selection, null);
             evt.consume();
         } else if (evt.getKeyCode() == KeyEvent.VK_SPACE) {
-            itemSelection();
+            itemSelectionToggle();
             evt.consume();
         } else if (evt.getKeyCode() == KeyEvent.VK_R && ((evt.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) != 0)) {
-            // Shortcut to Deep-Selection (Item plus sub-items)
-            recursiveItemSelection(true);
+            itemSelectionAndSubItems(true);
             evt.consume();
         } else if (evt.getKeyCode() == KeyEvent.VK_R && ((evt.getModifiersEx() & KeyEvent.ALT_DOWN_MASK) != 0)) {
-            // Shortcut to Deep-Selection Remove (Item plus sub-items)
-            recursiveItemSelection(false);
+            itemSelectionAndSubItems(false);
+            evt.consume();
+        } else if (evt.getKeyCode() == KeyEvent.VK_P && ((evt.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) != 0)) {
+            itemSelectionAndParent(true);
+            evt.consume();
+        } else if (evt.getKeyCode() == KeyEvent.VK_P && ((evt.getModifiersEx() & KeyEvent.ALT_DOWN_MASK) != 0)) {
+            itemSelectionAndParent(false);
+            evt.consume();
+        } else if (evt.getKeyCode() == KeyEvent.VK_D && ((evt.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) != 0)) {
+            itemSelectionAndReferencedBy(true);
+            evt.consume();
+        } else if (evt.getKeyCode() == KeyEvent.VK_D && ((evt.getModifiersEx() & KeyEvent.ALT_DOWN_MASK) != 0)) {
+            itemSelectionAndReferencedBy(false);
+            evt.consume();
+        } else if (evt.getKeyCode() == KeyEvent.VK_F && ((evt.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) != 0)) {
+            itemSelectionAndReferences(true);
+            evt.consume();
+        } else if (evt.getKeyCode() == KeyEvent.VK_F && ((evt.getModifiersEx() & KeyEvent.ALT_DOWN_MASK) != 0)) {
+            itemSelectionAndReferences(false);
             evt.consume();
         } else
             BookmarksManager.get().keyPressed(evt);
 
     }
 
-    public void itemSelection() {
+    private ProgressDialog createProgressDialog() {
+        ProgressDialog d = new ProgressDialog(App.get(), null, false, 200, Dialog.ModalityType.APPLICATION_MODAL);
+        d.setNote(Messages.getString("App.Wait")); //$NON-NLS-1$
+        return d;
+    }
+
+    public void itemSelectionToggle() {
+
         int col = App.get().resultsTable.convertColumnIndexToView(1);
         int firstRow = App.get().resultsTable.getSelectedRow();
         boolean value = true;
@@ -266,20 +290,13 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
             value = false;
         }
 
-        BookmarksController.get().setMultiSetting(true);
-        App.get().resultsTable.setUpdateSelectionOnSort(false);
-        int[] selectedRows = App.get().resultsTable.getSelectedRows();
-        for (int i = 0; i < selectedRows.length; i++) {
-            if (i == selectedRows.length - 1) {
-                BookmarksController.get().setMultiSetting(false);
-                App.get().resultsTable.setUpdateSelectionOnSort(true);
-            }
-            App.get().resultsTable.setValueAt(value, selectedRows[i], col);
-        }
+        itemSelection(value);
     }
 
-    public void recursiveItemSelection(boolean value) {
+    public void itemSelection(boolean value) {
+
         int col = App.get().resultsTable.convertColumnIndexToView(1);
+
         BookmarksController.get().setMultiSetting(true);
         App.get().resultsTable.setUpdateSelectionOnSort(false);
         int[] selectedRows = App.get().resultsTable.getSelectedRows();
@@ -289,42 +306,78 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
                 App.get().resultsTable.setUpdateSelectionOnSort(true);
             }
             App.get().resultsTable.setValueAt(value, selectedRows[i], col);
-
-            int modelIndex = App.get().resultsTable.convertRowIndexToModel(selectedRows[i]);
-            selectAllSubitems(value, App.get().ipedResult.getItem(modelIndex));
         }
         BookmarksController.get().updateUI();
         App.get().subItemTable.repaint();
     }
 
-    /**
-     * Perform selection of all subitems
-     * 
-     * @param state
-     *            - which state to set true or false
-     * @param rootID
-     *            - parent of the selection
-     */
-    private void selectAllSubitems(boolean state, IItemId rootID) {
-        try {
-            IItem item = App.get().appCase.getItemByItemId(rootID);
-            if (item.hasChildren() || item.isDir()) { // Filter subItems which have children or are directories.
-                logger.debug("Searching items with evidenceUUID {} id {}", item.getDataSource().getUUID(), item.getId());
-                String query = BasicProps.EVIDENCE_UUID + ":" + item.getDataSource().getUUID() + " AND " + BasicProps.PARENTIDs + ":" + rootID.getId();
-                IPEDSearcher task = new IPEDSearcher(App.get().appCase, query);
-                MultiSearchResult result = task.multiSearch();
-                if (result.getLength() > 0) {
-                    logger.debug("Found {} subitems of sourceId {} id {}", result.getLength(), rootID.getSourceId(), rootID.getId());
-                    for (IItemId subItem : result.getIterator()) {
-                        App.get().appCase.getMultiBookmarks().setChecked((Boolean) state, subItem);
+    public void itemSelectionAndResultsByQuery(boolean value, BaseTableModel tableModel) {
+        ProgressDialog dialog = createProgressDialog();
+        executor.execute(() -> {
+            try {
+                int col = App.get().resultsTable.convertColumnIndexToView(1);
+                BookmarksController.get().setMultiSetting(true);
+                App.get().resultsTable.setUpdateSelectionOnSort(false);
+                int[] selectedRows = App.get().resultsTable.getSelectedRows();
+                dialog.setMaximum(selectedRows.length);
+                for (int i = 0; i < selectedRows.length; i++) {
+
+                    // item selection
+                    if (i == selectedRows.length - 1) {
+                        BookmarksController.get().setMultiSetting(false);
+                        App.get().resultsTable.setUpdateSelectionOnSort(true);
+                    }
+                    App.get().resultsTable.setValueAt(value, selectedRows[i], col);
+
+                    // query results selection
+                    int selectedIndex = App.get().resultsTable.convertRowIndexToModel(selectedRows[i]);
+                    IItemId selectedItemId = App.get().ipedResult.getItem(selectedIndex);
+                    final int selectedDocId = App.get().appCase.getLuceneId(selectedItemId);
+                    Document selectedDoc = App.get().appCase.getSearcher().doc(selectedDocId);
+                    Query query = tableModel.createQuery(selectedDoc);
+                    if (query != null) {
+                        IPEDSearcher task = new IPEDSearcher(App.get().appCase, query);
+                        task.setRewritequery(false);
+                        MultiSearchResult result = task.multiSearch();
+                        if (result.getLength() > 0) {
+                            logger.debug("Found {} results of sourceId {} id {}", result.getLength(), selectedItemId.getSourceId(), selectedItemId.getId());
+                            for (IItemId subItem : result.getIterator()) {
+                                App.get().appCase.getMultiBookmarks().setChecked((Boolean) value, subItem);
+                            }
+                        }
+                    }
+
+                    dialog.setProgress(i);
+                    if (dialog.isCanceled()) {
+                        return;
                     }
                 }
+            } catch (Exception e) {
+                logger.error("Error selecting item and its query results", e);
+            } finally {
+                SwingUtilities.invokeLater(() -> {
+                    dialog.close();
+                    BookmarksController.get().updateUI();
+                    App.get().subItemTable.repaint();
+                });
             }
+        });
+    }
 
-        } catch (Exception e) {
-            logger.debug("Error :" + e.getLocalizedMessage());
-            e.printStackTrace();
-        }
+    public void itemSelectionAndSubItems(boolean value) {
+        itemSelectionAndResultsByQuery(value, App.get().subItemModel);
+    }
+
+    public void itemSelectionAndParent(boolean value) {
+        itemSelectionAndResultsByQuery(value, App.get().parentItemModel);
+    }
+
+    public void itemSelectionAndReferences(boolean value) {
+        itemSelectionAndResultsByQuery(value, App.get().referencesModel);
+    }
+
+    public void itemSelectionAndReferencedBy(boolean value) {
+        itemSelectionAndResultsByQuery(value, App.get().referencedByModel);
     }
 
     /**

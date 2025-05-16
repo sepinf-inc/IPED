@@ -3,6 +3,7 @@ package iped.parsers.util;
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+import java.text.MessageFormat;
 
 public class Messages {
 
@@ -13,7 +14,7 @@ public class Messages {
     private Messages() {
     }
 
-    public static String getString(String key) {
+    public static String get(String key) {
         if (RESOURCE_BUNDLE == null) {
             String str = System.getProperty(iped.localization.Messages.LOCALE_SYS_PROP); // $NON-NLS-1$
             Locale locale = str != null ? Locale.forLanguageTag(str) : Locale.getDefault();
@@ -27,4 +28,11 @@ public class Messages {
             throw e;
         }
     }
+
+    public static String getString(String key, Object... args) {
+        String value = get(key);
+        if (args != null)
+            value = MessageFormat.format(value, args);
+        return value;
+    }    
 }

@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -44,8 +46,8 @@ public class WhisperTranscriptTask extends Wav2Vec2TranscriptTask {
     }
 
     @Override
-    protected Server startServer0(int device) throws IOException {
-        if (numProcesses != null && device == numProcesses) {
+    protected Server startServer0(int deviceId) throws IOException {
+        if (numProcesses != null && deviceId == numProcesses) {
             return null;
         }
         ProcessBuilder pb = new ProcessBuilder();
@@ -70,14 +72,15 @@ public class WhisperTranscriptTask extends Wav2Vec2TranscriptTask {
 
         String precision = transcriptConfig.getPrecision();
         String batchSize = Integer.toString(transcriptConfig.getBatchSize());
+        String device = transcriptConfig.getDevice();
 
-        pb.command(python, script, model, Integer.toString(device), Integer.toString(threads), lang, precision, batchSize);
+        pb.command(python, script, model, device, Integer.toString(deviceId), Integer.toString(threads), lang, precision, batchSize);
 
         Process process = pb.start();
 
         logInputStream(process.getErrorStream());
 
-        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
 
         String line = reader.readLine();
 
@@ -91,8 +94,17 @@ public class WhisperTranscriptTask extends Wav2Vec2TranscriptTask {
         if ("whisperx".equals(line) && !ffmpegFound) {
             throw new IPEDException("FFmpeg not found on PATH, it is needed by WhisperX python library.");
         }
+        line = reader.readLine();
+        if (line == null) {
+            throw new StartupException("Error getting the number of cuda devices.");
+        }
 
-        int cudaCount = Integer.valueOf(reader.readLine());
+        int cudaCount = 0;
+        try {
+            cudaCount = Integer.valueOf(line);
+        } catch (NumberFormatException e) {
+            throw new StartupException("Error converting the number of cuda devices: " + line);
+        }
         if (numProcesses == null) {
             logger.info("Number of CUDA devices detected: {}", cudaCount);
             logger.info("Number of CPU devices detected: {}", cpus);
@@ -118,7 +130,7 @@ public class WhisperTranscriptTask extends Wav2Vec2TranscriptTask {
         Server server = new Server();
         server.process = process;
         server.reader = reader;
-        server.device = device;
+        server.device = deviceId;
 
         return server;
     }
@@ -128,14 +140,62 @@ public class WhisperTranscriptTask extends Wav2Vec2TranscriptTask {
         return transcribeWavPart(tmpFile);
     }
 
+    protected List<TextAndScore> transcribeAudios(ArrayList<File> tmpFiles) throws Exception {
+
+        ArrayList<TextAndScore> textAndScores = new ArrayList<>();
+        for (int i = 0; i < tmpFiles.size(); i++) {
+            textAndScores.add(null);
+        }
+
+        Server server = deque.take();
+        try {
+            if (!ping(server) || server.transcriptionsDone >= MAX_TRANSCRIPTIONS) {
+                terminateServer(server);
+                server = startServer(server.device);
+            }
+
+            StringBuilder filePaths = new StringBuilder();
+            for (int i = 0; i < tmpFiles.size(); i++) {
+                if (i > 0) {
+                    filePaths.append(",");
+                }
+                filePaths.append(tmpFiles.get(i).getAbsolutePath().replace('\\', '/'));
+
+            }
+            server.process.getOutputStream().write(filePaths.toString().getBytes("UTF-8"));
+            server.process.getOutputStream().write(NEW_LINE);
+            server.process.getOutputStream().flush();
+
+            String line;
+            while (!TRANSCRIPTION_FINISHED.equals(line = server.reader.readLine())) {
+                if (line == null) {
+                    throw new ProcessCrashedException();
+                } else {
+                    throw new RuntimeException("Transcription failed, returned: " + line);
+                }
+            }
+            for (int i = 0; i < tmpFiles.size(); i++) {
+                Double score = Double.valueOf(server.reader.readLine());
+                String text = server.reader.readLine();
+
+                TextAndScore textAndScore = new TextAndScore();
+                textAndScore.text = text;
+                textAndScore.score = score;
+                textAndScores.set(i, textAndScore);
+                server.transcriptionsDone++;
+            }
+
+        } finally {
+            deque.add(server);
+        }
+
+        return textAndScores;
+    }
+
     @Override
     protected void logInputStream(InputStream is) {
-        List<String> ignoreMsgs = Arrays.asList(
-                "With dispatcher enabled, this function is no-op. You can remove the function call.",
-                "torchvision is not available - cannot save figures",
-                "Lightning automatically upgraded your loaded checkpoint from",
-                "Model was trained with pyannote.audio 0.0.1, yours is",
-                "Model was trained with torch 1.10.0+cu102, yours is");
+        List<String> ignoreMsgs = Arrays.asList("With dispatcher enabled, this function is no-op. You can remove the function call.", "torchvision is not available - cannot save figures",
+                "Lightning automatically upgraded your loaded checkpoint from", "Model was trained with pyannote.audio 0.0.1, yours is", "Model was trained with torch 1.10.0+cu102, yours is");
         Thread t = new Thread() {
             public void run() {
                 byte[] buf = new byte[1024];
