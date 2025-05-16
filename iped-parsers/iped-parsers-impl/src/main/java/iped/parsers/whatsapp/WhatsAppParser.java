@@ -732,7 +732,8 @@ public class WhatsAppParser extends SQLite3DBParser {
                 } else if (!wcontext.isMainDB() && db.isMainDB()) {
                     mainDb = db;
                     other = wcontext;
-                } else if (wcontext.getItem().getHash().equals(db.getItem().getHash())) {
+                } else if (wcontext.getItem().getHash() != null
+                        && wcontext.getItem().getHash().equals(db.getItem().getHash())) {
 
                     if (wcontext.getItem().getId() > db.getItem().getId()) {
                         wcontext.setBackup(true);
@@ -1538,7 +1539,9 @@ public class WhatsAppParser extends SQLite3DBParser {
         if (messageList != null && saveItemRef) {
             for (Message m : messageList) {
                 m.setMediaItem(item);
-                m.setMediaQuery(escapeQuery(query, isHashQuery));
+                if (query != null) {
+                    m.setMediaQuery(escapeQuery(query, isHashQuery));
+                }
             }
         }
     }
@@ -1595,9 +1598,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             for (IItemReader item : result) {
                 String hash = (String) item.getExtraAttribute("sha-256"); //$NON-NLS-1$
                 List<Message> messageList = hashesToSearchFor.remove(hash);
-
-                setItemToMessage(item, messageList, "sha-256:" + hash, true, saveItemRef);
-
+                setItemToMessage(item, messageList, hash == null ? null : "sha-256:" + hash, true, saveItemRef);
             }
         }
 
@@ -1708,7 +1709,8 @@ public class WhatsAppParser extends SQLite3DBParser {
                                     return (fileSize >= mediaSize + 1 && fileSize <= mediaSize + 15
                                             && itemStreamEndsWithZeros(item, mediaSize));
                                 }).collect(Collectors.toList());
-                                setItemToMessage(item, messageList, BasicProps.HASH + ":" + item.getHash(), true,
+                                setItemToMessage(item, messageList,
+                                        item.getHash() == null ? null : BasicProps.HASH + ":" + item.getHash(), true,
                                         saveItemRef);
                             }
                         }
@@ -1726,8 +1728,10 @@ public class WhatsAppParser extends SQLite3DBParser {
                                             if (m.getMediaItem() == null) {
                                                 logger.info("Item matched by long path {}", mediaPath);
                                                 m.setMediaItem(item);
-                                                m.setMediaQuery(
-                                                        escapeQuery(BasicProps.HASH + ":" + item.getHash(), true));
+                                                if (item.getHash() != null) {
+                                                    m.setMediaQuery(
+                                                            escapeQuery(BasicProps.HASH + ":" + item.getHash(), true));
+                                                }
                                             }
                                         }
                                     }
