@@ -458,8 +458,10 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             metadata.remove(ExtraProperties.THUMBNAIL_BASE64);
             evidence.setThumb(Base64.getDecoder().decode(base64Thumb));
             try {
-                File thumbFile = getThumbFile(evidence);
-                saveThumb(evidence, thumbFile);
+                if (evidence.getHash() != null) {
+                    File thumbFile = getThumbFile(evidence);
+                    saveThumb(evidence, thumbFile);
+                }
             } catch (Throwable t) {
                 LOGGER.warn("Error saving thumb of " + evidence.toString(), t);
             } finally {
