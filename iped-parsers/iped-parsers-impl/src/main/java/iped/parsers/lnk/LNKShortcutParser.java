@@ -27,7 +27,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.HttpHeaders;
@@ -72,8 +71,6 @@ public class LNKShortcutParser extends AbstractParser {
     public static final String LNK_METADATA_FILEEXISTS = "fileExists";
     public static final String LNK_METADATA_FILEMODIFIED = "modifiedAfterOpen";
 
-    static AtomicBoolean initialized = new AtomicBoolean(false);
-
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
         return SUPPORTED_TYPES;
@@ -83,14 +80,6 @@ public class LNKShortcutParser extends AbstractParser {
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
-        synchronized (initialized) {
-            if (!initialized.get()) {
-                MetadataUtil.setMetadataType(LNK_METADATA_PREFIX + TikaCoreProperties.NAMESPACE_PREFIX_DELIMITER + BasicProps.CREATED, Date.class);
-                MetadataUtil.setMetadataType(LNK_METADATA_PREFIX + TikaCoreProperties.NAMESPACE_PREFIX_DELIMITER + BasicProps.ACCESSED, Date.class);
-                MetadataUtil.setMetadataType(LNK_METADATA_PREFIX + TikaCoreProperties.NAMESPACE_PREFIX_DELIMITER + BasicProps.MODIFIED, Date.class);
-                initialized.set(true);
-            }
-        }
 
         final DateFormat df = new SimpleDateFormat(Messages.getString("LNKShortcutParser.DateFormat")); //$NON-NLS-1$
         df.setTimeZone(TimeZone.getTimeZone("GMT+0")); //$NON-NLS-1$
