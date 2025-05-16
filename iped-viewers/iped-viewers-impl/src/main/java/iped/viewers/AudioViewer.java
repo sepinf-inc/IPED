@@ -2,20 +2,27 @@ package iped.viewers;
 
 import java.awt.Color;
 import java.awt.GridLayout;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
+import java.util.Base64;
 import java.util.Set;
 
+import javax.imageio.ImageIO;
 import javax.swing.UIManager;
 
 import iped.data.IItemReader;
 import iped.io.IStreamSource;
+import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
+import iped.utils.IconUtil;
 import iped.utils.SimpleHTMLEncoder;
 import iped.utils.UiUtil;
 import iped.viewers.api.AbstractViewer;
+import iped.viewers.api.AttachmentSearcher;
 import iped.viewers.localization.Messages;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
@@ -29,12 +36,13 @@ public class AudioViewer extends AbstractViewer {
     private static final String audioDurationAttr = ExtraProperties.AUDIO_META_PREFIX + "xmpDM:duration";
 
     private JFXPanel jfxPanel;
-    private HtmlViewer htmlViewer;
+    private HtmlLinkViewer htmlViewer;
+    private String playImgBase64 = "";
 
-    public AudioViewer() {
+    public AudioViewer(AttachmentSearcher attachmentSearcher) {
         super(new GridLayout());
         jfxPanel = new JFXPanel();
-        htmlViewer = new HtmlViewer();
+        htmlViewer = new HtmlLinkViewer(attachmentSearcher);
 
         Platform.runLater(new Runnable() {
             @Override
@@ -62,7 +70,15 @@ public class AudioViewer extends AbstractViewer {
     @Override
     public void init() {
         htmlViewer.init();
-    }
+        try {
+            BufferedImage img = ImageIO.read(IconUtil.class.getResource(resPath + "play.png"));
+            ByteArrayOutputStream out = new ByteArrayOutputStream(4096);
+            ImageIO.write(img, "png", out);
+            playImgBase64 = Base64.getEncoder().encodeToString(out.toByteArray());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+     }
 
     @Override
     public void dispose() {
@@ -169,6 +185,20 @@ public class AudioViewer extends AbstractViewer {
         sb.append("border: 1px solid ").append(borderColor).append("; text-align:left;}\n");
         sb.append("textarea {readonly: readonly; height: 60px; width: 100%; resize: none;}\n");
         sb.append("*:focus {outline: none;}\n");
+        sb.append("a.play {\n");
+        sb.append("  display: inline-block;\n");
+        sb.append("  vertical-align: top;\n");
+        sb.append("  cursor: pointer;\n");
+        sb.append("  width: 26px;\n");
+        sb.append("  height: 26px;\n");
+        sb.append("  margin: 3px;\n");
+        sb.append("  background-image: url(\"data:image/png;base64,").append(playImgBase64).append("\");\n");
+        sb.append("  background-position: 0px 0px;\n");
+        sb.append("  background-size: 26px 52px;\n");
+        sb.append("}\n");
+        sb.append("a.play:hover {\n");
+        sb.append("  background-position: 0px -26px;\n");
+        sb.append("}\n");
         sb.append("</style></head>\n");
         sb.append("<body style=\"");
 
@@ -180,6 +210,14 @@ public class AudioViewer extends AbstractViewer {
 
         sb.append("<table class=\"t\">");
         sb.append("<tr>");
+
+        sb.append("<td class=\"s1\" width=\"26px\">");
+        sb.append("<a class=\"play\" onclick=\"app.open('");
+        if (item.getHash() != null) {
+            sb.append(BasicProps.HASH).append(':').append(item.getHash());
+        }
+        sb.append("')\"/>");
+        sb.append("</td>");
 
         sb.append("<td class=\"s1\">");
         sb.append("<b>").append(SimpleHTMLEncoder.htmlEncode(Messages.getString("AudioViewer.TranscriptionTitle"))).append("</b>");
@@ -198,7 +236,7 @@ public class AudioViewer extends AbstractViewer {
         sb.append("</td></tr>");
 
         sb.append("<tr>");
-        sb.append("<td class=\"s2\">");
+        sb.append("<td colspan=\"2\" class=\"s2\">");
         if (transcription == null) {
             sb.append("<font color=\"gray\"> [");
             sb.append(SimpleHTMLEncoder.htmlEncode(Messages.getString("AudioViewer.NoTranscription")));
