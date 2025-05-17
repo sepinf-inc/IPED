@@ -57,6 +57,7 @@ public class AppListener implements ActionListener, MouseListener {
         App.get().resultsTable.scrollRectToVisible(a);
         App.get().gallery.scrollRectToVisible(new Rectangle());
         App.get().setEnableGallerySimSearchButton(false);
+        App.get().setEnableGalleryFaceSearchButton(false);
         App.get().ipedResult = new MultiSearchResult();
         App.get().setLastSelectedDoc(-1);
         if (App.get().resultSortKeys == null || (App.get().resultsTable.getRowSorter() != null && !App.get().resultsTable.getRowSorter().getSortKeys().isEmpty())) {
