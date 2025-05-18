@@ -41,6 +41,7 @@ import iped.engine.config.ConfigurationManager;
 import iped.engine.io.TimeoutException;
 import iped.engine.task.AbstractTask;
 import iped.engine.task.HashDBLookupTask;
+import iped.engine.task.HashTask;
 import iped.engine.task.video.VideoThumbTask;
 import iped.exception.IPEDException;
 import iped.properties.ExtraProperties;
@@ -189,6 +190,9 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             createConnection();
         }
 
+        if (transcriptConfig.isEnabled()) {
+            checkDependency(HashTask.class);
+        }
     }
 
     public static TextAndScore transcribeWavBreaking(File tmpFile, String itemPath, Function<File, TextAndScore> transcribeWavPart) throws Exception {
