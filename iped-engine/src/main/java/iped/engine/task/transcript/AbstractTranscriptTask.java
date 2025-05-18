@@ -372,8 +372,12 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
 
         if (evidence.getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR) != null && evidence.getMetadata().get(ExtraProperties.CONFIDENCE_ATTR) != null)
             return;
+        
+        String hash = evidence.getHash();
+        if (hash == null || hash.isEmpty())
+            return;
 
-        TextAndScore prevResult = getTextFromDb(evidence.getHash());
+        TextAndScore prevResult = getTextFromDb(hash);
         if (prevResult != null) {
             evidence.getMetadata().set(ExtraProperties.CONFIDENCE_ATTR, Double.toString(prevResult.score));
             evidence.getMetadata().set(ExtraProperties.TRANSCRIPT_ATTR, prevResult.text);
