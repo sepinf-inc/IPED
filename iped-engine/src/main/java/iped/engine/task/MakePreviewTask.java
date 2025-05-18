@@ -63,6 +63,10 @@ public class MakePreviewTask extends AbstractTask {
         parser = new StandardParser();
         parser.setPrintMetadata(false);
         parser.setIgnoreStyle(false);
+
+        if (isEnabled()) {
+            checkDependency(HashTask.class);
+        }
     }
 
     @Override
