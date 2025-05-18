@@ -58,6 +58,7 @@ import iped.engine.core.Statistics;
 import iped.engine.core.Worker.ProcessTime;
 import iped.engine.data.Item;
 import iped.engine.task.ExportFileTask;
+import iped.engine.task.HashTask;
 import iped.engine.task.ImageThumbTask;
 import iped.engine.task.ThumbTask;
 import iped.engine.task.die.DIETask;
@@ -256,6 +257,7 @@ public class VideoThumbTask extends ThumbTask {
                     logger.info("Task enabled."); //$NON-NLS-1$
                     logger.info("MPLAYER version: " + vmp); //$NON-NLS-1$
                 }
+                checkDependency(HashTask.class);
                 init.set(true);
             }
         }
