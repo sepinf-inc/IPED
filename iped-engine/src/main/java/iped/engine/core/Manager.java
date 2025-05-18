@@ -225,7 +225,7 @@ public class Manager {
         return indexDir;
     }
 
-    Worker[] getWorkers() {
+    public Worker[] getWorkers() {
         return workers;
     }
 
@@ -543,6 +543,9 @@ public class Manager {
         workers = new Worker[localConfig.getNumThreads()];
         for (int k = 0; k < workers.length; k++) {
             workers[k] = new Worker(k, caseData, writer, output, this);
+        }
+        for (Worker w : workers) {
+            w.init();
         }
 
         // Execução dos workers após todos terem sido instanciados e terem inicializado
