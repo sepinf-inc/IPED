@@ -123,6 +123,10 @@ public class ImageThumbTask extends ThumbTask {
 
         // Set ImageIO plugins priority order.
         ImageUtil.updateImageIOPluginsPriority();
+
+        if (isEnabled()) {
+            checkDependency(HashTask.class);
+        }
     }
 
     private static void startTmpDirCleaner(File tmpDir) {
