@@ -26,6 +26,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
@@ -343,7 +344,30 @@ public class LNKShortcutParser extends AbstractParser {
         fullLocalPath = "/" + StringUtils.substringAfter(fullLocalPath, ":/");
         final String fullLocalPathFinal = fullLocalPath;
         List<IItemReader> items = searcher.search(BasicProps.PATH + ":\"" + searcher.escapeQuery(fullLocalPath) + "\"");
-        items.removeIf(item -> !item.getPath().endsWith(fullLocalPathFinal)); // must match the path
+        items.removeIf(item -> !item.getPath().endsWith(fullLocalPathFinal)); // path must ends with fullLocalPathFinal
+
+        // Disconsider if fullPath is not relative to a root item (named as "/").
+        // This avoid a fullLocalPath = "/x/y/a.png" to wrongly reference a file like "/image.E01/vol_2/Images/foo/x/y/a.png"
+        int fullLocalPathParts = StringUtils.countMatches(fullLocalPathFinal, '/');
+        for (Iterator<IItemReader> iter = items.iterator(); iter.hasNext();) {
+            IItemReader item = iter.next();
+
+            // walk until find the relative root
+            IItemReader currentItem = item;
+            for (int i = 0; i < fullLocalPathParts; i++) {
+                List<IItemReader> parents = searcher.search(BasicProps.ID + ":" + currentItem.getParentId());
+                if (parents.isEmpty()) {
+                    currentItem = null;
+                    break;
+                }
+                currentItem = parents.get(0);
+            }
+
+            // if relative root is not "/", then the item is not related to the link
+            if (currentItem == null || !(currentItem.getName().equals("/") || currentItem.isRoot())) {
+                iter.remove();
+            }
+        }
         return items;
     }
 
