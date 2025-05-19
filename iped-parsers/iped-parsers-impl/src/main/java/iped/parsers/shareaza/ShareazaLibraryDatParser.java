@@ -128,6 +128,9 @@ public class ShareazaLibraryDatParser extends AbstractParser {
             bme.addPropertyExclusion(LibraryFolder.class, "indexToFile");
             bme.addPropertyExclusion(LibraryFolder.class, "parentFolder");
             bme.addPropertyExclusion(LibraryFile.class, "parentFolder");
+            bme.addPropertyExclusion(LibraryFile.class, "hashDBHit");
+            bme.addPropertyExclusion(LibraryFile.class, "hashSetHits");
+            bme.addPropertyExclusion(LibraryFile.class, "sharedSources");
             bme.registerClassNameProperty(LibraryFolder.class, "path");
             bme.registerClassNameProperty(AlbumFolder.class, "name");
             bme.registerTransformationMapping(LibraryFile.class, ExtraProperties.LINKED_ITEMS, "md5:${md5}");
