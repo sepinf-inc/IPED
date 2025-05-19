@@ -223,9 +223,9 @@ public class LNKShortcutParser extends AbstractParser {
         IItemReader lnkItem = context.get(IItemReader.class);
         String localPathName = StringUtils.substringAfterLast(fullLocalPath, '\\');
 
-        // Strategy 1: Relative path lookup
+        // Strategy 1: MFT-based lookup
         {
-            List<IItemReader> items = lookupUsingRelativePath(searcher, lnkObj, lnkItem);
+            List<IItemReader> items = lookupUsingMFT(searcher, lnkObj, lnkItem);
             IItemReader result = setReferenceMetadata(metadata, context, lnkObj, localPathName, items);
             if (result != null) {
                 metadata.set(LNK_METADATA_REFERENCEDUSIGN, LNK_REFERENCEDUSIGN_RELATIVEPATH);
@@ -233,9 +233,9 @@ public class LNKShortcutParser extends AbstractParser {
             }
         }
 
-        // Strategy 2: MFT-based lookup
+        // Strategy 2: Relative path lookup
         {
-            List<IItemReader> items = lookupUsingMFT(searcher, lnkObj, lnkItem);
+            List<IItemReader> items = lookupUsingRelativePath(searcher, lnkObj, lnkItem);
             IItemReader result = setReferenceMetadata(metadata, context, lnkObj, localPathName, items);
             if (result != null) {
                 metadata.set(LNK_METADATA_REFERENCEDUSIGN, LNK_REFERENCEDUSIGN_MFT);
