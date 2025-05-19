@@ -31,6 +31,7 @@ import iped.parsers.util.BeanMetadataExtraction;
 import iped.parsers.util.ChildPornHashLookup;
 import iped.parsers.util.Messages;
 import iped.parsers.util.P2PUtil;
+import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
 import iped.utils.LocalizedFormat;
@@ -124,6 +125,7 @@ public class PartMetParser extends AbstractParser {
             bme.registerPropertyNameMapping(KnownMetEntry.class, "hash", "ed2k");
             bme.registerTransformationMapping(KnownMetEntry.class, ExtraProperties.LINKED_ITEMS, "edonkey:${hash}");
             bme.registerTransformationMapping(KnownMetEntry.class, ExtraProperties.SHARED_HASHES, "${hash}");
+            bme.registerTransformationMapping(KnownMetEntry.class, BasicProps.NAME, "Part-Entry-${name}.met");
             bme.extractEmbedded(0, context, metadata, handler, e);
         }
 
