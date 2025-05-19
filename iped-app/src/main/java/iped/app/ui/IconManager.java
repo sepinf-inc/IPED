@@ -179,6 +179,11 @@ public class IconManager {
             mimeIconMap.put("application/x-emule-preferences-dat", icon);
         }
 
+        icon = availableIconsMap.get("emule-entry");
+        if (icon != null) {
+            mimeIconMap.put("application/x-emule-known-met-entry", icon);
+        }
+
         icon = availableIconsMap.get("ares");
         if (icon != null) {
             mimeIconMap.put("application/x-ares-galaxy", icon);
