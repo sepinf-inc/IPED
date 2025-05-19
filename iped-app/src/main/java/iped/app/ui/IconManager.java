@@ -202,6 +202,11 @@ public class IconManager {
             mimeIconMap.put("application/x-shareaza-download", icon);
         }
 
+        icon = availableIconsMap.get("shareaza-entry");
+        if (icon != null) {
+            mimeIconMap.put("application/x-shareaza-library-dat-entry", icon);
+        }
+
         icon = availableIconsMap.get("torrent");
         if (icon != null) {
             mimeIconMap.put("application/x-bittorrent-resume-dat", icon);
