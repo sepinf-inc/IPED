@@ -5,20 +5,27 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.tika.mime.MediaType;
 
 import iped.configuration.Configurable;
 import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.search.QueryBuilder;
 import iped.engine.task.AbstractTask;
-import iped.parsers.lnk.LNKShortcutParser;
 import iped.properties.ExtraProperties;
 
 public class JumpListTask extends AbstractTask {
 
-    private static final String AUTOMATIC_DESTINATIONS_SUFIX = ".automaticDestinations-ms";
+    public static final MediaType AUTOMATIC_DESTINATIONS_MIME = MediaType.application("x-customdestinations");
+    public static final MediaType CUSTOM_DESTINATIONS_MIME = MediaType.application("x-automaticdestinations");
 
-    private static final String JUMPLIST_META_PREFIX = "jumpList:";
+    public static final MediaType AUTOMATIC_DESTINATIONS_ENTRY_MIME = MediaType.application("x-customdestinations-entry");
+    public static final MediaType CUSTOM_DESTINATIONS_ENTRY_MIME = MediaType.application("x-automaticdestinations-entry");
+
+    private static final String AUTOMATIC_DESTINATIONS_SUFIX = ".automaticDestinations-ms";
+    private static final String CUSTOM_DESTINATIONS_SUFIX = ".customDestinations-ms";
+
+    public static final String JUMPLIST_META_PREFIX = "jumpList:";
 
     private Configurable<Map<String, String>> jumpListAppIDsConfig;
 
@@ -39,21 +46,26 @@ public class JumpListTask extends AbstractTask {
     @Override
     protected void process(IItem evidence) throws Exception {
 
-        handleAutomaticDestinationsEntry(evidence);
-        handleExecutablesInProgramFiles(evidence);
+        processAutomaticDestinationsEntry(evidence);
+        processExecutablesInProgramFiles(evidence);
     }
 
-    private void handleAutomaticDestinationsEntry(IItem evidence) {
-        if (evidence.getMediaType().equals(LNKShortcutParser.LNK_MEDIA_TYPE)) {
+    private void processAutomaticDestinationsEntry(IItem evidence) {
+
+        if (evidence.getMediaType().equals(AUTOMATIC_DESTINATIONS_ENTRY_MIME)
+                || evidence.getMediaType().equals(CUSTOM_DESTINATIONS_ENTRY_MIME)) {
+
             String parentPath = StringUtils.removeEnd(evidence.getPath(), evidence.getName());
             parentPath = StringUtils.removeEnd(parentPath, "/");
             parentPath = StringUtils.removeEnd(parentPath, ">>");
 
             String parentName = StringUtils.substringAfterLast(parentPath, "/");
 
-            if (StringUtils.endsWith(parentName, AUTOMATIC_DESTINATIONS_SUFIX)) {
+            if (StringUtils.endsWithAny(parentName, AUTOMATIC_DESTINATIONS_SUFIX, CUSTOM_DESTINATIONS_SUFIX)) {
 
-                String appID = StringUtils.removeEnd(parentName, AUTOMATIC_DESTINATIONS_SUFIX).toLowerCase();
+                String appID = StringUtils.removeEnd(parentName, AUTOMATIC_DESTINATIONS_SUFIX);
+                appID = StringUtils.removeEnd(appID, CUSTOM_DESTINATIONS_SUFIX);
+                appID = appID.toLowerCase();
                 evidence.getMetadata().set(JUMPLIST_META_PREFIX + "appID", appID);
 
                 String appName = jumpListAppIDsConfig.getConfiguration().get(appID);
@@ -61,12 +73,13 @@ public class JumpListTask extends AbstractTask {
                     evidence.getMetadata().set(JUMPLIST_META_PREFIX + "appName", appName);
                 }
 
-                evidence.getMetadata().add(ExtraProperties.LINKED_ITEMS, QueryBuilder.escape(JUMPLIST_META_PREFIX + "id") + ":" + appID);
+                String linkQuery = QueryBuilder.escape(JUMPLIST_META_PREFIX + "id") + ":" + appID;
+                evidence.getMetadata().add(ExtraProperties.LINKED_ITEMS, linkQuery);
             }
         }
     }
 
-    private void handleExecutablesInProgramFiles(IItem evidence) {
+    private void processExecutablesInProgramFiles(IItem evidence) {
 
         if ("exe".equals(evidence.getExt()) && !evidence.isCarved() && !evidence.isDeleted() && !evidence.isSubItem()) {
 
@@ -79,7 +92,5 @@ public class JumpListTask extends AbstractTask {
                 jumpListAppIDsConfig.getConfiguration().put(appID, appName);
             }
         }
-
     }
-
 }
