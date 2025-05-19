@@ -2,11 +2,7 @@ package iped.parsers.lnk;
 
 import java.text.DateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
-
-import org.apache.commons.lang3.StringUtils;
 
 public class LNKShortcut {
 
@@ -66,20 +62,12 @@ public class LNKShortcut {
         return toDateStr(df, createDate);
     }
 
-    public Date getCreateDate() {
-        return toDate(createDate);
-    }
-
     public void setCreateDate(long createDate) {
         this.createDate = createDate;
     }
 
     public String getAccessDate(DateFormat df) {
         return toDateStr(df, accessDate);
-    }
-
-    public Date getAccessDate() {
-        return toDate(accessDate);
     }
 
     public void setAccessDate(long accessDate) {
@@ -89,10 +77,6 @@ public class LNKShortcut {
     public String getModifiedDate(DateFormat df) {
         return toDateStr(df, modifiedDate);
     }
-    public Date getModifiedDate() {
-        return toDate(modifiedDate);
-    }
-
 
     public void setModifiedDate(long modifiedDate) {
         this.modifiedDate = modifiedDate;
@@ -311,21 +295,21 @@ public class LNKShortcut {
         public int getFlag() {
             return flag;
         }
-
-        public boolean match(int dFlag) {
-            return (dFlag & this.flag) == this.flag;
-        }
     }
 
     public static String getDataFlagStr(int dFlag) {
-        return StringUtils.join(getDataFlagArray(dFlag), ", ");
-    }
-
-    public static String[] getDataFlagArray(int dFlag) {
-        return Arrays.stream(DataFlags.values())
-            .filter(enumItem -> enumItem.match(dFlag))
-            .map(enumItem -> enumItem.name())
-            .toArray(String[]::new);
+        StringBuilder sb = new StringBuilder(""); //$NON-NLS-1$
+        for (DataFlags enumItem : DataFlags.values()) {
+            if ((dFlag & enumItem.getFlag()) == enumItem.getFlag()) {
+                sb.append(enumItem.name());
+                sb.append(", "); //$NON-NLS-1$
+            }
+        }
+        int i;
+        if ((i = sb.length()) > 0) {
+            sb.delete(i - 2, i);
+        }
+        return sb.toString();
     }
 
     public String getStringDataFlags() {
@@ -357,18 +341,13 @@ public class LNKShortcut {
         return sb.toString();
     }
 
-    public static Date toDate(long ft) {
+    public static String toDateStr(DateFormat df, long ft) {
         // FileTime do Windows = número de intervalos de 100 nanossegundos desde 1 de
         // janeiro de 1601
         // Date.parse("1/1/1601") == 11644455600000L
         if (ft == 0)
-            return null;
+            return LNKShortcut.DATA_NAO_SETADA;
         long tmpDt = (ft - 0x19db1ded53e8000L) / 10000;
-        return new Date(tmpDt);
-    }
-
-    public static String toDateStr(DateFormat df, long ft) {
-        Date date = toDate(ft);
-        return (date != null) ? df.format(date) : LNKShortcut.DATA_NAO_SETADA;
+        return df.format(tmpDt);
     }
 }
