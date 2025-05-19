@@ -209,6 +209,7 @@ public class AresParser extends AbstractParser {
                 if (!hashSets.isEmpty()) {
                     hashAlertHits++;
                     trClass = "rr"; //$NON-NLS-1$
+                    e.setFoundInHashDB(hashSets.toString());
                 }
                 cells.add(hash.substring(0, hash.length() / 2) + " " + hash.substring(hash.length() / 2)); //$NON-NLS-1$
                 cells.add(e.getDate() == null ? "-" : df.format(e.getDate())); //$NON-NLS-1$
@@ -253,6 +254,7 @@ public class AresParser extends AbstractParser {
                         if (item != null) {
                             P2PUtil.printNameWithLink(xhtml, item, s);
                             cells.set(cells.size() - 1, strYes);
+                            e.setFoundInCase(true);
                         } else {
                             xhtml.characters(s);
                         }

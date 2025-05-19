@@ -8,6 +8,24 @@ public class AresEntry {
     private long fileSize;
     private Date date;
     private boolean shared, corrupted;
+    private String foundInHashDB;
+    private boolean foundInCase;
+
+    public String getFoundInHashDB() {
+        return foundInHashDB;
+    }
+
+    public void setFoundInHashDB(String foundInHashDB) {
+        this.foundInHashDB = foundInHashDB;
+    }
+
+    public boolean getFoundInCase() {
+        return foundInCase;
+    }
+
+    public void setFoundInCase(boolean foundInCase) {
+        this.foundInCase = foundInCase;
+    }
 
     public String getHash() {
         return hash;
