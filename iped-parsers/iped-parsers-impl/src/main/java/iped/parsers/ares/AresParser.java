@@ -53,7 +53,7 @@ import iped.search.IItemSearcher;
 import iped.utils.LocalizedFormat;
 
 /**
- * Parser para arquivos ShareL.dat e ShareL.dat do Ares Galaxy.
+ * Parser for Ares Galaxy ShareH.dat e ShareL.dat files.
  * 
  * @author Wladimir
  */
