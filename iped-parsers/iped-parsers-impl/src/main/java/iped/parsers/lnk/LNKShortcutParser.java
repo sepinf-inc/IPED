@@ -18,6 +18,8 @@
  */
 package iped.parsers.lnk;
 
+import static org.apache.commons.lang3.StringUtils.firstNonBlank;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Paths;
@@ -157,18 +159,26 @@ public class LNKShortcutParser extends AbstractParser {
         metadata.set(LNK_METADATA_CREATED, lnkObj.getCreateDate());
         metadata.set(LNK_METADATA_MODIFIED, lnkObj.getModifiedDate());
         metadata.set(LNK_METADATA_ACCESSED, lnkObj.getAccessDate());
+        metadata.add(LNK_METADATA_PREFIX + BasicProps.LENGTH, Long.toString(lnkObj.getFileSize()));
 
         if (lnkObj.hasLinkLocation()) {
 
             LNKLinkLocation lnkLoc = lnkObj.getLinkLocation();
 
-            metadata.add(LNK_METADATA_LOCALPATH, lnkLoc.getLocalPath());
-            metadata.add(LNK_METADATA_COMMONPATH, lnkLoc.getCommonPath());
-            metadata.add(LNK_METADATA_NETWORKSHARE, lnkLoc.getNetShare());
-            metadata.add(LNK_METADATA_VOLUMELABEL, lnkLoc.getVolumeLabel());
-            metadata.add(LNK_METADATA_PREFIX + BasicProps.LENGTH, Long.toString(lnkObj.getFileSize()));
+            metadata.add(LNK_METADATA_LOCALPATH,
+                    lnkObj.isUnicode() ? firstNonBlank(lnkLoc.getLocalPathUnicode(), lnkLoc.getLocalPath())
+                            : lnkLoc.getLocalPath());
+            metadata.add(LNK_METADATA_COMMONPATH,
+                    lnkObj.isUnicode() ? firstNonBlank(lnkLoc.getCommonPathUnicode(), lnkLoc.getCommonPath())
+                            : lnkLoc.getCommonPath());
+            metadata.add(LNK_METADATA_NETWORKSHARE,
+                    lnkObj.isUnicode() ? firstNonBlank(lnkLoc.getNetShareUnicode(), lnkLoc.getNetShare())
+                            : lnkLoc.getNetShare());
+            metadata.add(LNK_METADATA_VOLUMELABEL,
+                    lnkObj.isUnicode() ? firstNonBlank(lnkLoc.getVolumeLabelUnicode(), lnkLoc.getVolumeLabel())
+                            : lnkLoc.getVolumeLabel());
 
-            String fullLocalPath = buildFullLocalPath(lnkLoc);
+            String fullLocalPath = buildFullLocalPath(lnkLoc, lnkObj.isUnicode());
             metadata.add(LNK_METADATA_FULLLOCALPATH, fullLocalPath);
 
             try {
@@ -181,16 +191,19 @@ public class LNKShortcutParser extends AbstractParser {
 
     // According to
     // https://github.com/libyal/liblnk/blob/main/documentation/Windows%20Shortcut%20File%20(LNK)%20format.asciidoc#4-location-information
-    // the real local path is the concatenation of netshare, commonPath and localPath
-    private String buildFullLocalPath(LNKLinkLocation lnkLoc) {
+    // the real local path is the concatenation of netShare, commonPath and localPath
+    private String buildFullLocalPath(LNKLinkLocation lnkLoc, boolean unicode) {
 
         String fullLocalPath = "";
-        if (StringUtils.isNotEmpty(lnkLoc.getNetShare())) {
-            fullLocalPath = StringUtils.appendIfMissing(lnkLoc.getNetShare(), "\\");
-        } else if (StringUtils.isNotEmpty(lnkLoc.getCommonPath())) {
-            fullLocalPath = StringUtils.appendIfMissing(lnkLoc.getCommonPath(), "\\");
+        String netShare = unicode ? firstNonBlank(lnkLoc.getNetShareUnicode(), lnkLoc.getNetShare()) : lnkLoc.getNetShare();
+        String commonPath = unicode ? firstNonBlank(lnkLoc.getCommonPathUnicode(), lnkLoc.getCommonPath()) : lnkLoc.getCommonPath();
+
+        if (StringUtils.isNotEmpty(netShare)) {
+            fullLocalPath = StringUtils.appendIfMissing(netShare, "\\");
+        } else if (StringUtils.isNotEmpty(commonPath)) {
+            fullLocalPath = StringUtils.appendIfMissing(commonPath, "\\");
         }
-        fullLocalPath += lnkLoc.getLocalPath();
+        fullLocalPath += unicode ? firstNonBlank(lnkLoc.getLocalPathUnicode(), lnkLoc.getLocalPath()) : lnkLoc.getLocalPath();
 
         return fullLocalPath;
     }
