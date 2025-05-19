@@ -7,6 +7,24 @@ public class KnownMetEntry {
     private Date lastModified, lastPublishedKad, lastShared;
     private long fileSize = -1, bytesTransfered = -1;
     private int totalRequests = -1, acceptedRequests = -1;
+    private String foundInHashDB;
+    private boolean foundInCase;
+
+    public String getFoundInHashDB() {
+        return foundInHashDB;
+    }
+
+    public void setFoundInHashDB(String foundInHashDB) {
+        this.foundInHashDB = foundInHashDB;
+    }
+
+    public boolean getFoundInCase() {
+        return foundInCase;
+    }
+
+    public void setFoundInCase(boolean foundInCase) {
+        this.foundInCase = foundInCase;
+    }
 
     public String getPartName() {
         return partName;

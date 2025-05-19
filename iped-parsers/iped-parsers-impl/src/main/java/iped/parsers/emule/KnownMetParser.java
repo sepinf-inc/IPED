@@ -200,10 +200,12 @@ public class KnownMetParser extends AbstractParser {
                 item = P2PUtil.searchItemInCase(searcher, EDONKEY, e.getHash());
                 if(item != null) {
                     hashSets = ChildPornHashLookup.lookupHashAndMerge(EDONKEY, hash, hashSets);
+                    e.setFoundInCase(true);
                 }
                 if (hashSets != null && !hashSets.isEmpty()) {
                     hashDBHits++;
                     trClass = "rr"; //$NON-NLS-1$
+                    e.setFoundInHashDB(hashSets.toString());
                 }
                 cells.add(hash.substring(0, hash.length() / 2) + " " + hash.substring(hash.length() / 2)); //$NON-NLS-1$
                 cells.add(e.getLastModified() == null ? " " : df.format(e.getLastModified())); //$NON-NLS-1$
