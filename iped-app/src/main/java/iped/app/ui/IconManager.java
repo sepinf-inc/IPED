@@ -182,6 +182,7 @@ public class IconManager {
         icon = availableIconsMap.get("emule-entry");
         if (icon != null) {
             mimeIconMap.put("application/x-emule-known-met-entry", icon);
+            mimeIconMap.put("application/x-emule-part-met-entry", icon);
         }
 
         icon = availableIconsMap.get("ares");
