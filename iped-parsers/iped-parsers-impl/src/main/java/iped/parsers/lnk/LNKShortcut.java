@@ -255,19 +255,15 @@ public class LNKShortcut {
         }
     }
 
-    public static String getFileAttributeFlagStr(int flAtt) {
-        StringBuilder sb = new StringBuilder(""); //$NON-NLS-1$
-        for (FileAttributeFlags enumItem : FileAttributeFlags.values()) {
-            if ((flAtt & enumItem.getFlag()) == enumItem.getFlag()) {
-                sb.append(enumItem.name());
-                sb.append(", "); //$NON-NLS-1$
-            }
-        }
-        int i;
-        if ((i = sb.length()) > 0) {
-            sb.delete(i - 2, i);
-        }
-        return sb.toString();
+    public static String getFileAttributeFlagStr(int dFlag) {
+        return StringUtils.join(getFileAttributeFlagArray(dFlag), ", ");
+    }
+
+    public static String[] getFileAttributeFlagArray(int flAtt) {
+        return Arrays.stream(FileAttributeFlags.values())
+            .filter(enumItem -> (flAtt & enumItem.getFlag()) == enumItem.getFlag())
+            .map(enumItem -> enumItem.name())
+            .toArray(String[]::new);
     }
 
     public static enum DataFlags {

@@ -18,8 +18,6 @@
  */
 package iped.parsers.lnk;
 
-import static org.apache.commons.lang3.StringUtils.firstNonBlank;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Paths;
@@ -77,18 +75,13 @@ public class LNKShortcutParser extends AbstractParser {
     public static final Property LNK_METADATA_CREATED = Property.internalDate(LNK_METADATA_PREFIX + BasicProps.CREATED);
     public static final Property LNK_METADATA_MODIFIED = Property.internalDate(LNK_METADATA_PREFIX + BasicProps.MODIFIED);
     public static final Property LNK_METADATA_ACCESSED = Property.internalDate(LNK_METADATA_PREFIX + BasicProps.ACCESSED);
-    public static final String LNK_METADATA_LOCALPATH = LNK_METADATA_PREFIX + "localPath";
-    public static final String LNK_METADATA_FULLLOCALPATH = LNK_METADATA_PREFIX + "fullLocalPath";
-    public static final String LNK_METADATA_COMMONPATH = LNK_METADATA_PREFIX + "commonPath";
-    public static final String LNK_METADATA_NETWORKSHARE = LNK_METADATA_PREFIX + "networkShare";
-    public static final String LNK_METADATA_VOLUMELABEL = LNK_METADATA_PREFIX + "volumeLabel";
-    public static final String LNK_METADATA_FILEEXISTS = LNK_METADATA_PREFIX + "fileExists";
-    public static final String LNK_METADATA_FILEMODIFIED = LNK_METADATA_PREFIX + "fileModifiedMetadata";
-    public static final String LNK_METADATA_REFERENCEDUSIGN = LNK_METADATA_PREFIX + "fileReferenceStrategy";
+    public static final String LNK_METADATA_TARGET_REFERENCED = LNK_METADATA_PREFIX + "targetReferenced";
+    public static final String LNK_METADATA_TARGET_METADATA_DIFFERENT = LNK_METADATA_PREFIX + "targetDifferentMetadata";
+    public static final String LNK_METADATA_TARGET_REF_STRATEGY = LNK_METADATA_PREFIX + "targetReferenceStrategy";
 
-    public static final String LNK_REFERENCEDUSIGN_MFT = "MFT";
-    public static final String LNK_REFERENCEDUSIGN_RELATIVEPATH = "RelativePath";
-    public static final String LNK_REFERENCEDUSIGN_FULLLOCALPATH = "FullLocalPath";
+    public static final String LNK_TARGET_REF_STRATEGY_MFT = "MFT";
+    public static final String LNK_TARGET_REF_STRATEGY_RELATIVEPATH = "RelativePath";
+    public static final String LNK_TARGET_REF_STRATEGY_FULLLOCALPATH = "FullLocalPath";
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
@@ -159,27 +152,32 @@ public class LNKShortcutParser extends AbstractParser {
         metadata.set(LNK_METADATA_CREATED, lnkObj.getCreateDate());
         metadata.set(LNK_METADATA_MODIFIED, lnkObj.getModifiedDate());
         metadata.set(LNK_METADATA_ACCESSED, lnkObj.getAccessDate());
-        metadata.add(LNK_METADATA_PREFIX + BasicProps.LENGTH, Long.toString(lnkObj.getFileSize()));
+
+        metadata.set(LNK_METADATA_PREFIX + "description", lnkObj.getDescription());
+        metadata.set(LNK_METADATA_PREFIX + "workingDir", lnkObj.getWorkingDir());
+        metadata.set(LNK_METADATA_PREFIX + "cmdLineArgs", lnkObj.getCommandLineArgs());
+        metadata.add(LNK_METADATA_PREFIX + "targetSize", Long.toString(lnkObj.getFileSize()));
+        for (String flagStr : LNKShortcut.getFileAttributeFlagArray(lnkObj.getFileAttributeFlags())) {
+            metadata.add(LNK_METADATA_PREFIX + "targetAttributes", flagStr);
+        }
+        for (String flagStr : LNKShortcut.getDataFlagArray(lnkObj.getDataLinkFlags())) {
+            metadata.add(LNK_METADATA_PREFIX + "linkAttributes", flagStr);
+        }
 
         if (lnkObj.hasLinkLocation()) {
 
             LNKLinkLocation lnkLoc = lnkObj.getLinkLocation();
 
-            metadata.add(LNK_METADATA_LOCALPATH,
-                    lnkObj.isUnicode() ? firstNonBlank(lnkLoc.getLocalPathUnicode(), lnkLoc.getLocalPath())
-                            : lnkLoc.getLocalPath());
-            metadata.add(LNK_METADATA_COMMONPATH,
-                    lnkObj.isUnicode() ? firstNonBlank(lnkLoc.getCommonPathUnicode(), lnkLoc.getCommonPath())
-                            : lnkLoc.getCommonPath());
-            metadata.add(LNK_METADATA_NETWORKSHARE,
-                    lnkObj.isUnicode() ? firstNonBlank(lnkLoc.getNetShareUnicode(), lnkLoc.getNetShare())
-                            : lnkLoc.getNetShare());
-            metadata.add(LNK_METADATA_VOLUMELABEL,
-                    lnkObj.isUnicode() ? firstNonBlank(lnkLoc.getVolumeLabelUnicode(), lnkLoc.getVolumeLabel())
-                            : lnkLoc.getVolumeLabel());
+            metadata.add(LNK_METADATA_PREFIX + "localPath", getUnicodeValue(lnkObj, lnkLoc.getLocalPathUnicode(), lnkLoc.getLocalPath()));
+            metadata.add(LNK_METADATA_PREFIX + "commonPath", getUnicodeValue(lnkObj, lnkLoc.getCommonPathUnicode(), lnkLoc.getCommonPath()));
+            metadata.add(LNK_METADATA_PREFIX + "volumeLabel", getUnicodeValue(lnkObj, lnkLoc.getVolumeLabelUnicode(), lnkLoc.getVolumeLabel()));
+            metadata.add(LNK_METADATA_PREFIX + "networkShare", getUnicodeValue(lnkObj, lnkLoc.getNetShareUnicode(), lnkLoc.getNetShare()));
+            metadata.set(LNK_METADATA_PREFIX + "networkDeviceName", getUnicodeValue(lnkObj, lnkLoc.getNetDevNameUnicode(), lnkLoc.getNetDevName()));
+            metadata.set(LNK_METADATA_PREFIX + "driveType", lnkLoc.getDriveTypeStr());
+            metadata.set(LNK_METADATA_PREFIX + "driveSerial", lnkLoc.getDriveSerial());
 
-            String fullLocalPath = buildFullLocalPath(lnkLoc, lnkObj.isUnicode());
-            metadata.add(LNK_METADATA_FULLLOCALPATH, fullLocalPath);
+            String fullLocalPath = buildFullLocalPath(lnkObj);
+            metadata.add(LNK_METADATA_PREFIX + "fullLocalPath", fullLocalPath);
 
             try {
                 makeReference(metadata, context, lnkObj, fullLocalPath);
@@ -189,21 +187,30 @@ public class LNKShortcutParser extends AbstractParser {
         }
     }
 
+    private static String getUnicodeValue(LNKShortcut lnkObj, String unicodeValue, String value) {
+        return lnkObj.isUnicode() ? StringUtils.firstNonBlank(unicodeValue, value) : value;
+    }
+
     // According to
     // https://github.com/libyal/liblnk/blob/main/documentation/Windows%20Shortcut%20File%20(LNK)%20format.asciidoc#4-location-information
     // the real local path is the concatenation of netShare, commonPath and localPath
-    private String buildFullLocalPath(LNKLinkLocation lnkLoc, boolean unicode) {
+    private String buildFullLocalPath(LNKShortcut lnkObj) {
 
         String fullLocalPath = "";
-        String netShare = unicode ? firstNonBlank(lnkLoc.getNetShareUnicode(), lnkLoc.getNetShare()) : lnkLoc.getNetShare();
-        String commonPath = unicode ? firstNonBlank(lnkLoc.getCommonPathUnicode(), lnkLoc.getCommonPath()) : lnkLoc.getCommonPath();
 
+        LNKLinkLocation lnkLoc = lnkObj.getLinkLocation();
+        if (lnkLoc == null) {
+            return fullLocalPath;
+        }
+
+        String netShare = getUnicodeValue(lnkObj, lnkLoc.getNetShareUnicode(), lnkLoc.getNetShare());
+        String commonPath = getUnicodeValue(lnkObj, lnkLoc.getCommonPathUnicode(), lnkLoc.getCommonPath());
         if (StringUtils.isNotEmpty(netShare)) {
             fullLocalPath = StringUtils.appendIfMissing(netShare, "\\");
         } else if (StringUtils.isNotEmpty(commonPath)) {
             fullLocalPath = StringUtils.appendIfMissing(commonPath, "\\");
         }
-        fullLocalPath += unicode ? firstNonBlank(lnkLoc.getLocalPathUnicode(), lnkLoc.getLocalPath()) : lnkLoc.getLocalPath();
+        fullLocalPath += getUnicodeValue(lnkObj, lnkLoc.getLocalPathUnicode(), lnkLoc.getLocalPath());
 
         return fullLocalPath;
     }
@@ -228,7 +235,7 @@ public class LNKShortcutParser extends AbstractParser {
             List<IItemReader> items = lookupUsingMFT(searcher, lnkObj, lnkItem);
             IItemReader result = setReferenceMetadata(metadata, context, lnkObj, localPathName, items);
             if (result != null) {
-                metadata.set(LNK_METADATA_REFERENCEDUSIGN, LNK_REFERENCEDUSIGN_RELATIVEPATH);
+                metadata.set(LNK_METADATA_TARGET_REF_STRATEGY, LNK_TARGET_REF_STRATEGY_MFT);
                 return result;
             }
         }
@@ -238,7 +245,7 @@ public class LNKShortcutParser extends AbstractParser {
             List<IItemReader> items = lookupUsingRelativePath(searcher, lnkObj, lnkItem);
             IItemReader result = setReferenceMetadata(metadata, context, lnkObj, localPathName, items);
             if (result != null) {
-                metadata.set(LNK_METADATA_REFERENCEDUSIGN, LNK_REFERENCEDUSIGN_MFT);
+                metadata.set(LNK_METADATA_TARGET_REF_STRATEGY, LNK_TARGET_REF_STRATEGY_RELATIVEPATH);
                 return result;
             }
         }
@@ -248,7 +255,7 @@ public class LNKShortcutParser extends AbstractParser {
             List<IItemReader> items = lookupUsingFullLocalPath(searcher, lnkObj, lnkItem, fullLocalPath);
             IItemReader result = setReferenceMetadata(metadata, context, lnkObj, localPathName, items);
             if (result != null) {
-                metadata.set(LNK_METADATA_REFERENCEDUSIGN, LNK_REFERENCEDUSIGN_FULLLOCALPATH);
+                metadata.set(LNK_METADATA_TARGET_REF_STRATEGY, LNK_TARGET_REF_STRATEGY_FULLLOCALPATH);
                 return result;
             }
         }
@@ -354,27 +361,27 @@ public class LNKShortcutParser extends AbstractParser {
 
         IItemReader item = items.get(0);
 
-        metadata.set(LNK_METADATA_FILEEXISTS, Boolean.toString(true));
+        metadata.set(LNK_METADATA_TARGET_REFERENCED, Boolean.toString(true));
         metadata.set(ExtraProperties.LINKED_ITEMS, BasicProps.ID + ":" + item.getId());
 
         Date created = item.getCreationDate();
         if (created != null && lnkObj.getCreateDate() != null
                 && !DateUtils.truncatedEquals(created, lnkObj.getCreateDate(), Calendar.SECOND)) {
-            metadata.add(LNK_METADATA_FILEMODIFIED, BasicProps.CREATED);
+            metadata.add(LNK_METADATA_TARGET_METADATA_DIFFERENT, BasicProps.CREATED);
         }
 
         Date modifiedDate = item.getModDate();
         if (modifiedDate != null && lnkObj.getModifiedDate() != null
                 && !DateUtils.truncatedEquals(modifiedDate, lnkObj.getModifiedDate(), Calendar.SECOND)) {
-            metadata.add(LNK_METADATA_FILEMODIFIED, BasicProps.MODIFIED);
+            metadata.add(LNK_METADATA_TARGET_METADATA_DIFFERENT, BasicProps.MODIFIED);
         }
 
         if (item.getLength() != lnkObj.getFileSize()) {
-            metadata.add(LNK_METADATA_FILEMODIFIED, BasicProps.LENGTH);
+            metadata.add(LNK_METADATA_TARGET_METADATA_DIFFERENT, BasicProps.LENGTH);
         }
 
         if (!item.getName().equals(localPathName)) {
-            metadata.add(LNK_METADATA_FILEMODIFIED, BasicProps.NAME);
+            metadata.add(LNK_METADATA_TARGET_METADATA_DIFFERENT, BasicProps.NAME);
         }
         return item;
     }
