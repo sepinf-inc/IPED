@@ -9,8 +9,8 @@ public class LNKShellItemFileEntry {
     private long fileSize, modifiedDate, createDate, accessDate;
     private int fileAttributeFlags, tipoShell;
     private String primaryName, secondaryName, guidShellFolder, ntfsRef, unknown;
-    private long indMft;
-    private int seqMft;
+    private long indMft = -1;
+    private int seqMft = -1;
     private StringBuffer extensionSigs, localizedNames;
 
     public int getTipoShell() {
