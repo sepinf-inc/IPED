@@ -148,7 +148,9 @@ public class BeanMetadataExtraction {
                     if (transformations != null) {
                         for (Iterator iterator = transformations.iterator(); iterator.hasNext();) {
                             String[] strings = (String[]) iterator.next();
-                            entryMetadata.add(strings[0], parseQuery(strings[1], bean));
+                            if (!strings[0].equals(resolvedNameProp)) {
+                                entryMetadata.add(strings[0], parseQuery(strings[1], bean));
+                            }
                         }
                     }
 
@@ -168,6 +170,15 @@ public class BeanMetadataExtraction {
 
                             if (pd.getDisplayName().equals(resolvedNameProp)) {
                                 String name = value.toString();
+                                if (transformations != null) {
+                                    for (Iterator<String[]> it = transformations.iterator(); it.hasNext();) {
+                                        String[] strs = it.next();
+                                        if (strs[0].equals(resolvedNameProp)) {
+                                            name = parseQuery(strs[1], bean);
+                                            break;
+                                        }
+                                    }
+                                }
                                 entryMetadata.add(TikaCoreProperties.TITLE, name);// adds the name property without prefix
                                 entryMetadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, name);
                             }
