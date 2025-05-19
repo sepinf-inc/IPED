@@ -190,6 +190,11 @@ public class IconManager {
             mimeIconMap.put("application/x-ares-galaxy", icon);
         }
 
+        icon = availableIconsMap.get("ares-entry");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ares-galaxy-entry", icon);
+        }
+
         icon = availableIconsMap.get("shareaza");
         if (icon != null) {
             mimeIconMap.put("application/x-shareaza-searches-dat", icon);
