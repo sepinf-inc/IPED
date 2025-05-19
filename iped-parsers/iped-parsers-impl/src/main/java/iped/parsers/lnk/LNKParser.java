@@ -641,6 +641,7 @@ public class LNKParser {
                 int seqNum = toSmall(b, posTmp + 6);
                 if (indMft > 0) {
                     fEntry.setIndMft(indMft);
+                    fEntry.setSeqMft(seqNum);
                     fEntry.setNtfsRef(
                             "MFT Entry Idx " + String.valueOf(indMft) + " - Seq.Numb. " + String.valueOf(seqNum)); //$NON-NLS-1$ //$NON-NLS-2$
                 }

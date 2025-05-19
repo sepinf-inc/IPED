@@ -10,6 +10,7 @@ public class LNKShellItemFileEntry {
     private int fileAttributeFlags, tipoShell;
     private String primaryName, secondaryName, guidShellFolder, ntfsRef, unknown;
     private long indMft;
+    private int seqMft;
     private StringBuffer extensionSigs, localizedNames;
 
     public int getTipoShell() {
@@ -183,5 +184,13 @@ public class LNKShellItemFileEntry {
 
     public void setIndMft(long indMft) {
         this.indMft = indMft;
+    }
+
+    public int getSeqMft() {
+        return seqMft;
+    }
+
+    public void setSeqMft(int seqMft) {
+        this.seqMft = seqMft;
     }
 }
