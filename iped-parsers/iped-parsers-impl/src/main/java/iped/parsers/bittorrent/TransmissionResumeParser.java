@@ -137,7 +137,11 @@ public class TransmissionResumeParser extends AbstractParser {
                 }
                 String v = torrentItem.getMetadata().get(TorrentFileParser.TORRENT_FILES_FOUND_IN_CASE);
                 if (v != null && !v.isBlank()) {
-                    filesFoundInCase = Integer.parseInt(v);
+                    try {
+                        filesFoundInCase = Integer.parseInt(v);
+                    } catch (NumberFormatException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
 
