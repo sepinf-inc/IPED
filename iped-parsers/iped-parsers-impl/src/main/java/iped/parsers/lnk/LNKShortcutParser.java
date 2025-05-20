@@ -282,7 +282,7 @@ public class LNKShortcutParser extends AbstractParser {
      */
     private List<IItemReader> lookupUsingRelativePath(IItemSearcher searcher, LNKShortcut lnkObj, IItemReader lnkItem) {
 
-        if (!lnkObj.hasRelativePath() || lnkItem == null) {
+        if (!lnkObj.hasRelativePath() || lnkItem == null || lnkObj.getRelativePath() == null) {
             return null;
         }
 
