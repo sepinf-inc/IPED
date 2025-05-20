@@ -13,6 +13,7 @@ import iped.parsers.ares.AresParser;
 import iped.parsers.bittorrent.BitTorrentResumeDatEntryParser;
 import iped.parsers.bittorrent.BitTorrentResumeDatParser;
 import iped.parsers.bittorrent.TorrentFileParser;
+import iped.parsers.bittorrent.TransmissionResumeParser;
 import iped.parsers.browsers.chrome.CacheIndexParser;
 import iped.parsers.discord.DiscordParser;
 import iped.parsers.emule.KnownMetParser;
@@ -85,6 +86,7 @@ public class QueuesProcessingOrder {
         mediaTypes.put(MediaType.parse(TorrentFileParser.TORRENT_FILE_MIME_TYPE), 2);
         mediaTypes.put(MediaType.parse(BitTorrentResumeDatParser.RESUME_DAT_MIME_TYPE), 3);
         mediaTypes.put(MediaType.parse(BitTorrentResumeDatEntryParser.RESUME_DAT_ENTRY_MIME_TYPE), 3);
+        mediaTypes.put(MediaType.parse(TransmissionResumeParser.TRANSMISSION_RESUME_MIME_TYPE), 3);
 
         mediaTypes.put(WhatsAppParser.WA_DB, 2);
         mediaTypes.put(WhatsAppParser.MSG_STORE, 3);

@@ -198,6 +198,10 @@ public class IconManager {
             mimeIconMap.put("application/x-bittorrent-settings-dat", icon);
             mimeIconMap.put("application/x-bittorrent", icon);
         }
+        icon = availableIconsMap.get("transmission");
+        if (icon != null) {
+            mimeIconMap.put("application/x-transmission-resume", icon);
+        }
 
         icon = availableIconsMap.get("registry");
         if (icon != null) {
