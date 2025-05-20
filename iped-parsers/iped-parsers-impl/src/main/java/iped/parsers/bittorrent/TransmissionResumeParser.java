@@ -190,15 +190,13 @@ public class TransmissionResumeParser extends AbstractParser {
                     String parent = path.substring(p0 + 1, p1);
                     if (parent.equalsIgnoreCase("resume")) {
                         int p2 = path.lastIndexOf('.');
-                        if (p2 > 0 && p2 > p1) {
-                            // IN:   <folder>/resume/xyz.resume
-                            // OUT1: <folder>/torrents/xyz.torrent
-                            // OUT2: <folder>/torrents/xy.torrent
-                            // Sometimes the last character is suppressed in torrent's name
-                            String base = path.substring(0, p0 + 1) + "torrents";
-                            return new String[] { base + path.substring(p1, p2) + ".torrent",
-                                    base + path.substring(p1, p2 - 1) + ".torrent" };
-                        }
+                        // IN:   <folder>/resume/xyz.resume
+                        // OUT1: <folder>/torrents/xyz.torrent
+                        // OUT2: <folder>/torrents/xy.torrent
+                        // Sometimes the last character is suppressed in torrent's name
+                        String base = path.substring(0, p0 + 1) + "torrents";
+                        return new String[] { base + path.substring(p1, p2) + ".torrent",
+                                base + path.substring(p1, p2 - 1) + ".torrent" };
                     }
                 }
             }
