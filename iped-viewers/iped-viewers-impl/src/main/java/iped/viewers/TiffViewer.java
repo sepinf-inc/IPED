@@ -7,6 +7,7 @@ import java.awt.GraphicsEnvironment;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +31,7 @@ import iped.utils.IOUtil;
 import iped.utils.IconUtil;
 import iped.utils.ImageUtil;
 import iped.viewers.localization.Messages;
+import iped.viewers.util.ImageMetadataUtil;
 
 public class TiffViewer extends ImageViewer {
     private final JTextField textCurrentPage = new JTextField(2);
@@ -44,6 +46,7 @@ public class TiffViewer extends ImageViewer {
     volatile private IStreamSource currentContent;
     volatile private int currentPage = 0;
     volatile private int numPages = 0;
+    volatile private int orientation = 0;
 
     private static final String actionFirstPage = "first-page";
     private static final String actionPreviousPage = "previous-page";
@@ -108,6 +111,7 @@ public class TiffViewer extends ImageViewer {
         super.cleanState(true);
         currentPage = 1;
         numPages = 0;
+        orientation = 0;
         textCurrentPage.setText("");
         labelNumPages.setText(" / ");
     }
@@ -150,6 +154,9 @@ public class TiffViewer extends ImageViewer {
                     reader = ImageIO.getImageReaders(iis).next();
                     reader.setInput(iis, false, true);
                     numPages = reader.getNumImages(true);
+                    try (InputStream is2 = content.getSeekableInputStream(); BufferedInputStream in = new BufferedInputStream(is2)) {
+                        orientation = ImageMetadataUtil.getOrientation(in);
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -193,8 +200,11 @@ public class TiffViewer extends ImageViewer {
                     if (image != null)
                         image = getCompatibleImage(image);
                 }
+                if (orientation > 0) {
+                    image = ImageUtil.applyOrientation(image, orientation);
+                }
                 if (rotation != 0) {
-                    imagePanel.setImage(ImageUtil.rotatePos(image, rotation));
+                    imagePanel.setImage(ImageUtil.rotate(image, rotation));
                 } else {
                     imagePanel.setImage(image);
                 }

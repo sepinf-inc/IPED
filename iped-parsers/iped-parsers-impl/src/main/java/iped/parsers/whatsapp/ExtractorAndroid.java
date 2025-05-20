@@ -60,14 +60,14 @@ import iped.parsers.sqlite.SQLiteRecordValidator;
 import iped.parsers.sqlite.SQLiteUndelete;
 import iped.parsers.sqlite.SQLiteUndeleteTable;
 import iped.parsers.sqlite.SQLiteUndeleteTableResultSetAdapter;
-import iped.parsers.whatsapp.Message.MessageStatus;
 import iped.parsers.whatsapp.Message.MessageQuotedType;
+import iped.parsers.whatsapp.Message.MessageStatus;
 
 /**
  *
  * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
  */
-public class ExtractorAndroid extends Extractor {
+public abstract class ExtractorAndroid extends Extractor {
 
     private static Logger logger = LoggerFactory.getLogger(ExtractorAndroid.class);
 
@@ -86,6 +86,8 @@ public class ExtractorAndroid extends Extractor {
     public ExtractorAndroid(String itemPath, File databaseFile, WAContactsDirectory contacts, WAAccount account, boolean recoverDeletedRecords) {
         super(itemPath, databaseFile, contacts, account, recoverDeletedRecords);
     }
+
+    protected abstract Connection getConnection() throws SQLException;
 
     @Override
     protected List<Chat> extractChatList() throws WAExtractorException {
@@ -185,12 +187,10 @@ public class ExtractorAndroid extends Extractor {
                         c.setId(rs.getLong("id")); //$NON-NLS-1$
                         c.setSubject(Util.getUTF8String(rs, "subject")); //$NON-NLS-1$
                         c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
-                        if (!(contactId.endsWith("@status") || contactId.endsWith("@broadcast"))) { //$NON-NLS-1$ //$NON-NLS-2$
-                            if (recoverDeletedRecords) {
-                                activeChats.add(contactId);
-                            }
-                            list.add(c);
+                        if (recoverDeletedRecords) {
+                            activeChats.add(contactId);
                         }
+                        list.add(c);
                     }
                 } catch (SQLException ex) {
                     if (firstTry || !isSqliteCorruptException(ex)) {
@@ -271,15 +271,13 @@ public class ExtractorAndroid extends Extractor {
             
             for (SqliteRow row : undeleteChatListTable.getTableRows()) {
                 String contactId = row.getTextValue("key_remote_jid"); //$NON-NLS-1$
-                if (!(contactId.endsWith("@status") || contactId.endsWith("@broadcast"))) { //$NON-NLS-1$ //$NON-NLS-2$
-                    WAContact contact = contacts.getContact(contactId);
-                    Chat c = new Chat(contact);
-                    c.setId(row.getIntValue("_id"));
-                    c.setDeleted(row.isDeletedRow());
-                    c.setSubject(row.getTextValue("subject")); //$NON-NLS-1$
-                    c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
-                    result.add(c);
-                }
+                WAContact contact = contacts.getContact(contactId);
+                Chat c = new Chat(contact);
+                c.setId(row.getIntValue("_id"));
+                c.setDeleted(row.isDeletedRow());
+                c.setSubject(row.getTextValue("subject")); //$NON-NLS-1$
+                c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
+                result.add(c);
             }
         } else if (undeleteChatTable != null && undeleteChatTable.getTableRows() != null && !undeleteChatTable.getTableRows().isEmpty()) {
             if (undeleteJIDTable != null && undeleteJIDTable.getTableRows() != null && !undeleteJIDTable.getTableRows().isEmpty()) {
@@ -292,15 +290,13 @@ public class ExtractorAndroid extends Extractor {
                     if (jid_rows.containsKey(jid_row_id)) {
                         SqliteRow jid_row = jid_rows.get(jid_row_id).get(0);
                         String contactId = jid_row.getTextValue("raw_string"); //$NON-NLS-1$
-                        if (!(contactId.endsWith("@status") || contactId.endsWith("@broadcast"))) { //$NON-NLS-1$ //$NON-NLS-2$
-                            WAContact contact = contacts.getContact(contactId);
-                            Chat c = new Chat(contact);
-                            c.setId(row.getIntValue("_id"));
-                            c.setDeleted(true);
-                            c.setSubject(row.getTextValue("subject")); //$NON-NLS-1$
-                            c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
-                            result.add(c);
-                        }
+                        WAContact contact = contacts.getContact(contactId);
+                        Chat c = new Chat(contact);
+                        c.setId(row.getIntValue("_id"));
+                        c.setDeleted(true);
+                        c.setSubject(row.getTextValue("subject")); //$NON-NLS-1$
+                        c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
+                        result.add(c);
                     }
                 }
             }

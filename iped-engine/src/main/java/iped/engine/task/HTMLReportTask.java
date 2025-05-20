@@ -52,6 +52,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -73,9 +74,11 @@ import iped.engine.data.IPEDSource;
 import iped.engine.data.ReportInfo;
 import iped.engine.localization.CategoryLocalization;
 import iped.engine.localization.Messages;
+import iped.engine.task.index.IndexItem;
 import iped.engine.task.video.VideoThumbTask;
 import iped.engine.util.UIPropertyListenerProvider;
 import iped.engine.util.Util;
+import iped.properties.BasicProps;
 import iped.utils.ExternalImageConverter;
 import iped.utils.IOUtil;
 import iped.utils.ImageUtil;
@@ -91,6 +94,18 @@ import iped.viewers.util.ImageMetadataUtil;
 public class HTMLReportTask extends AbstractTask {
 
     private static Logger logger = LoggerFactory.getLogger(HTMLReportTask.class);
+
+    private IPEDSource ipedCase;
+
+    private static final String PROP_NAME_PLACEHOLDER = "%PROPERTY_NAME%";
+    private static final String PROP_VALUE_PLACEHOLDER = "%PROPERTY_VALUE%";
+
+    public static final File SELECTED_PROPERTIES_FILE = new File(System.getProperty("user.home"), ".iped/reportProps.dat");
+    
+    public static final List<String> basicReportProps = Arrays.asList(BasicProps.NAME, BasicProps.PATH, BasicProps.TYPE, BasicProps.LENGTH,
+        BasicProps.CREATED, BasicProps.MODIFIED, BasicProps.ACCESSED, BasicProps.DELETED, BasicProps.CARVED,
+        BasicProps.HASH, IndexItem.ID_IN_SOURCE);
+
 
     /**
      * Collator utilizado para ordenação correta alfabética, incluindo acentuação.
@@ -183,6 +198,8 @@ public class HTMLReportTask extends AbstractTask {
 
     private boolean extractThumb;
 
+    private Set<String> selectedProperties;
+
     private static Collator getCollator() {
         LocaleConfig localeConfig = ConfigurationManager.get().findObject(LocaleConfig.class);
 
@@ -200,6 +217,17 @@ public class HTMLReportTask extends AbstractTask {
         return Arrays.asList(new HtmlReportTaskConfig());
     }
 
+    protected Set<String> loadReportSelectedProps() throws ClassNotFoundException, IOException {
+        TreeSet<String> selectedFields = new TreeSet<>();
+        if (SELECTED_PROPERTIES_FILE.exists()) {
+            Set<String> columnsReport = (Set<String>) Util.readObject(SELECTED_PROPERTIES_FILE.getAbsolutePath());
+            selectedFields.addAll(columnsReport);
+        } else {
+            selectedFields.addAll(basicReportProps);
+        }
+        return selectedFields;
+    }
+
     /**
      * Inicializa tarefa, realizando controle de alocação de apenas uma thread
      * principal.
@@ -208,6 +236,7 @@ public class HTMLReportTask extends AbstractTask {
     public void init(ConfigurationManager configurationManager) throws Exception {
 
         htmlReportConfig = configurationManager.findObject(HtmlReportTaskConfig.class);
+        selectedProperties = loadReportSelectedProps();
 
         if (!init.get()) {
             if (htmlReportConfig.isEnabled()) {
@@ -265,6 +294,7 @@ public class HTMLReportTask extends AbstractTask {
      */
     @Override
     public void finish() throws Exception {
+        ipedCase = new IPEDSource(this.output.getParentFile(), worker.writer);
 
         if (isEnabled() && caseData.containsReport() && info != null) {
 
@@ -286,6 +316,7 @@ public class HTMLReportTask extends AbstractTask {
                 templatesFolder = new File(new File(codePath), "htmlreport/" + localeConf.getLocale().toLanguageTag()); //$NON-NLS-1$
             }
 
+            logger.info("Selected report properties: " + selectedProperties.toString());
             logger.info("Report folder: " + reportSubFolder.getAbsolutePath()); //$NON-NLS-1$
             logger.info("Template folder: " + templatesFolder.getAbsolutePath()); //$NON-NLS-1$
             if (!templatesFolder.exists()) {
@@ -298,12 +329,10 @@ public class HTMLReportTask extends AbstractTask {
 
             long t = System.currentTimeMillis();
 
-            try (IPEDSource ipedCase = new IPEDSource(this.output.getParentFile(), worker.writer)) {
-                for (int labelId : ipedCase.getBookmarks().getBookmarkMap().keySet()) {
-                    String labelName = ipedCase.getBookmarks().getBookmarkName(labelId);
-                    String comments = ipedCase.getBookmarks().getBookmarkComment(labelId);
-                    labelcomments.put(labelName, comments);
-                }
+            for (int labelId : ipedCase.getBookmarks().getBookmarkMap().keySet()) {
+                String labelName = ipedCase.getBookmarks().getBookmarkName(labelId);
+                String comments = ipedCase.getBookmarks().getBookmarkComment(labelId);
+                labelcomments.put(labelName, comments);
             }
 
             reportSubFolder.mkdirs();
@@ -372,6 +401,8 @@ public class HTMLReportTask extends AbstractTask {
         reg.modified = evidence.getModDate();
         reg.created = evidence.getCreationDate();
         reg.path = evidence.getPath();
+
+        reg.evidenceId = evidence.getId();
 
         Set<String> categories = evidence.getCategorySet();
         categories = categories.stream().map(c -> CategoryLocalization.getInstance().getLocalizedCategory(c.trim()))
@@ -664,6 +695,7 @@ public class HTMLReportTask extends AbstractTask {
     private void createBookmarkPage(DateFormat dateFormat, NumberFormat longFormat, String name, String id,
             StringBuilder model, StringBuilder item, int pag, int totPags, int totRegs, List<ReportEntry> regs,
             boolean isLabel) throws Exception {
+
         File arq = new File(reportSubFolder, getPageId(id, pag));
 
         StringBuilder sb = new StringBuilder();
@@ -674,7 +706,41 @@ public class HTMLReportTask extends AbstractTask {
         for (int i = 0; i < regs.size(); i++) {
             ReportEntry reg = regs.get(i);
             it.delete(0, it.length());
-            it.append(item);
+            it.append("<div class='clrBkgrnd bkmkSeparator bkmkValue'></div>");
+
+            // Fill Basic Properties if present
+            if (selectedProperties.contains(BasicProps.NAME))
+                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemName"), "<b>" + reg.name + "</b>");
+            if (selectedProperties.contains(BasicProps.PATH))
+                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemPath"), reg.path);
+            if (selectedProperties.contains(BasicProps.TYPE))
+                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemType"), reg.category);
+            if (selectedProperties.contains(BasicProps.LENGTH))
+                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemSize"), formatNumber(reg.length, longFormat) + " Bytes");
+            if (selectedProperties.contains(BasicProps.CREATED))
+                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemCreated"), formatDate(reg.created, dateFormat));
+            if (selectedProperties.contains(BasicProps.MODIFIED))
+                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemModified"), formatDate(reg.modified, dateFormat));
+            if (selectedProperties.contains(BasicProps.ACCESSED))
+                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemAccessed"), formatDate(reg.accessed, dateFormat));
+            if (selectedProperties.contains(BasicProps.DELETED))
+                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemDeleted"), String.valueOf(reg.deleted));
+            if (selectedProperties.contains(BasicProps.CARVED))
+                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemCarved"), String.valueOf(reg.carved));
+            if (selectedProperties.contains(BasicProps.HASH))
+                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemHash"), reg.hash);
+
+            // Fill extra properties
+            for (String property : selectedProperties) {
+                if (!basicReportProps.contains(property)) { // filter for additional properties selected by the user
+                    String propertyValue = ipedCase.getItemProperty(reg.evidenceId, property);
+                    fillItemProperty(it, item, property, propertyValue);
+                }
+            }
+            if (selectedProperties.contains(IndexItem.ID_IN_SOURCE)) {
+                String export = reg.export == null ? "-" : "<b><a href=\"../" + reg.export + "\">" + reg.export + "</a></b>";
+                fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemIdInSource"), export);
+            }
 
             if (reg.isImage && htmlReportConfig.isImageThumbsEnabled() && reg.hash != null) {
                 File thumbFile = getImageThumbFile(reg.hash);
@@ -731,21 +797,7 @@ public class HTMLReportTask extends AbstractTask {
                     it.append("</a></span></div>\n"); //$NON-NLS-1$
                 }
             }
-            replace(it, "%SEQ%", reg.hash); //$NON-NLS-1$
-            replace(it, "%NAME%", reg.name); //$NON-NLS-1$
-            replace(it, "%PATH%", reg.path); //$NON-NLS-1$
-            replace(it, "%TYPE%", reg.category); //$NON-NLS-1$
-            replace(it, "%SIZE%", formatNumber(reg.length, longFormat)); //$NON-NLS-1$
-            replace(it, "%DELETED%", //$NON-NLS-1$
-                    reg.deleted ? Messages.getString("HTMLReportTask.Yes") : Messages.getString("HTMLReportTask.No")); //$NON-NLS-1$ //$NON-NLS-2$
-            replace(it, "%CARVED%", //$NON-NLS-1$
-                    reg.carved ? Messages.getString("HTMLReportTask.Yes") : Messages.getString("HTMLReportTask.No")); //$NON-NLS-1$ //$NON-NLS-2$
-            replace(it, "%HASH%", reg.hash); //$NON-NLS-1$
-            String export = reg.export == null ? "-" : "<a href=\"../" + reg.export + "\">" + reg.export + "</a>"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-            replace(it, "%EXPORTED%", export); //$NON-NLS-1$
-            replace(it, "%CREATED%", formatDate(reg.created, dateFormat)); //$NON-NLS-1$
-            replace(it, "%MODIFIED%", formatDate(reg.modified, dateFormat)); //$NON-NLS-1$
-            replace(it, "%ACCESSED%", formatDate(reg.accessed, dateFormat)); //$NON-NLS-1$
+
             items.append(it);
         }
 
@@ -780,6 +832,19 @@ public class HTMLReportTask extends AbstractTask {
 
         EncodedFile ef = new EncodedFile(sb, Charset.forName("utf-8"), arq); //$NON-NLS-1$
         ef.write();
+    }
+
+    private void fillItemProperty(StringBuilder it, StringBuilder item, String propertyName, String propertyValue) {
+        if (propertyValue != null && (propertyValue.equals(Boolean.TRUE.toString()) || propertyValue.equals(Boolean.FALSE.toString()))) {
+            boolean boolProperty = Boolean.parseBoolean(propertyValue);
+            propertyValue = boolProperty ? Messages.getString("HTMLReportTask.Yes")
+                : Messages.getString("HTMLReportTask.No");
+        }
+        if (propertyValue != null && !propertyValue.isBlank()) {
+            it.append(item);
+            replaceFirst(it, PROP_NAME_PLACEHOLDER, propertyName);
+            replaceFirst(it, PROP_VALUE_PLACEHOLDER, propertyValue);
+        }
     }
 
     private String getComments(String bookmark) {
@@ -949,6 +1014,14 @@ public class HTMLReportTask extends AbstractTask {
         }
     }
 
+    private static void replaceFirst(StringBuilder sb, String a, String b) {
+        int pos = 0;
+        if ((pos = sb.indexOf(a, pos)) >= 0) {
+            String rep = b == null ? "-" : b;
+            sb.replace(pos, pos + a.length(), rep);
+        }
+    }
+
     private static String formatDate(Date date, DateFormat dateFormat) {
         return date == null ? "-" : dateFormat.format(date); //$NON-NLS-1$
     }
@@ -1067,6 +1140,7 @@ class ReportEntry {
     Long length;
     boolean deleted, carved, isImage, isVideo;
     Date accessed, modified, created;
+    int evidenceId;
 }
 
 /**

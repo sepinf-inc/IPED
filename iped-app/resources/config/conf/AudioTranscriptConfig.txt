@@ -110,6 +110,10 @@ minWordScore = 0.5
 # 'language = detect' uses auto detection, but it can cause mistakes
 whisperModel = medium
 
+# Which device to use: 'cpu' or 'gpu'. For 'gpu', please see the official faster-whisper documentation
+# for the installation requirements: https://github.com/SYSTRAN/faster-whisper?tab=readme-ov-file#gpu  
+device = cpu
+
 # Compute type precision. This affects accuracy, speed and memory usage.
 # Possible values: float32 (better), float16 (recommended for GPU), int8 (faster)
 precision = int8
@@ -121,10 +125,10 @@ precision = int8
 batchSize = 1
 
 #########################################
-# RemoteAudioTranscriptTask options
+# RemoteTranscriptionTask options
 #########################################
 
-# IP:PORT of the service/central node used by the RemoteWav2Vec2TranscriptTask implementation.
+# IP:PORT of the service/central node used by the RemoteTranscriptionTask implementation.
 # remoteServiceAddress = 127.0.0.1:11111
 
 #########################################

@@ -36,6 +36,7 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
+import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.HashMap;
 import java.util.Map;
@@ -89,6 +90,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
     private String[] lastWorkerTaskItemId;
     private long[] lastWorkerTime;
     private static final NumberFormat nf = LocalizedFormat.getNumberInstance();
+    private static final DecimalFormat pct = LocalizedFormat.getDecimalInstance("0.0%");
     private boolean paused = false;
     private String decodingDir = null;
     private long physicalMemory;
@@ -498,6 +500,19 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         if (physicalMemory != 0) {
             startRow(msg, Messages.getString("ProgressFrame.PhysicalMemory"));
             finishRow(msg, formatMB(physicalMemory), Align.RIGHT);
+        }
+
+        long freeMemory = Util.getFreeMemorySize();
+        if (physicalMemory > 0 && freeMemory > 0) {
+            double memoryUsage = (physicalMemory - freeMemory) / (double) physicalMemory;
+            startRow(msg, Messages.getString("ProgressFrame.PhysicalMemoryUsage"));
+            finishRow(msg, pct.format(memoryUsage), Align.RIGHT);
+        }
+
+        double cpuUsage = Util.getSystemCpuLoad();
+        if (cpuUsage >= 0) {
+            startRow(msg, Messages.getString("ProgressFrame.CPUUsage"));
+            finishRow(msg, pct.format(cpuUsage), Align.RIGHT);
         }
 
         if (workers != null) {
