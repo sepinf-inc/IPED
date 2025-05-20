@@ -181,7 +181,7 @@ public class LNKParser {
                 posTmp += 4;
                 String hexSig = toHex(b, posTmp, 4);
 
-                if (hexSig.equals("0400efbe")) { //$NON-NLS-1$
+                if ("0400efbe".equals(hexSig)) { //$NON-NLS-1$
                     parseExtensionBlock(b, posTmp, objItem);
                     // if (!fEntry.hasClassID()) {
                     // possiveis outras extensoes 0xbeef0005, 0xbeef0006 and 0xbeef001a
