@@ -378,12 +378,14 @@ public class LNKShortcutParser extends AbstractParser {
             return null;
         }
 
+        IItemReader item;
         if (items.size() > 1) {
-            logger.warn("More than one file referenced to the link. Using only the first one. {}",
+            item = selectBestItem(lnkObj, items);
+            logger.warn("More than one file referenced to the link. Using only the best one. {}",
                     items.stream().map(IItemReader::getPath).toString());
+        } else {
+            item = items.get(0);
         }
-
-        IItemReader item = items.get(0);
 
         metadata.set(LNK_METADATA_TARGET_REFERENCED, Boolean.toString(true));
         metadata.set(ExtraProperties.LINKED_ITEMS, BasicProps.ID + ":" + item.getId());
@@ -408,6 +410,36 @@ public class LNKShortcutParser extends AbstractParser {
             metadata.add(LNK_METADATA_TARGET_METADATA_DIFFERENT, BasicProps.NAME);
         }
         return item;
+    }
+
+    private IItemReader selectBestItem(LNKShortcut lnkObj, List<IItemReader> items) {
+
+        Collections.sort(items, (o1, o2) -> {
+            return getItemScore(lnkObj, o2) - getItemScore(lnkObj, o1);
+        });
+
+        return items.get(0);
+    }
+
+    private int getItemScore(LNKShortcut lnkObj, IItemReader item) {
+        if (item.getCreationDate() != null && lnkObj.getCreateDate() != null) {
+            boolean sameCreated = DateUtils.truncatedEquals(item.getCreationDate(), lnkObj.getCreateDate(), Calendar.SECOND);
+            if (!item.isDeleted() && sameCreated) {
+                return item.getLength() == lnkObj.getFileSize() ? 20 : 19;
+            } else if (sameCreated) {
+                return item.getLength() == lnkObj.getFileSize() ? 18 : 17;
+            } else if (!item.isDeleted()) {
+                return item.getLength() == lnkObj.getFileSize() ? 16 : 15;
+            } else {
+                return item.getLength() == lnkObj.getFileSize() ? 14 : 13;
+            }
+        } else {
+            if (!item.isDeleted()) {
+                return item.getLength() == lnkObj.getFileSize() ? 10 : 9;
+            } else {
+                return item.getLength() == lnkObj.getFileSize() ? 8 : 7;
+            }
+        }
     }
 
     private void showHeader(LNKShortcut lnkObj, DateFormat df, XHTMLContentHandler xhtml) throws Exception {
