@@ -422,22 +422,23 @@ public class LNKShortcutParser extends AbstractParser {
     }
 
     private int getItemScore(LNKShortcut lnkObj, IItemReader item) {
+        boolean sameSize = item.getLength() != null ? item.getLength() == lnkObj.getFileSize() : false;
         if (item.getCreationDate() != null && lnkObj.getCreateDate() != null) {
             boolean sameCreated = DateUtils.truncatedEquals(item.getCreationDate(), lnkObj.getCreateDate(), Calendar.SECOND);
             if (!item.isDeleted() && sameCreated) {
-                return item.getLength() == lnkObj.getFileSize() ? 20 : 19;
+                return sameSize ? 20 : 19;
             } else if (sameCreated) {
-                return item.getLength() == lnkObj.getFileSize() ? 18 : 17;
+                return sameSize ? 18 : 17;
             } else if (!item.isDeleted()) {
-                return item.getLength() == lnkObj.getFileSize() ? 16 : 15;
+                return sameSize ? 16 : 15;
             } else {
-                return item.getLength() == lnkObj.getFileSize() ? 14 : 13;
+                return sameSize ? 14 : 13;
             }
         } else {
             if (!item.isDeleted()) {
-                return item.getLength() == lnkObj.getFileSize() ? 10 : 9;
+                return sameSize ? 10 : 9;
             } else {
-                return item.getLength() == lnkObj.getFileSize() ? 8 : 7;
+                return sameSize ? 8 : 7;
             }
         }
     }
