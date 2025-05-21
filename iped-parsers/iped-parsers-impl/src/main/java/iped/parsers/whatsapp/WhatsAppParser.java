@@ -127,13 +127,14 @@ public class WhatsAppParser extends SQLite3DBParser {
     public static final MediaType WHATSAPP_CALL = MediaType.parse("call/x-whatsapp-call"); //$NON-NLS-1$
 
     public static final String SHA256_ENABLED_SYSPROP = "IsSha256Enabled"; //$NON-NLS-1$
+    public static final String HASH_TASK_ENABLED_SYSPROP = "IsHashTaskEnabled";
 
     public static final String DOWNLOAD_MEDIA_FILES_PROP = "downloadWhatsAppMediaProp";
 
     // TODO: Once #2286 is merged, use some property to identify WhatsApp Status chats/messages 
     // private static final String STATUS_PROP = ExtraProperties.COMMUNICATION_PREFIX + "isStatus";
 
-    private static final AtomicBoolean sha256Checked = new AtomicBoolean();
+    private static final AtomicBoolean hashDependenciesChecked = new AtomicBoolean();
 
     // workaround to show message type before caption (values are shown in sort
     // order)
@@ -179,7 +180,10 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
-        if (!sha256Checked.getAndSet(true)) {
+        if (!hashDependenciesChecked.getAndSet(true)) {
+            if (!Boolean.valueOf(System.getProperty(HASH_TASK_ENABLED_SYSPROP, "false"))) {
+                logger.error("HashTask is disabled. WhatsAppParser needs it to link attachments to chats!");
+            }
             if (!Boolean.valueOf(System.getProperty(SHA256_ENABLED_SYSPROP, "false"))) { //$NON-NLS-1$
                 logger.error("SHA-256 is disabled. WhatsAppParser needs it to link attachments to chats!"); //$NON-NLS-1$
             }
@@ -732,7 +736,8 @@ public class WhatsAppParser extends SQLite3DBParser {
                 } else if (!wcontext.isMainDB() && db.isMainDB()) {
                     mainDb = db;
                     other = wcontext;
-                } else if (wcontext.getItem().getHash().equals(db.getItem().getHash())) {
+                } else if (wcontext.getItem().getHash() != null
+                        && wcontext.getItem().getHash().equals(db.getItem().getHash())) {
 
                     if (wcontext.getItem().getId() > db.getItem().getId()) {
                         wcontext.setBackup(true);
@@ -1538,7 +1543,9 @@ public class WhatsAppParser extends SQLite3DBParser {
         if (messageList != null && saveItemRef) {
             for (Message m : messageList) {
                 m.setMediaItem(item);
-                m.setMediaQuery(escapeQuery(query, isHashQuery));
+                if (query != null) {
+                    m.setMediaQuery(escapeQuery(query, isHashQuery));
+                }
             }
         }
     }
@@ -1595,9 +1602,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             for (IItemReader item : result) {
                 String hash = (String) item.getExtraAttribute("sha-256"); //$NON-NLS-1$
                 List<Message> messageList = hashesToSearchFor.remove(hash);
-
-                setItemToMessage(item, messageList, "sha-256:" + hash, true, saveItemRef);
-
+                setItemToMessage(item, messageList, hash == null ? null : "sha-256:" + hash, true, saveItemRef);
             }
         }
 
@@ -1708,7 +1713,8 @@ public class WhatsAppParser extends SQLite3DBParser {
                                     return (fileSize >= mediaSize + 1 && fileSize <= mediaSize + 15
                                             && itemStreamEndsWithZeros(item, mediaSize));
                                 }).collect(Collectors.toList());
-                                setItemToMessage(item, messageList, BasicProps.HASH + ":" + item.getHash(), true,
+                                setItemToMessage(item, messageList,
+                                        item.getHash() == null ? null : BasicProps.HASH + ":" + item.getHash(), true,
                                         saveItemRef);
                             }
                         }
@@ -1726,8 +1732,10 @@ public class WhatsAppParser extends SQLite3DBParser {
                                             if (m.getMediaItem() == null) {
                                                 logger.info("Item matched by long path {}", mediaPath);
                                                 m.setMediaItem(item);
-                                                m.setMediaQuery(
-                                                        escapeQuery(BasicProps.HASH + ":" + item.getHash(), true));
+                                                if (item.getHash() != null) {
+                                                    m.setMediaQuery(
+                                                            escapeQuery(BasicProps.HASH + ":" + item.getHash(), true));
+                                                }
                                             }
                                         }
                                     }

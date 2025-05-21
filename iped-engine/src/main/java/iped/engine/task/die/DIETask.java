@@ -25,6 +25,7 @@ import iped.engine.config.ConfigurationManager;
 import iped.engine.config.EnableTaskProperty;
 import iped.engine.config.ImageThumbTaskConfig;
 import iped.engine.task.AbstractTask;
+import iped.engine.task.HashTask;
 import iped.engine.task.ImageThumbTask;
 import iped.engine.task.video.VideoThumbTask;
 import iped.exception.IPEDException;
@@ -156,6 +157,8 @@ public class DIETask extends AbstractTask {
                 logger.info("Trees loaded: " + predictor.size()); //$NON-NLS-1$
 
                 externalImageConverter = new ExternalImageConverter();
+
+                checkDependency(HashTask.class);                
 
                 init.set(true);
             }
