@@ -8,8 +8,6 @@ public class AppIDCalculator {
     private static final long POLY64 = 0x92C64265D32139A4L;
     private static final long[] CRC_TABLE = new long[256];
 
-    private static final PathToGuidConverter CONVERTER = new PathToGuidConverter();
-
     static {
         initCrc64();
     }
@@ -85,7 +83,7 @@ public class AppIDCalculator {
             return results;
         }
 
-        List<String> folderIdPaths = CONVERTER.pathsWithKnownFolderIds(envPath);
+        List<String> folderIdPaths = PathToGuidConverter.getInstance().pathsWithKnownFolderIds(envPath);
         for (String folderIdPath : folderIdPaths) {
             String normalizedPath = folderIdPath.replace('/', '\\').toUpperCase();
             results.add(crc64(utf16le(normalizedPath)));

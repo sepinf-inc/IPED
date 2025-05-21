@@ -15,7 +15,7 @@ public class PathToGuidConverterTest {
 
     @BeforeClass
     public static void setUp() {
-        converter = new PathToGuidConverter();
+        converter = PathToGuidConverter.getInstance();
     }
 
     @Test
