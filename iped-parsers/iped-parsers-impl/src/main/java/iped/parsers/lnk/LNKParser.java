@@ -764,7 +764,7 @@ public class LNKParser {
     }
 
     private static final String toStr(byte[] b, int offset, int maxlength, byte delim, String charSet) {
-        if (offset + maxlength >= b.length || maxlength < 0)
+        if (offset + maxlength >= b.length || maxlength < 0 || offset < 0)
             return null;
         // procurando o delimitador
         int i = 0;
