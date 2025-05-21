@@ -4,14 +4,14 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import iped.engine.config.AbstractTaskConfig;
 
-public class AppIDsConfig extends AbstractTaskConfig<Map<String, String>> {
+public class AppIDsConfig extends AbstractTaskConfig<ConcurrentMap<String, String>> {
 
     private static final long serialVersionUID = 8409433427758336695L;
 
@@ -19,15 +19,15 @@ public class AppIDsConfig extends AbstractTaskConfig<Map<String, String>> {
 
     private Pattern pattern = Pattern.compile("\"([^\"]*)\"");
 
-    private Map<String, String> appIDsMap = new HashMap<>();
+    private ConcurrentMap<String, String> appIDsMap = new ConcurrentHashMap<>();
 
     @Override
-    public Map<String, String> getConfiguration() {
+    public ConcurrentMap<String, String> getConfiguration() {
         return appIDsMap;
     }
 
     @Override
-    public void setConfiguration(Map<String, String> config) {
+    public void setConfiguration(ConcurrentMap<String, String> config) {
         appIDsMap = config;
     }
 

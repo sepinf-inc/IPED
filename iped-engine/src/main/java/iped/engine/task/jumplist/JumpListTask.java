@@ -2,7 +2,7 @@ package iped.engine.task.jumplist;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.mime.MediaType;
@@ -26,8 +26,9 @@ public class JumpListTask extends AbstractTask {
     private static final String CUSTOM_DESTINATIONS_SUFIX = ".customDestinations-ms";
 
     public static final String JUMPLIST_META_PREFIX = "jumpList:";
+    public static final String JUMPLIST_PROGRAM_APP_IDS = JUMPLIST_META_PREFIX + "ids";
 
-    private Configurable<Map<String, String>> jumpListAppIDsConfig;
+    private Configurable<ConcurrentMap<String, String>> jumpListAppIDsConfig;
 
     @Override
     public List<Configurable<?>> getConfigurables() {
@@ -47,7 +48,7 @@ public class JumpListTask extends AbstractTask {
     protected void process(IItem evidence) throws Exception {
 
         processAutomaticDestinationsEntry(evidence);
-        processExecutablesInProgramFiles(evidence);
+        processExecutables(evidence);
     }
 
     private void processAutomaticDestinationsEntry(IItem evidence) {
@@ -73,23 +74,25 @@ public class JumpListTask extends AbstractTask {
                     evidence.getMetadata().set(JUMPLIST_META_PREFIX + "appName", appName);
                 }
 
-                String linkQuery = QueryBuilder.escape(JUMPLIST_META_PREFIX + "id") + ":" + appID;
+                String linkQuery = QueryBuilder.escape(JUMPLIST_PROGRAM_APP_IDS) + ":" + appID;
                 evidence.getMetadata().add(ExtraProperties.LINKED_ITEMS, linkQuery);
             }
         }
     }
 
-    private void processExecutablesInProgramFiles(IItem evidence) {
+    private void processExecutables(IItem evidence) {
 
         if ("exe".equals(evidence.getExt()) && !evidence.isCarved() && !evidence.isDeleted() && !evidence.isSubItem()) {
 
-            String appID = AppIDCalculator.calculateAppID(evidence.getPath());
+            List<String> appIDs = AppIDCalculator.calculateAppIDs(evidence.getPath());
 
-            if (appID != null) {
-                String appName = evidence.getName();
-                evidence.getMetadata().set(JUMPLIST_META_PREFIX + "id", appID);
-                evidence.getMetadata().set(JUMPLIST_META_PREFIX + "name", appName);
-                jumpListAppIDsConfig.getConfiguration().put(appID, appName);
+            for (String appID : appIDs) {
+
+                // add appID
+                evidence.getMetadata().add(JUMPLIST_PROGRAM_APP_IDS, appID);
+
+                // increment the known appIDs map
+                jumpListAppIDsConfig.getConfiguration().putIfAbsent(appID, evidence.getName());
             }
         }
     }
