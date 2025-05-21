@@ -290,7 +290,7 @@ public class LNKParser {
                     fimStr++; // tem um byte zero adicional no final da string pois é 16-bit aligned
                 } else {
                     uName = toStr(b, posBlock + offSet, fimStr);
-                    if (uName.length() % 2 == 0) {
+                    if (uName != null && uName.length() % 2 == 0) {
                         fimStr++; // tem um byte zero adicional no final da string pois é 16-bit aligned
                     }
                 }
