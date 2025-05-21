@@ -169,7 +169,7 @@ public class LNKParser {
                         fimNome++; // tem um byte zero adicional no final da string pois é 16-bit aligned
                     } else {
                         pName = toStr(b, posTmp, fimNome);
-                        if (pName.length() % 2 == 0) {
+                        if (pName != null && pName.length() % 2 == 0) {
                             fimNome++; // tem um byte zero adicional no final da string pois é 16-bit aligned
                         }
                     }
@@ -754,7 +754,7 @@ public class LNKParser {
     }
 
     private static final String toStr(byte[] b, int offset, int length) {
-        if (offset + length >= b.length)
+        if (offset + length > b.length || offset < 0 || length < 0)
             return null;
         return new String(b, offset, length, Charset.forName("UTF-8")); //$NON-NLS-1$
     }
