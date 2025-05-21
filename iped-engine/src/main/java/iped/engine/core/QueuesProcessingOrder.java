@@ -64,7 +64,9 @@ public class QueuesProcessingOrder {
 
         // handle wal logs
         mediaTypes.put(SQLite3Parser.MEDIA_TYPE, 2);
-        mediaTypes.put(MediaType.parse(LNKShortcutParser.LNK_MIME_TYPE), 2);
+
+        // links processed after theirs targets 
+        mediaTypes.put(LNKShortcutParser.LNK_MEDIA_TYPE, 2);
 
         // must be after sqlite processing to find storage_db.db
         mediaTypes.put(SkypeParser.SKYPE_MIME, 3);
