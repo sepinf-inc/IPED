@@ -805,7 +805,7 @@ public class LNKParser {
     }
 
     private static final int findEndStr(byte[] b, int offset, int maxlength, boolean utf16) {
-        if (offset + maxlength >= b.length || maxlength < 0)
+        if (offset + maxlength >= b.length || maxlength < 0 || offset < 0)
             return -1;
         // procurando o delimitador
         int i = 0;
