@@ -985,7 +985,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         galleryTabDock.addAction(butFaceSearch);
         butFaceSearch.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                SimilarFacesFilterActions.searchSimilarImages(false);
+                SimilarFacesFilterActions.searchSimilarFaces(false);
             }
         });
         butFaceSearch.setEnabled(false);

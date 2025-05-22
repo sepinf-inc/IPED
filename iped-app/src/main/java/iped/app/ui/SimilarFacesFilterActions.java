@@ -81,7 +81,7 @@ public class SimilarFacesFilterActions {
         }
     }
 
-    public static void searchSimilarImages(boolean external) {
+    public static void searchSimilarFaces(boolean external) {
         App app = App.get();
 
         IItemId itemId = null;
