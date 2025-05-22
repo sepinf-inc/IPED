@@ -1,41 +1,48 @@
 summary {
   cursor: pointer;
-  outline: 0; 
+  outline: 0;
 }
-
 
 details {
   white-space: nowrap;
 }
+
 details details {
-  margin-left: 1.4rem;
-}
-details li {
-  margin-left: 1.4rem;
-}
-details a {
-  margin-left: 1.4rem;
+  margin-left: 0.8rem;
 }
 
-details[open] > details::before {
+details li {
+  margin-left: 0.8rem;
+}
+
+details a {
+  margin-left: 0.8rem;
+}
+
+details[open]>details::before {
   transform: rotate(90deg);
 }
+
 .uuidlink {
   cursor: pointer;
 }
-.uuidlink::-webkit-details-marker{
-    display: none;
-}
-.uuidlink::marker {
-    content: "";
+
+.uuidlink::-webkit-details-marker {
+  display: none;
 }
 
-summary > details {
-  padding-left: 1.4rem;
+.uuidlink::marker {
+  content: "";
 }
-summary.nochild::-webkit-details-marker{
-    display: none;
+
+summary>details {
+  padding-left: 0.8rem;
 }
+
+summary.nochild::-webkit-details-marker {
+  display: none;
+}
+
 summary.nochild::marker {
-    content: "";
+  content: "";
 }
