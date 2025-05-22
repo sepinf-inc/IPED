@@ -1114,6 +1114,18 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 }
             });
 
+            if (viewer == App.get().getViewerController().getMultiViewer()) {
+                CButton copyViewerImage = new CButton(Messages.getString("MenuClass.CopyViewerImage"),
+                        IconUtil.getToolbarIcon("copy", resPath));
+                copyViewerImage.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {
+                        AbstractViewer viewer = App.get().getViewerController().getMultiViewer().getCurrentViewer();
+                        viewer.copyScreen();
+                    }
+                });
+                viewerDock.addAction(copyViewerImage);
+            }
+
             CButton prevHit = new CButton(Messages.getString("ViewerController.PrevHit"), IconUtil.getToolbarIcon("prev", resPath));
             CButton nextHit = new CButton(Messages.getString("ViewerController.NextHit"), IconUtil.getToolbarIcon("next", resPath));
             prevHit.addActionListener(new ActionListener() {
