@@ -99,6 +99,9 @@ public abstract class AbstractTask {
     }
 
     public boolean hasIpedDatasource() {
+        if (caseData == null) {
+            return false;
+        }
         CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
         for (File source : args.getDatasources()) {
             if (source.getName().endsWith(".iped")) {

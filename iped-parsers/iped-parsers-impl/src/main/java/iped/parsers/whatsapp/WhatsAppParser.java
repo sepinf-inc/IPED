@@ -130,6 +130,9 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     public static final String DOWNLOAD_MEDIA_FILES_PROP = "downloadWhatsAppMediaProp";
 
+    // TODO: Once #2286 is merged, use some property to identify WhatsApp Status chats/messages 
+    // private static final String STATUS_PROP = ExtraProperties.COMMUNICATION_PREFIX + "isStatus";
+
     private static final AtomicBoolean sha256Checked = new AtomicBoolean();
 
     // workaround to show message type before caption (values are shown in sort
@@ -250,21 +253,21 @@ public class WhatsAppParser extends SQLite3DBParser {
                 if (mergeBackups || isDownloadMediaFilesEnabled())
                     parseAndCheckIfIsMainDb(stream, handler, metadata, context, new ExtractorAndroidFactory());
                 else
-                    parseWhatsappMessages(stream, handler, metadata, context, new ExtractorAndroidFactory());
+                    parseWhatsAppMessages(stream, handler, metadata, context, new ExtractorAndroidFactory());
             } else if (mimetype.equals(WA_DB.toString())) {
                 parseWhatsAppContacts(stream, handler, metadata, context, new ExtractorAndroidFactory());
             } else if (mimetype.equals(CHAT_STORAGE.toString())) {
                 if (isDownloadMediaFilesEnabled()) {
                     parseAndCheckIfIsMainDb(stream, handler, metadata, context, new ExtractorIOSFactory());
                 } else {
-                    parseWhatsappMessages(stream, handler, metadata, context, new ExtractorIOSFactory());
+                    parseWhatsAppMessages(stream, handler, metadata, context, new ExtractorIOSFactory());
                 }
             } else if (mimetype.equals(CONTACTS_V2.toString())) {
                 parseWhatsAppContacts(stream, handler, metadata, context, new ExtractorIOSFactory());
             } else if (mimetype.equals(MSG_STORE_2.toString())) {
                 mergeParsedDBsAndOutputResults(stream, handler, metadata, context, new ExtractorAndroidFactory());
             } else if (mimetype.equals(CHAT_STORAGE_2.toString())) {
-                parseWhatsappMessages(stream, handler, metadata, context, new ExtractorIOSFactory());
+                parseWhatsAppMessages(stream, handler, metadata, context, new ExtractorIOSFactory());
             }
 
         } catch (Exception e) {
@@ -282,9 +285,16 @@ public class WhatsAppParser extends SQLite3DBParser {
     private void createReport(List<Chat> chatList, IItemSearcher searcher, WAContactsDirectory contacts,
             ContentHandler handler, EmbeddedDocumentExtractor extractor, WAAccount account, File dbPath,
             ParseContext context) throws Exception {
+
+        // Expand broadcast chat, from a single chat to one per contact
+        expandBroadcastChat(chatList, contacts);        
+
         int chatVirtualId = 0;
         HashMap<String, String> cache = new HashMap<>();
         for (Chat c : chatList) {
+            // sort messages before generating the report
+            Message.sort(c.getMessages());
+
             getAvatar(searcher, c.getRemote());
             searchMediaFilesForMessagesInBatches(c.getMessages(), searcher, handler, extractor, dbPath, context, null);
             int frag = 0;
@@ -340,6 +350,27 @@ public class WhatsAppParser extends SQLite3DBParser {
                         chatMetadata.add(ExtraProperties.PARTICIPANTS, formatContact(c.getRemote(), cache));
                     }
                 }
+                if (c.isBroadcast()) {
+                    // TODO: chatMetadata.set(STATUS_PROP, Boolean.TRUE.toString());
+                }
+
+                // Set created and modified dates based on the first and last messages dates
+                if (!msgSubset.isEmpty()) {
+                    Message first = msgSubset.get(0);
+                    chatMetadata.set(TikaCoreProperties.CREATED, first.getTimeStamp());
+                    Message last = msgSubset.get(msgSubset.size() - 1);
+                    chatMetadata.set(TikaCoreProperties.MODIFIED, last.getTimeStamp());
+                }
+
+                // "isEmpty" = the chat is empty or contains only system messages
+                boolean isEmpty = true;
+                for (Message m : msgSubset) {
+                    if (!m.isSystemMessage()) {
+                        isEmpty = false;
+                        break;
+                    }
+                }
+                chatMetadata.set(ExtraProperties.COMMUNICATION_PREFIX + "isEmpty", Boolean.valueOf(isEmpty).toString());
 
                 ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
                 extractor.parseEmbedded(chatStream, handler, chatMetadata, false);
@@ -356,7 +387,7 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     }
 
-    private void parseWhatsappMessages(InputStream stream, ContentHandler handler, Metadata metadata,
+    private void parseWhatsAppMessages(InputStream stream, ContentHandler handler, Metadata metadata,
             ParseContext context, ExtractorFactory extFactory) throws IOException, SAXException, TikaException {
 
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
@@ -378,8 +409,6 @@ public class WhatsAppParser extends SQLite3DBParser {
                 WAAccount account = getUserAccount(searcher, dbPath, extFactory instanceof ExtractorAndroidFactory);
 
                 File tempDbFile = tis.getFile();
-                exportWalLog(tempDbFile, context, tmp);
-                exportRollbackJournal(tempDbFile, context, tmp);
                 extFactory.setConnectionParams(tis, metadata, context, this);
                 Extractor waExtractor = extFactory.createMessageExtractor(filePath, tempDbFile, contacts, account,
                         recoverDeletedRecords);
@@ -395,6 +424,31 @@ public class WhatsAppParser extends SQLite3DBParser {
 
             } finally {
                 tmp.dispose();
+            }
+        }
+    }
+
+    private static void expandBroadcastChat(List<Chat> chatList, WAContactsDirectory contacts) {
+        Map<String, Chat> statusChats = new HashMap<String, Chat>();
+        for (int i = 0; i < chatList.size(); i++) {
+            Chat c = chatList.get(i);
+            if (c.getRemote().getFullId().equals(WAContact.waStatusBroadcast)) {
+                chatList.remove(i--);
+                List<Message> msgs = new ArrayList<Message>(c.getMessages());
+                for (Message m : msgs) {
+                    String remote = m.getRemoteResource();
+                    Chat newChat = statusChats.get(remote);
+                    if (newChat == null) {
+                        WAContact contact = contacts.getContact(remote);
+                        newChat = new Chat(contact);
+                        newChat.setBroadcast(true);
+                        newChat.setDeleted(c.isDeleted());
+                        newChat.setId(c.getId() + 1_000_000_000L);
+                        statusChats.put(remote, newChat);
+                        chatList.add(newChat);
+                    }
+                    newChat.add(m);
+                }
             }
         }
     }
@@ -537,9 +591,6 @@ public class WhatsAppParser extends SQLite3DBParser {
 
             String filePath = null;
             filePath = wcontext.getItem().getPath();
-
-            exportWalLog(tempFile, context, tmp);
-            exportRollbackJournal(tempFile, context, tmp);
 
             extFactory.setConnectionParams(tis, metadata, context, this);
             Extractor waExtractor = extFactory.createMessageExtractor(filePath, tempFile, contacts, account,
@@ -1012,6 +1063,9 @@ public class WhatsAppParser extends SQLite3DBParser {
                         meta.add(org.apache.tika.metadata.Message.MESSAGE_TO, local);
                     }
                 }
+                if (c.isBroadcast()) {
+                    // TODO: meta.set(STATUS_PROP, Boolean.TRUE.toString());
+                }
             }
             meta.set(ExtraProperties.MESSAGE_BODY, m.getData());
             meta.set(ExtraProperties.URL, m.getUrl());
@@ -1218,8 +1272,6 @@ public class WhatsAppParser extends SQLite3DBParser {
         if (extractor.shouldParseEmbedded(metadata)) {
             TikaInputStream tis = TikaInputStream.get(stream, tmp);
             File contactDbFile = tis.getFile();
-            exportWalLog(contactDbFile, context, tmp);
-            exportRollbackJournal(contactDbFile, context, tmp);
             try {
                 WAContactsExtractor waExtractor = extFactory.createContactsExtractor(contactDbFile,
                         recoverDeletedRecords);
@@ -1239,6 +1291,10 @@ public class WhatsAppParser extends SQLite3DBParser {
 
                 ReportGenerator reportGenerator = new ReportGenerator();
                 for (WAContact c : waExtractor.getContactsDirectory().contacts()) {
+                    if (c.getFullId().equals(WAContact.waStatusBroadcast)) {
+                        // Skip status@broadcast 
+                        continue;
+                    }
                     Metadata cMetadata = new Metadata();
                     cMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, WHATSAPP_CONTACT.toString());
                     cMetadata.set(TikaCoreProperties.TITLE, c.getTitle());

@@ -2,7 +2,11 @@ package iped.parsers.lnk;
 
 import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
 
 public class LNKShortcut {
 
@@ -62,12 +66,20 @@ public class LNKShortcut {
         return toDateStr(df, createDate);
     }
 
+    public Date getCreateDate() {
+        return toDate(createDate);
+    }
+
     public void setCreateDate(long createDate) {
         this.createDate = createDate;
     }
 
     public String getAccessDate(DateFormat df) {
         return toDateStr(df, accessDate);
+    }
+
+    public Date getAccessDate() {
+        return toDate(accessDate);
     }
 
     public void setAccessDate(long accessDate) {
@@ -77,6 +89,10 @@ public class LNKShortcut {
     public String getModifiedDate(DateFormat df) {
         return toDateStr(df, modifiedDate);
     }
+    public Date getModifiedDate() {
+        return toDate(modifiedDate);
+    }
+
 
     public void setModifiedDate(long modifiedDate) {
         this.modifiedDate = modifiedDate;
@@ -239,19 +255,15 @@ public class LNKShortcut {
         }
     }
 
-    public static String getFileAttributeFlagStr(int flAtt) {
-        StringBuilder sb = new StringBuilder(""); //$NON-NLS-1$
-        for (FileAttributeFlags enumItem : FileAttributeFlags.values()) {
-            if ((flAtt & enumItem.getFlag()) == enumItem.getFlag()) {
-                sb.append(enumItem.name());
-                sb.append(", "); //$NON-NLS-1$
-            }
-        }
-        int i;
-        if ((i = sb.length()) > 0) {
-            sb.delete(i - 2, i);
-        }
-        return sb.toString();
+    public static String getFileAttributeFlagStr(int dFlag) {
+        return StringUtils.join(getFileAttributeFlagArray(dFlag), ", ");
+    }
+
+    public static String[] getFileAttributeFlagArray(int flAtt) {
+        return Arrays.stream(FileAttributeFlags.values())
+            .filter(enumItem -> (flAtt & enumItem.getFlag()) == enumItem.getFlag())
+            .map(enumItem -> enumItem.name())
+            .toArray(String[]::new);
     }
 
     public static enum DataFlags {
@@ -298,18 +310,14 @@ public class LNKShortcut {
     }
 
     public static String getDataFlagStr(int dFlag) {
-        StringBuilder sb = new StringBuilder(""); //$NON-NLS-1$
-        for (DataFlags enumItem : DataFlags.values()) {
-            if ((dFlag & enumItem.getFlag()) == enumItem.getFlag()) {
-                sb.append(enumItem.name());
-                sb.append(", "); //$NON-NLS-1$
-            }
-        }
-        int i;
-        if ((i = sb.length()) > 0) {
-            sb.delete(i - 2, i);
-        }
-        return sb.toString();
+        return StringUtils.join(getDataFlagArray(dFlag), ", ");
+    }
+
+    public static String[] getDataFlagArray(int dFlag) {
+        return Arrays.stream(DataFlags.values())
+            .filter(enumItem -> (dFlag & enumItem.flag) == enumItem.flag)
+            .map(enumItem -> enumItem.name())
+            .toArray(String[]::new);
     }
 
     public String getStringDataFlags() {
@@ -341,13 +349,18 @@ public class LNKShortcut {
         return sb.toString();
     }
 
-    public static String toDateStr(DateFormat df, long ft) {
+    public static Date toDate(long ft) {
         // FileTime do Windows = número de intervalos de 100 nanossegundos desde 1 de
         // janeiro de 1601
         // Date.parse("1/1/1601") == 11644455600000L
         if (ft == 0)
-            return LNKShortcut.DATA_NAO_SETADA;
+            return null;
         long tmpDt = (ft - 0x19db1ded53e8000L) / 10000;
-        return df.format(tmpDt);
+        return new Date(tmpDt);
+    }
+
+    public static String toDateStr(DateFormat df, long ft) {
+        Date date = toDate(ft);
+        return (date != null) ? df.format(date) : LNKShortcut.DATA_NAO_SETADA;
     }
 }

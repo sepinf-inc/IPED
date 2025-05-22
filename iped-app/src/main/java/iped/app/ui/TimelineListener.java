@@ -10,6 +10,7 @@ import javax.swing.RowSorter.SortKey;
 import javax.swing.SortOrder;
 
 import bibliothek.gui.dock.common.action.CCheckBox;
+import iped.app.ui.columns.ColumnsManagerUI;
 import iped.engine.search.MultiSearchResult;
 import iped.engine.search.TimelineResults;
 import iped.exception.ParseException;
@@ -56,10 +57,10 @@ public class TimelineListener implements IResultSetFilterer {
     private void updateGUI(boolean updateResults) {
         if (timelineViewEnabled) {
             timelineButton.setIcon(filteredIcon);
-            ColumnsManager.getInstance().moveTimelineColumns(5);
+            ColumnsManagerUI.getInstance().moveTimelineColumns(5);
         } else {
             timelineButton.setIcon(defaultIcon);
-            ColumnsManager.getInstance().moveTimelineColumns(14);
+            ColumnsManagerUI.getInstance().moveTimelineColumns(14);
         }
         updateSortingColumn();
         if (updateResults) {

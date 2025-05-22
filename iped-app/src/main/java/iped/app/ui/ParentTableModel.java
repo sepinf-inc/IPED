@@ -21,18 +21,24 @@ package iped.app.ui;
 import java.awt.Rectangle;
 
 import javax.swing.ListSelectionModel;
-import javax.swing.SwingUtilities;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.IntPoint;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
 
-import iped.engine.search.IPEDSearcher;
-import iped.engine.search.LuceneSearchResult;
-import iped.engine.search.MultiSearchResult;
-import iped.engine.task.index.IndexItem;
+import iped.properties.BasicProps;
+
 
 public class ParentTableModel extends BaseTableModel {
 
     private static final long serialVersionUID = 1L;
+
+    public ParentTableModel() {
+    }
 
     @Override
     public void valueChanged(ListSelectionModel lsm) {
@@ -45,38 +51,24 @@ public class ParentTableModel extends BaseTableModel {
     }
 
     @Override
-    public void listItems(Document doc) {
+    public Query createQuery(Document doc) {
 
-        String textQuery = null;
-        String parentId = doc.get(IndexItem.PARENTID);
-        if (parentId != null) {
-            textQuery = IndexItem.ID + ":" + parentId;
+        String parentId = doc.get(BasicProps.PARENTID);
+        if (parentId == null) {
+            return null;
         }
 
-        String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
-        textQuery += " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID;
+        String sourceUUID = doc.get(BasicProps.EVIDENCE_UUID);
 
-        results = new LuceneSearchResult(0);
+        BooleanQuery.Builder queryBuilder = new BooleanQuery.Builder();
+        queryBuilder.add(IntPoint.newExactQuery(BasicProps.ID, Integer.parseInt(parentId)), Occur.MUST);
+        queryBuilder.add(new TermQuery(new Term(BasicProps.EVIDENCE_UUID, sourceUUID)), Occur.MUST);
 
-        if (textQuery != null) {
-            try {
-                IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
-                results = MultiSearchResult.get(task.multiSearch(), App.get().appCase);
+        return queryBuilder.build();
+    }
 
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        if (results.getLength() > 0) {
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    App.get().parentDock.setTitleText(Messages.getString("ParentTableModel.ParentCount"));
-                }
-            });
-        }
-
-        fireTableDataChanged();
+    @Override
+    public void onListItemsResultsComplete() {
+        App.get().parentDock.setTitleText(Messages.getString("ParentTableModel.ParentCount"));
     }
 }

@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.logging.log4j.Level;
@@ -42,6 +43,8 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
 
     protected static volatile Level logLevel = Level.forName("MSG", 250);
 
+    private static volatile AtomicBoolean init = new AtomicBoolean();
+    
     static class Server {
         Process process;
         BufferedReader reader;
@@ -68,7 +71,7 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
 
         super.init(configurationManager);
 
-        if (!this.isEnabled()) {
+        if (!isEnabled()) {
             return;
         }
         
@@ -85,11 +88,26 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
 
         if (!deque.isEmpty())
             return;
-        
-        Server server;
-        int device = 0;
-        while ((server = startServer(device++)) != null) {
-            deque.add(server);
+
+        synchronized (init) {
+            if (!init.get()) {
+                try {
+                    Server server;
+                    int device = 0;
+                    while ((server = startServer(device++)) != null) {
+                        deque.add(server);
+                    }
+
+                } catch (Exception e) {
+                    if (hasIpedDatasource()) {
+                        transcriptConfig.setEnabled(false);
+                        logger.warn("Could not initialize audio transcription. Task disabled.");
+                    } else {
+                        throw e;
+                    }
+                }
+                init.set(true);
+            }
         }
 
         logLevel = Level.DEBUG;
