@@ -350,7 +350,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     }
 
     public MenuClass getContextMenu() {
-        return new MenuClass();
+        IItemId id = resultTableListener.getSelectedItemId();
+        IItem item = id == null ? null : appCase.getItemByItemId(id); 
+        return new MenuClass(item);
     }
 
     public LogConfiguration getLogConfiguration() {

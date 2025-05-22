@@ -178,7 +178,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
         return null;
     }
 
-    private IItemId getSelectedItemId() {
+    public IItemId getSelectedItemId() {
         return getSelectedItemId(App.get().resultsTable.getSelectedRow());
     }
 

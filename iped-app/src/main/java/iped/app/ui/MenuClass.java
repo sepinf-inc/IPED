@@ -56,10 +56,6 @@ public class MenuClass extends JPopupMenu {
 
     private boolean similarFacesExternalEnabled = SimilarFacesFilterActions.isExternalSearchEnabled();
 
-    public MenuClass() {
-        this(null);
-    }
-
     public MenuClass(boolean isTreeMenu) {
         super();
         this.isTreeMenu = isTreeMenu;
