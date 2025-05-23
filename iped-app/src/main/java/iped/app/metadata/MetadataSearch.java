@@ -102,15 +102,6 @@ public class MetadataSearch extends MetadataSearchable {
                         ord = (int) ((val - min) / interval);
                         if (val == max && min != max)
                             ord--;
-                        if (!isFloat && !isDouble && actualMin != null) {
-                            long lval = (long) val;
-                            for (int i = Math.max(0, ord - 1); i <= ord + 1 && i < actualMin.length; i++) {
-                                if (lval >= actualMin[i] && lval <= actualMax[i]) {
-                                    ord = i;
-                                    break;
-                                }
-                            }
-                        }
                     }
                     if (ordsToGet.contains(ord)) {
                         items.add(item);
@@ -158,15 +149,6 @@ public class MetadataSearch extends MetadataSearchable {
                             ord = (int) ((val - min) / interval);
                             if (val == max && min != max)
                                 ord--;
-                            if (!isFloat && !isDouble && actualMin != null) {
-                                long lval = (long) val;
-                                for (int j = Math.max(0, ord - 1); j <= ord + 1 && j < actualMin.length; j++) {
-                                    if (lval >= actualMin[j] && lval <= actualMax[j]) {
-                                        ord = j;
-                                        break;
-                                    }
-                                }
-                            }
                         }
                     }
                     if (ordsToGet.contains(ord)) {
@@ -423,7 +405,8 @@ public class MetadataSearch extends MetadataSearchable {
                             val = NumericUtils.sortableIntToFloat((int) val);
                         else if (isDouble)
                             val = NumericUtils.sortableLongToDouble((long) val);
-                        int ord = (int) ((val - min) / interval);
+                        int ord = (int) Math.ceil((val - min) / interval);
+                        ord = ord == 0 ? ord : ord - 1;
                         if (val == Double.NEGATIVE_INFINITY) {
                             hasNegativeInfinite = true;
                             ord = 0;
@@ -437,12 +420,6 @@ public class MetadataSearch extends MetadataSearchable {
                             ord = linearScaleBins - 1;
                         if (!isFloat && !isDouble) {
                             long lval = (long) val;
-                            for (int i = Math.max(0, ord - 1); i <= ord + 1 && i < valueCount.length; i++) {
-                                if (lval >= rangeMin[i] && lval <= rangeMax[i]) {
-                                    ord = i;
-                                    break;
-                                }
-                            }
                             if (lval < actualMin[ord])
                                 actualMin[ord] = lval;
                             if (lval > actualMax[ord])
@@ -539,7 +516,8 @@ public class MetadataSearch extends MetadataSearchable {
                             val = NumericUtils.sortableIntToFloat((int) val);
                         else if (isDouble)
                             val = NumericUtils.sortableLongToDouble((long) val);
-                        int ord = (int) ((val - min) / interval);
+                        int ord = (int) Math.ceil((val - min) / interval);
+                        ord = ord == 0 ? ord : ord - 1;
                         if (val == Double.NEGATIVE_INFINITY) {
                             hasNegativeInfinite = true;
                             ord = 0;
@@ -553,12 +531,6 @@ public class MetadataSearch extends MetadataSearchable {
                             ord = linearScaleBins - 1;
                         if (!isFloat && !isDouble) {
                             long lval = (long) val;
-                            for (int j = Math.max(0, ord - 1); j <= ord + 1 && j < valueCount.length; j++) {
-                                if (lval >= rangeMin[j] && lval <= rangeMax[j]) {
-                                    ord = j;
-                                    break;
-                                }
-                            }
                             if (lval < actualMin[ord])
                                 actualMin[ord] = lval;
                             if (lval > actualMax[ord])
