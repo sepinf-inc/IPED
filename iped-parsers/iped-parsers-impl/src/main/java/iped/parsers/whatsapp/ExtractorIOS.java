@@ -1686,6 +1686,7 @@ public abstract class ExtractorIOS extends Extractor {
             case 30:
             case 32:
             case 41:
+            case 42:
                 result = TEMPLATE_MESSAGE;
                 break;
 
@@ -1744,7 +1745,7 @@ public abstract class ExtractorIOS extends Extractor {
             case 59:
                 result = VOICE_CALL;
                 break;
-
+            
             case 66:
                 result = MEDIA_GROUP;
                 break;
