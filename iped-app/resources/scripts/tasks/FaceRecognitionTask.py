@@ -5,7 +5,6 @@
 # If enabled, you can search for faces from the analysis interface, check the options menu.
 '''
 
-#import face_recognition as fr
 import os
 import time
 import subprocess
@@ -108,10 +107,45 @@ class FaceRecognitionTask:
     
     # This method is executed before starting the processing of items.
     def init(self, configuration):
+        # check if face recognition task is enabled
         taskConfig = configuration.getTaskConfigurable(configFile)
         FaceRecognitionTask.enabled = taskConfig.isEnabled()
         if not FaceRecognitionTask.enabled:
             return
+        
+        # check if required face recognition modules are properly installed 
+        try:
+            # default help and error messages
+            msg_see_manual = 'See FaceRecognition task setup information at <https://github.com/sepinf-inc/IPED/wiki/User-Manual#facerecognition>.'
+            msg_task_init_error = 'Processing Error: FaceRecognition task could not be initiliazed'
+
+            # chek if 'face_recognition' module is installed
+            module_name = 'face_recognition'
+            import face_recognition
+
+            # chek if 'opencv-python' module is installed
+            module_name = 'opencv-python'
+            import cv2
+
+            # chek if 'numpy' module is installed
+            module_name = 'numpy'
+            global np
+            import numpy as np
+            
+            # check if numpy version is supported (<2.x)
+            np_version_unsupported_min = '2'
+            np_version = np.__version__
+            if np_version >= np_version_unsupported_min:
+                # numpy version is not supported
+                msg = msg_task_init_error + f': \'{module_name}\' module version is {np_version} (must be <{np_version_unsupported_min}.x).'
+                logger.error(msg + ' ' + msg_see_manual)
+                System.exit(1)
+
+        except ModuleNotFoundError:
+            # required module not installed
+            msg = msg_task_init_error + f': \'{module_name}\' module is missing.'
+            logger.error(msg + ' ' + msg_see_manual)
+            System.exit(1)
         
         from iped.engine.config import VideoThumbsConfig
         videoConfig = configuration.findObject(VideoThumbsConfig);
@@ -122,9 +156,6 @@ class FaceRecognitionTask:
         terminate = fp.terminate
         imgError = fp.imgError
         ping = fp.ping
-        
-        global np
-        import numpy as np
         
         # check if was called from gui the first time
         global maxProcesses, firstInstance
@@ -278,7 +309,6 @@ class FaceRecognitionTask:
                 print(fp.video, file=proc.stdin, flush=True)
                     
             t1 = time.time()
-            #face_locations = fr.face_locations(img)
             
             line = proc.stdout.readline().strip()
 
@@ -311,9 +341,6 @@ class FaceRecognitionTask:
             for i in range(num_faces):
                 line = proc.stdout.readline()
                 face_locations.append(eval(line))
-            #print('locations ' + str(face_locations))
-            
-            #face_encodings = fr.face_encodings(img, face_locations)
             
             face_encodings = []
             for i in range(num_faces):
@@ -323,8 +350,6 @@ class FaceRecognitionTask:
                     list.append(float(line))
                 np_array = np.array(list)
                 face_encodings.append(np_array)
-            
-            #print('encodings ' + str(face_encodings))
             
             t3 = time.time()
             with timeLock:
