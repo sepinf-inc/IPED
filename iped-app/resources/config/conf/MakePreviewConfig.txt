@@ -11,4 +11,4 @@ supportedMimes = application/x-prefetch; text/x-vcard; application/x-emule-prefe
 
 # List of mimetypes which parsers insert links to other case items into preview
 supportedMimesWithLinks = application/x-emule; application/x-emule-part-met; application/x-ares-galaxy; application/x-shareaza-library-dat; application/x-shareaza-download; application/x-bittorrent-resume-dat; application/x-bittorrent-resume-dat-entry; application/x-bittorrent
-supportedMimesWithLinks = application/x-whatsapp-user-plist;application/x-bplist; application/x-apple-nskeyedarchiver; application/x-plist; application/x-bplist-webarchive; application/x-plist-webarchive; application/x-plist-memgraph; application/x-bplist-memgraph; application/x-bplist-itunes; application/x-plist-itunes
+supportedMimesWithLinks = application/x-bplist; application/x-apple-nskeyedarchiver; application/x-plist; application/x-bplist-webarchive; application/x-plist-webarchive; application/x-plist-memgraph; application/x-bplist-memgraph; application/x-bplist-itunes; application/x-plist-itunes
