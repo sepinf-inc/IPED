@@ -389,11 +389,10 @@ public class HtmlViewer extends AbstractViewer {
                             if (totalHits > 0) {
                                 // expands all parent elements of each hit
                                 try {
-                                    Boolean isNavigableTree = (Boolean) webEngine.executeScript("window.containsNavigableTree");
+                                    Boolean isNavigableTree = (Boolean) webEngine.executeScript("document.querySelector('details') != null");
                                     if (isNavigableTree.booleanValue()) {
                                         for (int i = 0; i < totalHits; i++) {
-                                            webEngine.executeScript("var a = document.getElementById(\"indexerHit-" + i + "\");\n" + "var els = [];\n" + "while (a) {\n" + "    a.open = 'true';\n"
-                                                    + "    a = a.parentNode;\n" + "}"); //$NON-NLS-2$
+                                            webEngine.executeScript("for (let el = document.getElementById('indexerHit-" + i + "'); el; el = el.parentElement) if (el.tagName === 'DETAILS') el.open = true;");
                                         }
                                     }
                                 } catch (ClassCastException e) {
