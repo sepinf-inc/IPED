@@ -24,8 +24,6 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,6 +46,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.app.ui.TreeViewModel.Node;
+import iped.app.ui.columns.ColumnsManager;
+import iped.app.ui.columns.ColumnsManagerUI;
+import iped.app.ui.columns.ColumnsSelectUI;
 import iped.app.ui.utils.UiIconSize;
 import iped.app.ui.utils.UiScale;
 import iped.data.IIPEDSource;
@@ -92,6 +93,11 @@ public class MenuListener implements ActionListener {
         if (dirDadosExportados.exists()) {
             fileChooser.setCurrentDirectory(dirDadosExportados);
         }
+    }
+
+    private void setupColumnsSelector() {
+        ColumnsSelectUI columnsSelector = ColumnsSelectUI.getInstance();
+        columnsSelector.setVisible();
     }
 
     private void setupFileChooserImportKeywords() {
@@ -157,7 +163,7 @@ public class MenuListener implements ActionListener {
 
         @Override
         public String getDescription() {
-            return "Comma Separeted Values (" + CSV + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+            return "Comma Separated Values (" + CSV + ")"; //$NON-NLS-1$ //$NON-NLS-2$
         }
 
     }
@@ -181,37 +187,36 @@ public class MenuListener implements ActionListener {
             App.get().loadPanelLayout();
 
         } else if (e.getSource() == menu.checkHighlighted) {
-            BookmarksController.get().setMultiSetting(true);
-            int col = App.get().resultsTable.convertColumnIndexToView(1);
-            for (Integer row : App.get().resultsTable.getSelectedRows()) {
-                App.get().resultsTable.setValueAt(true, row, col);
-            }
-            BookmarksController.get().setMultiSetting(false);
-            App.get().appCase.getMultiBookmarks().saveState();
-            BookmarksController.get().updateUISelection();
+            App.get().resultTableListener.itemSelection(true);
 
         } else if (e.getSource() == menu.uncheckHighlighted) {
-            BookmarksController.get().setMultiSetting(true);
-            int col = App.get().resultsTable.convertColumnIndexToView(1);
-            for (Integer row : App.get().resultsTable.getSelectedRows()) {
-                App.get().resultsTable.setValueAt(false, row, col);
-            }
-            BookmarksController.get().setMultiSetting(false);
-            App.get().appCase.getMultiBookmarks().saveState();
-            BookmarksController.get().updateUISelection();
+            App.get().resultTableListener.itemSelection(false);
 
+        } else if (e.getSource() == menu.checkHighlightedAndSubItems) {
+            App.get().resultTableListener.itemSelectionAndSubItems(true);
+
+        } else if (e.getSource() == menu.uncheckHighlightedAndSubItems) {
+            App.get().resultTableListener.itemSelectionAndSubItems(false);
+
+        } else if (e.getSource() == menu.checkHighlightedAndParent) {
+            App.get().resultTableListener.itemSelectionAndParent(true);
+
+        } else if (e.getSource() == menu.uncheckHighlightedAndParent) {
+            App.get().resultTableListener.itemSelectionAndParent(false);
+
+        } else if (e.getSource() == menu.checkHighlightedAndReferences) {
+            App.get().resultTableListener.itemSelectionAndReferences(true);
+
+        } else if (e.getSource() == menu.uncheckHighlightedAndReferences) {
+            App.get().resultTableListener.itemSelectionAndReferences(false);
+
+        } else if (e.getSource() == menu.checkHighlightedAndReferencedBy) {
+            App.get().resultTableListener.itemSelectionAndReferencedBy(true);
+
+        } else if (e.getSource() == menu.uncheckHighlightedAndReferencedBy) {
+            App.get().resultTableListener.itemSelectionAndReferencedBy(false);
         }
 
-        if (e.getSource() == menu.deepCheckHighlighted) {
-            KeyEvent keyCTRL_R_Pressed = new KeyEvent((Component) e.getSource(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), KeyEvent.CTRL_DOWN_MASK, KeyEvent.VK_R, KeyEvent.CHAR_UNDEFINED);
-            for (KeyListener kl : App.get().resultsTable.getListeners(KeyListener.class))
-                kl.keyPressed(keyCTRL_R_Pressed);
-
-        } else if (e.getSource() == menu.deepUncheckHighlighted) {
-            KeyEvent keyCTRL_R_Pressed = new KeyEvent((Component) e.getSource(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), KeyEvent.ALT_DOWN_MASK, KeyEvent.VK_R, KeyEvent.CHAR_UNDEFINED);
-            for (KeyListener kl : App.get().resultsTable.getListeners(KeyListener.class))
-                kl.keyPressed(keyCTRL_R_Pressed);
-        }
         if (e.getSource() == menu.readHighlighted) {
             BookmarksController.get().setMultiSetting(true);
             int col = App.get().resultsTable.convertColumnIndexToView(2);
@@ -253,15 +258,19 @@ public class MenuListener implements ActionListener {
                 int luceneId = App.get().appCase.getLuceneId(item);
                 selectedIds.add(luceneId);
             }
-            setupFileChooser();
-            fileChooser.setFileFilter(csvFilter);
-            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-            if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
-                File file = fileChooser.getSelectedFile();
-                if (!file.getName().endsWith(CSV)) {
-                    file = new File(file.getAbsolutePath() + CSV);
+            setupColumnsSelector();
+            if (ColumnsSelectUI.getOkButtonClicked()) {
+                setupFileChooser();
+                fileChooser.setFileFilter(csvFilter);
+                fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
+                    File file = fileChooser.getSelectedFile();
+                    if (!file.getName().endsWith(CSV)) {
+                        file = new File(file.getAbsolutePath() + CSV);
+                    }
+                    ArrayList<String> loadedSelectedFields = ColumnsSelectUI.loadSavedFields();
+                    (new CopyProperties(file, selectedIds, loadedSelectedFields)).execute();
                 }
-                (new CopyProperties(file, selectedIds)).execute();
             }
 
         } else if (e.getSource() == menu.copyChecked) {
@@ -272,17 +281,20 @@ public class MenuListener implements ActionListener {
                     uniqueSelectedIds.add(docId);
                 }
             });
-            setupFileChooser();
-            fileChooser.setFileFilter(csvFilter);
-            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-            if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
-                File file = fileChooser.getSelectedFile();
-                if (!file.getName().endsWith(CSV)) {
-                    file = new File(file.getAbsolutePath() + CSV);
+            setupColumnsSelector();
+            if (ColumnsSelectUI.getOkButtonClicked()) {
+                setupFileChooser();
+                fileChooser.setFileFilter(csvFilter);
+                fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
+                    File file = fileChooser.getSelectedFile();
+                    if (!file.getName().endsWith(CSV)) {
+                        file = new File(file.getAbsolutePath() + CSV);
+                    }
+                    ArrayList<String> loadedSelectedFields = ColumnsSelectUI.loadSavedFields();
+                    (new CopyProperties(file, uniqueSelectedIds, loadedSelectedFields)).execute();
                 }
-                (new CopyProperties(file, uniqueSelectedIds)).execute();
             }
-
         } else if (e.getSource() == menu.exportChecked) {
             ArrayList<IItemId> uniqueSelectedIds = new ArrayList<IItemId>();
             for (IPEDSource source : App.get().appCase.getAtomicSources()) {
@@ -360,15 +372,15 @@ public class MenuListener implements ActionListener {
 
         } else if (e.getSource() == menu.manageColumns) {
 
-            ColumnsManager.getInstance().setVisible();
+            ColumnsManagerUI.getInstance().setVisible();
 
         } else if (e.getSource() == menu.pinFirstColumns) {
 
-            int pinned = ColumnsManager.getInstance().getPinnedColumns();
+            int pinned = ColumnsManagerUI.getInstance().getPinnedColumns();
             String msg = Messages.getString("MenuListener.PinFirstCols");
             SpinnerDialog dialog = new SpinnerDialog(App.get(), msg, msg + ":", pinned, 2, 12);
             dialog.setVisible(true);
-            ColumnsManager.getInstance().setPinnedColumns(dialog.getSelectedValue());
+            ColumnsManagerUI.getInstance().setPinnedColumns(dialog.getSelectedValue());
 
         } else if (e.getSource() == menu.manageFilters) {
 
@@ -422,13 +434,13 @@ public class MenuListener implements ActionListener {
             new ReportDialog().setVisible();
 
         } else if (e.getSource() == menu.lastColLayout) {
-            ColumnsManager.getInstance().resetToLastLayout();
+            ColumnsManagerUI.getInstance().resetToLastLayout();
 
         } else if (e.getSource() == menu.saveColLayout) {
             ColumnsManager.getInstance().saveColumnsState();
 
         } else if (e.getSource() == menu.resetColLayout) {
-            ColumnsManager.getInstance().resetToDefaultLayout();
+            ColumnsManagerUI.getInstance().resetToDefaultLayout();
         } else if (e.getSource() == menu.addToGraph) {
             int[] rows = App.get().resultsTable.getSelectedRows();
             List<ItemId> items = new ArrayList<>(rows.length);

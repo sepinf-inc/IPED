@@ -1,8 +1,10 @@
 package iped.viewers.api;
 
 import java.awt.Component;
+import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.LayoutManager;
+import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.datatransfer.Clipboard;
@@ -154,8 +156,13 @@ public abstract class AbstractViewer {
 
     protected void copyScreen(Component comp) {
         BufferedImage image = new BufferedImage(comp.getWidth(), comp.getHeight(), BufferedImage.TYPE_INT_RGB);
-
-        comp.paint(image.getGraphics());
+        Graphics2D g = image.createGraphics();
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        comp.paint(g);
+        g.dispose();
         TransferableImage trans = new TransferableImage(image);
         Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
         clipboard.setContents(trans, trans);

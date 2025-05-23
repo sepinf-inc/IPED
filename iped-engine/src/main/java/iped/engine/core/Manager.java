@@ -29,7 +29,6 @@ import java.nio.file.StandardOpenOption;
 import java.security.Security;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.logging.log4j.Level;
@@ -57,7 +56,6 @@ import iped.engine.CmdLineArgs;
 import iped.engine.config.AnalysisConfig;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
-import iped.engine.config.FileSystemConfig;
 import iped.engine.config.IndexTaskConfig;
 import iped.engine.config.LocalConfig;
 import iped.engine.config.SplashScreenConfig;
@@ -152,8 +150,6 @@ public class Manager {
 
     private Thread commitThread = null;
     AtomicLong partialCommitsTime = new AtomicLong();
-
-    private final AtomicBoolean initSleuthkitServers = new AtomicBoolean(false);
 
     private static final String appWinExeFileName = "IPED-SearchApp.exe";
 
@@ -282,8 +278,6 @@ public class Manager {
 
             initWorkers();
 
-            initSleuthkitServers();
-
             status.addProcessingEvidences(args);
             status.save();
 
@@ -371,16 +365,6 @@ public class Manager {
         if (producer != null) {
             producer.interrupt();
             // produtor.join(5000);
-        }
-    }
-
-    public synchronized void initSleuthkitServers() throws InterruptedException {
-        File tskDB = SleuthkitReader.getSleuthkitDB(output);
-        FileSystemConfig fsConfig = ConfigurationManager.get().findObject(FileSystemConfig.class);
-        if (tskDB.exists() && fsConfig.isRobustImageReading()) {
-            if (!initSleuthkitServers.getAndSet(true)) {
-                SleuthkitClient.initSleuthkitServers(tskDB.getParent());
-            }
         }
     }
 
@@ -910,6 +894,12 @@ public class Manager {
             if (!currentProfile.equals(defaultProfile)) {
                 IOUtil.copyDirectory(currentProfile, new File(output, Configuration.CASE_PROFILE_DIR), true);
                 resetLocalConfigToPortable(new File(output, Configuration.CASE_PROFILE_DIR + "/" + Configuration.LOCAL_CONFIG));
+            }
+            if (caseData.isIpedReport()) {
+                File caseProfile = new File(Configuration.getInstance().appRoot, Configuration.CASE_PROFILE_DIR);
+                if (caseProfile.exists()) {
+                    IOUtil.copyDirectory(caseProfile, new File(output, Configuration.CASE_PROFILE_DIR));
+                }
             }
 
             File binDir = new File(Configuration.getInstance().appRoot, "bin"); //$NON-NLS-1$
