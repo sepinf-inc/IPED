@@ -80,6 +80,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
         BookmarksManager.updateCounters();
 
         if (App.get().resultsTable.getSelectedRowCount() == 0) {
+            App.get().setEnableGalleryFaceSearchButton(false);
             App.get().setEnableGallerySimSearchButton(false);
             App.get().setLastSelectedDoc(-1);
             lastTableDoc = -1;
@@ -177,7 +178,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
         return null;
     }
 
-    private IItemId getSelectedItemId() {
+    public IItemId getSelectedItemId() {
         return getSelectedItemId(App.get().resultsTable.getSelectedRow());
     }
 
