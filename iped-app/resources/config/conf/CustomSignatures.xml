@@ -471,6 +471,13 @@
 		<glob pattern="*.torrent"/>
 	</mime-type>
 
+	<mime-type type="application/x-transmission-resume">
+		<sub-class-of type="application/x-p2p"/>
+		<magic priority="50">
+    		<match value="d13:activity-date" type="string" offset="0"/>
+		</magic>
+	</mime-type>
+
     <mime-type type="message/outlook-pst">
         <magic priority="70">
             <match value="!--PST Email Message Indexer Preview--" type="string" offset="7"/>

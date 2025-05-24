@@ -20,6 +20,7 @@ import iped.engine.task.index.IndexItem;
 import iped.parsers.ares.AresParser;
 import iped.parsers.bittorrent.BitTorrentResumeDatEntryParser;
 import iped.parsers.bittorrent.BitTorrentResumeDatParser;
+import iped.parsers.bittorrent.TransmissionResumeParser;
 import iped.parsers.emule.KnownMetParser;
 import iped.parsers.emule.PartMetParser;
 import iped.parsers.gdrive.GDriveCloudGraphParser;
@@ -108,6 +109,8 @@ public class P2PBookmarker {
                 new P2PProgram(torrentHashes, "Torrent", new Color(0, 160, 60)));
         p2pPrograms.put(BitTorrentResumeDatEntryParser.RESUME_DAT_ENTRY_MIME_TYPE,
                 new P2PProgram(torrentHashes, "Torrent", new Color(0, 160, 60)));
+        p2pPrograms.put(TransmissionResumeParser.TRANSMISSION_RESUME_MIME_TYPE,
+                new P2PProgram(torrentHashes, "Transmission", new Color(0, 180, 0)));
 
         P2PProgram progGDrive = new P2PProgram(HashTask.HASH.MD5.toString(), "GoogleDrive");
         p2pPrograms.put(GDriveCloudGraphParser.GDRIVE_CLOUD_GRAPH_REG.toString(), progGDrive);

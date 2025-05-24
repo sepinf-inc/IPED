@@ -435,17 +435,16 @@ public class CmdLineArgsImpl implements CmdLineArgs {
             Main.getInstance().logFile = this.logFile;
         }
 
-        if (outputDir != null) {
-            Main.getInstance().output = new File(outputDir, "iped"); //$NON-NLS-1$
-        } else {
-            Main.getInstance().output = new File(datasources.get(0).getParentFile(), "iped"); //$NON-NLS-1$
+        if (outputDir == null) {
+            outputDir = datasources.get(0).getParentFile();
         }
+        Main.getInstance().output = new File(outputDir, "iped");
 
         File file = outputDir;
         while (file != null) {
             for (File source : Main.getInstance().dataSource) {
                 if (file.getAbsoluteFile().equals(source.getAbsoluteFile())) {
-                    throw new ParameterException("Output folder can not be equal or subdir of input!"); //$NON-NLS-1$
+                    throw new ParameterException("The output folder can not be equal or a subfolder of an input!");
                 }
             }
             file = file.getParentFile();
