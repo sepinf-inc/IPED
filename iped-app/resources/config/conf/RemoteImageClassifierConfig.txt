@@ -1,0 +1,15 @@
+##################################
+# RemoteImageClassifier Task configuration
+#################################
+
+# URL of the service/central node used by the RemoteImageClassifier implementation.
+url = https://10.61.86.148:30603/zip
+
+# Maximum number of thumbs to be included in the zip file to send to the server
+batch_size = 50
+
+# Threshold used to decide if an image is labeled in one category
+categorization_threshold = 0.6
+
+# Validate SSL certificate for communication with server
+validateSSL = false

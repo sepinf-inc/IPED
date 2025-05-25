@@ -47,20 +47,22 @@ import iped.engine.config.RemoteImageClassifierConfig;
 import iped.engine.task.die.DIETask;
 import iped.engine.task.index.IndexItem;
 import iped.utils.ImageUtil;
-public class RemoteImageClassifier extends AbstractTask {
 
-    private static Logger logger = LoggerFactory.getLogger(RemoteImageClassifier.class);
-    private String url = "http://localhost:8000/zip";
-    private int batch_size = 50;
+public class RemoteImageClassifierTask extends AbstractTask {
+
+    private static Logger logger = LoggerFactory.getLogger(RemoteImageClassifierTask.class);
+    private String url;
+    private int batchSize = 50;
     private Map<String, IItem> queue = new TreeMap<>();
-    private zipfile zip = null;
+    private ZipFile zip;
     private RemoteImageClassifierConfig config;
     private boolean validateSSL;
+
     private static class ResultItem {
         public String name;
         public TreeMap<String, ArrayList<Double>> classes = new TreeMap<>();
 
-        public void addClass(String classname,double val) {
+        public void addClass(String classname, double val) {
             if (!classes.containsKey(classname)) {
                 classes.put(classname, new ArrayList<>());
             }
@@ -68,52 +70,42 @@ public class RemoteImageClassifier extends AbstractTask {
         }
 
         public double getClassProb(String classname) {
-            /*
-             * double resp = 0; for (Double val : classes.get(classname)) { if (val > resp)
-             * resp = val; } return resp;
-             */
             return DIETask.videoScore(classes.get(classname));
-
         }
     }
 
-    private static class zipfile {
+    private static class ZipFile {
         TemporaryResources tmp;
         File zipFile;
         FileOutputStream fos;
         ZipOutputStream zos;
-        int size;
+        int fileCount;
 
-        public zipfile() throws IOException {
+        public ZipFile() throws IOException {
             tmp = new TemporaryResources();
             zipFile = tmp.createTemporaryFile();
             fos = new FileOutputStream(zipFile);
             zos = new ZipOutputStream(fos);
-            size = 0;
+            fileCount = 0;
         }
 
-        public int size() {
-            return size;
+        public int getFileCount() {
+            return fileCount;
         }
 
-        public void addFileToZip(String filename, byte[] dados) throws IOException {
-
+        public void addFileToZip(String filename, byte[] data) throws IOException {
             ZipEntry zipEntry = new ZipEntry(filename);
-
             zipEntry.setMethod(ZipEntry.STORED);
+            zipEntry.setSize(data.length);
+            zipEntry.setCompressedSize(data.length);
             CRC32 crc = new CRC32();
-            crc.update(dados);
-
-            zipEntry.setSize(dados.length);
-            zipEntry.setCompressedSize(dados.length);
+            crc.update(data);
             zipEntry.setCrc(crc.getValue());
 
-
             zos.putNextEntry(zipEntry);
-            zos.write(dados, 0, dados.length);
+            zos.write(data, 0, data.length);
             zos.closeEntry();
-            size++;
-
+            fileCount++;
         }
 
         public File closeAndGetZip() throws IOException {
@@ -140,18 +132,16 @@ public class RemoteImageClassifier extends AbstractTask {
     public void init(ConfigurationManager configurationManager) throws Exception {
         config = configurationManager.findObject(RemoteImageClassifierConfig.class);
         url = config.getUrl();
-        batch_size = config.getBatchSize();
+        batchSize = config.getBatchSize();
         validateSSL = config.getValidateSSL();
         if (zip == null) {
-            zip = new zipfile();
+            zip = new ZipFile();
         }
-
     }
 
     @Override
     public void finish() throws Exception {
-        // TODO Auto-generated method stub
-
+        return;
     }
 
     private void sendItemsToNextTask() throws Exception {
@@ -169,16 +159,9 @@ public class RemoteImageClassifier extends AbstractTask {
             return;
         }
 
-        /*
-         * if (zip.size() > 0 && (zip.size() >= batch_size || item.isQueueEnd())) {
-         * sendZipFile(zip.closeAndGetZip()); zip.clean(); zip = new zipfile();
-         * sendItemsToNextTask(); if (!item.isQueueEnd()) return; }
-         */
-
         if (!queue.containsValue(item) || item.isQueueEnd()) {
             super.sendToNextTask(item);
         }
-
     }
 
     private void processResult(InputStream responseStream) throws IOException {
@@ -186,19 +169,19 @@ public class RemoteImageClassifier extends AbstractTask {
         JsonNode jsonResponse = objectMapper.readTree(responseStream);
         logger.debug("Server Response: {}", jsonResponse.toPrettyString());
         JsonNode resultArray = jsonResponse.get("results");
-        Map<String,ResultItem> results=new TreeMap<>();
+        Map<String,ResultItem> results = new TreeMap<>();
 
         if (resultArray != null && resultArray.isArray()) {
             for (JsonNode item : resultArray) {
                 String name = item.get("filename").asText();
-                ResultItem res=null;
+                ResultItem res = null;
                 if (name == null) {
-                    logger.warn("Warning: Invalid name ");
+                    logger.warn("Invalid name ");
                     continue;
                 }
-                if(name.split("_").length==2) {
-                    name=name.split("_")[1];
-                    res=results.get(name);
+                if (name.split("_").length == 2) {
+                    name = name.split("_")[1];
+                    res = results.get(name);
                 }
                 if (res == null) {
                     res = new ResultItem();
@@ -215,25 +198,23 @@ public class RemoteImageClassifier extends AbstractTask {
                         res.addClass(key, value);
                     }
                 } else {
-                    logger.warn("Warning: 'class' field is missing for filename: {}", name);
+                    logger.warn("'class' field is missing for filename: {}", name);
                 }
             }
 
             for (String name : results.keySet()) {
                 IItem evidence;
                 if (name == null || (evidence = queue.get(name)) == null) {
-                    logger.warn("Warning: No matching item found ");
+                    logger.warn("No matching item found ");
                     continue;
                 }
                 ResultItem res = results.get(name);
                 for (String classname : res.classes.keySet()) {
                     evidence.setExtraAttribute(classname, res.getClassProb(classname));
                 }
-
             }
-
         } else {
-            logger.warn("Warning: 'results' array is missing in JSON response.");
+            logger.warn("'results' array is missing in JSON response.");
         }
     }
     
@@ -247,7 +228,6 @@ public class RemoteImageClassifier extends AbstractTask {
                         // Trust all certs
                         return true;
                     }
-
                 }).build();
             } catch (Exception e) {
                 throw new RuntimeException("Failed to create a trusting SSL context", e);
@@ -263,7 +243,7 @@ public class RemoteImageClassifier extends AbstractTask {
     }
 
     private void sendZipFile(File zipFile) throws IOException {
-        logger.info("Envia zip de tamanho {}", zip.size());
+        logger.info("Send ZIP file with {} files", zip.getFileCount());
         try (CloseableHttpClient client = getClient()) {
             HttpPost post = new HttpPost(url);
 
@@ -278,7 +258,6 @@ public class RemoteImageClassifier extends AbstractTask {
                     try (InputStream responseStream = response.getEntity().getContent()) {
                         processResult(responseStream);
                     }
-
                 } else {
                     String errorMessage;
                     try (InputStream errorStream = response.getEntity().getContent()) {
@@ -286,8 +265,7 @@ public class RemoteImageClassifier extends AbstractTask {
                     } catch (IOException e) {
                         errorMessage = "Failed to read error message from response.";
                     }
-
-                    logger.error("Failed to upload ZIP. HTTP Code: {} - Response: {}", statusCode, errorMessage);
+                    logger.error("Failed to upload ZIP file. HTTP Code: {} - Response: {}", statusCode, errorMessage);
                 }
             }
         }
@@ -295,18 +273,18 @@ public class RemoteImageClassifier extends AbstractTask {
 
     @Override
     protected boolean processQueueEnd() {
-        // TODO Auto-generated method stub
         return true;
     }
 
     @Override
     protected void process(IItem evidence) throws Exception {
-        if (zip.size() >= batch_size || (evidence.isQueueEnd() && zip.size() > 0)) {
+        if (zip.getFileCount() >= batchSize || (evidence.isQueueEnd() && zip.getFileCount() > 0)) {
             sendZipFile(zip.closeAndGetZip());
             zip.clean();
-            zip = new zipfile();
+            zip = new ZipFile();
             sendItemsToNextTask();
         }
+
         if (!isEnabled() || !evidence.isToAddToCase() || evidence.getHashValue() == null || evidence.getThumb() == null
                 || evidence.getThumb().length < 10 || evidence.isQueueEnd()) {
             return;
@@ -314,18 +292,16 @@ public class RemoteImageClassifier extends AbstractTask {
 
         String name = evidence.getExtraAttribute(IndexItem.TRACK_ID).toString() + ".jpg";
         if (DIETask.isVideoType(evidence.getMediaType()) || DIETask.isAnimationImage(evidence)) {
-
-            // For videos call the detection method for each extracted frame image
-            // (VideoThumbsTask must be enabled)
+            // For videos, call the detection method for each extracted frame image (VideoThumbsTask must be enabled)
             File viewFile = evidence.getViewFile();
             List<BufferedImage> frames;
             if (viewFile != null && viewFile.exists() && (frames = ImageUtil.getFrames(viewFile)) != null) {
                 int i = 0;
                 for (BufferedImage frame : frames) {
-                    String name_i = (++i) + "_" + name;
+                    String iName = (++i) + "_" + name;
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
                     ImageIO.write(frame, "jpeg", baos);
-                    zip.addFileToZip(name_i, baos.toByteArray());
+                    zip.addFileToZip(iName, baos.toByteArray());
                 }
             } else {
                 zip.addFileToZip(name, evidence.getThumb());
@@ -334,7 +310,6 @@ public class RemoteImageClassifier extends AbstractTask {
             zip.addFileToZip(name, evidence.getThumb());
         }
         queue.put(name, evidence);
-
     }
 
 }

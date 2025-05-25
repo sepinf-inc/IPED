@@ -326,7 +326,6 @@ public class DIETask extends AbstractTask {
      * Check if the item is a multiple frame image. Just works after VideoTahumbTask
      * is executed.
      */
-
     public static boolean isAnimationImage(IItem item) {
         return VideoThumbTask.isImageSequence(item.getMediaType().toString()) ||
                 item.getMetadata().get(VideoThumbTask.ANIMATION_FRAMES_PROP) != null;
@@ -339,7 +338,6 @@ public class DIETask extends AbstractTask {
         return MetadataUtil.isVideoType(mediaType);
     }
     
-
     /**
      * Get an image from the evidence, possibly reusing its thumb.
      */

@@ -4,7 +4,7 @@ import iped.utils.UTF8Properties;
 
 public class RemoteImageClassifierConfig extends AbstractTaskPropertiesConfig {
 
-    private static final String CONFIG_FILE = "RemoteImageClassifier.txt";
+    private static final String CONFIG_FILE = "RemoteImageClassifierConfig.txt";
     private static final String ENABLE_KEY = "enableRemoteImageClassifier";
 
     private static final String URL_KEY = "url";
@@ -12,10 +12,11 @@ public class RemoteImageClassifierConfig extends AbstractTaskPropertiesConfig {
     private static final String CATEGORIZATION_THRESHOLD = "categorization_threshold";
     private static final String VALIDATE_SSL = "validateSSL";
 
-    private boolean validateSSL = true;
     private String url;
     private int batchSize;
     private double categorizationThreshold = 0.5;
+    private boolean validateSSL = true;
+
     @Override
     void processProperties(UTF8Properties properties) {
         setUrl(properties.getProperty(URL_KEY).trim());
@@ -26,13 +27,11 @@ public class RemoteImageClassifierConfig extends AbstractTaskPropertiesConfig {
 
     @Override
     public String getTaskEnableProperty() {
-        // TODO Auto-generated method stub
         return ENABLE_KEY;
     }
 
     @Override
     public String getTaskConfigFileName() {
-        // TODO Auto-generated method stub
         return CONFIG_FILE;
     }
 
