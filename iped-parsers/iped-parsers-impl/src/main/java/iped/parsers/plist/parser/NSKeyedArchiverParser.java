@@ -1,8 +1,13 @@
 package iped.parsers.plist.parser;
 
+import static iped.parsers.plist.parser.PListHelper.METADATA_KEY_SEPARATOR;
+import static iped.parsers.plist.parser.PListHelper.appendPath;
+import static iped.parsers.plist.parser.PListHelper.getUIDInteger;
+import static org.apache.commons.text.StringEscapeUtils.escapeHtml4;
+
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -10,11 +15,12 @@ import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.tika.extractor.EmbeddedDocumentExtractor;
-import org.apache.tika.metadata.Metadata;
+import org.apache.commons.io.IOUtils;
+import org.apache.tika.exception.TikaException;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.sax.XHTMLContentHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
@@ -22,75 +28,115 @@ import com.dd.plist.NSArray;
 import com.dd.plist.NSDictionary;
 import com.dd.plist.NSNumber;
 import com.dd.plist.NSObject;
+import com.dd.plist.NSString;
 import com.dd.plist.UID;
 
+import iped.data.IItemReader;
 import iped.parsers.plist.detector.PListDetector;
-import iped.utils.IOUtil;
 
-public class NSKeyedArchiverParser extends PListParser {
+public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverParser.Extra> {
+
+    private static final long serialVersionUID = -2634688360813722393L;
+
+    private static final Logger logger = LoggerFactory.getLogger(NSKeyedArchiverParser.class);
+
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(PListDetector.NSKEYEDARCHIVER_PLIST);
-    private static final String NSKEYEDARCHIVER_METADATA_SUFFIX = "nskeyedarchiver";
+    private static final String NSKEYEDARCHIVER_METADATA_PREFIX = "nskeyedarchiver:";
 
-    private static final Object ARCHIVERKEY = "$archiver";
-    private static final Object TOPKEY = "$top";
-    private static final Object OBJECTSKEY = "$objects";
+    private static final String ARCHIVER_KEY = "$archiver";
+    private static final String VERSION_KEY = "$version";
+    private static final String TOP_KEY = "$top";
+    private static final String OBJECTS_KEY = "$objects";
 
-    private static final String CSS = new String(readResourceAsBytes("/iped/parsers/css/treeview.css"), Charset.forName("UTF-8"));
-    private static final String UUIDJS = new String(readResourceAsBytes("/iped/parsers/css/uuidlink.js"), Charset.forName("UTF-8"));
+    private static final String CLASS = "$class";
+    private static final String CLASSNAME = "$classname";
+    private static final String NS_TIME = "NS.time";
+    private static final String NS_OBJECTS = "NS.objects";
+    private static final String NS_KEYS = "NS.keys";
+
+    private static String jsContent;
+
+    public class Extra {
+        NSArray objects;
+        Set<NSObject> alreadyVisitedObjects;
+        UID currentUID;
+
+        public Extra(NSArray objects, Set<NSObject> alreadyVisitedObjects) {
+            this.objects = objects;
+            this.alreadyVisitedObjects = alreadyVisitedObjects;
+        }
+    }
+
+    private static synchronized String getJSContent() throws IOException {
+        if (jsContent == null) {
+            jsContent = IOUtils.resourceToString("/iped/parsers/css/uuidlink.js", StandardCharsets.UTF_8);
+        }
+        return jsContent;
+    }
 
     @Override
-    public Set<MediaType> getSupportedTypes(ParseContext arg0) {
+    public Set<MediaType> getSupportedTypes(ParseContext context) {
         return SUPPORTED_TYPES;
     }
 
-    public void parseNSObject(NSObject nso, XHTMLContentHandler xhtml, Metadata metadata, String path, EmbeddedDocumentExtractor extractor, ParseContext context) throws SAXException {
-        if (nso instanceof NSDictionary) {
-            HashMap<String, NSObject> map = ((NSDictionary) nso).getHashMap();
-
-            NSObject top = map.get(TOPKEY);
-            NSObject objects = map.get(OBJECTSKEY);
-
-            if (top != null && objects != null) {
-                NSObject root = null;
-                int rootIndex = 0;
-                HashMap<Integer, Object> objectsMap = new HashMap<Integer, Object>();
-
-                NSObject rootObj = null;
-                if (top instanceof NSDictionary) {
-                    if (((NSDictionary) top).size() > 0) {
-                        root = ((NSDictionary) top).get("root");
-                    }
-                }
-
-                if (root != null) {
-                    Set<NSObject> alreadyVisitedObjects = new HashSet<>();// array to control already written objects and avoid infinite loops
-                    parseObject("", root, ((NSArray) objects), alreadyVisitedObjects, xhtml, metadata, getBasePath(), extractor, context);
-                } else {
-                    // try to parse as a PList file
-                    parseAsPList(nso, xhtml, metadata, path, extractor, context);
-                }
-            } else {
-                // try to parse as a PList file
-                parseAsPList(nso, xhtml, metadata, path, extractor, context);
-            }
-        } else {
-            // try to parse as a PList file
-            parseAsPList(nso, xhtml, metadata, path, extractor, context);
-        }
+    @Override
+    protected String getMetadataPrefix() {
+        return NSKEYEDARCHIVER_METADATA_PREFIX;
     }
 
-    public void parseAsPList(NSObject nso, XHTMLContentHandler xhtml, Metadata metadata, String path, EmbeddedDocumentExtractor extractor, ParseContext context) throws SAXException {
-        super.parseNSObject(nso, xhtml, metadata, path, extractor, context);
+    @Override
+    protected Logger getLogger() {
+        return logger;
     }
 
-    public int getUUIDInteger(UID uid) {
-        byte[] b = new byte[4];
-        byte[] b2 = uid.getBytes();
-        for (int i = b.length - 1, j = b2.length - 1; i >= 0 && j >= 0; i--, j--) {
-            b[i] = b2[j];
+    @Override
+    protected void processAndGenerateHTMLContent(NSObject nso, State state) throws SAXException, TikaException {
+
+        if (!(nso instanceof NSDictionary) || !PListDetector.isNSKeyedArchiver((NSDictionary) nso)) {
+            logger.error("NSKeyedArchiver is unexpectedly invalid: {}", state.context.get(IItemReader.class));
+            processAsPList(nso, state);
+            return;
         }
-        ByteBuffer wrapped = ByteBuffer.wrap(b);
-        return wrapped.getInt();
+
+        HashMap<String, NSObject> map = ((NSDictionary) nso).getHashMap();
+        NSObject archiver = map.get(ARCHIVER_KEY);
+        NSObject version = map.get(VERSION_KEY);
+        NSObject top = map.get(TOP_KEY);
+        NSObject objects = map.get(OBJECTS_KEY);
+
+        state.xhtml.startElement("p");
+        state.xhtml.characters("Archiver: " + archiver + ", Version: " + (version != null ? version : "N/A"));
+        state.xhtml.endElement("p");
+
+        if (!(objects instanceof NSArray) || !((top instanceof NSDictionary))) {
+            logger.warn("NSKeyedArchiver has no valid $object or $top: {}", state.context.get(IItemReader.class));
+            processAsPList(nso, state);
+            return;
+        }
+
+        if (((NSDictionary) top).size() == 0) {
+            logger.warn("NSKeyedArchiver has no $top element: {}", state.context.get(IItemReader.class));
+            processAsPList(nso, state);
+            return;
+        }
+
+        try {
+            // process NSKeyedArchiver
+            Set<NSObject> alreadyVisitedObjects = new HashSet<>(); // array to control already written objects and avoid infinite loops
+            state.extra = new Extra((NSArray) objects, alreadyVisitedObjects);
+            processTop((NSDictionary) top, state);
+
+            // add JS
+            state.xhtml.startElement("script");
+            state.xhtml.characters(getJSContent());
+            state.xhtml.endElement("script");
+
+        } catch (IOException e) {
+            logger.error("Error reading JS", e);
+        } catch (Exception e) {
+            logger.error("Error parsing object", e);
+            throw e;
+        }
     }
 
     public boolean isPrimitive(NSObject obj) {
@@ -98,228 +144,215 @@ public class NSKeyedArchiverParser extends PListParser {
     }
 
     public boolean isNSTime(NSObject obj) {
-        return ((obj instanceof NSDictionary) && (((NSDictionary) obj).containsKey("NS.time")));
+        return (obj instanceof NSDictionary) //
+                && ((NSDictionary) obj).containsKey(NS_TIME);
     }
 
-    /*
-     * Dictionary objects was found in different representations. One with the keys
-     * and objects referenced by an UID array, and the other as a common BPList
-     * dictionary (function isNSDictionary).
-     */
     public boolean isKADictionary(NSObject obj) {
-        return ((obj instanceof NSDictionary) && (((NSDictionary) obj).containsKey("NS.keys")) && (((NSDictionary) obj).containsKey("NS.objects")));
-    }
-
-    public boolean isNSDictionary(NSObject obj) {
-        return ((obj instanceof NSDictionary) && (!((NSDictionary) obj).containsKey("NS.objects")) && !(((NSDictionary) obj).containsKey("NS.keys")));
+        return (obj instanceof NSDictionary) //
+                && ((NSDictionary) obj).containsKey(NS_KEYS) //
+                && (((NSDictionary) obj).containsKey(NS_OBJECTS));
     }
 
     public boolean isKAArray(NSObject obj) {
-        return ((obj instanceof NSDictionary) && ((NSDictionary) obj).containsKey("$class") && !((NSDictionary) obj).containsKey("NS.keys") && (((NSDictionary) obj).containsKey("NS.objects")));
+        return (obj instanceof NSDictionary) //
+                && ((NSDictionary) obj).containsKey(CLASS) //
+                && !((NSDictionary) obj).containsKey(NS_KEYS) //
+                && ((NSDictionary) obj).containsKey(NS_OBJECTS);
     }
 
-    private void parseObject(String name, NSObject object, NSArray objects, Set<NSObject> alreadyVisitedObjects, XHTMLContentHandler xhtml, Metadata metadata, String path,
-            EmbeddedDocumentExtractor extractor,
-            ParseContext context) throws SAXException {
+    public String getNSClassName(NSDictionary obj, NSArray objects) {
         try {
-            NSObject obj = object;
-            UID uid = null;
-            if(obj instanceof UID) {
-                uid = (UID) object;
-                obj = objects.objectAtIndex(getUUIDInteger(uid));
-            }
-
-            if (isPrimitive(obj)) {
-                parseNSPrimitiveObject(obj, xhtml, metadata, path, extractor, context);
-            } else {
-                // checks if object was already written to avoid infinite loops
-                if (alreadyVisitedObjects.contains(obj)) {
-                    xhtml.startElement("details", "open", "true");
-                    xhtml.startElement("summary", "class", "is-expandable");
-                    xhtml.startElement("a", "onclick", "clickUID(" + getUUIDInteger(uid) + ");");
-                    xhtml.characters("[Object link]");
-                    xhtml.endElement("a");
-                    xhtml.endElement("summary");
-                    xhtml.endElement("details");
-                    return;
-                } else {
-                    alreadyVisitedObjects.add(obj);
-                }
-
-                AttributesImpl attr = new AttributesImpl();
-                if (uid != null) {
-                    attr.addAttribute("", "treeuid", "", "", Integer.toString(getUUIDInteger(uid)));
-                    attr.addAttribute("", "class", "", "", "uidref");
-                }
-
-                if (isNSTime(obj)) {
-                    parseNSTime(((NSDictionary) obj).get("NS.time"), xhtml, metadata, path, extractor, context);
-                } else if (isKAArray(obj)) {
-                    NSObject[] arrayObjects = ((NSArray) ((NSDictionary) obj).get("NS.objects")).getArray();
-                    attr.addAttribute("", "open", "", "", "true");
-                    xhtml.startElement("details", attr);
-                    xhtml.startElement("summary", "class", "is-expandable");
-                    xhtml.characters("[ARRAY]");
-                    xhtml.endElement("summary");
-                    if (arrayObjects.length > 0) {
-                        String classname = getNSClassName(obj, objects);
-                        for (NSObject member : arrayObjects) {
-                            parseObject(classname, member, objects, alreadyVisitedObjects, xhtml, metadata, path, extractor, context);
-                        }
-                    } else {
-                        xhtml.startElement("li");
-                        xhtml.characters("[]");
-                        xhtml.endElement("li");
-                    }
-                    xhtml.endElement("details");
-                } else if (obj instanceof NSArray) {
-                    attr.addAttribute("", "open", "", "", "true");
-                    xhtml.startElement("details", attr);
-                    xhtml.startElement("summary", "class", "is-expandable");
-                    xhtml.characters(name);
-                    xhtml.endElement("summary");
-                    for (NSObject member : ((NSArray) obj).getArray()) {
-                        parseObject(name, member, objects, alreadyVisitedObjects, xhtml, metadata, path, extractor, context);
-                    }
-                    xhtml.endElement("details");
-                } else if (isNSDictionary(obj)) {
-                    if (((NSDictionary) obj).size() > 0) {
-                        xhtml.startElement("details", attr);
-                        HashMap<String, NSObject> dictMap = ((NSDictionary) obj).getHashMap();
-                        String className = getNSClassName(obj, objects);
-                        xhtml.startElement("summary", "class", "is-expandable");
-                        xhtml.characters(className == null ? "Dict" : className);
-                        xhtml.endElement("summary");
-                        for (Entry<String, NSObject> d : ((NSDictionary) obj).getHashMap().entrySet()) {
-                            if (!"$class".equals(d.getKey())) {
-                                xhtml.startElement("details");
-                                xhtml.startElement("summary", "class", "is-expandable");
-                                xhtml.characters(d.getKey());
-                                xhtml.endElement("summary");
-                                parseObject(d.getKey(), d.getValue(), objects, alreadyVisitedObjects, xhtml, metadata, path + ":" + className + ":" + d.getKey(), extractor,
-                                        context);
-                                xhtml.endElement("details");
-                            }
-                        }
-                        xhtml.endElement("details");
-                    }
-                } else if (isKADictionary(obj)) {
-                    parseKADictionary(name, uid, obj, objects, alreadyVisitedObjects, xhtml, metadata, path, extractor, context);
-                } else {
-                    xhtml.startElement("details", attr);
-                    xhtml.startElement("summary", "class", "is-expandable");
-                    String classname = getNSClassName(obj, objects);
-                    xhtml.characters(classname);
-                    xhtml.endElement("summary");
-                    for (Entry<String, NSObject> e : ((NSDictionary) obj).entrySet()) {
-                        if (!"$class".equals(e.getKey())) {
-                            xhtml.startElement("details", "open", "true");
-                            xhtml.startElement("summary", "class", "is-expandable");
-                            xhtml.characters(e.getKey());
-                            xhtml.endElement("summary");
-                            parseObject(e.getKey(), e.getValue(), objects, alreadyVisitedObjects, xhtml, metadata, path + ":" + classname + ":" + e.getKey(), extractor, context);
-                            xhtml.endElement("details");
-                        }
-                    }
-                    xhtml.endElement("details");
-                }
-            }
+            int uidInt = getUIDInteger((UID) obj.get(CLASS));
+            NSDictionary classObj = (NSDictionary) objects.getArray()[uidInt];
+            return classObj.get(CLASSNAME).toString();
         } catch (Exception e) {
-            System.out.println();
-            e.printStackTrace();
+            return obj.getClass().getSimpleName();
         }
     }
 
-    private void parseNSTime(NSObject nso, XHTMLContentHandler xhtml, Metadata metadata, String path, EmbeddedDocumentExtractor extractor, ParseContext context) throws SAXException {
-        Date date = new Date((((NSNumber) nso).longValue() + 978307200) * 1000);
-        parseDate(date, path, xhtml, metadata);
+    public void processAsPList(NSObject nso, State state) throws SAXException {
+        processObject(nso, "", state, true);
     }
 
-    public void parseKADictionary(String name, UID uid, NSObject obj, NSArray objects, Set<NSObject> alreadyVisitedObjects, XHTMLContentHandler xhtml, Metadata metadata, String path,
-            EmbeddedDocumentExtractor extractor,
-            ParseContext context) throws SAXException {
+    public void processTop(NSDictionary top, State state) throws SAXException {
+        for (Entry<String, NSObject> e : top.entrySet()) {
+            state.xhtml.startElement("details", "open", "true");
+            state.xhtml.startElement("summary");
+            state.xhtml.characters(e.getKey());
+            state.xhtml.endElement("summary");
+            processObject(e.getValue(), e.getKey(), state, false);
+            state.xhtml.endElement("details");
+        }
+    }
 
+    @Override
+    protected void processObject(NSObject obj, String path, State state, boolean open) throws SAXException {
+
+        // replace obj in case it is UID
+        state.extra.currentUID = null;
+        if (obj instanceof UID) {
+            state.extra.currentUID = (UID) obj;
+            obj = state.extra.objects.objectAtIndex(getUIDInteger(state.extra.currentUID));
+        }
+
+        if (isPrimitive(obj)) {
+            super.processObject(obj, path, state, false);
+        } else {
+
+            // checks if object was already written to avoid infinite loops
+            if (state.extra.alreadyVisitedObjects.contains(obj)) {
+                processVisitedObject(obj, path, state);
+                return;
+            } else {
+                state.extra.alreadyVisitedObjects.add(obj);
+            }
+
+            if (isNSTime(obj)) {
+                processNSTime((NSDictionary) obj, path, state);
+
+            } else if (isKAArray(obj)) {
+                processKAArray((NSDictionary) obj, path, state);
+
+            } else if (isKADictionary(obj)) {
+                processKADictionary((NSDictionary) obj, path, state);
+
+            } else if (obj instanceof NSArray || obj instanceof NSDictionary) {
+                super.processObject(obj, path, state, open);
+
+            } else {
+                logger.error("Unexpected object: {}", obj);
+            }
+        }
+    }
+
+    @Override
+    protected void processDictionary(NSDictionary obj, String path, AbstractPListParser<Extra>.State state, boolean open) throws SAXException {
+
+        if (obj.containsKey(CLASS)) {
+
+            String className = getNSClassName(obj, state.extra.objects);
+            NSDictionary newDict = obj.clone();
+            newDict.remove(CLASS);
+
+            state.xhtml.startElement("details", createAtribute(state.extra.currentUID));
+            state.xhtml.startElement("summary");
+            state.xhtml.characters(escapeHtml4(className) + SUMMARY_SUFFIX);
+            processItemsCount(state, "dictionary", newDict.size());
+            state.xhtml.endElement("summary");
+
+            super.processDictionary(newDict, appendPath(path, className), state, open);
+
+            state.xhtml.endElement("details");
+        } else {
+            super.processDictionary(obj, path, state, open);
+        }
+    }
+
+    private void processVisitedObject(NSObject obj, String path, State state) throws SAXException {
+        if (state.extra.currentUID != null) {
+            state.xhtml.startElement("p");
+
+            int uidInt = getUIDInteger(state.extra.currentUID);
+            AttributesImpl attrs = new AttributesImpl();
+            attrs.addAttribute("", "onclick", "", "", "clickUID(" + uidInt + ");");
+            attrs.addAttribute("", "href", "", "", "#");
+            state.xhtml.startElement("a", attrs);
+            state.xhtml.characters("[Object link to UID " + uidInt + "]");
+            state.xhtml.endElement("a");
+
+            state.xhtml.endElement("p");
+        } else {
+            throw new IllegalStateException("state.extra.currentUID is null");
+        }
+    }
+
+    private void processNSTime(NSDictionary obj, String path, State state) throws SAXException {
+        NSObject nso = obj.get(NS_TIME);
+        Date date = new Date((((NSNumber) nso).longValue() + 978307200) * 1000);
+        processDate(date, path, state);
+    }
+
+    private void processKAArray(NSDictionary obj, String path, State state) throws SAXException {
+
+        NSArray array = (NSArray) obj.get(NS_OBJECTS);
+        String className = getNSClassName(obj, state.extra.objects);
+
+        state.xhtml.startElement("details", createAtribute(state.extra.currentUID));
+        state.xhtml.startElement("summary");
+        state.xhtml.characters(escapeHtml4(className) + SUMMARY_SUFFIX);
+        processItemsCount(state, "Keyed Archive array", array.count());
+        state.xhtml.endElement("summary");
+
+        processArray(array, appendPath(path, className), state);
+
+        state.xhtml.endElement("details");
+    }
+
+    private void processKADictionary(NSDictionary obj, String path, State state) throws SAXException {
+
+        state.xhtml.startElement("details", createAtribute(state.extra.currentUID));
+        state.xhtml.startElement("summary");
+        String className = getNSClassName(obj, state.extra.objects);
+        state.xhtml.characters(escapeHtml4(className) + SUMMARY_SUFFIX);
+
+        NSArray keys = (NSArray) obj.get(NS_KEYS); // possibly an array of UIDs
+        NSArray objects = (NSArray) obj.get(NS_OBJECTS);
+
+        // convert keys from UID to any
+        NSArray indexedKeys = new NSArray(keys.count());
+        for (int i = 0; i < keys.getArray().length; i++) {
+            NSObject key = keys.getArray()[i];
+            if (key instanceof UID) {
+                int uidInt = getUIDInteger((UID) key);
+                key = state.extra.objects.objectAtIndex(uidInt);
+            }
+            indexedKeys.getArray()[i] = key;
+        }
+        boolean allKeysAreValid = Arrays.asList(indexedKeys.getArray()).stream() //
+                .allMatch(k -> k instanceof NSString || k instanceof NSNumber);
+
+        if (indexedKeys.count() == objects.count() && allKeysAreValid) {
+            int count = indexedKeys.count();
+            processItemsCount(state, "Keyed Archive dictionary", count);
+            state.xhtml.endElement("summary");
+
+            // build and process equivalent dictionary
+            NSDictionary newDict = new NSDictionary();
+            for (int i = 0; i < count; i++) {
+                String key = indexedKeys.getArray()[i].toString();
+                newDict.put(key, objects.getArray()[i]);
+            }
+            processDictionary(newDict, appendPath(path, className), state, false);
+
+        } else {
+            state.xhtml.endElement("summary");
+
+            state.xhtml.startElement("details");
+            state.xhtml.startElement("summary");
+            state.xhtml.characters(NS_KEYS + SUMMARY_SUFFIX);
+            processItemsCount(state, "", keys.count());
+            state.xhtml.endElement("summary");
+            processArray(keys, appendPath(path, className + METADATA_KEY_SEPARATOR + NS_KEYS), state);
+            state.xhtml.endElement("details");
+
+            state.xhtml.startElement("details");
+            state.xhtml.startElement("summary");
+            state.xhtml.characters(NS_OBJECTS + SUMMARY_SUFFIX);
+            processItemsCount(state, "", objects.count());
+            state.xhtml.endElement("summary");
+            processArray(objects, appendPath(path, className + METADATA_KEY_SEPARATOR + NS_OBJECTS), state);
+            state.xhtml.endElement("details");
+        }
+
+        state.xhtml.endElement("details");
+    }
+
+    private AttributesImpl createAtribute(UID uid) {
         AttributesImpl attr = new AttributesImpl();
         if (uid != null) {
-            attr.addAttribute("", "treeuid", "", "", Integer.toString(getUUIDInteger(uid)));
-            attr.addAttribute("", "class", "", "", "uidref");
+            attr.addAttribute("", "treeuid", "", "", Integer.toString(getUIDInteger(uid)));
         }
-        attr.addAttribute("", "open", "", "", "true");
-
-        xhtml.startElement("details", attr);
-        xhtml.startElement("summary", "class", "is-expandable");
-        String classname = getNSClassName(obj, objects);
-        xhtml.characters(classname);
-        xhtml.endElement("summary");
-
-        xhtml.startElement("details", "open", "true");
-        xhtml.startElement("summary", "class", "is-expandable");
-        xhtml.characters("NS.keys");
-        xhtml.endElement("summary");
-        NSArray keys = (NSArray) ((NSDictionary) obj).get("NS.keys");
-        int classIndex = -1;
-        for (NSObject member : keys.getArray()) {
-            parseObject(name, member, objects, alreadyVisitedObjects, xhtml, metadata, path, extractor, context);
-        }
-        xhtml.endElement("details");
-
-        xhtml.startElement("details", "open", "true");
-        xhtml.startElement("summary", "class", "is-expandable");
-        xhtml.characters("NS.objects");
-        xhtml.endElement("summary");
-        NSArray objectsArray = (NSArray) ((NSDictionary) obj).get("NS.objects");
-        int i=0;
-        for (NSObject member : objectsArray.getArray()) {
-            parseObject(name, member, objects, alreadyVisitedObjects, xhtml, metadata, path + ":" + classname, extractor, context);
-            i++;
-        }
-        xhtml.endElement("details");
-        xhtml.endElement("details");
+        return attr;
     }
-
-    public String getNSClassName(NSObject obj, NSArray objects) {
-        try {
-            NSDictionary classObj = (NSDictionary) objects.getArray()[getUUIDInteger((UID) ((NSDictionary) obj).get("$class"))];
-            return classObj.get("$classname").toString();
-        } catch (Exception e) {
-            return obj.getClass().getName();
-        }
-    }
-
-    static public boolean isNSKeyedArchiver(NSObject oc) {
-        if(oc instanceof NSDictionary) {
-            HashMap<String, NSObject> map = ((NSDictionary)oc).getHashMap();
-            NSObject archiver = map.get(ARCHIVERKEY);
-            // NSObject top = map.get(TOPKEY);
-            if (archiver != null && archiver.toString().equals("NSKeyedArchiver")) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static byte[] readResourceAsBytes(String resource) {
-        byte[] result = null;
-        try {
-            result = IOUtil.loadInputStream(PListParser.class.getResourceAsStream(resource));
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
-        return result;
-    }
-
-    @Override
-    public String getBasePath() {
-        return NSKEYEDARCHIVER_METADATA_SUFFIX;
-    }
-
-    @Override
-    public void parseUID(UID nso, XHTMLContentHandler xhtml, Metadata metadata, String path, EmbeddedDocumentExtractor extractor, ParseContext context) throws SAXException {
-        xhtml.startElement("li", "class", "nochild");
-        xhtml.characters(((UID) nso).getName() + "(" + getUUIDInteger(nso) + ")");
-        xhtml.endElement("li");
-    }
-
 }
