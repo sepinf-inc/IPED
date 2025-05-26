@@ -210,8 +210,6 @@ public abstract class AbstractPListParser<T> implements Parser {
 
     protected void processDictionary(NSDictionary obj, String path, State state, boolean open) throws SAXException {
 
-        int numItems = obj.count();
-
         if (StringUtils.isEmpty(path)) {
             if (open) {
                 state.xhtml.startElement("details", "open", "true");
@@ -219,7 +217,7 @@ public abstract class AbstractPListParser<T> implements Parser {
                 state.xhtml.startElement("details");
             }
             state.xhtml.startElement("summary");
-            state.xhtml.characters("Dictionary (" + numItems + " " + (numItems == 1 ? "item" : "items") + ")");
+            processItemsCount(state, "Dictionary", obj.count());
             state.xhtml.endElement("summary");
         }
 
