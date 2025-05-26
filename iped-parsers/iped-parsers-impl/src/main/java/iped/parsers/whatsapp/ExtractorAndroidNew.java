@@ -1023,6 +1023,7 @@ public abstract class ExtractorAndroidNew extends Extractor {
                 result = ORDER_MESSAGE;
                 break;
             case 45:
+            case 55:
                 result = UI_ELEMENTS;
                 break;
             case 46:
