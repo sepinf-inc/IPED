@@ -46,7 +46,7 @@ import static iped.parsers.whatsapp.Message.MessageType.GROUP_ONLY_ADMINS_CAN_SE
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_REMOVED_FROM_COMMUNITY;
 import static iped.parsers.whatsapp.Message.MessageType.IMAGE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.LOCATION_MESSAGE;
-import static iped.parsers.whatsapp.Message.MessageType.MEDIA_GROUP;
+import static iped.parsers.whatsapp.Message.MessageType.MESSAGE_ASSOCIATION;
 import static iped.parsers.whatsapp.Message.MessageType.MESSAGES_ENCRYPTED;
 import static iped.parsers.whatsapp.Message.MessageType.MESSAGES_NOW_ENCRYPTED;
 import static iped.parsers.whatsapp.Message.MessageType.MISSED_VIDEO_CALL;
@@ -1060,7 +1060,7 @@ public abstract class ExtractorAndroidNew extends Extractor {
                 result = CALL_MESSAGE;
                 break;
             case 99:
-                result = MEDIA_GROUP;
+                result = MESSAGE_ASSOCIATION;
                 break;
             default:
                 break;

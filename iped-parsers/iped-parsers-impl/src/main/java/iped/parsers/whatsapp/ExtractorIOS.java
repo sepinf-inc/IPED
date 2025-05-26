@@ -42,7 +42,7 @@ import static iped.parsers.whatsapp.Message.MessageType.GROUP_NOT_PART_OF_COMMUN
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_REMOVED_FROM_COMMUNITY;
 import static iped.parsers.whatsapp.Message.MessageType.IMAGE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.LOCATION_MESSAGE;
-import static iped.parsers.whatsapp.Message.MessageType.MEDIA_GROUP;
+import static iped.parsers.whatsapp.Message.MessageType.MESSAGE_ASSOCIATION;
 import static iped.parsers.whatsapp.Message.MessageType.MESSAGES_NOW_ENCRYPTED;
 import static iped.parsers.whatsapp.Message.MessageType.MISSED_VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.MISSED_VOICE_CALL;
@@ -1747,7 +1747,7 @@ public abstract class ExtractorIOS extends Extractor {
                 break;
             
             case 66:
-                result = MEDIA_GROUP;
+                result = MESSAGE_ASSOCIATION;
                 break;
         }
         return result;

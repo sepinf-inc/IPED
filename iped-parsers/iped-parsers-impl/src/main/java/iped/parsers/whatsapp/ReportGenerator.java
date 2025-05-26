@@ -222,7 +222,7 @@ public class ReportGenerator {
                     // for now, nothing should be included in the report.
                     continue;
                 }
-                if (m.getMessageType() == MessageType.MEDIA_GROUP) {
+                if (m.getMessageType() == MessageType.MESSAGE_ASSOCIATION) {
                     // These messages are not visible on the app and don't contain any data
                     continue;
                 }
