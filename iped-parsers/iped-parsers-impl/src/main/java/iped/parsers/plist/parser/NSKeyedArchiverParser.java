@@ -105,10 +105,6 @@ public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverPa
         NSObject top = map.get(TOP_KEY);
         NSObject objects = map.get(OBJECTS_KEY);
 
-        state.xhtml.startElement("p");
-        state.xhtml.characters("Archiver: " + archiver + ", Version: " + (version != null ? version : "N/A"));
-        state.xhtml.endElement("p");
-
         if (!(objects instanceof NSArray) || !((top instanceof NSDictionary))) {
             logger.warn("NSKeyedArchiver has no valid $object or $top: {}", state.context.get(IItemReader.class));
             processAsPList(nso, state);
@@ -120,6 +116,11 @@ public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverPa
             processAsPList(nso, state);
             return;
         }
+
+        state.xhtml.startElement("p");
+        state.xhtml.characters("Archiver: " + archiver + ", Version: " + (version != null ? version : "N/A") //
+                + ", Objects count: " + ((NSArray) objects).count());
+        state.xhtml.endElement("p");
 
         try {
             // process NSKeyedArchiver
