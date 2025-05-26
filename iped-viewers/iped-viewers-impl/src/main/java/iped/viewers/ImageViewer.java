@@ -64,7 +64,6 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
     private static final String actionZoomOut = "zoom-out";
     private static final String actionFitWidth = "fit-width";
     private static final String actionFitWindow = "fit-window";
-    private static final String actionCopyImage = "copy-image";
     private static final String actionGrayScale = "gray-scale";
     private static final String actionBlur = "blur-image";
 
@@ -116,13 +115,16 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
         if (content != null) {
             InputStream in = null;
             try {
-                in = new BufferedInputStream(content.getSeekableInputStream());
-                // needed for embedded jbig2
-                String mimeType = content instanceof IItemReader
-                        ? MediaTypes.getMimeTypeString((IItemReader) content)
-                        : null;
-                image = ImageUtil.getSubSampledImage(in, maxDim, maxDim, mimeType);
-
+                if (content instanceof IItemReader) {
+                    IItemReader item = (IItemReader) content;
+                    // needed for embedded jbig2
+                    String mimeType = MediaTypes.getMimeTypeString(item);
+                    image = ImageUtil.getSubSampledImage(item, maxDim, mimeType);
+                }
+                if (image == null) {
+                    in = new BufferedInputStream(content.getSeekableInputStream());
+                    image = ImageUtil.getSubSampledImage(in, maxDim);
+                }
                 if (image == null) {
                     IOUtil.closeQuietly(in);
                     SeekableInputStream sis = content.getSeekableInputStream();
@@ -140,7 +142,7 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
                     int orientation = ImageMetadataUtil.getOrientation(in);
                     boolean isVideo = false;
                     if (orientation > 0) {
-                        image = ImageUtil.rotate(image, orientation);
+                        image = ImageUtil.applyOrientation(image, orientation);
                     } else {
                         String videoComment = ImageUtil.readJpegMetaDataComment(content.getSeekableInputStream());
                         if (videoComment != null && videoComment.startsWith("Frames=")) {
@@ -320,11 +322,6 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
         toolBar.add(panelAux);
         toolBar.add(new JLabel(iconSeparator));
 
-        JButton butCopyImage = createToolBarButton(actionCopyImage);
-        butCopyImage.setToolTipText(Messages.getString("ImageViewer.Copy"));
-
-        toolBar.add(new JLabel(iconSeparator));
-
         grayButton = createToolBarButton(actionGrayScale, true);
         grayButton.setToolTipText(Messages.getString("ImageViewer.GrayScale"));
         
@@ -373,8 +370,6 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
             imagePanel.fitToWindow();
         } else if (cmd.equals(actionFitWidth)) {
             imagePanel.fitToWidth();
-        } else if (cmd.equals(actionCopyImage)) {
-            copyScreen();
         } else if (cmd.equals(actionGrayScale)) {
             setGrayFilter(!applyGrayScale);
             update = true;
@@ -392,7 +387,7 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
             updatePanel(null);
         } else {
             BufferedImage img = image;
-            img = rotation != 0 ? ImageUtil.rotatePos(img, rotation) : img;
+            img = rotation != 0 ? ImageUtil.rotate(img, rotation) : img;
             img = applyBlurFilter ? applyBlur(img) : img;
             img = applyGrayScale ? applyGrayScale(img) : img;
             updatePanel(img);

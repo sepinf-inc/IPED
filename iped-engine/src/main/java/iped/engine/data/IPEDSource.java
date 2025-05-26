@@ -48,6 +48,7 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.store.Directory;
+import org.apache.lucene.util.Bits;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.slf4j.Logger;
@@ -240,9 +241,9 @@ public class IPEDSource implements IIPEDSource {
                 Item.getAllExtraAttributes().addAll(extraAttributes);
             }
 
-            bookmarks = new Bookmarks(this, moduleDir);
+            bookmarks = new BitmapBookmarks(this);
             bookmarks.loadState();
-            multiBookmarks = new MultiBookmarks(Collections.singletonList(this));
+            multiBookmarks = new MultiBitmapBookmarks(Collections.singletonList(this));
 
         } catch (Exception e) {
             if (e instanceof RuntimeException) {
@@ -290,8 +291,13 @@ public class IPEDSource implements IIPEDSource {
             return;
         }
 
+        Bits liveDocs = atomicReader.getLiveDocs();
+
         int i;
         while ((i = ndv.nextDoc()) != DocIdSetIterator.NO_MORE_DOCS) {
+            if (liveDocs != null && !liveDocs.get(i)) {
+                continue;
+            }
             ids[i] = (int) ndv.longValue();
             parentDocs.set(i);
             if (ids[i] > lastId)
@@ -415,29 +421,27 @@ public class IPEDSource implements IIPEDSource {
         if (category.getNumItems() != -1)
             return category.getNumItems();
 
-        if (!category.getChildren().isEmpty()) {
-            int num = 0;
-            for (Category child : category.getChildren()) {
-                num += countNumItems(child);
-            }
-            category.setNumItems(num);
-
-        } else {
-            String query = IndexItem.CATEGORY + ":\"" + category.getName() + "\"";
-            IPEDSearcher searcher = new IPEDSearcher(this, query);
-            searcher.setNoScoring(true);
-            try {
-                if (this instanceof IPEDMultiSource) {
-                    category.setNumItems(searcher.multiSearch().getLength());
-                } else {
-                    category.setNumItems(searcher.search().getLength());
-                }
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        int num = 0;
+        for (Category child : category.getChildren()) {
+            num += countNumItems(child);
         }
-        return category.getNumItems();
+
+        String query = IndexItem.CATEGORY + ":\"" + category.getName() + "\"";
+        IPEDSearcher searcher = new IPEDSearcher(this, query);
+        searcher.setNoScoring(true);
+        try {
+            if (this instanceof IPEDMultiSource) {
+                num += searcher.multiSearch().getLength();
+            } else {
+                num += searcher.search().getLength();
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        category.setNumItems(num);
+        return num;
     }
 
     private void loadKeywords() {
@@ -651,6 +655,17 @@ public class IPEDSource implements IIPEDSource {
             }
         testCanWriteToCase(sleuthFile);
         sleuthCase.setImagePaths(imgId, newPaths);
+    }
+
+    public String getItemProperty(int id, String propertyName) {
+        String propertyValue = null;
+        try {
+            Document doc = searcher.doc(getLuceneId(id));
+            propertyValue = doc.get(propertyName);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return propertyValue;
     }
 
     public int getSourceId() {

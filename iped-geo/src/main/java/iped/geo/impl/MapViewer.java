@@ -2,7 +2,6 @@ package iped.geo.impl;
 
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map.Entry;
 
 import javax.swing.JPanel;
@@ -137,32 +136,34 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
 
         if (!mapaPanel.browserCanvas.isLoaded()) {
             mapaPanel.updateMap();
-        }
+            updatingCheckbox = false;
+        } else {
+            /*
+             * Se a alteração foi feita no próprio mapa ou a operação é de ordenação, ela
+             * não precisa ser refeita.
+             */
+            if (!desabilitaTemp) {
+                mapaPanel.setMapOutDated(true);
 
-        /*
-         * Se a alteração foi feita no próprio mapa ou a operação é de ordenação, ela
-         * não precisa ser refeita.
-         */
-        if (!desabilitaTemp) {
-            mapaPanel.setMapOutDated(true);
+                /* somente chamado se o tab de mapas estiver sendo exibido */
+                if (dockable != null && dockable.isShowing()) {
+                    if (!updatingCheckbox) {
+                        mapaPanel.updateMap();
+                    } else {
+                        mapaPanel.update();
+                    }
 
-            /* somente chamado se o tab de mapas estiver sendo exibido */
-            if (dockable != null && dockable.isShowing()) {
-                if (!updatingCheckbox) {
-                    mapaPanel.updateMap();
-                } else {
-                    mapaPanel.update();
+                    updatingCheckbox = false;
                 }
-
+            } else {
+                // reabilita renderização automatica pela alteração no modelo
+                desabilitaTemp = false;
+            }
+            if (dockable == null || !dockable.isShowing()) {
                 updatingCheckbox = false;
             }
-        } else {
-            // reabilita renderização automatica pela alteração no modelo
-            desabilitaTemp = false;
         }
-        if (dockable == null || !dockable.isShowing()) {
-            updatingCheckbox = false;
-        }
+
     }
 
     public void applyCheckedItems() {
@@ -218,20 +219,7 @@ public class MapViewer implements ResultSetViewer, TableModelListener, ListSelec
                             int rowModel = resultsTable.convertRowIndexToModel(i);
 
                             IItemId item = results.getItem(rowModel);
-
-                            if (mapaPanel.kmlResult != null && mapaPanel.kmlResult.getGPSItems().containsKey(item)) {
-                                List<Integer> subitems = mapaPanel.kmlResult.getGPSItems().get(item);
-                                if (subitems == null) {
-                                    String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
-                                    selecoes.put(gid, selected);
-                                } else {
-                                    for (Integer subitem : subitems) {
-                                        String gid = "marker_" + item.getSourceId() + "_" + item.getId() + "_" //$NON-NLS-1$ //$NON-NLS-2$
-                                                + subitem;
-                                        selecoes.put(gid, selected);
-                                    }
-                                }
-                            }
+                            mapaPanel.addSelection(selecoes, item);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }

@@ -75,7 +75,6 @@ public class AppMapPanel extends JPanel implements Consumer<Object[]> {
      * SwingWorker that prepares the result with georeferenced items that will be
      * sent to the map
      */
-    private GetResultsJSWorker jsWorker;
     private PropertyChangeListener lastPropertyChangeListener;
 
     static final String[] fieldNames = { "GEOMETRIC_SIMPLE", "GEOMETRIC_COMPLEX", "GEOMETRIC_MULTIPOLYGON", "GEOJSON" };
@@ -85,7 +84,15 @@ public class AppMapPanel extends JPanel implements Consumer<Object[]> {
     };
 
     MapLoadState loadState = MapLoadState.NOTLOADED;
+
+    // mapLoadWorker maintain the reference to the worker that loads all maps
+    // placemark
     private GetResultsJSWorker mapLoadWorker;
+
+    // jsWorker maintain the reference to the worker that updates changes done on
+    // the placemarks and result set
+    private GetResultsJSWorker jsWorker;
+
     private RoaringBitmap[] geoReferencedBitmap;
 
     public AppMapPanel(IMultiSearchResultProvider resultsProvider, GUIProvider guiProvider) {
@@ -282,10 +289,16 @@ public class AppMapPanel extends JPanel implements Consumer<Object[]> {
 
                 mapLoadWorker.execute();
             } else if (loadState == MapLoadState.LOADING) {
+                // this piece of code can occur if soon after entering map panel, before all
+                // placemarks are loaded some filter is
+                // applied to the resultset (even more than once)
+
                 if (lastPropertyChangeListener != null) {
                     // cancels prior map update in case it hasn't finished yet
                     mapLoadWorker.removePropertyChangeListener(lastPropertyChangeListener);
-                    jsWorker.cancel(true);
+                    if (jsWorker != null) {
+                        jsWorker.cancel(true);
+                    }
                 }
                 AppMapPanel self = this;
                 // enqueue the map update to run after map load worker ends.
@@ -315,7 +328,16 @@ public class AppMapPanel extends JPanel implements Consumer<Object[]> {
         for (int i = 0; i < selected.length; i++) {
             int rowModel = resultsTable.convertRowIndexToModel(selected[i]);
             IItemId item = results.getItem(rowModel);
+            addSelection(selecoes, item);
+        }
 
+        mapViewer.updateMapLeadCursor();
+
+        browserCanvas.sendSelection(selecoes);
+    }
+
+    public void addSelection(HashMap<String, Boolean> selecoes, IItemId item) {
+        if (kmlResult != null && kmlResult.getGPSItems().containsKey(item)) {
             List<Integer> subitems = kmlResult.getGPSItems().get(item);
             if (subitems == null) {
                 String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
@@ -328,10 +350,6 @@ public class AppMapPanel extends JPanel implements Consumer<Object[]> {
                 }
             }
         }
-
-        mapViewer.updateMapLeadCursor();
-
-        browserCanvas.sendSelection(selecoes);
     }
 
     @Override
@@ -563,7 +581,15 @@ public class AppMapPanel extends JPanel implements Consumer<Object[]> {
     }
 
     public boolean hasItem(IItemId item) {
-        return geoReferencedBitmap[item.getSourceId()].contains(item.getId());
+        if (geoReferencedBitmap == null) {
+            return false;
+        }
+        RoaringBitmap casegeoReferencedBitmap = geoReferencedBitmap[item.getSourceId()];
+        if (casegeoReferencedBitmap != null) {
+            return casegeoReferencedBitmap.contains(item.getId());
+        } else {
+            return false;
+        }
     }
 
 }

@@ -19,6 +19,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.metadata.IPTC;
 import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Metadata;
@@ -392,10 +393,13 @@ public class MetadataUtil {
         normalizeGPSMeta(metadata);
         normalizeCase(metadata);
         prefixCommonMetadata(metadata);
-        prefixAudioMetadata(metadata);
-        prefixImageMetadata(metadata);
-        prefixVideoMetadata(metadata);
-        prefixPDFMetadata(metadata);
+        if (!prefixVideoMetadata(metadata)) {
+            if (!prefixAudioMetadata(metadata)) {
+                if (!prefixImageMetadata(metadata)) {
+                    prefixPDFMetadata(metadata);
+                }
+            }
+        }
         prefixDocMetadata(metadata);
         prefixBasicMetadata(metadata);
         removeDuplicateValues(metadata);
@@ -435,35 +439,42 @@ public class MetadataUtil {
     }
 
     private static void normalizeGPSMeta(Metadata metadata) {
-        String lat = metadata.get(Metadata.LATITUDE);
-        if (lat == null)
-            lat = metadata.get(ExtraProperties.UFED_META_PREFIX + "Latitude");
-        String lon = metadata.get(Metadata.LONGITUDE);
-        if (lon == null)
-            lon = metadata.get(ExtraProperties.UFED_META_PREFIX + "Longitude");
-        boolean invalid = lat == null || lon == null;
-        if (!invalid) {
+        String lat = StringUtils.firstNonBlank(metadata.get(Metadata.LATITUDE),
+                metadata.get(ExtraProperties.UFED_META_PREFIX + "Latitude"),
+                metadata.get(ExtraProperties.UFED_META_PREFIX + "Associated Location Latitude"));
+
+        String lon = StringUtils.firstNonBlank(metadata.get(Metadata.LONGITUDE),
+                metadata.get(ExtraProperties.UFED_META_PREFIX + "Longitude"),
+                metadata.get(ExtraProperties.UFED_META_PREFIX + "Associated Location Longitude"));
+
+        boolean valid = StringUtils.isNoneBlank(lat, lon);
+        if (valid) {
+            lat = lat.replace(',', '.');
+            lon = lon.replace(',', '.');
             try {
                 Float lati = Float.valueOf(lat);
                 Float longit = Float.valueOf(lon);
                 if ((lati < -90 || lati > 90 || longit < -180 || longit > 180 || Float.isNaN(lati)
                         || Float.isNaN(longit)) || (lati == 0.0 && longit == 0.0)) {
-                    invalid = true;
+                    valid = false;
                 }
             } catch (NumberFormatException e) {
-                invalid = true;
+                valid = false;
             }
         }
-        if (!invalid) {
+        if (valid) {
             metadata.add(ExtraProperties.LOCATIONS, lat + ";" + lon);
+
+            // always remove these, if valid, they were stored above
+            metadata.remove(Metadata.LATITUDE.getName());
+            metadata.remove(Metadata.LONGITUDE.getName());
+            metadata.remove(ExtraProperties.UFED_META_PREFIX + "Latitude");
+            metadata.remove(ExtraProperties.UFED_META_PREFIX + "Longitude");
+            metadata.remove(ExtraProperties.UFED_META_PREFIX + "Associated Location Latitude");
+            metadata.remove(ExtraProperties.UFED_META_PREFIX + "Associated Location Longitude");
         } else {
             metadata.remove(Metadata.ALTITUDE.getName());
         }
-        // always remove these, if valid, they were stored above
-        metadata.remove(Metadata.LATITUDE.getName());
-        metadata.remove(Metadata.LONGITUDE.getName());
-        metadata.remove(ExtraProperties.UFED_META_PREFIX + "Latitude");
-        metadata.remove(ExtraProperties.UFED_META_PREFIX + "Longitude");
     }
 
     private static void removeDuplicateValues(Metadata metadata) {
@@ -654,14 +665,20 @@ public class MetadataUtil {
         }
     }
 
-    private static void prefixAudioMetadata(Metadata metadata) {
-        if (metadata.get(Metadata.CONTENT_TYPE).startsWith("audio")) //$NON-NLS-1$
+    private static boolean prefixAudioMetadata(Metadata metadata) {
+        if (metadata.get(Metadata.CONTENT_TYPE).startsWith("audio")) {
             includePrefix(metadata, ExtraProperties.AUDIO_META_PREFIX);
+            return true;
+        }
+        return false;
     }
 
-    private static void prefixImageMetadata(Metadata metadata) {
-        if (metadata.get(Metadata.CONTENT_TYPE).startsWith("image")) //$NON-NLS-1$
+    private static boolean prefixImageMetadata(Metadata metadata) {
+        if (metadata.get(Metadata.CONTENT_TYPE).startsWith("image")) {
             includePrefix(metadata, ExtraProperties.IMAGE_META_PREFIX);
+            return true;
+        }
+        return false;
     }
 
     public static boolean isVideoType(MediaType mediaType) {
@@ -669,15 +686,21 @@ public class MetadataUtil {
                 || mediaType.getBaseType().toString().equals("application/vnd.rn-realmedia"); //$NON-NLS-1$
     }
 
-    private static void prefixVideoMetadata(Metadata metadata) {
+    private static boolean prefixVideoMetadata(Metadata metadata) {
         if (isVideoType(MediaType.parse(metadata.get(Metadata.CONTENT_TYPE)))
-                || isVideoType(MediaType.parse(metadata.get(StandardParser.INDEXER_CONTENT_TYPE))))
+                || isVideoType(MediaType.parse(metadata.get(StandardParser.INDEXER_CONTENT_TYPE)))) {
             includePrefix(metadata, ExtraProperties.VIDEO_META_PREFIX);
+            return true;
+        }
+        return false;
     }
 
-    private static void prefixPDFMetadata(Metadata metadata) {
-        if (metadata.get(Metadata.CONTENT_TYPE).equals("application/pdf")) //$NON-NLS-1$
+    private static boolean prefixPDFMetadata(Metadata metadata) {
+        if (metadata.get(Metadata.CONTENT_TYPE).equals("application/pdf")) {
             includePrefix(metadata, ExtraProperties.PDF_META_PREFIX);
+            return true;
+        }
+        return false;
     }
 
     private static void prefixDocMetadata(Metadata metadata) {

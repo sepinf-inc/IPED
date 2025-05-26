@@ -40,7 +40,8 @@ public class ReportGenerator {
     private IItemSearcher searcher;
     private boolean firstFragment = true;
     private int currentMsg = 0;
-
+    
+    private static final String emptyMD5 = "d41d8cd98f00b204e9800998ecf8427e";
 
     private String creatSpanTag(String text) {
         return "<span class=\"tooltiptext\">" + SimpleHTMLEncoder.htmlEncode(text) + "</span>";
@@ -62,7 +63,12 @@ public class ReportGenerator {
         if (s == null || s.isEmpty()) {
             return "-";
         }
-        return SimpleHTMLEncoder.htmlEncode(s.trim());
+        String ret = SimpleHTMLEncoder.htmlEncode(s.trim());
+
+        // Keep line breaks present in the content, converting to an HTML <br>
+        ret = ret.replaceAll("\n", "<br>\n");
+
+        return ret;
     }
 
     public byte[] genarateContactHtml(Contact contact) {
@@ -81,11 +87,16 @@ public class ReportGenerator {
             out.println("<img src=\"data:image/jpg;base64," //$NON-NLS-1$
                     + iped.parsers.whatsapp.Util.encodeBase64(contact.getAvatar())
                     + "\" width=\"112\"/><br>"); //$NON-NLS-1$
-        out.println(Messages.getString("TelegramContact.ContactID") + contact.getId());
-        out.println("<br>" + Messages.getString("TelegramContact.FirstName") + format(contact.getName()));
-        out.println("<br>" + Messages.getString("TelegramContact.LastName") + format(contact.getLastName()));
-        out.println("<br>" + Messages.getString("TelegramContact.Username") + format(contact.getUsername()));
-        out.println("<br>" + Messages.getString("TelegramContact.Phone") + format(contact.getPhone()));
+        out.println(Messages.getString("TelegramContact.ContactID") + " " + contact.getId());
+        out.println("<br>" + Messages.getString("TelegramContact.FirstName") + " " + format(contact.getName()));
+        out.println("<br>" + Messages.getString("TelegramContact.LastName") + " " + format(contact.getLastName()));
+        out.println("<br>" + Messages.getString("TelegramContact.Username") + " " + format(contact.getUsername()));
+        out.println("<br>" + Messages.getString("TelegramContact.Phone") + " " + format(contact.getPhone()));
+        if (contact.isGroup()) {
+            out.println("<br>[" + Messages.getString("TelegramContact.Group") + "]");
+        } else if (contact.isChannel()) {
+            out.println("<br>[" + Messages.getString("TelegramContact.Channel") + "]");
+        }
         out.println("</body>\n</html>"); //$NON-NLS-1$
 
         out.flush();
@@ -104,14 +115,19 @@ public class ReportGenerator {
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, StandardCharsets.UTF_8));
         String title = c.getName();
-        if (!c.isGroup()) {
-            if (c.getC().getPhone() != null)
-                title += " phone:" + c.getC().getPhone();
-            else if (c.getC().getUsername() != null)
-                title += " user:" + c.getC().getUsername();
+        if (c.isGroup()) {
+            title = Messages.getString("TelegramContact.Group") + ": " + title;
+        } else if (c.isChannel()) {
+            title = Messages.getString("TelegramContact.Channel") + ": " + title;
+        } else {
+            if (c.getC().getPhone() != null) {
+                title += " (" + Messages.getString("TelegramContact.Phone") + " " + c.getC().getPhone() + ")";
+            } else if (c.getC().getUsername() != null) {
+                title += " (" + Messages.getString("TelegramContact.Username") + " " + c.getC().getUsername() + ")";
+            }
         }
 
-        printMessageFileHeader(out, title, c.getId() + "", c.getC().getAvatar(), c.isGroup() && c.isDeleted());
+        printMessageFileHeader(out, title, c.getC().getAvatar(), c.isGroup(), c.isChannel(), c.isDeleted());
 
         if (currentMsg > 0)
             out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
@@ -130,7 +146,7 @@ public class ReportGenerator {
                 lastDate = thisDate;
             }
 
-            printMessage(out, m, c.isGroup());
+            printMessage(out, m);
 
             if (currentMsg != c.getMessages().size() && bout.size() >= minChatSplitSize) {
                 out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
@@ -148,12 +164,12 @@ public class ReportGenerator {
     private TagHtml getThumbTag(Message m, String classnotfound) {
         byte thumb[] = m.getThumb();
 
-        if (thumb == null && m.getMediaHash() != null) {
-            List<IItemReader> result = null;
-            if (searcher != null)
-                result = iped.parsers.util.Util.getItems("hash:" + m.getMediaHash(), searcher);
-            if (result != null && !result.isEmpty()) {
-                thumb = result.get(0).getThumb();
+        if (searcher != null && thumb == null && m.getMediaHash() != null && !m.getMediaHash().isBlank()) {
+            if (!m.getMediaHash().equalsIgnoreCase(emptyMD5)) {
+                List<IItemReader> result = iped.parsers.util.Util.getItems("md5:" + m.getMediaHash(), searcher);
+                if (result != null && !result.isEmpty()) {
+                    thumb = result.get(0).getThumb();
+                }
             }
         }
 
@@ -261,7 +277,14 @@ public class ReportGenerator {
 
     private void printImage(PrintWriter out, Message message, boolean isLink) {
         if (isLink) {
-            out.print("Link:<br/>");
+            out.print("<b>" + Messages.getString("TelegramReport.Link") + "</b><br/>");
+            if (message.getUrl() != null) {
+                out.print(Messages.getString("TelegramReport.LinkURL") + ": " + format(message.getUrl()) + "<br/>");
+            }
+            if (message.getLinkTitle() != null) {
+                out.print(Messages.getString("TelegramReport.LinkTitle") + ": " + format(message.getLinkTitle())
+                        + "<br/>");
+            }
         }
         if (message.getMediaHash() != null) {
 
@@ -340,7 +363,7 @@ public class ReportGenerator {
         printImage(out, message, true);
     }
 
-    private void printMessage(PrintWriter out, Message message, boolean group) {
+    private void printMessage(PrintWriter out, Message message) {
 
         out.println("<div class=\"linha\" id=\"" + message.getId() + "\">"); //$NON-NLS-1$
         if (message.isFromMe()) {
@@ -374,6 +397,17 @@ public class ReportGenerator {
             }
 
         }
+
+        PoolData poolData = message.getPoolData();
+        if (poolData != null) {
+            out.println("<b>" + Messages.getString("TelegramReport.Pool") + "</b><br/>" + format(poolData.getTitle()));
+            out.println("<ul>");
+            for (String opt : poolData.getOptions()) {
+                out.println("<li>" + format(opt) + "</li>");
+            }
+            out.println("</ul>");
+        }
+
         if (message.getData() != null) {
             out.print(format(message.getData()));
         }
@@ -401,17 +435,17 @@ public class ReportGenerator {
 
     }
 
-    private static void printMessageFileHeader(PrintWriter out, String title, String id, byte[] avatar,
-            boolean isDeletedGroup) {
+    private static void printMessageFileHeader(PrintWriter out, String title, byte[] avatar,
+            boolean isGroup, boolean isChannel, boolean isDeleted) {
         out.println("<!DOCTYPE html>\n" //$NON-NLS-1$
                 + "<html>\n" //$NON-NLS-1$
                 + "<head>\n" //$NON-NLS-1$
-                + "	<title>" + id + "</title>\n" //$NON-NLS-1$ //$NON-NLS-2$
+                + "	<title>" + title + "</title>\n" //$NON-NLS-1$ //$NON-NLS-2$
                 + "	<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n" //$NON-NLS-1$
                 + "	<meta name=\"viewport\" content=\"width=device-width\" />\n" //$NON-NLS-1$
                 + "     <meta charset=\"UTF-8\" />\n" //$NON-NLS-1$
-                + "	<link rel=\"shortcut icon\" href=\"" //$NON-NLS-1$
-                + iped.parsers.whatsapp.Util.getImageResourceAsEmbedded("img/favicon.ico") + "\" />\n" //$NON-NLS-1$ //$NON-NLS-2$
+                + "<link rel=\"icon\" href=\""
+                + iped.parsers.whatsapp.Util.getImageResourceAsEmbedded("img/telegram.png") + "\">\n"
                 + "<style>\n" + iped.parsers.whatsapp.Util.readResourceAsString("css/whatsapp.css") //$NON-NLS-2$
                 + Util.readResourceAsString("css/tooltip.css") + "\n</style>\n" + "<script>"
                 + iped.parsers.whatsapp.Util.readResourceAsString("js/whatsapp.js") + "</script>"
@@ -433,10 +467,14 @@ public class ReportGenerator {
                 + "<div id=\"conversation\">\n" //$NON-NLS-1$
                 + "<br/><br/><br/>"); //$NON-NLS-1$
 
-
-        if (isDeletedGroup) {
-            out.println("<div class=\"linha\"><div class=\"recoveredChat\">"
-                    + Messages.getString("TelegramReport.RecoveredGroup") + "</div></div>");
+        if (isDeleted && (isGroup || isChannel)) {
+            out.print("<div class=\"linha\"><div class=\"recoveredChat\">");
+            if (isGroup) {
+                out.print(Messages.getString("TelegramReport.RecoveredGroup"));
+            } else {
+                out.print(Messages.getString("TelegramReport.RecoveredChannel"));
+            }
+            out.println("</div></div>");
         }
     }
 

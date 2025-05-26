@@ -1,12 +1,12 @@
 package iped.parsers.whatsapp;
 
-import static iped.parsers.whatsapp.Message.MessageType.APP_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.AUDIO_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_CHAT;
 import static iped.parsers.whatsapp.Message.MessageType.CONTACT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_ADMIN;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_SENDER;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.DOC_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.ENCRYPTION_KEY_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.GIF_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CREATED;
@@ -24,7 +24,7 @@ import static iped.parsers.whatsapp.Message.MessageType.SUBJECT_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.TEXT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_MEDIA_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_MESSAGE;
-import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP;
+import static iped.parsers.whatsapp.Message.MessageType.USER_ADDED_TO_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP_FROM_LINK;
 import static iped.parsers.whatsapp.Message.MessageType.USER_LEFT_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.USER_REMOVED_FROM_GROUP;
@@ -60,13 +60,14 @@ import iped.parsers.sqlite.SQLiteRecordValidator;
 import iped.parsers.sqlite.SQLiteUndelete;
 import iped.parsers.sqlite.SQLiteUndeleteTable;
 import iped.parsers.sqlite.SQLiteUndeleteTableResultSetAdapter;
+import iped.parsers.whatsapp.Message.MessageQuotedType;
 import iped.parsers.whatsapp.Message.MessageStatus;
 
 /**
  *
  * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
  */
-public class ExtractorAndroid extends Extractor {
+public abstract class ExtractorAndroid extends Extractor {
 
     private static Logger logger = LoggerFactory.getLogger(ExtractorAndroid.class);
 
@@ -79,11 +80,14 @@ public class ExtractorAndroid extends Extractor {
     private boolean hasMediaDurationCol = false;
     private boolean hasGroupParticiantsTable = true;
     private boolean hasForwardedCol = false;
+    private boolean hasQuoteCol = false;
     private SQLException parsingException = null;
 
     public ExtractorAndroid(String itemPath, File databaseFile, WAContactsDirectory contacts, WAAccount account, boolean recoverDeletedRecords) {
         super(itemPath, databaseFile, contacts, account, recoverDeletedRecords);
     }
+
+    protected abstract Connection getConnection() throws SQLException;
 
     @Override
     protected List<Chat> extractChatList() throws WAExtractorException {
@@ -151,6 +155,7 @@ public class ExtractorAndroid extends Extractor {
                     hasMediaCaptionCol = SQLite3DBParser.checkIfColumnExists(conn, "messages", "media_caption"); //$NON-NLS-1$ //$NON-NLS-2$
                     hasMediaDurationCol = SQLite3DBParser.checkIfColumnExists(conn, "messages", "media_duration"); //$NON-NLS-1$ //$NON-NLS-2$
                     hasForwardedCol = SQLite3DBParser.checkIfColumnExists(conn, "messages", "forwarded"); //$NON-NLS-1$ //$NON-NLS-2$
+                    hasQuoteCol = SQLite3DBParser.checkIfColumnExists(conn, "messages", "quoted_row_id"); 
                     if (!hasChatView) {
                         hasSubjectCol = SQLite3DBParser.checkIfColumnExists(conn, "chat_list", "subject"); //$NON-NLS-1$ //$NON-NLS-2$
                     }
@@ -182,12 +187,10 @@ public class ExtractorAndroid extends Extractor {
                         c.setId(rs.getLong("id")); //$NON-NLS-1$
                         c.setSubject(Util.getUTF8String(rs, "subject")); //$NON-NLS-1$
                         c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
-                        if (!(contactId.endsWith("@status") || contactId.endsWith("@broadcast"))) { //$NON-NLS-1$ //$NON-NLS-2$
-                            if (recoverDeletedRecords) {
-                                activeChats.add(contactId);
-                            }
-                            list.add(c);
+                        if (recoverDeletedRecords) {
+                            activeChats.add(contactId);
                         }
+                        list.add(c);
                     }
                 } catch (SQLException ex) {
                     if (firstTry || !isSqliteCorruptException(ex)) {
@@ -268,15 +271,13 @@ public class ExtractorAndroid extends Extractor {
             
             for (SqliteRow row : undeleteChatListTable.getTableRows()) {
                 String contactId = row.getTextValue("key_remote_jid"); //$NON-NLS-1$
-                if (!(contactId.endsWith("@status") || contactId.endsWith("@broadcast"))) { //$NON-NLS-1$ //$NON-NLS-2$
-                    WAContact contact = contacts.getContact(contactId);
-                    Chat c = new Chat(contact);
-                    c.setId(row.getIntValue("_id"));
-                    c.setDeleted(row.isDeletedRow());
-                    c.setSubject(row.getTextValue("subject")); //$NON-NLS-1$
-                    c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
-                    result.add(c);
-                }
+                WAContact contact = contacts.getContact(contactId);
+                Chat c = new Chat(contact);
+                c.setId(row.getIntValue("_id"));
+                c.setDeleted(row.isDeletedRow());
+                c.setSubject(row.getTextValue("subject")); //$NON-NLS-1$
+                c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
+                result.add(c);
             }
         } else if (undeleteChatTable != null && undeleteChatTable.getTableRows() != null && !undeleteChatTable.getTableRows().isEmpty()) {
             if (undeleteJIDTable != null && undeleteJIDTable.getTableRows() != null && !undeleteJIDTable.getTableRows().isEmpty()) {
@@ -289,15 +290,13 @@ public class ExtractorAndroid extends Extractor {
                     if (jid_rows.containsKey(jid_row_id)) {
                         SqliteRow jid_row = jid_rows.get(jid_row_id).get(0);
                         String contactId = jid_row.getTextValue("raw_string"); //$NON-NLS-1$
-                        if (!(contactId.endsWith("@status") || contactId.endsWith("@broadcast"))) { //$NON-NLS-1$ //$NON-NLS-2$
-                            WAContact contact = contacts.getContact(contactId);
-                            Chat c = new Chat(contact);
-                            c.setId(row.getIntValue("_id"));
-                            c.setDeleted(true);
-                            c.setSubject(row.getTextValue("subject")); //$NON-NLS-1$
-                            c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
-                            result.add(c);
-                        }
+                        WAContact contact = contacts.getContact(contactId);
+                        Chat c = new Chat(contact);
+                        c.setId(row.getIntValue("_id"));
+                        c.setDeleted(true);
+                        c.setSubject(row.getTextValue("subject")); //$NON-NLS-1$
+                        c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
+                        result.add(c);
                     }
                 }
             }
@@ -341,7 +340,34 @@ public class ExtractorAndroid extends Extractor {
         Set<MessageWrapperForDuplicateRemoval> activeMessages = new HashSet<>();
         Map<Long, Message> activeMessageIds = new HashMap<>();
 
-        String query = getMessagesQuery(hasThumbTable, hasEditVersionCol, hasMediaDurationCol, hasMediaCaptionCol, hasForwardedCol);
+        List<Message> messagesQuotes = new ArrayList<>();
+        HashMap<String, Message> messagesMapUuid = new HashMap<String, Message>();
+        HashMap<Long, Message> messagesMapIdQuote = new HashMap<Long, Message>();
+
+        if (hasQuoteCol){
+            String queryQuote = getMessagesQueryQuote(hasThumbTable, hasEditVersionCol, hasMediaDurationCol, hasMediaCaptionCol);
+
+            try (PreparedStatement stmt = conn.prepareStatement(queryQuote)) {
+                stmt.setFetchSize(1000);
+                stmt.setString(1, id);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        Message m = createMessageFromDBRow(rs, remote, isGroupChat, false, hasThumbTable, hasEditVersionCol);
+                        messagesQuotes.add(m);   
+                    }
+                }
+            } catch (SQLException e) {
+                if (firstTry || !isSqliteCorruptException(e)) {
+                    // ignore sqlite corrupt error on second try
+                    // to try to recover deleted records instead
+                    throw e;
+                } else if (parsingException == null) {
+                    parsingException = e;
+                }
+            }
+        }
+
+        String query = getMessagesQuery(hasThumbTable, hasEditVersionCol, hasMediaDurationCol, hasMediaCaptionCol, hasForwardedCol, hasQuoteCol);
 
         try (PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setFetchSize(1000);
@@ -353,6 +379,10 @@ public class ExtractorAndroid extends Extractor {
                         activeMessages.add(new MessageWrapperForDuplicateRemoval(m));
                         activeMessageIds.put(m.getId(), m);
                     }
+                    messagesMapIdQuote.put(m.getIdQuote(),m);
+                    if (m.getUuid() != null && !m.getUuid().isEmpty()) {
+                        messagesMapUuid.put(m.getUuid(), m);
+                    }                    
                     messages.add(m);
                 }
             }
@@ -379,6 +409,10 @@ public class ExtractorAndroid extends Extractor {
                     if (!activeMessages.contains(new MessageWrapperForDuplicateRemoval(m))) { //do not include deleted message if already there
                         if (!activeMessageIds.containsKey(m.getId()) ||
                             !compareMessagesAlmostTheSame(activeMessageIds.get(m.getId()), m)) { //also remove messages with same id that have the same start text (possibly corrupted recovered record)
+                            messagesMapIdQuote.put(m.getIdQuote(),m);
+                            if (m.getUuid() != null && !m.getUuid().isEmpty()) {
+                                messagesMapUuid.put(m.getUuid(), m);
+                            }                            
                             messages.add(m);
                         }
                     }}
@@ -389,8 +423,29 @@ public class ExtractorAndroid extends Extractor {
                 }
             }
     
-            Collections.sort(messages, (a, b) -> a.getTimeStamp().compareTo(b.getTimeStamp()));
+            Message.sort(messages);
         }
+
+        //Find quote messages
+        long fakeIds = 2000000000L;
+        for (Message mq: messagesQuotes){
+            Message m = messagesMapIdQuote.get(mq.getId());
+            if (m != null){// Has quote
+                Message original = messagesMapUuid.get(mq.getUuid());//Try to find orginal message in messages
+                if (original != null){// has found original message reference, more complete
+                    original.setMessageQuotedType(MessageQuotedType.QUOTE_FOUND);
+                    m.setMessageQuote(original);
+                }else{// not found original message reference, get info from message_quotes table, less complete
+                    mq.setMessageQuotedType(MessageQuotedType.QUOTE_NOT_FOUND);
+                    mq.setId(fakeIds--);
+                    m.setMessageQuote(mq);
+                }
+                m.setQuoted(true);
+            }
+        }
+        messagesMapIdQuote.clear();
+        messagesMapUuid.clear();
+
         return messages;
     }
 
@@ -433,7 +488,7 @@ public class ExtractorAndroid extends Extractor {
         m.setLatitude(rs.getDouble("latitude")); //$NON-NLS-1$
         m.setLongitude(rs.getDouble("longitude")); //$NON-NLS-1$
         m.setMessageType(decodeMessageType(type, status, edit_version, caption, (int) media_size));
-        m.setMediaDuration(SQLite3DBParser.getIntIfExists(rs, "media_duration")); //$NON-NLS-1$
+        m.setDuration(SQLite3DBParser.getIntIfExists(rs, "media_duration")); //$NON-NLS-1$
         if (m.getMessageType() == CONTACT_MESSAGE) {
             m.setVcards(Arrays.asList(new String[] { m.getData() }));
         }
@@ -479,7 +534,7 @@ public class ExtractorAndroid extends Extractor {
                     } else if (mediaMime.startsWith("video")) {
                         m.setMessageType(VIDEO_MESSAGE);
                     } else if (mediaMime.startsWith("application")) {
-                        m.setMessageType(APP_MESSAGE);
+                        m.setMessageType(DOC_MESSAGE);
                     } else if (mediaMime.startsWith("audio")) {
                         m.setMessageType(AUDIO_MESSAGE);
                     } else if (m.getMediaCaption() != null) {
@@ -492,6 +547,11 @@ public class ExtractorAndroid extends Extractor {
         }
         m.setDeleted(deleted);
         m.setForwarded(hasForwardedCol && (rs.getInt("forwarded") > 0));
+
+        if (hasQuoteCol){
+            m.setIdQuote(rs.getInt("quoted_row_id"));
+            m.setUuid(rs.getString("key_id"));
+        }
 
         return m;
     }
@@ -508,7 +568,7 @@ public class ExtractorAndroid extends Extractor {
                             break;
                         case 4:
                         case 12:
-                            result = USER_JOINED_GROUP;
+                            result = USER_ADDED_TO_GROUP;
                             break;
                         case 5:
                             result = USER_LEFT_GROUP;
@@ -576,7 +636,7 @@ public class ExtractorAndroid extends Extractor {
                 }
                 break;
             case 9:
-                result = APP_MESSAGE;
+                result = DOC_MESSAGE;
                 break;
             case 10:
                 if (caption != null) {
@@ -640,7 +700,7 @@ public class ExtractorAndroid extends Extractor {
     private static final String SELECT_CHAT_LIST_NO_SUBJECT = "SELECT _id as id,key_remote_jid AS contact, " //$NON-NLS-1$
             + " null as subject, 1230768000000 as creation FROM chat_list"; //$NON-NLS-1$
 
-    private static String getMessagesQuery(boolean hasThumbTable, boolean hasEditVersion, boolean hasMediaDuration, boolean hasMediaCaption, boolean hasForwarded) {
+    private static String getMessagesQuery(boolean hasThumbTable, boolean hasEditVersion, boolean hasMediaDuration, boolean hasMediaCaption, boolean hasForwarded, boolean hasQuote) {
         String query;
         if (hasThumbTable) {
             query = SELECT_MESSAGES_THUMBS_TABLE;
@@ -659,6 +719,28 @@ public class ExtractorAndroid extends Extractor {
         if (!hasForwarded) {
             query = query.replace("(forwarded & 1) as forwarded, ", "");
         }
+        if (!hasQuote) {
+            query = query.replace("quoted_row_id, messages.key_id, ", "");
+        }
+        return query;
+    }
+
+    private static String getMessagesQueryQuote(boolean hasThumbTable, boolean hasEditVersion, boolean hasMediaDuration, boolean hasMediaCaption) {
+        String query;
+        if (hasThumbTable) {
+            query = SELECT_QUOTES_THUMBS_TABLE;
+        } else {
+            query = SELECT_QUOTES_NO_THUMBS_TABLE;
+        }
+        if (!hasEditVersion) {
+            query = query.replace("edit_version, ", "");
+        }
+        if (!hasMediaDuration) {
+            query = query.replace("media_duration, ", "");
+        }
+        if (!hasMediaCaption) {
+            query = query.replace("media_caption as mediaCaption, ", "null as mediaCaption, ");
+        }
         return query;
     }
 
@@ -676,6 +758,7 @@ public class ExtractorAndroid extends Extractor {
             + "media_duration, " //$NON-NLS-1$
             + "media_caption as mediaCaption, " //$NON-NLS-1$
             + "(forwarded & 1) as forwarded, " //$NON-NLS-1$
+            + "quoted_row_id, messages.key_id, " //$NON-NLS-1$
             + "media_hash as mediaHash, raw_data as rawData FROM " //$NON-NLS-1$
             + "messages WHERE remoteId=? and status!=-1 ORDER BY timestamp"; //$NON-NLS-1$
 
@@ -688,7 +771,8 @@ public class ExtractorAndroid extends Extractor {
             + "media_duration, " //$NON-NLS-1$
             + "media_caption as mediaCaption, " //$NON-NLS-1$
             + "(forwarded & 1) as forwarded, " //$NON-NLS-1$
-            + "media_hash as mediaHash, thumbnail as thumbData FROM " //$NON-NLS-1$
+            + "quoted_row_id, messages.key_id, " //$NON-NLS-1$          
+            + "media_hash as mediaHash, thumbnail as thumbData FROM " //$NON-NLS-1$          
             + "messages LEFT JOIN message_thumbnails ON (messages.key_id = message_thumbnails.key_id " //$NON-NLS-1$
             + "AND messages.key_remote_jid = message_thumbnails.key_remote_jid " //$NON-NLS-1$
             + "AND messages.key_from_me = message_thumbnails.key_from_me) " //$NON-NLS-1$
@@ -696,6 +780,35 @@ public class ExtractorAndroid extends Extractor {
 
     // to address a field must use ` instead of '
     private static final String SELECT_GROUP_MEMBERS = "select gjid as 'group', jid as member FROM group_participants where `group`=?"; //$NON-NLS-1$
+
+    private static final String SELECT_QUOTES_NO_THUMBS_TABLE = "SELECT mq._id AS id, mq.key_remote_jid "
+            + "as remoteId, mq.remote_resource AS remoteResource, mq.status, mq.data, "
+            + "mq.key_from_me as fromMe, mq.timestamp, mq.media_url as mediaUrl, "
+            + "mq.media_mime_type as mediaMime, mq.media_size as mediaSize, mq.media_name as mediaName, "
+            + "mq.media_wa_type as messageType, null as thumbData, mq.latitude, mq.longitude, "
+            + "mq.edit_version, "
+            + "mq.media_duration, "
+            + "mq.media_caption as mediaCaption, "
+            + "null as forwarded, " //$NON-NLS-1$            
+            + "mq.quoted_row_id, mq.key_id, "         
+            + "mq.media_hash as mediaHash, mq.raw_data as rawData FROM messages_quotes mq "
+            + "WHERE remoteId=? and mq.status!=-1 ORDER BY mq.timestamp";
+
+    private static final String SELECT_QUOTES_THUMBS_TABLE = "SELECT mq._id AS id, mq.key_remote_jid " //$NON-NLS-1$
+            + "as remoteId, mq.remote_resource AS remoteResource, mq.status, mq.data, " //$NON-NLS-1$
+            + "mq.key_from_me as fromMe, mq.timestamp as timestamp, mq.media_url as mediaUrl, " //$NON-NLS-1$
+            + "mq.media_mime_type as mediaMime, mq.media_size as mediaSize, mq.media_name as mediaName, " //$NON-NLS-1$
+            + "mq.media_wa_type as messageType, mq.raw_data as rawData, mq.latitude, mq.longitude, " //$NON-NLS-1$
+            + "mq.edit_version, " //$NON-NLS-1$
+            + "mq.media_duration, " //$NON-NLS-1$
+            + "mq.media_caption as mediaCaption, " //$NON-NLS-1$
+            + "null as forwarded, " //$NON-NLS-1$             
+            + "mq.quoted_row_id, mq.key_id, " //$NON-NLS-1$          
+            + "mq.media_hash as mediaHash, thumbnail as thumbData FROM messages_quotes mq " //$NON-NLS-1$         
+            + "LEFT JOIN message_thumbnails ON (mq.key_id = message_thumbnails.key_id " //$NON-NLS-1$
+            + "AND mq.key_remote_jid = message_thumbnails.key_remote_jid " //$NON-NLS-1$
+            + "AND mq.key_from_me = message_thumbnails.key_from_me) " //$NON-NLS-1$
+            + "WHERE remoteId=? and mq.status!=-1 ORDER BY mq.timestamp"; //$NON-NLS-1$
 
     private static final Map<String, String> MESSAGES_TABLE_COL_MAP = new HashMap<>();
 

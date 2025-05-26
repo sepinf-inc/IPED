@@ -1,6 +1,6 @@
 /*
  * Copyright 2012-2014, Luis Filipe da Cruz Nassif
- * 
+ *
  * This file is part of Indexador e Processador de Evidências Digitais (IPED).
  *
  * IPED is free software: you can redistribute it and/or modify
@@ -34,13 +34,13 @@ import iped.utils.QualityIcon;
 
 /**
  * Load icons to memory
- * 
+ *
  * @author guilherme.dutra
  *
  */
 public class IconManager {
 
-    public static final int defaultSize = 16;
+    public static final int defaultSize = 18;
     public static final int defaultGallerySize = 24;
     public static final int defaultCategorySize = 20;
 
@@ -79,13 +79,11 @@ public class IconManager {
                         if (e == null) {
                             break;
                         }
-                        String path = IconManager.class.getName().toString().replace(".", separator)
-                                .replace(IconManager.class.getSimpleName(), "") + iconPath + separator;
+                        String path = IconManager.class.getName().toString().replace(".", separator).replace(IconManager.class.getSimpleName(), "") + iconPath + separator;
                         String nameWithPath = e.getName();
                         String name = nameWithPath.replace(path, "");
                         if (nameWithPath.startsWith(path) && name.toLowerCase().endsWith(ICON_EXTENSION)) {
-                            BufferedImage img = ImageIO
-                                    .read(IconManager.class.getResource(iconPath + separator + name));
+                            BufferedImage img = ImageIO.read(IconManager.class.getResource(iconPath + separator + name));
                             map.put(name.replace(ICON_EXTENSION, "").toLowerCase(), new QualityIcon(img, size));
                         }
                     }
@@ -134,8 +132,7 @@ public class IconManager {
         return getFileIcon(mimeType, extension, mimeIconMap, extIconMap, defaultIcon);
     }
 
-    private static Icon getFileIcon(String mimeType, String extension, Map<String, QualityIcon> mimeIconMap,
-            Map<String, QualityIcon> extIconMap, Icon defaultIcon) {
+    private static Icon getFileIcon(String mimeType, String extension, Map<String, QualityIcon> mimeIconMap, Map<String, QualityIcon> extIconMap, Icon defaultIcon) {
         if (mimeType != null && !mimeType.isBlank()) {
             Icon icon = mimeIconMap.get(mimeType.strip());
             if (icon != null) {
@@ -197,7 +194,13 @@ public class IconManager {
         icon = availableIconsMap.get("torrent");
         if (icon != null) {
             mimeIconMap.put("application/x-bittorrent-resume-dat", icon);
+            mimeIconMap.put("application/x-bittorrent-resume-dat-entry", icon);
+            mimeIconMap.put("application/x-bittorrent-settings-dat", icon);
             mimeIconMap.put("application/x-bittorrent", icon);
+        }
+        icon = availableIconsMap.get("transmission");
+        if (icon != null) {
+            mimeIconMap.put("application/x-transmission-resume", icon);
         }
 
         icon = availableIconsMap.get("registry");
@@ -226,6 +229,13 @@ public class IconManager {
             mimeIconMap.put("application/x-whatsapp-chat", icon);
             mimeIconMap.put("application/x-ufed-chat-whatsapp", icon);
             mimeIconMap.put("application/x-ufed-chat-preview-whatsapp", icon);
+        }
+
+        icon = availableIconsMap.get("threema");
+        if (icon != null) {
+            mimeIconMap.put("application/x-threema-chat", icon);
+            mimeIconMap.put("application/x-threema-user-plist", icon);
+            mimeIconMap.put("application/x-threema-chatstorage", icon);
         }
 
         icon = availableIconsMap.get("facebook");
@@ -317,6 +327,7 @@ public class IconManager {
             mimeIconMap.put("application/x-ufed-call", icon);
             mimeIconMap.put("call/x-whatsapp-call", icon);
             mimeIconMap.put("call/x-telegram-call", icon);
+            mimeIconMap.put("call/x-threema-call", icon);
             mimeIconMap.put("application/x-ios-calllog-db", icon);
             mimeIconMap.put("application/x-ios8-calllog-db", icon);
             mimeIconMap.put("call/x-discord-call", icon);
@@ -328,6 +339,10 @@ public class IconManager {
             mimeIconMap.put("application/x-ufed-visitedpage", icon);
             mimeIconMap.put("application/x-safari-history-registry", icon);
             mimeIconMap.put("application/x-safari-history", icon);
+        }
+
+        icon = availableIconsMap.get("safari-sqlite");
+        if (icon != null) {
             mimeIconMap.put("application/x-safari-sqlite", icon);
         }
 
@@ -338,6 +353,10 @@ public class IconManager {
             mimeIconMap.put("application/x-chrome-downloads", icon);
             mimeIconMap.put("application/x-chrome-history", icon);
             mimeIconMap.put("application/x-chrome-searches", icon);
+        }
+
+        icon = availableIconsMap.get("chrome-sqlite");
+        if (icon != null) {
             mimeIconMap.put("application/x-chrome-sqlite", icon);
         }
 
@@ -379,6 +398,12 @@ public class IconManager {
         if (icon != null) {
             mimeIconMap.put("message/x-whatsapp-message", icon);
             mimeIconMap.put("message/x-whatsapp-attachment", icon);
+        }
+
+        icon = availableIconsMap.get("message-threema");
+        if (icon != null) {
+            mimeIconMap.put("message/x-threema-message", icon);
+            mimeIconMap.put("message/x-threema-attachment", icon);
         }
 
         icon = availableIconsMap.get("message-telegram");
@@ -525,6 +550,11 @@ public class IconManager {
             mimeIconMap.put("application/x-ufed-financialaccount", icon);
         }
 
+        icon = availableIconsMap.get("transfer-funds");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-transferoffunds", icon);
+        }
+
         icon = availableIconsMap.get("fuzzy-object");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-fuzzyentitymodel", icon);
@@ -580,12 +610,32 @@ public class IconManager {
         if (icon != null) {
             mimeIconMap.put("application/irpf", icon);
         }
-        
+
         icon = availableIconsMap.get("usnjournal");
         if (icon != null) {
             mimeIconMap.put("application/x-usnjournal-$j", icon);
         }
-        
+
+        icon = availableIconsMap.get("vlc-ini");
+        if (icon != null) {
+            mimeIconMap.put("application/x-vlc-ini", icon);
+        }
+
+        icon = availableIconsMap.get("markdown");
+        if (icon != null) {
+            mimeIconMap.put("text/x-web-markdown", icon);
+        }
+
+        icon = availableIconsMap.get("notification");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-notification", icon);
+        }
+
+        icon = availableIconsMap.get("mobilecard");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-mobilecard", icon);
+        }
+
         return mimeIconMap;
     }
 

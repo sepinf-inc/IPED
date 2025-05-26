@@ -6,7 +6,7 @@ jobs:
 
   build-java11:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
     - uses: actions/checkout@v1
@@ -18,7 +18,7 @@ jobs:
 
     - name: Load libagdb from cache
       id: libagdb
-      uses: actions/cache@v1
+      uses: actions/cache@v4
       with:
         path: libagdb
         key: libagdb
@@ -28,7 +28,7 @@ jobs:
       if: steps.libagdb.outputs.cache-hit != 'true'
       run: | 
             sudo apt install git autoconf automake autopoint libtool pkg-config
-            git clone https://github.com/libyal/libagdb.git && cd libagdb/ && git checkout e858e15
+            git clone https://github.com/libyal/libagdb.git && cd libagdb/ && git checkout 667a782
             sudo ./synclibs.sh && sudo ./autogen.sh && sudo ./configure
 
     - name: Install External Tools
@@ -57,14 +57,14 @@ jobs:
       run:
         cd target && mv release iped-snapshot-$GITHUB_SHA && tar -zcvf ../iped-snapshot.tar.gz iped-snapshot-$GITHUB_SHA
     - name: Upload snapshot
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v4
       with:
         name: iped-snapshot-${{ github.sha }}
         path: iped-snapshot.tar.gz
 
   build-java14:
     
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
     - uses: actions/checkout@v1
@@ -77,7 +77,7 @@ jobs:
 
     - name: Load libagdb from cache
       id: libagdb
-      uses: actions/cache@v1
+      uses: actions/cache@v4
       with:
         path: libagdb
         key: libagdb
@@ -87,7 +87,7 @@ jobs:
       if: steps.libagdb.outputs.cache-hit != 'true'
       run: | 
             sudo apt install git autoconf automake autopoint libtool pkg-config
-            git clone https://github.com/libyal/libagdb.git && cd libagdb/ && git checkout e858e15
+            git clone https://github.com/libyal/libagdb.git && cd libagdb/ && git checkout 667a782
             sudo ./synclibs.sh && sudo ./autogen.sh && sudo ./configure
 
     - name: Install External Tools

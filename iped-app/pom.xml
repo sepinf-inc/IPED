@@ -4,7 +4,7 @@
 	<parent>
         <groupId>iped</groupId>
         <artifactId>iped-parent</artifactId>
-        <version>4.2-snapshot</version>
+        <version>4.3.0-snapshot</version>
     </parent>
 
     <artifactId>iped-app</artifactId>
@@ -52,11 +52,6 @@
 	  		<artifactId>jfreechartextensions</artifactId>
 	  		<version>5d6b903557dac49a925a7a62d5c6592bd07482c5</version>
 	  	</dependency>
-	  	<dependency>
-            <groupId>org.roaringbitmap</groupId>
-            <artifactId>RoaringBitmap</artifactId>
-            <version>0.9.39</version>
-        </dependency>
     </dependencies>
     
     <build>
@@ -130,7 +125,7 @@
                                 <artifactItem>
                                     <groupId>org.python</groupId>
                                     <artifactId>python-jep-dlib</artifactId>
-                                    <version>3.9.12-4.0.3-19.23.1</version>
+                                    <version>3.9.12-4.0.3-19.23.1-2</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${release.dir}</outputDirectory>
@@ -263,7 +258,7 @@
                                 <artifactItem>
                                     <groupId>libyal</groupId>
                                     <artifactId>sccainfo</artifactId>
-                                    <version>20170205.1</version>
+                                    <version>20240427</version>
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
@@ -301,7 +296,7 @@
                                 <artifactItem>
                                     <groupId>org.imagemagick</groupId>
                                     <artifactId>imagemagick-zip</artifactId>
-                                    <version>7.1.1-19-q8-x64+vcomp.dll</version>
+                                    <version>7.1.1-43-q8-x64+dlls</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
@@ -320,7 +315,7 @@
                                 <artifactItem>
                                     <groupId>tesseract</groupId>
                                     <artifactId>tesseract-zip</artifactId>
-                                    <version>5.3.2-24-g3922</version>
+                                    <version>5.3.2-24-g3922_1</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
@@ -472,9 +467,9 @@
                         <configuration>
                             <artifactItems>
                                 <artifactItem>
-                                    <groupId>dpf.ap</groupId>
+                                    <groupId>com.github.sepinf-inc.telegram-decoder</groupId>
     								<artifactId>telegram-decoder-impl</artifactId>
-    								<version>${telegram.impl.version}</version>
+    								<version>${telegram.version}</version>
                                     <type>jar</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${plugin.dir}</outputDirectory>

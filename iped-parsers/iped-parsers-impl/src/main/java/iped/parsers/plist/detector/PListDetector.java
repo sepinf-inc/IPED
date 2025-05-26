@@ -21,7 +21,7 @@ import com.dd.plist.PropertyListParser;
 public class PListDetector implements Detector {
 
     /**
-     * 
+     *
      */
     private static final long serialVersionUID = 1L;
 
@@ -31,6 +31,7 @@ public class PListDetector implements Detector {
     public static MediaType BPLIST = MediaType.application("x-bplist");
     public static MediaType BITUNES = MediaType.application("x-bplist-itunes");
     public static MediaType WA_USER_PLIST = MediaType.application("x-whatsapp-user-plist");
+    public static MediaType THREEMA_USER_PLIST = MediaType.application("x-threema-user-plist");
 
     public static MediaType detectOnKeys(Set<String> keySet) {
         if (keySet.contains("nodes") && keySet.contains("edges") && keySet.contains("graphEncodingVersion")) {
@@ -42,6 +43,8 @@ public class PListDetector implements Detector {
             return BITUNES;
         } else if ((keySet.contains("OwnJabberID") || keySet.contains("LastOwnJabberID")) && (keySet.contains("OwnPhoneNumber") || keySet.contains("FullUserName"))) {
             return WA_USER_PLIST;
+        } else if (keySet.contains("Threema device ID")) {
+            return THREEMA_USER_PLIST;
         }
         return BPLIST;
     }

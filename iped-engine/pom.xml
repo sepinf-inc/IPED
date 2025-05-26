@@ -4,7 +4,7 @@
 	<parent>
         <groupId>iped</groupId>
         <artifactId>iped-parent</artifactId>
-        <version>4.2-snapshot</version>
+        <version>4.3.0-snapshot</version>
     </parent>
     
     <artifactId>iped-engine</artifactId>
@@ -318,7 +318,7 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
             <!-- check https://github.com/sepinf-inc/IPED/issues/1068 when upgrading this -->
-            <version>1.21</version>
+            <version>1.27.1</version>
         </dependency>
         <dependency>
             <groupId>org.apache.tika</groupId>

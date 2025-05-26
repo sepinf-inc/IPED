@@ -2,7 +2,6 @@ package iped.parsers.whatsapp;
 
 import java.io.File;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -42,15 +41,13 @@ public abstract class Extractor {
 
     protected abstract List<Chat> extractChatList() throws WAExtractorException;
 
-    protected Connection getConnection() throws SQLException {
-        return DriverManager.getConnection("jdbc:sqlite:" + databaseFile.getAbsolutePath());
-    }
+    protected abstract Connection getConnection() throws SQLException;
 
     protected void setGroupMembers(Chat c, Connection conn, String SELECT_GROUP_MEMBERS) throws SQLException {
         // adds all contacts that sent at least one message
         for (Message m : c.getMessages()) {
             if (m.getRemoteResource() != null)
-                c.getGroupmembers().add(contacts.getContact(m.getRemoteResource()));
+                c.getGroupMembers().add(contacts.getContact(m.getRemoteResource()));
         }
         if (SELECT_GROUP_MEMBERS == null) {
             return;
@@ -62,11 +59,10 @@ public abstract class Extractor {
 
                 while (rs.next()) {
                     String memberId = rs.getString("member");
-                    if (!memberId.trim().isEmpty()) {
-                        c.getGroupmembers().add(contacts.getContact(memberId));
+                    if (memberId != null && !memberId.trim().isEmpty()) {
+                        c.getGroupMembers().add(contacts.getContact(memberId));
                     }
                 }
-
             }
         }
     }
@@ -108,7 +104,7 @@ public abstract class Extractor {
         List<Chat> cleanedList = new ArrayList<>();
         for (Chat c : list) {
             String remote = c.getRemote() != null ? c.getRemote().getId() : null;
-            if (!c.getMessages().isEmpty() || !c.getGroupmembers().isEmpty()
+            if (!c.getMessages().isEmpty() || !c.getGroupMembers().isEmpty()
                     || (c.getSubject() != null && !c.getSubject().isBlank())
                     || (remote != null && !(remote = remote.strip()).isEmpty() && !remote.equals("0"))) {
                 cleanedList.add(c);

@@ -1,8 +1,10 @@
 package iped.viewers;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Image;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Set;
@@ -15,6 +17,7 @@ import org.icepdf.core.pobjects.Document;
 import org.icepdf.core.pobjects.Page;
 import org.icepdf.core.pobjects.PageTree;
 import org.icepdf.core.search.DocumentSearchController;
+import org.icepdf.core.util.GraphicsRenderingHints;
 import org.icepdf.core.util.Library;
 import org.icepdf.ri.common.SwingController;
 import org.icepdf.ri.common.SwingViewBuilder;
@@ -148,7 +151,25 @@ public class IcePDFViewer extends AbstractViewer {
     }
 
     @Override
-    public void copyScreen(Component comp) {
+    public void copyScreen() {
+        try {
+            // Copy the current displayed page, with the current rotation applied.
+            int currPage = pdfController.getDocumentViewController().getCurrentPageIndex();
+            float currRot = pdfController.getDocumentViewController().getRotation();
+            float zoom = 2; // Use 2 for a better quality 
+
+            Image image = pdfController.getDocument().getPageImage(currPage, GraphicsRenderingHints.PRINT,
+                    Page.BOUNDARY_CROPBOX, currRot, zoom);
+            if (image != null) {
+                TransferableImage trans = new TransferableImage(image);
+                Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                clipboard.setContents(trans, trans);
+                return;
+            }
+        } catch (Exception e) {
+        }
+
+        // Fallback method, just copy the view content
         super.copyScreen(pdfController.getDocumentViewController().getViewContainer());
     }
 
