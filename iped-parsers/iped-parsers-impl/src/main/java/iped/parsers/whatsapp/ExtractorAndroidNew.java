@@ -1024,6 +1024,7 @@ public abstract class ExtractorAndroidNew extends Extractor {
                 break;
             case 45:
             case 55:
+            case 57:
                 result = UI_ELEMENTS;
                 break;
             case 46:
