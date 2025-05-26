@@ -42,6 +42,7 @@ public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverPa
 
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(PListDetector.NSKEYEDARCHIVER_PLIST);
     private static final String NSKEYEDARCHIVER_METADATA_PREFIX = "nskeyedarchiver:";
+    private static final String JS_UID_ID_PREFIX = "uid-";
 
     private static final String ARCHIVER_KEY = "$archiver";
     private static final String VERSION_KEY = "$version";
@@ -69,7 +70,7 @@ public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverPa
 
     private static synchronized String getJSContent() throws IOException {
         if (jsContent == null) {
-            jsContent = IOUtils.resourceToString("/iped/parsers/css/uuidlink.js", StandardCharsets.UTF_8);
+            jsContent = IOUtils.resourceToString("/iped/parsers/common/jump.js", StandardCharsets.UTF_8);
         }
         return jsContent;
     }
@@ -255,8 +256,8 @@ public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverPa
 
             int uidInt = getUIDInteger(state.extra.currentUID);
             AttributesImpl attrs = new AttributesImpl();
-            attrs.addAttribute("", "onclick", "", "", "clickUID(" + uidInt + ");");
             attrs.addAttribute("", "href", "", "", "#");
+            attrs.addAttribute("", "onclick", "", "", "jumpTo('#" + JS_UID_ID_PREFIX + uidInt + "')");
             state.xhtml.startElement("a", attrs);
             state.xhtml.characters("[Object link to UID " + uidInt + "]");
             state.xhtml.endElement("a");
@@ -351,7 +352,7 @@ public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverPa
     private AttributesImpl createAtribute(UID uid) {
         AttributesImpl attr = new AttributesImpl();
         if (uid != null) {
-            attr.addAttribute("", "treeuid", "", "", Integer.toString(getUIDInteger(uid)));
+            attr.addAttribute("", "id", "", "", JS_UID_ID_PREFIX + getUIDInteger(uid));
         }
         return attr;
     }
