@@ -35,6 +35,3 @@ function clickUID(uid) {
     },1);
     
 }
-
-window.containsNavigableTree=true;
-
