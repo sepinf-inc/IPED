@@ -1038,6 +1038,7 @@ public abstract class ExtractorAndroidNew extends Extractor {
                 result = POLL_MESSAGE;
                 break;
             case 81:
+            case 103:
                 // Quote with media
                 result = TEXT_MESSAGE;
                 if (mediaMime != null && !mediaMime.isBlank()) {
