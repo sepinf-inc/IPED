@@ -1035,6 +1035,7 @@ public abstract class ExtractorAndroidNew extends Extractor {
                 }
                 break;
             case 66:
+            case 106:
                 result = POLL_MESSAGE;
                 break;
             case 81:
