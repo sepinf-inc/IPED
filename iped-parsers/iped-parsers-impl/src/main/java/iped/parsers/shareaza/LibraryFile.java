@@ -66,6 +66,8 @@ public class LibraryFile extends ShareazaEntity {
     private boolean bogus;
     private final LibraryFolder parentFolder;
     private List<String> hashSetHits;
+    private String foundInHashDB;
+    private boolean foundInCase;
 
     public LibraryFile(LibraryFolder parentFolder) {
         super("LIBRARY FILE"); //$NON-NLS-1$
@@ -78,6 +80,14 @@ public class LibraryFile extends ShareazaEntity {
             resp = parentFolder.getInheritedShared();
         }
         return resp;
+    }
+
+    public String getFoundInHashDB() {
+        return foundInHashDB;
+    }
+
+    public boolean getFoundInCase() {
+        return foundInCase;
     }
 
     @Override
@@ -217,6 +227,7 @@ public class LibraryFile extends ShareazaEntity {
         }
         if (hashSetHits != null && !hashSetHits.isEmpty()) {
             attributes.addAttribute("", "class", "class", "CDATA", "r");
+            foundInHashDB = hashSetHits.toString();
         }
         html.startElement("tr", attributes);
 
@@ -228,7 +239,6 @@ public class LibraryFile extends ShareazaEntity {
 
     private void printTd(XHTMLContentHandler html, IItemSearcher searcher, Object... tdtext) throws SAXException {
         int col = 0;
-        Boolean foundInCase = false;
         for (Object o : tdtext) {
             html.startElement("td"); //$NON-NLS-1$
             if (o != null) {
@@ -265,7 +275,7 @@ public class LibraryFile extends ShareazaEntity {
         }
         html.endElement("td"); //$NON-NLS-1$
         html.startElement("td"); //$NON-NLS-1$
-        html.characters(foundInCase.toString());
+        html.characters(Boolean.toString(foundInCase));
         html.endElement("td"); //$NON-NLS-1$
     }
 

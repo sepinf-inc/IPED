@@ -179,9 +179,20 @@ public class IconManager {
             mimeIconMap.put("application/x-emule-preferences-dat", icon);
         }
 
+        icon = availableIconsMap.get("emule-entry");
+        if (icon != null) {
+            mimeIconMap.put("application/x-emule-known-met-entry", icon);
+            mimeIconMap.put("application/x-emule-part-met-entry", icon);
+        }
+
         icon = availableIconsMap.get("ares");
         if (icon != null) {
             mimeIconMap.put("application/x-ares-galaxy", icon);
+        }
+
+        icon = availableIconsMap.get("ares-entry");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ares-galaxy-entry", icon);
         }
 
         icon = availableIconsMap.get("shareaza");
@@ -189,6 +200,11 @@ public class IconManager {
             mimeIconMap.put("application/x-shareaza-searches-dat", icon);
             mimeIconMap.put("application/x-shareaza-library-dat", icon);
             mimeIconMap.put("application/x-shareaza-download", icon);
+        }
+
+        icon = availableIconsMap.get("shareaza-entry");
+        if (icon != null) {
+            mimeIconMap.put("application/x-shareaza-library-dat-entry", icon);
         }
 
         icon = availableIconsMap.get("torrent");
