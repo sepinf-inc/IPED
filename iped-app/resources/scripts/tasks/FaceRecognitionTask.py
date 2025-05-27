@@ -44,6 +44,7 @@ processQueue = None
 cache = {}
 
 timeLock = threading.Lock()
+initLock = threading.Lock()
 detectTime = 0
 featureTime = 0
 
@@ -95,11 +96,11 @@ def pingExternalProcess(proc):
 
 class FaceRecognitionTask:
 
-    enabled = False
+    enabled = None
     videoSubitems = False
     
     def isEnabled(self):
-        return FaceRecognitionTask.enabled
+        return False if FaceRecognitionTask.enabled is None else FaceRecognitionTask.enabled
     
     def getConfigurables(self):
         from iped.engine.config import DefaultTaskPropertiesConfig
@@ -109,15 +110,19 @@ class FaceRecognitionTask:
     def init(self, configuration):
         # check if face recognition task is enabled
         taskConfig = configuration.getTaskConfigurable(configFile)
-        FaceRecognitionTask.enabled = taskConfig.isEnabled()
-        if not FaceRecognitionTask.enabled:
-            return
+        if FaceRecognitionTask.enabled is None:
+            FaceRecognitionTask.enabled = taskConfig.isEnabled()
         
-        # check if required face recognition modules are properly installed 
+        # Check if required face recognition modules are properly installed
+        # This lock avoids multiple error messages from multiple threads
+        initLock.acquire()
         try:
+            if not FaceRecognitionTask.enabled:
+                return
+            
             # default help and error messages
             msg_see_manual = 'See FaceRecognition task setup information at <https://github.com/sepinf-inc/IPED/wiki/User-Manual#facerecognition>.'
-            msg_task_init_error = 'Processing Error: FaceRecognition task could not be initialized'
+            msg_task_init_error = 'FaceRecognition task could not be initialized and was disabled'
 
             # chek if 'face_recognition' module is installed
             module_name = 'face_recognition'
@@ -139,13 +144,17 @@ class FaceRecognitionTask:
                 # numpy version is not supported
                 msg = msg_task_init_error + f': \'{module_name}\' module version is {np_version} (must be <{np_version_unsupported_min}.x).'
                 logger.error(msg + ' ' + msg_see_manual)
-                System.exit(1)
+                FaceRecognitionTask.enabled = False
+                return
 
         except ModuleNotFoundError:
             # required module not installed
             msg = msg_task_init_error + f': \'{module_name}\' module is missing.'
             logger.error(msg + ' ' + msg_see_manual)
-            System.exit(1)
+            FaceRecognitionTask.enabled = False
+            return
+        finally:
+            initLock.release()
         
         from iped.engine.config import VideoThumbsConfig
         videoConfig = configuration.findObject(VideoThumbsConfig);
