@@ -18,8 +18,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
@@ -30,6 +32,8 @@ import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.metadata.IIOMetadata;
 import javax.imageio.metadata.IIOMetadataNode;
+import javax.imageio.spi.IIORegistry;
+import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.ImageOutputStream;
 import javax.imageio.stream.MemoryCacheImageOutputStream;
@@ -46,6 +50,8 @@ public class ImageUtil {
 
     private static final String JBIG2 = "image/x-jbig2";
     private static final String ICO = "image/vnd.microsoft.icon";
+
+    private static boolean pluginsPriorityUpdated;
 
     public static BufferedImage resizeImage(BufferedImage img, int maxW, int maxH) {
         return resizeImage(img, maxW, maxH, BufferedImage.TYPE_INT_ARGB);
@@ -770,5 +776,48 @@ public class ImageUtil {
             return op.filter(image, null);
         }
         return getImageFromType(image, BufferedImage.TYPE_BYTE_GRAY);
+    }
+
+    public static synchronized void updateImageIOPluginsPriority() {
+        if (pluginsPriorityUpdated) {
+            return;
+        }
+        IIORegistry registry = IIORegistry.getDefaultInstance();
+        String[] mimes = ImageIO.getReaderMIMETypes();
+        for (String mime : mimes) {
+            Map<ImageReaderSpi, Integer> priorityBySpi = new HashMap<ImageReaderSpi, Integer>();
+            Iterator<ImageReader> itReaders = ImageIO.getImageReadersByMIMEType(mime);
+            while (itReaders.hasNext()) {
+                ImageReader reader = itReaders.next();
+                ImageReaderSpi spi = reader.getOriginatingProvider();
+                String name = spi.getClass().toString().toLowerCase();
+                int priority = 100;
+                if (name.contains(".sun")) {
+                    priority = 0;
+                } else if (name.contains(".twelvemonkeys")) {
+                    priority = 10;
+                } else if (name.contains(".apache")) {
+                    priority = 20;
+                } else if (name.contains(".jai")) {
+                    priority = 30;
+                }
+                if (name.contains(".big")) {
+                    priority++;
+                }
+                priorityBySpi.put(spi, priority);
+            }
+            if (priorityBySpi.size() > 1) {
+                for (ImageReaderSpi spi1 : priorityBySpi.keySet()) {
+                    int p1 = priorityBySpi.get(spi1);
+                    for (ImageReaderSpi spi2 : priorityBySpi.keySet()) {
+                        int p2 = priorityBySpi.get(spi2);
+                        if (p1 < p2) {
+                            registry.setOrdering(ImageReaderSpi.class, spi1, spi2);
+                        }
+                    }
+                }
+            }
+        }
+        pluginsPriorityUpdated = true;
     }
 }
