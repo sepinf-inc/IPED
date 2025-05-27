@@ -117,7 +117,7 @@ class FaceRecognitionTask:
         try:
             # default help and error messages
             msg_see_manual = 'See FaceRecognition task setup information at <https://github.com/sepinf-inc/IPED/wiki/User-Manual#facerecognition>.'
-            msg_task_init_error = 'Processing Error: FaceRecognition task could not be initiliazed'
+            msg_task_init_error = 'Processing Error: FaceRecognition task could not be initialized'
 
             # chek if 'face_recognition' module is installed
             module_name = 'face_recognition'
