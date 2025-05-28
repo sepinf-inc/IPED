@@ -90,20 +90,39 @@ public class RemoteImageClassifierConfig extends AbstractTaskPropertiesConfig {
             url = value.trim();
 
         value = properties.getProperty(BATCH_SIZE);
-        if (value != null && !value.trim().isEmpty())
+        if (value != null && !value.trim().isEmpty()) {
             batchSize = Integer.valueOf(value.trim());
+            // enforce minimum value
+            if (batchSize < 1)
+                batchSize = 1;
+        }
 
         value = properties.getProperty(CATEGORIZATION_THRESHOLD);
-        if (value != null && !value.trim().isEmpty())
+        if (value != null && !value.trim().isEmpty()) {
             categorizationThreshold = Double.parseDouble(value.trim());
+            // enforce range
+            if (categorizationThreshold < 0) {
+                categorizationThreshold = 0;
+            } else if (categorizationThreshold > 1) {
+                categorizationThreshold = 1;
+            }
+        }
 
         value = properties.getProperty(SKIP_SIZE);
-        if (value != null && !value.trim().isEmpty())
+        if (value != null && !value.trim().isEmpty()) {
             skipSize = Integer.valueOf(value.trim());
+            // enforce minimum value
+            if (skipSize < 0)
+                skipSize = 0;
+        }
 
         value = properties.getProperty(SKIP_DIMENSION);
-        if (value != null && !value.trim().isEmpty())
+        if (value != null && !value.trim().isEmpty()) {
             skipDimension = Integer.valueOf(value.trim());
+            // enforce minimum value
+            if (skipDimension < 0)
+                skipDimension = 0;
+        }
 
         value = properties.getProperty(SKIP_HASH_DB_FILES);
         if (value != null && !value.trim().isEmpty())

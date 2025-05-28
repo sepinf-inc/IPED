@@ -80,10 +80,16 @@ public class RemoteImageClassifierTask extends AbstractTask {
     private Map<String, IItem> queue = new TreeMap<>();
     private ZipFile zip;
 
-    // Variables to store some statistics
+    // Variables to store statistics
     private static final AtomicLong classificationTime = new AtomicLong();
     private static final AtomicInteger classificationSuccess = new AtomicInteger();
     private static final AtomicInteger classificationFail = new AtomicInteger();
+    private static final AtomicLong sendImageBytes = new AtomicLong();
+    private static final AtomicLong sendVideoBytes = new AtomicLong();
+    private static final AtomicInteger skipDuplicatesCount = new AtomicInteger();
+    private static final AtomicInteger skipSizeCount = new AtomicInteger();
+    private static final AtomicInteger skipDimensionCount = new AtomicInteger();
+    private static final AtomicInteger skipHashDBFilesCount = new AtomicInteger();
 
     private static class ResultItem {
         public String name;
@@ -232,16 +238,33 @@ public class RemoteImageClassifierTask extends AbstractTask {
             conn = null;
         }
 
-        // Record some statics
+        // Statistics for classification requests 
         long totClassifications = classificationSuccess.longValue() + classificationFail.longValue();
         if (totClassifications != 0) {
-            logger.info("Total classifications: " + totClassifications);
+            logger.info("Total classifications count: " + totClassifications);
             logger.info("Successful classifications: " + classificationSuccess.intValue());
             logger.info("Failed classifications: " + classificationFail.intValue());
-            logger.info("Average classification time (ms/thumb): " + (classificationTime.longValue() / (totClassifications)));
-            logger.info("Total classification throughput (thumbs/s): " + (1000 * this.worker.manager.getNumWorkers() * totClassifications / classificationTime.longValue()));
+            logger.info("Average classification time (ms/thumb): " + String.format("%.3f", (((float) classificationTime.longValue() / this.worker.manager.getNumWorkers()) / totClassifications)));
+            logger.info("Average classification throughput (thumbs/s): " + ((int) (totClassifications / ((float) classificationTime.longValue() / this.worker.manager.getNumWorkers()) * 1000)));
+            logger.info("Total bytes sent: " + (sendImageBytes.longValue() + sendVideoBytes.longValue()));
+            logger.info("Bytes sent for images: " + sendImageBytes.longValue());
+            logger.info("Bytes sent for videos: " + sendVideoBytes.longValue());
             classificationSuccess.set(0);
             classificationFail.set(0);
+        }
+
+        // Statistics for skipped classification
+        long totSkipCount = skipSizeCount.longValue() + skipDimensionCount.longValue() + skipHashDBFilesCount.longValue() + skipDuplicatesCount.longValue();
+        if (totSkipCount != 0) {
+            logger.info("Total skipped classification: " + totSkipCount);
+            logger.info("Skipped classification by duplicates: " + skipDuplicatesCount.intValue());
+            logger.info("Skipped classification by size: " + skipSizeCount.intValue());
+            logger.info("Skipped classification by dimension: " + skipDimensionCount.intValue());
+            logger.info("Skipped classification by hashDBFiles: " + skipHashDBFilesCount.intValue());
+            skipSizeCount.set(0);
+            skipDimensionCount.set(0);
+            skipHashDBFilesCount.set(0);
+            skipDuplicatesCount.set(0);
         }
     }
 
@@ -315,6 +338,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
                 for (String classname : res.classes.keySet()) {
                     evidence.setExtraAttribute(classname, res.getClassProb(classname));
                 }
+                storeIdInDb(evidence.getHash());
             }
         } else {
             classificationFail.incrementAndGet();
@@ -397,35 +421,47 @@ public class RemoteImageClassifierTask extends AbstractTask {
             return;
         }
 
+        // Skip classification of images/videos duplicates
+        String hash = getIdFromDb(evidence.getHash());
+        if (hash != null) {
+            logger.info("- SkipDuplicates: Evidence -> type: '" + evidence.getMediaType().toString() + "'; hash: '" + evidence.getHash() + "'; name: '" + evidence.getName() + "'");
+            skipDuplicatesCount.incrementAndGet();
+            return;
+        }
+
         // Skip classification of images/videos smaller than a given file size, according to 'skipSize' config property
         if (config.getSkipSize() > 0 && config.getSkipSize() > evidence.getLength()) {
+            logger.info("- SkipSize: Evidence -> type: '" + evidence.getMediaType().toString() + "'; hash: '" + evidence.getHash() + "'; name: '" + evidence.getName() + "'; size: '" + evidence.getLength() + "'; skipSize: '" + config.getSkipSize() + "'");
+            skipSizeCount.incrementAndGet();
             return;
         }
 
         // Skip classification of images/videos smaller than a given dimension, i.e. height or width, according to 'skipDimension' config property
-        int width = 0;
-        int height = 0;
-        String mediaType = evidence.getMediaType().toString();
-        if (mediaType.startsWith("image")) {
-            width = Integer.parseInt(evidence.getMetadata().get("image:Image Width"));
-            height = Integer.parseInt(evidence.getMetadata().get("image:Image Height"));
-        }
-        else if (mediaType.startsWith("video")) {
-            width = Integer.parseInt(evidence.getMetadata().get("video:Width"));
-            height = Integer.parseInt(evidence.getMetadata().get("video:Height"));
-        }
-        if (config.getSkipDimension() > 0 && (config.getSkipDimension() > height || config.getSkipDimension() > width)) {
-            return;
+        if (config.getSkipDimension() > 0) {
+            int width = 0;
+            int height = 0;
+            String mediaType = evidence.getMediaType().toString();
+            if (mediaType.startsWith("image")) {
+                width = Integer.parseInt(evidence.getMetadata().get("image:Width"));
+                height = Integer.parseInt(evidence.getMetadata().get("image:Height"));
+                logger.info("Evidence -> type: '" + mediaType + "'; hash: '" + evidence.getHash() + "'; name: '" + evidence.getName() + "'; dimension: '" + width + "x" + height + "'");
+            }
+            else if (mediaType.startsWith("video")) {
+                width = Integer.parseInt(evidence.getMetadata().get("video:Width"));
+                height = Integer.parseInt(evidence.getMetadata().get("video:Height"));
+                logger.info("Evidence -> type: '" + mediaType + "'; hash: '" + evidence.getHash() + "'; name: '" + evidence.getName() + "'; dimension: '" + width + "x" + height + "'");
+            }
+            if (config.getSkipDimension() > height || config.getSkipDimension() > width) {
+                logger.info("- SkipDimension: Evidence -> type: '" + mediaType + "'; hash: '" + evidence.getHash() + "'; name: '" + evidence.getName() + "'; dimension: '" + width + "x" + height + "'; skipDimension: '" + config.getSkipDimension() + "'");
+                skipDimensionCount.incrementAndGet();
+                return;
+            }
         }
 
         // Skip classification of images/videos with hits on IPED hashesDB database, according to 'skipHashDBFiles' config property
         if (config.isSkipHashDBFiles() && evidence.getExtraAttribute(HashDBLookupTask.STATUS_ATTRIBUTE) != null) {
-            return;
-        }
-
-        // Skip classification of images/videos duplicates
-        String hash = getIdFromDb(evidence.getHash());
-        if (hash != null) {
+            logger.info("- SkipHashDBFiles: Evidence -> type: '" + evidence.getMediaType().toString() + "'; hash: '" + evidence.getHash() + "'; name: '" + evidence.getName() + "'; hashDBStatus: '" + evidence.getExtraAttribute(HashDBLookupTask.STATUS_ATTRIBUTE) + "'");
+            skipHashDBFilesCount.incrementAndGet();
             return;
         }
 
@@ -441,15 +477,17 @@ public class RemoteImageClassifierTask extends AbstractTask {
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
                     ImageIO.write(frame, "jpeg", baos);
                     zip.addFileToZip(iName, baos.toByteArray());
+                    sendVideoBytes.addAndGet(baos.toByteArray().length);
                 }
             } else {
+                sendVideoBytes.addAndGet(evidence.getThumb().length);
                 zip.addFileToZip(name, evidence.getThumb());
             }
         } else {
+            sendImageBytes.addAndGet(evidence.getThumb().length);
             zip.addFileToZip(name, evidence.getThumb());
         }
         queue.put(name, evidence);
-        storeIdInDb(evidence.getHash());
     }
 
 }
