@@ -9,11 +9,18 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -36,6 +43,8 @@ import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.tika.io.TemporaryResources;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.sqlite.SQLiteConfig;
+import org.sqlite.SQLiteConfig.SynchronousMode;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -51,12 +60,30 @@ import iped.utils.ImageUtil;
 public class RemoteImageClassifierTask extends AbstractTask {
 
     private static Logger logger = LoggerFactory.getLogger(RemoteImageClassifierTask.class);
+
+    private RemoteImageClassifierConfig config;
+
     private String url;
-    private int batchSize = 50;
+    private int batchSize;
+    private int skipSize;
+    private int skipDimension;
+    private boolean skipHashDBFiles;   
+    private boolean validateSSL;
+
+    // Temporary storage to allow for skipping classification of duplicate files
+    private static final String AI_STORAGE = "ai/unique_files.db";
+    private static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS unique_files(id TEXT PRIMARY KEY);";
+    private static final String INSERT_DATA = "INSERT INTO unique_files(id) VALUES(?) ON CONFLICT(id) DO NOTHING";
+    private static final String SELECT_EXACT = "SELECT id FROM unique_files WHERE id=?;";
+    private Connection conn;
+
     private Map<String, IItem> queue = new TreeMap<>();
     private ZipFile zip;
-    private RemoteImageClassifierConfig config;
-    private boolean validateSSL;
+
+    // Variables to store some statistics
+    private static final AtomicLong classificationTime = new AtomicLong();
+    private static final AtomicInteger classificationSuccess = new AtomicInteger();
+    private static final AtomicInteger classificationFail = new AtomicInteger();
 
     private static class ResultItem {
         public String name;
@@ -128,20 +155,94 @@ public class RemoteImageClassifierTask extends AbstractTask {
         return config.isEnabled();
     }
 
-    @Override
-    public void init(ConfigurationManager configurationManager) throws Exception {
-        config = configurationManager.findObject(RemoteImageClassifierConfig.class);
-        url = config.getUrl();
-        batchSize = config.getBatchSize();
-        validateSSL = config.getValidateSSL();
-        if (zip == null) {
-            zip = new ZipFile();
+    private void createConnection() {
+        this.conn = createConnection(output);
+    }
+
+    private Connection createConnection(File output) {
+        File db = new File(output, AI_STORAGE);
+        db.getParentFile().mkdirs();
+        try {
+            SQLiteConfig config = new SQLiteConfig();
+            config.setSynchronous(SynchronousMode.OFF);
+            config.setBusyTimeout(3600000);
+            Connection conn = config.createConnection("jdbc:sqlite:" + db.getAbsolutePath());
+
+            try (Statement stmt = conn.createStatement()) {
+                stmt.executeUpdate(CREATE_TABLE);
+            }
+            return conn;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private String getIdFromDb(String id) throws IOException {
+        return getIdFromDb(this.conn, id);
+    }
+
+    private String getIdFromDb(Connection conn, String id) throws IOException {
+        try (PreparedStatement ps = conn.prepareStatement(SELECT_EXACT)) {
+            ps.setString(1, id);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getString(1);
+            }
+        } catch (SQLException e) {
+            throw new IOException(e);
+        }
+        return null;
+    }
+
+    private void storeIdInDb(String id) throws IOException {
+        try (PreparedStatement ps = conn.prepareStatement(INSERT_DATA)) {
+            ps.setString(1, id);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new IOException(e);
         }
     }
 
     @Override
+    public void init(ConfigurationManager configurationManager) throws Exception {
+        config = configurationManager.findObject(RemoteImageClassifierConfig.class);
+
+        url = "https://" + config.getUrl(); // enforces secure communication (required for sensitive data transfer)
+        batchSize = config.getBatchSize();
+        skipSize = config.getSkipSize();
+        skipDimension = config.getSkipDimension();
+        skipHashDBFiles = config.isSkipHashDBFiles();
+        validateSSL = config.isValidateSSL();
+        
+        if (zip == null) {
+            zip = new ZipFile();
+        }
+
+        if (conn == null && config.isEnabled()) {
+            createConnection();
+        }
+
+    }
+
+    @Override
     public void finish() throws Exception {
-        return;
+        // Close DB connection
+        if (conn != null) {
+            conn.close();
+            conn = null;
+        }
+
+        // Record some statics
+        long totClassifications = classificationSuccess.longValue() + classificationFail.longValue();
+        if (totClassifications != 0) {
+            logger.info("Total classifications: " + totClassifications);
+            logger.info("Successful classifications: " + classificationSuccess.intValue());
+            logger.info("Failed classifications: " + classificationFail.intValue());
+            logger.info("Average classification time (ms/thumb): " + (classificationTime.longValue() / (totClassifications)));
+            logger.info("Total classification throughput (thumbs/s): " + (1000 * this.worker.manager.getNumWorkers() * totClassifications / classificationTime.longValue()));
+            classificationSuccess.set(0);
+            classificationFail.set(0);
+        }
     }
 
     private void sendItemsToNextTask() throws Exception {
@@ -190,6 +291,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
 
                 JsonNode classes = item.get("class");
                 if (classes != null && classes.isObject()) {
+                    classificationSuccess.incrementAndGet();
                     var iterator = classes.fields();
                     while (iterator.hasNext()) {
                         Map.Entry<String, JsonNode> entry = iterator.next();
@@ -198,6 +300,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
                         res.addClass(key, value);
                     }
                 } else {
+                    classificationFail.incrementAndGet();
                     logger.warn("'class' field is missing for filename: {}", name);
                 }
             }
@@ -214,6 +317,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
                 }
             }
         } else {
+            classificationFail.incrementAndGet();
             logger.warn("'results' array is missing in JSON response.");
         }
     }
@@ -252,13 +356,16 @@ public class RemoteImageClassifierTask extends AbstractTask {
 
             post.setEntity(entity);
 
+            long t = System.currentTimeMillis();
             try (CloseableHttpResponse response = client.execute(post)) {
                 int statusCode = response.getStatusLine().getStatusCode();
+                classificationTime.addAndGet(System.currentTimeMillis() - t);
                 if (statusCode == 200) {
                     try (InputStream responseStream = response.getEntity().getContent()) {
                         processResult(responseStream);
                     }
                 } else {
+                    classificationFail.incrementAndGet();
                     String errorMessage;
                     try (InputStream errorStream = response.getEntity().getContent()) {
                         errorMessage = new String(errorStream.readAllBytes(), StandardCharsets.UTF_8);
@@ -290,6 +397,38 @@ public class RemoteImageClassifierTask extends AbstractTask {
             return;
         }
 
+        // Skip classification of images/videos smaller than a given file size, according to 'skipSize' config property
+        if (config.getSkipSize() > 0 && config.getSkipSize() > evidence.getLength()) {
+            return;
+        }
+
+        // Skip classification of images/videos smaller than a given dimension, i.e. height or width, according to 'skipDimension' config property
+        int width = 0;
+        int height = 0;
+        String mediaType = evidence.getMediaType().toString();
+        if (mediaType.startsWith("image")) {
+            width = Integer.parseInt(evidence.getMetadata().get("image:Image Width"));
+            height = Integer.parseInt(evidence.getMetadata().get("image:Image Height"));
+        }
+        else if (mediaType.startsWith("video")) {
+            width = Integer.parseInt(evidence.getMetadata().get("video:Width"));
+            height = Integer.parseInt(evidence.getMetadata().get("video:Height"));
+        }
+        if (config.getSkipDimension() > 0 && (config.getSkipDimension() > height || config.getSkipDimension() > width)) {
+            return;
+        }
+
+        // Skip classification of images/videos with hits on IPED hashesDB database, according to 'skipHashDBFiles' config property
+        if (config.isSkipHashDBFiles() && evidence.getExtraAttribute(HashDBLookupTask.STATUS_ATTRIBUTE) != null) {
+            return;
+        }
+
+        // Skip classification of images/videos duplicates
+        String hash = getIdFromDb(evidence.getHash());
+        if (hash != null) {
+            return;
+        }
+
         String name = evidence.getExtraAttribute(IndexItem.TRACK_ID).toString() + ".jpg";
         if (DIETask.isVideoType(evidence.getMediaType()) || DIETask.isAnimationImage(evidence)) {
             // For videos, call the detection method for each extracted frame image (VideoThumbsTask must be enabled)
@@ -310,6 +449,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
             zip.addFileToZip(name, evidence.getThumb());
         }
         queue.put(name, evidence);
+        storeIdInDb(evidence.getHash());
     }
 
 }

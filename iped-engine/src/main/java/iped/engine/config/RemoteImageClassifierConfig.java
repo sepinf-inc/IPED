@@ -4,30 +4,49 @@ import iped.utils.UTF8Properties;
 
 public class RemoteImageClassifierConfig extends AbstractTaskPropertiesConfig {
 
-    private static final String CONFIG_FILE = "RemoteImageClassifierConfig.txt";
-    private static final String ENABLE_KEY = "enableRemoteImageClassifier";
+    private static final long serialVersionUID = 1L;
 
-    private static final String URL_KEY = "url";
-    private static final String BATCH_SIZE_KEY = "batch_size";
-    private static final String CATEGORIZATION_THRESHOLD = "categorization_threshold";
+    /**
+     * Config file name and enable/disable property.
+     */
+    private static final String CONFIG_FILE = "RemoteImageClassifierConfig.txt";
+    private static final String ENABLE_PROP = "enableRemoteImageClassifier";
+
+    /**
+     * Constants mapping to properties name in config file.
+     */
+    private static final String URL = "url";
+    private static final String BATCH_SIZE = "batchSize";
+    private static final String CATEGORIZATION_THRESHOLD = "categorizationThreshold";
+    private static final String SKIP_SIZE = "skipSize";
+    private static final String SKIP_DIMENSION = "skipDimension";
+    private static final String SKIP_HASH_DB_FILES = "skipHashDBFiles";
     private static final String VALIDATE_SSL = "validateSSL";
 
+    // URL of the service/central node used by the RemoteImageClassifier implementation
     private String url;
-    private int batchSize;
-    private double categorizationThreshold = 0.5;
-    private boolean validateSSL = true;
 
-    @Override
-    void processProperties(UTF8Properties properties) {
-        setUrl(properties.getProperty(URL_KEY).trim());
-        setBatchSize(Integer.parseInt(properties.getProperty(BATCH_SIZE_KEY).trim()));
-        setCategorizationThreshold(Double.parseDouble(properties.getProperty(CATEGORIZATION_THRESHOLD).trim()));
-        setValidateSSL(Boolean.valueOf(properties.getProperty(VALIDATE_SSL).trim()));
-    }
+    // Maximum number of thumbs to be included in the zip file to send to the server
+    private int batchSize = 50;
+
+    // Threshold used to decide if an image is labeled in one category
+    private double categorizationThreshold = 0.6;
+
+    // Skip classification of images/videos smaller than a given file size (in bytes; '0' = do not skip)
+    private int skipSize = 0;
+
+    // Skip classification of images/videos smaller than a given dimension, i.e. height or width (in pixels; '0' = do not skip)
+    private int skipDimension = 0;
+
+    // Skip classification of images/videos with hits on IPED hashesDB database (if 'hashesDB' is not configured in 'LocalConfig.txt' or 'false', do not skip)
+    private boolean skipHashDBFiles = true;   
+
+    // Validate server SSL certificate
+    private boolean validateSSL = false;
 
     @Override
     public String getTaskEnableProperty() {
-        return ENABLE_KEY;
+        return ENABLE_PROP;
     }
 
     @Override
@@ -39,32 +58,61 @@ public class RemoteImageClassifierConfig extends AbstractTaskPropertiesConfig {
         return url;
     }
 
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
     public int getBatchSize() {
         return batchSize;
-    }
-
-    public void setBatchSize(int batchSize) {
-        this.batchSize = batchSize;
     }
 
     public double getCategorizationThreshold() {
         return categorizationThreshold;
     }
 
-    public void setCategorizationThreshold(double categorizationThreshold) {
-        this.categorizationThreshold = categorizationThreshold;
+    public int getSkipSize() {
+        return skipSize;
     }
 
-    public boolean getValidateSSL() {
+    public int getSkipDimension() {
+        return skipDimension;
+    }
+
+    public boolean isSkipHashDBFiles() {
+        return skipHashDBFiles;
+    }
+
+    public boolean isValidateSSL() {
         return validateSSL;
     }
 
-    public void setValidateSSL(boolean validateSSL) {
-        this.validateSSL = validateSSL;
+    @Override
+    void processProperties(UTF8Properties properties) {
+
+        String value = properties.getProperty(URL);
+        if (value != null && !value.trim().isEmpty())
+            url = value.trim();
+
+        value = properties.getProperty(BATCH_SIZE);
+        if (value != null && !value.trim().isEmpty())
+            batchSize = Integer.valueOf(value.trim());
+
+        value = properties.getProperty(CATEGORIZATION_THRESHOLD);
+        if (value != null && !value.trim().isEmpty())
+            categorizationThreshold = Double.parseDouble(value.trim());
+
+        value = properties.getProperty(SKIP_SIZE);
+        if (value != null && !value.trim().isEmpty())
+            skipSize = Integer.valueOf(value.trim());
+
+        value = properties.getProperty(SKIP_DIMENSION);
+        if (value != null && !value.trim().isEmpty())
+            skipDimension = Integer.valueOf(value.trim());
+
+        value = properties.getProperty(SKIP_HASH_DB_FILES);
+        if (value != null && !value.trim().isEmpty())
+            skipHashDBFiles = Boolean.valueOf(value.trim());
+
+        value = properties.getProperty(VALIDATE_SSL);
+        if (value != null && !value.trim().isEmpty())
+            validateSSL = Boolean.valueOf(value.trim());
+    
     }
 
 }
