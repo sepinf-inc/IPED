@@ -20,6 +20,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.tika.detect.apple.BPListDetector;
 import org.apache.tika.metadata.IPTC;
 import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Metadata;
@@ -708,7 +709,8 @@ public class MetadataUtil {
         MediaType mediaType = MediaType.parse(contentType);
 
         if (contentType.startsWith("message") || //$NON-NLS-1$
-                MediaTypes.OUTLOOK_MSG.toString().equals(contentType))
+                MediaTypes.OUTLOOK_MSG.toString().equals(contentType) ||
+                BPListDetector.PLIST.toString().equals(contentType))
             return;
 
         while (mediaType != null) {
