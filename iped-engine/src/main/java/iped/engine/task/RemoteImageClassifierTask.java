@@ -451,7 +451,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
                 height = Integer.parseInt(evidence.getMetadata().get("video:Height"));
                 logger.info("Evidence -> type: '" + mediaType + "'; hash: '" + evidence.getHash() + "'; name: '" + evidence.getName() + "'; dimension: '" + width + "x" + height + "'");
             }
-            if (config.getSkipDimension() > height || config.getSkipDimension() > width) {
+            if ((config.getSkipDimension() > width || config.getSkipDimension() > height) && width > 0 && height > 0) {
                 logger.info("- SkipDimension: Evidence -> type: '" + mediaType + "'; hash: '" + evidence.getHash() + "'; name: '" + evidence.getName() + "'; dimension: '" + width + "x" + height + "'; skipDimension: '" + config.getSkipDimension() + "'");
                 skipDimensionCount.incrementAndGet();
                 return;
