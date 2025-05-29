@@ -16,6 +16,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -57,6 +58,12 @@ import iped.engine.task.die.DIETask;
 import iped.engine.task.index.IndexItem;
 import iped.utils.ImageUtil;
 
+/**
+ * Performs remote classification of image and video files.
+ * 
+ * Stores classification results in evidence's extra attributes.
+ * Note: attributes' names are controlled by the remote classifier (usually prefixed by 'AI').
+ */
 public class RemoteImageClassifierTask extends AbstractTask {
 
     private static Logger logger = LoggerFactory.getLogger(RemoteImageClassifierTask.class);
@@ -70,11 +77,15 @@ public class RemoteImageClassifierTask extends AbstractTask {
     private boolean skipHashDBFiles;   
     private boolean validateSSL;
 
-    // Temporary storage to allow for skipping classification of duplicate files
-    private static final String AI_STORAGE = "ai/unique_files.db";
-    private static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS unique_files(id TEXT PRIMARY KEY);";
-    private static final String INSERT_DATA = "INSERT INTO unique_files(id) VALUES(?) ON CONFLICT(id) DO NOTHING";
-    private static final String SELECT_EXACT = "SELECT id FROM unique_files WHERE id=?;";
+    // "case cache" - allows for improved classification management
+    private static final String AI_STORAGE = "ai/classifications.db";
+    // 'classifications' table - allows for skipping classification of duplicate files
+    private static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS classifications (id TEXT PRIMARY KEY, classes TEXT);";
+    private static final String INSERT_DATA = "INSERT INTO classifications (id, classes) VALUES (?,?) ON CONFLICT(id) DO NOTHING;";
+    private static final String SELECT_EXACT = "SELECT classes FROM classifications WHERE id=?;";
+    // "case cache" database file
+    private static File db;
+    // "case cache" database connection
     private Connection conn;
 
     private Map<String, IItem> queue = new TreeMap<>();
@@ -90,6 +101,10 @@ public class RemoteImageClassifierTask extends AbstractTask {
     private static final AtomicInteger skipSizeCount = new AtomicInteger();
     private static final AtomicInteger skipDimensionCount = new AtomicInteger();
     private static final AtomicInteger skipHashDBFilesCount = new AtomicInteger();
+    private static final AtomicLong cacheStoreTime = new AtomicLong();
+    private static final AtomicInteger cacheStoreCount = new AtomicInteger();
+    private static final AtomicLong cacheRetrieveTime = new AtomicLong();
+    private static final AtomicInteger cacheRetrieveCount = new AtomicInteger();
 
     private static class ResultItem {
         public String name;
@@ -166,7 +181,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
     }
 
     private Connection createConnection(File output) {
-        File db = new File(output, AI_STORAGE);
+        db = new File(output, AI_STORAGE);
         db.getParentFile().mkdirs();
         try {
             SQLiteConfig config = new SQLiteConfig();
@@ -183,14 +198,17 @@ public class RemoteImageClassifierTask extends AbstractTask {
         }
     }
 
-    private String getIdFromDb(String id) throws IOException {
-        return getIdFromDb(this.conn, id);
+    private String getClassesFromDb(String id) throws IOException {
+        return getClassesFromDb(this.conn, id);
     }
 
-    private String getIdFromDb(Connection conn, String id) throws IOException {
+    private String getClassesFromDb(Connection conn, String id) throws IOException {
+        long t = System.currentTimeMillis();
         try (PreparedStatement ps = conn.prepareStatement(SELECT_EXACT)) {
             ps.setString(1, id);
             ResultSet rs = ps.executeQuery();
+            cacheRetrieveTime.addAndGet(System.currentTimeMillis() - t);
+            cacheRetrieveCount.incrementAndGet();
             if (rs.next()) {
                 return rs.getString(1);
             }
@@ -200,10 +218,14 @@ public class RemoteImageClassifierTask extends AbstractTask {
         return null;
     }
 
-    private void storeIdInDb(String id) throws IOException {
+    private void storeClassesInDb(String id, String classes) throws IOException {
+        long t = System.currentTimeMillis();
         try (PreparedStatement ps = conn.prepareStatement(INSERT_DATA)) {
             ps.setString(1, id);
+            ps.setString(2, classes);
             ps.executeUpdate();
+            cacheStoreTime.addAndGet(System.currentTimeMillis() - t);
+            cacheStoreCount.incrementAndGet();
         } catch (SQLException e) {
             throw new IOException(e);
         }
@@ -241,14 +263,14 @@ public class RemoteImageClassifierTask extends AbstractTask {
         // Statistics for classification requests 
         long totClassifications = classificationSuccess.longValue() + classificationFail.longValue();
         if (totClassifications != 0) {
-            logger.info("Total classifications count: " + totClassifications);
-            logger.info("Successful classifications: " + classificationSuccess.intValue());
-            logger.info("Failed classifications: " + classificationFail.intValue());
-            logger.info("Average classification time (ms/thumb): " + String.format("%.3f", (((float) classificationTime.longValue() / this.worker.manager.getNumWorkers()) / totClassifications)));
-            logger.info("Average classification throughput (thumbs/s): " + ((int) (totClassifications / ((float) classificationTime.longValue() / this.worker.manager.getNumWorkers()) * 1000)));
+            logger.info("Total count of thumbs sent for classification: " + totClassifications);
+            logger.info(" Successful classifications: " + classificationSuccess.intValue());
+            logger.info(" Failed classifications: " + classificationFail.intValue());
+            logger.info(" Average classification time (ms/thumb): " + String.format("%.3f", (((float) classificationTime.longValue() / this.worker.manager.getNumWorkers()) / totClassifications)));
+            logger.info(" Average classification throughput (thumbs/s): " + ((int) (totClassifications / ((float) classificationTime.longValue() / this.worker.manager.getNumWorkers()) * 1000)));
             logger.info("Total bytes sent: " + (sendImageBytes.longValue() + sendVideoBytes.longValue()));
-            logger.info("Bytes sent for images: " + sendImageBytes.longValue());
-            logger.info("Bytes sent for videos: " + sendVideoBytes.longValue());
+            logger.info(" Bytes sent for images: " + sendImageBytes.longValue());
+            logger.info(" Bytes sent for videos: " + sendVideoBytes.longValue());
             classificationSuccess.set(0);
             classificationFail.set(0);
         }
@@ -256,11 +278,14 @@ public class RemoteImageClassifierTask extends AbstractTask {
         // Statistics for skipped classification
         long totSkipCount = skipSizeCount.longValue() + skipDimensionCount.longValue() + skipHashDBFilesCount.longValue() + skipDuplicatesCount.longValue();
         if (totSkipCount != 0) {
-            logger.info("Total skipped classification: " + totSkipCount);
-            logger.info("Skipped classification by duplicates: " + skipDuplicatesCount.intValue());
-            logger.info("Skipped classification by size: " + skipSizeCount.intValue());
-            logger.info("Skipped classification by dimension: " + skipDimensionCount.intValue());
-            logger.info("Skipped classification by hashDBFiles: " + skipHashDBFilesCount.intValue());
+            logger.info("Total count of files with skipped classification: " + totSkipCount);
+            logger.info(" Skipped classification by duplicates: " + skipDuplicatesCount.intValue());
+            logger.info("  Cache file size: ~" + Math.ceil((float) db.length() / 1024) + "KB");
+            logger.info("  Cache store operations: " + cacheStoreCount.intValue() + "; average operation time (ms): " + String.format("%.6f", ((float) cacheStoreTime.longValue() / cacheStoreCount.intValue())));
+            logger.info("  Cache retrieve operations: " + cacheRetrieveCount.intValue() + "; average operation time (ms): " + String.format("%.6f", ((float) cacheRetrieveTime.longValue() / cacheRetrieveCount.intValue())));
+            logger.info(" Skipped classification by size: " + skipSizeCount.intValue());
+            logger.info(" Skipped classification by dimension: " + skipDimensionCount.intValue());
+            logger.info(" Skipped classification by hashDBFiles: " + skipHashDBFilesCount.intValue());
             skipSizeCount.set(0);
             skipDimensionCount.set(0);
             skipHashDBFilesCount.set(0);
@@ -328,17 +353,34 @@ public class RemoteImageClassifierTask extends AbstractTask {
                 }
             }
 
+            // Add classification classes to evidence's extra attributes related to each result
             for (String name : results.keySet()) {
                 IItem evidence;
                 if (name == null || (evidence = queue.get(name)) == null) {
                     logger.warn("No matching item found ");
                     continue;
                 }
+
                 ResultItem res = results.get(name);
-                for (String classname : res.classes.keySet()) {
-                    evidence.setExtraAttribute(classname, res.getClassProb(classname));
+                Iterator<String> iterator = res.classes.keySet().iterator();
+                String className;
+                double classProb;
+                // Classification classes as a String holding className=classProb pairs (used when retrieving cached classifications)
+                StringBuilder classes = new StringBuilder();
+                while (iterator.hasNext()) {
+                    className = iterator.next();
+                    classProb = res.getClassProb(className);
+                    // Add classification class to the evidence 
+                    evidence.setExtraAttribute(className, classProb);
+                    classes.append(className + "=" + classProb);
+                    if (iterator.hasNext())
+                        classes.append(";");
                 }
-                storeIdInDb(evidence.getHash());
+                // Add extra attribute to signal that classification was NOT retrieved from cache
+                evidence.setExtraAttribute("AIClassesFromCache","no");
+
+                // Store classification classes in case cache
+                storeClassesInDb(evidence.getHash(), classes.toString());
             }
         } else {
             classificationFail.incrementAndGet();
@@ -421,46 +463,52 @@ public class RemoteImageClassifierTask extends AbstractTask {
             return;
         }
 
-        // Skip classification of images/videos duplicates
-        String hash = getIdFromDb(evidence.getHash());
-        if (hash != null) {
-            logger.info("- SkipDuplicates: Evidence -> type: '" + evidence.getMediaType().toString() + "'; hash: '" + evidence.getHash() + "'; name: '" + evidence.getName() + "'");
+        // Skip classification of images/videos duplicates (if classification exists in case cache)
+        String classes = getClassesFromDb(evidence.getHash());
+        if (classes != null) {
+            // Add classification classes to the evidence 
+            String[] classesArray = classes.split(";");
+            String[] classParts;
+            for (int i = 0; i < classesArray.length; i++) {
+                // classParts[0] will hold className and classParts[1] will hold classProb
+                classParts = classesArray[i].split("="); 
+                // Add classification class to the evidence 
+                evidence.setExtraAttribute(classParts[0], Double.parseDouble(classParts[1]));
+            }
+            // Add extra attribute to signal that classification was retrieved from cache
+            evidence.setExtraAttribute("AIClassesFromCache","case");
+
             skipDuplicatesCount.incrementAndGet();
             return;
         }
 
         // Skip classification of images/videos smaller than a given file size, according to 'skipSize' config property
-        if (config.getSkipSize() > 0 && config.getSkipSize() > evidence.getLength()) {
-            logger.info("- SkipSize: Evidence -> type: '" + evidence.getMediaType().toString() + "'; hash: '" + evidence.getHash() + "'; name: '" + evidence.getName() + "'; size: '" + evidence.getLength() + "'; skipSize: '" + config.getSkipSize() + "'");
+        if (skipSize > 0 && skipSize > evidence.getLength()) {
             skipSizeCount.incrementAndGet();
             return;
         }
 
         // Skip classification of images/videos smaller than a given dimension, i.e. height or width, according to 'skipDimension' config property
-        if (config.getSkipDimension() > 0) {
+        if (skipDimension > 0) {
             int width = 0;
             int height = 0;
             String mediaType = evidence.getMediaType().toString();
             if (mediaType.startsWith("image")) {
                 width = Integer.parseInt(evidence.getMetadata().get("image:Width"));
                 height = Integer.parseInt(evidence.getMetadata().get("image:Height"));
-                logger.info("Evidence -> type: '" + mediaType + "'; hash: '" + evidence.getHash() + "'; name: '" + evidence.getName() + "'; dimension: '" + width + "x" + height + "'");
             }
             else if (mediaType.startsWith("video")) {
                 width = Integer.parseInt(evidence.getMetadata().get("video:Width"));
                 height = Integer.parseInt(evidence.getMetadata().get("video:Height"));
-                logger.info("Evidence -> type: '" + mediaType + "'; hash: '" + evidence.getHash() + "'; name: '" + evidence.getName() + "'; dimension: '" + width + "x" + height + "'");
             }
-            if ((config.getSkipDimension() > width || config.getSkipDimension() > height) && width > 0 && height > 0) {
-                logger.info("- SkipDimension: Evidence -> type: '" + mediaType + "'; hash: '" + evidence.getHash() + "'; name: '" + evidence.getName() + "'; dimension: '" + width + "x" + height + "'; skipDimension: '" + config.getSkipDimension() + "'");
+            if ((skipDimension > width || skipDimension > height) && width > 0 && height > 0) {
                 skipDimensionCount.incrementAndGet();
                 return;
             }
         }
 
         // Skip classification of images/videos with hits on IPED hashesDB database, according to 'skipHashDBFiles' config property
-        if (config.isSkipHashDBFiles() && evidence.getExtraAttribute(HashDBLookupTask.STATUS_ATTRIBUTE) != null) {
-            logger.info("- SkipHashDBFiles: Evidence -> type: '" + evidence.getMediaType().toString() + "'; hash: '" + evidence.getHash() + "'; name: '" + evidence.getName() + "'; hashDBStatus: '" + evidence.getExtraAttribute(HashDBLookupTask.STATUS_ATTRIBUTE) + "'");
+        if (skipHashDBFiles && evidence.getExtraAttribute(HashDBLookupTask.STATUS_ATTRIBUTE) != null) {
             skipHashDBFilesCount.incrementAndGet();
             return;
         }
