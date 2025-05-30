@@ -8,7 +8,7 @@
     </parent>
     <artifactId>iped-parsers-impl</artifactId>
     <packaging>jar</packaging>
-    
+
     <dependencies>
     	<dependency>
     		<groupId>org.slf4j</groupId>
@@ -28,16 +28,20 @@
     		<version>3.8.0</version>
     		<scope>test</scope>
 		</dependency>
-        <!-- https://mvnrepository.com/artifact/org.bouncycastle/bcutil-jdk18on -->
-        <dependency>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bcutil-jdk18on</artifactId>
-            <version>1.80</version>
-        </dependency>
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcpkix-jdk18on</artifactId>
-            <version>1.80</version>
+            <version>${bouncycastle.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcutil-jdk18on</artifactId>
+            <version>${bouncycastle.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcmail-jdk18on</artifactId>
+            <version>${bouncycastle.version}</version>
         </dependency>
 		<dependency>
             <groupId>org.apache.tika</groupId>
@@ -61,6 +65,14 @@
         		<exclusion>
                     <groupId>commons-logging</groupId>
                     <artifactId>commons-logging</artifactId>
+                </exclusion>
+				<exclusion>
+					<groupId>org.bouncycastle</groupId>
+					<artifactId>bcmail-jdk15on</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.bouncycastle</groupId>
+					<artifactId>bcprov-jdk15on</artifactId>
                 </exclusion>
         	</exclusions>
         </dependency>
@@ -132,6 +144,14 @@
                 <exclusion>
                     <groupId>commons-logging</groupId>
                     <artifactId>commons-logging</artifactId>
+                </exclusion>
+				<exclusion>
+					<groupId>org.bouncycastle</groupId>
+					<artifactId>bcprov-jdk15on</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.bouncycastle</groupId>
+					<artifactId>bcpkix-jdk15on</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
