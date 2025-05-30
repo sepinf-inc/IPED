@@ -14,6 +14,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -77,16 +78,19 @@ public class RemoteImageClassifierTask extends AbstractTask {
     private boolean skipHashDBFiles;   
     private boolean validateSSL;
 
-    // "case cache" - allows for improved classification management
-    private static final String AI_STORAGE = "ai/classifications.db";
+    // "case cache"
+    // Allows for improved classification management
+    private static final String AI_STORAGE = "ai/classifications.db";    // use "ai/classifications.db", for db on disk, or ":memory:", for db in memory
     // 'classifications' table - allows for skipping classification of duplicate files
     private static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS classifications (id TEXT PRIMARY KEY, classes TEXT);";
     private static final String INSERT_DATA = "INSERT INTO classifications (id, classes) VALUES (?,?) ON CONFLICT(id) DO NOTHING;";
-    private static final String SELECT_EXACT = "SELECT classes FROM classifications WHERE id=?;";
+    private static final String SELECT_FROM_ID = "SELECT classes FROM classifications WHERE id=?;";
     // "case cache" database file
     private static File db;
-    // "case cache" database connection
-    private Connection conn;
+    // "case cache" database connection, lock, and prepared statements (uses a single connection for all task instances)
+    private static final Object lock = new Object();
+    private static Connection conn;
+    private static PreparedStatement psSelect, psInsert;
 
     private Map<String, IItem> queue = new TreeMap<>();
     private ZipFile zip;
@@ -97,6 +101,8 @@ public class RemoteImageClassifierTask extends AbstractTask {
     private static final AtomicInteger classificationFail = new AtomicInteger();
     private static final AtomicLong sendImageBytes = new AtomicLong();
     private static final AtomicLong sendVideoBytes = new AtomicLong();
+    private static final AtomicInteger countImageThumbs = new AtomicInteger();
+    private static final AtomicInteger countVideoThumbs = new AtomicInteger();
     private static final AtomicInteger skipDuplicatesCount = new AtomicInteger();
     private static final AtomicInteger skipSizeCount = new AtomicInteger();
     private static final AtomicInteger skipDimensionCount = new AtomicInteger();
@@ -177,7 +183,11 @@ public class RemoteImageClassifierTask extends AbstractTask {
     }
 
     private void createConnection() {
-        this.conn = createConnection(output);
+        synchronized (lock) {
+            if (conn == null) {
+                conn = createConnection(output);
+            }
+        }
     }
 
     private Connection createConnection(File output) {
@@ -188,47 +198,59 @@ public class RemoteImageClassifierTask extends AbstractTask {
             config.setSynchronous(SynchronousMode.OFF);
             config.setBusyTimeout(3600000);
             Connection conn = config.createConnection("jdbc:sqlite:" + db.getAbsolutePath());
-
             try (Statement stmt = conn.createStatement()) {
                 stmt.executeUpdate(CREATE_TABLE);
             }
+
+            psSelect = conn.prepareStatement(SELECT_FROM_ID);
+            psInsert = conn.prepareStatement(INSERT_DATA);
+
             return conn;
+
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
 
     private String getClassesFromDb(String id) throws IOException {
-        return getClassesFromDb(this.conn, id);
-    }
-
-    private String getClassesFromDb(Connection conn, String id) throws IOException {
-        long t = System.currentTimeMillis();
-        try (PreparedStatement ps = conn.prepareStatement(SELECT_EXACT)) {
-            ps.setString(1, id);
-            ResultSet rs = ps.executeQuery();
-            cacheRetrieveTime.addAndGet(System.currentTimeMillis() - t);
-            cacheRetrieveCount.incrementAndGet();
-            if (rs.next()) {
-                return rs.getString(1);
+        ResultSet rs = null;
+        try {
+            synchronized (lock) {
+                psSelect.setString(1, id);
+                long t = System.currentTimeMillis();
+                rs = psSelect.executeQuery();
+                cacheRetrieveTime.addAndGet(System.currentTimeMillis() - t);
+                cacheRetrieveCount.incrementAndGet();
+                if (rs.next()) {
+                    return rs.getString(1);
+                }
             }
         } catch (SQLException e) {
             throw new IOException(e);
+        } finally {
+            if (rs != null) {
+                try {
+                    rs.close();
+                } catch (Exception e) {
+                }
+            }
         }
-        return null;
+        return null;        
     }
 
     private void storeClassesInDb(String id, String classes) throws IOException {
-        long t = System.currentTimeMillis();
-        try (PreparedStatement ps = conn.prepareStatement(INSERT_DATA)) {
-            ps.setString(1, id);
-            ps.setString(2, classes);
-            ps.executeUpdate();
-            cacheStoreTime.addAndGet(System.currentTimeMillis() - t);
-            cacheStoreCount.incrementAndGet();
+        try {
+            synchronized (lock) {
+                psInsert.setString(1, id);
+                psInsert.setString(2, classes);
+                long t = System.currentTimeMillis();
+                psInsert.executeUpdate();
+                cacheStoreTime.addAndGet(System.currentTimeMillis() - t);
+                cacheStoreCount.incrementAndGet();
+            }
         } catch (SQLException e) {
             throw new IOException(e);
-        }
+        }        
     }
 
     @Override
@@ -252,12 +274,29 @@ public class RemoteImageClassifierTask extends AbstractTask {
 
     }
 
+    public static String formatNumberToKMGUnits(long bytes) {
+        if (bytes < 1024 * 1024) {
+            return new DecimalFormat("#,##0.##").format(bytes / 1024.0) + " KB";
+        } else if (bytes < 1024L * 1024 * 1024) {
+            return new DecimalFormat("#,##0.##").format(bytes / (1024.0 * 1024)) + " MB";
+        } else 
+            return new DecimalFormat("#,##0.##").format(bytes / (1024.0 * 1024 * 1024)) + " GB";
+    }
+
     @Override
     public void finish() throws Exception {
         // Close DB connection
-        if (conn != null) {
-            conn.close();
-            conn = null;
+        synchronized (lock) {
+            if (conn != null) {
+                if (psInsert != null) {
+                    psInsert.close();
+                }
+                if (psSelect != null) {
+                    psSelect.close();
+                }
+                conn.close();
+                conn = null;
+            }
         }
 
         // Statistics for classification requests 
@@ -268,9 +307,9 @@ public class RemoteImageClassifierTask extends AbstractTask {
             logger.info(" Failed classifications: " + classificationFail.intValue());
             logger.info(" Average classification time (ms/thumb): " + String.format("%.3f", (((float) classificationTime.longValue() / this.worker.manager.getNumWorkers()) / totClassifications)));
             logger.info(" Average classification throughput (thumbs/s): " + ((int) (totClassifications / ((float) classificationTime.longValue() / this.worker.manager.getNumWorkers()) * 1000)));
-            logger.info("Total bytes sent: " + (sendImageBytes.longValue() + sendVideoBytes.longValue()));
-            logger.info(" Bytes sent for images: " + sendImageBytes.longValue());
-            logger.info(" Bytes sent for videos: " + sendVideoBytes.longValue());
+            logger.info("Total thumbs sent: " + (countImageThumbs.intValue() + countVideoThumbs.intValue()) + " (" + formatNumberToKMGUnits(sendImageBytes.longValue() + sendVideoBytes.longValue()) + ")");
+            logger.info(" Image thumbs: " + countImageThumbs.intValue() + " (" + formatNumberToKMGUnits(sendImageBytes.longValue()) + "); average thumb size: " + formatNumberToKMGUnits(sendImageBytes.longValue() / countImageThumbs.intValue()));
+            logger.info(" Videos thumbs: " + countVideoThumbs.intValue() + " (" + formatNumberToKMGUnits(sendVideoBytes.longValue()) + "); average thumb size: " + formatNumberToKMGUnits(sendVideoBytes.longValue() / countVideoThumbs.intValue()));
             classificationSuccess.set(0);
             classificationFail.set(0);
         }
@@ -280,7 +319,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
         if (totSkipCount != 0) {
             logger.info("Total count of files with skipped classification: " + totSkipCount);
             logger.info(" Skipped classification by duplicates: " + skipDuplicatesCount.intValue());
-            logger.info("  Cache file size: ~" + Math.ceil((float) db.length() / 1024) + "KB");
+            logger.info("  Cache file size: " + formatNumberToKMGUnits(db.length()));
             logger.info("  Cache store operations: " + cacheStoreCount.intValue() + "; average operation time (ms): " + String.format("%.6f", ((float) cacheStoreTime.longValue() / cacheStoreCount.intValue())));
             logger.info("  Cache retrieve operations: " + cacheRetrieveCount.intValue() + "; average operation time (ms): " + String.format("%.6f", ((float) cacheRetrieveTime.longValue() / cacheRetrieveCount.intValue())));
             logger.info(" Skipped classification by size: " + skipSizeCount.intValue());
@@ -527,11 +566,14 @@ public class RemoteImageClassifierTask extends AbstractTask {
                     zip.addFileToZip(iName, baos.toByteArray());
                     sendVideoBytes.addAndGet(baos.toByteArray().length);
                 }
+                countVideoThumbs.addAndGet(i);
             } else {
+                countVideoThumbs.incrementAndGet();
                 sendVideoBytes.addAndGet(evidence.getThumb().length);
                 zip.addFileToZip(name, evidence.getThumb());
             }
         } else {
+            countImageThumbs.incrementAndGet();
             sendImageBytes.addAndGet(evidence.getThumb().length);
             zip.addFileToZip(name, evidence.getThumb());
         }
