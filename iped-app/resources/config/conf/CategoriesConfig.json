@@ -80,7 +80,7 @@
         {"name": "Certificate Revocation Lists", "mimes": ["application/pkix-crl"]},
         {"name": "Certificates Requests", "mimes": ["application/pkcs10"]},
         {"name": "Keys", "mimes": ["application/pkcs8", "application/pkcs8-encrypted", "application/pkcs8-encrypted"]},
-        {"name": "Crypto Objects Containers", "mimes": ["application/x-pkcs12"]},
+        {"name": "Crypto Objects Containers", "mimes": ["application/x-pkcs12", "application/x-java-keystore"]},
         {"name": "CMS", "mimes": ["application/pkcs7-mime", "application/pkcs7-signature", "application/cms"]},
         {"name": "Others Crypto Objects", "mimes": ["application/x-pem-file", "application/x-x509-dsa-parameters", "application/x-x509-ec-parameters", "application/pkix-pkipath", "application/pkixcmp"]}
     ]},
