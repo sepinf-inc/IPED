@@ -27,6 +27,7 @@ import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.cms.ContentInfo;
 import org.bouncycastle.asn1.pkcs.CertificationRequest;
 import org.bouncycastle.asn1.pkcs.EncryptedPrivateKeyInfo;
+import org.bouncycastle.asn1.pkcs.Pfx;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.jcajce.spec.OpenSSHPrivateKeySpec;
 import org.bouncycastle.jcajce.spec.OpenSSHPublicKeySpec;
@@ -145,6 +146,7 @@ public class CryptoObjectDecoder {
                 || (obj = tryParsePKCS10CSR(asn1)) != null //
                 || (obj = tryParsePrivateKeyInfo(asn1)) != null //
                 || (obj = tryParseEncryptedPrivateKeyInfo(asn1)) != null //
+                || (obj = tryParsePKCS12Pfx(asn1)) != null //
         ) {
             return obj;
         }
@@ -218,6 +220,14 @@ public class CryptoObjectDecoder {
     private PKCS10CertificationRequest tryParsePKCS10CSR(ASN1Primitive asn1) {
         try {
             return new PKCS10CertificationRequest(CertificationRequest.getInstance(asn1));
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private Pfx tryParsePKCS12Pfx(ASN1Primitive asn1) {
+        try {
+            return Pfx.getInstance(asn1);
         } catch (Exception e) {
             return null;
         }

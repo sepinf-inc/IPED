@@ -8,6 +8,7 @@ import org.apache.tika.mime.MediaType;
 import org.bouncycastle.asn1.cms.CMSObjectIdentifiers;
 import org.bouncycastle.asn1.cms.ContentInfo;
 import org.bouncycastle.asn1.pkcs.EncryptedPrivateKeyInfo;
+import org.bouncycastle.asn1.pkcs.Pfx;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.cert.X509CRLHolder;
 import org.bouncycastle.cert.X509CertificateHolder;
@@ -56,6 +57,8 @@ public class CryptoObjectMimeTypes {
                 || object instanceof PKCS8EncryptedPrivateKeyInfo //
                 || object instanceof PEMEncryptedKeyPair) {
             return PKCS8_ENCRYPTED_TYPE;
+        } else if (object instanceof Pfx) {
+            return KeystoreParser.PKCS12_MIME;
         } else {
             return MediaType.OCTET_STREAM;
         }
