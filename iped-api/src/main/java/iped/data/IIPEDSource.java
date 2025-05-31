@@ -38,6 +38,8 @@ public interface IIPEDSource extends Closeable {
 
     List<String> getLeafCategories();
 
+    Set<String> getDescendantsCategories(String ancestral);
+
     Set<String> getExtraAttributes();
 
     int getId(int luceneId);
