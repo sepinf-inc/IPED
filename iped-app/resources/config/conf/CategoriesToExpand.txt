@@ -21,6 +21,12 @@ Peer-to-peer
 Chrome Cache
 #Event Files
 
+# Crypto objects
+Crypto Objects Containers
+CMS
+Keys
+Others Crypto Objects
+
 # Generates registry reports:
 Windows Registry
 
