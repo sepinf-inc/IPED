@@ -137,7 +137,7 @@ public class CryptoObjectParser extends AbstractParser {
     }
 
     private EmbeddedDocumentExtractor createdEmbeddedDocumentExtractor(ParseContext context) {
-        return createdEmbeddedDocumentExtractor(context);
+        return context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
     }
 
     @Override
