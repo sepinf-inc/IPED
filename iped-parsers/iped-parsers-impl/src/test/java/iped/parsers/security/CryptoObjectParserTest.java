@@ -6,6 +6,7 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TimeZone;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
@@ -30,7 +31,7 @@ public class CryptoObjectParserTest extends TestCase {
 
     @Test
     public void testCertificateParsingDER() throws IOException, SAXException, TikaException {
-
+        TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
         CryptoObjectParser parser = new CryptoObjectParser();
         Metadata metadata = new Metadata();
         metadata.add(StandardParser.INDEXER_CONTENT_TYPE, ASN1SequenceUtils.ASN1_SEQUENCE_MIME.toString());
@@ -38,6 +39,7 @@ public class CryptoObjectParserTest extends TestCase {
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
         try (InputStream stream = getStream("test-files/test_serverCert.der")) {
+
             parser.parse(stream, handler, metadata, context);
             String hts = handler.toString();
 
@@ -50,8 +52,8 @@ public class CryptoObjectParserTest extends TestCase {
             assertTrue(hts.contains("SHA1WITHRSA"));
             assertTrue(hts.contains(Messages.getString("CryptoObjectParser.Cert.Issuer")));
             assertTrue(hts.contains(Messages.getString("CryptoObjectParser.Cert.ValidFrom")));
-            assertTrue(hts.contains("Tue Jun 01 14:28:38 BRT 2021"));
-            assertTrue(hts.contains("Thu Jul 01 14:28:38 BRT 2021"));
+            assertTrue(hts.contains("Jun 01 17:28:38 UTC 2021"));
+            assertTrue(hts.contains("Jul 01 17:28:38 UTC 2021"));
             assertTrue(hts.contains(Messages.getString("CryptoObjectParser.Cert.AlternativeNames")));
             assertTrue(hts.contains(Messages.getString("CryptoObjectParser.Cert.NoAlternativeNamesFound")));
 
@@ -65,7 +67,7 @@ public class CryptoObjectParserTest extends TestCase {
 
     @Test
     public void testCertificateParsingPEM() throws IOException, SAXException, TikaException {
-
+        TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
         CryptoObjectParser parser = new CryptoObjectParser();
         Metadata metadata = new Metadata();
         metadata.add(StandardParser.INDEXER_CONTENT_TYPE, CryptoObjectMimeTypes.X509_CERT_TYPE.toString());
@@ -85,8 +87,8 @@ public class CryptoObjectParserTest extends TestCase {
             assertTrue(hts.contains("SHA1WITHRSA"));
             assertTrue(hts.contains(Messages.getString("CryptoObjectParser.Cert.Issuer")));
             assertTrue(hts.contains(Messages.getString("CryptoObjectParser.Cert.ValidFrom")));
-            assertTrue(hts.contains("Tue Jun 01 14:28:38 BRT 2021"));
-            assertTrue(hts.contains("Thu Jul 01 14:28:38 BRT 2021"));
+            assertTrue(hts.contains("Jun 01 17:28:38 UTC 2021"));
+            assertTrue(hts.contains("Jul 01 17:28:38 UTC 2021"));
             assertTrue(hts.contains(Messages.getString("CryptoObjectParser.Cert.AlternativeNames")));
             assertTrue(hts.contains(Messages.getString("CryptoObjectParser.Cert.NoAlternativeNamesFound")));
 
