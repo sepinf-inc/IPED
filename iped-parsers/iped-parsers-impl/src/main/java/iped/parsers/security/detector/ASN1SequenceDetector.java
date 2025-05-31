@@ -39,14 +39,10 @@ public class ASN1SequenceDetector implements Detector {
                 if (result != null) {
 
                     MediaType mime = CryptoObjectMimeTypes.getMimetypeFromObject(result);
-                    if (mime.equals(MediaType.OCTET_STREAM)) {
-                        return ASN1_SEQUENCE_MIME;
-                    }
-
                     return mime;
 
                 } else {
-                    return ASN1_SEQUENCE_MIME;
+                    return MediaType.OCTET_STREAM;
                 }
             } finally {
                 tis.reset();
