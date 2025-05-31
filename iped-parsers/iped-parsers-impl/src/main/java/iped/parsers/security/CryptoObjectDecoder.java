@@ -42,7 +42,7 @@ public class CryptoObjectDecoder {
     private static volatile CryptoObjectDecoder instance;
     private final CertificateFactory certificateFactory;
 
-    private final List<String> keyAlgorithms = Arrays.asList("RSA", "DSA", "EC", "ECDSA", "EdDSA", "XDH");
+    private final List<String> keyAlgorithms = Arrays.asList("RSA", "DSA", "EC", "EdDSA", "XDH");
 
     private final Map<String, KeyFactory> keyFactories = new HashMap<>();
 
@@ -55,6 +55,7 @@ public class CryptoObjectDecoder {
         Provider provider = Security.getProvider(BouncyCastleProvider.PROVIDER_NAME);
         if (provider == null) {
             provider = new BouncyCastleProvider();
+            Security.addProvider(provider);
         }
 
         // initialize JCA factories

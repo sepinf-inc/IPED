@@ -47,7 +47,7 @@ public class CryptoObjectParserTest extends TestCase {
             assertTrue(hts.contains(Messages.getString("CryptoObjectParser.Cert.SerialNumber")));
             assertTrue(hts.contains("12677675471164634689"));
             assertTrue(hts.contains(Messages.getString("CryptoObjectParser.Cert.SignatureAlgorithm")));
-            assertTrue(hts.contains("SHA1withRSA"));
+            assertTrue(hts.contains("SHA1WITHRSA"));
             assertTrue(hts.contains(Messages.getString("CryptoObjectParser.Cert.Issuer")));
             assertTrue(hts.contains(Messages.getString("CryptoObjectParser.Cert.ValidFrom")));
             assertTrue(hts.contains("Tue Jun 01 14:28:38 BRT 2021"));
@@ -82,7 +82,7 @@ public class CryptoObjectParserTest extends TestCase {
             assertTrue(hts.contains(Messages.getString("CryptoObjectParser.Cert.SerialNumber")));
             assertTrue(hts.contains("12677675471164634689"));
             assertTrue(hts.contains(Messages.getString("CryptoObjectParser.Cert.SignatureAlgorithm")));
-            assertTrue(hts.contains("SHA1withRSA"));
+            assertTrue(hts.contains("SHA1WITHRSA"));
             assertTrue(hts.contains(Messages.getString("CryptoObjectParser.Cert.Issuer")));
             assertTrue(hts.contains(Messages.getString("CryptoObjectParser.Cert.ValidFrom")));
             assertTrue(hts.contains("Tue Jun 01 14:28:38 BRT 2021"));
