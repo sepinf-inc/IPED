@@ -39,7 +39,7 @@ public class PemUtils {
 
         // if ext is a PEM extension, check if it contains "-----BEGIN" in the first 8KB
         String ext = StringUtils.substringAfterLast(metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY), ".");
-        if (pemExtensions.contains(ext)) {
+        if (ext != null && pemExtensions.contains(ext)) {
 
             input.mark(BYTES_TO_READ_IN_PEM_EXTENSION);
             byte[] moreBytes = new byte[BYTES_TO_READ_IN_PEM_EXTENSION];
