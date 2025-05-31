@@ -30,6 +30,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
+import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
@@ -43,7 +44,6 @@ import org.bouncycastle.asn1.cms.AuthenticatedData;
 import org.bouncycastle.asn1.cms.CMSObjectIdentifiers;
 import org.bouncycastle.asn1.cms.ContentInfo;
 import org.bouncycastle.asn1.pkcs.EncryptedPrivateKeyInfo;
-import org.bouncycastle.asn1.pkcs.Pfx;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.asn1.util.ASN1Dump;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
@@ -64,7 +64,6 @@ import org.bouncycastle.openssl.PEMEncryptedKeyPair;
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.X509TrustedCertificateBlock;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
-import org.bouncycastle.pkcs.PKCS12PfxPdu;
 import org.bouncycastle.pkcs.PKCS8EncryptedPrivateKeyInfo;
 import org.bouncycastle.util.encoders.Hex;
 import org.bouncycastle.util.io.pem.PemObject;
@@ -95,8 +94,7 @@ public class CryptoObjectParser extends AbstractParser {
             CryptoObjectMimeTypes.PKCS7_DATA_TYPE, //
             CryptoObjectMimeTypes.PKCS7_SIGNED_DATA_TYPE, //
             CryptoObjectMimeTypes.PKCS8_UNENCRYPTED_TYPE, //
-            CryptoObjectMimeTypes.PKCS8_ENCRYPTED_TYPE, //
-            CryptoObjectMimeTypes.PKCS12_TYPE //
+            CryptoObjectMimeTypes.PKCS8_ENCRYPTED_TYPE //
     );
 
     private static final String META_PREFIX = "crypto:";
@@ -106,7 +104,6 @@ public class CryptoObjectParser extends AbstractParser {
     private static final String META_CSR_PREFIX = META_PREFIX + "csr:";
     private static final String META_KEY_PREFIX = META_PREFIX + "key:";
     private static final String META_CMS_PREFIX = META_PREFIX + "cms:";
-    private static final String META_PKCS12_PREFIX = META_PREFIX + "pkcs12:";
 
     private static final String META_OBJECT_CLASS = META_OBJECT_PREFIX + "class";
 
@@ -262,9 +259,6 @@ public class CryptoObjectParser extends AbstractParser {
 
         } else if (cryptoObject instanceof X9ECParameters) {
             processECParameters((X9ECParameters) cryptoObject, xhtml, metadata, context);
-
-        } else if (cryptoObject instanceof Pfx) {
-            processPfx((Pfx) cryptoObject, xhtml, metadata, context);
 
         } else if (cryptoObject instanceof ASN1ObjectIdentifier) {
             processASN1ObjectIdentifier((ASN1ObjectIdentifier) cryptoObject, xhtml, metadata, context);
@@ -699,26 +693,6 @@ public class CryptoObjectParser extends AbstractParser {
         processEncryptedPrivateKeyInfo(ekpi.toASN1Structure(), xhtml, metadata, context);
 
         metadata.set(META_OBJECT_CLASS, PKCS8EncryptedPrivateKeyInfo.class.getSimpleName());
-    }
-
-    private void processPfx(Pfx pfx, XHTMLContentHandler xhtml, Metadata metadata, ParseContext context) throws SAXException, IOException {
-
-        metadata.set(META_OBJECT_CLASS, Pfx.class.getSimpleName());
-
-        metadata.set(META_PKCS12_PREFIX + "authSafe:oid", pfx.getAuthSafe().getContentType().getId());
-        if (pfx.getMacData() != null) {
-            metadata.set(META_PKCS12_PREFIX + "mac:algorithm", pfx.getMacData().getMac().getAlgorithmId().toString());
-        }
-
-        PKCS12PfxPdu pdu = new PKCS12PfxPdu(pfx);
-        int index = 0;
-        EmbeddedDocumentExtractor extractor = createdEmbeddedDocumentExtractor(context);
-        for (org.bouncycastle.asn1.pkcs.ContentInfo ci : pdu.getContentInfos()) {
-            String name = String.format("contentInfo-%d.der", index++);
-            addEmbbeddedObject(ci.getEncoded(), name, extractor);
-        }
-
-        dumpObjectAsString(pfx, xhtml);
     }
 
     private void processECParameters(X9ECParameters obj, XHTMLContentHandler xhtml, Metadata metadata, ParseContext context) throws SAXException {

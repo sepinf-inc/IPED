@@ -8,7 +8,6 @@ import org.apache.tika.mime.MediaType;
 import org.bouncycastle.asn1.cms.CMSObjectIdentifiers;
 import org.bouncycastle.asn1.cms.ContentInfo;
 import org.bouncycastle.asn1.pkcs.EncryptedPrivateKeyInfo;
-import org.bouncycastle.asn1.pkcs.Pfx;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.cert.X509CRLHolder;
 import org.bouncycastle.cert.X509CertificateHolder;
@@ -27,7 +26,6 @@ public class CryptoObjectMimeTypes {
     public static final MediaType PKCS7_SIGNED_DATA_TYPE = MediaType.application("pkcs7-signature");
     public static final MediaType PKCS8_UNENCRYPTED_TYPE = MediaType.application("pkcs8");
     public static final MediaType PKCS8_ENCRYPTED_TYPE = MediaType.application("pkcs8-encrypted");
-    public static final MediaType PKCS12_TYPE = MediaType.application("x-pkcs12");
 
     public static MediaType getMimetypeFromObject(Object object) {
 
@@ -58,8 +56,6 @@ public class CryptoObjectMimeTypes {
                 || object instanceof PKCS8EncryptedPrivateKeyInfo //
                 || object instanceof PEMEncryptedKeyPair) {
             return PKCS8_ENCRYPTED_TYPE;
-        } else if (object instanceof Pfx) {
-            return PKCS12_TYPE;
         } else {
             return MediaType.OCTET_STREAM;
         }
