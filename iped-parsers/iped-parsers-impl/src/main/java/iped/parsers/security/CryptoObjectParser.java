@@ -76,6 +76,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import iped.parsers.security.icpbrasil.PessoaFisicaDataParser.PessoaFisicaField;
 import iped.parsers.security.icpbrasil.X509OtherName;
+import iped.parsers.util.CertificateUtils;
 import iped.parsers.util.TableHTMLContentHandler;
 import iped.utils.DateUtil;
 
@@ -464,12 +465,24 @@ public class CryptoObjectParser extends AbstractParser {
         X509CertificateHolder certHolder = new X509CertificateHolder(cert.getEncoded());
         DateFormat df = createDateFormat();
 
+        String pubKeyAlg = cert.getPublicKey().getAlgorithm();
+        String subType = "";
+        if ("RSA".equals(pubKeyAlg)) {
+            int moduleBits = CertificateUtils.getRSAKeySize(cert);
+            subType = moduleBits + " bits";
+            metadata.set(META_CERT_PREFIX + "publicKey:rsaModuleBits", Integer.toString(moduleBits));
+        } else if ("EC".equals(pubKeyAlg)) {
+            String curve = CertificateUtils.getECCurveName(certHolder);
+            subType = curve;
+            metadata.set(META_CERT_PREFIX + "publicKey:ecCurve", curve);
+        }
+
         metadata.set(META_CERT_PREFIX + "subject", certHolder.getSubject().toString());
         metadata.set(META_CERT_PREFIX + "issuer", certHolder.getIssuer().toString());
         metadata.set(META_CERT_PREFIX + "serialNumber", certHolder.getSerialNumber().toString());
         metadata.set(META_CERT_PREFIX + "notBefore", DateUtil.dateToString(certHolder.getNotBefore()));
         metadata.set(META_CERT_PREFIX + "notAfter", DateUtil.dateToString(certHolder.getNotAfter()));
-        metadata.set(META_CERT_PREFIX + "publicKeyAlgorithm", cert.getPublicKey().getAlgorithm());
+        metadata.set(META_CERT_PREFIX + "publicKey:algorithm", pubKeyAlg);
         metadata.set(META_CERT_PREFIX + "signatureAlgorithm", cert.getSigAlgName());
 
         TableHTMLContentHandler table = new TableHTMLContentHandler(xhtml, metadata);
@@ -480,7 +493,7 @@ public class CryptoObjectParser extends AbstractParser {
         table.addRow(true, getString("CryptoObjectParser.Cert.SerialNumber"), certHolder.getSerialNumber().toString());
         table.addRow(true, getString("CryptoObjectParser.Cert.ValidFrom"), df.format(certHolder.getNotBefore()));
         table.addRow(true, getString("CryptoObjectParser.Cert.ValidTo"), df.format(certHolder.getNotAfter()));
-        table.addRow(true, getString("CryptoObjectParser.Cert.PublicKeyAlgorithm"), cert.getPublicKey().getAlgorithm());
+        table.addRow(true, getString("CryptoObjectParser.Cert.PublicKeyAlgorithm"), pubKeyAlg + (StringUtils.isNotBlank(subType) ? " (" + subType + ")" : ""));
         table.addRow(true, getString("CryptoObjectParser.Cert.SignatureAlgorithm"), cert.getSigAlgName());
 
         // Process Alternative Names
