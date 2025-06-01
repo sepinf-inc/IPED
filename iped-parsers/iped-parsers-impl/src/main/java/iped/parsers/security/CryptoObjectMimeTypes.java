@@ -30,16 +30,12 @@ public class CryptoObjectMimeTypes {
 
     public static MediaType getMimetypeFromObject(Object object) {
 
-        if (object instanceof Certificate) {
+        if (object instanceof Certificate || object instanceof X509CertificateHolder) {
             return X509_CERT_TYPE;
-        } else if (object instanceof CRL) {
-            return X509_CERT_TYPE;
+        } else if (object instanceof CRL || object instanceof X509CRLHolder) {
+            return X509_CRL_TYPE;
         } else if (object instanceof Key) {
             return PKCS8_UNENCRYPTED_TYPE;
-        } else if (object instanceof X509CertificateHolder) {
-            return X509_CERT_TYPE;
-        } else if (object instanceof X509CRLHolder) {
-            return X509_CRL_TYPE;
         } else if (object instanceof PKCS10CertificationRequest) {
             return PKCS10_TYPE;
         } else if (object instanceof ContentInfo) {
