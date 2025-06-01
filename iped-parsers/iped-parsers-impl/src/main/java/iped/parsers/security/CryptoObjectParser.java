@@ -51,6 +51,7 @@ import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.cert.X509AttributeCertificateHolder;
 import org.bouncycastle.cert.X509CRLHolder;
 import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
 import org.bouncycastle.cms.CMSEnvelopedData;
 import org.bouncycastle.cms.CMSException;
@@ -169,7 +170,7 @@ public class CryptoObjectParser extends AbstractParser {
                         "table, td, th {border: 1px solid black; padding: 5px} " + //
                         "pre { padding: 10px 15px; border: 2px solid black; background-color: #EEE} " + // ;
                         "ol, ul {margin: 2px; padding-left: 25px } " + //
-                        "th {text-align:left; background-color: #CCC} " //
+                        "th {text-align:left; min-width: 150px; background-color: #CCC} " //
         );
 
         try {
@@ -462,7 +463,7 @@ public class CryptoObjectParser extends AbstractParser {
 
         metadata.set(META_OBJECT_CLASS, X509Certificate.class.getSimpleName());
 
-        X509CertificateHolder certHolder = new X509CertificateHolder(cert.getEncoded());
+        X509CertificateHolder certHolder = new JcaX509CertificateHolder(cert);
         DateFormat df = createDateFormat();
 
         String pubKeyAlg = cert.getPublicKey().getAlgorithm();
@@ -496,6 +497,22 @@ public class CryptoObjectParser extends AbstractParser {
         table.addRow(true, getString("CryptoObjectParser.Cert.PublicKeyAlgorithm"), pubKeyAlg + (StringUtils.isNotBlank(subType) ? " (" + subType + ")" : ""));
         table.addRow(true, getString("CryptoObjectParser.Cert.SignatureAlgorithm"), cert.getSigAlgName());
 
+        // Process Extended Key Usage
+        List<String> ekus = CertificateUtils.getExtendedKeyUsageStrings(certHolder);
+        if (!ekus.isEmpty()) {
+            table.startElement("tr");
+            table.element("th", getString("CryptoObjectParser.Cert.ExtendedKeyUsage"));
+            table.startElement("td");
+            table.startElement("ul");
+            for (String eku : ekus) {
+                table.element("li", eku);
+                metadata.add(META_CERT_PREFIX + "extendedKeyUsage", eku);
+            }
+            table.endElement("ul");
+            table.endElement("td");
+            table.endElement("tr");
+        }
+
         // Process Alternative Names
         table.startElement("tr");
         table.element("th", getString("CryptoObjectParser.Cert.AlternativeNames"));
@@ -503,6 +520,7 @@ public class CryptoObjectParser extends AbstractParser {
         processAlternativeNames(cert, xhtml, metadata);
         table.endElement("td");
         table.endElement("tr");
+
         table.endTable();
 
         xhtml.endElement("br");
