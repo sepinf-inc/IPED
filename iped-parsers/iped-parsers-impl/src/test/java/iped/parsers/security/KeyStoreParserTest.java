@@ -52,7 +52,7 @@ public class KeyStoreParserTest extends TestCase {
         try (InputStream stream = getStream("test-files/test_server.pfx")) {
             parser.parseCertificate(alias, stream, handler, metadata, context);
             assertEquals("server certificate", metadata.get(TikaCoreProperties.TITLE));
-            assertEquals(CertificateParser.DER_MIME.toString(), metadata.get(Metadata.CONTENT_TYPE));
+            assertEquals(CryptoObjectMimeTypes.X509_CERT_TYPE.toString(), metadata.get(Metadata.CONTENT_TYPE));
 
         }
     }
