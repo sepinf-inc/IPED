@@ -1,8 +1,8 @@
-package iped.parsers.plist.parser;
+package iped.parsers.plist;
 
-import static iped.parsers.plist.parser.PListHelper.METADATA_KEY_SEPARATOR;
-import static iped.parsers.plist.parser.PListHelper.appendPath;
-import static iped.parsers.plist.parser.PListHelper.getUIDInteger;
+import static iped.parsers.plist.PListHelper.METADATA_KEY_SEPARATOR;
+import static iped.parsers.plist.PListHelper.appendPath;
+import static iped.parsers.plist.PListHelper.getUIDInteger;
 import static org.apache.commons.text.StringEscapeUtils.escapeHtml4;
 
 import java.io.IOException;

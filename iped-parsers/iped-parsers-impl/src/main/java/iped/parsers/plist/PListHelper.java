@@ -1,4 +1,4 @@
-package iped.parsers.plist.parser;
+package iped.parsers.plist;
 
 import java.nio.ByteBuffer;
 import java.util.Date;

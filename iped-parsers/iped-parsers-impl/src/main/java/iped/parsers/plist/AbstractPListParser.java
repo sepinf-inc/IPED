@@ -1,9 +1,6 @@
-package iped.parsers.plist.parser;
+package iped.parsers.plist;
 
-import static iped.parsers.plist.parser.PListHelper.DATE;
-import static iped.parsers.plist.parser.PListHelper.*;
-import static iped.parsers.plist.parser.PListHelper.appendPath;
-import static iped.parsers.plist.parser.PListHelper.getUIDInteger;
+import static iped.parsers.plist.PListHelper.*;
 import static org.apache.commons.text.StringEscapeUtils.escapeHtml4;
 
 import java.io.IOException;
