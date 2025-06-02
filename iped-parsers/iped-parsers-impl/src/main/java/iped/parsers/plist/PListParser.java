@@ -23,8 +23,6 @@ public class PListParser extends AbstractPListParser<Void> {
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(BPListDetector.BITUNES,
             BPListDetector.BMEMGRAPH, BPListDetector.BPLIST, BPListDetector.BWEBARCHIVE, BPListDetector.PLIST)));
 
-    private static final String PLIST_METADATA_PREFIX = "plist:";
-
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
         return SUPPORTED_TYPES;
@@ -33,11 +31,6 @@ public class PListParser extends AbstractPListParser<Void> {
     @Override
     protected Logger getLogger() {
         return logger;
-    }
-
-    @Override
-    protected String getMetadataPrefix() {
-        return PLIST_METADATA_PREFIX;
     }
 
     @Override

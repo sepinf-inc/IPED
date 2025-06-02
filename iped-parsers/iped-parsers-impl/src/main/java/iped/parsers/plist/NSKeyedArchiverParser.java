@@ -41,7 +41,6 @@ public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverPa
     private static final Logger logger = LoggerFactory.getLogger(NSKeyedArchiverParser.class);
 
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(PListDetector.NSKEYEDARCHIVER_PLIST);
-    private static final String NSKEYEDARCHIVER_METADATA_PREFIX = "nskeyedarchiver:";
     private static final String JS_UID_ID_PREFIX = "uid-";
 
     private static final String ARCHIVER_KEY = "$archiver";
@@ -78,11 +77,6 @@ public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverPa
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
         return SUPPORTED_TYPES;
-    }
-
-    @Override
-    protected String getMetadataPrefix() {
-        return NSKEYEDARCHIVER_METADATA_PREFIX;
     }
 
     @Override
@@ -211,7 +205,7 @@ public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverPa
             }
 
             if (isNSTime(obj)) {
-                processNSTime((NSDictionary) obj, path, state);
+                processNSTime((NSDictionary) obj, state);
 
             } else if (isKAArray(obj)) {
                 processKAArray((NSDictionary) obj, path, state);
@@ -269,10 +263,10 @@ public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverPa
         }
     }
 
-    private void processNSTime(NSDictionary obj, String path, State state) throws SAXException {
+    private void processNSTime(NSDictionary obj, State state) throws SAXException {
         NSObject nso = obj.get(NS_TIME);
         Date date = new Date((((NSNumber) nso).longValue() + 978307200) * 1000);
-        processDate(date, path, state);
+        processDate(date, state);
     }
 
     private void processKAArray(NSDictionary obj, String path, State state) throws SAXException {

@@ -1,6 +1,11 @@
 package iped.parsers.plist;
 
-import static iped.parsers.plist.PListHelper.*;
+import static iped.parsers.plist.PListHelper.DATE;
+import static iped.parsers.plist.PListHelper.NUMBER;
+import static iped.parsers.plist.PListHelper.STRING;
+import static iped.parsers.plist.PListHelper.UID;
+import static iped.parsers.plist.PListHelper.appendPath;
+import static iped.parsers.plist.PListHelper.getUIDInteger;
 import static org.apache.commons.text.StringEscapeUtils.escapeHtml4;
 
 import java.io.IOException;
@@ -41,7 +46,6 @@ import com.dd.plist.UID;
 
 import iped.data.IItemReader;
 import iped.parsers.util.IgnoreContentHandler;
-import iped.parsers.util.MetadataUtil;
 import iped.properties.BasicProps;
 import iped.utils.DateUtil;
 
@@ -58,6 +62,11 @@ public abstract class AbstractPListParser<T> implements Parser {
 
     protected static final int MAX_POSSIBLE_DATA_LENGTH = 32765;
     protected static final int MAX_BASE64_LENGTH_TO_PRINT = 40;
+
+    protected static final String PLIST_META_PREFIX = "plist:";
+
+    protected static final String PLIST_DATES_META = PLIST_META_PREFIX + "nsDates";
+    protected static final String PLIST_POSSIBLE_DATES_META = PLIST_META_PREFIX + "nsNumber:possibleDates";
 
     protected class State {
         final XHTMLContentHandler xhtml;
@@ -140,14 +149,10 @@ public abstract class AbstractPListParser<T> implements Parser {
 
     protected abstract Logger getLogger();
 
-    protected abstract String getMetadataPrefix();
-
     protected abstract void processAndGenerateHTMLContent(NSObject obj, State state) throws SAXException, TikaException;
 
-    protected void addDateMetadata(Date date, String path, State state) {
+    protected void addDateMetadata(Date date, String metadataName, State state) {
         String dateStr = DateUtil.dateToString(date);
-        String metadataName = getMetadataPrefix() + path;
-        MetadataUtil.setMetadataType(metadataName, Date.class);
         String currentValue = state.metadata.get(metadataName);
         if (currentValue == null || (currentValue.length() + dateStr.length()) <= MAX_POSSIBLE_DATA_LENGTH) {
             state.metadata.add(metadataName, dateStr);
@@ -192,7 +197,7 @@ public abstract class AbstractPListParser<T> implements Parser {
             processNumber((NSNumber) obj, state);
 
         } else if (obj instanceof NSDate) {
-            processDate(((NSDate) obj).getDate(), path, state);
+            processDate(((NSDate) obj).getDate(), state);
 
         } else if (obj instanceof UID) {
             processUID((UID) obj, state);
@@ -295,22 +300,22 @@ public abstract class AbstractPListParser<T> implements Parser {
     }
 
     protected void processNumber(NSNumber obj, State state) throws SAXException {
-        String text = ((NSNumber) obj).toString();
+        String text = obj.toString();
         processSimpleText(text, NUMBER, state);
-        processPossibleDate((NSNumber) obj, text, state);
+        processPossibleDate(obj, state);
     }
 
-    protected void processDate(Date date, String path, State state) throws SAXException {
+    protected void processDate(Date date, State state) throws SAXException {
         processSimpleText(DateUtil.dateToString(date), DATE, state);
-        addDateMetadata(date, path, state);
+        addDateMetadata(date, PLIST_DATES_META, state);
     }
 
     protected void processUID(UID obj, State state) throws SAXException {
-        String text = Integer.toString(getUIDInteger((UID) obj));
+        String text = Integer.toString(getUIDInteger(obj));
         processSimpleText(text, UID, state);
     }
 
-    protected void processPossibleDate(NSNumber number, String path, State state) throws SAXException {
+    protected void processPossibleDate(NSNumber number, State state) throws SAXException {
 
         Date possibleDate = PListHelper.getPossibleDate(number);
 
@@ -324,7 +329,7 @@ public abstract class AbstractPListParser<T> implements Parser {
             state.xhtml.endElement("p");
 
             // add possible date in metadata
-            addDateMetadata(possibleDate, path, state);
+            addDateMetadata(possibleDate, PLIST_POSSIBLE_DATES_META, state);
         }
     }
 
