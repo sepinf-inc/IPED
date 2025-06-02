@@ -190,14 +190,6 @@ public class HTMLReportTask extends AbstractTask {
 
     private Set<String> selectedProperties;
 
-    /* List of report generated list files*/
-    private static final List<String> arqsHmltList = new ArrayList<String>();
-    private static final Object lock= new Object(); 
-    private static boolean bookmarkPDFSet = false;
-    private static boolean categoryPDFSet = false;
-    private static boolean bookmarkThumbPDFSet = false;
-    private static boolean categoryThumbPDFSet = false;   
-    private boolean PDFReport = false; 
     private static Collator getCollator() {
         LocaleConfig localeConfig = ConfigurationManager.get().findObject(LocaleConfig.class);
 
