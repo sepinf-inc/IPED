@@ -188,6 +188,8 @@ public class HTMLReportTask extends AbstractTask {
 
     private boolean extractThumb;
 
+    private Set<String> selectedProperties;
+
     /* List of report generated list files*/
     private static final List<String> arqsHmltList = new ArrayList<String>();
     private static final Object lock= new Object(); 
