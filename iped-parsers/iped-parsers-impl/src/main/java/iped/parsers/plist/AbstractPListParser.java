@@ -65,8 +65,8 @@ public abstract class AbstractPListParser<T> implements Parser {
 
     protected static final String PLIST_META_PREFIX = "plist:";
 
-    protected static final String PLIST_DATES_META = PLIST_META_PREFIX + "nsDates";
-    protected static final String PLIST_POSSIBLE_DATES_META = PLIST_META_PREFIX + "nsNumber:possibleDates";
+    protected static final String PLIST_DATES_META = PLIST_META_PREFIX + "dates";
+    protected static final String PLIST_POSSIBLE_DATES_META = PLIST_META_PREFIX + "possibleDates";
 
     protected class State {
         final XHTMLContentHandler xhtml;
@@ -194,7 +194,7 @@ public abstract class AbstractPListParser<T> implements Parser {
             processSimpleText(((NSString) obj).getContent(), STRING, state);
 
         } else if (obj instanceof NSNumber) {
-            processNumber((NSNumber) obj, state);
+            processNumber((NSNumber) obj, path, state);
 
         } else if (obj instanceof NSDate) {
             processDate(((NSDate) obj).getDate(), state);
@@ -299,10 +299,10 @@ public abstract class AbstractPListParser<T> implements Parser {
         state.xhtml.endElement("p");
     }
 
-    protected void processNumber(NSNumber obj, State state) throws SAXException {
+    protected void processNumber(NSNumber obj, String path, State state) throws SAXException {
         String text = obj.toString();
         processSimpleText(text, NUMBER, state);
-        processPossibleDate(obj, state);
+        processPossibleDate(obj, path, state);
     }
 
     protected void processDate(Date date, State state) throws SAXException {
@@ -315,7 +315,7 @@ public abstract class AbstractPListParser<T> implements Parser {
         processSimpleText(text, UID, state);
     }
 
-    protected void processPossibleDate(NSNumber number, State state) throws SAXException {
+    protected void processPossibleDate(NSNumber number, String path, State state) throws SAXException {
 
         Date possibleDate = PListHelper.getPossibleDate(number);
 
