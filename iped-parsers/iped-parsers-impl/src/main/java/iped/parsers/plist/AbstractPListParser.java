@@ -328,7 +328,7 @@ public abstract class AbstractPListParser<T> implements Parser {
             if (currentValue == null || currentValue.length() + 23 <= MAX_POSSIBLE_DATES_LENGTH) { // 23 is length to be added
                 addDateMetadata(possibleDate, PLIST_POSSIBLE_DATES_META, state);
             } else {
-                getLogger().warn("Metadata [{}] has too many dates. Skipping the value [{}]", PLIST_POSSIBLE_DATES_META, possibleDate);
+                state.metadata.set(PLIST_META_PREFIX + "possibleDatesTruncated", Boolean.toString(true));
             }
         }
     }

@@ -4132,6 +4132,7 @@ pdf:xmpTPg:NPages = java.lang.Integer
 phoneNumber = java.lang.String
 plist:dates = java.util.Date
 plist:possibleDates = java.util.Date
+plist:possibleDatesTruncated = java.lang.Boolean
 property_ = java.lang.String
 property_1 = java.lang.Integer
 property_11 = java.lang.String
