@@ -60,11 +60,9 @@ public abstract class AbstractPListParser<T> implements Parser {
 
     protected static final String SUMMARY_SUFFIX = ": ";
 
-    protected static final int MAX_POSSIBLE_DATES_LENGTH = 32 * 1024; // 32 KB
     protected static final int MAX_BASE64_LENGTH_TO_PRINT = 40;
 
     protected static final String PLIST_META_PREFIX = "plist:";
-
     protected static final String PLIST_DATES_META = PLIST_META_PREFIX + "dates";
     protected static final String PLIST_POSSIBLE_DATES_META = PLIST_META_PREFIX + "possibleDates";
 
@@ -158,11 +156,6 @@ public abstract class AbstractPListParser<T> implements Parser {
     protected abstract Logger getLogger();
 
     protected abstract void processAndGenerateHTMLContent(NSObject obj, State state) throws SAXException, TikaException;
-
-    protected void addDateMetadata(Date date, String metadataName, State state) {
-        String dateStr = DateUtil.dateToString(date);
-        state.metadata.add(metadataName, dateStr);
-    }
 
     protected void extractDataAsSubItem(NSData data, String path, State state) throws SAXException {
 
@@ -310,7 +303,7 @@ public abstract class AbstractPListParser<T> implements Parser {
 
     protected void processDate(Date date, State state) throws SAXException {
         processSimpleText(DateUtil.dateToString(date), DATE, state);
-        addDateMetadata(date, PLIST_DATES_META, state);
+        state.metadata.add(PLIST_DATES_META, DateUtil.dateToString(date));
     }
 
     protected void processUID(UID obj, State state) throws SAXException {
@@ -322,7 +315,7 @@ public abstract class AbstractPListParser<T> implements Parser {
 
         Date possibleDate = PListHelper.getPossibleDate(number);
 
-        if (possibleDate != null) {
+        if (possibleDate != null && StringUtils.containsAny(path, "Time", "Date", "Instant")) {
             // add possible date in the view
             state.xhtml.startElement("p");
             state.xhtml.startElement("em");
@@ -332,12 +325,7 @@ public abstract class AbstractPListParser<T> implements Parser {
             state.xhtml.endElement("p");
 
             // add possible date in metadata
-            String currentValue = state.metadata.get(PLIST_POSSIBLE_DATES_META);
-            if (currentValue == null || currentValue.length() + 23 <= MAX_POSSIBLE_DATES_LENGTH) { // 23 is length to be added
-                addDateMetadata(possibleDate, PLIST_POSSIBLE_DATES_META, state);
-            } else {
-                state.metadata.set(PLIST_META_PREFIX + "possibleDatesTruncated", Boolean.toString(true));
-            }
+            state.metadata.add(PLIST_POSSIBLE_DATES_META, DateUtil.dateToString(possibleDate));
         }
     }
 
