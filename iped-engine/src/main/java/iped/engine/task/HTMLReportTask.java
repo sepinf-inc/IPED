@@ -1096,22 +1096,6 @@ public class HTMLReportTask extends AbstractTask {
                 }
             }
 
-            replace(it, "%SEQ%", reg.hash); //$NON-NLS-1$
-            replace(it, "%NAME%", reg.name); //$NON-NLS-1$
-            replace(it, "%PATH%", reg.path); //$NON-NLS-1$
-            replace(it, "%TYPE%", reg.category); //$NON-NLS-1$
-            replace(it, "%SIZE%", formatNumber(reg.length, longFormat)); //$NON-NLS-1$
-            replace(it, "%DELETED%", //$NON-NLS-1$
-                    reg.deleted ? Messages.getString("HTMLReportTask.Yes") : Messages.getString("HTMLReportTask.No")); //$NON-NLS-1$ //$NON-NLS-2$
-            replace(it, "%CARVED%", //$NON-NLS-1$
-                    reg.carved ? Messages.getString("HTMLReportTask.Yes") : Messages.getString("HTMLReportTask.No")); //$NON-NLS-1$ //$NON-NLS-2$
-            replace(it, "%HASH%", reg.hash); //$NON-NLS-1$
-            String export = reg.export == null ? "-" : "<a href=\"../" + reg.export.replace("\\","/") + "\">" + reg.export + "</a>"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-            replace(it, "%EXPORTED%", export); //$NON-NLS-1$
-            replace(it, "%CREATED%", formatDate(reg.created, dateFormat)); //$NON-NLS-1$
-            replace(it, "%MODIFIED%", formatDate(reg.modified, dateFormat)); //$NON-NLS-1$
-            replace(it, "%ACCESSED%", formatDate(reg.accessed, dateFormat)); //$NON-NLS-1$
-
             items.append(it);
         }
 
