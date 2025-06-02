@@ -117,8 +117,9 @@ public class IOUtil {
     }
 
     public static String getValidFilename(String filename) {
-        // 64 is the max file name length in Joliet FS
-        return getValidFilename(filename, 64);
+        // max NTFS file name size is 255, but since max path size is 256, we use a
+        // much smaller value, which should handle most scenarios
+        return getValidFilename(filename, 160);
     }
 
     public static String getValidFilename(String filename, int maxLength) {

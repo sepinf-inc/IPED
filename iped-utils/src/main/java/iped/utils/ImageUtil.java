@@ -16,21 +16,27 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReadParam;
 import javax.imageio.ImageReader;
 import javax.imageio.ImageTypeSpecifier;
+import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.metadata.IIOMetadata;
 import javax.imageio.metadata.IIOMetadataNode;
-import javax.imageio.plugins.jpeg.JPEGImageWriteParam;
+import javax.imageio.spi.IIORegistry;
+import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.ImageOutputStream;
+import javax.imageio.stream.MemoryCacheImageOutputStream;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
@@ -40,10 +46,12 @@ import org.w3c.dom.NodeList;
 import iped.data.IItemReader;
 
 public class ImageUtil {
-    private static final int[] orientations = new int[] { 1, 5, 3, 7 };
+    private static final int[] orientations = new int[] { 1, 6, 3, 8 };
 
     private static final String JBIG2 = "image/x-jbig2";
     private static final String ICO = "image/vnd.microsoft.icon";
+
+    private static boolean pluginsPriorityUpdated;
 
     public static BufferedImage resizeImage(BufferedImage img, int maxW, int maxH) {
         return resizeImage(img, maxW, maxH, BufferedImage.TYPE_INT_ARGB);
@@ -601,10 +609,12 @@ public class ImageUtil {
     /**
      * Grava uma imagem JPEG e insere um comentário nos metadados da imagem.
      */
-    public static void saveJpegWithMetadata(BufferedImage img, File outFile, String data) throws IOException {
+    public static void saveJpegWithMetadata(BufferedImage img, File outFile, String data, int compression) throws IOException {
         ImageWriter writer = ImageIO.getImageWritersBySuffix("jpeg").next(); //$NON-NLS-1$
-        JPEGImageWriteParam jpegParams = (JPEGImageWriteParam) writer.getDefaultWriteParam();
-        IIOMetadata imageMetadata = writer.getDefaultImageMetadata(new ImageTypeSpecifier(img), jpegParams);
+        ImageWriteParam jpgWriteParam = writer.getDefaultWriteParam();
+        jpgWriteParam.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+        jpgWriteParam.setCompressionQuality(compression / 100f);
+        IIOMetadata imageMetadata = writer.getDefaultImageMetadata(new ImageTypeSpecifier(img), jpgWriteParam);
 
         Element tree = (Element) imageMetadata.getAsTree("javax_imageio_jpeg_image_1.0"); //$NON-NLS-1$
         NodeList comNL = tree.getElementsByTagName("com"); //$NON-NLS-1$
@@ -622,32 +632,43 @@ public class ImageUtil {
         IIOImage iioimage = new IIOImage(img, null, imageMetadata);
         ImageOutputStream os = ImageIO.createImageOutputStream(outFile);
         writer.setOutput(os);
-        writer.write(null, iioimage, jpegParams);
+        writer.write(null, iioimage, jpgWriteParam);
         os.close();
         writer.dispose();
     }
 
-    public static BufferedImage rotatePos(BufferedImage src, int pos) {
+    public static BufferedImage rotate(BufferedImage src, int pos) {
         if (pos < 0 || pos > 3) {
             return src;
         }
-        return rotate(src, orientations[pos]);
+        return applyOrientation(src, orientations[pos]);
     }
 
-    public static BufferedImage rotate(BufferedImage src, int orientation) {
-        if (orientation <= 1 || orientation > 8)
+    public static BufferedImage applyOrientation(BufferedImage src, int orientation) {
+        if (orientation <= 1 || orientation > 8) {
             return src;
-        int angle = (orientation - 1) / 2;
+        }
         int w = src.getWidth();
         int h = src.getHeight();
-        BufferedImage dest = new BufferedImage(angle == 1 ? w : h, angle == 1 ? h : w, src.getType());
+        if (orientation > 4) {
+            int aux = w;
+            w = h;
+            h = aux;
+        }
+        BufferedImage dest = new BufferedImage(w, h, src.getType());
         Graphics2D g = dest.createGraphics();
-        double d = (h - w) / 2.0;
-        if (angle == 2)
-            g.translate(d, d);
-        else if (angle == 3)
-            g.translate(-d, -d);
-        g.rotate((angle == 1 ? 2 : angle == 2 ? 1 : 3) * Math.PI / 2, dest.getWidth() / 2.0, dest.getHeight() / 2.0);
+        if (orientation == 2 || orientation == 3 || orientation == 5 || orientation == 8) {
+            g.scale(-1, 1);
+            g.translate(-w, 0);
+        }
+        if (orientation == 3 || orientation == 4 || orientation == 7 || orientation == 8) {
+            g.scale(1, -1);
+            g.translate(0, -h);
+        }
+        if (orientation >= 5) {
+            g.rotate(Math.PI / 2);
+            g.translate(0, -w);
+        }
         g.drawRenderedImage(src, null);
         g.dispose();
         return dest;
@@ -663,6 +684,17 @@ public class ImageUtil {
             }
         }
         return true;
+    }
+
+    public static void writeCompressedJPG(BufferedImage img, OutputStream baos, int compression) throws IOException {
+        ImageWriter jpgWriter = ImageIO.getImageWritersByFormatName("jpg").next();
+        ImageWriteParam jpgWriteParam = jpgWriter.getDefaultWriteParam();
+        jpgWriteParam.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+        jpgWriteParam.setCompressionQuality(compression / 100f);
+        jpgWriter.setOutput(new MemoryCacheImageOutputStream(baos));
+        IIOImage outputImage = new IIOImage(img, null, null);
+        jpgWriter.write(null, outputImage, jpgWriteParam);
+        jpgWriter.dispose();        
     }
 
     /**
@@ -744,5 +776,48 @@ public class ImageUtil {
             return op.filter(image, null);
         }
         return getImageFromType(image, BufferedImage.TYPE_BYTE_GRAY);
+    }
+
+    public static synchronized void updateImageIOPluginsPriority() {
+        if (pluginsPriorityUpdated) {
+            return;
+        }
+        IIORegistry registry = IIORegistry.getDefaultInstance();
+        String[] mimes = ImageIO.getReaderMIMETypes();
+        for (String mime : mimes) {
+            Map<ImageReaderSpi, Integer> priorityBySpi = new HashMap<ImageReaderSpi, Integer>();
+            Iterator<ImageReader> itReaders = ImageIO.getImageReadersByMIMEType(mime);
+            while (itReaders.hasNext()) {
+                ImageReader reader = itReaders.next();
+                ImageReaderSpi spi = reader.getOriginatingProvider();
+                String name = spi.getClass().toString().toLowerCase();
+                int priority = 100;
+                if (name.contains(".sun")) {
+                    priority = 0;
+                } else if (name.contains(".twelvemonkeys")) {
+                    priority = 10;
+                } else if (name.contains(".apache")) {
+                    priority = 20;
+                } else if (name.contains(".jai")) {
+                    priority = 30;
+                }
+                if (name.contains(".big")) {
+                    priority++;
+                }
+                priorityBySpi.put(spi, priority);
+            }
+            if (priorityBySpi.size() > 1) {
+                for (ImageReaderSpi spi1 : priorityBySpi.keySet()) {
+                    int p1 = priorityBySpi.get(spi1);
+                    for (ImageReaderSpi spi2 : priorityBySpi.keySet()) {
+                        int p2 = priorityBySpi.get(spi2);
+                        if (p1 < p2) {
+                            registry.setOrdering(ImageReaderSpi.class, spi1, spi2);
+                        }
+                    }
+                }
+            }
+        }
+        pluginsPriorityUpdated = true;
     }
 }

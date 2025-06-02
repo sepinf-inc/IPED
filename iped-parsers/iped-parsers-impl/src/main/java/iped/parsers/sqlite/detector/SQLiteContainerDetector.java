@@ -133,12 +133,11 @@ public class SQLiteContainerDetector implements Detector {
                 tableNames.contains("Calls")) //$NON-NLS-1$
             return SkypeParser.SKYPE_MIME;
 
-        if ((tableNames.contains("chat_list") || tableNames.contains("chat")) && //$NON-NLS-1$
-                (tableNames.contains("messages") || tableNames.contains("message")) && //$NON-NLS-1$
-                tableNames.contains("group_participants") && //$NON-NLS-1$
-                tableNames.contains("media_refs") && //$NON-NLS-1$
-                tableNames.contains("receipts") && //$NON-NLS-1$
-                tableNames.contains("sqlite_sequence")) //$NON-NLS-1$
+        if ((tableNames.contains("chat_list") || tableNames.contains("chat")) &&
+                (tableNames.contains("messages") || tableNames.contains("message")) &&
+                (tableNames.contains("group_participants") || tableNames.contains("group_participant_user")) &&
+                tableNames.contains("media_refs") &&
+                tableNames.contains("sqlite_sequence"))
             return WhatsAppParser.MSG_STORE;
 
         if (tableNames.contains("wa_contacts") && //$NON-NLS-1$

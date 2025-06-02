@@ -54,9 +54,7 @@ public class MenuClass extends JPopupMenu {
     MenuListener menuListener = new MenuListener(this);
     boolean isTreeMenu;
 
-    public MenuClass() {
-        this(null);
-    }
+    private boolean similarFacesExternalEnabled = SimilarFacesFilterActions.isExternalSearchEnabled();
 
     public MenuClass(boolean isTreeMenu) {
         super();
@@ -316,7 +314,7 @@ public class MenuClass extends JPopupMenu {
 
         similarFacesExternal = new JMenuItem(Messages.getString("MenuClass.FindSimilarFaces.External")); //$NON-NLS-1$
         similarFacesExternal.addActionListener(menuListener);
-        similarFacesExternal.setEnabled(submenu.isEnabled());
+        similarFacesExternal.setEnabled(submenu.isEnabled() && similarFacesExternalEnabled);
         submenu.add(similarFacesExternal);
 
         this.addSeparator();

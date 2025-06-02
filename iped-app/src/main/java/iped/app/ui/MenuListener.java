@@ -46,6 +46,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.app.ui.TreeViewModel.Node;
+import iped.app.ui.columns.ColumnsManager;
+import iped.app.ui.columns.ColumnsManagerUI;
+import iped.app.ui.columns.ColumnsSelectUI;
 import iped.app.ui.utils.UiIconSize;
 import iped.app.ui.utils.UiScale;
 import iped.data.IIPEDSource;
@@ -90,6 +93,11 @@ public class MenuListener implements ActionListener {
         if (dirDadosExportados.exists()) {
             fileChooser.setCurrentDirectory(dirDadosExportados);
         }
+    }
+
+    private void setupColumnsSelector() {
+        ColumnsSelectUI columnsSelector = ColumnsSelectUI.getInstance();
+        columnsSelector.setVisible();
     }
 
     private void setupFileChooserImportKeywords() {
@@ -155,7 +163,7 @@ public class MenuListener implements ActionListener {
 
         @Override
         public String getDescription() {
-            return "Comma Separeted Values (" + CSV + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+            return "Comma Separated Values (" + CSV + ")"; //$NON-NLS-1$ //$NON-NLS-2$
         }
 
     }
@@ -250,15 +258,19 @@ public class MenuListener implements ActionListener {
                 int luceneId = App.get().appCase.getLuceneId(item);
                 selectedIds.add(luceneId);
             }
-            setupFileChooser();
-            fileChooser.setFileFilter(csvFilter);
-            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-            if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
-                File file = fileChooser.getSelectedFile();
-                if (!file.getName().endsWith(CSV)) {
-                    file = new File(file.getAbsolutePath() + CSV);
+            setupColumnsSelector();
+            if (ColumnsSelectUI.getOkButtonClicked()) {
+                setupFileChooser();
+                fileChooser.setFileFilter(csvFilter);
+                fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
+                    File file = fileChooser.getSelectedFile();
+                    if (!file.getName().endsWith(CSV)) {
+                        file = new File(file.getAbsolutePath() + CSV);
+                    }
+                    ArrayList<String> loadedSelectedFields = ColumnsSelectUI.loadSavedFields();
+                    (new CopyProperties(file, selectedIds, loadedSelectedFields)).execute();
                 }
-                (new CopyProperties(file, selectedIds)).execute();
             }
 
         } else if (e.getSource() == menu.copyChecked) {
@@ -269,17 +281,20 @@ public class MenuListener implements ActionListener {
                     uniqueSelectedIds.add(docId);
                 }
             });
-            setupFileChooser();
-            fileChooser.setFileFilter(csvFilter);
-            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-            if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
-                File file = fileChooser.getSelectedFile();
-                if (!file.getName().endsWith(CSV)) {
-                    file = new File(file.getAbsolutePath() + CSV);
+            setupColumnsSelector();
+            if (ColumnsSelectUI.getOkButtonClicked()) {
+                setupFileChooser();
+                fileChooser.setFileFilter(csvFilter);
+                fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
+                    File file = fileChooser.getSelectedFile();
+                    if (!file.getName().endsWith(CSV)) {
+                        file = new File(file.getAbsolutePath() + CSV);
+                    }
+                    ArrayList<String> loadedSelectedFields = ColumnsSelectUI.loadSavedFields();
+                    (new CopyProperties(file, uniqueSelectedIds, loadedSelectedFields)).execute();
                 }
-                (new CopyProperties(file, uniqueSelectedIds)).execute();
             }
-
         } else if (e.getSource() == menu.exportChecked) {
             ArrayList<IItemId> uniqueSelectedIds = new ArrayList<IItemId>();
             for (IPEDSource source : App.get().appCase.getAtomicSources()) {
@@ -357,15 +372,15 @@ public class MenuListener implements ActionListener {
 
         } else if (e.getSource() == menu.manageColumns) {
 
-            ColumnsManager.getInstance().setVisible();
+            ColumnsManagerUI.getInstance().setVisible();
 
         } else if (e.getSource() == menu.pinFirstColumns) {
 
-            int pinned = ColumnsManager.getInstance().getPinnedColumns();
+            int pinned = ColumnsManagerUI.getInstance().getPinnedColumns();
             String msg = Messages.getString("MenuListener.PinFirstCols");
             SpinnerDialog dialog = new SpinnerDialog(App.get(), msg, msg + ":", pinned, 2, 12);
             dialog.setVisible(true);
-            ColumnsManager.getInstance().setPinnedColumns(dialog.getSelectedValue());
+            ColumnsManagerUI.getInstance().setPinnedColumns(dialog.getSelectedValue());
 
         } else if (e.getSource() == menu.manageFilters) {
 
@@ -390,10 +405,10 @@ public class MenuListener implements ActionListener {
             SimilarImagesFilterActions.searchSimilarImages(true);
 
         } else if (e.getSource() == menu.similarFacesCurrent) {
-            SimilarFacesFilterActions.searchSimilarImages(false);
+            SimilarFacesFilterActions.searchSimilarFaces(false);
 
         } else if (e.getSource() == menu.similarFacesExternal) {
-            SimilarFacesFilterActions.searchSimilarImages(true);
+            SimilarFacesFilterActions.searchSimilarFaces(true);
 
         } else if (e.getSource() == menu.similarDocs) {
             int selIdx = App.get().resultsTable.getSelectedRow();
@@ -419,13 +434,13 @@ public class MenuListener implements ActionListener {
             new ReportDialog().setVisible();
 
         } else if (e.getSource() == menu.lastColLayout) {
-            ColumnsManager.getInstance().resetToLastLayout();
+            ColumnsManagerUI.getInstance().resetToLastLayout();
 
         } else if (e.getSource() == menu.saveColLayout) {
             ColumnsManager.getInstance().saveColumnsState();
 
         } else if (e.getSource() == menu.resetColLayout) {
-            ColumnsManager.getInstance().resetToDefaultLayout();
+            ColumnsManagerUI.getInstance().resetToDefaultLayout();
         } else if (e.getSource() == menu.addToGraph) {
             int[] rows = App.get().resultsTable.getSelectedRows();
             List<ItemId> items = new ArrayList<>(rows.length);
