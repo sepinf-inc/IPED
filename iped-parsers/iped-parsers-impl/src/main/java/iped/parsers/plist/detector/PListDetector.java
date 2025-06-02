@@ -9,10 +9,12 @@ import java.text.ParseException;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.detect.Detector;
 import org.apache.tika.detect.apple.BPListDetector;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.xml.sax.SAXException;
 
@@ -34,8 +36,9 @@ public class PListDetector implements Detector {
   public static MediaType WA_USER_PLIST = MediaType.application("x-whatsapp-user-plist");
   public static MediaType THREEMA_USER_PLIST = MediaType.application("x-threema-user-plist");
   public static MediaType NSKEYEDARCHIVER_PLIST = MediaType.application("x-apple-nskeyedarchiver");
+  public static MediaType CAAR_PLIST = MediaType.application("x-plist-caar");
 
-    public static MediaType detectOnDict(NSDictionary dict) {
+    public static MediaType detectOnDict(NSDictionary dict, Metadata metadata) {
 
         MediaType type = BPListDetector.detectOnKeys(dict.keySet());
         if (!BPListDetector.BPLIST.equals(type)) {
@@ -46,6 +49,8 @@ public class PListDetector implements Detector {
             return WA_USER_PLIST;
         } else if (dict.containsKey("Threema device ID")) {
             return THREEMA_USER_PLIST;
+        } else if (isCAAR(metadata)) {
+            return CAAR_PLIST;
         } else if (isNSKeyedArchiver(dict)) {
             return NSKEYEDARCHIVER_PLIST;
         }
@@ -60,6 +65,11 @@ public class PListDetector implements Detector {
             }
         }
         return false;
+    }
+
+    public static boolean isCAAR(Metadata metadata) {
+        String ext = StringUtils.substringAfterLast(metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY), ".");
+        return "caar".equals(ext);
     }
 
     /**
@@ -108,7 +118,7 @@ public class PListDetector implements Detector {
             throw new IOException("problem parsing root", e);
         }
         if (rootObj instanceof NSDictionary) {
-            return detectOnDict((NSDictionary) rootObj);
+            return detectOnDict((NSDictionary) rootObj, metadata);
         }
         return BPLIST;
     }
