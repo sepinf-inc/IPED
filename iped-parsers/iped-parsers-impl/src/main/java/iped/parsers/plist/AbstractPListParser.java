@@ -114,7 +114,15 @@ public abstract class AbstractPListParser<T> implements Parser {
             }
         }
 
-        XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
+        XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata) {
+            @Override
+            public void endElement(String name) throws SAXException {
+                super.endElement(name);
+                if ("summary".equals(name)) {
+                    newline();
+                }
+            }
+        };
         xhtml.startDocument();
 
         try {
