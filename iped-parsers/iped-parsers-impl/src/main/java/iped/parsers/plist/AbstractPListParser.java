@@ -60,7 +60,7 @@ public abstract class AbstractPListParser<T> implements Parser {
 
     protected static final String SUMMARY_SUFFIX = ": ";
 
-    protected static final int MAX_POSSIBLE_DATA_LENGTH = 32765;
+    protected static final int MAX_POSSIBLE_DATES_LENGTH = 32 * 1024; // 32 KB
     protected static final int MAX_BASE64_LENGTH_TO_PRINT = 40;
 
     protected static final String PLIST_META_PREFIX = "plist:";
@@ -153,12 +153,7 @@ public abstract class AbstractPListParser<T> implements Parser {
 
     protected void addDateMetadata(Date date, String metadataName, State state) {
         String dateStr = DateUtil.dateToString(date);
-        String currentValue = state.metadata.get(metadataName);
-        if (currentValue == null || (currentValue.length() + dateStr.length()) <= MAX_POSSIBLE_DATA_LENGTH) {
-            state.metadata.add(metadataName, dateStr);
-        } else {
-            getLogger().warn("Metadata [{}] has too many dates. Skipping the value [{}]", metadataName, dateStr);
-        }
+        state.metadata.add(metadataName, dateStr);
     }
 
     protected void extractDataAsSubItem(NSData data, String path, State state) throws SAXException {
@@ -329,7 +324,12 @@ public abstract class AbstractPListParser<T> implements Parser {
             state.xhtml.endElement("p");
 
             // add possible date in metadata
-            addDateMetadata(possibleDate, PLIST_POSSIBLE_DATES_META, state);
+            String currentValue = state.metadata.get(PLIST_POSSIBLE_DATES_META);
+            if (currentValue == null || currentValue.length() + 23 <= MAX_POSSIBLE_DATES_LENGTH) { // 23 is length to be added
+                addDateMetadata(possibleDate, PLIST_POSSIBLE_DATES_META, state);
+            } else {
+                getLogger().warn("Metadata [{}] has too many dates. Skipping the value [{}]", PLIST_POSSIBLE_DATES_META, possibleDate);
+            }
         }
     }
 
