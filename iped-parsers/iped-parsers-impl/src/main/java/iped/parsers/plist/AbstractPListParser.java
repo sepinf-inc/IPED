@@ -339,7 +339,7 @@ public abstract class AbstractPListParser<T> implements Parser {
         state.xhtml.startElement("em");
         state.xhtml.characters("(data)");
         state.xhtml.endElement("em");
-        state.xhtml.characters(": " + escapeHtml4(displayText) + " (Base64 encoded, " + dataText.length() + " chars)");
+        state.xhtml.characters(": " + escapeHtml4(displayText) + " (Base64 encoded, " + value.length() + " bytes)");
         state.xhtml.endElement("p");
 
         extractDataAsSubItem(value, path, state);
