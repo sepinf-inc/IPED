@@ -198,7 +198,6 @@ public class HTMLReportTask extends AbstractTask {
     private static boolean bookmarkThumbPDFSet = false;
     private static boolean categoryThumbPDFSet = false;   
     private boolean PDFReport = false; 
-
     private static Collator getCollator() {
         LocaleConfig localeConfig = ConfigurationManager.get().findObject(LocaleConfig.class);
 
