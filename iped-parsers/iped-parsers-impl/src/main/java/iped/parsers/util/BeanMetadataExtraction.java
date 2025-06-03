@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TimeZone;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.metadata.HttpHeaders;
@@ -204,7 +205,7 @@ public class BeanMetadataExtraction {
                                             value = new Date(((Date) value).getTime() - offset);
                                         }
                                         entryMetadata.add(metadataName, DateUtil.dateToString((Date) value));
-                                    } else {
+                                    } else if (!isCollectionEmpty(value)) {
                                         entryMetadata.add(metadataName, value.toString());
                                     }
                                 }
@@ -242,7 +243,7 @@ public class BeanMetadataExtraction {
                                     value = new Date(((Date) value).getTime() - offset);
                                 }
                                 entryMetadata.add(metadataName, DateUtil.dateToString((Date) value));
-                            } else {
+                            } else if (!isCollectionEmpty(value)) {
                                 entryMetadata.add(metadataName, value.toString());
                             }
                         }
@@ -298,6 +299,14 @@ public class BeanMetadataExtraction {
         }
 
         return result;
+    }
+
+    public boolean isCollectionEmpty(Object value) {
+        try {
+            return CollectionUtils.sizeIsEmpty(value);
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 
     public boolean isBean(Object value) {
