@@ -161,12 +161,10 @@ public abstract class AbstractPListParser<T> implements Parser {
     }
 
     protected void extractDataAsSubItem(NSData data, String path, State state) throws SAXException {
-
-        Metadata entryMetadata = new Metadata();
-        entryMetadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, path);
-        entryMetadata.set(TikaCoreProperties.TITLE, path); // avoid extension fill
-
-        if (state.embeddedDocumentExtractor.shouldParseEmbedded(entryMetadata)) {
+        if (state.embeddedDocumentExtractor.shouldParseEmbedded(state.metadata)) {
+            Metadata entryMetadata = new Metadata();
+            entryMetadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, path);
+            entryMetadata.set(TikaCoreProperties.TITLE, path); // avoid extension fill
 
             try (TikaInputStream tis = TikaInputStream.get(data.bytes())) {
 
