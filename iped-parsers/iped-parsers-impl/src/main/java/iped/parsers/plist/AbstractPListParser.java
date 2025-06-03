@@ -31,6 +31,7 @@ import org.apache.tika.sax.XHTMLContentHandler;
 import org.slf4j.Logger;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
+import org.xml.sax.helpers.AttributesImpl;
 
 import com.dd.plist.NSArray;
 import com.dd.plist.NSData;
@@ -45,8 +46,6 @@ import com.dd.plist.PropertyListParser;
 import com.dd.plist.UID;
 
 import iped.data.IItemReader;
-import iped.parsers.util.IgnoreContentHandler;
-import iped.properties.BasicProps;
 import iped.utils.DateUtil;
 
 /**
@@ -157,6 +156,10 @@ public abstract class AbstractPListParser<T> implements Parser {
 
     protected abstract void processAndGenerateHTMLContent(NSObject obj, State state) throws SAXException, TikaException;
 
+    protected AttributesImpl createAtributes(State state) {
+        return new AttributesImpl();
+    }
+
     protected void extractDataAsSubItem(NSData data, String path, State state) throws SAXException {
 
         Metadata entryMetadata = new Metadata();
@@ -209,11 +212,11 @@ public abstract class AbstractPListParser<T> implements Parser {
     protected void processDictionary(NSDictionary obj, String path, State state, boolean open) throws SAXException {
 
         if (StringUtils.isEmpty(path)) {
+            AttributesImpl attrs = createAtributes(state);
             if (open) {
-                state.xhtml.startElement("details", "open", "true");
-            } else {
-                state.xhtml.startElement("details");
+                attrs.addAttribute("", "open", "", "", "true");
             }
+            state.xhtml.startElement("details", attrs);
             state.xhtml.startElement("summary");
             processItemsCount(state, "Dictionary", obj.count());
             state.xhtml.endElement("summary");
@@ -262,7 +265,7 @@ public abstract class AbstractPListParser<T> implements Parser {
 
     protected void processArray(NSArray obj, String path, State state) throws SAXException {
 
-        state.xhtml.startElement("ol");
+        state.xhtml.startElement("ol", createAtributes(state));
 
         for (NSObject member : obj.getArray()) {
             state.xhtml.startElement("li");
@@ -275,7 +278,7 @@ public abstract class AbstractPListParser<T> implements Parser {
 
     protected void processSet(NSSet obj, String path, State state) throws SAXException {
 
-        state.xhtml.startElement("ul");
+        state.xhtml.startElement("ul", createAtributes(state));
 
         for (NSObject member : obj.allObjects()) {
             state.xhtml.startElement("li");
@@ -287,7 +290,7 @@ public abstract class AbstractPListParser<T> implements Parser {
     }
 
     protected void processSimpleText(String text, String type, State state) throws SAXException {
-        state.xhtml.startElement("p");
+        state.xhtml.startElement("p", createAtributes(state));
         state.xhtml.startElement("em");
         state.xhtml.characters("(" + escapeHtml4(type) + ")");
         state.xhtml.endElement("em");
@@ -335,7 +338,7 @@ public abstract class AbstractPListParser<T> implements Parser {
         if (dataText.length() > MAX_BASE64_LENGTH_TO_PRINT) {
             displayText = dataText.substring(0, MAX_BASE64_LENGTH_TO_PRINT) + "...";
         }
-        state.xhtml.startElement("p");
+        state.xhtml.startElement("p", createAtributes(state));
         state.xhtml.startElement("em");
         state.xhtml.characters("(data)");
         state.xhtml.endElement("em");

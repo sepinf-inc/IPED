@@ -37,7 +37,6 @@ import com.dd.plist.UID;
 import iped.data.IItemReader;
 import iped.parsers.plist.detector.PListDetector;
 import iped.parsers.standard.StandardParser;
-import iped.parsers.util.IgnoreContentHandler;
 import iped.properties.BasicProps;
 import iped.utils.DateUtil;
 import iped.utils.EmptyInputStream;
@@ -103,6 +102,15 @@ public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverPa
     @Override
     protected Logger getLogger() {
         return logger;
+    }
+
+    @Override
+    protected AttributesImpl createAtributes(State state) {
+        AttributesImpl attr = new AttributesImpl();
+        if (state.extra.currentUID != null) {
+            attr.addAttribute("", "id", "", "", JS_UID_ID_PREFIX + getUIDInteger(state.extra.currentUID));
+        }
+        return attr;
     }
 
     @Override
@@ -263,7 +271,7 @@ public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverPa
             NSDictionary newDict = obj.clone();
             newDict.remove(CLASS);
 
-            state.xhtml.startElement("details", createAtribute(state.extra.currentUID));
+            state.xhtml.startElement("details", createAtributes(state));
             state.xhtml.startElement("summary");
             state.xhtml.characters(escapeHtml4(className) + SUMMARY_SUFFIX);
             processItemsCount(state, "dictionary", newDict.size());
@@ -369,7 +377,7 @@ public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverPa
         NSArray array = (NSArray) obj.get(NS_OBJECTS);
         String className = getNSClassName(obj, state.extra.objects);
 
-        state.xhtml.startElement("details", createAtribute(state.extra.currentUID));
+        state.xhtml.startElement("details", createAtributes(state));
         state.xhtml.startElement("summary");
         state.xhtml.characters(escapeHtml4(className) + SUMMARY_SUFFIX);
         processItemsCount(state, "Keyed Archive array", array.count());
@@ -382,7 +390,7 @@ public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverPa
 
     private void processKADictionary(NSDictionary obj, String path, State state) throws SAXException {
 
-        state.xhtml.startElement("details", createAtribute(state.extra.currentUID));
+        state.xhtml.startElement("details", createAtributes(state));
         state.xhtml.startElement("summary");
         String className = getNSClassName(obj, state.extra.objects);
         state.xhtml.characters(escapeHtml4(className) + SUMMARY_SUFFIX);
@@ -439,13 +447,5 @@ public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverPa
         }
 
         state.xhtml.endElement("details");
-    }
-
-    private AttributesImpl createAtribute(UID uid) {
-        AttributesImpl attr = new AttributesImpl();
-        if (uid != null) {
-            attr.addAttribute("", "id", "", "", JS_UID_ID_PREFIX + getUIDInteger(uid));
-        }
-        return attr;
     }
 }
