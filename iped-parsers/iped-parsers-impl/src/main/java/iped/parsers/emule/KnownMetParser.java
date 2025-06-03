@@ -115,7 +115,7 @@ public class KnownMetParser extends AbstractParser {
             bme.registerPropertyNameMapping(KnownMetEntry.class, "hash", "ed2k");
             bme.registerTransformationMapping(KnownMetEntry.class, ExtraProperties.LINKED_ITEMS, "edonkey:${hash}");
             bme.registerTransformationMapping(KnownMetEntry.class, ExtraProperties.SHARED_HASHES, "${hash}");
-            bme.registerTransformationMapping(KnownMetEntry.class, BasicProps.NAME, "Known-Entry-${name}.met");            
+            bme.registerTransformationMapping(KnownMetEntry.class, BasicProps.NAME, "Known-Entry-[${name}].met");
         }
 
         List<KnownMetEntry> l = iped.parsers.emule.KnownMetDecoder.parseToList(stream);
