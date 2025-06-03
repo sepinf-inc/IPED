@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.http.HttpConnectTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -17,9 +18,11 @@ import java.sql.Statement;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -34,6 +37,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.HttpHostConnectException;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustStrategy;
@@ -146,6 +150,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
     private static final AtomicInteger cacheStoreCount = new AtomicInteger();
     private static final AtomicLong cacheRetrieveTime = new AtomicLong();
     private static final AtomicInteger cacheRetrieveCount = new AtomicInteger();
+    private static final AtomicLong cacheStoreFailTime = new AtomicLong();
     private static final AtomicInteger cacheStoreFailEvidenceCount = new AtomicInteger();
 
     // Variables for debugging purposes
@@ -326,7 +331,9 @@ public class RemoteImageClassifierTask extends AbstractTask {
                 psInsertFail.setString(1, id);
                 psInsertFail.setInt(2, code);
                 psInsertFail.setInt(3, retry);
+                long t = System.currentTimeMillis();
                 psInsertFail.executeUpdate();
+                cacheStoreFailTime.addAndGet(System.currentTimeMillis() - t);
                 cacheStoreFailEvidenceCount.incrementAndGet();
             }
         } catch (SQLException e) {
@@ -388,10 +395,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
         if (totClassifications != 0) {
             logger.info(" Files sent for classification: " + totClassifications);
             logger.info("  Successful classifications: " + classificationSuccess.intValue());
-            if (cacheStoreFailEvidenceCount.intValue() == 0)
-                logger.info("  Failed classifications: " + classificationFail.intValue());
-            else
-                logger.info("  Failed classifications: " + classificationFail.intValue() + " (failed cache: " + cacheStoreFailEvidenceCount.intValue() + ")");
+            logger.info("  Failed classifications: " + classificationFail.intValue());
             if (countImageThumbs.intValue() > 0)
                 logger.info("  Image files: " + countImageThumbs.intValue() + " (1 thumb/image)");
             if (countVideoFiles.intValue() > 0)
@@ -418,10 +422,18 @@ public class RemoteImageClassifierTask extends AbstractTask {
             logger.info("  Skipped classification by hashDBFiles: " + skipHashDBFilesCount.intValue());
             logger.info("  Skipped classification by duplicates: " + skipDuplicatesCount.intValue());
             logger.info("   Cache file size: " + formatNumberToKMGUnits(db.length()));
-            if (cacheStoreCount.intValue() > 0)
+            if (cacheStoreCount.intValue() == 0)
+                logger.info("   Cache store operations: 0");
+            else
                 logger.info("   Cache store operations: " + cacheStoreCount.intValue() + "; average operation time (ms): " + String.format("%.3f", ((float) cacheStoreTime.longValue() / cacheStoreCount.intValue())));
-            if (cacheRetrieveCount.intValue() > 0)
+            if (cacheRetrieveCount.intValue() == 0)
+                logger.info("   Cache retrieve operations: 0");
+            else
                 logger.info("   Cache retrieve operations: " + cacheRetrieveCount.intValue() + "; average operation time (ms): " + String.format("%.3f", ((float) cacheRetrieveTime.longValue() / cacheRetrieveCount.intValue())));
+            if (cacheStoreFailEvidenceCount.intValue() == 0)
+                logger.info("   Cache 'fail' store operations: 0");
+            else
+                logger.info("   Cache 'fail' store operations: " + cacheStoreFailEvidenceCount.intValue() + "; average operation time (ms): " + String.format("%.3f", ((float) cacheStoreFailTime.longValue() / cacheStoreFailEvidenceCount.intValue())));
             skipSizeCount.set(0);
             skipDimensionCount.set(0);
             skipHashDBFilesCount.set(0);
@@ -453,16 +465,22 @@ public class RemoteImageClassifierTask extends AbstractTask {
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode jsonResponse = objectMapper.readTree(responseStream);
         logger.debug("Server Response: {}", jsonResponse.toPrettyString());
+        
+        // Queue to store 'name' of failed evidences
+        Set<String> queueFail = new HashSet<>();
+
         // Get 'tag' metadata from response
         JsonNode metadataNode = jsonResponse.get("metadata");
         String tag = "";
         if (metadataNode != null && metadataNode.get("tag") != null) {
             tag = metadataNode.get("tag").asText();
         }
+        
         // Get 'results' from response
         JsonNode resultArray = jsonResponse.get("results");       
         Map<String,ResultItem> results = new TreeMap<>();
         if (resultArray != null && resultArray.isArray()) {
+            // Process 'results'
             for (JsonNode item : resultArray) {
                 // Checks result item for 'filename' field
                 String name = item.get("filename").asText();
@@ -502,16 +520,24 @@ public class RemoteImageClassifierTask extends AbstractTask {
                     if (evidence != null) {
                         // Matching evidence found
 
-                        // Classification fail
-                        classificationFail.incrementAndGet();
+                        // Add classification fail info, if not already exists
+                        // Avoids duplicate counting of failed videos, in case of classification problem with more than one thumb
+                        if (!queueFail.contains(name)) {
+                            // Add evidence to the fail queue
+                            // Avoids signaling evidence classification success later on for videos with classification problem with some, but not all, thumbs
+                            queueFail.add(name);
 
-                        // Add classification status
-                        evidence.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_FAIL);
+                            // Classification fail
+                            classificationFail.incrementAndGet();
 
-                        // Store failed evidence in case cache
-                        storeFailEvidenceInDb(evidence.getExtraAttribute(IndexItem.TRACK_ID).toString(), AI_CLASSIFICATION_FAIL_NO_CLASS, 0);
+                            // Add classification status
+                            evidence.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_FAIL);
 
-                        logger.error("Invalid/missing 'class' field for filename: {}", name);
+                            // Store failed evidence in case cache
+                            storeFailEvidenceInDb(evidence.getExtraAttribute(IndexItem.TRACK_ID).toString(), AI_CLASSIFICATION_FAIL_NO_CLASS, 0);
+
+                            logger.error("Invalid/missing 'class' field for filename: {}", name);
+                        }
                     }
                     else {
                         // No matching evidence found
@@ -527,6 +553,11 @@ public class RemoteImageClassifierTask extends AbstractTask {
                 if (name == null || (evidence = queue.get(name)) == null) {
                     // No matching evidence found
                     logger.warn("No matching evidence found");
+                    continue;
+                }
+                // Check if evidence is in fail queue
+                if (name != null && queueFail.contains(name)) {
+                    // Classification failed
                     continue;
                 }
                 // Check if classes are not missing
@@ -626,10 +657,12 @@ public class RemoteImageClassifierTask extends AbstractTask {
                     }
                 } else {
                     // Classification fail
-                    classificationFail.addAndGet(zip.getFileCount());
                     
                     // Store fail information for each evidence in queue
                     for (IItem evidence : queue.values()) {
+                        // Classification fail
+                        classificationFail.incrementAndGet();
+
                         // Add classification status
                         evidence.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_FAIL);
 
@@ -649,19 +682,23 @@ public class RemoteImageClassifierTask extends AbstractTask {
             }
         }
         catch (IOException e) {
+            // Generic exception handling
+
             // Classification fail
-            classificationFail.addAndGet(zip.getFileCount());
             
             // Store fail information for each evidence in queue
             for (IItem evidence : queue.values()) {
+                // Classification fail
+                classificationFail.incrementAndGet();
+
                 // Add classification status
                 evidence.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_FAIL);
 
                 // Store failed evidence in case cache
                 storeFailEvidenceInDb(evidence.getExtraAttribute(IndexItem.TRACK_ID).toString(), AI_CLASSIFICATION_FAIL_OTHER, 0);
-            }                    
+            }
 
-            logger.error("Failed to upload ZIP file #{}. {}", currentBatch, e.getMessage());
+            logger.error("Failed to upload ZIP file #{}. {}", currentBatch, e.getClass().getName() + ": " + e.getMessage());
         }
     }
 
