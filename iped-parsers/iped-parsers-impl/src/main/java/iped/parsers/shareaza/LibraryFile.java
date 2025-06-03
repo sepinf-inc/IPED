@@ -122,7 +122,7 @@ public class LibraryFile extends ShareazaEntity {
             shared = Util.decodeTriState(ar.readInt());
         } else {
             if (ar.readByte() == 0) {
-                shared = Util.TRI_STATE_TRUE;
+                shared = Util.TRI_STATE_FALSE;
             } else {
                 shared = Util.TRI_STATE_UNKNOWN;
             }
