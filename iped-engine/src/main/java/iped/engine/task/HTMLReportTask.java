@@ -425,7 +425,6 @@ public class HTMLReportTask extends AbstractTask {
         arguments.add("page");
 
         Collections.sort(arqsHmltList);
-        arqsHmltList.forEach(System.out::println);
 
         String stag = "<title>";
         String etag = ":";
@@ -466,16 +465,7 @@ public class HTMLReportTask extends AbstractTask {
         Thread readThread = null;
         try {
 
-            //For Debug only            
-            try (BufferedReader br = new BufferedReader(new FileReader(pdf_cmds))) {
-                String line;
-                while ((line = br.readLine()) != null) {
-                    System.out.println(line);
-                }
-            }
-
             String[] cmd = { wkhtmltopdf, "--read-args-from-stdin"};
-            System.out.println(Arrays.toString(cmd));
             ProcessBuilder pb = new ProcessBuilder(cmd);
             pb.redirectErrorStream(true);
             pb.redirectInput(pdf_cmds);
@@ -590,8 +580,8 @@ public class HTMLReportTask extends AbstractTask {
 			boolean found = false;
             if (file.exists()) {
 				for (String keyword : keywords) {
-					try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-						String line;						
+					try (BufferedReader reader = new BufferedReader(new FileReader(file,StandardCharsets.UTF_8))) {
+						String line;			
 						while ((line = reader.readLine()) != null) {
 							if (line.contains(stag+keyword+etag)) {
 								keywordGroups.computeIfAbsent(keyword, k -> new ArrayList<>()).add(filePath);
@@ -606,18 +596,17 @@ public class HTMLReportTask extends AbstractTask {
 				}
             } 
         }
-		keywordGroups.forEach((key, value) -> System.out.println(key + ":" + value));
 		return keywordGroups;
     }
 
     public static void mergeFiles(List<String> filePaths, File outputFile) throws IOException {
         
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile,StandardCharsets.UTF_8))) {
             String fixNewPagePDF = "<div style = \"display:block; clear:both; page-break-after:avoid;\"></div>";
             for (String filePath : filePaths) {
                 File file = new File(filePath);
                 if (file.exists()) {
-                    try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+                    try (BufferedReader reader = new BufferedReader(new FileReader(file,StandardCharsets.UTF_8))) {
                         String line;
                         while ((line = reader.readLine()) != null) {
                             writer.write(line);
@@ -1036,7 +1025,7 @@ public class HTMLReportTask extends AbstractTask {
                 }
             }
             if (selectedProperties.contains(IndexItem.ID_IN_SOURCE)) {
-                String export = reg.export == null ? "-" : "<b><a href=\"../" + reg.export + "\">" + reg.export + "</a></b>";
+                String export = reg.export == null ? "-" : "<b><a href=\"../" + reg.export.replace("\\","/") + "\">" + reg.export + "</a></b>";
                 fillItemProperty(it, item, Messages.getString("HTMLReportTask.ItemIdInSource"), export);
             }
 
