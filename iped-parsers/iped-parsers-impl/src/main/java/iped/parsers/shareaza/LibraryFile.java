@@ -212,7 +212,7 @@ public class LibraryFile extends ShareazaEntity {
         }
     }
 
-    public boolean isShared() {
+    public boolean isSharedTrue() {
         return "True".equals(getInheritedShared()); //$NON-NLS-1$
     }
 

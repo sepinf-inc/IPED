@@ -131,6 +131,7 @@ public class ShareazaLibraryDatParser extends AbstractParser {
             bme.addPropertyExclusion(LibraryFile.class, "hashDBHit");
             bme.addPropertyExclusion(LibraryFile.class, "hashSetHits");
             bme.addPropertyExclusion(LibraryFile.class, "sharedSources");
+            bme.addPropertyExclusion(LibraryFile.class, "sharedTrue");
             bme.registerClassNameProperty(LibraryFolder.class, "path");
             bme.registerClassNameProperty(AlbumFolder.class, "name");
             bme.registerTransformationMapping(LibraryFile.class, ExtraProperties.LINKED_ITEMS, "md5:${md5}");
@@ -153,7 +154,7 @@ public class ShareazaLibraryDatParser extends AbstractParser {
         for (LibraryFolder folder : library.getLibraryFolders().getLibraryFolders())
             numRegistros += countLibraryFiles(folder);
         numRegistros += countLibraryFiles(library.getLibraryFolders().getAlbumRoot(), library.getLibraryFolders().getIndexToFile());
-        metadata.set(ExtraProperties.P2P_REGISTRY_COUNT, String.valueOf(numRegistros));
+        metadata.set(ExtraProperties.P2P_REGISTRY_COUNT, Integer.toString(numRegistros));
 
         int hashDBHits = countHashDBHits(library.getLibraryFolders());
 
@@ -172,13 +173,13 @@ public class ShareazaLibraryDatParser extends AbstractParser {
     }
 
     private void storeSharedHashes(LibraryFile file, Metadata metadata) {
-        if (file.isShared() && file.getMd5() != null && file.getMd5().length() == 32) {
+        if (file.isSharedTrue() && file.getMd5() != null && file.getMd5().length() == 32) {
             metadata.add(ExtraProperties.SHARED_HASHES, file.getMd5());
         }
-        if (file.isShared() && file.getSha1() != null && file.getSha1().length() == 40) {
+        if (file.isSharedTrue() && file.getSha1() != null && file.getSha1().length() == 40) {
             metadata.add(ExtraProperties.SHARED_HASHES, file.getSha1());
         }
-        if (file.isShared() && file.getEd2k() != null && file.getEd2k().length() == 32) {
+        if (file.isSharedTrue() && file.getEd2k() != null && file.getEd2k().length() == 32) {
             metadata.add(ExtraProperties.SHARED_HASHES, file.getEd2k());
         }
     }
