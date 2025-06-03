@@ -31,6 +31,10 @@ import org.apache.commons.codec.binary.Base64;
  */
 class Util {
 
+    public static final String TRI_STATE_UNKNOWN = "Unknown";
+    public static final String TRI_STATE_TRUE = "True";
+    public static final String TRI_STATE_FALSE = "False";
+
     public static String encodeGUID(byte[] bytes) {
         long u1 = (long) (bytes[7]) << 56 | (long) (bytes[6] & 0xff) << 48 | (long) (bytes[5] & 0xff) << 40
                 | (long) (bytes[4] & 0xff) << 32 | (long) (bytes[3] & 0xff) << 24 | (long) (bytes[2] & 0xff) << 16
@@ -75,12 +79,12 @@ class Util {
     public static String decodeTriState(int state) {
         switch (state) {
             case 1:
-                return "False"; //$NON-NLS-1$
+                return TRI_STATE_FALSE; //$NON-NLS-1$
             case 2:
-                return "True"; //$NON-NLS-1$
+                return TRI_STATE_TRUE; //$NON-NLS-1$
             default:
         }
-        return "Unknown"; //$NON-NLS-1$
+        return TRI_STATE_UNKNOWN; //$NON-NLS-1$
     }
 
     // DateFormat nao é thread safe
