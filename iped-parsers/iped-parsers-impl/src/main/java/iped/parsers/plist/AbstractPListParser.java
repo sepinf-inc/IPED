@@ -167,7 +167,7 @@ public abstract class AbstractPListParser<T> implements Parser {
 
             try (TikaInputStream tis = TikaInputStream.get(data.bytes())) {
 
-                state.embeddedDocumentExtractor.parseEmbedded(tis, new IgnoreContentHandler(), entryMetadata, true);
+                state.embeddedDocumentExtractor.parseEmbedded(tis, state.xhtml, entryMetadata, true);
 
             } catch (IOException e) {
                 getLogger().warn("Error adding plist data as sub-item " + state.metadata + ">>" + path, e);

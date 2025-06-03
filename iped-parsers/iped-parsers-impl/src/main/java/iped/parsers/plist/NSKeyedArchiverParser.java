@@ -16,7 +16,10 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.exception.TikaException;
+import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
 import org.slf4j.Logger;
@@ -33,6 +36,11 @@ import com.dd.plist.UID;
 
 import iped.data.IItemReader;
 import iped.parsers.plist.detector.PListDetector;
+import iped.parsers.standard.StandardParser;
+import iped.parsers.util.IgnoreContentHandler;
+import iped.properties.BasicProps;
+import iped.utils.DateUtil;
+import iped.utils.EmptyInputStream;
 
 public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverParser.Extra> {
 
@@ -48,22 +56,35 @@ public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverPa
     private static final String TOP_KEY = "$top";
     private static final String OBJECTS_KEY = "$objects";
 
+    private static final String NULL = "$null";
     private static final String CLASS = "$class";
     private static final String CLASSNAME = "$classname";
     private static final String NS_TIME = "NS.time";
     private static final String NS_OBJECTS = "NS.objects";
     private static final String NS_KEYS = "NS.keys";
 
+    public static final MediaType APPLE_LOCATION = MediaType.application("x-apple-location");
+
+    private static final String PLIST_LOC_META_PREFIX = PLIST_META_PREFIX + "loc:";
+
+    private static final String CL_LOCATION = "CLLocation";
+    private static final String CL_LOCATION_PREFIX = "kCLLocationCodingKey";
+    private static final String CL_LOCATION_RAW_PREFIX = CL_LOCATION_PREFIX + "Raw";
+    private static final String CL_LOCATION_LONGITUDE = CL_LOCATION_PREFIX + "CoordinateLongitude";
+    private static final String CL_LOCATION_LATITUDE = CL_LOCATION_PREFIX + "CoordinateLatitude";
+    private static final String CL_LOCATION_ALTITUDE = CL_LOCATION_PREFIX + "Altitude";
+    private static final String CL_LOCATION_TIMESTAMP = CL_LOCATION_PREFIX + "Timestamp";
+
     private static String jsContent;
 
     public class Extra {
         NSArray objects;
-        Set<NSObject> alreadyVisitedObjects;
+        Set<UID> alreadyVisitedUIDs;
         UID currentUID;
 
-        public Extra(NSArray objects, Set<NSObject> alreadyVisitedObjects) {
+        public Extra(NSArray objects, Set<UID> alreadyVisitedUIDs) {
             this.objects = objects;
-            this.alreadyVisitedObjects = alreadyVisitedObjects;
+            this.alreadyVisitedUIDs = alreadyVisitedUIDs;
         }
     }
 
@@ -118,8 +139,8 @@ public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverPa
 
         try {
             // process NSKeyedArchiver
-            Set<NSObject> alreadyVisitedObjects = new HashSet<>(); // array to control already written objects and avoid infinite loops
-            state.extra = new Extra((NSArray) objects, alreadyVisitedObjects);
+            Set<UID> alreadyVisitedUIDs = new HashSet<>(); // array to control already written objects and avoid infinite loops
+            state.extra = new Extra((NSArray) objects, alreadyVisitedUIDs);
             processTop((NSDictionary) top, state);
 
             // add JS
@@ -157,6 +178,13 @@ public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverPa
                 && ((NSDictionary) obj).containsKey(NS_OBJECTS);
     }
 
+    public boolean isKALocation(NSObject obj, String path) {
+        return (obj instanceof NSDictionary) //
+                && path.endsWith(CL_LOCATION) //
+                && ((NSDictionary) obj).containsKey(CL_LOCATION_LATITUDE) //
+                && ((NSDictionary) obj).containsKey(CL_LOCATION_LONGITUDE);
+    }
+
     public String getNSClassName(NSDictionary obj, NSArray objects) {
         try {
             int uidInt = getUIDInteger((UID) obj.get(CLASS));
@@ -188,24 +216,28 @@ public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverPa
         // replace obj in case it is UID
         state.extra.currentUID = null;
         if (obj instanceof UID) {
-            state.extra.currentUID = (UID) obj;
-            obj = state.extra.objects.objectAtIndex(getUIDInteger(state.extra.currentUID));
+            UID uid = (UID) obj;
+
+            // checks if object was already written to avoid infinite loops
+            if (state.extra.alreadyVisitedUIDs.contains(uid)) {
+                processVisitedObject(uid, state);
+                return;
+            } else {
+                state.extra.currentUID = uid;
+                obj = state.extra.objects.objectAtIndex(getUIDInteger(uid));
+                state.extra.alreadyVisitedUIDs.add(uid);
+            }
         }
 
         if (isPrimitive(obj)) {
             super.processObject(obj, path, state, false);
         } else {
 
-            // checks if object was already written to avoid infinite loops
-            if (state.extra.alreadyVisitedObjects.contains(obj)) {
-                processVisitedObject(obj, path, state);
-                return;
-            } else {
-                state.extra.alreadyVisitedObjects.add(obj);
-            }
-
             if (isNSTime(obj)) {
                 processNSTime((NSDictionary) obj, state);
+
+            } else if (isKALocation(obj, path)) {
+                processKALocation((NSDictionary) obj, path, state);
 
             } else if (isKAArray(obj)) {
                 processKAArray((NSDictionary) obj, path, state);
@@ -237,7 +269,9 @@ public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverPa
             processItemsCount(state, "dictionary", newDict.size());
             state.xhtml.endElement("summary");
 
-            super.processDictionary(newDict, appendPath(path, className), state, open);
+            if (!obj.isEmpty()) {
+                processObject(newDict, appendPath(path, className), state, open);
+            }
 
             state.xhtml.endElement("details");
         } else {
@@ -245,28 +279,89 @@ public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverPa
         }
     }
 
-    private void processVisitedObject(NSObject obj, String path, State state) throws SAXException {
-        if (state.extra.currentUID != null) {
-            state.xhtml.startElement("p");
+    private void processVisitedObject(UID uid, State state) throws SAXException {
+        int uidInt = getUIDInteger(uid);
+        state.xhtml.startElement("p");
+        AttributesImpl attrs = new AttributesImpl();
+        attrs.addAttribute("", "href", "", "", "#");
+        attrs.addAttribute("", "onclick", "", "", "jumpTo('#" + JS_UID_ID_PREFIX + uidInt + "')");
+        state.xhtml.startElement("a", attrs);
+        state.xhtml.characters("[Object link to UID " + uidInt + "]");
+        state.xhtml.endElement("a");
 
-            int uidInt = getUIDInteger(state.extra.currentUID);
-            AttributesImpl attrs = new AttributesImpl();
-            attrs.addAttribute("", "href", "", "", "#");
-            attrs.addAttribute("", "onclick", "", "", "jumpTo('#" + JS_UID_ID_PREFIX + uidInt + "')");
-            state.xhtml.startElement("a", attrs);
-            state.xhtml.characters("[Object link to UID " + uidInt + "]");
-            state.xhtml.endElement("a");
-
-            state.xhtml.endElement("p");
-        } else {
-            throw new IllegalStateException("state.extra.currentUID is null");
-        }
+        state.xhtml.endElement("p");
     }
 
     private void processNSTime(NSDictionary obj, State state) throws SAXException {
         NSObject nso = obj.get(NS_TIME);
-        Date date = new Date((((NSNumber) nso).longValue() + 978307200) * 1000);
+        Date date = PListHelper.getNSTimeDate((NSNumber) nso);
         processDate(date, state);
+    }
+
+    private void processKALocation(NSDictionary obj, String path, State state) throws SAXException {
+
+        processDictionary(obj, path, state, false);
+
+        Metadata metadata = new Metadata();
+        metadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, path);
+        metadata.add(TikaCoreProperties.TITLE, path);
+        metadata.add(StandardParser.INDEXER_CONTENT_TYPE, APPLE_LOCATION.toString());
+        metadata.set(BasicProps.LENGTH, "");
+
+        if (state.embeddedDocumentExtractor.shouldParseEmbedded(metadata)) {
+            try {
+                metadata.set(Metadata.LATITUDE, obj.get(CL_LOCATION_LATITUDE).toString());
+                metadata.set(Metadata.LONGITUDE, obj.get(CL_LOCATION_LONGITUDE).toString());
+                if (obj.containsKey(CL_LOCATION_ALTITUDE)) {
+                    metadata.set(Metadata.ALTITUDE, obj.get(CL_LOCATION_ALTITUDE).toString());
+                }
+
+                for (Entry<String, NSObject> entry : obj.entrySet()) {
+                    NSObject value = entry.getValue();
+                    String key = entry.getKey();
+                    if (value == null //
+                            || StringUtils.equalsAny(key, CL_LOCATION_LATITUDE, //
+                                    CL_LOCATION_LONGITUDE, //
+                                    CL_LOCATION_ALTITUDE, //
+                                    CL_LOCATION_PREFIX + "Reserved", //
+                                    CL_LOCATION_PREFIX + "SignalEnvironmentType") //
+                            || StringUtils.startsWith(key, CL_LOCATION_RAW_PREFIX)) {
+                        continue;
+                    }
+
+                    String metadataKey = StringUtils.removeStart(key, CL_LOCATION_PREFIX);
+                    metadataKey = StringUtils.uncapitalize(metadataKey);
+
+                    if (value instanceof UID) {
+                        value = state.extra.objects.objectAtIndex(getUIDInteger((UID) value));
+                    }
+                    String valueStr = null;
+                    if (value instanceof NSNumber) {
+                        NSNumber number = (NSNumber) value;
+                        if (CL_LOCATION_TIMESTAMP.equals(key)) {
+                            Date timestamp = PListHelper.getNSTimeDate((NSNumber) value);
+                            if (timestamp != null) {
+                                valueStr = DateUtil.dateToString(timestamp);
+                            }
+                        } else if (number.isInteger() && number.intValue() >= 0 && number.intValue() != Integer.MAX_VALUE //
+                                || number.isReal() && number.doubleValue() >= 0 //
+                                || number.isBoolean()) {
+                            valueStr = value.toString();
+                        }
+                    } else if (value instanceof NSString) {
+                        valueStr = value.toString();
+                    }
+
+                    if (valueStr != null && !NULL.equals(valueStr)) {
+                        metadata.set(PLIST_LOC_META_PREFIX + metadataKey, valueStr);
+                    }
+                }
+
+                state.embeddedDocumentExtractor.parseEmbedded(new EmptyInputStream(), state.xhtml, metadata, true);
+            } catch (IOException e) {
+                getLogger().warn("Error adding plist data as sub-item " + state.metadata + ">>" + path, e);
+            }
+        }
     }
 
     private void processKAArray(NSDictionary obj, String path, State state) throws SAXException {
@@ -314,12 +409,14 @@ public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverPa
             state.xhtml.endElement("summary");
 
             // build and process equivalent dictionary
-            NSDictionary newDict = new NSDictionary();
-            for (int i = 0; i < count; i++) {
-                String key = indexedKeys.getArray()[i].toString();
-                newDict.put(key, objects.getArray()[i]);
+            if (count > 0) {
+                NSDictionary newDict = new NSDictionary();
+                for (int i = 0; i < count; i++) {
+                    String key = indexedKeys.getArray()[i].toString();
+                    newDict.put(key, objects.getArray()[i]);
+                }
+                processObject(newDict, appendPath(path, className), state, false);
             }
-            processDictionary(newDict, appendPath(path, className), state, false);
 
         } else {
             state.xhtml.endElement("summary");

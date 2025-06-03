@@ -9,8 +9,10 @@ import com.dd.plist.UID;
 
 public class PListHelper {
 
-    private static final long THIRTY_YEARS_IN_SECONDS = TimeUnit.DAYS.toSeconds(365 * 30);
-    private static final long TWO_YEARS_IN_SECONDS = TimeUnit.DAYS.toSeconds(365 * 2);
+    private static final long THIRTY_YEARS_IN_MILLIS = TimeUnit.DAYS.toMillis(365 * 30);
+    private static final long TWO_YEARS_IN_MILLIS = TimeUnit.DAYS.toMillis(365 * 2);
+
+    public static final int APPLE_OFFSET_TIMESTAMP = 978307200; // difference between 2001-01-01T00:00:00Z and 1970-01-01T00:00:00Z
 
     protected static final String METADATA_KEY_SEPARATOR = ":";
 
@@ -36,14 +38,24 @@ public class PListHelper {
     }
 
     public static Date getPossibleDate(NSNumber number) {
-        try {
-            long timeSeconds = Long.parseLong(number.stringValue());
-            long nowSeconds = System.currentTimeMillis() / 1000;
+
+        if (number.isInteger()) {
+            long nowMillis = System.currentTimeMillis();
+            long timeMillis = number.longValue() * 1000;
 
             // converts 30 years to now and 2 years from now timestamps
-            if (timeSeconds > (nowSeconds - THIRTY_YEARS_IN_SECONDS) && timeSeconds < (nowSeconds + TWO_YEARS_IN_SECONDS)) {
-                return new Date(timeSeconds * 1000);
+            if (timeMillis > (nowMillis - THIRTY_YEARS_IN_MILLIS) && timeMillis < (nowMillis + TWO_YEARS_IN_MILLIS)) {
+                return new Date(timeMillis);
             }
+        }
+
+        return null;
+    }
+
+    public static Date getNSTimeDate(NSNumber number) {
+        try {
+            long timeMillis = (long) ((Double.parseDouble(number.stringValue()) + PListHelper.APPLE_OFFSET_TIMESTAMP) * 1000);
+            return new Date(timeMillis);
         } catch (NumberFormatException ignore) {
         }
         return null;
