@@ -316,7 +316,7 @@ public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverPa
         metadata.add(StandardParser.INDEXER_CONTENT_TYPE, APPLE_LOCATION.toString());
         metadata.set(BasicProps.LENGTH, "");
 
-        if (state.embeddedDocumentExtractor.shouldParseEmbedded(metadata)) {
+        if (state.embeddedDocumentExtractor.shouldParseEmbedded(state.metadata)) {
             try {
                 metadata.set(Metadata.LATITUDE, obj.get(CL_LOCATION_LATITUDE).toString());
                 metadata.set(Metadata.LONGITUDE, obj.get(CL_LOCATION_LONGITUDE).toString());
