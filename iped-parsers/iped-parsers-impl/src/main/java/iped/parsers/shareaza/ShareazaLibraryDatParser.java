@@ -135,6 +135,9 @@ public class ShareazaLibraryDatParser extends AbstractParser {
             bme.addPropertyExclusion(LibraryFile.class, "sharedTrue");
             bme.registerClassNameProperty(LibraryFolder.class, "path");
             bme.registerClassNameProperty(AlbumFolder.class, "name");
+            bme.registerTransformationMapping(AlbumFolder.class, ExtraProperties.EMBEDDED_FOLDER, Boolean.toString(true));
+            bme.registerTransformationMapping(LibraryFolders.class, ExtraProperties.EMBEDDED_FOLDER, Boolean.toString(true));
+            bme.registerTransformationMapping(LibraryFolder.class, ExtraProperties.EMBEDDED_FOLDER, Boolean.toString(true));
             bme.registerTransformationMapping(LibraryFile.class, ExtraProperties.LINKED_ITEMS, "md5:${md5}");
             bme.registerTransformationMapping(LibraryFile.class, ExtraProperties.SHARED_HASHES, "${md5}");
             bme.registerTransformationMapping(LibraryFile.class, BasicProps.NAME, "Library-Entry-[${name}].dat");
