@@ -78,10 +78,10 @@ public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverPa
 
     public class Extra {
         NSArray objects;
-        Set<UID> alreadyVisitedUIDs;
+        Set<Integer> alreadyVisitedUIDs;
         UID currentUID;
 
-        public Extra(NSArray objects, Set<UID> alreadyVisitedUIDs) {
+        public Extra(NSArray objects, Set<Integer> alreadyVisitedUIDs) {
             this.objects = objects;
             this.alreadyVisitedUIDs = alreadyVisitedUIDs;
         }
@@ -147,7 +147,7 @@ public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverPa
 
         try {
             // process NSKeyedArchiver
-            Set<UID> alreadyVisitedUIDs = new HashSet<>(); // array to control already written objects and avoid infinite loops
+            Set<Integer> alreadyVisitedUIDs = new HashSet<>(); // array to control already written objects and avoid infinite loops
             state.extra = new Extra((NSArray) objects, alreadyVisitedUIDs);
             processTop((NSDictionary) top, state);
 
@@ -225,15 +225,16 @@ public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverPa
         state.extra.currentUID = null;
         if (obj instanceof UID) {
             UID uid = (UID) obj;
+            int uidInt = getUIDInteger(uid);
 
             // checks if object was already written to avoid infinite loops
-            if (state.extra.alreadyVisitedUIDs.contains(uid)) {
-                processVisitedObject(uid, state);
+            if (state.extra.alreadyVisitedUIDs.contains(uidInt)) {
+                processVisitedObject(uidInt, state);
                 return;
             } else {
                 state.extra.currentUID = uid;
-                obj = state.extra.objects.objectAtIndex(getUIDInteger(uid));
-                state.extra.alreadyVisitedUIDs.add(uid);
+                obj = state.extra.objects.objectAtIndex(uidInt);
+                state.extra.alreadyVisitedUIDs.add(uidInt);
             }
         }
 
@@ -287,8 +288,7 @@ public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverPa
         }
     }
 
-    private void processVisitedObject(UID uid, State state) throws SAXException {
-        int uidInt = getUIDInteger(uid);
+    private void processVisitedObject(Integer uidInt, State state) throws SAXException {
         state.xhtml.startElement("p");
         AttributesImpl attrs = new AttributesImpl();
         attrs.addAttribute("", "href", "", "", "#");
