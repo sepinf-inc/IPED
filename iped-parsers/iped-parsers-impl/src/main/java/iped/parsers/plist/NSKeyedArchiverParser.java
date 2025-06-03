@@ -328,10 +328,10 @@ public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverPa
                     NSObject value = entry.getValue();
                     String key = entry.getKey();
                     if (value == null //
+                            || !StringUtils.startsWith(key, CL_LOCATION_PREFIX) //
                             || StringUtils.equalsAny(key, CL_LOCATION_LATITUDE, //
                                     CL_LOCATION_LONGITUDE, //
                                     CL_LOCATION_ALTITUDE, //
-                                    CL_LOCATION_PREFIX + "Reserved", //
                                     CL_LOCATION_PREFIX + "SignalEnvironmentType") //
                             || StringUtils.startsWith(key, CL_LOCATION_RAW_PREFIX)) {
                         continue;
