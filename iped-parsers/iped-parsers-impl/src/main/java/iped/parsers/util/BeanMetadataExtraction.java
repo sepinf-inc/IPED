@@ -9,13 +9,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TimeZone;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.IteratorUtils;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.metadata.HttpHeaders;
@@ -50,6 +53,7 @@ public class BeanMetadataExtraction {
     HashMap<Class, String> nameProperties = new HashMap<Class, String>();
     HashMap<Class, String> referencedQuery = new HashMap<Class, String>();
 
+    HashMap<Class, Set<String>> collectionPropertiesToMergeMap = new HashMap<>();
     HashMap<Class, HashMap<String, String>> propertyNameMapping = new HashMap<>();
     HashMap<Class, ArrayList<String[]>> transformationMapping = new HashMap<>();
 
@@ -130,6 +134,7 @@ public class BeanMetadataExtraction {
                     colObj = ((Map) bean).entrySet().toArray();
                 }
 
+
                 if (colObj == null) {
                     String resolvedNameProp = null;
                     if (bean instanceof Entry) {
@@ -193,8 +198,18 @@ public class BeanMetadataExtraction {
                                     metadataName = prefix + metadataName;
                                 }
                                 if (isBean(value)) {
-                                    children.add(new ChildParams(value, pd));
-                                    // this.extractEmbedded(seq, context, entryMetadata, pd, handler, value);
+                                    if (shouldMergeCollectionProperty(bean, pd) && isCollectionNotEmpty(value)) {
+                                        for (Iterator<?> iterator = IteratorUtils.getIterator(value); iterator.hasNext();) {
+                                            Object subValue =  iterator.next();
+                                            if (isBean(subValue)) {
+                                                children.add(new ChildParams(subValue, pd));
+                                            } else {
+                                                fillMetadataForNonBeanValue(entryMetadata, metadataName, subValue);
+                                            }
+                                        }
+                                    } else {
+                                        children.add(new ChildParams(value, pd));
+                                    }
                                 } else {
                                     fillMetadataForNonBeanValue(entryMetadata, metadataName, value);
                                 }
@@ -302,6 +317,14 @@ public class BeanMetadataExtraction {
         }
     }
 
+    public boolean isCollectionNotEmpty(Object value) {
+        try {
+            return CollectionUtils.size(value) > 0;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
+
     public boolean isBean(Object value) {
         BeanInfo beanInfo;
         try {
@@ -339,6 +362,14 @@ public class BeanMetadataExtraction {
         this.nameProperty = nameProperty;
     }
 
+    public void registerCollectionPropertyToMerge(Class<?> beanClass, String propertyName) {
+        Set<String> set = collectionPropertiesToMergeMap.get(beanClass);
+        if (set == null) {
+            collectionPropertiesToMergeMap.put(beanClass, set = new HashSet<String>());
+        }
+        set.add(propertyName);
+    }
+
     public void registerPropertyNameMapping(Class beanClass, String propertyName, String metadataPropName) {
         HashMap<String, String> map = propertyNameMapping.get(beanClass);
         if (map == null) {
@@ -370,6 +401,11 @@ public class BeanMetadataExtraction {
 
     public List<String[]> getTransformationMapping(Class beanClass) {
         return transformationMapping.get(beanClass);
+    }
+
+    private boolean shouldMergeCollectionProperty(Object bean, PropertyDescriptor pd) {
+        Set<String> propertiesToMerge = collectionPropertiesToMergeMap.get(bean.getClass());
+        return propertiesToMerge != null && propertiesToMerge.contains(pd.getDisplayName());
     }
 
     public boolean isLocalTime() {

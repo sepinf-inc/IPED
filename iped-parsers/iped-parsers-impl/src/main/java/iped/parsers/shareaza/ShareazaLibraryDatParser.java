@@ -127,7 +127,6 @@ public class ShareazaLibraryDatParser extends AbstractParser {
 
         if (extractEntries) {
             BeanMetadataExtraction bme = new BeanMetadataExtraction(ExtraProperties.P2P_META_PREFIX, LIBRARY_DAT_ENTRY_MIME_TYPE);
-            bme.addPropertyExclusion(AlbumFolder.class, "albumFileIndexes");
             bme.addPropertyExclusion(LibraryFolders.class, "indexToFile");
             bme.addPropertyExclusion(LibraryFolder.class, "indexToFile");
             bme.addPropertyExclusion(LibraryFolder.class, "parentFolder");
@@ -136,6 +135,9 @@ public class ShareazaLibraryDatParser extends AbstractParser {
             bme.addPropertyExclusion(LibraryFile.class, "hashSetHits");
             bme.addPropertyExclusion(LibraryFile.class, "sharedSources");
             bme.addPropertyExclusion(LibraryFile.class, "sharedTrue");
+            bme.registerCollectionPropertyToMerge(LibraryFolder.class, "libraryFiles");
+            bme.registerCollectionPropertyToMerge(AlbumFolder.class, "albumFolders");
+            bme.registerCollectionPropertyToMerge(AlbumFolder.class, "albumFileIndexes");
             bme.registerClassNameProperty(LibraryFolder.class, "path");
             bme.registerClassNameProperty(AlbumFolder.class, "name");
             bme.registerTransformationMapping(AlbumFolder.class, ExtraProperties.EMBEDDED_FOLDER, Boolean.toString(true));
