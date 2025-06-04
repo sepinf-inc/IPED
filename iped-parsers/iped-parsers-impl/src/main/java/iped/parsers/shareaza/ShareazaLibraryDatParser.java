@@ -136,6 +136,7 @@ public class ShareazaLibraryDatParser extends AbstractParser {
             bme.addPropertyExclusion(LibraryFile.class, "sharedSources");
             bme.addPropertyExclusion(LibraryFile.class, "sharedTrue");
             bme.registerCollectionPropertyToMerge(LibraryFolder.class, "libraryFiles");
+            bme.registerCollectionPropertyToMerge(LibraryFolder.class, "libraryFolders");
             bme.registerCollectionPropertyToMerge(AlbumFolder.class, "albumFolders");
             bme.registerCollectionPropertyToMerge(AlbumFolder.class, "albumFileIndexes");
             bme.registerClassNameProperty(LibraryFolder.class, "path");
