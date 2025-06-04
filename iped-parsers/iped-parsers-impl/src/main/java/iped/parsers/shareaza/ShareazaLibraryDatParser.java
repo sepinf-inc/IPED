@@ -144,8 +144,8 @@ public class ShareazaLibraryDatParser extends AbstractParser {
             bme.registerTransformationMapping(AlbumFolder.class, ExtraProperties.EMBEDDED_FOLDER, Boolean.toString(true));
             bme.registerTransformationMapping(LibraryFolders.class, ExtraProperties.EMBEDDED_FOLDER, Boolean.toString(true));
             bme.registerTransformationMapping(LibraryFolder.class, ExtraProperties.EMBEDDED_FOLDER, Boolean.toString(true));
-            bme.registerTransformationMapping(LibraryFile.class, ExtraProperties.LINKED_ITEMS, "md5:${md5}");
-            bme.registerTransformationMapping(LibraryFile.class, ExtraProperties.SHARED_HASHES, "${md5}");
+            bme.registerTransformationMapping(LibraryFile.class, ExtraProperties.LINKED_ITEMS, "${sha1 != null ? \"sha-1:\" + sha1 : null}");
+            bme.registerTransformationMapping(LibraryFile.class, ExtraProperties.SHARED_HASHES, "${sharedTrue ? (md5 != null ? md5 : sha1) : null}");
             bme.registerTransformationMapping(LibraryFile.class, BasicProps.NAME, "Library-Entry-[${name}].dat");
 
             String albumLibraryFilesQuery = String.format(

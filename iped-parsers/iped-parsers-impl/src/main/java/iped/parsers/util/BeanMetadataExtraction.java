@@ -19,12 +19,15 @@ import java.util.TimeZone;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IteratorUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.parser.ParseContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
@@ -39,6 +42,9 @@ import iped.utils.DateUtil;
 import iped.utils.EmptyInputStream;
 
 public class BeanMetadataExtraction {
+
+    private static final Logger logger = LoggerFactory.getLogger(BeanMetadataExtraction.class);
+
     String prefix;
     String mimeType;
     String nameProperty;
@@ -301,9 +307,13 @@ public class BeanMetadataExtraction {
             i = result.indexOf("${", i + 2);
         }
 
-        for (Iterator iterator = variables.iterator(); iterator.hasNext();) {
-            String var = (String) iterator.next();
-            result = result.replace("${" + var + "}", elparser.parseExpression(var).getValue(context).toString());
+        for (String var : variables) {
+            try {
+                String parsedVar = elparser.parseExpression(var).getValue(context, String.class);
+                result = result.replace("${" + var + "}", StringUtils.defaultString(parsedVar));
+            } catch (Exception e) {
+                logger.error("Error parsing expression: " + var, e);
+            }
         }
 
         return result;
