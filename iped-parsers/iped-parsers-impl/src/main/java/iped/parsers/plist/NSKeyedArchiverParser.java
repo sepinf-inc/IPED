@@ -209,18 +209,11 @@ public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverPa
 
     public void processTop(NSDictionary top, State state) throws SAXException {
         for (Entry<String, NSObject> e : top.entrySet()) {
-            NSObject value;
-            if (e.getValue() instanceof UID) {
-                state.extra.currentUID = ((UID) ((NSDictionary) top).get(e.getKey()));
-                value = state.extra.objects.objectAtIndex(getUIDInteger(state.extra.currentUID));
-            } else {
-                value = e.getValue();
-            }
             state.xhtml.startElement("details", "open", "true");
             state.xhtml.startElement("summary");
             state.xhtml.characters(e.getKey());
             state.xhtml.endElement("summary");
-            processObject(value, e.getKey(), state, false);
+            processObject(e.getValue(), e.getKey(), state, false);
             state.xhtml.endElement("details");
         }
     }
