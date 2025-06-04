@@ -37,6 +37,7 @@ import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.data.IItemReader;
 import iped.parsers.util.BeanMetadataExtraction;
 import iped.parsers.util.Messages;
 import iped.properties.BasicProps;
@@ -84,6 +85,7 @@ public class ShareazaLibraryDatParser extends AbstractParser {
         storeSharedHashes(folders.getAlbumRoot(), folders.getIndexToFile(), metadata);
 
         IItemSearcher searcher = context.get(IItemSearcher.class);
+        IItemReader item = context.get(IItemReader.class);
 
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
         xhtml.startDocument();
@@ -125,6 +127,7 @@ public class ShareazaLibraryDatParser extends AbstractParser {
 
         if (extractEntries) {
             BeanMetadataExtraction bme = new BeanMetadataExtraction(ExtraProperties.P2P_META_PREFIX, LIBRARY_DAT_ENTRY_MIME_TYPE);
+            bme.addPropertyExclusion(AlbumFolder.class, "albumFileIndexes");
             bme.addPropertyExclusion(LibraryFolders.class, "indexToFile");
             bme.addPropertyExclusion(LibraryFolder.class, "indexToFile");
             bme.addPropertyExclusion(LibraryFolder.class, "parentFolder");
@@ -141,6 +144,12 @@ public class ShareazaLibraryDatParser extends AbstractParser {
             bme.registerTransformationMapping(LibraryFile.class, ExtraProperties.LINKED_ITEMS, "md5:${md5}");
             bme.registerTransformationMapping(LibraryFile.class, ExtraProperties.SHARED_HASHES, "${md5}");
             bme.registerTransformationMapping(LibraryFile.class, BasicProps.NAME, "Library-Entry-[${name}].dat");
+
+            String albumLibraryFilesQuery = String.format(
+                    "path:\"%s\" && p2p\\:index:(${T(org.apache.commons.lang3.StringUtils).join(albumFileIndexes, ',')})",
+                    searcher.escapeQuery(item.getPath()));
+            bme.registerTransformationMapping(AlbumFolder.class, ExtraProperties.LINKED_ITEMS, albumLibraryFilesQuery);
+
             bme.extractEmbedded(0, context, metadata, handler, library.getLibraryFolders());
         }
 
