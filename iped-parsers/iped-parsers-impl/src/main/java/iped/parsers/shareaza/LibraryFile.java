@@ -38,6 +38,7 @@ import iped.search.IItemSearcher;
  */
 public class LibraryFile extends ShareazaEntity {
 
+    private static final String SINGLE_ZERO = "0";
     private final XMLElement metadata = new XMLElement();
     private final List<SharedSource> sharedSources = new ArrayList<>();
     private String name;
@@ -299,11 +300,11 @@ public class LibraryFile extends ShareazaEntity {
     }
 
     public String getMd5() {
-        return md5;
+        return SINGLE_ZERO.equals(md5) ? null : md5;
     }
 
     public String getSha1() {
-        return sha1;
+        return SINGLE_ZERO.equals(sha1) ? null : sha1;
     }
 
     public int getIndex() {
@@ -331,11 +332,11 @@ public class LibraryFile extends ShareazaEntity {
     }
 
     public String getTiger() {
-        return tiger;
+        return SINGLE_ZERO.equals(tiger) ? null : tiger;
     }
 
     public String getEd2k() {
-        return ed2k;
+        return SINGLE_ZERO.equals(ed2k) ? null : ed2k;
     }
 
     public String getBth() {
