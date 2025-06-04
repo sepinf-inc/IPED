@@ -196,18 +196,7 @@ public class BeanMetadataExtraction {
                                     children.add(new ChildParams(value, pd));
                                     // this.extractEmbedded(seq, context, entryMetadata, pd, handler, value);
                                 } else {
-                                    if (value instanceof Date) {
-                                        if (isLocalTime) {
-                                            TimeZone tz = identifiedTimeZone != null ? identifiedTimeZone : TimeZone.getDefault();
-                                            // this can still be wrong by 1h when daylight saving ends
-                                            // there is no way to know if clock was already turned back by 1h or not
-                                            int offset = tz.getOffset(((Date) value).getTime() - tz.getRawOffset());
-                                            value = new Date(((Date) value).getTime() - offset);
-                                        }
-                                        entryMetadata.add(metadataName, DateUtil.dateToString((Date) value));
-                                    } else if (!isCollectionEmpty(value)) {
-                                        entryMetadata.add(metadataName, value.toString());
-                                    }
+                                    fillMetadataForNonBeanValue(entryMetadata, metadataName, value);
                                 }
                             }
                         }
@@ -234,18 +223,7 @@ public class BeanMetadataExtraction {
                         if (isBean(value)) {
                             children.add(new ChildParams(value, parentPd));
                         } else {
-                            if (value instanceof Date) {
-                                if (isLocalTime) {
-                                    TimeZone tz = identifiedTimeZone != null ? identifiedTimeZone : TimeZone.getDefault();
-                                    // this can still be wrong by 1h when daylight saving ends
-                                    // there is no way to know if clock was already turned back by 1h or not
-                                    int offset = tz.getOffset(((Date) value).getTime() - tz.getRawOffset());
-                                    value = new Date(((Date) value).getTime() - offset);
-                                }
-                                entryMetadata.add(metadataName, DateUtil.dateToString((Date) value));
-                            } else if (!isCollectionEmpty(value)) {
-                                entryMetadata.add(metadataName, value.toString());
-                            }
+                            fillMetadataForNonBeanValue(entryMetadata, metadataName, value);
                         }
                     }
                 }
@@ -277,6 +255,21 @@ public class BeanMetadataExtraction {
             return true;
         } else {
             return false;
+        }
+    }
+
+    private void fillMetadataForNonBeanValue(Metadata entryMetadata, String metadataName, Object value) {
+        if (value instanceof Date) {
+            if (isLocalTime) {
+                TimeZone tz = identifiedTimeZone != null ? identifiedTimeZone : TimeZone.getDefault();
+                // this can still be wrong by 1h when daylight saving ends
+                // there is no way to know if clock was already turned back by 1h or not
+                int offset = tz.getOffset(((Date) value).getTime() - tz.getRawOffset());
+                value = new Date(((Date) value).getTime() - offset);
+            }
+            entryMetadata.add(metadataName, DateUtil.dateToString((Date) value));
+        } else if (!isCollectionEmpty(value)) {
+            entryMetadata.add(metadataName, value.toString());
         }
     }
 
