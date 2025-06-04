@@ -394,6 +394,13 @@ public class LibraryFile extends ShareazaEntity {
         return parentFolder;
     }
 
+    public String getParentFolderPath() {
+        if (parentFolder != null) {
+            return parentFolder.getPath();
+        }
+        return null;
+    }
+
     public List<String> getHashSetHits() {
         return hashSetHits == null ? Collections.emptyList() : hashSetHits;
     }
