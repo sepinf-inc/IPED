@@ -9,18 +9,25 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TimeZone;
 
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.IteratorUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.parser.ParseContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
@@ -35,6 +42,9 @@ import iped.utils.DateUtil;
 import iped.utils.EmptyInputStream;
 
 public class BeanMetadataExtraction {
+
+    private static final Logger logger = LoggerFactory.getLogger(BeanMetadataExtraction.class);
+
     String prefix;
     String mimeType;
     String nameProperty;
@@ -49,6 +59,7 @@ public class BeanMetadataExtraction {
     HashMap<Class, String> nameProperties = new HashMap<Class, String>();
     HashMap<Class, String> referencedQuery = new HashMap<Class, String>();
 
+    HashMap<Class, Set<String>> collectionPropertiesToMergeMap = new HashMap<>();
     HashMap<Class, HashMap<String, String>> propertyNameMapping = new HashMap<>();
     HashMap<Class, ArrayList<String[]>> transformationMapping = new HashMap<>();
 
@@ -129,6 +140,7 @@ public class BeanMetadataExtraction {
                     colObj = ((Map) bean).entrySet().toArray();
                 }
 
+
                 if (colObj == null) {
                     String resolvedNameProp = null;
                     if (bean instanceof Entry) {
@@ -148,7 +160,9 @@ public class BeanMetadataExtraction {
                     if (transformations != null) {
                         for (Iterator iterator = transformations.iterator(); iterator.hasNext();) {
                             String[] strings = (String[]) iterator.next();
-                            entryMetadata.add(strings[0], parseQuery(strings[1], bean));
+                            if (!strings[0].equals(resolvedNameProp)) {
+                                entryMetadata.add(strings[0], parseQuery(strings[1], bean));
+                            }
                         }
                     }
 
@@ -168,6 +182,15 @@ public class BeanMetadataExtraction {
 
                             if (pd.getDisplayName().equals(resolvedNameProp)) {
                                 String name = value.toString();
+                                if (transformations != null) {
+                                    for (Iterator<String[]> it = transformations.iterator(); it.hasNext();) {
+                                        String[] strs = it.next();
+                                        if (strs[0].equals(resolvedNameProp)) {
+                                            name = parseQuery(strs[1], bean);
+                                            break;
+                                        }
+                                    }
+                                }
                                 entryMetadata.add(TikaCoreProperties.TITLE, name);// adds the name property without prefix
                                 entryMetadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, name);
                             }
@@ -181,21 +204,20 @@ public class BeanMetadataExtraction {
                                     metadataName = prefix + metadataName;
                                 }
                                 if (isBean(value)) {
-                                    children.add(new ChildParams(value, pd));
-                                    // this.extractEmbedded(seq, context, entryMetadata, pd, handler, value);
-                                } else {
-                                    if (value instanceof Date) {
-                                        if (isLocalTime) {
-                                            TimeZone tz = identifiedTimeZone != null ? identifiedTimeZone : TimeZone.getDefault();
-                                            // this can still be wrong by 1h when daylight saving ends
-                                            // there is no way to know if clock was already turned back by 1h or not
-                                            int offset = tz.getOffset(((Date) value).getTime() - tz.getRawOffset());
-                                            value = new Date(((Date) value).getTime() - offset);
+                                    if (shouldMergeCollectionProperty(bean, pd) && isCollectionNotEmpty(value)) {
+                                        for (Iterator<?> iterator = IteratorUtils.getIterator(value); iterator.hasNext();) {
+                                            Object subValue =  iterator.next();
+                                            if (isBean(subValue)) {
+                                                children.add(new ChildParams(subValue, pd));
+                                            } else {
+                                                fillMetadataForNonBeanValue(entryMetadata, metadataName, subValue);
+                                            }
                                         }
-                                        entryMetadata.add(metadataName, DateUtil.dateToString((Date) value));
                                     } else {
-                                        entryMetadata.add(metadataName, value.toString());
+                                        children.add(new ChildParams(value, pd));
                                     }
+                                } else {
+                                    fillMetadataForNonBeanValue(entryMetadata, metadataName, value);
                                 }
                             }
                         }
@@ -222,18 +244,7 @@ public class BeanMetadataExtraction {
                         if (isBean(value)) {
                             children.add(new ChildParams(value, parentPd));
                         } else {
-                            if (value instanceof Date) {
-                                if (isLocalTime) {
-                                    TimeZone tz = identifiedTimeZone != null ? identifiedTimeZone : TimeZone.getDefault();
-                                    // this can still be wrong by 1h when daylight saving ends
-                                    // there is no way to know if clock was already turned back by 1h or not
-                                    int offset = tz.getOffset(((Date) value).getTime() - tz.getRawOffset());
-                                    value = new Date(((Date) value).getTime() - offset);
-                                }
-                                entryMetadata.add(metadataName, DateUtil.dateToString((Date) value));
-                            } else {
-                                entryMetadata.add(metadataName, value.toString());
-                            }
+                            fillMetadataForNonBeanValue(entryMetadata, metadataName, value);
                         }
                     }
                 }
@@ -268,6 +279,21 @@ public class BeanMetadataExtraction {
         }
     }
 
+    private void fillMetadataForNonBeanValue(Metadata entryMetadata, String metadataName, Object value) {
+        if (value instanceof Date) {
+            if (isLocalTime) {
+                TimeZone tz = identifiedTimeZone != null ? identifiedTimeZone : TimeZone.getDefault();
+                // this can still be wrong by 1h when daylight saving ends
+                // there is no way to know if clock was already turned back by 1h or not
+                int offset = tz.getOffset(((Date) value).getTime() - tz.getRawOffset());
+                value = new Date(((Date) value).getTime() - offset);
+            }
+            entryMetadata.add(metadataName, DateUtil.dateToString((Date) value));
+        } else if (!isCollectionEmpty(value)) {
+            entryMetadata.add(metadataName, value.toString());
+        }
+    }
+
     private String parseQuery(String resolvedReferencedQuery, Object value) {
         ArrayList<String> variables = new ArrayList<>();
         EvaluationContext context = new StandardEvaluationContext(value);
@@ -281,12 +307,32 @@ public class BeanMetadataExtraction {
             i = result.indexOf("${", i + 2);
         }
 
-        for (Iterator iterator = variables.iterator(); iterator.hasNext();) {
-            String var = (String) iterator.next();
-            result = result.replace("${" + var + "}", elparser.parseExpression(var).getValue(context).toString());
+        for (String var : variables) {
+            try {
+                String parsedVar = elparser.parseExpression(var).getValue(context, String.class);
+                result = result.replace("${" + var + "}", StringUtils.defaultString(parsedVar));
+            } catch (Exception e) {
+                logger.error("Error parsing expression: " + var, e);
+            }
         }
 
         return result;
+    }
+
+    public boolean isCollectionEmpty(Object value) {
+        try {
+            return CollectionUtils.sizeIsEmpty(value);
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
+
+    public boolean isCollectionNotEmpty(Object value) {
+        try {
+            return CollectionUtils.size(value) > 0;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 
     public boolean isBean(Object value) {
@@ -326,6 +372,14 @@ public class BeanMetadataExtraction {
         this.nameProperty = nameProperty;
     }
 
+    public void registerCollectionPropertyToMerge(Class<?> beanClass, String propertyName) {
+        Set<String> set = collectionPropertiesToMergeMap.get(beanClass);
+        if (set == null) {
+            collectionPropertiesToMergeMap.put(beanClass, set = new HashSet<String>());
+        }
+        set.add(propertyName);
+    }
+
     public void registerPropertyNameMapping(Class beanClass, String propertyName, String metadataPropName) {
         HashMap<String, String> map = propertyNameMapping.get(beanClass);
         if (map == null) {
@@ -357,6 +411,11 @@ public class BeanMetadataExtraction {
 
     public List<String[]> getTransformationMapping(Class beanClass) {
         return transformationMapping.get(beanClass);
+    }
+
+    private boolean shouldMergeCollectionProperty(Object bean, PropertyDescriptor pd) {
+        Set<String> propertiesToMerge = collectionPropertiesToMergeMap.get(bean.getClass());
+        return propertiesToMerge != null && propertiesToMerge.contains(pd.getDisplayName());
     }
 
     public boolean isLocalTime() {
