@@ -78,6 +78,16 @@ public class RemoteImageClassifierTask extends AbstractTask {
 
     private static Logger logger = LoggerFactory.getLogger(RemoteImageClassifierTask.class);
 
+    private RemoteImageClassifierConfig config;
+
+    // Configuration parameters
+    private String url;
+    private int batchSize;
+    private int skipSize;
+    private int skipDimension;
+    private boolean skipHashDBFiles;   
+    private boolean validateSSL;
+
     // AI classification extra attributes, values, and fail codes
     private static final String AI_CLASSIFICATION_STATUS_ATTR = "AIClassificationStatus";
     private static final String AI_CLASSIFICATION_SUCCESS = "success";
@@ -95,15 +105,6 @@ public class RemoteImageClassifierTask extends AbstractTask {
     private static final int AI_CLASSIFICATION_FAIL_NO_CLASS = 1;
     private static final int AI_CLASSIFICATION_FAIL_NO_RESULTS = 2;
     private static final int AI_CLASSIFICATION_FAIL_OTHER = 3;
-
-    private RemoteImageClassifierConfig config;
-
-    private String url;
-    private int batchSize;
-    private int skipSize;
-    private int skipDimension;
-    private boolean skipHashDBFiles;   
-    private boolean validateSSL;
 
     // "case cache" - allows for improved classification management
     private static final String AI_STORAGE = "ai/classifications.db";
@@ -163,14 +164,15 @@ public class RemoteImageClassifierTask extends AbstractTask {
 
     // Number of the current batch of files being processed
     private int currentBatch;
+
     // Number of retry failed classifications performed
     private int retryCount;
 
     // Maximum number of attempts to retry failed classifications
-    private static int MAX_RETRY = 10;
+    private static final int MAX_RETRY = 10;
 
     // Wait time (ms) before retry attempts
-    private static int WAIT_BEFORE_RETRY = 100;
+    private static final int WAIT_BEFORE_RETRY = 100;
 
     /**
      * Represents the result of a classification.
