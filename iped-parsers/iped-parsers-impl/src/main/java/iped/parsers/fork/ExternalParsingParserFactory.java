@@ -19,6 +19,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
+import iped.content.TikaManager;
 import iped.parsers.standard.StandardParser;
 import iped.utils.IOUtil;
 
@@ -31,7 +32,7 @@ public class ExternalParsingParserFactory extends ParserFactory {
     @Override
     public Parser build() throws IOException, SAXException, TikaException {
 
-        TikaConfig tikaConfig = TikaConfig.getDefaultConfig();
+        TikaConfig tikaConfig = TikaManager.getTikaConfig();
         final StandardParser recursiveParser = new StandardParser();
 
         CompositeParser c = new CompositeParser(tikaConfig.getMediaTypeRegistry(),

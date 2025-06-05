@@ -1,9 +1,9 @@
 package iped.properties;
 
-import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MediaTypeRegistry;
 
+import iped.content.TikaManager;
 import iped.data.IItemReader;
 
 public class MediaTypes {
@@ -37,17 +37,8 @@ public class MediaTypes {
 
     public static final String UFED_MIME_PREFIX = "x-ufed-"; //$NON-NLS-1$
 
-    private static MediaTypeRegistry mediaTypeRegistry;
-
     public static MediaTypeRegistry getMediaTypeRegistry() {
-        if (mediaTypeRegistry == null) {
-            synchronized (MediaTypes.class) {
-                if (mediaTypeRegistry == null) {
-                    mediaTypeRegistry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
-                }
-            }
-        }
-        return mediaTypeRegistry;
+        return TikaManager.getTikaConfig().getMediaTypeRegistry();
     }
 
     public static MediaType normalize(MediaType type) {
