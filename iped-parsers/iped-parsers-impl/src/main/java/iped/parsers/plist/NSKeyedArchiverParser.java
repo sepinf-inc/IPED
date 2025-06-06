@@ -313,8 +313,9 @@ public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverPa
         if (state.embeddedDocumentExtractor.shouldParseEmbedded(state.metadata)) {
             try {
                 Metadata metadata = new Metadata();
-                metadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, path);
-                metadata.add(TikaCoreProperties.TITLE, path);
+                String name = String.format("NSKeyArchiver-Location-[%s]", path);
+                metadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, name);
+                metadata.add(TikaCoreProperties.TITLE, name);
                 metadata.add(StandardParser.INDEXER_CONTENT_TYPE, APPLE_LOCATION.toString());
                 metadata.set(BasicProps.LENGTH, "");
 
