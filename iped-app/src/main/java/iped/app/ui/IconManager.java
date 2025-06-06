@@ -605,11 +605,6 @@ public class IconManager {
             mimeIconMap.put("application/x-elf-record", icon);
         }
 
-        icon = availableIconsMap.get("plist");
-        if (icon != null) {
-            mimeIconMap.put("application/x-bplist", icon);
-        }
-
         icon = availableIconsMap.get("drive");
         if (icon != null) {
             mimeIconMap.put("application/x-e01-image", icon);
