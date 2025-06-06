@@ -306,7 +306,7 @@
                 <param name="extractMessages" type="bool">true</param>
                 <param name="mergeBackups" type="bool">true</param>
                 <param name="linkMediasByNameAndApproxSizeFallback" type="bool">true</param>
-                <!--Set as 0 to disable long path matching fallback-->                
+                <!--Set as 0 to disable long path matching fallback-->
                 <param name="linkMediasByLongPathFallback" type="int">40</param>
                 <param name="downloadConnectionTimeout" type="int">500</param>
                 <param name="downloadReadTimeout" type="int">1000</param>
@@ -378,6 +378,7 @@
         <parser class="iped.parsers.discord.DiscordParser"></parser>
         <parser class="iped.parsers.apk.APKParser"></parser>
         <parser class="iped.parsers.vlc.VLCIniParser"></parser>
+        <parser class="iped.parsers.misc.ThumbcacheParser"></parser>
 
     </parsers>
 
