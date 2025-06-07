@@ -736,7 +736,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
                     } catch (IOException e) {
                         errorMessage = "Failed to read error message from response.";
                     }
-                    String errMsg = String.format("ClassificationFail::HttpStatusNotOK: HTTP Status Code: %d - Response:%n%s", statusCode, errorMessage);
+                    String errMsg = String.format("HTTP Status Code: %d - Response:%n%s", statusCode, errorMessage);
                     throw new HttpResponseStatusException(errMsg, statusCode, errorMessage);
                 }
             }
@@ -776,7 +776,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
                         HttpResponseStatusException eHTTP = (HttpResponseStatusException) e;
                         if (eHTTP.getStatusCode() != HttpStatus.SC_SERVICE_UNAVAILABLE && eHTTP.getStatusCode() != HttpStatus.SC_GATEWAY_TIMEOUT) {
                             if (!abortNow.getAndSet(true)) {
-                                logger.error(e.getMessage());
+                                logger.error("ClassificationFail::HttpStatusNotOK: {}", e.getMessage());
                                 System.exit(1);
                             }
                         }
