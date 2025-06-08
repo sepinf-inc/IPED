@@ -11,14 +11,10 @@ import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -53,13 +49,12 @@ import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.tika.io.TemporaryResources;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.sqlite.SQLiteConfig;
-import org.sqlite.SQLiteConfig.SynchronousMode;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import iped.configuration.Configurable;
+import iped.data.IHashValue;
 import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.RemoteImageClassifierConfig;
@@ -88,48 +83,20 @@ public class RemoteImageClassifierTask extends AbstractTask {
     private boolean skipHashDBFiles;   
     private boolean validateSSL;
 
-    // AI classification extra attributes, values, and fail codes
+    // AI classification extra attributes and values
     private static final String AI_CLASSIFICATION_STATUS_ATTR = "AIClassificationStatus";
     private static final String AI_CLASSIFICATION_SUCCESS = "success";
-    private static final String AI_CLASSIFICATION_FAIL = "fail";
+    private static final String AI_CLASSIFICATION_FAIL_NO_CLASS = "fail:NoClass";
+    private static final String AI_CLASSIFICATION_FAIL_NO_RESULTS = "fail:NoResults";
     private static final String AI_CLASSIFICATION_SKIP_ATTR = "AIClassificationSkip";
     private static final String AI_CLASSIFICATION_SKIP_NO = "no";
     private static final String AI_CLASSIFICATION_SKIP_SIZE = "size";
     private static final String AI_CLASSIFICATION_SKIP_DIMENSION = "dimension";
     private static final String AI_CLASSIFICATION_SKIP_HASHDB = "hashDB";
     private static final String AI_CLASSIFICATION_SKIP_DUPLICATE = "duplicate";
-    private static final String AI_CLASSIFICATION_FROM_CACHE_ATTR = "AIClassesFromCache";
-    private static final String AI_CLASSIFICATION_FROM_CACHE_NO = "no";
-    private static final String AI_CLASSIFICATION_FROM_CACHE_CASE = "case";
-    private static final int AI_CLASSIFICATION_FAIL_NO_CLASS = 1;
 
-    // Classifications "case cache" - allows for improved classification management
-    // Uses distinct DB files for faster cleanup on finish
-    // Cache for "success" classifications (removed on finish)
-    private static final String AI_STORAGE_SUCCESS = "ai/success.db";
-    // Cache for "fail" classifications
-    private static final String AI_STORAGE_FAIL = "ai/fail.db";
-
-    // 'success' table (in 'AI_STORAGE_SUCCESS' DB) - allows for skipping classification of duplicate files
-    //   - 'id': evidence HASH; 'classes': classification classes;
-    private static final String CREATE_TABLE_SUCCESS = "CREATE TABLE IF NOT EXISTS success (id TEXT PRIMARY KEY, classes TEXT);";
-    private static final String INSERT_DATA_SUCCESS = "INSERT INTO success (id, classes) VALUES (?,?) ON CONFLICT(id) DO NOTHING;";
-    private static final String SELECT_FROM_ID_SUCCESS = "SELECT classes FROM success WHERE id=?;";
-
-    // 'fail' table (in 'AI_STORAGE_FAIL' DB)  - allows for storing failed classifications
-    //   - 'id': evidence TRACK_ID; 'code': fail code;
-    private static final String CREATE_TABLE_FAIL = "CREATE TABLE IF NOT EXISTS fail (id TEXT PRIMARY KEY, code INTEGER);";
-    private static final String INSERT_DATA_FAIL = "INSERT INTO fail (id, code) VALUES (?,?) ON CONFLICT(id) DO NOTHING;";
-
-    // "case cache" database file for "success" classifications
-    private static File dbSuccess;
-    // "case cache" database file for "fail" classifications
-    private static File dbFail;
-
-    // "case cache" database connections, lock, and prepared statements (for each DB, uses a single connection for all task instances)
-    private static final Object lock = new Object();
-    private static Connection connSuccess, connFail;
-    private static PreparedStatement psInsertSuccess, psSelectSuccess, psInsertFail;
+    // Classifications cache (avoids classification of duplicates)
+    private static final HashMap<IHashValue, String> classifications = new HashMap<>();
 
     // Queue to store 'name' to 'evidence' mapping
     private Map<String, IItem> queue = new TreeMap<>();
@@ -155,12 +122,6 @@ public class RemoteImageClassifierTask extends AbstractTask {
     private static final AtomicInteger skipSizeCount = new AtomicInteger();
     private static final AtomicInteger skipDimensionCount = new AtomicInteger();
     private static final AtomicInteger skipHashDBFilesCount = new AtomicInteger();
-    private static final AtomicLong cacheStoreTime = new AtomicLong();
-    private static final AtomicInteger cacheStoreCount = new AtomicInteger();
-    private static final AtomicLong cacheRetrieveTime = new AtomicLong();
-    private static final AtomicInteger cacheRetrieveCount = new AtomicInteger();
-    private static final AtomicLong cacheStoreFailTime = new AtomicLong();
-    private static final AtomicInteger cacheStoreFailEvidenceCount = new AtomicInteger();
 
     // Number of the current batch of files being processed
     private int currentBatch;
@@ -178,7 +139,6 @@ public class RemoteImageClassifierTask extends AbstractTask {
      * Represents the result of a classification.
      */
     private static class ResultItem {
-        public String name;
         public TreeMap<String, ArrayList<Double>> classes = new TreeMap<>();
 
         // Add classification value for 'classname'.
@@ -253,116 +213,6 @@ public class RemoteImageClassifierTask extends AbstractTask {
         return config.isEnabled();
     }
 
-    private void createConnections() {
-        synchronized (lock) {
-            if (connSuccess == null) {
-                connSuccess = createConnectionSuccess(output);
-            }
-            if (connFail == null) {
-                connFail = createConnectionFail(output);
-            }
-        }
-    }
-
-    private Connection createConnectionSuccess(File output) {
-        dbSuccess = new File(output, AI_STORAGE_SUCCESS);
-        dbSuccess.getParentFile().mkdirs();
-        try {
-            SQLiteConfig config = new SQLiteConfig();
-            config.setSynchronous(SynchronousMode.OFF);
-            config.setBusyTimeout(3600000);
-            Connection conn = config.createConnection("jdbc:sqlite:" + dbSuccess.getAbsolutePath());
-            
-            // Create 'success' table and prepared statements
-            try (Statement stmt = conn.createStatement()) {
-                stmt.executeUpdate(CREATE_TABLE_SUCCESS);
-            }
-            psInsertSuccess = conn.prepareStatement(INSERT_DATA_SUCCESS);
-            psSelectSuccess = conn.prepareStatement(SELECT_FROM_ID_SUCCESS);
-
-            return conn;
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private Connection createConnectionFail(File output) {
-        dbFail = new File(output, AI_STORAGE_FAIL);
-        dbFail.getParentFile().mkdirs();
-        try {
-            SQLiteConfig config = new SQLiteConfig();
-            config.setSynchronous(SynchronousMode.OFF);
-            config.setBusyTimeout(3600000);
-            Connection conn = config.createConnection("jdbc:sqlite:" + dbFail.getAbsolutePath());
-            
-            // Create 'fail' table and prepared statements
-            try (Statement stmt = conn.createStatement()) {
-                stmt.executeUpdate(CREATE_TABLE_FAIL);
-            }
-            psInsertFail = conn.prepareStatement(INSERT_DATA_FAIL);
-
-            return conn;
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private String getClassesFromDb(String id) throws IOException {
-        ResultSet rs = null;
-        try {
-            synchronized (lock) {
-                psSelectSuccess.setString(1, id);
-                long t = System.currentTimeMillis();
-                rs = psSelectSuccess.executeQuery();
-                cacheRetrieveTime.addAndGet(System.currentTimeMillis() - t);
-                cacheRetrieveCount.incrementAndGet();
-                if (rs.next()) {
-                    return rs.getString(1);
-                }
-            }
-        } catch (SQLException e) {
-            throw new IOException(e);
-        } finally {
-            if (rs != null) {
-                try {
-                    rs.close();
-                } catch (Exception e) {
-                }
-            }
-        }
-        return null;        
-    }
-
-    private void storeClassesInDb(String id, String classes) throws IOException {
-        try {
-            synchronized (lock) {
-                psInsertSuccess.setString(1, id);
-                psInsertSuccess.setString(2, classes);
-                long t = System.currentTimeMillis();
-                psInsertSuccess.executeUpdate();
-                cacheStoreTime.addAndGet(System.currentTimeMillis() - t);
-                cacheStoreCount.incrementAndGet();
-            }
-        } catch (SQLException e) {
-            throw new IOException(e);
-        }        
-    }
-
-    private void storeFailEvidenceInDb(String id, int code) throws IOException {
-        try {
-            synchronized (lock) {
-                psInsertFail.setString(1, id);
-                psInsertFail.setInt(2, code);
-                long t = System.currentTimeMillis();
-                psInsertFail.executeUpdate();
-                cacheStoreFailTime.addAndGet(System.currentTimeMillis() - t);
-                cacheStoreFailEvidenceCount.incrementAndGet();
-            }
-        } catch (SQLException e) {
-            throw new IOException(e);
-        }        
-    }
-
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
         config = configurationManager.findObject(RemoteImageClassifierConfig.class);
@@ -377,10 +227,6 @@ public class RemoteImageClassifierTask extends AbstractTask {
         if (zip == null) {
             zip = new ZipFile();
         }
-
-        if (config.isEnabled()) {
-            createConnections();
-        }
     }
 
     public static String formatNumberToKMGUnits(float bytes) {
@@ -394,43 +240,6 @@ public class RemoteImageClassifierTask extends AbstractTask {
 
     @Override
     public void finish() throws Exception {
-        // Close DB connections
-        synchronized (lock) {
-            if (connSuccess != null) {
-                if (psInsertSuccess != null) {
-                    psInsertSuccess.close();
-                }
-                if (psSelectSuccess != null) {
-                    psSelectSuccess.close();
-                }
-                connSuccess.close();
-                connSuccess = null;
-                // Delete "case cache" database file for "success" classifications
-                try {
-                    dbSuccess.delete();
-                }
-                catch (Exception e) {
-                    logger.warn("Cache database file for 'success' classifications could not be deleted.");
-                }
-            }
-            if (connFail != null) {
-                if (psInsertFail != null) {
-                    psInsertFail.close();
-                }
-                connFail.close();
-                connFail = null;
-                // Delete "case cache" database file for "fail" classifications, if no failure was stored
-                if (cacheStoreFailEvidenceCount.intValue() == 0) {
-                    try {
-                        dbFail.delete();
-                    }
-                    catch (Exception e) {
-                        logger.warn("Cache database file for 'fail' classifications could not be deleted.");
-                    }
-                }
-            }
-        }
-
         if (!finishNow.getAndSet(true)) {
             // Summary statistics
             long totClassifications = classificationSuccess.longValue() + classificationFail.longValue();
@@ -467,22 +276,6 @@ public class RemoteImageClassifierTask extends AbstractTask {
                 logger.info("  Skipped classification by dimension: {}", skipDimensionCount.intValue());
                 logger.info("  Skipped classification by hashDBFiles: {}", skipHashDBFilesCount.intValue());
                 logger.info("  Skipped classification by duplicates: {}", skipDuplicatesCount.intValue());
-            }
-
-            // Statistics for cache usage
-            if (totClassifications != 0) {
-                if (cacheStoreCount.intValue() == 0)
-                    logger.info(" Cache 'success' store operations: 0");
-                else
-                    logger.info(" Cache 'success' store operations: {}; average operation time (ms): {}", cacheStoreCount.intValue(), String.format("%.3f", ((float) cacheStoreTime.longValue() / cacheStoreCount.intValue())));
-                if (cacheRetrieveCount.intValue() == 0)
-                    logger.info(" Cache 'success' retrieve operations: 0");
-                else
-                    logger.info(" Cache 'success' retrieve operations: {}; average operation time (ms): {}", cacheRetrieveCount.intValue(), String.format("%.3f", ((float) cacheRetrieveTime.longValue() / cacheRetrieveCount.intValue())));
-                if (cacheStoreFailEvidenceCount.intValue() == 0)
-                    logger.info(" Cache 'fail' store operations: 0");
-                else
-                    logger.info(" Cache 'fail' store operations: {}; average operation time (ms): {}", cacheStoreFailEvidenceCount.intValue(), String.format("%.3f", ((float) cacheStoreFailTime.longValue() / cacheStoreFailEvidenceCount.intValue())));
             }
         }
     }
@@ -561,23 +354,18 @@ public class RemoteImageClassifierTask extends AbstractTask {
                     IItem evidence = queue.get(name);
                     if (evidence != null) {
                         // Matching evidence found
-
                         // Add classification fail info, if not already exists
                         // Avoids duplicate counting of failed videos, in case of classification problem with more than one thumb
                         if (!queueFail.contains(name)) {
                             // Add evidence to the fail queue
                             // Avoids signaling evidence classification success later on for videos with classification problem with some, but not all, thumbs
                             queueFail.add(name);
-
                             // Classification fail
                             classificationFail.incrementAndGet();
-
                             // Add classification status
-                            evidence.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_FAIL);
-
-                            // Store failed evidence in case cache
-                            storeFailEvidenceInDb(evidence.getExtraAttribute(IndexItem.TRACK_ID).toString(), AI_CLASSIFICATION_FAIL_NO_CLASS);
-
+                            evidence.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_FAIL_NO_CLASS);
+                            // Add skip classification info
+                            evidence.setExtraAttribute(AI_CLASSIFICATION_SKIP_ATTR, AI_CLASSIFICATION_SKIP_NO);
                             logger.warn("ClassificationFail::EvidenceNoClass: Invalid/missing 'class' field for filename: {}", name);
                         }
                     }
@@ -600,7 +388,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
                 }
                 // Check if evidence is in fail queue
                 if (name != null && queueFail.contains(name)) {
-                    // Classification failed
+                    // Classification fail
                     continue;
                 }
                 // Check if classes are not missing
@@ -609,17 +397,14 @@ public class RemoteImageClassifierTask extends AbstractTask {
                 if (iterator.hasNext()) {
                     // Classification success
                     classificationSuccess.incrementAndGet();
-
                     // Add classification status
                     evidence.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_SUCCESS);
-                    // Add classification cache info
-                    evidence.setExtraAttribute(AI_CLASSIFICATION_FROM_CACHE_ATTR, AI_CLASSIFICATION_FROM_CACHE_NO);
                     // Add skip classification info
                     evidence.setExtraAttribute(AI_CLASSIFICATION_SKIP_ATTR, AI_CLASSIFICATION_SKIP_NO);
-
+                    
+                    // Classification classes as a String holding className=classProb pairs (used when retrieving cached classifications)
                     String className;
                     double classProb;
-                    // Classification classes as a String holding className=classProb pairs (used when retrieving cached classifications)
                     StringBuilder classes = new StringBuilder();
                     while (iterator.hasNext()) {
                         className = iterator.next();
@@ -631,8 +416,8 @@ public class RemoteImageClassifierTask extends AbstractTask {
                             classes.append(";");
                     }
 
-                    // Store classification in case cache
-                    storeClassesInDb(evidence.getHash(), classes.toString());
+                    // Store classification in classifications cache
+                    classifications.put(evidence.getHashValue(), classes.toString());
                 }
             }
         } else {
@@ -644,12 +429,12 @@ public class RemoteImageClassifierTask extends AbstractTask {
             // Store fail information for each evidence in queue
             for (IItem evidence : queue.values()) {
                 // Classification fail
-                classificationFail.incrementAndGet();
-                
+                classificationFail.incrementAndGet();                
                 // Add classification status
-                evidence.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_FAIL);
+                evidence.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_FAIL_NO_RESULTS);
+                // Add skip classification info
+                evidence.setExtraAttribute(AI_CLASSIFICATION_SKIP_ATTR, AI_CLASSIFICATION_SKIP_NO);
             }
-
             logger.error("ClassificationFail::NoResults: 'results' array is missing in JSON response. Classification fail for a batch of {} files", queue.size());
         }
     }
@@ -887,18 +672,15 @@ public class RemoteImageClassifierTask extends AbstractTask {
             return;
         }
 
-        // Skip classification of images/videos duplicates (if classification exists in case cache)
-        String classes = getClassesFromDb(evidence.getHash());
+        // Skip classification of images/videos duplicates if classification exists in classifications cache
+        // Retrieve classification from classifications cache
+        String classes = classifications.get(evidence.getHashValue());
         if (classes != null) {
-            // Classification success (exists in case cache)
-
+            // Classification exists in classifications cache
             // Add classification status
             evidence.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_SUCCESS);
-            // Add classification cache info
-            evidence.setExtraAttribute(AI_CLASSIFICATION_FROM_CACHE_ATTR, AI_CLASSIFICATION_FROM_CACHE_CASE);
             // Add skip classification info
             evidence.setExtraAttribute(AI_CLASSIFICATION_SKIP_ATTR, AI_CLASSIFICATION_SKIP_DUPLICATE);
-
             // Add classification classes to the evidence 
             String[] classesArray = classes.split(";");
             String[] classParts;
@@ -908,7 +690,6 @@ public class RemoteImageClassifierTask extends AbstractTask {
                 // Add classification class to the evidence 
                 evidence.setExtraAttribute(classParts[0], Double.parseDouble(classParts[1]));
             }
-
             skipDuplicatesCount.incrementAndGet();
             return;
         }
