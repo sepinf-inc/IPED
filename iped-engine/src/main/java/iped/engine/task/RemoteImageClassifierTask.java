@@ -14,13 +14,13 @@ import java.security.cert.X509Certificate;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -96,7 +96,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
     private static final String AI_CLASSIFICATION_SKIP_DUPLICATE = "duplicate";
 
     // Classifications cache (avoids classification of duplicates)
-    private static final HashMap<IHashValue, String> classifications = new HashMap<>();
+    private static ConcurrentHashMap<IHashValue, String> classifications = new ConcurrentHashMap<>();
 
     // Queue to store 'name' to 'evidence' mapping
     private Map<String, IItem> queue = new TreeMap<>();
@@ -240,8 +240,12 @@ public class RemoteImageClassifierTask extends AbstractTask {
 
     @Override
     public void finish() throws Exception {
+        // "Close" classifications cache
+        if (classifications != null)
+            classifications = null;
+
+        // Summary statistics
         if (!finishNow.getAndSet(true)) {
-            // Summary statistics
             long totClassifications = classificationSuccess.longValue() + classificationFail.longValue();
             long totSkipCount = skipSizeCount.longValue() + skipDimensionCount.longValue() + skipHashDBFilesCount.longValue() + skipDuplicatesCount.longValue();
             logger.info("Total count of files processed: {}", (totClassifications + totSkipCount));
