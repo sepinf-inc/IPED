@@ -528,6 +528,80 @@ public class RemoteImageClassifierTask extends AbstractTask {
         }
     }
 
+    private void sendBatchedFiles() throws Exception {
+        // In case of errors, retry, if possible
+        while (retryCount <= MAX_RETRY) {
+            try {
+                sendZipFile(zip.closeAndGetZip());
+                break;
+            }
+            catch (IOException e) {
+                String baseMsg = String.format(" Failed to upload ZIP file.");
+
+                // In case of non recoverable errors, abort case processing
+                // Abort if unknown host on URL
+                if (e instanceof UnknownHostException) {
+                    if (!abortNow.getAndSet(true)) {
+                        logger.error("ClassificationFail::UnknownHost:{} Unknown host on '{}': {}", baseMsg, url, e.getClass().getName());
+                        System.exit(1);
+                    }
+                }
+                // Abort if HTTP response status code is different from SC_SERVICE_UNAVAILABLE and SC_GATEWAY_TIMEOUT
+                if (e instanceof HttpResponseStatusException) {
+                    HttpResponseStatusException eHTTP = (HttpResponseStatusException) e;
+                    if (eHTTP.getStatusCode() != HttpStatus.SC_SERVICE_UNAVAILABLE && eHTTP.getStatusCode() != HttpStatus.SC_GATEWAY_TIMEOUT) {
+                        if (!abortNow.getAndSet(true)) {
+                            logger.error("ClassificationFail::HttpStatusNotOK: {}", e.getMessage());
+                            System.exit(1);
+                        }
+                    }
+                }
+
+                // In case of recoverable errors, retry sending batched files
+                // Log warning/error messages
+                baseMsg = String.format(" Failed to upload ZIP file #%d (files: %d).", currentBatch, zip.getFileCount());
+                if (retryCount == MAX_RETRY)
+                    baseMsg = String.format(" Failed to upload ZIP file.");
+                if (retryCount > 0)
+                    baseMsg = String.format("retry#%d:", retryCount) + baseMsg; 
+                String msg = "";                    
+                if (e instanceof HttpResponseStatusException) {
+                    HttpResponseStatusException eHTTP = (HttpResponseStatusException) e;
+                    if (eHTTP.getStatusCode() == HttpStatus.SC_SERVICE_UNAVAILABLE)
+                        msg += String.format("ClassificationFail::HttpStatusNotOK:%s Service unavailable for '%s': %s: %s", baseMsg, url, e.getClass().getName(), e.getMessage());
+                    if (eHTTP.getStatusCode() == HttpStatus.SC_GATEWAY_TIMEOUT)
+                        msg += String.format("ClassificationFail::HttpStatusNotOK:%s Gateway timeout for '%s': %s: %s", baseMsg, url, e.getClass().getName(), e.getMessage());
+                }
+                else if (e instanceof HttpHostConnectException)
+                    msg += String.format("ClassificationFail::ConnectionProblem:%s Could not connect to host on '%s': %s: %s", baseMsg, url, e.getClass().getName(), e.getMessage());
+                else if (e instanceof SocketTimeoutException)
+                    msg += String.format("ClassificationFail::ConnectionProblem:%s Socket timeout occurred while connecting or reading from '%s': %s: %s", baseMsg, url, e.getClass().getName(), e.getMessage());
+                else if (e instanceof ClientProtocolException)
+                    msg += String.format("ClassificationFail::ConnectionProblem:%s HTTP protocol error while communicating with '%s': %s: %s", baseMsg, url, e.getClass().getName(), e.getMessage());
+                else 
+                    msg += String.format("ClassificationFail::IOProblem:%s I/O error occurred during HTTP request to '%s': %s: %s", baseMsg, url, e.getClass().getName(), e.getMessage());
+                if (retryCount < MAX_RETRY) {
+                    // Log warning and retry
+                    logger.warn(msg);
+                }
+                else {
+                    // Log error and abort case processing
+                    if (!abortNow.getAndSet(true)) {
+                        logger.error(msg);
+                        logger.error("ClassificationFail::TooManyErrors: Aborting case processing");
+                        System.exit(1);
+                    }
+                }
+
+                // Increment 'retryCount'
+                retryCount++;
+
+                // Wait time before retrying
+                Thread.sleep(WAIT_BEFORE_RETRY);
+            }
+        }
+    }
+
     @Override
     protected boolean processQueueEnd() {
         return true;
@@ -539,77 +613,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
         // (if maximum number of thumbs in current batch has been reached or current batch is the last one)
         if (zip.getFileCount() >= batchSize || (evidence.isQueueEnd() && zip.getFileCount() > 0)) {
             // Send batched files
-            // In case of errors, retry, if possible
-            while (retryCount <= MAX_RETRY) {
-                try {
-                    sendZipFile(zip.closeAndGetZip());
-                    break;
-                }
-                catch (IOException e) {
-                    String baseMsg = String.format(" Failed to upload ZIP file.");
-
-                    // In case of non recoverable errors, abort case processing
-                    // Abort if unknown host on URL
-                    if (e instanceof UnknownHostException) {
-                        if (!abortNow.getAndSet(true)) {
-                            logger.error("ClassificationFail::UnknownHost:{} Unknown host on '{}': {}", baseMsg, url, e.getClass().getName());
-                            System.exit(1);
-                        }
-                    }
-                    // Abort if HTTP response status code is different from SC_SERVICE_UNAVAILABLE and SC_GATEWAY_TIMEOUT
-                    if (e instanceof HttpResponseStatusException) {
-                        HttpResponseStatusException eHTTP = (HttpResponseStatusException) e;
-                        if (eHTTP.getStatusCode() != HttpStatus.SC_SERVICE_UNAVAILABLE && eHTTP.getStatusCode() != HttpStatus.SC_GATEWAY_TIMEOUT) {
-                            if (!abortNow.getAndSet(true)) {
-                                logger.error("ClassificationFail::HttpStatusNotOK: {}", e.getMessage());
-                                System.exit(1);
-                            }
-                        }
-                    }
-
-                    // In case of recoverable errors, retry sending batched files
-                    // Log warning/error messages
-                    baseMsg = String.format(" Failed to upload ZIP file #%d (files: %d).", currentBatch, zip.getFileCount());
-                    if (retryCount == MAX_RETRY)
-                        baseMsg = String.format(" Failed to upload ZIP file.");
-                    if (retryCount > 0)
-                        baseMsg = String.format("retry#%d:", retryCount) + baseMsg; 
-                    String msg = "";                    
-                    if (e instanceof HttpResponseStatusException) {
-                        HttpResponseStatusException eHTTP = (HttpResponseStatusException) e;
-                        if (eHTTP.getStatusCode() == HttpStatus.SC_SERVICE_UNAVAILABLE)
-                            msg += String.format("ClassificationFail::HttpStatusNotOK:%s Service unavailable for '%s': %s: %s", baseMsg, url, e.getClass().getName(), e.getMessage());
-                        if (eHTTP.getStatusCode() == HttpStatus.SC_GATEWAY_TIMEOUT)
-                            msg += String.format("ClassificationFail::HttpStatusNotOK:%s Gateway timeout for '%s': %s: %s", baseMsg, url, e.getClass().getName(), e.getMessage());
-                    }
-                    else if (e instanceof HttpHostConnectException)
-                        msg += String.format("ClassificationFail::ConnectionProblem:%s Could not connect to host on '%s': %s: %s", baseMsg, url, e.getClass().getName(), e.getMessage());
-                    else if (e instanceof SocketTimeoutException)
-                        msg += String.format("ClassificationFail::ConnectionProblem:%s Socket timeout occurred while connecting or reading from '%s': %s: %s", baseMsg, url, e.getClass().getName(), e.getMessage());
-                    else if (e instanceof ClientProtocolException)
-                        msg += String.format("ClassificationFail::ConnectionProblem:%s HTTP protocol error while communicating with '%s': %s: %s", baseMsg, url, e.getClass().getName(), e.getMessage());
-                    else 
-                        msg += String.format("ClassificationFail::IOProblem:%s I/O error occurred during HTTP request to '%s': %s: %s", baseMsg, url, e.getClass().getName(), e.getMessage());
-                    if (retryCount < MAX_RETRY) {
-                        // Log warning and retry
-                        logger.warn(msg);
-                    }
-                    else {
-                        // Log error and abort case processing
-                        if (!abortNow.getAndSet(true)) {
-                            logger.error(msg);
-                            logger.error("ClassificationFail::TooManyErrors: Aborting case processing");
-                            System.exit(1);
-                        }
-                    }
-
-                    // Increment 'retryCount'
-                    retryCount++;
-
-                    // Wait time before retrying
-                    Thread.sleep(WAIT_BEFORE_RETRY);
-                }
-            }
+            sendBatchedFiles();
             zip.clean();
             zip = new ZipFile();
             sendItemsToNextTask();
