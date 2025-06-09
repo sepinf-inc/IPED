@@ -51,15 +51,17 @@ public class ProcessingQueues {
         ProcessingPriorityConfig config = ConfigurationManager.get().findObject(ProcessingPriorityConfig.class);
         randomOrder = config.isRandomOrder();
         maxQueueSize = config.getMaxQueueSize();
+        boolean auto = false;
         if (maxQueueSize == 0) {
             // If the queue maximum size is not explicitly defined, set it based on the
             // maximum heap size. 1 item each 64 KB, so 32 GB would allow ~500,000 items.
             maxQueueSize = (int) (Runtime.getRuntime().maxMemory() >>> 16);
+            auto = true;
         }
         // Enforce a very minimal size
         maxQueueSize = Math.max(1024, maxQueueSize);
 
-        logger.info("Maximum Processing Queue Size: {}", maxQueueSize);
+        logger.info("Maximum Processing Queue Size: {}{}", maxQueueSize, auto ? " (auto)" : "");
         logger.info("Processing Queue Random Order: {}", randomOrder ? "enabled" : "disabled");
     }
 
