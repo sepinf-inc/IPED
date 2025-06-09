@@ -12,6 +12,14 @@ import iped.engine.util.Util;
 
 public class ProcessingQueues {
 
+    /*
+     * The LinkedList's are used for prioritized items, inserted on the top of the
+     * queue. They can be used for the rest of the items if the selected behavior is
+     * the same used before #2541. The ArrayList's are used for the rest of the
+     * items. Items are selected randomly from them, to "spread" similar items,
+     * minimizing the situation of having all workers dealing with similar items,
+     * that would compete for the same type of resources.
+     */
     private TreeMap<Integer, LinkedList<IItem>> queuesTop;
     private TreeMap<Integer, ArrayList<IItem>> queuesRest;
 
@@ -19,7 +27,7 @@ public class ProcessingQueues {
 
     private CaseData caseData;
 
-    private final int maxQueueSize = 100_000; //TODO
+    private final int maxQueueSize = 100_000; // TODO
 
     private int totalItemsBeingProcessed = 0;
 
@@ -90,7 +98,7 @@ public class ProcessingQueues {
                     if (addFirst) {
                         q1.addFirst(item);
                     } else {
-                        //q1.addLast(item); //TODO
+                        // q1.addLast(item); //TODO
                         q2.add(item);
                     }
                     break;
