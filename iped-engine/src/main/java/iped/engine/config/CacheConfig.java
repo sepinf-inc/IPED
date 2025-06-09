@@ -7,17 +7,21 @@ import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import org.ehcache.Cache;
+import org.ehcache.CachePersistenceException;
 import org.ehcache.PersistentCacheManager;
+import org.ehcache.config.builders.CacheConfigurationBuilder;
 import org.ehcache.config.builders.CacheManagerBuilder;
 import org.ehcache.config.builders.ResourcePoolsBuilder;
 import org.ehcache.config.units.MemoryUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import iped.cache.ICacheConfig;
 import iped.engine.util.Util;
 import iped.utils.UTF8Properties;
 
-public class CacheConfig extends AbstractPropertiesConfigurable implements AutoCloseable {
+public class CacheConfig extends AbstractPropertiesConfigurable implements AutoCloseable, ICacheConfig {
 
     private static final long serialVersionUID = 3652846422867916097L;
 
@@ -80,7 +84,7 @@ public class CacheConfig extends AbstractPropertiesConfigurable implements AutoC
             // If "auto", calculate 0.5% of the maximum Java heap size (-Xmx).
             long maxHeapBytes = Runtime.getRuntime().maxMemory();
             heapPoolSizeInMB = (long) (maxHeapBytes * AUTO_HEAP_FACTOR / ONE_MB);
-            logger.info("Auto-configured heapPoolSizeInMB to: {} MB", heapPoolSizeInMB);
+            logger.info("Auto-configured heapPoolSizeInMB to {} MB", heapPoolSizeInMB);
         } else {
             heapPoolSizeInMB = Long.parseLong(heapPoolSizeValue);
         }
@@ -92,7 +96,7 @@ public class CacheConfig extends AbstractPropertiesConfigurable implements AutoC
             // This provides a more reliable measure for available off-heap memory.
             long totalPhysicalMemoryBytes = Util.getPhysicalMemorySize();
             offHeapPoolSizeInMB = (long) (totalPhysicalMemoryBytes * AUTO_OFF_HEAP_FACTOR / ONE_MB);
-            logger.info("Auto-configured offHeapPoolSizeInMB to: {} MB", offHeapPoolSizeInMB);
+            logger.info("Auto-configured offHeapPoolSizeInMB to {} MB", offHeapPoolSizeInMB);
         } else {
             offHeapPoolSizeInMB = Long.parseLong(offHeapPoolSizeValue);
         }
@@ -107,18 +111,50 @@ public class CacheConfig extends AbstractPropertiesConfigurable implements AutoC
                 .heap(heapPoolSizeInMB, MemoryUnit.MB) //
                 .offheap(offHeapPoolSizeInMB, MemoryUnit.MB) //
                 .disk(diskPoolSizeInMB, MemoryUnit.MB, true);
-    }
 
-    public ResourcePoolsBuilder getDefaultResourcePoolsBuilder() {
-        return defaultResourcePoolsBuilder;
-    }
-
-    public PersistentCacheManager getCacheManager() {
-        return cacheManager;
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            cacheManager.close();
+        }));
     }
 
     @Override
-    public void close() throws Exception {
+    public <K, V> Cache<K, V> getOrCreateCache(String alias, Class<K> keyType, Class<V> valueType) {
+        return getOrCreateCache(alias, keyType, valueType, defaultResourcePoolsBuilder);
+    }
+
+    @Override
+    public <K, V> Cache<K, V> getOrCreateCache(String alias, Class<K> keyType, Class<V> valueType, ResourcePoolsBuilder resourcePoolsBuilder) {
+
+        Cache<K, V> cache = cacheManager.getCache(alias, keyType, valueType);
+        if (cache != null) {
+            return cache;
+        }
+
+        try {
+
+            return createCache(alias, keyType, valueType, resourcePoolsBuilder);
+
+        } catch (IllegalStateException e) {
+            logger.error("Invalid cache. Destroying and creating a new one: " + alias);
+            try {
+                cacheManager.destroyCache(alias);
+            } catch (CachePersistenceException cpe) {
+                logger.error("Error destroying cache: " + alias, cpe);
+            }
+            return createCache(alias, keyType, valueType, resourcePoolsBuilder);
+        }
+    }
+
+    private <K, V> Cache<K, V> createCache(String alias, Class<K> keyType, Class<V> valueType, ResourcePoolsBuilder resourcePoolsBuilder) {
+        return cacheManager.createCache(alias, //
+                CacheConfigurationBuilder.newCacheConfigurationBuilder( //
+                        keyType, //
+                        valueType, //
+                        resourcePoolsBuilder));
+    }
+
+    @Override
+    public synchronized void close() throws Exception {
         if (cacheManager != null) {
             cacheManager.close();
             cacheManager = null;

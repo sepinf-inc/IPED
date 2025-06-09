@@ -14,7 +14,8 @@ import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.BodyContentHandler;
-import org.ehcache.CacheManager;
+import org.ehcache.Cache;
+import org.ehcache.config.builders.CacheConfigurationBuilder;
 import org.ehcache.config.builders.CacheManagerBuilder;
 import org.ehcache.config.builders.ResourcePoolsBuilder;
 import org.junit.AfterClass;
@@ -27,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.cache.ICacheConfig;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.ItemInfo;
 import iped.parsers.util.OCROutputFolder;
@@ -42,6 +44,22 @@ public class OCRParserTest {
 
     @Rule
     public TestName testName = new TestName();
+
+    private ICacheConfig cacheConfig = new ICacheConfig() {
+
+        @Override
+        public <K, V> Cache<K, V> getOrCreateCache(String alias, Class<K> keyType, Class<V> valueType) {
+            return getOrCreateCache(alias, keyType, valueType, ResourcePoolsBuilder.heap(10));
+        }
+
+        @Override
+        public <K, V> Cache<K, V> getOrCreateCache(String alias, Class<K> keyType, Class<V> valueType, ResourcePoolsBuilder resourcePoolsBuilder) {
+            return CacheManagerBuilder.newCacheManagerBuilder() //
+                    .build(true) //
+                    .createCache(alias, //
+                            CacheConfigurationBuilder.newCacheConfigurationBuilder(keyType, valueType, resourcePoolsBuilder));
+        }
+    };
 
     @BeforeClass
     public static void setUpTool() throws IOException {
@@ -83,8 +101,7 @@ public class OCRParserTest {
         metadata.add(StandardParser.INDEXER_CONTENT_TYPE, "image/png");
         context.set(OCROutputFolder.class, new OCROutputFolder(new File(OCR_OUTPUT_FOLDER_NAME)));
         System.setProperty(OCRParser.LANGUAGE_PROP, "por");
-        context.set(CacheManager.class, CacheManagerBuilder.newCacheManagerBuilder().build(true));
-        context.set(ResourcePoolsBuilder.class, ResourcePoolsBuilder.heap(10));
+        context.set(ICacheConfig.class, cacheConfig);
 
         String hts = "";
         OCRParser parser = new OCRParser();
@@ -113,8 +130,7 @@ public class OCRParserTest {
         metadata.add(StandardParser.INDEXER_CONTENT_TYPE, "application/pdf");
         context.set(OCROutputFolder.class, new OCROutputFolder(new File(OCR_OUTPUT_FOLDER_NAME)));
         System.setProperty(OCRParser.LANGUAGE_PROP, "por");
-        context.set(CacheManager.class, CacheManagerBuilder.newCacheManagerBuilder().build(true));
-        context.set(ResourcePoolsBuilder.class, ResourcePoolsBuilder.heap(10));
+        context.set(ICacheConfig.class, cacheConfig);
 
         String hts = "";
         OCRParser parser = new OCRParser();
@@ -157,8 +173,7 @@ public class OCRParserTest {
         metadata.add(StandardParser.INDEXER_CONTENT_TYPE, "image/tiff");
         context.set(OCROutputFolder.class, new OCROutputFolder(new File(OCR_OUTPUT_FOLDER_NAME)));
         System.setProperty(OCRParser.LANGUAGE_PROP, "eng");
-        context.set(CacheManager.class, CacheManagerBuilder.newCacheManagerBuilder().build(true));
-        context.set(ResourcePoolsBuilder.class, ResourcePoolsBuilder.heap(10));
+        context.set(ICacheConfig.class, cacheConfig);
 
         String hts = "";
         OCRParser parser = new OCRParser();
@@ -188,8 +203,7 @@ public class OCRParserTest {
         metadata.add(StandardParser.INDEXER_CONTENT_TYPE, "image/vnd.adobe.photoshop");
         context.set(OCROutputFolder.class, new OCROutputFolder(new File(OCR_OUTPUT_FOLDER_NAME)));
         System.setProperty(OCRParser.LANGUAGE_PROP, "eng");
-        context.set(CacheManager.class, CacheManagerBuilder.newCacheManagerBuilder().build(true));
-        context.set(ResourcePoolsBuilder.class, ResourcePoolsBuilder.heap(10));
+        context.set(ICacheConfig.class, cacheConfig);
 
         String hts = "";
         OCRParser parser = new OCRParser();
@@ -218,8 +232,7 @@ public class OCRParserTest {
         metadata.add(StandardParser.INDEXER_CONTENT_TYPE, "image/svg+xml");
         context.set(OCROutputFolder.class, new OCROutputFolder(new File(OCR_OUTPUT_FOLDER_NAME)));
         System.setProperty(OCRParser.LANGUAGE_PROP, "eng");
-        context.set(CacheManager.class, CacheManagerBuilder.newCacheManagerBuilder().build(true));
-        context.set(ResourcePoolsBuilder.class, ResourcePoolsBuilder.heap(10));
+        context.set(ICacheConfig.class, cacheConfig);
 
         String hts = "";
         OCRParser parser = new OCRParser();
@@ -276,5 +289,4 @@ public class OCRParserTest {
         }
         return true;
     }
-
 }

@@ -48,13 +48,12 @@ import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.html.HtmlMapper;
 import org.apache.tika.parser.html.IdentityHtmlMapper;
 import org.apache.tika.utils.XMLReaderUtils;
-import org.ehcache.CacheManager;
-import org.ehcache.config.builders.ResourcePoolsBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.cache.ICacheConfig;
 import iped.configuration.Configurable;
 import iped.data.ICaseData;
 import iped.data.IItem;
@@ -237,8 +236,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         ItemInfo itemInfo = ItemInfoFactory.getItemInfo(evidence);
         context.set(ItemInfo.class, itemInfo);
         context.set(OCROutputFolder.class, new OCROutputFolder(output));
-        context.set(CacheManager.class, cacheConfig.getCacheManager());
-        context.set(ResourcePoolsBuilder.class, cacheConfig.getDefaultResourcePoolsBuilder());
+        context.set(ICacheConfig.class, cacheConfig);
 
         if (CarverTask.ignoreCorrupted && caseData != null && !caseData.isIpedReport()) {
             context.set(IgnoreCorruptedCarved.class, new IgnoreCorruptedCarved());
@@ -296,7 +294,6 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
                 || TelegramParser.TELEGRAM_USER_CONF.equals(item.getMediaType());
     }
 
-    @SuppressWarnings("resource")
     private void setEmptyTextCache(IItem evidence) {
         ((Item) evidence).setParsedTextCache(new TextCache());
     }

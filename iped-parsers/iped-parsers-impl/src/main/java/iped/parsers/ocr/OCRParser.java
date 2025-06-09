@@ -19,10 +19,13 @@
 package iped.parsers.ocr;
 
 import java.awt.image.BufferedImage;
+import java.io.Externalizable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -51,14 +54,12 @@ import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.ehcache.Cache;
-import org.ehcache.CacheManager;
-import org.ehcache.config.builders.CacheConfigurationBuilder;
-import org.ehcache.config.builders.ResourcePoolsBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.cache.ICacheConfig;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.CharCountContentHandler;
 import iped.parsers.util.ItemInfo;
@@ -234,6 +235,24 @@ public class OCRParser extends AbstractParser {
         return this.ENABLED;
     }
 
+    public static class OCRResult implements Externalizable {
+
+        private String text;
+        private String tesseractVersion;
+
+        @Override
+        public void writeExternal(ObjectOutput out) throws IOException {
+            out.writeUTF(text);
+            out.writeUTF(tesseractVersion);
+        }
+
+        @Override
+        public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+            text = in.readUTF();
+            tesseractVersion = in.readUTF();
+        }
+    }
+
     public OCRParser() {
         String tesseractPath = TOOL_NAME;
         if (!TOOL_PATH.isEmpty())
@@ -292,22 +311,6 @@ public class OCRParser extends AbstractParser {
         return false;
     }
 
-    private synchronized Cache<String, String> getOrCreateCache(ParseContext context) {
-
-        CacheManager cacheManager = context.get(CacheManager.class);
-        ResourcePoolsBuilder defaultResourcePoolsBuilder = context.get(ResourcePoolsBuilder.class);
-
-        Cache<String, String> cache = cacheManager.getCache(CACHE_ALIAS, String.class, String.class);
-        if (cache != null) {
-            return cache;
-        }
-
-        return cacheManager.createCache(CACHE_ALIAS, //
-                CacheConfigurationBuilder.newCacheConfigurationBuilder( //
-                        String.class, //
-                        String.class, //
-                        defaultResourcePoolsBuilder));
-    }
 
     /**
      * Executes the configured external command and passes the given document stream
@@ -320,7 +323,8 @@ public class OCRParser extends AbstractParser {
         if (!ENABLED)
             return;
 
-        Cache<String, String> cache = getOrCreateCache(context);
+        ICacheConfig cacheConfig = context.get(ICacheConfig.class);
+        Cache<String, OCRResult> cache = cacheConfig.getOrCreateCache(CACHE_ALIAS, String.class, OCRResult.class);
 
         CharCountContentHandler countHandler = new CharCountContentHandler(handler);
         XHTMLContentHandler xhtml = new XHTMLContentHandler(countHandler, metadata);
@@ -355,9 +359,9 @@ public class OCRParser extends AbstractParser {
                         outFileName += CHILD_PREFIX + itemInfo.getChild(); // $NON-NLS-1$
                     }
 
-                    String ocrText = cache.get(outFileName);
-                    if (ocrText != null) {
-                        extractOutput(ocrText, xhtml); //$NON-NLS-1$
+                    OCRResult ocrResult = cache.get(outFileName);
+                    if (ocrResult != null && ocrResult.tesseractVersion.equals(tessVersion)) {
+                        extractOutput(ocrResult.text, xhtml); //$NON-NLS-1$
                         return;
                     }
 
@@ -404,7 +408,10 @@ public class OCRParser extends AbstractParser {
                     }
 
                     String ocrText = new String(bytes, "UTF-8").trim(); //$NON-NLS-1$
-                    cache.put(outFileName, ocrText);
+                    OCRResult result = new OCRResult();
+                    result.text = ocrText;
+                    result.tesseractVersion = tessVersion;
+                    cache.put(outFileName, result);
 
                 } else {
                     extractOutput(output, xhtml);

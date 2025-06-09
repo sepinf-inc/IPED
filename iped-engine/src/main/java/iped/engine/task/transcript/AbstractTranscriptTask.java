@@ -26,7 +26,6 @@ import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.utils.SystemUtils;
 import org.ehcache.Cache;
-import org.ehcache.config.builders.CacheConfigurationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -144,22 +143,9 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         // clear profile config service address in output
         this.transcriptConfig.clearTranscriptionServiceAddress(new File(output, "profile"));
 
-        this.cache = getOrCreateCache(configurationManager);
-    }
-
-    private synchronized Cache<String, TextAndScore> getOrCreateCache(ConfigurationManager configurationManager) {
         CacheConfig cacheConfig = configurationManager.findObject(CacheConfig.class);
 
-        Cache<String, TextAndScore> cache = cacheConfig.getCacheManager().getCache(CACHE_ALIAS, String.class, TextAndScore.class);
-        if (cache != null) {
-            return cache;
-        }
-
-        return cacheConfig.getCacheManager().createCache(CACHE_ALIAS, //
-                CacheConfigurationBuilder.newCacheConfigurationBuilder( //
-                        String.class, //
-                        TextAndScore.class, //
-                        cacheConfig.getDefaultResourcePoolsBuilder()));
+        this.cache = cacheConfig.getOrCreateCache(CACHE_ALIAS, String.class, TextAndScore.class);
     }
 
     public static TextAndScore transcribeWavBreaking(File tmpFile, String itemPath, Function<File, TextAndScore> transcribeWavPart) throws Exception {
