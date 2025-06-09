@@ -6,19 +6,24 @@ import java.util.LinkedList;
 import java.util.SplittableRandom;
 import java.util.TreeMap;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import iped.data.IItem;
+import iped.engine.config.ConfigurationManager;
+import iped.engine.config.ProcessingPriorityConfig;
 import iped.engine.data.CaseData;
 import iped.engine.util.Util;
 
 public class ProcessingQueues {
-
     /*
-     * The LinkedList's are used for prioritized items, inserted on the top of the
-     * queue. They can be used for the rest of the items if the selected behavior is
-     * the same used before #2541. The ArrayList's are used for the rest of the
-     * items. Items are selected randomly from them, to "spread" similar items,
-     * minimizing the situation of having all workers dealing with similar items,
-     * that would compete for the same type of resources.
+     The LinkedList's are used for prioritized items, inserted on the top of the
+     queue. They can be used for the rest of the items if the selected behavior is
+     the same used before #2541 (FIFO). The ArrayList's are used for the rest of
+     the items, if random order is enabled (default). In such case, items are
+     selected randomly from the active queue, to "spread" items, minimizing the
+     situation of having all workers dealing with similar items, that would
+     compete for the same type of resources.
      */
     private TreeMap<Integer, LinkedList<IItem>> queuesTop;
     private TreeMap<Integer, ArrayList<IItem>> queuesRest;
@@ -27,7 +32,10 @@ public class ProcessingQueues {
 
     private CaseData caseData;
 
-    private final int maxQueueSize = 100_000; // TODO
+    private int maxQueueSize;
+    private boolean randomOrder;
+
+    private static Logger logger = LogManager.getLogger(ProcessingQueues.class);
 
     private int totalItemsBeingProcessed = 0;
 
@@ -35,7 +43,24 @@ public class ProcessingQueues {
 
     public ProcessingQueues(CaseData caseData) {
         this.caseData = caseData;
+        initConfig();
         initQueues();
+    }
+
+    private void initConfig() {
+        ProcessingPriorityConfig config = ConfigurationManager.get().findObject(ProcessingPriorityConfig.class);
+        randomOrder = config.isRandomOrder();
+        maxQueueSize = config.getMaxQueueSize();
+        if (maxQueueSize == 0) {
+            // If the queue maximum size is not explicitly defined, set it based on the
+            // maximum heap size. 1 item each 64 KB, so 32 GB would allow ~500,000 items.
+            maxQueueSize = (int) (Runtime.getRuntime().maxMemory() >>> 16);
+        }
+        // Enforce a very minimal size
+        maxQueueSize = Math.max(1024, maxQueueSize);
+
+        logger.info("Maximum Processing Queue Size: {}", maxQueueSize);
+        logger.info("Processing Queue Ranom Order: {}", randomOrder);
     }
 
     private void initQueues() {
@@ -98,14 +123,18 @@ public class ProcessingQueues {
                     if (addFirst) {
                         q1.addFirst(item);
                     } else {
-                        // q1.addLast(item); //TODO
-                        q2.add(item);
+                        if (randomOrder) {
+                            q2.add(item);
+                        } else {
+                            // If random order is disabled, FIFO is used, and new items are places in the
+                            // end of the LinkedList queue.
+                            q1.addLast(item);
+                        }
                     }
                     break;
                 }
             }
         }
-
     }
 
     public synchronized int getItemsBeingProcessed() {
