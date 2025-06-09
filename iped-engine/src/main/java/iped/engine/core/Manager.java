@@ -604,7 +604,7 @@ public class Manager {
                             "Changed to processing queue with priority " + processingQueues.getCurrentQueuePriority()); //$NON-NLS-1$
                     caseData.putCaseObject(IItemSearcher.class.getName(),
                             new ItemSearcher(output.getParentFile(), writer));
-                    processingQueues.addLastToCurrentQueue(queueEnd);
+                    processingQueues.addToCurrentQueue(queueEnd);
                     for (int k = 0; k < workers.length; k++) {
                         workers[k].processNextQueue();
                     }
