@@ -311,6 +311,8 @@ public class Main {
             e.printStackTrace();
         }
 
+        Configuration.getInstance().closeConfigurables();
+
         if (!success) {
             SystemOut.println("\nERROR!!!"); //$NON-NLS-1$
         } else {

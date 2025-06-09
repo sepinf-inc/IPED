@@ -204,6 +204,7 @@ public class Configuration {
         configManager.addObject(new OCRConfig());
         configManager.addObject(new FileSystemConfig());
         configManager.addObject(new AnalysisConfig());
+        configManager.addObject(new CacheConfig());
 
         configManager.addObject(new EnableTaskProperty(FaceRecognitionConfig.enableParam));
 
@@ -254,4 +255,16 @@ public class Configuration {
         }
     }
 
+    public void closeConfigurables() {
+        ConfigurationManager.get().getObjects().stream() //
+                .filter(AutoCloseable.class::isInstance) //
+                .map(AutoCloseable.class::cast) //
+                .forEach(ac -> {
+                    try {
+                        ac.close();
+                    } catch (Exception e) {
+                        logger.error("Error closing " + ac, e);
+                    }
+                });
+    }
 }

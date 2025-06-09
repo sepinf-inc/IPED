@@ -24,12 +24,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -54,10 +50,12 @@ import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
+import org.ehcache.Cache;
+import org.ehcache.CacheManager;
+import org.ehcache.config.builders.CacheConfigurationBuilder;
+import org.ehcache.config.builders.ResourcePoolsBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.sqlite.SQLiteConfig;
-import org.sqlite.SQLiteConfig.SynchronousMode;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
@@ -79,14 +77,14 @@ import iped.utils.ImageUtil;
  * @author Nassif
  *
  */
-public class OCRParser extends AbstractParser implements AutoCloseable {
+public class OCRParser extends AbstractParser {
 
     /**
      * 
      */
     private static final long serialVersionUID = 1L;
 
-    private static Logger LOGGER;
+    private static Logger LOGGER = LoggerFactory.getLogger(OCRParser.class);
 
     private static final String OUTPUT_REGEX = "Tesseract Open Source OCR Engine v.* with Leptonica"; //$NON-NLS-1$
 
@@ -95,16 +93,6 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
     private static final String TOOL_NAME = "tesseract"; //$NON-NLS-1$
 
     private static final String CHILD_PREFIX = "-child-"; //$NON-NLS-1$
-
-    private static final String OCR_STORAGE = "ocr-results.db"; //$NON-NLS-1$
-
-    private static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS ocr(id TEXT PRIMARY KEY, text TEXT);"; //$NON-NLS-1$
-
-    private static final String INSERT_DATA = "INSERT INTO ocr(id, text) VALUES(?,?) ON CONFLICT(id) DO NOTHING"; //$NON-NLS-1$
-
-    private static final String SELECT_EXACT = "SELECT text FROM ocr WHERE id=?;"; //$NON-NLS-1$
-
-    private static final String SELECT_ALL = "SELECT id, text FROM ocr WHERE id >= ? AND id < ?"; //$NON-NLS-1$
 
     private static final String TESSERACT_ERROR_MSG = "tesseract returned error code ";
 
@@ -140,8 +128,6 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
     private static AtomicBoolean checked = new AtomicBoolean();
     private static String tessVersion = "";
 
-    private static HashMap<File, Connection> connMap = new HashMap<>();
-
     private static final Set<MediaType> directSupportedTypes = getDirectSupportedTypes();
     private static final Set<MediaType> nonStandardSupportedTypes = getNonStandardSupportedTypes();
     private static final Set<MediaType> nonImageSupportedTypes = getNonImageSupportedTypes();
@@ -155,6 +141,9 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
     private File outputBase;
     private String[] command;
     private Random random = new Random();
+
+    // Cache
+    private static final String CACHE_ALIAS = "OCRParserCache";
 
     static {
         imageSupportedTypes.addAll(directSupportedTypes);
@@ -259,7 +248,6 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
                     List<String> info = checkVersionInfo(cmd[0], "-v"); //$NON-NLS-1$
                     if (!info.isEmpty()) 
                         tessVersion = info.get(0);
-                    LOGGER = LoggerFactory.getLogger(OCRParser.class);
                     LOGGER.info("Detected Tesseract " + tessVersion); //$NON-NLS-1$
                     if (info.size() <= 1) {
                         LOGGER.info("No Tesseract optional image libraries detected."); //$NON-NLS-1$
@@ -280,6 +268,7 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
                     if (command[i].equals("-psm")) //$NON-NLS-1$
                         command[i] = "--psm"; //$NON-NLS-1$
             }
+
 
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException("Error running " + cmd[0], e); //$NON-NLS-1$
@@ -303,38 +292,21 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
         return false;
     }
 
-    private static synchronized Connection getConnection(File outputBase) {
-        File db = new File(outputBase, OCR_STORAGE);
-        Connection conn = connMap.get(db);
-        if (conn != null) {
-            return conn;
-        }
-        db.getParentFile().mkdirs();
-        try {
-            SQLiteConfig config = new SQLiteConfig();
-            config.setSynchronous(SynchronousMode.NORMAL);
-            config.setBusyTimeout(3600000);
-            conn = config.createConnection("jdbc:sqlite:" + db.getAbsolutePath());
-            connMap.put(db, conn);
+    private synchronized Cache<String, String> getOrCreateCache(ParseContext context) {
 
-            try (Statement stmt = conn.createStatement()) {
-                stmt.executeUpdate(CREATE_TABLE);
-            }
+        CacheManager cacheManager = context.get(CacheManager.class);
+        ResourcePoolsBuilder defaultResourcePoolsBuilder = context.get(ResourcePoolsBuilder.class);
 
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+        Cache<String, String> cache = cacheManager.getCache(CACHE_ALIAS, String.class, String.class);
+        if (cache != null) {
+            return cache;
         }
-        return conn;
-    }
 
-    @Override
-    public void close() throws SQLException {
-        synchronized (this.getClass()) {
-            for (Connection con : connMap.values()) {
-                con.close();
-            }
-            connMap.clear();
-        }
+        return cacheManager.createCache(CACHE_ALIAS, //
+                CacheConfigurationBuilder.newCacheConfigurationBuilder( //
+                        String.class, //
+                        String.class, //
+                        defaultResourcePoolsBuilder));
     }
 
     /**
@@ -347,6 +319,8 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
 
         if (!ENABLED)
             return;
+
+        Cache<String, String> cache = getOrCreateCache(context);
 
         CharCountContentHandler countHandler = new CharCountContentHandler(handler);
         XHTMLContentHandler xhtml = new XHTMLContentHandler(countHandler, metadata);
@@ -368,6 +342,10 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
             if (outDir != null)
                 outputBase = new File(outDir.getPath(), TEXT_DIR);
 
+            if (outputBase != null && !outputBase.exists()) {
+                outputBase.mkdirs();
+            }
+
             if (size >= MIN_SIZE && size <= MAX_SIZE && (bookmarksToOCR == null || isFromBookmarkToOCR(itemInfo))
                     && !(SKIP_KNOWN_FILES && itemInfo.isKnown())) {
                 if (outputBase != null && itemInfo != null && itemInfo.getHash() != null) {
@@ -377,7 +355,7 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
                         outFileName += CHILD_PREFIX + itemInfo.getChild(); // $NON-NLS-1$
                     }
 
-                    String ocrText = getOcrTextFromDb(outFileName, outputBase);
+                    String ocrText = cache.get(outFileName);
                     if (ocrText != null) {
                         extractOutput(ocrText, xhtml); //$NON-NLS-1$
                         return;
@@ -426,7 +404,7 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
                     }
 
                     String ocrText = new String(bytes, "UTF-8").trim(); //$NON-NLS-1$
-                    storeOcrTextInDb(outFileName, ocrText, outputBase);
+                    cache.put(outFileName, ocrText);
 
                 } else {
                     extractOutput(output, xhtml);
@@ -443,49 +421,6 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
             }
             tmp.dispose();
         }
-    }
-
-    private static String getOcrTextFromDb(String id, File outputBase) throws IOException {
-        try (PreparedStatement ps = getConnection(outputBase).prepareStatement(SELECT_EXACT)) {
-            ps.setString(1, id);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                return rs.getString(1);
-            }
-        } catch (SQLException e) {
-            throw new IOException(e);
-        }
-        return null;
-    }
-
-    private static void storeOcrTextInDb(String id, String ocrText, File outputBase) throws IOException {
-        try (PreparedStatement ps = getConnection(outputBase).prepareStatement(INSERT_DATA)) {
-            ps.setString(1, id);
-            ps.setString(2, ocrText);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            throw new IOException(e);
-        }
-    }
-
-    public static void copyOcrResults(String hash, File inputBase, File outputBase) throws IOException {
-        File sourceDb = new File(inputBase, OCRParser.TEXT_DIR + File.separator + OCRParser.OCR_STORAGE);
-        File targetDb = new File(outputBase, OCRParser.TEXT_DIR + File.separator + OCRParser.OCR_STORAGE);
-        if (!sourceDb.exists())
-            return;
-        try (PreparedStatement ps = getConnection(sourceDb.getParentFile()).prepareStatement(SELECT_ALL)) {
-            ps.setString(1, hash);
-            ps.setString(2, hash.substring(0, hash.length() - 1) + (char) (hash.charAt(hash.length() - 1) + 1));
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                String id = rs.getString(1);
-                String ocrText = rs.getString(2);
-                storeOcrTextInDb(id, ocrText, targetDb.getParentFile());
-            }
-        } catch (SQLException e) {
-            throw new IOException(e);
-        }
-
     }
 
     private void parseTiff(XHTMLContentHandler xhtml, TemporaryResources tmp, File input, File output, String itemPath)
@@ -705,7 +640,7 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
     }
 
     private static List<String> extractVersion(InputStream is) throws IOException {
-        List<String> lines = IOUtils.readLines(is);
+        List<String> lines = IOUtils.readLines(is, StandardCharsets.UTF_8);
         String version = lines.get(0).replace("tesseract", "").trim(); //$NON-NLS-1$ //$NON-NLS-2$
         if (version.startsWith("v")) {
             version = version.substring(1);
