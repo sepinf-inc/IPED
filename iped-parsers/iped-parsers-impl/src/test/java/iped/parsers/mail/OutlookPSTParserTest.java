@@ -24,6 +24,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import iped.content.TikaManager;
+import iped.content.TikaManager.TikaConfigAlreadyInitializedException;
 import iped.parsers.util.AbstractPkgTest;
 import iped.properties.ExtraProperties;
 
@@ -40,8 +41,8 @@ public class OutlookPSTParserTest extends AbstractPkgTest {
         super.setUp();
 
         try {
-            TikaManager.initializeTikaConfig();
-        } catch (IllegalStateException ignore) {
+            TikaManager.initializeTikaConfig(false, false);
+        } catch (TikaConfigAlreadyInitializedException ignore) {
         }
 
         psttracker = new EmbeddedPSTParser();
