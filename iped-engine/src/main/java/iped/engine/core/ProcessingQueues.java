@@ -126,7 +126,7 @@ public class ProcessingQueues {
                         if (randomOrder) {
                             q2.add(item);
                         } else {
-                            // If random order is disabled, FIFO is used, and new items are places in the
+                            // If "random order" is disabled, FIFO is used, and new items are placed in the
                             // end of the LinkedList queue.
                             q1.addLast(item);
                         }
