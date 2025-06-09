@@ -60,7 +60,7 @@ public class ProcessingQueues {
         maxQueueSize = Math.max(1024, maxQueueSize);
 
         logger.info("Maximum Processing Queue Size: {}", maxQueueSize);
-        logger.info("Processing Queue Ranom Order: {}", randomOrder);
+        logger.info("Processing Queue Random Order: {}", randomOrder ? "enabled" : "disabled");
     }
 
     private void initQueues() {
