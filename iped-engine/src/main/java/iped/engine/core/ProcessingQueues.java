@@ -1,6 +1,9 @@
 package iped.engine.core;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
+import java.util.SplittableRandom;
 import java.util.TreeMap;
 
 import iped.data.IItem;
@@ -9,17 +12,18 @@ import iped.engine.util.Util;
 
 public class ProcessingQueues {
 
-    private static final int QUEUE_SIZE = 100000;
-
-    private TreeMap<Integer, LinkedList<IItem>> queues;
+    private TreeMap<Integer, LinkedList<IItem>> queuesTop;
+    private TreeMap<Integer, ArrayList<IItem>> queuesRest;
 
     private volatile Integer currentQueuePriority = 0;
-    
+
     private CaseData caseData;
 
-    private int maxQueueSize = QUEUE_SIZE;
+    private final int maxQueueSize = 100_000; //TODO
 
     private int totalItemsBeingProcessed = 0;
+
+    private final SplittableRandom rnd = new SplittableRandom();
 
     public ProcessingQueues(CaseData caseData) {
         this.caseData = caseData;
@@ -27,10 +31,14 @@ public class ProcessingQueues {
     }
 
     private void initQueues() {
-        queues = new TreeMap<Integer, LinkedList<IItem>>();
-        queues.put(0, new LinkedList<IItem>());
-        for (Integer priority : QueuesProcessingOrder.getProcessingQueues())
-            queues.put(priority, new LinkedList<IItem>());
+        queuesTop = new TreeMap<Integer, LinkedList<IItem>>();
+        queuesTop.put(0, new LinkedList<IItem>());
+        queuesRest = new TreeMap<Integer, ArrayList<IItem>>();
+        queuesRest.put(0, new ArrayList<IItem>());
+        for (Integer priority : QueuesProcessingOrder.getProcessingQueues()) {
+            queuesTop.put(priority, new LinkedList<IItem>());
+            queuesRest.put(priority, new ArrayList<IItem>());
+        }
     }
 
     public void addItem(IItem item) throws InterruptedException {
@@ -66,7 +74,8 @@ public class ProcessingQueues {
 
         Util.calctrackIDAndUpdateID(caseData, item);
 
-        LinkedList<IItem> queue = queues.get(queuePriority);
+        LinkedList<IItem> q1 = queuesTop.get(queuePriority);
+        ArrayList<IItem> q2 = queuesRest.get(queuePriority);
         boolean sleep = false;
         while (true) {
             if (sleep) {
@@ -74,14 +83,15 @@ public class ProcessingQueues {
                 Thread.sleep(1000);
             }
             synchronized (this) {
-                if (blockIfFull && queuePriority == 0 && queue.size() >= maxQueueSize) {
+                if (blockIfFull && queuePriority == 0 && q1.size() + q2.size() >= maxQueueSize) {
                     sleep = true;
                     continue;
                 } else {
                     if (addFirst) {
-                        queue.addFirst(item);
+                        q1.addFirst(item);
                     } else {
-                        queue.addLast(item);
+                        //q1.addLast(item); //TODO
+                        q2.add(item);
                     }
                     break;
                 }
@@ -103,27 +113,39 @@ public class ProcessingQueues {
     }
 
     public synchronized boolean isNoItemInQueueOrBeingProcessed() {
-        return totalItemsBeingProcessed == 0 && getItemQueue().size() == 0;
+        return totalItemsBeingProcessed == 0 && getItemQueueTop().isEmpty() && getItemQueueRest().isEmpty();
     }
 
-    public synchronized IItem pollFirstFromCurrentQueue() throws InterruptedException {
-        return getItemQueue().pollFirst();
+    public synchronized IItem pollFromCurrentQueue() throws InterruptedException {
+        LinkedList<IItem> q1 = getItemQueueTop();
+        if (!q1.isEmpty()) {
+            return q1.pollFirst();
+        }
+        ArrayList<IItem> q2 = getItemQueueRest();
+        if (q2.size() > 2) {
+            int pos = rnd.nextInt(q2.size() - 1);
+            IItem item = q2.get(pos);
+            Collections.swap(q2, pos, q2.size() - 2);
+            q2.remove(q2.size() - 2);
+            return item;
+        }
+        return q2.isEmpty() ? null : q2.remove(0);
     }
 
-    public synchronized void addLastToCurrentQueue(IItem item) throws InterruptedException {
-        getItemQueue().addLast(item);
+    public synchronized void addToCurrentQueue(IItem item) throws InterruptedException {
+        getItemQueueRest().add(item);
     }
 
     public synchronized IItem peekItemFromCurrentQueue() {
-        return getItemQueue().peek();
+        return getItemQueueTop().isEmpty() ? getItemQueueRest().get(0) : getItemQueueTop().peekFirst();
     }
 
     public synchronized int getCurrentQueueSize() {
-        return getItemQueue().size();
+        return getItemQueueTop().size() + getItemQueueRest().size();
     }
 
     public Integer changeToNextQueue() {
-        currentQueuePriority = queues.ceilingKey(currentQueuePriority + 1);
+        currentQueuePriority = queuesTop.ceilingKey(currentQueuePriority + 1);
         return currentQueuePriority;
     }
 
@@ -131,13 +153,11 @@ public class ProcessingQueues {
         return currentQueuePriority;
     }
 
-    /**
-     * Obtém fila de arquivos de evidência do caso.
-     *
-     * @return fila de arquivos.
-     */
-    private LinkedList<IItem> getItemQueue() {
-        return queues.get(currentQueuePriority);
+    private ArrayList<IItem> getItemQueueRest() {
+        return queuesRest.get(currentQueuePriority);
     }
 
+    private LinkedList<IItem> getItemQueueTop() {
+        return queuesTop.get(currentQueuePriority);
+    }
 }
