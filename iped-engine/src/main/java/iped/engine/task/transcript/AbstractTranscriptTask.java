@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import iped.configuration.Configurable;
 import iped.configuration.IConfigurationDirectory;
 import iped.data.IItem;
+import iped.engine.cache.CacheProvider;
 import iped.engine.config.AudioTranscriptConfig;
 import iped.engine.config.CacheConfig;
 import iped.engine.config.Configuration;
@@ -144,8 +145,9 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         this.transcriptConfig.clearTranscriptionServiceAddress(new File(output, "profile"));
 
         CacheConfig cacheConfig = configurationManager.findObject(CacheConfig.class);
+        CacheProvider cacheProvider = CacheProvider.getInstance(cacheConfig);
 
-        this.cache = cacheConfig.getOrCreateCache(CACHE_ALIAS, String.class, TextAndScore.class);
+        this.cache = cacheProvider.getOrCreateCache(CACHE_ALIAS, String.class, TextAndScore.class);
     }
 
     public static TextAndScore transcribeWavBreaking(File tmpFile, String itemPath, Function<File, TextAndScore> transcribeWavPart) throws Exception {

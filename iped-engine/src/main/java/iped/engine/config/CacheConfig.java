@@ -7,21 +7,13 @@ import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import org.ehcache.Cache;
-import org.ehcache.CachePersistenceException;
-import org.ehcache.PersistentCacheManager;
-import org.ehcache.config.builders.CacheConfigurationBuilder;
-import org.ehcache.config.builders.CacheManagerBuilder;
-import org.ehcache.config.builders.ResourcePoolsBuilder;
-import org.ehcache.config.units.MemoryUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import iped.cache.ICacheConfig;
 import iped.engine.util.Util;
 import iped.utils.UTF8Properties;
 
-public class CacheConfig extends AbstractPropertiesConfigurable implements AutoCloseable, ICacheConfig {
+public class CacheConfig extends AbstractPropertiesConfigurable {
 
     private static final long serialVersionUID = 3652846422867916097L;
 
@@ -36,9 +28,13 @@ public class CacheConfig extends AbstractPropertiesConfigurable implements AutoC
     private static final String CACHE_DIR_TEMP = "temp";
     private static final String CACHE_DIR_GLOBAL = "global";
 
-    private PersistentCacheManager cacheManager;
+    private static File caseDir;
 
-    private ResourcePoolsBuilder defaultResourcePoolsBuilder;
+    private File cacheDir;
+
+    private long heapPoolSizeInMB;
+    private long offHeapPoolSizeInMB;
+    private long diskPoolSizeInMB;
 
     public static final DirectoryStream.Filter<Path> filter = new Filter<Path>() {
         @Override
@@ -56,7 +52,6 @@ public class CacheConfig extends AbstractPropertiesConfigurable implements AutoC
     public void processProperties(UTF8Properties properties) {
 
         String cacheDirValue = properties.getProperty("cacheDir");
-        File cacheDir;
         switch (cacheDirValue) {
         case CACHE_DIR_GLOBAL:
             cacheDir = new File(System.getProperty("user.home"), ".iped/ehcache");
@@ -79,7 +74,6 @@ public class CacheConfig extends AbstractPropertiesConfigurable implements AutoC
         }
 
         String heapPoolSizeValue = properties.getProperty("heapPoolSizeInMB");
-        long heapPoolSizeInMB;
         if ("auto".equalsIgnoreCase(heapPoolSizeValue)) {
             // If "auto", calculate 0.5% of the maximum Java heap size (-Xmx).
             long maxHeapBytes = Runtime.getRuntime().maxMemory();
@@ -90,7 +84,6 @@ public class CacheConfig extends AbstractPropertiesConfigurable implements AutoC
         }
 
         String offHeapPoolSizeValue = properties.getProperty("offHeapPoolSizeInMB");
-        long offHeapPoolSizeInMB;
         if ("auto".equalsIgnoreCase(offHeapPoolSizeValue)) {
             // If "auto", calculate 0.5% of the total physical system memory.
             // This provides a more reliable measure for available off-heap memory.
@@ -101,64 +94,24 @@ public class CacheConfig extends AbstractPropertiesConfigurable implements AutoC
             offHeapPoolSizeInMB = Long.parseLong(offHeapPoolSizeValue);
         }
 
-        long diskPoolSizeInMB = Long.parseLong(properties.getProperty("diskPoolSizeInMB"));
+        diskPoolSizeInMB = Long.parseLong(properties.getProperty("diskPoolSizeInMB"));
 
-        cacheManager = CacheManagerBuilder.newCacheManagerBuilder()//
-                .with(CacheManagerBuilder.persistence(cacheDir))//
-                .build(true);
-
-        defaultResourcePoolsBuilder = ResourcePoolsBuilder.newResourcePoolsBuilder() //
-                .heap(heapPoolSizeInMB, MemoryUnit.MB) //
-                .offheap(offHeapPoolSizeInMB, MemoryUnit.MB) //
-                .disk(diskPoolSizeInMB, MemoryUnit.MB, true);
-
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            cacheManager.close();
-        }));
     }
 
-    @Override
-    public <K, V> Cache<K, V> getOrCreateCache(String alias, Class<K> keyType, Class<V> valueType) {
-        return getOrCreateCache(alias, keyType, valueType, defaultResourcePoolsBuilder);
+    public File getCacheDir() {
+        return cacheDir;
     }
 
-    @Override
-    public <K, V> Cache<K, V> getOrCreateCache(String alias, Class<K> keyType, Class<V> valueType, ResourcePoolsBuilder resourcePoolsBuilder) {
-
-        Cache<K, V> cache = cacheManager.getCache(alias, keyType, valueType);
-        if (cache != null) {
-            return cache;
-        }
-
-        try {
-
-            return createCache(alias, keyType, valueType, resourcePoolsBuilder);
-
-        } catch (IllegalStateException e) {
-            logger.error("Invalid cache. Destroying and creating a new one: " + alias);
-            try {
-                cacheManager.destroyCache(alias);
-            } catch (CachePersistenceException cpe) {
-                logger.error("Error destroying cache: " + alias, cpe);
-            }
-            return createCache(alias, keyType, valueType, resourcePoolsBuilder);
-        }
+    public long getHeapPoolSizeInMB() {
+        return heapPoolSizeInMB;
     }
 
-    private <K, V> Cache<K, V> createCache(String alias, Class<K> keyType, Class<V> valueType, ResourcePoolsBuilder resourcePoolsBuilder) {
-        return cacheManager.createCache(alias, //
-                CacheConfigurationBuilder.newCacheConfigurationBuilder( //
-                        keyType, //
-                        valueType, //
-                        resourcePoolsBuilder));
+    public long getOffHeapPoolSizeInMB() {
+        return offHeapPoolSizeInMB;
     }
 
-    @Override
-    public synchronized void close() throws Exception {
-        if (cacheManager != null) {
-            cacheManager.close();
-            cacheManager = null;
-        }
+    public long getDiskPoolSizeInMB() {
+        return diskPoolSizeInMB;
     }
 
 }

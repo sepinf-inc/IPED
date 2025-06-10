@@ -53,11 +53,12 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.cache.ICacheConfig;
+import iped.cache.ICacheProvider;
 import iped.configuration.Configurable;
 import iped.data.ICaseData;
 import iped.data.IItem;
 import iped.data.IItemReader;
+import iped.engine.cache.CacheProvider;
 import iped.engine.config.CacheConfig;
 import iped.engine.config.CategoryToExpandConfig;
 import iped.engine.config.Configuration;
@@ -236,7 +237,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         ItemInfo itemInfo = ItemInfoFactory.getItemInfo(evidence);
         context.set(ItemInfo.class, itemInfo);
         context.set(OCROutputFolder.class, new OCROutputFolder(output));
-        context.set(ICacheConfig.class, cacheConfig);
+        context.set(ICacheProvider.class, CacheProvider.getInstance(cacheConfig));
 
         if (CarverTask.ignoreCorrupted && caseData != null && !caseData.isIpedReport()) {
             context.set(IgnoreCorruptedCarved.class, new IgnoreCorruptedCarved());

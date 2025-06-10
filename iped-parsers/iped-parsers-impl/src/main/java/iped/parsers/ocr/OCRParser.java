@@ -59,7 +59,7 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.cache.ICacheConfig;
+import iped.cache.ICacheProvider;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.CharCountContentHandler;
 import iped.parsers.util.ItemInfo;
@@ -323,8 +323,8 @@ public class OCRParser extends AbstractParser {
         if (!ENABLED)
             return;
 
-        ICacheConfig cacheConfig = context.get(ICacheConfig.class);
-        Cache<String, OCRResult> cache = cacheConfig.getOrCreateCache(CACHE_ALIAS, String.class, OCRResult.class);
+        ICacheProvider cacheProvider = context.get(ICacheProvider.class);
+        Cache<String, OCRResult> cache = cacheProvider.getOrCreateCache(CACHE_ALIAS, String.class, OCRResult.class);
 
         CharCountContentHandler countHandler = new CharCountContentHandler(handler);
         XHTMLContentHandler xhtml = new XHTMLContentHandler(countHandler, metadata);
