@@ -17,8 +17,9 @@ function getConfigurables() {
 	return Arrays.asList(new RemoteImageClassifierConfig());
 }
 
+var categorizationThreshold; // Declare the variable explicitly at the top of the script
 function init(configurationManager) {
-	config = configurationManager.findObject(RemoteImageClassifierConfig.class);
+	var config = configurationManager.findObject(RemoteImageClassifierConfig.class);
 	categorizationThreshold = config.getCategorizationThreshold();
 }
 
