@@ -29,13 +29,17 @@ import java.io.ObjectOutput;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -55,15 +59,10 @@ import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.ehcache.Cache;
-import org.mapdb.BTreeMap;
-import org.mapdb.DB;
-import org.mapdb.DBMaker;
-import org.mapdb.DataInput2;
-import org.mapdb.DataOutput2;
-import org.mapdb.Serializer;
-import org.mapdb.serializer.GroupSerializerObjectArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.sqlite.SQLiteConfig;
+import org.sqlite.SQLiteConfig.SynchronousMode;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
@@ -100,6 +99,16 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
 
     private static final String CHILD_PREFIX = "-child-"; //$NON-NLS-1$
 
+    private static final String OCR_STORAGE = "ocr-results.db"; //$NON-NLS-1$
+
+    private static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS ocr(id TEXT PRIMARY KEY, text TEXT);"; //$NON-NLS-1$
+
+    private static final String INSERT_DATA = "INSERT INTO ocr(id, text) VALUES(?,?) ON CONFLICT(id) DO NOTHING"; //$NON-NLS-1$
+
+    private static final String SELECT_EXACT = "SELECT text FROM ocr WHERE id=?;"; //$NON-NLS-1$
+
+    private static final String SELECT_ALL = "SELECT id, text FROM ocr WHERE id >= ? AND id < ?"; //$NON-NLS-1$
+
     private static final String TESSERACT_ERROR_MSG = "tesseract returned error code ";
 
     private static final String INPUT_FILE_TOKEN = "${INPUT}"; //$NON-NLS-1$
@@ -134,6 +143,8 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
     private static AtomicBoolean checked = new AtomicBoolean();
     private static String tessVersion = "";
 
+    private static HashMap<File, Connection> connMap = new HashMap<>();
+
     private static final Set<MediaType> directSupportedTypes = getDirectSupportedTypes();
     private static final Set<MediaType> nonStandardSupportedTypes = getNonStandardSupportedTypes();
     private static final Set<MediaType> nonImageSupportedTypes = getNonImageSupportedTypes();
@@ -151,11 +162,6 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
 
     // Cache
     private static final String CACHE_ALIAS = "OCRParserCache";
-
-    // OCR results store
-    private static final String OCR_RESULTS_MAP_FILE_NAME = "ocr-results.map";
-    private static HashMap<File, BTreeMap<char[], OCRResult>> resultsMapStore = new HashMap<>();
-    private static HashMap<File, DB> resultsDBs = new HashMap<>();
 
     static {
         imageSupportedTypes.addAll(directSupportedTypes);
@@ -252,6 +258,15 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
 
     public static class OCRResult implements Externalizable {
 
+        public OCRResult() {
+        }
+
+        public OCRResult(String text, String tesseractVersion) {
+            super();
+            this.text = text;
+            this.tesseractVersion = tesseractVersion;
+        }
+
         private String text;
         private String tesseractVersion;
 
@@ -325,59 +340,38 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
         return false;
     }
 
-    private static class OCRResultSerializer extends GroupSerializerObjectArray<OCRResult> {
-        @Override
-        public void serialize(DataOutput2 out, OCRResult value) throws IOException {
-            out.writeUTF(value.text);
-            out.writeUTF(value.tesseractVersion);
+    private static synchronized Connection getConnection(File outputBase) {
+        File db = new File(outputBase, OCR_STORAGE);
+        Connection conn = connMap.get(db);
+        if (conn != null) {
+            return conn;
         }
+        db.getParentFile().mkdirs();
+        try {
+            SQLiteConfig config = new SQLiteConfig();
+            config.setSynchronous(SynchronousMode.NORMAL);
+            config.setBusyTimeout(3600000);
+            conn = config.createConnection("jdbc:sqlite:" + db.getAbsolutePath());
+            connMap.put(db, conn);
 
-        @Override
-        public OCRResult deserialize(DataInput2 input, int available) throws IOException {
-            OCRResult result = new OCRResult();
-            result.text = input.readUTF();
-            result.tesseractVersion = input.readUTF();
-            return result;
+            try (Statement stmt = conn.createStatement()) {
+                stmt.executeUpdate(CREATE_TABLE);
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
-    }
-
-    private static synchronized BTreeMap<char[], OCRResult> getResultsMap(File outputBase) throws IOException {
-        File mapFile = new File(outputBase, OCR_RESULTS_MAP_FILE_NAME);
-        BTreeMap<char[], OCRResult> map = resultsMapStore.get(mapFile);
-        if (map != null) {
-            return map;
-        }
-
-        Files.createDirectories(outputBase.toPath());
-
-        DB db = DBMaker //
-                .fileDB(mapFile) //
-                .fileMmapEnableIfSupported()
-                .fileLockDisable()
-                .checksumHeaderBypass()
-                .concurrencyScale(Runtime.getRuntime().availableProcessors())
-                .closeOnJvmShutdown()
-                .make();
-        resultsDBs.put(mapFile, db);
-
-        map = db.treeMap("ocr-results") //
-                .keySerializer(Serializer.CHAR_ARRAY) // implements nextValue (https://jankotek.gitbooks.io/mapdb/content/btreemap/#prefix-submaps)
-                .valueSerializer(new OCRResultSerializer()) //
-                .createOrOpen();
-        resultsMapStore.put(mapFile, map);
-
-        return map;
+        return conn;
     }
 
     @Override
-    public void close() {
-        closeResultsDBs();
-    }
-
-    public static synchronized void closeResultsDBs() {
-        resultsDBs.values().parallelStream().forEach(DB::close);
-        resultsDBs.clear();
-        resultsMapStore.clear();
+    public void close() throws SQLException {
+        synchronized (this.getClass()) {
+            for (Connection con : connMap.values()) {
+                con.close();
+            }
+            connMap.clear();
+        }
     }
 
     /**
@@ -415,12 +409,6 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
             ICacheProvider cacheProvider = context.get(ICacheProvider.class);
             Cache<String, OCRResult> cache = cacheProvider.getOrCreateCache(CACHE_ALIAS, String.class, OCRResult.class);
 
-            // get map results
-            BTreeMap<char[], OCRResult> resultsMap = null;
-            if (outputBase != null) {
-                resultsMap = getResultsMap(outputBase);
-            }
-
             if (size >= MIN_SIZE && size <= MAX_SIZE && (bookmarksToOCR == null || isFromBookmarkToOCR(itemInfo))
                     && !(SKIP_KNOWN_FILES && itemInfo.isKnown())) {
 
@@ -432,24 +420,31 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
                         resultKey += CHILD_PREFIX + itemInfo.getChild();
                     }
 
-                    boolean fetchFromResultsMap = false;
+                    boolean gotResultsFromDB = false;
 
                     // try first from cache
                     OCRResult result = cache.get(resultKey);
+                    LOGGER.debug("Got from cache: " + resultKey + " => " + result);
 
-                    // if not found in cache, try from resultsMap
-                    if (result == null && resultsMap != null) {
-                        result = resultsMap.get(resultKey.toCharArray());
+                    // if not found in cache, try from DB
+                    if (result == null) {
+                        result = getOcrTextFromDb(resultKey, outputBase);
+                        LOGGER.debug("  Got from DB: " + resultKey + " => " + result);
+
                         if (result != null) {
+                            LOGGER.debug("    Saving in DB: " + resultKey + " => " + result);
                             cache.put(resultKey, result);
                         }
-                        fetchFromResultsMap = true;
+                        gotResultsFromDB = true;
                     }
 
                     // if found and was processed with current tesseract version, use this result
-                    if (result != null && (tessVersion == null || result.tesseractVersion.equals(tessVersion))) {
-                        if (!fetchFromResultsMap && resultsMap != null) {
-                            resultsMap.putIfAbsent(resultKey.toCharArray(), result);
+                    if (result != null && (tessVersion == null || result.tesseractVersion == null || tessVersion.equals(result.tesseractVersion))) {
+                        LOGGER.debug("Reused result: " + resultKey + " => " + result);
+
+                        if (!gotResultsFromDB) {
+                            LOGGER.debug("  Saving in DB if absent: " + resultKey + " => " + result);
+                            storeOcrTextInDb(resultKey, result, outputBase);
                         }
 
                         extractOutput(result.text, xhtml);
@@ -467,7 +462,7 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
                     // support for old cases, where OCR was stored in txt files
                     extractOutput(oldOCROutput, xhtml);
 
-                    // read resultBytes to store it in cache and in resultsMap
+                    // read resultBytes to store it in cache and in DB
                     resultBytes = Files.readAllBytes(oldOCROutput.toPath());
 
                 } else {
@@ -511,20 +506,16 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
 
                 if (resultKey != null) {
 
-                    // store results in ocrResultsMap and in the cache
+                    // store results in DB and in the cache
+                    LOGGER.debug("Saving result and cache: " + resultKey);
                     String ocrText = new String(resultBytes, StandardCharsets.UTF_8).trim();
-                    OCRResult result = new OCRResult();
-                    result.text = ocrText;
-                    result.tesseractVersion = tessVersion;
+                    OCRResult result = new OCRResult(ocrText, tessVersion);
                     cache.put(resultKey, result);
-                    if (resultsMap != null) {
-                        resultsMap.put(ocrText.toCharArray(), result);
-                    }
+                    storeOcrTextInDb(resultKey, result, outputBase);
                 }
             }
 
         } finally {
-
             // Call before endDocument() to avoid counting non-OCR characters
             int charCount = countHandler.getCharCount();
             xhtml.endDocument();
@@ -536,18 +527,47 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
         }
     }
 
-    public static void copyOcrResults(String hash, File inputBase, File outputBase) throws IOException {
-        File sourceMapFile = new File(inputBase, OCRParser.TEXT_DIR + File.separator + OCRParser.OCR_RESULTS_MAP_FILE_NAME);
-        File targetMapFile = new File(outputBase, OCRParser.TEXT_DIR + File.separator + OCRParser.OCR_RESULTS_MAP_FILE_NAME);
-        if (!sourceMapFile.exists())
-            return;
-
-        BTreeMap<char[], OCRResult> sourceMap = getResultsMap(sourceMapFile.getParentFile());
-        BTreeMap<char[], OCRResult> targetMap = getResultsMap(targetMapFile.getParentFile());
-
-        for (Entry<char[], OCRResult> entry : sourceMap.prefixSubMap(hash.toCharArray()).entrySet()) {
-            targetMap.put(entry.getKey(), entry.getValue());
+    private static OCRResult getOcrTextFromDb(String id, File outputBase) throws IOException {
+        try (PreparedStatement ps = getConnection(outputBase).prepareStatement(SELECT_EXACT)) {
+            ps.setString(1, id);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return new OCRResult(rs.getString(1), null);
+            }
+        } catch (SQLException e) {
+            throw new IOException(e);
         }
+        return null;
+    }
+
+    private static void storeOcrTextInDb(String id, OCRResult ocrResult, File outputBase) throws IOException {
+        try (PreparedStatement ps = getConnection(outputBase).prepareStatement(INSERT_DATA)) {
+            ps.setString(1, id);
+            ps.setString(2, ocrResult.text);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new IOException(e);
+        }
+    }
+
+    public static void copyOcrResults(String hash, File inputBase, File outputBase) throws IOException {
+        File sourceDb = new File(inputBase, OCRParser.TEXT_DIR + File.separator + OCRParser.OCR_STORAGE);
+        File targetDb = new File(outputBase, OCRParser.TEXT_DIR + File.separator + OCRParser.OCR_STORAGE);
+        if (!sourceDb.exists())
+            return;
+        try (PreparedStatement ps = getConnection(sourceDb.getParentFile()).prepareStatement(SELECT_ALL)) {
+            ps.setString(1, hash);
+            ps.setString(2, hash.substring(0, hash.length() - 1) + (char) (hash.charAt(hash.length() - 1) + 1));
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                String id = rs.getString(1);
+                OCRResult ocrResult = new OCRResult(rs.getString(2), null);
+                storeOcrTextInDb(id, ocrResult, targetDb.getParentFile());
+            }
+        } catch (SQLException e) {
+            throw new IOException(e);
+        }
+
     }
 
     private void parseTiff(XHTMLContentHandler xhtml, TemporaryResources tmp, File input, File output, String itemPath)
