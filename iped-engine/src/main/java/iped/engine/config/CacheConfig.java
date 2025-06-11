@@ -21,6 +21,11 @@ public class CacheConfig extends AbstractPropertiesConfigurable {
 
     public static final String CONFIG_FILE = "CacheConfig.txt";
 
+    private static final String CACHE_DIR_PROP = "cacheDir";
+    private static final String DISK_POOL_SIZE_IN_MB_PROP = "diskPoolSizeInMB";
+    private static final String OFF_HEAP_POOL_SIZE_IN_MB_PROP = "offHeapPoolSizeInMB";
+    private static final String HEAP_POOL_SIZE_IN_MB_PROP = "heapPoolSizeInMB";
+
     private static final int ONE_MB = 1024 * 1024;
     private static final double AUTO_HEAP_FACTOR = 0.005;
     private static final double AUTO_OFF_HEAP_FACTOR = 0.005;
@@ -51,7 +56,7 @@ public class CacheConfig extends AbstractPropertiesConfigurable {
     @Override
     public void processProperties(UTF8Properties properties) {
 
-        String cacheDirValue = properties.getProperty("cacheDir");
+        String cacheDirValue = properties.getProperty(CACHE_DIR_PROP);
         switch (cacheDirValue) {
         case CACHE_DIR_GLOBAL:
             cacheDir = new File(System.getProperty("user.home"), ".iped/ehcache");
@@ -73,7 +78,7 @@ public class CacheConfig extends AbstractPropertiesConfigurable {
             break;
         }
 
-        String heapPoolSizeValue = properties.getProperty("heapPoolSizeInMB");
+        String heapPoolSizeValue = properties.getProperty(HEAP_POOL_SIZE_IN_MB_PROP);
         if ("auto".equalsIgnoreCase(heapPoolSizeValue)) {
             // If "auto", calculate 0.5% of the maximum Java heap size (-Xmx).
             long maxHeapBytes = Runtime.getRuntime().maxMemory();
@@ -83,7 +88,7 @@ public class CacheConfig extends AbstractPropertiesConfigurable {
             heapPoolSizeInMB = Long.parseLong(heapPoolSizeValue);
         }
 
-        String offHeapPoolSizeValue = properties.getProperty("offHeapPoolSizeInMB");
+        String offHeapPoolSizeValue = properties.getProperty(OFF_HEAP_POOL_SIZE_IN_MB_PROP);
         if ("auto".equalsIgnoreCase(offHeapPoolSizeValue)) {
             // If "auto", calculate 0.5% of the total physical system memory.
             // This provides a more reliable measure for available off-heap memory.
@@ -94,7 +99,7 @@ public class CacheConfig extends AbstractPropertiesConfigurable {
             offHeapPoolSizeInMB = Long.parseLong(offHeapPoolSizeValue);
         }
 
-        diskPoolSizeInMB = Long.parseLong(properties.getProperty("diskPoolSizeInMB"));
+        diskPoolSizeInMB = Long.parseLong(properties.getProperty(DISK_POOL_SIZE_IN_MB_PROP));
 
     }
 
