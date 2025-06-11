@@ -53,6 +53,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import iped.data.ICaseData;
 import iped.data.IItem;
 import iped.engine.CmdLineArgs;
+import iped.engine.cache.CacheProvider;
 import iped.engine.config.AnalysisConfig;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
@@ -314,6 +315,8 @@ public class Manager {
 
         shutDownSleuthkitServers();
 
+        closeCacheProviders();
+
         deleteTempDir();
 
         stats.logStatistics(this);
@@ -366,6 +369,11 @@ public class Manager {
             producer.interrupt();
             // produtor.join(5000);
         }
+    }
+
+    private void closeCacheProviders() {
+        LOGGER.info("Closing Caches.");
+        CacheProvider.closeAll();
     }
 
     private void shutDownSleuthkitServers() {

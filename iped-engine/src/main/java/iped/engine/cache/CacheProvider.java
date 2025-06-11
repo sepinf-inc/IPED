@@ -2,6 +2,7 @@ package iped.engine.cache;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.ehcache.Cache;
@@ -33,13 +34,13 @@ public class CacheProvider implements ICacheProvider, AutoCloseable {
         CacheProvider instance = instances.get(cacheConfig);
         if (instance == null) {
             instances.put(cacheConfig, instance = new CacheProvider(cacheConfig));
-            instance.initialize();
         }
         return instance;
     }
 
     private CacheProvider(CacheConfig config) {
         this.config = config;
+        initialize();
     }
 
     private void initialize() {
@@ -65,7 +66,7 @@ public class CacheProvider implements ICacheProvider, AutoCloseable {
         }
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            cacheManager.close();
+            close();
         }));
     }
 
@@ -82,6 +83,10 @@ public class CacheProvider implements ICacheProvider, AutoCloseable {
     @Override
     public synchronized <K, V> Cache<K, V> getOrCreateCache(String alias, Class<K> keyType, Class<V> valueType,
             ResourcePoolsBuilder resourcePoolsBuilder) {
+
+        if (cacheManager == null) {
+            throw new IllegalStateException("CacheProvider was closed()");
+        }
 
         Cache<K, V> cache = cacheManager.getCache(alias, keyType, valueType);
         if (cache != null) {
@@ -116,10 +121,18 @@ public class CacheProvider implements ICacheProvider, AutoCloseable {
     }
 
     @Override
-    public synchronized void close() throws Exception {
+    public synchronized void close() {
         if (cacheManager != null) {
             cacheManager.close();
             cacheManager = null;
+            synchronized(CacheProvider.class) {
+                instances.remove(config);
+            }
         }
+    }
+
+    public static synchronized void closeAll() {
+        List.copyOf(instances.values()).stream().forEach(CacheProvider::close);
+        instances.clear();
     }
 }
