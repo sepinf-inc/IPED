@@ -6,9 +6,10 @@
 # There are four options for this value:
 # 1. "global":      Uses a shared cache directory located at <User Home>/.iped/ehcache.
 # 2. "temp":        Uses a cache directory inside the case temporary folder (e.g., /tmp/ehcache).
-# 3. Custom Path:   A full path to any directory on your filesystem (e.g., /mnt/fast_storage/cache).
+# 3. <custom-path>: A full path to any directory on your filesystem (e.g., /mnt/fast_storage/cache).
+# 4. "disabled":    Don't persist the cache. Only memory (heap + off-heap) will be used.
 #
-cacheDir=global
+cacheDir = global
 
 # -----------------------------------------------------------------------------
 # Cache Memory Pool Size Configuration
@@ -22,7 +23,7 @@ cacheDir=global
 # Set to "auto" to dynamically calculate the size as 1% of the maximum
 # Java heap memory (as specified by the -Xmx JVM option).
 # Alternatively, provide a specific size in MB (e.g., 256).
-heapPoolSizeInMB=auto
+heapPoolSizeInMB = auto
 
 # Defines the size of the off-heap memory pool in MB.
 # This tier stores data in memory outside the Java heap, which can help
@@ -30,9 +31,9 @@ heapPoolSizeInMB=auto
 # Set to "auto" to dynamically calculate the size as 1% of the total
 # physical system memory (RAM).
 # Alternatively, provide a specific size in MB (e.g., 512).
-offHeapPoolSizeInMB=auto
+offHeapPoolSizeInMB = auto
 
 # Defines the size of the disk pool in MB.
 # This is the largest but slowest tier, used for persistent storage on disk.
 # The directory used for this pool is defined by the 'cacheDir' property.
-diskPoolSizeInMB=1024
+diskPoolSizeInMB = 1024

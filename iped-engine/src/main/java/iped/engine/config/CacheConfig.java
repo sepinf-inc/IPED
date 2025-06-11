@@ -32,8 +32,7 @@ public class CacheConfig extends AbstractPropertiesConfigurable {
 
     private static final String CACHE_DIR_TEMP = "temp";
     private static final String CACHE_DIR_GLOBAL = "global";
-
-    private static File caseDir;
+    private static final String CACHE_DIR_DISABLED = "disabled";
 
     private File cacheDir;
 
@@ -68,6 +67,10 @@ public class CacheConfig extends AbstractPropertiesConfigurable {
             } catch (IOException e) {
                 throw new RuntimeException("Error creating cacheDir", e);
             }
+            break;
+
+        case CACHE_DIR_DISABLED:
+            cacheDir = null;
             break;
 
         default:
@@ -118,5 +121,4 @@ public class CacheConfig extends AbstractPropertiesConfigurable {
     public long getDiskPoolSizeInMB() {
         return diskPoolSizeInMB;
     }
-
 }
