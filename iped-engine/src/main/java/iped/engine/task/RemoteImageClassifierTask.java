@@ -122,6 +122,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
     private static final AtomicInteger skipSizeCount = new AtomicInteger();
     private static final AtomicInteger skipDimensionCount = new AtomicInteger();
     private static final AtomicInteger skipHashDBFilesCount = new AtomicInteger();
+    private static final AtomicInteger activeInstances = new AtomicInteger(0);
 
     // Number of the current batch of files being processed
     private int currentBatch;
@@ -216,6 +217,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
         config = configurationManager.findObject(RemoteImageClassifierConfig.class);
+        activeInstances.incrementAndGet();
 
         url = "https://" + config.getUrl(); // enforces secure communication (required for sensitive data transfer)
         batchSize = config.getBatchSize();
@@ -241,9 +243,9 @@ public class RemoteImageClassifierTask extends AbstractTask {
     @Override
     public void finish() throws Exception {
         // "Close" classifications cache
-        if (classifications != null)
-            classifications = null;
-
+        if (activeInstances.decrementAndGet() == 0){
+            classifications.clear();
+        }
         // Summary statistics
         if (!finishNow.getAndSet(true)) {
             long totClassifications = classificationSuccess.longValue() + classificationFail.longValue();
