@@ -16,6 +16,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -27,14 +28,15 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReadParam;
 import javax.imageio.ImageReader;
 import javax.imageio.ImageTypeSpecifier;
+import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.metadata.IIOMetadata;
 import javax.imageio.metadata.IIOMetadataNode;
-import javax.imageio.plugins.jpeg.JPEGImageWriteParam;
 import javax.imageio.spi.IIORegistry;
 import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.ImageOutputStream;
+import javax.imageio.stream.MemoryCacheImageOutputStream;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
@@ -607,10 +609,12 @@ public class ImageUtil {
     /**
      * Grava uma imagem JPEG e insere um comentário nos metadados da imagem.
      */
-    public static void saveJpegWithMetadata(BufferedImage img, File outFile, String data) throws IOException {
+    public static void saveJpegWithMetadata(BufferedImage img, File outFile, String data, int compression) throws IOException {
         ImageWriter writer = ImageIO.getImageWritersBySuffix("jpeg").next(); //$NON-NLS-1$
-        JPEGImageWriteParam jpegParams = (JPEGImageWriteParam) writer.getDefaultWriteParam();
-        IIOMetadata imageMetadata = writer.getDefaultImageMetadata(new ImageTypeSpecifier(img), jpegParams);
+        ImageWriteParam jpgWriteParam = writer.getDefaultWriteParam();
+        jpgWriteParam.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+        jpgWriteParam.setCompressionQuality(compression / 100f);
+        IIOMetadata imageMetadata = writer.getDefaultImageMetadata(new ImageTypeSpecifier(img), jpgWriteParam);
 
         Element tree = (Element) imageMetadata.getAsTree("javax_imageio_jpeg_image_1.0"); //$NON-NLS-1$
         NodeList comNL = tree.getElementsByTagName("com"); //$NON-NLS-1$
@@ -628,7 +632,7 @@ public class ImageUtil {
         IIOImage iioimage = new IIOImage(img, null, imageMetadata);
         ImageOutputStream os = ImageIO.createImageOutputStream(outFile);
         writer.setOutput(os);
-        writer.write(null, iioimage, jpegParams);
+        writer.write(null, iioimage, jpgWriteParam);
         os.close();
         writer.dispose();
     }
@@ -680,6 +684,17 @@ public class ImageUtil {
             }
         }
         return true;
+    }
+
+    public static void writeCompressedJPG(BufferedImage img, OutputStream baos, int compression) throws IOException {
+        ImageWriter jpgWriter = ImageIO.getImageWritersByFormatName("jpg").next();
+        ImageWriteParam jpgWriteParam = jpgWriter.getDefaultWriteParam();
+        jpgWriteParam.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+        jpgWriteParam.setCompressionQuality(compression / 100f);
+        jpgWriter.setOutput(new MemoryCacheImageOutputStream(baos));
+        IIOImage outputImage = new IIOImage(img, null, null);
+        jpgWriter.write(null, outputImage, jpgWriteParam);
+        jpgWriter.dispose();        
     }
 
     /**

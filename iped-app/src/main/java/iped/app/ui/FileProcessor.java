@@ -43,6 +43,7 @@ import iped.engine.sleuthkit.SleuthkitInputStreamFactory;
 import iped.engine.task.index.IndexItem;
 import iped.engine.task.similarity.ImageSimilarityTask;
 import iped.io.ISeekableInputStreamFactory;
+import iped.properties.ExtraProperties;
 import iped.utils.FileInputStreamFactory;
 import iped.viewers.ImageViewer;
 import iped.viewers.api.CancelableWorker;
@@ -156,8 +157,11 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
             contentType = item.getMediaType().toString();
         }
 
-        boolean enabled = item.getExtraAttribute(ImageSimilarityTask.IMAGE_FEATURES) != null;
-        App.get().setEnableGallerySimSearchButton(enabled);
+        boolean imgSimEnabled = item.getExtraAttribute(ImageSimilarityTask.IMAGE_FEATURES) != null;
+        App.get().setEnableGallerySimSearchButton(imgSimEnabled);
+
+        boolean faceEnabled = item.getExtraAttribute(ExtraProperties.FACE_ENCODINGS) != null;
+        App.get().setEnableGalleryFaceSearchButton(faceEnabled);
 
         IItem viewItem = item;
 
