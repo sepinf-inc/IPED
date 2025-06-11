@@ -629,6 +629,8 @@ public class IPEDReader extends DataSourceReader {
                     if (viewFile != null) {
                         evidence.setViewFile(viewFile);
                     }
+
+                    OCRParser.copyOcrResults(value, indexDir.getParentFile(), output);
                 }
             }
 

@@ -35,8 +35,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.imageio.ImageIO;
@@ -54,6 +55,13 @@ import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.ehcache.Cache;
+import org.mapdb.BTreeMap;
+import org.mapdb.DB;
+import org.mapdb.DBMaker;
+import org.mapdb.DataInput2;
+import org.mapdb.DataOutput2;
+import org.mapdb.Serializer;
+import org.mapdb.serializer.GroupSerializerObjectArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
@@ -78,11 +86,8 @@ import iped.utils.ImageUtil;
  * @author Nassif
  *
  */
-public class OCRParser extends AbstractParser {
+public class OCRParser extends AbstractParser implements AutoCloseable {
 
-    /**
-     * 
-     */
     private static final long serialVersionUID = 1L;
 
     private static Logger LOGGER = LoggerFactory.getLogger(OCRParser.class);
@@ -140,11 +145,17 @@ public class OCRParser extends AbstractParser {
     
     // Root folder to store ocr results
     private File outputBase;
+
+    // Tesseract command
     private String[] command;
-    private Random random = new Random();
 
     // Cache
     private static final String CACHE_ALIAS = "OCRParserCache";
+
+    // OCR results store
+    private static final String OCR_RESULTS_MAP_FILE_NAME = "ocr-results.map";
+    private static HashMap<File, BTreeMap<char[], OCRResult>> resultsMapStore = new HashMap<>();
+    private static HashMap<File, DB> resultsDBs = new HashMap<>();
 
     static {
         imageSupportedTypes.addAll(directSupportedTypes);
@@ -235,6 +246,10 @@ public class OCRParser extends AbstractParser {
         return this.ENABLED;
     }
 
+    public static void preloadCache(ICacheProvider cacheProvider) {
+        cacheProvider.getOrCreateCache(CACHE_ALIAS, String.class, OCRResult.class);
+    }
+
     public static class OCRResult implements Externalizable {
 
         private String text;
@@ -288,7 +303,6 @@ public class OCRParser extends AbstractParser {
                         command[i] = "--psm"; //$NON-NLS-1$
             }
 
-
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException("Error running " + cmd[0], e); //$NON-NLS-1$
         }
@@ -311,6 +325,60 @@ public class OCRParser extends AbstractParser {
         return false;
     }
 
+    private static class OCRResultSerializer extends GroupSerializerObjectArray<OCRResult> {
+        @Override
+        public void serialize(DataOutput2 out, OCRResult value) throws IOException {
+            out.writeUTF(value.text);
+            out.writeUTF(value.tesseractVersion);
+        }
+
+        @Override
+        public OCRResult deserialize(DataInput2 input, int available) throws IOException {
+            OCRResult result = new OCRResult();
+            result.text = input.readUTF();
+            result.tesseractVersion = input.readUTF();
+            return result;
+        }
+    }
+
+    private static synchronized BTreeMap<char[], OCRResult> getResultsMap(File outputBase) throws IOException {
+        File mapFile = new File(outputBase, OCR_RESULTS_MAP_FILE_NAME);
+        BTreeMap<char[], OCRResult> map = resultsMapStore.get(mapFile);
+        if (map != null) {
+            return map;
+        }
+
+        Files.createDirectories(outputBase.toPath());
+
+        DB db = DBMaker //
+                .fileDB(mapFile) //
+                .fileMmapEnableIfSupported()
+                .fileLockDisable()
+                .checksumHeaderBypass()
+                .concurrencyScale(Runtime.getRuntime().availableProcessors())
+                .closeOnJvmShutdown()
+                .make();
+        resultsDBs.put(mapFile, db);
+
+        map = db.treeMap("ocr-results") //
+                .keySerializer(Serializer.CHAR_ARRAY) // implements nextValue (https://jankotek.gitbooks.io/mapdb/content/btreemap/#prefix-submaps)
+                .valueSerializer(new OCRResultSerializer()) //
+                .createOrOpen();
+        resultsMapStore.put(mapFile, map);
+
+        return map;
+    }
+
+    @Override
+    public void close() {
+        closeResultsDBs();
+    }
+
+    public static synchronized void closeResultsDBs() {
+        resultsDBs.values().parallelStream().forEach(DB::close);
+        resultsDBs.clear();
+        resultsMapStore.clear();
+    }
 
     /**
      * Executes the configured external command and passes the given document stream
@@ -323,16 +391,13 @@ public class OCRParser extends AbstractParser {
         if (!ENABLED)
             return;
 
-        ICacheProvider cacheProvider = context.get(ICacheProvider.class);
-        Cache<String, OCRResult> cache = cacheProvider.getOrCreateCache(CACHE_ALIAS, String.class, OCRResult.class);
-
         CharCountContentHandler countHandler = new CharCountContentHandler(handler);
         XHTMLContentHandler xhtml = new XHTMLContentHandler(countHandler, metadata);
         xhtml.startDocument();
 
         TemporaryResources tmp = new TemporaryResources();
-        File output = null, tmpOutput = null;
-        String outFileName = null;
+        File tmpOutput = null;
+        String resultKey = null;
         try {
             TikaInputStream tikaStream = TikaInputStream.get(stream, tmp);
             File input = tikaStream.getFile();
@@ -346,35 +411,72 @@ public class OCRParser extends AbstractParser {
             if (outDir != null)
                 outputBase = new File(outDir.getPath(), TEXT_DIR);
 
-            if (outputBase != null && !outputBase.exists()) {
-                outputBase.mkdirs();
+            // get cache
+            ICacheProvider cacheProvider = context.get(ICacheProvider.class);
+            Cache<String, OCRResult> cache = cacheProvider.getOrCreateCache(CACHE_ALIAS, String.class, OCRResult.class);
+
+            // get map results
+            BTreeMap<char[], OCRResult> resultsMap = null;
+            if (outputBase != null) {
+                resultsMap = getResultsMap(outputBase);
             }
 
             if (size >= MIN_SIZE && size <= MAX_SIZE && (bookmarksToOCR == null || isFromBookmarkToOCR(itemInfo))
                     && !(SKIP_KNOWN_FILES && itemInfo.isKnown())) {
+
+                File oldOCROutput = null;
                 if (outputBase != null && itemInfo != null && itemInfo.getHash() != null) {
                     String hash = itemInfo.getHash();
-                    outFileName = hash;
+                    resultKey = hash;
                     if (itemInfo.getChild() > -1) {
-                        outFileName += CHILD_PREFIX + itemInfo.getChild(); // $NON-NLS-1$
+                        resultKey += CHILD_PREFIX + itemInfo.getChild();
                     }
 
-                    OCRResult ocrResult = cache.get(outFileName);
-                    if (ocrResult != null && ocrResult.tesseractVersion.equals(tessVersion)) {
-                        extractOutput(ocrResult.text, xhtml); //$NON-NLS-1$
+                    boolean fetchFromResultsMap = false;
+
+                    // try first from cache
+                    OCRResult result = cache.get(resultKey);
+
+                    // if not found in cache, try from resultsMap
+                    if (result == null && resultsMap != null) {
+                        result = resultsMap.get(resultKey.toCharArray());
+                        if (result != null) {
+                            cache.put(resultKey, result);
+                        }
+                        fetchFromResultsMap = true;
+                    }
+
+                    // if found and was processed with current tesseract version, use this result
+                    if (result != null && (tessVersion == null || result.tesseractVersion.equals(tessVersion))) {
+                        if (!fetchFromResultsMap && resultsMap != null) {
+                            resultsMap.putIfAbsent(resultKey.toCharArray(), result);
+                        }
+
+                        extractOutput(result.text, xhtml);
                         return;
                     }
 
-                    String outPath = hash.charAt(0) + "/" + hash.charAt(1); //$NON-NLS-1$
-                    output = new File(outputBase, outPath + "/" + outFileName + ".txt"); //$NON-NLS-1$ //$NON-NLS-2$
+                    String parentFolders = hash.charAt(0) + "/" + hash.charAt(1);
+                    oldOCROutput = new File(outputBase, parentFolders + "/" + resultKey + ".txt");
                 }
 
-                if (output == null || !output.exists()) {
+                byte[] resultBytes;
 
-                    tmpOutput = new File(outputBase, "ocr-" + random.nextLong() + ".txt"); //$NON-NLS-1$ //$NON-NLS-2$
+                if (oldOCROutput != null && oldOCROutput.exists()) {
+
+                    // support for old cases, where OCR was stored in txt files
+                    extractOutput(oldOCROutput, xhtml);
+
+                    // read resultBytes to store it in cache and in resultsMap
+                    resultBytes = Files.readAllBytes(oldOCROutput.toPath());
+
+                } else {
+
+                    // make OCR of the image and put the result in tmpOutput
+                    tmpOutput = new File(outputBase, "ocr-" + UUID.randomUUID() + ".txt");
 
                     String mediaType = metadata.get(StandardParser.INDEXER_CONTENT_TYPE);
-                    if (mediaType.equals("application/pdf")) { //$NON-NLS-1$
+                    if (mediaType.equals("application/pdf")) {
                         parsePDF(xhtml, tmp, input, tmpOutput, itemPath);
 
                     } else if (nonStandardSupportedTypes.contains(MediaType.parse(mediaType))
@@ -399,26 +501,30 @@ public class OCRParser extends AbstractParser {
                             }
                         }
                     }
-                    
-                    byte[] bytes;
-                    if (tmpOutput.exists()) {
-                        bytes = Files.readAllBytes(tmpOutput.toPath());
-                    } else {
-                        bytes = new byte[0];
-                    }
 
-                    String ocrText = new String(bytes, "UTF-8").trim(); //$NON-NLS-1$
+                    if (tmpOutput.exists()) {
+                        resultBytes = Files.readAllBytes(tmpOutput.toPath());
+                    } else {
+                        resultBytes = new byte[0];
+                    }
+                }
+
+                if (resultKey != null) {
+
+                    // store results in ocrResultsMap and in the cache
+                    String ocrText = new String(resultBytes, StandardCharsets.UTF_8).trim();
                     OCRResult result = new OCRResult();
                     result.text = ocrText;
                     result.tesseractVersion = tessVersion;
-                    cache.put(outFileName, result);
-
-                } else {
-                    extractOutput(output, xhtml);
+                    cache.put(resultKey, result);
+                    if (resultsMap != null) {
+                        resultsMap.put(ocrText.toCharArray(), result);
+                    }
                 }
             }
 
         } finally {
+
             // Call before endDocument() to avoid counting non-OCR characters
             int charCount = countHandler.getCharCount();
             xhtml.endDocument();
@@ -427,6 +533,20 @@ public class OCRParser extends AbstractParser {
                 tmpOutput.delete();
             }
             tmp.dispose();
+        }
+    }
+
+    public static void copyOcrResults(String hash, File inputBase, File outputBase) throws IOException {
+        File sourceMapFile = new File(inputBase, OCRParser.TEXT_DIR + File.separator + OCRParser.OCR_RESULTS_MAP_FILE_NAME);
+        File targetMapFile = new File(outputBase, OCRParser.TEXT_DIR + File.separator + OCRParser.OCR_RESULTS_MAP_FILE_NAME);
+        if (!sourceMapFile.exists())
+            return;
+
+        BTreeMap<char[], OCRResult> sourceMap = getResultsMap(sourceMapFile.getParentFile());
+        BTreeMap<char[], OCRResult> targetMap = getResultsMap(targetMapFile.getParentFile());
+
+        for (Entry<char[], OCRResult> entry : sourceMap.prefixSubMap(hash.toCharArray()).entrySet()) {
+            targetMap.put(entry.getKey(), entry.getValue());
         }
     }
 
@@ -664,5 +784,4 @@ public class OCRParser extends AbstractParser {
         }
         return info;
     }
-
 }

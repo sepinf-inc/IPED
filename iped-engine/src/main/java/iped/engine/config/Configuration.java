@@ -254,17 +254,4 @@ public class Configuration {
             }
         }
     }
-
-    public void closeConfigurables() {
-        ConfigurationManager.get().getObjects().stream() //
-                .filter(AutoCloseable.class::isInstance) //
-                .map(AutoCloseable.class::cast) //
-                .forEach(ac -> {
-                    try {
-                        ac.close();
-                    } catch (Exception e) {
-                        logger.error("Error closing " + ac, e);
-                    }
-                });
-    }
 }

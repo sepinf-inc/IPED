@@ -58,6 +58,11 @@ public class OCRParserTest {
                     .createCache(alias, //
                             CacheConfigurationBuilder.newCacheConfigurationBuilder(keyType, valueType, resourcePoolsBuilder));
         }
+
+        @Override
+        public File getCacheDir() {
+            return new File(OCR_OUTPUT_FOLDER_NAME);
+        }
     };
 
     @BeforeClass
@@ -118,6 +123,7 @@ public class OCRParserTest {
         assertTrue(hts.contains("2:51 PM"));
         assertTrue(hts.toLowerCase().contains("boa sorte galera"));
 
+        parser.close();
     }
 
     private void assertPDFParsing() throws IOException, SAXException, TikaException, SQLException {
@@ -146,6 +152,8 @@ public class OCRParserTest {
         assertTrue(hts.contains("and s6, s5, s4"));
         assertTrue(hts.contains("00000048 005324b3"));
         assertTrue(hts.contains("as memórias de instruções e dados."));
+
+        parser.close();
     }
 
     @Test
@@ -190,6 +198,8 @@ public class OCRParserTest {
         assertTrue(hts.contains("The Lazy Dog."));
         assertTrue(hts.contains("abcdefghijklmnopq"));
         assertTrue(hts.contains("01234567890 01234567890"));
+
+        parser.close();
     }
 
     @Test
@@ -219,6 +229,8 @@ public class OCRParserTest {
         assertTrue(hts.contains("Parsing non-standard file format"));
         assertTrue(hts.contains("SAMPLE TEXT"));
         assertTrue(hts.contains("Centered Text"));
+
+        parser.close();
     }
 
     @Test
@@ -249,6 +261,8 @@ public class OCRParserTest {
         assertTrue(hts.contains("Fox Jumps Over"));
         assertTrue(hts.contains("The Lazy Dog"));
         assertTrue(hts.contains("0123456789"));
+
+        parser.close();
     }
 
 
