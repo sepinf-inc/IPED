@@ -853,6 +853,10 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
 
         OCRConfig ocrConfig = configurationManager.findObject(OCRConfig.class);
         setupOCROptions(ocrConfig);
+        if (ocrConfig.isOCREnabled()) {
+            CacheProvider cacheProvider = CacheProvider.getInstance(configurationManager.findObject(CacheConfig.class));
+            OCRParser.preloadCache(cacheProvider);
+        }
 
         // do not open extra processes for OCR if ForkParser is enabled
         String value = parsingConfig.isEnableExternalParsing() ? Boolean.FALSE.toString() : ocrConfig.getExternalPdfToImgConv();
