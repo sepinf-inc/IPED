@@ -549,7 +549,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
                 if (e instanceof UnknownHostException) {
                     if (!abortNow.getAndSet(true)) {
                         logger.error("ClassificationFail::UnknownHost:{} Unknown host on '{}': {}", baseMsg, url, e.getClass().getName());
-                        System.exit(1);
+                        throw new RuntimeException("Unknown host on '" + url + "': " + e.getMessage(), e);
                     }
                 }
                 // Abort if HTTP response status code is different from SC_SERVICE_UNAVAILABLE and SC_GATEWAY_TIMEOUT
@@ -558,7 +558,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
                     if (eHTTP.getStatusCode() != HttpStatus.SC_SERVICE_UNAVAILABLE && eHTTP.getStatusCode() != HttpStatus.SC_GATEWAY_TIMEOUT) {
                         if (!abortNow.getAndSet(true)) {
                             logger.error("ClassificationFail::HttpStatusNotOK: {}", e.getMessage());
-                            System.exit(1);
+                            throw new RuntimeException("HTTP Status Not OK on '" + url + "': " + e.getMessage(), e);
                         }
                     }
                 }
