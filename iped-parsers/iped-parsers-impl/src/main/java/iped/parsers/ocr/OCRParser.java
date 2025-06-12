@@ -50,6 +50,9 @@ import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
@@ -273,13 +276,26 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
         @Override
         public void writeExternal(ObjectOutput out) throws IOException {
             out.writeUTF(text);
-            out.writeUTF(tesseractVersion);
+            out.writeBoolean(tesseractVersion != null);
+            if (tesseractVersion != null) {
+                out.writeUTF(tesseractVersion);
+            }
         }
 
         @Override
         public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
             text = in.readUTF();
-            tesseractVersion = in.readUTF();
+            if (in.readBoolean()) {
+                tesseractVersion = in.readUTF();
+            }
+        }
+
+        @Override
+        public String toString() {
+            return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE) //
+                    .append("version", tesseractVersion) //
+                    .append("text", StringUtils.abbreviate(text, 15)) //
+                    .toString();
         }
     }
 
