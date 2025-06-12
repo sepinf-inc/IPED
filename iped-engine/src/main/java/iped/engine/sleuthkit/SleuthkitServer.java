@@ -52,7 +52,7 @@ public class SleuthkitServer {
     public static void main(String args[]) {
 
         String dbPath = args[0];
-        // String id = args[1];
+        String configPath = args[1];
         String pipePath = args[2];
         MappedByteBuffer out = null;
 
@@ -68,7 +68,7 @@ public class SleuthkitServer {
             out = fc.map(MapMode.READ_WRITE, 0, size);
             out.load();
 
-            Configuration.getInstance().loadConfigurables(new File(dbPath).getParent() + "/iped"); //$NON-NLS-1$
+            Configuration.getInstance().loadConfigurables(configPath); // $NON-NLS-1$
             ConfigurationManager cm = ConfigurationManager.get();
             LocalConfig localConfig = new LocalConfig();
             localConfig.setIndexerTemp(new File(System.getProperty("java.io.tmpdir")));
