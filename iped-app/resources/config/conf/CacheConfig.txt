@@ -2,38 +2,51 @@
 # Cache Configuration Settings
 # -----------------------------------------------------------------------------
 
-# Specifies the directory to be used for the disk cache.
-# There are four options for this value:
-# 1. "global":      Uses a shared cache directory located at <User Home>/.iped/ehcache.
-# 2. "temp":        Uses a cache directory inside the case temporary folder (e.g., /tmp/ehcache).
-# 3. <custom-path>: A full path to any directory on your filesystem (e.g., /mnt/fast_storage/cache).
-# 4. "disabled":    Don't persist the cache. Only memory (heap + off-heap) will be used.
-#
-cacheDir = global
+# Specifies the cache mode. There are three options:
+# 1. "onlyMemory":  Uses only in-memory caching (heap and off-heap), without disk persistence.
+# 2. "disk":        Uses a multi-tiered cache with heap, off-heap, and disk storage.
+# 3. "redis":       Uses a Redis server for caching. The 'redisUrl' property must be set.
+mode = disk
 
 # -----------------------------------------------------------------------------
 # Cache Memory Pool Size Configuration
 #
-# The following properties control the size of the different memory and disk
-# tiers for the cache. The values are specified in Megabytes (MB).
+# The following properties control the size of the memory tiers for the cache.
+# The values are specified in Megabytes (MB).
 # -----------------------------------------------------------------------------
 
 # Defines the size of the on-heap memory pool in MB.
-# This is the fastest cache tier, but it impacts the Java heap space.
-# Set to "auto" to dynamically calculate the size as 0.5% of the maximum
-# Java heap memory (as specified by the -Xmx JVM option).
+# This is the fastest cache tier but impacts Java heap space.
+# Set to "auto" to calculate the size as 0.5% of the maximum Java heap memory (-Xmx).
 # Alternatively, provide a specific size in MB (e.g., 256).
 heapPoolSizeInMB = auto
 
-# Defines the size of the off-heap memory pool in MB.
-# This tier stores data in memory outside the Java heap, which can help
-# reduce Garbage Collection (GC) pauses. It is still very fast.
-# Set to "auto" to dynamically calculate the size as 0.5% of the total
-# physical system memory (RAM).
-# Alternatively, provide a specific size in MB (e.g., 512).
+# Defines the size of the off-heap memory pool in MB. 
+# This tier stores data in memory outside the Java heap, reducing GC pauses.  It is still very fast. 
+# Set to "auto" to calculate the size as 0.5% of the total physical system memory.
+# Alternatively, provide a specific size in MB (e.g., 512). 
 offHeapPoolSizeInMB = auto
 
-# Defines the size of the disk pool in MB.
-# This is the largest but slowest tier, used for persistent storage on disk.
-# The directory used for this pool is defined by the 'cacheDir' property.
+
+# -----------------------------------------------------------------------------
+# Disk Cache Configuration (used when mode = disk)
+# -----------------------------------------------------------------------------
+
+# Specifies the directory for the disk cache. This is only used when 'mode' is 'disk'.
+# There are three options for this value:
+# 1. "global":      Uses a shared cache directory at <User Home>/.iped/ehcache.
+# 2. "temp":        Uses a temporary cache directory that is deleted on exit.
+# 3. <custom-path>: A full path to a directory (e.g., /mnt/fast_storage/cache).
+cacheDir = global
+
+# Defines the size of the disk pool in MB.  This is the largest but slowest tier.
 diskPoolSizeInMB = 1024
+
+# -----------------------------------------------------------------------------
+# Redis Cache Configuration (used when mode = redis)
+# -----------------------------------------------------------------------------
+
+# Specifies the URL for the Redis server.
+# This is only used when 'mode' is 'redis'.
+# The URL must start with "redis://" (e.g., redis://localhost:6379).
+redisUrl = redis://localhost:6379

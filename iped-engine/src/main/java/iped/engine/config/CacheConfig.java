@@ -7,6 +7,7 @@ import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +22,10 @@ public class CacheConfig extends AbstractPropertiesConfigurable {
 
     public static final String CONFIG_FILE = "CacheConfig.txt";
 
+    private static final String MODE_PROP = "mode";
     private static final String CACHE_DIR_PROP = "cacheDir";
+    private static final String REDIS_URL_PROP = "redisUrl";
+
     private static final String DISK_POOL_SIZE_IN_MB_PROP = "diskPoolSizeInMB";
     private static final String OFF_HEAP_POOL_SIZE_IN_MB_PROP = "offHeapPoolSizeInMB";
     private static final String HEAP_POOL_SIZE_IN_MB_PROP = "heapPoolSizeInMB";
@@ -32,13 +36,19 @@ public class CacheConfig extends AbstractPropertiesConfigurable {
 
     private static final String CACHE_DIR_TEMP = "temp";
     private static final String CACHE_DIR_GLOBAL = "global";
-    private static final String CACHE_DIR_DISABLED = "disabled";
+
+    private Mode mode;
 
     private File cacheDir;
+    private String redisUrl;
 
     private long heapPoolSizeInMB;
     private long offHeapPoolSizeInMB;
     private long diskPoolSizeInMB;
+
+    public enum Mode {
+        onlyMemory, disk, redis;
+    }
 
     public static final DirectoryStream.Filter<Path> filter = new Filter<Path>() {
         @Override
@@ -55,29 +65,18 @@ public class CacheConfig extends AbstractPropertiesConfigurable {
     @Override
     public void processProperties(UTF8Properties properties) {
 
-        String cacheDirValue = properties.getProperty(CACHE_DIR_PROP);
-        switch (cacheDirValue) {
-        case CACHE_DIR_GLOBAL:
-            cacheDir = new File(System.getProperty("user.home"), ".iped/ehcache");
+        mode = Mode.valueOf(properties.getProperty(MODE_PROP));
+
+        switch (mode) {
+        case disk:
+            parserCacheDir(properties);
             break;
 
-        case CACHE_DIR_TEMP:
-            try {
-                cacheDir = Files.createTempDirectory("ehcache").toFile();
-            } catch (IOException e) {
-                throw new RuntimeException("Error creating cacheDir", e);
-            }
-            break;
-
-        case CACHE_DIR_DISABLED:
-            cacheDir = null;
+        case redis:
+            parserRedisUrl(properties);
             break;
 
         default:
-            cacheDir = new File(cacheDirValue);
-            if (!cacheDir.isDirectory() || !cacheDir.mkdirs()) {
-                throw new IllegalArgumentException("cacheDir is not valid: " + cacheDir);
-            }
             break;
         }
 
@@ -101,13 +100,53 @@ public class CacheConfig extends AbstractPropertiesConfigurable {
         } else {
             offHeapPoolSizeInMB = Long.parseLong(offHeapPoolSizeValue);
         }
+    }
+
+    private void parserCacheDir(UTF8Properties properties) {
+        String cacheDirValue = properties.getProperty(CACHE_DIR_PROP);
+        switch (cacheDirValue) {
+        case CACHE_DIR_GLOBAL:
+            cacheDir = new File(System.getProperty("user.home"), ".iped/ehcache");
+            break;
+
+        case CACHE_DIR_TEMP:
+            try {
+                cacheDir = Files.createTempDirectory("ehcache").toFile();
+            } catch (IOException e) {
+                throw new RuntimeException("Error creating cacheDir", e);
+            }
+            break;
+
+        default:
+            cacheDir = new File(cacheDirValue);
+            if (!cacheDir.isDirectory() || !cacheDir.mkdirs()) {
+                throw new IllegalArgumentException("cacheDir is not valid: " + cacheDir);
+            }
+            break;
+        }
 
         diskPoolSizeInMB = Long.parseLong(properties.getProperty(DISK_POOL_SIZE_IN_MB_PROP));
+    }
 
+    private void parserRedisUrl(UTF8Properties properties) {
+        String redisUrlValue = properties.getProperty(REDIS_URL_PROP);
+        if (!StringUtils.startsWith(redisUrlValue, "redis:")) {
+            throw new IllegalArgumentException("Invalid redisUrl: " + redisUrlValue + ". Use the form redis://<host>:<port>");
+        }
+
+        redisUrl = redisUrlValue;
+    }
+
+    public Mode getMode() {
+        return mode;
     }
 
     public File getCacheDir() {
         return cacheDir;
+    }
+
+    public String getRedisUrl() {
+        return redisUrl;
     }
 
     public long getHeapPoolSizeInMB() {

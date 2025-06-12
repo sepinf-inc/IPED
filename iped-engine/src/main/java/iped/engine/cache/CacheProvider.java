@@ -1,6 +1,9 @@
 package iped.engine.cache;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,7 +21,9 @@ import org.slf4j.LoggerFactory;
 
 import iped.cache.ICacheProvider;
 import iped.engine.config.CacheConfig;
+import iped.engine.config.CacheConfig.Mode;
 import iped.engine.core.Manager;
+import redis.clients.jedis.JedisPool;
 
 public class CacheProvider implements ICacheProvider, AutoCloseable {
 
@@ -29,6 +34,10 @@ public class CacheProvider implements ICacheProvider, AutoCloseable {
     private CacheConfig config;
     private CacheManager cacheManager;
     private ResourcePoolsBuilder defaultResourcePoolsBuilder;
+
+    private JedisPool jedisPool;
+
+    private Mode mode;
 
     public static synchronized CacheProvider getInstance(CacheConfig cacheConfig) {
         CacheProvider instance = instances.get(cacheConfig);
@@ -45,23 +54,40 @@ public class CacheProvider implements ICacheProvider, AutoCloseable {
 
     private void initialize() {
 
-        boolean onlyInMemory = config.getCacheDir() == null || Manager.getInstance() == null || Manager.getInstance().getCaseData().isIpedReport();
-        if (onlyInMemory) {
-            logger.info("Initialing cache in memory");
+        mode = config.getMode();
+
+        // only allow disk mode in processing
+        if (mode == Mode.disk && (Manager.getInstance() == null || Manager.getInstance().getCaseData().isIpedReport())) {
+            mode = Mode.onlyMemory;
+        }
+
+        switch (mode) {
+        case onlyMemory:
+            logger.error("Initialing cache in memory");
             cacheManager = CacheManagerBuilder.newCacheManagerBuilder() //
                     .build(true);
-        } else {
-            logger.info("Initialing cache from folder {}", config.getCacheDir().getAbsolutePath());
+            break;
+
+        case disk:
+            logger.error("Initialing cache from folder {}", config.getCacheDir().getAbsolutePath());
             cacheManager = CacheManagerBuilder.newCacheManagerBuilder() //
                     .with(CacheManagerBuilder.persistence(config.getCacheDir()))//
                     .build(true);
+            break;
+
+        case redis:
+            logger.error("Initialing cache redis {}", config.getRedisUrl());
+            jedisPool = new JedisPool();
+            cacheManager = CacheManagerBuilder.newCacheManagerBuilder() //
+                    .build(true);
+            break;
         }
 
         defaultResourcePoolsBuilder = ResourcePoolsBuilder.newResourcePoolsBuilder() //
                 .heap(config.getHeapPoolSizeInMB(), MemoryUnit.MB) //
                 .offheap(config.getOffHeapPoolSizeInMB(), MemoryUnit.MB);
 
-        if (!onlyInMemory) {
+        if (mode == Mode.disk) {
             defaultResourcePoolsBuilder = defaultResourcePoolsBuilder.disk(config.getDiskPoolSizeInMB(), MemoryUnit.MB, true);
         }
 
@@ -113,11 +139,17 @@ public class CacheProvider implements ICacheProvider, AutoCloseable {
     }
 
     private <K, V> Cache<K, V> createCache(String alias, Class<K> keyType, Class<V> valueType, ResourcePoolsBuilder resourcePoolsBuilder) {
-        return cacheManager.createCache(alias, //
-                CacheConfigurationBuilder.newCacheConfigurationBuilder( //
-                        keyType, //
-                        valueType, //
-                        resourcePoolsBuilder));
+
+        CacheConfigurationBuilder<K, V> configurationBuilder = CacheConfigurationBuilder.newCacheConfigurationBuilder( //
+                keyType, //
+                valueType, //
+                resourcePoolsBuilder);
+
+        if (mode == Mode.redis) {
+            configurationBuilder = configurationBuilder.withLoaderWriter(new RedisCacheLoaderWriter<K, V>(jedisPool, alias + ":", valueType));
+        }
+
+        return cacheManager.createCache(alias, configurationBuilder);
     }
 
     @Override
@@ -125,14 +157,23 @@ public class CacheProvider implements ICacheProvider, AutoCloseable {
         if (cacheManager != null) {
             cacheManager.close();
             cacheManager = null;
-            synchronized(CacheProvider.class) {
+            synchronized (CacheProvider.class) {
                 instances.remove(config);
             }
+        }
+        if (jedisPool != null) {
+            jedisPool.close();
+            jedisPool = null;
         }
     }
 
     public static synchronized void closeAll() {
         List.copyOf(instances.values()).stream().forEach(CacheProvider::close);
         instances.clear();
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        initialize();
     }
 }
