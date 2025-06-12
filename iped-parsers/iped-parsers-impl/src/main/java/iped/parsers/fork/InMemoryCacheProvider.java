@@ -7,7 +7,6 @@ import org.ehcache.CacheManager;
 import org.ehcache.config.builders.CacheConfigurationBuilder;
 import org.ehcache.config.builders.CacheManagerBuilder;
 import org.ehcache.config.builders.ResourcePoolsBuilder;
-import org.ehcache.config.units.EntryUnit;
 
 import iped.cache.ICacheProvider;
 
@@ -29,8 +28,7 @@ public class InMemoryCacheProvider implements ICacheProvider {
                 .build(true);
 
         long maxHeapBytes = Runtime.getRuntime().maxMemory();
-        defaultResourcePoolsBuilder = ResourcePoolsBuilder.newResourcePoolsBuilder() //
-                .heap((long) (maxHeapBytes * HEAP_FACTOR), EntryUnit.ENTRIES);
+        defaultResourcePoolsBuilder = ResourcePoolsBuilder.heap((long) (maxHeapBytes * HEAP_FACTOR));
     }
 
     @Override
