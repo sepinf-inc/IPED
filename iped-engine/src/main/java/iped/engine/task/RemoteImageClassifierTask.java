@@ -589,13 +589,13 @@ public class RemoteImageClassifierTask extends AbstractTask {
                 if (retryCount < MAX_RETRY) {
                     // Log warning and retry
                     logger.warn(msg);
-                }
-                else {
+                } else {
                     // Log error and abort case processing
                     if (!abortNow.getAndSet(true)) {
                         logger.error(msg);
                         logger.error("ClassificationFail::TooManyErrors: Aborting case processing");
-                        System.exit(1);
+                        throw new RuntimeException(
+                                "Too many errors while communicating with '" + url + "': " + e.getMessage(), e);
                     }
                 }
 
