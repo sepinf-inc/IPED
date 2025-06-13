@@ -2,6 +2,7 @@ package iped.engine.config;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.nio.file.DirectoryStream;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Files;
@@ -11,6 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import iped.engine.sleuthkit.SleuthkitServer;
 import iped.engine.util.Util;
 import iped.utils.UTF8Properties;
 
@@ -31,8 +33,8 @@ public class CacheConfig extends AbstractPropertiesConfigurable {
     private static final String HEAP_POOL_SIZE_IN_MB_PROP = "heapPoolSizeInMB";
 
     private static final int ONE_MB = 1024 * 1024;
-    private static final double AUTO_HEAP_FACTOR = 0.005;
-    private static final double AUTO_OFF_HEAP_FACTOR = 0.005;
+    private static final double DEFAULT_AUTO_HEAP_FACTOR = 0.005; // 0.5%
+    private static final double DEFAULT_AUTO_OFF_HEAP_FACTOR = 0.01; // 1%
 
     private static final String CACHE_DIR_TEMP = "temp";
     private static final String CACHE_DIR_GLOBAL = "global";
@@ -42,9 +44,9 @@ public class CacheConfig extends AbstractPropertiesConfigurable {
     private File cacheDir;
     private String redisUrl;
 
-    private long heapPoolSizeInMB;
-    private long offHeapPoolSizeInMB;
-    private long diskPoolSizeInMB;
+    private long heapPoolSize;
+    private long offHeapPoolSize;
+    private long diskPoolSize;
 
     public enum Mode {
         onlyMemory, disk, redis;
@@ -60,6 +62,18 @@ public class CacheConfig extends AbstractPropertiesConfigurable {
     @Override
     public Filter<Path> getResourceLookupFilter() {
         return filter;
+    }
+
+    // Runs initialize() after deserialization
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+
+        // if SleuthkitServer or ForkServer is running, the Xmx is smaller, so adjust the factors
+        String mainClass = Util.getMainClass();
+        if (StringUtils.equalsAny(mainClass, SleuthkitServer.class.getName(), "iped.parsers.fork.ForkServer")) {
+            parseAutoHeapPoolSize(0.02); // 2%
+            parseAutoOffHeapPoolSize(0.04); // 4%
+        }
     }
 
     @Override
@@ -80,25 +94,18 @@ public class CacheConfig extends AbstractPropertiesConfigurable {
             break;
         }
 
-        String heapPoolSizeValue = properties.getProperty(HEAP_POOL_SIZE_IN_MB_PROP);
-        if ("auto".equalsIgnoreCase(heapPoolSizeValue)) {
-            // If "auto", calculate 0.5% of the maximum Java heap size (-Xmx).
-            long maxHeapBytes = Runtime.getRuntime().maxMemory();
-            heapPoolSizeInMB = (long) (maxHeapBytes * AUTO_HEAP_FACTOR / ONE_MB);
-            logger.info("Auto-configured heapPoolSizeInMB to {} MB", heapPoolSizeInMB);
+        String heapPoolSizeInMBValue = properties.getProperty(HEAP_POOL_SIZE_IN_MB_PROP);
+        if ("auto".equalsIgnoreCase(heapPoolSizeInMBValue)) {
+            parseAutoHeapPoolSize(DEFAULT_AUTO_HEAP_FACTOR);
         } else {
-            heapPoolSizeInMB = Long.parseLong(heapPoolSizeValue);
+            heapPoolSize = Long.parseLong(heapPoolSizeInMBValue) * ONE_MB;
         }
 
-        String offHeapPoolSizeValue = properties.getProperty(OFF_HEAP_POOL_SIZE_IN_MB_PROP);
-        if ("auto".equalsIgnoreCase(offHeapPoolSizeValue)) {
-            // If "auto", calculate 0.5% of the total physical system memory.
-            // This provides a more reliable measure for available off-heap memory.
-            long totalPhysicalMemoryBytes = Util.getPhysicalMemorySize();
-            offHeapPoolSizeInMB = (long) (totalPhysicalMemoryBytes * AUTO_OFF_HEAP_FACTOR / ONE_MB);
-            logger.info("Auto-configured offHeapPoolSizeInMB to {} MB", offHeapPoolSizeInMB);
+        String offHeapPoolSizeInMBValue = properties.getProperty(OFF_HEAP_POOL_SIZE_IN_MB_PROP);
+        if ("auto".equalsIgnoreCase(offHeapPoolSizeInMBValue)) {
+            parseAutoOffHeapPoolSize(DEFAULT_AUTO_OFF_HEAP_FACTOR);
         } else {
-            offHeapPoolSizeInMB = Long.parseLong(offHeapPoolSizeValue);
+            offHeapPoolSize = Long.parseLong(offHeapPoolSizeInMBValue) * ONE_MB;
         }
     }
 
@@ -125,7 +132,7 @@ public class CacheConfig extends AbstractPropertiesConfigurable {
             break;
         }
 
-        diskPoolSizeInMB = Long.parseLong(properties.getProperty(DISK_POOL_SIZE_IN_MB_PROP));
+        diskPoolSize = Long.parseLong(properties.getProperty(DISK_POOL_SIZE_IN_MB_PROP)) * ONE_MB;
     }
 
     private void parserRedisUrl(UTF8Properties properties) {
@@ -135,6 +142,26 @@ public class CacheConfig extends AbstractPropertiesConfigurable {
         }
 
         redisUrl = redisUrlValue;
+    }
+
+    /**
+     * If "auto", calculate x% of the maximum Java heap size (-Xmx).
+     */
+    private void parseAutoHeapPoolSize(double factor) {
+        long maxHeapBytes = Runtime.getRuntime().maxMemory();
+        heapPoolSize = (long) (maxHeapBytes * factor);
+        logger.error("Auto-configured heapPoolSize to {} MB", (long) (heapPoolSize / ONE_MB));
+    }
+
+    /**
+     * If "auto", calculate x% of the maximum direct memory size (-XX:MaxDirectMemorySize).
+     */
+    private void parseAutoOffHeapPoolSize(double factor) {
+
+        long totalPhysicalMemoryBytes = Util.getMaxDirectMemory();
+        offHeapPoolSize = (long) (totalPhysicalMemoryBytes * factor);
+        logger.error("Auto-configured offHeapPoolSize to {} MB", (long) (offHeapPoolSize / ONE_MB));
+
     }
 
     public Mode getMode() {
@@ -149,15 +176,15 @@ public class CacheConfig extends AbstractPropertiesConfigurable {
         return redisUrl;
     }
 
-    public long getHeapPoolSizeInMB() {
-        return heapPoolSizeInMB;
+    public long getHeapPoolSize() {
+        return heapPoolSize;
     }
 
-    public long getOffHeapPoolSizeInMB() {
-        return offHeapPoolSizeInMB;
+    public long getOffHeapPoolSize() {
+        return offHeapPoolSize;
     }
 
-    public long getDiskPoolSizeInMB() {
-        return diskPoolSizeInMB;
+    public long getDiskPoolSize() {
+        return diskPoolSize;
     }
 }

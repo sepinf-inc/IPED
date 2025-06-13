@@ -53,8 +53,11 @@ import org.apache.tika.sax.RecursiveParserWrapperHandler;
 import org.apache.tika.sax.TeeContentHandler;
 import org.apache.tika.utils.ProcessUtils;
 import org.apache.tika.utils.SystemUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 
+import iped.cache.ICacheProvider;
 import iped.parsers.fork.MemoryURLStreamHandlerFactory.MemoryURLStreamHandler;
 import iped.parsers.fork.MemoryURLStreamHandlerFactory.MemoryURLStreamHandler.MemoryURLConnection;
 import iped.parsers.fork.MemoryURLStreamHandlerFactory.MemoryURLStreamHandler.MemoryURLStreamRecord;
@@ -63,6 +66,9 @@ import iped.parsers.util.ItemInfo;
 import iped.parsers.util.OCROutputFolder;
 
 class ForkClient {
+
+    private static Logger logger = LoggerFactory.getLogger(ForkClient.class);
+
     private static AtomicInteger CLIENT_COUNTER = new AtomicInteger(0);
 
     private final List<ForkResource> resources = new ArrayList<>();
@@ -336,6 +342,7 @@ class ForkClient {
         } else if (object instanceof ParseContext) {
             ParseContextProxy contextProxy = new ParseContextProxy();
             contextProxy.set(OCROutputFolder.class, ((ParseContext) object).get(OCROutputFolder.class));
+            contextProxy.set(ICacheProvider.class, ((ParseContext) object).get(ICacheProvider.class));
             contextProxy.set(ItemInfo.class, ((ParseContext) object).get(ItemInfo.class));
             contextProxy.set(ComputeThumb.class, ((ParseContext) object).get(ComputeThumb.class));
             contextProxy.set(ParsingTimeout.class, ((ParseContext) object).get(ParsingTimeout.class));
@@ -352,8 +359,9 @@ class ForkClient {
             ForkObjectInputStream.sendObject(object, output);
         } catch (NotSerializableException nse) {
             // Build a more friendly error message for this
-            throw new TikaException(
-                    "Unable to serialize " + object.getClass().getSimpleName() + " to pass to the Forked Parser", nse);
+            String msg = "Unable to serialize " + object.getClass().getSimpleName() + " to pass to the Forked Parser";
+            logger.error(msg, nse);
+            throw new TikaException(msg, nse);
         }
 
         waitForResponse(resources);

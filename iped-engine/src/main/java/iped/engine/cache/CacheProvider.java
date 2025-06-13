@@ -25,30 +25,38 @@ import iped.engine.config.CacheConfig.Mode;
 import iped.engine.core.Manager;
 import redis.clients.jedis.JedisPool;
 
-public class CacheProvider implements ICacheProvider, AutoCloseable {
+public class CacheProvider implements ICacheProvider, AutoCloseable, Serializable {
+
+    private static final long serialVersionUID = 4341757434440803033L;
 
     private static Logger logger = LoggerFactory.getLogger(CacheProvider.class);
 
     private static Map<CacheConfig, CacheProvider> instances = new HashMap<>();
 
+    private transient CacheManager cacheManager;
+    private transient ResourcePoolsBuilder defaultResourcePoolsBuilder;
+
+    private transient JedisPool jedisPool;
+
     private CacheConfig config;
-    private CacheManager cacheManager;
-    private ResourcePoolsBuilder defaultResourcePoolsBuilder;
-
-    private JedisPool jedisPool;
-
     private Mode mode;
 
     public static synchronized CacheProvider getInstance(CacheConfig cacheConfig) {
         CacheProvider instance = instances.get(cacheConfig);
         if (instance == null) {
             instances.put(cacheConfig, instance = new CacheProvider(cacheConfig));
+            instance.initialize();
         }
         return instance;
     }
 
     private CacheProvider(CacheConfig config) {
         this.config = config;
+    }
+
+    // Runs initialize() after deserialization
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
         initialize();
     }
 
@@ -84,11 +92,11 @@ public class CacheProvider implements ICacheProvider, AutoCloseable {
         }
 
         defaultResourcePoolsBuilder = ResourcePoolsBuilder.newResourcePoolsBuilder() //
-                .heap(config.getHeapPoolSizeInMB(), MemoryUnit.MB) //
-                .offheap(config.getOffHeapPoolSizeInMB(), MemoryUnit.MB);
+                .heap(config.getHeapPoolSize(), MemoryUnit.B) //
+                .offheap(config.getOffHeapPoolSize(), MemoryUnit.B);
 
         if (mode == Mode.disk) {
-            defaultResourcePoolsBuilder = defaultResourcePoolsBuilder.disk(config.getDiskPoolSizeInMB(), MemoryUnit.MB, true);
+            defaultResourcePoolsBuilder = defaultResourcePoolsBuilder.disk(config.getDiskPoolSize(), MemoryUnit.B, true);
         }
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -111,7 +119,7 @@ public class CacheProvider implements ICacheProvider, AutoCloseable {
             ResourcePoolsBuilder resourcePoolsBuilder) {
 
         if (cacheManager == null) {
-            throw new IllegalStateException("CacheProvider was closed()");
+            throw new IllegalStateException("CacheProvider was not initialized()");
         }
 
         Cache<K, V> cache = cacheManager.getCache(alias, keyType, valueType);
@@ -170,10 +178,5 @@ public class CacheProvider implements ICacheProvider, AutoCloseable {
     public static synchronized void closeAll() {
         List.copyOf(instances.values()).stream().forEach(CacheProvider::close);
         instances.clear();
-    }
-
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
-        initialize();
     }
 }

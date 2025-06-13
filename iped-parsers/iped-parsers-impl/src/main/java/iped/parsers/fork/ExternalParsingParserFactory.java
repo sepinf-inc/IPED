@@ -25,11 +25,8 @@ import iped.utils.IOUtil;
 
 public class ExternalParsingParserFactory extends ParserFactory {
 
-    private InMemoryCacheProvider cacheProvider;
-
     public ExternalParsingParserFactory(Map<String, String> args) {
         super(args);
-        cacheProvider = new InMemoryCacheProvider();
     }
 
     @Override
@@ -47,7 +44,6 @@ public class ExternalParsingParserFactory extends ParserFactory {
                     throws IOException, SAXException, TikaException {
 
                 context.set(Parser.class, recursiveParser);
-                context.set(ICacheProvider.class, cacheProvider);
                 EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class);
                 if (extractor instanceof EmbeddedDocumentParser) {
                     ((EmbeddedDocumentParser) extractor).setContext(context);
