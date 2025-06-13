@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import iped.cache.ICacheProvider;
 import iped.engine.config.CacheConfig;
-import iped.engine.config.CacheConfig.Mode;
+import iped.engine.config.CacheConfig.CacheMode;
 import iped.engine.core.Manager;
 import redis.clients.jedis.JedisPool;
 
@@ -39,7 +39,7 @@ public class CacheProvider implements ICacheProvider, AutoCloseable, Serializabl
     private transient JedisPool jedisPool;
 
     private CacheConfig config;
-    private Mode mode;
+    private CacheMode mode;
 
     public static synchronized CacheProvider getInstance(CacheConfig cacheConfig) {
         CacheProvider instance = instances.get(cacheConfig);
@@ -62,15 +62,12 @@ public class CacheProvider implements ICacheProvider, AutoCloseable, Serializabl
 
     private void initialize() {
 
+        config.postProcess(Manager.getInstance());
+
         mode = config.getMode();
 
-        // only allow disk mode in processing
-        if (mode == Mode.disk && (Manager.getInstance() == null || Manager.getInstance().getCaseData().isIpedReport())) {
-            mode = Mode.onlyMemory;
-        }
-
         switch (mode) {
-        case onlyMemory:
+        case memoryOnly:
             logger.info("Initialing cache in memory");
             cacheManager = CacheManagerBuilder.newCacheManagerBuilder() //
                     .build(true);
@@ -95,7 +92,7 @@ public class CacheProvider implements ICacheProvider, AutoCloseable, Serializabl
                 .heap(config.getHeapPoolSize(), MemoryUnit.B) //
                 .offheap(config.getOffHeapPoolSize(), MemoryUnit.B);
 
-        if (mode == Mode.disk) {
+        if (mode == CacheMode.disk) {
             defaultResourcePoolsBuilder = defaultResourcePoolsBuilder.disk(config.getDiskPoolSize(), MemoryUnit.B, true);
         }
 
@@ -153,7 +150,7 @@ public class CacheProvider implements ICacheProvider, AutoCloseable, Serializabl
                 valueType, //
                 resourcePoolsBuilder);
 
-        if (mode == Mode.redis) {
+        if (mode == CacheMode.redis) {
             configurationBuilder = configurationBuilder.withLoaderWriter(new RedisCacheLoaderWriter<K, V>(jedisPool, alias + ":", valueType));
         }
 

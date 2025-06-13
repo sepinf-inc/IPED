@@ -3,7 +3,7 @@
 # -----------------------------------------------------------------------------
 
 # Specifies the cache mode. There are three options:
-# 1. "onlyMemory":  Uses only in-memory caching (heap and off-heap), without disk persistence.
+# 1. "memoryOnly":  Uses only in-memory caching (heap and off-heap), without disk persistence.
 # 2. "disk":        Uses a multi-tiered cache with heap, off-heap, and disk storage.
 # 3. "redis":       Uses a Redis server for caching. The 'redisUrl' property must be set.
 mode = disk
@@ -27,17 +27,17 @@ heapPoolSizeInMB = auto
 # Alternatively, provide a specific size in MB (e.g., 512). 
 offHeapPoolSizeInMB = auto
 
-
 # -----------------------------------------------------------------------------
 # Disk Cache Configuration (used when mode = disk)
 # -----------------------------------------------------------------------------
 
 # Specifies the directory for the disk cache. This is only used when 'mode' is 'disk'.
 # There are three options for this value:
-# 1. "global":      Uses a shared cache directory at <User Home>/.iped/ehcache.
-# 2. "temp":        Uses a temporary cache directory that is deleted on exit.
-# 3. <custom-path>: A full path to a directory (e.g., /mnt/fast_storage/cache).
-cacheDir = global
+# 1. "global":      Uses a shared cache directory at <User Home>/.iped/cache.
+# 2. "internal":    Uses the cache directory that at <Case Folder>/iped/cache.
+# 3. "temp":        Uses a temporary cache directory that is deleted on exit.
+# 4. <custom-path>: A full path to a directory (e.g., /mnt/fast_storage/cache).
+cacheDir = internal
 
 # Defines the size of the disk pool in MB.  This is the largest but slowest tier.
 diskPoolSizeInMB = 1024

@@ -12,6 +12,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import iped.configuration.IConfigurationDirectory;
+import iped.engine.core.Manager;
 import iped.engine.sleuthkit.SleuthkitServer;
 import iped.engine.util.Util;
 import iped.utils.UTF8Properties;
@@ -23,6 +25,7 @@ public class CacheConfig extends AbstractPropertiesConfigurable {
     private static Logger logger = LoggerFactory.getLogger(CacheConfig.class);
 
     public static final String CONFIG_FILE = "CacheConfig.txt";
+    private static final String CACHE_DIR_INTERNAL = "cache";
 
     private static final String MODE_PROP = "mode";
     private static final String CACHE_DIR_PROP = "cacheDir";
@@ -36,20 +39,23 @@ public class CacheConfig extends AbstractPropertiesConfigurable {
     private static final double DEFAULT_AUTO_HEAP_FACTOR = 0.005; // 0.5%
     private static final double DEFAULT_AUTO_OFF_HEAP_FACTOR = 0.01; // 1%
 
-    private static final String CACHE_DIR_TEMP = "temp";
-    private static final String CACHE_DIR_GLOBAL = "global";
-
-    private Mode mode;
+    private CacheMode mode;
 
     private File cacheDir;
+    private CacheDirMode cacheDirMode;
+
     private String redisUrl;
 
     private long heapPoolSize;
     private long offHeapPoolSize;
     private long diskPoolSize;
 
-    public enum Mode {
-        onlyMemory, disk, redis;
+    public enum CacheMode {
+        memoryOnly, disk, redis;
+    }
+
+    public enum CacheDirMode {
+        global, internal, temp, userDefined;
     }
 
     public static final DirectoryStream.Filter<Path> filter = new Filter<Path>() {
@@ -79,7 +85,7 @@ public class CacheConfig extends AbstractPropertiesConfigurable {
     @Override
     public void processProperties(UTF8Properties properties) {
 
-        mode = Mode.valueOf(properties.getProperty(MODE_PROP));
+        mode = CacheMode.valueOf(properties.getProperty(MODE_PROP));
 
         switch (mode) {
         case disk:
@@ -111,12 +117,22 @@ public class CacheConfig extends AbstractPropertiesConfigurable {
 
     private void parserCacheDir(UTF8Properties properties) {
         String cacheDirValue = properties.getProperty(CACHE_DIR_PROP);
-        switch (cacheDirValue) {
-        case CACHE_DIR_GLOBAL:
-            cacheDir = new File(System.getProperty("user.home"), ".iped/ehcache");
+        try {
+            cacheDirMode = CacheDirMode.valueOf(cacheDirValue);
+        } catch (IllegalArgumentException e) {
+            cacheDirMode = CacheDirMode.userDefined;
+        }
+
+        switch (cacheDirMode) {
+        case global:
+            cacheDir = new File(System.getProperty("user.home"), ".iped/cache");
             break;
 
-        case CACHE_DIR_TEMP:
+        case internal:
+            // cacheDir will be defined later in postProcess()
+            break;
+
+        case temp:
             try {
                 cacheDir = Files.createTempDirectory("ehcache").toFile();
             } catch (IOException e) {
@@ -124,15 +140,42 @@ public class CacheConfig extends AbstractPropertiesConfigurable {
             }
             break;
 
-        default:
+        case userDefined:
             cacheDir = new File(cacheDirValue);
             if (!cacheDir.isDirectory() || !cacheDir.mkdirs()) {
                 throw new IllegalArgumentException("cacheDir is not valid: " + cacheDir);
             }
+            logger.info("Using cache directory at {}", cacheDir.getAbsolutePath());
             break;
         }
 
         diskPoolSize = Long.parseLong(properties.getProperty(DISK_POOL_SIZE_IN_MB_PROP)) * ONE_MB;
+    }
+
+    public void postProcess(Manager manager) {
+
+        if (mode == CacheMode.disk) {
+
+            if (manager == null) {
+
+                // if it is not the Main processing, uses memoryOnly
+                mode = CacheMode.memoryOnly;
+                cacheDir = null;
+
+            } else if (cacheDirMode == CacheDirMode.internal) {
+
+                if (manager.getCaseData().isIpedReport()) {
+
+                    // uses cache from original case folder
+                    String ipedRoot = System.getProperty(IConfigurationDirectory.IPED_APP_ROOT);
+                    cacheDir = new File(ipedRoot, CACHE_DIR_INTERNAL);
+                } else {
+
+                    // uses cache from current case folder
+                    cacheDir = new File(manager.getOutputFolder(), CACHE_DIR_INTERNAL);
+                }
+            }
+        }
     }
 
     private void parserRedisUrl(UTF8Properties properties) {
@@ -157,14 +200,12 @@ public class CacheConfig extends AbstractPropertiesConfigurable {
      * If "auto", calculate x% of the maximum direct memory size (-XX:MaxDirectMemorySize).
      */
     private void parseAutoOffHeapPoolSize(double factor) {
-
         long totalPhysicalMemoryBytes = Util.getMaxDirectMemory();
         offHeapPoolSize = (long) (totalPhysicalMemoryBytes * factor);
         logger.info("Auto-configured offHeapPoolSize to {} MB", (long) (offHeapPoolSize / ONE_MB));
-
     }
 
-    public Mode getMode() {
+    public CacheMode getMode() {
         return mode;
     }
 

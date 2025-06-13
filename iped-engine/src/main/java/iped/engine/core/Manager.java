@@ -977,4 +977,7 @@ public class Manager {
         }
     }
 
+    public File getOutputFolder() {
+        return output;
+    }
 }
