@@ -68,20 +68,20 @@ public class CacheProvider implements ICacheProvider, AutoCloseable, Serializabl
 
         switch (mode) {
         case memoryOnly:
-            logger.info("Initialing cache in memory");
+            logger.info("Initializing cache in memory only");
             cacheManager = CacheManagerBuilder.newCacheManagerBuilder() //
                     .build(true);
             break;
 
         case disk:
-            logger.info("Initialing cache from folder {}", config.getCacheDir().getAbsolutePath());
+            logger.info("Initializing cache with disk folder {}", config.getCacheDir().getAbsolutePath());
             cacheManager = CacheManagerBuilder.newCacheManagerBuilder() //
                     .with(CacheManagerBuilder.persistence(config.getCacheDir()))//
                     .build(true);
             break;
 
         case redis:
-            logger.info("Initialing cache redis {}", config.getRedisUrl());
+            logger.info("Initializing cache with redis {}", config.getRedisUrl());
             jedisPool = new JedisPool();
             cacheManager = CacheManagerBuilder.newCacheManagerBuilder() //
                     .build(true);
