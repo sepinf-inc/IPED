@@ -204,7 +204,9 @@ public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverPa
     }
 
     public void processAsPList(NSObject nso, State state) throws SAXException {
-        processObject(nso, "", state, true);
+        PListParser plistParser = new PListParser();
+        AbstractPListParser<Void>.State plistState = plistParser.new State(state.xhtml, state.metadata, state.embeddedDocumentExtractor, state.context);
+        plistParser.processObject(nso, "", plistState, true);
     }
 
     public void processTop(NSDictionary top, State state) throws SAXException {
