@@ -357,8 +357,8 @@ class FaceRecognitionTask:
                 for j in range(128):
                     line = proc.stdout.readline()
                     list.append(float(line))
-                np_array = np.array(list)
-                face_encodings.append(np_array)
+                vector = javaConverter.toKnnVector(list)
+                face_encodings.append(vector)
             
             t3 = time.time()
             with timeLock:
