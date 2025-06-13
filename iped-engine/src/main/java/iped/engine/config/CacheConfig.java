@@ -150,7 +150,7 @@ public class CacheConfig extends AbstractPropertiesConfigurable {
     private void parseAutoHeapPoolSize(double factor) {
         long maxHeapBytes = Runtime.getRuntime().maxMemory();
         heapPoolSize = (long) (maxHeapBytes * factor);
-        logger.error("Auto-configured heapPoolSize to {} MB", (long) (heapPoolSize / ONE_MB));
+        logger.info("Auto-configured heapPoolSize to {} MB", (long) (heapPoolSize / ONE_MB));
     }
 
     /**
@@ -160,7 +160,7 @@ public class CacheConfig extends AbstractPropertiesConfigurable {
 
         long totalPhysicalMemoryBytes = Util.getMaxDirectMemory();
         offHeapPoolSize = (long) (totalPhysicalMemoryBytes * factor);
-        logger.error("Auto-configured offHeapPoolSize to {} MB", (long) (offHeapPoolSize / ONE_MB));
+        logger.info("Auto-configured offHeapPoolSize to {} MB", (long) (offHeapPoolSize / ONE_MB));
 
     }
 
