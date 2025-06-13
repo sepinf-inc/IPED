@@ -440,15 +440,15 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
 
                     // try first from cache
                     OCRResult result = cache.get(resultKey);
-                    LOGGER.debug("Got from cache: " + resultKey + " => " + result);
+                    LOGGER.debug("Got from cache: {} => {}", resultKey, result);
 
                     // if not found in cache, try from DB
                     if (result == null) {
                         result = getOcrTextFromDb(resultKey, outputBase);
-                        LOGGER.debug("  Got from DB: " + resultKey + " => " + result);
+                        LOGGER.debug("  Got from DB: {} => {}", resultKey, result);
 
                         if (result != null) {
-                            LOGGER.debug("    Saving in DB: " + resultKey + " => " + result);
+                            LOGGER.debug("    Saving in DB: {} => {}", resultKey, result);
                             cache.put(resultKey, result);
                         }
                         gotResultsFromDB = true;
@@ -456,7 +456,7 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
 
                     // if found and was processed with current tesseract version, use this result
                     if (result != null && (tessVersion == null || result.tesseractVersion == null || tessVersion.equals(result.tesseractVersion))) {
-                        LOGGER.debug("Reused result: " + resultKey + " => " + result);
+                        LOGGER.debug("Reused result: {} => {}", resultKey, result);
 
                         if (!gotResultsFromDB) {
                             LOGGER.debug("  Saving in DB if absent: " + resultKey + " => " + result);
@@ -521,11 +521,10 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
                 }
 
                 if (resultKey != null) {
-
                     // store results in DB and in the cache
-                    LOGGER.debug("Saving result and cache: " + resultKey);
                     String ocrText = new String(resultBytes, StandardCharsets.UTF_8).trim();
                     OCRResult result = new OCRResult(ocrText, tessVersion);
+                    LOGGER.debug("Saving result in DB and cache: {} => {}", resultKey, result);
                     cache.put(resultKey, result);
                     storeOcrTextInDb(resultKey, result, outputBase);
                 }
