@@ -36,6 +36,7 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
 import java.net.URI;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Files;
@@ -45,6 +46,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
@@ -52,6 +54,7 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.lucene.util.IOUtils;
 import org.apache.poi.poifs.filesystem.DirectoryEntry;
@@ -62,6 +65,7 @@ import org.apache.tika.detect.microsoft.POIFSContainerDetector;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
+import org.springframework.util.unit.DataSize;
 
 import com.sun.jna.Native;
 
@@ -619,5 +623,47 @@ public class Util {
         } catch (Exception e) {
         }
         return -1;
+    }
+
+    public static Optional<String> findJvmArgument(String argumentPrefix) {
+        RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
+        List<String> jvmArgs = runtimeMXBean.getInputArguments();
+
+        return jvmArgs.stream()
+                .filter(arg -> arg.startsWith(argumentPrefix))
+                .findFirst();
+    }
+
+    /**
+     * Scans the JVM's input arguments to find one that starts with the prefix -XX:MaxDirectMemorySize. 
+     * if not set, uses value defined as -Xmx
+     */
+    public static long getMaxDirectMemory() {
+        Optional<String> maxDirectArg = findJvmArgument("-XX:MaxDirectMemorySize=");
+        if (maxDirectArg.isPresent()) {
+
+            // returns the user defined -XX:MaxDirectMemorySize
+            String maxDirectValue = maxDirectArg.get().split("=")[1].toUpperCase();
+            if (!StringUtils.isNumeric(maxDirectValue) && !StringUtils.endsWith(maxDirectValue, "B")) {
+                maxDirectValue += "B";
+            }
+            return DataSize.parse(maxDirectValue).toBytes();
+
+        } else {
+
+            // by default, if the user has not defined -XX:MaxDirectMemorySize, Java uses -Xmx
+            return Runtime.getRuntime().maxMemory();
+        }
+    }
+
+    public static String getMainClass() {
+        return Thread.getAllStackTraces().entrySet().stream() //
+                .filter(entry -> entry.getKey().getName().equals("main")) //
+                .map(entry -> { //
+                    StackTraceElement[] stackTrace = entry.getValue();
+                    return (stackTrace.length > 0) ? stackTrace[stackTrace.length - 1] : null;
+                }) //
+                .map(StackTraceElement::getClassName) //
+                .findFirst().orElse(null);
     }
 }

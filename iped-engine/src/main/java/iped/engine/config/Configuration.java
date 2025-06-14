@@ -204,6 +204,7 @@ public class Configuration {
         configManager.addObject(new OCRConfig());
         configManager.addObject(new FileSystemConfig());
         configManager.addObject(new AnalysisConfig());
+        configManager.addObject(new CacheConfig());
 
         configManager.addObject(new EnableTaskProperty(FaceRecognitionConfig.enableParam));
 
@@ -253,5 +254,4 @@ public class Configuration {
             }
         }
     }
-
 }

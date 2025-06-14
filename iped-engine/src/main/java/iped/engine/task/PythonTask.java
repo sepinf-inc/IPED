@@ -3,15 +3,20 @@ package iped.engine.task;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.lang3.StringUtils;
+import org.ehcache.Cache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.configuration.Configurable;
 import iped.data.IItem;
+import iped.engine.cache.CacheProvider;
+import iped.engine.config.CacheConfig;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.LocalConfig;
 import iped.engine.data.CaseData;
@@ -45,6 +50,9 @@ public class PythonTask extends AbstractTask {
     private boolean isEnabled = true;
     private boolean sendToNextTaskExists = true;
     private boolean throwExceptionInsteadOfLogging = false;
+
+    @SuppressWarnings({ "rawtypes", "unused" })
+    private Cache<String, HashMap> cache;
 
     public PythonTask(File scriptFile) {
         this.scriptFile = scriptFile;
@@ -112,6 +120,7 @@ public class PythonTask extends AbstractTask {
         setGlobalVar(jep, "worker", this.worker); //$NON-NLS-1$
         setGlobalVar(jep, "stats", this.stats); //$NON-NLS-1$
         setGlobalVar(jep, "logger", LOGGER); //$NON-NLS-1$
+        setGlobalVar(jep, "cache", this.cache);
         setGlobalVar(jep, "javaArray", new ArrayConverter()); //$NON-NLS-1$
         setGlobalVar(jep, "ImageUtil", new ImageUtil()); //$NON-NLS-1$
 
@@ -240,6 +249,12 @@ public class PythonTask extends AbstractTask {
         }
         lastInstalledScript = scriptFile;
         numInstances++;
+
+        CacheConfig cacheConfig = configurationManager.findObject(CacheConfig.class);
+        CacheProvider cacheProvider = CacheProvider.getInstance(cacheConfig);
+
+        String cacheAlias = StringUtils.removeEnd(moduleName, "Task") + "Cache";
+        this.cache = cacheProvider.getOrCreateCache(cacheAlias, String.class, HashMap.class);
     }
 
     @Override
