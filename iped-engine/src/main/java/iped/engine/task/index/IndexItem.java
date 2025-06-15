@@ -222,7 +222,11 @@ public class IndexItem extends BasicProps {
         File metadataTypesFile = new File(confDir, attrTypesFilename);
         UTF8Properties props = new UTF8Properties();
         for (Entry<String, Class<?>> e : typesMap.entrySet()) {
-            props.setProperty(e.getKey(), e.getValue().getName());
+            if (e.getValue().isMemberClass()) {
+                props.setProperty(e.getKey(), e.getValue().getName());
+            } else {
+                props.setProperty(e.getKey(), e.getValue().getCanonicalName());
+            }
         }
         props.store(metadataTypesFile);
         IOUtils.fsync(metadataTypesFile.toPath(), false);
