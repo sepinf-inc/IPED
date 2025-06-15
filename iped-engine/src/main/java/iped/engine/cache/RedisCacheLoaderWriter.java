@@ -43,19 +43,21 @@ public class RedisCacheLoaderWriter<K, V> implements CacheLoaderWriter<K, V> {
         LOGGER.debug("Ehcache miss for key '{}'. Loading from Redis...", key);
         String jsonPayload;
         try (Jedis jedis = jedisPool.getResource()) {
+
             jsonPayload = jedis.get(keyPrefix + key.toString());
+            if (jsonPayload == null) {
+                LOGGER.debug("Redis MISS for key '{}'", key);
+                return null;
+            }
+
+            LOGGER.debug("Redis HIT for key '{}'", key);
+            return gson.fromJson(jsonPayload, valueType);
+
         } catch (JedisException e) {
             LOGGER.error("Load error: {}", key, e.getMessage());
             LOGGER.warn("Could not load from Redis for key '{}'", key, e);
             return null; // Don't crash app if Redis is down
         }
-
-        if (jsonPayload == null) {
-            LOGGER.debug("Redis MISS for key '{}'", key);
-            return null;
-        }
-
-        return gson.fromJson(jsonPayload, valueType);
     }
 
     @Override
