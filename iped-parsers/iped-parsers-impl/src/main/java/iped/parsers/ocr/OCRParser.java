@@ -19,11 +19,15 @@
 package iped.parsers.ocr;
 
 import java.awt.image.BufferedImage;
+import java.io.Externalizable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -36,8 +40,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.imageio.ImageIO;
@@ -46,6 +50,9 @@ import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
@@ -54,6 +61,7 @@ import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
+import org.ehcache.Cache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sqlite.SQLiteConfig;
@@ -61,6 +69,7 @@ import org.sqlite.SQLiteConfig.SynchronousMode;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.cache.ICacheProvider;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.CharCountContentHandler;
 import iped.parsers.util.ItemInfo;
@@ -81,12 +90,9 @@ import iped.utils.ImageUtil;
  */
 public class OCRParser extends AbstractParser implements AutoCloseable {
 
-    /**
-     * 
-     */
     private static final long serialVersionUID = 1L;
 
-    private static Logger LOGGER;
+    private static Logger LOGGER = LoggerFactory.getLogger(OCRParser.class);
 
     private static final String OUTPUT_REGEX = "Tesseract Open Source OCR Engine v.* with Leptonica"; //$NON-NLS-1$
 
@@ -153,8 +159,12 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
     
     // Root folder to store ocr results
     private File outputBase;
+
+    // Tesseract command
     private String[] command;
-    private Random random = new Random();
+
+    // Cache
+    private static final String CACHE_ALIAS = "OCRParserCache";
 
     static {
         imageSupportedTypes.addAll(directSupportedTypes);
@@ -245,6 +255,50 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
         return this.ENABLED;
     }
 
+    public static void preloadCache(ICacheProvider cacheProvider) {
+        cacheProvider.getOrCreateCache(CACHE_ALIAS, String.class, OCRResult.class);
+    }
+
+    public static class OCRResult implements Externalizable {
+
+        public OCRResult() {
+        }
+
+        public OCRResult(String text, String tesseractVersion) {
+            super();
+            this.text = text;
+            this.tesseractVersion = tesseractVersion;
+        }
+
+        private String text;
+        private String tesseractVersion;
+
+        @Override
+        public void writeExternal(ObjectOutput out) throws IOException {
+            out.writeUTF(text);
+            out.writeBoolean(tesseractVersion != null);
+            if (tesseractVersion != null) {
+                out.writeUTF(tesseractVersion);
+            }
+        }
+
+        @Override
+        public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+            text = in.readUTF();
+            if (in.readBoolean()) {
+                tesseractVersion = in.readUTF();
+            }
+        }
+
+        @Override
+        public String toString() {
+            return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE) //
+                    .append("version", tesseractVersion) //
+                    .append("text", StringUtils.abbreviate(text, 15)) //
+                    .toString();
+        }
+    }
+
     public OCRParser() {
         String tesseractPath = TOOL_NAME;
         if (!TOOL_PATH.isEmpty())
@@ -259,7 +313,6 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
                     List<String> info = checkVersionInfo(cmd[0], "-v"); //$NON-NLS-1$
                     if (!info.isEmpty()) 
                         tessVersion = info.get(0);
-                    LOGGER = LoggerFactory.getLogger(OCRParser.class);
                     LOGGER.info("Detected Tesseract " + tessVersion); //$NON-NLS-1$
                     if (info.size() <= 1) {
                         LOGGER.info("No Tesseract optional image libraries detected."); //$NON-NLS-1$
@@ -353,8 +406,8 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
         xhtml.startDocument();
 
         TemporaryResources tmp = new TemporaryResources();
-        File output = null, tmpOutput = null;
-        String outFileName = null;
+        File tmpOutput = null;
+        String resultKey = null;
         try {
             TikaInputStream tikaStream = TikaInputStream.get(stream, tmp);
             File input = tikaStream.getFile();
@@ -368,31 +421,73 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
             if (outDir != null)
                 outputBase = new File(outDir.getPath(), TEXT_DIR);
 
+            // get cache
+            ICacheProvider cacheProvider = context.get(ICacheProvider.class);
+            Cache<String, OCRResult> cache = cacheProvider.getOrCreateCache(CACHE_ALIAS, String.class, OCRResult.class);
+
             if (size >= MIN_SIZE && size <= MAX_SIZE && (bookmarksToOCR == null || isFromBookmarkToOCR(itemInfo))
                     && !(SKIP_KNOWN_FILES && itemInfo.isKnown())) {
+
+                File oldOCROutput = null;
                 if (outputBase != null && itemInfo != null && itemInfo.getHash() != null) {
                     String hash = itemInfo.getHash();
-                    outFileName = hash;
+                    resultKey = hash;
                     if (itemInfo.getChild() > -1) {
-                        outFileName += CHILD_PREFIX + itemInfo.getChild(); // $NON-NLS-1$
+                        resultKey += CHILD_PREFIX + itemInfo.getChild();
                     }
 
-                    String ocrText = getOcrTextFromDb(outFileName, outputBase);
-                    if (ocrText != null) {
-                        extractOutput(ocrText, xhtml); //$NON-NLS-1$
+                    boolean gotResultsFromDB = false;
+
+                    // try first from cache
+                    OCRResult result = cache.get(resultKey);
+                    LOGGER.debug("Got from cache: {} => {}", resultKey, result);
+
+                    // if not found in cache, try from DB
+                    if (result == null) {
+                        result = getOcrTextFromDb(resultKey, outputBase);
+                        LOGGER.debug("  Got from DB: {} => {}", resultKey, result);
+
+                        if (result != null) {
+                            LOGGER.debug("    Saving in DB: {} => {}", resultKey, result);
+                            cache.put(resultKey, result);
+                        }
+                        gotResultsFromDB = true;
+                    }
+
+                    // if found and was processed with current tesseract version, use this result
+                    if (result != null && (tessVersion == null || result.tesseractVersion == null || tessVersion.equals(result.tesseractVersion))) {
+                        LOGGER.debug("Reused result: {} => {}", resultKey, result);
+
+                        if (!gotResultsFromDB) {
+                            LOGGER.debug("  Saving in DB if absent: " + resultKey + " => " + result);
+                            storeOcrTextInDb(resultKey, result, outputBase);
+                        }
+
+                        extractOutput(result.text, xhtml);
                         return;
                     }
 
-                    String outPath = hash.charAt(0) + "/" + hash.charAt(1); //$NON-NLS-1$
-                    output = new File(outputBase, outPath + "/" + outFileName + ".txt"); //$NON-NLS-1$ //$NON-NLS-2$
+                    String parentFolders = hash.charAt(0) + "/" + hash.charAt(1);
+                    oldOCROutput = new File(outputBase, parentFolders + "/" + resultKey + ".txt");
                 }
 
-                if (output == null || !output.exists()) {
+                byte[] resultBytes;
 
-                    tmpOutput = new File(outputBase, "ocr-" + random.nextLong() + ".txt"); //$NON-NLS-1$ //$NON-NLS-2$
+                if (oldOCROutput != null && oldOCROutput.exists()) {
+
+                    // support for old cases, where OCR was stored in txt files
+                    extractOutput(oldOCROutput, xhtml);
+
+                    // read resultBytes to store it in cache and in DB
+                    resultBytes = Files.readAllBytes(oldOCROutput.toPath());
+
+                } else {
+
+                    // make OCR of the image and put the result in tmpOutput
+                    tmpOutput = new File(outputBase, "ocr-" + UUID.randomUUID() + ".txt");
 
                     String mediaType = metadata.get(StandardParser.INDEXER_CONTENT_TYPE);
-                    if (mediaType.equals("application/pdf")) { //$NON-NLS-1$
+                    if (mediaType.equals("application/pdf")) {
                         parsePDF(xhtml, tmp, input, tmpOutput, itemPath);
 
                     } else if (nonStandardSupportedTypes.contains(MediaType.parse(mediaType))
@@ -417,19 +512,21 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
                             }
                         }
                     }
-                    
-                    byte[] bytes;
+
                     if (tmpOutput.exists()) {
-                        bytes = Files.readAllBytes(tmpOutput.toPath());
+                        resultBytes = Files.readAllBytes(tmpOutput.toPath());
                     } else {
-                        bytes = new byte[0];
+                        resultBytes = new byte[0];
                     }
+                }
 
-                    String ocrText = new String(bytes, "UTF-8").trim(); //$NON-NLS-1$
-                    storeOcrTextInDb(outFileName, ocrText, outputBase);
-
-                } else {
-                    extractOutput(output, xhtml);
+                if (resultKey != null) {
+                    // store results in DB and in the cache
+                    String ocrText = new String(resultBytes, StandardCharsets.UTF_8).trim();
+                    OCRResult result = new OCRResult(ocrText, tessVersion);
+                    LOGGER.debug("Saving result in DB and cache: {} => {}", resultKey, result);
+                    cache.put(resultKey, result);
+                    storeOcrTextInDb(resultKey, result, outputBase);
                 }
             }
 
@@ -445,12 +542,12 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
         }
     }
 
-    private static String getOcrTextFromDb(String id, File outputBase) throws IOException {
+    private static OCRResult getOcrTextFromDb(String id, File outputBase) throws IOException {
         try (PreparedStatement ps = getConnection(outputBase).prepareStatement(SELECT_EXACT)) {
             ps.setString(1, id);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
-                return rs.getString(1);
+                return new OCRResult(rs.getString(1), null);
             }
         } catch (SQLException e) {
             throw new IOException(e);
@@ -458,10 +555,10 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
         return null;
     }
 
-    private static void storeOcrTextInDb(String id, String ocrText, File outputBase) throws IOException {
+    private static void storeOcrTextInDb(String id, OCRResult ocrResult, File outputBase) throws IOException {
         try (PreparedStatement ps = getConnection(outputBase).prepareStatement(INSERT_DATA)) {
             ps.setString(1, id);
-            ps.setString(2, ocrText);
+            ps.setString(2, ocrResult.text);
             ps.executeUpdate();
         } catch (SQLException e) {
             throw new IOException(e);
@@ -479,8 +576,8 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 String id = rs.getString(1);
-                String ocrText = rs.getString(2);
-                storeOcrTextInDb(id, ocrText, targetDb.getParentFile());
+                OCRResult ocrResult = new OCRResult(rs.getString(2), null);
+                storeOcrTextInDb(id, ocrResult, targetDb.getParentFile());
             }
         } catch (SQLException e) {
             throw new IOException(e);
@@ -705,7 +802,7 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
     }
 
     private static List<String> extractVersion(InputStream is) throws IOException {
-        List<String> lines = IOUtils.readLines(is);
+        List<String> lines = IOUtils.readLines(is, StandardCharsets.UTF_8);
         String version = lines.get(0).replace("tesseract", "").trim(); //$NON-NLS-1$ //$NON-NLS-2$
         if (version.startsWith("v")) {
             version = version.substring(1);
@@ -722,5 +819,4 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
         }
         return info;
     }
-
 }
