@@ -5,6 +5,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.ToNumberPolicy;
 
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
@@ -17,8 +19,10 @@ public class RedisCacheLoaderWriter<K, V> implements CacheLoaderWriter<K, V> {
     private final JedisPool jedisPool;
     private final Class<V> valueType;
     private final String keyPrefix;
-    
-    private final Gson gson = new Gson();
+
+    private final Gson gson = new GsonBuilder() //
+            .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE) //
+            .create();
 
     public RedisCacheLoaderWriter(JedisPool jedisPool, String keyPrefix, Class<V> valueType) {
         this.jedisPool = jedisPool;
