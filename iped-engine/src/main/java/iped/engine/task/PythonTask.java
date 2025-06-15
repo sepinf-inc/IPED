@@ -34,6 +34,9 @@ public class PythonTask extends AbstractTask {
     private static final String DISABLED = PythonParser.DISABLED;
     private static final String SEE_MANUAL = PythonParser.SEE_MANUAL;
 
+    // The python script class must set usesCache = True if cache intended to be used
+    private static final String USES_CACHE_VARIABLE = "usesCache";
+
     private static final Logger LOGGER = LoggerFactory.getLogger(PythonTask.class);
     private static Map<File, JepException> jepExceptionPerScript = new ConcurrentHashMap<>();
     private static volatile File lastInstalledScript;
@@ -250,11 +253,18 @@ public class PythonTask extends AbstractTask {
         lastInstalledScript = scriptFile;
         numInstances++;
 
-        CacheConfig cacheConfig = configurationManager.findObject(CacheConfig.class);
-        CacheProvider cacheProvider = CacheProvider.getInstance(cacheConfig);
+        try {
+            Boolean usesCache = getJep().getValue(getInstanceMethod(USES_CACHE_VARIABLE), Boolean.class);
+            if (Boolean.TRUE.equals(usesCache)) {
 
-        String cacheAlias = StringUtils.removeEnd(moduleName, "Task") + "Cache";
-        this.cache = cacheProvider.getOrCreateCache(cacheAlias, String.class, HashMap.class);
+                CacheConfig cacheConfig = configurationManager.findObject(CacheConfig.class);
+                CacheProvider cacheProvider = CacheProvider.getInstance(cacheConfig);
+
+                String cacheAlias = StringUtils.removeEnd(moduleName, "Task") + "Cache";
+                this.cache = cacheProvider.getOrCreateCache(cacheAlias, String.class, HashMap.class);
+            }
+        } catch (JepException e) {
+        }
     }
 
     @Override

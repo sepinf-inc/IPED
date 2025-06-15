@@ -97,6 +97,7 @@ class FaceRecognitionTask:
 
     enabled = None
     videoSubitems = False
+    usesCache = True
     
     def isEnabled(self):
         return False if FaceRecognitionTask.enabled is None else FaceRecognitionTask.enabled
