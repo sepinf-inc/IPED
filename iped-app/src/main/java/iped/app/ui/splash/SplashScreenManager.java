@@ -8,7 +8,9 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.SplashScreen;
 import java.awt.geom.Rectangle2D;
+import java.io.File;
 
+import iped.app.ui.AppMain;
 import iped.engine.Version;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.SplashScreenConfig;
@@ -157,6 +159,30 @@ public class SplashScreenManager {
                     }
                 } catch (IllegalStateException e) {
                     // Splash was already closed, just ignore this exception.
+                } catch (NoClassDefFoundError | UnsatisfiedLinkError e) {
+                    // Maybe JRE is corrupted
+                    e.printStackTrace();
+
+                    // Check if the OS is Windows
+                    String os = System.getProperty("os.name");
+                    if (os != null && os.toLowerCase().startsWith("windows")) {
+
+                        // Check if user home is valid
+                        File userHome = new File(System.getProperty("user.home"));
+                        if (userHome != null && userHome.exists() && userHome.isDirectory()) {
+
+                            // Check if the is a JRE in user home
+                            File userJrePath = new File(userHome, AppMain.HOME_JRE_FOLDER);
+                            if (userJrePath.exists()) {
+
+                                // Warn the user about possibly corrupted JRE
+                                System.err.println("\n\nERROR: User JRE may be corrupted!");
+                                System.err.println("Please, try to delete \"" + userJrePath.getAbsolutePath()
+                                        + "\" folder and run IPED again.");
+                                System.err.println("");
+                            }
+                        }
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
