@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 
-public class EmuleCollectionFile implements CollectionFile {
+public class EmuleCollectionFile implements ECollectionFile {
 
     HashMap<Byte, Tag> tags = new HashMap<Byte, Tag>();
 

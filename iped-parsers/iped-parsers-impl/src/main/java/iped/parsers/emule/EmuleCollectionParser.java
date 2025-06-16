@@ -28,8 +28,8 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
-import iped.parsers.emule.data.Collection;
-import iped.parsers.emule.data.CollectionFile;
+import iped.parsers.emule.data.ECollection;
+import iped.parsers.emule.data.ECollectionFile;
 import iped.parsers.emule.data.ED2KURLCollection;
 import iped.parsers.emule.data.ED2KURLCollectionFile;
 import iped.parsers.emule.data.EmuleCollection;
@@ -63,10 +63,10 @@ public class EmuleCollectionParser extends AbstractParser {
             TikaInputStream tikaStream = TikaInputStream.get(stream, tmp);
             long size = tikaStream.getLength();
             ByteBuffer bb = ByteBuffer.wrap(tikaStream.readAllBytes());
-            Collection collection = null;
+            ECollection collection = null;
             try {
                 collection = EmuleCollection.loadCollectionFile(bb);
-                List<CollectionFile> files = collection.getFiles();
+                List<ECollectionFile> files = collection.getFiles();
                 if (files.size() <= 0) {
                     collection = null;
                 }
@@ -77,7 +77,7 @@ public class EmuleCollectionParser extends AbstractParser {
             if (collection == null) {// tries to find ed2k urls with regex
 
                 collection = new ED2KURLCollection(metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY));
-                List<CollectionFile> files = collection.getFiles();
+                List<ECollectionFile> files = collection.getFiles();
 
                 Pattern p = Pattern.compile(ED2K_URL_REGEX);
                 Scanner sc = new Scanner(new ByteArrayInputStream(bb.array()), "UTF-8");
@@ -105,7 +105,7 @@ public class EmuleCollectionParser extends AbstractParser {
 
     }
 
-    public void parse(Collection collection, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
+    public void parse(ECollection collection, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
         metadata.set(HttpHeaders.CONTENT_TYPE, EMULE_COLLECTION_MIME_TYPE);
         metadata.remove(TikaCoreProperties.RESOURCE_NAME_KEY);
 
@@ -136,7 +136,7 @@ public class EmuleCollectionParser extends AbstractParser {
         xhtml.endElement("p");
         xhtml.newline();
 
-        List<CollectionFile> files = collection.getFiles();
+        List<ECollectionFile> files = collection.getFiles();
         xhtml.startElement("table", "class", "dt"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
         xhtml.startElement("tr"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
@@ -173,7 +173,7 @@ public class EmuleCollectionParser extends AbstractParser {
         // String linkedMd5_512 = "";
         // String linkedMd5_64K = "";
         long totalSize = 0;
-        for (CollectionFile cf : files) {
+        for (ECollectionFile cf : files) {
             String trClass = "ra";
 
             String hashStr = cf.getHashStr();

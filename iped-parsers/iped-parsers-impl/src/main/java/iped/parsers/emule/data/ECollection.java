@@ -2,8 +2,8 @@ package iped.parsers.emule.data;
 
 import java.util.List;
 
-public interface Collection {
+public interface ECollection {
     String getName();
 
-    List<CollectionFile> getFiles();
+    List<ECollectionFile> getFiles();
 }

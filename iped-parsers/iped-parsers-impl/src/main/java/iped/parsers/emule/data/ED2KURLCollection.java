@@ -3,9 +3,9 @@ package iped.parsers.emule.data;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ED2KURLCollection implements Collection {
+public class ED2KURLCollection implements ECollection {
     String name;
-    ArrayList<CollectionFile> files = new ArrayList<CollectionFile>();
+    ArrayList<ECollectionFile> files = new ArrayList<ECollectionFile>();
     
     public ED2KURLCollection(String name) {
         this.name = name;
@@ -17,7 +17,7 @@ public class ED2KURLCollection implements Collection {
     }
 
     @Override
-    public List<CollectionFile> getFiles() {
+    public List<ECollectionFile> getFiles() {
         return files;
     }
 

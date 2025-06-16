@@ -9,12 +9,12 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 
-public class EmuleCollection implements Collection {
+public class EmuleCollection implements ECollection {
 
     private static final int COLLECTION_FILE_VERSION1_INITIAL = 0x01;
     private static final int COLLECTION_FILE_VERSION2_LARGEFILES = 0x02;
     private String m_sCollectionAuthorName;
-    ArrayList<CollectionFile> files = new ArrayList<>();
+    ArrayList<ECollectionFile> files = new ArrayList<>();
 
     public static EmuleCollection loadCollectionFile(File f) throws FileNotFoundException, IOException {
         return loadCollectionFile(ByteBuffer.wrap(new FileInputStream(f).readAllBytes()));
@@ -71,7 +71,7 @@ public class EmuleCollection implements Collection {
                 System.out.println("Collection--------------------------------------------------------");
                 System.out.println(c.getName());
                 System.out.println("------------------------------------------------------------------");
-                for (CollectionFile cf : c.files) {
+                for (ECollectionFile cf : c.files) {
                     System.out.println("Filename:" + cf.getName());
                     System.out.println("Hash:" + cf.getHashStr());
                     System.out.println("------");
@@ -93,7 +93,7 @@ public class EmuleCollection implements Collection {
     }
 
     @Override
-    public List<CollectionFile> getFiles() {
+    public List<ECollectionFile> getFiles() {
         return files;
     }
 

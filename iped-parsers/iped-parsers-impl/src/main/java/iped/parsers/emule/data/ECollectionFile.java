@@ -1,6 +1,6 @@
 package iped.parsers.emule.data;
 
-public interface CollectionFile {
+public interface ECollectionFile {
 
     String getName();
     String getHashStr();

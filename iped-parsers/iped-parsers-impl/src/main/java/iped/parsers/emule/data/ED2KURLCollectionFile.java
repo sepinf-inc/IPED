@@ -2,7 +2,7 @@ package iped.parsers.emule.data;
 
 import java.net.URLDecoder;
 
-public class ED2KURLCollectionFile implements CollectionFile {
+public class ED2KURLCollectionFile implements ECollectionFile {
     private String name;
     private String hashStr;
     private long size;
