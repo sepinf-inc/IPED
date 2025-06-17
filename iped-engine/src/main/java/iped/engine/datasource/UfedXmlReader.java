@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
+import java.util.Stack;
 import java.util.TimeZone;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -377,8 +378,8 @@ public class UfedXmlReader extends DataSourceReader {
 
         private final DecimalFormat currencyFormat = LocalizedFormat.getDecimalInstance("#,##0.00");
 
-        ArrayList<XmlNode> nodeSeq = new ArrayList<>();
-        ArrayList<Item> itemSeq = new ArrayList<>();
+        Stack<XmlNode> nodeSeq = new Stack<>();
+        Stack<Item> itemSeq = new Stack<>();
 
         HashSet<String> elements = new HashSet<>();
 
@@ -529,7 +530,7 @@ public class UfedXmlReader extends DataSourceReader {
         public void startElement(String uri, String localName, String qName, Attributes atts) throws SAXException {
 
             XmlNode node = new XmlNode(qName, atts);
-            nodeSeq.add(node);
+            nodeSeq.push(node);
 
             if (!listOnly)
                 elements.add(qName);
@@ -570,7 +571,7 @@ public class UfedXmlReader extends DataSourceReader {
                 item.setDeleted(deleted);
 
                 fillCommonMeta(item, atts);
-                itemSeq.add(item);
+                itemSeq.push(item);
 
             } else if (qName.equals("model")) { //$NON-NLS-1$
                 XmlNode prevNode = nodeSeq.get(nodeSeq.size() - 2);
@@ -601,7 +602,7 @@ public class UfedXmlReader extends DataSourceReader {
                     item.setDeleted(deleted);
 
                     fillCommonMeta(item, atts);
-                    itemSeq.add(item);
+                    itemSeq.push(item);
 
                     String ufedId = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "id");
                     if (ignoreItemTree == null && addedImUfedIds.contains(ufedId)) {
@@ -640,7 +641,7 @@ public class UfedXmlReader extends DataSourceReader {
                     item.setDeleted(deleted);
 
                     fillCommonMeta(item, atts);
-                    itemSeq.add(item);
+                    itemSeq.push(item);
 
                     if ("InstantMessage".equals(type)) {
                         this.numAttachments = 0;
@@ -675,7 +676,7 @@ public class UfedXmlReader extends DataSourceReader {
         @Override
         public void endElement(String uri, String localName, String qName) throws SAXException {
 
-            XmlNode currentNode = nodeSeq.remove(nodeSeq.size() - 1);
+            XmlNode currentNode = nodeSeq.pop();
 
             for (XmlNode node : nodeSeq) {
                 if (node.element.equals("entityBookmarks")) { //$NON-NLS-1$
@@ -689,12 +690,12 @@ public class UfedXmlReader extends DataSourceReader {
 
             String nameAttr = currentNode.atts.get("name"); //$NON-NLS-1$
             Item item = null;
-            if (itemSeq.size() > 0)
-                item = itemSeq.get(itemSeq.size() - 1);
+            if (!itemSeq.empty())
+                item = itemSeq.peek();
 
             XmlNode parentNode = null;
-            if (nodeSeq.size() > 0)
-                parentNode = nodeSeq.get(nodeSeq.size() - 1);
+            if (!nodeSeq.empty())
+                parentNode = nodeSeq.peek();
 
             String metadataSection = parentNode != null ? parentNode.atts.get("section") : null;
             if ("Extraction Data".equals(metadataSection) || "Device Info".equals(metadataSection)) {
@@ -811,7 +812,7 @@ public class UfedXmlReader extends DataSourceReader {
                 md5ToLocalPath.clear();
 
             } else if (qName.equals("file")) { //$NON-NLS-1$
-                itemSeq.remove(itemSeq.size() - 1);
+                itemSeq.pop();
 
                 // See https://github.com/sepinf-inc/IPED/issues/2299
                 String md5 = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "MD5");
@@ -828,7 +829,7 @@ public class UfedXmlReader extends DataSourceReader {
                 // See https://github.com/sepinf-inc/IPED/issues/1685
                 boolean merged = false;
                 if (!itemSeq.isEmpty()) {
-                    IItem parentItem = itemSeq.get(itemSeq.size() - 1);
+                    IItem parentItem = itemSeq.peek();
                     if (parentItem.getMediaType() != null && UFED_CONTACTPHOTO_MIME.equals(parentItem.getMediaType().getSubtype())) {
                         String[] split = item.getIdInDataSource().split(UFDRInputStreamFactory.UFDR_PATH_PREFIX);
                         String exportPath = split[split.length - 1];
@@ -853,12 +854,12 @@ public class UfedXmlReader extends DataSourceReader {
                 }
 
             } else if (qName.equals("model") && ( //$NON-NLS-1$
-            parentNode.element.equals("modelType") || //$NON-NLS-1$
+                    parentNode.element.equals("modelType") || //$NON-NLS-1$
                     parentNode.element.equals("modelField") || //$NON-NLS-1$
                     parentNode.element.equals("multiModelField"))) { //$NON-NLS-1$
 
                 boolean seenAttachment = false;
-                itemSeq.remove(itemSeq.size() - 1);
+                itemSeq.pop();
                 String type = currentNode.atts.get("type"); //$NON-NLS-1$
                 if ("Contact".equals(type) || "UserAccount".equals(type)) { //$NON-NLS-1$ //$NON-NLS-2$
                     createContactPreview(item);
@@ -868,7 +869,7 @@ public class UfedXmlReader extends DataSourceReader {
 
                 } else if ("Attachment".equals(type)) { //$NON-NLS-1$
                     prevUfedId = handleAttachment(item);
-                    IItem parentItem = itemSeq.get(itemSeq.size() - 1);
+                    IItem parentItem = itemSeq.peek();
                     if (parentItem.getMediaType().equals(MediaTypes.UFED_EMAIL_MIME)) // $NON-NLS-1$
                         parentItem.getMetadata().add(EMAIL_ATTACH_KEY, item.getName());
                     else if (parentItem.getMediaType().equals(MediaTypes.UFED_MESSAGE_MIME)) {
@@ -923,15 +924,15 @@ public class UfedXmlReader extends DataSourceReader {
                     }
                     this.numAttachments = 0;
                     if (!itemSeq.isEmpty()) {
-                        IItem parentItem = itemSeq.get(itemSeq.size() - 1);
+                        IItem parentItem = itemSeq.peek();
                         // See https://github.com/sepinf-inc/IPED/issues/2264#issuecomment-2254192462
                         if (parentItem.getName().startsWith("ReplyMessageData_")) {
                             ignoreItemLocal = true;
                         }
                     }
                 }
-                if (mergeInParentNode.contains(type) && itemSeq.size() > 0) {
-                    IItem parentItem = itemSeq.get(itemSeq.size() - 1);
+                if (mergeInParentNode.contains(type) && !itemSeq.empty()) {
+                    IItem parentItem = itemSeq.peek();
                     if ("Party".equals(type)) { //$NON-NLS-1$
                         String role = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Role"); //$NON-NLS-1$
                         String parentNameAttr = parentNode.atts.get("name"); //$NON-NLS-1$
@@ -1182,7 +1183,6 @@ public class UfedXmlReader extends DataSourceReader {
                 }
             }
 
-            chars = new StringBuilder();
             nameAttr = null;
 
         }
@@ -1208,9 +1208,9 @@ public class UfedXmlReader extends DataSourceReader {
                 if (item.getMediaType() != null
                         && MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.UFED_MESSAGE_MIME)) {
                     // we have seen ufed messages without parent chat
-                    if (itemSeq.size() == 0)
+                    if (itemSeq.empty())
                         return;
-                    IItem parentChat = itemSeq.get(itemSeq.size() - 1);
+                    IItem parentChat = itemSeq.peek();
                     List<String> toList = new ArrayList<>();
                     if (to != null && to.length > 0) {
                         toList = Arrays.asList(to);
