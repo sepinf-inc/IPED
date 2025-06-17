@@ -93,7 +93,8 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
         return result;
     }
 
-    public <T extends Configurable<?>> T findObject(Class<? extends Configurable<?>> clazz) {
+    @SuppressWarnings("unchecked")
+    public <T extends Configurable<?>> T findObject(Class<T> clazz) {
         for (Configurable<?> configurable : singleton.loadedConfigurables.keySet()) {
             if (configurable.getClass().equals(clazz)) {
                 return (T) configurable;

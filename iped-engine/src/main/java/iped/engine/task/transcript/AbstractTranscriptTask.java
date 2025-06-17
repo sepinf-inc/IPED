@@ -2,15 +2,13 @@ package iped.engine.task.transcript;
 
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
+import java.io.Externalizable;
 import java.io.File;
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.net.NoRouteToHostException;
 import java.nio.file.Files;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -27,15 +25,16 @@ import javax.sound.sampled.AudioSystem;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.utils.SystemUtils;
+import org.ehcache.Cache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.sqlite.SQLiteConfig;
-import org.sqlite.SQLiteConfig.SynchronousMode;
 
 import iped.configuration.Configurable;
 import iped.configuration.IConfigurationDirectory;
 import iped.data.IItem;
+import iped.engine.cache.CacheProvider;
 import iped.engine.config.AudioTranscriptConfig;
+import iped.engine.config.CacheConfig;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.io.TimeoutException;
@@ -52,14 +51,6 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
 
     protected static final MediaType wav = MediaType.audio("vnd.wave");
 
-    private static final String TEXT_STORAGE = "text/transcriptions.db"; //$NON-NLS-1$
-
-    private static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS transcriptions(id TEXT PRIMARY KEY, text TEXT, score REAL);"; //$NON-NLS-1$
-
-    private static final String INSERT_DATA = "INSERT INTO transcriptions(id, text, score) VALUES(?,?,?) ON CONFLICT(id) DO NOTHING"; //$NON-NLS-1$
-
-    private static final String SELECT_EXACT = "SELECT text, score FROM transcriptions WHERE id=?;"; //$NON-NLS-1$
-
     protected static final int TIMEOUT_PER_MB = 100;
 
     protected static int MIN_TIMEOUT = 180;
@@ -71,6 +62,11 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
 
     protected AudioTranscriptConfig transcriptConfig;
 
+    // Cache
+    private static final String CACHE_ALIAS = "AudioTranscriptionCache";
+    private Cache<String, TextAndScore> cache;
+
+
     // Variables to store some statistics
     private static final AtomicLong wavTime = new AtomicLong();
     private static final AtomicLong transcriptionTime = new AtomicLong();
@@ -80,9 +76,8 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
     private static final AtomicInteger transcriptionFail = new AtomicInteger();
     private static final AtomicLong transcriptionChars = new AtomicLong();
 
-    private Connection conn;
-
     protected IItem evidence;
+
 
     @Override
     public boolean isEnabled() {
@@ -108,64 +103,28 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         return supported;
     }
 
-    private void createConnection() {
-        this.conn = createConnection(output);
-    }
-
-    private Connection createConnection(File output) {
-        File db = new File(output, TEXT_STORAGE);
-        db.getParentFile().mkdirs();
-        try {
-            SQLiteConfig config = new SQLiteConfig();
-            config.setSynchronous(SynchronousMode.OFF);
-            config.setBusyTimeout(3600000);
-            Connection conn = config.createConnection("jdbc:sqlite:" + db.getAbsolutePath());
-
-            try (Statement stmt = conn.createStatement()) {
-                stmt.executeUpdate(CREATE_TABLE);
-            }
-
-            return conn;
-
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    protected static class TextAndScore {
+    public static class TextAndScore implements Externalizable {
         String text;
         double score;
-    }
 
-    private TextAndScore getTextFromDb(String id) throws IOException {
-        TextAndScore result = getTextFromDb(this.conn, id);
-        return result;
-    }
-
-    private TextAndScore getTextFromDb(Connection conn, String id) throws IOException {
-        try (PreparedStatement ps = conn.prepareStatement(SELECT_EXACT)) {
-            ps.setString(1, id);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                TextAndScore result = new TextAndScore();
-                result.text = rs.getString(1);
-                result.score = rs.getDouble(2);
-                return result;
-            }
-        } catch (SQLException e) {
-            throw new IOException(e);
+        public TextAndScore() {
         }
-        return null;
-    }
 
-    private void storeTextInDb(String id, String text, double score) throws IOException {
-        try (PreparedStatement ps = conn.prepareStatement(INSERT_DATA)) {
-            ps.setString(1, id);
-            ps.setString(2, text);
-            ps.setDouble(3, score);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            throw new IOException(e);
+        public TextAndScore(String text, double score) {
+            this.text = text;
+            this.score = score;
+        }
+
+        @Override
+        public void writeExternal(ObjectOutput out) throws IOException {
+            out.writeUTF(text);
+            out.writeDouble(score);
+        }
+
+        @Override
+        public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+            text = in.readUTF();
+            score = in.readDouble();
         }
     }
 
@@ -185,10 +144,10 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         // clear profile config service address in output
         this.transcriptConfig.clearTranscriptionServiceAddress(new File(output, "profile"));
 
-        if (conn == null && transcriptConfig.isEnabled()) {
-            createConnection();
-        }
+        CacheConfig cacheConfig = configurationManager.findObject(CacheConfig.class);
+        CacheProvider cacheProvider = CacheProvider.getInstance(cacheConfig);
 
+        this.cache = cacheProvider.getOrCreateCache(CACHE_ALIAS, String.class, TextAndScore.class);
     }
 
     public static TextAndScore transcribeWavBreaking(File tmpFile, String itemPath, Function<File, TextAndScore> transcribeWavPart) throws Exception {
@@ -310,10 +269,6 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
 
     @Override
     public void finish() throws Exception {
-        if (conn != null) {
-            conn.close();
-            conn = null;
-        }
 
         long totWavConversions = wavSuccess.longValue() + wavFail.longValue();
         if (totWavConversions != 0) {
@@ -373,7 +328,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         if (evidence.getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR) != null && evidence.getMetadata().get(ExtraProperties.CONFIDENCE_ATTR) != null)
             return;
 
-        TextAndScore prevResult = getTextFromDb(evidence.getHash());
+        TextAndScore prevResult = cache.get(evidence.getHash());
         if (prevResult != null) {
             evidence.getMetadata().set(ExtraProperties.CONFIDENCE_ATTR, Double.toString(prevResult.score));
             evidence.getMetadata().set(ExtraProperties.TRANSCRIPT_ATTR, prevResult.text);
@@ -401,7 +356,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             if (result != null) {
                 evidence.getMetadata().set(ExtraProperties.CONFIDENCE_ATTR, Double.toString(result.score));
                 evidence.getMetadata().set(ExtraProperties.TRANSCRIPT_ATTR, result.text);
-                storeTextInDb(evidence.getHash(), result.text, result.score);
+                cache.put(evidence.getHash(), result);
                 transcriptionSuccess.incrementAndGet();
                 if (result.text != null) {
                     transcriptionChars.addAndGet(result.text.length());
