@@ -31,7 +31,6 @@ import iped.engine.config.FileSystemConfig;
 import iped.engine.config.LocalConfig;
 import iped.engine.config.PluginConfig;
 import iped.engine.core.Manager;
-import iped.engine.datasource.SleuthkitReader;
 import iped.engine.sleuthkit.SleuthkitServer.FLAGS;
 import iped.io.SeekableInputStream;
 
@@ -47,12 +46,12 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
 
     private static List<SleuthkitClient> clientsList = new ArrayList<>();
 
-    public static final int NUM_TSK_SERVERS;
+    private static final int NUM_TSK_SERVERS;
 
     private static final HashMap<String, String> newEnvVars = new HashMap<>();
 
-    static volatile String dbDirPath;
-    static AtomicInteger idStart = new AtomicInteger();
+    private static volatile File tskDb;
+    private static AtomicInteger idStart = new AtomicInteger();
 
     private static final AtomicBoolean initSleuthkitServers = new AtomicBoolean(false);
 
@@ -149,15 +148,15 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
         if (tskDB.exists() && fsConfig.isRobustImageReading()) {
             synchronized (SleuthkitClient.class) {
                 if (!initSleuthkitServers.get()) {
-                    SleuthkitClient.initSleuthkitServers(tskDB.getParent());
+                    SleuthkitClient.initSleuthkitServers0(tskDB);
                     initSleuthkitServers.set(true);
                 }
             }
         }
     }
 
-    private static void initSleuthkitServers(final String dbPath) throws InterruptedException {
-        dbDirPath = dbPath;
+    private static void initSleuthkitServers0(File DB) throws InterruptedException {
+        tskDb = DB;
         ArrayList<Thread> initThreads = new ArrayList<>();
         for (int i = 0; i < NUM_TSK_SERVERS; i++) {
             Thread t = new Thread() {
@@ -206,8 +205,8 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
 
         String[] cmd = { "java", "-cp", classpath, "-Xmx128M", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 "-Djava.io.tmpdir=" + System.getProperty("java.io.tmpdir").replace("\"", "\\\"") + File.separator + "tsk-server-" + Math.abs(rand.nextLong()),
-                SleuthkitServer.class.getCanonicalName(), dbDirPath + "/" + SleuthkitReader.DB_NAME, //$NON-NLS-1$
-                String.valueOf(id), pipePath };
+                SleuthkitServer.class.getCanonicalName(), tskDb.getAbsolutePath(), // $NON-NLS-1$
+                Configuration.getInstance().appRoot, pipePath };
 
         try {
             logger.info("Starting SleuthkitServer " + id + ": " + Arrays.asList(cmd));

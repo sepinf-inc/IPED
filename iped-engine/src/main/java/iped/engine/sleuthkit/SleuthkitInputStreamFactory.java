@@ -122,7 +122,7 @@ public class SleuthkitInputStreamFactory extends SeekableInputStreamFactory {
             return new SleuthkitInputStream(tskContent);
         } else {
             try {
-                SleuthkitClient.initSleuthkitServers(new File(getSleuthkitCase().getDbDirPath(), SleuthkitReader.DB_NAME));
+                SleuthkitClient.initSleuthkitServers(new File(getSleuthkitCase().getDbDirPath(), getSleuthkitCase().getDatabaseName()));
             } catch (InterruptedException e) {
                 throw new IOException(e);
             }
