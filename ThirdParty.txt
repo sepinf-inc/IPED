@@ -48,6 +48,10 @@ Apache TwelveMonkeys
 - Site: https://github.com/haraldk/TwelveMonkeys
 - License: BSD 3 Clause
 
+OFX Client
+- Site: https://github.com/stoicflame/ofx4j
+- License: Apache License, Version 2.0
+
 ----------------------------------------------------
 
 Simple Logging Facade for Java
@@ -175,3 +179,7 @@ Zlib
 JUnRAR
 - Site: https://github.com/edmund-wagner/junrar
 - License: licenses/JUNRAR.txt
+
+Lottie-player
+- Site: https://github.com/LottieFiles/lottie-player/blob/master/LICENSE
+- License: licenses/LOTTIE-PLAYER.txt

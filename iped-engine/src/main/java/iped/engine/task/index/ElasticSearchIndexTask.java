@@ -86,7 +86,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     public static final String PREVIEW_IN_DATASOURCE = "previewInDataSource";
     public static final String KEY_VAL_SEPARATOR = ":";
-    
+
     public static final int FACE_SIZE = 128;
 
     private static boolean isEnabled = false;
@@ -107,9 +107,13 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     private int numRequests = 0;
 
+    private int retries;
+
     private AtomicBoolean onCommit = new AtomicBoolean();
 
     private char[] textBuf = new char[16 * 1024];
+
+    private volatile IOException indexException = null;
 
     @Override
     public boolean isEnabled() {
@@ -126,6 +130,8 @@ public class ElasticSearchIndexTask extends AbstractTask {
         taskInstances.add(this);
         elasticConfig = configurationManager.findObject(ElasticSearchTaskConfig.class);
 
+        retries = elasticConfig.getRetries();
+
         if (!(isEnabled = elasticConfig.isEnabled())) {
             return;
         }
@@ -135,10 +141,10 @@ public class ElasticSearchIndexTask extends AbstractTask {
         }
 
         CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-        String cmdFields = args.getExtraParams().get(CMD_FIELDS_KEY);
-        if (cmdFields != null) {
-            parseCmdLineFields(cmdFields);
-        }
+
+        parseCmdLineFields(System.getenv(CMD_FIELDS_KEY));
+        parseCmdLineFields(System.getProperty(CMD_FIELDS_KEY));
+        parseCmdLineFields(args.getExtraParams().get(CMD_FIELDS_KEY));
 
         if (indexName == null) {
             indexName = output.getParentFile().getName();
@@ -195,6 +201,8 @@ public class ElasticSearchIndexTask extends AbstractTask {
     }
 
     private void parseCmdLineFields(String cmdFields) {
+        if (cmdFields == null)
+            return;
         String[] entries = cmdFields.split(";");
         for (String entry : entries) {
             String[] pair = entry.split(":", 2);
@@ -328,12 +336,19 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 }
                 instance.onCommit.set(false);
                 instance.notifyAll();
+                if (instance.indexException != null) {
+                    throw instance.indexException;
+                }
             }
         }
+
     }
 
     @Override
     public void finish() throws Exception {
+        if (indexException != null) {
+            throw indexException;
+        }
         if (!taskInstances.isEmpty()) {
             commit();
             taskInstances.clear();
@@ -364,6 +379,10 @@ public class ElasticSearchIndexTask extends AbstractTask {
     protected synchronized void process(IItem item) throws Exception {
 
         Reader textReader = null;
+
+        if (indexException != null) {
+            throw indexException;
+        }
 
         if (!item.isToAddToCase()) {
             if (IndexTask.isTreeNodeOnly(item)) {
@@ -453,47 +472,77 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 this.wait();
             }
             Cancellable cancellable = client.bulkAsync(bulkRequest, RequestOptions.DEFAULT,
-                    new BulkResponseListener(idToPath));
+                    new BulkResponseListener(idToPath, bulkRequest, retries));
 
         } catch (Exception e) {
             LOGGER.error("Error indexing to ElasticSearch " + bulkRequest.getDescription(), e);
+            throw new IOException("Error indexing to ElasticSearch" + bulkRequest.getDescription());
         }
     }
 
     private class BulkResponseListener implements ActionListener<BulkResponse> {
 
         HashMap<String, String> idPathMap;
-
-        private BulkResponseListener(HashMap<String, String> itemMap) {
+        BulkRequest bulkRequest;
+        int retries_left;
+        private BulkResponseListener(HashMap<String, String> itemMap, BulkRequest bulkRequest, int retries) {
             this.idPathMap = itemMap;
+            this.bulkRequest = bulkRequest;
+            this.retries_left = retries;
+        }
+
+        private void retryOrError(IOException temp) {
+            if (temp != null) {
+                if (retries_left > 0 | retries_left == -1) {
+                    if (retries_left > 0) {
+                        retries_left--;
+                    }
+                    Cancellable cancellable = client.bulkAsync(bulkRequest, RequestOptions.DEFAULT, this);
+                } else {
+                    notifyWaitingRequests();
+                    indexException = temp;
+                }
+            } else {
+                notifyWaitingRequests();
+            }
         }
 
         @Override
         public void onResponse(BulkResponse response) {
 
-            notifyWaitingRequests();
-
+            IOException temp = null;
             for (BulkItemResponse bulkItemResponse : response) {
                 if (bulkItemResponse.isFailed()) {
                     BulkItemResponse.Failure failure = bulkItemResponse.getFailure();
                     String path = idPathMap.get(bulkItemResponse.getId());
                     String msg = failure.getMessage();
-                    if (!msg.contains("document already exists")) { //$NON-NLS-1$
-                        LOGGER.error("Elastic failure result {}: {}", path, msg); //$NON-NLS-1$
-                    } else {
-                        LOGGER.debug("Elastic failure result {}: {}", path, msg); //$NON-NLS-1$
+
+                    // Some documents probable have already been indexed in previous attempts
+                    if (msg.contains("document already exists")) {
+                        LOGGER.warn("Elastic failure result {}: {}", path, msg);
+                        continue;
                     }
+
+                    LOGGER.error("Elastic failure result {}: {}", path, msg); //$NON-NLS-1$
+
+                    temp = new IOException(String.format("Elastic failure result {}: {}", path, msg));
+
+                    break;
+
                 } else {
                     LOGGER.debug("Elastic result {} {}", bulkItemResponse.getResponse().getResult(),
                             idPathMap.get(bulkItemResponse.getId()));
                 }
             }
+
+            retryOrError(temp);
+
         }
 
         @Override
         public void onFailure(Exception e) {
-            notifyWaitingRequests();
             LOGGER.error("Error indexing to ElasticSearch ", e);
+            retryOrError(new IOException("Error indexing to ElasticSearch ", e));
         }
 
         private void notifyWaitingRequests() {
@@ -597,12 +646,12 @@ public class ElasticSearchIndexTask extends AbstractTask {
                     List<float[]> locations = new ArrayList<>(values.length);
                     for (int i = 0; i < values.length; i++) {
                         String[] coord = values[i].split(";");
-                        float[] point = { Float.parseFloat(coord[0]), Float.parseFloat(coord[1]) };
+                        float[] point = { Float.parseFloat(coord[1]), Float.parseFloat(coord[0]) };
                         locations.add(point);
                     }
                     builder.array(key, locations.toArray());
                 } else {
-                    builder.array(key, values);
+                    builder.array(key.replaceAll("\\.", "_"), values);
                 }
             }
         }

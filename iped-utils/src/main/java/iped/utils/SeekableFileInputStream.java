@@ -11,15 +11,21 @@ import iped.io.SeekableInputStream;
 
 public class SeekableFileInputStream extends SeekableInputStream {
 
+    private File file;
     private SeekableByteChannel sbc;
     private boolean closed = false;
 
     public SeekableFileInputStream(File file) throws IOException {
+        this.file = file;
         this.sbc = FileChannel.open(file.toPath(), StandardOpenOption.READ);
     }
 
     public SeekableFileInputStream(SeekableByteChannel channel) {
         this.sbc = channel;
+    }
+
+    public File getFile() {
+        return this.file;
     }
 
     @Override

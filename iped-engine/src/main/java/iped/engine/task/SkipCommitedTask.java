@@ -54,6 +54,8 @@ public class SkipCommitedTask extends AbstractTask {
 
     public static final String trackID_ID_MAP = "trackID_ID_MAP";
 
+    public static final String IS_COMMITTED = "IS_COMMITTED";
+
     private static Logger logger = LogManager.getLogger(SkipCommitedTask.class);
 
     private static HashValue[] commitedtrackIDs;
@@ -75,7 +77,11 @@ public class SkipCommitedTask extends AbstractTask {
             return false;
         }
         HashValue trackID = new HashValue(Util.getTrackID(item));
-        return Arrays.binarySearch(commitedtrackIDs, trackID) >= 0;
+        boolean isCommitted = Arrays.binarySearch(commitedtrackIDs, trackID) >= 0;
+        if (isCommitted) {
+            item.setTempAttribute(IS_COMMITTED, Boolean.TRUE.toString());
+        }
+        return isCommitted;
     }
 
     @Override
@@ -269,6 +275,7 @@ public class SkipCommitedTask extends AbstractTask {
             // was already committed, coming from the index.
             if (!parentsWithLostSubitems.remove(trackID)) {
                 item.setToIgnore(true);
+                item.setTempAttribute(IS_COMMITTED, Boolean.TRUE.toString());
                 return;
             } else {
                 removedParents.add(trackID);

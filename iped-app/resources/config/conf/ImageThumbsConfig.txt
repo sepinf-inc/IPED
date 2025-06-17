@@ -32,6 +32,10 @@ imgConvTimeoutPerMB = 2
 # Pixel size of generated thumbnails.
 imgThumbSize = 256
 
+# Compression level of the generated thumbnail image.
+# From 0 to 100, 0 - is very high compression and very low quality, 100 - higher quality and minimum compression.
+compression = 50
+
 # Extract embedded thumbs from exif, faster than generating them again.
 # Eventually these thumbs may have lower quality or be different of the original image.
 extractThumb = true
@@ -43,3 +47,10 @@ galleryThreads = default
 # Logs rendering of each image in gallery. Could generate huge logs or
 # slow down gallery rendering depending on log location.
 logGalleryRendering = false
+
+# Create view images (to speed up rendering) for the following mime types.
+# Used only for images that require external conversion. Use ";" as separator. 
+mimesToCreateView = image/heic; image/heif
+
+# Maximum size (in pixels) of generated view image
+maxViewImageSize = 2400

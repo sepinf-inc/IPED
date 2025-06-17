@@ -5,7 +5,6 @@
 # If enabled, you can search for faces from the analysis interface, check the options menu.
 '''
 
-#import face_recognition as fr
 import os
 import time
 import subprocess
@@ -20,6 +19,7 @@ numFaceRecognitionProcessesProp = 'numFaceRecognitionProcesses'
 maxResolutionProp = 'maxResolution'
 faceDetectionModelProp = 'faceDetectionModel'
 upSamplingProp = 'upSampling'
+minSizeProp = 'minSize'
 
 # External process script
 processScript = 'FaceRecognitionProcess.py'
@@ -37,12 +37,14 @@ bin = 'python' if platform.system().lower() == 'windows' else 'python3'
 detection_model = 'hog'
 max_size = 1024
 up_sampling = 1
+min_size = 48
 
 firstInstance = True
 processQueue = None
 cache = {}
 
 timeLock = threading.Lock()
+initLock = threading.Lock()
 detectTime = 0
 featureTime = 0
 
@@ -50,7 +52,7 @@ def createProcessQueue():
     global processQueue, maxProcesses
     if processQueue is None:
         if maxProcesses is None:
-            maxProcesses = numThreads
+            maxProcesses = int(max(1, numThreads / 2))
         processQueue = queue.Queue(maxProcesses)
 
 def log_stderr(proc):
@@ -94,11 +96,11 @@ def pingExternalProcess(proc):
 
 class FaceRecognitionTask:
 
-    enabled = False
+    enabled = None
     videoSubitems = False
     
     def isEnabled(self):
-        return FaceRecognitionTask.enabled
+        return False if FaceRecognitionTask.enabled is None else FaceRecognitionTask.enabled
     
     def getConfigurables(self):
         from iped.engine.config import DefaultTaskPropertiesConfig
@@ -106,10 +108,53 @@ class FaceRecognitionTask:
     
     # This method is executed before starting the processing of items.
     def init(self, configuration):
+        # check if face recognition task is enabled
         taskConfig = configuration.getTaskConfigurable(configFile)
-        FaceRecognitionTask.enabled = taskConfig.isEnabled()
-        if not FaceRecognitionTask.enabled:
+        if FaceRecognitionTask.enabled is None:
+            FaceRecognitionTask.enabled = taskConfig.isEnabled()
+        
+        # Check if required face recognition modules are properly installed
+        # This lock avoids multiple error messages from multiple threads
+        initLock.acquire()
+        try:
+            if not FaceRecognitionTask.enabled:
+                return
+            
+            # default help and error messages
+            msg_see_manual = 'See FaceRecognition task setup information at <https://github.com/sepinf-inc/IPED/wiki/User-Manual#facerecognition>.'
+            msg_task_init_error = 'FaceRecognition task could not be initialized and was disabled'
+
+            # chek if 'face_recognition' module is installed
+            module_name = 'face_recognition'
+            import face_recognition
+
+            # chek if 'opencv-python' module is installed
+            module_name = 'opencv-python'
+            import cv2
+
+            # chek if 'numpy' module is installed
+            module_name = 'numpy'
+            global np
+            import numpy as np
+            
+            # check if numpy version is supported (<2.x)
+            np_version_unsupported_min = '2'
+            np_version = np.__version__
+            if np_version >= np_version_unsupported_min:
+                # numpy version is not supported
+                msg = msg_task_init_error + f': \'{module_name}\' module version is {np_version} (must be <{np_version_unsupported_min}.x).'
+                logger.error(msg + ' ' + msg_see_manual)
+                FaceRecognitionTask.enabled = False
+                return
+
+        except ModuleNotFoundError:
+            # required module not installed
+            msg = msg_task_init_error + f': \'{module_name}\' module is missing.'
+            logger.error(msg + ' ' + msg_see_manual)
+            FaceRecognitionTask.enabled = False
             return
+        finally:
+            initLock.release()
         
         from iped.engine.config import VideoThumbsConfig
         videoConfig = configuration.findObject(VideoThumbsConfig);
@@ -120,9 +165,6 @@ class FaceRecognitionTask:
         terminate = fp.terminate
         imgError = fp.imgError
         ping = fp.ping
-        
-        global np
-        import numpy as np
         
         # check if was called from gui the first time
         global maxProcesses, firstInstance
@@ -142,7 +184,7 @@ class FaceRecognitionTask:
         if maxProcesses is None and numProcs is not None:
             maxProcesses = int(numProcs)
         maxResolution = extraProps.getProperty(maxResolutionProp)
-        global max_size, detection_model, up_sampling
+        global max_size, detection_model, up_sampling, min_size
         if maxResolution is not None:
             max_size = int(maxResolution)
         faceDetectionModel = extraProps.getProperty(faceDetectionModelProp)
@@ -151,6 +193,9 @@ class FaceRecognitionTask:
         upSampling = extraProps.getProperty(upSamplingProp)
         if upSampling is not None:
             up_sampling = int(upSampling)
+        minSize = extraProps.getProperty(minSizeProp)
+        if minSize is not None:
+            min_size = int(minSize)
         
         createProcessQueue()
         return
@@ -185,9 +230,10 @@ class FaceRecognitionTask:
             result.append(list(i))
         return result
     
-    def cacheResults(self, hash, locations, encodings):
+    def cacheResults(self, hash, locations, encodings, count):
         cache[hash + '_locations'] = locations
         cache[hash + '_encodings'] = encodings
+        cache[hash + '_count'] = count
     
     # This function is executed on all case items
     def process(self, item):
@@ -196,27 +242,36 @@ class FaceRecognitionTask:
         # Only image type items are processed
         if hash is None or not item.getExtraAttribute('hasThumb'):
             return
-        
-        #reuse cached results
+
+        from iped.properties import ExtraProperties
+
+        # Ignore small images
+        try:
+            width = int(item.getMetadata().get(ExtraProperties.IMAGE_META_PREFIX + 'Width'))
+            height = int(item.getMetadata().get(ExtraProperties.IMAGE_META_PREFIX + 'Height'))
+            if width < min_size or height < min_size:
+                return
+        except:
+            pass
+
+        # don't process it again (in the report generation for example)
+        face_count = item.getExtraAttribute(ExtraProperties.FACE_COUNT)
+        if face_count is not None:
+            return
+
+        # reuse cached results
         face_locations = cache.get(hash + '_locations')
         face_encodings = cache.get(hash + '_encodings')
-        if face_locations is not None and face_encodings is not None:
-            if len(face_locations) > 0 and len(face_encodings) > 0:
-                item.setExtraAttribute("face_locations", face_locations)
-                item.setExtraAttribute("face_encodings", face_encodings)
-                return
-    
-        # Load absolute path
-        isVideo = False
-        mediaType = item.getMediaType().toString()
-        if mediaType.startswith('image'):
-            img_path = item.getTempFile().getAbsolutePath()
-        elif mediaType.startswith('video') and not FaceRecognitionTask.videoSubitems:
-            img_path = item.getViewFile().getAbsolutePath()
-            isVideo = True
-        else:
+        face_count = cache.get(hash + '_count')
+        if face_count is not None:
+            if face_count >= 0:
+                item.setExtraAttribute(ExtraProperties.FACE_COUNT, face_count)
+                if face_locations is not None and face_encodings is not None:
+                    if len(face_locations) > 0 and len(face_encodings) > 0:
+                        item.setExtraAttribute(ExtraProperties.FACE_LOCATIONS, face_locations)
+                        item.setExtraAttribute(ExtraProperties.FACE_ENCODINGS, face_encodings)
             return
-    
+
         try:
             # Get tiff:Orientation attribute
             tiff_orient = int(item.getMetadata().get("image:tiff:Orientation"))
@@ -224,7 +279,21 @@ class FaceRecognitionTask:
             # If item has no tiff:Orientation attribute
             tiff_orient = 1
 
-        
+        # Load absolute path
+        isVideo = False
+        mediaType = item.getMediaType().toString()
+        if mediaType.startswith('image'):
+            if item.getViewFile() is not None and os.path.exists(item.getViewFile().getAbsolutePath()):
+                img_path = item.getViewFile().getAbsolutePath()
+                tiff_orient = 1
+            else:
+                img_path = item.getTempFile().getAbsolutePath()
+        elif mediaType.startswith('video') and not FaceRecognitionTask.videoSubitems:
+            img_path = item.getViewFile().getAbsolutePath()
+            isVideo = True
+        else:
+            return
+
         # creates process in parallel
         numCreatedProcsLock.acquire()
         global numCreatedProcs
@@ -235,7 +304,6 @@ class FaceRecognitionTask:
             processQueue.put(proc, block=True)
         else:
             numCreatedProcsLock.release()
-        
         
         try:
             proc = processQueue.get(block=True)
@@ -250,7 +318,6 @@ class FaceRecognitionTask:
                 print(fp.video, file=proc.stdin, flush=True)
                     
             t1 = time.time()
-            #face_locations = fr.face_locations(img)
             
             line = proc.stdout.readline().strip()
 
@@ -264,7 +331,7 @@ class FaceRecognitionTask:
 
             if line == imgError:
                 logger.info("[FaceRecognitionTask] Error loading image {} ({} bytes)", item.getPath(), item.getLength())
-                self.cacheResults(hash, [], [])
+                self.cacheResults(hash, [], [], -1)
                 return
                 
             num_faces = int(line)
@@ -275,16 +342,14 @@ class FaceRecognitionTask:
                 detectTime += t2 - t1
             
             if num_faces == 0:
-                self.cacheResults(hash, [], [])
+                item.setExtraAttribute(ExtraProperties.FACE_COUNT, 0)
+                self.cacheResults(hash, [], [], 0)
                 return
             
             face_locations = []
             for i in range(num_faces):
                 line = proc.stdout.readline()
                 face_locations.append(eval(line))
-            #print('locations ' + str(face_locations))
-            
-            #face_encodings = fr.face_encodings(img, face_locations)
             
             face_encodings = []
             for i in range(num_faces):
@@ -295,8 +360,6 @@ class FaceRecognitionTask:
                 np_array = np.array(list)
                 face_encodings.append(np_array)
             
-            #print('encodings ' + str(face_encodings))
-            
             t3 = time.time()
             with timeLock:
                 global featureTime
@@ -306,10 +369,10 @@ class FaceRecognitionTask:
             processQueue.put(proc, block=True)
         
         face_locations = self.convertTuplesToList(face_locations)
-        
-        from iped.properties import ExtraProperties
+        face_count = len(face_locations)
+
         item.setExtraAttribute(ExtraProperties.FACE_LOCATIONS, face_locations)
         item.setExtraAttribute(ExtraProperties.FACE_ENCODINGS, face_encodings)
-        item.setExtraAttribute(ExtraProperties.FACE_COUNT, len(face_locations))
+        item.setExtraAttribute(ExtraProperties.FACE_COUNT, face_count)
         
-        self.cacheResults(hash, face_locations, face_encodings)
+        self.cacheResults(hash, face_locations, face_encodings, face_count)

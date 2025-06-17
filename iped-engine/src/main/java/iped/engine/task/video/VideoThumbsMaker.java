@@ -13,6 +13,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -40,6 +41,7 @@ public class VideoThumbsMaker {
     private String mplayer = "mplayer.exe"; //$NON-NLS-1$
     private Boolean videoThumbsOriginalDimension = false;
     private int maxDimensionSize = 1024;
+    private int compression = 50;
     private String numFramesEquation;
     private ScriptEngine scriptEngine;
     private int timeoutProcess = 45000;
@@ -92,6 +94,7 @@ public class VideoThumbsMaker {
 
         boolean fixed = false;
         File lnk = null;
+        File subTmpFile = null;
         String videoStream = null;
         for (int step = numFrames <= 0 ? 0 : 1; step <= 1; step++) {
             if (step == 1) {
@@ -130,6 +133,25 @@ public class VideoThumbsMaker {
                     step--;
                     continue;
                 }
+                if (inOrg.getAbsolutePath().length() > 256) {
+                    subTmpFile = File.createTempFile("_temp_video_", ".tmp", subTmp);
+                    subTmpFile.deleteOnExit();
+                    if (verbose) {
+                        System.err.println("Using temp file = " + subTmpFile); //$NON-NLS-1$
+                    }
+                    try {
+                        Files.copy(inOrg.toPath(), subTmpFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                        in = subTmpFile;
+                        cmds.set(cmds.size() - 1, in.getPath());
+                        step--;
+                        continue;
+                    } catch (IOException e) {
+                        if (verbose) {
+                            System.err.println("Error copying to temp a file with long path: " + inOrg.toPath()); //$NON-NLS-1$
+                            e.printStackTrace();
+                        }
+                    }
+                }
             }
             if (info != null) {
                 result.setVideoInfo(info);
@@ -146,8 +168,7 @@ public class VideoThumbsMaker {
             return result;
         }
 
-        if (result.getVideoDuration() == 0 || result.getDimension() == null || result.getDimension().width == 0
-                || result.getDimension().height == 0) {
+        if (result.getDimension() == null || result.getDimension().width == 0 || result.getDimension().height == 0) {
             return result;
         }
 
@@ -162,8 +183,8 @@ public class VideoThumbsMaker {
             if (maxThumbs < curr) {
                 maxThumbs = curr;
             }
-            if (maxSize < config.getThumbWidth()) {
-                maxSize = config.getThumbWidth();
+            if (maxSize < config.getThumbSize()) {
+                maxSize = config.getThumbSize();
             }
         }
 
@@ -340,6 +361,9 @@ public class VideoThumbsMaker {
         if (lnk != null) {
             lnk.delete();
         }
+        if (subTmpFile != null) {
+            subTmpFile.delete();
+        }
         if (images.size() == 0) {
             return result;
         }
@@ -440,8 +464,14 @@ public class VideoThumbsMaker {
         int border = config.getBorder();
         int w, h;
         // setting dimension for gallery thumbs
-        w = config.getThumbWidth();
-        h = dimension.height * w / dimension.width;
+        int size = config.getThumbSize();
+        if (dimension.width >= dimension.height) {
+            w = size;
+            h = dimension.height * w / dimension.width;
+        } else {
+            h = size;
+            w = dimension.width * h / dimension.height;
+        }
         if (w > maxDimensionSize) {
             w = maxDimensionSize;
         }
@@ -473,7 +503,7 @@ public class VideoThumbsMaker {
         }
         g2.dispose();
         ImageUtil.saveJpegWithMetadata(img, config.getOutFile(),
-                "Frames=" + config.getRows() + "x" + config.getColumns()); //$NON-NLS-1$ //$NON-NLS-2$
+                "Frames=" + config.getRows() + "x" + config.getColumns(), compression);
     }
 
     private final ExecResult run(String[] cmds, int timeout, File currDir) {
@@ -575,6 +605,10 @@ public class VideoThumbsMaker {
 
     public void setMaxDimensionSize(int maxDimensionSize) {
         this.maxDimensionSize = maxDimensionSize;
+    }
+
+    public void setCompression(int compression) {
+        this.compression = compression;
     }
 
     public Boolean getVideoThumbsOriginalDimension() {

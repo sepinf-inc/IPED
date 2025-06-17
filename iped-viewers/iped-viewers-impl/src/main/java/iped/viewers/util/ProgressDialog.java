@@ -117,10 +117,10 @@ public class ProgressDialog implements ActionListener, Runnable, IProgressMonito
             dialog = new JDialog((Dialog) parent, modal);
         else if (parent != null)
             dialog = new JDialog(SwingUtilities.windowForComponent(parent), modal);
-        else
+        else {
             dialog = new JDialog(null, modal);
-
-        dialog.setAlwaysOnTop(true);
+            dialog.setAlwaysOnTop(true);
+        }
         dialog.setBounds(0, 0, 260 + extraWidth, 140 + length);
         dialog.setTitle(Messages.getString("ProgressDialog.Progress")); //$NON-NLS-1$
 

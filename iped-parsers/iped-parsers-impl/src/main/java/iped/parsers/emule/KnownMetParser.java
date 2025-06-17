@@ -18,7 +18,6 @@
  */
 package iped.parsers.emule;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.DateFormat;
@@ -28,7 +27,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
@@ -49,9 +47,8 @@ import org.xml.sax.helpers.AttributesImpl;
 import iped.data.IItemReader;
 import iped.parsers.util.BeanMetadataExtraction;
 import iped.parsers.util.ChildPornHashLookup;
-import iped.parsers.util.ExportFolder;
 import iped.parsers.util.Messages;
-import iped.properties.BasicProps;
+import iped.parsers.util.P2PUtil;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
 import iped.utils.LocalizedFormat;
@@ -199,13 +196,12 @@ public class KnownMetParser extends AbstractParser {
                 cells.add(e.getName());
                 String hash = e.getHash();
                 metadata.add(ExtraProperties.SHARED_HASHES, hash);
-                HashSet<String> hashSets = new HashSet<>();
-                hashSets.addAll(ChildPornHashLookup.lookupHash(EDONKEY, hash));
-                item = searchItemInCase(searcher, EDONKEY, e.getHash());
+                List<String> hashSets = ChildPornHashLookup.lookupHash(EDONKEY, hash);
+                item = P2PUtil.searchItemInCase(searcher, EDONKEY, e.getHash());
                 if(item != null) {
-                    hashSets.addAll(ChildPornHashLookup.lookupHash(item.getHash()));
+                    hashSets = ChildPornHashLookup.lookupHashAndMerge(EDONKEY, hash, hashSets);
                 }
-                if (!hashSets.isEmpty()) {
+                if (hashSets != null && !hashSets.isEmpty()) {
                     hashDBHits++;
                     trClass = "rr"; //$NON-NLS-1$
                 }
@@ -243,7 +239,7 @@ public class KnownMetParser extends AbstractParser {
                     xhtml.characters(cells.get(j));
                 else {
                     if (item != null) {
-                        printNameWithLink(xhtml, item, e.getName());
+                        P2PUtil.printNameWithLink(xhtml, item, e.getName());
                         cells.set(cells.size() - 1, strYes);
                     } else {
                         xhtml.characters(e.getName());
@@ -262,42 +258,6 @@ public class KnownMetParser extends AbstractParser {
 
         xhtml.endElement("table"); //$NON-NLS-1$
         xhtml.endDocument();
-    }
-
-    public static IItemReader searchItemInCase(IItemSearcher searcher, String hashAlgo, String hash) {
-        if (searcher == null) {
-            return null;
-        }
-        List<IItemReader> items = searcher.search(hashAlgo + ":" + hash); //$NON-NLS-1$
-        if (items == null || items.isEmpty()) {
-            return null;
-        }
-        return items.get(0);
-    }
-
-    public static void printNameWithLink(XHTMLContentHandler xhtml, IItemReader item, String name) throws SAXException {
-        String hashPath = getPathFromHash(new File("../../../../", ExportFolder.getExportPath()), //$NON-NLS-1$
-                item.getHash(), item.getExt());
-
-        AttributesImpl attributes = new AttributesImpl();
-        attributes.addAttribute("", "onclick", "onclick", "CDATA", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-                "app.open(\"" + BasicProps.HASH + ":" + item.getHash() + "\")"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        attributes.addAttribute("", "href", "href", "CDATA", hashPath); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-        xhtml.startElement("a", attributes); //$NON-NLS-1$
-        xhtml.characters(name);
-        xhtml.endElement("a"); //$NON-NLS-1$
-    }
-
-    private static String getPathFromHash(File baseDir, String hash, String ext) {
-        if (hash == null || hash.length() < 2)
-            return ""; //$NON-NLS-1$
-        StringBuilder path = new StringBuilder();
-        hash = hash.toUpperCase();
-        path.append(hash.charAt(0)).append('/');
-        path.append(hash.charAt(1)).append('/');
-        path.append(hash).append('.').append(ext);
-        File result = new File(baseDir, path.toString());
-        return result.getPath();
     }
 
     private long toSum(long v) {

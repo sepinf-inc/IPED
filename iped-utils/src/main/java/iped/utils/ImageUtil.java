@@ -16,39 +16,50 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReadParam;
 import javax.imageio.ImageReader;
 import javax.imageio.ImageTypeSpecifier;
+import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.metadata.IIOMetadata;
 import javax.imageio.metadata.IIOMetadataNode;
-import javax.imageio.plugins.jpeg.JPEGImageWriteParam;
+import javax.imageio.spi.IIORegistry;
+import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.ImageOutputStream;
+import javax.imageio.stream.MemoryCacheImageOutputStream;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-/* 
- * @author Wladimir Leite (GPINF/SP)
- */
+import iped.data.IItemReader;
+
 public class ImageUtil {
-    private static final int[] orientations = new int[] { 1, 5, 3, 7 };
+    private static final int[] orientations = new int[] { 1, 6, 3, 8 };
+
+    private static final String JBIG2 = "image/x-jbig2";
+    private static final String ICO = "image/vnd.microsoft.icon";
+
+    private static boolean pluginsPriorityUpdated;
 
     public static BufferedImage resizeImage(BufferedImage img, int maxW, int maxH) {
         return resizeImage(img, maxW, maxH, BufferedImage.TYPE_INT_ARGB);
     }
 
     /**
-     * Redimensiona um imagem, mantendo sua proporção original se possível, mas utilizando mantendo dimensões mínimas.
+     * Redimensiona um imagem, mantendo sua proporção original se possível, mas
+     * utilizando mantendo dimensões mínimas.
      */
     public static BufferedImage resizeImage(BufferedImage img, int maxW, int maxH, int minW, int minH, int imageType) {
         int imgW = img.getWidth();
@@ -106,78 +117,84 @@ public class ImageUtil {
         return bufferedImage;
     }
 
-    public static BufferedImage getSubSampledImage(InputStream source, int w, int h) {
-        return doGetSubSampledImage(source, w, h, null, null);
+    public static BufferedImage getSubSampledImage(IItemReader itemReader, int size) {
+        return doGetSubSampledImage(itemReader, size, null, null);
     }
 
-    public static BufferedImage getSubSampledImage(InputStream source, int w, int h, String mimeType) {
-        return doGetSubSampledImage(source, w, h, null, mimeType);
+    public static BufferedImage getSubSampledImage(IItemReader itemReader, int size, String mimeType) {
+        return doGetSubSampledImage(itemReader, size, null, mimeType);
     }
 
-    public static BufferedImage getSubSampledImage(File source, int w, int h) {
-        return doGetSubSampledImage(source, w, h, null, null);
+    public static BufferedImage getSubSampledImage(InputStream inputStream, int size) {
+        return doGetSubSampledImage(inputStream, size, null, null);
     }
 
-    public static BufferedImage getSubSampledImage(File source, int w, int h, String mimeType) {
-        return doGetSubSampledImage(source, w, h, null, mimeType);
+    public static BufferedImage getSubSampledImage(File file, int size, String mimeType) {
+        return doGetSubSampledImage(file, size, null, mimeType);
+    }
+
+    public static BufferedImage getSubSampledImage(IItemReader source, int size, BooleanWrapper renderException,
+            String mimeType) {
+        return doGetSubSampledImage(source, size, renderException, mimeType);
     }
 
     public static class BooleanWrapper {
         public boolean value;
     }
 
-    public static final int getSamplingFactor(int w0, int h0, int w, int h) {
+    public static final int getSamplingFactor(int w0, int h0, int targetSize) {
         int sampling = 1;
-        if (w0 > w || h0 > h) {
-            if (w * h0 < w0 * h) {
-                sampling = w0 / w;
+        if (w0 > targetSize || h0 > targetSize) {
+            if (targetSize * h0 < w0 * targetSize) {
+                sampling = w0 / targetSize;
             } else {
-                sampling = h0 / h;
+                sampling = h0 / targetSize;
             }
         }
         return sampling;
     }
 
-    // Contribuição do PCF Wladimir e Nassif
-    public static BufferedImage getSubSampledImage(InputStream source, int w, int h, BooleanWrapper renderException,
-            String mimeType) {
-        return doGetSubSampledImage(source, w, h, renderException, mimeType);
-    }
-
-    private static BufferedImage doGetSubSampledImage(Object source, int w, int h, BooleanWrapper renderException,
+    private static BufferedImage doGetSubSampledImage(Object source, int targetSize, BooleanWrapper renderException,
             String mimeType) {
         ImageInputStream iis = null;
         ImageReader reader = null;
         BufferedImage image = null;
         try {
-            iis = ImageIO.createImageInputStream(source);
-            Iterator<ImageReader> iter = mimeType == null ? ImageIO.getImageReaders(iis)
-                    : ImageIO.getImageReadersByMIMEType(mimeType);
+            if (source instanceof IItemReader) {
+                iis = ((IItemReader) source).getImageInputStream();
+            } else {
+                iis = ImageIO.createImageInputStream(source);
+            }
+            // JBIG2 needs that reader is get by mime type
+            Iterator<ImageReader> iter = JBIG2.equals(mimeType) ? ImageIO.getImageReadersByMIMEType(mimeType)
+                    : ImageIO.getImageReaders(iis);
             if (!iter.hasNext())
                 return null;
             reader = iter.next();
             reader.setInput(iis, false, true);
-            
-            // For sources that contains multiple images (e.g. ICO), get the largest one
+
             int idx = 0;
-            try {
-                int n = reader.getNumImages(false);
-                if (n > 1) {
-                    int max = -1;
-                    for (int i = 0; i < n; i++) {
-                        int wi = reader.getWidth(i);
-                        if (wi > max) {
-                            max = wi;
-                            idx = i;
+            // ICO may contains multiple images, get the largest one
+            if (ICO.equals(mimeType)) {
+                try {
+                    int n = reader.getNumImages(false);
+                    if (n > 1) {
+                        int max = -1;
+                        for (int i = 0; i < n; i++) {
+                            int wi = reader.getWidth(i);
+                            if (wi > max) {
+                                max = wi;
+                                idx = i;
+                            }
                         }
                     }
+                } catch (Exception e) {
                 }
-            } catch (Exception e) {
             }
 
             int w0 = reader.getWidth(idx);
             int h0 = reader.getHeight(idx);
-            int sampling = getSamplingFactor(w0, h0, w, h);
+            int sampling = getSamplingFactor(w0, h0, targetSize);
 
             int finalW = (int) Math.ceil((float) w0 / sampling);
             int finalH = (int) Math.ceil((float) h0 / sampling);
@@ -202,10 +219,7 @@ public class ImageUtil {
             if (reader != null) {
                 reader.dispose();
             }
-            try {
-                iis.close();
-            } catch (IOException e) {
-            }
+            IOUtil.closeQuietly(iis);
         }
 
         return image;
@@ -216,16 +230,24 @@ public class ImageUtil {
         int h = image.getHeight();
         int[] pixels = new int[w * h];
         image.getRGB(0, 0, w, h, pixels, 0, w);
-        int color;
+        int color = -1;
         if (pixels.length > 0) {
-            color = pixels[0];
-        } else
-            return false;
-
-        for (int p : pixels)
-            if (p != color)
-                return false;
-
+            // Starts at ~5% of the pixels
+            for (int i = pixels.length / 20; i < pixels.length; i++) {
+                int p = pixels[i];
+                // Consider only non-transparent pixels
+                if ((p & 0xFF000000) != 0) {
+                    int c = p & 0xFFFFFF;
+                    if (color == -1) {
+                        // Store first color found
+                        color = c;
+                    } else if (color != c) {
+                        // Has different colors
+                        return false;
+                    }
+                }
+            }
+        }
         return true;
     }
 
@@ -338,7 +360,7 @@ public class ImageUtil {
         g2.dispose();
         return out;
     }
-    
+
     public static BufferedImage getImageFromType(BufferedImage img, int type) {
         if (img == null || img.getType() == type) {
             return img;
@@ -371,15 +393,24 @@ public class ImageUtil {
      * @return Array com {BufferedImage, String}
      */
     public static Object[] readJpegWithMetaData(File inFile) throws IOException {
-        ImageReader reader = ImageIO.getImageReadersBySuffix("jpeg").next(); //$NON-NLS-1$
-        ImageInputStream is = ImageIO.createImageInputStream(inFile);
-        reader.setInput(is);
-        BufferedImage img = reader.read(0);
-        IIOMetadata meta = reader.getImageMetadata(0);
-        IIOMetadataNode root = (IIOMetadataNode) meta.getAsTree("javax_imageio_jpeg_image_1.0"); //$NON-NLS-1$
-        is.close();
-        reader.dispose();
-        return new Object[] { img, findAttribute(root, "comment") }; //$NON-NLS-1$
+        ImageReader reader = null;
+        ImageInputStream iis = null;
+        try {
+            reader = ImageIO.getImageReadersBySuffix("jpeg").next();
+            iis = ImageIO.createImageInputStream(inFile);
+            reader.setInput(iis);
+            BufferedImage img = reader.read(0);
+            IIOMetadata meta = reader.getImageMetadata(0);
+            IIOMetadataNode root = (IIOMetadataNode) meta.getAsTree("javax_imageio_jpeg_image_1.0");
+            return new Object[] { img, findAttribute(root, "comment") };
+        } finally {
+            IOUtil.closeQuietly(iis);
+            try {
+                if (reader != null)
+                    reader.dispose();
+            } catch (Exception e) {
+            }
+        }
     }
 
     /**
@@ -387,7 +418,7 @@ public class ImageUtil {
      *
      * @return Comment metadata, or null if no metadata is present.
      */
-    public static String readJpegMetaDataComment(InputStream is) throws IOException {
+    public static String readJpegMetaDataComment(InputStream is) {
         ImageReader reader = null;
         ImageInputStream iis = null;
         String ret = null;
@@ -396,15 +427,11 @@ public class ImageUtil {
             iis = ImageIO.createImageInputStream(is);
             reader.setInput(iis);
             IIOMetadata meta = reader.getImageMetadata(0);
-            IIOMetadataNode root = (IIOMetadataNode) meta.getAsTree("javax_imageio_jpeg_image_1.0"); //$NON-NLS-1$
+            IIOMetadataNode root = (IIOMetadataNode) meta.getAsTree("javax_imageio_jpeg_image_1.0");
             ret = findAttribute(root, "comment");
         } catch (Exception e) {
         } finally {
-            try {
-                if (iis != null)
-                    iis.close();
-            } catch (Exception e) {
-            }
+            IOUtil.closeQuietly(iis);
             try {
                 if (reader != null)
                     reader.dispose();
@@ -530,7 +557,8 @@ public class ImageUtil {
                 nCols = Integer.parseInt(comment.substring(p2 + 1));
             }
         }
-        if (nRows <= 0 || nCols <= 0) return null;
+        if (nRows <= 0 || nCols <= 0)
+            return null;
 
         int imgWidth = img.getWidth();
         int imgHeight = img.getHeight();
@@ -538,7 +566,8 @@ public class ImageUtil {
         final int border = 2;
         int frameWidth = (imgWidth - 2 - border * (nCols + 1)) / nCols;
         int frameHeight = (imgHeight - 2 - border * (nRows + 1)) / nRows;
-        if (frameWidth <= 2 || frameHeight <= 2) return null;
+        if (frameWidth <= 2 || frameHeight <= 2)
+            return null;
 
         List<BufferedImage> frames = new ArrayList<BufferedImage>();
         for (int row = 0; row < nRows; row++) {
@@ -550,7 +579,7 @@ public class ImageUtil {
         }
         return frames;
     }
-    
+
     /**
      * Método auxiliar que percorre uma árvore buscando o valor de um nó com
      * determinado nome.
@@ -580,10 +609,12 @@ public class ImageUtil {
     /**
      * Grava uma imagem JPEG e insere um comentário nos metadados da imagem.
      */
-    public static void saveJpegWithMetadata(BufferedImage img, File outFile, String data) throws IOException {
+    public static void saveJpegWithMetadata(BufferedImage img, File outFile, String data, int compression) throws IOException {
         ImageWriter writer = ImageIO.getImageWritersBySuffix("jpeg").next(); //$NON-NLS-1$
-        JPEGImageWriteParam jpegParams = (JPEGImageWriteParam) writer.getDefaultWriteParam();
-        IIOMetadata imageMetadata = writer.getDefaultImageMetadata(new ImageTypeSpecifier(img), jpegParams);
+        ImageWriteParam jpgWriteParam = writer.getDefaultWriteParam();
+        jpgWriteParam.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+        jpgWriteParam.setCompressionQuality(compression / 100f);
+        IIOMetadata imageMetadata = writer.getDefaultImageMetadata(new ImageTypeSpecifier(img), jpgWriteParam);
 
         Element tree = (Element) imageMetadata.getAsTree("javax_imageio_jpeg_image_1.0"); //$NON-NLS-1$
         NodeList comNL = tree.getElementsByTagName("com"); //$NON-NLS-1$
@@ -601,37 +632,48 @@ public class ImageUtil {
         IIOImage iioimage = new IIOImage(img, null, imageMetadata);
         ImageOutputStream os = ImageIO.createImageOutputStream(outFile);
         writer.setOutput(os);
-        writer.write(null, iioimage, jpegParams);
+        writer.write(null, iioimage, jpgWriteParam);
         os.close();
         writer.dispose();
     }
 
-    public static BufferedImage rotatePos(BufferedImage src, int pos) {
+    public static BufferedImage rotate(BufferedImage src, int pos) {
         if (pos < 0 || pos > 3) {
             return src;
         }
-        return rotate(src, orientations[pos]);
+        return applyOrientation(src, orientations[pos]);
     }
 
-    public static BufferedImage rotate(BufferedImage src, int orientation) {
-        if (orientation <= 1 || orientation > 8)
+    public static BufferedImage applyOrientation(BufferedImage src, int orientation) {
+        if (orientation <= 1 || orientation > 8) {
             return src;
-        int angle = (orientation - 1) / 2;
+        }
         int w = src.getWidth();
         int h = src.getHeight();
-        BufferedImage dest = new BufferedImage(angle == 1 ? w : h, angle == 1 ? h : w, src.getType());
+        if (orientation > 4) {
+            int aux = w;
+            w = h;
+            h = aux;
+        }
+        BufferedImage dest = new BufferedImage(w, h, src.getType());
         Graphics2D g = dest.createGraphics();
-        double d = (h - w) / 2.0;
-        if (angle == 2)
-            g.translate(d, d);
-        else if (angle == 3)
-            g.translate(-d, -d);
-        g.rotate((angle == 1 ? 2 : angle == 2 ? 1 : 3) * Math.PI / 2, dest.getWidth() / 2.0, dest.getHeight() / 2.0);
+        if (orientation == 2 || orientation == 3 || orientation == 5 || orientation == 8) {
+            g.scale(-1, 1);
+            g.translate(-w, 0);
+        }
+        if (orientation == 3 || orientation == 4 || orientation == 7 || orientation == 8) {
+            g.scale(1, -1);
+            g.translate(0, -h);
+        }
+        if (orientation >= 5) {
+            g.rotate(Math.PI / 2);
+            g.translate(0, -w);
+        }
         g.drawRenderedImage(src, null);
         g.dispose();
         return dest;
     }
-    
+
     public static boolean isCompressedBMP(File file) throws FileNotFoundException, IOException {
         byte[] b = new byte[34];
         if (file.length() >= b.length) {
@@ -644,9 +686,21 @@ public class ImageUtil {
         return true;
     }
 
+    public static void writeCompressedJPG(BufferedImage img, OutputStream baos, int compression) throws IOException {
+        ImageWriter jpgWriter = ImageIO.getImageWritersByFormatName("jpg").next();
+        ImageWriteParam jpgWriteParam = jpgWriter.getDefaultWriteParam();
+        jpgWriteParam.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+        jpgWriteParam.setCompressionQuality(compression / 100f);
+        jpgWriter.setOutput(new MemoryCacheImageOutputStream(baos));
+        IIOImage outputImage = new IIOImage(img, null, null);
+        jpgWriter.write(null, outputImage, jpgWriteParam);
+        jpgWriter.dispose();        
+    }
+
     /**
-     * @param intensity A proportion between the blurring window and the image dimensions. 
-     * Typical values are between 0.01 and 0.05.
+     * @param intensity
+     *            A proportion between the blurring window and the image dimensions.
+     *            Typical values are between 0.01 and 0.05.
      */
     public static BufferedImage blur(BufferedImage image, int maxSize, double intensity) {
         int w = image.getWidth();
@@ -666,8 +720,8 @@ public class ImageUtil {
         g.dispose();
         int radius = (int) Math.ceil(intensity * (newImage.getWidth() + newImage.getHeight()) / 2);
         byte[] pixels = ((DataBufferByte) newImage.getRaster().getDataBuffer()).getData();
-        int[] len = {newImage.getWidth(),newImage.getHeight()};
-        int[] step = {1,newImage.getWidth()};
+        int[] len = { newImage.getWidth(), newImage.getHeight() };
+        int[] step = { 1, newImage.getWidth() };
         for (int pass = 0; pass <= 1; pass++) {
             int len1 = len[pass];
             int len2 = len[1 - pass];
@@ -713,12 +767,57 @@ public class ImageUtil {
     }
 
     public static BufferedImage grayscale(BufferedImage image) {
-        if (image == null || image.getType() == BufferedImage.TYPE_BYTE_GRAY || image.getType() == BufferedImage.TYPE_USHORT_GRAY) return image;
+        if (image == null || image.getType() == BufferedImage.TYPE_BYTE_GRAY
+                || image.getType() == BufferedImage.TYPE_USHORT_GRAY)
+            return image;
         if (image.getColorModel().hasAlpha()) {
             ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_GRAY);
             ColorConvertOp op = new ColorConvertOp(cs, null);
             return op.filter(image, null);
         }
         return getImageFromType(image, BufferedImage.TYPE_BYTE_GRAY);
+    }
+
+    public static synchronized void updateImageIOPluginsPriority() {
+        if (pluginsPriorityUpdated) {
+            return;
+        }
+        IIORegistry registry = IIORegistry.getDefaultInstance();
+        String[] mimes = ImageIO.getReaderMIMETypes();
+        for (String mime : mimes) {
+            Map<ImageReaderSpi, Integer> priorityBySpi = new HashMap<ImageReaderSpi, Integer>();
+            Iterator<ImageReader> itReaders = ImageIO.getImageReadersByMIMEType(mime);
+            while (itReaders.hasNext()) {
+                ImageReader reader = itReaders.next();
+                ImageReaderSpi spi = reader.getOriginatingProvider();
+                String name = spi.getClass().toString().toLowerCase();
+                int priority = 100;
+                if (name.contains(".sun")) {
+                    priority = 0;
+                } else if (name.contains(".twelvemonkeys")) {
+                    priority = 10;
+                } else if (name.contains(".apache")) {
+                    priority = 20;
+                } else if (name.contains(".jai")) {
+                    priority = 30;
+                }
+                if (name.contains(".big")) {
+                    priority++;
+                }
+                priorityBySpi.put(spi, priority);
+            }
+            if (priorityBySpi.size() > 1) {
+                for (ImageReaderSpi spi1 : priorityBySpi.keySet()) {
+                    int p1 = priorityBySpi.get(spi1);
+                    for (ImageReaderSpi spi2 : priorityBySpi.keySet()) {
+                        int p2 = priorityBySpi.get(spi2);
+                        if (p1 < p2) {
+                            registry.setOrdering(ImageReaderSpi.class, spi1, spi2);
+                        }
+                    }
+                }
+            }
+        }
+        pluginsPriorityUpdated = true;
     }
 }

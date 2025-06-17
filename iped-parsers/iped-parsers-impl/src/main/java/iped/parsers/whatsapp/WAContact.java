@@ -2,9 +2,15 @@ package iped.parsers.whatsapp;
 
 public class WAContact {
 
-    private final String id;
+    public static final String waSuffix = "@s.whatsapp.net";
+    public static final String waStatusBroadcast = "status@broadcast";
+    public static final String waGroupSuffix = "@g.us";
+    public static final String waStatusSuffix = "@status";
+    public static final String waNewsletterSuffix = "@newsletter";
 
-    private final String suffix;
+    private String id;
+
+    private String suffix;
 
     private String status;
 
@@ -25,18 +31,21 @@ public class WAContact {
     private boolean deleted = false;
 
     public WAContact(String id) {
-        if (id != null && id.contains("@")) { //$NON-NLS-1$
-            String[] id_split = id.split("@"); //$NON-NLS-1$
-            this.id = id_split[0];
-            this.suffix = id_split[1];
-        } else {
-            this.id = id;
-            this.suffix = ""; //$NON-NLS-1$
-        }
+        updateId(id);
     }
 
     public String getId() {
         return id;
+    }
+
+    public void updateId(String id) {
+        if (id != null) {
+            String[] idSplit = id.split("@", 2);
+            this.id = idSplit[0].trim();
+            this.suffix = idSplit.length > 1 ? idSplit[1].trim() : "";
+        } else {
+            this.id = this.suffix = "";
+        }
     }
 
     public String getStatus() {
@@ -88,10 +97,10 @@ public class WAContact {
     }
 
     public String getName() {
-        if (waName != null && ! waName.isBlank())
-            return waName;
-        else if (displayName != null && !displayName.isBlank())
+        if (displayName != null && !displayName.isBlank())
             return displayName;
+        else if (waName != null && !waName.isBlank())
+            return waName;
         else if (givenName != null && !givenName.isBlank())
             return givenName;
         else if (nickName != null && !nickName.isBlank())

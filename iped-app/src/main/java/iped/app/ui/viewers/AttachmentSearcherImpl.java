@@ -2,6 +2,9 @@ package iped.app.ui.viewers;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.util.BytesRef;
@@ -15,6 +18,7 @@ import iped.data.IItemId;
 import iped.engine.lucene.DocValuesUtil;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.MultiSearchResult;
+import iped.engine.search.QueryBuilder;
 import iped.properties.BasicProps;
 import iped.viewers.api.AttachmentSearcher;
 
@@ -52,6 +56,25 @@ public class AttachmentSearcherImpl implements AttachmentSearcher {
         }
 
         return null;
+    }
+
+    @Override
+    public List<IItem> getItems(String luceneQuery) {
+        IPEDSearcher searcher = new IPEDSearcher(App.get().appCase, luceneQuery);
+        try {
+            MultiSearchResult result = searcher.multiSearch();
+            List<IItem> items = new ArrayList<>();
+            for (int i = 0; i < result.getLength(); i++) {
+                IItemId item = result.getItem(i);
+                items.add(App.get().appCase.getItemByItemId(item));
+            }
+            return items;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return Collections.emptyList();
     }
 
     @Override
@@ -120,6 +143,11 @@ public class AttachmentSearcherImpl implements AttachmentSearcher {
                 }
             }
         });
+    }
+
+    @Override
+    public String escapeQuery(String string) {
+        return QueryBuilder.escape(string);
     }
 
 }

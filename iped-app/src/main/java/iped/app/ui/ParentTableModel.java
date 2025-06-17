@@ -19,138 +19,29 @@
 package iped.app.ui;
 
 import java.awt.Rectangle;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 
 import javax.swing.ListSelectionModel;
-import javax.swing.SwingUtilities;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.table.AbstractTableModel;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.IntPoint;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
 
-import iped.engine.search.IPEDSearcher;
-import iped.engine.search.LuceneSearchResult;
-import iped.engine.search.MultiSearchResult;
-import iped.engine.task.index.IndexItem;
-import iped.search.IMultiSearchResult;
+import iped.properties.BasicProps;
 
-public class ParentTableModel extends AbstractTableModel
-        implements MouseListener, ListSelectionListener, SearchResultTableModel {
 
-    /**
-     *
-     */
+public class ParentTableModel extends BaseTableModel {
+
     private static final long serialVersionUID = 1L;
 
-    // public ScoreDoc[] results = new ScoreDoc[0];
-    LuceneSearchResult results = new LuceneSearchResult(0);
-    int selectedIndex = -1;
-
-    @Override
-    public int getColumnCount() {
-        return 3;
+    public ParentTableModel() {
     }
 
     @Override
-    public int getRowCount() {
-        return results.getLength();
-    }
-
-    @Override
-    public String getColumnName(int col) {
-        if (col == 2)
-            return IndexItem.NAME;
-
-        return ""; //$NON-NLS-1$
-    }
-
-    @Override
-    public boolean isCellEditable(int row, int col) {
-        if (col == 1) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    public Class<?> getColumnClass(int c) {
-        if (c == 1) {
-            return Boolean.class;
-        } else {
-            return String.class;
-        }
-    }
-
-    @Override
-    public void setValueAt(Object value, int row, int col) {
-        App.get().appCase.getMultiBookmarks().setChecked((Boolean) value,
-                App.get().appCase.getItemId(results.getLuceneIds()[row]));
-        BookmarksController.get().updateUISelection();
-    }
-
-    @Override
-    public Object getValueAt(int row, int col) {
-        if (col == 0) {
-            return row + 1;
-
-        } else if (col == 1) {
-            return App.get().appCase.getMultiBookmarks()
-                    .isChecked(App.get().appCase.getItemId(results.getLuceneIds()[row]));
-
-        } else {
-            try {
-                Document doc = App.get().appCase.getSearcher().doc(results.getLuceneIds()[row]);
-                return doc.get(IndexItem.NAME);
-            } catch (Exception e) {
-                // e.printStackTrace();
-            }
-            return ""; //$NON-NLS-1$
-        }
-    }
-
-    @Override
-    public IMultiSearchResult getSearchResult() {
-        return (IMultiSearchResult) MultiSearchResult.get(App.get().appCase, results);
-    }
-
-    @Override
-    public void mouseClicked(MouseEvent arg0) {
-    }
-
-    @Override
-    public void mouseEntered(MouseEvent arg0) {
-    }
-
-    @Override
-    public void mouseExited(MouseEvent arg0) {
-    }
-
-    @Override
-    public void mousePressed(MouseEvent arg0) {
-    }
-
-    @Override
-    public void mouseReleased(MouseEvent evt) {
-        if (evt.getClickCount() == 2 && selectedIndex != -1) {
-            int docId = results.getLuceneIds()[selectedIndex];
-            ExternalFileOpen.open(docId);
-        }
-
-    }
-
-    @Override
-    public void valueChanged(ListSelectionEvent evt) {
-        ListSelectionModel lsm = (ListSelectionModel) evt.getSource();
-
-        if (lsm.getMinSelectionIndex() == -1 || selectedIndex == lsm.getMinSelectionIndex()) {
-            selectedIndex = lsm.getMinSelectionIndex();
-            return;
-        }
-
-        selectedIndex = lsm.getMinSelectionIndex();
+    public void valueChanged(ListSelectionModel lsm) {
         App.get().getTextViewer().textTable.scrollRectToVisible(new Rectangle());
 
         FileProcessor parsingTask = new FileProcessor(results.getLuceneIds()[selectedIndex], false);
@@ -159,42 +50,25 @@ public class ParentTableModel extends AbstractTableModel
         App.get().subItemModel.fireTableDataChanged();
     }
 
-    Thread thread;
+    @Override
+    public Query createQuery(Document doc) {
 
-    public void listParents(final Document doc) {
-
-        String textQuery = null;
-        String parentId = doc.get(IndexItem.PARENTID);
-        if (parentId != null) {
-            textQuery = IndexItem.ID + ":" + parentId; //$NON-NLS-1$
+        String parentId = doc.get(BasicProps.PARENTID);
+        if (parentId == null) {
+            return null;
         }
 
-        String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
-        textQuery += " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID; //$NON-NLS-1$ //$NON-NLS-2$
+        String sourceUUID = doc.get(BasicProps.EVIDENCE_UUID);
 
-        results = new LuceneSearchResult(0);
+        BooleanQuery.Builder queryBuilder = new BooleanQuery.Builder();
+        queryBuilder.add(IntPoint.newExactQuery(BasicProps.ID, Integer.parseInt(parentId)), Occur.MUST);
+        queryBuilder.add(new TermQuery(new Term(BasicProps.EVIDENCE_UUID, sourceUUID)), Occur.MUST);
 
-        if (textQuery != null) {
-            try {
-                IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
-                results = MultiSearchResult.get(task.multiSearch(), App.get().appCase);
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        if (results.getLength() > 0) {
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    App.get().parentDock.setTitleText(Messages.getString("ParentTableModel.ParentCount")); //$NON-NLS-1$
-                }
-            });
-        }
-
-        fireTableDataChanged();
-
+        return queryBuilder.build();
     }
 
+    @Override
+    public void onListItemsResultsComplete() {
+        App.get().parentDock.setTitleText(Messages.getString("ParentTableModel.ParentCount"));
+    }
 }

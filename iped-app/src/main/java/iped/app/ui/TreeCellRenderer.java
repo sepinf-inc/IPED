@@ -22,7 +22,6 @@ import java.awt.Component;
 
 import javax.swing.Icon;
 import javax.swing.JTree;
-import javax.swing.UIManager;
 import javax.swing.tree.DefaultTreeCellRenderer;
 
 import org.apache.lucene.document.Document;
@@ -35,27 +34,27 @@ public class TreeCellRenderer extends DefaultTreeCellRenderer {
 
     private static final long serialVersionUID = 1L;
 
-    private static Icon diskIcon = UIManager.getIcon("FileView.hardDriveIcon"); //$NON-NLS-1$
+    private static final Icon rootIcon = IconManager.getTreeIcon("evidences-root");
 
-    public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded,
-            boolean leaf, int row, boolean hasFocus) {
+    public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
 
         Node node = (Node) value;
-        boolean notDir = !Boolean.valueOf(node.getDoc().get(IndexItem.ISDIR)) && node.docId != -1;
-        DefaultTreeCellRenderer result = (DefaultTreeCellRenderer) super.getTreeCellRendererComponent(tree, value,
-                selected, expanded, notDir, row, hasFocus);
+        boolean isDir = Boolean.valueOf(node.getDoc().get(IndexItem.ISDIR)) || node.docId == -1;
+        super.getTreeCellRendererComponent(tree, value, selected, expanded, !isDir, row, hasFocus);
 
-        if (notDir && Boolean.valueOf(node.getDoc().get(IndexItem.ISROOT))) {
-            result.setIcon(diskIcon);
-        } else if (notDir) {
+        if (row == 0) {
+            setIcon(rootIcon);
+        } else if (isDir) {
+            setIcon(IconManager.getFolderIcon(expanded));
+        } else {
             Document doc = node.getDoc();
             String type = doc.get(BasicProps.TYPE);
             String contentType = doc.get(BasicProps.CONTENTTYPE);
-            Icon icon = IconManager.getFileIcon(contentType, type);
-            result.setIcon(icon);
+            Icon icon = Boolean.valueOf(doc.get(IndexItem.ISROOT)) ? IconManager.getFileIcon(contentType, type, IconManager.getDiskIcon()) : IconManager.getFileIcon(contentType, type);
+            setIcon(icon);
         }
 
-        return result;
+        return this;
 
     }
 

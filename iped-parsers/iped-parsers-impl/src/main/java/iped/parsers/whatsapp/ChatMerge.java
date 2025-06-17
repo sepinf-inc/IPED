@@ -2,7 +2,6 @@ package iped.parsers.whatsapp;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 public class ChatMerge {
@@ -10,39 +9,13 @@ public class ChatMerge {
     List<Chat> main;
     String dbname;
 
-    Comparator<Message> cmpMessage = new Comparator<Message>() {
-
-        @Override
-        public int compare(Message u1, Message u2) {
-            if (u1.getTimeStamp() != null && u2.getTimeStamp() != null) {
-                int comp = u1.getTimeStamp().compareTo(u2.getTimeStamp());
-                if (comp != 0) {
-                    return comp;
-                } else {
-                    return compareId(u1, u2);
-                }
-            } else {
-                return compareId(u1, u2);
-            }
-        }
-
-        private int compareId(Message u1, Message u2) {
-            if (u1.getId() == u2.getId()) {
-                return 0;
-            } else if (u1.getId() < u2.getId())
-                return -1;
-            else
-                return 1;
-        }
-    };
-
     public ChatMerge(List<Chat> main, String dbname) {
         this.main = main;
         this.dbname = dbname;
         for (Chat c : main) {
             // new instance to avoid threading issues
             List<Message> messages = new ArrayList<Message>(c.getMessages());
-            Collections.sort(messages, cmpMessage);
+            Collections.sort(messages);
             c.setMessages(messages);
         }
     }
@@ -72,7 +45,7 @@ public class ChatMerge {
     private boolean hasCompatibleMessage(List<Message> backup, List<Message> main) {
         int maxMsgsToCheck = 10;
         for (int i = 0; i < backup.size(); i += Math.max(1, backup.size() / maxMsgsToCheck)) {
-            int idx = Collections.binarySearch(main, backup.get(i), cmpMessage);
+            int idx = Collections.binarySearch(main, backup.get(i));
             if (idx >= 0) {
                 return true;
             }
@@ -109,7 +82,7 @@ public class ChatMerge {
         int indexmain = 0;
         for (Message m : backup) {
 
-            indexmain = Collections.binarySearch(main, m, cmpMessage);
+            indexmain = Collections.binarySearch(main, m);
             if (indexmain < 0) {// message was removed
                 main.add(-indexmain - 1, m);
                 tot_rec++;

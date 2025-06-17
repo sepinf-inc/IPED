@@ -17,6 +17,7 @@ import com.beust.jcommander.IParameterValidator;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
+import com.beust.jcommander.converters.IParameterSplitter;
 
 import iped.data.ICaseData;
 import iped.engine.CmdLineArgs;
@@ -42,12 +43,19 @@ import iped.parsers.whatsapp.WhatsAppParser;
  */
 public class CmdLineArgsImpl implements CmdLineArgs {
 
+    private static class NoSplitter implements IParameterSplitter {
+        @Override
+        public List<String> split(String value) {
+            return Arrays.asList(value);
+        }
+    }
+
     @Parameter(names = { "-d", "-data" }, description = "input data (can be used multiple times): "
-            + "folder, DD, 001, E01 images (+AFF on Linux), ISO, physical drive, "
-            + "or *.iped file (with tagged files to export and reindex)", validateWith = DatasourceExistsValidator.class, order = 0)
+            + "DD, 001, E01, Ex01, VHD, VHDX, VMDK, Physical Drive, ISO, AFF (on Linux), AD1, UFDR, folder "
+            + "or *.iped file (with tagged files to export and reindex)", validateWith = DatasourceExistsValidator.class, order = 0, splitter = NoSplitter.class)
     private List<File> datasources;
 
-    @Parameter(names = "-dname", description = "display name (optional) of data added with -d", order = 1)
+    @Parameter(names = "-dname", description = "display name (optional) of data added with -d", order = 1, splitter = NoSplitter.class)
     private List<String> dname;
 
     @Parameter(names = { "-o", "-output" }, description = "output folder", order = 2)
@@ -60,7 +68,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
             + "Keywords with no hits are filtered out.", validateWith = FileExistsValidator.class)
     private File keywords;
 
-    @Parameter(names = "-ocr", description = "only run OCR on a specific category or bookmark (can be used multiple times)")
+    @Parameter(names = "-ocr", description = "only run OCR on a specific category or bookmark (can be used multiple times)", splitter = NoSplitter.class)
     private List<String> ocr;
 
     @Parameter(names = "-log", description = "Redirect log to another file")
@@ -69,7 +77,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     @Parameter(names = "-asap", validateWith = FileExistsValidator.class, description = ".asap file (Brazilian Federal Police) with case info to be included in html report")
     private File asap;
 
-    @Parameter(names = "-nocontent", description = "do not export to report file contents of a specific category/bookmark, only thumbs and properties")
+    @Parameter(names = "-nocontent", description = "do not export to report file contents of a specific category/bookmark, only thumbs and properties", splitter = NoSplitter.class)
     private List<String> nocontent;
 
     @Parameter(names = { "-tz", "-timezone" }, description = "original timezone of FAT devices: GMT-3, GMT-4... "
@@ -79,7 +87,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     @Parameter(names = { "-b", "-blocksize" }, description = "sector block size (bytes), must set to 4k sector devices")
     private int blocksize;
 
-    @Parameter(names = { "-p", "-password" }, description = "password for encrypted images/volumes")
+    @Parameter(names = { "-p", "-password" }, description = "password for encrypted images/volumes", splitter = NoSplitter.class)
     private List<String> passwords;
 
     @Parameter(names = "-profile", description = "use a processing profile: forensic, pedo, "
@@ -427,17 +435,16 @@ public class CmdLineArgsImpl implements CmdLineArgs {
             Main.getInstance().logFile = this.logFile;
         }
 
-        if (outputDir != null) {
-            Main.getInstance().output = new File(outputDir, "iped"); //$NON-NLS-1$
-        } else {
-            Main.getInstance().output = new File(datasources.get(0).getParentFile(), "iped"); //$NON-NLS-1$
+        if (outputDir == null) {
+            outputDir = datasources.get(0).getParentFile();
         }
+        Main.getInstance().output = new File(outputDir, "iped");
 
         File file = outputDir;
         while (file != null) {
             for (File source : Main.getInstance().dataSource) {
                 if (file.getAbsoluteFile().equals(source.getAbsoluteFile())) {
-                    throw new ParameterException("Output folder can not be equal or subdir of input!"); //$NON-NLS-1$
+                    throw new ParameterException("The output folder can not be equal or a subfolder of an input!");
                 }
             }
             file = file.getParentFile();

@@ -21,7 +21,7 @@
 
     <parsers>
         <parser class="iped.parsers.external.CompositeExternalParser"></parser>
-        
+
         <parser class="org.apache.tika.parser.apple.AppleSingleFileParser"></parser>
         <parser class="org.apache.tika.parser.apple.PListParser"></parser>
         <parser class="org.apache.tika.parser.asm.ClassParser"></parser>
@@ -55,6 +55,8 @@
         <!--<parser class="org.apache.tika.parser.image.HeifParser"></parser>-->
         <parser class="org.apache.tika.parser.iptc.IptcAnpaParser"></parser>
         <parser class="org.apache.tika.parser.iwork.IWorkPackageParser"></parser>
+        <parser class="org.apache.tika.parser.iwork.iwana.IWork13PackageParser"></parser>
+        <parser class="org.apache.tika.parser.iwork.iwana.IWork18PackageParser"></parser>
         <!--<parser class="org.apache.tika.parser.image.JpegParser"></parser>-->
         <!--We have our own impls
         <parser class="org.apache.tika.parser.mail.RFC822Parser"></parser>
@@ -63,7 +65,7 @@
         <!--Returns empty content for some EMFs. Used below in MultipleParser
         <parser class="org.apache.tika.parser.microsoft.EMFParser"></parser-->
         <!--<parser class="org.apache.tika.parser.microsoft.WMFParser"></parser>-->
-        <!--TODO: compare to our old MDB parser and possibly switch to this 
+        <!--TODO: compare to our old MDB parser and possibly switch to this
         <parser class="org.apache.tika.parser.microsoft.JackcessParser"></parser>-->
         <parser class="org.apache.tika.parser.microsoft.MSOwnerFileParser"></parser>
         <parser class="org.apache.tika.parser.microsoft.OfficeParser">
@@ -135,7 +137,7 @@
         <!-- this uses a REST service to parse PDF journals
         <parser class="org.apache.tika.parser.journal.JournalParser"></parser>-->
         <parser class="org.apache.tika.parser.image.ICNSParser"></parser>
-        <!--TODO: compare with our old DBF parser and maybe switch to this 
+        <!--TODO: compare with our old DBF parser and maybe switch to this
         <parser class="org.apache.tika.parser.dbf.DBFParser"></parser>-->
         <!-- these are related to localization xliff+zip and xliff+xml files
         <parser class="org.apache.tika.parser.xliff.XLIFF12Parser"></parser>
@@ -144,17 +146,18 @@
         <parser class="org.apache.tika.parser.EmptyParser">
             <mime>application/vnd.rn-realmedia</mime>
             <mime>application/java-archive</mime>
+            <mime>audio/ilbc</mime>
         </parser>
-        
+
         <parser class="org.gagravarr.tika.FlacParser"></parser>
         <parser class="org.gagravarr.tika.OggParser"></parser>
         <parser class="org.gagravarr.tika.VorbisParser"></parser>
         <parser class="org.gagravarr.tika.OpusParser"></parser>
         <parser class="org.gagravarr.tika.SpeexParser"></parser>
         <parser class="org.gagravarr.tika.TheoraParser"></parser>
-        
+
         <parser class="iped.parsers.ocr.OCRParser"></parser>
-        
+
         <parser class="iped.parsers.misc.MultipleParser">
             <mime>image/jpeg</mime>
             <params>
@@ -162,7 +165,7 @@
                 <param name="parsers" type="string">iped.parsers.ocr.OCRParser;org.apache.tika.parser.image.JpegParser</param>
             </params>
         </parser>
-        
+
         <parser class="iped.parsers.misc.MultipleParser">
             <mime>image/bmp</mime>
             <mime>image/gif</mime>
@@ -174,7 +177,7 @@
                 <param name="parsers" type="string">iped.parsers.ocr.OCRParser;org.apache.tika.parser.image.ImageParser</param>
             </params>
         </parser>
-        
+
         <parser class="iped.parsers.misc.MultipleParser">
             <mime>image/webp</mime>
             <params>
@@ -182,7 +185,7 @@
                 <param name="parsers" type="string">iped.parsers.ocr.OCRParser;org.apache.tika.parser.image.WebPParser</param>
             </params>
         </parser>
-        
+
         <parser class="iped.parsers.misc.MultipleParser">
             <mime>image/vnd.adobe.photoshop</mime>
             <params>
@@ -190,7 +193,7 @@
                 <param name="parsers" type="string">iped.parsers.ocr.OCRParser;org.apache.tika.parser.image.PSDParser</param>
             </params>
         </parser>
-        
+
         <parser class="iped.parsers.misc.MultipleParser">
             <mime>image/tiff</mime>
             <params>
@@ -198,7 +201,7 @@
                 <param name="parsers" type="string">iped.parsers.ocr.OCRParser;org.apache.tika.parser.image.TiffParser;iped.parsers.image.TiffPageParser</param>
             </params>
         </parser>
-        
+
         <parser class="iped.parsers.misc.MultipleParser">
             <mime>image/heic</mime>
             <mime>image/heif</mime>
@@ -209,7 +212,7 @@
                 <param name="parsers" type="string">iped.parsers.ocr.OCRParser;org.apache.tika.parser.image.HeifParser</param>
             </params>
         </parser>
-        
+
         <parser class="iped.parsers.misc.MultipleParser">
             <mime>image/emf</mime>
             <params>
@@ -217,7 +220,7 @@
                 <param name="parsers" type="string">iped.parsers.ocr.OCRParser;org.apache.tika.parser.microsoft.EMFParser</param>
             </params>
         </parser>
-        
+
         <parser class="iped.parsers.misc.MultipleParser">
             <mime>image/wmf</mime>
             <params>
@@ -225,7 +228,7 @@
                 <param name="parsers" type="string">iped.parsers.ocr.OCRParser;org.apache.tika.parser.microsoft.WMFParser</param>
             </params>
         </parser>
-        
+
         <parser class="iped.parsers.misc.MultipleParser">
             <mime>image/svg+xml</mime>
             <params>
@@ -233,7 +236,7 @@
                 <param name="parsers" type="string">iped.parsers.ocr.OCRParser;iped.parsers.misc.XMLParser</param>
             </params>
         </parser>
-        
+
         <parser class="iped.parsers.misc.MultipleParser">
             <mime>application/x-msdownload</mime>
             <mime>application/x-elf</mime>
@@ -249,7 +252,7 @@
                 </param>
             </params>
         </parser>
-        
+
         <parser class="iped.parsers.browsers.firefox.FirefoxSqliteParser">
             <params>
                 <param name="extractEntries" type="bool">true</param>
@@ -259,12 +262,13 @@
         <parser class="iped.parsers.browsers.edge.EdgeWebCacheParser"></parser>
         <parser class="iped.parsers.browsers.safari.SafariSqliteParser"></parser>
         <parser class="iped.parsers.browsers.safari.SafariPlistParser"></parser>
-        
+
         <parser class="iped.parsers.database.EDBParser"></parser>
         <parser class="iped.parsers.registry.RegRipperParser"></parser>
         <parser class="iped.parsers.browsers.ie.IndexDatParser"></parser>
-        <parser class="iped.parsers.compress.PackageParser"></parser>    
+        <parser class="iped.parsers.compress.PackageParser"></parser>
         <parser class="iped.parsers.compress.SevenZipParser"></parser>
+        <parser class="iped.parsers.compress.LZFSEParser"></parser>
         <parser class="iped.parsers.misc.XMLParser">
             <mime-exclude>image/svg+xml</mime-exclude>
         </parser>
@@ -289,7 +293,9 @@
         </parser>
         <parser class="iped.parsers.telegram.TelegramParser">
             <params>
+				<param name="extractMessages" type="bool">true</param>
                 <param name="enabledForUfdr" type="bool">true</param>
+                <param name="minChatSplitSize" type="int">6000000</param>
             </params>
         </parser>
         <parser class="iped.parsers.skype.SkypeParser"></parser>
@@ -300,15 +306,27 @@
                 <param name="extractMessages" type="bool">true</param>
                 <param name="mergeBackups" type="bool">true</param>
                 <param name="linkMediasByNameAndApproxSizeFallback" type="bool">true</param>
+                <!--Set as 0 to disable long path matching fallback-->                
+                <param name="linkMediasByLongPathFallback" type="int">40</param>
                 <param name="downloadConnectionTimeout" type="int">500</param>
                 <param name="downloadReadTimeout" type="int">1000</param>
                 <param name="recoverDeletedRecords" type="bool">true</param>
+                <param name="minChatSplitSize" type="int">6000000</param>
+            </params>
+        </parser>
+        <parser class="iped.parsers.threema.ThreemaParser">
+            <params>
+                <param name="extractMessages" type="bool">true</param>
+                <param name="extractMediasAsFiles" type="bool">false</param>
             </params>
         </parser>
         <parser class="iped.parsers.ufed.UFEDChatParser">
             <!--<mime-exclude>application/x-ufed-chat-whatsapp</mime-exclude>-->
+            <params>
+                <param name="minChatSplitSize" type="int">6000000</param>
+            </params>
         </parser>
-        
+
         <parser class="iped.parsers.emule.KnownMetParser">
             <params>
                 <param name="extractEntries" type="bool">true</param>
@@ -325,6 +343,7 @@
                 <param name="extractEntries" type="bool">true</param>
             </params>
         </parser>
+        <parser class="iped.parsers.shareaza.ShareazaDownloadParser"></parser>
         <parser class="iped.parsers.shareaza.ShareazaSearchesDatParser"></parser>
         <parser class="iped.parsers.shareaza.ShareazaLibraryDatParser">
             <params>
@@ -332,9 +351,14 @@
             </params>
         </parser>
         <parser class="iped.parsers.bittorrent.BitTorrentResumeDatParser"></parser>
+        <parser class="iped.parsers.bittorrent.BitTorrentResumeDatEntryParser"></parser>
+        <parser class="iped.parsers.bittorrent.BitTorrentGenericDatParser"></parser>
         <parser class="iped.parsers.bittorrent.TorrentFileParser"></parser>
+        <parser class="iped.parsers.bittorrent.TransmissionResumeParser"></parser>
         <parser class="iped.parsers.lnk.LNKShortcutParser"></parser>
         <parser class="iped.parsers.misc.GenericOLEParser"></parser>
+        <parser class="iped.parsers.misc.OFXParser"></parser>
+        <parser class="iped.parsers.misc.OFCParser"></parser>
         <parser class="iped.parsers.misc.PDFTextParser"></parser>
         <parser class="iped.parsers.video.FLVParserWrapper"></parser>
         <parser class="iped.parsers.video.EmptyVideoParser"></parser>
@@ -352,6 +376,8 @@
         <parser class="iped.parsers.python.PythonParser"></parser>
         <parser class="iped.parsers.mail.win10.Win10MailParser"></parser>
         <parser class="iped.parsers.discord.DiscordParser"></parser>
+        <parser class="iped.parsers.apk.APKParser"></parser>
+        <parser class="iped.parsers.vlc.VLCIniParser"></parser>
 
     </parsers>
 

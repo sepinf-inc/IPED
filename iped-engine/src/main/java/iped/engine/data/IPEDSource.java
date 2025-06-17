@@ -48,6 +48,7 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.store.Directory;
+import org.apache.lucene.util.Bits;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.slf4j.Logger;
@@ -83,10 +84,12 @@ public class IPEDSource implements IIPEDSource {
 
     private static Logger LOGGER = LoggerFactory.getLogger(IPEDSource.class);
 
-    public static final String INDEX_DIR = "index"; //$NON-NLS-1$
     public static final String MODULE_DIR = "iped"; //$NON-NLS-1$
+    public static final String INDEX_DIR = "index"; //$NON-NLS-1$
+    public static final String DATA_DIR = "data"; //$NON-NLS-1$
+    public static final String LIB_DIR = "lib"; //$NON-NLS-1$
     public static final String SLEUTH_DB = "sleuth.db"; //$NON-NLS-1$
-    public static final String PREV_TEMP_INFO_PATH = "data/prevTempDir.txt"; //$NON-NLS-1$
+    public static final String PREV_TEMP_INFO_PATH = DATA_DIR + "/prevTempDir.txt"; //$NON-NLS-1$
 
     /**
      * workaround para JVM não coletar objeto, nesse caso Sleuthkit perde referencia
@@ -130,6 +133,16 @@ public class IPEDSource implements IIPEDSource {
 
     boolean isReport = false;
 
+    boolean askImagePathIfNotFound = true;
+
+    public static boolean checkIfIsCaseFolder(File dir) {
+        File module = new File(dir, MODULE_DIR);
+        if (new File(module, INDEX_DIR).exists() && new File(module, LIB_DIR).exists() && new File(module, DATA_DIR).exists()) {
+            return true;
+        }
+        return false;
+    }
+
     public static File getTempDirInfoFile(File moduleDir) {
         return new File(moduleDir, IPEDSource.PREV_TEMP_INFO_PATH);
     }
@@ -145,7 +158,11 @@ public class IPEDSource implements IIPEDSource {
     }
 
     public IPEDSource(File casePath, IndexWriter iw) {
+        this(casePath, iw, true);
+    }
 
+    public IPEDSource(File casePath, IndexWriter iw, boolean askImagePathIfNotFound) {
+        this.askImagePathIfNotFound = askImagePathIfNotFound;
         this.casePath = casePath;
         moduleDir = new File(casePath, MODULE_DIR);
         index = new File(moduleDir, INDEX_DIR);
@@ -224,11 +241,14 @@ public class IPEDSource implements IIPEDSource {
                 Item.getAllExtraAttributes().addAll(extraAttributes);
             }
 
-            bookmarks = new Bookmarks(this, moduleDir);
+            bookmarks = new BitmapBookmarks(this);
             bookmarks.loadState();
-            multiBookmarks = new MultiBookmarks(Collections.singletonList(this));
+            multiBookmarks = new MultiBitmapBookmarks(Collections.singletonList(this));
 
         } catch (Exception e) {
+            if (e instanceof RuntimeException) {
+                throw (RuntimeException) e;
+            }
             throw new RuntimeException(e.getMessage(), e);
         }
     }
@@ -271,8 +291,13 @@ public class IPEDSource implements IIPEDSource {
             return;
         }
 
+        Bits liveDocs = atomicReader.getLiveDocs();
+
         int i;
         while ((i = ndv.nextDoc()) != DocIdSetIterator.NO_MORE_DOCS) {
+            if (liveDocs != null && !liveDocs.get(i)) {
+                continue;
+            }
             ids[i] = (int) ndv.longValue();
             parentDocs.set(i);
             if (ids[i] > lastId)
@@ -396,29 +421,27 @@ public class IPEDSource implements IIPEDSource {
         if (category.getNumItems() != -1)
             return category.getNumItems();
 
-        if (!category.getChildren().isEmpty()) {
-            int num = 0;
-            for (Category child : category.getChildren()) {
-                num += countNumItems(child);
-            }
-            category.setNumItems(num);
-
-        } else {
-            String query = IndexItem.CATEGORY + ":\"" + category.getName() + "\"";
-            IPEDSearcher searcher = new IPEDSearcher(this, query);
-            searcher.setNoScoring(true);
-            try {
-                if (this instanceof IPEDMultiSource) {
-                    category.setNumItems(searcher.multiSearch().getLength());
-                } else {
-                    category.setNumItems(searcher.search().getLength());
-                }
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        int num = 0;
+        for (Category child : category.getChildren()) {
+            num += countNumItems(child);
         }
-        return category.getNumItems();
+
+        String query = IndexItem.CATEGORY + ":\"" + category.getName() + "\"";
+        IPEDSearcher searcher = new IPEDSearcher(this, query);
+        searcher.setNoScoring(true);
+        try {
+            if (this instanceof IPEDMultiSource) {
+                num += searcher.multiSearch().getLength();
+            } else {
+                num += searcher.search().getLength();
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        category.setNumItems(num);
+        return num;
     }
 
     private void loadKeywords() {
@@ -591,8 +614,13 @@ public class IPEDSource implements IIPEDSource {
                 if (newPaths.size() > 0) {
                     testCanWriteToCase(sleuthFile);
                     sleuthCase.setImagePaths(id, newPaths);
-                } else if (iw == null)
-                    askNewImagePath(id, paths, sleuthFile);
+                } else if (iw == null) {
+                    if (askImagePathIfNotFound) {
+                        askNewImagePath(id, paths, sleuthFile);
+                    } else {
+                        throw new RuntimeException("Image not found: " + paths.get(0));
+                    }
+                }
         }
     }
 
@@ -627,6 +655,17 @@ public class IPEDSource implements IIPEDSource {
             }
         testCanWriteToCase(sleuthFile);
         sleuthCase.setImagePaths(imgId, newPaths);
+    }
+
+    public String getItemProperty(int id, String propertyName) {
+        String propertyValue = null;
+        try {
+            Document doc = searcher.doc(getLuceneId(id));
+            propertyValue = doc.get(propertyName);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return propertyValue;
     }
 
     public int getSourceId() {

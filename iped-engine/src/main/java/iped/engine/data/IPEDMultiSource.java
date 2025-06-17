@@ -98,7 +98,7 @@ public class IPEDMultiSource extends IPEDSource {
                     continue;
                 }
                 File path = new File(pathStr);
-                if (!new File(path, MODULE_DIR).exists()) {
+                if (!checkIfIsCaseFolder(path)) {
                     throw new IllegalArgumentException("Invalid case path: " + path.getAbsolutePath());
                 }
                 files.add(path);
@@ -121,7 +121,7 @@ public class IPEDMultiSource extends IPEDSource {
         if (subFiles != null)
             for (File file : subFiles) {
                 if (file.isDirectory()) {
-                    if (new File(file, MODULE_DIR).exists())
+                    if (checkIfIsCaseFolder(file))
                         files.add(file);
                     else
                         files.addAll(searchCasesinFolder(file));
@@ -157,7 +157,7 @@ public class IPEDMultiSource extends IPEDSource {
                     keywords.add(keyword);
 
         // marcadores = new Bookmarks(this, this.getCaseDir());
-        this.multiBookmarks = new MultiBookmarks(cases);
+        this.multiBookmarks = new MultiBitmapBookmarks(cases);
 
         analyzer = AppAnalyzer.get();
 

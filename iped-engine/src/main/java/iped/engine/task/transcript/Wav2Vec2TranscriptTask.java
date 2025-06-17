@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.logging.log4j.Level;
@@ -14,10 +15,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.glassfish.grizzly.utils.Charsets;
 
+import iped.configuration.IConfigurationDirectory;
 import iped.engine.config.AudioTranscriptConfig;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
-import iped.exception.IPEDException;
 import oshi.SystemInfo;
 import oshi.hardware.CentralProcessor;
 import oshi.hardware.HardwareAbstractionLayer;
@@ -27,29 +28,31 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
     private static Logger logger = LogManager.getLogger(Wav2Vec2TranscriptTask.class);
 
     private static final String SCRIPT_PATH = "/scripts/tasks/Wav2Vec2Process.py";
-    private static final String TRANSCRIPTION_FINISHED = "transcription_finished";
+    protected static final String TRANSCRIPTION_FINISHED = "transcription_finished";
     private static final String MODEL_LOADED = "wav2vec2_model_loaded";
     private static final String HUGGINGSOUND_LOADED = "huggingsound_loaded";
     private static final String TERMINATE = "terminate_process";
     private static final String PING = "ping";
 
-    private static final int MAX_TRANSCRIPTIONS = 100000;
-    private static final byte[] NEW_LINE = "\n".getBytes();
+    protected static final int MAX_TRANSCRIPTIONS = 100000;
+    protected static final byte[] NEW_LINE = "\n".getBytes();
 
-    private static volatile Integer numProcesses;
+    protected static volatile Integer numProcesses;
 
-    private static LinkedBlockingDeque<Server> deque = new LinkedBlockingDeque<>();
+    protected static LinkedBlockingDeque<Server> deque = new LinkedBlockingDeque<>();
 
-    private static volatile Level logLevel = Level.forName("MSG", 250);
+    protected static volatile Level logLevel = Level.forName("MSG", 250);
 
-    private static class Server {
+    private static volatile AtomicBoolean init = new AtomicBoolean();
+    
+    static class Server {
         Process process;
         BufferedReader reader;
         int transcriptionsDone = 0;
         int device = 0;
     }
 
-    private static int getNumProcessors() {
+    protected static int getNumProcessors() {
         SystemInfo si = new SystemInfo();
         HardwareAbstractionLayer hal = si.getHardware();
         CentralProcessor cpu = hal.getProcessor();
@@ -68,34 +71,76 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
 
         super.init(configurationManager);
 
-        if (!this.isEnabled()) {
+        if (!isEnabled()) {
             return;
         }
         
+        String ipedRoot = System.getProperty(IConfigurationDirectory.IPED_ROOT);
+        if (SystemUtils.IS_OS_WINDOWS && ipedRoot == null) {
+            ipedRoot = Configuration.getInstance().appRoot;
+            if (!new File(ipedRoot, "python/python.exe").exists()) {
+                // Possibly generating report on a machine that have never run iped processing.
+                this.transcriptConfig.setEnabled(false);
+                logger.warn("Python.exe not found, disabling transcription module.");
+                return;
+            }
+        }
+
         if (!deque.isEmpty())
             return;
-        
-        Server server;
-        int device = 0;
-        while ((server = startServer(device++)) != null) {
-            deque.add(server);
+
+        synchronized (init) {
+            if (!init.get()) {
+                try {
+                    Server server;
+                    int device = 0;
+                    while ((server = startServer(device++)) != null) {
+                        deque.add(server);
+                    }
+
+                } catch (Exception e) {
+                    if (hasIpedDatasource()) {
+                        transcriptConfig.setEnabled(false);
+                        logger.warn("Could not initialize audio transcription. Task disabled.");
+                    } else {
+                        throw e;
+                    }
+                }
+                init.set(true);
+            }
         }
 
         logLevel = Level.DEBUG;
 
     }
 
-    private Server startServer(int device) throws IOException {
+    protected Server startServer(int device) throws StartupException {
+        try {
+            return startServer0(device);
+        } catch (Exception e) {
+            if (e instanceof StartupException) {
+                throw (StartupException) e;
+            } else {
+                e.printStackTrace();
+                throw new StartupException(e.toString());
+            }
+        }
+    }
+
+    protected Server startServer0(int device) throws IOException {
         if (numProcesses != null && device == numProcesses) {
             return null;
         }
         ProcessBuilder pb = new ProcessBuilder();
-        String ipedRoot = Configuration.getInstance().appRoot;
+        String ipedRoot = System.getProperty(IConfigurationDirectory.IPED_ROOT);
+        if (ipedRoot == null) {
+            ipedRoot = Configuration.getInstance().appRoot;
+        }
         String python = SystemUtils.IS_OS_WINDOWS ? ipedRoot + "/python/python.exe" : "python3";
         String script = ipedRoot + SCRIPT_PATH;
         String model = super.transcriptConfig.getHuggingFaceModel();
         if (model == null) {
-            throw new IPEDException("You must configure '" + AudioTranscriptConfig.HUGGING_FACE_MODEL
+            throw new StartupException("You must configure '" + AudioTranscriptConfig.HUGGING_FACE_MODEL
                     + "' in audio transcription config file.");
         }
 
@@ -110,7 +155,7 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
         String line = reader.readLine();
 
         if (!HUGGINGSOUND_LOADED.equals(line)) {
-            throw new IPEDException("'huggingsound' python lib not loaded correctly. Have you installed it?");
+            throw new StartupException("'huggingsound' python lib not loaded correctly. Have you installed it?");
         }
 
         int cudaCount = Integer.valueOf(reader.readLine());
@@ -125,10 +170,12 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
             }
         }
 
-        line = reader.readLine();
+        String msgToIgnore = "Ignored unknown";
+        while ((line = reader.readLine()) != null && line.startsWith(msgToIgnore))
+            ;
 
         if (!MODEL_LOADED.equals(line)) {
-            throw new IPEDException("Error loading '" + model + "' transcription model.");
+            throw new StartupException("Error loading '" + model + "' transcription model.");
         }
 
         line = reader.readLine();
@@ -143,7 +190,7 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
         return server;
     }
 
-    private void logInputStream(InputStream is) {
+    protected void logInputStream(InputStream is) {
         Thread t = new Thread() {
             public void run() {
                 byte[] buf = new byte[1024];
@@ -170,7 +217,7 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
         deque.clear();
     }
 
-    private void terminateServer(Server server) throws InterruptedException {
+    protected void terminateServer(Server server) throws InterruptedException {
         Process process = server.process;
         try {
             process.getOutputStream().write(TERMINATE.getBytes(Charsets.UTF8_CHARSET));
@@ -187,7 +234,7 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
         }
     }
 
-    private boolean ping(Server server) {
+    protected boolean ping(Server server) {
         try {
             server.process.getOutputStream().write(PING.getBytes(Charsets.UTF8_CHARSET));
             server.process.getOutputStream().write(NEW_LINE);
@@ -210,6 +257,9 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
             try {
                 return transcribeWavPart(f);
             } catch (Exception e) {
+                if (e instanceof RuntimeException) {
+                    throw (RuntimeException) e;
+                }
                 throw new RuntimeException(e);
             }
         });
@@ -234,7 +284,7 @@ public class Wav2Vec2TranscriptTask extends AbstractTranscriptTask {
             String line;
             while (!TRANSCRIPTION_FINISHED.equals(line = server.reader.readLine())) {
                 if (line == null) {
-                    throw new RuntimeException("External transcription process crashed.");
+                    throw new ProcessCrashedException();
                 } else {
                     throw new RuntimeException("Transcription failed, returned: " + line);
                 }

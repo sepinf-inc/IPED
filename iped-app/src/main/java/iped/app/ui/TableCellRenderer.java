@@ -19,59 +19,103 @@
 package iped.app.ui;
 
 import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.io.IOException;
 
 import javax.swing.Icon;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableModel;
 
 import org.apache.lucene.document.Document;
 
+import iped.app.ui.bookmarks.BookmarkCellRenderer;
+import iped.app.ui.bookmarks.BookmarkIcon;
 import iped.data.IItemId;
+import iped.data.IMultiBookmarks;
 import iped.engine.task.index.IndexItem;
+import iped.localization.LocalizedProperties;
 
 public class TableCellRenderer extends DefaultTableCellRenderer {
 
-    /**
-     *
-     */
     private static final long serialVersionUID = 1L;
+    private boolean customPaint;
+    private BookmarkCellRenderer bookmarkCellRenderer;
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
 
-        DefaultTableCellRenderer result = (DefaultTableCellRenderer) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
         int idx = table.convertRowIndexToModel(row);
         int col = table.convertColumnIndexToModel(column);
-        String localizedNameProp = iped.localization.LocalizedProperties.getLocalizedField(IndexItem.NAME);
-        String colName = table.getModel().getColumnName(col);
+        TableModel model = table.getModel();
+        String colName = model.getColumnName(col);
 
-        if (table.getModel() instanceof SearchResultTableModel && (colName.equalsIgnoreCase(IndexItem.NAME) || colName.equalsIgnoreCase(localizedNameProp))) {
-            try {
-                IItemId item = ((SearchResultTableModel) table.getModel()).getSearchResult().getItem(idx);
-                int docId = App.get().appCase.getLuceneId(item);
-                Document doc = App.get().appCase.getSearcher().doc(docId);
-                if (Boolean.valueOf(doc.get(IndexItem.ISDIR))) {
-                    result.setIcon(IconManager.FOLDER_ICON);
-                } else if (Boolean.valueOf(doc.get(IndexItem.ISROOT))) {
-                    result.setIcon(IconManager.DISK_ICON);
-                } else {
-                    String type = doc.get(IndexItem.TYPE);
-                    String contentType = doc.get(IndexItem.CONTENTTYPE);
-                    Icon icon = IconManager.getFileIcon(contentType, type);
-                    result.setIcon(icon);
+        Icon icon = null;
+        String toopTip = null;
+        customPaint = false;
+
+        if (model instanceof SearchResultTableModel) {
+            if (colName.equalsIgnoreCase(ResultTableModel.BOOKMARK_COL)) {
+                String str = (String) value;
+                if (!str.isEmpty()) {
+                    IMultiBookmarks multiBookmarks = App.get().appCase.getMultiBookmarks();
+                    if (bookmarkCellRenderer == null) {
+                        bookmarkCellRenderer = new BookmarkCellRenderer();
+                    }
+                    bookmarkCellRenderer.setBookmarks(multiBookmarks, str);
+                    customPaint = true;
                 }
 
-            } catch (IOException e) {
-                result.setIcon(null);
-            }
+            } else if (colName.equalsIgnoreCase(BookmarkIcon.columnName)) {
+                setText("");
+                if (value != null) {
+                    String str = (String) value;
+                    if (!str.isEmpty()) {
+                        toopTip = str;
+                        IMultiBookmarks multiBookmarks = App.get().appCase.getMultiBookmarks();
+                        icon = BookmarkIcon.getIcon(multiBookmarks, str);
+                    }
+                }
 
-        } else {
-            result.setIcon(null);
+            } else if (colName.equalsIgnoreCase(IndexItem.NAME) || colName.equalsIgnoreCase(LocalizedProperties.getLocalizedField(IndexItem.NAME))
+                    || (model instanceof DuplicatesTableModel && (colName.equalsIgnoreCase(IndexItem.PATH) || colName.equalsIgnoreCase(LocalizedProperties.getLocalizedField(IndexItem.PATH))))) {
+                try {
+                    IItemId item = ((SearchResultTableModel) model).getSearchResult().getItem(idx);
+                    int docId = App.get().appCase.getLuceneId(item);
+                    Document doc = App.get().appCase.getSearcher().doc(docId);
+                    if (Boolean.valueOf(doc.get(IndexItem.ISDIR))) {
+                        icon = IconManager.getFolderIcon();
+                    } else {
+                        String type = doc.get(IndexItem.TYPE);
+                        String contentType = doc.get(IndexItem.CONTENTTYPE);
+                        icon = Boolean.valueOf(doc.get(IndexItem.ISROOT)) ? IconManager.getFileIcon(contentType, type, IconManager.getDiskIcon()) : IconManager.getFileIcon(contentType, type);
+                    }
+                } catch (IOException e) {
+                }
+            }
         }
 
-        return result;
+        setIcon(icon);
+        setToolTipText(toopTip);
+
+        return this;
     }
 
+    @Override
+    protected void paintComponent(Graphics g) {
+        if (customPaint) {
+            Graphics2D g2 = (Graphics2D) g;
+            int w = getWidth();
+            int h = getHeight();
+            g2.setBackground(getBackground());
+            g2.clearRect(0, 0, w, h);
+            g2.setFont(getFont());
+            bookmarkCellRenderer.paint(g2, w, h);
+        } else {
+            super.paintComponent(g);
+        }
+    }
 }

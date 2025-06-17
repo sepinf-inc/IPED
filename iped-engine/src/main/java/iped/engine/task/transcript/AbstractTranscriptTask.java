@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.net.NoRouteToHostException;
 import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -32,6 +33,7 @@ import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteConfig.SynchronousMode;
 
 import iped.configuration.Configurable;
+import iped.configuration.IConfigurationDirectory;
 import iped.data.IItem;
 import iped.engine.config.AudioTranscriptConfig;
 import iped.engine.config.Configuration;
@@ -68,7 +70,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
     private static final int MAX_WAV_SIZE = 16000 * 2 * MAX_WAV_TIME;
 
     protected AudioTranscriptConfig transcriptConfig;
-    
+
     // Variables to store some statistics
     private static final AtomicLong wavTime = new AtomicLong();
     private static final AtomicLong transcriptionTime = new AtomicLong();
@@ -89,8 +91,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
 
     protected boolean isToProcess(IItem evidence) {
 
-        if (evidence.getLength() == null || evidence.getLength() == 0 || !evidence.isToAddToCase()
-                || evidence.getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR) != null) {
+        if (evidence.getLength() == null || evidence.getLength() == 0 || !evidence.isToAddToCase() || evidence.getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR) != null) {
             return false;
         }
         if (transcriptConfig.getSkipKnownFiles() && evidence.getExtraAttribute(HashDBLookupTask.STATUS_ATTRIBUTE) != null) {
@@ -190,8 +191,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
 
     }
 
-    public static TextAndScore transcribeWavBreaking(File tmpFile, String itemPath,
-            Function<File, TextAndScore> transcribeWavPart) throws Exception {
+    public static TextAndScore transcribeWavBreaking(File tmpFile, String itemPath, Function<File, TextAndScore> transcribeWavPart) throws Exception {
         if (tmpFile.length() <= MAX_WAV_SIZE) {
             return transcribeWavPart.apply(tmpFile);
         } else {
@@ -216,6 +216,10 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
     }
 
     protected static Collection<File> getAudioSplits(File inFile, String itemPath) {
+        return getAudioSplits(inFile, itemPath, MAX_WAV_TIME);
+    }
+
+    protected static Collection<File> getAudioSplits(File inFile, String itemPath, int max_wave_time) {
         List<File> splitFiles = new ArrayList<File>();
         AudioInputStream aIn = null;
         AudioInputStream aOut = null;
@@ -224,7 +228,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             outFile.delete();
             aIn = AudioSystem.getAudioInputStream(inFile);
             int bytesPerFrame = aIn.getFormat().getFrameSize();
-            int framesPerPart = Math.round(aIn.getFormat().getFrameRate() * MAX_WAV_TIME);
+            int framesPerPart = Math.round(aIn.getFormat().getFrameRate() * max_wave_time);
             byte[] partBytes = new byte[framesPerPart * bytesPerFrame];
             int numBytesRead = 0;
             int seq = 0;
@@ -253,7 +257,11 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         String[] cmd = transcriptConfig.getConvertCmd().split(" ");
         if (SystemUtils.IS_OS_WINDOWS) {
             String mplayerWin = VideoThumbTask.MPLAYER_WIN_PATH;
-            cmd[0] = cmd[0].replace("mplayer", Configuration.getInstance().appRoot + "/" + mplayerWin);
+            String ipedRoot = System.getProperty(IConfigurationDirectory.IPED_ROOT);
+            if (ipedRoot == null) {
+                ipedRoot = Configuration.getInstance().appRoot;
+            }
+            cmd[0] = cmd[0].replace("mplayer", ipedRoot + "/" + mplayerWin);
         }
         for (int i = 0; i < cmd.length; i++) {
             cmd[i] = cmd[i].replace("$INPUT", input.getAbsolutePath());
@@ -265,7 +273,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         }
         pb.redirectErrorStream(true);
         Process p = pb.start();
-        IOUtil.ignoreInputStream(p.getInputStream());
+        IOUtil.ignoreInputStream(p);
         long timeoutSecs = MIN_TIMEOUT / 3 + TIMEOUT_PER_MB * input.length() / (1 << 20);
         boolean finished = p.waitFor(timeoutSecs, TimeUnit.SECONDS);
         if (!finished) {
@@ -306,7 +314,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             conn.close();
             conn = null;
         }
-        
+
         long totWavConversions = wavSuccess.longValue() + wavFail.longValue();
         if (totWavConversions != 0) {
             LOGGER.info("Total conversions to WAV: " + totWavConversions);
@@ -330,8 +338,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         }
     }
 
-    protected File getTempFileToTranscript(IItem evidence, TemporaryResources tmp)
-            throws IOException, InterruptedException {
+    protected File getTempFileToTranscript(IItem evidence, TemporaryResources tmp) throws IOException, InterruptedException {
         long t = System.currentTimeMillis();
         File tempWav = null;
         try {
@@ -363,14 +370,20 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             return;
         }
 
-        if (evidence.getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR) != null
-                && evidence.getMetadata().get(ExtraProperties.CONFIDENCE_ATTR) != null)
+        if (evidence.getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR) != null && evidence.getMetadata().get(ExtraProperties.CONFIDENCE_ATTR) != null)
             return;
 
         TextAndScore prevResult = getTextFromDb(evidence.getHash());
         if (prevResult != null) {
             evidence.getMetadata().set(ExtraProperties.CONFIDENCE_ATTR, Double.toString(prevResult.score));
             evidence.getMetadata().set(ExtraProperties.TRANSCRIPT_ATTR, prevResult.text);
+            return;
+        }
+
+        try {
+            evidence.getTempFile();
+        } catch (IOException e) {
+            LOGGER.warn("Error creating temp file {} ({} bytes) {}", evidence.getPath(), evidence.getLength(), e.toString());
             return;
         }
 
@@ -398,10 +411,10 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             }
 
         } catch (Exception e) {
-            if (e instanceof TooManyConnectException || e instanceof IPEDException) {
+            if (e instanceof TooManyConnectException || e instanceof IPEDException || e instanceof NoRouteToHostException) {
                 throw e;
             }
-            LOGGER.warn("Unexpected exception while transcribing: " + evidence.getPath(), e);
+            LOGGER.error("Unexpected exception while transcribing: " + evidence.getPath(), e);
         } finally {
             tmp.close();
         }

@@ -36,8 +36,7 @@ import iped.viewers.util.LuceneSimpleHTMLEncoder;
 public class TextHighlighter {
 
     // Highlight dos fragmentos
-    public static TextFragment[] getHighlightedFrags(boolean breakOnNewLine, String text, String fieldName,
-            int minFragmentSize) throws Exception {
+    public static TextFragment[] getHighlightedFrags(boolean breakOnNewLine, String text, String fieldName, int minFragmentSize) throws Exception {
 
         Query query = App.get().getQuery();
         if (text == null || query == null) {
@@ -46,8 +45,7 @@ public class TextHighlighter {
         TokenStream stream = TokenSources.getTokenStream(fieldName, text, App.get().appCase.getAnalyzer());
         QueryScorer scorer = new QueryScorer(query, fieldName);
         Fragmenter fragmenter;
-        SimpleHTMLFormatter formatter = new SimpleHTMLFormatter(ATextViewer.HIGHLIGHT_START_TAG,
-                ATextViewer.HIGHLIGHT_END_TAG);
+        SimpleHTMLFormatter formatter = new SimpleHTMLFormatter(ATextViewer.HIGHLIGHT_START_TAG, ATextViewer.HIGHLIGHT_END_TAG);
         int maxFragments = 1;
         if (minFragmentSize != 0) {
             fragmenter = new TextFragmenter(minFragmentSize);

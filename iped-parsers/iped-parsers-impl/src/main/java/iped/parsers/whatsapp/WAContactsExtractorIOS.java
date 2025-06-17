@@ -16,7 +16,7 @@ import iped.parsers.sqlite.SQLiteRecordValidator;
 import iped.parsers.sqlite.SQLiteUndelete;
 import iped.parsers.sqlite.SQLiteUndeleteTable;
 
-public class WAContactsExtractorIOS extends WAContactsExtractor {
+public abstract class WAContactsExtractorIOS extends WAContactsExtractor {
     
     private static Logger logger = LoggerFactory.getLogger(WAContactsExtractorIOS.class);
 
@@ -29,6 +29,8 @@ public class WAContactsExtractorIOS extends WAContactsExtractor {
     public WAContactsExtractorIOS(File database, WAContactsDirectory directory, boolean recoverDeletedRecords) {
         super(database, directory, recoverDeletedRecords);
     }
+
+    protected abstract Connection getConnection() throws SQLException;
 
     @Override
     public void extractContactList() throws WAExtractorException {
@@ -57,9 +59,13 @@ public class WAContactsExtractorIOS extends WAContactsExtractor {
             }
 
             while (rs.next()) {
-                WAContact c = directory.getContact(getString(rs, "ZWHATSAPPID") + "@s.whatsapp.net"); //$NON-NLS-1$ //$NON-NLS-2$
-                c.setDisplayName(getString(rs, "ZHIGHLIGHTEDNAME")); //$NON-NLS-1$
-                c.setWaName(getString(rs, "ZFULLNAME")); //$NON-NLS-1$
+                String id = getString(rs, "ZWHATSAPPID");
+                if (!id.endsWith(WAContact.waSuffix)) {
+                    id += WAContact.waSuffix;
+                }
+                WAContact c = directory.getContact(id);
+                c.setWaName(getString(rs, "ZHIGHLIGHTEDNAME")); //$NON-NLS-1$
+                c.setDisplayName(getString(rs, "ZFULLNAME")); //$NON-NLS-1$
                 c.setNickName(getString(rs, "ZNICKNAME")); //$NON-NLS-1$
                 String given_name = getString(rs, "ZGIVENNAME"); //$NON-NLS-1$
                 if (given_name == null)
@@ -78,10 +84,13 @@ public class WAContactsExtractorIOS extends WAContactsExtractor {
         if (undeletedContactsTable != null) {
             for (var row : undeletedContactsTable.getTableRows()) {
                 var id = row.getTextValue("ZWHATSAPPID");
-                if (! directory.hasContact(id)) { // only recover contact if it does not exist already
-                    WAContact c = directory.getContact(id + "@s.whatsapp.net"); //$NON-NLS-1$
-                    c.setDisplayName(nullToEmpty(row.getTextValue("ZHIGHLIGHTEDNAME"))); //$NON-NLS-1$
-                    c.setWaName(nullToEmpty(row.getTextValue("ZFULLNAME"))); //$NON-NLS-1$
+                if (!id.endsWith(WAContact.waSuffix)) {
+                    id += WAContact.waSuffix;
+                }
+                if (! directory.hasContact(Util.getNameFromId(id))) { // only recover contact if it does not exist already
+                    WAContact c = directory.getContact(id);
+                    c.setWaName(nullToEmpty(row.getTextValue("ZHIGHLIGHTEDNAME"))); //$NON-NLS-1$
+                    c.setDisplayName(nullToEmpty(row.getTextValue("ZFULLNAME"))); //$NON-NLS-1$
                     c.setNickName(nullToEmpty(row.getTextValue("ZNICKNAME"))); //$NON-NLS-1$
                     String given_name = row.getTextValue("ZGIVENNAME"); //$NON-NLS-1$
                     if (given_name == null) 

@@ -182,7 +182,9 @@ public class Configuration {
         }
 
         ConfigurationManager configManager = ConfigurationManager.createInstance(configDirectory);
-        configManager.addObject(new LocaleConfig());
+        LocaleConfig lc = new LocaleConfig();
+        configManager.addObject(lc);
+        configManager.loadConfig(lc);
 
         PluginConfig pluginConfig = new PluginConfig();
         configManager.addObject(pluginConfig);
@@ -202,6 +204,8 @@ public class Configuration {
         configManager.addObject(new OCRConfig());
         configManager.addObject(new FileSystemConfig());
         configManager.addObject(new AnalysisConfig());
+
+        configManager.addObject(new EnableTaskProperty(FaceRecognitionConfig.enableParam));
 
         TaskInstallerConfig taskConfig = new TaskInstallerConfig();
         configManager.addObject(taskConfig);
