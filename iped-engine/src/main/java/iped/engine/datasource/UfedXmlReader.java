@@ -361,7 +361,7 @@ public class UfedXmlReader extends DataSourceReader {
 
         private static final String LAST_USE_PREFIX = "last known use:";
 
-        StringBuilder chars = new StringBuilder();
+        private final StringBuilder chars = new StringBuilder();
 
         HashMap<String, String> extractionInfoMap = new HashMap<String, String>();
 
@@ -529,6 +529,8 @@ public class UfedXmlReader extends DataSourceReader {
         @Override
         public void startElement(String uri, String localName, String qName, Attributes atts) throws SAXException {
 
+            chars.setLength(0);
+
             XmlNode node = new XmlNode(qName, atts);
             nodeSeq.push(node);
 
@@ -648,9 +650,6 @@ public class UfedXmlReader extends DataSourceReader {
                     }
                 }
             }
-
-            chars = new StringBuilder();
-
         }
 
         private void fillCommonMeta(IItem item, Attributes atts) {
