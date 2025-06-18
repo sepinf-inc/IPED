@@ -78,11 +78,11 @@ function process(e){
 		e.setCategory(cat);
 	}
 
-	if(mime.equals("application/x-ufed-location") && rawPath.indexOf("/InstantMessage_") > -1) {
+	if(mime.equals("application/x-ufed-location") && (rawPath.indexOf("/InstantMessage/") > -1 || rawPath.indexOf("/Chat/") > -1)) {
 		e.setCategory("Shared Locations");
 	}
 
-	if(mime.equals("application/x-ufed-contact") && rawPath.indexOf("/InstantMessage_") > -1) {
+	if(mime.equals("application/x-ufed-contact") && (rawPath.indexOf("/InstantMessage/") > -1 || rawPath.indexOf("/Chat/") > -1)) {
 		e.setCategory("Shared Contacts");
 	}
 
