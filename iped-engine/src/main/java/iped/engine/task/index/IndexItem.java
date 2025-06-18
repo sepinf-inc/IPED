@@ -223,6 +223,9 @@ public class IndexItem extends BasicProps {
         File metadataTypesFile = new File(confDir, attrTypesFilename);
         UTF8Properties props = new UTF8Properties();
         for (Entry<String, Class<?>> e : typesMap.entrySet().toArray(new Entry[0])) {
+            if (ExtraProperties.FACE_ENCODINGS.equals(e.getKey())) {
+                continue;
+            }
             props.setProperty(e.getKey(), e.getValue().getName());
         }
         props.store(metadataTypesFile);
