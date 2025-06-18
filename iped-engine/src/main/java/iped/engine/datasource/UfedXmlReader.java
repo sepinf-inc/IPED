@@ -196,6 +196,14 @@ public class UfedXmlReader extends DataSourceReader {
         return null;
     }
 
+    private boolean entryExists(String entryPath) {
+        if (ufdrFile != null) {
+            return getUISF().entryExists(entryPath);
+        } else {
+            return Files.exists(root.toPath().resolve(entryPath));
+        }
+    }
+
     private UFDRInputStreamFactory getUISF() {
         if (uisf == null) {
             synchronized (uisfMap) {
@@ -1437,7 +1445,7 @@ public class UfedXmlReader extends DataSourceReader {
                 ufedId = ufdrPathToUfedId.get(extracted_path);
 
                 // If extracted path doesn't exist, replace non-existent extracted path by attached file's local path
-                if (!getUISF().entryExists(extracted_path)) {
+                if (!entryExists(extracted_path)) {
                     // Replace extracted path by attached file's local path
                     extracted_path = ufedFileIdToLocalPath.get(item.getMetadata().get(FILE_ID_ATTR));
                 }
