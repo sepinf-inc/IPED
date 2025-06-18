@@ -353,11 +353,11 @@ class FaceRecognitionTask:
             
             face_encodings = []
             for i in range(num_faces):
-                list = []
+                encodings_list = []
                 for j in range(128):
                     line = proc.stdout.readline()
-                    list.append(float(line))
-                np_array = np.array(list)
+                    encodings_list.append(float(line))
+                np_array = np.array(encodings_list)
                 face_encodings.append(np_array)
             
             t3 = time.time()
@@ -372,7 +372,7 @@ class FaceRecognitionTask:
         face_count = len(face_locations)
 
         item.setExtraAttribute(ExtraProperties.FACE_LOCATIONS, face_locations)
-        item.setExtraAttribute(ExtraProperties.FACE_ENCODINGS, face_encodings)
+        item.setExtraAttribute(ExtraProperties.FACE_ENCODINGS, list(map(javaConverter.toKnnVector, face_encodings)))
         item.setExtraAttribute(ExtraProperties.FACE_COUNT, face_count)
         
         self.cacheResults(hash, face_locations, face_encodings, face_count)

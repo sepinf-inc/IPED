@@ -17,11 +17,11 @@ import iped.engine.config.LocalConfig;
 import iped.engine.data.CaseData;
 import iped.engine.data.IPEDSource;
 import iped.engine.search.IPEDSearcher;
+import iped.engine.task.index.IndexItem.KnnVector;
 import iped.parsers.python.PythonParser;
 import iped.utils.ImageUtil;
 import jep.Jep;
 import jep.JepException;
-import jep.NDArray;
 
 public class PythonTask extends AbstractTask {
 
@@ -58,37 +58,9 @@ public class PythonTask extends AbstractTask {
         super.caseData = caseData;
     }
 
-    private class ArrayConverter {
-        public NDArray<?> getNDArray(byte[] array) {
-            return new NDArray(array);
-        }
-
-        public NDArray<?> getNDArray(int[] array) {
-            return new NDArray(array);
-        }
-
-        public NDArray<?> getNDArray(long[] array) {
-            return new NDArray(array);
-        }
-
-        public NDArray<?> getNDArray(float[] array) {
-            return new NDArray(array);
-        }
-
-        public NDArray<?> getNDArray(double[] array) {
-            return new NDArray(array);
-        }
-
-        public NDArray<?> getNDArray(boolean[] array) {
-            return new NDArray(array);
-        }
-
-        public NDArray<?> getNDArray(short[] array) {
-            return new NDArray(array);
-        }
-
-        public NDArray<?> getNDArray(char[] array) {
-            return new NDArray(array);
+    public class Converter {
+        public KnnVector toKnnVector(double[] array) {
+            return new KnnVector(array);
         }
     }
 
@@ -107,13 +79,13 @@ public class PythonTask extends AbstractTask {
     }
 
     private void setGlobalVars(Jep jep) throws JepException {
-        setGlobalVar(jep, "caseData", this.caseData); //$NON-NLS-1$
-        setGlobalVar(jep, "moduleDir", this.output); //$NON-NLS-1$
-        setGlobalVar(jep, "worker", this.worker); //$NON-NLS-1$
-        setGlobalVar(jep, "stats", this.stats); //$NON-NLS-1$
-        setGlobalVar(jep, "logger", LOGGER); //$NON-NLS-1$
-        setGlobalVar(jep, "javaArray", new ArrayConverter()); //$NON-NLS-1$
-        setGlobalVar(jep, "ImageUtil", new ImageUtil()); //$NON-NLS-1$
+        setGlobalVar(jep, "caseData", this.caseData);
+        setGlobalVar(jep, "moduleDir", this.output);
+        setGlobalVar(jep, "worker", this.worker);
+        setGlobalVar(jep, "stats", this.stats);
+        setGlobalVar(jep, "logger", LOGGER);
+        setGlobalVar(jep, "javaConverter", new Converter());
+        setGlobalVar(jep, "ImageUtil", new ImageUtil());
 
         LocalConfig localConfig = ConfigurationManager.get().findObject(LocalConfig.class);
         setGlobalVar(jep, "numThreads", Integer.valueOf(localConfig.getNumThreads()));
