@@ -97,6 +97,9 @@ public class UfedChatStringUtils {
     }
 
     public static String getPartyString(Party party) {
+        if (party == null) {
+            return null;
+        }
         if (StringUtils.isAllBlank(party.getName(), party.getIdentifier())) {
             return "";
         } else if (StringUtils.isNoneBlank(party.getName(), party.getIdentifier())) {

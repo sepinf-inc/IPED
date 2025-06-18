@@ -32,6 +32,7 @@ import iped.parsers.ufed.model.Contact;
 import iped.parsers.ufed.model.ContactPhoto;
 import iped.parsers.ufed.model.InstantMessage;
 import iped.parsers.ufed.model.JumpTarget;
+import iped.parsers.ufed.model.ReplyMessageData;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
@@ -311,15 +312,27 @@ public class UFEDChatParser extends AbstractParser {
 
         // load message items
         chat.getMessages().stream().forEach(m -> {
-            m.getAttachments().stream().forEach(a -> {
-                loadAttachmentReference(a, searcher);
-            });
-            m.getSharedContacts().stream().forEach(c -> {
-                loadContactReference(c, searcher);
-            });
-            loadLocationReference(m, searcher);
+            loadInstantMessageReferences(m, searcher);
         });
     }
+
+    private void loadInstantMessageReferences(InstantMessage message, IItemSearcher searcher) {
+
+        message.getAttachments().stream().forEach(a -> {
+            loadAttachmentReference(a, searcher);
+        });
+        message.getSharedContacts().stream().forEach(c -> {
+            loadContactReference(c, searcher);
+        });
+        loadLocationReference(message, searcher);
+        message.getEmbeddedMessage().ifPresent(em -> {
+            loadInstantMessageReferences(em, searcher);
+        });
+        message.getExtraData().getReplyMessage().map(ReplyMessageData::getInstantMessage).ifPresent(rm -> {
+            loadInstantMessageReferences(rm, searcher);
+        });
+    }
+
 
     private void loadContactPhotoData(ContactPhoto photo, IItemSearcher searcher) {
         if (photo.getPhotoNodeId() == null) {

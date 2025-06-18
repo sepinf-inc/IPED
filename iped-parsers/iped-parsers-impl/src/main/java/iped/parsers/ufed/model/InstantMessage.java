@@ -95,8 +95,8 @@ public class InstantMessage extends BaseModel implements Comparable<InstantMessa
         return others;
     }
 
-    public InstantMessage getEmbeddedMessage() {
-        return embeddedMessage;
+    public Optional<InstantMessage> getEmbeddedMessage() {
+        return Optional.ofNullable(embeddedMessage);
     }
 
     public void setEmbeddedMessage(InstantMessage embeddedMessage) {

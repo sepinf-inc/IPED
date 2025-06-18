@@ -445,7 +445,7 @@ public class ReportGenerator {
         String body = quotedMessage.getBody();
         String quoteClick = "onclick=\"goToAnchorId(" + quotedMessage.getSourceIndex() + ");\"";
         String quoteIcon = "";
-        String quoteUser = quotedMessage.getFrom().map(Party::getName).orElse(null);
+        String quoteUser = UfedChatStringUtils.getPartyString(quotedMessage.getFrom().orElse(null));
         if (quoteUser == null) {
             if (message.isFromPhoneOwner()) {
                 quoteUser = Messages.getString("WhatsAppReport.Owner");
