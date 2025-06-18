@@ -257,7 +257,7 @@ public class ReportGenerator {
 
         if (message.isForwardedMessage()) {
             String forwardedFrom = "";
-            Party originalSender = message.getForwaredMessageOriginalSender();
+            Party originalSender = message.findForwardedMessageOriginalSender();
 
             if (originalSender != null) {
                 forwardedFrom = Messages.getString("UFEDChatParser.Forwarded.From") + " " + UfedChatStringUtils.getPartyString(originalSender);
@@ -433,7 +433,7 @@ public class ReportGenerator {
     private void printQuote(PrintWriter out, InstantMessage message) {
         String quoteClass = "quoteBlock " + (message.isFromPhoneOwner() ? "quoteTo" : "quoteFrom");
 
-        InstantMessage quotedMessage = message.getReplyMessage();
+        InstantMessage quotedMessage = message.findReplyMessage(chat);
 
         if (quotedMessage == null) {
             // Reference not found

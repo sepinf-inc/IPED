@@ -148,28 +148,103 @@ public class InstantMessage extends BaseModel implements Comparable<InstantMessa
                 || messageExtraData.getQuotedMessage().filter(q -> "Forwarded".equalsIgnoreCase(q.getLabel())).isPresent();
     }
 
-    public Party getForwaredMessageOriginalSender() {
-        Party originalSender = messageExtraData.getForwardedMessage().map(ForwardedMessageData::getOriginalSender).orElse(null);
-        if (originalSender != null) {
-            return originalSender;
+    public Party findForwardedMessageOriginalSender() {
+        Optional<Party> originalSender = messageExtraData.getForwardedMessage().map(ForwardedMessageData::getOriginalSender);
+        if (originalSender.isPresent()) {
+            return originalSender.get();
         }
 
-        String referenceId = messageExtraData.getQuotedMessage().map(QuotedMessageData::getReferenceId).orElse(null);
-        if (referenceId != null && embeddedMessage != null && StringUtils.equals(embeddedMessage.getId(), referenceId)) {
-            return embeddedMessage.getFrom().orElse(null);
+        InstantMessage quotedMessage = findQuotedMessage(null);
+        if (quotedMessage != null) {
+            return quotedMessage.getFrom().orElse(null);
         }
         return null;
     }
 
-    public InstantMessage getReplyMessage() {
-        InstantMessage replyMessage = messageExtraData.getReplyMessage().map(ReplyMessageData::getInstantMessage).orElse(null);
-        if (replyMessage != null) {
-            return replyMessage;
+    public InstantMessage findReplyMessage(Chat chat) {
+
+        // first search in replyMessage embedded InstantMessage
+        Optional<InstantMessage> replyMessage = messageExtraData.getReplyMessage().map(ReplyMessageData::getInstantMessage);
+        if (replyMessage.isPresent()) {
+            return replyMessage.get();
         }
 
-        String referenceId = messageExtraData.getQuotedMessage().map(QuotedMessageData::getReferenceId).orElse(null);
-        if (referenceId != null && embeddedMessage != null && StringUtils.equals(embeddedMessage.getId(), referenceId)) {
+        // search using replyMessage.originalMessageID
+        replyMessage = messageExtraData
+                .getReplyMessage()
+                .map(ReplyMessageData::getOriginalMessageID)
+                .map(id -> findMessageUsingOriginalMessageId(id, chat));
+        if (replyMessage.isPresent()) {
+            return replyMessage.get();
+        }
+
+        // finally try in quoted message
+        return findQuotedMessage(chat);
+    }
+
+    public InstantMessage findQuotedMessage(Chat chat) {
+
+        // search using quotedMessage.originalMessageID
+        Optional<InstantMessage> quotedMessage = messageExtraData
+                .getQuotedMessage()
+                .map(QuotedMessageData::getOriginalMessageID)
+                .map(id -> findMessageUsingOriginalMessageId(id, chat));
+        if (quotedMessage.isPresent()) {
+            return quotedMessage.get();
+        }
+
+        // search using quotedMessage.referenceId
+        quotedMessage = messageExtraData
+                .getQuotedMessage()
+                .map(QuotedMessageData::getReferenceId)
+                .map(refId -> findMessageUsingReferenceId(refId, chat));
+        if (quotedMessage.isPresent()) {
+            return quotedMessage.get();
+        }
+
+        return null;
+    }
+
+    private InstantMessage findMessageUsingOriginalMessageId(String originalMessageID, Chat chat) {
+
+        // first compare with embeddedMessage
+        if (embeddedMessage != null && StringUtils.equals(embeddedMessage.getIdentifier(), originalMessageID)) {
             return embeddedMessage;
+        }
+
+        // ... so look up in chat messages
+        if (chat != null) {
+            Optional<InstantMessage> chatMessage = chat
+                    .getMessages()
+                    .stream() //
+                    .filter(m -> StringUtils.equals(m.getIdentifier(), originalMessageID)) //
+                    .findFirst();
+
+            if (chatMessage.isPresent()) {
+                return chatMessage.get();
+            }
+        }
+        return null;
+    }
+
+    private InstantMessage findMessageUsingReferenceId(String referenceId, Chat chat) {
+
+        // first compare with embeddedMessage
+        if (embeddedMessage != null && StringUtils.equals(embeddedMessage.getId(), referenceId)) {
+            return embeddedMessage;
+        }
+
+        // ... so look up in chat messages
+        if (chat != null) {
+            Optional<InstantMessage> chatMessage = chat
+                    .getMessages()
+                    .stream() //
+                    .filter(m -> StringUtils.equals(m.getId(), referenceId)) //
+                    .findFirst();
+
+            if (chatMessage.isPresent()) {
+                return chatMessage.get();
+            }
         }
         return null;
     }
