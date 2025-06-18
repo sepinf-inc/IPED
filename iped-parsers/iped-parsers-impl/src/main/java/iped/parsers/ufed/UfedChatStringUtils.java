@@ -129,7 +129,9 @@ public class UfedChatStringUtils {
 
     public static String getContactTitle(Contact contact) {
         return new StringBuilder()
-                .append(StringUtils.firstNonBlank(contact.getType(), "Contact")) //
+                .append("Contact")
+                .append(contact.getType() != null ? "-" : "")
+                .append(StringUtils.defaultString(contact.getType())) //
                 .append("-[") //
                 .append(StringUtils.firstNonBlank(
                         contact.getName(),
