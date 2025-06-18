@@ -25,9 +25,11 @@ import javax.swing.ListSelectionModel;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
 
 import iped.data.IItem;
 import iped.engine.search.QueryBuilder;
@@ -100,6 +102,12 @@ public class ReferencedByTableModel extends BaseTableModel {
             queryBuilder.add(b.getQuery(ExtraProperties.LINKED_ITEMS + ":\"" + idQuery + "\""), Occur.SHOULD);
         } catch (ParseException | QueryNodeException e) {
             e.printStackTrace();
+        }
+
+        // ufed:id
+        String ufedId = doc.get(ExtraProperties.UFED_ID);
+        if (StringUtils.isNotBlank(ufedId)) {
+            queryBuilder.add(new TermQuery(new Term(ExtraProperties.UFED_JUMP_TARGETS, ufedId)), Occur.SHOULD);
         }
 
         return queryBuilder.build();

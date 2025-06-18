@@ -139,7 +139,7 @@ public class UfedChatMetadataUtils {
 
         // add jumpTargets
         model.getJumpTargets().forEach(jt -> {
-            metadata.add(ExtraProperties.UFED_META_PREFIX + "jumpTargets", jt.getId());
+            metadata.add(ExtraProperties.UFED_JUMP_TARGETS, jt.getId());
         });
     }
 

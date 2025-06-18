@@ -838,7 +838,7 @@ public class UfedXmlReader extends DataSourceReader {
                     }
                 }
             } else if (qName.equals("targetid") && parentNode.element.equals("jumptargets")) { //$NON-NLS-1$ //$NON-NLS-2$
-                item.getMetadata().add(ExtraProperties.UFED_META_PREFIX + parentNode.element, chars.toString().trim());
+                item.getMetadata().add(ExtraProperties.UFED_JUMP_TARGETS, chars.toString().trim());
 
             } else if (qName.equals("taggedFiles")) { //$NON-NLS-1$
                 md5ToLocalPath.clear();
