@@ -127,7 +127,6 @@ public class UFEDChatParser extends AbstractParser {
     public void parse(InputStream inputStream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
 
-        long startTime = System.currentTimeMillis();
         try {
             IItemSearcher searcher = context.get(IItemSearcher.class);
             IItemReader item = context.get(IItemReader.class);
@@ -199,8 +198,6 @@ public class UFEDChatParser extends AbstractParser {
                     extractor.parseEmbedded(chatStream, handler, chatPreviewMeta, false);
                     bytes = nextBytes;
 
-                    logger.error("   Ufed Chat only-chat: " + (double) (System.currentTimeMillis() - startTime) / 1000 + " ms");
-
                     if (extractMessages) {
                         extractMessages(subList, virtualId, handler, extractor, chat);
                     }
@@ -210,8 +207,6 @@ public class UFEDChatParser extends AbstractParser {
             logger.error("Error processing chat", e);
             throw e;
         }
-
-        logger.error("Ufed Chat TOTAL: " + (double) (System.currentTimeMillis() - startTime) / 1000 + " ms");
     }
 
     private void extractMessages(List<InstantMessage> subList, String chatVirtualId, ContentHandler handler,
@@ -332,7 +327,6 @@ public class UFEDChatParser extends AbstractParser {
             loadInstantMessageReferences(rm, searcher);
         });
     }
-
 
     private void loadContactPhotoData(ContactPhoto photo, IItemSearcher searcher) {
         if (photo.getPhotoNodeId() == null) {
