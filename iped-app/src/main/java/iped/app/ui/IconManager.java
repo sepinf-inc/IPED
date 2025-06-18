@@ -385,10 +385,14 @@ public class IconManager {
             mimeIconMap.put("application/x-ufed-deviceevent", icon);
         }
 
+        icon = availableIconsMap.get("attachment");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-attachment", icon);
+        }
+
         icon = availableIconsMap.get("message");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-instantmessage", icon);
-            mimeIconMap.put("message/x-ufed-attachment", icon);
             mimeIconMap.put("application/x-ufed-chat-preview", icon);
             mimeIconMap.put("message/x-chat-message", icon);
             mimeIconMap.put("message/x-discord-message", icon);
