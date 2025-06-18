@@ -11,7 +11,6 @@ import javax.imageio.stream.ImageInputStream;
 
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.ParseContext;
 
 import iped.datasource.IDataSource;
 import iped.io.ISeekableInputStreamFactory;
@@ -159,12 +158,5 @@ public interface IItemReader extends IStreamSource {
      * @return Object containing the metadata of the item
      */
     public Metadata getMetadata();
-
-    /**
-     * Used to pass models and other objects to parsers
-     */
-    default ParseContext getParseContext() {
-        return null;
-    }
 
 }

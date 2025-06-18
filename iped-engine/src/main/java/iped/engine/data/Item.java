@@ -30,7 +30,6 @@ import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.ParseContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -207,8 +206,6 @@ public class Item implements IItem {
     private byte[] data;
 
     private ISeekableInputStreamFactory inputStreamFactory;
-
-    private ParseContext context;
 
     private static final int BUF_LEN = 8 * 1024 * 1024;
     
@@ -1318,12 +1315,5 @@ public class Item implements IItem {
 
     public void setTempAttribute(String key, Object value) {
         tempAttributes.put(key, value);
-    }
-
-    public ParseContext getParseContext() {
-        if (context == null) {
-            context = new ParseContext();
-        }
-        return context;
     }
 }

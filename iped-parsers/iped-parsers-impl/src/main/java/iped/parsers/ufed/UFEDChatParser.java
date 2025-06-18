@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.data.IItem;
 import iped.data.IItemReader;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.ufed.model.Attachment;
@@ -63,6 +64,7 @@ public class UFEDChatParser extends AbstractParser {
 
     public static final String ATTACHED_MEDIA_MSG = "ATTACHED_MEDIA: ";
 
+    public static final String CHAT_TEMP_ATTRIBUTE = "ufed:chat";
 
     private boolean extractMessages = true;
     private boolean extractActivityLogs = true;
@@ -137,7 +139,10 @@ public class UFEDChatParser extends AbstractParser {
                 return;
             }
 
-            final Chat chat = item.getParseContext().get(Chat.class);
+            Chat chat = null;
+            if (item instanceof IItem) {
+                chat = (Chat) ((IItem) item).getTempAttribute(CHAT_TEMP_ATTRIBUTE);
+            }
             if (chat == null) {
                 return;
             }

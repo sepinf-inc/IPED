@@ -1785,7 +1785,7 @@ public class UfedXmlReader extends DataSourceReader {
                 }
                 item.setExtraAttribute(IndexItem.TREENODE, Boolean.toString(true));
 
-                item.getParseContext().set(Chat.class, chat);
+                item.setTempAttribute(UFEDChatParser.CHAT_TEMP_ATTRIBUTE, chat);
 
                 try {
                     processItem(item);
