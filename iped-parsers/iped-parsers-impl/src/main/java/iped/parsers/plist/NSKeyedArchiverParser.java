@@ -3,7 +3,6 @@ package iped.parsers.plist;
 import static iped.parsers.plist.PListHelper.METADATA_KEY_SEPARATOR;
 import static iped.parsers.plist.PListHelper.appendPath;
 import static iped.parsers.plist.PListHelper.getUIDInteger;
-import static org.apache.commons.text.StringEscapeUtils.escapeHtml4;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -276,7 +275,7 @@ public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverPa
 
             state.xhtml.startElement("details", createAtributes(state));
             state.xhtml.startElement("summary");
-            state.xhtml.characters(escapeHtml4(className) + SUMMARY_SUFFIX);
+            state.xhtml.characters(className + SUMMARY_SUFFIX);
             processItemsCount(state, "dictionary", newDict.size());
             state.xhtml.endElement("summary");
 
@@ -382,7 +381,7 @@ public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverPa
 
         state.xhtml.startElement("details", createAtributes(state));
         state.xhtml.startElement("summary");
-        state.xhtml.characters(escapeHtml4(className) + SUMMARY_SUFFIX);
+        state.xhtml.characters(className + SUMMARY_SUFFIX);
         processItemsCount(state, "Keyed Archive array", array.count());
         state.xhtml.endElement("summary");
 
@@ -396,7 +395,7 @@ public class NSKeyedArchiverParser extends AbstractPListParser<NSKeyedArchiverPa
         state.xhtml.startElement("details", createAtributes(state));
         state.xhtml.startElement("summary");
         String className = getNSClassName(obj, state.extra.objects);
-        state.xhtml.characters(escapeHtml4(className) + SUMMARY_SUFFIX);
+        state.xhtml.characters(className + SUMMARY_SUFFIX);
 
         NSArray keys = (NSArray) obj.get(NS_KEYS); // possibly an array of UIDs
         NSArray objects = (NSArray) obj.get(NS_OBJECTS);

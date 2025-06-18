@@ -6,7 +6,6 @@ import static iped.parsers.plist.PListHelper.STRING;
 import static iped.parsers.plist.PListHelper.UID;
 import static iped.parsers.plist.PListHelper.appendPath;
 import static iped.parsers.plist.PListHelper.getUIDInteger;
-import static org.apache.commons.text.StringEscapeUtils.escapeHtml4;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -229,7 +228,7 @@ public abstract class AbstractPListParser<T> implements Parser {
             state.xhtml.startElement("details");
             state.xhtml.startElement("summary");
             state.xhtml.startElement("strong");
-            state.xhtml.characters(escapeHtml4(key) + SUMMARY_SUFFIX);
+            state.xhtml.characters(key + SUMMARY_SUFFIX);
             state.xhtml.endElement("strong");
 
             // Peek at value type for summary
@@ -290,9 +289,9 @@ public abstract class AbstractPListParser<T> implements Parser {
     protected void processSimpleText(String text, String type, State state) throws SAXException {
         state.xhtml.startElement("p", createAtributes(state));
         state.xhtml.startElement("em");
-        state.xhtml.characters("(" + escapeHtml4(type) + ")");
+        state.xhtml.characters("(" + type + ")");
         state.xhtml.endElement("em");
-        state.xhtml.characters(": " + escapeHtml4(text));
+        state.xhtml.characters(": " + text);
         state.xhtml.endElement("p");
     }
 
@@ -322,7 +321,7 @@ public abstract class AbstractPListParser<T> implements Parser {
             state.xhtml.startElement("em");
             state.xhtml.characters("(possible date)");
             state.xhtml.endElement("em");
-            state.xhtml.characters(": " + escapeHtml4(DateUtil.dateToString(possibleDate)));
+            state.xhtml.characters(": " + DateUtil.dateToString(possibleDate));
             state.xhtml.endElement("p");
 
             // add possible date in metadata
@@ -340,7 +339,7 @@ public abstract class AbstractPListParser<T> implements Parser {
         state.xhtml.startElement("em");
         state.xhtml.characters("(data)");
         state.xhtml.endElement("em");
-        state.xhtml.characters(": " + escapeHtml4(displayText) + " (Base64 encoded, " + value.length() + " bytes)");
+        state.xhtml.characters(": " + displayText + " (Base64 encoded, " + value.length() + " bytes)");
         state.xhtml.endElement("p");
 
         extractDataAsSubItem(value, path, state);
