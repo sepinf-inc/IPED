@@ -174,6 +174,10 @@ public class InstantMessage extends BaseModel implements Comparable<InstantMessa
         return null;
     }
 
+    public String getAnchorId() {
+        return StringUtils.firstNonBlank(getIdentifier(), getId(), Integer.toString(getSourceIndex()));
+    }
+
     @Override
     public String toString() {
         return new StringJoiner("\n    ", InstantMessage.class.getSimpleName() + "[\n    ", "\n  ]")

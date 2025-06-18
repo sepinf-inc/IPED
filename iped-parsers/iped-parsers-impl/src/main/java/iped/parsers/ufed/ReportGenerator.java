@@ -228,7 +228,7 @@ public class ReportGenerator {
 
         boolean isOutgoing = message.isFromPhoneOwner();
 
-        out.println("<div id=\"" + message.getSourceIndex() + "\" class=\"linha\">");
+        out.println("<div id=\"" + message.getAnchorId() + "\" class=\"linha\">");
         String name = null;
         if (message.isSystemMessage()) {
             out.println("<div class=\"systemmessage\">");
@@ -443,7 +443,7 @@ public class ReportGenerator {
         }
 
         String body = quotedMessage.getBody();
-        String quoteClick = "onclick=\"goToAnchorId(" + quotedMessage.getSourceIndex() + ");\"";
+        String quoteClick = "onclick=\"goToAnchorId('" + quotedMessage.getAnchorId() + "');\"";
         String quoteIcon = "";
         String quoteUser = UfedChatStringUtils.getPartyString(quotedMessage.getFrom().orElse(null));
         if (quoteUser == null) {
