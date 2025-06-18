@@ -218,10 +218,11 @@ public class IndexItem extends BasicProps {
         return Collections.unmodifiableMap(typesMap);
     }
 
+    @SuppressWarnings("unchecked")
     public static void saveMetadataTypes(File confDir) throws IOException {
         File metadataTypesFile = new File(confDir, attrTypesFilename);
         UTF8Properties props = new UTF8Properties();
-        for (Entry<String, Class<?>> e : typesMap.entrySet()) {
+        for (Entry<String, Class<?>> e : typesMap.entrySet().toArray(new Entry[0])) {
             if (e.getValue().isMemberClass()) {
                 props.setProperty(e.getKey(), e.getValue().getName());
             } else {
