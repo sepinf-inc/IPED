@@ -1,12 +1,13 @@
 package iped.engine.datasource.ufed;
 import java.util.Stack;
-import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
+import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 
 import iped.parsers.ufed.model.Attachment;
@@ -31,23 +32,41 @@ import iped.parsers.ufed.model.UserID;
 import iped.utils.DateUtil;
 
 
-public class UfedXmlModelHandler extends DefaultHandler {
+public class UfedModelHandler extends DefaultHandler {
 
-    private static Logger logger = LoggerFactory.getLogger(UfedXmlModelHandler.class);
+    private static Logger logger = LoggerFactory.getLogger(UfedModelHandler.class);
 
     private final Stack<BaseModel> modelStack = new Stack<>();
     private final Stack<String> fieldNameStack = new Stack<>();
     private final Stack<String> fieldTypeStack = new Stack<>();
     private final StringBuilder elementValueBuilder = new StringBuilder();
-    private Chat chatResult;
-    private JumpTarget currentJumpTarget; // To handle the creation of a JumpTarget
+    private JumpTarget currentJumpTarget;
 
-    public Chat getChatResult() {
-        return chatResult;
+    private XMLReader xmlReader;
+    private ContentHandler parentHandler;
+    private UfedModelListener listener;
+    private boolean listOnly;
+
+
+    public interface UfedModelListener {
+        void onModelStarted(BaseModel model, Attributes attr);
+        void onModelCompleted(BaseModel model);
+    }
+
+    public UfedModelHandler(XMLReader xmlReader, ContentHandler parentHandler, UfedModelListener listener, boolean listOnly) {
+        this.xmlReader = xmlReader;
+        this.parentHandler = parentHandler;
+        this.listener = listener;
+        this.listOnly = listOnly;
     }
 
     @Override
     public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+        if (listOnly) {
+            modelStack.push(null);
+            return;
+        }
+
         elementValueBuilder.setLength(0); // Clear builder for new element
 
         if ("model".equalsIgnoreCase(qName)) {
@@ -61,6 +80,8 @@ public class UfedXmlModelHandler extends DefaultHandler {
 
             if (!modelStack.isEmpty() && !fieldNameStack.isEmpty()) {
                 addChildModel(modelStack.peek(), newModel, fieldNameStack.peek());
+            } else {
+                listener.onModelStarted(newModel, attributes);
             }
 
             modelStack.push(newModel);
@@ -81,10 +102,26 @@ public class UfedXmlModelHandler extends DefaultHandler {
 
     @Override
     public void endElement(String uri, String localName, String qName) throws SAXException {
+
+        // the list of models has ended, so pass the control back to parentHandler
+        if (modelStack.isEmpty()) {
+            xmlReader.setContentHandler(parentHandler);
+            return;
+        }
+
+        if (listOnly) {
+            modelStack.pop();
+            if (modelStack.isEmpty()) {
+                listener.onModelCompleted(null);
+            }
+            return;
+        }
+
         if ("model".equalsIgnoreCase(qName)) {
             BaseModel completedModel = modelStack.pop();
-            if (modelStack.isEmpty() && completedModel instanceof Chat) {
-                this.chatResult = (Chat) completedModel;
+            if (modelStack.isEmpty()) {
+                // this model object has completed, notify the listener
+                listener.onModelCompleted(completedModel);
             }
         } else if ("field".equalsIgnoreCase(qName) || "modelField".equalsIgnoreCase(qName)
                    || "multiModelField".equalsIgnoreCase(qName) || "nodeField".equalsIgnoreCase(qName)) {
@@ -129,9 +166,8 @@ public class UfedXmlModelHandler extends DefaultHandler {
         try {
             switch (type) {
                 case "TimeStamp": return DateUtil.tryToParseDate(value);
-                case "Boolean": return "True".equalsIgnoreCase(value);
-                case "Double": return Double.parseDouble(value.replace(',', '.'));
-                case "Guid": return UUID.fromString(value);
+                case "Boolean": return Boolean.valueOf(value);
+                case "Double": return value.replace(',', '.');
                 default: return value;
             }
         } catch (Exception e) {
@@ -191,7 +227,7 @@ public class UfedXmlModelHandler extends DefaultHandler {
             } else if ("ActivityLog".equals(fieldName) && child instanceof ChatActivity) {
                 message.setActivityLog((ChatActivity) child);
             } else if ("MessageExtraData".equals(fieldName)) {
-                InstantMessageExtraData extraData = message.getMessageExtraData();
+                InstantMessageExtraData extraData = message.getExtraData();
                 if(child instanceof MessageLabel) {
                     extraData.getMessageLabels().add((MessageLabel) child);
                 } else if (child instanceof QuotedMessageData) {
@@ -217,17 +253,20 @@ public class UfedXmlModelHandler extends DefaultHandler {
             Contact contact = (Contact) parent;
             if ("Entries".equals(fieldName) && child instanceof ContactEntry) {
                 contact.getEntries().add((ContactEntry) child);
+            } else if ("Photos".equals(fieldName) && child instanceof ContactPhoto) {
+                contact.getPhotos().add((ContactPhoto) child);
             } else {
-                logger.error("Unknown Contact child '{}' ({}). Ignoring...", fieldName, child.getId());
+                logger.warn("Unrecognized Contact child '{}' => {} (id={}).", fieldName, child.getClass().getName(), child.getId());
+                contact.getOthers().put(fieldName, child);
             }
         } else if (parent instanceof ReplyMessageData) {
-            if("InstantMessage".equals(fieldName)) {
+            if("InstantMessage".equals(fieldName) && child instanceof InstantMessage) {
                 ((ReplyMessageData) parent).setInstantMessage((InstantMessage) child);
             } else {
                 logger.error("Unknown ReplyMessageData child '{}' ({}). Ignoring...", fieldName, child.getId());
             }
         } else if (parent instanceof ChatActivity) {
-            if("Participant".equals(fieldName)) {
+            if("Participant".equals(fieldName) && child instanceof Party) {
                 ((ChatActivity) parent).setParticipant((Party) child);
             } else {
                 logger.error("Unknown ChatActivity child '{}' ({}). Ignoring...", fieldName, child.getId());

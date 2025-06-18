@@ -1,7 +1,5 @@
 package iped.parsers.ufed.model;
 
-import java.util.UUID;
-
 /**
  * Represents a <model type="QuotedMessageData"> element.
  */
@@ -15,6 +13,6 @@ public class QuotedMessageData extends BaseModel {
 
     // Specific field getters
     public String getOriginalMessageID() { return (String) getField("OriginalMessageID"); }
-    public UUID getReferenceId() { return (UUID) getField("ReferenceId"); }
+    public String getReferenceId() { return (String) getField("ReferenceId"); }
     public String getLabel() { return (String) getField("Label"); }
 }

@@ -3,6 +3,7 @@ package iped.parsers.ufed.model;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Represents a <multiModelField type="InstantMessageExtraData">.
@@ -21,24 +22,24 @@ public class InstantMessageExtraData implements Serializable {
         return messageLabels;
     }
 
-    public QuotedMessageData getQuotedMessages() {
-        return quotedMessage;
-    }
-
-    public void setQuotedMessage(QuotedMessageData quotedMessage) {
-        this.quotedMessage = quotedMessage;
-    }
-
-    public ForwardedMessageData getForwardedMessages() {
-        return forwardedMessage;
+    public Optional<ForwardedMessageData> getForwardedMessage() {
+        return Optional.ofNullable(forwardedMessage);
     }
 
     public void setForwardedMessage(ForwardedMessageData forwardedMessage) {
         this.forwardedMessage = forwardedMessage;
     }
 
-    public ReplyMessageData getReplyMessage() {
-        return replyMessage;
+    public Optional<QuotedMessageData> getQuotedMessage() {
+        return Optional.ofNullable(quotedMessage);
+    }
+
+    public void setQuotedMessage(QuotedMessageData quotedMessage) {
+        this.quotedMessage = quotedMessage;
+    }
+
+    public Optional<ReplyMessageData> getReplyMessage() {
+        return Optional.ofNullable(replyMessage);
     }
 
     public void setReplyMessage(ReplyMessageData replyMessage) {

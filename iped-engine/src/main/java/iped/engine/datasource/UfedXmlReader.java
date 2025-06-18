@@ -71,6 +71,8 @@ import iped.engine.core.Manager;
 import iped.engine.data.CaseData;
 import iped.engine.data.DataSource;
 import iped.engine.data.Item;
+import iped.engine.datasource.ufed.UfedModelHandler;
+import iped.engine.datasource.ufed.UfedModelHandler.UfedModelListener;
 import iped.engine.io.MetadataInputStreamFactory;
 import iped.engine.io.UFDRInputStreamFactory;
 import iped.engine.io.UFEDXMLWrapper;
@@ -82,6 +84,10 @@ import iped.engine.task.index.IndexItem;
 import iped.engine.util.Util;
 import iped.parsers.telegram.TelegramParser;
 import iped.parsers.ufed.UFEDChatParser;
+import iped.parsers.ufed.UfedChatMetadataUtils;
+import iped.parsers.ufed.model.BaseModel;
+import iped.parsers.ufed.model.Chat;
+import iped.parsers.ufed.model.InstantMessage;
 import iped.parsers.util.MetadataUtil;
 import iped.parsers.util.PhoneParsingConfig;
 import iped.parsers.whatsapp.WhatsAppParser;
@@ -254,7 +260,7 @@ public class UfedXmlReader extends DataSourceReader {
             spf.setNamespaceAware(true);
             SAXParser saxParser = spf.newSAXParser();
             XMLReader xmlReader = saxParser.getXMLReader();
-            xmlReader.setContentHandler(new XMLContentHandler());
+            xmlReader.setContentHandler(new XMLContentHandler(xmlReader));
             xmlReader.setErrorHandler(new XMLErrorHandler());
             xmlReader.parse(new InputSource(new UFEDXMLWrapper(xmlStream)));
         } finally {
@@ -365,7 +371,7 @@ public class UfedXmlReader extends DataSourceReader {
         }
     }
 
-    private class XMLContentHandler implements ContentHandler {
+    private class XMLContentHandler implements ContentHandler, UfedModelListener {
 
         private static final String LAST_USE_PREFIX = "last known use:";
 
@@ -404,6 +410,8 @@ public class UfedXmlReader extends DataSourceReader {
         boolean inChat = false;
         int numAttachments = 0;
         String prevUfedId = null;
+
+        private XMLReader xmlReader;
 
         private class XmlNode {
             String element;
@@ -453,6 +461,10 @@ public class UfedXmlReader extends DataSourceReader {
                 "Price",
                 "QuotedMessageData"
         ));
+
+        public XMLContentHandler(XMLReader xmlReader) {
+            this.xmlReader = xmlReader;
+        }
 
         @Override
         public void setDocumentLocator(Locator locator) {
@@ -542,6 +554,13 @@ public class UfedXmlReader extends DataSourceReader {
             XmlNode node = new XmlNode(qName, atts);
             nodeSeq.push(node);
 
+            // if started <modelType type="Chat"> or <modelType type="InstantMessage">,
+            // then delegates the parsing to UfedModelHandler
+            if (qName.equals("modelType") && StringUtils.equalsAny(atts.getValue("type"), "Chat", "InstantMessage")) {
+                xmlReader.setContentHandler(new UfedModelHandler(xmlReader, this, this, listOnly));
+                return;
+            }
+
             if (!listOnly)
                 elements.add(qName);
 
@@ -591,27 +610,7 @@ public class UfedXmlReader extends DataSourceReader {
                         return;
                     }
 
-                    Item item = new Item();
-                    item.setExtraAttribute(ExtraProperties.DATASOURCE_READER, UfedXmlReader.class.getSimpleName());
-                    String type = atts.getValue("type"); //$NON-NLS-1$
-                    if (type.equals("Chat"))
-                        inChat = true;
-                    String name = type + "_" + atts.getValue("id"); //$NON-NLS-1$ //$NON-NLS-2$
-                    item.setName(name);
-                    String path = decodedFolder.getPath() + "/" + type + "/" + name; //$NON-NLS-1$ //$NON-NLS-2$
-                    item.setPath(path);
-                    item.setParent(getParent(path));
-                    item.setMediaType(MediaType.application(UFED_MIME_PREFIX + type));
-                    if (caseData.containsReport()) {
-                        // export metadata as content only if generating blind report
-                        item.setInputStreamFactory(new MetadataInputStreamFactory(item.getMetadata()));
-                    }
-                    item.setHash(""); //$NON-NLS-1$
-
-                    boolean deleted = "deleted".equalsIgnoreCase(atts.getValue("deleted_state")); //$NON-NLS-1$ //$NON-NLS-2$
-                    item.setDeleted(deleted);
-
-                    fillCommonMeta(item, atts);
+                    Item item = createModelItem(atts);
                     itemSeq.push(item);
 
                     String ufedId = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "id");
@@ -658,6 +657,32 @@ public class UfedXmlReader extends DataSourceReader {
                     }
                 }
             }
+        }
+
+        private Item createModelItem(Attributes atts) throws SAXException {
+            Item item = new Item();
+            item.setExtraAttribute(ExtraProperties.DATASOURCE_READER, UfedXmlReader.class.getSimpleName());
+            String type = atts.getValue("type");
+            if (type.equals("Chat")) {
+                inChat = true;
+            }
+            String name = type + "_" + atts.getValue("id");
+            item.setName(name);
+            String path = decodedFolder.getPath() + "/" + type + "/" + name;
+            item.setPath(path);
+            item.setParent(getParent(path));
+            item.setMediaType(MediaType.application(UFED_MIME_PREFIX + type));
+            if (caseData.containsReport()) {
+                // export metadata as content only if generating blind report
+                item.setInputStreamFactory(new MetadataInputStreamFactory(item.getMetadata()));
+            }
+            item.setHash("");
+
+            boolean deleted = "deleted".equalsIgnoreCase(atts.getValue("deleted_state"));
+            item.setDeleted(deleted);
+
+            fillCommonMeta(item, atts);
+            return item;
         }
 
         private void fillCommonMeta(IItem item, Attributes atts) {
@@ -1725,6 +1750,62 @@ public class UfedXmlReader extends DataSourceReader {
 
         }
 
+        @Override
+        public void onModelStarted(BaseModel completedModel, Attributes attr) {
+            if (listOnly) {
+                return;
+            }
+
+            try {
+                Item item = createModelItem(attr);
+                itemSeq.push(item);
+            } catch (SAXException e) {
+                LOGGER.error("Error creating model Item", e);
+            }
+        }
+
+        @Override
+        public void onModelCompleted(BaseModel model) {
+            if (listOnly) {
+                caseData.incDiscoveredEvidences(1);
+                return;
+            }
+
+            Item item = itemSeq.pop();
+
+            if (model instanceof Chat) {
+
+                // handle Chat model
+                Chat chat = (Chat) model;
+                String source = chat.getSource();
+                if (StringUtils.containsIgnoreCase(source, Chat.SOURCE_WHATSAPP)) {
+                    item.setMediaType(UFEDChatParser.UFED_CHAT_WA_MIME);
+                } else if (Chat.SOURCE_TELEGRAM.equalsIgnoreCase(source)) {
+                    item.setMediaType(UFEDChatParser.UFED_CHAT_TELEGRAM);
+                }
+                item.setExtraAttribute(IndexItem.TREENODE, Boolean.toString(true));
+
+                item.getParseContext().set(Chat.class, chat);
+
+                try {
+                    processItem(item);
+                } catch (SAXException e) {
+                    LOGGER.error("Error on sending Chat to process", e);
+                }
+
+            } else if (model instanceof InstantMessage) {
+
+                // handle InstantMessage model (without Chat parent)
+                InstantMessage message = (InstantMessage) model;
+                UfedChatMetadataUtils.fillInstantMessageMetadata(message, item.getMetadata(), null);
+
+                try {
+                    processItem(item);
+                } catch (SAXException e) {
+                    LOGGER.error("Error on sending InstantMessage to process", e);
+                }
+            }
+        }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

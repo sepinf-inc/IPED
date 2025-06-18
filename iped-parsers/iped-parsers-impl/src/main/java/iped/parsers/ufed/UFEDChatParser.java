@@ -3,18 +3,12 @@ package iped.parsers.ufed;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
@@ -24,26 +18,30 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.sax.XHTMLContentHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import com.google.common.collect.ImmutableMap;
-
 import iped.data.IItemReader;
 import iped.parsers.standard.StandardParser;
-import iped.parsers.util.Messages;
-import iped.parsers.whatsapp.Message;
-import iped.parsers.whatsapp.WAContact;
+import iped.parsers.ufed.model.Attachment;
+import iped.parsers.ufed.model.Chat;
+import iped.parsers.ufed.model.ChatActivity;
+import iped.parsers.ufed.model.Contact;
+import iped.parsers.ufed.model.ContactPhoto;
+import iped.parsers.ufed.model.InstantMessage;
+import iped.parsers.ufed.model.JumpTarget;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
-import iped.properties.MediaTypes;
 import iped.search.IItemSearcher;
-import iped.utils.DateUtil;
+import iped.utils.EmptyInputStream;
 
 public class UFEDChatParser extends AbstractParser {
 
     private static final long serialVersionUID = 1L;
+
+    private static Logger logger = LoggerFactory.getLogger(UFEDChatParser.class);
 
     public static final MediaType UFED_CHAT_MIME = MediaType.application("x-ufed-chat");
     public static final MediaType UFED_CHAT_WA_MIME = MediaType.application("x-ufed-chat-whatsapp");
@@ -51,12 +49,12 @@ public class UFEDChatParser extends AbstractParser {
 
     public static final MediaType UFED_CHAT_PREVIEW_MIME = MediaType.application("x-ufed-chat-preview");
 
-    public static final Map<String, MediaType> appToMime = ImmutableMap.of("whatsapp",
-            MediaType.application("x-ufed-chat-preview-whatsapp"), "telegram",
-            MediaType.application("x-ufed-chat-preview-telegram"), "skype",
-            MediaType.application("x-ufed-chat-preview-skype"), "facebook",
-            MediaType.application("x-ufed-chat-preview-facebook"), "instagram",
-            MediaType.application("x-ufed-chat-preview-instagram"));
+    public static final Map<String, MediaType> appToMime = Map.of( //
+                    "whatsapp", MediaType.application("x-ufed-chat-preview-whatsapp"), //
+                    "telegram", MediaType.application("x-ufed-chat-preview-telegram"), //
+                    "skype", MediaType.application("x-ufed-chat-preview-skype"), //
+                    "facebook", MediaType.application("x-ufed-chat-preview-facebook"), //
+                    "instagram", MediaType.application("x-ufed-chat-preview-instagram"));
 
     public static final String META_PHONE_OWNER = ExtraProperties.UFED_META_PREFIX + "phoneOwner";
     public static final String META_FROM_OWNER = ExtraProperties.UFED_META_PREFIX + "fromOwner";
@@ -64,22 +62,12 @@ public class UFEDChatParser extends AbstractParser {
 
     public static final String ATTACHED_MEDIA_MSG = "ATTACHED_MEDIA: ";
 
-    protected static final String WHATSAPP = "WhatsApp";
-    protected static final String WHATSAPP_BUSINESS = "WhatsApp Business";
-    protected static final String TELEGRAM = "Telegram";
 
-    // Types used by UFED
-    protected static final String CHATTYPE_ONEONONE = "OneOnOne";
-    protected static final String CHATTYPE_GROUP = "Group";
-    protected static final String CHATTYPE_BROADCAST = "Broadcast";
-    protected static final String CHATTYPE_UNKNOWN = "Unknown";
-
-    // Strings used in item names and titles
-    protected static final String CHATTYPE_GROUP_TITLE = Messages.getString("UFEDChatParser.Group");
-    protected static final String CHATTYPE_BROADCAST_TITLE = Messages.getString("UFEDChatParser.Broadcast");
-    protected static final String CHATTYPE_STATUS_TITLE = Messages.getString("UFEDChatParser.Status");
-    protected static final String CHATTYPE_UNKNOWN_TITLE = Messages.getString("UFEDChatParser.Unknown");
-
+    private boolean extractMessages = true;
+    private boolean extractActivityLogs = true;
+    private boolean extractAttachments = true;
+    private boolean extractSharedContacts = true;
+    private boolean ignoreEmptyChats = false;
     private int minChatSplitSize = 6000000;
 
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(UFED_CHAT_MIME, UFED_CHAT_WA_MIME,
@@ -100,6 +88,31 @@ public class UFEDChatParser extends AbstractParser {
     }
 
     @Field
+    public void setExtractMessages(boolean extractMessages) {
+        this.extractMessages = extractMessages;
+    }
+
+    @Field
+    public void setExtractActivityLogs(boolean extractActivityLogs) {
+        this.extractActivityLogs = extractActivityLogs;
+    }
+
+    @Field
+    public void setExtractAttachments(boolean extractAttachments) {
+        this.extractAttachments = extractAttachments;
+    }
+
+    @Field
+    public void setExtractSharedContacts(boolean extractSharedContacts) {
+        this.extractSharedContacts = extractSharedContacts;
+    }
+
+    @Field
+    public void setIgnoreEmptyChats(boolean ignoreEmptyChats) {
+        this.ignoreEmptyChats = ignoreEmptyChats;
+    }
+
+    @Field
     public void setMinChatSplitSize(int minChatSplitSize) {
         this.minChatSplitSize = minChatSplitSize;
     }
@@ -113,268 +126,278 @@ public class UFEDChatParser extends AbstractParser {
     public void parse(InputStream inputStream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
 
-        XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
-        xhtml.startDocument();
+        long startTime = System.currentTimeMillis();
         try {
             IItemSearcher searcher = context.get(IItemSearcher.class);
-            IItemReader chat = context.get(IItemReader.class);
+            IItemReader item = context.get(IItemReader.class);
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                     new ParsingEmbeddedDocumentExtractor(context));
 
-            if (chat == null || searcher == null)
+            if (item == null || searcher == null) {
                 return;
-
-            String query = BasicProps.PARENTID + ":" + chat.getId();
-
-            List<UfedMessage> messages = new ArrayList<>();
-
-            for (IItemReader msg : searcher.searchIterable(query)) {
-                Iterator<IItemReader> subItems = null;
-                String[] attachRefs = msg.getMetadata().getValues(ExtraProperties.LINKED_ITEMS);
-                if (attachRefs.length > 0) {
-                    String attachQuery = Arrays.asList(attachRefs).stream().collect(Collectors.joining(" "));
-                    subItems = searcher.searchIterable(attachQuery).iterator();
-                } else if (msg.hasChildren()) {
-                    String contactQuery = BasicProps.PARENTID + ":" + msg.getId() + " && " + BasicProps.CONTENTTYPE
-                            + ":\"" + MediaTypes.UFED_CONTACT_MIME.toString() + "\"";
-                    subItems = searcher.searchIterable(contactQuery).iterator();
-                }
-                if (subItems == null || !subItems.hasNext()) {
-                    UfedMessage m = createMessage(msg);
-                    messages.add(m);
-                } else {
-                    HashSet<String> uuids = new HashSet<>();
-                    while (subItems.hasNext()) {
-                        IItemReader subitem = subItems.next();
-                        if (uuids.add(subitem.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "id"))) {
-                            UfedMessage m = createMessage(msg, subitem);
-                            messages.add(m);
-                        }
-                    }
-                }
             }
 
-            Collections.sort(messages);
+            final Chat chat = item.getParseContext().get(Chat.class);
+            if (chat == null) {
+                return;
+            }
+
+            int messagesCount = (int) chat.getMessages().stream().filter(m -> !m.isSystemMessage()).count();
+            if (messagesCount == 0 && ignoreEmptyChats) {
+                return;
+            }
+
+            UfedChatMetadataUtils.fillChatMetadata(chat, metadata);
+
+            Collections.sort(chat.getMessages());
+
+            loadChatReferences(chat, searcher);
+
+            String virtualId = chat.getId();
+            String chatPrefix = UfedChatStringUtils.getChatTitle(chat, true, true);
 
             if (extractor.shouldParseEmbedded(metadata)) {
-                ReportGenerator reportGenerator = new ReportGenerator();
-                reportGenerator.setMinChatSplitSize(this.minChatSplitSize);
-                byte[] bytes = reportGenerator.generateNextChatHtml(chat, messages);
+                ReportGenerator reportGenerator = new ReportGenerator(chat, minChatSplitSize);
+                byte[] bytes = reportGenerator.generateNextChatHtml();
                 int frag = 0;
                 int firstMsg = 0;
-                MediaType previewMime = getMediaType(
-                        chat.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source"));
+                MediaType previewMime = getMediaType(chat.getSource());
                 while (bytes != null) {
-                    Metadata chatMetadata = new Metadata();
+                    Metadata chatPreviewMeta = new Metadata();
                     int nextMsg = reportGenerator.getNextMsgNum();
-                    List<UfedMessage> subList = messages.subList(firstMsg, nextMsg);
-                    storeLinkedHashes(subList, chatMetadata);
-                    storeMsgIds(subList, chatMetadata);
+                    List<InstantMessage> subList = chat.getMessages().subList(firstMsg, nextMsg);
+                    storeLinkedHashes(subList, chatPreviewMeta);
 
                     firstMsg = nextMsg;
-                    byte[] nextBytes = reportGenerator.generateNextChatHtml(chat, messages);
+                    byte[] nextBytes = reportGenerator.generateNextChatHtml();
 
                     // copy parent metadata
-                    for (String meta : chat.getMetadata().names()) {
-                        if (meta.contains(ExtraProperties.UFED_META_PREFIX))
-                            for (String val : chat.getMetadata().getValues(meta))
-                                chatMetadata.add(meta, val);
+                    for (String meta : metadata.names()) {
+                        if (meta.contains(ExtraProperties.UFED_META_PREFIX)) {
+                            for (String val : metadata.getValues(meta)) {
+                                chatPreviewMeta.add(meta, val);
+                            }
+                        }
                     }
 
-                    String chatName = getChatName(chat);
-
-                    if (frag > 0 || nextBytes != null)
+                    String chatName = chatPrefix;
+                    if (frag > 0 || nextBytes != null) {
                         chatName += "_" + frag++;
-                    chatMetadata.set(TikaCoreProperties.TITLE, chatName);
-                    chatMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, previewMime.toString());
-                    chatMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+                    }
+
+                    chatPreviewMeta.set(TikaCoreProperties.TITLE, chatName);
+                    chatPreviewMeta.set(ExtraProperties.ITEM_VIRTUAL_ID, virtualId);
+                    chatPreviewMeta.set(StandardParser.INDEXER_CONTENT_TYPE, previewMime.toString());
+                    chatPreviewMeta.set(ExtraProperties.DECODED_DATA, Boolean.toString(true));
+
+                    if (extractMessages && !subList.isEmpty()) {
+                        chatPreviewMeta.set(BasicProps.HASCHILD, Boolean.toString(true));
+                    }
 
                     ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
-                    extractor.parseEmbedded(chatStream, handler, chatMetadata, false);
+                    extractor.parseEmbedded(chatStream, handler, chatPreviewMeta, false);
                     bytes = nextBytes;
+
+                    logger.error("   Ufed Chat only-chat: " + (double) (System.currentTimeMillis() - startTime) / 1000 + " ms");
+
+                    if (extractMessages) {
+                        extractMessages(subList, virtualId, handler, extractor, chat);
+                    }
                 }
             }
-
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error processing chat", e);
             throw e;
-
-        } finally {
-            xhtml.endDocument();
         }
 
+        logger.error("Ufed Chat TOTAL: " + (double) (System.currentTimeMillis() - startTime) / 1000 + " ms");
     }
 
-    private UfedMessage createMessage(IItemReader msg) {
-        return createMessage(msg, null);
-    }
+    private void extractMessages(List<InstantMessage> subList, String chatVirtualId, ContentHandler handler,
+            EmbeddedDocumentExtractor extractor, Chat chat) throws SAXException, IOException {
 
-    private UfedMessage createMessage(IItemReader msg, IItemReader attach) {
-        UfedMessage m = new UfedMessage();
-        m.setId(msg.getId());
-        m.setDeleted(msg.isDeleted());
-        for (String body : msg.getMetadata().getValues(ExtraProperties.MESSAGE_BODY)) {
-            if (!body.startsWith(ATTACHED_MEDIA_MSG))
-                m.setData(body);
-        }
-        m.setFromMe(Boolean.valueOf(msg.getMetadata().get(META_FROM_OWNER)));
-        String str = msg.getMetadata().get(ExtraProperties.MESSAGE_DATE);
-        if (str != null) {
-            Date date = DateUtil.tryToParseDate(str);
-            m.setTimeStamp(date);
-        }
-        if (!m.isFromMe()) {
-            m.setRemoteResource(msg.getMetadata().get(ExtraProperties.COMMUNICATION_FROM));
-            m.setLocalResource(msg.getMetadata().get(ExtraProperties.COMMUNICATION_TO));
-        } else {
-            m.setRemoteResource(msg.getMetadata().get(ExtraProperties.COMMUNICATION_TO));
-            m.setLocalResource(msg.getMetadata().get(ExtraProperties.COMMUNICATION_FROM));
-        }
-        if (attach != null) {
-            if (attach.getLength() != null && attach.getLength() > 0) {
-                m.setMediaHash(attach.getHash(), false);
-            }
-            m.setMediaName(attach.getName());
-            m.setMediaTrueExt(attach.getType());
-            m.setMediaUrl(getMetaFromAttachOrMsg(ExtraProperties.UFED_META_PREFIX + "URL", msg, attach));
-            m.setMediaCaption(getMetaFromAttachOrMsg(ExtraProperties.UFED_META_PREFIX + "Title", msg, attach));
-            m.setThumbData(attach.getThumb());
-            m.setTranscription(attach.getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR));
-            m.setTranscriptConfidence(attach.getMetadata().get(ExtraProperties.CONFIDENCE_ATTR));
-            if (attach.isDeleted())
-                m.setDeleted(true);
-            if (attach.getLength() != null)
-                m.setMediaSize(attach.getLength());
-            if (attach.getMediaType() != null && !attach.getMediaType().equals(MediaType.OCTET_STREAM))
-                m.setMediaMime(attach.getMediaType().toString());
-            else
-                m.setMediaMime(getMetaFromAttachOrMsg(ExtraProperties.UFED_META_PREFIX + "ContentType", msg, attach));
-        }
-        return m;
-    }
+        for (InstantMessage message : subList) {
 
-    private String getMetaFromAttachOrMsg(String key, IItemReader msg, IItemReader attach) {
-        String result = attach.getMetadata().get(key);
-        if (result == null) {
-            result = msg.getMetadata().get(key);
-        }
-        return result;
-    }
+            String messageVirtualId = message.getId();
 
-    public static String getChatName(IItemReader item) {
-        String name = "Chat";
-        String source = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source");
-        String account = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Account");
-        String phoneOwner = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "phoneOwner");
-        String idProperty = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "id");
-        String nameProperty = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name");
-        String chatType = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "ChatType");
-        String[] parties = item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants");
-
-        if (source != null) {
-            name += "_" + source;
-        }
-
-        if (account != null) {
-            name += "_" + clean(account);
-        } else if (phoneOwner != null) {
-            name += "_" + clean(phoneOwner);
-        }
-
-        if (chatType != null) {
-            if (chatType.equals(CHATTYPE_ONEONONE)) {
-                if (parties != null) {
-                    name += "_" + clean(
-                            ((parties.length > 1) && (parties[0].equals(phoneOwner)) ? parties[1] : parties[0]));
-                } else {
-                    name += "_" + idProperty;
-                }
-
-            } else if (chatType.equals(CHATTYPE_GROUP)) {
-                name += "_" + CHATTYPE_GROUP_TITLE + "_" + (nameProperty != null ? nameProperty : idProperty);
-
-            } else if (chatType.equals(CHATTYPE_BROADCAST)) {
-                if (parties != null) {
-                    if ((parties.length == 1) && ((source != null) && (source.equals(WHATSAPP)
-                            || source.equals(WHATSAPP_BUSINESS) || source.equals(TELEGRAM)))) {
-                        // "Status" chat type (known from behaviour)
-                        // NOTE: Apps with this behaviour should be added to this if condition
-                        name += "_" + CHATTYPE_STATUS_TITLE + "_" + clean(parties[0]);
-                    } else {
-                        name += "_" + CHATTYPE_BROADCAST_TITLE + "_"
-                                + (nameProperty != null ? nameProperty : idProperty);
-                    }
-                } else {
-                    name += "_" + CHATTYPE_BROADCAST_TITLE + "_" + (nameProperty != null ? nameProperty : idProperty);
-                }
-
-            } else if (chatType.equals(CHATTYPE_UNKNOWN)) {
-                if ((source != null)
-                        && (source.equals(WHATSAPP) || source.equals(WHATSAPP_BUSINESS) || source.equals(TELEGRAM))) {
-                    // "Unknown" chat type regarding apps for which there are specific chat types
-                    // NOTE: Apps with similar behavior should be added to this if condition
-                    name += "_" + CHATTYPE_UNKNOWN_TITLE + "_" + idProperty;
-
-                } else {
-                    // "Unknown" chat type regarding apps for which there aren't specific chat types
-                    // Communication type is derived from the number of participants
-                    if ((parties != null) && (parties.length > 0)) {
-                        if (parties.length > 2) {
-                            name += "_" + CHATTYPE_GROUP_TITLE + "_" + idProperty;
-                        } else {
-                            name += "_" + clean(
-                                    (parties.length > 1) && (parties[0].equals(phoneOwner)) ? parties[1] : parties[0]);
-                        }
-                    } else {
-                        name += "_" + CHATTYPE_UNKNOWN_TITLE + "_" + idProperty;
-                    }
-                }
-
-            } else {
-                name += "_" + chatType + "_" + idProperty;
+            Metadata messageMetaData = UfedChatMetadataUtils.createInstantMessageMetadata(message, chat);
+            messageMetaData.set(TikaCoreProperties.TITLE, UfedChatStringUtils.getInstantMessageTitle(message));
+            messageMetaData.set(ExtraProperties.ITEM_VIRTUAL_ID, messageVirtualId);
+            messageMetaData.set(StandardParser.INDEXER_CONTENT_TYPE, message.getContentType().toString());
+            messageMetaData.set(ExtraProperties.PARENT_VIRTUAL_ID, chatVirtualId);
+            messageMetaData.set(ExtraProperties.PARENT_VIEW_POSITION, Integer.toString(message.getSourceIndex()));
+            messageMetaData.set(BasicProps.LENGTH, "");
+            if (!message.getAttachments().isEmpty()) {
+                messageMetaData.set(ExtraProperties.MESSAGE_ATTACHMENT_COUNT, message.getAttachments().size());
             }
 
-        } else {
-            name += "_" + idProperty;
-        }
+            if (message.isDeleted()) {
+                messageMetaData.set(ExtraProperties.DELETED, Boolean.toString(true));
+            }
 
-        return name;
+            extractor.parseEmbedded(new EmptyInputStream(), handler, messageMetaData, false);
+
+            if (extractActivityLogs) {
+                extractActivityLog(message, messageVirtualId, handler, extractor);
+            }
+            if (extractAttachments) {
+                extractAttachments(message, messageVirtualId, handler, extractor);
+            }
+            if (extractSharedContacts) {
+                extractShareContacts(message, messageVirtualId, handler, extractor);
+            }
+        }
     }
 
-    private static String clean(String s) {
-        if (s != null) {
-            s = s.trim();
-            if (s.endsWith(")")) {
-                int p = s.indexOf("(");
-                if (p > 0) {
-                    int cnt = 0;
-                    for (int i = p + 1; i < s.length() - 1; i++) {
-                        if (Character.isDigit(s.charAt(i))) {
-                            cnt++;
-                        }
-                    }
-                    if (cnt >= 5) {
-                        s = s.substring(0, p);
+    private void extractActivityLog(InstantMessage message, String messageVirtualId, ContentHandler handler,
+            EmbeddedDocumentExtractor extractor) throws SAXException, IOException {
+
+        ChatActivity activity = message.getActivityLog();
+        if (activity != null) {
+            Metadata activityMeta = UfedChatMetadataUtils.createGenericMetadata(activity);
+            activityMeta.set(TikaCoreProperties.TITLE, "ChatActivity_" + activity.getId());
+            activityMeta.set(StandardParser.INDEXER_CONTENT_TYPE, activity.getContentType().toString());
+            activityMeta.set(ExtraProperties.PARENT_VIRTUAL_ID, messageVirtualId);
+            activityMeta.set(BasicProps.LENGTH, "");
+            extractor.parseEmbedded(new EmptyInputStream(), handler, activityMeta, false);
+        }
+    }
+
+    private void extractAttachments(InstantMessage message, String messageVirtualId, ContentHandler handler,
+            EmbeddedDocumentExtractor extractor) throws SAXException, IOException {
+
+        for (Attachment attach : message.getAttachments()) {
+            Metadata attachMeta = UfedChatMetadataUtils.createGenericMetadata(attach);
+            attachMeta.set(TikaCoreProperties.TITLE, UfedChatStringUtils.getAttachmentTitle(attach));
+            attachMeta.set(StandardParser.INDEXER_CONTENT_TYPE, attach.getContentType().toString());
+            attachMeta.set(ExtraProperties.PARENT_VIRTUAL_ID, messageVirtualId);
+            attachMeta.set(BasicProps.LENGTH, "");
+            extractor.parseEmbedded(new EmptyInputStream(), handler, attachMeta, false);
+        }
+    }
+
+    private void extractShareContacts(InstantMessage message, String messageVirtualId, ContentHandler handler,
+            EmbeddedDocumentExtractor extractor) throws SAXException, IOException {
+
+        for (Contact shareContact : message.getSharedContacts()) {
+            Metadata shareContactMeta = UfedChatMetadataUtils.createGenericMetadata(shareContact);
+            shareContactMeta.set(TikaCoreProperties.TITLE, UfedChatStringUtils.getContactTitle(shareContact));
+            shareContactMeta.set(StandardParser.INDEXER_CONTENT_TYPE, shareContact.getContentType().toString());
+            shareContactMeta.set(ExtraProperties.PARENT_VIRTUAL_ID, messageVirtualId);
+            shareContactMeta.set(BasicProps.LENGTH, "");
+            extractor.parseEmbedded(new EmptyInputStream(), handler, shareContactMeta, false);
+        }
+    }
+
+    private void storeLinkedHashes(List<InstantMessage> messages, Metadata metadata) {
+        for (InstantMessage m : messages) {
+            for (Attachment a : m.getAttachments()) {
+                if (a.getReferencedFile() != null && a.getReferencedFile().getHash() != null) {
+                    metadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + a.getReferencedFile().getHash());
+                    if (m.isFromPhoneOwner()) {
+                        metadata.add(ExtraProperties.SHARED_HASHES, a.getReferencedFile().getHash());
                     }
                 }
             }
-            s = StringUtils.remove(s, WAContact.waSuffix);
-        }
-        return s;
-    }
-
-    private void storeMsgIds(List<UfedMessage> messages, Metadata metadata) {
-        for (Message m : messages) {
-            metadata.add(CHILD_MSG_IDS, Long.toString(m.getId()));
         }
     }
 
-    private void storeLinkedHashes(List<UfedMessage> messages, Metadata metadata) {
-        for (Message m : messages) {
-            if (m.getMediaHash() != null) {
-                metadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + m.getMediaHash());
-                if (m.isFromMe())
-                    metadata.add(ExtraProperties.SHARED_HASHES, m.getMediaHash());
+    private void loadChatReferences(Chat chat, IItemSearcher searcher) {
+
+        // load photo thumb
+        chat.getPhotos().stream().forEach(p -> {
+            loadContactPhotoData(p, searcher);
+        });
+
+        // load message items
+        chat.getMessages().stream().forEach(m -> {
+            m.getAttachments().stream().forEach(a -> {
+                loadAttachmentReference(a, searcher);
+            });
+            m.getSharedContacts().stream().forEach(c -> {
+                loadContactReference(c, searcher);
+            });
+            loadLocationReference(m, searcher);
+        });
+    }
+
+    private void loadContactPhotoData(ContactPhoto photo, IItemSearcher searcher) {
+        if (photo.getPhotoNodeId() == null) {
+            return;
+        }
+
+        String query = searcher.escapeQuery(ExtraProperties.UFED_ID) + ":\"" + photo.getPhotoNodeId() + "\"";
+        List<IItemReader> result = searcher.search(query);
+        if (!result.isEmpty()) {
+            IItemReader contactPhoto = result.get(0);
+            photo.setImageData(contactPhoto.getThumb());
+        }
+    }
+
+    private void loadAttachmentReference(Attachment attachment, IItemSearcher searcher) {
+        if (attachment.getFileId() == null) {
+            return;
+        }
+
+        // attachment "ufed:file_id" metadata contains the "ufed:id" metadata of the file
+        String query = searcher.escapeQuery(ExtraProperties.UFED_ID) + ":\"" + attachment.getFileId() + "\"";
+        List<IItemReader> fileItems = searcher.search(query);
+        if (!fileItems.isEmpty()) {
+            if (fileItems.size() > 1) {
+                logger.warn("Found more than 1 file for attachment: {}", fileItems);
+            }
+            attachment.setReferencedFile(fileItems.get(0));
+        }
+    }
+
+    private void loadContactReference(Contact contact, IItemSearcher searcher) {
+        if (contact.getId() == null) {
+            return;
+        }
+
+        // shared contact and indexed contact have the same "ufed:id" metadata
+        String query = searcher.escapeQuery(ExtraProperties.UFED_ID) + ":\"" + contact.getId() + "\"";
+        List<IItemReader> contactItems = searcher.search(query);
+        if (!contactItems.isEmpty()) {
+            if (contactItems.size() > 1) {
+                logger.warn("Found more than 1 contact for shared contact: {}", contactItems);
+            }
+            contact.setReferencedContact(contactItems.get(0));
+        }
+    }
+
+    private void loadLocationReference(InstantMessage message, IItemSearcher searcher) {
+        if (message.getPosition() == null || message.getPosition().getId() == null) {
+            return;
+        }
+
+        {
+            // the message and location shares the same "ufed:coordinate_id" that was added when merging in UfedXmlReader
+            String query = searcher.escapeQuery(ExtraProperties.UFED_ID) + ":\"" + message.getPosition().getId() + "\"";
+            List<IItemReader> locationItems = searcher.search(query);
+            if (!locationItems.isEmpty()) {
+                if (locationItems.size() > 1) {
+                    logger.warn("Found more than 1 location for coordinate: {}", locationItems);
+                }
+                message.getPosition().setReferencedLocation(locationItems.get(0));
+                return;
+            }
+        }
+
+        if (message.isLocationSharing()) {
+
+            // the location item is referenced by jumptargets
+            String[] jumpTargets = message.getJumpTargets().stream().map(JumpTarget::getId).toArray(String[]::new);
+            if (jumpTargets.length > 0) {
+                String query = BasicProps.CONTENTTYPE + ":\"application/x-ufed-location\" && " //
+                        + searcher.escapeQuery(ExtraProperties.UFED_ID) + ":(\"" + StringUtils.join(jumpTargets, "\" \"") + "\")";
+                List<IItemReader> locationItems = searcher.search(query);
+                if (!locationItems.isEmpty()) {
+                    if (locationItems.size() > 1) {
+                        logger.warn("Found more than 1 location for jumptargets: {}", locationItems);
+                    }
+                    message.getPosition().setReferencedLocation(locationItems.get(0));
+                }
             }
         }
     }

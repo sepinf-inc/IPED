@@ -5,7 +5,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.StringJoiner;
+
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Represents a <model type="InstantMessage"> element.
@@ -54,16 +57,18 @@ public class InstantMessage extends BaseModel implements Comparable<InstantMessa
     public String getPlatform() { return (String) getField("Platform"); }
     public String getIdentifier() { return (String) getField("Identifier"); }
     public Date getTimeStamp() { return (Date) getField("TimeStamp"); }
+    public String getSource() { return (String) getField("Source"); }
+    public String getLabel() { return (String) getField("Label"); }
     public String getSourceApplication() { return (String) getField("SourceApplication"); }
-    public boolean isLocationSharing() { return Boolean.TRUE.equals(getField("IsLocationSharing")); }
+    public boolean isLocationSharing() { return Boolean.parseBoolean((String) getField("IsLocationSharing")); }
 
     public MessageStatus getStatus() {
         return MessageStatus.parse((String) getField("Status"));
     }
 
     // Getters and Setters for child models
-    public Party getFrom() {
-        return from;
+    public Optional<Party> getFrom() {
+        return Optional.ofNullable(from);
     }
 
     public void setFrom(Party from) {
@@ -82,7 +87,7 @@ public class InstantMessage extends BaseModel implements Comparable<InstantMessa
         return sharedContacts;
     }
 
-    public InstantMessageExtraData getMessageExtraData() {
+    public InstantMessageExtraData getExtraData() {
         return messageExtraData;
     }
 
@@ -116,7 +121,57 @@ public class InstantMessage extends BaseModel implements Comparable<InstantMessa
 
     // for convenience (the information about system message is in From
     public boolean isSystemMessage() {
-        return from != null && from.isSystemMessage();
+        return hasLabel("System") || getFrom().map(Party::isSystemMessage).orElse(false);
+    }
+
+    public boolean isFromPhoneOwner() {
+        return getFrom().map(Party::isPhoneOwner).orElse(false);
+    }
+
+    public boolean hasLabel(String label) {
+        return messageExtraData.getMessageLabels().stream().anyMatch(l -> label.equalsIgnoreCase(l.getLabel()));
+    }
+
+    public boolean isEdited() {
+        return hasLabel("Edited");
+    }
+
+    public boolean isReplyMessage() {
+        return messageExtraData.getReplyMessage().isPresent()
+                || hasLabel("Reply")
+                || messageExtraData.getQuotedMessage().filter(q -> "Reply".equalsIgnoreCase(q.getLabel())).isPresent();
+    }
+
+    public boolean isForwardedMessage() {
+        return messageExtraData.getForwardedMessage().isPresent()
+                || hasLabel("Forwarded")
+                || messageExtraData.getQuotedMessage().filter(q -> "Forwarded".equalsIgnoreCase(q.getLabel())).isPresent();
+    }
+
+    public Party getForwaredMessageOriginalSender() {
+        Party originalSender = messageExtraData.getForwardedMessage().map(ForwardedMessageData::getOriginalSender).orElse(null);
+        if (originalSender != null) {
+            return originalSender;
+        }
+
+        String referenceId = messageExtraData.getQuotedMessage().map(QuotedMessageData::getReferenceId).orElse(null);
+        if (referenceId != null && embeddedMessage != null && StringUtils.equals(embeddedMessage.getId(), referenceId)) {
+            return embeddedMessage.getFrom().orElse(null);
+        }
+        return null;
+    }
+
+    public InstantMessage getReplyMessage() {
+        InstantMessage replyMessage = messageExtraData.getReplyMessage().map(ReplyMessageData::getInstantMessage).orElse(null);
+        if (replyMessage != null) {
+            return replyMessage;
+        }
+
+        String referenceId = messageExtraData.getQuotedMessage().map(QuotedMessageData::getReferenceId).orElse(null);
+        if (referenceId != null && embeddedMessage != null && StringUtils.equals(embeddedMessage.getId(), referenceId)) {
+            return embeddedMessage;
+        }
+        return null;
     }
 
     @Override

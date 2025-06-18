@@ -8,6 +8,9 @@ import java.util.Map;
 import java.util.StringJoiner;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.tika.mime.MediaType;
+
+import iped.properties.MediaTypes;
 
 /**
  * A base class for all model objects parsed from the XML.
@@ -23,6 +26,20 @@ public abstract class BaseModel implements Serializable {
     private final Map<String, String> attributes = new HashMap<>();
     private final List<JumpTarget> jumpTargets = new ArrayList<>();
 
+    public static enum DeletedState {
+        Unknown, Intact, Deleted, Missed, Trash;
+
+        public static DeletedState parse(String value) {
+            if (value == null) {
+                return null;
+            }
+            try {
+                return valueOf(value);
+            } catch (IllegalArgumentException e) {
+                return Unknown;
+            }
+        }
+    }
 
     public BaseModel(String modelType) {
         this.modelType = modelType;
@@ -66,7 +83,7 @@ public abstract class BaseModel implements Serializable {
     }
 
     public boolean isRelated() {
-        return "True".equalsIgnoreCase(getAttribute("isrelated"));
+        return Boolean.parseBoolean(getAttribute("isrelated"));
     }
 
     public boolean isDeleted() {
@@ -87,6 +104,10 @@ public abstract class BaseModel implements Serializable {
         } catch (NumberFormatException | NullPointerException e) {
             return -1;
         }
+    }
+
+    public MediaType getContentType() {
+        return MediaType.application(MediaTypes.UFED_MIME_PREFIX + modelType);
     }
 
     // --- Field Methods ---

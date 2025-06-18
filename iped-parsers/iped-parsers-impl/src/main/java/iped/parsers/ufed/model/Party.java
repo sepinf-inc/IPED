@@ -2,6 +2,8 @@ package iped.parsers.ufed.model;
 
 import java.util.StringJoiner;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+
 /**
  * Represents a <model type="Party"> element.
  */
@@ -41,5 +43,21 @@ public class Party extends BaseModel {
                 .add("Name='" + getName() + "'")
                 .add("isPhoneOwner=" + isPhoneOwner())
                 .toString();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+
+        Party other = (Party) obj;
+
+        return new EqualsBuilder()
+                .append(getIdentifier(), other.getIdentifier())
+                .isEquals();
     }
 }

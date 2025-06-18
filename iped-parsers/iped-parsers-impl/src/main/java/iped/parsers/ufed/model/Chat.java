@@ -5,7 +5,11 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.StringJoiner;
+import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Represents a <model type="Chat"> element. This is the root object.
@@ -13,6 +17,15 @@ import java.util.StringJoiner;
 public class Chat extends BaseModel {
 
     private static final long serialVersionUID = -568791121571161053L;
+
+    public static final String TYPE_ONEONONE = "OneOnOne";
+    public static final String TYPE_GROUP = "Group";
+    public static final String TYPE_BROADCAST = "Broadcast";
+    public static final String TYPE_UNKNOWN = "Unknown";
+
+    public static final String SOURCE_WHATSAPP = "WhatsApp";
+    public static final String SOURCE_WHATSAPP_BUSINESS = "WhatsApp Business";
+    public static final String SOURCE_TELEGRAM = "Telegram";
 
     private final List<Party> participants = new ArrayList<>();
     private final List<ContactPhoto> photos = new ArrayList<>();
@@ -38,8 +51,12 @@ public class Chat extends BaseModel {
         return participants;
     }
 
-    public Party getParticipantPhoneOwner() {
-        return participants.stream().filter(p -> p.isPhoneOwner()).findFirst().orElse(null);
+    public Optional<Party> getPhoneOwnerParticipant() {
+        return participants.stream().filter(p -> p.isPhoneOwner()).findFirst();
+    }
+
+    public List<Party> getOtherParticipants() {
+        return participants.stream().filter(p -> !p.isPhoneOwner()).collect(Collectors.toList());
     }
 
     public List<ContactPhoto> getPhotos() {
@@ -54,6 +71,10 @@ public class Chat extends BaseModel {
         return others;
     }
 
+    public boolean isGroup() {
+        return StringUtils.equalsAnyIgnoreCase(getChatType(), "Channel", "Group");
+    }
+
     @Override
     public String toString() {
         return new StringJoiner("\n  ", Chat.class.getSimpleName() + "[\n", "\n]")
@@ -64,5 +85,7 @@ public class Chat extends BaseModel {
                 .add("messages=" + messages)
                 .toString();
     }
+
+
 }
 

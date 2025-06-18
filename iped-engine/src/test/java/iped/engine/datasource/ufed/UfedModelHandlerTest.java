@@ -15,8 +15,13 @@ import javax.xml.parsers.SAXParserFactory;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.xml.sax.Attributes;
+import org.xml.sax.XMLReader;
+import org.xml.sax.helpers.DefaultHandler;
 
+import iped.engine.datasource.ufed.UfedModelHandler.UfedModelListener;
 import iped.parsers.ufed.model.Attachment;
+import iped.parsers.ufed.model.BaseModel;
 import iped.parsers.ufed.model.Chat;
 import iped.parsers.ufed.model.ChatActivity;
 import iped.parsers.ufed.model.Contact;
@@ -29,7 +34,7 @@ import iped.parsers.ufed.model.ReplyMessageData;
 import iped.utils.DateUtil;
 
 
-public class UfedXmlModelHandlerTest {
+public class UfedModelHandlerTest {
 
     private static Chat parsedChat;
 
@@ -38,11 +43,22 @@ public class UfedXmlModelHandlerTest {
 
         SAXParserFactory factory = SAXParserFactory.newInstance();
         SAXParser saxParser = factory.newSAXParser();
-        UfedXmlModelHandler handler = new UfedXmlModelHandler();
+        XMLReader xmlReader = saxParser.getXMLReader();
+        DefaultHandler parentHandler = new DefaultHandler();
+        UfedModelListener listener = new UfedModelHandler.UfedModelListener() {
+            @Override
+            public void onModelStarted(BaseModel model, Attributes attr) {
+            }
+            @Override
+            public void onModelCompleted(BaseModel model) {
+                parsedChat = (Chat) model;
+            }
+        };
 
-        InputStream xmlFile = UfedXmlModelHandlerTest.class.getResourceAsStream("/ufed-chat-test.xml");
+        UfedModelHandler handler = new UfedModelHandler(xmlReader, parentHandler, listener, false);
+
+        InputStream xmlFile = UfedModelHandlerTest.class.getResourceAsStream("/ufed-chat-test.xml");
         saxParser.parse(xmlFile, handler);
-        parsedChat = handler.getChatResult();
     }
 
     @Test
@@ -149,11 +165,11 @@ public class UfedXmlModelHandlerTest {
 
         assertTrue("Message with ReplyMessageData should be found.", msgWithReply.isPresent());
 
-        ReplyMessageData replyData = msgWithReply.get().getMessageExtraData().getReplyMessage();
+        ReplyMessageData replyData = msgWithReply.get().getExtraData().getReplyMessage().orElse(null);
         assertNotNull("ReplyMessageData should be present in MessageExtraData.", replyData);
         assertEquals("Reply", replyData.getLabel());
         assertEquals("1654984910:14433", replyData.getOriginalMessageID());
         assertNotNull(replyData.getInstantMessage());
-        assertEquals("Pidgeot", replyData.getInstantMessage().getFrom().getName());
+        assertEquals("Pidgeot", replyData.getInstantMessage().getFrom().get().getName());
     }
 }
