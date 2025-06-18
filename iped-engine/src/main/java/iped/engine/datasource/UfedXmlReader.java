@@ -1797,6 +1797,7 @@ public class UfedXmlReader extends DataSourceReader {
 
                 // handle InstantMessage model (without Chat parent)
                 InstantMessage message = (InstantMessage) model;
+                UfedChatMetadataUtils.fillCommonMetadata(model, item.getMetadata());
                 UfedChatMetadataUtils.fillInstantMessageMetadata(message, item.getMetadata(), null);
 
                 try {
