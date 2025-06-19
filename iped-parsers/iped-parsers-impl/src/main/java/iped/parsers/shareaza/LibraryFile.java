@@ -38,6 +38,7 @@ import iped.search.IItemSearcher;
  */
 public class LibraryFile extends ShareazaEntity {
 
+    private static final String SINGLE_ZERO = "0";
     private final XMLElement metadata = new XMLElement();
     private final List<SharedSource> sharedSources = new ArrayList<>();
     private String name;
@@ -66,6 +67,8 @@ public class LibraryFile extends ShareazaEntity {
     private boolean bogus;
     private final LibraryFolder parentFolder;
     private List<String> hashSetHits;
+    private String foundInHashDB;
+    private boolean foundInCase;
 
     public LibraryFile(LibraryFolder parentFolder) {
         super("LIBRARY FILE"); //$NON-NLS-1$
@@ -73,11 +76,34 @@ public class LibraryFile extends ShareazaEntity {
     }
 
     public String getInheritedShared() {
+        if (parentFolder != null) {
+            return parentFolder.getShared();
+        }
+        return Util.TRI_STATE_UNKNOWN;
+    }
+
+    public String getExplicitShared() {
+        return shared;
+    }
+
+    public String getShared() {
         String resp = shared;
-        if (resp.equals("Unknown") && parentFolder != null) { //$NON-NLS-1$
-            resp = parentFolder.getInheritedShared();
+        if (Util.TRI_STATE_UNKNOWN.equals(resp) && parentFolder != null) {
+            resp = parentFolder.getShared();
         }
         return resp;
+    }
+
+    public boolean isSharedTrue() {
+        return Util.TRI_STATE_TRUE.equals(getShared()); //$NON-NLS-1$
+    }
+
+    public String getFoundInHashDB() {
+        return foundInHashDB;
+    }
+
+    public boolean getFoundInCase() {
+        return foundInCase;
     }
 
     @Override
@@ -97,9 +123,9 @@ public class LibraryFile extends ShareazaEntity {
             shared = Util.decodeTriState(ar.readInt());
         } else {
             if (ar.readByte() == 0) {
-                shared = "True"; //$NON-NLS-1$
+                shared = Util.TRI_STATE_FALSE;
             } else {
-                shared = "Unknown"; //$NON-NLS-1$
+                shared = Util.TRI_STATE_UNKNOWN;
             }
         }
 
@@ -178,7 +204,7 @@ public class LibraryFile extends ShareazaEntity {
         f.out("Index: " + index); //$NON-NLS-1$
         f.out("Size: " + size); //$NON-NLS-1$
         f.out("Time: " + time); //$NON-NLS-1$
-        f.out("Shared: " + getInheritedShared()); //$NON-NLS-1$
+        f.out("Shared: " + getShared()); //$NON-NLS-1$
         f.out("Virtual Size: %d, Virtual Base: %d", virtualSize, virtualBase); //$NON-NLS-1$
         f.out("SHA1: " + sha1); //$NON-NLS-1$
         f.out("Tiger: " + tiger); //$NON-NLS-1$
@@ -202,10 +228,6 @@ public class LibraryFile extends ShareazaEntity {
         }
     }
 
-    public boolean isShared() {
-        return "True".equals(getInheritedShared()); //$NON-NLS-1$
-    }
-
     public void printTableRow(XHTMLContentHandler html, String path, IItemSearcher searcher, Map<Integer, List<String>> albunsForFiles) throws SAXException {
 
         hashSetHits = ChildPornHashLookup.lookupHashAndMerge(md5, hashSetHits);
@@ -217,10 +239,11 @@ public class LibraryFile extends ShareazaEntity {
         }
         if (hashSetHits != null && !hashSetHits.isEmpty()) {
             attributes.addAttribute("", "class", "class", "CDATA", "r");
+            foundInHashDB = hashSetHits.toString();
         }
         html.startElement("tr", attributes);
 
-        printTd(html, searcher, path, name, albunsForFiles.get(index), index, size, time, getInheritedShared(), virtualSize, virtualBase, sha1, tiger, md5, ed2k, bth, verify, uri, metadataAuto, metadataTime, metadataModified, rating,
+        printTd(html, searcher, path, name, albunsForFiles.get(index), index, size, time, getShared(), virtualSize, virtualBase, sha1, tiger, md5, ed2k, bth, verify, uri, metadataAuto, metadataTime, metadataModified, rating,
                 comments, shareTags, hitsTotal, uploadsTotal, cachedPreview, bogus);
 
         html.endElement("tr"); //$NON-NLS-1$
@@ -228,7 +251,6 @@ public class LibraryFile extends ShareazaEntity {
 
     private void printTd(XHTMLContentHandler html, IItemSearcher searcher, Object... tdtext) throws SAXException {
         int col = 0;
-        Boolean foundInCase = false;
         for (Object o : tdtext) {
             html.startElement("td"); //$NON-NLS-1$
             if (o != null) {
@@ -265,7 +287,7 @@ public class LibraryFile extends ShareazaEntity {
         }
         html.endElement("td"); //$NON-NLS-1$
         html.startElement("td"); //$NON-NLS-1$
-        html.characters(foundInCase.toString());
+        html.characters(Boolean.toString(foundInCase));
         html.endElement("td"); //$NON-NLS-1$
     }
 
@@ -278,11 +300,11 @@ public class LibraryFile extends ShareazaEntity {
     }
 
     public String getMd5() {
-        return md5;
+        return SINGLE_ZERO.equals(md5) ? null : md5;
     }
 
     public String getSha1() {
-        return sha1;
+        return SINGLE_ZERO.equals(sha1) ? null : sha1;
     }
 
     public int getIndex() {
@@ -301,10 +323,6 @@ public class LibraryFile extends ShareazaEntity {
         return time;
     }
 
-    public String getShared() {
-        return shared;
-    }
-
     public long getVirtualSize() {
         return virtualSize;
     }
@@ -314,11 +332,11 @@ public class LibraryFile extends ShareazaEntity {
     }
 
     public String getTiger() {
-        return tiger;
+        return SINGLE_ZERO.equals(tiger) ? null : tiger;
     }
 
     public String getEd2k() {
-        return ed2k;
+        return SINGLE_ZERO.equals(ed2k) ? null : ed2k;
     }
 
     public String getBth() {
@@ -375,6 +393,13 @@ public class LibraryFile extends ShareazaEntity {
 
     public LibraryFolder getParentFolder() {
         return parentFolder;
+    }
+
+    public String getParentFolderPath() {
+        if (parentFolder != null) {
+            return parentFolder.getPath();
+        }
+        return null;
     }
 
     public List<String> getHashSetHits() {
