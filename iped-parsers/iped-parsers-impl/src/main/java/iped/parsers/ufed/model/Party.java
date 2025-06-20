@@ -4,6 +4,9 @@ import java.util.StringJoiner;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
+import iped.data.IItemReader;
+import iped.parsers.ufed.reference.ReferencedContact;
+
 /**
  * Represents a <model type="Party"> element.
  */
@@ -12,6 +15,8 @@ public class Party extends BaseModel {
     private static final long serialVersionUID = -8316756774909953715L;
 
     public static final String SYSTEM_MESSAGE = "System Message";
+
+    private ReferencedContact referencedContact;
 
     public Party() {
         super("Party");
@@ -33,6 +38,14 @@ public class Party extends BaseModel {
 
     public boolean isSystemMessage() {
         return SYSTEM_MESSAGE.equalsIgnoreCase(getIdentifier());
+    }
+
+    public ReferencedContact getReferencedContact() {
+        return referencedContact;
+    }
+
+    public void setReferencedContact(IItemReader contactItem) {
+        this.referencedContact = new ReferencedContact(contactItem);
     }
 
     @Override

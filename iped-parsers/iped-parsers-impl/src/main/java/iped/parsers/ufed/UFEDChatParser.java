@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,6 +34,7 @@ import iped.parsers.ufed.model.Contact;
 import iped.parsers.ufed.model.ContactPhoto;
 import iped.parsers.ufed.model.InstantMessage;
 import iped.parsers.ufed.model.JumpTarget;
+import iped.parsers.ufed.model.Party;
 import iped.parsers.ufed.model.ReplyMessageData;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
@@ -306,7 +308,14 @@ public class UFEDChatParser extends AbstractParser {
 
     private void loadChatReferences(Chat chat, IItemSearcher searcher) {
 
+        // load chat account
         loadAccountReference(chat, searcher);
+
+        // load participants
+        Map<String, IItemReader> participantsCache = new HashMap<>();
+        chat.getParticipants().forEach(participant -> {
+            loadPartyReference(participant, searcher, chat, participantsCache);
+        });
 
         // load photo thumb
         chat.getPhotos().stream().forEach(p -> {
@@ -315,7 +324,7 @@ public class UFEDChatParser extends AbstractParser {
 
         // load message items
         chat.getMessages().stream().forEach(m -> {
-            loadInstantMessageReferences(m, searcher);
+            loadInstantMessageReferences(m, searcher, chat, participantsCache);
         });
     }
 
@@ -343,23 +352,6 @@ public class UFEDChatParser extends AbstractParser {
         }
     }
 
-    private void loadInstantMessageReferences(InstantMessage message, IItemSearcher searcher) {
-
-        message.getAttachments().stream().forEach(a -> {
-            loadAttachmentReference(a, searcher);
-        });
-        message.getSharedContacts().stream().forEach(c -> {
-            loadContactReference(c, searcher);
-        });
-        loadLocationReference(message, searcher);
-        message.getEmbeddedMessage().ifPresent(em -> {
-            loadInstantMessageReferences(em, searcher);
-        });
-        message.getExtraData().getReplyMessage().map(ReplyMessageData::getInstantMessage).ifPresent(rm -> {
-            loadInstantMessageReferences(rm, searcher);
-        });
-    }
-
     private void loadContactPhotoData(ContactPhoto photo, IItemSearcher searcher) {
         if (photo.getPhotoNodeId() == null) {
             return;
@@ -370,6 +362,56 @@ public class UFEDChatParser extends AbstractParser {
         if (!result.isEmpty()) {
             IItemReader contactPhoto = result.get(0);
             photo.setImageData(contactPhoto.getThumb());
+        }
+    }
+
+    private void loadInstantMessageReferences(InstantMessage message, IItemSearcher searcher, Chat chat, Map<String, IItemReader> cache) {
+
+        message.getFrom().ifPresent(from -> {
+            loadPartyReference(from, searcher, chat, cache);
+        });
+        message.getTo().forEach(to -> {
+            loadPartyReference(to, searcher, chat, cache);
+        });
+        message.getAttachments().stream().forEach(a -> {
+            loadAttachmentReference(a, searcher);
+        });
+        message.getSharedContacts().stream().forEach(c -> {
+            loadContactReference(c, searcher);
+        });
+        loadLocationReference(message, searcher);
+        message.getEmbeddedMessage().ifPresent(em -> {
+            loadInstantMessageReferences(em, searcher, chat, cache);
+        });
+        message.getExtraData().getReplyMessage().map(ReplyMessageData::getInstantMessage).ifPresent(rm -> {
+            loadInstantMessageReferences(rm, searcher, chat, cache);
+        });
+    }
+
+    private void loadPartyReference(Party party, IItemSearcher searcher, Chat chat, Map<String, IItemReader> cache) {
+
+        String identifier = party.getIdentifier();
+        if (cache.containsKey(identifier)) {
+             party.setReferencedContact(cache.get(identifier));
+             return;
+        }
+
+        String account = chat.getAccount();
+        String source = chat.getSource();
+        String query = BasicProps.CONTENTTYPE + ":\"" + MediaTypes.UFED_CONTACT_MIME.toString() + "\"" //
+                + " && " + searcher.escapeQuery(ExtraProperties.UFED_META_PREFIX + "Account") + ":\"" + account + "\"" //
+                + " && " + searcher.escapeQuery(ExtraProperties.UFED_META_PREFIX + "Source") + ":\"" + source + "\"" //
+                + " && " + searcher.escapeQuery(ExtraProperties.UFED_META_PREFIX + "Type") + ":ChatParticipant" //
+                + " && " + searcher.escapeQuery(ExtraProperties.UFED_META_PREFIX + "UserID") + ":\"" + identifier + "\"";
+
+        List<IItemReader> results = searcher.search(query);
+        if (!results.isEmpty()) {
+            if (results.size() > 1) {
+                logger.warn("Found more than one participant for [{}]: {}", account, results);
+            }
+            IItemReader result = results.get(0);
+            cache.put(identifier, result);
+            party.setReferencedContact(result);
         }
     }
 
