@@ -15,7 +15,8 @@ import iped.parsers.ufed.model.BaseModel;
 import iped.parsers.ufed.model.Chat;
 import iped.parsers.ufed.model.ChatActivity;
 import iped.parsers.ufed.model.Contact;
-import iped.parsers.ufed.model.ContactEntry;
+import iped.parsers.ufed.model.ContactEntry.PhoneNumber;
+import iped.parsers.ufed.model.ContactEntry.UserID;
 import iped.parsers.ufed.model.ContactPhoto;
 import iped.parsers.ufed.model.Coordinate;
 import iped.parsers.ufed.model.ForwardedMessageData;
@@ -25,10 +26,8 @@ import iped.parsers.ufed.model.InstantMessageExtraData;
 import iped.parsers.ufed.model.JumpTarget;
 import iped.parsers.ufed.model.MessageLabel;
 import iped.parsers.ufed.model.Party;
-import iped.parsers.ufed.model.PhoneNumber;
 import iped.parsers.ufed.model.QuotedMessageData;
 import iped.parsers.ufed.model.ReplyMessageData;
-import iped.parsers.ufed.model.UserID;
 import iped.utils.DateUtil;
 
 
@@ -251,13 +250,20 @@ public class UfedModelHandler extends DefaultHandler {
             }
         } else if (parent instanceof Contact) {
             Contact contact = (Contact) parent;
-            if ("Entries".equals(fieldName) && child instanceof ContactEntry) {
-                contact.getEntries().add((ContactEntry) child);
+            if ("Entries".equals(fieldName)) {
+                if (child instanceof UserID) {
+                    contact.setUserID((UserID) child);
+                } else if (child instanceof PhoneNumber) {
+                    contact.setPhoneNumber((PhoneNumber) child);
+                } else {
+                    logger.warn("Unrecognized Contact entry '{}' => {} (id={}).", fieldName, child.getClass().getName(), child.getId());
+                    contact.getOtherEntries().put(fieldName, child);
+                }
             } else if ("Photos".equals(fieldName) && child instanceof ContactPhoto) {
                 contact.getPhotos().add((ContactPhoto) child);
             } else {
                 logger.warn("Unrecognized Contact child '{}' => {} (id={}).", fieldName, child.getClass().getName(), child.getId());
-                contact.getOthers().put(fieldName, child);
+                contact.getOtherFields().put(fieldName, child);
             }
         } else if (parent instanceof ReplyMessageData) {
             if("InstantMessage".equals(fieldName) && child instanceof InstantMessage) {

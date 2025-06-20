@@ -25,11 +25,11 @@ import iped.parsers.ufed.model.BaseModel;
 import iped.parsers.ufed.model.Chat;
 import iped.parsers.ufed.model.ChatActivity;
 import iped.parsers.ufed.model.Contact;
-import iped.parsers.ufed.model.ContactEntry;
+import iped.parsers.ufed.model.ContactEntry.PhoneNumber;
+import iped.parsers.ufed.model.ContactEntry.UserID;
 import iped.parsers.ufed.model.InstantMessage;
 import iped.parsers.ufed.model.JumpTarget;
 import iped.parsers.ufed.model.Party;
-import iped.parsers.ufed.model.PhoneNumber;
 import iped.parsers.ufed.model.ReplyMessageData;
 import iped.utils.DateUtil;
 
@@ -120,9 +120,13 @@ public class UfedModelHandlerTest {
 
         Contact contact = msgWithContact.get().getSharedContacts().get(0);
         assertEquals("Charmeleon", contact.getName());
-        assertEquals(2, contact.getEntries().size());
+        assertEquals(0, contact.getOtherEntries().size());
 
-        Optional<ContactEntry> phoneEntry = contact.getEntries().stream().filter(e -> e instanceof PhoneNumber).findFirst();
+        Optional<UserID> userIdEntry = contact.getUserID();
+        assertTrue(userIdEntry.isPresent());
+        assertEquals("5511999997745@s.whatsapp.net", userIdEntry.get().getValue());
+
+        Optional<PhoneNumber> phoneEntry = contact.getPhoneNumber();
         assertTrue(phoneEntry.isPresent());
         assertEquals("+55 11 99999-22222", phoneEntry.get().getValue());
     }

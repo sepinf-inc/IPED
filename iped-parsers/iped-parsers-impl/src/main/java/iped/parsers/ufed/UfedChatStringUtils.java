@@ -135,7 +135,8 @@ public class UfedChatStringUtils {
                 .append("-[") //
                 .append(StringUtils.firstNonBlank(
                         contact.getName(),
-                        contact.getEntries().stream().map(ContactEntry::getValue).filter(StringUtils::isNotBlank).findFirst().orElse(null),
+                        contact.getUserID().map(ContactEntry::getValue).orElse(null),
+                        contact.getPhoneNumber().map(ContactEntry::getValue).orElse(null),
                         contact.getId())
                         )
                 .append("]") //

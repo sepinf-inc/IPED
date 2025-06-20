@@ -6,9 +6,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.StringJoiner;
 
 import iped.data.IItemReader;
+import iped.parsers.ufed.model.ContactEntry.PhoneNumber;
+import iped.parsers.ufed.model.ContactEntry.UserID;
 import iped.parsers.ufed.reference.ReferencedContact;
 
 /**
@@ -18,9 +21,12 @@ public class Contact extends BaseModel {
 
     private static final long serialVersionUID = 9129744519486979882L;
 
-    private final List<ContactEntry> entries = new ArrayList<>();
     private final List<ContactPhoto> photos = new ArrayList<>();
-    private final Map<String, BaseModel> others = new HashMap<>();
+
+    private UserID userID;
+    private PhoneNumber phoneNumber;
+    private final Map<String, BaseModel> otherEntries = new HashMap<>();
+    private final Map<String, BaseModel> otherFields = new HashMap<>();
 
 
     private transient ReferencedContact referencedContact;
@@ -34,16 +40,32 @@ public class Contact extends BaseModel {
     public String getType() { return (String) getField("Type"); }
     public String getAccount() { return (String) getField("Account"); }
 
-    public List<ContactEntry> getEntries() {
-        return entries;
+    public Optional<UserID> getUserID() {
+        return Optional.ofNullable(userID);
+    }
+
+    public void setUserID(UserID userID) {
+        this.userID = userID;
+    }
+
+    public Optional<PhoneNumber> getPhoneNumber() {
+        return Optional.ofNullable(phoneNumber);
+    }
+
+    public void setPhoneNumber(PhoneNumber phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    public Map<String, BaseModel> getOtherEntries() {
+        return otherEntries;
     }
 
     public List<ContactPhoto> getPhotos() {
         return photos;
     }
 
-    public Map<String, BaseModel> getOthers() {
-        return others;
+    public Map<String, BaseModel> getOtherFields() {
+        return otherFields;
     }
 
     public ReferencedContact getReferencedContact() {
@@ -63,7 +85,7 @@ public class Contact extends BaseModel {
         return new StringJoiner(", ", Contact.class.getSimpleName() + "[", "]")
             .add("id='" + getId() + "'")
             .add("Name='" + getName() + "'")
-            .add("entries=" + entries)
+            .add("entries=" + otherEntries)
             .toString();
     }
 }
