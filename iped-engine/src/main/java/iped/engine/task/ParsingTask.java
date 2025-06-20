@@ -119,6 +119,7 @@ import iped.properties.MediaTypes;
 import iped.search.IItemSearcher;
 import iped.utils.EmptyInputStream;
 import iped.utils.IOUtil;
+import iped.utils.TempAttributeInputStream;
 
 /**
  * TAREFA DE PARSING DE ALGUNS TIPOS DE ARQUIVOS. ARMAZENA O TEXTO EXTRAÍDO,
@@ -672,6 +673,11 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
                 if (updateInputStream) {
                     IOUtil.closeQuietly(is);
                 }
+            }
+
+            if (inputStream instanceof TempAttributeInputStream) {
+                TempAttributeInputStream tempAttrStream = (TempAttributeInputStream) inputStream;
+                subItem.setTempAttribute(tempAttrStream.getKey(), tempAttrStream.getObject());
             }
 
             checkRecursiveZipBomb(subItem);

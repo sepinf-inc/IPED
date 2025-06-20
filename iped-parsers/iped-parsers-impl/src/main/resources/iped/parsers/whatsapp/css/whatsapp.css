@@ -104,7 +104,16 @@ div.deletedIcon {
     height: 16px;
     vertical-align: bottom;
     background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAACGElEQVR42pWTz2saQRTH39j9oWs09LQW2720ppRe9lQotJce+i/0EPIHBBIqBEJNDh6ChyaX4EEPPSpCTjn03oMBKY1kEdIt2I0FW4kYNdYUZd1dp2+XZnGrsfTBlxmGeZ958+Y7BP5Ep9NJE0Keww0xHo8hHo+/y+fzmcl1MgFQcJBhTiSTSdrtdtcKhUJmCtButxXLsmTDMGYm+/1+yOVy0Gw2KcMwa6lUKuMBtFotxTRNWdf1mYBgMOjOKaWaKIoxDwDJ/7zCRGiRSMQLaDQaCp4uD4fDuZmBQAB4ntei0agXUK/X/6sCSZK8gFqt5lQwGAxmZlDTBMIwIAgC8Bynvd/aevz64GDkAqrVqoI+kFFTyY10GgbHx3B/bw+IKIJ+enr1LZEgY4576+5WVdV5BZT3ZDTQ55UVuHVxAbclCe6srsKP3V3oX16CTsgHF1CpVBR8Htl23N8xOj+Hs40N2yzgwwrHlMKI0vJXw3jpAsrl8twmXh0dgbazAz67KkJoSBSfvVLVkgsolUqOE6+vYPeC4zhnrmsaqNvbYPb7zjpWCuzCQpMRxRcuoFgsOk2c6r5lwcflZRj1erC4tAQP1tfhC1YyaLWAE4QKyWazIYy74XD4DcuyTzGHRzEo3zXk++Eh+/PkhH+4udllQyH9F5rmbH//kT8WSxD8nvdwzxNUBLWICs6A2J2172Z/FNsoPVQT9ek3OcbuBA+nPxcAAAAASUVORK5CYII=");
-    margin: 0;
+    margin-left: 0 0 0 3px;
+}
+
+div.trashIcon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    vertical-align: bottom;
+    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACHUlEQVQ4jXWTP2haQRzHP09F8/SCvFPQwfCItEEbQRHagHTpFjp2EdwytEOFDiW7uhbBKQQnh2ydCu0iWTILBoIYiEXQRfOHiMgTUcHXockjJvpbjvvefT/3/R13CkAulwtJKX+HQqGEoiisqouLi7/A+0KhcPtUdzyM3zKZTMLv9680A9zd3b02DOPP4eHhh2KxOH7UbQCKogiPx7PWDKBpGul0+q3P5/uZy+UeD7YSAHB+fk6n0wEgGAySSqWsNcMwqNVq+Hy+j9fX19+BHy8AyWSSZDK5MsHBwQEA9/f3HB8fW70uAer1Ou12e20be3t7CCGWtCVANBple3t7LWBzc5PRaLQe0Ol06PV6K82TyYRoNIqmaesB8/mc6XT6wtxoNGi1WpydneFyuXC73asBkUgEXdeteT6fp1KpMJvNEELgcDgYDoeYpvlVCPHKMIxPS4Bms0m327XmsViM0WhENpvl9PQUXdfZ2dnh6OjIo6rqCTw8pMdSVRVN09A0jXA4TCaTASAejyOlZGtri0QiAYDL5eq/aEHXdQKBAABOpxNVVfF6vUynUzY2NpbuRUrZv7m5+Z/ANE1zsVjgdruRUiKlRAiBoigEg0EGgwFSSstss9kW+/v7t1YC0zR/VavVL7u7u47nv9Hr9XJ5ecl4PGY+n3N1dYXdbh+WSqUJgLU7n8+/AWI8q3K5/Lnf76eeak6nszmbzd4B/AO8yqrd8aktfgAAAABJRU5ErkJggg==");
+    margin-left: 0 0 0 3px;
 }
 
 div.statusIcon {
@@ -230,7 +239,9 @@ div.catalogIcon {
 }
 
 .name {
-    color: #B0C040;	
+    color: #B0C040;
+    display: inline-block;
+    padding-bottom: 3px;
 }
 
 .name_call {
@@ -254,30 +265,26 @@ div:target {
     animation-duration: 2.5s; 
 }
 
+.quoteBlock {
+    border-radius: 5px;
+    border-left: 4px solid #01A280;
+    padding: 5px;
+    margin-top: 2px;
+    margin-bottom: 5px;
+    display:table;
+    width:-webkit-fill-available;
+}
+
+.quoteBlock:hover {
+	background-color: #AFD3F0 !important;
+}
+
 .quoteFrom {
       background:#F5F7F6;
-      border-radius: 5px;
-      border-left: 4px solid #01A280;
-      padding: 5px;
-      display:table;
-      width:-webkit-fill-available;
 }
 
 .quoteTo {
     background:#DEF6D4;
-    border-radius: 5px;
-    border-left: 4px solid #01A280;
-    padding: 5px;
-    display:table;
-    width:-webkit-fill-available;    
-}
-
-.quoteTo:hover {
-	background-color: #AFD3F0 !important;
-}
-
-.quoteFrom:hover {
-	background-color: #AFD3F0 !important;
 }
 
 .quoteUser {
@@ -291,8 +298,8 @@ div:target {
 }
 
 .quoteImg {
-    width: 33px;
-    height: 33px;
+    max-width: 100px;
+    max-height: 100px;
     display: table-cell;
 }
 
@@ -470,8 +477,8 @@ div:target {
     cursor: pointer;
     border-radius: 4px;
     box-shadow: 0 0 6px #a7a7a7;
-    display: block;
-    padding: 8px 8px 16px 8px;
+    display: inline-block;
+    padding: 8px 8px 8px 8px;
     background-color: #f7f787;
     color: #444400;
     margin: 4px 2px 4px 3px;
@@ -519,7 +526,13 @@ div:target {
     text-align: right;
     padding-left: 10px;
     font-size: small;
+    margin-top: 4px;
 }
+#conversation .link {
+    color: #0000EE;
+    font-weight: bold
+}
+
 #conversation .recovered {
     color: #ff0000;
     float: left;
@@ -628,6 +641,19 @@ div:target {
     font-style: italic;
     color: #aaaaaa;
     font-size: small;
+    margin-bottom: 5px;
+}
+
+.contact-table {
+    border-collapse: collapse;
+    border-style: groove;
+    border-color: black;
+    margin-top: 2px;
+}
+
+.contact-table td {
+    border: 1px solid black;
+    padding: 4px 8px;
 }
 
 /** Modal window - Author: https://github.com/lecoa/Vanilla-JS-Prompt **/
