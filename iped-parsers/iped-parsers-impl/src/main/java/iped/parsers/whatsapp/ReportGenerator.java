@@ -222,6 +222,10 @@ public class ReportGenerator {
                     // for now, nothing should be included in the report.
                     continue;
                 }
+                if (m.getMessageType() == MessageType.MESSAGE_ASSOCIATION) {
+                    // These messages are not visible on the app and don't contain any data
+                    continue;
+                }
                 String thisDate = dateFormat.format(m.getTimeStamp());
                 if (lastDate == null || !lastDate.equals(thisDate)) {
                     out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
