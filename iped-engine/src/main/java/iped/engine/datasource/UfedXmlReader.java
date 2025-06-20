@@ -84,10 +84,9 @@ import iped.engine.task.index.IndexItem;
 import iped.engine.util.Util;
 import iped.parsers.telegram.TelegramParser;
 import iped.parsers.ufed.UFEDChatParser;
-import iped.parsers.ufed.UfedChatMetadataUtils;
 import iped.parsers.ufed.model.BaseModel;
 import iped.parsers.ufed.model.Chat;
-import iped.parsers.ufed.model.InstantMessage;
+import iped.parsers.ufed.util.UfedUtils;
 import iped.parsers.util.MetadataUtil;
 import iped.parsers.util.PhoneParsingConfig;
 import iped.parsers.whatsapp.WhatsAppParser;
@@ -554,9 +553,9 @@ public class UfedXmlReader extends DataSourceReader {
             XmlNode node = new XmlNode(qName, atts);
             nodeSeq.push(node);
 
-            // if started <modelType type="Chat"> or <modelType type="InstantMessage">,
+            // if started <modelType type="Chat">, <modelType type="InstantMessage"> or <modelType type="Contact">
             // then delegates the parsing to UfedModelHandler
-            if (qName.equals("modelType") && StringUtils.equalsAny(atts.getValue("type"), "Chat", "InstantMessage")) {
+            if (qName.equals("modelType") && StringUtils.equalsAny(atts.getValue("type"), "Chat", "InstantMessage", "Contact")) {
                 xmlReader.setContentHandler(new UfedModelHandler(xmlReader, this, this, listOnly));
                 return;
             }
@@ -1772,10 +1771,12 @@ public class UfedXmlReader extends DataSourceReader {
             }
 
             Item item = itemSeq.pop();
+            item.setTempAttribute(UfedUtils.MODEL_TEMP_ATTRIBUTE, model);
+
 
             if (model instanceof Chat) {
 
-                // handle Chat model
+                // refine chat item
                 Chat chat = (Chat) model;
                 String source = chat.getSource();
                 if (StringUtils.containsIgnoreCase(source, Chat.SOURCE_WHATSAPP)) {
@@ -1784,27 +1785,12 @@ public class UfedXmlReader extends DataSourceReader {
                     item.setMediaType(UFEDChatParser.UFED_CHAT_TELEGRAM);
                 }
                 item.setExtraAttribute(IndexItem.TREENODE, Boolean.toString(true));
+            }
 
-                item.setTempAttribute(UFEDChatParser.CHAT_TEMP_ATTRIBUTE, chat);
-
-                try {
-                    processItem(item);
-                } catch (SAXException e) {
-                    LOGGER.error("Error on sending Chat to process", e);
-                }
-
-            } else if (model instanceof InstantMessage) {
-
-                // handle InstantMessage model (without Chat parent)
-                InstantMessage message = (InstantMessage) model;
-                UfedChatMetadataUtils.fillCommonMetadata(model, item.getMetadata());
-                UfedChatMetadataUtils.fillInstantMessageMetadata(message, item.getMetadata(), null);
-
-                try {
-                    processItem(item);
-                } catch (SAXException e) {
-                    LOGGER.error("Error on sending InstantMessage to process", e);
-                }
+            try {
+                processItem(item);
+            } catch (SAXException e) {
+                LOGGER.error("Error on sending model to process", e);
             }
         }
     }

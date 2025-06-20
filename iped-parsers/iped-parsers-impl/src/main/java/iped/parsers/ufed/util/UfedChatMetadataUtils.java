@@ -1,4 +1,4 @@
-package iped.parsers.ufed;
+package iped.parsers.ufed.util;
 
 import java.util.Collections;
 import java.util.Date;
@@ -44,14 +44,20 @@ public class UfedChatMetadataUtils {
         return metadata;
     }
 
-    public static Metadata createInstantMessageMetadata(InstantMessage message, Chat chat) {
+    public static Metadata createInstantMessageMetadata(InstantMessage message) {
         Metadata metadata = new Metadata();
-        fillCommonMetadata(message, metadata);
-        fillInstantMessageMetadata(message, metadata, chat);
+        fillInstantMessageMetadata(message, metadata);
         return metadata;
     }
 
-    public static void fillInstantMessageMetadata(InstantMessage message, Metadata metadata, Chat chat) {
+    public static void fillInstantMessageMetadata(InstantMessage message, Metadata metadata) {
+
+        fillCommonMetadata(message, metadata);
+
+        metadata.set(ExtraProperties.PARENT_VIEW_POSITION, Integer.toString(message.getSourceIndex()));
+        if (!message.getAttachments().isEmpty()) {
+            metadata.set(ExtraProperties.MESSAGE_ATTACHMENT_COUNT, message.getAttachments().size());
+        }
 
         // Instant Message -> From
         message.getFrom().ifPresent(from -> {
@@ -63,22 +69,22 @@ public class UfedChatMetadataUtils {
             message.getTo().forEach(to -> {
                 fillParticipantMetadata(to, metadata, "to");
             });
-        } else if (chat != null) {
+        } else if (message.getChat() != null) {
 
             // get participants that are not 'from'
             List<Party> otherParticipants;
             if (message.getFrom().isPresent()) {
-                otherParticipants = chat.getParticipants().stream().filter(p -> {
+                otherParticipants = message.getChat().getParticipants().stream().filter(p -> {
                     return !p.equals(message.getFrom().get());
                 }).collect(Collectors.toList());
             } else {
-                otherParticipants = chat.getParticipants();
+                otherParticipants = message.getChat().getParticipants();
             }
 
             if (otherParticipants.size() == 1) {
                 fillParticipantMetadata(otherParticipants.get(0), metadata, "to");
             } if (otherParticipants.size() > 2) {
-                metadata.add(ExtraProperties.UFED_META_PREFIX + "to", UfedChatStringUtils.getChatTitle(chat, false, false));
+                metadata.add(ExtraProperties.UFED_META_PREFIX + "to", UfedChatStringUtils.getChatTitle(message.getChat(), false, false));
             }
         }
 
@@ -126,6 +132,10 @@ public class UfedChatMetadataUtils {
     }
 
     public static void fillCommonMetadata(BaseModel model, Metadata metadata) {
+
+        if (model.isDeleted()) {
+            metadata.set(ExtraProperties.DELETED, Boolean.toString(true));
+        }
 
         // add attributes
         model.getAttributes().entrySet().stream() //

@@ -15,6 +15,7 @@ import iped.parsers.ufed.model.BaseModel;
 import iped.parsers.ufed.model.Chat;
 import iped.parsers.ufed.model.ChatActivity;
 import iped.parsers.ufed.model.Contact;
+import iped.parsers.ufed.model.ContactEntry;
 import iped.parsers.ufed.model.ContactEntry.PhoneNumber;
 import iped.parsers.ufed.model.ContactEntry.UserID;
 import iped.parsers.ufed.model.ContactPhoto;
@@ -181,7 +182,13 @@ public class UfedModelHandler extends DefaultHandler {
         }
         switch (type) {
             case "Chat": return new Chat();
-            case "InstantMessage": return new InstantMessage();
+            case "InstantMessage": {
+                if (!modelStack.isEmpty() && modelStack.peek() instanceof Chat) {
+                    return new InstantMessage((Chat) modelStack.peek());
+                } else {
+                    return new InstantMessage();
+                }
+            }
             case "Party": return new Party();
             case "QuotedMessageData": return new QuotedMessageData();
             case "Attachment": return new Attachment();
@@ -194,7 +201,14 @@ public class UfedModelHandler extends DefaultHandler {
             case "ForwardedMessageData": return new ForwardedMessageData();
             case "ReplyMessageData": return new ReplyMessageData();
             case "ChatActivity": return new ChatActivity();
-            default: return new GenericModel(type);
+            default: {
+                if (!modelStack.isEmpty() && modelStack.peek() instanceof Contact
+                        && !fieldNameStack.isEmpty() && "Entries".equals(fieldNameStack.peek())) {
+                    return new ContactEntry(type);
+                } else {
+                    return new GenericModel(type);
+                }
+            }
         }
     }
 
@@ -250,20 +264,20 @@ public class UfedModelHandler extends DefaultHandler {
             }
         } else if (parent instanceof Contact) {
             Contact contact = (Contact) parent;
-            if ("Entries".equals(fieldName)) {
+            if ("Entries".equals(fieldName) && child instanceof ContactEntry) {
                 if (child instanceof UserID) {
                     contact.setUserID((UserID) child);
                 } else if (child instanceof PhoneNumber) {
                     contact.setPhoneNumber((PhoneNumber) child);
                 } else {
                     logger.warn("Unrecognized Contact entry '{}' => {} (id={}).", fieldName, child.getClass().getName(), child.getId());
-                    contact.getOtherEntries().put(fieldName, child);
+                    contact.getOtherEntries().put(fieldName, (ContactEntry) child);
                 }
             } else if ("Photos".equals(fieldName) && child instanceof ContactPhoto) {
                 contact.getPhotos().add((ContactPhoto) child);
             } else {
                 logger.warn("Unrecognized Contact child '{}' => {} (id={}).", fieldName, child.getClass().getName(), child.getId());
-                contact.getOtherFields().put(fieldName, child);
+                contact.getOtherModelFields().put(fieldName, child);
             }
         } else if (parent instanceof ReplyMessageData) {
             if("InstantMessage".equals(fieldName) && child instanceof InstantMessage) {

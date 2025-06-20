@@ -29,6 +29,7 @@ import iped.parsers.ufed.model.InstantMessage;
 import iped.parsers.ufed.model.Party;
 import iped.parsers.ufed.reference.ReferencedContact;
 import iped.parsers.ufed.reference.ReferencedLocation;
+import iped.parsers.ufed.util.UfedChatStringUtils;
 import iped.parsers.util.Messages;
 import iped.parsers.whatsapp.Util;
 import iped.utils.EmojiUtil;

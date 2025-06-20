@@ -1,4 +1,4 @@
-package iped.parsers.ufed;
+package iped.parsers.ufed.util;
 
 import java.util.List;
 

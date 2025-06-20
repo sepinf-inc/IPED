@@ -1,4 +1,4 @@
-package iped.parsers.ufed;
+package iped.parsers.ufed.util;
 
 import java.util.Arrays;
 import java.util.List;
@@ -9,6 +9,8 @@ import iped.data.IItemReader;
 import iped.properties.ExtraProperties;
 
 public class UfedUtils {
+
+    public static final String MODEL_TEMP_ATTRIBUTE = "ufed:model";
 
     public static String readUfedMetadata(Metadata metadata, String property) {
         return metadata.get(ExtraProperties.UFED_META_PREFIX + property);

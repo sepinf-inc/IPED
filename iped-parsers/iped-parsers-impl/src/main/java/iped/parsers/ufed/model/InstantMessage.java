@@ -36,6 +36,7 @@ public class InstantMessage extends BaseModel implements Comparable<InstantMessa
         Unknown, NotEstablishedUnknownReason, Established, Missed, Rejected,
     }
 
+    private transient Chat chat;
     private Party from;
     private final List<Party> to = new ArrayList<>();
     private final List<Attachment> attachments = new ArrayList<>();
@@ -51,6 +52,11 @@ public class InstantMessage extends BaseModel implements Comparable<InstantMessa
         super("InstantMessage");
     }
 
+    public InstantMessage(Chat chat) {
+        this();
+        this.chat = chat;
+    }
+
     // Specific field getters
     public String getBody() { return (String) getField("Body"); }
     public String getType() { return (String) getField("Type"); }
@@ -64,6 +70,10 @@ public class InstantMessage extends BaseModel implements Comparable<InstantMessa
 
     public MessageStatus getStatus() {
         return MessageStatus.parse((String) getField("Status"));
+    }
+
+    public Chat getChat() {
+        return chat;
     }
 
     // Getters and Setters for child models

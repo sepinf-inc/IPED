@@ -1,6 +1,6 @@
 package iped.parsers.ufed.model;
 
-import static iped.parsers.ufed.UfedUtils.readUfedMetadata;
+import static iped.parsers.ufed.util.UfedUtils.readUfedMetadata;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,8 +25,8 @@ public class Contact extends BaseModel {
 
     private UserID userID;
     private PhoneNumber phoneNumber;
-    private final Map<String, BaseModel> otherEntries = new HashMap<>();
-    private final Map<String, BaseModel> otherFields = new HashMap<>();
+    private final Map<String, ContactEntry> otherEntries = new HashMap<>();
+    private final Map<String, BaseModel> otherModelFields = new HashMap<>();
 
 
     private transient ReferencedContact referencedContact;
@@ -56,7 +56,7 @@ public class Contact extends BaseModel {
         this.phoneNumber = phoneNumber;
     }
 
-    public Map<String, BaseModel> getOtherEntries() {
+    public Map<String, ContactEntry> getOtherEntries() {
         return otherEntries;
     }
 
@@ -64,8 +64,8 @@ public class Contact extends BaseModel {
         return photos;
     }
 
-    public Map<String, BaseModel> getOtherFields() {
-        return otherFields;
+    public Map<String, BaseModel> getOtherModelFields() {
+        return otherModelFields;
     }
 
     public ReferencedContact getReferencedContact() {

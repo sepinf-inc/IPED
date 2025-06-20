@@ -1,6 +1,6 @@
 package iped.parsers.ufed.reference;
 
-import static iped.parsers.ufed.UfedUtils.readUfedMetadata;
+import static iped.parsers.ufed.util.UfedUtils.readUfedMetadata;
 
 import iped.data.IItemReader;
 
