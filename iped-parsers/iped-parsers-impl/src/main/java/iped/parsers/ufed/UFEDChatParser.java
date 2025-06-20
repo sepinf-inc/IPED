@@ -36,6 +36,7 @@ import iped.parsers.ufed.model.JumpTarget;
 import iped.parsers.ufed.model.ReplyMessageData;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
+import iped.properties.MediaTypes;
 import iped.search.IItemSearcher;
 import iped.utils.EmptyInputStream;
 
@@ -305,6 +306,8 @@ public class UFEDChatParser extends AbstractParser {
 
     private void loadChatReferences(Chat chat, IItemSearcher searcher) {
 
+        loadAccountReference(chat, searcher);
+
         // load photo thumb
         chat.getPhotos().stream().forEach(p -> {
             loadContactPhotoData(p, searcher);
@@ -314,6 +317,30 @@ public class UFEDChatParser extends AbstractParser {
         chat.getMessages().stream().forEach(m -> {
             loadInstantMessageReferences(m, searcher);
         });
+    }
+
+    private void loadAccountReference(Chat chat, IItemSearcher searcher) {
+        String account = chat.getAccount();
+        if (StringUtils.isBlank(account)) {
+            return;
+        }
+
+        String source = chat.getSource();
+        String query = BasicProps.CONTENTTYPE + ":\"" + MediaTypes.UFED_USER_ACCOUNT_MIME.toString() + "\"" //
+                + " && " + searcher.escapeQuery(ExtraProperties.UFED_META_PREFIX + "Source") + ":\"" + source + "\"" //
+                + " && (" + searcher.escapeQuery(ExtraProperties.UFED_META_PREFIX + "UserID") + ":\"" + account + "\"" //
+                + " || " + searcher.escapeQuery(ExtraProperties.UFED_META_PREFIX + "PhoneNumber") + ":\"" + account
+                + "\"" //
+                + " || " + searcher.escapeQuery(ExtraProperties.UFED_META_PREFIX + "Username") + ":\"" + account + "\"" //
+                + ")";
+
+        List<IItemReader> results = searcher.search(query);
+        if (!results.isEmpty()) {
+            if (results.size() > 1) {
+                logger.warn("Found more than one account for [{}]: {}", account, results);
+            }
+            chat.setReferencedAccount(results.get(0));
+        }
     }
 
     private void loadInstantMessageReferences(InstantMessage message, IItemSearcher searcher) {

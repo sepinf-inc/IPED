@@ -17,6 +17,7 @@ public class MediaTypes {
     public static final MediaType UFED_SMS_MIME = MediaType.application("x-ufed-sms"); //$NON-NLS-1$
     public static final MediaType UFED_MMS_MIME = MediaType.application("x-ufed-mms"); //$NON-NLS-1$
     public static final MediaType UFED_CONTACT_MIME = MediaType.application("x-ufed-contact"); //$NON-NLS-1$
+    public static final MediaType UFED_USER_ACCOUNT_MIME = MediaType.application("x-ufed-useraccount");
     public static final MediaType UFED_DEVICE_INFO = MediaType.application("x-ufed-deviceinfo"); //$NON-NLS-1$
     public static final MediaType UNALLOCATED = MediaType.application("x-unallocated"); //$NON-NLS-1$
     public static final MediaType OUTLOOK_MSG = MediaType.application("vnd.ms-outlook");

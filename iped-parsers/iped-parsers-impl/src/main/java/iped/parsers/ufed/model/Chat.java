@@ -11,6 +11,8 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
+import iped.data.IItemReader;
+
 /**
  * Represents a <model type="Chat"> element. This is the root object.
  */
@@ -31,6 +33,8 @@ public class Chat extends BaseModel {
     private final List<ContactPhoto> photos = new ArrayList<>();
     private final List<InstantMessage> messages = new ArrayList<>();
     private final Map<String, BaseModel> others = new HashMap<>();
+
+    private IItemReader referencedAccount;
 
     public Chat() {
         super("Chat");
@@ -71,6 +75,14 @@ public class Chat extends BaseModel {
         return others;
     }
 
+    public IItemReader getReferencedAccount() {
+        return referencedAccount;
+    }
+
+    public void setReferencedAccount(IItemReader referencedAccount) {
+        this.referencedAccount = referencedAccount;
+    }
+
     public boolean isGroup() {
         return StringUtils.equalsAnyIgnoreCase(getChatType(), "Channel", "Group");
     }
@@ -85,7 +97,5 @@ public class Chat extends BaseModel {
                 .add("messages=" + messages)
                 .toString();
     }
-
-
 }
 
