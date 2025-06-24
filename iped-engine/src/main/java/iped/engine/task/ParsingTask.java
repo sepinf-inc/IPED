@@ -364,6 +364,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             // Don't expand subitem if its hash is equal to parent container hash, could lead to infinite recursion.
             // See https://github.com/sepinf-inc/IPED/issues/1814
             if (evidence.isSubItem() && evidence.getHash() != null && evidence.getHash().equals(evidence.getTempAttribute(PARENT_CONTAINER_HASH))) {
+                containersBeingExpanded.decrementAndGet();
                 return;
             }
         }
