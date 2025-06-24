@@ -34,6 +34,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.io.TemporaryResources;
@@ -363,7 +364,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             }
             // Don't expand subitem if its hash is equal to parent container hash, could lead to infinite recursion.
             // See https://github.com/sepinf-inc/IPED/issues/1814
-            if (evidence.isSubItem() && evidence.getHash() != null && evidence.getHash().equals(evidence.getTempAttribute(PARENT_CONTAINER_HASH))) {
+            if (evidence.isSubItem() && StringUtils.isNotEmpty(evidence.getHash()) && evidence.getHash().equals(evidence.getTempAttribute(PARENT_CONTAINER_HASH))) {
                 containersBeingExpanded.decrementAndGet();
                 return;
             }
