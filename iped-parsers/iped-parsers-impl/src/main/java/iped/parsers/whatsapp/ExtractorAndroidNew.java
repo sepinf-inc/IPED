@@ -46,6 +46,7 @@ import static iped.parsers.whatsapp.Message.MessageType.GROUP_ONLY_ADMINS_CAN_SE
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_REMOVED_FROM_COMMUNITY;
 import static iped.parsers.whatsapp.Message.MessageType.IMAGE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.LOCATION_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.MESSAGE_ASSOCIATION;
 import static iped.parsers.whatsapp.Message.MessageType.MESSAGES_ENCRYPTED;
 import static iped.parsers.whatsapp.Message.MessageType.MESSAGES_NOW_ENCRYPTED;
 import static iped.parsers.whatsapp.Message.MessageType.MISSED_VIDEO_CALL;
@@ -1022,6 +1023,8 @@ public abstract class ExtractorAndroidNew extends Extractor {
                 result = ORDER_MESSAGE;
                 break;
             case 45:
+            case 55:
+            case 57:
                 result = UI_ELEMENTS;
                 break;
             case 46:
@@ -1034,9 +1037,11 @@ public abstract class ExtractorAndroidNew extends Extractor {
                 }
                 break;
             case 66:
+            case 106:
                 result = POLL_MESSAGE;
                 break;
             case 81:
+            case 103:
                 // Quote with media
                 result = TEXT_MESSAGE;
                 if (mediaMime != null && !mediaMime.isBlank()) {
@@ -1056,6 +1061,9 @@ public abstract class ExtractorAndroidNew extends Extractor {
             case 90:
                 // Newer databases also have entries to any call in messages table
                 result = CALL_MESSAGE;
+                break;
+            case 99:
+                result = MESSAGE_ASSOCIATION;
                 break;
             default:
                 break;

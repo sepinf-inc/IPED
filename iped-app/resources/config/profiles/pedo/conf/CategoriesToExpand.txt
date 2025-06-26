@@ -18,6 +18,8 @@ GDrive Synced Files
 OLE files
 Georeferenced Files
 Peer-to-peer
+Chrome Cache
+Apple Configuration Files
 #Event Files
 
 # Generates registry reports:
@@ -25,6 +27,9 @@ Windows Registry
 
 # Generates USN Journal reports
 USN Journal
+
+#Generate Open Financial Exchange Spreadsheets
+Open Financial Exchange
 
 Text Documents
 Spreadsheets
