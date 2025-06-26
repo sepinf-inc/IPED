@@ -61,11 +61,9 @@ public class InstantMessageHandler extends BaseModelHandler<InstantMessage> {
         });
 
         // Message -> To
-        if (!model.getTo().isEmpty()) {
+        if (model.getTo().size() == 1) {
 
-            model.getTo().forEach(to -> {
-                new PartyHandler(to,  item).fillMetadata("To", metadata);
-            });
+            new PartyHandler(model.getTo().get(0),  item).fillMetadata("To", metadata);
 
         } else if (model.getChat() != null) {
 

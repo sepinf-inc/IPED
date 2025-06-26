@@ -191,10 +191,10 @@ public class UfedChatParser extends AbstractParser {
 
         for (InstantMessage message : subList) {
 
-            InstantMessageHandler imHandler = new InstantMessageHandler(message, null);
+            InstantMessageHandler messageHandler = new InstantMessageHandler(message, null);
 
             Metadata messageMeta = new Metadata();
-            messageMeta.set(TikaCoreProperties.TITLE, imHandler.getTitle());
+            messageMeta.set(TikaCoreProperties.TITLE, messageHandler.getTitle());
             messageMeta.set(StandardParser.INDEXER_CONTENT_TYPE, message.getContentType().toString());
             messageMeta.set(ExtraProperties.PARENT_VIRTUAL_ID, chatVirtualId);
             messageMeta.set(BasicProps.LENGTH, "");
