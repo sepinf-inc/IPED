@@ -10,14 +10,13 @@ import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 
+import iped.parsers.ufed.model.Accountable;
 import iped.parsers.ufed.model.Attachment;
 import iped.parsers.ufed.model.BaseModel;
 import iped.parsers.ufed.model.Chat;
 import iped.parsers.ufed.model.ChatActivity;
 import iped.parsers.ufed.model.Contact;
 import iped.parsers.ufed.model.ContactEntry;
-import iped.parsers.ufed.model.ContactEntry.PhoneNumber;
-import iped.parsers.ufed.model.ContactEntry.UserID;
 import iped.parsers.ufed.model.ContactPhoto;
 import iped.parsers.ufed.model.Coordinate;
 import iped.parsers.ufed.model.ForwardedMessageData;
@@ -25,10 +24,12 @@ import iped.parsers.ufed.model.GenericModel;
 import iped.parsers.ufed.model.InstantMessage;
 import iped.parsers.ufed.model.InstantMessageExtraData;
 import iped.parsers.ufed.model.JumpTarget;
+import iped.parsers.ufed.model.KeyValueModel;
 import iped.parsers.ufed.model.MessageLabel;
 import iped.parsers.ufed.model.Party;
 import iped.parsers.ufed.model.QuotedMessageData;
 import iped.parsers.ufed.model.ReplyMessageData;
+import iped.parsers.ufed.model.UserAccount;
 import iped.utils.DateUtil;
 
 
@@ -41,6 +42,7 @@ public class UfedModelHandler extends DefaultHandler {
     private final Stack<String> fieldTypeStack = new Stack<>();
     private final StringBuilder elementValueBuilder = new StringBuilder();
     private JumpTarget currentJumpTarget;
+    private boolean inRelatedModels = false; // Flag for <RelatedModels> section
 
     private XMLReader xmlReader;
     private ContentHandler parentHandler;
@@ -79,19 +81,25 @@ public class UfedModelHandler extends DefaultHandler {
             newModel.setId(attributes.getValue("id"));
 
             if (!modelStack.isEmpty() && !fieldNameStack.isEmpty()) {
-                addChildModel(modelStack.peek(), newModel, fieldNameStack.peek());
+                // Use a special field name for related models to distinguish them
+               String fieldName = inRelatedModels ? "RelatedModels" : fieldNameStack.peek();
+                addChildModel(modelStack.peek(), newModel, fieldName);
             } else {
                 listener.onModelStarted(newModel, attributes);
             }
-
             modelStack.push(newModel);
+
         } else if ("field".equalsIgnoreCase(qName) || "modelField".equalsIgnoreCase(qName)
                    || "multiModelField".equalsIgnoreCase(qName) || "nodeField".equalsIgnoreCase(qName)) {
             fieldNameStack.push(attributes.getValue("name"));
             fieldTypeStack.push(attributes.getValue("type")); // Store the field's type
+
         } else if ("targetid".equalsIgnoreCase(qName)) {
             currentJumpTarget = new JumpTarget();
             currentJumpTarget.setIsModel("true".equalsIgnoreCase(attributes.getValue("ismodel")));
+
+        } else if ("RelatedModels".equalsIgnoreCase(qName)) {
+            inRelatedModels = true;
         }
     }
 
@@ -155,6 +163,8 @@ public class UfedModelHandler extends DefaultHandler {
                 modelStack.peek().getJumpTargets().add(currentJumpTarget);
                 currentJumpTarget = null; // Reset
             }
+        } else if ("RelatedModels".equalsIgnoreCase(qName)) {
+            inRelatedModels = false;
         }
     }
 
@@ -194,15 +204,15 @@ public class UfedModelHandler extends DefaultHandler {
             case "Attachment": return new Attachment();
             case "ContactPhoto": return new ContactPhoto();
             case "MessageLabel": return new MessageLabel();
+            case "UserAccount": return new UserAccount();
             case "Contact": return new Contact();
-            case "UserID": return new UserID();
-            case "PhoneNumber": return new PhoneNumber();
             case "Coordinate": return new Coordinate();
             case "ForwardedMessageData": return new ForwardedMessageData();
             case "ReplyMessageData": return new ReplyMessageData();
             case "ChatActivity": return new ChatActivity();
+            case "KeyValueModel": return new KeyValueModel();
             default: {
-                if (!modelStack.isEmpty() && modelStack.peek() instanceof Contact
+                if (!modelStack.isEmpty() && modelStack.peek() instanceof Accountable
                         && !fieldNameStack.isEmpty() && "Entries".equals(fieldNameStack.peek())) {
                     return new ContactEntry(type);
                 } else {
@@ -213,6 +223,18 @@ public class UfedModelHandler extends DefaultHandler {
     }
 
     private void addChildModel(BaseModel parent, BaseModel child, String fieldName) {
+
+        // Handle AdditionalInfo universally before specific parent checks
+        if ("AdditionalInfo".equals(fieldName) && child instanceof KeyValueModel) {
+            parent.getAdditionalInfo().add((KeyValueModel) child);
+            return;
+        }
+
+        if ("RelatedModels".equals(fieldName)) {
+            parent.getRelatedModels().add(child);
+            return;
+        }
+
         if (parent instanceof Chat) {
             Chat chat = (Chat) parent;
             if ("Participants".equals(fieldName) && child instanceof Party) {
@@ -262,22 +284,15 @@ public class UfedModelHandler extends DefaultHandler {
             } else {
                 logger.error("Unknown ForwardedMessageData child '{}' ({}). Ignoring...", fieldName, child.getId());
             }
-        } else if (parent instanceof Contact) {
-            Contact contact = (Contact) parent;
+        } else if (parent instanceof Accountable) {
+            Accountable accountable = (Accountable) parent;
             if ("Entries".equals(fieldName) && child instanceof ContactEntry) {
-                if (child instanceof UserID) {
-                    contact.setUserID((UserID) child);
-                } else if (child instanceof PhoneNumber) {
-                    contact.setPhoneNumber((PhoneNumber) child);
-                } else {
-                    logger.warn("Unrecognized Contact entry '{}' => {} (id={}).", fieldName, child.getClass().getName(), child.getId());
-                    contact.getOtherEntries().put(fieldName, (ContactEntry) child);
-                }
+                accountable.getContactEntries().put(child.getModelType(), (ContactEntry) child);
             } else if ("Photos".equals(fieldName) && child instanceof ContactPhoto) {
-                contact.getPhotos().add((ContactPhoto) child);
+                accountable.getPhotos().add((ContactPhoto) child);
             } else {
-                logger.warn("Unrecognized Contact child '{}' => {} (id={}).", fieldName, child.getClass().getName(), child.getId());
-                contact.getOtherModelFields().put(fieldName, child);
+                logger.warn("Unrecognized Accountable child '{}' => {} (id={}).", fieldName, child.getClass().getName(), child.getId());
+                accountable.getOtherModelFields().put(fieldName, child);
             }
         } else if (parent instanceof ReplyMessageData) {
             if("InstantMessage".equals(fieldName) && child instanceof InstantMessage) {

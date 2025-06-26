@@ -34,7 +34,6 @@ import iped.parsers.image.TiffPageParser;
 import iped.parsers.ocr.OCRParser;
 import iped.parsers.standard.RawStringParser;
 import iped.parsers.standard.StandardParser;
-import iped.parsers.ufed.UFEDChatParser;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
@@ -198,7 +197,6 @@ public class MetadataUtil {
         ignorePreviewMetas.add(Metadata.CONTENT_TYPE);
         ignorePreviewMetas.add(StandardParser.INDEXER_CONTENT_TYPE);
         ignorePreviewMetas.add(ExtraProperties.TIKA_PARSER_USED);
-        ignorePreviewMetas.add(UFEDChatParser.CHILD_MSG_IDS);
         return ignorePreviewMetas;
     }
 

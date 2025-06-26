@@ -56,12 +56,7 @@ import iped.data.IItem;
 import iped.data.IItemId;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.ItemId;
-import iped.engine.search.IPEDSearcher;
-import iped.engine.search.QueryBuilder;
-import iped.parsers.ufed.UFEDChatParser;
 import iped.properties.ExtraProperties;
-import iped.properties.MediaTypes;
-import iped.search.SearchResult;
 import iped.utils.SpinnerDialog;
 import iped.viewers.api.AbstractViewer;
 

@@ -2,7 +2,7 @@ package iped.parsers.ufed.model;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,7 +32,7 @@ public class Chat extends BaseModel {
     private final List<Party> participants = new ArrayList<>();
     private final List<ContactPhoto> photos = new ArrayList<>();
     private final List<InstantMessage> messages = new ArrayList<>();
-    private final Map<String, BaseModel> others = new HashMap<>();
+    private final Map<String, BaseModel> others = new LinkedHashMap<>();
 
     private IItemReader referencedAccount;
 

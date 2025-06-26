@@ -21,6 +21,8 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
+import iped.parsers.ufed.handler.ChatHandler;
+import iped.parsers.ufed.handler.PartyHandler;
 import iped.parsers.ufed.model.Attachment;
 import iped.parsers.ufed.model.Chat;
 import iped.parsers.ufed.model.Contact;
@@ -29,7 +31,6 @@ import iped.parsers.ufed.model.InstantMessage;
 import iped.parsers.ufed.model.Party;
 import iped.parsers.ufed.reference.ReferencedContact;
 import iped.parsers.ufed.reference.ReferencedLocation;
-import iped.parsers.ufed.util.UfedChatStringUtils;
 import iped.parsers.util.Messages;
 import iped.parsers.whatsapp.Util;
 import iped.utils.EmojiUtil;
@@ -189,7 +190,7 @@ public class ReportGenerator {
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, "UTF-8"));
 
-        String title = UfedChatStringUtils.getChatTitle(chat, true, false);
+        String title = new ChatHandler(chat, null).getTitle(true, false);
         String source = chat.getSource();
 
         byte[] firstPhotoData = chat.getPhotos().stream().findFirst().map(ContactPhoto::getImageData).orElse(null);
@@ -241,7 +242,7 @@ public class ReportGenerator {
             }
 
             if (message.getFrom().isPresent()) {
-                name = UfedChatStringUtils.getPartyString(message.getFrom().get());
+                name = new PartyHandler(message.getFrom().get()).getTitle();
             }
             if (StringUtils.isBlank(name)) {
                 if (isOutgoing) {
@@ -261,7 +262,7 @@ public class ReportGenerator {
             Party originalSender = message.findForwardedMessageOriginalSender();
 
             if (originalSender != null) {
-                forwardedFrom = Messages.getString("UFEDChatParser.Forwarded.From") + " " + UfedChatStringUtils.getPartyString(originalSender);
+                forwardedFrom = Messages.getString("UFEDChatParser.Forwarded.From") + " " + new PartyHandler(originalSender).getTitle();
             }
             out.println("<img class=\"fwd\"><span class=\"fwd\">" + Messages.getString("UFEDChatParser.Forwarded") + " " + forwardedFrom + "</span><br/>");
         }
@@ -298,7 +299,7 @@ public class ReportGenerator {
                 }
             }
 
-            String contentType = attachment.getUfedContentType();
+            String contentType = attachment.getAttachmentContentType();
             if (contentType != null) {
                 contentType = contentType.toLowerCase();
             }
@@ -446,8 +447,10 @@ public class ReportGenerator {
         String body = quotedMessage.getBody();
         String quoteClick = "onclick=\"goToAnchorId('" + quotedMessage.getAnchorId() + "');\"";
         String quoteIcon = "";
-        String quoteUser = UfedChatStringUtils.getPartyString(quotedMessage.getFrom().orElse(null));
-        if (quoteUser == null) {
+        String quoteUser;
+        if (quotedMessage.getFrom().isPresent()) {
+            quoteUser = new PartyHandler(quotedMessage.getFrom().get()).getTitle();
+        } else {
             if (message.isFromPhoneOwner()) {
                 quoteUser = Messages.getString("WhatsAppReport.Owner");
             } else {
@@ -481,7 +484,7 @@ public class ReportGenerator {
                 }
             }
 
-            String attachContentType = attach.getUfedContentType();
+            String attachContentType = attach.getAttachmentContentType();
             if (attachContentType != null) {
                 attachContentType = attachContentType.toLowerCase();
             }

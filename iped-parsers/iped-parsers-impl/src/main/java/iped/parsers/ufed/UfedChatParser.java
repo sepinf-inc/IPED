@@ -25,23 +25,21 @@ import org.xml.sax.SAXException;
 import iped.data.IItem;
 import iped.data.IItemReader;
 import iped.parsers.standard.StandardParser;
-import iped.parsers.ufed.model.Attachment;
+import iped.parsers.ufed.handler.ChatHandler;
+import iped.parsers.ufed.handler.InstantMessageHandler;
 import iped.parsers.ufed.model.Chat;
 import iped.parsers.ufed.model.InstantMessage;
-import iped.parsers.ufed.util.UfedChatMetadataUtils;
-import iped.parsers.ufed.util.UfedChatStringUtils;
-import iped.parsers.ufed.util.UfedModelReferenceLoader;
 import iped.parsers.ufed.util.UfedUtils;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
 import iped.utils.TempAttributeInputStream;
 
-public class UFEDChatParser extends AbstractParser {
+public class UfedChatParser extends AbstractParser {
 
     private static final long serialVersionUID = 1L;
 
-    private static Logger logger = LoggerFactory.getLogger(UFEDChatParser.class);
+    private static Logger logger = LoggerFactory.getLogger(UfedChatParser.class);
 
     public static final MediaType UFED_CHAT_MIME = MediaType.application("x-ufed-chat");
     public static final MediaType UFED_CHAT_WA_MIME = MediaType.application("x-ufed-chat-whatsapp");
@@ -56,17 +54,13 @@ public class UFEDChatParser extends AbstractParser {
                     "facebook", MediaType.application("x-ufed-chat-preview-facebook"), //
                     "instagram", MediaType.application("x-ufed-chat-preview-instagram"));
 
-    public static final String META_PHONE_OWNER = ExtraProperties.UFED_META_PREFIX + "phoneOwner";
-    public static final String META_FROM_OWNER = ExtraProperties.UFED_META_PREFIX + "fromOwner";
-    public static final String CHILD_MSG_IDS = ExtraProperties.UFED_META_PREFIX + "msgChildIds";
-
-    public static final String ATTACHED_MEDIA_MSG = "ATTACHED_MEDIA: ";
-
     private boolean extractMessages = true;
     private boolean ignoreEmptyChats = false;
     private int minChatSplitSize = 6000000;
 
-    private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(UFED_CHAT_MIME, UFED_CHAT_WA_MIME,
+    private static Set<MediaType> SUPPORTED_TYPES = MediaType.set( //
+            UFED_CHAT_MIME, //
+            UFED_CHAT_WA_MIME, //
             UFED_CHAT_TELEGRAM);
 
     public static void setSupportedTypes(Set<MediaType> supportedTypes) {
@@ -130,14 +124,14 @@ public class UFEDChatParser extends AbstractParser {
                 return;
             }
 
-            UfedChatMetadataUtils.fillChatMetadata(chat, metadata);
+            ChatHandler chatHandler = new ChatHandler(chat, item);
+            chatHandler.loadReferences(searcher);
+            chatHandler.fillMetadata(metadata);
 
             Collections.sort(chat.getMessages());
 
-            UfedModelReferenceLoader.build(chat).load(searcher);
-
             String virtualId = chat.getId();
-            String chatPrefix = UfedChatStringUtils.getChatTitle(chat, true, true);
+            String chatPrefix = chatHandler.getTitle(true, true);
 
             if (extractor.shouldParseEmbedded(metadata)) {
                 ReportGenerator reportGenerator = new ReportGenerator(chat, minChatSplitSize);
@@ -197,10 +191,13 @@ public class UFEDChatParser extends AbstractParser {
 
         for (InstantMessage message : subList) {
 
+            InstantMessageHandler imHandler = new InstantMessageHandler(message, null);
+
             Metadata messageMeta = new Metadata();
-            messageMeta.set(TikaCoreProperties.TITLE, UfedChatStringUtils.getInstantMessageTitle(message));
+            messageMeta.set(TikaCoreProperties.TITLE, imHandler.getTitle());
             messageMeta.set(StandardParser.INDEXER_CONTENT_TYPE, message.getContentType().toString());
             messageMeta.set(ExtraProperties.PARENT_VIRTUAL_ID, chatVirtualId);
+            messageMeta.set(BasicProps.LENGTH, "");
 
             TempAttributeInputStream tempAttrStream = new TempAttributeInputStream(UfedUtils.MODEL_TEMP_ATTRIBUTE, message);
             extractor.parseEmbedded(tempAttrStream, handler, messageMeta, false);
@@ -209,14 +206,7 @@ public class UFEDChatParser extends AbstractParser {
 
     private void storeLinkedHashes(List<InstantMessage> messages, Metadata metadata) {
         for (InstantMessage m : messages) {
-            for (Attachment a : m.getAttachments()) {
-                if (a.getReferencedFile() != null && a.getReferencedFile().getHash() != null) {
-                    metadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + a.getReferencedFile().getHash());
-                    if (m.isFromPhoneOwner()) {
-                        metadata.add(ExtraProperties.SHARED_HASHES, a.getReferencedFile().getHash());
-                    }
-                }
-            }
+            UfedMessageParser.storeLinkedHashes(m, metadata);
         }
     }
 }

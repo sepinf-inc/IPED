@@ -84,7 +84,7 @@ import iped.engine.task.die.DIETask;
 import iped.engine.task.index.IndexItem;
 import iped.engine.util.Util;
 import iped.parsers.telegram.TelegramParser;
-import iped.parsers.ufed.UFEDChatParser;
+import iped.parsers.ufed.UfedChatParser;
 import iped.parsers.ufed.model.BaseModel;
 import iped.parsers.ufed.model.Chat;
 import iped.parsers.ufed.util.UfedUtils;
@@ -126,6 +126,12 @@ public class UfedXmlReader extends DataSourceReader {
 
     private static final String FILE_ID_ATTR = ExtraProperties.UFED_META_PREFIX + "file_id"; //$NON-NLS-1$
     private static final String LOCAL_PATH_META = ExtraProperties.UFED_META_PREFIX + "local_path"; //$NON-NLS-1$
+
+    public static final String META_PHONE_OWNER = ExtraProperties.UFED_META_PREFIX + "phoneOwner";
+    public static final String META_FROM_OWNER = ExtraProperties.UFED_META_PREFIX + "fromOwner";
+    public static final String CHILD_MSG_IDS = ExtraProperties.UFED_META_PREFIX + "msgChildIds";
+
+    public static final String ATTACHED_MEDIA_MSG = "ATTACHED_MEDIA: ";
 
     private Set<String> supportedApps = new HashSet<String>(Arrays.asList(WhatsAppParser.WHATSAPP,
             TelegramParser.TELEGRAM, WhatsAppParser.WHATSAPP + " Business", WhatsAppParser.WHATSAPP + " (Dual App)"));
@@ -180,7 +186,6 @@ public class UfedXmlReader extends DataSourceReader {
                 for (String str : HEADER_STRINGS)
                     if (!header.contains(str))
                         return null;
-
                 return new FileInputStream(file);
 
             } catch (IOException e) {
@@ -221,6 +226,18 @@ public class UfedXmlReader extends DataSourceReader {
             }
         }
         return uisf;
+    }
+
+    private FileInputStreamFactory getFISF() {
+        if (fisf == null) {
+            synchronized (root) {
+                if (fisf == null) {
+                    rootFolder = root.isDirectory() ? root : root.getParentFile();
+                    fisf = new FileInputStreamFactory(rootFolder.toPath());
+                }
+            }
+        }
+        return fisf;
     }
 
     private InputStream lookUpXmlReportInputStream(File root) {
@@ -289,7 +306,7 @@ public class UfedXmlReader extends DataSourceReader {
         }
 
         if (parsingConfig.getPhoneParsersToUse().equalsIgnoreCase("internal")) { //$NON-NLS-1$
-            UFEDChatParser.setSupportedTypes(Collections.singleton(UFEDChatParser.UFED_CHAT_MIME));
+            UfedChatParser.setSupportedTypes(Collections.singleton(UfedChatParser.UFED_CHAT_MIME));
             ignoreSupportedChats = true;
 
         } else if (parsingConfig.getPhoneParsersToUse().equalsIgnoreCase("external")) { //$NON-NLS-1$
@@ -554,9 +571,10 @@ public class UfedXmlReader extends DataSourceReader {
             XmlNode node = new XmlNode(qName, atts);
             nodeSeq.push(node);
 
-            // if started <modelType type="Chat">, <modelType type="InstantMessage"> or <modelType type="Contact">
+            // if started <modelType type="Chat">, <modelType type="InstantMessage"> and so on...
             // then delegates the parsing to UfedModelHandler
-            if (qName.equals("modelType") && StringUtils.equalsAny(atts.getValue("type"), "Chat", "InstantMessage", "Contact")) {
+            if (qName.equals("modelType") && StringUtils.equalsAny(atts.getValue("type"),
+                    "Chat", "InstantMessage", "Contact", "UserAccount")) {
                 xmlReader.setContentHandler(new UfedModelHandler(xmlReader, this, this, listOnly));
                 return;
             }
@@ -921,9 +939,9 @@ public class UfedXmlReader extends DataSourceReader {
                 } else if ("Chat".equals(type)) { //$NON-NLS-1$
                     String source = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source"); //$NON-NLS-1$
                     if (WhatsAppParser.WHATSAPP.equalsIgnoreCase(source)) // $NON-NLS-1$
-                        item.setMediaType(UFEDChatParser.UFED_CHAT_WA_MIME);
+                        item.setMediaType(UfedChatParser.UFED_CHAT_WA_MIME);
                     if (TelegramParser.TELEGRAM.equalsIgnoreCase(source)) // $NON-NLS-1$
-                        item.setMediaType(UFEDChatParser.UFED_CHAT_TELEGRAM);
+                        item.setMediaType(UfedChatParser.UFED_CHAT_TELEGRAM);
 
                     item.setExtraAttribute(IndexItem.TREENODE, "true"); //$NON-NLS-1$
                 }
@@ -952,7 +970,7 @@ public class UfedXmlReader extends DataSourceReader {
                     if (numInstantMsgAttachs > 0) {
                         item.setMediaType(MediaTypes.UFED_MESSAGE_ATTACH_MIME);
                         item.getMetadata().add(ExtraProperties.MESSAGE_BODY,
-                                UFEDChatParser.ATTACHED_MEDIA_MSG + numInstantMsgAttachs);
+                                ATTACHED_MEDIA_MSG + numInstantMsgAttachs);
                     }
                     this.numAttachments = 0;
                     if (!itemSeq.isEmpty()) {
@@ -996,10 +1014,10 @@ public class UfedXmlReader extends DataSourceReader {
                         if (value != null && isOwner) { // $NON-NLS-1$
                             ownerParties.add(value);
                             if (parentItem.getMediaType().toString().contains("chat"))
-                                parentItem.getMetadata().add(UFEDChatParser.META_PHONE_OWNER, value);
+                                parentItem.getMetadata().add(META_PHONE_OWNER, value);
                         }
                         if (isOwner && "From".equals(role)) //$NON-NLS-1$
-                            parentItem.getMetadata().add(UFEDChatParser.META_FROM_OWNER, Boolean.TRUE.toString());
+                            parentItem.getMetadata().add(META_FROM_OWNER, Boolean.TRUE.toString());
 
                     } else if ("PhoneNumber".equals(type) || "EmailAddress".equals(type)) { //$NON-NLS-1$ //$NON-NLS-2$
                         String category = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Category"); //$NON-NLS-1$
@@ -1178,7 +1196,7 @@ public class UfedXmlReader extends DataSourceReader {
                         // item skipped, decrement counter
                         caseData.incDiscoveredEvidences(-1);
                     }
-                    if (MediaTypes.isInstanceOf(item.getMediaType(), UFEDChatParser.UFED_CHAT_MIME)) {
+                    if (MediaTypes.isInstanceOf(item.getMediaType(), UfedChatParser.UFED_CHAT_MIME)) {
                         inChat = false;
                         ignoreItems = false;
                     }
@@ -1337,15 +1355,9 @@ public class UfedXmlReader extends DataSourceReader {
                 ufdrPathToUfedId.put(path, ufedId);
             }
             if (ufdrFile == null) {
-                if (rootFolder == null) {
-                    rootFolder = root.isDirectory() ? root : root.getParentFile();
-                }
-                if (fisf == null) {
-                    fisf = new FileInputStreamFactory(rootFolder.toPath());
-                }
                 File file = new File(rootFolder, path);
                 if (file.exists()) {
-                    item.setInputStreamFactory(fisf);
+                    item.setInputStreamFactory(getFISF());
                     item.setIdInDataSource(path);
                     item.setLength(file.length());
                 }
@@ -1752,16 +1764,15 @@ public class UfedXmlReader extends DataSourceReader {
             Item item = itemSeq.pop();
             item.setTempAttribute(UfedUtils.MODEL_TEMP_ATTRIBUTE, model);
 
-
             if (model instanceof Chat) {
-
-                // refine chat item
                 Chat chat = (Chat) model;
+
+                // fix chat media type
                 String source = chat.getSource();
                 if (StringUtils.containsIgnoreCase(source, Chat.SOURCE_WHATSAPP)) {
-                    item.setMediaType(UFEDChatParser.UFED_CHAT_WA_MIME);
+                    item.setMediaType(UfedChatParser.UFED_CHAT_WA_MIME);
                 } else if (Chat.SOURCE_TELEGRAM.equalsIgnoreCase(source)) {
-                    item.setMediaType(UFEDChatParser.UFED_CHAT_TELEGRAM);
+                    item.setMediaType(UfedChatParser.UFED_CHAT_TELEGRAM);
                 }
                 item.setExtraAttribute(IndexItem.TREENODE, Boolean.toString(true));
             }

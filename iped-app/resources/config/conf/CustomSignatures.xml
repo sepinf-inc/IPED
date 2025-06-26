@@ -1257,6 +1257,14 @@
     	<glob pattern="chat.*txt" isregex="true"/>
     </mime-type>
 
+    <mime-type type="application/x-ufed-instantmessage">
+    	<sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-ufed-deviceinfo">
+    	<sub-class-of type="text/html"/>
+    </mime-type>
+
     <mime-type type="application/x-ufed-contact">
     	<sub-class-of type="text/html"/>
     </mime-type>
@@ -1435,14 +1443,6 @@
     <mime-type type="application/x-threema-user-plist">
         <sub-class-of type="application/x-bplist"/>
         <glob pattern="group.ch.threema*.plist"/>
-    </mime-type>
-
-    <mime-type type="application/x-ufed-instantmessage">
-        <sub-class-of type="message/x-chat-message"/>
-    </mime-type>
-
-    <mime-type type="application/x-ufed-deviceinfo">
-    	<sub-class-of type="text/html"/>
     </mime-type>
 
 	<mime-type type="application/x-database-table">

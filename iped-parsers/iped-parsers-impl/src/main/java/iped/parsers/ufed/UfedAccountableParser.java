@@ -1,0 +1,178 @@
+package iped.parsers.ufed;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Date;
+import java.util.Map.Entry;
+import java.util.Set;
+
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.tika.exception.TikaException;
+import org.apache.tika.metadata.Metadata;
+import org.apache.tika.mime.MediaType;
+import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.ParseContext;
+import org.apache.tika.sax.XHTMLContentHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.SAXException;
+
+import iped.data.IItem;
+import iped.data.IItemReader;
+import iped.parsers.ufed.handler.AccountableHandler;
+import iped.parsers.ufed.handler.BaseModelHandler;
+import iped.parsers.ufed.handler.ContactHandler;
+import iped.parsers.ufed.handler.UserAccountHandler;
+import iped.parsers.ufed.model.Accountable;
+import iped.parsers.ufed.model.BaseModel;
+import iped.parsers.ufed.model.Contact;
+import iped.parsers.ufed.model.ContactEntry;
+import iped.parsers.ufed.model.ContactPhoto;
+import iped.parsers.ufed.model.UserAccount;
+import iped.parsers.ufed.util.UfedUtils;
+import iped.properties.MediaTypes;
+import iped.utils.DateUtil;
+
+public class UfedAccountableParser extends AbstractParser {
+
+    private static final long serialVersionUID = -4738095481615972119L;
+
+    private static Logger logger = LoggerFactory.getLogger(UfedAccountableParser.class);
+
+
+    private static Set<MediaType> SUPPORTED_TYPES = Set.of(
+            MediaTypes.UFED_CONTACT_MIME,
+            MediaTypes.UFED_USER_ACCOUNT_MIME);
+
+    @Override
+    public Set<MediaType> getSupportedTypes(ParseContext context) {
+        return SUPPORTED_TYPES;
+    }
+
+    @Override
+    public void parse(InputStream inputStream, ContentHandler handler, Metadata metadata, ParseContext context)
+            throws IOException, SAXException, TikaException {
+
+        XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
+
+        xhtml.startDocument();
+        try {
+            IItemReader item = context.get(IItemReader.class);
+
+            if (item == null) {
+                return;
+            }
+
+            Accountable accountable = null;
+            if (item instanceof IItem) {
+                accountable = (Accountable) ((IItem) item).getTempAttribute(UfedUtils.MODEL_TEMP_ATTRIBUTE);
+            }
+            if (accountable == null) {
+                return;
+            }
+
+            AccountableHandler<?> accountableHandler;
+            if (accountable instanceof Contact) {
+                accountableHandler = new ContactHandler((Contact) accountable);
+            } else if (accountable instanceof UserAccount) {
+                accountableHandler = new UserAccountHandler((UserAccount) accountable);
+            } else {
+                accountableHandler = new AccountableHandler<>(accountable);
+            }
+
+            accountableHandler.fillMetadata(metadata);
+
+            if (item instanceof IItem) {
+                String name = accountableHandler.getTitle();
+                ((IItem) item).setName(name);
+            }
+
+            xhtml.startElement("style");
+            xhtml.characters( //
+                     "table { border-collapse: collapse; }" + //
+                     "table, th, td { border: 1px solid black; }" + //
+                     "th, td { padding: 5px; text-align: left; }" + //
+                     "th { width: 150px; min-width: 150px; }" +
+                     "td img { max-width: 300px; }" + //
+                     ".ellipsis { display: inline-block; max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }" + //
+                     ".ellipsis:hover { white-space: normal; max-width: initial; }" //
+            );
+            xhtml.endElement("style");
+
+            renderAccountView(accountable, xhtml);
+
+        } catch (Exception e) {
+            logger.error("Error processing chat", e);
+            throw e;
+        } finally {
+            xhtml.endDocument();
+        }
+    }
+
+    private void renderAccountView(Accountable contact, XHTMLContentHandler xhtml) throws SAXException, IOException {
+
+        xhtml.startElement("table");
+
+        // Contact Photo
+        if (!contact.getPhotos().isEmpty()) {
+            xhtml.startElement("tr");
+            xhtml.element("th", "Photo");
+            xhtml.startElement("td");
+            for (ContactPhoto photo : contact.getPhotos()) {
+                byte[] photoData = photo.getImageData();
+                if (photoData == null) {
+                    photoData = IOUtils.resourceToByteArray("/iped/parsers/common/img/avatar-unavailable.png");
+                }
+                xhtml.startElement("img", "src", "data:image/jpg;base64," + Base64.encodeBase64String(photoData));
+                xhtml.startElement("br");
+            }
+            xhtml.endElement("td");
+            xhtml.endElement("tr");
+        }
+
+        // Contact Fields
+        for (Entry<String, Object> e : contact.getFields().entrySet()) {
+            if (BaseModelHandler.ignoreFields.contains(e.getKey())) {
+                continue;
+            }
+            xhtml.startElement("tr");
+            xhtml.element("th", iped.utils.StringUtil.convertCamelCaseToSpaces(e.getKey()));
+            String valueStr;
+            if (e.getValue() instanceof Date) {
+                valueStr = DateUtil.dateToString((Date) e.getValue());
+            } else {
+                valueStr = e.getValue().toString();
+            }
+            xhtml.element("td", valueStr);
+            xhtml.endElement("tr");
+        }
+
+        // Contact Entries
+        for (ContactEntry entry : contact.getContactEntries().values()) {
+            xhtml.startElement("tr");
+            xhtml.element("th", StringUtils.firstNonBlank(entry.getDomain(), entry.getModelType()));
+            xhtml.startElement("td");
+            xhtml.startElement("span", "class", "ellipsis");
+            xhtml.characters(entry.getValue());
+            xhtml.endElement("span");
+            if (StringUtils.isNotBlank(entry.getCategory())) {
+                xhtml.element("i", " (" + entry.getCategory() + ")");
+            }
+            xhtml.endElement("td");
+            xhtml.endElement("tr");
+        }
+
+        // Contact Model Fields
+        for (Entry<String, BaseModel> e : contact.getOtherModelFields().entrySet()) {
+            xhtml.startElement("tr");
+            xhtml.element("th", iped.utils.StringUtil.convertCamelCaseToSpaces(e.getKey()));
+            xhtml.element("td", e.getValue().toString());
+            xhtml.endElement("tr");
+        }
+
+        xhtml.endElement("table");
+    }
+}

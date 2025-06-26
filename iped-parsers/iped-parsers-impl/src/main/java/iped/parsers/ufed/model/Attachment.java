@@ -1,8 +1,8 @@
 package iped.parsers.ufed.model;
 
-import static iped.parsers.ufed.util.UfedUtils.readUfedMetadata;
-
 import java.util.StringJoiner;
+
+import org.apache.commons.lang3.StringUtils;
 
 import iped.data.IItemReader;
 import iped.parsers.ufed.reference.ReferencedFile;
@@ -16,6 +16,7 @@ public class Attachment extends BaseModel {
     private static final long serialVersionUID = -1061991406347039102L;
 
     private transient ReferencedFile referencedFile;
+    private transient byte[] unreferencedContent;
 
     public Attachment() {
         super("Attachment");
@@ -26,22 +27,26 @@ public class Attachment extends BaseModel {
 
     // Specific field getters
     public String getFilename() { return (String) getField("Filename"); }
-    public String getUfedContentType() { return (String) getField("ContentType"); }
+    public String getAttachmentContentType() { return (String) getField("ContentType"); }
     public String getURL() { return (String) getField("URL"); }
     public String getTitle() { return (String) getField("Title"); }
     public String getTranscript() { return (String) getField("Transcript"); }
-    public String getAttachmentExtractedPath() { return (String) getField("attachment_extracted_path"); }
+    public String getAttachmentExtractedPath() { return StringUtils.replaceChars((String) getField("attachment_extracted_path"), '\\', '/'); }
 
     public ReferencedFile getReferencedFile() {
         return referencedFile;
     }
 
     public void setReferencedFile(IItemReader fileItem) {
-        String fileItemId = readUfedMetadata(fileItem, "id");
-        if (!fileItemId.equals(getFileId())) {
-            throw new IllegalArgumentException("Ufed file_id doesn't match: " + getFileId() + " x " + fileItemId);
-        }
         this.referencedFile = new ReferencedFile(fileItem);
+    }
+
+    public byte[] getUnreferencedContent() {
+        return unreferencedContent;
+    }
+
+    public void setUnreferencedContent(byte[] unreferencedContent) {
+        this.unreferencedContent = unreferencedContent;
     }
 
     @Override

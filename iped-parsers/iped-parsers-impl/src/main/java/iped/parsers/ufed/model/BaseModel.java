@@ -2,7 +2,7 @@ package iped.parsers.ufed.model;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
@@ -22,9 +22,12 @@ public abstract class BaseModel implements Serializable {
 
     private final String modelType;
     private String id;
-    private final Map<String, Object> fields = new HashMap<>();
-    private final Map<String, String> attributes = new HashMap<>();
+    private final Map<String, Object> fields = new LinkedHashMap<>();
+    private final Map<String, String> attributes = new LinkedHashMap<>();
+    private final List<KeyValueModel> additionalInfo = new ArrayList<>();
     private final List<JumpTarget> jumpTargets = new ArrayList<>();
+    private final List<BaseModel> relatedModels = new ArrayList<>();
+
 
     public static enum DeletedState {
         Unknown, Intact, Deleted, Missed, Trash;
@@ -54,6 +57,16 @@ public abstract class BaseModel implements Serializable {
     }
 
     public void setField(String name, Object value) {
+
+        // handle field value
+        switch (name) {
+        case "attachment_extracted_path":
+            value = StringUtils.replaceChars((String) value, '\\', '/');
+            break;
+
+        default:
+            break;
+        }
         this.fields.put(name, value);
     }
 
@@ -69,8 +82,16 @@ public abstract class BaseModel implements Serializable {
         return Collections.unmodifiableMap(attributes);
     }
 
+    public List<KeyValueModel> getAdditionalInfo() {
+        return additionalInfo;
+    }
+
     public List<JumpTarget> getJumpTargets() {
         return jumpTargets;
+    }
+
+    public List<BaseModel> getRelatedModels() {
+        return relatedModels;
     }
 
     // Specific attribute getters for convenience

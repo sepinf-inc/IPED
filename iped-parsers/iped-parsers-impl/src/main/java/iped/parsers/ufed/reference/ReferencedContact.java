@@ -15,14 +15,14 @@ public class ReferencedContact extends AbstractReferencedItem {
     }
 
     public String getPhoneNumber() {
-        return readUfedMetadata(item, "PhoneNumber");
+        return readUfedMetadata(item, "phoneNumber");
     }
 
     public String getUsername() {
-        return readUfedMetadata(item, "Username");
+        return readUfedMetadata(item, "username");
     }
 
     public String getUserID() {
-        return readUfedMetadata(item, "UserID");
+        return readUfedMetadata(item, "userID");
     }
 }

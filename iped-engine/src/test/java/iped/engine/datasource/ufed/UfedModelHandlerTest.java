@@ -25,8 +25,7 @@ import iped.parsers.ufed.model.BaseModel;
 import iped.parsers.ufed.model.Chat;
 import iped.parsers.ufed.model.ChatActivity;
 import iped.parsers.ufed.model.Contact;
-import iped.parsers.ufed.model.ContactEntry.PhoneNumber;
-import iped.parsers.ufed.model.ContactEntry.UserID;
+import iped.parsers.ufed.model.ContactEntry;
 import iped.parsers.ufed.model.InstantMessage;
 import iped.parsers.ufed.model.JumpTarget;
 import iped.parsers.ufed.model.Party;
@@ -106,7 +105,7 @@ public class UfedModelHandlerTest {
         Attachment attachment = msgWithAttachment.get().getAttachments().get(0);
         assertEquals("Attachment file_id should be parsed.", "d70bf66b-49b6-4185-b2cd-1db458e19267", attachment.getFileId());
         assertEquals("Attachment filename should be parsed.", "PTT-20241103-WA0101.opus", attachment.getFilename());
-        assertEquals("Attachment extracted path should be parsed.", "files\\Audio\\PTT-20241103-WA0101.opus", attachment.getAttachmentExtractedPath());
+        assertEquals("Attachment extracted path should be parsed.", "files/Audio/PTT-20241103-WA0101.opus", attachment.getAttachmentExtractedPath());
     }
 
     @Test
@@ -120,13 +119,13 @@ public class UfedModelHandlerTest {
 
         Contact contact = msgWithContact.get().getSharedContacts().get(0);
         assertEquals("Charmeleon", contact.getName());
-        assertEquals(0, contact.getOtherEntries().size());
+        assertEquals(2, contact.getContactEntries().size());
 
-        Optional<UserID> userIdEntry = contact.getUserID();
+        Optional<ContactEntry> userIdEntry = contact.getUserID();
         assertTrue(userIdEntry.isPresent());
         assertEquals("5511999997745@s.whatsapp.net", userIdEntry.get().getValue());
 
-        Optional<PhoneNumber> phoneEntry = contact.getPhoneNumber();
+        Optional<ContactEntry> phoneEntry = contact.getPhoneNumber();
         assertTrue(phoneEntry.isPresent());
         assertEquals("+55 11 99999-22222", phoneEntry.get().getValue());
     }

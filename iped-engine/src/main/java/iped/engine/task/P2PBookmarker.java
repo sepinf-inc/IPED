@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import iped.data.ICaseData;
 import iped.engine.data.IPEDSource;
+import iped.engine.datasource.UfedXmlReader;
 import iped.engine.localization.Messages;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.task.index.IndexItem;
@@ -30,7 +31,7 @@ import iped.parsers.shareaza.ShareazaLibraryDatParser;
 import iped.parsers.skype.SkypeParser;
 import iped.parsers.telegram.TelegramParser;
 import iped.parsers.threema.ThreemaParser;
-import iped.parsers.ufed.UFEDChatParser;
+import iped.parsers.ufed.UfedChatParser;
 import iped.parsers.whatsapp.WhatsAppParser;
 import iped.properties.ExtraProperties;
 import iped.search.SearchResult;
@@ -91,7 +92,7 @@ public class P2PBookmarker {
         p2pPrograms.put(WhatsAppParser.WHATSAPP_CHAT.toString(),
                 new P2PProgram(HashTask.HASH.SHA256.toString(), "WhatsApp", new Color(32, 146, 90)));
 
-        p2pPrograms.put(UFEDChatParser.UFED_CHAT_PREVIEW_MIME.toString(),
+        p2pPrograms.put(UfedChatParser.UFED_CHAT_PREVIEW_MIME.toString(),
                 new P2PProgram(IndexItem.HASH.toString(), "UFED_Chats", new Color(0, 160, 160)));
 
         P2PProgram progSkype = new P2PProgram(IndexItem.HASH, "Skype", new Color(50, 150, 220));
@@ -163,11 +164,11 @@ public class P2PBookmarker {
                     continue;
 
                 String bookmarkSufix = program.appName;
-                if (UFEDChatParser.UFED_CHAT_PREVIEW_MIME.toString().equals(mediaType)) {
+                if (UfedChatParser.UFED_CHAT_PREVIEW_MIME.toString().equals(mediaType)) {
                     String source = doc.get(ExtraProperties.UFED_META_PREFIX + "Source"); //$NON-NLS-1$
                     if (source != null)
                         bookmarkSufix = source;
-                    String phoneOwner = doc.get(UFEDChatParser.META_PHONE_OWNER);
+                    String phoneOwner = doc.get(UfedXmlReader.META_PHONE_OWNER); // TODO: trocar para direction
                     if (phoneOwner != null && !phoneOwner.isEmpty())
                         bookmarkSufix += " by " + phoneOwner; //$NON-NLS-1$
                 }

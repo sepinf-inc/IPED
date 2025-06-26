@@ -1,7 +1,9 @@
 package iped.parsers.ufed;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Objects;
 import java.util.Set;
 
 import org.apache.tika.config.Field;
@@ -24,33 +26,37 @@ import com.google.gson.GsonBuilder;
 import iped.data.IItem;
 import iped.data.IItemReader;
 import iped.parsers.standard.StandardParser;
+import iped.parsers.ufed.handler.AttachmentHandler;
+import iped.parsers.ufed.handler.BaseModelHandler;
+import iped.parsers.ufed.handler.ContactHandler;
+import iped.parsers.ufed.handler.InstantMessageHandler;
 import iped.parsers.ufed.model.Attachment;
 import iped.parsers.ufed.model.ChatActivity;
 import iped.parsers.ufed.model.Contact;
 import iped.parsers.ufed.model.InstantMessage;
 import iped.parsers.ufed.reference.ReferencedFile;
-import iped.parsers.ufed.util.UfedChatMetadataUtils;
-import iped.parsers.ufed.util.UfedChatStringUtils;
-import iped.parsers.ufed.util.UfedModelReferenceLoader;
 import iped.parsers.ufed.util.UfedUtils;
 import iped.parsers.util.HashUtils;
 import iped.parsers.util.Messages;
+import iped.parsers.util.OmitEmptyObjectsTypeAdapterFactory;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
+import iped.properties.MediaTypes;
 import iped.search.IItemSearcher;
 import iped.utils.EmptyInputStream;
 
-public class UfedInstantMessageParser extends AbstractParser {
+public class UfedMessageParser extends AbstractParser {
 
     private static final long serialVersionUID = -4738095481615972119L;
 
-    private static Logger logger = LoggerFactory.getLogger(UfedInstantMessageParser.class);
+    private static Logger logger = LoggerFactory.getLogger(UfedMessageParser.class);
 
-    public static final MediaType UFED_INSTANT_MESSAGE_MIME = MediaType.application("x-ufed-instantmessage");
+    private static Set<MediaType> SUPPORTED_TYPES = Set.of(MediaTypes.UFED_MESSAGE_MIME);
 
-    private static Set<MediaType> SUPPORTED_TYPES = Set.of(UFED_INSTANT_MESSAGE_MIME);
-
-    private GsonBuilder gsonBuilder = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping()
+    private GsonBuilder gsonBuilder = new GsonBuilder() //
+            .registerTypeAdapterFactory(new OmitEmptyObjectsTypeAdapterFactory()) //
+            .setPrettyPrinting() //
+            .disableHtmlEscaping() //
             .setDateFormat(Messages.getString("UFEDChatParser.DateFormat"));
 
     private boolean extractActivityLogs = true;
@@ -82,6 +88,7 @@ public class UfedInstantMessageParser extends AbstractParser {
             throws IOException, SAXException, TikaException {
 
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
+
         xhtml.startDocument();
         try {
             IItemSearcher searcher = context.get(IItemSearcher.class);
@@ -100,9 +107,11 @@ public class UfedInstantMessageParser extends AbstractParser {
                 return;
             }
 
-            UfedModelReferenceLoader.build(message).load(searcher);
+            InstantMessageHandler messageHandler = new InstantMessageHandler(message, item);
+            messageHandler.loadReferences(searcher);
+            messageHandler.fillMetadata(metadata);
 
-            UfedChatMetadataUtils.fillInstantMessageMetadata(message, metadata);
+            xhtml.startElement("meta", "charset", "UTF-8");
 
             renderMessageView(message, xhtml);
 
@@ -116,7 +125,9 @@ public class UfedInstantMessageParser extends AbstractParser {
                     extractActivityLog(message, messageVirtualId, handler, extractor);
                 }
                 if (extractAttachments) {
-                    extractAttachments(message, messageVirtualId, handler, extractor);
+                    extractAttachments(message, messageVirtualId, handler, extractor, false);
+                } else {
+                    extractAttachments(message, messageVirtualId, handler, extractor, true);
                 }
                 if (extractSharedContacts) {
                     extractShareContacts(message, messageVirtualId, handler, extractor);
@@ -137,9 +148,12 @@ public class UfedInstantMessageParser extends AbstractParser {
         handler.element("pre", json);
     }
 
-    private void storeLinkedHashes(InstantMessage message, Metadata metadata) {
-        message.getAttachments().stream() //
+    public static void storeLinkedHashes(InstantMessage message, Metadata metadata) {
+        message
+                .getAttachments()
+                .stream() //
                 .map(Attachment::getReferencedFile) //
+                .filter(Objects::nonNull) //
                 .map(ReferencedFile::getHash) //
                 .filter(HashUtils::isValidHash) //
                 .forEach(hash -> {
@@ -155,25 +169,46 @@ public class UfedInstantMessageParser extends AbstractParser {
 
         ChatActivity activity = message.getActivityLog();
         if (activity != null) {
-            Metadata activityMeta = UfedChatMetadataUtils.createGenericMetadata(activity);
-            activityMeta.set(TikaCoreProperties.TITLE, "ChatActivity_" + activity.getId());
+
+            BaseModelHandler<ChatActivity> activityHandler = new BaseModelHandler<>(activity);
+
+            Metadata activityMeta = activityHandler.createMetadata();
+            activityMeta.set(TikaCoreProperties.TITLE, activityHandler.getTitle());
             activityMeta.set(StandardParser.INDEXER_CONTENT_TYPE, activity.getContentType().toString());
             activityMeta.set(ExtraProperties.PARENT_VIRTUAL_ID, messageVirtualId);
             activityMeta.set(BasicProps.LENGTH, "");
+
             extractor.parseEmbedded(new EmptyInputStream(), handler, activityMeta, false);
         }
     }
 
-    private void extractAttachments(InstantMessage message, String messageVirtualId, ContentHandler handler, EmbeddedDocumentExtractor extractor)
-            throws SAXException, IOException {
+    private void extractAttachments(InstantMessage message, String messageVirtualId, ContentHandler handler, EmbeddedDocumentExtractor extractor,
+            boolean onlyUnreferenced) throws SAXException, IOException {
 
         for (Attachment attach : message.getAttachments()) {
-            Metadata attachMeta = UfedChatMetadataUtils.createGenericMetadata(attach);
-            attachMeta.set(TikaCoreProperties.TITLE, UfedChatStringUtils.getAttachmentTitle(attach));
-            attachMeta.set(StandardParser.INDEXER_CONTENT_TYPE, attach.getContentType().toString());
+            if (onlyUnreferenced && attach.getUnreferencedContent() == null) {
+                continue;
+            }
+
+            AttachmentHandler attachHandler = new AttachmentHandler(attach, null);
+            Metadata attachMeta = attachHandler.createMetadata();
+
             attachMeta.set(ExtraProperties.PARENT_VIRTUAL_ID, messageVirtualId);
-            attachMeta.set(BasicProps.LENGTH, "");
-            extractor.parseEmbedded(new EmptyInputStream(), handler, attachMeta, false);
+
+            InputStream inputStream;
+            if (attach.getUnreferencedContent() != null) {
+                inputStream = new ByteArrayInputStream(attach.getUnreferencedContent());
+                attachMeta.set(TikaCoreProperties.RESOURCE_NAME_KEY, attach.getFilename());
+                attachMeta.set(StandardParser.INDEXER_CONTENT_TYPE, attach.getAttachmentContentType());
+                attachMeta.set(BasicProps.LENGTH, Integer.toString(attach.getUnreferencedContent().length));
+            } else {
+                inputStream = new EmptyInputStream();
+                attachMeta.set(TikaCoreProperties.TITLE, attachHandler.getTitle());
+                attachMeta.set(StandardParser.INDEXER_CONTENT_TYPE, attach.getContentType().toString());
+                attachMeta.set(BasicProps.LENGTH, "");
+            }
+
+            extractor.parseEmbedded(inputStream, handler, attachMeta, false);
         }
     }
 
@@ -181,11 +216,15 @@ public class UfedInstantMessageParser extends AbstractParser {
             throws SAXException, IOException {
 
         for (Contact shareContact : message.getSharedContacts()) {
-            Metadata shareContactMeta = UfedChatMetadataUtils.createGenericMetadata(shareContact);
-            shareContactMeta.set(TikaCoreProperties.TITLE, UfedChatStringUtils.getContactTitle(shareContact));
+            ContactHandler contactHandler = new ContactHandler(shareContact);
+
+            Metadata shareContactMeta = contactHandler.createMetadata();
+            shareContactMeta.set(TikaCoreProperties.TITLE, contactHandler.getTitle());
             shareContactMeta.set(StandardParser.INDEXER_CONTENT_TYPE, shareContact.getContentType().toString());
             shareContactMeta.set(ExtraProperties.PARENT_VIRTUAL_ID, messageVirtualId);
             shareContactMeta.set(BasicProps.LENGTH, "");
+            contactHandler.fillMetadata(shareContactMeta);
+
             extractor.parseEmbedded(new EmptyInputStream(), handler, shareContactMeta, false);
         }
     }
