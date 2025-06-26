@@ -49,6 +49,7 @@ public class AppAnalyzer {
         analyzerPerField.put(ExtraProperties.UFED_ID, new KeywordAnalyzer());
         analyzerPerField.put(ExtraProperties.UFED_FILE_ID, new KeywordAnalyzer());
         analyzerPerField.put(ExtraProperties.UFED_JUMP_TARGETS, new KeywordAnalyzer());
+        analyzerPerField.put(ExtraProperties.UFED_COORDINATE_ID, new KeywordAnalyzer());
 
         analyzerPerField.put(IndexItem.CREATED, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.MODIFIED, new KeywordAnalyzer());

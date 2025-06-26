@@ -2,6 +2,7 @@ package iped.parsers.ufed.handler;
 
 import static iped.properties.ExtraProperties.MESSAGE_ATTACHMENT_COUNT;
 import static iped.properties.ExtraProperties.PARENT_VIEW_POSITION;
+import static iped.properties.ExtraProperties.UFED_COORDINATE_ID;
 import static iped.properties.ExtraProperties.UFED_ID;
 import static iped.properties.ExtraProperties.UFED_META_PREFIX;
 
@@ -182,7 +183,7 @@ public class InstantMessageHandler extends BaseModelHandler<InstantMessage> {
         if (model.getPosition().getId() != null) {
 
             // the message and location shares the same "ufed:coordinate_id" that was added when merging in UfedXmlReader
-            String query = searcher.escapeQuery(UFED_ID) + ":\"" + model.getPosition().getId() + "\"";
+            String query = searcher.escapeQuery(UFED_COORDINATE_ID) + ":\"" + model.getPosition().getId() + "\"";
             List<IItemReader> locationItems = searcher.search(query);
             if (!locationItems.isEmpty()) {
                 if (locationItems.size() > 1) {

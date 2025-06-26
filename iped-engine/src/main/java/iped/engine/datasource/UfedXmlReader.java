@@ -1033,6 +1033,7 @@ public class UfedXmlReader extends DataSourceReader {
                         String lon = ExtraProperties.UFED_META_PREFIX + "Longitude"; //$NON-NLS-1$
                         parentItem.getMetadata().set(lat, item.getMetadata().get(lat));
                         parentItem.getMetadata().set(lon, item.getMetadata().get(lon));
+                        parentItem.getMetadata().set(ExtraProperties.UFED_COORDINATE_ID, item.getMetadata().get(ExtraProperties.UFED_ID));
 
                     } else if ("Organization".equals(type)) { //$NON-NLS-1$
                         String value = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name"); //$NON-NLS-1$
