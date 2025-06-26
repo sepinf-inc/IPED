@@ -108,6 +108,7 @@ public class ReferencedByTableModel extends BaseTableModel {
         String ufedId = doc.get(ExtraProperties.UFED_ID);
         if (StringUtils.isNotBlank(ufedId)) {
             queryBuilder.add(new TermQuery(new Term(ExtraProperties.UFED_JUMP_TARGETS, ufedId)), Occur.SHOULD);
+            queryBuilder.add(new TermQuery(new Term(ExtraProperties.UFED_FILE_ID, ufedId)), Occur.SHOULD);
         }
 
         return queryBuilder.build();

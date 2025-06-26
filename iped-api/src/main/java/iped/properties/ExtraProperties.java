@@ -91,6 +91,8 @@ public class ExtraProperties {
 
     public static final String UFED_ID = UFED_META_PREFIX + "id";
 
+    public static final String UFED_FILE_ID = UFED_META_PREFIX + "file_id";
+
     public static final String UFED_COORDINATE_ID = UFED_META_PREFIX + "coordinate_id";
 
     public static final String UFED_JUMP_TARGETS = UFED_META_PREFIX + "jumpTargets";

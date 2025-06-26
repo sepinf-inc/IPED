@@ -27,7 +27,6 @@ import org.apache.lucene.analysis.core.KeywordAnalyzer;
 
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.IndexTaskConfig;
-import iped.engine.datasource.UfedXmlReader;
 import iped.engine.task.HashTask;
 import iped.engine.task.PhotoDNATask;
 import iped.engine.task.index.IndexItem;
@@ -48,6 +47,7 @@ public class AppAnalyzer {
         analyzerPerField.put(IndexItem.PARENTID, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.EVIDENCE_UUID, new KeywordAnalyzer());
         analyzerPerField.put(ExtraProperties.UFED_ID, new KeywordAnalyzer());
+        analyzerPerField.put(ExtraProperties.UFED_FILE_ID, new KeywordAnalyzer());
         analyzerPerField.put(ExtraProperties.UFED_JUMP_TARGETS, new KeywordAnalyzer());
 
         analyzerPerField.put(IndexItem.CREATED, new KeywordAnalyzer());

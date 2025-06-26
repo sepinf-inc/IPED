@@ -103,6 +103,12 @@ public class ReferencingTableModel extends BaseTableModel {
             queryBuilder.add(new TermQuery(new Term(ExtraProperties.UFED_ID, jumpTarget)), Occur.SHOULD);
         }
 
+        // ufed:file_id
+        String fileId = doc.get(ExtraProperties.UFED_FILE_ID);
+        if (StringUtils.isNotBlank(fileId)) {
+            queryBuilder.add(new TermQuery(new Term(ExtraProperties.UFED_ID, fileId)), Occur.SHOULD);
+        }
+
         return queryBuilder.build();
     }
 
