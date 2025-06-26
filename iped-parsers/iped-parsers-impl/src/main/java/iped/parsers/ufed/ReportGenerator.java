@@ -331,6 +331,9 @@ public class ReportGenerator {
 
             if (attachment.getReferencedFile() != null) {
                 String transcription = attachment.getReferencedFile().getTranscription();
+                if (transcription == null) {
+                    transcription = attachment.getTranscript();
+                }
                 if (transcription != null) {
                     out.print("<br/>");
                     out.print(Messages.getString("ReportGenerator.TranscriptionTitle"));
