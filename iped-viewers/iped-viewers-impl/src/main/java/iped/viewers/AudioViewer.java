@@ -19,6 +19,7 @@ import java.util.Set;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -166,8 +167,9 @@ public class AudioViewer extends AbstractViewer {
 		controlsPane.add(pauseButton);
 		rewindButton = new JButton("Rewind");
 		controlsPane.add(rewindButton);
-		//skipButton = new JButton("Skip");
-		//controlsPane.add(skipButton);
+		JLabel spaceHintLabel = new JLabel("Push spacebar to play");
+		controlsPane.add(spaceHintLabel);
+
 		this.getPanel().add(controlsPane, BorderLayout.SOUTH);
 
 		playButton.addActionListener(new ActionListener() {
