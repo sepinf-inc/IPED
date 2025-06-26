@@ -16,7 +16,7 @@ import iped.parsers.sqlite.SQLiteRecordValidator;
 import iped.parsers.sqlite.SQLiteUndelete;
 import iped.parsers.sqlite.SQLiteUndeleteTable;
 
-public class WAContactsExtractorIOS extends WAContactsExtractor {
+public abstract class WAContactsExtractorIOS extends WAContactsExtractor {
     
     private static Logger logger = LoggerFactory.getLogger(WAContactsExtractorIOS.class);
 
@@ -29,6 +29,8 @@ public class WAContactsExtractorIOS extends WAContactsExtractor {
     public WAContactsExtractorIOS(File database, WAContactsDirectory directory, boolean recoverDeletedRecords) {
         super(database, directory, recoverDeletedRecords);
     }
+
+    protected abstract Connection getConnection() throws SQLException;
 
     @Override
     public void extractContactList() throws WAExtractorException {

@@ -288,8 +288,7 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
     }
 
     private String cleanFileName(String name) {
-        // 255 is max file name length in NTFS
-        return IOUtil.getValidFilename(name, 255);
+        return IOUtil.getValidFilename(name);
     }
 
 }

@@ -1,6 +1,7 @@
 package iped.engine.task;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
@@ -23,6 +24,7 @@ import iped.engine.config.SignatureConfig;
 import iped.io.SeekableInputStream;
 import iped.properties.MediaTypes;
 import iped.utils.IOUtil;
+import iped.utils.SimpleInputStreamFactory;
 
 /**
  * Análise de assinatura utilizando biblioteca Apache Tika.
@@ -67,6 +69,9 @@ public class SignatureTask extends AbstractTask {
                     TikaInputStream tis = null;
                     try {
                         tis = evidence.getTikaStream();
+                        // See https://github.com/sepinf-inc/IPED/issues/2356
+                        setInputStreamFactory(tis, evidence);
+
                         type = getDetector().detect(tis, metadata).getBaseType();
 
                     } catch (IOException e) {
@@ -120,6 +125,16 @@ public class SignatureTask extends AbstractTask {
             }
         }
         evidence.setMediaType(MediaTypes.getMediaTypeRegistry().normalize(type));
+    }
+
+    private void setInputStreamFactory(TikaInputStream tis, IItem item) {
+        tis.setOpenContainer(new SimpleInputStreamFactory() {
+            @Override
+            public InputStream getInputStream() throws IOException {
+                return item.getSeekableInputStream();
+            }
+        });
+
     }
 
     private boolean hasVHDFooter(IItem item) {

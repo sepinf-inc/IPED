@@ -107,7 +107,7 @@ public class RemoteTranscriptionService {
     private static final AtomicLong transcriptionTime = new AtomicLong();
     private static final AtomicLong requestsReceived = new AtomicLong();
     private static final AtomicLong requestsAccepted = new AtomicLong();
-    private static final List<OpenConnectons> beaconQueq = new LinkedList<>();
+    private static final List<OpenConnectons> beaconQueue = new LinkedList<>();
     private static final Deque<TranscribeRequest> toTranscribe = new LinkedList<>();
 
     private static Logger logger;
@@ -201,9 +201,9 @@ public class RemoteTranscriptionService {
                             break;
                         }
                         Thread.sleep(60000);
-                        logger.info("Send beacons to {} clients", beaconQueq.size());
-                        synchronized (beaconQueq) {
-                            for (var cliente : beaconQueq) {
+                        logger.info("Send beacons to {} clients", beaconQueue.size());
+                        synchronized (beaconQueue) {
+                            for (var cliente : beaconQueue) {
                                 cliente.sendBeacon();
                             }
                         }
@@ -313,10 +313,10 @@ public class RemoteTranscriptionService {
         }
     }
 
-    private static void removeFrombeaconQueq(OpenConnectons opc) {
+    private static void removeFromBeaconQueue(OpenConnectons opc) {
         if (opc != null) {
-            synchronized (beaconQueq) {
-                beaconQueq.remove(opc);
+            synchronized (beaconQueue) {
+                beaconQueue.remove(opc);
             }
         }
     }
@@ -374,9 +374,9 @@ public class RemoteTranscriptionService {
 
                             byte[] bytes = bis.readNBytes(MESSAGES.VERSION_1_2.toString().length());
                             protocol = new String(bytes);
-                            synchronized (beaconQueq) {
+                            synchronized (beaconQueue) {
                                 opc = new OpenConnectons(client, bis, writer, this);
-                                beaconQueq.add(opc);
+                                beaconQueue.add(opc);
                             }
 
                             logger.info("Protocol Version {}", protocol);
@@ -494,17 +494,15 @@ public class RemoteTranscriptionService {
 
                                 for (TranscribeRequest req : reqs) {
                                     TextAndScore partResult = req.result;
-                                    if (partResult == null) {
+                                    if (partResult == null || req.error != null) {
                                         error = false;
-                                        throw new Exception("Error processing the audio", req.error);
+                                        throw req.error != null ? req.error : new Exception("Error processing the audio");
                                     }
 
                                     if (result.score > 0)
                                         result.text += " ";
                                     result.text += partResult.text;
                                     result.score += partResult.score;
-                                    result = req.result;
-
                                 }
                                 result.score /= reqs.size();
 
@@ -528,7 +526,7 @@ public class RemoteTranscriptionService {
 
                             // removes from the beacon queue to prevent beacons in the middle of the
                             // transcription
-                            removeFrombeaconQueq(opc);
+                            removeFromBeaconQueue(opc);
 
                             writer.println(Double.toString(result.score));
                             writer.println(result.text);
@@ -562,7 +560,7 @@ public class RemoteTranscriptionService {
                                     }
                                 }
                             }
-                            removeFrombeaconQueq(opc);
+                            removeFromBeaconQueue(opc);
                         }
                     }
                 });

@@ -105,6 +105,7 @@ public class ViewerController {
         viewersRepository.addViewer(linkViewer);
         viewersRepository.addViewer(new IcePDFViewer());
         viewersRepository.addViewer(new TiffViewer());
+        viewersRepository.addViewer(new AudioViewer(new AttachmentSearcherImpl()));
         viewersRepository.addViewer(new ReferencedFileViewer(viewersRepository, new AttachmentSearcherImpl()));
 
         new Thread() {

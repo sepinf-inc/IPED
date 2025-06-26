@@ -1,9 +1,9 @@
 package iped.engine.datasource;
 
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -75,6 +75,7 @@ import iped.engine.io.UFDRInputStreamFactory;
 import iped.engine.io.UFEDXMLWrapper;
 import iped.engine.localization.Messages;
 import iped.engine.search.QueryBuilder;
+import iped.engine.task.ExportFileTask;
 import iped.engine.task.ImageThumbTask;
 import iped.engine.task.die.DIETask;
 import iped.engine.task.index.IndexItem;
@@ -441,7 +442,8 @@ public class UfedXmlReader extends DataSourceReader {
                 "ProfilePicture", //$NON-NLS-1$
                 "WebAddress", //$NON-NLS-1$
                 "Reaction", //$NON-NLS-1$
-                "Price"
+                "Price",
+                "QuotedMessageData"
         ));
 
         @Override
@@ -1083,6 +1085,11 @@ public class UfedXmlReader extends DataSourceReader {
                         if (currency != null) {
                             parentItem.getMetadata().add(prop, currency);
                         }
+                    } else if ("QuotedMessageData".equals(type)) {
+                        String refId = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "ReferenceId");
+                        if (refId != null) {
+                            parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + "QuotedReferenceId", refId);
+                        }
                     }
                 } else {
                     if (!ignoreItems) {
@@ -1461,27 +1468,10 @@ public class UfedXmlReader extends DataSourceReader {
             return sb.toString();
         }
 
-        private FileInputStreamFactory getPreviewInputStreamFactory() {
-            if (previewFisf == null) {
-                previewFisf = new FileInputStreamFactory(output.getParentFile().toPath());
-            }
-            return previewFisf;
-        }
-
-        private File getNewPreviewFile(String subdir) {
-            File baseDir = new File(output, "view/" + subdir);
-            baseDir.mkdirs();
-            File file;
-            do {
-                long suffix = Math.abs(random.nextLong());
-                file = new File(baseDir, "view-" + suffix + ".html");
-            } while (file.exists());
-            return file;
-        }
-
-        private File createEmailPreview(Item email) {
-            File file = getNewPreviewFile("emails");
-            try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"))) { //$NON-NLS-1$
+        // TODO Move this to (MakePreview)Task.
+        private void createEmailPreview(Item email) {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(baos, "UTF-8"))) { //$NON-NLS-1$
                 bw.write("<!DOCTYPE html>\n" //$NON-NLS-1$
                         + "<html>\n" //$NON-NLS-1$
                         + "<head>\n" //$NON-NLS-1$
@@ -1537,21 +1527,19 @@ public class UfedXmlReader extends DataSourceReader {
                     bw.write(body);
 
                 bw.write("</body></html>"); //$NON-NLS-1$
+                bw.close();
 
-            } catch (IOException e) {
+                ExportFileTask.getLastInstance().insertIntoStorage(email, baos.toByteArray(), baos.size());
+                email.setHash(null);
+
+            } catch (Exception e) {
                 e.printStackTrace();
             }
             email.setMediaType(MediaType.parse(UFED_EMAIL_MIME));
-            String relativePath = Util.getRelativePath(output, file);
-            email.setIdInDataSource(relativePath);
-            email.setInputStreamFactory(getPreviewInputStreamFactory());
-            email.setLength(file.length());
-            email.setHash(null);
-
-            return file;
         }
 
-        private File createContactPreview(Item contact) {
+        // TODO Move this to (MakePreview)Task.
+        private void createContactPreview(Item contact) {
 
             String name = contact.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name"); //$NON-NLS-1$
             if (name == null)
@@ -1561,8 +1549,8 @@ public class UfedXmlReader extends DataSourceReader {
                 updateName(contact, name);
             }
 
-            File file = getNewPreviewFile("contacts");
-            try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"))) { //$NON-NLS-1$
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(baos, "UTF-8"))) { //$NON-NLS-1$
 
                 bw.write("<!DOCTYPE html>\n" //$NON-NLS-1$
                         + "<html>\n" //$NON-NLS-1$
@@ -1610,20 +1598,18 @@ public class UfedXmlReader extends DataSourceReader {
                     bw.write("<br>"); //$NON-NLS-1$
                 }
                 bw.write("</body></html>"); //$NON-NLS-1$
+                bw.close();
 
-            } catch (IOException e) {
+                ExportFileTask.getLastInstance().insertIntoStorage(contact, baos.toByteArray(), baos.size());
+                contact.setHash(null);
+
+            } catch (Exception e) {
                 e.printStackTrace();
             }
-            String relativePath = Util.getRelativePath(output, file);
-            contact.setIdInDataSource(relativePath);
-            contact.setInputStreamFactory(getPreviewInputStreamFactory());
-            contact.setLength(file.length());
-            contact.setHash(null);
-
-            return file;
         }
 
-        private File createDeviceInfoPreview(Item deviceInfo) {
+        // TODO Move this to (MakePreview)Task.
+        private void createDeviceInfoPreview(Item deviceInfo) {
             Collections.sort(deviceInfoData, new Comparator<String[]>() {
                 public int compare(String[] a, String[] b) {
                     int cmp = a[0].compareToIgnoreCase(b[0]);
@@ -1644,8 +1630,8 @@ public class UfedXmlReader extends DataSourceReader {
             }
             uniqueDeviceInfo.add(deviceInfoData.get(deviceInfoData.size() - 1));
 
-            File file = getNewPreviewFile("deviceInfo");
-            try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"))) {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(baos, "UTF-8"))) {
                 bw.write("<!DOCTYPE html>\n"
                         + "<html>\n"
                         + "<head>\n"
@@ -1675,16 +1661,15 @@ public class UfedXmlReader extends DataSourceReader {
                     }
                 }
                 bw.write("</table></body></html>");
+                bw.flush();
+                bw.close();
 
-            } catch (IOException e) {
+                ExportFileTask.getLastInstance().insertIntoStorage(deviceInfo, baos.toByteArray(), baos.size());
+                deviceInfo.setHash(null);
+
+            } catch (Exception e) {
                 e.printStackTrace();
             }
-            String relativePath = Util.getRelativePath(output, file);
-            deviceInfo.setIdInDataSource(relativePath);
-            deviceInfo.setInputStreamFactory(getPreviewInputStreamFactory());
-            deviceInfo.setLength(file.length());
-            deviceInfo.setHash(null);
-            return file;
         }
 
         @Override

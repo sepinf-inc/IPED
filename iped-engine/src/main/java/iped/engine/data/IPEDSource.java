@@ -24,6 +24,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -112,6 +113,7 @@ public class IPEDSource implements IIPEDSource {
 
     protected ArrayList<String> leafCategories = new ArrayList<String>();
     protected Category categoryTree;
+    protected final Map<String, Set<String>> descendantsCategories = new HashMap<String, Set<String>>();
 
     private IBookmarks bookmarks;
     IMultiBookmarks multiBookmarks;
@@ -230,6 +232,7 @@ public class IPEDSource implements IIPEDSource {
 
             loadLeafCategories();
             loadCategoryTree();
+            buildDescendantsCategories(categoryTree);
 
             loadKeywords();
 
@@ -374,6 +377,27 @@ public class IPEDSource implements IIPEDSource {
         categoryTree = root;
     }
 
+    private void buildDescendantsCategories(Category category) {
+        Set<String> descendants = new HashSet<String>();
+        fillDescendants(category, category, descendants);
+        if (!descendants.isEmpty()) {
+            descendantsCategories.put(category.getName().toLowerCase(), descendants);
+        }
+
+        Set<Category> children = category.getChildren();
+        for (Category child : children) {
+            buildDescendantsCategories(child);
+        }
+    }
+
+    private void fillDescendants(Category ancestral, Category current, Set<String> descendants) {
+        Set<Category> children = current.getChildren();
+        for (Category child : children) {
+            descendants.add(child.getName().toLowerCase());
+            fillDescendants(ancestral, child, descendants);
+        }
+    }
+
     private boolean checkAndAddMissingCategory(Category root, Category leaf) {
         boolean found = false;
         if (leaf.getName().equalsIgnoreCase(root.getName())) {
@@ -421,19 +445,19 @@ public class IPEDSource implements IIPEDSource {
         if (category.getNumItems() != -1)
             return category.getNumItems();
 
-        int num = 0;
         for (Category child : category.getChildren()) {
-            num += countNumItems(child);
+            countNumItems(child);
         }
 
         String query = IndexItem.CATEGORY + ":\"" + category.getName() + "\"";
         IPEDSearcher searcher = new IPEDSearcher(this, query);
         searcher.setNoScoring(true);
+        int num = 0;
         try {
             if (this instanceof IPEDMultiSource) {
-                num += searcher.multiSearch().getLength();
+                num = searcher.multiSearch().getLength();
             } else {
-                num += searcher.search().getLength();
+                num = searcher.search().getLength();
             }
 
         } catch (Exception e) {
@@ -657,6 +681,17 @@ public class IPEDSource implements IIPEDSource {
         sleuthCase.setImagePaths(imgId, newPaths);
     }
 
+    public String getItemProperty(int id, String propertyName) {
+        String propertyValue = null;
+        try {
+            Document doc = searcher.doc(getLuceneId(id));
+            propertyValue = doc.get(propertyName);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return propertyValue;
+    }
+
     public int getSourceId() {
         return sourceId;
     }
@@ -705,6 +740,10 @@ public class IPEDSource implements IIPEDSource {
 
     public List<String> getLeafCategories() {
         return leafCategories;
+    }
+
+    public Set<String> getDescendantsCategories(String ancestral) {
+        return descendantsCategories.get(ancestral);
     }
 
     public Category getCategoryTree() {

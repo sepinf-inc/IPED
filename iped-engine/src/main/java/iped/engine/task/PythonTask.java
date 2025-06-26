@@ -38,7 +38,7 @@ public class PythonTask extends AbstractTask {
     private Map<Long, Boolean> scriptLoaded = new ConcurrentHashMap<>();
     private Map<Long, String> instanceName = new ConcurrentHashMap<>();
 
-    private ArrayList<String> globals = new ArrayList<>();
+    private List<String> globals = Collections.synchronizedList(new ArrayList<>());
     private File scriptFile;
     private String moduleName;
     private Boolean processQueueEnd;
@@ -150,7 +150,7 @@ public class PythonTask extends AbstractTask {
         jep.eval(instanceName + " = " + moduleName + "." + className + "()");
         this.instanceName.put(threadId, instanceName);
 
-        for (String global : globals) {
+        for (String global : globals.toArray(new String[0])) {
             jep.eval(moduleName + "." + global + " = " + global);
         }
 

@@ -6,13 +6,13 @@ import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_CHANGED_NAME;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_CHAT;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_OFFICIAL;
 import static iped.parsers.whatsapp.Message.MessageType.BUSINESS_TO_STANDARD;
-import static iped.parsers.whatsapp.Message.MessageType.CHAT_ADDED_PRIVACY;
 import static iped.parsers.whatsapp.Message.MessageType.CHANGED_NUMBER_CHATTING_WITH_NEW;
 import static iped.parsers.whatsapp.Message.MessageType.CHANGED_NUMBER_CHATTING_WITH_OLD;
-import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_CREATED;                        
 import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_ADDED_PRIVACY;
-import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_CHANGED_ONLY_ADMINS_CAN_ADD;
+import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_CREATED;
+import static iped.parsers.whatsapp.Message.MessageType.CHAT_ADDED_PRIVACY;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_CHANGED_ALL_MEMBERS_CAN_ADD;
+import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_CHANGED_ONLY_ADMINS_CAN_ADD;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_DESCRIPTION_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_MANAGEMENT_ACTION;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_NOT_AVAILABLE;
@@ -29,8 +29,8 @@ import static iped.parsers.whatsapp.Message.MessageType.GROUP_ADDED_TO_COMMUNITY
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_EDIT;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_SEND;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ONLY_ADMINS_CAN_ADD;
-import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ONLY_ADMINS_CAN_SEND;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ONLY_ADMINS_CAN_EDIT;
+import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ONLY_ADMINS_CAN_SEND;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CREATED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_DESCRIPTION_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_DESCRIPTION_DELETED;
@@ -42,6 +42,7 @@ import static iped.parsers.whatsapp.Message.MessageType.GROUP_NOT_PART_OF_COMMUN
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_REMOVED_FROM_COMMUNITY;
 import static iped.parsers.whatsapp.Message.MessageType.IMAGE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.LOCATION_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.MESSAGE_ASSOCIATION;
 import static iped.parsers.whatsapp.Message.MessageType.MESSAGES_NOW_ENCRYPTED;
 import static iped.parsers.whatsapp.Message.MessageType.MISSED_VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.MISSED_VOICE_CALL;
@@ -56,6 +57,7 @@ import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_MEDIA_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.UNKNOWN_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.URL_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.USER_ADDED_TO_GROUP;
+import static iped.parsers.whatsapp.Message.MessageType.USER_ADMIN;
 import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP_FROM_COMMUNITY;
 import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP_FROM_INVITATION;
 import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP_FROM_LINK;
@@ -67,7 +69,6 @@ import static iped.parsers.whatsapp.Message.MessageType.VIEW_ONCE_AUDIO_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.VIEW_ONCE_IMAGE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.VIEW_ONCE_VIDEO_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.VOICE_CALL;
-import static iped.parsers.whatsapp.Message.MessageType.USER_ADMIN;
 import static iped.parsers.whatsapp.Message.MessageType.WAITING_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.YOU_ADMIN;
 import static iped.parsers.whatsapp.Message.MessageType.YOU_NOT_ADMIN;
@@ -102,16 +103,16 @@ import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.sqlite.SQLiteRecordValidator;
 import iped.parsers.sqlite.SQLiteUndelete;
 import iped.parsers.sqlite.SQLiteUndeleteTable;
+import iped.parsers.whatsapp.Message.MessageQuotedType;
 import iped.parsers.whatsapp.Message.MessageStatus;
 import iped.parsers.whatsapp.Message.MessageType;
-import iped.parsers.whatsapp.Message.MessageQuotedType;
 import iped.parsers.whatsapp.ProtoBufDecoder.Part;
 
 /**
  *
  * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
  */
-public class ExtractorIOS extends Extractor {
+public abstract class ExtractorIOS extends Extractor {
 
     private static Logger logger = LoggerFactory.getLogger(ExtractorIOS.class);
 
@@ -128,6 +129,8 @@ public class ExtractorIOS extends Extractor {
         super(itemPath, databaseFile, contacts, account, recoverDeletedRecords);
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT")); //$NON-NLS-1$
     }
+
+    protected abstract Connection getConnection() throws SQLException;
 
     @Override
     protected List<Chat> extractChatList() throws WAExtractorException {
@@ -210,20 +213,23 @@ public class ExtractorIOS extends Extractor {
                 try (ResultSet rs = stmt.executeQuery(chatListQuery)) {
                     while (rs.next()) {
                         String contactId = rs.getString("contact"); //$NON-NLS-1$
-                        if (!(contactId.endsWith("@status") || contactId.endsWith("@broadcast"))) { //$NON-NLS-1$ //$NON-NLS-2$
-                            WAContact remote = contacts.getContact(contactId);
-                            Chat c = new Chat(remote);
-                            c.setId(rs.getLong("id")); //$NON-NLS-1$
-                            c.setSubject(Util.getUTF8String(rs, "subject")); //$NON-NLS-1$
-                            c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
-                            c.setChannelChat(contactId.endsWith("newsletter"));
-                            c.setDeleted(rs.getInt("ZREMOVED") != 0);
-                            remote.setAvatarPath(rs.getString("avatarPath")); //$NON-NLS-1$
-                            if (recoverDeletedRecords) {
-                                activeChats.add(c.getId());
-                            }
-                            list.add(c);
+                        WAContact remote = contacts.getContact(contactId);
+                        Chat c = new Chat(remote);
+                        c.setId(rs.getLong("id")); //$NON-NLS-1$
+                        c.setSubject(Util.getUTF8String(rs, "subject")); //$NON-NLS-1$
+                        if (contactId.endsWith(WAContact.waGroupSuffix)) {
+                            c.setGroupChat(true);
+                        } else if (contactId.endsWith(WAContact.waNewsletterSuffix)) {
+                            c.setChannelChat(true);
+                        } else if (contactId.endsWith(WAContact.waStatusSuffix)) {
+                            c.setBroadcast(true);
                         }
+                        c.setDeleted(rs.getInt("ZREMOVED") != 0);
+                        remote.setAvatarPath(rs.getString("avatarPath")); //$NON-NLS-1$
+                        if (recoverDeletedRecords) {
+                            activeChats.add(c.getId());
+                        }
+                        list.add(c);
                     }
                 } catch (SQLException ex) {
                     if (firstTry || !isSqliteCorruptException(ex)) {
@@ -604,11 +610,10 @@ public class ExtractorIOS extends Extractor {
                             messageQuote.setRemoteResource(m.getRemoteResource());
                             // just set default case if does not match order cases ...
                             messageQuote.setMessageQuotedType(MessageQuotedType.QUOTE_PRIVACY_GROUP_NOT_FOUND);
-                            if (contactQuote.compareTo(Message.STATUS_BROADCAST) == 0) {
-
+                            if (contactQuote.equals(WAContact.waStatusBroadcast)) {
                                 messageQuote.setMessageQuotedType(MessageQuotedType.QUOTE_STATUS);
 
-                            } else if (contactQuote.contains(Message.GROUP)) {
+                            } else if (contactQuote.endsWith(WAContact.waGroupSuffix)) {
 
                                 // set it first in case if not found
                                 messageQuote.setQuotePrivateGroupName(contactQuote);
@@ -1378,15 +1383,19 @@ public class ExtractorIOS extends Extractor {
         if (undeleteChatsSessions != null && !undeleteChatsSessions.getTableRows().isEmpty()) {
             for (SqliteRow row : undeleteChatsSessions.getTableRows()) {
                 String contactId = row.getTextValue("ZCONTACTJID"); //$NON-NLS-1$
-                if (!(contactId.endsWith("@status") || contactId.endsWith("@broadcast"))) { //$NON-NLS-1$ //$NON-NLS-2$
-                    WAContact contact = contacts.getContact(contactId);
-                    Chat c = new Chat(contact);
-                    c.setId(row.getIntValue("Z_PK")); //$NON-NLS-1$
-                    c.setDeleted(row.getIntValue("ZREMOVED") != 0 || row.isDeletedRow());
-                    c.setSubject(row.getTextValue("ZPARTNERNAME")); //$NON-NLS-1$
-                    c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
-                    result.add(c);
+                WAContact contact = contacts.getContact(contactId);
+                Chat c = new Chat(contact);
+                c.setId(row.getIntValue("Z_PK")); //$NON-NLS-1$
+                c.setDeleted(row.getIntValue("ZREMOVED") != 0 || row.isDeletedRow());
+                c.setSubject(row.getTextValue("ZPARTNERNAME")); //$NON-NLS-1$
+                if (contactId.endsWith(WAContact.waGroupSuffix)) {
+                    c.setGroupChat(true);
+                } else if (contactId.endsWith(WAContact.waNewsletterSuffix)) {
+                    c.setChannelChat(true);
+                } else if (contactId.endsWith(WAContact.waStatusSuffix)) {
+                    c.setBroadcast(true);
                 }
+                result.add(c);
             }
         }
 
@@ -1677,6 +1686,7 @@ public class ExtractorIOS extends Extractor {
             case 30:
             case 32:
             case 41:
+            case 42:
                 result = TEMPLATE_MESSAGE;
                 break;
 
@@ -1734,6 +1744,10 @@ public class ExtractorIOS extends Extractor {
                 
             case 59:
                 result = VOICE_CALL;
+                break;
+            
+            case 66:
+                result = MESSAGE_ASSOCIATION;
                 break;
         }
         return result;
@@ -1872,7 +1886,10 @@ public class ExtractorIOS extends Extractor {
                 }
 
                 String remoteId = row.getTextValue("ZFROMJID"); //$NON-NLS-1$
-                if (remoteId == null || !(remoteId.endsWith("whatsapp.net") || remoteId.endsWith("g.us"))) { //$NON-NLS-1$ //$NON-NLS-2$
+                if (remoteId == null
+                        || !(remoteId.endsWith(WAContact.waSuffix) || remoteId.endsWith(WAContact.waNewsletterSuffix)
+                                || remoteId.endsWith(WAContact.waStatusBroadcast)
+                                || remoteId.endsWith(WAContact.waStatusSuffix))) {
                     return false;
                 }
 

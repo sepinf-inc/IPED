@@ -13,9 +13,11 @@ import static iped.parsers.whatsapp.Message.MessageType.CHANGED_NUMBER_TO;
 import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_ADDED_PRIVACY;
 import static iped.parsers.whatsapp.Message.MessageType.CHANNEL_CREATED;
 import static iped.parsers.whatsapp.Message.MessageType.CHAT_ADDED_PRIVACY;
+import static iped.parsers.whatsapp.Message.MessageType.CHAT_STARTED_FROM_AD;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_MANAGEMENT_ACTION;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_RENAMED;
 import static iped.parsers.whatsapp.Message.MessageType.COMMUNITY_WELCOME;
+import static iped.parsers.whatsapp.Message.MessageType.CONTACTED_FIND_BUSINESSES;
 import static iped.parsers.whatsapp.Message.MessageType.CONTACT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_ADMIN;
 import static iped.parsers.whatsapp.Message.MessageType.DELETED_BY_SENDER;
@@ -25,11 +27,12 @@ import static iped.parsers.whatsapp.Message.MessageType.ENCRYPTION_KEY_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_CHANGED;
 import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_DEFAULT;
 import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_DURATION_CHANGED;
-import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_SETTINGS_NOT_APPLIED;
 import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_SAVE;
+import static iped.parsers.whatsapp.Message.MessageType.EPHEMERAL_SETTINGS_NOT_APPLIED;
 import static iped.parsers.whatsapp.Message.MessageType.GIF_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_ADDED_TO_COMMUNITY;
-import static iped.parsers.whatsapp.Message.MessageType.CONTACTED_FIND_BUSINESSES;
+import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ADMIN_APPROVAL_OFF;
+import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_ADD;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_EDIT;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ALL_MEMBERS_CAN_SEND;
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_CHANGED_ONLY_ADMINS_CAN_ADD;
@@ -43,18 +46,21 @@ import static iped.parsers.whatsapp.Message.MessageType.GROUP_ONLY_ADMINS_CAN_SE
 import static iped.parsers.whatsapp.Message.MessageType.GROUP_REMOVED_FROM_COMMUNITY;
 import static iped.parsers.whatsapp.Message.MessageType.IMAGE_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.LOCATION_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.MESSAGE_ASSOCIATION;
 import static iped.parsers.whatsapp.Message.MessageType.MESSAGES_ENCRYPTED;
 import static iped.parsers.whatsapp.Message.MessageType.MESSAGES_NOW_ENCRYPTED;
 import static iped.parsers.whatsapp.Message.MessageType.MISSED_VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.MISSED_VOICE_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.NEW_PARTICIPANTS_NEED_ADMIN_APPROVAL;
 import static iped.parsers.whatsapp.Message.MessageType.ORDER_MESSAGE;
+import static iped.parsers.whatsapp.Message.MessageType.OVER_256_MEMBERS_ONLY_ADMINS_CAN_EDIT;
 import static iped.parsers.whatsapp.Message.MessageType.PINNED_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.POLL_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.PRODUCT_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.REFUSED_VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.REFUSED_VOICE_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.RESET_GROUP_LINK;
+import static iped.parsers.whatsapp.Message.MessageType.SECURITY_NOTIFICATIONS_NO_LONGER_AVAILABLE;
 import static iped.parsers.whatsapp.Message.MessageType.SENDER_IN_CONTACTS;
 import static iped.parsers.whatsapp.Message.MessageType.SHARE_LOCATION_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.STANDARD_CHAT;
@@ -80,6 +86,7 @@ import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_GROUP_FROM_L
 import static iped.parsers.whatsapp.Message.MessageType.USER_JOINED_WHATSAPP;
 import static iped.parsers.whatsapp.Message.MessageType.USER_LEFT_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.USER_REMOVED_FROM_GROUP;
+import static iped.parsers.whatsapp.Message.MessageType.USER_REQUEST_TO_ADD_TO_GROUP;
 import static iped.parsers.whatsapp.Message.MessageType.VIDEO_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.VIDEO_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.VIEW_ONCE_AUDIO_MESSAGE;
@@ -89,8 +96,6 @@ import static iped.parsers.whatsapp.Message.MessageType.VOICE_CALL;
 import static iped.parsers.whatsapp.Message.MessageType.WAITING_MESSAGE;
 import static iped.parsers.whatsapp.Message.MessageType.YOU_ADMIN;
 import static iped.parsers.whatsapp.Message.MessageType.YOU_NOT_ADMIN;
-import static iped.parsers.whatsapp.Message.MessageType.OVER_256_MEMBERS_ONLY_ADMINS_CAN_EDIT;
-import static iped.parsers.whatsapp.Message.MessageType.SECURITY_NOTIFICATIONS_NO_LONGER_AVAILABLE;
 
 import java.io.File;
 import java.sql.Connection;
@@ -100,26 +105,26 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import iped.parsers.sqlite.SQLite3DBParser;
-import iped.parsers.whatsapp.Message.MessageStatus;
-import iped.parsers.whatsapp.Message.MessageType;
 import iped.parsers.whatsapp.Message.MessageQuotedType;
+import iped.parsers.whatsapp.Message.MessageStatus;
 
 /**
  *
  * @author Hauck
  */
-public class ExtractorAndroidNew extends Extractor {
+public abstract class ExtractorAndroidNew extends Extractor {
 
     public ExtractorAndroidNew(String itemPath, File databaseFile, WAContactsDirectory contacts, WAAccount account) {
         super(itemPath, databaseFile, contacts, account, false);
     }
+
+    protected abstract Connection getConnection() throws SQLException;
 
     @Override
     protected List<Chat> extractChatList() throws WAExtractorException {
@@ -135,12 +140,15 @@ public class ExtractorAndroidNew extends Extractor {
                     Chat c = new Chat(remote);
                     c.setId(rs.getLong("id"));
                     c.setSubject(Util.getUTF8String(rs, "subject")); //$NON-NLS-1$
-                    c.setGroupChat(contactId.endsWith("@g.us"));
-                    c.setChannelChat(contactId.endsWith("@newsletter"));
-                    if (!(contactId.endsWith("@status") || contactId.endsWith("@broadcast"))) { //$NON-NLS-1$ //$NON-NLS-2$
-                        list.add(c);
-                        idToChat.put(c.getId(), c);
+                    if (contactId.endsWith(WAContact.waGroupSuffix)) {
+                        c.setGroupChat(true);
+                    } else if (contactId.endsWith(WAContact.waNewsletterSuffix)) {
+                        c.setChannelChat(true);
+                    } else if (contactId.endsWith(WAContact.waStatusSuffix)) {
+                        c.setBroadcast(true);
                     }
+                    list.add(c);
+                    idToChat.put(c.getId(), c);
                 }
 
                 extractMessages(conn, idToChat);
@@ -407,7 +415,7 @@ public class ExtractorAndroidNew extends Extractor {
 
                 m.setId(rs.getLong("id")); //$NON-NLS-1$
                 String remoteResource = rs.getString("remoteResource");
-                if (remoteResource == null || remoteResource.isEmpty() || !c.isGroupOrChannelChat()) {
+                if (remoteResource == null || remoteResource.isEmpty() || (!c.isGroupOrChannelChat() && !c.isBroadcast())) {
                     remoteResource = c.getRemote().getFullId();
                 }
                 m.setRemoteResource(remoteResource); // $NON-NLS-1$
@@ -495,7 +503,9 @@ public class ExtractorAndroidNew extends Extractor {
                 }
 
                 if (hasSystemChat
-                        && (m.getMessageType() == USER_ADDED_TO_COMMUNITY || m.getMessageType() == USER_ADDED_TO_GROUP
+                        && (m.getMessageType() == USER_ADDED_TO_COMMUNITY
+                                || m.getMessageType() == USER_ADDED_TO_GROUP
+                                || m.getMessageType() == USER_REQUEST_TO_ADD_TO_GROUP
                                 || m.getMessageType() == USER_COMMUNITY_ADMIN
                                 || m.getMessageType() == USER_REMOVED_FROM_GROUP
                                 || m.getMessageType() == USER_JOINED_GROUP_FROM_COMMUNITY
@@ -585,9 +595,9 @@ public class ExtractorAndroidNew extends Extractor {
                                 mq.setId(fakeIds--);
                                 String remoteId = mq.getRemoteId();
                                 if (remoteId != null) {
-                                    if (remoteId.compareTo(Message.STATUS_BROADCAST) == 0) {
+                                    if (remoteId.equals(WAContact.waStatusBroadcast)) {
                                         mq.setMessageQuotedType(MessageQuotedType.QUOTE_STATUS);
-                                    } else if (remoteId.contains(Message.GROUP)) {
+                                    } else if (remoteId.endsWith(WAContact.waGroupSuffix)) {
                                         // Set it first in case if not found
                                         mq.setQuotePrivateGroupName(remoteId);
                                         boolean found = false;
@@ -853,14 +863,21 @@ public class ExtractorAndroidNew extends Extractor {
                     case 84:
                         result = NEW_PARTICIPANTS_NEED_ADMIN_APPROVAL;
                         break;
+                    case 85:
+                        result = GROUP_CHANGED_ADMIN_APPROVAL_OFF;
+                        break;
                     case 87:
                     case 88:
                     case 95:
                     case 110:
+                    case 115:
                         result = COMMUNITY_MANAGEMENT_ACTION;
                         break;
                     case 90:
                         result = USER_ADDED_TO_COMMUNITY;
+                        break;
+                    case 91:
+                        result = GROUP_CHANGED_ALL_MEMBERS_CAN_ADD;
                         break;
                     case 92:
                         result = GROUP_CHANGED_ONLY_ADMINS_CAN_ADD;
@@ -877,7 +894,13 @@ public class ExtractorAndroidNew extends Extractor {
                     case 118:
                         result = PINNED_MESSAGE;
                         break;
+                    case 120:
+                        result = USER_REQUEST_TO_ADD_TO_GROUP;
+                        break;
+                    case 123:
                     case 124:
+                    case 125:
+                    case 131:
                         result = COMMUNITY_WELCOME;
                         break;
                     case 129:
@@ -898,10 +921,12 @@ public class ExtractorAndroidNew extends Extractor {
                     case 155:
                         result = AI_THIRD_PARTY;
                         break;
+                    case 158:
+                        result = CHAT_STARTED_FROM_AD;
+                        break;
                     default:
                         break;
                 }
-
                 break;
             case 1:
                 result = IMAGE_MESSAGE;
@@ -998,6 +1023,8 @@ public class ExtractorAndroidNew extends Extractor {
                 result = ORDER_MESSAGE;
                 break;
             case 45:
+            case 55:
+            case 57:
                 result = UI_ELEMENTS;
                 break;
             case 46:
@@ -1010,9 +1037,11 @@ public class ExtractorAndroidNew extends Extractor {
                 }
                 break;
             case 66:
+            case 106:
                 result = POLL_MESSAGE;
                 break;
             case 81:
+            case 103:
                 // Quote with media
                 result = TEXT_MESSAGE;
                 if (mediaMime != null && !mediaMime.isBlank()) {
@@ -1032,6 +1061,9 @@ public class ExtractorAndroidNew extends Extractor {
             case 90:
                 // Newer databases also have entries to any call in messages table
                 result = CALL_MESSAGE;
+                break;
+            case 99:
+                result = MESSAGE_ASSOCIATION;
                 break;
             default:
                 break;
