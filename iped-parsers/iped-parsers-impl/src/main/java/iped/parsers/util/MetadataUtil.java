@@ -253,6 +253,7 @@ public class MetadataUtil {
         generalKeys.add(ExtraProperties.CONFIDENCE_ATTR);
         generalKeys.add(OCRParser.OCR_CHAR_COUNT);
         generalKeys.add(RawStringParser.COMPRESS_RATIO);
+        generalKeys.add(ExtraProperties.PARENT_VIEW_POSITION);
 
         return generalKeys;
     }

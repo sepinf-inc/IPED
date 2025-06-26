@@ -47,7 +47,9 @@ public class InstantMessageHandler extends BaseModelHandler<InstantMessage> {
 
         super.fillMetadata(prefix, metadata);
 
-        metadata.set(PARENT_VIEW_POSITION, Integer.toString(model.getSourceIndex()));
+        if (model.getChat() != null) {
+            metadata.set(PARENT_VIEW_POSITION, model.getAnchorId());
+        }
 
         if (!model.getAttachments().isEmpty()) {
             metadata.set(MESSAGE_ATTACHMENT_COUNT, Integer.toString(model.getAttachments().size()));
