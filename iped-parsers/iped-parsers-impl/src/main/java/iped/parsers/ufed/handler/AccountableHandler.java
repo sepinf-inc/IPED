@@ -30,6 +30,7 @@ public class AccountableHandler<T extends Accountable> extends BaseModelHandler<
         model.getPhotos().forEach(photo -> {
             metadata.add(UFED_META_PREFIX + "Photo:id", photo.getPhotoNodeId());
             metadata.add(UFED_META_PREFIX + "Photo:name", photo.getName());
+            metadata.add(UFED_META_PREFIX + "Photo:url", photo.getUrl());
         });
 
         model.getContactEntries().forEach((key, value) -> {

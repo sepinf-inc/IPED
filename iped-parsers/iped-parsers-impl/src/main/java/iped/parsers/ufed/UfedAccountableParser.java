@@ -3,10 +3,14 @@ package iped.parsers.ufed;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.exception.TikaException;
@@ -101,7 +105,7 @@ public class UfedAccountableParser extends AbstractParser {
                      "table, th, td { border: 1px solid black; }" + //
                      "th, td { padding: 5px; text-align: left; }" + //
                      "th { width: 150px; min-width: 150px; }" +
-                     "td img { max-width: 300px; }" + //
+                     "td img { max-width: 300px; margin: 4px }" + //
                      ".ellipsis { display: inline-block; max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }" + //
                      ".ellipsis:hover { white-space: normal; max-width: initial; }" //
             );
@@ -122,16 +126,28 @@ public class UfedAccountableParser extends AbstractParser {
         xhtml.startElement("table");
 
         // Contact Photo
-        if (!contact.getPhotos().isEmpty()) {
+        List<ContactPhoto> validPhotos = contact.getPhotos().stream()
+                .filter(p -> !StringUtils.isAllBlank(p.getPhotoNodeId(), p.getUrl()))
+                .collect(Collectors.toList());
+        if (!validPhotos.isEmpty()) {
             xhtml.startElement("tr");
             xhtml.element("th", "Photo");
             xhtml.startElement("td");
+            HashSet<String> seenPhoto = new HashSet<>();
             for (ContactPhoto photo : contact.getPhotos()) {
                 byte[] photoData = photo.getImageData();
-                if (photoData == null) {
+                if (photoData == null && StringUtils.isNotEmpty(photo.getPhotoNodeId())) {
                     photoData = IOUtils.resourceToByteArray("/iped/parsers/common/img/avatar-unavailable.png");
                 }
-                xhtml.startElement("img", "src", "data:image/jpg;base64," + Base64.encodeBase64String(photoData));
+                if (photoData != null) {
+                    String hash = DigestUtils.md5Hex(photoData);
+                    if (seenPhoto.add(hash)) {
+                        xhtml.startElement("img", "src", "data:image/jpg;base64," + Base64.encodeBase64String(photoData));
+                    }
+                }
+                if (StringUtils.isNotBlank(photo.getUrl())) {
+                    xhtml.element("p", photo.getUrl());
+                }
                 xhtml.startElement("br");
             }
             xhtml.endElement("td");

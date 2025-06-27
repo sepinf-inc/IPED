@@ -34,7 +34,7 @@ public class ContactHandler extends AccountableHandler<Contact> {
     }
 
     private void loadReferencedContact(IItemSearcher searcher) {
-        if (model.getReferencedContact() != null || model.getId() == null) {
+        if (model.getReferencedContact() != null || model.getId() == null || !"Shared".equals(model.getType())) {
             return;
         }
 

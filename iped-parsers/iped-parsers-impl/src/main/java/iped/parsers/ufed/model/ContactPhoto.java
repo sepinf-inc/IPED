@@ -18,6 +18,7 @@ public class ContactPhoto extends BaseModel {
     // Specific field getters
     public String getName() { return (String) getField("Name"); }
     public String getPhotoNodeId() { return (String) getField("PhotoNodeId"); }
+    public String getUrl() { return (String) getField("Url"); }
 
     public byte[] getImageData() {
         return imageData;
