@@ -34,7 +34,7 @@ public class ContactHandler extends AccountableHandler<Contact> {
     }
 
     private void loadReferencedContact(IItemSearcher searcher) {
-        if (model.getReferencedContact() != null || model.getId() == null || !"Shared".equals(model.getType())) {
+        if (model.getReferencedContact().isPresent() || model.getId() == null || !"Shared".equals(model.getType())) {
             return;
         }
 
@@ -47,7 +47,7 @@ public class ContactHandler extends AccountableHandler<Contact> {
             model.setReferencedContact(contactItems.get(0));
             return;
         }
-        logger.error("Contact reference was not found: {}", model);
+        logger.debug("Contact reference was not found: {}", model);
     }
 
     @Override

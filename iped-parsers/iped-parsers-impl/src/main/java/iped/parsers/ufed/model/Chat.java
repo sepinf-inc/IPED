@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 
 import iped.data.IItemReader;
+import iped.parsers.ufed.reference.ReferencedAccountable;
 
 /**
  * Represents a <model type="Chat"> element. This is the root object.
@@ -34,7 +35,7 @@ public class Chat extends BaseModel {
     private final List<InstantMessage> messages = new ArrayList<>();
     private final Map<String, BaseModel> others = new LinkedHashMap<>();
 
-    private IItemReader referencedAccount;
+    private Optional<ReferencedAccountable> referencedAccount = Optional.empty();
 
     public Chat() {
         super("Chat");
@@ -75,12 +76,12 @@ public class Chat extends BaseModel {
         return others;
     }
 
-    public IItemReader getReferencedAccount() {
+    public Optional<ReferencedAccountable> getReferencedAccount() {
         return referencedAccount;
     }
 
     public void setReferencedAccount(IItemReader referencedAccount) {
-        this.referencedAccount = referencedAccount;
+        this.referencedAccount = Optional.of(new ReferencedAccountable(referencedAccount));
     }
 
     public boolean isGroup() {

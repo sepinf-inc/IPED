@@ -17,6 +17,7 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -29,7 +30,7 @@ import iped.parsers.ufed.model.Contact;
 import iped.parsers.ufed.model.ContactPhoto;
 import iped.parsers.ufed.model.InstantMessage;
 import iped.parsers.ufed.model.Party;
-import iped.parsers.ufed.reference.ReferencedContact;
+import iped.parsers.ufed.reference.ReferencedAccountable;
 import iped.parsers.ufed.reference.ReferencedLocation;
 import iped.parsers.util.Messages;
 import iped.parsers.whatsapp.Util;
@@ -43,7 +44,7 @@ public class ReportGenerator {
     private int minChatSplitSize;
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-    private final SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ");
+    private final SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
     private boolean firstHtml = true;
     private Chat chat;
     private int currentMsg = 0;
@@ -56,11 +57,6 @@ public class ReportGenerator {
 
     public int getNextMsgNum() {
         return currentMsg;
-    }
-
-    private static final String formatParty(String party) {
-        party = StringUtils.remove(party, "@s.whatsapp.net");
-        return format(party);
     }
 
     private static final String format(String text) {
@@ -151,17 +147,19 @@ public class ReportGenerator {
 
         for (Contact msgContact : message.getSharedContacts()) {
 
-            ReferencedContact contact = msgContact.getReferencedContact();
-            String name = StringUtils.firstNonBlank(msgContact.getName(), contact != null ? contact.getName() : null);
+            Optional<ReferencedAccountable> contact = msgContact.getReferencedContact();
+            String name = StringUtils.firstNonBlank(msgContact.getName(),
+                    contact.map(ReferencedAccountable::getName).orElse(null),
+                    Messages.getString("ReportGenerator.Unknown"));
 
             TableTag table = table(attrs(".contact-table"),
                     tr(td(Messages.getString("UFEDChatParser.SharedContact.Name")), td(name)));
 
-            if (contact != null) {
+            if (contact.isPresent()) {
 
-                String userID = contact.getUserID();
-                String username = contact.getUsername();
-                String phone = contact.getPhoneNumber();
+                String userID = contact.get().getUserID();
+                String username = contact.get().getUsername();
+                String phone = contact.get().getPhoneNumber();
 
                 if (isNotBlank(userID)) {
                     table.with(tr(td(Messages.getString("UFEDChatParser.SharedContact.UserID")), td(userID)));
@@ -242,7 +240,7 @@ public class ReportGenerator {
             }
 
             if (message.getFrom().isPresent()) {
-                name = new PartyHandler(message.getFrom().get()).getTitle();
+                name = new PartyHandler(message.getFrom().get(), message.getSource()).getTitle();
             }
             if (StringUtils.isBlank(name)) {
                 if (isOutgoing) {
@@ -254,22 +252,92 @@ public class ReportGenerator {
         }
 
         if (name != null) {
-            out.println("<span class=\"name\">" + formatParty(name) + "</span><br/>");
-        }
-
-        if (message.isForwardedMessage()) {
-            String forwardedFrom = "";
-            Party originalSender = message.findForwardedMessageOriginalSender();
-
-            if (originalSender != null) {
-                forwardedFrom = Messages.getString("UFEDChatParser.Forwarded.From") + " " + new PartyHandler(originalSender).getTitle();
-            }
-            out.println("<img class=\"fwd\"><span class=\"fwd\">" + Messages.getString("UFEDChatParser.Forwarded") + " " + forwardedFrom + "</span><br/>");
+            out.println("<span class=\"name\">" + format(name) + "</span><br/>");
         }
 
         if (message.isReplyMessage()) {
             printQuote(out, message);
         }
+
+        if (message.isForwardedMessage()) {
+            String forwardedFrom = "";
+            Party originalSender = message.findForwardedMessageOriginalSender(chat);
+
+            if (originalSender != null) {
+                forwardedFrom = Messages.getString("UFEDChatParser.Forwarded.From") + " "
+                        + new PartyHandler(originalSender, message.getSource()).getTitle();
+            }
+            out.println("<img class=\"fwd\"><span class=\"fwd\">" + Messages.getString("UFEDChatParser.Forwarded") + " " + forwardedFrom + "</span><br/>");
+
+            InstantMessage forwardedMessage = message.findForwardedMessage(chat);
+            if (forwardedMessage != null) {
+                printMessageContent(out, forwardedMessage);
+            }
+        }
+
+        printMessageContent(out, message);
+
+        out.println("<span class=\"time\">");
+        if (message.isEdited()) {
+            out.print(Messages.getString("UFEDChatParser.Edited") + " ");
+        }
+        if (message.getTimeStamp() != null) {
+            out.println(timeFormat.format(message.getTimeStamp())); // $NON-NLS-1$
+        }
+
+        boolean hasStatus = false;
+        if (isOutgoing && message.getStatus() != null) {
+            switch (message.getStatus()) {
+            case Unsent:
+                out.print("<div class=\"unsent\"></div>");
+                hasStatus = true;
+                break;
+            case Sent:
+                out.print("<div class=\"sent\"></div>");
+                hasStatus = true;
+                break;
+            case Delivered:
+                out.print("<div class=\"delivered\"></div>");
+                hasStatus = true;
+                break;
+            case Read:
+                out.print("<div class=\"viewed\"></div>");
+                hasStatus = true;
+                break;
+            default:
+                break;
+            }
+        }
+        if (message.isEdited() && hasStatus) {
+            out.print("<div class=\"edit\"></div>");
+        }
+        out.println("</span>");
+
+        if (chatDeleted || message.isDeleted()) {
+            if ("Trash".equalsIgnoreCase(message.getDeletedState())) {
+                out.println("<br/><span class=\"recovered\">");
+                out.println("<i>" + Messages.getString("UFEDChatParser.MessageRecovered") + "</i>");
+                out.println("<div class=\"trashIcon\"></div>");
+                out.println("</span>");
+            } else {
+                out.println("<br/><span class=\"recovered\">");
+                out.println("<i>" + Messages.getString("UFEDChatParser.MessageDeletedRecovered") + "</i>");
+                out.println("<div class=\"deletedIcon\"></div>");
+                out.println("</span>");
+            }
+        }
+        if (!message.isSystemMessage()) {
+            if (isOutgoing) {
+                out.println("</div><div class=\"aw\"><div class=\"awr\"></div></div>");
+            } else {
+                out.println("</div>");
+            }
+        }
+
+        out.println("</div></div>");
+    }
+
+    private void printMessageContent(PrintWriter out, InstantMessage message) {
 
         out.println(formatLocation(message));
         out.println(formatSharedContacts(message));
@@ -374,65 +442,6 @@ public class ReportGenerator {
         } else if (message.isSystemMessage()) {
             out.print("System Message");
         }
-
-        out.println("<span class=\"time\">");
-        if (message.isEdited()) {
-            out.print(Messages.getString("UFEDChatParser.Edited") + " ");
-        }
-        if (message.getTimeStamp() != null) {
-            out.println(timeFormat.format(message.getTimeStamp())); // $NON-NLS-1$
-        }
-
-        boolean hasStatus = false;
-        if (isOutgoing && message.getStatus() != null) {
-            switch (message.getStatus()) {
-            case Unsent:
-                out.print("<div class=\"unsent\"></div>");
-                hasStatus = true;
-                break;
-            case Sent:
-                out.print("<div class=\"sent\"></div>");
-                hasStatus = true;
-                break;
-            case Delivered:
-                out.print("<div class=\"delivered\"></div>");
-                hasStatus = true;
-                break;
-            case Read:
-                out.print("<div class=\"viewed\"></div>");
-                hasStatus = true;
-                break;
-            default:
-                break;
-            }
-        }
-        if (message.isEdited() && hasStatus) {
-            out.print("<div class=\"edit\"></div>");
-        }
-        out.println("</span>");
-
-        if (chatDeleted || message.isDeleted()) {
-            if ("Trash".equalsIgnoreCase(message.getDeletedState())) {
-                out.println("<br/><span class=\"recovered\">");
-                out.println("<i>" + Messages.getString("UFEDChatParser.MessageRecovered") + "</i>");
-                out.println("<div class=\"trashIcon\"></div>");
-                out.println("</span>");
-            } else {
-                out.println("<br/><span class=\"recovered\">");
-                out.println("<i>" + Messages.getString("UFEDChatParser.MessageDeletedRecovered") + "</i>");
-                out.println("<div class=\"deletedIcon\"></div>");
-                out.println("</span>");
-            }
-        }
-        if (!message.isSystemMessage()) {
-            if (isOutgoing) {
-                out.println("</div><div class=\"aw\"><div class=\"awr\"></div></div>");
-            } else {
-                out.println("</div>");
-            }
-        }
-
-        out.println("</div></div>");
     }
 
     private void printQuote(PrintWriter out, InstantMessage message) {
@@ -452,7 +461,7 @@ public class ReportGenerator {
         String quoteIcon = "";
         String quoteUser;
         if (quotedMessage.getFrom().isPresent()) {
-            quoteUser = new PartyHandler(quotedMessage.getFrom().get()).getTitle();
+            quoteUser = new PartyHandler(quotedMessage.getFrom().get(), message.getSource()).getTitle();
         } else {
             if (message.isFromPhoneOwner()) {
                 quoteUser = Messages.getString("WhatsAppReport.Owner");
@@ -543,7 +552,7 @@ public class ReportGenerator {
 
         out.print("<div class=\"" + quoteClass + "\" " + quoteClick + ">"
                 + "<div class=\"quoteTop\">"
-                + "<span class=\"quoteUser\">" + formatParty(quoteUser) + "</span><br/>"
+                + "<span class=\"quoteUser\">" + format(quoteUser) + "</span><br/>"
                 + "<span class=\"quoteMsg\">" + msgStr + quoteEnd
                 + attachStr + "</div>");
     }

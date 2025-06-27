@@ -7,7 +7,7 @@ import java.util.StringJoiner;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
 import iped.data.IItemReader;
-import iped.parsers.ufed.reference.ReferencedContact;
+import iped.parsers.ufed.reference.ReferencedAccountable;
 
 /**
  * Represents a <model type="Party"> element.
@@ -18,7 +18,7 @@ public class Party extends BaseModel {
 
     public static final String SYSTEM_MESSAGE = "System Message";
 
-    private ReferencedContact referencedContact;
+    private Optional<ReferencedAccountable> referencedContact = Optional.empty();
 
     public Party() {
         super("Party");
@@ -45,12 +45,12 @@ public class Party extends BaseModel {
         return SYSTEM_MESSAGE.equalsIgnoreCase(getIdentifier());
     }
 
-    public Optional<ReferencedContact> getReferencedContact() {
-        return Optional.ofNullable(referencedContact);
+    public Optional<ReferencedAccountable> getReferencedContact() {
+        return referencedContact;
     }
 
     public void setReferencedContact(IItemReader contactItem) {
-        this.referencedContact = new ReferencedContact(contactItem);
+        this.referencedContact = Optional.of(new ReferencedAccountable(contactItem));
     }
 
     @Override

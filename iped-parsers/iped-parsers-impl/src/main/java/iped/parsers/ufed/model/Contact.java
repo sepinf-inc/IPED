@@ -2,8 +2,10 @@ package iped.parsers.ufed.model;
 
 import static iped.parsers.ufed.util.UfedUtils.readUfedMetadata;
 
+import java.util.Optional;
+
 import iped.data.IItemReader;
-import iped.parsers.ufed.reference.ReferencedContact;
+import iped.parsers.ufed.reference.ReferencedAccountable;
 
 /**
  * Represents a <model type="Contact"> element.
@@ -13,7 +15,7 @@ public class Contact extends Accountable {
     private static final long serialVersionUID = 9129744519486979882L;
 
     // used for shared contacts
-    private transient ReferencedContact referencedContact;
+    private transient Optional<ReferencedAccountable> referencedContact = Optional.empty();
 
     public Contact() {
         super("Contact");
@@ -24,7 +26,7 @@ public class Contact extends Accountable {
     public String getGroup() { return (String) getField("Group"); }
     public String getInteractionStatuses() { return (String) getField("InteractionStatuses"); }
 
-    public ReferencedContact getReferencedContact() {
+    public Optional<ReferencedAccountable> getReferencedContact() {
         return referencedContact;
     }
 
@@ -33,6 +35,6 @@ public class Contact extends Accountable {
         if (!referencedId.equals(getId())) {
             throw new IllegalArgumentException("Ufed id doesn't match: " + getId() + " x " + referencedId);
         }
-        this.referencedContact = new ReferencedContact(contactItem);
+        this.referencedContact = Optional.of(new ReferencedAccountable(contactItem));
     }
 }

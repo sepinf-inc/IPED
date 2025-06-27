@@ -1,5 +1,8 @@
 package iped.parsers.ufed.handler;
 
+import static iped.properties.ExtraProperties.UFED_JUMP_TARGETS;
+import static iped.properties.ExtraProperties.UFED_META_PREFIX;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -99,7 +102,7 @@ public class BaseModelHandler<T extends BaseModel> {
         model.getAttributes().entrySet().stream()
             .filter(e -> !ignoreAttrs.contains(e.getKey()))
             .forEach(e -> {
-                metadata.set(ExtraProperties.UFED_META_PREFIX + e.getKey(), e.getValue());
+                metadata.set(UFED_META_PREFIX + e.getKey(), e.getValue());
             });
 
         // add fields
@@ -109,12 +112,12 @@ public class BaseModelHandler<T extends BaseModel> {
 
         // add additional info
         model.getAdditionalInfo().forEach(info -> {
-            metadata.set(ExtraProperties.UFED_META_PREFIX + "Info:" +  info.getKey(), info.getValue());
+            metadata.set(UFED_META_PREFIX + "Info:" +  info.getKey(), info.getValue());
         });
 
         // add jumpTargets
         model.getJumpTargets().forEach(jt -> {
-            metadata.add(ExtraProperties.UFED_JUMP_TARGETS, jt.getId());
+            metadata.add(UFED_JUMP_TARGETS, jt.getId());
         });
     }
 
@@ -130,9 +133,9 @@ public class BaseModelHandler<T extends BaseModel> {
         }
 
         if (value instanceof Date) {
-            metadata.add(ExtraProperties.UFED_META_PREFIX + key, DateUtils.formatDate((Date) value));
+            metadata.add(UFED_META_PREFIX + key, DateUtils.formatDate((Date) value));
         } else {
-            metadata.add(ExtraProperties.UFED_META_PREFIX + key, value.toString());
+            metadata.add(UFED_META_PREFIX + key, value.toString());
         }
     }
 

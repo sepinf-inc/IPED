@@ -4,25 +4,25 @@ import static iped.parsers.ufed.util.UfedUtils.readUfedMetadata;
 
 import iped.data.IItemReader;
 
-public class ReferencedContact extends AbstractReferencedItem {
+public class ReferencedAccountable extends AbstractReferencedItem {
 
-    public ReferencedContact(IItemReader item) {
+    public ReferencedAccountable(IItemReader item) {
         super(item);
     }
 
     public String getName() {
-        return readUfedMetadata(item, "name");
+        return readUfedMetadata(item, "Name");
     }
 
     public String getPhoneNumber() {
-        return readUfedMetadata(item, "phoneNumber");
+        return readUfedMetadata(item, "PhoneNumber");
     }
 
     public String getUsername() {
-        return readUfedMetadata(item, "username");
+        return readUfedMetadata(item, "Username");
     }
 
     public String getUserID() {
-        return readUfedMetadata(item, "userID");
+        return readUfedMetadata(item, "UserID");
     }
 }

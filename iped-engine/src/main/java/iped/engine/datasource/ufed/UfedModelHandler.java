@@ -274,6 +274,8 @@ public class UfedModelHandler extends DefaultHandler {
                 } else {
                     logger.error("Unknown InstantMessageExtraData child '{}' => {} (id={}). Ignoring...", fieldName, child.getClass().getSimpleName(), child.getId());
                 }
+            } else if ("Position".equals(fieldName) && child instanceof Coordinate) {
+                message.setPosition((Coordinate) child);
             } else {
                 logger.warn("Unrecognized InstantMessage child '{}' => {} (id={}).", fieldName, child.getClass().getName(), child.getId());
                 message.getOthers().put(fieldName, child);

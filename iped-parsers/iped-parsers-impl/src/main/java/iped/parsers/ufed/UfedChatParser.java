@@ -182,6 +182,7 @@ public class UfedChatParser extends AbstractParser {
             }
         } catch (Exception e) {
             logger.error("Error processing chat", e);
+            e.printStackTrace();
             throw e;
         }
     }

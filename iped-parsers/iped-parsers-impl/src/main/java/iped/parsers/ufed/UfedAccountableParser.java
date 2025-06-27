@@ -143,12 +143,12 @@ public class UfedAccountableParser extends AbstractParser {
                     String hash = DigestUtils.md5Hex(photoData);
                     if (seenPhoto.add(hash)) {
                         xhtml.startElement("img", "src", "data:image/jpg;base64," + Base64.encodeBase64String(photoData));
+                        xhtml.startElement("br");
                     }
                 }
                 if (StringUtils.isNotBlank(photo.getUrl())) {
                     xhtml.element("p", photo.getUrl());
                 }
-                xhtml.startElement("br");
             }
             xhtml.endElement("td");
             xhtml.endElement("tr");

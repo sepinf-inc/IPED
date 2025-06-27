@@ -90,6 +90,6 @@ public class AttachmentHandler extends BaseModelHandler<Attachment> {
             }
         }
 
-        logger.error("Attachment file reference was not found: {}", model);
+        logger.warn("Attachment file reference was not found: {}", model);
     }
 }

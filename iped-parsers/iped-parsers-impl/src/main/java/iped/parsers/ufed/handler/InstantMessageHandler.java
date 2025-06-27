@@ -58,13 +58,13 @@ public class InstantMessageHandler extends BaseModelHandler<InstantMessage> {
 
         // Message -> From
         model.getFrom().ifPresent(from ->  {
-            new PartyHandler(from,  item).fillMetadata("From", metadata);
+            new PartyHandler(from, model.getSource()).fillMetadata("From", metadata);
         });
 
         // Message -> To
         if (model.getTo().size() == 1) {
 
-            new PartyHandler(model.getTo().get(0),  item).fillMetadata("To", metadata);
+            new PartyHandler(model.getTo().get(0), model.getSource()).fillMetadata("To", metadata);
 
         } else if (model.getChat() != null) {
 
@@ -81,7 +81,7 @@ public class InstantMessageHandler extends BaseModelHandler<InstantMessage> {
             }
 
             if (otherParticipants.size() == 1) {
-                new PartyHandler(otherParticipants.get(0),  item).fillMetadata("To", metadata);
+                new PartyHandler(otherParticipants.get(0), model.getSource()).fillMetadata("To", metadata);
 
             } else if (otherParticipants.size() > 2) {
 
@@ -106,7 +106,7 @@ public class InstantMessageHandler extends BaseModelHandler<InstantMessage> {
 
         model.getExtraData().getForwardedMessage().ifPresent(fw -> {
             if (fw.getOriginalSender() != null) {
-                new PartyHandler(fw.getOriginalSender(),  item).fillMetadata("Forwarded:originalSender", metadata);
+                new PartyHandler(fw.getOriginalSender(), model.getSource()).fillMetadata("Forwarded:originalSender", metadata);
             }
             metadata.add(UFED_META_PREFIX + "Label", fw.getLabel());
 
@@ -140,10 +140,10 @@ public class InstantMessageHandler extends BaseModelHandler<InstantMessage> {
     public void loadReferences(IItemSearcher searcher) {
 
         model.getFrom().ifPresent(from -> {
-            new PartyHandler(from, item, cache).loadReferences(searcher);
+            new PartyHandler(from, model.getSource(), item, cache).loadReferences(searcher);
         });
         model.getTo().forEach(to -> {
-            new PartyHandler(to, item, cache).loadReferences(searcher);
+            new PartyHandler(to, model.getSource(), item, cache).loadReferences(searcher);
         });
         model.getAttachments().stream().forEach(a -> {
             new AttachmentHandler(a, item).loadReferences(searcher);
@@ -152,14 +152,14 @@ public class InstantMessageHandler extends BaseModelHandler<InstantMessage> {
             new ContactHandler(c).loadReferences(searcher);
         });
 
-        loadLocationReference(searcher);
-
         model.getEmbeddedMessage().ifPresent(em -> {
             new InstantMessageHandler(em, item, cache).loadReferences(searcher);
         });
         model.getExtraData().getReplyMessage().map(ReplyMessageData::getInstantMessage).ifPresent(rm -> {
             new InstantMessageHandler(rm, item, cache).loadReferences(searcher);
         });
+
+        loadLocationReference(searcher);
     }
 
     @Override
@@ -212,6 +212,6 @@ public class InstantMessageHandler extends BaseModelHandler<InstantMessage> {
             }
         }
 
-        logger.error("Location reference was not found: {}", model);
+        logger.debug("Location reference was not found: {}", model);
     }
 }

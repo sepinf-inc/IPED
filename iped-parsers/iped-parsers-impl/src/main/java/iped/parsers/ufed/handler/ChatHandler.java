@@ -12,12 +12,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.data.IItemReader;
-import iped.parsers.ufed.model.BaseModel;
 import iped.parsers.ufed.model.Chat;
 import iped.parsers.ufed.model.Party;
 import iped.parsers.util.Messages;
 import iped.parsers.whatsapp.WAContact;
-import iped.properties.BasicProps;
 import iped.properties.MediaTypes;
 import iped.search.IItemSearcher;
 
@@ -41,17 +39,35 @@ public class ChatHandler extends BaseModelHandler<Chat> {
 
         super.fillMetadata(prefix, metadata);
 
+        // Chat Account Info
+        model.getReferencedAccount().ifPresent(a -> {
+            metadata.add(UFED_META_PREFIX + "Account:id", a.getUserID());
+            metadata.add(UFED_META_PREFIX + "Account:name", a.getName());
+            metadata.add(UFED_META_PREFIX + "Account:phoneNumber", a.getPhoneNumber());
+            metadata.add(UFED_META_PREFIX + "Account:username", a.getUsername());
+        });
+
+        // Chat Participants
         model.getParticipants().forEach(p -> {
-            new PartyHandler(p,  item).fillMetadata("Participants", metadata);
+            new PartyHandler(p, model.getSource()).fillMetadata("Participants", metadata);
         });
+        if (!model.getParticipants().isEmpty()) {
+            metadata.add(UFED_META_PREFIX + "Participants:count", Integer.toString(model.getParticipants().size()));
+        }
 
+        // Chat Owner Participant
         model.getPhoneOwnerParticipant().ifPresent(p -> {
-            new PartyHandler(p,  item).fillMetadata("PhoneOwner", metadata);
+            new PartyHandler(p, model.getSource()).fillMetadata("PhoneOwner", metadata);
         });
 
+        // Chat Group Admin Participants
         model.getParticipants().stream().filter(Party::isGroupAdmin).forEach(p -> {
-            new PartyHandler(p,  item).fillMetadata("GroupAdmins", metadata);
+            new PartyHandler(p, model.getSource()).fillMetadata("GroupAdmins", metadata);
         });
+        long groupAdminsCount = model.getParticipants().stream().filter(Party::isGroupAdmin).count();
+        if (groupAdminsCount > 0) {
+            metadata.add(UFED_META_PREFIX + "GroupAdmins:count", Long.toString(groupAdminsCount));
+        }
     }
 
     @Override
@@ -66,7 +82,7 @@ public class ChatHandler extends BaseModelHandler<Chat> {
         Map<String, IItemReader> participantsCache = new HashMap<>();
 
         model.getParticipants().forEach(participant -> {
-            new PartyHandler(participant, item, participantsCache).loadReferences(searcher);
+            new PartyHandler(participant, model.getSource(), item, participantsCache).loadReferences(searcher);
         });
 
         model.getMessages().forEach(m -> {
@@ -130,18 +146,36 @@ public class ChatHandler extends BaseModelHandler<Chat> {
             sb.append(name);
         } else if (otherParticipants.size() == 1) {
 
-            // append other participant
+            outputOwnerParticipant = outputOwnerParticipant && ownerPartipant != null;
+            String ownerParticipantStr = "";
             if (outputOwnerParticipant) {
+                ownerParticipantStr = new PartyHandler(ownerPartipant, model.getSource()).getTitle();
+                outputOwnerParticipant = StringUtils.isNotBlank(ownerParticipantStr);
+            }
+
+            // append other participant
+            String otherParticipantStr = new PartyHandler(otherParticipants.get(0), model.getSource()).getTitle();
+            boolean otherSurroundedByBrackets = otherParticipantStr.startsWith("[") && otherParticipantStr.endsWith("]");
+            if (outputOwnerParticipant && !otherSurroundedByBrackets) {
                 sb.append("[");
             }
-            sb.append(new PartyHandler(otherParticipants.get(0), item).getTitle());
-            if (outputOwnerParticipant) {
+            sb.append(otherParticipantStr);
+            if (outputOwnerParticipant && !otherSurroundedByBrackets) {
                 sb.append("]");
             }
 
             // append owner participant
-            if (ownerPartipant != null && outputOwnerParticipant) {
-                sb.append(" - [").append(new PartyHandler(ownerPartipant, item).getTitle()).append("]");
+            if (outputOwnerParticipant) {
+                boolean ownerSurroundedByBrackets = ownerParticipantStr.startsWith("[") && ownerParticipantStr.endsWith("]");
+
+                sb.append(" - ");
+                if (!ownerSurroundedByBrackets) {
+                    sb.append("[");
+                }
+                sb.append(ownerParticipantStr);
+                if (!ownerSurroundedByBrackets) {
+                    sb.append("]");
+                }
             }
         } else if (chatId != null) {
             sb.append("[ID:").append(chatId).append("]");
@@ -160,12 +194,12 @@ public class ChatHandler extends BaseModelHandler<Chat> {
 
     private void loadChatAccountReference(IItemSearcher searcher) {
 
-        if (model.getReferencedAccount() != null || model.getAccount() == null) {
+        if (model.getReferencedAccount().isPresent() || model.getAccount() == null) {
             return;
         }
 
         String account = model.getAccount();
-        String query = createUserAccountQuery(account, model, item, searcher);
+        String query = AccountableHandler.createAccountableQuery(account, model.getSource(), MediaTypes.UFED_USER_ACCOUNT_MIME, model, item, searcher);
         List<IItemReader> results = searcher.search(query);
         if (!results.isEmpty()) {
             if (results.size() > 1) {
@@ -174,31 +208,8 @@ public class ChatHandler extends BaseModelHandler<Chat> {
             model.setReferencedAccount(results.get(0));
             return;
         }
-
-        logger.error("User Account reference was not found: {}", account);
+        logger.warn("User Account reference was not found: {}", account);
     }
 
-    public static String createUserAccountQuery(String identifier, BaseModel relatedModel, IItemReader relatedItem, IItemSearcher searcher) {
 
-        // also use node of possible jid (e.g. "node@domain.com" -> "node")
-        String identifierNode = StringUtils.substringBefore(identifier, '@');
-        String possiblePhoneNumber = null;
-        if (!identifierNode.isBlank() && !identifierNode.equals(identifier)) {
-            possiblePhoneNumber = identifierNode;
-        }
-
-        String source = (String) relatedModel.getField("Source");
-
-        String query = BasicProps.CONTENTTYPE + ":\"" + MediaTypes.UFED_USER_ACCOUNT_MIME.toString() + "\"" //
-                + " && " + BasicProps.EVIDENCE_UUID + ":\"" + relatedItem.getDataSource().getUUID() + "\"" //
-                + " && " + searcher.escapeQuery(UFED_META_PREFIX + "extractionId") + ":" + relatedModel.getExtractionId()  //
-                + " && " + searcher.escapeQuery(UFED_META_PREFIX + "Source") + ":\"" + source + "\"" //
-                + " && (" + searcher.escapeQuery(UFED_META_PREFIX + "UserID") + ":\"" + identifier + "\"" //
-                +   ((possiblePhoneNumber != null) ?
-                        (" || " + searcher.escapeQuery(UFED_META_PREFIX + "PhoneNumber") + ":\"" + possiblePhoneNumber + "\"") : "") //
-                + " || " + searcher.escapeQuery(UFED_META_PREFIX + "Username") + ":\"" + identifier + "\"" //
-                + ")";
-
-        return query;
-    }
 }

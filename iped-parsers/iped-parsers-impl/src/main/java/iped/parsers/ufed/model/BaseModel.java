@@ -2,9 +2,11 @@ package iped.parsers.ufed.model;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.StringJoiner;
 
 import org.apache.commons.lang3.StringUtils;
@@ -25,7 +27,7 @@ public abstract class BaseModel implements Serializable {
     private final Map<String, Object> fields = new LinkedHashMap<>();
     private final Map<String, String> attributes = new LinkedHashMap<>();
     private final List<KeyValueModel> additionalInfo = new ArrayList<>();
-    private final List<JumpTarget> jumpTargets = new ArrayList<>();
+    private final Set<JumpTarget> jumpTargets = new HashSet<>();
     private final List<BaseModel> relatedModels = new ArrayList<>();
 
 
@@ -86,7 +88,7 @@ public abstract class BaseModel implements Serializable {
         return additionalInfo;
     }
 
-    public List<JumpTarget> getJumpTargets() {
+    public Set<JumpTarget> getJumpTargets() {
         return jumpTargets;
     }
 
@@ -145,7 +147,6 @@ public abstract class BaseModel implements Serializable {
     public void setId(String id) {
         this.id = id;
     }
-
 
     @Override
     public String toString() {

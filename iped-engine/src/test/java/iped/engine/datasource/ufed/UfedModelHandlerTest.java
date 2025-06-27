@@ -139,7 +139,7 @@ public class UfedModelHandlerTest {
         assertTrue("Message with jump target should be found.", msgWithJumpTarget.isPresent());
         assertFalse("Jump targets list should not be empty.", msgWithJumpTarget.get().getJumpTargets().isEmpty());
 
-        JumpTarget target = msgWithJumpTarget.get().getJumpTargets().get(0);
+        JumpTarget target = msgWithJumpTarget.get().getJumpTargets().iterator().next();
         assertEquals("4c658373-983a-4bc6-bf93-e06115de4fa5", target.getId());
         assertFalse("isModel attribute should be false.", target.isModel());
     }

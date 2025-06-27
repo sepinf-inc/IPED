@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
 
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -66,7 +67,7 @@ public class InstantMessage extends BaseModel implements Comparable<InstantMessa
     public String getSource() { return (String) getField("Source"); }
     public String getLabel() { return (String) getField("Label"); }
     public String getSourceApplication() { return (String) getField("SourceApplication"); }
-    public boolean isLocationSharing() { return Boolean.parseBoolean((String) getField("IsLocationSharing")); }
+    public boolean isLocationSharing() { return BooleanUtils.toBoolean((Boolean) getField("IsLocationSharing")); }
 
     public MessageStatus getStatus() {
         return MessageStatus.parse((String) getField("Status"));
@@ -158,17 +159,21 @@ public class InstantMessage extends BaseModel implements Comparable<InstantMessa
                 || messageExtraData.getQuotedMessage().filter(q -> "Forwarded".equalsIgnoreCase(q.getLabel())).isPresent();
     }
 
-    public Party findForwardedMessageOriginalSender() {
+    public Party findForwardedMessageOriginalSender(Chat chat) {
         Optional<Party> originalSender = messageExtraData.getForwardedMessage().map(ForwardedMessageData::getOriginalSender);
         if (originalSender.isPresent()) {
             return originalSender.get();
         }
 
-        InstantMessage quotedMessage = findQuotedMessage(null);
+        InstantMessage quotedMessage = findQuotedMessage(chat);
         if (quotedMessage != null) {
             return quotedMessage.getFrom().orElse(null);
         }
         return null;
+    }
+
+    public InstantMessage findForwardedMessage(Chat chat) {
+        return findQuotedMessage(chat);
     }
 
     public InstantMessage findReplyMessage(Chat chat) {

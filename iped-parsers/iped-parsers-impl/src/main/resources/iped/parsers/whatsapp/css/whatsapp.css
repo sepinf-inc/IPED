@@ -478,7 +478,7 @@ div:target {
     cursor: pointer;
     border-radius: 4px;
     box-shadow: 0 0 6px #a7a7a7;
-    display: inline-block;
+    display: grid;
     padding: 8px 8px 8px 8px;
     background-color: #f7f787;
     color: #444400;
