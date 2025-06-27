@@ -1,6 +1,7 @@
 package iped.parsers.ufed.model;
 
 import java.util.Date;
+import java.util.Optional;
 import java.util.StringJoiner;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -44,8 +45,8 @@ public class Party extends BaseModel {
         return SYSTEM_MESSAGE.equalsIgnoreCase(getIdentifier());
     }
 
-    public ReferencedContact getReferencedContact() {
-        return referencedContact;
+    public Optional<ReferencedContact> getReferencedContact() {
+        return Optional.ofNullable(referencedContact);
     }
 
     public void setReferencedContact(IItemReader contactItem) {

@@ -34,8 +34,16 @@ public class PartyHandler extends BaseModelHandler<Party> {
     @Override
     protected void fillMetadata(String prefix, Metadata metadata) {
         metadata.add(UFED_META_PREFIX + prefix, getTitle());
-        metadata.add(UFED_META_PREFIX + prefix + ":id", model.getIdentifier());
-        metadata.add(UFED_META_PREFIX + prefix + ":name", model.getName());
+
+        model.getReferencedContact().ifPresentOrElse(ref -> {
+            metadata.add(UFED_META_PREFIX + prefix + ":id", StringUtils.firstNonBlank(model.getIdentifier(), ref.getUserID()));
+            metadata.add(UFED_META_PREFIX + prefix + ":name", StringUtils.firstNonBlank(model.getName(), ref.getName()));
+            metadata.add(UFED_META_PREFIX + prefix + ":phoneNumber", ref.getPhoneNumber());
+            metadata.add(UFED_META_PREFIX + prefix + ":username", ref.getUsername());
+        }, () -> {
+            metadata.add(UFED_META_PREFIX + prefix + ":id", model.getIdentifier());
+            metadata.add(UFED_META_PREFIX + prefix + ":name", model.getName());
+        });
     }
 
     @Override
