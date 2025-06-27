@@ -21,6 +21,8 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import com.google.gson.ExclusionStrategy;
+import com.google.gson.FieldAttributes;
 import com.google.gson.GsonBuilder;
 
 import iped.data.IItem;
@@ -55,6 +57,16 @@ public class UfedMessageParser extends AbstractParser {
 
     private GsonBuilder gsonBuilder = new GsonBuilder() //
             .registerTypeAdapterFactory(new OmitEmptyObjectsTypeAdapterFactory()) //
+            .addSerializationExclusionStrategy(new ExclusionStrategy() {
+                @Override
+                public boolean shouldSkipField(FieldAttributes f) {
+                    return f.getName().equals("attributes"); // don't print attributes in JSON
+                }
+                @Override
+                public boolean shouldSkipClass(Class<?> clazz) {
+                    return false;
+                }
+            })
             .setPrettyPrinting() //
             .disableHtmlEscaping() //
             .setDateFormat(Messages.getString("UFEDChatParser.DateFormat"));

@@ -17,13 +17,11 @@ public class Attachment extends BaseModel {
 
     private transient ReferencedFile referencedFile;
     private transient byte[] unreferencedContent;
+    private String fileId;
 
     public Attachment() {
         super("Attachment");
     }
-
-    // Specific attribute getter
-    public String getFileId() { return getAttribute("file_id"); }
 
     // Specific field getters
     public String getFilename() { return (String) getField("Filename"); }
@@ -47,6 +45,18 @@ public class Attachment extends BaseModel {
 
     public void setUnreferencedContent(byte[] unreferencedContent) {
         this.unreferencedContent = unreferencedContent;
+    }
+
+    public String getFileId() {
+        return fileId;
+    }
+
+    @Override
+    public void setAttribute(String name, String value) {
+        super.setAttribute(name, value);
+        if ("file_id".equals(name)) {
+            fileId = value;
+        }
     }
 
     @Override
