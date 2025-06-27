@@ -34,6 +34,7 @@ import iped.parsers.ufed.model.ContactPhoto;
 import iped.parsers.ufed.model.UserAccount;
 import iped.parsers.ufed.util.UfedUtils;
 import iped.properties.MediaTypes;
+import iped.search.IItemSearcher;
 import iped.utils.DateUtil;
 
 public class UfedAccountableParser extends AbstractParser {
@@ -61,7 +62,7 @@ public class UfedAccountableParser extends AbstractParser {
         xhtml.startDocument();
         try {
             IItemReader item = context.get(IItemReader.class);
-
+            IItemSearcher searcher = context.get(IItemSearcher.class);
             if (item == null) {
                 return;
             }
@@ -84,6 +85,10 @@ public class UfedAccountableParser extends AbstractParser {
             }
 
             accountableHandler.fillMetadata(metadata);
+
+            if (searcher != null) {
+                accountableHandler.loadReferences(searcher);
+            }
 
             if (item instanceof IItem) {
                 String name = accountableHandler.getTitle();

@@ -99,6 +99,7 @@ public class QueuesProcessingOrder {
 
         // required to load ContactPhotos
         mediaTypes.put(MediaTypes.UFED_CONTACT_MIME, 2);
+        mediaTypes.put(MediaTypes.UFED_USER_ACCOUNT_MIME, 2);
 
         // required to load Attachments, Coordinates, Contacts and ContactPhotos
         mediaTypes.put(UfedChatParser.UFED_CHAT_MIME, 3);
