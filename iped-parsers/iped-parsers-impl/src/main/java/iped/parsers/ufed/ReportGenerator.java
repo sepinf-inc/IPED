@@ -334,7 +334,7 @@ public class ReportGenerator {
                 if (transcription == null) {
                     transcription = attachment.getTranscript();
                 }
-                if (transcription != null) {
+                if (StringUtils.isNotBlank(transcription)) {
                     out.print("<br/>");
                     out.print(Messages.getString("ReportGenerator.TranscriptionTitle"));
                     String confidence = attachment.getReferencedFile().getTranscriptConfidence();
