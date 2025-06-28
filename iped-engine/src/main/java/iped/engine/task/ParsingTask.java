@@ -34,6 +34,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.io.TemporaryResources;
@@ -119,6 +120,7 @@ import iped.properties.MediaTypes;
 import iped.search.IItemSearcher;
 import iped.utils.EmptyInputStream;
 import iped.utils.IOUtil;
+import iped.utils.TempAttributeInputStream;
 
 /**
  * TAREFA DE PARSING DE ALGUNS TIPOS DE ARQUIVOS. ARMAZENA O TEXTO EXTRAÍDO,
@@ -362,7 +364,8 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             }
             // Don't expand subitem if its hash is equal to parent container hash, could lead to infinite recursion.
             // See https://github.com/sepinf-inc/IPED/issues/1814
-            if (evidence.isSubItem() && evidence.getHash() != null && evidence.getHash().equals(evidence.getTempAttribute(PARENT_CONTAINER_HASH))) {
+            if (evidence.isSubItem() && StringUtils.isNotEmpty(evidence.getHash()) && evidence.getHash().equals(evidence.getTempAttribute(PARENT_CONTAINER_HASH))) {
+                containersBeingExpanded.decrementAndGet();
                 return;
             }
         }
@@ -486,11 +489,6 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             evidence.getMetadata().remove(EntropyTask.COMPRESS_RATIO);
             evidence.setExtraAttribute(EntropyTask.COMPRESS_RATIO, Double.valueOf(compressRatio));
         }
-        
-        if (MediaTypes.isInstanceOf(evidence.getMediaType(), MediaTypes.UFED_MESSAGE_MIME)) {
-            evidence.getMetadata().set(ExtraProperties.PARENT_VIEW_POSITION, String.valueOf(evidence.getId()));
-        }
-
     }
 
     @Override
@@ -672,6 +670,11 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
                 if (updateInputStream) {
                     IOUtil.closeQuietly(is);
                 }
+            }
+
+            if (inputStream instanceof TempAttributeInputStream) {
+                TempAttributeInputStream tempAttrStream = (TempAttributeInputStream) inputStream;
+                subItem.setTempAttribute(tempAttrStream.getKey(), tempAttrStream.getObject());
             }
 
             checkRecursiveZipBomb(subItem);

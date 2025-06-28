@@ -736,6 +736,12 @@ public class IndexItem extends BasicProps {
 
             evidence.setName(doc.get(IndexItem.NAME));
 
+            // if evidence was stored with EXT, replace the generated in setName()
+            String ext = doc.get(IndexItem.EXT);
+            if (ext != null) {
+                evidence.setExtension(ext);
+            }
+
             String value = doc.get(IndexItem.LENGTH);
             Long len = null;
             if (value != null && !value.isEmpty()) {

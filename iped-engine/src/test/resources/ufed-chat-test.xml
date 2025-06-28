@@ -1,0 +1,1343 @@
+<model type="Chat" id="5c1b7590-ec7d-43ec-8ae0-f1ff3967d30d" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="89030" extractionId="2">
+    <field name="UserMapping" type="DecodingSourceOptions">
+        <value type="DecodingSourceOptions"><![CDATA[Decoding]]></value>
+    </field>
+    <field name="Source" type="String">
+        <value type="String"><![CDATA[WhatsApp]]></value>
+    </field>
+    <field name="ServiceIdentifier" type="String">
+        <empty />
+    </field>
+    <field name="Id" type="String">
+        <value type="String"><![CDATA[5511999996666@s.whatsapp.net]]></value>
+    </field>
+    <field name="Name" type="String">
+        <empty />
+    </field>
+    <field name="StartTime" type="TimeStamp">
+        <value type="TimeStamp" format="TimeStampKnown" formattedTimestamp="2024-09-28T14:59:35+00:00">2024-09-28T14:59:35.230+00:00</value>
+    </field>
+    <field name="LastActivity" type="TimeStamp">
+        <value type="TimeStamp" format="TimeStampKnown" formattedTimestamp="2024-09-28T14:59:35+00:00">2024-09-28T14:59:35.230+00:00</value>
+    </field>
+    <multiModelField name="Participants" type="Party">
+        <model type="Party" id="885c4246-78db-4eb1-9ace-2a7d79cd7c97" deleted_state="Unknown" decoding_confidence="High" isrelated="False" source_index="89032" extractionId="2">
+            <field name="UserMapping" type="DecodingSourceOptions">
+                <empty />
+            </field>
+            <field name="Identifier" type="String">
+                <value type="String"><![CDATA[5511999996666@s.whatsapp.net]]></value>
+            </field>
+            <field name="Name" type="String">
+                <value type="String"><![CDATA[Blastoise]]></value>
+            </field>
+            <field name="IsPhoneOwner" type="Boolean">
+                <value type="Boolean"><![CDATA[False]]></value>
+            </field>
+            <field name="IsGroupAdmin" type="Boolean">
+                <empty />
+            </field>
+        </model>
+        <model type="Party" id="a324e6ba-261d-411a-9acc-5391ecb95bee" deleted_state="Unknown" decoding_confidence="High" isrelated="False" source_index="89035" extractionId="2">
+            <field name="UserMapping" type="DecodingSourceOptions">
+                <empty />
+            </field>
+            <field name="Identifier" type="String">
+                <value type="String"><![CDATA[5511999998888@s.whatsapp.net]]></value>
+            </field>
+            <field name="Name" type="String">
+                <value type="String"><![CDATA[Clefable]]></value>
+            </field>
+            <field name="IsPhoneOwner" type="Boolean">
+                <value type="Boolean"><![CDATA[True]]></value>
+            </field>
+            <field name="IsGroupAdmin" type="Boolean">
+                <value type="Boolean"><![CDATA[False]]></value>
+            </field>
+        </model>
+    </multiModelField>
+    <multiModelField name="Photos" type="ContactPhoto">
+        <model type="ContactPhoto" id="31b9ab23-b2a8-4c89-8448-593cab4dee1e" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="89031" extractionId="2">
+            <field name="Name" type="String">
+                <empty />
+            </field>
+            <multiField name="Url" type="String" />
+            <nodeField name="PhotoNode">
+                <id name="5511999996666@s.whatsapp.net.j">450cab4c-d16d-4c9b-b617-ac21360861c8</id>
+            </nodeField>
+        </model>
+    </multiModelField>
+    <multiModelField name="Messages" type="InstantMessage">
+        <model type="InstantMessage" id="2ee39d83-7b1e-48df-bfe7-ef8039de7ae2" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="28775" extractionId="2">
+            <field name="UserMapping" type="DecodingSourceOptions">
+                <value type="DecodingSourceOptions"><![CDATA[Decoding]]></value>
+            </field>
+            <field name="Source" type="String">
+                <value type="String"><![CDATA[WhatsApp]]></value>
+            </field>
+            <field name="ServiceIdentifier" type="String">
+                <empty />
+            </field>
+            <modelField name="From" type="Party">
+                <model type="Party" id="7db50272-c4c7-4f8a-88c2-95533466b124" deleted_state="Unknown" decoding_confidence="High" isrelated="False" source_index="26301" extractionId="2">
+                    <field name="UserMapping" type="DecodingSourceOptions">
+                        <empty />
+                    </field>
+                    <field name="Identifier" type="String">
+                        <value type="String"><![CDATA[5511999997777@s.whatsapp.net]]></value>
+                    </field>
+                    <field name="Role" type="PartyRole">
+                        <value type="PartyRole"><![CDATA[From]]></value>
+                    </field>
+                    <field name="Name" type="String">
+                        <value type="String"><![CDATA[Bulbasaur]]></value>
+                    </field>
+                    <field name="IsPhoneOwner" type="Boolean">
+                        <value type="Boolean"><![CDATA[False]]></value>
+                    </field>
+                    <field name="IsGroupAdmin" type="Boolean">
+                        <empty />
+                    </field>
+                </model>
+            </modelField>
+            <multiModelField name="To" type="Party" />
+            <field name="Body" type="String">
+                <empty />
+            </field>
+            <field name="Identifier" type="String">
+                <value type="String"><![CDATA[20B2CB24BF3CBD881397130CAF870169]]></value>
+            </field>
+            <field name="TimeStamp" type="TimeStamp">
+                <value type="TimeStamp" format="TimeStampKnown" formattedTimestamp="2024-11-03T19:46:47+00:00">2024-11-03T19:46:47.000+00:00</value>
+            </field>
+            <modelField name="Attachment" type="Attachment">
+                <empty />
+            </modelField>
+            <multiModelField name="Attachments" type="Attachment">
+                <model type="Attachment" id="3956e91a-b3cd-4df7-867a-a6ff109293b3" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="28776" extractionId="2" file_id="d70bf66b-49b6-4185-b2cd-1db458e19267">
+                    <field name="Filename" type="String">
+                        <value type="String"><![CDATA[PTT-20241103-WA0101.opus]]></value>
+                    </field>
+                    <field name="ContentType" type="String">
+                        <value type="String"><![CDATA[audio/ogg; codecs=opus]]></value>
+                    </field>
+                    <dataField name="Data" type="MemoryRange">
+                        <source length="7054" />
+                    </dataField>
+                    <field name="URL" type="String">
+                        <value type="String"><![CDATA[https://mmg.whatsapp.net/v/t6xxxxxxxx4A0D&_nc_sid=5e03e0&mms3=true]]></value>
+                    </field>
+                    <field name="Title" type="String">
+                        <value type="String"><![CDATA[Duration: 00:00:03]]></value>
+                    </field>
+                    <field name="Transcript" type="String">
+                        <empty />
+                    </field>
+                    <field name="attachment_extracted_path" type="String">
+                        <value type="String"><![CDATA[files\Audio\PTT-20241103-WA0101.opus]]></value>
+                    </field>
+                </model>
+            </multiModelField>
+            <field name="Status" type="MessageStatus">
+                <value type="MessageStatus"><![CDATA[Read]]></value>
+            </field>
+            <multiModelField name="SharedContacts" type="Contact" />
+            <field name="Platform" type="Platform">
+                <value type="Platform"><![CDATA[Mobile]]></value>
+            </field>
+            <field name="Type" type="InstantMessageType">
+                <value type="InstantMessageType"><![CDATA[AppMessage]]></value>
+            </field>
+            <field name="IsLocationSharing" type="Boolean">
+                <empty />
+            </field>
+            <multiModelField name="EmbeddedInstantMessage" type="InstantMessage" />
+            <field name="SourceApplication" type="String">
+                <value type="String"><![CDATA[WhatsApp]]></value>
+            </field>
+            <multiModelField name="EmbeddedInstantMessage" type="InstantMessage" />
+            <jumptargets name="">
+                <targetid ismodel="false"><![CDATA[d70bf66b-49b6-4185-b2cd-1db458e19267]]></targetid>
+            </jumptargets>
+        </model>
+        <model type="InstantMessage" id="5fd44844-5874-47eb-ab1f-0a54a56bdf54" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="28779" extractionId="2">
+            <field name="UserMapping" type="DecodingSourceOptions">
+                <value type="DecodingSourceOptions"><![CDATA[Decoding]]></value>
+            </field>
+            <field name="Source" type="String">
+                <value type="String"><![CDATA[WhatsApp]]></value>
+            </field>
+            <field name="ServiceIdentifier" type="String">
+                <empty />
+            </field>
+            <modelField name="From" type="Party">
+                <model type="Party" id="7db50272-c4c7-4f8a-88c2-95533466b124" deleted_state="Unknown" decoding_confidence="High" isrelated="False" source_index="26301" extractionId="2">
+                    <field name="UserMapping" type="DecodingSourceOptions">
+                        <empty />
+                    </field>
+                    <field name="Identifier" type="String">
+                        <value type="String"><![CDATA[5511999997777@s.whatsapp.net]]></value>
+                    </field>
+                    <field name="Role" type="PartyRole">
+                        <value type="PartyRole"><![CDATA[From]]></value>
+                    </field>
+                    <field name="Name" type="String">
+                        <value type="String"><![CDATA[Bulbasaur]]></value>
+                    </field>
+                    <field name="IsPhoneOwner" type="Boolean">
+                        <value type="Boolean"><![CDATA[False]]></value>
+                    </field>
+                    <field name="IsGroupAdmin" type="Boolean">
+                        <empty />
+                    </field>
+                </model>
+            </modelField>
+            <multiModelField name="To" type="Party" />
+            <field name="Body" type="String">
+                <empty />
+            </field>
+            <field name="Identifier" type="String">
+                <value type="String"><![CDATA[D14D3E2B6A937F38A920DBD383533848]]></value>
+            </field>
+            <field name="TimeStamp" type="TimeStamp">
+                <value type="TimeStamp" format="TimeStampKnown" formattedTimestamp="2024-11-03T19:46:55+00:00">2024-11-03T19:46:55.000+00:00</value>
+            </field>
+            <modelField name="Attachment" type="Attachment">
+                <empty />
+            </modelField>
+            <multiModelField name="Attachments" type="Attachment" />
+            <field name="Status" type="MessageStatus">
+                <value type="MessageStatus"><![CDATA[Read]]></value>
+            </field>
+            <multiModelField name="SharedContacts" type="Contact" />
+            <field name="Platform" type="Platform">
+                <value type="Platform"><![CDATA[Mobile]]></value>
+            </field>
+            <multiModelField name="MessageExtraData" type="InstantMessageExtraData">
+                <model type="MessageLabel" id="ecd97f62-f162-4e83-a586-229aa5cf84a3" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="28780" extractionId="2">
+                    <field name="UserMapping" type="DecodingSourceOptions">
+                        <empty />
+                    </field>
+                    <field name="Label" type="Label">
+                        <value type="Label"><![CDATA[Forwarded]]></value>
+                    </field>
+                </model>
+                <model type="QuotedMessageData" id="733771aa-dbed-46e3-8c4a-bdfbf4e20c06" deleted_state="Unknown" decoding_confidence="High" isrelated="False" source_index="28781" extractionId="2">
+                    <field name="UserMapping" type="DecodingSourceOptions">
+                        <empty />
+                    </field>
+                    <field name="Label" type="Label">
+                        <value type="Label"><![CDATA[Forwarded]]></value>
+                    </field>
+                    <field name="OriginalMessageID" type="String">
+                        <empty />
+                    </field>
+                    <field name="ReferenceId" type="Guid">
+                        <value type="Guid"><![CDATA[9cfcb1df-26e3-4ebf-a3e4-da45ad5587fc]]></value>
+                    </field>
+                    <field name="Label" type="Label">
+                        <value type="Label"><![CDATA[Forwarded]]></value>
+                    </field>
+                </model>
+            </multiModelField>
+            <field name="Type" type="InstantMessageType">
+                <value type="InstantMessageType"><![CDATA[AppMessage]]></value>
+            </field>
+            <field name="IsLocationSharing" type="Boolean">
+                <empty />
+            </field>
+            <multiModelField name="EmbeddedInstantMessage" type="InstantMessage">
+                <model type="InstantMessage" id="9cfcb1df-26e3-4ebf-a3e4-da45ad5587fc" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="28777" extractionId="2">
+                    <field name="UserMapping" type="DecodingSourceOptions">
+                        <value type="DecodingSourceOptions"><![CDATA[Decoding]]></value>
+                    </field>
+                    <field name="Source" type="String">
+                        <value type="String"><![CDATA[WhatsApp]]></value>
+                    </field>
+                    <field name="ServiceIdentifier" type="String">
+                        <empty />
+                    </field>
+                    <modelField name="From" type="Party">
+                        <empty />
+                    </modelField>
+                    <multiModelField name="To" type="Party" />
+                    <field name="Body" type="String">
+                        <empty />
+                    </field>
+                    <field name="Identifier" type="String">
+                        <empty />
+                    </field>
+                    <field name="TimeStamp" type="TimeStamp">
+                        <empty />
+                    </field>
+                    <modelField name="Attachment" type="Attachment">
+                        <empty />
+                    </modelField>
+                    <multiModelField name="Attachments" type="Attachment">
+                        <model type="Attachment" id="c0332bf8-96eb-4db4-adfa-d39b732ef769" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="28778" extractionId="2" file_id="ffcfc186-6d63-4a06-b479-18eb9f50a385">
+                            <field name="Filename" type="String">
+                                <value type="String"><![CDATA[IMG-20241103-WA0103.jpg]]></value>
+                            </field>
+                            <field name="ContentType" type="String">
+                                <value type="String"><![CDATA[image/jpeg]]></value>
+                            </field>
+                            <dataField name="Data" type="MemoryRange">
+                                <source length="74436" />
+                            </dataField>
+                            <field name="URL" type="String">
+                                <value type="String"><![CDATA[https://mmg.whatsapp.ne=11-4&oh=xxxxxxxxxxxxxxxxxxx&oe=674E03CD&_nc_sid=5e03e0&mms3=true]]></value>
+                            </field>
+                            <field name="Title" type="String">
+                                <empty />
+                            </field>
+                            <field name="Transcript" type="String">
+                                <empty />
+                            </field>
+                        </model>
+                    </multiModelField>
+                    <field name="Status" type="MessageStatus">
+                        <value type="MessageStatus"><![CDATA[Default]]></value>
+                    </field>
+                    <field name="Platform" type="Platform">
+                        <value type="Platform"><![CDATA[Unknown]]></value>
+                    </field>
+                    <field name="Type" type="InstantMessageType">
+                        <value type="InstantMessageType"><![CDATA[AppMessage]]></value>
+                    </field>
+                    <multiModelField name="EmbeddedInstantMessage" type="InstantMessage" />
+                    <field name="SourceApplication" type="String">
+                        <value type="String"><![CDATA[WhatsApp]]></value>
+                    </field>
+                    <multiModelField name="EmbeddedInstantMessage" type="InstantMessage" />
+                    <jumptargets name="">
+                        <targetid ismodel="false"><![CDATA[b5c09d96-8812-49b7-be1a-aafd3296280f]]></targetid>
+                    </jumptargets>
+                </model>
+            </multiModelField>
+            <field name="SourceApplication" type="String">
+                <value type="String"><![CDATA[WhatsApp]]></value>
+            </field>
+            <multiModelField name="EmbeddedInstantMessage" type="InstantMessage">
+                <model type="InstantMessage" id="9cfcb1df-26e3-4ebf-a3e4-da45ad5587fc" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="28777" extractionId="2">
+                    <field name="UserMapping" type="DecodingSourceOptions">
+                        <value type="DecodingSourceOptions"><![CDATA[Decoding]]></value>
+                    </field>
+                    <field name="Source" type="String">
+                        <value type="String"><![CDATA[WhatsApp]]></value>
+                    </field>
+                    <field name="ServiceIdentifier" type="String">
+                        <empty />
+                    </field>
+                    <modelField name="From" type="Party">
+                        <empty />
+                    </modelField>
+                    <multiModelField name="To" type="Party" />
+                    <field name="Body" type="String">
+                        <empty />
+                    </field>
+                    <field name="Identifier" type="String">
+                        <empty />
+                    </field>
+                    <field name="TimeStamp" type="TimeStamp">
+                        <empty />
+                    </field>
+                    <modelField name="Attachment" type="Attachment">
+                        <empty />
+                    </modelField>
+                    <multiModelField name="Attachments" type="Attachment">
+                        <model type="Attachment" id="c0332bf8-96eb-4db4-adfa-d39b732ef769" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="28778" extractionId="2" file_id="ffcfc186-6d63-4a06-b479-18eb9f50a385">
+                            <field name="Filename" type="String">
+                                <value type="String"><![CDATA[IMG-20241103-WA0103.jpg]]></value>
+                            </field>
+                            <field name="ContentType" type="String">
+                                <value type="String"><![CDATA[image/jpeg]]></value>
+                            </field>
+                            <dataField name="Data" type="MemoryRange">
+                                <source length="74436" />
+                            </dataField>
+                            <field name="URL" type="String">
+                                <value type="String"><![CDATA[https://mmg.whatsapp.net/v/t62.7118-24/xxxxxxxxxxxxxxx&oexxxxx_nc_sid=5e03e0&mms3=true]]></value>
+                            </field>
+                            <field name="Title" type="String">
+                                <empty />
+                            </field>
+                            <field name="Transcript" type="String">
+                                <empty />
+                            </field>
+                        </model>
+                    </multiModelField>
+                    <field name="Status" type="MessageStatus">
+                        <value type="MessageStatus"><![CDATA[Default]]></value>
+                    </field>
+                    <field name="Platform" type="Platform">
+                        <value type="Platform"><![CDATA[Unknown]]></value>
+                    </field>
+                    <field name="Type" type="InstantMessageType">
+                        <value type="InstantMessageType"><![CDATA[AppMessage]]></value>
+                    </field>
+                    <multiModelField name="EmbeddedInstantMessage" type="InstantMessage" />
+                    <field name="SourceApplication" type="String">
+                        <value type="String"><![CDATA[WhatsApp]]></value>
+                    </field>
+                    <multiModelField name="EmbeddedInstantMessage" type="InstantMessage" />
+                    <jumptargets name="">
+                        <targetid ismodel="false"><![CDATA[b5c09d96-8812-49b7-be1a-aafd3296280f]]></targetid>
+                    </jumptargets>
+                </model>
+            </multiModelField>
+        </model>
+        <model type="InstantMessage" id="1b9fdd2a-ac19-411c-8776-cee0023a4597" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="28782" extractionId="2">
+            <field name="UserMapping" type="DecodingSourceOptions">
+                <value type="DecodingSourceOptions"><![CDATA[Decoding]]></value>
+            </field>
+            <field name="Source" type="String">
+                <value type="String"><![CDATA[WhatsApp]]></value>
+            </field>
+            <field name="ServiceIdentifier" type="String">
+                <empty />
+            </field>
+            <modelField name="From" type="Party">
+                <model type="Party" id="dd907d16-7526-4848-ab56-15f3e54539f2" deleted_state="Unknown" decoding_confidence="High" isrelated="False" source_index="22035" extractionId="2">
+                    <field name="UserMapping" type="DecodingSourceOptions">
+                        <empty />
+                    </field>
+                    <field name="Identifier" type="String">
+                        <value type="String"><![CDATA[5511999998888@s.whatsapp.net]]></value>
+                    </field>
+                    <field name="Role" type="PartyRole">
+                        <value type="PartyRole"><![CDATA[From]]></value>
+                    </field>
+                    <field name="Name" type="String">
+                        <value type="String"><![CDATA[Clefable]]></value>
+                    </field>
+                    <field name="IsPhoneOwner" type="Boolean">
+                        <value type="Boolean"><![CDATA[True]]></value>
+                    </field>
+                    <field name="IsGroupAdmin" type="Boolean">
+                        <value type="Boolean"><![CDATA[False]]></value>
+                    </field>
+                </model>
+            </modelField>
+            <multiModelField name="To" type="Party">
+                <model type="Party" id="33bd2e6e-0063-41a3-9ed0-20abd9bd7177" deleted_state="Unknown" decoding_confidence="High" isrelated="False" source_index="28785" extractionId="2">
+                    <field name="UserMapping" type="DecodingSourceOptions">
+                        <empty />
+                    </field>
+                    <field name="Identifier" type="String">
+                        <value type="String"><![CDATA[5511999997777@s.whatsapp.net]]></value>
+                    </field>
+                    <field name="Role" type="PartyRole">
+                        <value type="PartyRole"><![CDATA[To]]></value>
+                    </field>
+                    <field name="Name" type="String">
+                        <value type="String"><![CDATA[Bulbasaur]]></value>
+                    </field>
+                    <field name="DateDelivered" type="TimeStamp">
+                        <value type="TimeStamp" format="TimeStampKnown" formattedTimestamp="2024-11-03T19:47:15+00:00">2024-11-03T19:47:15.000+00:00</value>
+                    </field>
+                    <field name="DateRead" type="TimeStamp">
+                        <value type="TimeStamp" format="TimeStampKnown" formattedTimestamp="2024-11-03T19:47:15+00:00">2024-11-03T19:47:15.000+00:00</value>
+                    </field>
+                    <field name="DatePlayed" type="TimeStamp">
+                        <value type="TimeStamp" format="TimeStampKnown" formattedTimestamp="2024-11-03T19:47:39+00:00">2024-11-03T19:47:39.000+00:00</value>
+                    </field>
+                    <field name="IsPhoneOwner" type="Boolean">
+                        <value type="Boolean"><![CDATA[False]]></value>
+                    </field>
+                    <field name="IsGroupAdmin" type="Boolean">
+                        <empty />
+                    </field>
+                </model>
+            </multiModelField>
+            <field name="Body" type="String">
+                <empty />
+            </field>
+            <field name="Identifier" type="String">
+                <value type="String"><![CDATA[16B5233E40F47B614915A1F058C40828]]></value>
+            </field>
+            <field name="TimeStamp" type="TimeStamp">
+                <value type="TimeStamp" format="TimeStampKnown" formattedTimestamp="2024-11-03T19:47:14+00:00">2024-11-03T19:47:14.160+00:00</value>
+            </field>
+            <modelField name="Attachment" type="Attachment">
+                <empty />
+            </modelField>
+            <multiModelField name="Attachments" type="Attachment">
+                <model type="Attachment" id="14dd4852-b85e-48f3-b207-f66b87650933" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="28786" extractionId="2" file_id="fdbff807-b7bb-4d84-914b-13703a7b316e">
+                    <field name="Filename" type="String">
+                        <value type="String"><![CDATA[02b32769fe914644aaeb47f0485786e9.opus]]></value>
+                    </field>
+                    <field name="ContentType" type="String">
+                        <value type="String"><![CDATA[audio/ogg; codecs=opus]]></value>
+                    </field>
+                    <dataField name="Data" type="MemoryRange">
+                        <source length="17097" />
+                    </dataField>
+                    <field name="URL" type="String">
+                        <value type="String"><![CDATA[https://mmg.whatsapp.net/v/t62.7117-24/xxxxxxxxxxnc_sid=5e03e0&mms3=true]]></value>
+                    </field>
+                    <field name="Title" type="String">
+                        <value type="String"><![CDATA[Duration: 00:00:07]]></value>
+                    </field>
+                    <field name="Transcript" type="String">
+                        <empty />
+                    </field>
+                    <field name="attachment_extracted_path" type="String">
+                        <value type="String"><![CDATA[files\Audio\PTT-20241103-WA0102.opus]]></value>
+                    </field>
+                </model>
+            </multiModelField>
+            <field name="Status" type="MessageStatus">
+                <value type="MessageStatus"><![CDATA[Read]]></value>
+            </field>
+            <multiModelField name="SharedContacts" type="Contact" />
+            <field name="Platform" type="Platform">
+                <value type="Platform"><![CDATA[Mobile]]></value>
+            </field>
+            <field name="Type" type="InstantMessageType">
+                <value type="InstantMessageType"><![CDATA[AppMessage]]></value>
+            </field>
+            <field name="IsLocationSharing" type="Boolean">
+                <empty />
+            </field>
+            <multiModelField name="EmbeddedInstantMessage" type="InstantMessage" />
+            <field name="SourceApplication" type="String">
+                <value type="String"><![CDATA[WhatsApp]]></value>
+            </field>
+            <multiModelField name="EmbeddedInstantMessage" type="InstantMessage" />
+            <jumptargets name="">
+                <targetid ismodel="false"><![CDATA[fdbff807-b7bb-4d84-914b-13703a7b316e]]></targetid>
+            </jumptargets>
+        </model>
+        <model type="InstantMessage" id="241dd37e-b717-4b73-95bd-92936211113a" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="28805" extractionId="2">
+            <field name="UserMapping" type="DecodingSourceOptions">
+                <value type="DecodingSourceOptions"><![CDATA[Decoding]]></value>
+            </field>
+            <field name="Source" type="String">
+                <value type="String"><![CDATA[WhatsApp]]></value>
+            </field>
+            <field name="ServiceIdentifier" type="String">
+                <empty />
+            </field>
+            <modelField name="From" type="Party">
+                <model type="Party" id="7db50272-c4c7-4f8a-88c2-95533466b124" deleted_state="Unknown" decoding_confidence="High" isrelated="False" source_index="26301" extractionId="2">
+                    <field name="UserMapping" type="DecodingSourceOptions">
+                        <empty />
+                    </field>
+                    <field name="Identifier" type="String">
+                        <value type="String"><![CDATA[5511999997777@s.whatsapp.net]]></value>
+                    </field>
+                    <field name="Role" type="PartyRole">
+                        <value type="PartyRole"><![CDATA[From]]></value>
+                    </field>
+                    <field name="Name" type="String">
+                        <value type="String"><![CDATA[Bulbasaur]]></value>
+                    </field>
+                    <field name="IsPhoneOwner" type="Boolean">
+                        <value type="Boolean"><![CDATA[False]]></value>
+                    </field>
+                    <field name="IsGroupAdmin" type="Boolean">
+                        <empty />
+                    </field>
+                </model>
+            </modelField>
+            <multiModelField name="To" type="Party" />
+            <field name="Body" type="String">
+                <empty />
+            </field>
+            <field name="Identifier" type="String">
+                <value type="String"><![CDATA[0DC64F555E513C1DEB24133455A61920]]></value>
+            </field>
+            <field name="TimeStamp" type="TimeStamp">
+                <value type="TimeStamp" format="TimeStampKnown" formattedTimestamp="2024-11-03T19:47:39+00:00">2024-11-03T19:47:39.000+00:00</value>
+            </field>
+            <modelField name="Attachment" type="Attachment">
+                <empty />
+            </modelField>
+            <multiModelField name="Attachments" type="Attachment">
+                <model type="Attachment" id="f39d079a-777b-46c2-ac4e-40a3e9498788" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="28806" extractionId="2" file_id="e02bf955-5a06-4b98-a6fa-52f846a51d40">
+                    <field name="Filename" type="String">
+                        <value type="String"><![CDATA[PTT-20241103-WA0104.opus]]></value>
+                    </field>
+                    <field name="ContentType" type="String">
+                        <value type="String"><![CDATA[audio/ogg; codecs=opus]]></value>
+                    </field>
+                    <dataField name="Data" type="MemoryRange">
+                        <source length="42288" />
+                    </dataField>
+                    <field name="URL" type="String">
+                        <value type="String"><![CDATA[https://mmg.whatsapp.net/v/t62.71174CC&_nc_sid=5e03e0&mms3=true]]></value>
+                    </field>
+                    <field name="Title" type="String">
+                        <value type="String"><![CDATA[Duration: 00:00:19]]></value>
+                    </field>
+                    <field name="Transcript" type="String">
+                        <empty />
+                    </field>
+                    <field name="attachment_extracted_path" type="String">
+                        <value type="String"><![CDATA[files\Audio\PTT-20241103-WA0104.opus]]></value>
+                    </field>
+                </model>
+            </multiModelField>
+            <multiModelField name="SharedContacts" type="Contact" />
+            <field name="Platform" type="Platform">
+                <value type="Platform"><![CDATA[Mobile]]></value>
+            </field>
+            <field name="Type" type="InstantMessageType">
+                <value type="InstantMessageType"><![CDATA[AppMessage]]></value>
+            </field>
+            <field name="IsLocationSharing" type="Boolean">
+                <empty />
+            </field>
+            <multiModelField name="EmbeddedInstantMessage" type="InstantMessage" />
+            <field name="SourceApplication" type="String">
+                <value type="String"><![CDATA[WhatsApp]]></value>
+            </field>
+            <multiModelField name="EmbeddedInstantMessage" type="InstantMessage" />
+            <jumptargets name="">
+                <targetid ismodel="false"><![CDATA[e02bf955-5a06-4b98-a6fa-52f846a51d40]]></targetid>
+            </jumptargets>
+        </model>
+        <model type="InstantMessage" id="c8fd9822-dd2c-41d1-af63-6675db3d8864" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="28760" extractionId="2">
+            <field name="UserMapping" type="DecodingSourceOptions">
+                <value type="DecodingSourceOptions"><![CDATA[Decoding]]></value>
+            </field>
+            <field name="Source" type="String">
+                <value type="String"><![CDATA[WhatsApp]]></value>
+            </field>
+            <field name="ServiceIdentifier" type="String">
+                <empty />
+            </field>
+            <modelField name="From" type="Party">
+                <model type="Party" id="dd907d16-7526-4848-ab56-15f3e54539f2" deleted_state="Unknown" decoding_confidence="High" isrelated="False" source_index="22035" extractionId="2">
+                    <field name="UserMapping" type="DecodingSourceOptions">
+                        <empty />
+                    </field>
+                    <field name="Identifier" type="String">
+                        <value type="String"><![CDATA[5511999998888@s.whatsapp.net]]></value>
+                    </field>
+                    <field name="Role" type="PartyRole">
+                        <value type="PartyRole"><![CDATA[From]]></value>
+                    </field>
+                    <field name="Name" type="String">
+                        <value type="String"><![CDATA[Clefable]]></value>
+                    </field>
+                    <field name="IsPhoneOwner" type="Boolean">
+                        <value type="Boolean"><![CDATA[True]]></value>
+                    </field>
+                    <field name="IsGroupAdmin" type="Boolean">
+                        <value type="Boolean"><![CDATA[False]]></value>
+                    </field>
+                </model>
+            </modelField>
+            <multiModelField name="To" type="Party">
+                <model type="Party" id="c271767f-83df-46f0-ba5b-08a3e5518354" deleted_state="Unknown" decoding_confidence="High" isrelated="False" source_index="28763" extractionId="2">
+                    <field name="UserMapping" type="DecodingSourceOptions">
+                        <empty />
+                    </field>
+                    <field name="Identifier" type="String">
+                        <value type="String"><![CDATA[5511999997777@s.whatsapp.net]]></value>
+                    </field>
+                    <field name="Role" type="PartyRole">
+                        <value type="PartyRole"><![CDATA[To]]></value>
+                    </field>
+                    <field name="Name" type="String">
+                        <value type="String"><![CDATA[Bulbasaur]]></value>
+                    </field>
+                    <field name="DateDelivered" type="TimeStamp">
+                        <value type="TimeStamp" format="TimeStampKnown" formattedTimestamp="2024-11-03T19:45:35+00:00">2024-11-03T19:45:35.000+00:00</value>
+                    </field>
+                    <field name="DateRead" type="TimeStamp">
+                        <value type="TimeStamp" format="TimeStampKnown" formattedTimestamp="2024-11-03T19:46:03+00:00">2024-11-03T19:46:03.000+00:00</value>
+                    </field>
+                    <field name="DatePlayed" type="TimeStamp">
+                        <value type="TimeStamp" format="TimeStampKnown" formattedTimestamp="2024-11-03T19:46:04+00:00">2024-11-03T19:46:04.000+00:00</value>
+                    </field>
+                    <field name="IsPhoneOwner" type="Boolean">
+                        <value type="Boolean"><![CDATA[False]]></value>
+                    </field>
+                    <field name="IsGroupAdmin" type="Boolean">
+                        <empty />
+                    </field>
+                </model>
+            </multiModelField>
+            <field name="Body" type="String">
+                <empty />
+            </field>
+            <field name="Identifier" type="String">
+                <value type="String"><![CDATA[BF846858C5BD58F689193A5A7212F6D4]]></value>
+            </field>
+            <field name="TimeStamp" type="TimeStamp">
+                <value type="TimeStamp" format="TimeStampKnown" formattedTimestamp="2024-11-03T19:45:33+00:00">2024-11-03T19:45:33.533+00:00</value>
+            </field>
+            <modelField name="Attachment" type="Attachment">
+                <empty />
+            </modelField>
+            <multiModelField name="Attachments" type="Attachment">
+                <model type="Attachment" id="1e5fa035-e4d7-4f56-b63e-b3702f8efb91" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="28764" extractionId="2" file_id="4c658373-983a-4bc6-bf93-e06115de4fa5">
+                    <field name="Filename" type="String">
+                        <value type="String"><![CDATA[ef890c21f6024b509e2af50a4e2cf935.opus]]></value>
+                    </field>
+                    <field name="ContentType" type="String">
+                        <value type="String"><![CDATA[audio/ogg; codecs=opus]]></value>
+                    </field>
+                    <dataField name="Data" type="MemoryRange">
+                        <source length="28101" />
+                    </dataField>
+                    <field name="URL" type="String">
+                        <value type="String"><![CDATA[https://mmg.whatsapp.net/v/t62.7117-24/xxxxxxxxxxx.enc?ccb=11-4&oh=xxxx-5SV9aHODY9n&oe=674F539E&_nc_sid=5e03e0&mms3=true]]></value>
+                    </field>
+                    <field name="Title" type="String">
+                        <value type="String"><![CDATA[Duration: 00:00:11]]></value>
+                    </field>
+                    <field name="Transcript" type="String">
+                        <empty />
+                    </field>
+                    <field name="attachment_extracted_path" type="String">
+                        <value type="String"><![CDATA[files\Audio\PTT-20241103-WA0098.opus]]></value>
+                    </field>
+                </model>
+            </multiModelField>
+            <field name="Status" type="MessageStatus">
+                <value type="MessageStatus"><![CDATA[Read]]></value>
+            </field>
+            <multiModelField name="SharedContacts" type="Contact" />
+            <field name="Platform" type="Platform">
+                <value type="Platform"><![CDATA[Mobile]]></value>
+            </field>
+            <field name="Type" type="InstantMessageType">
+                <value type="InstantMessageType"><![CDATA[AppMessage]]></value>
+            </field>
+            <field name="IsLocationSharing" type="Boolean">
+                <empty />
+            </field>
+            <multiModelField name="EmbeddedInstantMessage" type="InstantMessage" />
+            <field name="SourceApplication" type="String">
+                <value type="String"><![CDATA[WhatsApp]]></value>
+            </field>
+            <multiModelField name="EmbeddedInstantMessage" type="InstantMessage" />
+            <jumptargets name="">
+                <targetid ismodel="false"><![CDATA[4c658373-983a-4bc6-bf93-e06115de4fa5]]></targetid>
+            </jumptargets>
+        </model>
+        <model type="InstantMessage" id="8a6fe7fd-1433-4afb-8ad4-9190034d363b" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="28771" extractionId="2">
+            <field name="UserMapping" type="DecodingSourceOptions">
+                <value type="DecodingSourceOptions"><![CDATA[Decoding]]></value>
+            </field>
+            <field name="Source" type="String">
+                <value type="String"><![CDATA[WhatsApp]]></value>
+            </field>
+            <field name="ServiceIdentifier" type="String">
+                <empty />
+            </field>
+            <modelField name="From" type="Party">
+                <model type="Party" id="7db50272-c4c7-4f8a-88c2-95533466b124" deleted_state="Unknown" decoding_confidence="High" isrelated="False" source_index="26301" extractionId="2">
+                    <field name="UserMapping" type="DecodingSourceOptions">
+                        <empty />
+                    </field>
+                    <field name="Identifier" type="String">
+                        <value type="String"><![CDATA[5511999997777@s.whatsapp.net]]></value>
+                    </field>
+                    <field name="Role" type="PartyRole">
+                        <value type="PartyRole"><![CDATA[From]]></value>
+                    </field>
+                    <field name="Name" type="String">
+                        <value type="String"><![CDATA[Bulbasaur]]></value>
+                    </field>
+                    <field name="IsPhoneOwner" type="Boolean">
+                        <value type="Boolean"><![CDATA[False]]></value>
+                    </field>
+                    <field name="IsGroupAdmin" type="Boolean">
+                        <empty />
+                    </field>
+                </model>
+            </modelField>
+            <multiModelField name="To" type="Party" />
+            <field name="Body" type="String">
+                <value type="String"><![CDATA[Certo amigo veja ae]]></value>
+            </field>
+            <field name="Identifier" type="String">
+                <value type="String"><![CDATA[6E4825C0E054907DC25BA02D16D55F80]]></value>
+            </field>
+            <field name="TimeStamp" type="TimeStamp">
+                <value type="TimeStamp" format="TimeStampKnown" formattedTimestamp="2024-11-03T19:46:09+00:00">2024-11-03T19:46:09.000+00:00</value>
+            </field>
+            <modelField name="Attachment" type="Attachment">
+                <empty />
+            </modelField>
+            <multiModelField name="Attachments" type="Attachment" />
+            <multiModelField name="SharedContacts" type="Contact" />
+            <field name="Platform" type="Platform">
+                <value type="Platform"><![CDATA[Mobile]]></value>
+            </field>
+            <field name="Type" type="InstantMessageType">
+                <value type="InstantMessageType"><![CDATA[AppMessage]]></value>
+            </field>
+            <field name="IsLocationSharing" type="Boolean">
+                <empty />
+            </field>
+            <multiModelField name="EmbeddedInstantMessage" type="InstantMessage" />
+            <field name="SourceApplication" type="String">
+                <value type="String"><![CDATA[WhatsApp]]></value>
+            </field>
+            <multiModelField name="EmbeddedInstantMessage" type="InstantMessage" />
+        </model>
+        <model type="InstantMessage" id="dbe45972-5f4a-4167-a8ce-702e05f0d8b3" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="28772" extractionId="2">
+            <field name="UserMapping" type="DecodingSourceOptions">
+                <value type="DecodingSourceOptions"><![CDATA[Decoding]]></value>
+            </field>
+            <field name="Source" type="String">
+                <value type="String"><![CDATA[WhatsApp]]></value>
+            </field>
+            <field name="ServiceIdentifier" type="String">
+                <empty />
+            </field>
+            <modelField name="From" type="Party">
+                <model type="Party" id="7db50272-c4c7-4f8a-88c2-95533466b124" deleted_state="Unknown" decoding_confidence="High" isrelated="False" source_index="26301" extractionId="2">
+                    <field name="UserMapping" type="DecodingSourceOptions">
+                        <empty />
+                    </field>
+                    <field name="Identifier" type="String">
+                        <value type="String"><![CDATA[5511999997777@s.whatsapp.net]]></value>
+                    </field>
+                    <field name="Role" type="PartyRole">
+                        <value type="PartyRole"><![CDATA[From]]></value>
+                    </field>
+                    <field name="Name" type="String">
+                        <value type="String"><![CDATA[Bulbasaur]]></value>
+                    </field>
+                    <field name="IsPhoneOwner" type="Boolean">
+                        <value type="Boolean"><![CDATA[False]]></value>
+                    </field>
+                    <field name="IsGroupAdmin" type="Boolean">
+                        <empty />
+                    </field>
+                </model>
+            </modelField>
+            <multiModelField name="To" type="Party" />
+            <field name="Body" type="String">
+                <value type="String"><![CDATA[Vendo]]></value>
+            </field>
+            <field name="Identifier" type="String">
+                <value type="String"><![CDATA[5531F763B84CC73C457CF928678B7461]]></value>
+            </field>
+            <field name="TimeStamp" type="TimeStamp">
+                <value type="TimeStamp" format="TimeStampKnown" formattedTimestamp="2024-11-03T19:46:18+00:00">2024-11-03T19:46:18.000+00:00</value>
+            </field>
+            <modelField name="Attachment" type="Attachment">
+                <empty />
+            </modelField>
+            <multiModelField name="Attachments" type="Attachment" />
+            <multiModelField name="SharedContacts" type="Contact" />
+            <field name="Platform" type="Platform">
+                <value type="Platform"><![CDATA[Mobile]]></value>
+            </field>
+            <field name="Type" type="InstantMessageType">
+                <value type="InstantMessageType"><![CDATA[AppMessage]]></value>
+            </field>
+            <field name="IsLocationSharing" type="Boolean">
+                <empty />
+            </field>
+            <multiModelField name="EmbeddedInstantMessage" type="InstantMessage" />
+            <field name="SourceApplication" type="String">
+                <value type="String"><![CDATA[WhatsApp]]></value>
+            </field>
+            <multiModelField name="EmbeddedInstantMessage" type="InstantMessage" />
+        </model>
+        <model type="InstantMessage" id="6ad32088-9abd-428b-af6c-1df4bcc8796e" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="28773" extractionId="2">
+            <field name="UserMapping" type="DecodingSourceOptions">
+                <value type="DecodingSourceOptions"><![CDATA[Decoding]]></value>
+            </field>
+            <field name="Source" type="String">
+                <value type="String"><![CDATA[WhatsApp]]></value>
+            </field>
+            <field name="ServiceIdentifier" type="String">
+                <empty />
+            </field>
+            <modelField name="From" type="Party">
+                <model type="Party" id="7db50272-c4c7-4f8a-88c2-95533466b124" deleted_state="Unknown" decoding_confidence="High" isrelated="False" source_index="26301" extractionId="2">
+                    <field name="UserMapping" type="DecodingSourceOptions">
+                        <empty />
+                    </field>
+                    <field name="Identifier" type="String">
+                        <value type="String"><![CDATA[5511999997777@s.whatsapp.net]]></value>
+                    </field>
+                    <field name="Role" type="PartyRole">
+                        <value type="PartyRole"><![CDATA[From]]></value>
+                    </field>
+                    <field name="Name" type="String">
+                        <value type="String"><![CDATA[Bulbasaur]]></value>
+                    </field>
+                    <field name="IsPhoneOwner" type="Boolean">
+                        <value type="Boolean"><![CDATA[False]]></value>
+                    </field>
+                    <field name="IsGroupAdmin" type="Boolean">
+                        <empty />
+                    </field>
+                </model>
+            </modelField>
+            <multiModelField name="To" type="Party" />
+            <field name="Body" type="String">
+                <empty />
+            </field>
+            <field name="Identifier" type="String">
+                <value type="String"><![CDATA[7E4ABDCA8D30624BC4BC3BCD59A675D0]]></value>
+            </field>
+            <field name="TimeStamp" type="TimeStamp">
+                <value type="TimeStamp" format="TimeStampKnown" formattedTimestamp="2024-11-03T19:46:37+00:00">2024-11-03T19:46:37.000+00:00</value>
+            </field>
+            <modelField name="Attachment" type="Attachment">
+                <empty />
+            </modelField>
+            <multiModelField name="Attachments" type="Attachment">
+                <model type="Attachment" id="9ead7008-3045-4a5f-ab79-7192e6d7d40a" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="28774" extractionId="2" file_id="b1758db7-de62-406b-a08a-f561ad08c99c">
+                    <field name="Filename" type="String">
+                        <value type="String"><![CDATA[PTT-20241103-WA0100.opus]]></value>
+                    </field>
+                    <field name="ContentType" type="String">
+                        <value type="String"><![CDATA[audio/ogg; codecs=opus]]></value>
+                    </field>
+                    <dataField name="Data" type="MemoryRange">
+                        <source length="33844" />
+                    </dataField>
+                    <field name="URL" type="String">
+                        <value type="String"><![CDATA[https://mmg.whatsapp.net/v/t62.7117-24/xxxx.enc?ccb=11-4&oh=xxxxxx&oe=674F37A0&_nc_sid=5e03e0&mms3=true]]></value>
+                    </field>
+                    <field name="Title" type="String">
+                        <value type="String"><![CDATA[Duration: 00:00:17]]></value>
+                    </field>
+                    <field name="Transcript" type="String">
+                        <empty />
+                    </field>
+                    <field name="attachment_extracted_path" type="String">
+                        <value type="String"><![CDATA[files\Audio\PTT-20241103-WA0100.opus]]></value>
+                    </field>
+                </model>
+            </multiModelField>
+            <field name="Status" type="MessageStatus">
+                <value type="MessageStatus"><![CDATA[Read]]></value>
+            </field>
+            <multiModelField name="SharedContacts" type="Contact" />
+            <field name="Platform" type="Platform">
+                <value type="Platform"><![CDATA[Mobile]]></value>
+            </field>
+            <field name="Type" type="InstantMessageType">
+                <value type="InstantMessageType"><![CDATA[AppMessage]]></value>
+            </field>
+            <field name="IsLocationSharing" type="Boolean">
+                <empty />
+            </field>
+            <multiModelField name="EmbeddedInstantMessage" type="InstantMessage" />
+            <field name="SourceApplication" type="String">
+                <value type="String"><![CDATA[WhatsApp]]></value>
+            </field>
+            <multiModelField name="EmbeddedInstantMessage" type="InstantMessage" />
+            <jumptargets name="">
+                <targetid ismodel="false"><![CDATA[b1758db7-de62-406b-a08a-f561ad08c99c]]></targetid>
+            </jumptargets>
+        </model>
+        <model type="InstantMessage" id="076caedd-17fd-4d81-b6ce-132de4bedfa2" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="64893" extractionId="2">
+            <field name="UserMapping" type="DecodingSourceOptions">
+                <value type="DecodingSourceOptions"><![CDATA[Decoding]]></value>
+            </field>
+            <field name="Source" type="String">
+                <value type="String"><![CDATA[WhatsApp]]></value>
+            </field>
+            <field name="ServiceIdentifier" type="String">
+                <empty />
+            </field>
+            <modelField name="From" type="Party">
+                <model type="Party" id="2c56e6cc-b160-4d58-98f3-4e9ff8e7d16a" deleted_state="Unknown" decoding_confidence="High" isrelated="False" source_index="21999" extractionId="2">
+                    <field name="UserMapping" type="DecodingSourceOptions">
+                        <empty />
+                    </field>
+                    <field name="Identifier" type="String">
+                        <value type="String"><![CDATA[551199999999@s.whatsapp.net]]></value>
+                    </field>
+                    <field name="Role" type="PartyRole">
+                        <value type="PartyRole"><![CDATA[From]]></value>
+                    </field>
+                    <field name="Name" type="String">
+                        <value type="String"><![CDATA[Metapod]]></value>
+                    </field>
+                    <field name="IsPhoneOwner" type="Boolean">
+                        <value type="Boolean"><![CDATA[False]]></value>
+                    </field>
+                    <field name="IsGroupAdmin" type="Boolean">
+                        <empty />
+                    </field>
+                </model>
+            </modelField>
+            <multiModelField name="To" type="Party" />
+            <field name="Body" type="String">
+                <empty />
+            </field>
+            <field name="Identifier" type="String">
+                <value type="String"><![CDATA[6495CA0FE66BAC9C453ED9FBAFD71CC5]]></value>
+            </field>
+            <field name="TimeStamp" type="TimeStamp">
+                <value type="TimeStamp" format="TimeStampKnown" formattedTimestamp="2024-10-12T12:53:12+00:00">2024-10-12T12:53:12.000+00:00</value>
+            </field>
+            <modelField name="Attachment" type="Attachment">
+                <empty />
+            </modelField>
+            <multiModelField name="Attachments" type="Attachment" />
+            <multiModelField name="SharedContacts" type="Contact">
+                <model type="Contact" id="20d58bee-dfc4-4fb4-a4b7-0d3f63c25594" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="87252" extractionId="2">
+                    <field name="UserMapping" type="DecodingSourceOptions">
+                        <value type="DecodingSourceOptions"><![CDATA[Decoding]]></value>
+                    </field>
+                    <field name="Source" type="String">
+                        <value type="String"><![CDATA[WhatsApp]]></value>
+                    </field>
+                    <field name="ServiceIdentifier" type="String">
+                        <empty />
+                    </field>
+                    <field name="Name" type="String">
+                        <value type="String"><![CDATA[Charmeleon]]></value>
+                    </field>
+                    <multiModelField name="Photos" type="ContactPhoto" />
+                    <multiModelField name="Entries" type="ContactEntry">
+                        <model type="UserID" id="1e775f57-81ed-4079-92ac-68fe7172d884" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="87255" extractionId="2">
+                            <field name="UserMapping" type="DecodingSourceOptions">
+                                <empty />
+                            </field>
+                            <field name="Category" type="String">
+                                <value type="String"><![CDATA[WhatsApp User Id]]></value>
+                            </field>
+                            <field name="Value" type="String">
+                                <value type="String"><![CDATA[5511999997745@s.whatsapp.net]]></value>
+                            </field>
+                            <field name="Domain" type="String">
+                                <value type="String"><![CDATA[ID do usuário]]></value>
+                            </field>
+                        </model>
+                        <model type="PhoneNumber" id="8d94db9b-06a2-4b1d-9386-be0eee7ba13d" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="87258" extractionId="2">
+                            <field name="UserMapping" type="DecodingSourceOptions">
+                                <empty />
+                            </field>
+                            <field name="Category" type="String">
+                                <value type="String"><![CDATA[Celular]]></value>
+                            </field>
+                            <field name="Value" type="String">
+                                <value type="String"><![CDATA[+55 11 99999-22222]]></value>
+                            </field>
+                            <field name="Domain" type="String">
+                                <value type="String"><![CDATA[Telefone]]></value>
+                            </field>
+                        </model>
+                    </multiModelField>
+                    <field name="Group" type="String">
+                        <empty />
+                    </field>
+                    <field name="Type" type="ContactType">
+                        <value type="ContactType"><![CDATA[Shared]]></value>
+                    </field>
+                    <field name="Account" type="String">
+                        <value type="String"><![CDATA[5511999995555@s.whatsapp.net]]></value>
+                    </field>
+                    <multiField name="InteractionStatuses" type="ContactType">
+                        <value type="ContactType"><![CDATA[Shared]]></value>
+                    </multiField>
+                    <jumptargets name="">
+                        <targetid ismodel="true"><![CDATA[076caedd-17fd-4d81-b6ce-132de4bedfa2]]></targetid>
+                    </jumptargets>
+                </model>
+            </multiModelField>
+            <field name="Platform" type="Platform">
+                <value type="Platform"><![CDATA[Mobile]]></value>
+            </field>
+            <field name="Type" type="InstantMessageType">
+                <value type="InstantMessageType"><![CDATA[AppMessage]]></value>
+            </field>
+            <field name="IsLocationSharing" type="Boolean">
+                <empty />
+            </field>
+            <multiModelField name="EmbeddedInstantMessage" type="InstantMessage" />
+            <field name="SourceApplication" type="String">
+                <value type="String"><![CDATA[WhatsApp]]></value>
+            </field>
+            <multiModelField name="EmbeddedInstantMessage" type="InstantMessage" />
+            <jumptargets name="">
+                <targetid ismodel="true"><![CDATA[20d58bee-dfc4-4fb4-a4b7-0d3f63c25594]]></targetid>
+            </jumptargets>
+        </model>
+        <model type="InstantMessage" id="db1afcb5-e03e-4fca-bb9e-9ebe1c00bf48" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="674506" extractionId="0">
+            <field name="UserMapping" type="DecodingSourceOptions">
+                <value type="DecodingSourceOptions"><![CDATA[Decoding]]></value>
+            </field>
+            <field name="Source" type="String">
+                <value type="String"><![CDATA[Telegram]]></value>
+            </field>
+            <modelField name="From" type="Party">
+                <model type="Party" id="7d009f4d-9fae-4911-bd26-017a9e99b97b" deleted_state="Unknown" decoding_confidence="High" isrelated="False" source_index="88171" extractionId="0">
+                    <field name="Identifier" type="String">
+                        <value type="String"><![CDATA[System message]]></value>
+                    </field>
+                    <field name="Role" type="PartyRole">
+                        <value type="PartyRole"><![CDATA[From]]></value>
+                    </field>
+                    <field name="Status" type="PartyStatus">
+                        <value type="PartyStatus"><![CDATA[Unknown]]></value>
+                    </field>
+                    <field name="Name" type="String">
+                        <value type="String"><![CDATA[System message]]></value>
+                    </field>
+                    <field name="Distance" type="Double">
+                        <value type="Double"><![CDATA[0]]></value>
+                    </field>
+                    <field name="IsGroupAdmin" type="Boolean">
+                        <value type="Boolean"><![CDATA[False]]></value>
+                    </field>
+                </model>
+            </modelField>
+            <multiModelField name="ActivityLog" type="ChatActivity">
+                <model type="ChatActivity" id="51d69d49-4680-461e-9cf3-80477a2fa134" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="674509" extractionId="0">
+                    <field name="Action" type="ChatActivityAction">
+                        <value type="ChatActivityAction"><![CDATA[ParticipantJoined]]></value>
+                    </field>
+                    <field name="SystemMessageId" type="Guid">
+                        <value type="Guid"><![CDATA[db1afcb5-e03e-4fca-bb9e-9ebe1c00bf48]]></value>
+                    </field>
+                    <field name="SystemMessageTimeStamp" type="TimeStamp">
+                        <value type="TimeStamp" format="TimeStampKnown" formattedTimestamp="2023-10-10T09:53:27+00:00">2023-10-10T09:53:27.000+00:00</value>
+                    </field>
+                    <field name="SystemMessageBody" type="String">
+                        <value type="String"><![CDATA[You joined the group via invite link]]></value>
+                    </field>
+                    <modelField name="Participant" type="Party">
+                        <model type="Party" id="f78d2baf-a1a0-4c3b-a3ea-693f0a452884" deleted_state="Unknown" decoding_confidence="High" isrelated="False" source_index="674508" extractionId="0">
+                            <field name="Identifier" type="String">
+                                <value type="String"><![CDATA[5860529659]]></value>
+                            </field>
+                            <field name="Role" type="PartyRole">
+                                <value type="PartyRole"><![CDATA[General]]></value>
+                            </field>
+                            <field name="Status" type="PartyStatus">
+                                <value type="PartyStatus"><![CDATA[Unknown]]></value>
+                            </field>
+                            <field name="Name" type="String">
+                                <value type="String"><![CDATA[Squirtle]]></value>
+                            </field>
+                            <field name="Distance" type="Double">
+                                <value type="Double"><![CDATA[0]]></value>
+                            </field>
+                            <field name="IsPhoneOwner" type="Boolean">
+                                <value type="Boolean"><![CDATA[True]]></value>
+                            </field>
+                            <field name="IsGroupAdmin" type="Boolean">
+                                <value type="Boolean"><![CDATA[False]]></value>
+                            </field>
+                        </model>
+                    </modelField>
+                </model>
+            </multiModelField>
+            <field name="Body" type="String">
+                <value type="String"><![CDATA[You joined the group via invite link]]></value>
+            </field>
+            <field name="TimeStamp" type="TimeStamp">
+                <value type="TimeStamp" format="TimeStampKnown" formattedTimestamp="2023-10-10T09:53:27+00:00">2023-10-10T09:53:27.000+00:00</value>
+            </field>
+            <modelField name="Attachment" type="Attachment">
+                <empty />
+            </modelField>
+            <multiModelField name="Attachments" type="Attachment" />
+            <field name="Status" type="MessageStatus">
+                <value type="MessageStatus"><![CDATA[Read]]></value>
+            </field>
+            <multiModelField name="SharedContacts" type="Contact" />
+            <field name="Label" type="Label">
+                <value type="Label"><![CDATA[Default]]></value>
+            </field>
+            <field name="Platform" type="Platform">
+                <value type="Platform"><![CDATA[Unknown]]></value>
+            </field>
+            <multiModelField name="MessageExtraData" type="InstantMessageExtraData">
+                <model type="MessageLabel" id="ccf760f6-156c-4816-a157-20980c9edcaa" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="674510" extractionId="0">
+                    <field name="Label" type="Label">
+                        <value type="Label"><![CDATA[System]]></value>
+                    </field>
+                </model>
+            </multiModelField>
+            <field name="Type" type="InstantMessageType">
+                <value type="InstantMessageType"><![CDATA[AppMessage]]></value>
+            </field>
+            <field name="Priority" type="MailPriority">
+                <value type="MailPriority"><![CDATA[Normal]]></value>
+            </field>
+            <field name="SelfDestructDuration" type="TimeSpan">
+                <value type="TimeSpan"><![CDATA[00:00:00]]></value>
+            </field>
+            <field name="IsLocationSharing" type="Boolean">
+                <value type="Boolean"><![CDATA[False]]></value>
+            </field>
+            <field name="Identifier" type="String">
+                <value type="String"><![CDATA[1919334790:6586]]></value>
+            </field>
+            <field name="SourceApplication" type="String">
+                <value type="String"><![CDATA[Telegram]]></value>
+            </field>
+        </model>
+<model type="InstantMessage" id="2833f15a-b6e2-4b0e-b7b2-4691528f1ed0" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="93632" extractionId="0">
+          <field name="UserMapping" type="DecodingSourceOptions">
+            <value type="DecodingSourceOptions"><![CDATA[Decoding]]></value>
+          </field>
+          <field name="Source" type="String">
+            <value type="String"><![CDATA[Telegram]]></value>
+          </field>
+          <modelField name="From" type="Party">
+            <model type="Party" id="435b6a70-e1e3-44e2-9df9-8a11a2ded4bb" deleted_state="Unknown" decoding_confidence="High" isrelated="False" source_index="93633" extractionId="0">
+              <field name="Identifier" type="String">
+                <value type="String"><![CDATA[5600023546]]></value>
+              </field>
+              <field name="Role" type="PartyRole">
+                <value type="PartyRole"><![CDATA[From]]></value>
+              </field>
+              <field name="Status" type="PartyStatus">
+                <value type="PartyStatus"><![CDATA[Unknown]]></value>
+              </field>
+              <field name="Name" type="String">
+                <value type="String"><![CDATA[Pikachu]]></value>
+              </field>
+              <field name="Distance" type="Double">
+                <value type="Double"><![CDATA[0]]></value>
+              </field>
+              <field name="IsPhoneOwner" type="Boolean">
+                <value type="Boolean"><![CDATA[True]]></value>
+              </field>
+              <field name="IsGroupAdmin" type="Boolean">
+                <value type="Boolean"><![CDATA[False]]></value>
+              </field>
+            </model>
+          </modelField>
+          <field name="Body" type="String">
+            <value type="String"><![CDATA[Obrigado]]></value>
+          </field>
+          <field name="TimeStamp" type="TimeStamp">
+            <value type="TimeStamp" format="TimeStampKnown" formattedTimestamp="2023-10-11T01:39:05+00:00">2023-10-11T01:39:05.000+00:00</value>
+          </field>
+          <modelField name="Attachment" type="Attachment">
+            <empty />
+          </modelField>
+          <multiModelField name="Attachments" type="Attachment" />
+          <field name="Status" type="MessageStatus">
+            <value type="MessageStatus"><![CDATA[Read]]></value>
+          </field>
+          <multiModelField name="SharedContacts" type="Contact" />
+          <field name="Label" type="Label">
+            <value type="Label"><![CDATA[Default]]></value>
+          </field>
+          <field name="Platform" type="Platform">
+            <value type="Platform"><![CDATA[Unknown]]></value>
+          </field>
+          <multiModelField name="MessageExtraData" type="InstantMessageExtraData">
+            <model type="ReplyMessageData" id="a2e7044d-c074-4a71-874f-cc71ea3b5b85" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="93635" extractionId="0">
+              <field name="Label" type="Label">
+                <value type="Label"><![CDATA[Reply]]></value>
+              </field>
+              <field name="OriginalMessageID" type="String">
+                <value type="String"><![CDATA[1654984910:14433]]></value>
+              </field>
+              <modelField name="InstantMessage" type="InstantMessage">
+                <model type="InstantMessage" id="714a7bda-9349-41f9-842d-27817339c845" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="93629" extractionId="0">
+                  <field name="UserMapping" type="DecodingSourceOptions">
+                    <value type="DecodingSourceOptions"><![CDATA[Decoding]]></value>
+                  </field>
+                  <field name="Source" type="String">
+                    <value type="String"><![CDATA[Telegram]]></value>
+                  </field>
+                  <modelField name="From" type="Party">
+                    <model type="Party" id="b4aa3a37-fc7f-4466-9473-8f211572ea08" deleted_state="Unknown" decoding_confidence="High" isrelated="False" source_index="93630" extractionId="0">
+                      <field name="Identifier" type="String">
+                        <value type="String"><![CDATA[1654984910]]></value>
+                      </field>
+                      <field name="Role" type="PartyRole">
+                        <value type="PartyRole"><![CDATA[From]]></value>
+                      </field>
+                      <field name="Status" type="PartyStatus">
+                        <value type="PartyStatus"><![CDATA[Unknown]]></value>
+                      </field>
+                      <field name="Name" type="String">
+                        <value type="String"><![CDATA[Pidgeot]]></value>
+                      </field>
+                      <field name="Distance" type="Double">
+                        <value type="Double"><![CDATA[0]]></value>
+                      </field>
+                      <field name="IsPhoneOwner" type="Boolean">
+                        <value type="Boolean"><![CDATA[False]]></value>
+                      </field>
+                      <field name="IsGroupAdmin" type="Boolean">
+                        <value type="Boolean"><![CDATA[False]]></value>
+                      </field>
+                    </model>
+                  </modelField>
+                  <field name="Body" type="String">
+                    <value type="String"><![CDATA[Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.]]></value>
+                  </field>
+                  <field name="TimeStamp" type="TimeStamp">
+                    <value type="TimeStamp" format="TimeStampKnown" formattedTimestamp="2023-10-11T01:38:50+00:00">2023-10-11T01:38:50.000+00:00</value>
+                  </field>
+                  <multiModelField name="Attachments" type="Attachment" />
+                  <field name="Status" type="MessageStatus">
+                    <value type="MessageStatus"><![CDATA[Read]]></value>
+                  </field>
+                  <field name="Label" type="Label">
+                    <value type="Label"><![CDATA[Default]]></value>
+                  </field>
+                  <field name="Platform" type="Platform">
+                    <value type="Platform"><![CDATA[Unknown]]></value>
+                  </field>
+                  <multiModelField name="MessageExtraData" type="InstantMessageExtraData">
+                    <model type="MessageLabel" id="9b096aab-c208-4a9a-b722-190471479e56" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="93631" extractionId="0">
+                      <field name="Label" type="Label">
+                        <value type="Label"><![CDATA[SelfDestruct]]></value>
+                      </field>
+                    </model>
+                  </multiModelField>
+                  <field name="Type" type="InstantMessageType">
+                    <value type="InstantMessageType"><![CDATA[AppMessage]]></value>
+                  </field>
+                  <field name="Priority" type="MailPriority">
+                    <value type="MailPriority"><![CDATA[Normal]]></value>
+                  </field>
+                  <field name="SelfDestructDuration" type="TimeSpan">
+                    <value type="TimeSpan"><![CDATA[00:00:00]]></value>
+                  </field>
+                  <field name="IsLocationSharing" type="Boolean">
+                    <value type="Boolean"><![CDATA[False]]></value>
+                  </field>
+                  <field name="Identifier" type="String">
+                    <value type="String"><![CDATA[1654984910:14433]]></value>
+                  </field>
+                  <field name="SourceApplication" type="String">
+                    <value type="String"><![CDATA[Telegram]]></value>
+                  </field>
+                </model>
+              </modelField>
+            </model>
+            <model type="MessageLabel" id="68158ceb-ac72-45cc-a2f4-e750c5e26037" deleted_state="Intact" decoding_confidence="High" isrelated="False" source_index="93634" extractionId="0">
+              <field name="Label" type="Label">
+                <value type="Label"><![CDATA[SelfDestruct]]></value>
+              </field>
+            </model>
+          </multiModelField>
+          <field name="Type" type="InstantMessageType">
+            <value type="InstantMessageType"><![CDATA[AppMessage]]></value>
+          </field>
+          <field name="Priority" type="MailPriority">
+            <value type="MailPriority"><![CDATA[Normal]]></value>
+          </field>
+          <field name="SelfDestructDuration" type="TimeSpan">
+            <value type="TimeSpan"><![CDATA[00:00:00]]></value>
+          </field>
+          <field name="IsLocationSharing" type="Boolean">
+            <value type="Boolean"><![CDATA[False]]></value>
+          </field>
+          <field name="Identifier" type="String">
+            <value type="String"><![CDATA[1654984910:14434]]></value>
+          </field>
+          <field name="SourceApplication" type="String">
+            <value type="String"><![CDATA[Telegram]]></value>
+          </field>
+        </model>
+    </multiModelField>
+</model>
