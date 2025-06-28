@@ -1,3 +1,5 @@
 iped.parsers.sqlite.detector.SQLiteContainerDetector
 iped.parsers.plist.detector.PListDetector
 iped.parsers.video.MP4Detector
+iped.parsers.security.detector.PemDetector
+iped.parsers.security.detector.ASN1SequenceDetector
