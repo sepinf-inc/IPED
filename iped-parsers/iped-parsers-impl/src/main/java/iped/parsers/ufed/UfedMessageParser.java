@@ -3,8 +3,10 @@ package iped.parsers.ufed;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
@@ -23,6 +25,7 @@ import org.xml.sax.SAXException;
 
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
+import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import iped.data.IItem;
@@ -40,7 +43,7 @@ import iped.parsers.ufed.reference.ReferencedFile;
 import iped.parsers.ufed.util.UfedUtils;
 import iped.parsers.util.HashUtils;
 import iped.parsers.util.Messages;
-import iped.parsers.util.OmitEmptyObjectsTypeAdapterFactory;
+import iped.parsers.util.OmitEmptyArraysTypeAdapterFactory;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
@@ -55,8 +58,12 @@ public class UfedMessageParser extends AbstractParser {
 
     private static Set<MediaType> SUPPORTED_TYPES = Set.of(MediaTypes.UFED_MESSAGE_MIME);
 
-    private GsonBuilder gsonBuilder = new GsonBuilder() //
-            .registerTypeAdapterFactory(new OmitEmptyObjectsTypeAdapterFactory()) //
+    private static final String JSON_EMPTY_OBJECT_KEYWORD = ": {},";
+
+    private static final String JSON_TEMP_ATTR = "message:json";
+
+    private Gson gson = new GsonBuilder() //
+            .registerTypeAdapterFactory(new OmitEmptyArraysTypeAdapterFactory()) //
             .addSerializationExclusionStrategy(new ExclusionStrategy() {
                 @Override
                 public boolean shouldSkipField(FieldAttributes f) {
@@ -69,7 +76,8 @@ public class UfedMessageParser extends AbstractParser {
             })
             .setPrettyPrinting() //
             .disableHtmlEscaping() //
-            .setDateFormat(Messages.getString("UFEDChatParser.DateFormat"));
+            .setDateFormat(Messages.getString("UFEDChatParser.DateFormat")) //
+            .create();
 
     private boolean extractActivityLogs = true;
     private boolean extractAttachments = true;
@@ -125,7 +133,7 @@ public class UfedMessageParser extends AbstractParser {
 
             xhtml.startElement("meta", "charset", "UTF-8");
 
-            renderMessageView(message, xhtml);
+            renderMessageView(item, message, xhtml);
 
             storeLinkedHashes(message, metadata);
 
@@ -153,11 +161,32 @@ public class UfedMessageParser extends AbstractParser {
         }
     }
 
-    private void renderMessageView(InstantMessage message, XHTMLContentHandler handler) throws SAXException {
+    private void renderMessageView(IItemReader item, InstantMessage message, XHTMLContentHandler handler) throws SAXException {
 
-        String json = gsonBuilder.create().toJson(message);
+        String json = null;
+        if (item instanceof IItem) {
+            json = (String) ((IItem) item).getTempAttribute(JSON_TEMP_ATTR);
+        }
 
+        if (json == null) {
+
+            // serialize to JSON
+            json = gson.toJson(message);
+
+            // remove empty objects
+            json = Arrays
+                    .stream(json.split("\n")) //
+                    .filter(line -> !line.endsWith(JSON_EMPTY_OBJECT_KEYWORD)) //
+                    .collect(Collectors.joining("\n"));
+        }
+
+        // render
         handler.element("pre", json);
+
+        if (item instanceof IItem) {
+            // to be reused by MakePreviewTask
+            ((IItem) item).setTempAttribute(JSON_TEMP_ATTR, json);
+        }
     }
 
     public static void storeLinkedHashes(InstantMessage message, Metadata metadata) {

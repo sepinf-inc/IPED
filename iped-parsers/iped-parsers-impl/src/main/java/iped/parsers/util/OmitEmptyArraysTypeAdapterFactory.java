@@ -1,26 +1,23 @@
 package iped.parsers.util;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.Collection;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import com.google.gson.TypeAdapter;
 import com.google.gson.TypeAdapterFactory;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
-public class OmitEmptyObjectsTypeAdapterFactory implements TypeAdapterFactory {
+public class OmitEmptyArraysTypeAdapterFactory implements TypeAdapterFactory {
 
     @Override
     public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
 
-        // We only want to apply this to Plain Old Java Objects (POJOs) and arrays
-        if (!Object.class.isAssignableFrom(type.getRawType())
-                && !type.getRawType().isArray() 
-                && !Collection.class.isAssignableFrom(type.getRawType())
-                || String.class.isAssignableFrom(type.getRawType())) {
+        // We only want to apply this to arrays and collections
+        if (!type.getRawType().isArray() && !Collection.class.isAssignableFrom(type.getRawType())) {
             return null;
         }
 
@@ -29,17 +26,9 @@ public class OmitEmptyObjectsTypeAdapterFactory implements TypeAdapterFactory {
         return new TypeAdapter<T>() {
             @Override
             public void write(JsonWriter out, T value) throws IOException {
-                if (value == null) {
-                    out.nullValue();
-                    return;
-                }
-
-                JsonElement tree = delegate.toJsonTree(value);
-
-                if (tree.isJsonObject() && tree.getAsJsonObject().entrySet().stream().filter(e -> !e.getValue().isJsonNull()).count() == 0) {
-                    out.nullValue();
-                    return;
-                } else if (tree.isJsonArray() && tree.getAsJsonArray().isEmpty()) {
+                if (value == null //
+                        || value instanceof Collection && ((Collection<?>) value).isEmpty() //
+                        || value.getClass().isArray() && Array.getLength(value) == 0) {
                     out.nullValue();
                     return;
                 }
