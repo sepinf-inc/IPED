@@ -149,10 +149,10 @@ public class UfedChatParser extends AbstractParser {
                     byte[] nextBytes = reportGenerator.generateNextChatHtml();
 
                     // copy parent metadata
-                    for (String meta : metadata.names()) {
-                        if (meta.contains(ExtraProperties.UFED_META_PREFIX)) {
-                            for (String val : metadata.getValues(meta)) {
-                                chatPreviewMeta.add(meta, val);
+                    for (String name : metadata.names()) {
+                        if (name.startsWith(ExtraProperties.UFED_META_PREFIX) || name.startsWith(ExtraProperties.CONVERSATION_PREFIX)) {
+                            for (String val : metadata.getValues(name)) {
+                                chatPreviewMeta.add(name, val);
                             }
                         }
                     }

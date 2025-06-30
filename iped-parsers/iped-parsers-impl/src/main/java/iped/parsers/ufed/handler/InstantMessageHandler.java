@@ -1,5 +1,10 @@
 package iped.parsers.ufed.handler;
 
+import static iped.properties.ExtraProperties.COMMUNICATION_DATE;
+import static iped.properties.ExtraProperties.COMMUNICATION_DIRECTION;
+import static iped.properties.ExtraProperties.COMMUNICATION_FROM;
+import static iped.properties.ExtraProperties.COMMUNICATION_PREFIX;
+import static iped.properties.ExtraProperties.COMMUNICATION_TO;
 import static iped.properties.ExtraProperties.MESSAGE_ATTACHMENT_COUNT;
 import static iped.properties.ExtraProperties.PARENT_VIEW_POSITION;
 import static iped.properties.ExtraProperties.UFED_COORDINATE_ID;
@@ -22,8 +27,10 @@ import iped.parsers.ufed.model.InstantMessage;
 import iped.parsers.ufed.model.JumpTarget;
 import iped.parsers.ufed.model.Party;
 import iped.parsers.ufed.model.ReplyMessageData;
+import iped.parsers.util.ConversationConstants;
 import iped.properties.BasicProps;
 import iped.search.IItemSearcher;
+import iped.utils.DateUtil;
 
 /**
  * Handles all processing logic for an InstantMessage model.
@@ -56,46 +63,64 @@ public class InstantMessageHandler extends BaseModelHandler<InstantMessage> {
             metadata.set(MESSAGE_ATTACHMENT_COUNT, Integer.toString(model.getAttachments().size()));
         }
 
+        // Message -> Date
+        if (model.getTimeStamp() != null) {
+            metadata.set(COMMUNICATION_DATE, DateUtil.dateToString(model.getTimeStamp()));
+        }
+
+        // Message -> Direction
+        model.getFrom().ifPresentOrElse(from -> {
+            if (from.isPhoneOwner()) {
+                metadata.set(COMMUNICATION_DIRECTION, ConversationConstants.DIRECTION_OUTGOING);
+            } else {
+                metadata.set(COMMUNICATION_DIRECTION, ConversationConstants.DIRECTION_INCOMING);
+            }
+        }, () -> {
+            if (model.getTo().stream().filter(Party::isPhoneOwner).findAny().isPresent()) {
+                metadata.set(COMMUNICATION_DIRECTION, ConversationConstants.DIRECTION_INCOMING);
+            }
+        });
+
         // Message -> From
         model.getFrom().ifPresent(from ->  {
-            new PartyHandler(from, model.getSource()).fillMetadata("From", metadata);
+            new PartyHandler(from, model.getSource()).fillMetadata(COMMUNICATION_FROM, metadata);
         });
 
         // Message -> To
         if (model.getTo().size() == 1) {
-
-            new PartyHandler(model.getTo().get(0), model.getSource()).fillMetadata("To", metadata);
+            new PartyHandler(model.getTo().get(0), model.getSource()).fillMetadata(COMMUNICATION_TO, metadata);
 
         } else if (model.getChat() != null) {
 
-            // in case "To" is NOT set in InstantMessage, try to
+            // in case "To" is NOT set in InstantMessage, try to...
             List<Party> otherParticipants;
             if (model.getFrom().isPresent()) {
 
-                // get other participants (without "from")
+                // ...get other participants (without "from")
                 otherParticipants = model.getChat().getParticipants().stream() //
                         .filter(p -> !p.equals(model.getFrom().get())) //
                         .collect(Collectors.toList()); //
             } else {
+                // ...get other participants
                 otherParticipants = model.getChat().getParticipants();
             }
 
             if (otherParticipants.size() == 1) {
-                new PartyHandler(otherParticipants.get(0), model.getSource()).fillMetadata("To", metadata);
+                new PartyHandler(otherParticipants.get(0), model.getSource()).fillMetadata(COMMUNICATION_TO, metadata);
 
             } else if (otherParticipants.size() > 2) {
 
                 // there is more than one "To", so use chat information
-                metadata.add(UFED_META_PREFIX + "To", new ChatHandler(model.getChat()).getTitle(false, false));
+                metadata.add(COMMUNICATION_TO, new ChatHandler(model.getChat()).getTitle(false, false));
 
                 String chatId = model.getChat().getFieldId();
                 if (StringUtils.isNotBlank(chatId)) {
-                    metadata.add(UFED_META_PREFIX + "To:id", chatId);
+                    metadata.add(COMMUNICATION_TO  + ":id", chatId);
                 }
 
                 String chatName = model.getChat().getName();
                 if (StringUtils.isNotBlank(chatName)) {
-                    metadata.add(UFED_META_PREFIX + "To:name", chatName);
+                    metadata.add(COMMUNICATION_TO + ":name", chatName);
                 }
             }
         }
@@ -106,7 +131,8 @@ public class InstantMessageHandler extends BaseModelHandler<InstantMessage> {
 
         model.getExtraData().getForwardedMessage().ifPresent(fw -> {
             if (fw.getOriginalSender() != null) {
-                new PartyHandler(fw.getOriginalSender(), model.getSource()).fillMetadata("Forwarded:originalSender", metadata);
+                new PartyHandler(fw.getOriginalSender(), model.getSource())
+                    .fillMetadata(UFED_META_PREFIX + "Forwarded:originalSender", metadata);
             }
             metadata.add(UFED_META_PREFIX + "Label", fw.getLabel());
 
@@ -131,9 +157,13 @@ public class InstantMessageHandler extends BaseModelHandler<InstantMessage> {
             String type = StringUtils.firstNonBlank(quoted.getLabel(), "Quoted");
 
             quoted.getFields().forEach((key, value) -> {
-                fillFieldMetadata( type + ":" + key, prefix, metadata, Set.of("Label"));
+                fillFieldMetadata(type + ":" + key, prefix, metadata, Set.of("Label"));
             });
         });
+
+        if (model.isSystemMessage()) {
+            metadata.set(UFED_META_PREFIX + "isSystemMessage", Boolean.toString(true));
+        }
     }
 
     @Override

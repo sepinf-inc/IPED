@@ -1,6 +1,6 @@
 package iped.parsers.ufed.handler;
 
-import static iped.properties.ExtraProperties.UFED_META_PREFIX;
+import static iped.properties.ExtraProperties.*;
 
 import java.util.HashMap;
 import java.util.List;
@@ -39,34 +39,53 @@ public class ChatHandler extends BaseModelHandler<Chat> {
 
         super.fillMetadata(prefix, metadata);
 
+        // Chat ID
+         metadata.set(CONVERSATION_ID, model.getFieldId());
+
+         // Chat Type
+         metadata.set(CONVERSATION_TYPE, model.getChatType());
+
+         // Chat Name
+         if (StringUtils.isNotBlank(model.getName())) {
+             metadata.set(CONVERSATION_NAME, model.getName());
+         }
+
+         // Chat Messages Count
+         metadata.set(CONVERSATION_MESSAGES_COUNT, (int) model.getMessages().stream().filter(m -> !m.isSystemMessage()).count());
+
         // Chat Account Info
         model.getReferencedAccount().ifPresent(a -> {
-            metadata.add(UFED_META_PREFIX + "Account:id", a.getUserID());
-            metadata.add(UFED_META_PREFIX + "Account:name", a.getName());
-            metadata.add(UFED_META_PREFIX + "Account:phoneNumber", a.getPhoneNumber());
-            metadata.add(UFED_META_PREFIX + "Account:username", a.getUsername());
+            metadata.set(CONVERSATION_ACCOUNT + CONVERSATION_SUFFIX_ID, a.getUserID());
+            metadata.set(CONVERSATION_ACCOUNT + CONVERSATION_SUFFIX_NAME, a.getName());
+            metadata.set(CONVERSATION_ACCOUNT + CONVERSATION_SUFFIX_PHONE, a.getPhoneNumber());
+            metadata.set(CONVERSATION_ACCOUNT + CONVERSATION_SUFFIX_USERNAME, a.getUsername());
         });
 
         // Chat Participants
         model.getParticipants().forEach(p -> {
-            new PartyHandler(p, model.getSource()).fillMetadata("Participants", metadata);
+            new PartyHandler(p, model.getSource()).fillMetadata(CONVERSATION_PARTICIPANTS, metadata);
         });
         if (!model.getParticipants().isEmpty()) {
-            metadata.add(UFED_META_PREFIX + "Participants:count", Integer.toString(model.getParticipants().size()));
+            metadata.add(CONVERSATION_PARTICIPANTS + ":count", Integer.toString(model.getParticipants().size()));
         }
 
         // Chat Owner Participant
         model.getPhoneOwnerParticipant().ifPresent(p -> {
-            new PartyHandler(p, model.getSource()).fillMetadata("PhoneOwner", metadata);
+            new PartyHandler(p, model.getSource()).fillMetadata(UFED_META_PREFIX + "PhoneOwner", metadata);
         });
 
         // Chat Group Admin Participants
         model.getParticipants().stream().filter(Party::isGroupAdmin).forEach(p -> {
-            new PartyHandler(p, model.getSource()).fillMetadata("GroupAdmins", metadata);
+            new PartyHandler(p, model.getSource()).fillMetadata(CONVERSATION_ADMINS, metadata);
         });
         long groupAdminsCount = model.getParticipants().stream().filter(Party::isGroupAdmin).count();
         if (groupAdminsCount > 0) {
-            metadata.add(UFED_META_PREFIX + "GroupAdmins:count", Long.toString(groupAdminsCount));
+            metadata.set(CONVERSATION_ADMINS + ":count", Long.toString(groupAdminsCount));
+        }
+
+        // Chat Owner is Group Admin
+        if (model.getParticipants().stream().filter(Party::isGroupAdmin).filter(Party::isPhoneOwner).findAny().isPresent()) {
+            metadata.set(CONVERSATION_IS_OWNER_ADMIN, true);
         }
     }
 

@@ -13,6 +13,7 @@ import java.util.TreeSet;
 
 import javax.swing.table.TableColumn;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.Document;
 import org.apache.tika.metadata.Message;
 import org.slf4j.Logger;
@@ -329,7 +330,7 @@ public class ColumnsManager implements Serializable, IColumnsManager {
                 p2pFields.add(f);
             else if (f.startsWith(ExtraProperties.UFED_META_PREFIX))
                 ufedFields.add(f);
-            else if (f.startsWith(Message.MESSAGE_PREFIX) || ExtraProperties.COMMUNICATION_BASIC_PROPS.contains(f))
+            else if (StringUtils.startsWithAny(f, Message.MESSAGE_PREFIX, ExtraProperties.CONVERSATION_PREFIX, ExtraProperties.COMMUNICATION_PREFIX) || ExtraProperties.COMMUNICATION_BASIC_PROPS.contains(f))
                 communicationFields.add(f);
             else if (f.startsWith(ExtraProperties.COMMON_META_PREFIX))
                 commonFields.add(f);

@@ -1,6 +1,9 @@
 package iped.parsers.ufed.handler;
 
-import static iped.properties.ExtraProperties.UFED_META_PREFIX;
+import static iped.properties.ExtraProperties.CONVERSATION_SUFFIX_ID;
+import static iped.properties.ExtraProperties.CONVERSATION_SUFFIX_NAME;
+import static iped.properties.ExtraProperties.CONVERSATION_SUFFIX_PHONE;
+import static iped.properties.ExtraProperties.CONVERSATION_SUFFIX_USERNAME;
 
 import java.util.List;
 import java.util.Map;
@@ -37,16 +40,16 @@ public class PartyHandler extends BaseModelHandler<Party> {
 
     @Override
     protected void fillMetadata(String prefix, Metadata metadata) {
-        metadata.add(UFED_META_PREFIX + prefix, getTitle());
+        metadata.add(prefix, getTitle());
 
         model.getReferencedContact().ifPresentOrElse(ref -> {
-            metadata.add(UFED_META_PREFIX + prefix + ":id", StringUtils.firstNonBlank(model.getIdentifier(), ref.getUserID()));
-            metadata.add(UFED_META_PREFIX + prefix + ":name", StringUtils.firstNonBlank(model.getName(), ref.getName()));
-            metadata.add(UFED_META_PREFIX + prefix + ":phoneNumber", ref.getPhoneNumber());
-            metadata.add(UFED_META_PREFIX + prefix + ":username", ref.getUsername());
+            metadata.add(prefix + CONVERSATION_SUFFIX_ID, StringUtils.firstNonBlank(model.getIdentifier(), ref.getUserID()));
+            metadata.add(prefix + CONVERSATION_SUFFIX_NAME, StringUtils.firstNonBlank(model.getName(), ref.getName()));
+            metadata.add(prefix + CONVERSATION_SUFFIX_PHONE, ref.getPhoneNumber());
+            metadata.add(prefix + CONVERSATION_SUFFIX_USERNAME, ref.getUsername());
         }, () -> {
-            metadata.add(UFED_META_PREFIX + prefix + ":id", model.getIdentifier());
-            metadata.add(UFED_META_PREFIX + prefix + ":name", model.getName());
+            metadata.add(prefix + CONVERSATION_SUFFIX_ID, model.getIdentifier());
+            metadata.add(prefix + CONVERSATION_SUFFIX_NAME, model.getName());
         });
     }
 

@@ -44,6 +44,7 @@ public class BaseModelHandler<T extends BaseModel> {
             "CoreFileSystemFileSystemNodeCreationTime", //
             "CoreFileSystemFileSystemNodeModifyTime", //
             "CoreFileSystemFileSystemNodeLastAccessTime", //
+            "CoreFileSystemFileSystemNodeDeletedTime", //
             "UserMapping" //
     ));
 
