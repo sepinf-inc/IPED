@@ -80,6 +80,7 @@ import iped.engine.localization.Messages;
 import iped.engine.search.QueryBuilder;
 import iped.engine.task.ExportFileTask;
 import iped.engine.task.ImageThumbTask;
+import iped.engine.task.ParsingTask;
 import iped.engine.task.die.DIETask;
 import iped.engine.task.index.IndexItem;
 import iped.engine.util.Util;
@@ -1763,7 +1764,7 @@ public class UfedXmlReader extends DataSourceReader {
             }
 
             Item item = itemSeq.pop();
-            item.setTempAttribute(UfedUtils.MODEL_TEMP_ATTRIBUTE, model);
+            item.setTempAttribute(ParsingTask.TIKA_OPEN_CONTAINER_KEY, model);
 
             if (model instanceof Chat) {
                 Chat chat = (Chat) model;

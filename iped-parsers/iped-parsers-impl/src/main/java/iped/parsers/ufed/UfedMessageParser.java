@@ -12,6 +12,7 @@ import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
+import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
@@ -40,7 +41,6 @@ import iped.parsers.ufed.model.ChatActivity;
 import iped.parsers.ufed.model.Contact;
 import iped.parsers.ufed.model.InstantMessage;
 import iped.parsers.ufed.reference.ReferencedFile;
-import iped.parsers.ufed.util.UfedUtils;
 import iped.parsers.util.HashUtils;
 import iped.parsers.util.Messages;
 import iped.parsers.util.OmitEmptyArraysTypeAdapterFactory;
@@ -120,8 +120,8 @@ public class UfedMessageParser extends AbstractParser {
             }
 
             InstantMessage message = null;
-            if (item instanceof IItem) {
-                message = (InstantMessage) ((IItem) item).getTempAttribute(UfedUtils.MODEL_TEMP_ATTRIBUTE);
+            if (inputStream instanceof TikaInputStream) {
+                message = (InstantMessage) TikaInputStream.cast(inputStream).getOpenContainer();
             }
             if (message == null) {
                 return;

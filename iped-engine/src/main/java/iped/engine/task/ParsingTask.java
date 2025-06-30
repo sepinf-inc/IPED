@@ -120,7 +120,6 @@ import iped.properties.MediaTypes;
 import iped.search.IItemSearcher;
 import iped.utils.EmptyInputStream;
 import iped.utils.IOUtil;
-import iped.utils.TempAttributeInputStream;
 
 /**
  * TAREFA DE PARSING DE ALGUNS TIPOS DE ARQUIVOS. ARMAZENA O TEXTO EXTRAÍDO,
@@ -149,6 +148,8 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
     private static final String SUBITEM_DEPTH = "subitemDepth"; //$NON-NLS-1$
 
     private static final String PARENT_CONTAINER_HASH = "PARENT_CONTAINER_HASH";
+
+    public static final String TIKA_OPEN_CONTAINER_KEY = "TIKA_OPEN_CONTAINER";
 
     /**
      * Max number of containers expanded concurrently. Configured to be half the
@@ -672,12 +673,14 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
                 }
             }
 
-            if (inputStream instanceof TempAttributeInputStream) {
-                TempAttributeInputStream tempAttrStream = (TempAttributeInputStream) inputStream;
-                subItem.setTempAttribute(tempAttrStream.getKey(), tempAttrStream.getObject());
-            }
-
             checkRecursiveZipBomb(subItem);
+
+            if (inputStream instanceof TikaInputStream) {
+                Object openContainer = TikaInputStream.cast(inputStream).getOpenContainer();
+                if (openContainer != null) {
+                    subItem.setTempAttribute(TIKA_OPEN_CONTAINER_KEY, openContainer);
+                }
+            }
 
             if ("".equals(metadata.get(BasicProps.LENGTH))) {
                 subItem.setLength(null);

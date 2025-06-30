@@ -12,6 +12,7 @@ import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
+import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
@@ -22,18 +23,16 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.data.IItem;
 import iped.data.IItemReader;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.ufed.handler.ChatHandler;
 import iped.parsers.ufed.handler.InstantMessageHandler;
 import iped.parsers.ufed.model.Chat;
 import iped.parsers.ufed.model.InstantMessage;
-import iped.parsers.ufed.util.UfedUtils;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
-import iped.utils.TempAttributeInputStream;
+import iped.utils.EmptyInputStream;
 
 public class UfedChatParser extends AbstractParser {
 
@@ -112,8 +111,8 @@ public class UfedChatParser extends AbstractParser {
             }
 
             Chat chat = null;
-            if (item instanceof IItem) {
-                chat = (Chat) ((IItem) item).getTempAttribute(UfedUtils.MODEL_TEMP_ATTRIBUTE);
+            if (inputStream instanceof TikaInputStream) {
+                chat = (Chat) TikaInputStream.cast(inputStream).getOpenContainer();
             }
             if (chat == null) {
                 return;
@@ -200,8 +199,9 @@ public class UfedChatParser extends AbstractParser {
             messageMeta.set(ExtraProperties.PARENT_VIRTUAL_ID, chatVirtualId);
             messageMeta.set(BasicProps.LENGTH, "");
 
-            TempAttributeInputStream tempAttrStream = new TempAttributeInputStream(UfedUtils.MODEL_TEMP_ATTRIBUTE, message);
-            extractor.parseEmbedded(tempAttrStream, handler, messageMeta, false);
+            TikaInputStream messageInput = TikaInputStream.get(new EmptyInputStream());
+            messageInput.setOpenContainer(message);
+            extractor.parseEmbedded(messageInput, handler, messageMeta, false);
         }
     }
 

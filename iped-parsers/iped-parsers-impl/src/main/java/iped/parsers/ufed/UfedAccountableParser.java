@@ -14,6 +14,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.exception.TikaException;
+import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
@@ -36,7 +37,6 @@ import iped.parsers.ufed.model.Contact;
 import iped.parsers.ufed.model.ContactEntry;
 import iped.parsers.ufed.model.ContactPhoto;
 import iped.parsers.ufed.model.UserAccount;
-import iped.parsers.ufed.util.UfedUtils;
 import iped.properties.MediaTypes;
 import iped.search.IItemSearcher;
 import iped.utils.DateUtil;
@@ -72,8 +72,8 @@ public class UfedAccountableParser extends AbstractParser {
             }
 
             Accountable accountable = null;
-            if (item instanceof IItem) {
-                accountable = (Accountable) ((IItem) item).getTempAttribute(UfedUtils.MODEL_TEMP_ATTRIBUTE);
+            if (inputStream instanceof TikaInputStream) {
+                accountable = (Accountable) TikaInputStream.cast(inputStream).getOpenContainer();
             }
             if (accountable == null) {
                 return;

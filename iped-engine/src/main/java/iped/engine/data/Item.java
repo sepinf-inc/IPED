@@ -39,6 +39,7 @@ import iped.datasource.IDataSource;
 import iped.engine.core.Statistics;
 import iped.engine.io.ReferencedFile;
 import iped.engine.lucene.analysis.CategoryTokenizer;
+import iped.engine.task.ParsingTask;
 import iped.engine.task.index.IndexItem;
 import iped.engine.tika.SyncMetadata;
 import iped.engine.util.ParentInfo;
@@ -750,6 +751,10 @@ public class Item implements IItem {
             }
         }
         addTmpResource(tis);
+        Object openContainer = getTempAttribute(ParsingTask.TIKA_OPEN_CONTAINER_KEY);
+        if (openContainer != null) {
+            tis.setOpenContainer(openContainer);
+        }
         return tis;
     }
 
