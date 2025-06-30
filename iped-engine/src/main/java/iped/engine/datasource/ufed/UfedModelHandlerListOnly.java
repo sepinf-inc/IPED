@@ -28,7 +28,7 @@ public class UfedModelHandlerListOnly extends UfedModelHandler {
     @Override
     public void endElement(String uri, String localName, String qName) throws SAXException {
 
-        if ("model".equalsIgnoreCase(qName) || StringUtils.equalsAnyIgnoreCase(qName, "field", "value") && modelStack.size() == 1) {
+        if ("model".equalsIgnoreCase(qName) || StringUtils.equalsAnyIgnoreCase(qName, "field", "value") && modelStack.size() == 1 || modelStack.isEmpty()) {
             super.endElement(uri, localName, qName);
         }
     }

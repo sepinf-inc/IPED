@@ -568,9 +568,6 @@ public class UfedXmlReader extends DataSourceReader {
 
             chars.setLength(0);
 
-            XmlNode node = new XmlNode(qName, atts);
-            nodeSeq.push(node);
-
             // if started <modelType type="Chat">, <modelType type="InstantMessage"> and so on...
             // then delegates the parsing to UfedModelHandler
             if (qName.equals("modelType") && StringUtils.equalsAny(atts.getValue("type"),
@@ -582,6 +579,9 @@ public class UfedXmlReader extends DataSourceReader {
                 }
                 return;
             }
+
+            XmlNode node = new XmlNode(qName, atts);
+            nodeSeq.push(node);
 
             if (!listOnly)
                 elements.add(qName);
@@ -717,6 +717,9 @@ public class UfedXmlReader extends DataSourceReader {
                 String attName = atts.getQName(i);
                 if (!ignoreAttrs.contains(attName)) {
                     String value = atts.getValue(i);
+                    if ("name".equals(attName)) {
+                        attName = StringUtils.capitalize(attName);
+                    }
                     item.getMetadata().add(ExtraProperties.UFED_META_PREFIX + attName, value);
                 }
             }
@@ -1563,6 +1566,7 @@ public class UfedXmlReader extends DataSourceReader {
                     }
                 }
                 email.getMetadata().set(ExtraProperties.MESSAGE_ATTACHMENT_COUNT, attachNames.length);
+                email.setHasChildren(attachNames.length > 0);
 
                 bw.write("<hr>"); //$NON-NLS-1$
 
@@ -1753,6 +1757,7 @@ public class UfedXmlReader extends DataSourceReader {
 
             try {
                 Item item = createModelItem(attr);
+                item.setSumVolume(false);
                 itemSeq.push(item);
             } catch (SAXException e) {
                 LOGGER.error("Error creating model Item", e);
@@ -1762,17 +1767,21 @@ public class UfedXmlReader extends DataSourceReader {
         @Override
         public void onModelCompleted(BaseModel model) {
 
-            if (model instanceof Chat && ignoreSupportedChats && supportedApps.contains(((Chat) model).getSource())) {
-                return;
-            }
+            boolean ignoreChat = model instanceof Chat
+                    && ignoreSupportedChats
+                    && supportedApps.contains(((Chat) model).getSource());
 
             if (listOnly) {
-                caseData.incDiscoveredEvidences(1);
+                if (!ignoreChat) {
+                    caseData.incDiscoveredEvidences(1);
+                }
                 return;
             }
 
             Item item = itemSeq.pop();
-            item.setOpenContainer(model);
+            if (ignoreChat) {
+                return;
+            }
 
             if (model instanceof Chat) {
                 Chat chat = (Chat) model;
@@ -1786,6 +1795,8 @@ public class UfedXmlReader extends DataSourceReader {
                 }
                 item.setExtraAttribute(IndexItem.TREENODE, Boolean.toString(true));
             }
+
+            item.setOpenContainer(model);
 
             try {
                 processItem(item);
