@@ -149,8 +149,6 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
 
     private static final String PARENT_CONTAINER_HASH = "PARENT_CONTAINER_HASH";
 
-    public static final String TIKA_OPEN_CONTAINER_KEY = "TIKA_OPEN_CONTAINER";
-
     /**
      * Max number of containers expanded concurrently. Configured to be half the
      * number of workers or external parsing processes if enabled. See
@@ -666,10 +664,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             checkRecursiveZipBomb(subItem);
 
             if (inputStream instanceof TikaInputStream) {
-                Object openContainer = TikaInputStream.cast(inputStream).getOpenContainer();
-                if (openContainer != null) {
-                    subItem.setTempAttribute(TIKA_OPEN_CONTAINER_KEY, openContainer);
-                }
+                subItem.setOpenContainer(TikaInputStream.cast(inputStream).getOpenContainer());
             }
 
             if ("".equals(metadata.get(BasicProps.LENGTH))) {

@@ -39,7 +39,6 @@ import iped.datasource.IDataSource;
 import iped.engine.core.Statistics;
 import iped.engine.io.ReferencedFile;
 import iped.engine.lucene.analysis.CategoryTokenizer;
-import iped.engine.task.ParsingTask;
 import iped.engine.task.index.IndexItem;
 import iped.engine.tika.SyncMetadata;
 import iped.engine.util.ParentInfo;
@@ -69,6 +68,8 @@ import iped.utils.SeekableFileInputStream;
 public class Item implements IItem {
 
     private static Logger LOGGER = LoggerFactory.getLogger(Item.class);
+
+    private static final String TIKA_OPEN_CONTAINER_KEY = "TIKA_OPEN_CONTAINER";
 
     private static Set<String> extraAttributeSet = Collections.synchronizedSet(new HashSet<String>());
 
@@ -751,11 +752,15 @@ public class Item implements IItem {
             }
         }
         addTmpResource(tis);
-        Object openContainer = getTempAttribute(ParsingTask.TIKA_OPEN_CONTAINER_KEY);
+        Object openContainer = getTempAttribute(TIKA_OPEN_CONTAINER_KEY);
         if (openContainer != null) {
             tis.setOpenContainer(openContainer);
         }
         return tis;
+    }
+
+    public void setOpenContainer(Object openContainer) {
+        setTempAttribute(TIKA_OPEN_CONTAINER_KEY, openContainer);
     }
 
     @Override
