@@ -54,6 +54,7 @@ public class ChatHandler extends BaseModelHandler<Chat> {
          metadata.set(CONVERSATION_MESSAGES_COUNT, (int) model.getMessages().stream().filter(m -> !m.isSystemMessage()).count());
 
         // Chat Account Info
+        metadata.set(CONVERSATION_ACCOUNT, model.getAccount());
         model.getReferencedAccount().ifPresent(a -> {
             metadata.set(CONVERSATION_ACCOUNT + CONVERSATION_SUFFIX_ID, a.getUserID());
             metadata.set(CONVERSATION_ACCOUNT + CONVERSATION_SUFFIX_NAME, a.getName());
