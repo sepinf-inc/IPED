@@ -4534,7 +4534,6 @@ ufed:mediaClassScore:Face = java.lang.String
 ufed:mediaClassScore:Hand_Holding_Objects = java.lang.String
 ufed:mediaClasses = java.lang.String
 ufed:mime-type = java.lang.String
-ufed:name = java.lang.String
 ufed:notification_reminder_selectable = java.lang.String
 ufed:originalId = java.lang.String
 ufed:phoneOwner = java.lang.String
