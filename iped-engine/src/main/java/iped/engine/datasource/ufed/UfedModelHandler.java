@@ -38,7 +38,7 @@ public class UfedModelHandler extends DefaultHandler {
     private static Logger logger = LoggerFactory.getLogger(UfedModelHandler.class);
 
     protected final Stack<BaseModel> modelStack = new Stack<>();
-    private final Stack<String> fieldNameStack = new Stack<>();
+    protected final Stack<String> fieldNameStack = new Stack<>();
     private final Stack<String> fieldTypeStack = new Stack<>();
     protected final StringBuilder elementValueBuilder = new StringBuilder();
     private JumpTarget currentJumpTarget;

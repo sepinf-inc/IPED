@@ -34,6 +34,13 @@ public class UfedModelHandlerListOnly extends UfedModelHandler {
     }
 
     @Override
+    public void characters(char[] ch, int start, int length) throws SAXException {
+        if (modelStack.size() == 1 && !fieldNameStack.isEmpty() && fieldNameStack.peek().equals("Source")) {
+            super.characters(ch, start, length);
+        }
+    }
+
+    @Override
     protected void setAttributes(BaseModel model, Attributes attributes) {
         // nothing...
     }
