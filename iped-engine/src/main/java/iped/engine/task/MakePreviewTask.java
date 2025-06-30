@@ -103,17 +103,16 @@ public class MakePreviewTask extends AbstractTask {
         }
 
         try {
-            if (mediaType.startsWith("application/x-ufed-")) {
+            if (StringUtils.isBlank(evidence.getHash())) {
 
                 LOGGER.debug("Generating preview of {} ({} bytes)", evidence.getPath(), evidence.getLength());
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 makeHtmlPreview(evidence, baos, mediaType);
-                ExportFileTask.getLastInstance().insertIntoStorage(evidence, baos.toByteArray(), baos.size());
+                if (baos.size() > 0) {
+                    ExportFileTask.getLastInstance().insertIntoStorage(evidence, baos.toByteArray(), baos.size());
+                }
 
             } else {
-                if (StringUtils.isBlank(evidence.getHash())) {
-                    return;
-                }
 
                 File viewFile = Util.getFileFromHash(new File(output, viewFolder), evidence.getHash(), ext);
                 if (viewFile.exists()) {
