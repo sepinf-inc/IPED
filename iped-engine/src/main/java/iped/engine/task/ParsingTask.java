@@ -317,9 +317,17 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
                 task = new ParsingTask(worker, autoParser);
                 task.parsingConfig = this.parsingConfig;
                 task.expandConfig = this.expandConfig;
-                task.safeProcess(evidence);
-
+                task.evidence = evidence;
+                task.getTikaContext();
+                if (task.extractEmbedded && containersBeingExpanded.incrementAndGet() > max_expanding_containers) {
+                    task.reEnqueueItem(evidence);
+                 } else {
+                    task.safeProcess();
+                 }
             } finally {
+                if (task != null && task.extractEmbedded) {
+                    containersBeingExpanded.decrementAndGet();
+                }
                 String parserName = getParserName(parser, evidence.getMetadata().get(Metadata.CONTENT_TYPE));
                 long st = task == null ? 0 : task.subitemsTime;
                 long diff = System.nanoTime() / 1000 - start;
@@ -331,9 +339,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
                     timesPerParser.merge(parserName, diff - st, Long::sum);
                 }
             }
-
         }
-
     }
 
     private String getParserName(Parser parser, String contentType) {
@@ -351,22 +357,12 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         return autoParser.hasSpecificParser(evidence.getMetadata());
     }
 
-    private void safeProcess(IItem evidence) throws Exception {
-
-        this.evidence = evidence;
-
-        context = getTikaContext();
+    private void safeProcess() throws Exception {
 
         if (this.extractEmbedded) {
-            if (containersBeingExpanded.incrementAndGet() > max_expanding_containers) {
-                containersBeingExpanded.decrementAndGet();
-                super.reEnqueueItem(evidence);
-                return;
-            }
             // Don't expand subitem if its hash is equal to parent container hash, could lead to infinite recursion.
             // See https://github.com/sepinf-inc/IPED/issues/1814
             if (evidence.isSubItem() && StringUtils.isNotEmpty(evidence.getHash()) && evidence.getHash().equals(evidence.getTempAttribute(PARENT_CONTAINER_HASH))) {
-                containersBeingExpanded.decrementAndGet();
                 return;
             }
         }
@@ -377,9 +373,6 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
 
         } catch (IOException e) {
             LOGGER.warn("{} Error opening: {} {}", Thread.currentThread().getName(), evidence.getPath(), e.toString()); //$NON-NLS-1$
-            if (this.extractEmbedded) {
-                containersBeingExpanded.decrementAndGet();
-            }
             return;
         }
 
@@ -427,9 +420,6 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
 
         } finally {
             // IOUtil.closeQuietly(tis);
-            if (this.extractEmbedded) {
-                containersBeingExpanded.decrementAndGet();
-            }
             IOUtil.closeQuietly(reader);
             if (numSubitems > 0) {
                 evidence.setExtraAttribute(NUM_SUBITEMS, numSubitems);
