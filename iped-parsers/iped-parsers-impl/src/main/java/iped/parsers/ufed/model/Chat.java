@@ -35,7 +35,7 @@ public class Chat extends BaseModel {
     private final List<InstantMessage> messages = new ArrayList<>();
     private final Map<String, BaseModel> others = new LinkedHashMap<>();
 
-    private Optional<ReferencedAccountable> referencedAccount = Optional.empty();
+    private transient Optional<ReferencedAccountable> referencedAccount = Optional.empty();
 
     public Chat() {
         super("Chat");

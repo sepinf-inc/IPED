@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,5 +92,15 @@ public class AttachmentHandler extends BaseModelHandler<Attachment> {
         }
 
         logger.warn("Attachment file reference was not found: {}", model);
+    }
+
+    @Override
+    public String getTitle() {
+        return new StringBuilder()
+                .append("Attachment") //
+                .append("-[") //
+                .append(StringUtils.firstNonBlank(model.getFilename(), model.getId())) //
+                .append("]") //
+                .toString();
     }
 }

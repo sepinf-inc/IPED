@@ -18,7 +18,7 @@ public class Party extends BaseModel {
 
     public static final String SYSTEM_MESSAGE = "System Message";
 
-    private Optional<ReferencedAccountable> referencedContact = Optional.empty();
+    private transient Optional<ReferencedAccountable> referencedContact = Optional.empty();
 
     public Party() {
         super("Party");
