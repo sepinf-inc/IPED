@@ -233,6 +233,10 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Act
         if (discoverEnded && processingStart != 0) {
             secsToEnd = (totalVolume - processedVolume) * (System.currentTimeMillis() - processingStart)
                     / ((processedVolume + 1) * 1000L);
+            if (secsToEnd == 0) {
+                secsToEnd = (totalItems - processedItems) * (System.currentTimeMillis() - processingStart)
+                        / ((processedItems + 1) * 1000L);
+            }
             msg += Messages.getString("ProgressFrame.FinishIn") + secsToEnd / 3600 + "h " + (secsToEnd / 60) % 60 + "m "
                     + secsToEnd % 60 + "s";
         } else if (decodingDir != null) {
