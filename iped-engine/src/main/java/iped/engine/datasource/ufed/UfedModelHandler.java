@@ -37,17 +37,16 @@ public class UfedModelHandler extends DefaultHandler {
 
     private static Logger logger = LoggerFactory.getLogger(UfedModelHandler.class);
 
-    private final Stack<BaseModel> modelStack = new Stack<>();
+    protected final Stack<BaseModel> modelStack = new Stack<>();
     private final Stack<String> fieldNameStack = new Stack<>();
     private final Stack<String> fieldTypeStack = new Stack<>();
-    private final StringBuilder elementValueBuilder = new StringBuilder();
+    protected final StringBuilder elementValueBuilder = new StringBuilder();
     private JumpTarget currentJumpTarget;
     private boolean inRelatedModels = false; // Flag for <RelatedModels> section
 
     private XMLReader xmlReader;
     private ContentHandler parentHandler;
     private UfedModelListener listener;
-    private boolean listOnly;
 
 
     public interface UfedModelListener {
@@ -55,42 +54,32 @@ public class UfedModelHandler extends DefaultHandler {
         void onModelCompleted(BaseModel model);
     }
 
-    public UfedModelHandler(XMLReader xmlReader, ContentHandler parentHandler, UfedModelListener listener, boolean listOnly) {
+    public UfedModelHandler(XMLReader xmlReader, ContentHandler parentHandler, UfedModelListener listener) {
         this.xmlReader = xmlReader;
         this.parentHandler = parentHandler;
         this.listener = listener;
-        this.listOnly = listOnly;
     }
 
     @Override
     public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
-        if (listOnly) {
-            modelStack.push(null);
-            return;
-        }
 
         elementValueBuilder.setLength(0); // Clear builder for new element
 
         if ("model".equalsIgnoreCase(qName)) {
             String type = attributes.getValue("type");
             BaseModel newModel = createModelByType(type);
-
-            for (int i = 0; i < attributes.getLength(); i++) {
-                newModel.setAttribute(attributes.getQName(i), attributes.getValue(i));
-            }
-            newModel.setId(attributes.getValue("id"));
+            setAttributes(newModel, attributes);
 
             if (!modelStack.isEmpty() && !fieldNameStack.isEmpty()) {
                 // Use a special field name for related models to distinguish them
-               String fieldName = inRelatedModels ? "RelatedModels" : fieldNameStack.peek();
+                String fieldName = inRelatedModels ? "RelatedModels" : fieldNameStack.peek();
                 addChildModel(modelStack.peek(), newModel, fieldName);
             } else {
                 listener.onModelStarted(newModel, attributes);
             }
             modelStack.push(newModel);
 
-        } else if ("field".equalsIgnoreCase(qName) || "modelField".equalsIgnoreCase(qName)
-                   || "multiModelField".equalsIgnoreCase(qName) || "nodeField".equalsIgnoreCase(qName)) {
+        } else if (StringUtils.equalsAnyIgnoreCase(qName, "field", "modelField", "multiModelField", "nodeField")) {
             fieldNameStack.push(attributes.getValue("name"));
             fieldTypeStack.push(attributes.getValue("type")); // Store the field's type
 
@@ -117,22 +106,13 @@ public class UfedModelHandler extends DefaultHandler {
             return;
         }
 
-        if (listOnly) {
-            modelStack.pop();
-            if (modelStack.isEmpty()) {
-                listener.onModelCompleted(null);
-            }
-            return;
-        }
-
         if ("model".equalsIgnoreCase(qName)) {
             BaseModel completedModel = modelStack.pop();
             if (modelStack.isEmpty()) {
                 // this model object has completed, notify the listener
                 listener.onModelCompleted(completedModel);
             }
-        } else if ("field".equalsIgnoreCase(qName) || "modelField".equalsIgnoreCase(qName)
-                   || "multiModelField".equalsIgnoreCase(qName) || "nodeField".equalsIgnoreCase(qName)) {
+        } else if (StringUtils.equalsAnyIgnoreCase(qName, "field", "modelField", "multiModelField", "nodeField")) {
             // Guard against empty stacks if XML is malformed
             if (!fieldNameStack.isEmpty()) {
                 fieldNameStack.pop();
@@ -166,6 +146,13 @@ public class UfedModelHandler extends DefaultHandler {
         } else if ("RelatedModels".equalsIgnoreCase(qName)) {
             inRelatedModels = false;
         }
+    }
+
+    protected void setAttributes(BaseModel model, Attributes attributes) {
+        for (int i = 0; i < attributes.getLength(); i++) {
+            model.setAttribute(attributes.getQName(i), attributes.getValue(i));
+        }
+        model.setId(attributes.getValue("id"));
     }
 
     private Object parseValue(String value, String type) {
@@ -222,7 +209,7 @@ public class UfedModelHandler extends DefaultHandler {
         }
     }
 
-    private void addChildModel(BaseModel parent, BaseModel child, String fieldName) {
+    protected void addChildModel(BaseModel parent, BaseModel child, String fieldName) {
 
         // Handle AdditionalInfo universally before specific parent checks
         if ("AdditionalInfo".equals(fieldName) && child instanceof KeyValueModel) {

@@ -54,7 +54,7 @@ public class UfedModelHandlerTest {
             }
         };
 
-        UfedModelHandler handler = new UfedModelHandler(xmlReader, parentHandler, listener, false);
+        UfedModelHandler handler = new UfedModelHandler(xmlReader, parentHandler, listener);
 
         InputStream xmlFile = UfedModelHandlerTest.class.getResourceAsStream("/ufed-chat-test.xml");
         saxParser.parse(xmlFile, handler);

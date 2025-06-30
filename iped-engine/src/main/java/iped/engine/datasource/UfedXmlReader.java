@@ -73,6 +73,7 @@ import iped.engine.data.DataSource;
 import iped.engine.data.Item;
 import iped.engine.datasource.ufed.UfedModelHandler;
 import iped.engine.datasource.ufed.UfedModelHandler.UfedModelListener;
+import iped.engine.datasource.ufed.UfedModelHandlerListOnly;
 import iped.engine.io.MetadataInputStreamFactory;
 import iped.engine.io.UFDRInputStreamFactory;
 import iped.engine.io.UFEDXMLWrapper;
@@ -574,7 +575,11 @@ public class UfedXmlReader extends DataSourceReader {
             // then delegates the parsing to UfedModelHandler
             if (qName.equals("modelType") && StringUtils.equalsAny(atts.getValue("type"),
                     "Chat", "InstantMessage", "Contact", "UserAccount")) {
-                xmlReader.setContentHandler(new UfedModelHandler(xmlReader, this, this, listOnly));
+                if (listOnly) {
+                    xmlReader.setContentHandler(new UfedModelHandlerListOnly(xmlReader, this, this));
+                } else {
+                    xmlReader.setContentHandler(new UfedModelHandler(xmlReader, this, this));
+                }
                 return;
             }
 
@@ -1756,6 +1761,11 @@ public class UfedXmlReader extends DataSourceReader {
 
         @Override
         public void onModelCompleted(BaseModel model) {
+
+            if (model instanceof Chat && ignoreSupportedChats && supportedApps.contains(((Chat) model).getSource())) {
+                return;
+            }
+
             if (listOnly) {
                 caseData.incDiscoveredEvidences(1);
                 return;
