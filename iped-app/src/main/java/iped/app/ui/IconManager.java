@@ -280,6 +280,7 @@ public class IconManager {
         icon = availableIconsMap.get("deviceinfo");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-deviceinfo", icon);
+            mimeIconMap.put("application/x-ufed-deviceinfoentry", icon);
             mimeIconMap.put("application/x-ufed-simdata", icon);
             mimeIconMap.put("application/x-ufed-html-simdata", icon);
             mimeIconMap.put("application/x-ufed-html-summary", icon);

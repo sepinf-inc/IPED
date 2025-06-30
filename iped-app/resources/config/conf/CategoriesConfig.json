@@ -194,7 +194,7 @@
     {"name": "Recordings", "mimes": ["application/x-ufed-html-recordings", "application/x-ufed-recording", "application/x-ios-voicemail-db"]},
     {"name": "Mobile Cards", "mimes": ["application/x-ufed-mobilecard"]},
     {"name": "Applications Usage", "mimes": ["application/x-ufed-appsusagelog", "application/x-ufed-applicationusage"]},
-    {"name": "Device Information", "mimes": ["application/x-ufed-deviceinfo"]},
+    {"name": "Device Information", "mimes": ["application/x-ufed-deviceinfo", "application/x-ufed-deviceinfoentry"]},
     {"name": "Activities Sensor", "mimes": ["application/x-ufed-activitysensordata", "application/x-ufed-activitysensordatameasurement", "application/x-ufed-activitysensordatasample"]},
     {"name": "Credit Cards", "mimes": ["application/x-ufed-creditcard"]},
     {"name": "Device Connectivity", "mimes": ["application/x-ufed-deviceconnectivity"]},
