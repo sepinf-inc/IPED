@@ -19,6 +19,7 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
+import org.apache.tika.parser.html.HtmlParser;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,7 +59,7 @@ public class UfedAccountableParser extends AbstractParser {
     }
 
     @Override
-    public void parse(InputStream inputStream, ContentHandler handler, Metadata metadata, ParseContext context)
+    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
 
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
@@ -72,10 +73,12 @@ public class UfedAccountableParser extends AbstractParser {
             }
 
             Accountable accountable = null;
-            if (inputStream instanceof TikaInputStream) {
-                accountable = (Accountable) TikaInputStream.cast(inputStream).getOpenContainer();
+            if (stream instanceof TikaInputStream) {
+                accountable = (Accountable) TikaInputStream.cast(stream).getOpenContainer();
             }
             if (accountable == null) {
+                HtmlParser parser = new HtmlParser();
+                parser.parse(stream, handler, metadata, context);
                 return;
             }
 
