@@ -95,8 +95,7 @@ public class UfedAccountableParser extends AbstractParser {
             }
 
             if (item instanceof IItem) {
-                String name = accountableHandler.getTitle();
-                ((IItem) item).setName(name);
+                ((IItem) item).setName(accountableHandler.getTitle());
             }
 
             xhtml.startElement("style");

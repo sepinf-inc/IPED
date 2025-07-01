@@ -131,6 +131,10 @@ public class UfedMessageParser extends AbstractParser {
             messageHandler.loadReferences(searcher);
             messageHandler.fillMetadata(metadata);
 
+            if (item instanceof IItem) {
+                ((IItem) item).setName(messageHandler.getTitle());
+            }
+
             xhtml.startElement("meta", "charset", "UTF-8");
 
             renderMessageView(item, message, xhtml);
