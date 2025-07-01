@@ -975,7 +975,7 @@ public class UfedXmlReader extends DataSourceReader {
                 if ("InstantMessage".equals(type)) {
                     numInstantMsgAttachs = this.numAttachments;
                     if (numInstantMsgAttachs > 0) {
-                        item.setMediaType(MediaTypes.UFED_MESSAGE_ATTACH_MIME);
+                        item.setMediaType(MediaTypes.UFED_ATTACHMENT_MIME);
                         item.getMetadata().add(ExtraProperties.MESSAGE_BODY,
                                 ATTACHED_MEDIA_MSG + numInstantMsgAttachs);
                     }
