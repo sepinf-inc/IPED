@@ -164,6 +164,11 @@ public class InstantMessageHandler extends BaseModelHandler<InstantMessage> {
         if (model.isSystemMessage()) {
             metadata.set(UFED_META_PREFIX + "isSystemMessage", Boolean.toString(true));
         }
+
+        if (model.getPosition() != null) {
+            metadata.set(Metadata.LATITUDE, model.getPosition().getLatitude());
+            metadata.set(Metadata.LONGITUDE, model.getPosition().getLongitude());
+        }
     }
 
     @Override
