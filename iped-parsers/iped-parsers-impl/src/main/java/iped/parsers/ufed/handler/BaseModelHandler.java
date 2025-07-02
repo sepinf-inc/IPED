@@ -1,5 +1,8 @@
 package iped.parsers.ufed.handler;
 
+import static iped.properties.ExtraProperties.COMMUNICATION_DATE;
+import static iped.properties.ExtraProperties.MESSAGE_BODY;
+import static iped.properties.ExtraProperties.MESSAGE_SUBJECT;
 import static iped.properties.ExtraProperties.UFED_JUMP_TARGETS;
 import static iped.properties.ExtraProperties.UFED_META_PREFIX;
 
@@ -120,6 +123,8 @@ public class BaseModelHandler<T extends BaseModel> {
         model.getJumpTargets().forEach(jt -> {
             metadata.add(UFED_JUMP_TARGETS, jt.getId());
         });
+
+        postProcessMetadata(metadata);
     }
 
     protected void fillFieldMetadata(String key, Object value, Metadata metadata, Set<String> fieldsToIgnore) {
@@ -137,6 +142,27 @@ public class BaseModelHandler<T extends BaseModel> {
             metadata.add(UFED_META_PREFIX + key, DateUtils.formatDate((Date) value));
         } else {
             metadata.add(UFED_META_PREFIX + key, value.toString());
+        }
+    }
+
+    private void postProcessMetadata(Metadata metadata) {
+        if (StringUtils.equalsAny(model.getModelType(), "InstantMessage", "Email", "Call", "SMS", "MMS")) {
+
+            String date = metadata.get(UFED_META_PREFIX + "TimeStamp");
+            metadata.remove(UFED_META_PREFIX + "TimeStamp");
+            metadata.set(COMMUNICATION_DATE, date);
+
+            String subject = metadata.get(UFED_META_PREFIX + "Subject");
+            metadata.remove(UFED_META_PREFIX + "Subject");
+            metadata.set(MESSAGE_SUBJECT, subject);
+
+            String body = metadata.get(UFED_META_PREFIX + "Body");
+            metadata.remove(UFED_META_PREFIX + "Body");
+            if (body == null) {
+                body = metadata.get(UFED_META_PREFIX + "Snippet");
+                metadata.remove(UFED_META_PREFIX + "Snippet");
+            }
+            metadata.set(MESSAGE_BODY, body);
         }
     }
 

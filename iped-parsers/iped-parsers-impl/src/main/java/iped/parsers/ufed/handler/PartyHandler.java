@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.data.IItemReader;
-import iped.parsers.chat.PartyStringBuilder;
 import iped.parsers.chat.PartyStringBuilderFactory;
 import iped.parsers.ufed.model.Party;
 import iped.properties.MediaTypes;
@@ -87,21 +86,8 @@ public class PartyHandler extends BaseModelHandler<Party> {
 
     @Override
     public String getTitle() {
-
-        PartyStringBuilder builder = PartyStringBuilderFactory.getBuilder(source);
-
-        model.getReferencedContact().ifPresentOrElse(ref -> {
-            builder //
-                    .withUserId(StringUtils.firstNonBlank(model.getIdentifier(), ref.getUserID())) //
-                    .withName(StringUtils.firstNonBlank(model.getName(), ref.getName())) //
-                    .withPhoneNumber(ref.getPhoneNumber()) //
-                    .withUsername(ref.getUsername());
-        }, () -> {
-            builder //
-                    .withUserId(model.getIdentifier()) //
-                    .withName(model.getName());
-        });
-
-        return builder.build();
+        return PartyStringBuilderFactory.getBuilder(source)
+                .withParty(model)
+                .build();
     }
 }

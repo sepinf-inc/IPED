@@ -1,6 +1,18 @@
 package iped.parsers.ufed.handler;
 
-import static iped.properties.ExtraProperties.*;
+import static iped.properties.ExtraProperties.CONVERSATION_ACCOUNT;
+import static iped.properties.ExtraProperties.CONVERSATION_ADMINS;
+import static iped.properties.ExtraProperties.CONVERSATION_ID;
+import static iped.properties.ExtraProperties.CONVERSATION_IS_OWNER_ADMIN;
+import static iped.properties.ExtraProperties.CONVERSATION_MESSAGES_COUNT;
+import static iped.properties.ExtraProperties.CONVERSATION_NAME;
+import static iped.properties.ExtraProperties.CONVERSATION_PARTICIPANTS;
+import static iped.properties.ExtraProperties.CONVERSATION_SUFFIX_ID;
+import static iped.properties.ExtraProperties.CONVERSATION_SUFFIX_NAME;
+import static iped.properties.ExtraProperties.CONVERSATION_SUFFIX_PHONE;
+import static iped.properties.ExtraProperties.CONVERSATION_SUFFIX_USERNAME;
+import static iped.properties.ExtraProperties.CONVERSATION_TYPE;
+import static iped.properties.ExtraProperties.UFED_META_PREFIX;
 
 import java.util.HashMap;
 import java.util.List;

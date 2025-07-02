@@ -1,9 +1,7 @@
 package iped.parsers.ufed.handler;
 
-import static iped.properties.ExtraProperties.COMMUNICATION_DATE;
 import static iped.properties.ExtraProperties.COMMUNICATION_DIRECTION;
 import static iped.properties.ExtraProperties.COMMUNICATION_FROM;
-import static iped.properties.ExtraProperties.COMMUNICATION_PREFIX;
 import static iped.properties.ExtraProperties.COMMUNICATION_TO;
 import static iped.properties.ExtraProperties.MESSAGE_ATTACHMENT_COUNT;
 import static iped.properties.ExtraProperties.PARENT_VIEW_POSITION;
@@ -18,6 +16,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.tika.metadata.Geographic;
 import org.apache.tika.metadata.Metadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +29,6 @@ import iped.parsers.ufed.model.ReplyMessageData;
 import iped.parsers.util.ConversationConstants;
 import iped.properties.BasicProps;
 import iped.search.IItemSearcher;
-import iped.utils.DateUtil;
 
 /**
  * Handles all processing logic for an InstantMessage model.
@@ -61,11 +59,6 @@ public class InstantMessageHandler extends BaseModelHandler<InstantMessage> {
 
         if (!model.getAttachments().isEmpty()) {
             metadata.set(MESSAGE_ATTACHMENT_COUNT, Integer.toString(model.getAttachments().size()));
-        }
-
-        // Message -> Date
-        if (model.getTimeStamp() != null) {
-            metadata.set(COMMUNICATION_DATE, DateUtil.dateToString(model.getTimeStamp()));
         }
 
         // Message -> Direction
@@ -166,8 +159,8 @@ public class InstantMessageHandler extends BaseModelHandler<InstantMessage> {
         }
 
         if (model.getPosition() != null) {
-            metadata.set(Metadata.LATITUDE, model.getPosition().getLatitude());
-            metadata.set(Metadata.LONGITUDE, model.getPosition().getLongitude());
+            metadata.set(Geographic.LATITUDE, model.getPosition().getLatitude());
+            metadata.set(Geographic.LONGITUDE, model.getPosition().getLongitude());
         }
     }
 

@@ -62,13 +62,10 @@ public class UfedAccountableParser extends AbstractParser {
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
 
-        XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
-
-        xhtml.startDocument();
         try {
             IItemReader item = context.get(IItemReader.class);
             IItemSearcher searcher = context.get(IItemSearcher.class);
-            if (item == null) {
+            if (item == null || searcher == null) {
                 return;
             }
 
@@ -77,6 +74,7 @@ public class UfedAccountableParser extends AbstractParser {
                 accountable = (Accountable) TikaInputStream.cast(stream).getOpenContainer();
             }
             if (accountable == null) {
+                // view is already generated — proceed to parse with HtmlParser
                 HtmlParser parser = new HtmlParser();
                 parser.parse(stream, handler, metadata, context);
                 return;
@@ -90,40 +88,40 @@ public class UfedAccountableParser extends AbstractParser {
             } else {
                 accountableHandler = new AccountableHandler<>(accountable);
             }
-
             accountableHandler.fillMetadata(metadata);
-
-            if (searcher != null) {
-                accountableHandler.loadReferences(searcher);
-            }
-
+            accountableHandler.loadReferences(searcher);
             if (item instanceof IItem) {
                 ((IItem) item).setName(accountableHandler.getTitle());
             }
 
-            xhtml.startElement("style");
-            xhtml.characters( //
-                     "table { border-collapse: collapse; }" + //
-                     "table, th, td { border: 1px solid black; }" + //
-                     "th, td { padding: 5px; text-align: left; }" + //
-                     "th { width: 150px; min-width: 150px; }" +
-                     "td img { max-width: 300px; margin: 4px }" + //
-                     ".ellipsis { display: inline-block; max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }" + //
-                     ".ellipsis:hover { white-space: normal; max-width: initial; }" //
-            );
-            xhtml.endElement("style");
+            // parse accountable content into the XHTML handler
+            XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
+            xhtml.startDocument();
+            try {
+                xhtml.startElement("style");
+                xhtml.characters(
+                        "table { border-collapse: collapse; }" + //
+                        "table, th, td { border: 1px solid black; }" + //
+                        "th, td { padding: 5px; text-align: left; }" + //
+                        "th { width: 150px; min-width: 150px; }" + "td img { max-width: 300px; margin: 4px }" + //
+                        ".ellipsis { display: inline-block; max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }" + //
+                        ".ellipsis:hover { white-space: normal; max-width: initial; }" //
+                );
+                xhtml.endElement("style");
 
-            renderAccountView(accountable, xhtml);
+                parserAccountable(accountable, xhtml);
+
+            } finally {
+                xhtml.endDocument();
+            }
 
         } catch (Exception e) {
-            logger.error("Error processing chat", e);
+            logger.error("Error processing Contact/UserAccount", e);
             throw e;
-        } finally {
-            xhtml.endDocument();
         }
     }
 
-    private void renderAccountView(Accountable contact, XHTMLContentHandler xhtml) throws SAXException, IOException {
+    private void parserAccountable(Accountable contact, XHTMLContentHandler xhtml) throws SAXException, IOException {
 
         xhtml.startElement("table");
 

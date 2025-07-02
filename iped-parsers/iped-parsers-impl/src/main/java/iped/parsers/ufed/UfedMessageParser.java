@@ -108,9 +108,6 @@ public class UfedMessageParser extends AbstractParser {
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
 
-        XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
-
-        xhtml.startDocument();
         try {
             IItemSearcher searcher = context.get(IItemSearcher.class);
             IItemReader item = context.get(IItemReader.class);
@@ -125,6 +122,7 @@ public class UfedMessageParser extends AbstractParser {
                 message = (InstantMessage) TikaInputStream.cast(stream).getOpenContainer();
             }
             if (message == null) {
+                // view is already generated — proceed to parse with HtmlParser
                 HtmlParser parser = new HtmlParser();
                 parser.parse(stream, handler, metadata, context);
                 return;
@@ -133,45 +131,47 @@ public class UfedMessageParser extends AbstractParser {
             InstantMessageHandler messageHandler = new InstantMessageHandler(message, item);
             messageHandler.loadReferences(searcher);
             messageHandler.fillMetadata(metadata);
-
             if (item instanceof IItem) {
                 ((IItem) item).setName(messageHandler.getTitle());
             }
-
-            xhtml.startElement("meta", "charset", "UTF-8");
-
-            renderMessageView(item, message, xhtml);
 
             storeLinkedHashes(message, metadata);
 
             if (extractor.shouldParseEmbedded(metadata)) {
 
-                String messageVirtualId = message.getId();
-
                 if (extractActivityLogs) {
-                    extractActivityLog(message, messageVirtualId, handler, extractor);
+                    extractActivityLog(message, handler, extractor);
                 }
                 if (extractAttachments) {
-                    extractAttachments(message, messageVirtualId, handler, extractor, false);
+                    extractAttachments(message, handler, extractor, false);
                 } else {
-                    extractAttachments(message, messageVirtualId, handler, extractor, true);
+                    extractAttachments(message, handler, extractor, true);
                 }
                 if (extractSharedContacts) {
-                    extractShareContacts(message, messageVirtualId, handler, extractor);
+                    extractShareContacts(message, handler, extractor);
                 }
             }
+
+            // parse message content into the XHTML handler
+            XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
+            xhtml.startDocument();
+            try {
+                parseMessage(item, message, xhtml);
+            } finally {
+                xhtml.endDocument();
+            }
+
         } catch (Exception e) {
-            logger.error("Error processing chat", e);
+            logger.error("Error processing InstantMessage", e);
             throw e;
-        } finally {
-            xhtml.endDocument();
         }
     }
 
-    private void renderMessageView(IItemReader item, InstantMessage message, XHTMLContentHandler handler) throws SAXException {
+    private void parseMessage(IItemReader item, InstantMessage message, XHTMLContentHandler handler) throws SAXException {
 
         String json = null;
         if (item instanceof IItem) {
+            // restore previously generated JSON
             json = (String) ((IItem) item).getTempAttribute(JSON_TEMP_ATTR);
         }
 
@@ -212,7 +212,7 @@ public class UfedMessageParser extends AbstractParser {
                 });
     }
 
-    private void extractActivityLog(InstantMessage message, String messageVirtualId, ContentHandler handler, EmbeddedDocumentExtractor extractor)
+    private void extractActivityLog(InstantMessage message, ContentHandler handler, EmbeddedDocumentExtractor extractor)
             throws SAXException, IOException {
 
         ChatActivity activity = message.getActivityLog();
@@ -222,15 +222,14 @@ public class UfedMessageParser extends AbstractParser {
 
             Metadata activityMeta = activityHandler.createMetadata();
             activityMeta.set(TikaCoreProperties.TITLE, activityHandler.getTitle());
-            activityMeta.set(StandardParser.INDEXER_CONTENT_TYPE, activity.getContentType().toString());
-            activityMeta.set(ExtraProperties.PARENT_VIRTUAL_ID, messageVirtualId);
+            activityMeta.set(StandardParser.INDEXER_CONTENT_TYPE, activity.getMediaType().toString());
             activityMeta.set(BasicProps.LENGTH, "");
 
             extractor.parseEmbedded(new EmptyInputStream(), handler, activityMeta, false);
         }
     }
 
-    private void extractAttachments(InstantMessage message, String messageVirtualId, ContentHandler handler, EmbeddedDocumentExtractor extractor,
+    private void extractAttachments(InstantMessage message, ContentHandler handler, EmbeddedDocumentExtractor extractor,
             boolean onlyUnreferenced) throws SAXException, IOException {
 
         for (Attachment attach : message.getAttachments()) {
@@ -241,18 +240,16 @@ public class UfedMessageParser extends AbstractParser {
             AttachmentHandler attachHandler = new AttachmentHandler(attach, null);
             Metadata attachMeta = attachHandler.createMetadata();
 
-            attachMeta.set(ExtraProperties.PARENT_VIRTUAL_ID, messageVirtualId);
-
             InputStream inputStream;
             if (attach.getUnreferencedContent() != null) {
                 inputStream = new ByteArrayInputStream(attach.getUnreferencedContent());
                 attachMeta.set(TikaCoreProperties.RESOURCE_NAME_KEY, attach.getFilename());
-                attachMeta.set(StandardParser.INDEXER_CONTENT_TYPE, attach.getAttachmentContentType());
+                attachMeta.set(StandardParser.INDEXER_CONTENT_TYPE, attach.getContentType());
                 attachMeta.set(BasicProps.LENGTH, Integer.toString(attach.getUnreferencedContent().length));
             } else {
                 inputStream = new EmptyInputStream();
                 attachMeta.set(TikaCoreProperties.TITLE, attachHandler.getTitle());
-                attachMeta.set(StandardParser.INDEXER_CONTENT_TYPE, attach.getContentType().toString());
+                attachMeta.set(StandardParser.INDEXER_CONTENT_TYPE, attach.getMediaType().toString());
                 attachMeta.set(BasicProps.LENGTH, "");
             }
 
@@ -260,7 +257,7 @@ public class UfedMessageParser extends AbstractParser {
         }
     }
 
-    private void extractShareContacts(InstantMessage message, String messageVirtualId, ContentHandler handler, EmbeddedDocumentExtractor extractor)
+    private void extractShareContacts(InstantMessage message, ContentHandler handler, EmbeddedDocumentExtractor extractor)
             throws SAXException, IOException {
 
         for (Contact shareContact : message.getSharedContacts()) {
@@ -268,8 +265,7 @@ public class UfedMessageParser extends AbstractParser {
 
             Metadata shareContactMeta = contactHandler.createMetadata();
             shareContactMeta.set(TikaCoreProperties.TITLE, contactHandler.getTitle());
-            shareContactMeta.set(StandardParser.INDEXER_CONTENT_TYPE, shareContact.getContentType().toString());
-            shareContactMeta.set(ExtraProperties.PARENT_VIRTUAL_ID, messageVirtualId);
+            shareContactMeta.set(StandardParser.INDEXER_CONTENT_TYPE, shareContact.getMediaType().toString());
             shareContactMeta.set(BasicProps.LENGTH, "");
             contactHandler.fillMetadata(shareContactMeta);
 

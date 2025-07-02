@@ -129,7 +129,7 @@ public abstract class BaseModel implements Serializable {
         }
     }
 
-    public MediaType getContentType() {
+    public MediaType getMediaType() {
         return MediaType.application(MediaTypes.UFED_MIME_PREFIX + modelType);
     }
 

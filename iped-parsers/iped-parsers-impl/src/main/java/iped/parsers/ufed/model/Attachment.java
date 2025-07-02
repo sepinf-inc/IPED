@@ -25,7 +25,7 @@ public class Attachment extends BaseModel {
 
     // Specific field getters
     public String getFilename() { return (String) getField("Filename"); }
-    public String getAttachmentContentType() { return (String) getField("ContentType"); }
+    public String getContentType() { return (String) getField("ContentType"); }
     public String getURL() { return (String) getField("URL"); }
     public String getTitle() { return (String) getField("Title"); }
     public String getTranscript() { return (String) getField("Transcript"); }
@@ -47,6 +47,7 @@ public class Attachment extends BaseModel {
         this.unreferencedContent = unreferencedContent;
     }
 
+    // externalized in a field to serialize in JSON
     public String getFileId() {
         return fileId;
     }
@@ -59,13 +60,17 @@ public class Attachment extends BaseModel {
         }
     }
 
+    public boolean isFileRelated() {
+        return getFilename() != null || getAttachmentExtractedPath() != null;
+    }
+
     @Override
     public String toString() {
         return new StringJoiner(", ", Attachment.class.getSimpleName() + "[", "]")
                 .add("id='" + getId() + "'")
                 .add("file_id='" + getFileId() + "'")
                 .add("Filename='" + getFilename() + "'")
-                .add("ContentType='" + getContentType() + "'")
+                .add("ContentType='" + getMediaType() + "'")
                 .toString();
     }
 }

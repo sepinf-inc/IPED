@@ -174,13 +174,15 @@ public class UfedChatParser extends AbstractParser {
                     extractor.parseEmbedded(chatStream, handler, chatPreviewMeta, false);
                     bytes = nextBytes;
 
-                    if (extractMessages) {
-                        extractMessages(subList, virtualId, handler, extractor, chat);
+                    if (extractor.shouldParseEmbedded(metadata)) {
+                        if (extractMessages) {
+                            extractMessages(subList, virtualId, handler, extractor, chat);
+                        }
                     }
                 }
             }
         } catch (Exception e) {
-            logger.error("Error processing chat", e);
+            logger.error("Error processing Chat", e);
             e.printStackTrace();
             throw e;
         }
@@ -195,7 +197,7 @@ public class UfedChatParser extends AbstractParser {
 
             Metadata messageMeta = new Metadata();
             messageMeta.set(TikaCoreProperties.TITLE, messageHandler.getTitle());
-            messageMeta.set(StandardParser.INDEXER_CONTENT_TYPE, message.getContentType().toString());
+            messageMeta.set(StandardParser.INDEXER_CONTENT_TYPE, message.getMediaType().toString());
             messageMeta.set(ExtraProperties.PARENT_VIRTUAL_ID, chatVirtualId);
             messageMeta.set(BasicProps.LENGTH, "");
 

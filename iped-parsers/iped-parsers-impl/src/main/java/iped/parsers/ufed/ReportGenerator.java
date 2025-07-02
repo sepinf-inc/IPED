@@ -367,7 +367,7 @@ public class ReportGenerator {
                 }
             }
 
-            String contentType = attachment.getAttachmentContentType();
+            String contentType = attachment.getContentType();
             if (contentType != null) {
                 contentType = contentType.toLowerCase();
             }
@@ -496,7 +496,7 @@ public class ReportGenerator {
                 }
             }
 
-            String attachContentType = attach.getAttachmentContentType();
+            String attachContentType = attach.getContentType();
             if (attachContentType != null) {
                 attachContentType = attachContentType.toLowerCase();
             }
