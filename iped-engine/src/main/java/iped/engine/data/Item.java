@@ -69,6 +69,8 @@ public class Item implements IItem {
 
     private static Logger LOGGER = LoggerFactory.getLogger(Item.class);
 
+    private static final String TIKA_OPEN_CONTAINER_KEY = "TIKA_OPEN_CONTAINER";
+
     private static Set<String> extraAttributeSet = Collections.synchronizedSet(new HashSet<String>());
 
     private static class Counter {
@@ -750,7 +752,15 @@ public class Item implements IItem {
             }
         }
         addTmpResource(tis);
+        Object openContainer = getTempAttribute(TIKA_OPEN_CONTAINER_KEY);
+        if (openContainer != null) {
+            tis.setOpenContainer(openContainer);
+        }
         return tis;
+    }
+
+    public void setOpenContainer(Object openContainer) {
+        setTempAttribute(TIKA_OPEN_CONTAINER_KEY, openContainer);
     }
 
     @Override
