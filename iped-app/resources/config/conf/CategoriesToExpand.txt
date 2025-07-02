@@ -22,6 +22,12 @@ Chrome Cache
 Apple Configuration Files
 #Event Files
 
+# Crypto objects
+Crypto Objects Containers
+CMS
+Keys
+Others Crypto Objects
+
 # Generates registry reports:
 Windows Registry
 

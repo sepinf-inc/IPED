@@ -29,6 +29,14 @@ public class Messages {
         }
     }
 
+    public static String getOrDefault(String key, String defaultValue) {
+        try {
+            return get(key);
+        } catch (MissingResourceException e) {
+            return defaultValue;
+        }
+    }
+
     public static String getString(String key, Object... args) {
         String value = get(key);
         if (args != null)
