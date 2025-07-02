@@ -1,0 +1,52 @@
+# -----------------------------------------------------------------------------
+# Cache Configuration Settings
+# -----------------------------------------------------------------------------
+
+# Specifies the cache mode. There are three options:
+# 1. "memoryOnly":  Uses only in-memory caching (heap and off-heap), without disk persistence.
+# 2. "disk":        Uses a multi-tiered cache with heap, off-heap, and disk storage.
+# 3. "redis":       Uses a Redis server for caching. The 'redisUrl' property must be set.
+mode = disk
+
+# -----------------------------------------------------------------------------
+# Cache Memory Pool Size Configuration
+#
+# The following properties control the size of the memory tiers for the cache.
+# The values are specified in Megabytes (MB).
+# -----------------------------------------------------------------------------
+
+# Defines the size of the on-heap memory pool in MB.
+# This is the fastest cache tier but impacts Java heap space.
+# Set to "auto" to calculate the size as 0.5% of the maximum Java heap memory (-Xmx).
+# Alternatively, provide a specific size in MB (e.g., 256).
+heapPoolSizeInMB = auto
+
+# Defines the size of the off-heap memory pool in MB. 
+# This tier stores data in memory outside the Java heap, reducing GC pauses.  It is still very fast. 
+# Set to "auto" to calculate the size as 0.5% of the total physical system memory.
+# Alternatively, provide a specific size in MB (e.g., 512). 
+offHeapPoolSizeInMB = auto
+
+# -----------------------------------------------------------------------------
+# Disk Cache Configuration (used when mode = disk)
+# -----------------------------------------------------------------------------
+
+# Specifies the directory for the disk cache. This is only used when 'mode' is 'disk'.
+# There are three options for this value:
+# 1. "global":      Uses a shared cache directory at <User Home>/.iped/cache.
+# 2. "internal":    Uses the cache directory that at <Case Folder>/iped/cache.
+# 3. "temp":        Uses a temporary cache directory that is deleted on exit.
+# 4. <custom-path>: A full path to a directory (e.g., /mnt/fast_storage/cache).
+cacheDir = internal
+
+# Defines the size of the disk pool in MB.  This is the largest but slowest tier.
+diskPoolSizeInMB = 1024
+
+# -----------------------------------------------------------------------------
+# Redis Cache Configuration (used when mode = redis)
+# -----------------------------------------------------------------------------
+
+# Specifies the URL for the Redis server.
+# This is only used when 'mode' is 'redis'.
+# The URL must start with "redis://" (e.g., redis://localhost:6379).
+redisUrl = redis://localhost:6379

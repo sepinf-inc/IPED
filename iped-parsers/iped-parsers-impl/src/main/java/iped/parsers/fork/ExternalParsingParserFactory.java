@@ -19,6 +19,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
+import iped.cache.ICacheProvider;
 import iped.parsers.standard.StandardParser;
 import iped.utils.IOUtil;
 

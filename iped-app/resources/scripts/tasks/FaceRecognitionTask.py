@@ -41,7 +41,6 @@ min_size = 48
 
 firstInstance = True
 processQueue = None
-cache = {}
 
 timeLock = threading.Lock()
 initLock = threading.Lock()
@@ -98,6 +97,7 @@ class FaceRecognitionTask:
 
     enabled = None
     videoSubitems = False
+    usesCache = True
     
     def isEnabled(self):
         return False if FaceRecognitionTask.enabled is None else FaceRecognitionTask.enabled
@@ -231,9 +231,12 @@ class FaceRecognitionTask:
         return result
     
     def cacheResults(self, hash, locations, encodings, count):
-        cache[hash + '_locations'] = locations
-        cache[hash + '_encodings'] = encodings
-        cache[hash + '_count'] = count
+        entry = {
+            'face_locations': locations,
+            'face_encodings': encodings,
+            'face_count': count
+        }
+        cache.put(hash, entry)
     
     # This function is executed on all case items
     def process(self, item):
@@ -260,17 +263,19 @@ class FaceRecognitionTask:
             return
 
         # reuse cached results
-        face_locations = cache.get(hash + '_locations')
-        face_encodings = cache.get(hash + '_encodings')
-        face_count = cache.get(hash + '_count')
-        if face_count is not None:
-            if face_count >= 0:
-                item.setExtraAttribute(ExtraProperties.FACE_COUNT, face_count)
-                if face_locations is not None and face_encodings is not None:
-                    if len(face_locations) > 0 and len(face_encodings) > 0:
-                        item.setExtraAttribute(ExtraProperties.FACE_LOCATIONS, face_locations)
-                        item.setExtraAttribute(ExtraProperties.FACE_ENCODINGS, face_encodings)
-            return
+        cacheEntry = cache.get(hash)
+        if cacheEntry is not None:
+            face_locations = cacheEntry['face_locations']
+            face_encodings = cacheEntry['face_encodings']
+            face_count = cacheEntry['face_count']
+            if face_count is not None:
+                if face_count >= 0:
+                    item.setExtraAttribute(ExtraProperties.FACE_COUNT, face_count)
+                    if face_locations is not None and face_encodings is not None:
+                        if len(face_locations) > 0 and len(face_encodings) > 0:
+                            item.setExtraAttribute(ExtraProperties.FACE_LOCATIONS, face_locations)
+                            item.setExtraAttribute(ExtraProperties.FACE_ENCODINGS, list(map(np.array, face_encodings)))
+                return
 
         try:
             # Get tiff:Orientation attribute
@@ -353,12 +358,11 @@ class FaceRecognitionTask:
             
             face_encodings = []
             for i in range(num_faces):
-                list = []
+                encodings_list = []
                 for j in range(128):
                     line = proc.stdout.readline()
-                    list.append(float(line))
-                np_array = np.array(list)
-                face_encodings.append(np_array)
+                    encodings_list.append(float(line))
+                face_encodings.append(encodings_list)
             
             t3 = time.time()
             with timeLock:
@@ -372,7 +376,7 @@ class FaceRecognitionTask:
         face_count = len(face_locations)
 
         item.setExtraAttribute(ExtraProperties.FACE_LOCATIONS, face_locations)
-        item.setExtraAttribute(ExtraProperties.FACE_ENCODINGS, face_encodings)
+        item.setExtraAttribute(ExtraProperties.FACE_ENCODINGS, list(map(np.array, face_encodings)))
         item.setExtraAttribute(ExtraProperties.FACE_COUNT, face_count)
         
         self.cacheResults(hash, face_locations, face_encodings, face_count)

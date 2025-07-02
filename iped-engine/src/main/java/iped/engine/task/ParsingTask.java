@@ -53,10 +53,13 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.cache.ICacheProvider;
 import iped.configuration.Configurable;
 import iped.data.ICaseData;
 import iped.data.IItem;
 import iped.data.IItemReader;
+import iped.engine.cache.CacheProvider;
+import iped.engine.config.CacheConfig;
 import iped.engine.config.CategoryToExpandConfig;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
@@ -166,6 +169,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
 
     private CategoryToExpandConfig expandConfig;
     private ParsingTaskConfig parsingConfig;
+    private CacheConfig cacheConfig;
 
     private IItem evidence;
     private ParseContext context;
@@ -177,6 +181,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
     private int numSubitems = 0;
     private StandardParser autoParser;
     private long minItemSizeToFragment;
+
 
     private static Set<MediaType> getTypesToCheckZipbomb() {
         HashSet<MediaType> set = new HashSet<>();
@@ -232,6 +237,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         ItemInfo itemInfo = ItemInfoFactory.getItemInfo(evidence);
         context.set(ItemInfo.class, itemInfo);
         context.set(OCROutputFolder.class, new OCROutputFolder(output));
+        context.set(ICacheProvider.class, CacheProvider.getInstance(cacheConfig));
 
         if (CarverTask.ignoreCorrupted && caseData != null && !caseData.isIpedReport()) {
             context.set(IgnoreCorruptedCarved.class, new IgnoreCorruptedCarved());
@@ -289,7 +295,6 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
                 || TelegramParser.TELEGRAM_USER_CONF.equals(item.getMediaType());
     }
 
-    @SuppressWarnings("resource")
     private void setEmptyTextCache(IItem evidence) {
         ((Item) evidence).setParsedTextCache(new TextCache());
     }
@@ -314,6 +319,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
                 task = new ParsingTask(worker, autoParser);
                 task.parsingConfig = this.parsingConfig;
                 task.expandConfig = this.expandConfig;
+                task.cacheConfig = this.cacheConfig;
                 task.safeProcess(evidence);
 
             } finally {
@@ -776,6 +782,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
 
         parsingConfig = configurationManager.findObject(ParsingTaskConfig.class);
         expandConfig = configurationManager.findObject(CategoryToExpandConfig.class);
+        cacheConfig = configurationManager.findObject(CacheConfig.class);
 
         SplitLargeBinaryConfig splitConfig = configurationManager.findObject(SplitLargeBinaryConfig.class);
         minItemSizeToFragment = splitConfig.getMinItemSizeToFragment();
@@ -783,7 +790,6 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         setupParsingOptions(configurationManager);
 
         this.autoParser = new StandardParser();
-
     }
 
     public static void setupParsingOptions(ConfigurationManager configurationManager) {
@@ -847,6 +853,10 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
 
         OCRConfig ocrConfig = configurationManager.findObject(OCRConfig.class);
         setupOCROptions(ocrConfig);
+        if (ocrConfig.isOCREnabled()) {
+            CacheProvider cacheProvider = CacheProvider.getInstance(configurationManager.findObject(CacheConfig.class));
+            OCRParser.preloadCache(cacheProvider);
+        }
 
         // do not open extra processes for OCR if ForkParser is enabled
         String value = parsingConfig.isEnableExternalParsing() ? Boolean.FALSE.toString() : ocrConfig.getExternalPdfToImgConv();
