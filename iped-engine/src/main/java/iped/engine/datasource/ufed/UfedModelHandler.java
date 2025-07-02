@@ -19,6 +19,7 @@ import iped.parsers.ufed.model.Contact;
 import iped.parsers.ufed.model.ContactEntry;
 import iped.parsers.ufed.model.ContactPhoto;
 import iped.parsers.ufed.model.Coordinate;
+import iped.parsers.ufed.model.Email;
 import iped.parsers.ufed.model.ForwardedMessageData;
 import iped.parsers.ufed.model.GenericModel;
 import iped.parsers.ufed.model.InstantMessage;
@@ -178,6 +179,7 @@ public class UfedModelHandler extends DefaultHandler {
             return new GenericModel("null");
         }
         switch (type) {
+            case "Email": return new Email();
             case "Chat": return new Chat();
             case "InstantMessage": {
                 if (!modelStack.isEmpty() && modelStack.peek() instanceof Chat) {
@@ -215,14 +217,25 @@ public class UfedModelHandler extends DefaultHandler {
         if ("AdditionalInfo".equals(fieldName) && child instanceof KeyValueModel) {
             parent.getAdditionalInfo().add((KeyValueModel) child);
             return;
-        }
-
-        if ("RelatedModels".equals(fieldName)) {
+        } else if ("RelatedModels".equals(fieldName)) {
             parent.getRelatedModels().add(child);
             return;
         }
 
-        if (parent instanceof Chat) {
+        if (parent instanceof Email) {
+            Email email = (Email) parent;
+            if ("From".equals(fieldName) && child instanceof Party) {
+                email.setFrom((Party) child);
+            } else if ("To".equals(fieldName) && child instanceof Party) {
+                email.getTo().add((Party) child);
+            } else if ("Cc".equals(fieldName) && child instanceof Party) {
+                email.getCc().add((Party) child);
+            } else if ("Bcc".equals(fieldName) && child instanceof Party) {
+                email.getBcc().add((Party) child);
+            } else if ("Attachments".equals(fieldName) && child instanceof Attachment) {
+                email.getAttachments().add((Attachment) child);
+            }
+        } else if (parent instanceof Chat) {
             Chat chat = (Chat) parent;
             if ("Participants".equals(fieldName) && child instanceof Party) {
                 chat.getParticipants().add((Party) child);

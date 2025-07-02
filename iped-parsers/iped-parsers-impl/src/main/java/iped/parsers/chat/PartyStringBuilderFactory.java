@@ -11,6 +11,7 @@ public class PartyStringBuilderFactory {
     public static final String SOURCE_WHATSAPP = "WhatsApp";
     public static final String SOURCE_TELEGRAM = "Telegram";
     public static final String SOURCE_INSTAGRAM = "Instagram";
+    public static final String SOURCE_EMAIL = "Email";
 
     /**
      * Creates a specific {@link PartyStringBuilder} based on the chat application source.
@@ -32,6 +33,8 @@ public class PartyStringBuilderFactory {
             case SOURCE_TELEGRAM:
                 return new TelegramPartyStringBuilder();
             case SOURCE_INSTAGRAM:
+                return new InstagramPartyStringBuilder();
+            case SOURCE_EMAIL:
                 return new InstagramPartyStringBuilder();
             default:
                 return new GenericPartyStringBuilder();

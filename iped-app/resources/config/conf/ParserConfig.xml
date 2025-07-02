@@ -337,6 +337,7 @@
             </params>
         </parser>
         <parser class="iped.parsers.ufed.UfedAccountableParser"></parser>
+        <parser class="iped.parsers.ufed.UfedEmailParser"></parser>
 
         <parser class="iped.parsers.emule.KnownMetParser">
             <params>

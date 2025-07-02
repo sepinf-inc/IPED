@@ -19,7 +19,7 @@
     ]},
     {"name": "Emails and Mailboxes", "categories":[
       {"name": "Mailboxes", "mimes": ["application/vnd.ms-outlook-pst", "application/outlook-dbx", "application/mbox", "application/x-incredimail", "application/vnd.lotus-notes", "application/x-win10-mail-db"]},
-      {"name": "Emails", "mimes": ["message/rfc822", "message/x-emlx", "application/vnd.ms-outlook", "message/outlook-pst", "application/x-ufed-html-mails", "message/x-ufed-email", "message/x-win10-mail-msg"]},
+      {"name": "Emails", "mimes": ["message/rfc822", "message/x-emlx", "application/vnd.ms-outlook", "message/outlook-pst", "application/x-ufed-html-mails", "application/x-ufed-email", "message/x-win10-mail-msg"]},
       {"name": "Appointments", "mimes": ["application/x-win10-mail-appointment"]},
       {"name": "Win10 Mail Info", "mimes": ["application/x-win10-mail-store"]},
       {"name": "Email Attachments"}

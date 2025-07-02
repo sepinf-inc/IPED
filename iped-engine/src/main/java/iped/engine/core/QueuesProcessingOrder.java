@@ -97,9 +97,10 @@ public class QueuesProcessingOrder {
         mediaTypes.put(ThreemaParser.CHAT_STORAGE, 3);
         mediaTypes.put(ThreemaParser.CHAT_STORAGE_F, 4);
 
-        // required to load ContactPhotos
+        // required to load ContactPhotos and Attachments
         mediaTypes.put(MediaTypes.UFED_CONTACT_MIME, 2);
         mediaTypes.put(MediaTypes.UFED_USER_ACCOUNT_MIME, 2);
+        mediaTypes.put(MediaTypes.UFED_EMAIL_MIME, 2);
 
         // required to load Attachments, Coordinates, Contacts and ContactPhotos
         mediaTypes.put(UfedChatParser.UFED_CHAT_MIME, 3);

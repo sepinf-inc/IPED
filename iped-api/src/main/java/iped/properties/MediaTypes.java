@@ -9,8 +9,8 @@ import iped.data.IItemReader;
 public class MediaTypes {
 
     public static final MediaType METADATA_ENTRY = MediaType.application("x-metadata-entry"); //$NON-NLS-1$
-    public static final MediaType UFED_EMAIL_MIME = MediaType.parse("message/x-ufed-email"); //$NON-NLS-1$
     public static final MediaType CHAT_MESSAGE_MIME = MediaType.parse("message/x-chat-message"); //$NON-NLS-1$
+    public static final MediaType UFED_EMAIL_MIME = MediaType.application("x-ufed-email");
     public static final MediaType UFED_MESSAGE_MIME = MediaType.application("x-ufed-instantmessage"); //$NON-NLS-1$
     public static final MediaType UFED_ATTACHMENT_MIME = MediaType.application("x-ufed-attachment");
     public static final MediaType UFED_CALL_MIME = MediaType.application("x-ufed-call"); //$NON-NLS-1$

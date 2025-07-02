@@ -88,6 +88,7 @@ import iped.parsers.telegram.TelegramParser;
 import iped.parsers.ufed.UfedChatParser;
 import iped.parsers.ufed.model.BaseModel;
 import iped.parsers.ufed.model.Chat;
+import iped.parsers.ufed.model.Email;
 import iped.parsers.util.MetadataUtil;
 import iped.parsers.util.PhoneParsingConfig;
 import iped.parsers.whatsapp.WhatsAppParser;
@@ -571,7 +572,7 @@ public class UfedXmlReader extends DataSourceReader {
             // if started <modelType type="Chat">, <modelType type="InstantMessage"> and so on...
             // then delegates the parsing to UfedModelHandler
             if (qName.equals("modelType") && StringUtils.equalsAny(atts.getValue("type"),
-                    "Chat", "InstantMessage", "Contact", "UserAccount")) {
+                    "Chat", "InstantMessage", "Contact", "UserAccount", "Email")) {
                 if (listOnly) {
                     xmlReader.setContentHandler(new UfedModelHandlerListOnly(xmlReader, this, this));
                 } else {
@@ -1750,7 +1751,7 @@ public class UfedXmlReader extends DataSourceReader {
         }
 
         @Override
-        public void onModelStarted(BaseModel completedModel, Attributes attr) {
+        public void onModelStarted(BaseModel model, Attributes attr) {
             if (listOnly) {
                 return;
             }
