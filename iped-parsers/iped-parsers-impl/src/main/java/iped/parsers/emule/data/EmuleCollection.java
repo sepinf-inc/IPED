@@ -59,35 +59,6 @@ public class EmuleCollection implements ECollection {
 
     }
 
-    public static void main(String args[]) {
-
-        File dir = new File("/mnt/shares/10.65.6.13/pedo/mat_1535_2024/WD-WXL1A394SXJ0/emulecollections/");
-
-        for (File f : dir.listFiles()) {
-            try {
-                EmuleCollection c = EmuleCollection.loadCollectionFile(f);
-
-                System.out.println("");
-                System.out.println("Collection--------------------------------------------------------");
-                System.out.println(c.getName());
-                System.out.println("------------------------------------------------------------------");
-                for (ECollectionFile cf : c.files) {
-                    System.out.println("Filename:" + cf.getName());
-                    System.out.println("Hash:" + cf.getHashStr());
-                    System.out.println("------");
-                }
-
-            } catch (FileNotFoundException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-        }
-
-    }
-
     public String getName() {
         return m_sCollectionAuthorName;
     }
