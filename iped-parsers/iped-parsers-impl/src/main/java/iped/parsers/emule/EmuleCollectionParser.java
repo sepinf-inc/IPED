@@ -170,8 +170,7 @@ public class EmuleCollectionParser extends AbstractParser {
 
         int i = 0;
         String linkedItens = "";
-        // String linkedMd5_512 = "";
-        // String linkedMd5_64K = "";
+
         long totalSize = 0;
         for (ECollectionFile cf : files) {
             String trClass = "ra";
@@ -183,14 +182,6 @@ public class EmuleCollectionParser extends AbstractParser {
 
 
                 hashset = ChildPornHashLookup.lookupHash(KnownMetParser.EDONKEY, hashStr);
-                // Map<String, String> properties =
-                // ChildPornHashLookup.lookupProperties(KnownMetParser.EDONKEY, hashStr);
-                // if (properties.containsKey("md5_512")) {
-                // linkedMd5_512 += " || hashDb\\:md5_512:" + properties.get("md5_512");
-                // }
-                // if (properties.containsKey("md5_64k")) {
-                // linkedMd5_64K += " || hashDb\\:md5_64k:" + properties.get("md5_64k");
-                // }
             }
 
             if (hashset != null && hashset.size() > 0) {
@@ -234,14 +225,6 @@ public class EmuleCollectionParser extends AbstractParser {
             linkedItens = linkedItens.substring(3);
             metadata.add(ExtraProperties.LINKED_ITEMS, linkedItens);
         }
-        // if (linkedMd5_512 != "") {
-        // linkedMd5_512 = linkedMd5_512.substring(3);
-        // metadata.add("linked_md5_512", linkedMd5_512);
-        // }
-        // if (linkedMd5_64K != "") {
-        // linkedMd5_64K = linkedMd5_64K.substring(3);
-        // metadata.add("linked_md5_64K", linkedMd5_64K);
-        // }
         xhtml.endElement("table"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         xhtml.startElement("p");
         xhtml.characters(Messages.getString("EmuleCollectionParser.CollectionTotalSize") + totalSize);
