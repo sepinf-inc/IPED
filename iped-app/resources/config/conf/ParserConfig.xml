@@ -38,6 +38,7 @@
             </params>
         </parser>
         <parser class="org.apache.tika.parser.crypto.TSDParser"></parser>
+        <parser class="iped.parsers.emule.EmuleCollectionParser"></parser>
         <parser class="org.apache.tika.parser.csv.TextAndCSVParser"></parser>
         <parser class="org.apache.tika.parser.dwg.DWGParser"></parser>
         <parser class="org.apache.tika.parser.epub.EpubParser"></parser>
