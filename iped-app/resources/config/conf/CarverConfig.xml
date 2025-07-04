@@ -61,6 +61,16 @@
             <minLength>100000</minLength>
             <maxLength>500000000</maxLength>
         </carverType>
+        
+        <carverType>
+            <name>7ZIP</name>
+            <carverClass>iped.carvers.custom.SevenZipCarver</carverClass>
+            <signatures>
+                <headerSignature>7z\bc\af\27\1c</headerSignature>
+            </signatures>
+            <minLength>1000</minLength>
+            <maxLength>100000000</maxLength>
+        </carverType>
 
         <!--carverType>
             <name>DER</name>
