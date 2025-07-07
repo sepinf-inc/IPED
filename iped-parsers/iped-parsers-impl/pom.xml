@@ -4,7 +4,7 @@
     <parent>
         <groupId>iped</groupId>
         <artifactId>iped-parsers</artifactId>
-        <version>4.2-snapshot</version>
+        <version>4.3.0-snapshot</version>
     </parent>
     <artifactId>iped-parsers-impl</artifactId>
     <packaging>jar</packaging>
@@ -209,7 +209,7 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-expression</artifactId>
-            <version>5.3.27</version>
+            <version>5.3.39</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.springframework</groupId>

@@ -1,9 +1,9 @@
 package iped.engine.datasource;
 
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -27,7 +27,6 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Random;
@@ -76,6 +75,7 @@ import iped.engine.io.UFDRInputStreamFactory;
 import iped.engine.io.UFEDXMLWrapper;
 import iped.engine.localization.Messages;
 import iped.engine.search.QueryBuilder;
+import iped.engine.task.ExportFileTask;
 import iped.engine.task.ImageThumbTask;
 import iped.engine.task.die.DIETask;
 import iped.engine.task.index.IndexItem;
@@ -140,6 +140,8 @@ public class UfedXmlReader extends DataSourceReader {
     private final List<String[]> deviceInfoData = new ArrayList<String[]>();
     private HashSet<String> addedImUfedIds = new HashSet<>();
     private HashSet<String> addedTrackIds = new HashSet<>();
+
+    HashMap<String, String> md5ToLocalPath = new HashMap<>();
 
     public UfedXmlReader(ICaseData caseData, File output, boolean listOnly) {
         super(caseData, output, listOnly);
@@ -440,7 +442,8 @@ public class UfedXmlReader extends DataSourceReader {
                 "ProfilePicture", //$NON-NLS-1$
                 "WebAddress", //$NON-NLS-1$
                 "Reaction", //$NON-NLS-1$
-                "Price"
+                "Price",
+                "QuotedMessageData"
         ));
 
         @Override
@@ -805,8 +808,23 @@ public class UfedXmlReader extends DataSourceReader {
             } else if (qName.equals("targetid") && parentNode.element.equals("jumptargets")) { //$NON-NLS-1$ //$NON-NLS-2$
                 item.getMetadata().add(ExtraProperties.UFED_META_PREFIX + parentNode.element, chars.toString().trim());
 
+            } else if (qName.equals("taggedFiles")) { //$NON-NLS-1$
+                md5ToLocalPath.clear();
+
             } else if (qName.equals("file")) { //$NON-NLS-1$
                 itemSeq.remove(itemSeq.size() - 1);
+
+                // See https://github.com/sepinf-inc/IPED/issues/2299
+                String md5 = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "MD5");
+                String localPath = item.getMetadata().get(LOCAL_PATH_META);
+                if (StringUtils.isNotBlank(md5) && md5.length() == 32) {
+                    if (item.getInputStreamFactory() != null && !md5ToLocalPath.containsKey(md5) && StringUtils.isNotBlank(localPath)) {
+                        md5ToLocalPath.put(md5, localPath);
+                    } else if (item.getInputStreamFactory() == null && md5ToLocalPath.containsKey(md5)) {
+                        String seenPath = md5ToLocalPath.get(md5);
+                        setContent(item, seenPath);
+                    }
+                }
 
                 // See https://github.com/sepinf-inc/IPED/issues/1685
                 boolean merged = false;
@@ -896,6 +914,7 @@ public class UfedXmlReader extends DataSourceReader {
                     item.getMetadata().set(ExtraProperties.MESSAGE_BODY, body);
                 }
                 int numInstantMsgAttachs = 0;
+                boolean ignoreItemLocal = false;
                 if ("InstantMessage".equals(type)) {
                     numInstantMsgAttachs = this.numAttachments;
                     if (numInstantMsgAttachs > 0) {
@@ -904,6 +923,13 @@ public class UfedXmlReader extends DataSourceReader {
                                 UFEDChatParser.ATTACHED_MEDIA_MSG + numInstantMsgAttachs);
                     }
                     this.numAttachments = 0;
+                    if (!itemSeq.isEmpty()) {
+                        IItem parentItem = itemSeq.get(itemSeq.size() - 1);
+                        // See https://github.com/sepinf-inc/IPED/issues/2264#issuecomment-2254192462
+                        if (parentItem.getName().startsWith("ReplyMessageData_")) {
+                            ignoreItemLocal = true;
+                        }
+                    }
                 }
                 if (mergeInParentNode.contains(type) && itemSeq.size() > 0) {
                     IItem parentItem = itemSeq.get(itemSeq.size() - 1);
@@ -1059,6 +1085,11 @@ public class UfedXmlReader extends DataSourceReader {
                         if (currency != null) {
                             parentItem.getMetadata().add(prop, currency);
                         }
+                    } else if ("QuotedMessageData".equals(type)) {
+                        String refId = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "ReferenceId");
+                        if (refId != null) {
+                            parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + "QuotedReferenceId", refId);
+                        }
                     }
                 } else {
                     if (!ignoreItems) {
@@ -1067,7 +1098,11 @@ public class UfedXmlReader extends DataSourceReader {
                             String ufedId = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "id");
                             // add items if not ignoring already added instant message xml tree
                             if (ignoreItemTree == null) {
-                                processItem(item);
+                                if (!ignoreItemLocal) {
+                                    processItem(item);
+                                } else {
+                                    caseData.incDiscoveredEvidences(-1);
+                                }
                                 if ("InstantMessage".equals(type)) {
                                     // remember IM ids to not add them again later
                                     addedImUfedIds.add(ufedId);
@@ -1164,43 +1199,36 @@ public class UfedXmlReader extends DataSourceReader {
             }
         }
 
-        private HashMap<String, String[]> toCache = new LinkedHashMap<String, String[]>(16, 0.75f, true) {
-
-            private static final long serialVersionUID = 1L;
-
-            @Override
-            protected boolean removeEldestEntry(Entry<String, String[]> eldest) {
-                return this.size() > 1000;
-            }
-        };
-
         private Property toProperty = Property.internalText(ExtraProperties.COMMUNICATION_TO);
 
         private void fillMissingInfo(Item item) {
             String from = item.getMetadata().get(ExtraProperties.COMMUNICATION_FROM);
-            String to = item.getMetadata().get(ExtraProperties.COMMUNICATION_TO);
+            String[] to = item.getMetadata().getValues(ExtraProperties.COMMUNICATION_TO);
             boolean fromOwner = Boolean.valueOf(item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "fromOwner"));
-            if (to == null) {
+            if (to == null || to.length != 1) {
                 if (item.getMediaType() != null
                         && MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.UFED_MESSAGE_MIME)) {
                     // we have seen ufed messages without parent chat
                     if (itemSeq.size() == 0)
                         return;
                     IItem parentChat = itemSeq.get(itemSeq.size() - 1);
-                    String[] parties = parentChat.getMetadata()
-                            .getValues(ExtraProperties.UFED_META_PREFIX + "Participants");
-                    ArrayList<String> toList = new ArrayList<>();
-                    for (String party : parties) {
-                        if ((from != null && !party.equals(from)) || (fromOwner && !ownerParties.contains(party)))
-                            toList.add(party);
+                    List<String> toList = new ArrayList<>();
+                    if (to != null && to.length > 0) {
+                        toList = Arrays.asList(to);
+                    } else {
+                        String[] parties = parentChat.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants");
+                        for (String party : parties) {
+                            if ((from != null && !party.equals(from)) || (fromOwner && !ownerParties.contains(party)))
+                                toList.add(party);
+                        }
                     }
-                    String key = toList.toString();
-                    String[] val = toCache.get(key);
-                    if (val == null) {
-                        val = toList.toArray(new String[toList.size()]);
-                        toCache.put(key, val);
+                    if (toList.size() == 1) {
+                        item.getMetadata().set(toProperty, toList.get(0));
+                    } else if (toList.size() > 1) {
+                        item.getMetadata().set(toProperty, parentChat.getName());
+                        item.getMetadata().set(ExtraProperties.IS_GROUP_MESSAGE, "true");
                     }
-                    item.getMetadata().set(toProperty, val);
+
                 }
             }
             if (!msisdns.isEmpty() && (MediaTypes.UFED_CALL_MIME.equals(item.getMediaType())
@@ -1284,10 +1312,12 @@ public class UfedXmlReader extends DataSourceReader {
                 if (fisf == null) {
                     fisf = new FileInputStreamFactory(rootFolder.toPath());
                 }
-                item.setInputStreamFactory(fisf);
-                item.setIdInDataSource(path);
                 File file = new File(rootFolder, path);
-                item.setLength(file.length());
+                if (file.exists()) {
+                    item.setInputStreamFactory(fisf);
+                    item.setIdInDataSource(path);
+                    item.setLength(file.length());
+                }
             } else {
                 if (getUISF().entryExists(path)) {
                     item.setLength(getUISF().getEntrySize(path));
@@ -1413,6 +1443,11 @@ public class UfedXmlReader extends DataSourceReader {
                     // Replace extracted path by attached file's local path
                     extracted_path = ufedFileIdToLocalPath.get(item.getMetadata().get(FILE_ID_ATTR));
                 }
+
+                // if extracted_path does not reference a ufedId, use the ufedId of attached file
+                if (ufedId == null && ufedFileIdToLocalPath.containsKey(item.getMetadata().get(FILE_ID_ATTR))) {
+                    ufedId = item.getMetadata().get(FILE_ID_ATTR);
+                }
                 
             }
             setContent(item, extracted_path);
@@ -1433,27 +1468,10 @@ public class UfedXmlReader extends DataSourceReader {
             return sb.toString();
         }
 
-        private FileInputStreamFactory getPreviewInputStreamFactory() {
-            if (previewFisf == null) {
-                previewFisf = new FileInputStreamFactory(output.getParentFile().toPath());
-            }
-            return previewFisf;
-        }
-
-        private File getNewPreviewFile(String subdir) {
-            File baseDir = new File(output, "view/" + subdir);
-            baseDir.mkdirs();
-            File file;
-            do {
-                long suffix = Math.abs(random.nextLong());
-                file = new File(baseDir, "view-" + suffix + ".html");
-            } while (file.exists());
-            return file;
-        }
-
-        private File createEmailPreview(Item email) {
-            File file = getNewPreviewFile("emails");
-            try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"))) { //$NON-NLS-1$
+        // TODO Move this to (MakePreview)Task.
+        private void createEmailPreview(Item email) {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(baos, "UTF-8"))) { //$NON-NLS-1$
                 bw.write("<!DOCTYPE html>\n" //$NON-NLS-1$
                         + "<html>\n" //$NON-NLS-1$
                         + "<head>\n" //$NON-NLS-1$
@@ -1509,21 +1527,19 @@ public class UfedXmlReader extends DataSourceReader {
                     bw.write(body);
 
                 bw.write("</body></html>"); //$NON-NLS-1$
+                bw.close();
 
-            } catch (IOException e) {
+                ExportFileTask.getLastInstance().insertIntoStorage(email, baos.toByteArray(), baos.size());
+                email.setHash(null);
+
+            } catch (Exception e) {
                 e.printStackTrace();
             }
             email.setMediaType(MediaType.parse(UFED_EMAIL_MIME));
-            String relativePath = Util.getRelativePath(output, file);
-            email.setIdInDataSource(relativePath);
-            email.setInputStreamFactory(getPreviewInputStreamFactory());
-            email.setLength(file.length());
-            email.setHash(null);
-
-            return file;
         }
 
-        private File createContactPreview(Item contact) {
+        // TODO Move this to (MakePreview)Task.
+        private void createContactPreview(Item contact) {
 
             String name = contact.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name"); //$NON-NLS-1$
             if (name == null)
@@ -1533,8 +1549,8 @@ public class UfedXmlReader extends DataSourceReader {
                 updateName(contact, name);
             }
 
-            File file = getNewPreviewFile("contacts");
-            try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"))) { //$NON-NLS-1$
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(baos, "UTF-8"))) { //$NON-NLS-1$
 
                 bw.write("<!DOCTYPE html>\n" //$NON-NLS-1$
                         + "<html>\n" //$NON-NLS-1$
@@ -1582,20 +1598,18 @@ public class UfedXmlReader extends DataSourceReader {
                     bw.write("<br>"); //$NON-NLS-1$
                 }
                 bw.write("</body></html>"); //$NON-NLS-1$
+                bw.close();
 
-            } catch (IOException e) {
+                ExportFileTask.getLastInstance().insertIntoStorage(contact, baos.toByteArray(), baos.size());
+                contact.setHash(null);
+
+            } catch (Exception e) {
                 e.printStackTrace();
             }
-            String relativePath = Util.getRelativePath(output, file);
-            contact.setIdInDataSource(relativePath);
-            contact.setInputStreamFactory(getPreviewInputStreamFactory());
-            contact.setLength(file.length());
-            contact.setHash(null);
-
-            return file;
         }
 
-        private File createDeviceInfoPreview(Item deviceInfo) {
+        // TODO Move this to (MakePreview)Task.
+        private void createDeviceInfoPreview(Item deviceInfo) {
             Collections.sort(deviceInfoData, new Comparator<String[]>() {
                 public int compare(String[] a, String[] b) {
                     int cmp = a[0].compareToIgnoreCase(b[0]);
@@ -1616,8 +1630,8 @@ public class UfedXmlReader extends DataSourceReader {
             }
             uniqueDeviceInfo.add(deviceInfoData.get(deviceInfoData.size() - 1));
 
-            File file = getNewPreviewFile("deviceInfo");
-            try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"))) {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(baos, "UTF-8"))) {
                 bw.write("<!DOCTYPE html>\n"
                         + "<html>\n"
                         + "<head>\n"
@@ -1647,16 +1661,15 @@ public class UfedXmlReader extends DataSourceReader {
                     }
                 }
                 bw.write("</table></body></html>");
+                bw.flush();
+                bw.close();
 
-            } catch (IOException e) {
+                ExportFileTask.getLastInstance().insertIntoStorage(deviceInfo, baos.toByteArray(), baos.size());
+                deviceInfo.setHash(null);
+
+            } catch (Exception e) {
                 e.printStackTrace();
             }
-            String relativePath = Util.getRelativePath(output, file);
-            deviceInfo.setIdInDataSource(relativePath);
-            deviceInfo.setInputStreamFactory(getPreviewInputStreamFactory());
-            deviceInfo.setLength(file.length());
-            deviceInfo.setHash(null);
-            return file;
         }
 
         @Override

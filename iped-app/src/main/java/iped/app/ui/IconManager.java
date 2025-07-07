@@ -40,7 +40,7 @@ import iped.utils.QualityIcon;
  */
 public class IconManager {
 
-    public static final int defaultSize = 16;
+    public static final int defaultSize = 18;
     public static final int defaultGallerySize = 24;
     public static final int defaultCategorySize = 20;
 
@@ -202,8 +202,13 @@ public class IconManager {
         icon = availableIconsMap.get("torrent");
         if (icon != null) {
             mimeIconMap.put("application/x-bittorrent-resume-dat", icon);
+            mimeIconMap.put("application/x-bittorrent-resume-dat-entry", icon);
             mimeIconMap.put("application/x-bittorrent-settings-dat", icon);
             mimeIconMap.put("application/x-bittorrent", icon);
+        }
+        icon = availableIconsMap.get("transmission");
+        if (icon != null) {
+            mimeIconMap.put("application/x-transmission-resume", icon);
         }
 
         icon = availableIconsMap.get("registry");
@@ -267,6 +272,19 @@ public class IconManager {
             mimeIconMap.put("application/x-ufed-chat-preview-telegram", icon);
         }
 
+        icon = availableIconsMap.get("apple-config");
+        if (icon != null) {
+            mimeIconMap.put("application/x-plist-itunes", icon);
+            mimeIconMap.put("application/x-bplist-itunes", icon);
+            mimeIconMap.put("application/x-bplist-memgraph", icon);
+            mimeIconMap.put("application/x-bplist", icon);
+            mimeIconMap.put("application/x-apple-nskeyedarchiver", icon);
+            mimeIconMap.put("application/x-plist", icon);
+            mimeIconMap.put("application/x-bplist-webarchive", icon);
+            mimeIconMap.put("application/x-plist-webarchive", icon);
+            mimeIconMap.put("application/x-plist-memgraph", icon);
+        }
+
         icon = availableIconsMap.get("deviceinfo");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-deviceinfo", icon);
@@ -280,6 +298,7 @@ public class IconManager {
             mimeIconMap.put("application/x-ufed-location", icon);
             mimeIconMap.put("application/x-ios-locations-db", icon);
             mimeIconMap.put("application/x-ufed-html-locations", icon);
+            mimeIconMap.put("application/x-apple-location", icon);
         }
 
         icon = availableIconsMap.get("password");
@@ -592,11 +611,6 @@ public class IconManager {
         icon = availableIconsMap.get("elf");
         if (icon != null) {
             mimeIconMap.put("application/x-elf-record", icon);
-        }
-
-        icon = availableIconsMap.get("plist");
-        if (icon != null) {
-            mimeIconMap.put("application/x-bplist", icon);
         }
 
         icon = availableIconsMap.get("drive");

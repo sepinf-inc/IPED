@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -28,6 +29,7 @@ import iped.data.IItem;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.ImageThumbTaskConfig;
+import iped.engine.util.Util;
 import iped.properties.MediaTypes;
 import iped.utils.ExternalImageConverter;
 import iped.utils.ImageUtil;
@@ -37,7 +39,7 @@ import iped.viewers.util.ImageMetadataUtil;
 public class ImageThumbTask extends ThumbTask {
 
     public static final String THUMB_TIMEOUT = "thumbTimeout"; //$NON-NLS-1$
-    
+
     private static final int TIMEOUT_DELTA = 5;
 
     private static final int samplingRatio = 3;
@@ -57,7 +59,10 @@ public class ImageThumbTask extends ThumbTask {
     private ExternalImageConverter externalImageConverter;
     private static final AtomicBoolean extConvPropInit = new AtomicBoolean(false);
 
+    private int compression;
     private int thumbSize;
+    private int maxViewImageSize;
+    private Set<String> mimesToCreateView;
 
     public ImageThumbTaskConfig getImageThumbConfig() {
         return imgThumbConfig;
@@ -86,7 +91,7 @@ public class ImageThumbTask extends ThumbTask {
                     System.setProperty(ExternalImageConverter.winToolPathPrefixProp,
                             Configuration.getInstance().appRoot);
                 }
-                
+
                 File tmpDir = new File(System.getProperty("java.io.tmpdir"), "ext-conv"); //$NON-NLS-1$ //$NON-NLS-2$
                 tmpDir.mkdirs();
                 System.setProperty(ExternalImageConverter.tmpDirProp, tmpDir.getAbsolutePath());
@@ -98,6 +103,9 @@ public class ImageThumbTask extends ThumbTask {
 
         externalImageConverter = new ExternalImageConverter(executor);
         thumbSize = imgThumbConfig.getThumbSize();
+        compression = imgThumbConfig.getCompression();
+        maxViewImageSize = imgThumbConfig.getMaxViewImageSize();
+        mimesToCreateView = imgThumbConfig.getMimesToCreateView();
 
         synchronized (logInit) {
             if (isEnabled() && !logInit.get()) {
@@ -107,13 +115,16 @@ public class ImageThumbTask extends ThumbTask {
             }
         }
 
-        // use memory instead of files to cache image streams
-        // tests have shown up to 3x thumb creation speed up
+        // Use memory instead of files to cache image streams
+        // tests have shown up to 3x thumb creation speed up.
         ImageIO.setUseCache(false);
 
-        // install a new exif reader to read thumb data.
-        // must be installed at the beginning of the processing, see #532
+        // Install a new EXIF reader to read thumb data.
+        // must be installed at the beginning of the processing, see #532.
         ImageMetadataUtil.updateExifReaderToLoadThumbData();
+
+        // Set ImageIO plugins priority order.
+        ImageUtil.updateImageIOPluginsPriority();
     }
 
     private static void startTmpDirCleaner(File tmpDir) {
@@ -229,6 +240,10 @@ public class ImageThumbTask extends ThumbTask {
 
         File thumbFile = getThumbFile(evidence);
         if (hasThumb(evidence, thumbFile)) {
+            File viewFile = getViewFile(evidence, "jpg");
+            if (viewFile.exists()) {
+                evidence.setViewFile(viewFile);
+            }
             return;
         }
 
@@ -277,8 +292,13 @@ public class ImageThumbTask extends ThumbTask {
     }
 
     private void createImageThumb(IItem evidence, File thumbFile) {
-        long[] performanceStats = new long[numStats];
         try {
+            if (evidence.getLength() != null && evidence.getLength().longValue() == 0) {
+                // If evidence length is zero, don't even try to create a thumb 
+                saveThumb(evidence, thumbFile);
+                return;
+            }
+            long[] performanceStats = new long[numStats];
             BufferedImage img = null;
             if (imgThumbConfig.isExtractThumb() && isJpeg(evidence)) { // $NON-NLS-1$
                 long t = System.currentTimeMillis();
@@ -300,15 +320,44 @@ public class ImageThumbTask extends ThumbTask {
                 performanceStats[img == null ? 7 : 5] += System.currentTimeMillis() - t;
             }
             if (img == null) {
+                // External Conversion
                 long t = System.currentTimeMillis();
-                try (BufferedInputStream stream = evidence.getBufferedInputStream()) {
-                    img = externalImageConverter.getImage(stream, thumbSize, false, evidence.getLength(), true);
-                    if (img != null)
-                        evidence.setExtraAttribute("externalThumb", "true"); //$NON-NLS-1$ //$NON-NLS-2$
-                } catch (TimeoutException e) {
-                    stats.incTimeouts();
-                    evidence.setExtraAttribute(THUMB_TIMEOUT, "true"); //$NON-NLS-1$
-                    logger.warn("Timeout creating thumb: " + evidence); //$NON-NLS-1$
+
+                // Create a high resolution view
+                String mime = MediaTypes.getMimeTypeString(evidence);
+                if (mime != null && mimesToCreateView.contains(mime)) {
+                    try (BufferedInputStream stream = evidence.getBufferedInputStream()) {
+                        img = externalImageConverter.getImage(stream, maxViewImageSize, true, evidence.getLength(),
+                                true);
+                    } catch (TimeoutException e) {
+                        stats.incTimeouts();
+                        evidence.setExtraAttribute(THUMB_TIMEOUT, "true");
+                        logger.warn("Timeout creating view: " + evidence);
+                    }
+                    if (img != null) {
+                        // Store view
+                        File viewTmpFile = getViewFile(evidence, "tmp");
+                        viewTmpFile.getParentFile().mkdirs();
+                        ImageIO.write(img, "jpg", viewTmpFile);
+                        File viewFile = getViewFile(evidence, "jpg");
+                        viewTmpFile.renameTo(viewFile);
+                        evidence.setViewFile(viewFile);
+                    }
+                }
+
+                if (img == null) {
+                    // No view was created through external conversion
+                    try (BufferedInputStream stream = evidence.getBufferedInputStream()) {
+                        img = externalImageConverter.getImage(stream, thumbSize, false, evidence.getLength(), true);
+                    } catch (TimeoutException e) {
+                        stats.incTimeouts();
+                        evidence.setExtraAttribute(THUMB_TIMEOUT, "true");
+                        logger.warn("Timeout creating thumb: " + evidence);
+                    }
+                }
+
+                if (img != null) {
+                    evidence.setExtraAttribute("externalThumb", "true");
                 }
                 performanceStats[img == null ? 10 : 8]++;
                 performanceStats[img == null ? 11 : 9] += System.currentTimeMillis() - t;
@@ -326,23 +375,21 @@ public class ImageThumbTask extends ThumbTask {
                 performanceStats[14]++;
                 performanceStats[15] += System.currentTimeMillis() - t;
 
-                if (isJpeg(evidence)) {
-                    // Ajusta rotacao da miniatura a partir do metadado orientacao
-                    try (BufferedInputStream stream = evidence.getBufferedInputStream()) {
-                        int orientation = ImageMetadataUtil.getOrientation(stream);
-                        if (orientation > 0) {
-                            t = System.currentTimeMillis();
-                            img = ImageUtil.rotate(img, orientation);
-                            performanceStats[16]++;
-                            performanceStats[17] += System.currentTimeMillis() - t;
-                        }
+                // Ajusta rotacao da miniatura a partir do metadado orientacao
+                try (BufferedInputStream stream = evidence.getBufferedInputStream()) {
+                    int orientation = ImageMetadataUtil.getOrientation(stream);
+                    if (orientation > 0) {
+                        t = System.currentTimeMillis();
+                        img = ImageUtil.applyOrientation(img, orientation);
+                        performanceStats[16]++;
+                        performanceStats[17] += System.currentTimeMillis() - t;
                     }
                 }
 
                 t = System.currentTimeMillis();
                 performanceStats[18]++;
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                ImageIO.write(img, "jpg", baos); //$NON-NLS-1$
+                ImageUtil.writeCompressedJPG(img, baos, compression);
                 evidence.setThumb(baos.toByteArray());
                 performanceStats[19] += System.currentTimeMillis() - t;
             }
@@ -370,5 +417,9 @@ public class ImageThumbTask extends ThumbTask {
         } finally {
             updateHasThumb(evidence);
         }
+    }
+
+    private File getViewFile(IItem evidence, String ext) {
+        return Util.getFileFromHash(new File(output, MakePreviewTask.viewFolder), evidence.getHash(), ext);
     }
 }

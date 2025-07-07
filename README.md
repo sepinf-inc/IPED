@@ -108,3 +108,6 @@ Timeline:
 
 Time chart:
 ![image](https://github.com/sepinf-inc/IPED/assets/7276994/81df1c18-361d-49f1-b755-36520437803a)
+
+Events correlation of 2 suspects actions and illegal activities:
+![image](https://github.com/sepinf-inc/IPED/assets/7276994/e1f47b15-ba89-4436-9291-7ec354ef2b57)

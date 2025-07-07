@@ -266,10 +266,10 @@ public class TelegramParser extends SQLite3DBParser {
             meta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, m.getFrom().toString());
             if (m.getChat().isGroupOrChannel()) {
                 ChatGroup groupChat = (ChatGroup) m.getChat();
-                for (Long id : groupChat.getMembers()) {
-                    if (id != m.getFrom().getId())
-                        meta.add(org.apache.tika.metadata.Message.MESSAGE_TO, e.getContact(id).toString());
-                }
+                String to = groupChat.isGroup() ? "Group " : "Channel ";
+                to += groupChat.getName() + " (id:" + groupChat.getId() + ")";
+                meta.add(org.apache.tika.metadata.Message.MESSAGE_TO, to);
+                meta.set(ExtraProperties.IS_GROUP_MESSAGE, "true");
             }
             if (meta.get(org.apache.tika.metadata.Message.MESSAGE_TO) == null) {
                 if (m.getToId() != 0) {

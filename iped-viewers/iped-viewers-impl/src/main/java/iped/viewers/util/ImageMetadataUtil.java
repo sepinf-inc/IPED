@@ -8,6 +8,7 @@ import java.util.List;
 
 import javax.imageio.ImageIO;
 
+import com.drew.imaging.ImageMetadataReader;
 import com.drew.imaging.jpeg.JpegMetadataReader;
 import com.drew.imaging.jpeg.JpegSegmentMetadataReader;
 import com.drew.imaging.jpeg.JpegSegmentType;
@@ -130,7 +131,7 @@ public class ImageMetadataUtil {
 
     public static int getOrientation(InputStream imageFile) {
         try {
-            Metadata metadata = JpegMetadataReader.readMetadata(imageFile);
+            Metadata metadata = ImageMetadataReader.readMetadata(imageFile);
             if (metadata != null) {
                 Collection<ExifIFD0Directory> dirs = metadata.getDirectoriesOfType(ExifIFD0Directory.class);
                 if (dirs != null) {

@@ -77,14 +77,17 @@ function process(e){
 		e.setCategory(cat);
 	}
 	
-	if(mime.equals("application/dita+xml") && 
+	if(path.indexOf("whatsapp") != -1 && mime.equals("application/dita+xml") &&
 		(e.getName().equals("com.whatsapp_preferences.xml") || 
 		 e.getName().equals("com.whatsapp_preferences_light.xml") ||
 		 e.getName().equals("com.whatsapp.w4b_preferences.xml") || 
-		 e.getName().equals("com.whatsapp.w4b_preferences_light.xml"))) {
+		 e.getName().equals("com.whatsapp.w4b_preferences_light.xml") ||
+		 e.getName().equals("registration.RegisterPhone.xml") ||
+		 e.getName().equals("startup_prefs.xml"))) {
 		e.setMediaTypeStr("application/x-whatsapp-user-xml");
-		e.setCategory("Contacts");
+		e.setCategory("User Accounts");
 	}
+
 	if(mime.equals("application/dita+xml") && e.getName().equals("userconfing.xml")){
 		e.setMediaTypeStr("application/x-telegram-user-conf");
 		//e.setCategory("Contacts");
@@ -144,6 +147,32 @@ function process(e){
 	   			   name.indexOf("history") > -1 || 
 				   name.indexOf("journal") > -1)
 					e.setCategory("Internet History");
+			}
+		}
+	}
+
+	// Calls sub-categories
+	if (mime.equals("application/x-ufed-call")) {
+		source = e.getMetadata().get("ufed:Source");
+		if (source == null) {
+			e.setCategory("Phone Calls");
+		} else {
+			source = source.toLowerCase();
+			if (source.contains("whatsapp")) {
+				e.setCategory("WhatsApp Calls");
+			} else if (source.contains("facebook")) {
+				e.setCategory("Facebook Calls");
+			} else if (source.contains("discord")) {
+				e.setCategory("Discord Calls");
+			} else if (source.contains("threema")) {
+				e.setCategory("Threema Calls");
+			} else if (source.contains("telegram")) {
+				e.setCategory("Telegram Calls");
+			} else if (source.contains("signal")) {
+				e.setCategory("Signal Calls");
+			} else {
+			    // New sub-categories may be created from other phone call apps handled by UFED
+				e.setCategory("Other Calls");
 			}
 		}
 	}

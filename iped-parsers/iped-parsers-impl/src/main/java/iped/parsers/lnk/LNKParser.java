@@ -169,7 +169,7 @@ public class LNKParser {
                         fimNome++; // tem um byte zero adicional no final da string pois é 16-bit aligned
                     } else {
                         pName = toStr(b, posTmp, fimNome);
-                        if (pName.length() % 2 == 0) {
+                        if (pName != null && pName.length() % 2 == 0) {
                             fimNome++; // tem um byte zero adicional no final da string pois é 16-bit aligned
                         }
                     }
@@ -181,7 +181,7 @@ public class LNKParser {
                 posTmp += 4;
                 String hexSig = toHex(b, posTmp, 4);
 
-                if (hexSig.equals("0400efbe")) { //$NON-NLS-1$
+                if ("0400efbe".equals(hexSig)) { //$NON-NLS-1$
                     parseExtensionBlock(b, posTmp, objItem);
                     // if (!fEntry.hasClassID()) {
                     // possiveis outras extensoes 0xbeef0005, 0xbeef0006 and 0xbeef001a
@@ -290,7 +290,7 @@ public class LNKParser {
                     fimStr++; // tem um byte zero adicional no final da string pois é 16-bit aligned
                 } else {
                     uName = toStr(b, posBlock + offSet, fimStr);
-                    if (uName.length() % 2 == 0) {
+                    if (uName != null && uName.length() % 2 == 0) {
                         fimStr++; // tem um byte zero adicional no final da string pois é 16-bit aligned
                     }
                 }
@@ -640,6 +640,8 @@ public class LNKParser {
                 long indMft = toInt6(b, posTmp);
                 int seqNum = toSmall(b, posTmp + 6);
                 if (indMft > 0) {
+                    fEntry.setIndMft(indMft);
+                    fEntry.setSeqMft(seqNum);
                     fEntry.setNtfsRef(
                             "MFT Entry Idx " + String.valueOf(indMft) + " - Seq.Numb. " + String.valueOf(seqNum)); //$NON-NLS-1$ //$NON-NLS-2$
                 }
@@ -752,7 +754,7 @@ public class LNKParser {
     }
 
     private static final String toStr(byte[] b, int offset, int length) {
-        if (offset + length >= b.length)
+        if (offset + length > b.length || offset < 0 || length < 0)
             return null;
         return new String(b, offset, length, Charset.forName("UTF-8")); //$NON-NLS-1$
     }
@@ -762,7 +764,7 @@ public class LNKParser {
     }
 
     private static final String toStr(byte[] b, int offset, int maxlength, byte delim, String charSet) {
-        if (offset + maxlength >= b.length || maxlength < 0)
+        if (offset + maxlength >= b.length || maxlength < 0 || offset < 0)
             return null;
         // procurando o delimitador
         int i = 0;
@@ -803,7 +805,7 @@ public class LNKParser {
     }
 
     private static final int findEndStr(byte[] b, int offset, int maxlength, boolean utf16) {
-        if (offset + maxlength >= b.length || maxlength < 0)
+        if (offset + maxlength >= b.length || maxlength < 0 || offset < 0)
             return -1;
         // procurando o delimitador
         int i = 0;

@@ -18,6 +18,7 @@ import java.util.PriorityQueue;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.tika.utils.SystemUtils;
@@ -29,7 +30,7 @@ import iped.engine.config.ConfigurationManager;
 import iped.engine.config.FileSystemConfig;
 import iped.engine.config.LocalConfig;
 import iped.engine.config.PluginConfig;
-import iped.engine.datasource.SleuthkitReader;
+import iped.engine.core.Manager;
 import iped.engine.sleuthkit.SleuthkitServer.FLAGS;
 import iped.io.SeekableInputStream;
 
@@ -45,16 +46,24 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
 
     private static List<SleuthkitClient> clientsList = new ArrayList<>();
 
-    public static final int NUM_TSK_SERVERS;
+    private static final int NUM_TSK_SERVERS;
 
     private static final HashMap<String, String> newEnvVars = new HashMap<>();
 
-    static volatile String dbDirPath;
-    static AtomicInteger idStart = new AtomicInteger();
+    private static volatile File tskDb;
+    private static AtomicInteger idStart = new AtomicInteger();
+
+    private static final AtomicBoolean initSleuthkitServers = new AtomicBoolean(false);
 
     static {
-        FileSystemConfig config = ConfigurationManager.get().findObject(FileSystemConfig.class);
-        NUM_TSK_SERVERS = config.getNumImageReaders();
+        if (Manager.getInstance() != null) {
+            FileSystemConfig config = ConfigurationManager.get().findObject(FileSystemConfig.class);
+            NUM_TSK_SERVERS = config.getNumImageReaders();
+        } else {
+            // Analysis UI just needs 1 process in most scenarios (gallery could benefit of
+            // more processes just if thumbs are not pre-computed)
+            NUM_TSK_SERVERS = 1;
+        }
     }
 
     int id = idStart.getAndIncrement();;
@@ -131,8 +140,23 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
 
     }
 
-    public static void initSleuthkitServers(final String dbPath) throws InterruptedException {
-        dbDirPath = dbPath;
+    public static void initSleuthkitServers(File tskDB) throws InterruptedException {
+        if (initSleuthkitServers.get()) {
+            return;
+        }
+        FileSystemConfig fsConfig = ConfigurationManager.get().findObject(FileSystemConfig.class);
+        if (tskDB.exists() && fsConfig.isRobustImageReading()) {
+            synchronized (SleuthkitClient.class) {
+                if (!initSleuthkitServers.get()) {
+                    SleuthkitClient.initSleuthkitServers0(tskDB);
+                    initSleuthkitServers.set(true);
+                }
+            }
+        }
+    }
+
+    private static void initSleuthkitServers0(File DB) throws InterruptedException {
+        tskDb = DB;
         ArrayList<Thread> initThreads = new ArrayList<>();
         for (int i = 0; i < NUM_TSK_SERVERS; i++) {
             Thread t = new Thread() {
@@ -181,8 +205,8 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
 
         String[] cmd = { "java", "-cp", classpath, "-Xmx128M", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 "-Djava.io.tmpdir=" + System.getProperty("java.io.tmpdir").replace("\"", "\\\"") + File.separator + "tsk-server-" + Math.abs(rand.nextLong()),
-                SleuthkitServer.class.getCanonicalName(), dbDirPath + "/" + SleuthkitReader.DB_NAME, //$NON-NLS-1$
-                String.valueOf(id), pipePath };
+                SleuthkitServer.class.getCanonicalName(), tskDb.getAbsolutePath(), // $NON-NLS-1$
+                Configuration.getInstance().appRoot, pipePath };
 
         try {
             logger.info("Starting SleuthkitServer " + id + ": " + Arrays.asList(cmd));

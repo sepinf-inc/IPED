@@ -21,7 +21,6 @@ import iped.data.IItemReader;
 import iped.parsers.util.ChildPornHashLookup;
 
 /**
- *
  * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
  */
 public class Message implements Comparable<Message> {
@@ -69,7 +68,11 @@ public class Message implements Comparable<Message> {
     private long idQuote;
     private Message messageQuote = null;
     private boolean quoted = false;
+    private MessageQuotedType messageQuotedType = MessageQuotedType.QUOTE_NOT_FOUND;
     private String uuid = null;
+    private long editId = -1;
+    private long quoteChatId = -1;
+    private String quotePrivateGroupName;
     private byte[] metaData;
     private String groupInviteName;
     private MessageTemplate messageTemplate;
@@ -207,8 +210,8 @@ public class Message implements Comparable<Message> {
     }
 
     public void setMediaMime(String mediaMime) {
-        if (mediaMime != null && mediaMime.contains(";")) { //$NON-NLS-1$
-            mediaMime = mediaMime.split(";")[0]; //$NON-NLS-1$
+        if (mediaMime != null && mediaMime.contains(";")) {
+            mediaMime = mediaMime.split(";")[0];
         }
         this.mediaMime = mediaMime;
     }
@@ -412,6 +415,7 @@ public class Message implements Comparable<Message> {
             case CHANGED_NUMBER_TO:
             case CHANNEL_ADDED_PRIVACY:
             case CHANNEL_CREATED:
+            case CHAT_STARTED_FROM_AD:
             case COMMUNITY_MANAGEMENT_ACTION:
             case DELETED_BY_ADMIN:
             case DELETED_BY_SENDER:
@@ -422,12 +426,17 @@ public class Message implements Comparable<Message> {
             case EPHEMERAL_DURATION_CHANGED:
             case EPHEMERAL_SAVE:
             case GROUP_ADDED_TO_COMMUNITY:
+            case COMMUNITY_CHANGED_ONLY_ADMINS_CAN_ADD:
+            case COMMUNITY_CHANGED_ALL_MEMBERS_CAN_ADD:
+            case GROUP_CHANGED_ALL_MEMBERS_CAN_ADD:
             case GROUP_CHANGED_ALL_MEMBERS_CAN_EDIT:
             case GROUP_CHANGED_ALL_MEMBERS_CAN_SEND:
             case GROUP_CHANGED_ONLY_ADMINS_CAN_ADD:
             case GROUP_CHANGED_ONLY_ADMINS_CAN_EDIT:
             case GROUP_CHANGED_ONLY_ADMINS_CAN_SEND:
+            case GROUP_CHANGED_ADMIN_APPROVAL_OFF:
             case GROUP_CREATED:
+            case COMMUNITY_DESCRIPTION_CHANGED:
             case GROUP_DESCRIPTION_CHANGED:
             case GROUP_DESCRIPTION_DELETED:
             case GROUP_ICON_CHANGED:
@@ -437,6 +446,7 @@ public class Message implements Comparable<Message> {
             case GROUP_ONLY_ADMINS_CAN_SEND:
             case MESSAGES_ENCRYPTED:
             case MESSAGES_NOW_ENCRYPTED:
+            case NEW_PARTICIPANTS_NEED_ADMIN_APPROVAL:
             case ORDER_MESSAGE:
             case PINNED_MESSAGE:
             case SENDER_ADDED_TO_CONTACTS:
@@ -450,8 +460,12 @@ public class Message implements Comparable<Message> {
             case USER_JOINED_WHATSAPP:
             case USER_LEFT_GROUP:
             case USER_REMOVED_FROM_GROUP:
+            case USER_REQUEST_TO_ADD_TO_GROUP:
             case YOU_ADMIN:
             case YOU_NOT_ADMIN:
+            case OVER_256_MEMBERS_ONLY_ADMINS_CAN_EDIT:
+            case SECURITY_NOTIFICATIONS_NO_LONGER_AVAILABLE:
+            case CONTACTED_FIND_BUSINESSES:
                 return true;
             default:
         }
@@ -554,6 +568,14 @@ public class Message implements Comparable<Message> {
         this.quoted = quoted;
     }
 
+    public MessageQuotedType getMessageQuotedType() {
+        return messageQuotedType;
+    }
+
+    public void setMessageQuotedType(MessageQuotedType messageQuotedType) {
+        this.messageQuotedType = messageQuotedType;
+    }
+
     public Message getMessageQuote(){
         return this.messageQuote;
     }
@@ -568,6 +590,22 @@ public class Message implements Comparable<Message> {
 
     public void setUuid(String uuid) {
         this.uuid = uuid;
+    }
+
+    public long getEditId() {
+        return this.editId;
+    }
+
+    public void setEditId(long editId) {
+        this.editId = editId;
+    }
+
+    public long getQuoteChatId() {
+        return this.quoteChatId;
+    }
+
+    public void setQuoteChatId(long quoteChatId) {
+        this.quoteChatId = quoteChatId;
     }
 
     public byte[] getMetaData() {
@@ -586,6 +624,14 @@ public class Message implements Comparable<Message> {
         this.groupInviteName = groupInviteName;
     }
 
+    public String getQuotePrivateGroupName() {
+        return quotePrivateGroupName;
+    }
+
+    public void setQuotePrivateGroupName(String quotePrivateGroupName) {
+        this.quotePrivateGroupName = quotePrivateGroupName;
+    }
+
     public MessageTemplate getMessageTemplate() {
         return messageTemplate;
     }
@@ -595,7 +641,7 @@ public class Message implements Comparable<Message> {
     }
 
     public long getSortId() {
-        return sortId;
+        return sortId != 0 ? sortId : timeStamp != null ? timeStamp.getTime() : id;
     }
 
     public void setSortId(long sortId) {
@@ -635,27 +681,72 @@ public class Message implements Comparable<Message> {
     }
 
     public static enum MessageType {
-        TEXT_MESSAGE, IMAGE_MESSAGE, AUDIO_MESSAGE, VIDEO_MESSAGE, UNKNOWN_MEDIA_MESSAGE, CONTACT_MESSAGE, LOCATION_MESSAGE, SHARE_LOCATION_MESSAGE, VOICE_CALL, VIDEO_CALL, DOC_MESSAGE, GIF_MESSAGE, BLOCKED_CONTACT, UNBLOCKED_CONTACT, BUSINESS_CHAT, BUSINESS_TO_STANDARD, MESSAGES_ENCRYPTED, MESSAGES_NOW_ENCRYPTED, ENCRYPTION_KEY_CHANGED, MISSED_VOICE_CALL, MISSED_VIDEO_CALL, DELETED_MESSAGE, DELETED_BY_ADMIN, DELETED_BY_SENDER, GROUP_CREATED, USER_ADDED_TO_COMMUNITY, USER_ADDED_TO_GROUP, USER_JOINED_GROUP_FROM_COMMUNITY, USER_JOINED_GROUP_FROM_LINK, USER_JOINED_GROUP_FROM_INVITATION, USER_LEFT_GROUP, USER_REMOVED_FROM_GROUP, USER_COMMUNITY_ADMIN, URL_MESSAGE, GROUP_ICON_CHANGED, GROUP_ICON_DELETED, GROUP_DESCRIPTION_CHANGED, GROUP_DESCRIPTION_DELETED, SUBJECT_CHANGED, YOU_ADMIN, YOU_NOT_ADMIN, USER_ADMIN, WAITING_MESSAGE, STICKER_MESSAGE, REFUSED_VIDEO_CALL, REFUSED_VOICE_CALL, UNAVAILABLE_VIDEO_CALL, UNAVAILABLE_VOICE_CALL, UNKNOWN_VOICE_CALL, UNKNOWN_VIDEO_CALL, VIEW_ONCE_AUDIO_MESSAGE, VIEW_ONCE_IMAGE_MESSAGE, VIEW_ONCE_VIDEO_MESSAGE, CALL_MESSAGE, BUSINESS_META_SECURE_SERVICE, GROUP_INVITE, TEMPLATE_MESSAGE, TEMPLATE_QUOTE, POLL_MESSAGE, EPHEMERAL_DURATION_CHANGED, EPHEMERAL_SETTINGS_NOT_APPLIED, EPHEMERAL_CHANGED, EPHEMERAL_DEFAULT, EPHEMERAL_SAVE, GROUP_CHANGED_ONLY_ADMINS_CAN_ADD, GROUP_CHANGED_ONLY_ADMINS_CAN_SEND, GROUP_CHANGED_ALL_MEMBERS_CAN_SEND, GROUP_CHANGED_ONLY_ADMINS_CAN_EDIT, GROUP_CHANGED_ALL_MEMBERS_CAN_EDIT, GROUP_ONLY_ADMINS_CAN_SEND, CHANGED_DEVICE, CHANGED_NUMBER_TO, CHANGED_NUMBER_CHATTING_WITH_NEW, CHANGED_NUMBER_CHATTING_WITH_OLD, STANDARD_CHAT, SENDER_ADDED_TO_CONTACTS, SENDER_IN_CONTACTS, BUSINESS_OFFICIAL, GROUP_ADDED_TO_COMMUNITY, GROUP_REMOVED_FROM_COMMUNITY, COMMUNITY_MANAGEMENT_ACTION, COMMUNITY_WELCOME, UI_ELEMENTS, UI_ELEMENTS_QUOTE, CHAT_ADDED_PRIVACY, CHANNEL_ADDED_PRIVACY, CHANNEL_CREATED, ORDER_MESSAGE, PRODUCT_MESSAGE, BUSINESS_CHANGED_NAME, USER_JOINED_WHATSAPP, PINNED_MESSAGE, GROUP_NAME_CHANGED, AI_THIRD_PARTY, NEW_PARTICIPANTS_NEED_ADMIN_APPROVAL, RESET_GROUP_LINK, COMMUNITY_RENAMED, ANY_COMMUNITY_MEMBER_CAN_JOIN_GROUP, UNKNOWN_MESSAGE
+        TEXT_MESSAGE, IMAGE_MESSAGE, AUDIO_MESSAGE, VIDEO_MESSAGE, UNKNOWN_MEDIA_MESSAGE, CONTACT_MESSAGE, LOCATION_MESSAGE, SHARE_LOCATION_MESSAGE, VOICE_CALL, VIDEO_CALL, DOC_MESSAGE, GIF_MESSAGE, BLOCKED_CONTACT, UNBLOCKED_CONTACT, BUSINESS_CHAT, BUSINESS_TO_STANDARD, MESSAGES_ENCRYPTED, MESSAGES_NOW_ENCRYPTED, ENCRYPTION_KEY_CHANGED, MISSED_VOICE_CALL, MISSED_VIDEO_CALL, DELETED_MESSAGE, DELETED_BY_ADMIN, DELETED_BY_SENDER, GROUP_CREATED, USER_ADDED_TO_COMMUNITY, USER_ADDED_TO_GROUP, USER_JOINED_GROUP_FROM_COMMUNITY, USER_JOINED_GROUP_FROM_LINK, USER_JOINED_GROUP_FROM_INVITATION, USER_LEFT_GROUP, USER_REMOVED_FROM_GROUP, USER_COMMUNITY_ADMIN, URL_MESSAGE, GROUP_ICON_CHANGED, GROUP_ICON_DELETED, GROUP_DESCRIPTION_CHANGED, GROUP_DESCRIPTION_DELETED, SUBJECT_CHANGED, YOU_ADMIN, YOU_NOT_ADMIN, USER_ADMIN, WAITING_MESSAGE, STICKER_MESSAGE, REFUSED_VIDEO_CALL, REFUSED_VOICE_CALL, UNAVAILABLE_VIDEO_CALL, UNAVAILABLE_VOICE_CALL, UNKNOWN_VOICE_CALL, UNKNOWN_VIDEO_CALL, VIEW_ONCE_AUDIO_MESSAGE, VIEW_ONCE_IMAGE_MESSAGE, VIEW_ONCE_VIDEO_MESSAGE, CALL_MESSAGE, BUSINESS_META_SECURE_SERVICE, GROUP_INVITE, TEMPLATE_MESSAGE, TEMPLATE_QUOTE, POLL_MESSAGE, EPHEMERAL_DURATION_CHANGED, EPHEMERAL_SETTINGS_NOT_APPLIED, EPHEMERAL_CHANGED, EPHEMERAL_DEFAULT, EPHEMERAL_SAVE, GROUP_CHANGED_ONLY_ADMINS_CAN_ADD, GROUP_CHANGED_ONLY_ADMINS_CAN_SEND, GROUP_CHANGED_ALL_MEMBERS_CAN_SEND, GROUP_CHANGED_ONLY_ADMINS_CAN_EDIT, GROUP_CHANGED_ALL_MEMBERS_CAN_EDIT, GROUP_ONLY_ADMINS_CAN_SEND, CHANGED_DEVICE, CHANGED_NUMBER_TO, CHANGED_NUMBER_CHATTING_WITH_NEW, CHANGED_NUMBER_CHATTING_WITH_OLD, STANDARD_CHAT, SENDER_ADDED_TO_CONTACTS, SENDER_IN_CONTACTS, BUSINESS_OFFICIAL, GROUP_ADDED_TO_COMMUNITY, GROUP_REMOVED_FROM_COMMUNITY, COMMUNITY_MANAGEMENT_ACTION, COMMUNITY_WELCOME, UI_ELEMENTS, UI_ELEMENTS_QUOTE, CHAT_ADDED_PRIVACY, CHANNEL_ADDED_PRIVACY, CHANNEL_CREATED, ORDER_MESSAGE, PRODUCT_MESSAGE, BUSINESS_CHANGED_NAME, USER_JOINED_WHATSAPP, PINNED_MESSAGE, GROUP_NAME_CHANGED, AI_THIRD_PARTY, NEW_PARTICIPANTS_NEED_ADMIN_APPROVAL, RESET_GROUP_LINK, COMMUNITY_RENAMED, ANY_COMMUNITY_MEMBER_CAN_JOIN_GROUP, UNKNOWN_MESSAGE, OVER_256_MEMBERS_ONLY_ADMINS_CAN_EDIT, SECURITY_NOTIFICATIONS_NO_LONGER_AVAILABLE, CONTACTED_FIND_BUSINESSES, COMMUNITY_CHANGED_ONLY_ADMINS_CAN_ADD, COMMUNITY_CHANGED_ALL_MEMBERS_CAN_ADD, COMMUNITY_DESCRIPTION_CHANGED, COMMUNITY_NOT_AVAILABLE, GROUP_NOT_PART_OF_COMMUNITY, GROUP_CHANGED_ADMIN_APPROVAL_OFF, GROUP_CHANGED_ALL_MEMBERS_CAN_ADD, USER_REQUEST_TO_ADD_TO_GROUP, CHAT_STARTED_FROM_AD, MESSAGE_ASSOCIATION 
     }
 
     public static enum MessageStatus {
         MESSAGE_UNSENT, MESSAGE_SENT, MESSAGE_DELIVERED, MESSAGE_VIEWED
     }
 
+    public static enum MessageQuotedType {
+        QUOTE_NOT_FOUND, QUOTE_FOUND, QUOTE_STATUS, QUOTE_PRIVACY_GROUP, QUOTE_PRIVACY_GROUP_NOT_FOUND, QUOTE_CATALOG
+    }
+
     @Override
     public int compareTo(Message o) {
-        if (getSortId() != 0 && o.getSortId() != 0) {
-            int comp = Long.compare(getSortId(), o.getSortId());
-            if (comp != 0) {
-                return comp;
+        return Long.compare(getSortId(), o.getSortId());
+    }
+
+    public static void sort(List<Message> messages) {
+        Collections.sort(messages);
+
+        // Check if there are messages with sortId != 0 AND sortId == 0
+        boolean zero = false;
+        boolean notZero = false;
+        for (Message m : messages) {
+            if (m.sortId == 0) {
+                zero = true;
+            } else {
+                notZero = true;
+            }
+            if (zero && notZero) {
+                break;
             }
         }
-        if (getTimeStamp() != null && o.getTimeStamp() != null) {
-            int comp = getTimeStamp().compareTo(o.getTimeStamp());
-            if (comp != 0) {
-                return comp;
+
+        // If both are present, merge these two groups
+        if (zero && notZero) {
+            List<Message> l0 = new ArrayList<Message>();
+            List<Message> l1 = new ArrayList<Message>();
+            for (Message m : messages) {
+                if (m.sortId == 0) {
+                    l0.add(m);
+                } else {
+                    l1.add(m);
+                }
+            }
+            messages.clear();
+            int idx0 = 0;
+            int idx1 = 0;
+            while (idx0 < l0.size() || idx1 < l1.size()) {
+                if (idx0 == l0.size()) {
+                    messages.add(l1.get(idx1++));
+                } else if (idx1 == l1.size()) {
+                    messages.add(l0.get(idx0++));
+                } else {
+                    Message m0 = l0.get(idx0);
+                    Message m1 = l1.get(idx1);
+                    long t0 = m0.timeStamp == null ? m0.id : m0.timeStamp.getTime();
+                    long t1 = m1.timeStamp == null ? m1.id : m1.timeStamp.getTime();
+                    if (t0 < t1) {
+                        messages.add(m0);
+                        idx0++;
+                    } else {
+                        messages.add(m1);
+                        idx1++;
+                    }
+                }
             }
         }
-        return Long.compare(getId(), o.getId());
     }
 }
