@@ -156,7 +156,7 @@
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
-                    </execution>                    
+                    </execution>
                     <execution>
                         <id>unpack-esedbexport</id>
                         <phase>package</phase>
@@ -227,7 +227,7 @@
                                     <artifactId>libagdb</artifactId>
                                     <version>20181111.1</version>
                                     <type>zip</type>
-                                    <overWrite>false</overWrite>
+                                    <overWrite>true</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
@@ -246,7 +246,7 @@
                                     <artifactId>evtexport</artifactId>
                                     <version>20180317.1</version>
                                     <type>zip</type>
-                                    <overWrite>false</overWrite>
+                                    <overWrite>true</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
@@ -265,7 +265,7 @@
                                     <artifactId>evtxexport</artifactId>
                                     <version>20170122.1</version>
                                     <type>zip</type>
-                                    <overWrite>false</overWrite>
+                                    <overWrite>true</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
@@ -284,7 +284,7 @@
                                     <artifactId>sccainfo</artifactId>
                                     <version>20240427</version>
                                     <type>zip</type>
-                                    <overWrite>false</overWrite>
+                                    <overWrite>true</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
@@ -303,7 +303,7 @@
                                     <artifactId>rifiuti2</artifactId>
                                     <version>0.7.0</version>
                                     <type>zip</type>
-                                    <overWrite>false</overWrite>
+                                    <overWrite>true</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
@@ -590,7 +590,7 @@
                                     <artifactId>nativeview-dll</artifactId>
                                     <version>1.0.1</version>
                                     <type>zip</type>
-                                    <overWrite>false</overWrite>
+                                    <overWrite>true</overWrite>
                                     <outputDirectory>${lib.dir}</outputDirectory>
                                 </artifactItem>
                             </artifactItems>

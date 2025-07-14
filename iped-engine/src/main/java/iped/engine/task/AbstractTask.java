@@ -154,7 +154,7 @@ public abstract class AbstractTask {
      */
     abstract protected void process(IItem evidence) throws Exception;
 
-    public static class ItemReEnqueuedException extends RuntimeException {
+    protected static class ItemReEnqueuedException extends RuntimeException {
 
         /**
          * 
@@ -256,7 +256,7 @@ public abstract class AbstractTask {
         throw new ItemReEnqueuedException();
     }
 
-    protected void reEnqueueItem(IItem item, int queue) throws InterruptedException {
+    private void reEnqueueItem(IItem item, int queue) throws InterruptedException {
         item.dispose();
         SkipCommitedTask.checkAgainLaterProcessedParents(item);
         worker.manager.getProcessingQueues().addItemToQueue(item, queue);
