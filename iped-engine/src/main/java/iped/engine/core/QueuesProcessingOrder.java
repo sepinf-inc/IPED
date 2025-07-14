@@ -9,7 +9,7 @@ import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MediaTypeRegistry;
 
-import iped.engine.task.leappbridge.LeappBridgeTask;
+import iped.engine.task.aleapp.AleappTask;
 import iped.parsers.ares.AresParser;
 import iped.parsers.bittorrent.BitTorrentResumeDatEntryParser;
 import iped.parsers.bittorrent.BitTorrentResumeDatParser;
@@ -107,7 +107,9 @@ public class QueuesProcessingOrder {
         mediaTypes.put(RFC822Parser.RFC822_PARTIAL0_MIME, 2);
         mediaTypes.put(RFC822Parser.RFC822_PARTIAL1_MIME, 2);
 
-        mediaTypes.put(LeappBridgeTask.DEVICEDETAILS, 4);
+        mediaTypes.put(AleappTask.ALEAPP_CASE_MEDIATYPE, 5);
+        mediaTypes.put(AleappTask.ALEAPP_PLUGIN_RESULTS_MEDIATYPE, 5);
+        mediaTypes.put(AleappTask.ALEAPP_DEVICE_INFO_MEDIATYPE, 6);
 
         return mediaTypes;
     }

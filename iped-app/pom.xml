@@ -98,7 +98,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <url>https://github.com/abrignoni/ALEAPP/archive/refs/tags/v3.1.9.zip</url>
+                    <url>https://github.com/abrignoni/ALEAPP/archive/refs/tags/v3.4.0.zip</url>
                     <unpack>true</unpack>
                     <fileMappers>
                       <org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
@@ -106,7 +106,7 @@
                         <replacement>./</replacement>
                       </org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
                     </fileMappers>
-                    <outputDirectory>${tools.dir}/ALEAPP</outputDirectory>
+                    <outputDirectory>${tools.dir}/aleapp</outputDirectory>
                 </configuration>
             </plugin>
             <plugin>

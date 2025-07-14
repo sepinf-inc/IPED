@@ -1,6 +1,11 @@
 package iped.engine.config;
 
+import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -8,40 +13,14 @@ import iped.utils.UTF8Properties;
 
 public class ALeappConfig extends AbstractTaskPropertiesConfig {
 
-    String aleapScriptsDir;
-    ArrayList<String> excludedPlugins = new ArrayList();
-    ArrayList<String> includedPlugins = new ArrayList();
+    private static final long serialVersionUID = -6174870703965268807L;
 
-    /**
-     * 
-     */
-    private static final long serialVersionUID = 1L;
+    private static final String CONFIG_FILE = "ALeappConfig.txt";
 
-    private static final String CONFIG_FILE = "ALeappConfig.txt"; //$NON-NLS-1$
+    private File aleappFolder;
 
-    @Override
-    void processProperties(UTF8Properties properties) {
-        String value = properties.getProperty("aleapFolder"); //$NON-NLS-1$
-        if (value != null) {
-            aleapScriptsDir = value.trim();
-        }
-
-        String excludePlugins = properties.getProperty("excludePlugins"); //$NON-NLS-1$
-        if (excludePlugins != null) {
-            String[] aExcludedPlugins = StringUtils.split(excludePlugins, ",");
-            for (String excludedPlugin : aExcludedPlugins) {
-                excludedPlugins.add(excludePlugins);
-            }
-        }
-
-        String includePlugins = properties.getProperty("includePlugins"); //$NON-NLS-1$
-        if (includePlugins != null) {
-            String[] aIncludedPlugins = StringUtils.split(includePlugins, ",");
-            for (String includedPlugin : aIncludedPlugins) {
-                includedPlugins.add(includedPlugin);
-            }
-        }
-    }
+    ArrayList<String> excludedPlugins = new ArrayList<>();
+    ArrayList<String> includedPlugins = new ArrayList<>();
 
     @Override
     public String getTaskEnableProperty() {
@@ -53,38 +32,63 @@ public class ALeappConfig extends AbstractTaskPropertiesConfig {
         return CONFIG_FILE;
     }
 
-    public String getAleapScriptsDir() {
-        return aleapScriptsDir;
+    @Override
+    void processProperties(UTF8Properties properties) {
+
+        String aleapFolderValue = properties.getProperty("aleapFolder");
+        if (StringUtils.isNotBlank(aleapFolderValue)) {
+            Path aleappPath = Paths.get(aleapFolderValue.trim());
+            if (aleappPath.isAbsolute()) {
+                aleappFolder = aleappPath.toFile();
+            } else {
+                aleappFolder = new File(Configuration.getInstance().appRoot, aleappPath.toString());
+            }
+        } else {
+            aleappFolder = new File(Configuration.getInstance().appRoot, "tools/aleapp");
+        }
+        if (!aleappFolder.exists() || !aleappFolder.isDirectory()) {
+            throw new IllegalArgumentException("Invalid Aleapp folder: " + aleappFolder);
+        }
+
+        String excludePlugins = properties.getProperty("excludePlugins");
+        if (StringUtils.isNotBlank(excludePlugins)) {
+            Arrays.stream(StringUtils.split(excludePlugins, ','))
+                .map(StringUtils::strip)
+                .collect(Collectors.toCollection(() -> excludedPlugins));
+        }
+
+        String includePlugins = properties.getProperty("includePlugins");
+        if (StringUtils.isNotBlank(includePlugins)) {
+            Arrays.stream(StringUtils.split(includePlugins, ','))
+                .map(StringUtils::strip)
+                .collect(Collectors.toCollection(() -> includedPlugins));
+        }
     }
 
-    public void setAleapScriptsDir(String aleapScriptsDir) {
-        this.aleapScriptsDir = aleapScriptsDir;
+    public File getAleappFolder() {
+        return aleappFolder;
     }
 
     public ArrayList<String> getExcludedPlugins() {
         return excludedPlugins;
     }
 
-    public void setExcludedPlugins(ArrayList<String> excludedPlugins) {
-        this.excludedPlugins = excludedPlugins;
-    }
-
     public ArrayList<String> getIncludedPlugins() {
         return includedPlugins;
     }
 
-    public void setIncludedPlugins(ArrayList<String> includedPlugins) {
-        this.includedPlugins = includedPlugins;
-    }
-
     public boolean isPluginIncluded(String moduleName) {
-        if (!excludedPlugins.isEmpty()) {
-            return !excludedPlugins.contains(moduleName);
-        }
-        if (!includedPlugins.isEmpty()) {
-            return includedPlugins.contains(moduleName);
-        }
-        return true;
-    }
 
+        boolean include = true;
+
+        if (!includedPlugins.isEmpty()) {
+            include &= includedPlugins.contains(moduleName);
+        }
+
+        if (!excludedPlugins.isEmpty()) {
+            include &= !excludedPlugins.contains(moduleName);
+        }
+
+        return include;
+    }
 }

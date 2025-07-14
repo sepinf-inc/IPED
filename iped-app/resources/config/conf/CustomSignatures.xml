@@ -1674,4 +1674,8 @@
         <glob pattern="vlc-qt-interface.ini"/>
     </mime-type>
 
+    <mime-type type="application/x-aleapp-deviceinfo">
+    	<sub-class-of type="text/html"/>
+    </mime-type>
+
 </mime-info>
