@@ -40,8 +40,17 @@ public class AleappInterceptors {
     }
 
     public void disableFunctions(Jep jep) {
+
+        // not used... prefer tsv
         disableLavaFuncs(jep);
+
+        // not used... prefer tsv
         disablePythonFunction(jep, "scripts.ilapfuncs", "scripts.ilapfuncs.timeline");
+
+        // avoid to use backslash as path separator
+        disablePythonFunction(jep, "scripts.ilapfuncs", "scripts.ilapfuncs.is_platform_windows", "False");
+
+        // not used... prefer tsv
         disablePythonClass(jep, "scripts.artifact_report", "scripts.artifact_report.ArtifactHtmlReport");
     }
 
