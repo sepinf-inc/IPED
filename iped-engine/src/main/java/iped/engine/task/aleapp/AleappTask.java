@@ -140,6 +140,11 @@ public class AleappTask extends AbstractTask {
     }
 
     @Override
+    public boolean isEnabled() {
+        return config.isEnabled();
+    }
+
+    @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
 
         config = (ALeappConfig) configurationManager.findObject(ALeappConfig.class);
