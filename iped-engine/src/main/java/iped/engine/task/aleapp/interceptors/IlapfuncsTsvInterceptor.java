@@ -18,6 +18,7 @@ import iped.engine.task.aleapp.AleappTask;
 import iped.engine.task.aleapp.AleappTask.State;
 import iped.engine.task.aleapp.AleappUtils;
 import iped.engine.task.aleapp.CallInterceptor;
+import iped.engine.task.aleapp.FileSeeker;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import jep.PyMethod;
@@ -100,7 +101,12 @@ public class IlapfuncsTsvInterceptor extends CallInterceptor {
                 Object value = data.get(i);
                 if (value != null) {
                     String header = dataHeaders.get(i);
-                    subItem.getMetadata().set("aleapp:" + header, value.toString());
+                    String valueStr = value.toString();
+                    if (AleappTask.getTranslatedPaths().containsKey(valueStr)) {
+                        valueStr = AleappTask.getTranslatedPaths().get(valueStr);
+                    }
+                    valueStr = StringUtils.removeStart(valueStr, FileSeeker.IPED_PATH_PREFIX);
+                    subItem.getMetadata().set("aleapp:" + header, valueStr);
                 }
             }
 

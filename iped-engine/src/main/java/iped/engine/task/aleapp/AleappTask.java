@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -72,6 +73,8 @@ public class AleappTask extends AbstractTask {
     private static final String EXTRACTION_TYPE_UFDR = "ufdr";
     private static final String EXTRACTION_TYPE_DUMP = "dump";
 
+    private static final Map<String, String> translatedPaths = new ConcurrentHashMap<>();
+
     private volatile boolean initialized = false;
     private Map<String, PluginSpec> selectedPlugins;
     private ALeappConfig config;
@@ -125,6 +128,10 @@ public class AleappTask extends AbstractTask {
 
     public static Jep getJep() {
         return jepThreadLocal.get();
+    }
+
+    public static Map<String, String> getTranslatedPaths() {
+        return translatedPaths;
     }
 
     @Override
@@ -407,5 +414,4 @@ public class AleappTask extends AbstractTask {
         jepThreadLocal.get().close();
         jepThreadLocal.remove();
     }
-
 }

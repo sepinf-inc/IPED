@@ -74,6 +74,8 @@ public class FileSeeker {
                                 journalFile.deleteOnExit();
                             }
 
+                            AleappTask.getTranslatedPaths().put(tempDB.toString(), item.getPath());
+
                             return tempDB.toString();
                         } catch (IOException e) {
                             throw new RuntimeException(e);
