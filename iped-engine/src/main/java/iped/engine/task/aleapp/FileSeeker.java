@@ -20,7 +20,6 @@ public class FileSeeker {
 
     protected static final Logger logger = LoggerFactory.getLogger(FileSeeker.class);
 
-
     public static final String IPED_PATH_PREFIX = "iped://";
 
     private String rootPath;
@@ -41,11 +40,12 @@ public class FileSeeker {
         return search(filePatternToSearch, returnOnFirstHit, false);
     }
 
+    // https://github.com/abrignoni/ALEAPP/blob/v3.4.0/scripts/search_files.py#L23
     public Object search(String filePatternToSearch, boolean returnOnFirstHit, boolean force) {
 
         String query = AleappUtils.globToLuceneQuery(rootPath, filePatternToSearch);
 
-        logger.error("query=[{}], pattern=[{}]", query, filePatternToSearch);
+        logger.debug("query=[{}], pattern=[{}]", query, filePatternToSearch);
 
         Stream<String> stream = searcher
                 .search(query) //
@@ -90,6 +90,7 @@ public class FileSeeker {
         }
     }
 
+    // https://github.com/abrignoni/ALEAPP/blob/v3.4.0/scripts/search_files.py#L27
     public void cleanup() {
     }
 }

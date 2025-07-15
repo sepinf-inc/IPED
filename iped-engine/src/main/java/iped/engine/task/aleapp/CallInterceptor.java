@@ -76,14 +76,15 @@ public class CallInterceptor {
 
     @PyMethod(varargs = true, kwargs = true)
     public Object call(Object[] args, Map<String, Object> kwargs) throws Exception {
-//        logger.error("JAVA INTERCEPTOR: ---- 001 ----");
-//        logger.error("JAVA INTERCEPTOR: call: " + pythonCall);
-//        logger.error("JAVA INTERCEPTOR: varargs: " + Arrays.toString(args));
-//        logger.error("JAVA INTERCEPTOR: kwargs: " + kwargs);
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("JAVA INTERCEPTOR: ---- 001 ----");
+            logger.debug("JAVA INTERCEPTOR: call: " + pythonCall);
+            logger.debug("JAVA INTERCEPTOR: varargs: " + Arrays.toString(args));
+            logger.debug("JAVA INTERCEPTOR: kwargs: " + kwargs);
+        }
 
         handleArgs(args, kwargs);
-
-//        logger.error("JAVA INTERCEPTOR: Now calling the original Python function {}", pythonCall);
 
         return this.originalCall.call(args, kwargs);
     }
@@ -116,7 +117,9 @@ public class CallInterceptor {
 
     protected void setArgumentValue(String key, int index, Object value, Object[] args, Map<String, Object> kwargs) {
 
-        logger.error(String.format("Setting value: [%s,%d] <= %s", key, index, value));
+        if (logger.isDebugEnabled()) {
+            logger.debug(String.format("Setting value: [%s,%d] <= %s", key, index, value));
+        }
 
         if (key != null && kwargs != null && kwargs.containsKey(key)) {
             kwargs.put(key, value);
