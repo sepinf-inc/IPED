@@ -49,10 +49,16 @@ public class UfedModelHandler extends DefaultHandler {
     private ContentHandler parentHandler;
     private UfedModelListener listener;
 
-
     public interface UfedModelListener {
         void onModelStarted(BaseModel model, Attributes attr);
         void onModelCompleted(BaseModel model);
+    }
+
+    public static UfedModelHandler create(XMLReader xmlReader, ContentHandler parentHandler, UfedModelListener listener, boolean listOnly) {
+        if (listOnly) {
+            return new UfedModelHandlerListOnly(xmlReader, parentHandler, listener);
+        }
+        return new UfedModelHandler(xmlReader, parentHandler, listener);
     }
 
     public UfedModelHandler(XMLReader xmlReader, ContentHandler parentHandler, UfedModelListener listener) {
@@ -308,6 +314,50 @@ public class UfedModelHandler extends DefaultHandler {
             } else {
                 logger.error("Unknown ChatActivity child '{}' ({}). Ignoring...", fieldName, child.getId());
             }
+        }
+    }
+
+    private static class UfedModelHandlerListOnly extends UfedModelHandler {
+
+        public UfedModelHandlerListOnly(XMLReader xmlReader, ContentHandler parentHandler,
+                iped.engine.datasource.ufed.UfedModelHandler.UfedModelListener listener) {
+            super(xmlReader, parentHandler, listener);
+        }
+
+        @Override
+        public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+
+            elementValueBuilder.setLength(0); // Clear builder for new element
+
+            if ("model".equalsIgnoreCase(qName) || StringUtils.equalsAnyIgnoreCase(qName, "field", "value") && modelStack.size() == 1) {
+                super.startElement(uri, localName, qName, attributes);
+            }
+        }
+
+        @Override
+        public void endElement(String uri, String localName, String qName) throws SAXException {
+
+            if ("model".equalsIgnoreCase(qName) || StringUtils.equalsAnyIgnoreCase(qName, "field", "value") && modelStack.size() == 1
+                    || modelStack.isEmpty()) {
+                super.endElement(uri, localName, qName);
+            }
+        }
+
+        @Override
+        public void characters(char[] ch, int start, int length) throws SAXException {
+            if (modelStack.size() == 1 && !fieldNameStack.isEmpty() && fieldNameStack.peek().equals("Source")) {
+                super.characters(ch, start, length);
+            }
+        }
+
+        @Override
+        protected void setAttributes(BaseModel model, Attributes attributes) {
+            // nothing...
+        }
+
+        @Override
+        protected void addChildModel(BaseModel parent, BaseModel child, String fieldName) {
+            // nothing...
         }
     }
 }
