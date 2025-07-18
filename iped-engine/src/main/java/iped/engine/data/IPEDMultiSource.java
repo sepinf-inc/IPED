@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -169,6 +170,15 @@ public class IPEDMultiSource extends IPEDSource {
             for (String category : iCase.leafCategories) {
                 if (!leafCategories.contains(category)) {
                     leafCategories.add(category);
+                }
+            }
+            for (String ancestral : iCase.descendantsCategories.keySet()) {
+                Set<String> caseDescendants = iCase.descendantsCategories.get(ancestral);
+                Set<String> multiDescendants = descendantsCategories.get(ancestral);
+                if (multiDescendants != null) {
+                    multiDescendants.addAll(caseDescendants);
+                } else {
+                    descendantsCategories.put(ancestral, new HashSet<String>(caseDescendants));
                 }
             }
         }

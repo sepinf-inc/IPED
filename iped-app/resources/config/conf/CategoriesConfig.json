@@ -71,6 +71,9 @@
 	      ]}
 	    ]}
     ]},
+    {"name": "Apple Artifacts", "categories":[
+        {"name": "Apple Configuration Files", "mimes": ["application/x-plist-itunes", "application/x-bplist-itunes","application/x-bplist-memgraph","application/x-bplist","application/x-apple-nskeyedarchiver","application/x-plist","application/x-bplist-webarchive", "application/x-plist-webarchive", "application/x-plist-memgraph"]}
+    ]},
     {"name": "Google Drive", "categories":[
       {"name": "GDrive Synced Files", "mimes": ["application/x-gdrive-cloud-graph", "application/x-gdrive-snapshot"]},
       {"name": "GDrive File Entries", "mimes": ["application/x-gdrive-cloud-graph-registry", "application/x-gdrive-snapshot-registry"]}
@@ -175,7 +178,7 @@
     {"name": "Notes", "mimes": ["application/x-ufed-html-notes", "application/x-ufed-note", "application/x-ios-oldnotes-db", "application/x-ios-notes-db"]},
     {"name": "Wireless Networks", "mimes": ["application/x-ufed-html-wifi", "application/x-ufed-wirelessnetwork"]},
     {"name": "Notifications", "mimes": ["application/x-ufed-html-notifications", "application/x-ufed-notification"]},
-    {"name": "Locations", "mimes": ["application/x-ufed-html-locations", "application/x-ufed-location", "application/x-ios-locations-db"]},
+    {"name": "Locations", "mimes": ["application/x-ufed-html-locations", "application/x-ufed-location", "application/x-ios-locations-db", "application/x-apple-location"]},
     {"name": "Cookies", "mimes": ["application/x-ufed-html-cookies", "application/x-ufed-cookie"]},
     {"name": "Configuration", "mimes": ["application/x-ufed-html-configurations"]},
     {"name": "Passwords", "mimes": ["application/x-ufed-html-passwords", "application/x-ufed-password"]},

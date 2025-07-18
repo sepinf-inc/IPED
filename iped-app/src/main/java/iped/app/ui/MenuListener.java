@@ -405,10 +405,10 @@ public class MenuListener implements ActionListener {
             SimilarImagesFilterActions.searchSimilarImages(true);
 
         } else if (e.getSource() == menu.similarFacesCurrent) {
-            SimilarFacesFilterActions.searchSimilarImages(false);
+            SimilarFacesFilterActions.searchSimilarFaces(false);
 
         } else if (e.getSource() == menu.similarFacesExternal) {
-            SimilarFacesFilterActions.searchSimilarImages(true);
+            SimilarFacesFilterActions.searchSimilarFaces(true);
 
         } else if (e.getSource() == menu.similarDocs) {
             int selIdx = App.get().resultsTable.getSelectedRow();
