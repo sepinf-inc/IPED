@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
@@ -55,11 +56,9 @@ public class UfedMessageParser extends AbstractParser {
 
     private static final long serialVersionUID = -4738095481615972119L;
 
-    private static Logger logger = LoggerFactory.getLogger(UfedMessageParser.class);
+    private static final Logger logger = LoggerFactory.getLogger(UfedMessageParser.class);
 
-    private static Set<MediaType> SUPPORTED_TYPES = Set.of(MediaTypes.UFED_MESSAGE_MIME);
-
-    private static final String JSON_EMPTY_OBJECT_KEYWORD = ": {},";
+    private static final Set<MediaType> SUPPORTED_TYPES = Set.of(MediaTypes.UFED_MESSAGE_MIME);
 
     private static final String JSON_TEMP_ATTR = "message:json";
 
@@ -183,7 +182,7 @@ public class UfedMessageParser extends AbstractParser {
             // remove empty objects
             json = Arrays
                     .stream(json.split("\n")) //
-                    .filter(line -> !line.endsWith(JSON_EMPTY_OBJECT_KEYWORD)) //
+                    .filter(line -> !StringUtils.endsWithAny(line, ": {}", ": {},")) //
                     .collect(Collectors.joining("\n"));
         }
 

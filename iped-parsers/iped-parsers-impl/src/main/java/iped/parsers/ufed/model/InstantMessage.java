@@ -2,9 +2,7 @@ package iped.parsers.ufed.model;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
 
@@ -43,7 +41,6 @@ public class InstantMessage extends BaseModel implements Comparable<InstantMessa
     private final List<Attachment> attachments = new ArrayList<>();
     private final List<Contact> sharedContacts = new ArrayList<>();
     private InstantMessageExtraData messageExtraData = new InstantMessageExtraData();
-    private final Map<String, BaseModel> others = new HashMap<>();
 
     private InstantMessage embeddedMessage;
     private ChatActivity activityLog;
@@ -100,10 +97,6 @@ public class InstantMessage extends BaseModel implements Comparable<InstantMessa
 
     public InstantMessageExtraData getExtraData() {
         return messageExtraData;
-    }
-
-    public Map<String, BaseModel> getOthers() {
-        return others;
     }
 
     public Optional<InstantMessage> getEmbeddedMessage() {

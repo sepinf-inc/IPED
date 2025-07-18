@@ -17,7 +17,6 @@ public abstract class  Accountable extends BaseModel {
     private final List<ContactPhoto> photos = new ArrayList<>();
 
     private final Map<String, ContactEntry> contactEntries = new LinkedHashMap<>();
-    private final Map<String, BaseModel> otherModelFields = new LinkedHashMap<>();
 
 
     protected Accountable(String modelType) {
@@ -47,10 +46,6 @@ public abstract class  Accountable extends BaseModel {
 
     public List<ContactPhoto> getPhotos() {
         return photos;
-    }
-
-    public Map<String, BaseModel> getOtherModelFields() {
-        return otherModelFields;
     }
 
     @Override

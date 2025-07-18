@@ -2,9 +2,7 @@ package iped.parsers.ufed.model;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
@@ -33,7 +31,6 @@ public class Chat extends BaseModel {
     private final List<Party> participants = new ArrayList<>();
     private final List<ContactPhoto> photos = new ArrayList<>();
     private final List<InstantMessage> messages = new ArrayList<>();
-    private final Map<String, BaseModel> others = new LinkedHashMap<>();
 
     private transient Optional<ReferencedAccountable> referencedAccount = Optional.empty();
 
@@ -70,10 +67,6 @@ public class Chat extends BaseModel {
 
     public List<InstantMessage> getMessages() {
         return messages;
-    }
-
-    public Map<String, BaseModel> getOthers() {
-        return others;
     }
 
     public Optional<ReferencedAccountable> getReferencedAccount() {

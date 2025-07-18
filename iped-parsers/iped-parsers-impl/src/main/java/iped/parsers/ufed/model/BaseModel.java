@@ -29,7 +29,7 @@ public abstract class BaseModel implements Serializable {
     private final List<KeyValueModel> additionalInfo = new ArrayList<>();
     private final Set<JumpTarget> jumpTargets = new HashSet<>();
     private final List<BaseModel> relatedModels = new ArrayList<>();
-
+    private final Map<String, List<BaseModel>> otherModelFields = new LinkedHashMap<>();
 
     public static enum DeletedState {
         Unknown, Intact, Deleted, Missed, Trash;
@@ -94,6 +94,10 @@ public abstract class BaseModel implements Serializable {
 
     public List<BaseModel> getRelatedModels() {
         return relatedModels;
+    }
+
+    public Map<String, List<BaseModel>> getOtherModelFields() {
+        return otherModelFields;
     }
 
     // Specific attribute getters for convenience

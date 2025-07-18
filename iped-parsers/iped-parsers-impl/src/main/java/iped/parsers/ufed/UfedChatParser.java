@@ -38,7 +38,7 @@ public class UfedChatParser extends AbstractParser {
 
     private static final long serialVersionUID = 1L;
 
-    private static Logger logger = LoggerFactory.getLogger(UfedChatParser.class);
+    private static final Logger logger = LoggerFactory.getLogger(UfedChatParser.class);
 
     public static final MediaType UFED_CHAT_MIME = MediaType.application("x-ufed-chat");
     public static final MediaType UFED_CHAT_WA_MIME = MediaType.application("x-ufed-chat-whatsapp");

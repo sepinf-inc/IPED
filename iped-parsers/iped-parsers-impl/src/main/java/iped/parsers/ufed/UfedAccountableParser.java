@@ -46,8 +46,7 @@ public class UfedAccountableParser extends AbstractParser {
 
     private static final long serialVersionUID = -4738095481615972119L;
 
-    private static Logger logger = LoggerFactory.getLogger(UfedAccountableParser.class);
-
+    private static final Logger logger = LoggerFactory.getLogger(UfedAccountableParser.class);
 
     private static Set<MediaType> SUPPORTED_TYPES = Set.of(
             MediaTypes.UFED_CONTACT_MIME,
@@ -187,10 +186,28 @@ public class UfedAccountableParser extends AbstractParser {
         }
 
         // Contact Model Fields
-        for (Entry<String, BaseModel> e : contact.getOtherModelFields().entrySet()) {
+        for (Entry<String, List<BaseModel>> e : contact.getOtherModelFields().entrySet()) {
             xhtml.startElement("tr");
             xhtml.element("th", iped.utils.StringUtil.convertCamelCaseToSpaces(e.getKey()));
-            xhtml.element("td", e.getValue().toString());
+            xhtml.startElement("td");
+
+            int i = 0;
+            for (BaseModel fieldValue : e.getValue()) {
+                if (i++ > 0) {
+                    xhtml.startElement("hr");
+                    xhtml.endElement("hr");
+                }
+                int j = 0;
+                for (Entry<String, Object> fieldEntry : fieldValue.getFields().entrySet()) {
+                    if (j++ > 0) {
+                        xhtml.startElement("br");
+                        xhtml.endElement("br");
+                    }
+                    xhtml.element("b", fieldEntry.getKey() + ": ");
+                    xhtml.characters(fieldEntry.getValue().toString());
+                }
+            }
+            xhtml.endElement("td");
             xhtml.endElement("tr");
         }
 

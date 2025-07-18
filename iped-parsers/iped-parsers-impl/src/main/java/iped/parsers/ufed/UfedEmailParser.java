@@ -58,7 +58,7 @@ public class UfedEmailParser extends AbstractParser {
 
     private static final long serialVersionUID = -4583682558447807906L;
 
-    private static Logger logger = LoggerFactory.getLogger(UfedEmailParser.class);
+    private static final Logger logger = LoggerFactory.getLogger(UfedEmailParser.class);
 
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaTypes.UFED_EMAIL_MIME);
 

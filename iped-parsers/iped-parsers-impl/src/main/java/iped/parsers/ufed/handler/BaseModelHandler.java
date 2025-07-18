@@ -65,7 +65,7 @@ public class BaseModelHandler<T extends BaseModel> {
         fillCommonMetadata(metadata);
     }
 
-        /**
+    /**
      * Fills all relevant metadata for the model into the Tika Metadata object.
      * This is the main entry point for a handler.
      */
@@ -122,6 +122,15 @@ public class BaseModelHandler<T extends BaseModel> {
         // add jumpTargets
         model.getJumpTargets().forEach(jt -> {
             metadata.add(UFED_JUMP_TARGETS, jt.getId());
+        });
+
+        // add other model fields
+        model.getOtherModelFields().forEach((fieldName, childs) -> {
+            childs.forEach(child -> {
+                child.getFields().forEach((key, value) -> {
+                    fillFieldMetadata(fieldName + ":" + key, value, metadata, Collections.emptySet());
+                });
+            });
         });
 
         postProcessMetadata(metadata);

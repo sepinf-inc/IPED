@@ -1,4 +1,5 @@
 package iped.engine.datasource.ufed;
+import java.util.ArrayList;
 import java.util.Stack;
 
 import org.apache.commons.lang3.StringUtils;
@@ -36,7 +37,7 @@ import iped.utils.DateUtil;
 
 public class UfedModelHandler extends DefaultHandler {
 
-    private static Logger logger = LoggerFactory.getLogger(UfedModelHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger(UfedModelHandler.class);
 
     protected final Stack<BaseModel> modelStack = new Stack<>();
     protected final Stack<String> fieldNameStack = new Stack<>();
@@ -240,6 +241,8 @@ public class UfedModelHandler extends DefaultHandler {
                 email.getBcc().add((Party) child);
             } else if ("Attachments".equals(fieldName) && child instanceof Attachment) {
                 email.getAttachments().add((Attachment) child);
+            } else {
+                addOtherModelField(parent, fieldName, child);
             }
         } else if (parent instanceof Chat) {
             Chat chat = (Chat) parent;
@@ -250,8 +253,7 @@ public class UfedModelHandler extends DefaultHandler {
             } else if ("Photos".equals(fieldName) && child instanceof ContactPhoto) {
                 chat.getPhotos().add((ContactPhoto) child);
             } else {
-                logger.warn("Unrecognized Chat child '{}' ({}).", fieldName, child.getId());
-                chat.getOthers().put(fieldName, chat);
+                addOtherModelField(parent, fieldName, child);
             }
         } else if (parent instanceof InstantMessage) {
             InstantMessage message = (InstantMessage) parent;
@@ -283,14 +285,13 @@ public class UfedModelHandler extends DefaultHandler {
             } else if ("Position".equals(fieldName) && child instanceof Coordinate) {
                 message.setPosition((Coordinate) child);
             } else {
-                logger.warn("Unrecognized InstantMessage child '{}' => {} (id={}).", fieldName, child.getClass().getName(), child.getId());
-                message.getOthers().put(fieldName, child);
+                addOtherModelField(parent, fieldName, child);
             }
         } else if (parent instanceof ForwardedMessageData) {
             if("OriginalSender".equals(fieldName)) {
                 ((ForwardedMessageData) parent).setOriginalSender((Party) child);
             } else {
-                logger.error("Unknown ForwardedMessageData child '{}' ({}). Ignoring...", fieldName, child.getId());
+                addOtherModelField(parent, fieldName, child);
             }
         } else if (parent instanceof Accountable) {
             Accountable accountable = (Accountable) parent;
@@ -299,22 +300,30 @@ public class UfedModelHandler extends DefaultHandler {
             } else if ("Photos".equals(fieldName) && child instanceof ContactPhoto) {
                 accountable.getPhotos().add((ContactPhoto) child);
             } else {
-                logger.warn("Unrecognized Accountable child '{}' => {} (id={}).", fieldName, child.getClass().getName(), child.getId());
-                accountable.getOtherModelFields().put(fieldName, child);
+                addOtherModelField(accountable, fieldName, child);
             }
         } else if (parent instanceof ReplyMessageData) {
             if("InstantMessage".equals(fieldName) && child instanceof InstantMessage) {
                 ((ReplyMessageData) parent).setInstantMessage((InstantMessage) child);
             } else {
-                logger.error("Unknown ReplyMessageData child '{}' ({}). Ignoring...", fieldName, child.getId());
+                addOtherModelField(parent, fieldName, child);
             }
         } else if (parent instanceof ChatActivity) {
             if("Participant".equals(fieldName) && child instanceof Party) {
                 ((ChatActivity) parent).setParticipant((Party) child);
             } else {
-                logger.error("Unknown ChatActivity child '{}' ({}). Ignoring...", fieldName, child.getId());
+                addOtherModelField(parent, fieldName, child);
             }
         }
+    }
+
+    private void addOtherModelField(BaseModel model, String fieldName, BaseModel child) {
+        if (child instanceof GenericModel) {
+            logger.debug("Adding {} child '{}' => {} (id={}).", model.getClass().getName(), fieldName, child.getClass().getName(), child.getId());
+        } else {
+            logger.warn("Unimplemented {} child '{}' => {} (id={}).", model.getClass().getName(), fieldName, child.getClass().getName(), child.getId());
+        }
+        model.getOtherModelFields().computeIfAbsent(fieldName, k -> new ArrayList<>()).add(child);
     }
 
     private static class UfedModelHandlerListOnly extends UfedModelHandler {
