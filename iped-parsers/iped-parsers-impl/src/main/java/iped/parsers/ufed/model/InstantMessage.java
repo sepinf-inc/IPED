@@ -276,18 +276,20 @@ public class InstantMessage extends BaseModel implements Comparable<InstantMessa
 
     @Override
     public int compareTo(InstantMessage o) {
-        int thisIndex = getSourceIndex();
-        int otherIndex = o.getSourceIndex();
+
         int ret = 0;
-        if (thisIndex >= 0 && otherIndex >= 0) {
-            ret = Integer.compare(thisIndex, otherIndex);
+
+        Date thisTime = getTimeStamp();
+        Date otherTime = getTimeStamp();
+        if (thisTime != null && otherTime != null) {
+            ret = thisTime.compareTo(otherTime);
         }
 
         if (ret == 0) {
-            Date thisTime = getTimeStamp();
-            Date otherTime = getTimeStamp();
-            if (thisTime != null && otherTime != null) {
-                ret = thisTime.compareTo(otherTime);
+            int thisIndex = getSourceIndex();
+            int otherIndex = o.getSourceIndex();
+            if (thisIndex >= 0 && otherIndex >= 0) {
+                ret = Integer.compare(thisIndex, otherIndex);
             }
         }
 
