@@ -171,18 +171,20 @@ public class UfedAccountableParser extends AbstractParser {
         }
 
         // Contact Entries
-        for (ContactEntry entry : contact.getContactEntries().values()) {
-            xhtml.startElement("tr");
-            xhtml.element("th", StringUtils.firstNonBlank(entry.getDomain(), entry.getModelType()));
-            xhtml.startElement("td");
-            xhtml.startElement("span", "class", "ellipsis");
-            xhtml.characters(entry.getValue());
-            xhtml.endElement("span");
-            if (StringUtils.isNotBlank(entry.getCategory())) {
-                xhtml.element("i", " (" + entry.getCategory() + ")");
+        for (List<ContactEntry> entryList : contact.getContactEntries().values()) {
+            for (ContactEntry entry: entryList) {
+                xhtml.startElement("tr");
+                xhtml.element("th", StringUtils.firstNonBlank(entry.getDomain(), entry.getModelType()));
+                xhtml.startElement("td");
+                xhtml.startElement("span", "class", "ellipsis");
+                xhtml.characters(entry.getValue());
+                xhtml.endElement("span");
+                if (StringUtils.isNotBlank(entry.getCategory())) {
+                    xhtml.element("i", " (" + entry.getCategory() + ")");
+                }
+                xhtml.endElement("td");
+                xhtml.endElement("tr");
             }
-            xhtml.endElement("td");
-            xhtml.endElement("tr");
         }
 
         // Contact Model Fields

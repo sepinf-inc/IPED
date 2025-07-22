@@ -33,7 +33,7 @@ import iped.parsers.ufed.model.ReplyMessageData;
 import iped.utils.DateUtil;
 
 
-public class UfedModelHandlerTest {
+public class UfedModelHandlerChatTest {
 
     private static Chat parsedChat;
 
@@ -56,7 +56,7 @@ public class UfedModelHandlerTest {
 
         UfedModelHandler handler = new UfedModelHandler(xmlReader, parentHandler, listener);
 
-        InputStream xmlFile = UfedModelHandlerTest.class.getResourceAsStream("/ufed-chat-test.xml");
+        InputStream xmlFile = UfedModelHandlerChatTest.class.getResourceAsStream("/ufed-model-chat.xml");
         saxParser.parse(xmlFile, handler);
     }
 
@@ -121,11 +121,11 @@ public class UfedModelHandlerTest {
         assertEquals("Charmeleon", contact.getName());
         assertEquals(2, contact.getContactEntries().size());
 
-        Optional<ContactEntry> userIdEntry = contact.getUserID();
+        Optional<ContactEntry> userIdEntry = contact.getUserID().flatMap(list -> list.stream().findFirst());
         assertTrue(userIdEntry.isPresent());
         assertEquals("5511999997745@s.whatsapp.net", userIdEntry.get().getValue());
 
-        Optional<ContactEntry> phoneEntry = contact.getPhoneNumber();
+        Optional<ContactEntry> phoneEntry = contact.getPhoneNumber().flatMap(list -> list.stream().findFirst());
         assertTrue(phoneEntry.isPresent());
         assertEquals("+55 11 99999-22222", phoneEntry.get().getValue());
     }

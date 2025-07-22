@@ -54,8 +54,14 @@ public class ContactHandler extends AccountableHandler<Contact> {
     public String getTitle() {
 
         String name = model.getName();
-        String userID = model.getUserID().map(ContactEntry::getValue).orElse(null);
-        String phoneNumber = model.getPhoneNumber().map(ContactEntry::getValue).orElse(null);
+        String userID = model.getUserID()
+                .flatMap(list -> list.stream().findFirst())
+                .map(ContactEntry::getValue)
+                .orElse(null);
+        String phoneNumber = model.getPhoneNumber()
+                .flatMap(list -> list.stream().findFirst())
+                .map(ContactEntry::getValue)
+                .orElse(null);
 
         String data = Arrays.asList(name, userID, phoneNumber).stream()
             .filter(StringUtils::isNotBlank)

@@ -296,7 +296,7 @@ public class UfedModelHandler extends DefaultHandler {
         } else if (parent instanceof Accountable) {
             Accountable accountable = (Accountable) parent;
             if ("Entries".equals(fieldName) && child instanceof ContactEntry) {
-                accountable.getContactEntries().put(child.getModelType(), (ContactEntry) child);
+                accountable.getContactEntries().computeIfAbsent(child.getModelType(), k -> new ArrayList<>()).add((ContactEntry) child);
             } else if ("Photos".equals(fieldName) && child instanceof ContactPhoto) {
                 accountable.getPhotos().add((ContactPhoto) child);
             } else {

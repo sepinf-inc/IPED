@@ -16,7 +16,7 @@ public abstract class  Accountable extends BaseModel {
 
     private final List<ContactPhoto> photos = new ArrayList<>();
 
-    private final Map<String, ContactEntry> contactEntries = new LinkedHashMap<>();
+    private final Map<String, List<ContactEntry>> contactEntries = new LinkedHashMap<>();
 
 
     protected Accountable(String modelType) {
@@ -28,19 +28,19 @@ public abstract class  Accountable extends BaseModel {
     public String getSource() { return (String) getField("Source"); }
     public String getAccount() { return (String) getField("Account"); }
 
-    public Optional<ContactEntry> getUserID() {
+    public Optional<List<ContactEntry>> getUserID() {
         return Optional.ofNullable(contactEntries.get("UserID"));
     }
 
-    public Optional<ContactEntry> getPhoneNumber() {
+    public Optional<List<ContactEntry>> getPhoneNumber() {
         return Optional.ofNullable(contactEntries.get("PhoneNumber"));
     }
 
-    public Optional<ContactEntry> getEmailAddress() {
+    public Optional<List<ContactEntry>> getEmailAddress() {
         return Optional.ofNullable(contactEntries.get("EmailAddress"));
     }
 
-    public Map<String, ContactEntry> getContactEntries() {
+    public Map<String, List<ContactEntry>> getContactEntries() {
         return contactEntries;
     }
 

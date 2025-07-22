@@ -12,6 +12,7 @@ import org.apache.tika.mime.MediaType;
 import iped.data.IItemReader;
 import iped.parsers.ufed.model.Accountable;
 import iped.parsers.ufed.model.BaseModel;
+import iped.parsers.ufed.model.ContactEntry;
 import iped.properties.BasicProps;
 import iped.search.IItemSearcher;
 
@@ -42,10 +43,12 @@ public class AccountableHandler<T extends Accountable> extends BaseModelHandler<
             metadata.add(UFED_META_PREFIX + "Photo:url", photo.getUrl());
         });
 
-        model.getContactEntries().forEach((key, value) -> {
-            metadata.add(UFED_META_PREFIX + key, value.getValue());
-            metadata.add(UFED_META_PREFIX + key + ":category", value.getCategory());
-            metadata.add(UFED_META_PREFIX + key + ":domain", value.getDomain());
+        model.getContactEntries().forEach((key, list) -> {
+            for (ContactEntry value: list) {
+                metadata.add(UFED_META_PREFIX + key, value.getValue());
+                metadata.add(UFED_META_PREFIX + key + ":category", value.getCategory());
+                metadata.add(UFED_META_PREFIX + key + ":domain", value.getDomain());
+            }
         });
     }
 
