@@ -455,7 +455,8 @@ public class UfedXmlReader extends DataSourceReader {
                 "CoreFileSystemFileSystemNodeCreationTime", //$NON-NLS-1$
                 "CoreFileSystemFileSystemNodeModifyTime", //$NON-NLS-1$
                 "CoreFileSystemFileSystemNodeLastAccessTime", //$NON-NLS-1$
-                "UserMapping" //$NON-NLS-1$
+                "UserMapping",
+                "source"
         ));
 
         HashSet<String> mergeInParentNode = new HashSet<>(Arrays.asList("Party", //$NON-NLS-1$
