@@ -49,8 +49,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.Deflater;
 
-import iped.properties.BasicProps;
-import iped.properties.ExtraProperties;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
@@ -93,6 +91,7 @@ import iped.exception.IPEDException;
 import iped.exception.ZipBombException;
 import iped.io.SeekableInputStream;
 import iped.parsers.util.ExportFolder;
+import iped.properties.ExtraProperties;
 import iped.utils.FileInputStreamFactory;
 import iped.utils.HashValue;
 import iped.utils.IOUtil;
@@ -147,6 +146,7 @@ public class ExportFileTask extends AbstractTask {
 
     private static boolean computeHash = false;
     private static File extractDir;
+    private static ExportFileTask lastInstance = null;
 
     private HashMap<IHashValue, IHashValue> hashMap;
     private List<String> noContentLabels;
@@ -155,8 +155,13 @@ public class ExportFileTask extends AbstractTask {
     private CategoryConfig categoryConfig;
     private boolean automaticExportEnabled = false;
 
+    public static ExportFileTask getLastInstance() {
+        return lastInstance;
+    }
+
     public ExportFileTask() {
         ExportFolder.setExportPath(EXTRACT_DIR);
+        lastInstance = this;
     }
 
     public static synchronized void incItensExtracted() {
@@ -175,13 +180,20 @@ public class ExportFileTask extends AbstractTask {
                 extractDir = new File(output, SUBITEM_DIR);
             }
         }
-        HtmlReportTaskConfig htmlReportConfig = ConfigurationManager.get()
-                .findObject(HtmlReportTaskConfig.class);
-        if (!caseData.containsReport() || new File(output, STORAGE_PREFIX).exists() || !htmlReportConfig.isEnabled()) {
+        if (storeInSQLite(caseData, output)) {
             if (storageCon.get(output) == null) {
                 configureSQLiteStorage(output);
             }
         }
+    }
+
+    private static boolean storeInSQLite(ICaseData caseData, File output) {
+        HtmlReportTaskConfig htmlReportConfig = ConfigurationManager.get().findObject(HtmlReportTaskConfig.class);
+        return !caseData.containsReport() || !htmlReportConfig.isEnabled();
+    }
+
+    private boolean storeInSQLite() {
+        return storeInSQLite(this.caseData, this.output);
     }
 
     public static Connection getSQLiteStorageCon(File output, byte[] hash) {
@@ -547,7 +559,7 @@ public class ExportFileTask extends AbstractTask {
                             // catch exceptions here to extract some content, even runtime exceptions
                             exception = e;
                         }
-                        if ((i == -1 || exception != null) && storageCon.get(output) != null && total == 0 && evidence.getMetadata().get(ExtraProperties.EXTRACTED_FILE) == null) {
+                        if ((i == -1 || exception != null) && storeInSQLite() && total == 0 && evidence.getMetadata().get(ExtraProperties.EXTRACTED_FILE) == null) {
                             if (baos.size() == 0) {
                                 evidence.setLength(0L);
                             } else {
@@ -608,7 +620,7 @@ public class ExportFileTask extends AbstractTask {
 
     }
 
-    private void insertIntoStorage(IItem evidence, byte[] buf, int len)
+    public void insertIntoStorage(IItem evidence, byte[] buf, int len)
             throws InterruptedException, IOException, SQLException, CompressorException {
         byte[] hash = null;
         String hashString = (String) evidence.getExtraAttribute(HashTask.HASH.MD5.toString());
@@ -620,6 +632,9 @@ public class ExportFileTask extends AbstractTask {
         int k = getStorageSuffix(hash);
         boolean alreadyInDB = false;
         String id = hashString != null ? hashString : new HashValue(hash).toString();
+        if (storageCon.get(output) == null) {
+            configureSQLiteStorage(output);
+        }
         try (PreparedStatement ps = storageCon.get(output).get(k).prepareStatement(CHECK_HASH)) {
             ps.setString(1, id);
             ResultSet rs = ps.executeQuery();

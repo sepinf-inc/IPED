@@ -32,6 +32,7 @@ import iped.engine.task.index.IndexItem;
 import iped.io.IStreamSource;
 import iped.io.URLUtil;
 import iped.viewers.ATextViewer;
+import iped.viewers.AudioViewer;
 import iped.viewers.CADViewer;
 import iped.viewers.EmailViewer;
 import iped.viewers.HexViewerPlus;
@@ -103,6 +104,7 @@ public class ViewerController {
         viewersRepository.addViewer(linkViewer);
         viewersRepository.addViewer(new IcePDFViewer());
         viewersRepository.addViewer(new TiffViewer());
+        viewersRepository.addViewer(new AudioViewer(new AttachmentSearcherImpl()));
         viewersRepository.addViewer(new ReferencedFileViewer(viewersRepository, new AttachmentSearcherImpl()));
 
         new Thread() {

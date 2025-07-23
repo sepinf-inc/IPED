@@ -872,7 +872,7 @@ public class WhatsAppParser extends SQLite3DBParser {
     }
 
     private void fillAccountAvatar(WAAccount account, IItemSearcher searcher, String dbPath) {
-        if (account == null || account.getAvatar() != null || account.getAvatarPath() != null || dbPath == null) {
+        if (searcher == null || account == null || account.getAvatar() != null || account.getAvatarPath() != null || dbPath == null) {
             return;
         }
 
