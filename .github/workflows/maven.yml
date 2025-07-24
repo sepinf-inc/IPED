@@ -1,6 +1,6 @@
 name: Java CI
 
-on: [push]
+on: [ push ]
 
 jobs:
   build-java11:
@@ -28,7 +28,7 @@ jobs:
           git clone https://github.com/libyal/libagdb.git && cd libagdb/ && git checkout 667a782
           sudo ./synclibs.sh && sudo ./autogen.sh && sudo ./configure
 
-      - name: Install External Tools
+      - name: Install External Tools (Java 11)
         run: |
           sudo apt-get update && sudo apt-get install -y \
           libscca-utils rifiuti2 libevtx-utils libevt-utils \
@@ -47,28 +47,31 @@ jobs:
           cd ..
           sudo apt-get install -y gsfonts
 
-      - name: Cache test images
+      - name: Cache test images (Java 11)
         uses: actions/cache@v4
         with:
           path: |
             target/test-images
           key: ${{ runner.os }}-test-images-${{ hashFiles('iped-tests/src/test/java/br/com/iped/tests/ImageProcessingTest.java') }}
 
-      - name: Build IPED and prepare CLI for tests
+      - name: Build IPED and prepare CLI for tests (Java 11)
         run: |
+          mvn -B clean install -DskipTests
           mkdir -p target/release/iped-4.2.0
           cp -r iped-parent/target/release/iped-4.2.0/* target/release/iped-4.2.0/ || true
 
-      - name: Run Regression Tests
-        # Executa os testes do módulo `iped-tests`.
-        # Certifique-se de que o pom.xml raiz ou o pom.xml do módulo `iped-tests`
-        # esteja configurado para rodar os testes que invocam o IpedProcessor.
-        run: mvn -B test --projects iped-tests # ou apenas `mvn -B test` se os testes estão habilitados por padrão e o IpedProcessor pode ser encontrado.
+      - name: Run Regression Tests (Java 11)
+        run: mvn -B test --projects iped-tests
 
-      - shell: bash
-        run:
-          cd target && mv release iped-snapshot-$GITHUB_SHA && tar -zcvf ../iped-snapshot.tar.gz iped-snapshot-$GITHUB_SHA
-      - name: Upload snapshot
+      - name: Create and upload snapshot archive (Java 11)
+        shell: bash
+        run: |
+          # Garante que o diretório 'target/release' exista antes de tentar movê-lo.
+          mkdir -p target/release
+          mv target/release target/iped-snapshot-${{ github.sha }}
+          tar -zcvf iped-snapshot.tar.gz target/iped-snapshot-${{ github.sha }}
+
+      - name: Upload snapshot (Java 11)
         uses: actions/upload-artifact@v4
         with:
           name: iped-snapshot-${{ github.sha }}
@@ -77,32 +80,34 @@ jobs:
   build-java14:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4 # Use a versão mais recente
-      - run: curl -O "https://download.bell-sw.com/java/14.0.2+13/bellsoft-jdk14.0.2+13-linux-amd64-full.tar.gz"
+      - uses: actions/checkout@v4
+      - name: Download JDK 14
+        run: curl -O "https://download.bell-sw.com/java/14.0.2+13/bellsoft-jdk14.0.2+13-linux-amd64-full.tar.gz"
       - name: Set up JDK 14
-        uses: actions/setup-java@v4 # Use a versão mais recente
+        uses: actions/setup-java@v4
         with:
           java-version: 14
           jdkFile: ./bellsoft-jdk14.0.2+13-linux-amd64-full.tar.gz
-          cache: 'maven' # Adiciona cache para dependências Maven
+          cache: 'maven'
 
       - name: Load libagdb from cache
-        id: libagdb
+        id: libagdb_java14 # ID único para este job
         uses: actions/cache@v4
         with:
           path: libagdb
           key: libagdb
 
-      - name: Compile libagdb
-        if: steps.libagdb.outputs.cache-hit != 'true'
+      - name: Compile libagdb (Java 14)
+        if: steps.libagdb_java14.outputs.cache-hit != 'true' # Referencia o ID único
         run: |
           sudo apt update && sudo apt install -y git autoconf automake autopoint libtool pkg-config
           git clone https://github.com/libyal/libagdb.git && cd libagdb/ && git checkout 667a782
           sudo ./synclibs.sh && sudo ./autogen.sh && sudo ./configure
 
-      - name: Install External Tools
+      - name: Install External Tools (Java 14)
         run: |
-          sudo add-apt-repository ppa:alex-p/tesseract-ocr-devel && sudo apt-get update && sudo apt-get install -y \
+          sudo add-apt-repository ppa:alex-p/tesseract-ocr-devel -y
+          sudo apt-get update && sudo apt-get install -y \
           libscca-utils rifiuti2 libevtx-utils libevt-utils \
           libmsiecf-utils=20181227-2build1 \
           pff-tools=20180714-3build1 \
@@ -119,18 +124,18 @@ jobs:
           cd ..
           sudo apt-get install -y gsfonts
 
-      - name: Cache test images
+      - name: Cache test images (Java 14)
         uses: actions/cache@v4
         with:
           path: |
             target/test-images
           key: ${{ runner.os }}-test-images-${{ hashFiles('iped-tests/src/test/java/br/com/iped/tests/ImageProcessingTest.java') }}
 
-      - name: Build IPED and prepare CLI for tests
+      - name: Build IPED and prepare CLI for tests (Java 14)
         run: |
-          mvn -B clean install # ou `mvn -B clean package -DskipTests`
+          mvn -B clean install # Isso deve construir todos os módulos do seu projeto Maven
           mkdir -p target/release/iped-4.2.0
-          cp -r iped-parent/target/release/iped-4.2.0/* target/release/iped-4.2.0/ || true # Ajuste o caminho exato
+          cp -r iped-parent/target/release/iped-4.2.0/* target/release/iped-4.2.0/ || true
 
-      - name: Run Regression Tests
+      - name: Run Regression Tests (Java 14)
         run: mvn -B test --projects iped-tests
