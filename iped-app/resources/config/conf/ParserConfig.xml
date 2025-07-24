@@ -364,6 +364,9 @@
         <parser class="iped.parsers.misc.PDFTextParser"></parser>
         <parser class="iped.parsers.video.FLVParserWrapper"></parser>
         <parser class="iped.parsers.video.EmptyVideoParser"></parser>
+
+        <parser class="iped.parsers.security.CryptoObjectParser"></parser>
+
         <parser class="iped.parsers.standard.RawStringParser">
             <mime>application/skype</mime>
             <mime>application/irpf</mime>

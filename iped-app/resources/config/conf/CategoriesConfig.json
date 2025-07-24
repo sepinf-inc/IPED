@@ -78,6 +78,15 @@
     ]},
     {"name": "Databases", "mimes": ["application/x-edb", "application/x-edb-table", "application/irpf", "application/x-msaccess", "application/x-dbf", "application/vnd.oasis.opendocument.database", "application/x-sqlite3", "application/x-mysql-db", "application/x-berkeley-db", "application/x-mssql-data", "application/x-database-table"]},
     {"name": "Compressed Archives", "mimes": ["application/x-tika-ooxml", "application/zlib", "application/applefile", "application/vnd.ms-tnef", "application/zip", "application/x-rar-compressed", "application/x-tar", "application/gzip", "application/x-gzip", "application/x-xz", "application/x-bzip", "application/x-bzip2", "application/x-7z-compressed", "application/x-arj", "application/x-gtar", "application/x-archive", "application/x-cpio", "application/x-tika-unix-dump", "application/x-snappy-framed", "application/x-snappy", "application/x-snappy-raw", "application/x-compress", "application/x-java-pack200", "application/x-lzma", "application/x-lz4", "application/x-lz4-block", "application/x-brotli", "application/zstd", "application/deflate64", "image/x-emf-compressed", "application/x-lzfse"]},
+    {"name": "Crypto Objects", "categories":[
+        {"name": "Certificates", "mimes": ["application/pkix-cert", "application/x-x509-cert"]},
+        {"name": "Certificate Revocation Lists", "mimes": ["application/pkix-crl"]},
+        {"name": "Certificates Requests", "mimes": ["application/pkcs10"]},
+        {"name": "Keys", "mimes": ["application/pkcs8", "application/pkcs8-encrypted", "application/pkcs8-encrypted"]},
+        {"name": "Crypto Objects Containers", "mimes": ["application/x-pkcs12", "application/x-java-keystore"]},
+        {"name": "CMS", "mimes": ["application/pkcs7-mime", "application/pkcs7-signature", "application/cms"]},
+        {"name": "Others Crypto Objects", "mimes": ["application/x-pem-file", "application/x-x509-dsa-parameters", "application/x-x509-ec-parameters", "application/pkix-pkipath", "application/pkixcmp"]}
+    ]},
     {"name": "Contacts", "mimes": ["text/x-vcard", "application/x-vcard-html", "application/windows-adress-book", "application/outlook-contact", "application/x-livecontacts", "application/x-livecontacts-table", "contact/x-skype-contact", "application/x-whatsapp-wadb", "application/x-whatsapp-contactsv2", "contact/x-whatsapp-contact", "application/x-ufed-html-contacts", "application/x-ufed-contact", "contact/x-telegram-contact", "application/x-ios-addressbook-db", "application/x-win10-mail-contact"]},
     {"name": "Chats", "categories":[
         {"name": "WhatsApp", "mimes":["application/x-whatsapp-db", "application/x-whatsapp-chatstorage", "application/x-whatsapp-chat","application/x-ufed-chat-whatsapp","application/x-ufed-chat-preview-whatsapp"]},
@@ -95,7 +104,7 @@
     {"name": "Open Financial Exchange", "mimes": ["application/x-ofx-v1","application/x-ofx-v2","application/x-ofc"]},
     {"name": "USN Journal", "mimes": ["application/x-usnjournal-$J", "application/x-usnjournal-report-html", "application/x-usnjournal-report-csv", "application/x-usnjournal-registry"]},
     {"name": "Programs and Libraries", 
-        "mimes": ["application/java-archive", "application/x-dosexec", "application/x-msdownload", "application/x-bat", "application/vnd.ms-cab-compressed", "application/x-font-ttf", "application/pkcs7-signature", "application/vnd.ms-htmlhelp", "application/java-vm", "application/vnd.ms-pki.seccat", "application/x-ms-installer", "application/x-ufed-html-apps", "application/x-ufed-installedapplication"],
+        "mimes": ["application/java-archive", "application/x-dosexec", "application/x-msdownload", "application/x-bat", "application/vnd.ms-cab-compressed", "application/x-font-ttf", "application/vnd.ms-htmlhelp", "application/java-vm", "application/vnd.ms-pki.seccat", "application/x-ms-installer", "application/x-ufed-html-apps", "application/x-ufed-installedapplication"],
         "categories":[{"name": "Android Applications", "mimes": ["application/vnd.android.package-archive"]}]
         },
         
