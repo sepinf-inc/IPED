@@ -109,7 +109,7 @@
     {"name": "Other files", "mimes": ["application/octet-stream", "application/x-nls"]},
     {"name": "Peer-to-peer", "categories":[
       {"name": "Ares Galaxy", "mimes": ["application/x-ares-galaxy","application/x-ares-galaxy-entry"]},
-      {"name": "E-Mule", "mimes": ["application/x-emule", "application/x-emule-part-met", "application/x-emule-searches", "application/x-emule-preferences-ini", "application/x-emule-preferences-dat", "application/x-emule-known-met-entry", "application/x-emule-part-met-entry"]},
+      {"name": "E-Mule", "mimes": ["application/x-emule", "application/x-emule-collection", "application/x-emule-part-met", "application/x-emule-searches", "application/x-emule-preferences-ini", "application/x-emule-preferences-dat", "application/x-emule-known-met-entry", "application/x-emule-part-met-entry"]},
       {"name": "Shareaza", "mimes": ["application/x-shareaza-searches-dat", "application/x-shareaza-library-dat", "application/x-shareaza-library-dat-entry", "application/x-shareaza-download"]},
       {"name": "Torrent", "mimes": ["application/x-bittorrent-resume-dat", "application/x-bittorrent-resume-dat-entry", "application/x-bittorrent-settings-dat", "application/x-bittorrent", "application/x-transmission-resume"]},
       {"name": "Other Peer-to-peer", "mimes": ["application/x-p2p"]}
