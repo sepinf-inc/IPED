@@ -7,22 +7,23 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      - name: Set up JDK 11
+      - name: Set up JDK 11 with JavaFX
         uses: actions/setup-java@v4
         with:
           java-version: 11
           distribution: 'temurin'
+          java-package: 'jdk+fx' # Adicionado para incluir JavaFX
           cache: 'maven'
 
-      - name: Load libagdb from cache
-        id: libagdb
+      - name: Load libagdb from cache (Java 11)
+        id: libagdb_java11
         uses: actions/cache@v4
         with:
           path: libagdb
-          key: libagdb
+          key: libagdb-java11
 
-      - name: Compile libagdb
-        if: steps.libagdb.outputs.cache-hit != 'true'
+      - name: Compile libagdb (Java 11)
+        if: steps.libagdb_java11.outputs.cache-hit != 'true'
         run: |
           sudo apt update && sudo apt install -y git autoconf automake autopoint libtool pkg-config
           git clone https://github.com/libyal/libagdb.git && cd libagdb/ && git checkout 667a782
@@ -56,8 +57,10 @@ jobs:
 
       - name: Build IPED and prepare CLI for tests (Java 11)
         run: |
+          # Use 'mvn clean install -DskipTests' para construir o projeto e pular os testes nesta fase.
           mvn -B clean install -DskipTests
           mkdir -p target/release/iped-4.2.0
+          # Copie os artefatos de release. Verifique o caminho exato onde o seu projeto gera os artefatos.
           cp -r iped-parent/target/release/iped-4.2.0/* target/release/iped-4.2.0/ || true
 
       - name: Run Regression Tests (Java 11)
@@ -81,24 +84,25 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      - name: Download JDK 14
-        run: curl -O "https://download.bell-sw.com/java/14.0.2+13/bellsoft-jdk14.0.2+13-linux-amd64-full.tar.gz"
-      - name: Set up JDK 14
+      - name: Set up JDK 14 with JavaFX
         uses: actions/setup-java@v4
         with:
           java-version: 14
-          jdkFile: ./bellsoft-jdk14.0.2+13-linux-amd64-full.tar.gz
+          distribution: 'liberica' # Usando Liberica que oferece 'jdk+fx'
+          java-package: 'jdk+fx'  # Adicionado para incluir JavaFX
           cache: 'maven'
+          # Removido 'jdkFile' pois 'distribution' será usado para baixar o JDK com FX.
+          # Também removido o passo 'Download JDK 14' manual.
 
-      - name: Load libagdb from cache
-        id: libagdb_java14 # ID único para este job
+      - name: Load libagdb from cache (Java 14)
+        id: libagdb_java14
         uses: actions/cache@v4
         with:
           path: libagdb
-          key: libagdb
+          key: libagdb-java14 # ID único para este job
 
       - name: Compile libagdb (Java 14)
-        if: steps.libagdb_java14.outputs.cache-hit != 'true' # Referencia o ID único
+        if: steps.libagdb_java14.outputs.cache-hit != 'true'
         run: |
           sudo apt update && sudo apt install -y git autoconf automake autopoint libtool pkg-config
           git clone https://github.com/libyal/libagdb.git && cd libagdb/ && git checkout 667a782
@@ -106,6 +110,7 @@ jobs:
 
       - name: Install External Tools (Java 14)
         run: |
+          # Adicione -y para aceitar automaticamente as perguntas do PPA.
           sudo add-apt-repository ppa:alex-p/tesseract-ocr-devel -y
           sudo apt-get update && sudo apt-get install -y \
           libscca-utils rifiuti2 libevtx-utils libevt-utils \
@@ -133,7 +138,7 @@ jobs:
 
       - name: Build IPED and prepare CLI for tests (Java 14)
         run: |
-          mvn -B clean install # Isso deve construir todos os módulos do seu projeto Maven
+          mvn -B clean install
           mkdir -p target/release/iped-4.2.0
           cp -r iped-parent/target/release/iped-4.2.0/* target/release/iped-4.2.0/ || true
 
