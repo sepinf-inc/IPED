@@ -225,73 +225,86 @@ public class UfedEmailParser extends AbstractParser {
 
     private void parseBody(Email email, XHTMLContentHandler xhtml) throws IOException, SAXException, TikaException {
         String body = email.getBody();
-        if (StringUtils.isNotBlank(body)) {
-            HtmlParser parser = new HtmlParser();
+        boolean isFromSnippet = false;
+        if (StringUtils.isBlank(body)) {
+            body = email.getSnippet();
+            isFromSnippet = true;
+        }
+
+        if (StringUtils.isBlank(body)) {
+            return;
+        }
+
+        /**
+         * An extended BodyContentHandler that processes HTML content to embed email attachments directly into the output.
+         * It overrides the startElement method to find elements with a 'src' attribute (like <img> tags)
+         * that reference an attachment. When a match is found, it replaces the 'src' attribute's value
+         * with a Base64-encoded data URI of the attachment's content.
+         */
+        BodyContentHandler bodyHandler = new BodyContentHandler(xhtml) {
 
             /**
-             * An extended BodyContentHandler that processes HTML content to embed email attachments directly into the output.
-             * It overrides the startElement method to find elements with a 'src' attribute (like <img> tags)
-             * that reference an attachment. When a match is found, it replaces the 'src' attribute's value
-             * with a Base64-encoded data URI of the attachment's content.
+             * Intercepts the start of an XML element to check for 'src' attributes that can be replaced
+             * with inline attachment data.
+             *
+             * The matching logic for attachments includes:
+             * - Exact URL match.
+             * - Content-ID (cid:) match with the attachment filename.
+             * - A fallback for single-attachment emails with a 'cid:' link.
+             * - A special-case comparison for Gmail URLs, ignoring certain parameters.
              */
-            BodyContentHandler bodyHandler = new BodyContentHandler(xhtml) {
-
-                /**
-                 * Intercepts the start of an XML element to check for 'src' attributes that can be replaced
-                 * with inline attachment data.
-                 *
-                 * The matching logic for attachments includes:
-                 * - Exact URL match.
-                 * - Content-ID (cid:) match with the attachment filename.
-                 * - A fallback for single-attachment emails with a 'cid:' link.
-                 * - A special-case comparison for Gmail URLs, ignoring certain parameters.
-                 */
-                @Override
-                public void startElement(String uri, String localName, String name, Attributes atts) throws SAXException {
-                    String src = atts.getValue(SRC_ATTR);
-                    if (src != null) {
-                        // Attempt to find a matching attachment for the given src attribute.
-                        String newSrc = email.getAttachments().stream()
-                        .filter(a -> src.equals(a.getURL())
-                                || src.startsWith("cid:" + a.getFilename())
-                                || src.startsWith("cid:") && email.getAttachments().size() == 1
-                                || "Gmail".equals(email.getSource()) && StringUtils.substringBefore(src, "&view=").equals(StringUtils.substringBefore(a.getURL(), "&view=")))
-                        .map(a -> {
-                            byte[] attachData = null;
-                            String contentType = null;
-                            if (a.getReferencedFile() != null) {
-                                try {
-                                    attachData = IOUtils.toByteArray(a.getReferencedFile().getItem().getBufferedInputStream());
-                                    contentType = StringUtils.firstNonBlank(a.getContentType(), a.getReferencedFile().getItem().getMediaType().toString());
-                                } catch (IOException e) {
-                                    logger.warn("Error reading attachment referenced file: " + a, e);
-                                }
-                            } else if (a.getUnreferencedContent() != null) {
-                                attachData = a.getUnreferencedContent();
-                                contentType = a.getContentType();
+            @Override
+            public void startElement(String uri, String localName, String name, Attributes atts) throws SAXException {
+                String src = atts.getValue(SRC_ATTR);
+                if (src != null) {
+                    // Attempt to find a matching attachment for the given src attribute.
+                    String newSrc = email.getAttachments().stream()
+                    .filter(a -> src.equals(a.getURL())
+                            || src.startsWith("cid:" + a.getFilename())
+                            || src.startsWith("cid:") && email.getAttachments().size() == 1
+                            || "Gmail".equals(email.getSource()) && StringUtils.substringBefore(src, "&view=").equals(StringUtils.substringBefore(a.getURL(), "&view=")))
+                    .map(a -> {
+                        byte[] attachData = null;
+                        String contentType = null;
+                        if (a.getReferencedFile() != null) {
+                            try {
+                                attachData = IOUtils.toByteArray(a.getReferencedFile().getItem().getBufferedInputStream());
+                                contentType = StringUtils.firstNonBlank(a.getContentType(), a.getReferencedFile().getItem().getMediaType().toString());
+                            } catch (IOException e) {
+                                logger.warn("Error reading attachment referenced file: " + a, e);
                             }
-                            if (attachData != null) {
-                                return String.format("data:%s;base64,%s", StringUtils.defaultString(contentType), Base64.encodeBase64String(attachData));
-                            }
-                            return null;
-                        })
-                        .filter(Objects::nonNull)
-                        .findFirst()
-                        .orElse(null);
-
-                        // If a data URI was successfully created, replace the original src attribute.
-                        if (newSrc != null) {
-                            logger.info("Found replaced src attribute: " + email + " / " + src);
-                            AttributesImpl newAtts = new AttributesImpl(atts);
-                            newAtts.removeAttribute(atts.getIndex(SRC_ATTR));
-                            newAtts.addAttribute("", SRC_ATTR, SRC_ATTR, "", newSrc);
-                            atts = newAtts;
+                        } else if (a.getUnreferencedContent() != null) {
+                            attachData = a.getUnreferencedContent();
+                            contentType = a.getContentType();
                         }
+                        if (attachData != null) {
+                            return String.format("data:%s;base64,%s", StringUtils.defaultString(contentType), Base64.encodeBase64String(attachData));
+                        }
+                        return null;
+                    })
+                    .filter(Objects::nonNull)
+                    .findFirst()
+                    .orElse(null);
+
+                    // If a data URI was successfully created, replace the original src attribute.
+                    if (newSrc != null) {
+                        logger.info("Found replaced src attribute: " + email + " / " + src);
+                        AttributesImpl newAtts = new AttributesImpl(atts);
+                        newAtts.removeAttribute(atts.getIndex(SRC_ATTR));
+                        newAtts.addAttribute("", SRC_ATTR, SRC_ATTR, "", newSrc);
+                        atts = newAtts;
                     }
-                    super.startElement(uri, localName, name, atts);
                 }
-            };
-            parser.parse(new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8)), bodyHandler, new Metadata(), new ParseContext());
+                super.startElement(uri, localName, name, atts);
+            }
+        };
+
+        // add html break line if snippet
+        if (isFromSnippet) {
+            body = body.replace("\n", "<br>\n");
         }
+
+        HtmlParser parser = new HtmlParser();
+        parser.parse(new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8)), bodyHandler, new Metadata(), new ParseContext());
     }
 }

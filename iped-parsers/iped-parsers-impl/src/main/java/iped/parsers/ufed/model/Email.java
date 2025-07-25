@@ -25,6 +25,7 @@ public class Email extends BaseModel {
     public String getFolder() { return (String) getField("Folder"); }
     public String getSubject() { return (String) getField("Subject"); }
     public String getBody() { return (String) getField("Body"); }
+    public String getSnippet() { return (String) getField("Snippet"); }
     public Date getTimeStamp() { return (Date) getField("TimeStamp"); }
     public String getEmailHeader() { return (String) getField("EmailHeader"); }
     public String getAccount() { return (String) getField("Account"); }

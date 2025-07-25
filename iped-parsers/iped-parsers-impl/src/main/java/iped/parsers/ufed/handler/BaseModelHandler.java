@@ -178,6 +178,9 @@ public class BaseModelHandler<T extends BaseModel> {
             if (body == null) {
                 body = metadata.get(UFED_META_PREFIX + "Snippet");
                 metadata.remove(UFED_META_PREFIX + "Snippet");
+                if (body != null) {
+                    metadata.set(UFED_META_PREFIX + "isBodyFromSnippet", Boolean.toString(true));
+                }
             }
             metadata.set(MESSAGE_BODY, body);
         }
