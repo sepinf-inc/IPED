@@ -88,7 +88,7 @@ indexFileContents = true
 # You must configure at least host/port options in conf/ElasticSearchConfig.txt
 enableIndexToElasticSearch = false
 
-# Enable exporting files to MinIO object storage cluster.
+# Enables exporting files to MinIO object storage cluster.
 # You must configure at least host/port options in conf/MinIOConfig.txt
 enableMinIO = false
 
@@ -96,7 +96,7 @@ enableMinIO = false
 # OCR language dictionary and other advanced configurations can be found in conf/OCRConfig.txt.
 enableOCR = false
 
-# Enable audio transcription.
+# Enables audio transcription.
 # Default implementation uses VOSK transcription on local CPU (faster but bad accuracy).
 # You can change the algorithm into conf/AudioTranscriptConfig.txt:
 # - Wav2Vec2 algorithm (slower and good accuracy)
@@ -145,3 +145,8 @@ enableDocThumbs = false
 # Enables HTML report generation on automatic extractions or from selected items.
 # Generation settings can be modified in file "conf/HTMLReportConfig.txt"
 enableHTMLReport = true
+
+# Enables remote image classifier.
+# It performs classification of image and video files.
+# Advanced settings can be modified in file "conf/RemoteImageClassifierConfig.txt"
+enableRemoteImageClassifier = false
