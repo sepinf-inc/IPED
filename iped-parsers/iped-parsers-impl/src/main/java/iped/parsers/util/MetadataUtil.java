@@ -710,6 +710,7 @@ public class MetadataUtil {
 
         if (contentType.startsWith("message") || //$NON-NLS-1$
                 MediaTypes.OUTLOOK_MSG.toString().equals(contentType) ||
+                MediaTypes.UFED_EMAIL_MIME.toString().equals(contentType) ||
                 MediaTypes.UFED_MESSAGE_MIME.toString().equals(contentType) ||
                 BPListDetector.PLIST.toString().equals(contentType))
             return;
