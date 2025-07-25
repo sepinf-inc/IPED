@@ -26,7 +26,9 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
+import org.apache.tika.parser.html.HtmlMapper;
 import org.apache.tika.parser.html.HtmlParser;
+import org.apache.tika.parser.html.IdentityHtmlMapper;
 import org.apache.tika.sax.BodyContentHandler;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.slf4j.Logger;
@@ -304,7 +306,10 @@ public class UfedEmailParser extends AbstractParser {
             body = body.replace("\n", "<br>\n");
         }
 
+        ParseContext context = new ParseContext();
+        context.set(HtmlMapper.class, IdentityHtmlMapper.INSTANCE);
+
         HtmlParser parser = new HtmlParser();
-        parser.parse(new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8)), bodyHandler, new Metadata(), new ParseContext());
+        parser.parse(new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8)), bodyHandler, new Metadata(), context);
     }
 }
