@@ -35,7 +35,7 @@ public class PartyStringBuilderFactory {
             case SOURCE_INSTAGRAM:
                 return new InstagramPartyStringBuilder();
             case SOURCE_EMAIL:
-                return new InstagramPartyStringBuilder();
+                return new EmailPartyStringBuilder();
             default:
                 return new GenericPartyStringBuilder();
         }
