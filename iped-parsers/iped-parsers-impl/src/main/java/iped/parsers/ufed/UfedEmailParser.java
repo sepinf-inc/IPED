@@ -36,7 +36,6 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
-import iped.data.IItem;
 import iped.data.IItemReader;
 import iped.localization.LocaleResolver;
 import iped.parsers.chat.EmailPartyStringBuilder;
@@ -104,9 +103,7 @@ public class UfedEmailParser extends AbstractParser {
             EmailHandler emailHandler = new EmailHandler(email, item);
             emailHandler.loadReferences(searcher);
             emailHandler.fillMetadata(metadata);
-            if (item instanceof IItem) {
-                ((IItem) item).setName(emailHandler.getTitle());
-            }
+            emailHandler.updateItemNameWithTitle();
 
             extractAttachments(email, handler, extractor);
 

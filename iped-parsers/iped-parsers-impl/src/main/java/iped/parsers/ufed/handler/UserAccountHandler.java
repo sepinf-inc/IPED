@@ -5,13 +5,14 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
+import iped.data.IItemReader;
 import iped.parsers.ufed.model.ContactEntry;
 import iped.parsers.ufed.model.UserAccount;
 
 public class UserAccountHandler extends AccountableHandler<UserAccount> {
 
-    public UserAccountHandler(UserAccount model) {
-        super(model);
+    public UserAccountHandler(UserAccount model, IItemReader item) {
+        super(model, item);
     }
 
     @Override

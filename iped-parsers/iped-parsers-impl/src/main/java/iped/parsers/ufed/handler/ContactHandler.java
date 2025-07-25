@@ -21,8 +21,12 @@ public class ContactHandler extends AccountableHandler<Contact> {
 
     private static final Logger logger = LoggerFactory.getLogger(ContactHandler.class);
 
+    public ContactHandler(Contact model, IItemReader item) {
+        super(model, item);
+    }
+
     public ContactHandler(Contact model) {
-        super(model);
+        super(model, null);
     }
 
     @Override

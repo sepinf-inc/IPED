@@ -130,9 +130,7 @@ public class UfedMessageParser extends AbstractParser {
             InstantMessageHandler messageHandler = new InstantMessageHandler(message, item);
             messageHandler.loadReferences(searcher);
             messageHandler.fillMetadata(metadata);
-            if (item instanceof IItem) {
-                ((IItem) item).setName(messageHandler.getTitle());
-            }
+            messageHandler.updateItemNameWithTitle();
 
             storeLinkedHashes(message, metadata);
 

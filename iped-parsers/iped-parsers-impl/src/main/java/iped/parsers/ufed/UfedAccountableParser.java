@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped.data.IItem;
 import iped.data.IItemReader;
 import iped.parsers.ufed.handler.AccountableHandler;
 import iped.parsers.ufed.handler.BaseModelHandler;
@@ -81,17 +80,15 @@ public class UfedAccountableParser extends AbstractParser {
 
             AccountableHandler<?> accountableHandler;
             if (accountable instanceof Contact) {
-                accountableHandler = new ContactHandler((Contact) accountable);
+                accountableHandler = new ContactHandler((Contact) accountable, item);
             } else if (accountable instanceof UserAccount) {
-                accountableHandler = new UserAccountHandler((UserAccount) accountable);
+                accountableHandler = new UserAccountHandler((UserAccount) accountable, item);
             } else {
-                accountableHandler = new AccountableHandler<>(accountable);
+                accountableHandler = new AccountableHandler<>(accountable, item);
             }
             accountableHandler.fillMetadata(metadata);
             accountableHandler.loadReferences(searcher);
-            if (item instanceof IItem) {
-                ((IItem) item).setName(accountableHandler.getTitle());
-            }
+            accountableHandler.updateItemNameWithTitle();
 
             // parse accountable content into the XHTML handler
             XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);

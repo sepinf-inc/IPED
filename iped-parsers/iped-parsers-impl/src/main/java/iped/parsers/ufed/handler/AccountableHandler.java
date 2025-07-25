@@ -21,8 +21,8 @@ import iped.search.IItemSearcher;
  */
 public class AccountableHandler<T extends Accountable> extends BaseModelHandler<T> {
 
-    public AccountableHandler(T model) {
-        super(model, null);
+    public AccountableHandler(T model, IItemReader item) {
+        super(model, item);
     }
 
     @Override

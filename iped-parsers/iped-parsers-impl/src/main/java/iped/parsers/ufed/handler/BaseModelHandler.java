@@ -17,6 +17,7 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.utils.DateUtils;
 
+import iped.data.IItem;
 import iped.data.IItemReader;
 import iped.parsers.ufed.model.BaseModel;
 import iped.properties.ExtraProperties;
@@ -86,6 +87,13 @@ public class BaseModelHandler<T extends BaseModel> {
         return model.getModelType() + "_" + model.getId();
     }
 
+    public void updateItemNameWithTitle() {
+        if (item instanceof IItem) {
+            IItem writableItem = (IItem) item;
+            writableItem.setName(getTitle());
+            writableItem.setExtension("");
+        }
+    }
 
     protected void fillCommonMetadata(Metadata metadata) {
 
