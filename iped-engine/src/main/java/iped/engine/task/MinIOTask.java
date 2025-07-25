@@ -154,8 +154,7 @@ public class MinIOTask extends AbstractTask {
         minioClient.setTimeout(timeout, timeout, timeout);
         inputStreamFactory = new MinIOInputInputStreamFactory(URI.create(server));
 
-
-
+        checkDependency(HashTask.class);
     }
 
     private static void parseFields(String cmdFields) {
