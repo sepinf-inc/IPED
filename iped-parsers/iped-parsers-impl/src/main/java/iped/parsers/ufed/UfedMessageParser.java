@@ -264,9 +264,10 @@ public class UfedMessageParser extends AbstractParser {
             shareContactMeta.set(TikaCoreProperties.TITLE, contactHandler.getTitle());
             shareContactMeta.set(StandardParser.INDEXER_CONTENT_TYPE, shareContact.getMediaType().toString());
             shareContactMeta.set(BasicProps.LENGTH, "");
-            contactHandler.fillMetadata(shareContactMeta);
 
-            extractor.parseEmbedded(new EmptyInputStream(), handler, shareContactMeta, false);
+            TikaInputStream sharedContactInput = TikaInputStream.get(new EmptyInputStream());
+            sharedContactInput.setOpenContainer(shareContact);
+            extractor.parseEmbedded(sharedContactInput, handler, shareContactMeta, false);
         }
     }
 }
