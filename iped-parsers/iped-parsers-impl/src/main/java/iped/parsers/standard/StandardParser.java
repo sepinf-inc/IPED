@@ -54,6 +54,7 @@ import iped.parsers.util.IgnoreCorruptedCarved;
 import iped.parsers.util.ItemInfo;
 import iped.parsers.util.Messages;
 import iped.parsers.util.MetadataUtil;
+import iped.properties.MediaTypes;
 import iped.utils.IOUtil;
 
 /**
@@ -241,8 +242,14 @@ public class StandardParser extends CompositeParser {
                     if (metadata.get(INDEXER_TIMEOUT) == null) {
                         if (canUseForkParser && ForkParser.isEnabled() && hasSpecificParser(metadata))
                             ForkParser.getForkParser().parse(tis, sch, metadata, context);
-                        else
-                            super.parse(tis, sch, metadata, context);
+                        else {
+                            // Disable zip bomb prevention for ufed items
+                            if (contentType.startsWith(MediaType.application(MediaTypes.UFED_MIME_PREFIX).toString())) {
+                                super.parse(tis, noEndHandler, metadata, context);
+                            } else {
+                                super.parse(tis, sch, metadata, context);
+                            }
+                        }
                     } else {
                         if (errorParser != null)
                             errorParser.parse(tis, sch, metadata, context);

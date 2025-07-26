@@ -280,6 +280,7 @@ public class IconManager {
         icon = availableIconsMap.get("deviceinfo");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-deviceinfo", icon);
+            mimeIconMap.put("application/x-ufed-deviceinfoentry", icon);
             mimeIconMap.put("application/x-ufed-simdata", icon);
             mimeIconMap.put("application/x-ufed-html-simdata", icon);
             mimeIconMap.put("application/x-ufed-html-summary", icon);
@@ -399,10 +400,14 @@ public class IconManager {
             mimeIconMap.put("application/x-ufed-deviceevent", icon);
         }
 
+        icon = availableIconsMap.get("attachment");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-attachment", icon);
+        }
+
         icon = availableIconsMap.get("message");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-instantmessage", icon);
-            mimeIconMap.put("message/x-ufed-attachment", icon);
             mimeIconMap.put("application/x-ufed-chat-preview", icon);
             mimeIconMap.put("message/x-chat-message", icon);
             mimeIconMap.put("message/x-discord-message", icon);
@@ -467,8 +472,8 @@ public class IconManager {
         icon = availableIconsMap.get("email");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-html-mails", icon);
+            mimeIconMap.put("application/x-ufed-email", icon);
             mimeIconMap.put("multipart/related", icon);
-            mimeIconMap.put("message/x-ufed-email", icon);
             mimeIconMap.put("message/outlook-pst", icon);
             mimeIconMap.put("message/x-emlx", icon);
             mimeIconMap.put("message/rfc822-partial", icon);
