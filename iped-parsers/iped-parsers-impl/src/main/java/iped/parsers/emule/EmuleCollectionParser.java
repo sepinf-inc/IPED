@@ -45,6 +45,7 @@ import iped.properties.ExtraProperties;
 public class EmuleCollectionParser extends AbstractParser {
     public static final String EMULE_COLLECTION_MIME_TYPE = "application/x-emule-collection"; //$NON-NLS-1$
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.parse(EMULE_COLLECTION_MIME_TYPE));
+    private static final long MAX_FILE_SIZE = 100 * 1024 * 1024;
 
     static String ED2K_URL_REGEX = "(ed2k://)\\|file\\|(?<filename>[^\\|]*)\\|(?<size>[^\\|]*)\\|(?<hash>[^\\|]*)\\|";
 
@@ -62,6 +63,8 @@ public class EmuleCollectionParser extends AbstractParser {
         try {
             TikaInputStream tikaStream = TikaInputStream.get(stream, tmp);
             long size = tikaStream.getLength();
+            if (size > MAX_FILE_SIZE)
+                throw new TikaException("EmuleCollection is too big (" + size + " bytes): maximum supported size to parse is " + MAX_FILE_SIZE + " bytes");
             ByteBuffer bb = ByteBuffer.wrap(tikaStream.readAllBytes());
             ECollection collection = null;
             try {

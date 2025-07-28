@@ -1,8 +1,5 @@
 package iped.parsers.emule.data;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -15,11 +12,6 @@ public class EmuleCollection implements ECollection {
     private static final int COLLECTION_FILE_VERSION2_LARGEFILES = 0x02;
     private String m_sCollectionAuthorName;
     ArrayList<ECollectionFile> files = new ArrayList<>();
-
-    public static EmuleCollection loadCollectionFile(File f) throws FileNotFoundException, IOException {
-        return loadCollectionFile(ByteBuffer.wrap(new FileInputStream(f).readAllBytes()));
-
-    }
 
     public static EmuleCollection loadCollectionFile(ByteBuffer data) throws IOException {
         EmuleCollection result = new EmuleCollection();
