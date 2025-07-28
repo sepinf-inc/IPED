@@ -1,6 +1,5 @@
 package iped.parsers.emule.data;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
@@ -9,8 +8,7 @@ public class EmuleCollectionFile implements ECollectionFile {
 
     HashMap<Byte, Tag> tags = new HashMap<Byte, Tag>();
 
-
-    public static EmuleCollectionFile loadCollectionFile(ByteBuffer data) throws FileNotFoundException, IOException {
+    public static EmuleCollectionFile loadCollectionFile(ByteBuffer data) throws IOException {
 
         EmuleCollectionFile result = new EmuleCollectionFile();
 
