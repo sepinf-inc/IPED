@@ -4,7 +4,9 @@ import static iped.properties.ExtraProperties.COMMUNICATION_DIRECTION;
 import static iped.properties.ExtraProperties.MESSAGE_ATTACHMENT_COUNT;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
@@ -34,11 +36,11 @@ public class EmailHandler extends BaseModelHandler<Email> {
     }
 
     @Override
-    public void addLinkedItemsAndSharedHashes(Metadata metadata, IItemSearcher searcher) {
+    protected void doAddLinkedItemsAndSharedHashes(Set<String> linkedItems, HashSet<String> sharedHashes, IItemSearcher searcher) {
         model.getAttachments().stream().map(Attachment::getReferencedFile).filter(Objects::nonNull).forEach(ref -> {
-            addLinkedItem(metadata, ref.getItem(), searcher);
+            addLinkedItem(linkedItems, ref.getItem(), searcher);
             if (model.isFromPhoneOwner()) {
-                addSharedHash(metadata, ref.getItem());
+                addSharedHash(sharedHashes, ref.getItem());
             }
         });
     }
@@ -98,7 +100,6 @@ public class EmailHandler extends BaseModelHandler<Email> {
                 .map(Party::getIdentifier)
                 .distinct()
                 .forEach(addr -> metadata.add(Message.MESSAGE_RECIPIENT_ADDRESS, addr));
-
     }
 
     @Override

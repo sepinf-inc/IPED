@@ -1,7 +1,9 @@
 package iped.parsers.ufed.handler;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -64,12 +66,12 @@ public class ContactHandler extends AccountableHandler<Contact> {
     }
 
     @Override
-    public void addLinkedItemsAndSharedHashes(Metadata metadata, IItemSearcher searcher) {
+    protected void doAddLinkedItemsAndSharedHashes(Set<String> linkedItems, HashSet<String> sharedHashes, IItemSearcher searcher) {
 
-        super.addLinkedItemsAndSharedHashes(metadata, searcher);
+        super.doAddLinkedItemsAndSharedHashes(linkedItems, sharedHashes, searcher);
 
         model.getReferencedContact().ifPresent(ref -> {
-            addLinkedItem(metadata, ref.getItem(), searcher);
+            addLinkedItem(linkedItems, ref.getItem(), searcher);
         });
     }
 

@@ -14,6 +14,7 @@ import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.Property;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.utils.DateUtils;
 
@@ -106,28 +107,45 @@ public class BaseModelHandler<T extends BaseModel> {
         }
     }
 
-    public void addLinkedItemsAndSharedHashes(Metadata metadata, IItemSearcher searcher) {
+    public final void addLinkedItemsAndSharedHashes(Metadata metadata, IItemSearcher searcher) {
+
+        Property linkedItemsProperty = Property.internalTextBag(ExtraProperties.LINKED_ITEMS);
+        HashSet<String> linkedItems = new HashSet<String>(Arrays.asList(metadata.getValues(linkedItemsProperty)));
+        int initialLinkedItemsSize = linkedItems.size();
+
+        Property sharedHashesProperty = Property.internalTextBag(ExtraProperties.SHARED_HASHES);
+        HashSet<String> sharedHashes = new HashSet<String>(Arrays.asList(metadata.getValues(sharedHashesProperty)));
+        int initialSharedHashessSize = sharedHashes.size();
+
+        doAddLinkedItemsAndSharedHashes(linkedItems, sharedHashes, searcher);
+
+        if (initialLinkedItemsSize != linkedItems.size()) {
+            metadata.set(linkedItemsProperty, linkedItems.toArray(new String[] {}));
+        }
+
+        if (initialSharedHashessSize != sharedHashes.size()) {
+            metadata.set(sharedHashesProperty, sharedHashes.toArray(new String[] {}));
+        }
     }
 
-    protected final void addLinkedItem(Metadata metadata, IItemReader referencedItem, IItemSearcher searcher) {
+    protected void doAddLinkedItemsAndSharedHashes(Set<String> linkedItems, HashSet<String> sharedHashes, IItemSearcher searcher) {
+    }
+
+    protected final void addLinkedItem(Set<String> linkedItems, IItemReader referencedItem, IItemSearcher searcher) {
 
         String referencedUfedId = referencedItem.getMetadata().get(ExtraProperties.UFED_ID);
 
         // add linked items (if referencedUfedId not present in jumpTargets)
         if (StringUtils.isNotBlank(referencedUfedId) && !model.getJumpTargets().stream().anyMatch(j -> referencedUfedId.equals(j.getId()))) {
             String linkedItemQuery = searcher.escapeQuery(ExtraProperties.UFED_ID) + ":\"" + referencedUfedId + "\"";
-            if (!Arrays.asList(metadata.getValues(ExtraProperties.LINKED_ITEMS)).contains(linkedItemQuery)) {
-                metadata.add(ExtraProperties.LINKED_ITEMS, linkedItemQuery);
-            }
+            linkedItems.add(linkedItemQuery);
         }
     }
 
-    protected final void addSharedHash(Metadata metadata, IItemReader sharedItem) {
+    protected final void addSharedHash(Set<String> sharedHashes, IItemReader sharedItem) {
         String sharedHash = sharedItem.getHash();
         if (HashUtils.isValidHash(sharedHash)) {
-            if (!Arrays.asList(metadata.getValues(ExtraProperties.SHARED_HASHES)).contains(sharedHash)) {
-                metadata.add(ExtraProperties.SHARED_HASHES, sharedHash);
-            }
+            sharedHashes.add(sharedHash);
         }
     }
 

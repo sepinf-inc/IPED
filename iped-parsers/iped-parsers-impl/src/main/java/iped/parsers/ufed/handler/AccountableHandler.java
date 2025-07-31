@@ -56,9 +56,9 @@ public class AccountableHandler<T extends Accountable> extends BaseModelHandler<
     }
 
     @Override
-    public void addLinkedItemsAndSharedHashes(Metadata metadata, IItemSearcher searcher) {
+    protected void doAddLinkedItemsAndSharedHashes(Set<String> linkedItems, HashSet<String> sharedHashes, IItemSearcher searcher) {
         model.getPhotos().stream().map(ContactPhoto::getReferencedFile).filter(Optional::isPresent).forEach(ref -> {
-            addLinkedItem(metadata, ref.get().getItem(), searcher);
+            addLinkedItem(linkedItems, ref.get().getItem(), searcher);
         });
     }
 

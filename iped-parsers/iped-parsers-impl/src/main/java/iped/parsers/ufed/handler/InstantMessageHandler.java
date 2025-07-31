@@ -10,6 +10,7 @@ import static iped.properties.ExtraProperties.UFED_ID;
 import static iped.properties.ExtraProperties.UFED_META_PREFIX;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -195,27 +196,27 @@ public class InstantMessageHandler extends BaseModelHandler<InstantMessage> {
     }
 
     @Override
-    public void addLinkedItemsAndSharedHashes(Metadata metadata, IItemSearcher searcher) {
+    protected void doAddLinkedItemsAndSharedHashes(Set<String> linkedItems, HashSet<String> sharedHashes, IItemSearcher searcher) {
         model.getFrom().flatMap(Party::getReferencedContact).ifPresent(ref -> {
-            addLinkedItem(metadata, ref.getItem(), searcher);
+            addLinkedItem(linkedItems, ref.getItem(), searcher);
         });
         model.getTo().stream().map(Party::getReferencedContact).filter(Optional::isPresent).map(Optional::get).forEach(ref -> {
-            addLinkedItem(metadata, ref.getItem(), searcher);
+            addLinkedItem(linkedItems, ref.getItem(), searcher);
         });
 
         model.getAttachments().stream().map(Attachment::getReferencedFile).filter(Objects::nonNull).forEach(ref -> {
-            addLinkedItem(metadata, ref.getItem(), searcher);
+            addLinkedItem(linkedItems, ref.getItem(), searcher);
             if (model.isFromPhoneOwner()) {
-                addSharedHash(metadata, ref.getItem());
+                addSharedHash(sharedHashes, ref.getItem());
             }
         });
 
         model.getSharedContacts().stream().map(Contact::getReferencedContact).filter(Optional::isPresent).map(Optional::get).forEach(ref -> {
-            addLinkedItem(metadata, ref.getItem(), searcher);
+            addLinkedItem(linkedItems, ref.getItem(), searcher);
         });
 
         if (model.getPosition() != null && model.getPosition().getReferencedLocation() != null) {
-            addLinkedItem(metadata, model.getPosition().getReferencedLocation().getItem(), searcher);
+            addLinkedItem(linkedItems, model.getPosition().getReferencedLocation().getItem(), searcher);
         }
     }
 
