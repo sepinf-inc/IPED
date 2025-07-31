@@ -15,8 +15,11 @@ import static iped.properties.ExtraProperties.CONVERSATION_TYPE;
 import static iped.properties.ExtraProperties.UFED_META_PREFIX;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.metadata.Metadata;
@@ -25,6 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import iped.data.IItemReader;
 import iped.parsers.ufed.model.Chat;
+import iped.parsers.ufed.model.ContactPhoto;
 import iped.parsers.ufed.model.Party;
 import iped.parsers.util.Messages;
 import iped.parsers.whatsapp.WAContact;
@@ -120,6 +124,23 @@ public class ChatHandler extends BaseModelHandler<Chat> {
         model.getMessages().forEach(m -> {
             new InstantMessageHandler(m, item, participantsCache).loadReferences(searcher);
         });
+    }
+
+    @Override
+    protected void doAddLinkedItemsAndSharedHashes(Set<String> linkedItems, HashSet<String> sharedHashes, IItemSearcher searcher) {
+
+        model.getReferencedAccount().ifPresent(ref -> {
+            addLinkedItem(linkedItems, ref.getItem(), searcher);
+        });
+
+        model.getPhotos().stream().map(ContactPhoto::getReferencedFile).filter(Optional::isPresent).forEach(ref -> {
+            addLinkedItem(linkedItems, ref.get().getItem(), searcher);
+        });
+        model.getParticipants().stream().map(Party::getReferencedContact).filter(Optional::isPresent).forEach(ref -> {
+            addLinkedItem(linkedItems, ref.get().getItem(), searcher);
+        });
+
+        // references to messages referenced items are done in UfedChatParser.storeLinkedHashes() per chat-preview
     }
 
     @Override
@@ -226,7 +247,7 @@ public class ChatHandler extends BaseModelHandler<Chat> {
 
     private void loadChatAccountReference(IItemSearcher searcher) {
 
-        if (model.getReferencedAccount().isPresent() || model.getAccount() == null) {
+        if (model.getAccount() == null) {
             return;
         }
 
@@ -238,9 +259,9 @@ public class ChatHandler extends BaseModelHandler<Chat> {
                 logger.warn("Found more than one account for [{}]: {}", account, results);
             }
             model.setReferencedAccount(results.get(0));
-            return;
+        } else {
+            logger.warn("User Account reference was not found: {}", account);
         }
-        logger.warn("User Account reference was not found: {}", account);
     }
 
 

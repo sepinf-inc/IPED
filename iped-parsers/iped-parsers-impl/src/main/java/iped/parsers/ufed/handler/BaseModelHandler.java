@@ -115,7 +115,7 @@ public class BaseModelHandler<T extends BaseModel> {
 
         Property sharedHashesProperty = Property.internalTextBag(ExtraProperties.SHARED_HASHES);
         HashSet<String> sharedHashes = new HashSet<String>(Arrays.asList(metadata.getValues(sharedHashesProperty)));
-        int initialSharedHashessSize = sharedHashes.size();
+        int initialSharedHashesSize = sharedHashes.size();
 
         doAddLinkedItemsAndSharedHashes(linkedItems, sharedHashes, searcher);
 
@@ -123,7 +123,7 @@ public class BaseModelHandler<T extends BaseModel> {
             metadata.set(linkedItemsProperty, linkedItems.toArray(new String[] {}));
         }
 
-        if (initialSharedHashessSize != sharedHashes.size()) {
+        if (initialSharedHashesSize != sharedHashes.size()) {
             metadata.set(sharedHashesProperty, sharedHashes.toArray(new String[] {}));
         }
     }

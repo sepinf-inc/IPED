@@ -126,6 +126,7 @@ public class UfedChatParser extends AbstractParser {
             ChatHandler chatHandler = new ChatHandler(chat, item);
             chatHandler.loadReferences(searcher);
             chatHandler.fillMetadata(metadata);
+            chatHandler.addLinkedItemsAndSharedHashes(metadata, searcher);
 
             Collections.sort(chat.getMessages());
 
@@ -149,7 +150,8 @@ public class UfedChatParser extends AbstractParser {
 
                     // copy parent metadata
                     for (String name : metadata.names()) {
-                        if (name.startsWith(ExtraProperties.UFED_META_PREFIX) || name.startsWith(ExtraProperties.CONVERSATION_PREFIX)) {
+                        if (name.startsWith(ExtraProperties.UFED_META_PREFIX) || name.startsWith(ExtraProperties.CONVERSATION_PREFIX)
+                                || name.equals(ExtraProperties.LINKED_ITEMS)) {
                             for (String val : metadata.getValues(name)) {
                                 chatPreviewMeta.add(name, val);
                             }
