@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Metadata;
 
@@ -105,7 +106,7 @@ public class EmailHandler extends BaseModelHandler<Email> {
         return new StringBuilder()
                 .append("Email") //
                 .append("-[") //
-                .append(model.getSubject()) //
+                .append(StringUtils.firstNonBlank(model.getSubject(), model.getId())) //
                 .append("]") //
                 .toString();
     }
