@@ -166,10 +166,6 @@ public class UfedChatParser extends AbstractParser {
                     chatPreviewMeta.set(StandardParser.INDEXER_CONTENT_TYPE, previewMime.toString());
                     chatPreviewMeta.set(ExtraProperties.DECODED_DATA, Boolean.toString(true));
 
-                    if (extractMessages && !subList.isEmpty()) {
-                        chatPreviewMeta.set(BasicProps.HASCHILD, Boolean.toString(true));
-                    }
-
                     ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
                     extractor.parseEmbedded(chatStream, handler, chatPreviewMeta, false);
                     bytes = nextBytes;
