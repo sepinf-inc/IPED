@@ -379,7 +379,7 @@ public class ImageThumbTask extends ThumbTask {
                 performanceStats[15] += System.currentTimeMillis() - t;
 
                 if (!isView) {
-                    // Ajusta rotacao da miniatura a partir do metadado orientacao
+                    // Adjust thumb orientation based on "tiff:orientation" metadata.
                     try (BufferedInputStream stream = evidence.getBufferedInputStream()) {
                         int orientation = ImageMetadataUtil.getOrientation(stream);
                         if (orientation > 0) {
