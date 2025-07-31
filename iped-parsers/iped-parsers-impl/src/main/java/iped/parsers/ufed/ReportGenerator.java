@@ -24,6 +24,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 
+import ezvcard.util.org.apache.commons.codec.binary.Base64;
 import iped.parsers.ufed.handler.ChatHandler;
 import iped.parsers.ufed.handler.PartyHandler;
 import iped.parsers.ufed.model.Attachment;
@@ -386,8 +387,8 @@ public class ReportGenerator {
                     out.println(Messages.getString("WhatsAppReport.Video") + ":<br/>");
                 }
                 out.print("<img class=\"thumb\" src=\"");
-                out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\"");
-                out.println(" title=\"" + format(attachment.getTitle()) + "\"/><br/>");
+                out.print("data:image/jpg;base64," + Base64.encodeBase64String(thumb));
+                out.println("\" /><br/>");
 
             } else if (contentType != null) {
                 if (contentType.startsWith("audio")) {
@@ -398,6 +399,8 @@ public class ReportGenerator {
                     out.println("<div class=\"imageImg\" title=\"Image\"></div>");
                 } else if (contentType.contains("contact")) {
                     out.println("<div class=\"contactImg\" title=\"Contact\"></div>");
+                } else if (contentType.equalsIgnoreCase("URL")) {
+                    // nothing
                 } else {
                     out.println("Attachment:<br/><div class=\"attachImg\" title=\"Doc\"></div>");
                 }
@@ -428,19 +431,9 @@ public class ReportGenerator {
                     out.print("<p><i>" + Messages.getString("WhatsAppReport.FoundInPedoHashDB") + " "
                             + format(attachment.getReferencedFile().getChildPornSets().toString()) + "</i></p>");
                 }
-            } else {
-
-                String title = attachment.getTitle();
-                if (isNotBlank(title) && !StringUtils.contains(body, title)) {
-                    out.println("<br/>" + format(title));
-                }
-
-                String url = attachment.getURL();
-                if (isNotBlank(url) && !StringUtils.contains(body, url) //
-                        && StringUtils.equalsAny(message.getSource(), "Telegram")) {
-                    out.println("<p class=\"link\">" + format(attachment.getURL()) + "</p>");
-                }
             }
+
+            out.println(formatTitleAndURL(attachment, body));
         }
 
         if (isNotBlank(body)) {
@@ -536,17 +529,9 @@ public class ReportGenerator {
                         attachStr.append("<div class=\"attachImg quoteImg\" title=\"Doc\"></div>");
                     }
                 }
-
-                String title = attach.getTitle();
-                if (isNotBlank(title)) {
-                    msgStr.append(format(title));
-                }
-
-                break;
-
-            } else if (attach.getURL() != null) {
-                msgStr.append(formatURL(attach, body));
             }
+
+            msgStr.append(formatTitleAndURL(attach, body));
         }
 
         msgStr.append(formatLocation(quotedMessage));
@@ -577,7 +562,7 @@ public class ReportGenerator {
         return String.format("%02d:%02d", (int) duration / 60, (int) duration % 60);
     }
 
-    private String formatURL(Attachment attachment, String body) {
+    private String formatTitleAndURL(Attachment attachment, String body) {
 
         StringBuilder sb = new StringBuilder();
 
@@ -586,8 +571,10 @@ public class ReportGenerator {
             sb.append("<br/>" + format(title));
         }
 
+        String contentType = attachment.getContentType();
         String url = attachment.getURL();
-        if (isNotBlank(url) && !StringUtils.contains(body, url)) {
+        if (isNotBlank(url) && !StringUtils.contains(body, url)
+                && (contentType == null || contentType.equalsIgnoreCase("URL"))) {
             sb.append("<p class=\"link\">" + format(attachment.getURL()) + "</p>");
         }
 
