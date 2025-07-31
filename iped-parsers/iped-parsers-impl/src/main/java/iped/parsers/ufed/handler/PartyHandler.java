@@ -53,8 +53,8 @@ public class PartyHandler extends BaseModelHandler<Party> {
     }
 
     @Override
-    public void loadReferences(IItemSearcher searcher) {
-        if (model.getReferencedContact().isPresent() || model.isSystemMessage() || model.getIdentifier() == null) {
+    public void doLoadReferences(IItemSearcher searcher) {
+        if (model.isSystemMessage() || model.getIdentifier() == null) {
             return;
         }
 
@@ -75,6 +75,9 @@ public class PartyHandler extends BaseModelHandler<Party> {
         }
         List<IItemReader> results = searcher.search(query);
         if (!results.isEmpty()) {
+            if (results.size() > 1) {
+                logger.warn("Found more than 1 party reference: {}", results);
+            }
             IItemReader result = results.get(0);
             cache.put(identifier, result);
             model.setReferencedContact(result);

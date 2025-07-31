@@ -1,6 +1,10 @@
 package iped.parsers.ufed.model;
 
+import java.util.Optional;
 import java.util.StringJoiner;
+
+import iped.data.IItemReader;
+import iped.parsers.ufed.reference.ReferencedFile;
 
 /**
  * Represents a <model type="ContactPhoto"> element.
@@ -9,7 +13,7 @@ public class ContactPhoto extends BaseModel {
 
     private static final long serialVersionUID = -7306239929532046153L;
 
-    private transient byte[] imageData;
+    private transient Optional<ReferencedFile> referencedFile = Optional.empty();
 
     public ContactPhoto() {
         super("ContactPhoto");
@@ -20,12 +24,12 @@ public class ContactPhoto extends BaseModel {
     public String getPhotoNodeId() { return (String) getField("PhotoNodeId"); }
     public String getUrl() { return (String) getField("Url"); }
 
-    public byte[] getImageData() {
-        return imageData;
+    public Optional<ReferencedFile> getReferencedFile() {
+        return referencedFile;
     }
 
-    public void setImageData(byte[] imageData) {
-        this.imageData = imageData;
+    public void setReferencedFile(IItemReader fileItem) {
+        this.referencedFile = Optional.of(new ReferencedFile(fileItem));
     }
 
     @Override

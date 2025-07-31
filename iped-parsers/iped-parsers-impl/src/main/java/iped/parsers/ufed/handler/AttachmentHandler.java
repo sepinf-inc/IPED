@@ -26,11 +26,7 @@ public class AttachmentHandler extends BaseModelHandler<Attachment> {
     }
 
     @Override
-    public void loadReferences(IItemSearcher searcher) {
-        if (model.getReferencedFile() != null || model.getUnreferencedContent() != null || (model.getFileId() == null && model.getAttachmentExtractedPath() == null)) {
-            // cannot be loaded
-            return;
-        }
+    public void doLoadReferences(IItemSearcher searcher) {
 
         // lookup for file using "ufed:file_id"
         if (model.getFileId() != null) {
@@ -45,9 +41,8 @@ public class AttachmentHandler extends BaseModelHandler<Attachment> {
             }
         }
 
+        // lookup for file using "ufed:attachment_extracted_path"
         if (model.getAttachmentExtractedPath() != null) {
-
-            // lookup for file using "ufed:attachment_extracted_path"
             {
                 String query = BasicProps.EVIDENCE_UUID + ":\"" + item.getDataSource().getUUID() + "\"" //
                         + " && " + searcher.escapeQuery(ExtraProperties.UFED_META_PREFIX + "local_path") + ":\"" + model.getAttachmentExtractedPath() + "\"";

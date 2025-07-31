@@ -105,6 +105,7 @@ public class UfedEmailParser extends AbstractParser {
             EmailHandler emailHandler = new EmailHandler(email, item);
             emailHandler.loadReferences(searcher);
             emailHandler.fillMetadata(metadata);
+            emailHandler.addLinkedItemsAndSharedHashes(metadata, searcher);
             emailHandler.updateItemNameWithTitle();
 
             extractAttachments(email, handler, extractor);

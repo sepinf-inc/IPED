@@ -48,4 +48,8 @@ public class Email extends BaseModel {
     public List<Party> getCc() { return cc; }
     public List<Party> getBcc() { return bcc; }
     public List<Attachment> getAttachments() { return attachments; }
+
+    public boolean isFromPhoneOwner() {
+        return getFrom().map(Party::isPhoneOwner).orElse(false);
+    }
 }

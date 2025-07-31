@@ -5,12 +5,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.tika.metadata.Metadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.data.IItemReader;
 import iped.parsers.ufed.model.Contact;
 import iped.parsers.ufed.model.ContactEntry;
+import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
 
@@ -30,28 +32,46 @@ public class ContactHandler extends AccountableHandler<Contact> {
     }
 
     @Override
-    public void loadReferences(IItemSearcher searcher) {
+    protected void fillMetadata(String prefix, Metadata metadata) {
+        super.fillMetadata(prefix, metadata);
 
-        super.loadReferences(searcher);
+    }
+
+    @Override
+    public void doLoadReferences(IItemSearcher searcher) {
+
+        super.doLoadReferences(searcher);
 
         loadReferencedContact(searcher);
     }
 
     private void loadReferencedContact(IItemSearcher searcher) {
-        if (model.getReferencedContact().isPresent() || model.getId() == null || !"Shared".equals(model.getType())) {
+
+        if (model.getId() == null || !"Shared".equals(model.getType())) {
             return;
         }
 
-        String query = searcher.escapeQuery(ExtraProperties.UFED_ID) + ":\"" + model.getId() + "\"";
+        String query = searcher.escapeQuery(ExtraProperties.UFED_ID) + ":\" && " + BasicProps.SUBITEM + ":false";
         List<IItemReader> contactItems = searcher.search(query);
         if (!contactItems.isEmpty()) {
             if (contactItems.size() > 1) {
                 logger.warn("Found more than 1 contact for shared contact: {}", contactItems);
             }
             model.setReferencedContact(contactItems.get(0));
-            return;
+
+        } else {
+            logger.debug("Contact reference was not found: {}", model);
         }
-        logger.debug("Contact reference was not found: {}", model);
+    }
+
+    @Override
+    public void addLinkedItemsAndSharedHashes(Metadata metadata, IItemSearcher searcher) {
+
+        super.addLinkedItemsAndSharedHashes(metadata, searcher);
+
+        model.getReferencedContact().ifPresent(ref -> {
+            addLinkedItem(metadata, ref.getItem(), searcher);
+        });
     }
 
     @Override

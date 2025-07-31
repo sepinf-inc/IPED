@@ -37,6 +37,7 @@ import iped.parsers.ufed.model.Contact;
 import iped.parsers.ufed.model.ContactEntry;
 import iped.parsers.ufed.model.ContactPhoto;
 import iped.parsers.ufed.model.UserAccount;
+import iped.parsers.ufed.reference.ReferencedFile;
 import iped.properties.MediaTypes;
 import iped.search.IItemSearcher;
 import iped.utils.DateUtil;
@@ -88,6 +89,7 @@ public class UfedAccountableParser extends AbstractParser {
             }
             accountableHandler.fillMetadata(metadata);
             accountableHandler.loadReferences(searcher);
+            accountableHandler.addLinkedItemsAndSharedHashes(metadata, searcher);
             accountableHandler.updateItemNameWithTitle();
 
             // parse accountable content into the XHTML handler
@@ -131,7 +133,7 @@ public class UfedAccountableParser extends AbstractParser {
             xhtml.startElement("td");
             HashSet<String> seenPhoto = new HashSet<>();
             for (ContactPhoto photo : contact.getPhotos()) {
-                byte[] photoData = photo.getImageData();
+                byte[] photoData = photo.getReferencedFile().map(ReferencedFile::getThumb).orElse(null);
                 if (photoData == null && StringUtils.isNotEmpty(photo.getPhotoNodeId())) {
                     photoData = IOUtils.resourceToByteArray("/iped/parsers/common/img/avatar-unavailable.png");
                 }

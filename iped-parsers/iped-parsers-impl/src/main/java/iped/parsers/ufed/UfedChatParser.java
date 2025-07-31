@@ -142,7 +142,7 @@ public class UfedChatParser extends AbstractParser {
                     Metadata chatPreviewMeta = new Metadata();
                     int nextMsg = reportGenerator.getNextMsgNum();
                     List<InstantMessage> subList = chat.getMessages().subList(firstMsg, nextMsg);
-                    storeLinkedHashes(subList, chatPreviewMeta);
+                    storeLinkedHashes(subList, chatPreviewMeta, searcher);
 
                     firstMsg = nextMsg;
                     byte[] nextBytes = reportGenerator.generateNextChatHtml();
@@ -207,9 +207,9 @@ public class UfedChatParser extends AbstractParser {
         }
     }
 
-    private void storeLinkedHashes(List<InstantMessage> messages, Metadata metadata) {
+    private void storeLinkedHashes(List<InstantMessage> messages, Metadata chatMetadata, IItemSearcher searcher) {
         for (InstantMessage m : messages) {
-            UfedMessageParser.storeLinkedHashes(m, metadata);
+            new InstantMessageHandler(m, null).addLinkedItemsAndSharedHashes(chatMetadata, searcher);
         }
     }
 }

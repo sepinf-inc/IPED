@@ -20,6 +20,7 @@ import org.apache.tika.utils.DateUtils;
 import iped.data.IItem;
 import iped.data.IItemReader;
 import iped.parsers.ufed.model.BaseModel;
+import iped.parsers.util.HashUtils;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
 
@@ -77,7 +78,17 @@ public class BaseModelHandler<T extends BaseModel> {
     /**
      * Loads all indexed references for the model.
      */
-    public void loadReferences(IItemSearcher searcher) {
+    public final void loadReferences(IItemSearcher searcher) {
+        if (model.isReferenceLoaded()) {
+            return;
+        }
+
+        doLoadReferences(searcher);
+
+        model.setReferenceLoaded(true);
+    }
+
+    protected void doLoadReferences(IItemSearcher searcher) {
     }
 
     /**
@@ -95,7 +106,32 @@ public class BaseModelHandler<T extends BaseModel> {
         }
     }
 
-    protected void fillCommonMetadata(Metadata metadata) {
+    public void addLinkedItemsAndSharedHashes(Metadata metadata, IItemSearcher searcher) {
+    }
+
+    protected final void addLinkedItem(Metadata metadata, IItemReader referencedItem, IItemSearcher searcher) {
+
+        String referencedUfedId = referencedItem.getMetadata().get(ExtraProperties.UFED_ID);
+
+        // add linked items (if referencedUfedId not present in jumpTargets)
+        if (StringUtils.isNotBlank(referencedUfedId) && !model.getJumpTargets().stream().anyMatch(j -> referencedUfedId.equals(j.getId()))) {
+            String linkedItemQuery = searcher.escapeQuery(ExtraProperties.UFED_ID) + ":\"" + referencedUfedId + "\"";
+            if (!Arrays.asList(metadata.getValues(ExtraProperties.LINKED_ITEMS)).contains(linkedItemQuery)) {
+                metadata.add(ExtraProperties.LINKED_ITEMS, linkedItemQuery);
+            }
+        }
+    }
+
+    protected final void addSharedHash(Metadata metadata, IItemReader sharedItem) {
+        String sharedHash = sharedItem.getHash();
+        if (HashUtils.isValidHash(sharedHash)) {
+            if (!Arrays.asList(metadata.getValues(ExtraProperties.SHARED_HASHES)).contains(sharedHash)) {
+                metadata.add(ExtraProperties.SHARED_HASHES, sharedHash);
+            }
+        }
+    }
+
+    protected final void fillCommonMetadata(Metadata metadata) {
 
         // title
         if (metadata.get(TikaCoreProperties.TITLE) == null) {
@@ -144,7 +180,7 @@ public class BaseModelHandler<T extends BaseModel> {
         postProcessMetadata(metadata);
     }
 
-    protected void fillFieldMetadata(String key, Object value, Metadata metadata, Set<String> fieldsToIgnore) {
+    protected final void fillFieldMetadata(String key, Object value, Metadata metadata, Set<String> fieldsToIgnore) {
 
         if (fieldsToIgnore.contains(key) || ignoreFields.contains(key)) {
             return;

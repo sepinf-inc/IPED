@@ -12,6 +12,8 @@ import static iped.properties.ExtraProperties.UFED_META_PREFIX;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -22,6 +24,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.data.IItemReader;
+import iped.parsers.ufed.model.Attachment;
+import iped.parsers.ufed.model.Contact;
 import iped.parsers.ufed.model.InstantMessage;
 import iped.parsers.ufed.model.JumpTarget;
 import iped.parsers.ufed.model.Party;
@@ -165,7 +169,7 @@ public class InstantMessageHandler extends BaseModelHandler<InstantMessage> {
     }
 
     @Override
-    public void loadReferences(IItemSearcher searcher) {
+    public void doLoadReferences(IItemSearcher searcher) {
 
         model.getFrom().ifPresent(from -> {
             new PartyHandler(from, model.getSource(), item, cache).loadReferences(searcher);
@@ -188,6 +192,31 @@ public class InstantMessageHandler extends BaseModelHandler<InstantMessage> {
         });
 
         loadLocationReference(searcher);
+    }
+
+    @Override
+    public void addLinkedItemsAndSharedHashes(Metadata metadata, IItemSearcher searcher) {
+        model.getFrom().flatMap(Party::getReferencedContact).ifPresent(ref -> {
+            addLinkedItem(metadata, ref.getItem(), searcher);
+        });
+        model.getTo().stream().map(Party::getReferencedContact).filter(Optional::isPresent).map(Optional::get).forEach(ref -> {
+            addLinkedItem(metadata, ref.getItem(), searcher);
+        });
+
+        model.getAttachments().stream().map(Attachment::getReferencedFile).filter(Objects::nonNull).forEach(ref -> {
+            addLinkedItem(metadata, ref.getItem(), searcher);
+            if (model.isFromPhoneOwner()) {
+                addSharedHash(metadata, ref.getItem());
+            }
+        });
+
+        model.getSharedContacts().stream().map(Contact::getReferencedContact).filter(Optional::isPresent).map(Optional::get).forEach(ref -> {
+            addLinkedItem(metadata, ref.getItem(), searcher);
+        });
+
+        if (model.getPosition() != null && model.getPosition().getReferencedLocation() != null) {
+            addLinkedItem(metadata, model.getPosition().getReferencedLocation().getItem(), searcher);
+        }
     }
 
     @Override

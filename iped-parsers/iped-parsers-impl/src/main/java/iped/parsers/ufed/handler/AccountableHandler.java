@@ -2,6 +2,7 @@ package iped.parsers.ufed.handler;
 import static iped.properties.ExtraProperties.UFED_META_PREFIX;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -13,6 +14,7 @@ import iped.data.IItemReader;
 import iped.parsers.ufed.model.Accountable;
 import iped.parsers.ufed.model.BaseModel;
 import iped.parsers.ufed.model.ContactEntry;
+import iped.parsers.ufed.model.ContactPhoto;
 import iped.properties.BasicProps;
 import iped.search.IItemSearcher;
 
@@ -26,7 +28,8 @@ public class AccountableHandler<T extends Accountable> extends BaseModelHandler<
     }
 
     @Override
-    public void loadReferences(IItemSearcher searcher) {
+    public void doLoadReferences(IItemSearcher searcher) {
+
         model.getPhotos().forEach(photo -> {
             new ContactPhotoHandler(photo).loadReferences(searcher);
         });
@@ -49,6 +52,13 @@ public class AccountableHandler<T extends Accountable> extends BaseModelHandler<
                 metadata.add(UFED_META_PREFIX + key + ":category", value.getCategory());
                 metadata.add(UFED_META_PREFIX + key + ":domain", value.getDomain());
             }
+        });
+    }
+
+    @Override
+    public void addLinkedItemsAndSharedHashes(Metadata metadata, IItemSearcher searcher) {
+        model.getPhotos().stream().map(ContactPhoto::getReferencedFile).filter(Optional::isPresent).forEach(ref -> {
+            addLinkedItem(metadata, ref.get().getItem(), searcher);
         });
     }
 

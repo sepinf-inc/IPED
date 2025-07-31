@@ -4,6 +4,7 @@ import static iped.properties.ExtraProperties.COMMUNICATION_DIRECTION;
 import static iped.properties.ExtraProperties.MESSAGE_ATTACHMENT_COUNT;
 
 import java.util.Collection;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import org.apache.tika.metadata.Message;
@@ -11,6 +12,7 @@ import org.apache.tika.metadata.Metadata;
 
 import iped.data.IItemReader;
 import iped.parsers.chat.EmailPartyStringBuilder;
+import iped.parsers.ufed.model.Attachment;
 import iped.parsers.ufed.model.Email;
 import iped.parsers.ufed.model.Party;
 import iped.parsers.util.ConversationConstants;
@@ -23,9 +25,20 @@ public class EmailHandler extends BaseModelHandler<Email> {
     }
 
     @Override
-    public void loadReferences(IItemSearcher searcher) {
+    public void doLoadReferences(IItemSearcher searcher) {
+
         model.getAttachments().forEach(a -> {
             new AttachmentHandler(a, item).loadReferences(searcher);
+        });
+    }
+
+    @Override
+    public void addLinkedItemsAndSharedHashes(Metadata metadata, IItemSearcher searcher) {
+        model.getAttachments().stream().map(Attachment::getReferencedFile).filter(Objects::nonNull).forEach(ref -> {
+            addLinkedItem(metadata, ref.getItem(), searcher);
+            if (model.isFromPhoneOwner()) {
+                addSharedHash(metadata, ref.getItem());
+            }
         });
     }
 

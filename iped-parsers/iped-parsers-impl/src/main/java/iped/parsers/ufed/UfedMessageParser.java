@@ -4,7 +4,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -35,19 +34,16 @@ import iped.data.IItem;
 import iped.data.IItemReader;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.ufed.handler.AttachmentHandler;
-import iped.parsers.ufed.handler.BaseModelHandler;
+import iped.parsers.ufed.handler.ChatActivityHandler;
 import iped.parsers.ufed.handler.ContactHandler;
 import iped.parsers.ufed.handler.InstantMessageHandler;
 import iped.parsers.ufed.model.Attachment;
 import iped.parsers.ufed.model.ChatActivity;
 import iped.parsers.ufed.model.Contact;
 import iped.parsers.ufed.model.InstantMessage;
-import iped.parsers.ufed.reference.ReferencedFile;
-import iped.parsers.util.HashUtils;
 import iped.parsers.util.Messages;
 import iped.parsers.util.OmitEmptyArraysTypeAdapterFactory;
 import iped.properties.BasicProps;
-import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
 import iped.search.IItemSearcher;
 import iped.utils.EmptyInputStream;
@@ -131,8 +127,7 @@ public class UfedMessageParser extends AbstractParser {
             messageHandler.loadReferences(searcher);
             messageHandler.fillMetadata(metadata);
             messageHandler.updateItemNameWithTitle();
-
-            storeLinkedHashes(message, metadata);
+            messageHandler.addLinkedItemsAndSharedHashes(metadata, searcher);
 
             if (extractor.shouldParseEmbedded(metadata)) {
 
@@ -193,29 +188,13 @@ public class UfedMessageParser extends AbstractParser {
         }
     }
 
-    public static void storeLinkedHashes(InstantMessage message, Metadata metadata) {
-        message
-                .getAttachments()
-                .stream() //
-                .map(Attachment::getReferencedFile) //
-                .filter(Objects::nonNull) //
-                .map(ReferencedFile::getHash) //
-                .filter(HashUtils::isValidHash) //
-                .forEach(hash -> {
-                    metadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + hash);
-                    if (message.isFromPhoneOwner()) {
-                        metadata.add(ExtraProperties.SHARED_HASHES, hash);
-                    }
-                });
-    }
-
     private void extractActivityLog(InstantMessage message, ContentHandler handler, EmbeddedDocumentExtractor extractor)
             throws SAXException, IOException {
 
         ChatActivity activity = message.getActivityLog();
         if (activity != null) {
 
-            BaseModelHandler<ChatActivity> activityHandler = new BaseModelHandler<>(activity);
+            ChatActivityHandler activityHandler = new ChatActivityHandler(activity);
 
             Metadata activityMeta = activityHandler.createMetadata();
             activityMeta.set(TikaCoreProperties.TITLE, activityHandler.getTitle());

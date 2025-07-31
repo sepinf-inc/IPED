@@ -17,8 +17,10 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -31,6 +33,7 @@ import iped.parsers.ufed.model.ContactPhoto;
 import iped.parsers.ufed.model.InstantMessage;
 import iped.parsers.ufed.model.Party;
 import iped.parsers.ufed.reference.ReferencedAccountable;
+import iped.parsers.ufed.reference.ReferencedFile;
 import iped.parsers.ufed.reference.ReferencedLocation;
 import iped.parsers.util.Messages;
 import iped.parsers.whatsapp.Util;
@@ -191,7 +194,13 @@ public class ReportGenerator {
         String title = new ChatHandler(chat, null).getTitle(true, false);
         String source = chat.getSource();
 
-        byte[] firstPhotoData = chat.getPhotos().stream().findFirst().map(ContactPhoto::getImageData).orElse(null);
+        byte[] firstPhotoData = chat.getPhotos().stream()
+                .map(ContactPhoto::getReferencedFile)                          // Optional<ReferencedFile>
+                .flatMap(opt -> opt.map(Stream::of).orElseGet(Stream::empty))  // unwrap Optional<ReferencedFile>
+                .map(ReferencedFile::getThumb)                                 // extract data
+                .filter(Objects::nonNull)                                      // skip nulls
+                .findFirst()                                                   // get the first
+                .orElse(null);
         printMessageFileHeader(out, title, title, firstPhotoData, source);
         if (currentMsg > 0) {
             out.println("<div class=\"linha\"><div class=\"date\">"

@@ -31,6 +31,8 @@ public abstract class BaseModel implements Serializable {
     private final List<BaseModel> relatedModels = new ArrayList<>();
     private final Map<String, List<BaseModel>> otherModelFields = new LinkedHashMap<>();
 
+    private transient boolean referenceLoaded = false;
+
     public static enum DeletedState {
         Unknown, Intact, Deleted, Missed, Trash;
 
@@ -150,6 +152,14 @@ public abstract class BaseModel implements Serializable {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public boolean isReferenceLoaded() {
+        return referenceLoaded;
+    }
+
+    public void setReferenceLoaded(boolean referenceLookedUp) {
+        this.referenceLoaded = referenceLookedUp;
     }
 
     @Override

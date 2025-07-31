@@ -103,7 +103,7 @@ public class ChatHandler extends BaseModelHandler<Chat> {
     }
 
     @Override
-    public void loadReferences(IItemSearcher searcher) {
+    public void doLoadReferences(IItemSearcher searcher) {
 
         loadChatAccountReference(searcher);
 
