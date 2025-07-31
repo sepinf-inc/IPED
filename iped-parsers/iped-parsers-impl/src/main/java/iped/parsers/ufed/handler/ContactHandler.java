@@ -50,8 +50,7 @@ public class ContactHandler extends AccountableHandler<Contact> {
         if (model.getId() == null || !"Shared".equals(model.getType())) {
             return;
         }
-
-        String query = searcher.escapeQuery(ExtraProperties.UFED_ID) + ":\" && " + BasicProps.SUBITEM + ":false";
+        String query = searcher.escapeQuery(ExtraProperties.UFED_ID) + ":\"" + model.getId() + "\" && " + BasicProps.SUBITEM + ":false";
         List<IItemReader> contactItems = searcher.search(query);
         if (!contactItems.isEmpty()) {
             if (contactItems.size() > 1) {
