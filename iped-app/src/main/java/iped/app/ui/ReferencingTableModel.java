@@ -26,6 +26,7 @@ import javax.swing.ListSelectionModel;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
@@ -108,6 +109,9 @@ public class ReferencingTableModel extends BaseTableModel {
         if (StringUtils.isNotBlank(fileId)) {
             queryBuilder.add(new TermQuery(new Term(ExtraProperties.UFED_ID, fileId)), Occur.SHOULD);
         }
+
+        // don't reference itself
+        queryBuilder.add(IntPoint.newExactQuery(BasicProps.ID, Integer.parseInt(doc.get(BasicProps.ID))), Occur.MUST_NOT);
 
         return queryBuilder.build();
     }
