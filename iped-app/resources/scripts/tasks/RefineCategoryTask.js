@@ -78,10 +78,6 @@ function process(e){
 		e.setCategory(cat);
 	}
 
-	if(mime.equals("application/x-ufed-contact") && (rawPath.indexOf("/InstantMessage/") > -1 || rawPath.indexOf("/Chat/") > -1)) {
-		e.setCategory("Shared Contacts");
-	}
-
 	if(mime.equals("application/x-ufed-attachment")) {
 		if (rawPath.indexOf("/InstantMessage/") > -1 || rawPath.indexOf("/Chat/") > -1) {
 			e.setCategory("Message Attachments");

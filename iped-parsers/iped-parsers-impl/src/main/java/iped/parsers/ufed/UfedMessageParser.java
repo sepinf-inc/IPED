@@ -140,7 +140,7 @@ public class UfedMessageParser extends AbstractParser {
                     extractAttachments(message, handler, extractor, true);
                 }
                 if (extractSharedContacts) {
-                    extractShareContacts(message, handler, extractor);
+                    extractSharedContacts(message, handler, extractor);
                 }
             }
 
@@ -233,19 +233,25 @@ public class UfedMessageParser extends AbstractParser {
         }
     }
 
-    private void extractShareContacts(InstantMessage message, ContentHandler handler, EmbeddedDocumentExtractor extractor)
+    private void extractSharedContacts(InstantMessage message, ContentHandler handler, EmbeddedDocumentExtractor extractor)
             throws SAXException, IOException {
 
-        for (Contact shareContact : message.getSharedContacts()) {
-            ContactHandler contactHandler = new ContactHandler(shareContact);
+        for (Contact sharedContact : message.getSharedContacts()) {
+
+            // don't extract shared contact already present in the case
+            if (sharedContact.getReferencedContact().isPresent()) {
+                continue;
+            }
+
+            ContactHandler contactHandler = new ContactHandler(sharedContact);
 
             Metadata shareContactMeta = contactHandler.createMetadata();
             shareContactMeta.set(TikaCoreProperties.TITLE, contactHandler.getTitle());
-            shareContactMeta.set(StandardParser.INDEXER_CONTENT_TYPE, shareContact.getMediaType().toString());
+            shareContactMeta.set(StandardParser.INDEXER_CONTENT_TYPE, sharedContact.getMediaType().toString());
             shareContactMeta.set(BasicProps.LENGTH, "");
 
             TikaInputStream sharedContactInput = TikaInputStream.get(new EmptyInputStream());
-            sharedContactInput.setOpenContainer(shareContact);
+            sharedContactInput.setOpenContainer(sharedContact);
             extractor.parseEmbedded(sharedContactInput, handler, shareContactMeta, false);
         }
     }

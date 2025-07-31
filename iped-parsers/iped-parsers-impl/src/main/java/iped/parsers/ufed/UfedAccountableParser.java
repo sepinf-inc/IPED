@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.data.IItem;
 import iped.data.IItemReader;
 import iped.parsers.ufed.handler.AccountableHandler;
 import iped.parsers.ufed.handler.BaseModelHandler;
@@ -91,6 +92,11 @@ public class UfedAccountableParser extends AbstractParser {
             accountableHandler.loadReferences(searcher);
             accountableHandler.addLinkedItemsAndSharedHashes(metadata, searcher);
             accountableHandler.updateItemNameWithTitle();
+
+            // update category for shared contacts
+            if (accountable instanceof Contact && "Shared".equalsIgnoreCase(((Contact) accountable).getType()) && item instanceof IItem) {
+                ((IItem) item).setCategory("Shared Contacts");
+            }
 
             // parse accountable content into the XHTML handler
             XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
