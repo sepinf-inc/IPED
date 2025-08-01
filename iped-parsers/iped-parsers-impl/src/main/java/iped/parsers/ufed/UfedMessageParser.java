@@ -72,7 +72,7 @@ public class UfedMessageParser extends AbstractParser {
             })
             .setPrettyPrinting() //
             .disableHtmlEscaping() //
-            .setDateFormat(Messages.getString("UFEDChatParser.DateFormat")) //
+            .setDateFormat(Messages.getString("UfedMessageParser.DateFormat")) //
             .create();
 
     private boolean extractActivityLogs = true;

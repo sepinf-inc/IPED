@@ -165,22 +165,22 @@ public class ChatHandler extends BaseModelHandler<Chat> {
                     break;
 
                 case Chat.TYPE_GROUP:
-                    sb.append(Messages.getString("UFEDChatParser.Group")).append(' ');
+                    sb.append(Messages.getString("UfedChatParser.Group")).append(' ');
                     break;
 
                 case Chat.TYPE_BROADCAST:
                     if (model.getParticipants().size() == 1 && StringUtils.containsAnyIgnoreCase(source, Chat.SOURCE_TELEGRAM, Chat.SOURCE_WHATSAPP)) {
-                        sb.append(Messages.getString("UFEDChatParser.Status"));
+                        sb.append(Messages.getString("UfedChatParser.Status"));
                     } else if (Chat.SOURCE_TELEGRAM.equalsIgnoreCase(source)) {
-                        sb.append(Messages.getString("UFEDChatParser.Channel"));
+                        sb.append(Messages.getString("UfedChatParser.Channel"));
                     } else {
-                        sb.append(Messages.getString("UFEDChatParser.Broadcast"));
+                        sb.append(Messages.getString("UfedChatParser.Broadcast"));
                     }
                     sb.append(' ');
                     break;
 
                 case Chat.TYPE_UNKNOWN:
-                    sb.append(Messages.getString("UFEDChatParser.Unknown")).append(' ');
+                    sb.append(Messages.getString("UfedChatParser.Unknown")).append(' ');
                     break;
 
                 default:

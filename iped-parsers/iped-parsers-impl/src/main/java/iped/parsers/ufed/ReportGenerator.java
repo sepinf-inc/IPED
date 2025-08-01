@@ -100,12 +100,12 @@ public class ReportGenerator {
         lat = StringUtils.replace(lat, ",", ".");
         lon = StringUtils.replace(lon, ",", ".");
 
-        DivTag div = div(img(attrs(".location")), b(Messages.getString("UFEDChatParser.Location.Title")), br());
+        DivTag div = div(img(attrs(".location")), b(Messages.getString("UfedChatParser.Location.Title")), br());
 
         if (!StringUtils.isAllBlank(lat, lon)) {
             div.with(table(attrs(".contact-table"), //
-                    tr(td(Messages.getString("UFEDChatParser.Location.Latitude")), td(lat)), //
-                    tr(td(Messages.getString("UFEDChatParser.Location.Longitude")), td(lon))), //
+                    tr(td(Messages.getString("UfedChatParser.Location.Latitude")), td(lat)), //
+                    tr(td(Messages.getString("UfedChatParser.Location.Longitude")), td(lon))), //
                     br());
         }
 
@@ -149,7 +149,7 @@ public class ReportGenerator {
             return StringUtils.EMPTY;
         }
 
-        DivTag div = div(b(Messages.getString("UFEDChatParser.SharedContact.Title")), br());
+        DivTag div = div(b(Messages.getString("UfedChatParser.SharedContact.Title")), br());
 
         for (Contact msgContact : message.getSharedContacts()) {
 
@@ -159,7 +159,7 @@ public class ReportGenerator {
                     Messages.getString("ReportGenerator.Unknown"));
 
             TableTag table = table(attrs(".contact-table"),
-                    tr(td(Messages.getString("UFEDChatParser.SharedContact.Name")), td(name)));
+                    tr(td(Messages.getString("UfedChatParser.SharedContact.Name")), td(name)));
 
             if (contact.isPresent()) {
 
@@ -168,15 +168,15 @@ public class ReportGenerator {
                 String phone = contact.get().getPhoneNumber();
 
                 if (isNotBlank(userID)) {
-                    table.with(tr(td(Messages.getString("UFEDChatParser.SharedContact.UserID")), td(userID)));
+                    table.with(tr(td(Messages.getString("UfedChatParser.SharedContact.UserID")), td(userID)));
                 }
 
                 if (isNotBlank(username)) {
-                    table.with(tr(td(Messages.getString("UFEDChatParser.SharedContact.Username")), td(username)));
+                    table.with(tr(td(Messages.getString("UfedChatParser.SharedContact.Username")), td(username)));
                 }
 
                 if (isNotBlank(phone)) {
-                    table.with(tr(td(Messages.getString("UFEDChatParser.SharedContact.PhoneNumber")), td(phone)));
+                    table.with(tr(td(Messages.getString("UfedChatParser.SharedContact.PhoneNumber")), td(phone)));
                 }
             }
 
@@ -277,10 +277,10 @@ public class ReportGenerator {
             Party originalSender = message.findForwardedMessageOriginalSender(chat);
 
             if (originalSender != null) {
-                forwardedFrom = Messages.getString("UFEDChatParser.Forwarded.From") + " "
+                forwardedFrom = Messages.getString("UfedChatParser.Forwarded.From") + " "
                         + new PartyHandler(originalSender, message.getSource()).getTitle();
             }
-            out.println("<img class=\"fwd\"><span class=\"fwd\">" + Messages.getString("UFEDChatParser.Forwarded") + " " + forwardedFrom + "</span><br/>");
+            out.println("<img class=\"fwd\"><span class=\"fwd\">" + Messages.getString("UfedChatParser.Forwarded") + " " + forwardedFrom + "</span><br/>");
 
             InstantMessage forwardedMessage = message.findForwardedMessage(chat);
             if (forwardedMessage != null) {
@@ -292,7 +292,7 @@ public class ReportGenerator {
 
         out.println("<span class=\"time\">");
         if (message.isEdited()) {
-            out.print(Messages.getString("UFEDChatParser.Edited") + " ");
+            out.print(Messages.getString("UfedChatParser.Edited") + " ");
         }
         if (message.getTimeStamp() != null) {
             out.println(timeFormat.format(message.getTimeStamp())); // $NON-NLS-1$
@@ -329,12 +329,12 @@ public class ReportGenerator {
         if (chatDeleted || message.isDeleted()) {
             if ("Trash".equalsIgnoreCase(message.getDeletedState())) {
                 out.println("<br/><span class=\"recovered\">");
-                out.println("<i>" + Messages.getString("UFEDChatParser.MessageRecovered") + "</i>");
+                out.println("<i>" + Messages.getString("UfedChatParser.MessageRecovered") + "</i>");
                 out.println("<div class=\"trashIcon\"></div>");
                 out.println("</span>");
             } else {
                 out.println("<br/><span class=\"recovered\">");
-                out.println("<i>" + Messages.getString("UFEDChatParser.MessageDeletedRecovered") + "</i>");
+                out.println("<i>" + Messages.getString("UfedChatParser.MessageDeletedRecovered") + "</i>");
                 out.println("<div class=\"deletedIcon\"></div>");
                 out.println("</span>");
             }
@@ -445,7 +445,7 @@ public class ReportGenerator {
                 out.print("<br/>");
             }
         } else if (message.isSystemMessage()) {
-            out.print("System Message");
+            out.print(Messages.getString("UfedChatParser.SystemMessage"));
         }
     }
 
@@ -545,7 +545,7 @@ public class ReportGenerator {
         String quoteEnd = "";
         if (quotedMessage.isDeleted()) {
             quoteEnd = "<br/><span style=\"float:none\" class=\"recovered\"><div class=\"deletedIcon\"></div>"
-                    + "<i>" + Messages.getString("UFEDChatParser.MessageDeletedRecovered") + "</i>";
+                    + "<i>" + Messages.getString("UfedChatParser.MessageDeletedRecovered") + "</i>";
         }
 
         out.println("<div class=\"" + quoteClass + "\" " + quoteClick + ">"
@@ -630,7 +630,7 @@ public class ReportGenerator {
                 + "<body"+ backImage +">");
        if (printModal) {
            out.println("<div id=\"loading-modal\">\n"
-                        + "  <div class=\"loader\">Loading...</div>\n"
+                        + "  <div class=\"loader\">" + Messages.getString("UfedChatParser.Loading") + "</div>\n"
                         + "</div>");
        }
        out.println("<div id=\"topbar\"" + topbarClass + ">\n"
