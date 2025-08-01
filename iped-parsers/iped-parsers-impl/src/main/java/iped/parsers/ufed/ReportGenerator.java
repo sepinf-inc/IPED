@@ -386,8 +386,8 @@ public class ReportGenerator {
                 if (contentType != null && contentType.startsWith("video")) {
                     out.println(Messages.getString("WhatsAppReport.Video") + ":<br/>");
                 }
-                out.print("<img class=\"thumb\" src=\"");
-                out.print("data:image/jpg;base64," + Base64.encodeBase64String(thumb));
+                out.print("<img class=\"thumb\" src=\"data:image/jpg;base64,");
+                out.print(Base64.encodeBase64String(thumb));
                 out.println("\" /><br/>");
 
             } else if (contentType != null) {
@@ -433,7 +433,7 @@ public class ReportGenerator {
                 }
             }
 
-            out.println(formatTitleAndURL(attachment, body));
+            out.println(formatTitleAndUrl(attachment, body));
         }
 
         if (isNotBlank(body)) {
@@ -453,8 +453,8 @@ public class ReportGenerator {
 
         if (quotedMessage == null) {
             // Reference not found
-            out.println("<div class=\"" + quoteClass + "\"><span class=\"quoteUser\">" + Messages.getString("WhatsAppReport.QuoteNotFound")
-                    + "</span><br/><span class=\"quoteMsg\">" + format("") + "</span></div>");
+            out.println("<div class=\"" + quoteClass + "\"><span class=\"quoteUser\"><i>" + Messages.getString("WhatsAppReport.QuoteNotFound")
+                    + "</i></span></div>");
             return;
         }
 
@@ -472,12 +472,6 @@ public class ReportGenerator {
             }
         }
 
-        String quoteEnd = "</span></div>";
-        if (quotedMessage.isDeleted()) {
-            quoteEnd = "</span><br/><span style=\"float:none\" class=\"recovered\"><div class=\"deletedIcon\"></div><i>"
-                    + Messages.getString("UFEDChatParser.MessageDeletedRecovered") + "</i>" + quoteEnd;
-        }
-
         StringBuilder msgStr = new StringBuilder();
         StringBuilder attachStr = new StringBuilder();
 
@@ -488,8 +482,9 @@ public class ReportGenerator {
             if (attach.getReferencedFile() != null) {
                 byte[] quoteThumb = attach.getReferencedFile().getThumb();
                 if (quoteThumb != null) {
-                    attachStr.append("<div><img class=\"quoteImg\" src=\"");
-                    attachStr.append("data:image/jpg;base64," + Util.encodeBase64(quoteThumb) + "\"/></div>");
+                    attachStr.append("<div><img class=\"quoteImg\" src=\"data:image/jpg;base64,")
+                        .append(Util.encodeBase64(quoteThumb))
+                        .append("\"/></div>");
                     hasThumb = true;
                 }
                 Float duration = attach.getReferencedFile().getDuration();
@@ -531,7 +526,7 @@ public class ReportGenerator {
                 }
             }
 
-            msgStr.append(formatTitleAndURL(attach, body));
+            msgStr.append(formatTitleAndUrl(attach, body));
         }
 
         msgStr.append(formatLocation(quotedMessage));
@@ -544,11 +539,21 @@ public class ReportGenerator {
             msgStr.append(body);
         }
 
-        out.print("<div class=\"" + quoteClass + "\" " + quoteClick + ">"
-                + "<div class=\"quoteTop\">"
-                + "<span class=\"quoteUser\">" + format(quoteUser) + "</span><br/>"
-                + "<span class=\"quoteMsg\">" + msgStr + quoteEnd
-                + attachStr + "</div>");
+        String quoteEnd = "";
+        if (quotedMessage.isDeleted()) {
+            quoteEnd = "<br/><span style=\"float:none\" class=\"recovered\"><div class=\"deletedIcon\"></div>"
+                    + "<i>" + Messages.getString("UFEDChatParser.MessageDeletedRecovered") + "</i>";
+        }
+
+        out.println("<div class=\"" + quoteClass + "\" " + quoteClick + ">"
+                    + "<div class=\"quoteTop\">"
+                        + "<span class=\"quoteUser\">" + format(quoteUser) + "</span><br/>"
+                        + "<span class=\"quoteMsg\">");
+        out.println(msgStr);
+        out.println("</span></div>");
+        out.println(quoteEnd);
+        out.println(attachStr);
+        out.println("</div>");
     }
 
     private static String formatDuration(float duration) {
@@ -562,20 +567,20 @@ public class ReportGenerator {
         return String.format("%02d:%02d", (int) duration / 60, (int) duration % 60);
     }
 
-    private String formatTitleAndURL(Attachment attachment, String body) {
+    private String formatTitleAndUrl(Attachment attachment, String body) {
 
         StringBuilder sb = new StringBuilder();
 
         String title = attachment.getTitle();
         if (isNotBlank(title) && !StringUtils.contains(body, title)) {
-            sb.append("<br/>" + format(title));
+            sb.append("<br/>").append(format(title)).append("<br/>");
         }
 
         String contentType = attachment.getContentType();
         String url = attachment.getURL();
         if (isNotBlank(url) && !StringUtils.contains(body, url)
                 && (contentType == null || contentType.equalsIgnoreCase("URL"))) {
-            sb.append("<p class=\"link\">" + format(attachment.getURL()) + "</p>");
+            sb.append("<p class=\"link\">").append(format(attachment.getURL())).append("</p>");
         }
 
         return sb.toString();
