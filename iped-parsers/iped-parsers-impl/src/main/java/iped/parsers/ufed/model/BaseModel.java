@@ -2,12 +2,15 @@ package iped.parsers.ufed.model;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringJoiner;
+import java.util.TreeMap;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.mime.MediaType;
@@ -24,7 +27,7 @@ public abstract class BaseModel implements Serializable {
 
     private final String modelType;
     private String id;
-    private final Map<String, Object> fields = new LinkedHashMap<>();
+    private final Map<String, Object> fields = new TreeMap<>(new FieldsComparator());
     private final Map<String, String> attributes = new LinkedHashMap<>();
     private final List<KeyValueModel> additionalInfo = new ArrayList<>();
     private final Set<JumpTarget> jumpTargets = new HashSet<>();
@@ -168,6 +171,34 @@ public abstract class BaseModel implements Serializable {
                 .add("id='" + id + "'")
                 .add("modelType='" + modelType + "'")
                 .toString();
+    }
+
+    private static class FieldsComparator implements Comparator<String> {
+
+        private static final Map<String, Integer> rankingMap = new HashMap<>();
+        static {
+            int ranking = 0;
+            rankingMap.put("Source", ranking++);
+            rankingMap.put("Service Type", ranking++);
+            rankingMap.put("Service Identifier", ranking++);
+            rankingMap.put("Account", ranking++);
+            rankingMap.put("Type", ranking++);
+            rankingMap.put("Name", ranking++);
+            rankingMap.put("User ID", ranking++);
+            rankingMap.put("Username", ranking++);
+        }
+
+        @Override
+        public int compare(String field1, String field2) {
+            Integer ranking1 = rankingMap.get(field1);
+            Integer ranking2 = rankingMap.get(field2);
+
+            if (ranking1 == null && ranking2 == null) return field1.compareTo(field2);
+            if (ranking1 == null) return 1;
+            if (ranking2 == null) return -1;
+
+            return Integer.compare(ranking1, ranking2);
+        }
     }
 }
 
