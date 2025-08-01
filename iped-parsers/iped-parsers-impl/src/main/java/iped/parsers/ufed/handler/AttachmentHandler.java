@@ -28,6 +28,10 @@ public class AttachmentHandler extends BaseModelHandler<Attachment> {
     @Override
     public void doLoadReferences(IItemSearcher searcher) {
 
+        if (model.getFileId() == null && model.getAttachmentExtractedPath() == null) {
+            return;
+        }
+
         // lookup for file using "ufed:file_id"
         if (model.getFileId() != null) {
             String query = searcher.escapeQuery(ExtraProperties.UFED_ID) + ":\"" + model.getFileId() + "\"";
@@ -86,7 +90,11 @@ public class AttachmentHandler extends BaseModelHandler<Attachment> {
             }
         }
 
-        logger.warn("Attachment file reference was not found: {}", model);
+        if (!StringUtils.endsWith(model.getFilename(), ".enc")                  // don´t log ".enc" files not found - e.g. WhatsApp
+                && !StringUtils.equalsIgnoreCase(model.getContentType(), "URL") // don't log URL attachments
+        ) {
+            logger.warn("Attachment file reference was not found: {}", model);
+        }
     }
 
     @Override
