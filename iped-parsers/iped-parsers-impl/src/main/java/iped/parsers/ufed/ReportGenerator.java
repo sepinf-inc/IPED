@@ -483,7 +483,7 @@ public class ReportGenerator {
                 byte[] quoteThumb = attach.getReferencedFile().getThumb();
                 if (quoteThumb != null) {
                     attachStr.append("<div><img class=\"quoteImg\" src=\"data:image/jpg;base64,")
-                        .append(Util.encodeBase64(quoteThumb))
+                        .append(Base64.encodeBase64String(quoteThumb))
                         .append("\"/></div>");
                     hasThumb = true;
                 }
@@ -576,11 +576,21 @@ public class ReportGenerator {
             sb.append("<br/>").append(format(title)).append("<br/>");
         }
 
+        // when contentType is "URL", fileName may contain relevant information
         String contentType = attachment.getContentType();
+        String fileName = attachment.getFilename();
+        if ("URL".equalsIgnoreCase(contentType) && isNotBlank(fileName) 
+                && !StringUtils.contains(body, fileName) && !StringUtils.contains(title, fileName)) {
+            if (sb.length() == 0) {
+                sb.append("<br/>");
+            }
+            sb.append(format(fileName)).append("<br/>");
+        }
+
         String url = attachment.getURL();
-        if (isNotBlank(url) && !StringUtils.contains(body, url)
+        if (isNotBlank(url) && !StringUtils.contains(body, url) && !StringUtils.contains(title, url)  && !StringUtils.contains(fileName, url)
                 && (contentType == null || contentType.equalsIgnoreCase("URL"))) {
-            sb.append("<p class=\"link\">").append(format(attachment.getURL())).append("</p>");
+            sb.append("<p class=\"link\">").append(format(url)).append("</p>");
         }
 
         return sb.toString();
