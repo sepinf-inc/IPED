@@ -3,7 +3,8 @@ package iped.utils;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
-import java.util.Locale;
+
+import iped.localization.LocaleResolver;
 
 public class LocalizedFormat {
     //A better description (e.g. Undefined / Indefinido) could be used, but localized
@@ -26,24 +27,18 @@ public class LocalizedFormat {
     }
 
     public static final DecimalFormat getDecimalInstance(String format) {
-        DecimalFormatSymbols dfs = DecimalFormatSymbols.getInstance(getLocale());
+        DecimalFormatSymbols dfs = DecimalFormatSymbols.getInstance(LocaleResolver.getLocale());
         dfs.setNaN(NaN);
         return new DecimalFormat(format, dfs);
     }
 
     public static final NumberFormat getNumberInstance() {
-        NumberFormat nf = NumberFormat.getNumberInstance(getLocale());
+        NumberFormat nf = NumberFormat.getNumberInstance(LocaleResolver.getLocale());
         if (nf instanceof DecimalFormat) {
-            DecimalFormatSymbols dfs = DecimalFormatSymbols.getInstance(getLocale());
+            DecimalFormatSymbols dfs = DecimalFormatSymbols.getInstance(LocaleResolver.getLocale());
             dfs.setNaN(NaN);
             ((DecimalFormat) nf).setDecimalFormatSymbols(dfs);
         }
         return nf;
-    }
-
-    private static final Locale getLocale() {
-        String localeStr = System.getProperty(iped.localization.Messages.LOCALE_SYS_PROP);
-        Locale locale = localeStr != null ? Locale.forLanguageTag(localeStr) : Locale.getDefault();
-        return locale;
     }
 }

@@ -41,6 +41,7 @@ import iped.engine.graph.GraphServiceFactoryImpl;
 import iped.engine.graph.NodeQueryListener;
 import iped.engine.graph.links.SearchLinksQuery;
 import iped.engine.graph.links.SearchLinksQueryProvider;
+import iped.localization.LocaleResolver;
 
 public class SearchLinksDialog extends JDialog {
 
@@ -67,7 +68,7 @@ public class SearchLinksDialog extends JDialog {
     }
 
     public static void main(String[] args) {
-        System.setProperty(iped.localization.Messages.LOCALE_SYS_PROP, "pt-BR");
+        System.setProperty(LocaleResolver.LOCALE_SYS_PROP, "pt-BR");
         SearchLinksDialog dialog = new SearchLinksDialog();
         dialog.setVisible(true);
     }

@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
+import iped.localization.LocaleResolver;
 import iped.utils.UTF8Properties;
 
 public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
@@ -147,7 +148,7 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
 
         String langs = properties.getProperty(LANG_KEY).trim();
         if (LANG_AUTO_VAL.equalsIgnoreCase(langs)) {
-            languages.add(System.getProperty(iped.localization.Messages.LOCALE_SYS_PROP));
+            languages.add(LocaleResolver.getLocaleString());
         } else {
             for (String lang : langs.split(";")) {
                 languages.add(lang.trim());

@@ -6,6 +6,7 @@ import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Path;
 import java.util.Locale;
 
+import iped.localization.LocaleResolver;
 import iped.utils.UTF8Properties;
 
 public class LocaleConfig extends AbstractPropertiesConfigurable {
@@ -52,7 +53,7 @@ public class LocaleConfig extends AbstractPropertiesConfigurable {
         if (value != null && !value.trim().isEmpty())
             locale = Locale.forLanguageTag(value.trim());
 
-        System.setProperty(iped.localization.Messages.LOCALE_SYS_PROP, locale.toLanguageTag()); // $NON-NLS-1$
+        LocaleResolver.setLocale(locale);
     }
 
     public Locale getLocale() {
