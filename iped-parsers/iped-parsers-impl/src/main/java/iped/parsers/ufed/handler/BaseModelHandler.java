@@ -109,26 +109,38 @@ public class BaseModelHandler<T extends BaseModel> {
 
     public final void addLinkedItemsAndSharedHashes(Metadata metadata, IItemSearcher searcher) {
 
-        Property linkedItemsProperty = Property.internalTextBag(ExtraProperties.LINKED_ITEMS);
-        HashSet<String> linkedItems = new HashSet<String>(Arrays.asList(metadata.getValues(linkedItemsProperty)));
-        int initialLinkedItemsSize = linkedItems.size();
+        HashSet<String> newLinkedItems = new HashSet<>();
+        HashSet<String> newSharedHashes = new HashSet<>();
 
-        Property sharedHashesProperty = Property.internalTextBag(ExtraProperties.SHARED_HASHES);
-        HashSet<String> sharedHashes = new HashSet<String>(Arrays.asList(metadata.getValues(sharedHashesProperty)));
-        int initialSharedHashesSize = sharedHashes.size();
+        doAddLinkedItemsAndSharedHashes(newLinkedItems, newSharedHashes, searcher);
 
+        updateLinkedItemsAndSharedHashes(metadata, newLinkedItems, newSharedHashes);
+    }
+
+    public final void addLinkedItemsAndSharedHashes(Set<String> linkedItems, Set<String> sharedHashes, IItemSearcher searcher) {
         doAddLinkedItemsAndSharedHashes(linkedItems, sharedHashes, searcher);
+    }
 
-        if (initialLinkedItemsSize != linkedItems.size()) {
-            metadata.set(linkedItemsProperty, linkedItems.toArray(new String[] {}));
+    public static void updateLinkedItemsAndSharedHashes(Metadata metadata, Set<String> newLinkedItems, Set<String> newSharedHashes) {
+
+        if (!newLinkedItems.isEmpty()) {
+            Property linkedItemsProperty = Property.internalTextBag(ExtraProperties.LINKED_ITEMS);
+            HashSet<String> linkedItems = new HashSet<>(Arrays.asList(metadata.getValues(linkedItemsProperty)));
+            if (linkedItems.addAll(newLinkedItems)) {
+                metadata.set(linkedItemsProperty, linkedItems.toArray(new String[] {}));
+            }
         }
 
-        if (initialSharedHashesSize != sharedHashes.size()) {
-            metadata.set(sharedHashesProperty, sharedHashes.toArray(new String[] {}));
+        if (!newSharedHashes.isEmpty()) {
+            Property sharedHashesProperty = Property.internalTextBag(ExtraProperties.SHARED_HASHES);
+            HashSet<String> sharedHashes = new HashSet<>(Arrays.asList(metadata.getValues(sharedHashesProperty)));
+            if (sharedHashes.addAll(newLinkedItems)) {
+                metadata.set(sharedHashesProperty, sharedHashes.toArray(new String[] {}));
+            }
         }
     }
 
-    protected void doAddLinkedItemsAndSharedHashes(Set<String> linkedItems, HashSet<String> sharedHashes, IItemSearcher searcher) {
+    protected void doAddLinkedItemsAndSharedHashes(Set<String> linkedItems, Set<String> sharedHashes, IItemSearcher searcher) {
     }
 
     protected final void addLinkedItem(Set<String> linkedItems, IItemReader referencedItem, IItemSearcher searcher) {

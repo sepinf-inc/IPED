@@ -15,7 +15,6 @@ import static iped.properties.ExtraProperties.CONVERSATION_TYPE;
 import static iped.properties.ExtraProperties.UFED_META_PREFIX;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -127,7 +126,7 @@ public class ChatHandler extends BaseModelHandler<Chat> {
     }
 
     @Override
-    protected void doAddLinkedItemsAndSharedHashes(Set<String> linkedItems, HashSet<String> sharedHashes, IItemSearcher searcher) {
+    protected void doAddLinkedItemsAndSharedHashes(Set<String> linkedItems, Set<String> sharedHashes, IItemSearcher searcher) {
 
         model.getReferencedAccount().ifPresent(ref -> {
             addLinkedItem(linkedItems, ref.getItem(), searcher);

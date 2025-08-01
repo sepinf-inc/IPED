@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -25,6 +26,7 @@ import org.xml.sax.SAXException;
 
 import iped.data.IItemReader;
 import iped.parsers.standard.StandardParser;
+import iped.parsers.ufed.handler.BaseModelHandler;
 import iped.parsers.ufed.handler.ChatHandler;
 import iped.parsers.ufed.handler.InstantMessageHandler;
 import iped.parsers.ufed.model.Chat;
@@ -143,8 +145,6 @@ public class UfedChatParser extends AbstractParser {
                     Metadata chatPreviewMeta = new Metadata();
                     int nextMsg = reportGenerator.getNextMsgNum();
                     List<InstantMessage> subList = chat.getMessages().subList(firstMsg, nextMsg);
-                    storeLinkedHashes(subList, chatPreviewMeta, searcher);
-
                     firstMsg = nextMsg;
                     byte[] nextBytes = reportGenerator.generateNextChatHtml();
 
@@ -157,6 +157,8 @@ public class UfedChatParser extends AbstractParser {
                             }
                         }
                     }
+
+                    storeLinkedHashes(subList, chatPreviewMeta, searcher);
 
                     String chatName = chatPrefix;
                     if (frag > 0 || nextBytes != null) {
@@ -206,8 +208,14 @@ public class UfedChatParser extends AbstractParser {
     }
 
     private void storeLinkedHashes(List<InstantMessage> messages, Metadata chatMetadata, IItemSearcher searcher) {
+
+        HashSet<String> newLinkedItems = new HashSet<>();
+        HashSet<String> newSharedHashes = new HashSet<>();
+
         for (InstantMessage m : messages) {
-            new InstantMessageHandler(m, null).addLinkedItemsAndSharedHashes(chatMetadata, searcher);
+            new InstantMessageHandler(m, null).addLinkedItemsAndSharedHashes(newLinkedItems, newSharedHashes, searcher);
         }
+
+        BaseModelHandler.updateLinkedItemsAndSharedHashes(chatMetadata, newLinkedItems, newSharedHashes);
     }
 }
