@@ -2,6 +2,7 @@ package iped.parsers.ufed.model;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.StringJoiner;
@@ -30,7 +31,10 @@ public class Chat extends BaseModel {
 
     private final List<Party> participants = new ArrayList<>();
     private final List<ContactPhoto> photos = new ArrayList<>();
+
     private final List<InstantMessage> messages = new ArrayList<>();
+    private transient final HashMap<String, InstantMessage> messagesByIdentifier = new HashMap<>();
+    private transient final HashMap<String, InstantMessage> messagesByUfedId = new HashMap<>();
 
     private transient Optional<ReferencedAccountable> referencedAccount = Optional.empty();
 
@@ -69,6 +73,20 @@ public class Chat extends BaseModel {
         return messages;
     }
 
+    public void addMessage(InstantMessage message) {
+        messages.add(message);
+
+        String identifier = message.getIdentifier();
+        if (StringUtils.isNotBlank(identifier)) {
+            messagesByIdentifier.put(identifier, message);
+        }
+
+        String ufedId = message.getId();
+        if (StringUtils.isNotBlank(ufedId)) {
+            messagesByUfedId.put(ufedId, message);
+        }
+    }
+
     public Optional<ReferencedAccountable> getReferencedAccount() {
         return referencedAccount;
     }
@@ -79,6 +97,14 @@ public class Chat extends BaseModel {
 
     public boolean isGroup() {
         return StringUtils.equalsAnyIgnoreCase(getChatType(), "Channel", "Group");
+    }
+
+    public InstantMessage findMessageByIdentifier(String identifier) {
+        return messagesByIdentifier.get(identifier);
+    }
+
+    public InstantMessage findMessageByUfedId(String ufedId) {
+        return messagesByUfedId.get(ufedId);
     }
 
     @Override

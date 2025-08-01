@@ -222,14 +222,9 @@ public class InstantMessage extends BaseModel implements Comparable<InstantMessa
 
         // ... so look up in chat messages
         if (chat != null) {
-            Optional<InstantMessage> chatMessage = chat
-                    .getMessages()
-                    .stream() //
-                    .filter(m -> StringUtils.equals(m.getIdentifier(), originalMessageID)) //
-                    .findFirst();
-
-            if (chatMessage.isPresent()) {
-                return chatMessage.get();
+            InstantMessage chatMessage = chat.findMessageByIdentifier(originalMessageID);
+            if (chatMessage != null) {
+                return chatMessage;
             }
         }
         return null;
@@ -244,14 +239,9 @@ public class InstantMessage extends BaseModel implements Comparable<InstantMessa
 
         // ... so look up in chat messages
         if (chat != null) {
-            Optional<InstantMessage> chatMessage = chat
-                    .getMessages()
-                    .stream() //
-                    .filter(m -> StringUtils.equals(m.getId(), referenceId)) //
-                    .findFirst();
-
-            if (chatMessage.isPresent()) {
-                return chatMessage.get();
+            InstantMessage chatMessage = chat.findMessageByUfedId(referenceId);
+            if (chatMessage != null) {
+                return chatMessage;
             }
         }
         return null;

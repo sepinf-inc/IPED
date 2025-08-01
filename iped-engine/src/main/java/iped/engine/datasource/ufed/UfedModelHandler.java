@@ -249,7 +249,7 @@ public class UfedModelHandler extends DefaultHandler {
             if ("Participants".equals(fieldName) && child instanceof Party) {
                 chat.getParticipants().add((Party) child);
             } else if ("Messages".equals(fieldName) && child instanceof InstantMessage) {
-                chat.getMessages().add((InstantMessage) child);
+                chat.addMessage((InstantMessage) child);
             } else if ("Photos".equals(fieldName) && child instanceof ContactPhoto) {
                 chat.getPhotos().add((ContactPhoto) child);
             } else {
