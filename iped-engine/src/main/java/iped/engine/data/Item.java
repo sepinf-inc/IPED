@@ -752,6 +752,8 @@ public class Item implements IItem {
             }
         }
         addTmpResource(tis);
+
+        // set the TikaInputStream openContainer with the object previously set in item.setOpenContainer(object)
         Object openContainer = getTempAttribute(TIKA_OPEN_CONTAINER_KEY);
         if (openContainer != null) {
             tis.setOpenContainer(openContainer);
@@ -759,6 +761,10 @@ public class Item implements IItem {
         return tis;
     }
 
+    /**
+     * This method is used to pass a generic object to TikaInputStream in parsers.
+     * In the parser, the generic object can be fetch by calling TikaInputStream.getOpenContainer()
+     */
     public void setOpenContainer(Object openContainer) {
         setTempAttribute(TIKA_OPEN_CONTAINER_KEY, openContainer);
     }

@@ -663,6 +663,8 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
 
             checkRecursiveZipBomb(subItem);
 
+            // set the subItem openContainer with the object passed in the inputStrem of the call parseEmbedded()
+            // it will be used in the parser of the the subitem
             if (inputStream instanceof TikaInputStream) {
                 subItem.setOpenContainer(TikaInputStream.cast(inputStream).getOpenContainer());
             }
