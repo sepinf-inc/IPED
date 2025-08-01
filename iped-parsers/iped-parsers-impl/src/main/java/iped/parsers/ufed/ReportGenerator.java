@@ -45,6 +45,8 @@ import j2html.tags.specialized.TableTag;
 
 public class ReportGenerator {
 
+    private static final int MIN_MESSAGES_TO_SHOW_MODAL = 500;
+
     private int minChatSplitSize;
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -202,7 +204,8 @@ public class ReportGenerator {
                 .filter(Objects::nonNull)                                      // skip nulls
                 .findFirst()                                                   // get the first
                 .orElse(null);
-        printMessageFileHeader(out, title, title, firstPhotoData, source);
+        boolean printModal = (chat.getMessages().size() - currentMsg) > MIN_MESSAGES_TO_SHOW_MODAL;
+        printMessageFileHeader(out, title, title, firstPhotoData, source, printModal);
         if (currentMsg > 0) {
             out.println("<div class=\"linha\"><div class=\"date\">"
                     + Messages.getString("WhatsAppReport.ChatContinuation") + "</div></div>");
@@ -597,7 +600,7 @@ public class ReportGenerator {
     }
 
     private static void printMessageFileHeader(PrintWriter out, String chatName, String title, byte[] avatar,
-            String source) {
+            String source, boolean printModal) {
 
         String topbarClass = " class=\"other\"";
         String backImage = " style=\"background-image:url(" + Util.getImageResourceAsEmbedded("img/other-chat-back.jpg") + ")\"";
@@ -624,8 +627,13 @@ public class ReportGenerator {
                 + "<link rel=\"icon\" href=\"" + Util.getImageResourceAsEmbedded("img/" + icon + ".png") + "\">\n"
                 + "<style>\n" + Util.readResourceAsString("css/whatsapp.css")
                 + "\n</style>\n" + "<style>.check {vertical-align: top;}</style>" + "</head>\n"
-                + "<body"+ backImage +">\n"
-                + "<div id=\"topbar\"" + topbarClass + ">\n"
+                + "<body"+ backImage +">");
+       if (printModal) {
+           out.println("<div id=\"loading-modal\">\n"
+                        + "  <div class=\"loader\">Loading...</div>\n"
+                        + "</div>");
+       }
+       out.println("<div id=\"topbar\"" + topbarClass + ">\n"
                 + " <span class=\"left\">"
                 + " &nbsp; ");
 

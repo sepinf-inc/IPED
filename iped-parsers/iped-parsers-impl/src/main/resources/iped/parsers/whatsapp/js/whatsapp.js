@@ -146,3 +146,11 @@ if (navigator.userAgent.search("JavaFX") < 0) {
 
 const topHeight = document.getElementById('topbar').offsetHeight;
 document.getElementById('conversation').style.paddingTop = `${topHeight}px`;
+
+window.addEventListener('load', () => {
+    const modal = document.getElementById('loading-modal');
+    if (modal) {
+        modal.classList.add('fade-out');
+        setTimeout(() => modal.remove(), 300);
+    }
+});
