@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.metadata.Metadata;
@@ -78,16 +79,13 @@ public class ContactHandler extends AccountableHandler<Contact> {
     public String getTitle() {
 
         String name = model.getName();
-        String userID = model.getUserID()
-                .flatMap(list -> list.stream().findFirst())
+        List<String> contactEntries = model.getContactEntries().values().stream()
+                .flatMap(List::stream)
                 .map(ContactEntry::getValue)
-                .orElse(null);
-        String phoneNumber = model.getPhoneNumber()
-                .flatMap(list -> list.stream().findFirst())
-                .map(ContactEntry::getValue)
-                .orElse(null);
+                .collect(Collectors.toList());
 
-        String data = Arrays.asList(name, userID, phoneNumber).stream()
+        String data = Stream.of(Arrays.asList(name), contactEntries)
+            .flatMap(List::stream)
             .filter(StringUtils::isNotBlank)
             .collect(Collectors.joining(" | "));
 
