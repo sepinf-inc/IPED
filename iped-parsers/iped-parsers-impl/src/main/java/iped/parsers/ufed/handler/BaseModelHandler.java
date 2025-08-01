@@ -17,6 +17,8 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.Property;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.utils.DateUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import iped.data.IItem;
 import iped.data.IItemReader;
@@ -30,6 +32,8 @@ import iped.search.IItemSearcher;
  * @param <T> The type of the BaseModel being processed.
  */
 public class BaseModelHandler<T extends BaseModel> {
+
+    private static final Logger logger = LoggerFactory.getLogger(BaseModelHandler.class);
 
     protected final T model;
     protected final IItemReader item;
@@ -84,7 +88,12 @@ public class BaseModelHandler<T extends BaseModel> {
             return;
         }
 
-        doLoadReferences(searcher);
+        try {
+            doLoadReferences(searcher);
+        } catch (Exception e) {
+            logger.error("Error loading references of model {}: {}", model, e.getMessage());
+            logger.warn("", e);
+        }
 
         model.setReferenceLoaded(true);
     }
