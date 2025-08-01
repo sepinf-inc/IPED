@@ -116,6 +116,9 @@ public class UfedModelHandler extends DefaultHandler {
 
         if ("model".equalsIgnoreCase(qName)) {
             BaseModel completedModel = modelStack.pop();
+            if (completedModel instanceof Chat) {
+                ((Chat) completedModel).indexMessages();
+            }
             if (modelStack.isEmpty()) {
                 // this model object has completed, notify the listener
                 listener.onModelCompleted(completedModel);
@@ -249,7 +252,7 @@ public class UfedModelHandler extends DefaultHandler {
             if ("Participants".equals(fieldName) && child instanceof Party) {
                 chat.getParticipants().add((Party) child);
             } else if ("Messages".equals(fieldName) && child instanceof InstantMessage) {
-                chat.addMessage((InstantMessage) child);
+                chat.getMessages().add((InstantMessage) child);
             } else if ("Photos".equals(fieldName) && child instanceof ContactPhoto) {
                 chat.getPhotos().add((ContactPhoto) child);
             } else {

@@ -2,10 +2,10 @@ package iped.parsers.ufed.model;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.StringJoiner;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -33,8 +33,8 @@ public class Chat extends BaseModel {
     private final List<ContactPhoto> photos = new ArrayList<>();
 
     private final List<InstantMessage> messages = new ArrayList<>();
-    private transient final HashMap<String, InstantMessage> messagesByIdentifier = new HashMap<>();
-    private transient final HashMap<String, InstantMessage> messagesByUfedId = new HashMap<>();
+    private transient final ConcurrentHashMap<String, InstantMessage> messagesByIdentifier = new ConcurrentHashMap<>();
+    private transient final ConcurrentHashMap<String, InstantMessage> messagesByUfedId = new ConcurrentHashMap<>();
 
     private transient Optional<ReferencedAccountable> referencedAccount = Optional.empty();
 
@@ -73,18 +73,19 @@ public class Chat extends BaseModel {
         return messages;
     }
 
-    public void addMessage(InstantMessage message) {
-        messages.add(message);
+    public void indexMessages() {
+        messages.parallelStream().forEach(message -> {
 
-        String identifier = message.getIdentifier();
-        if (StringUtils.isNotBlank(identifier)) {
-            messagesByIdentifier.put(identifier, message);
-        }
+            String identifier = message.getIdentifier();
+            if (StringUtils.isNotBlank(identifier)) {
+                messagesByIdentifier.put(identifier, message);
+            }
 
-        String ufedId = message.getId();
-        if (StringUtils.isNotBlank(ufedId)) {
-            messagesByUfedId.put(ufedId, message);
-        }
+            String ufedId = message.getId();
+            if (StringUtils.isNotBlank(ufedId)) {
+                messagesByUfedId.put(ufedId, message);
+            }
+        });
     }
 
     public Optional<ReferencedAccountable> getReferencedAccount() {
