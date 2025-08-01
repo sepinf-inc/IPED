@@ -5,10 +5,13 @@ import static iped.properties.ExtraProperties.CONVERSATION_SUFFIX_NAME;
 import static iped.properties.ExtraProperties.CONVERSATION_SUFFIX_PHONE;
 import static iped.properties.ExtraProperties.CONVERSATION_SUFFIX_USERNAME;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.validator.routines.EmailValidator;
 import org.apache.tika.metadata.Metadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import iped.data.IItemReader;
 import iped.parsers.chat.PartyStringBuilderFactory;
 import iped.parsers.ufed.model.Party;
+import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
 import iped.search.IItemSearcher;
 
@@ -67,16 +71,28 @@ public class PartyHandler extends BaseModelHandler<Party> {
             return;
         }
 
+        // in some cases we've seen weird identifiers like "________", "iciousContentF__t__�ȁ"��Z,", 
+        if (!isValidPartyIdentifier(identifier)) {
+            cache.put(identifier, null);
+            return;
+        }
+
         String query;
         if (model.isPhoneOwner()) {
             query = AccountableHandler.createAccountableQuery(identifier, source, MediaTypes.UFED_USER_ACCOUNT_MIME, model, item, searcher);
         } else {
             query = AccountableHandler.createAccountableQuery(identifier, source, MediaTypes.UFED_CONTACT_MIME, model, item, searcher);
         }
-        List<IItemReader> results = searcher.search(query);
+        List<IItemReader> results = searcher.search(query).stream()
+                .filter(item -> source.equals(item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source"))) // filter for exact source
+                .collect(Collectors.toList());
         if (!results.isEmpty()) {
             if (results.size() > 1) {
-                logger.warn("Found more than 1 party reference: {}", results);
+                // sort getting by items with more metadata
+                Collections.sort(results, (item1, item2) -> {
+                    return Integer.compare(item2.getMetadata().names().length, item1.getMetadata().names().length);
+                });
+                logger.warn("Found more than 1 party reference: size=[{}] \t query=[{}] \t items=[{}]", results.size(), query, StringUtils.truncate(results.toString(), 0, 1000));
             }
             IItemReader result = results.get(0);
             cache.put(identifier, result);
@@ -85,6 +101,29 @@ public class PartyHandler extends BaseModelHandler<Party> {
             cache.put(identifier, null);
             logger.debug("Party reference was not found: {}", model);
         }
+    }
+
+    private boolean isValidPartyIdentifier(String identifier) {
+
+        if (StringUtils.isBlank(identifier) || StringUtils.containsWhitespace(identifier)) {
+            return false;
+        }
+
+        if (StringUtils.isAlphanumeric(identifier) || EmailValidator.getInstance(true, true).isValid(identifier)) {
+            return true;
+        }
+
+        String shortIdentifier = StringUtils.replaceChars(identifier, "!@#$%&*()=+-_/\\.,;.? ", null);
+
+        if (StringUtils.isBlank(shortIdentifier)) {
+            return false;
+        }
+
+        if (StringUtils.isAlphanumeric(shortIdentifier)) {
+            return true;
+        }
+
+        return false;
     }
 
     @Override
