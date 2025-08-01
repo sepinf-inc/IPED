@@ -626,8 +626,7 @@ public class ReportGenerator {
 
         out.println(format(chatName) + "</span>\n"
                 + "</div>\n"
-                + "<div id=\"conversation\">\n"
-                + "<br/><br/><br/>");
+                + "<div id=\"conversation\">");
     }
     private static void printMessageFileFooter(PrintWriter out) {
         out.println("	<br /><br /><br />\n"

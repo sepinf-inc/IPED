@@ -162,6 +162,7 @@ div.catalogIcon {
     border: 1px solid #394d4d;
     width: 640px;
     z-index: 100;
+    display: inline-flex
 }
 
 #topbar.status {
@@ -225,6 +226,7 @@ div.catalogIcon {
 #conversation {
     width: 640px;
     color: #000000;
+    padding-top: 90px;
 }
 
 #conversation .linha {
@@ -271,7 +273,7 @@ div:target {
     border-left: 4px solid #01A280;
     padding: 5px;
     margin-top: 2px;
-    margin-bottom: 5px;
+    margin-bottom: 10px;
     display:table;
     width:-webkit-fill-available;
 }
