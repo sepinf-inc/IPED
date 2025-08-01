@@ -178,7 +178,7 @@ div.catalogIcon {
 .loader {
     font-size: 1.5rem;
     color: #333;
-    animation: pulse 1s infinite;
+    animation: pulse 1.6s infinite;
 }
 
 @keyframes pulse {
