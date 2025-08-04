@@ -22,8 +22,17 @@ public class IpedProcessor {
             throw new IllegalStateException("Image file not found: " + imagePath);
         }
 
-        // Limpa o diretório de saída se existir
+        // Verifica se a análise já foi executada
         File outputDirFile = new File(outputDir);
+        File fileListCsv = new File(outputDir, "FileList.csv");
+        File sleuthDb = new File(outputDir, "sleuth.db");
+
+        if (outputDirFile.exists() && fileListCsv.exists() && sleuthDb.exists()) {
+            System.out.println("Analysis already completed, skipping execution");
+            return;
+        }
+
+        // Limpa o diretório de saída se existir (apenas se não tiver resultados válidos)
         if (outputDirFile.exists()) {
             System.out.println("Cleaning existing output directory: " + outputDir);
             deleteDirectory(outputDirFile);
