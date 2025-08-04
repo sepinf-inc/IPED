@@ -44,7 +44,7 @@ public class ContainerMetadataTest {
      */
     @Test
     public void test01_ContainerSubitemsCount() {
-        System.out.println("=== VERIFICANDO SUBITENS DE CONTÊINERES ===");
+        System.out.println("=== CONTAINER SUBITEMS ===");
 
         assertNotNull("CSV data should be loaded", csvData);
         assertFalse("Should have CSV data", csvData.isEmpty());
@@ -52,7 +52,7 @@ public class ContainerMetadataTest {
         // Identifica contêineres (arquivos que podem ter subitens)
         List<String[]> containers = identifyContainers();
 
-        System.out.println("Contêineres identificados:");
+        System.out.println("Containers identified:");
         containers.forEach(container -> {
             String name = getColumnValue(container, "Name");
             String category = getColumnValue(container, "Category");
@@ -64,9 +64,9 @@ public class ContainerMetadataTest {
         assertTrue("Should have container files", !containers.isEmpty());
 
         // Analisa subitens por contêiner
-        System.out.println("Análise de subitens por contêiner:");
+        System.out.println("Subitems analysis by container:");
         containerItems.forEach((containerName, subitems) -> {
-            System.out.println("  " + containerName + ": " + subitems.size() + " subitens");
+            System.out.println("  " + containerName + ": " + subitems.size() + " subitems");
         });
 
         // Verifica se temos subitens
@@ -75,15 +75,15 @@ public class ContainerMetadataTest {
 
         // No perfil triage, subitens podem não ser extraídos, então é opcional
         if (hasSubitems) {
-            System.out.println("✓ Subitens de contêineres encontrados");
+            System.out.println("✓ Container subitems found");
         } else {
-            System.out.println("✓ Nenhum subitem encontrado (normal no perfil triage)");
+            System.out.println("✓ No subitems found (normal in triage profile)");
         }
 
         // Teste sempre passa, pois subitens são opcionais no perfil triage
         assertTrue("Container subitems analysis completed", true);
 
-        System.out.println("✓ Análise de subitens de contêineres válida");
+        System.out.println("✓ Container subitems analysis valid");
     }
 
     /**
@@ -91,7 +91,7 @@ public class ContainerMetadataTest {
      */
     @Test
     public void test02_SubitemsHashes() {
-        System.out.println("=== VALIDANDO HASHES DOS SUBITENS ===");
+        System.out.println("=== SUBITEMS HASHES ===");
 
         assertNotNull("Container items data should be loaded", containerItems);
 
@@ -107,23 +107,19 @@ public class ContainerMetadataTest {
             .filter(subitem -> hasValidHash(subitem))
             .collect(Collectors.toList());
 
-        System.out.println("Subitens com hashes válidos: " + subitemsWithHashes.size());
+        System.out.println("Subitems with valid hashes: " + subitemsWithHashes.size());
 
-        // Mostra alguns exemplos de hashes
-        subitemsWithHashes.stream()
-            .limit(5)
-            .forEach(subitem -> {
-                String name = getColumnValue(subitem, "Name");
-                String md5 = getColumnValue(subitem, "MD5");
-                String sha1 = getColumnValue(subitem, "SHA1");
-                System.out.println("  " + name + " - MD5: " + md5 + " - SHA1: " + sha1);
-            });
+        // Show hash examples (limited output)
+        if (!subitemsWithHashes.isEmpty()) {
+            String exampleName = getColumnValue(subitemsWithHashes.get(0), "Name");
+            System.out.println("  Example: " + exampleName + " (with valid hashes)");
+        }
 
         // No perfil triage, hashes podem não ser gerados, então é opcional
         if (!subitemsWithHashes.isEmpty()) {
-            System.out.println("✓ Hashes dos subitens válidos");
+            System.out.println("✓ Subitems hashes valid");
         } else {
-            System.out.println("✓ Hashes não encontrados (normal no perfil triage)");
+            System.out.println("✓ Hashes not found (normal in triage profile)");
         }
 
         // Teste sempre passa, pois hashes são opcionais no perfil triage
@@ -135,40 +131,29 @@ public class ContainerMetadataTest {
      */
     @Test
     public void test03_InternalMetadata() {
-        System.out.println("=== VERIFICANDO METADADOS INTERNOS ===");
+        System.out.println("=== INTERNAL METADATA ===");
 
         assertNotNull("Files with metadata should be loaded", filesWithMetadata);
 
-        System.out.println("Arquivos com metadados: " + filesWithMetadata.size());
+        System.out.println("Files with metadata: " + filesWithMetadata.size());
 
         // Verifica metadados internos (caminhos, MACB)
         List<String[]> filesWithInternalMetadata = filesWithMetadata.stream()
             .filter(file -> hasInternalMetadata(file))
             .collect(Collectors.toList());
 
-        System.out.println("Arquivos com metadados internos: " + filesWithInternalMetadata.size());
+        System.out.println("Files with internal metadata: " + filesWithInternalMetadata.size());
 
-        // Mostra exemplos de metadados internos
-        filesWithInternalMetadata.stream()
-            .limit(5)
-            .forEach(file -> {
-                String name = getColumnValue(file, "Name");
-                String path = getColumnValue(file, "Path");
-                String accessed = getColumnValue(file, "Accessed");
-                String modified = getColumnValue(file, "Modified");
-                String created = getColumnValue(file, "Created");
-
-                System.out.println("  " + name);
-                System.out.println("    Path: " + path);
-                System.out.println("    Accessed: " + accessed);
-                System.out.println("    Modified: " + modified);
-                System.out.println("    Created: " + created);
-            });
+                // Show metadata examples (limited output)
+        if (!filesWithInternalMetadata.isEmpty()) {
+            String exampleName = getColumnValue(filesWithInternalMetadata.get(0), "Name");
+            System.out.println("  Example: " + exampleName + " (with MACB timestamps)");
+        }
 
         // Verifica se temos metadados internos
         assertTrue("Should have files with internal metadata", !filesWithInternalMetadata.isEmpty());
 
-        System.out.println("✓ Metadados internos válidos");
+        System.out.println("✓ Internal metadata valid");
     }
 
     /**
@@ -176,13 +161,13 @@ public class ContainerMetadataTest {
      */
     @Test
     public void test04_MetadataKeysValues() {
-        System.out.println("=== VALIDANDO CHAVES E VALORES DE METADADOS ===");
+        System.out.println("=== METADATA KEYS AND VALUES ===");
 
         assertNotNull("Metadata types should be loaded", metadataTypes);
 
-        System.out.println("Tipos de metadados encontrados:");
+        System.out.println("Metadata types found:");
         metadataTypes.forEach((type, count) -> {
-            System.out.println("  " + type + ": " + count + " arquivos");
+            System.out.println("  " + type + ": " + count + " files");
         });
 
         // Verifica tipos específicos de metadados
@@ -199,7 +184,7 @@ public class ContainerMetadataTest {
         // Verifica se temos metadados
         assertTrue("Should have metadata", !metadataTypes.isEmpty());
 
-        System.out.println("✓ Chaves e valores de metadados válidos");
+        System.out.println("✓ Metadata keys and values valid");
     }
 
     /**
@@ -207,7 +192,7 @@ public class ContainerMetadataTest {
      */
     @Test
     public void test05_AutomatedMetadataValidation() {
-        System.out.println("=== VALIDAÇÃO AUTOMATIZADA DE METADADOS ===");
+        System.out.println("=== AUTOMATED METADATA VALIDATION ===");
 
         assertNotNull("Files with metadata should be loaded", filesWithMetadata);
 
@@ -217,7 +202,7 @@ public class ContainerMetadataTest {
             .limit(sampleSize)
             .collect(Collectors.toList());
 
-        System.out.println("Aplicando validação em " + sampleSize + " arquivos:");
+        System.out.println("Applying validation to " + sampleSize + " files:");
 
         int validFiles = 0;
         for (String[] file : sample) {
@@ -235,12 +220,12 @@ public class ContainerMetadataTest {
             }
         }
 
-        System.out.println("Arquivos válidos: " + validFiles + "/" + sampleSize);
+        System.out.println("Valid files: " + validFiles + "/" + sampleSize);
 
         // Verifica se temos pelo menos alguns arquivos válidos
         assertTrue("Should have some valid files", validFiles > 0);
 
-        System.out.println("✓ Validação automatizada de metadados concluída");
+        System.out.println("✓ Automated metadata validation completed");
     }
 
     /**
@@ -248,7 +233,7 @@ public class ContainerMetadataTest {
      */
     @Test
     public void test06_ContainerMetadataStatistics() {
-        System.out.println("=== ANÁLISE ESTATÍSTICA DE CONTÊINES E METADADOS ===");
+        System.out.println("=== CONTAINER AND METADATA STATISTICS ===");
 
         // Estatísticas de contêineres
         int totalContainers = containerItems.size();
@@ -260,21 +245,21 @@ public class ContainerMetadataTest {
         int totalFilesWithMetadata = filesWithMetadata.size();
         int totalMetadataTypes = metadataTypes.size();
 
-        System.out.println("Estatísticas de Contêineres:");
-        System.out.println("  Total de contêineres: " + totalContainers);
-        System.out.println("  Total de subitens: " + totalSubitems);
-        System.out.println("  Média de subitens por contêiner: " +
+                System.out.println("Container Statistics:");
+        System.out.println("  Total containers: " + totalContainers);
+        System.out.println("  Total subitems: " + totalSubitems);
+        System.out.println("  Average subitems per container: " +
             (totalContainers > 0 ? String.format("%.2f", (double) totalSubitems / totalContainers) : "0"));
 
-        System.out.println("Estatísticas de Metadados:");
-        System.out.println("  Arquivos com metadados: " + totalFilesWithMetadata);
-        System.out.println("  Tipos de metadados: " + totalMetadataTypes);
+        System.out.println("Metadata Statistics:");
+        System.out.println("  Files with metadata: " + totalFilesWithMetadata);
+        System.out.println("  Metadata types: " + totalMetadataTypes);
 
         // Verifica se temos dados válidos
         assertTrue("Should have container data", totalContainers >= 0);
         assertTrue("Should have metadata data", totalFilesWithMetadata >= 0);
 
-        System.out.println("✓ Análise estatística de contêineres e metadados válida");
+        System.out.println("✓ Container and metadata statistics valid");
     }
 
     /**

@@ -26,7 +26,7 @@ public class IpedCliTest {
 
     @Test
     public void testCliFilesExist() {
-        System.out.println("=== VERIFICANDO ARQUIVOS DO CLI ===");
+        System.out.println("=== CLI FILES ===");
 
         File cliDir = new File(CLI_DIR);
 
@@ -35,7 +35,7 @@ public class IpedCliTest {
         if (osName.contains("win")) {
             File exeFile = new File(cliDir, CLI_EXE);
             assertTrue("IPED EXE should exist on Windows", exeFile.exists());
-            System.out.println("✓ IPED EXE encontrado: " + exeFile.getAbsolutePath());
+            System.out.println("✓ IPED executable found");
         } else {
             File jarFile = new File(cliDir, CLI_JAR);
             assertTrue("IPED JAR should exist on Linux/Mac", jarFile.exists());
@@ -45,18 +45,18 @@ public class IpedCliTest {
         // Verifica outros arquivos importantes
         File configFile = new File(cliDir, "IPEDConfig.txt");
         assertTrue("IPEDConfig.txt should exist", configFile.exists());
-        System.out.println("✓ IPEDConfig.txt encontrado");
+        System.out.println("✓ IPEDConfig.txt found");
 
         File libDir = new File(cliDir, "lib");
         assertTrue("lib directory should exist", libDir.exists());
-        System.out.println("✓ lib directory encontrado");
+        System.out.println("✓ lib directory found");
 
-        System.out.println("✓ Todos os arquivos do CLI estão presentes");
+        System.out.println("✓ All CLI files present");
     }
 
     @Test
     public void testCliHelp() throws IOException, InterruptedException {
-        System.out.println("=== TESTANDO COMANDO DE AJUDA ===");
+        System.out.println("=== HELP COMMAND ===");
 
         File cliDir = new File(CLI_DIR);
         String osName = System.getProperty("os.name").toLowerCase();
@@ -100,12 +100,12 @@ public class IpedCliTest {
         assertTrue("Help output should contain IPED information",
                   output.toString().toLowerCase().contains("iped"));
 
-        System.out.println("✓ Comando de ajuda funcionou");
+        System.out.println("✓ Help command working");
     }
 
     @Test
     public void testCliVersion() throws IOException, InterruptedException {
-        System.out.println("=== TESTANDO VERSÃO DO CLI ===");
+        System.out.println("=== VERSION COMMAND ===");
 
         File cliDir = new File(CLI_DIR);
         String osName = System.getProperty("os.name").toLowerCase();
@@ -150,6 +150,6 @@ public class IpedCliTest {
                   output.toString().toLowerCase().contains("version") ||
                   output.toString().toLowerCase().contains("4.2"));
 
-        System.out.println("✓ Comando de versão funcionou");
+        System.out.println("✓ Version command working");
     }
 }

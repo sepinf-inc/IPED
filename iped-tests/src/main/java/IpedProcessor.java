@@ -25,7 +25,7 @@ public class IpedProcessor {
         // Limpa o diretório de saída se existir
         File outputDirFile = new File(outputDir);
         if (outputDirFile.exists()) {
-            System.out.println("Limpando diretório de saída existente: " + outputDir);
+            System.out.println("Cleaning existing output directory: " + outputDir);
             deleteDirectory(outputDirFile);
         }
 
@@ -34,12 +34,8 @@ public class IpedProcessor {
 
         List<String> command = buildCommand(cliDir, imagePath, outputDir);
 
-        System.out.println("=== EXECUTANDO IPED CLI ===");
-        System.out.println("Diretório: " + cliDir.getAbsolutePath());
-        System.out.println("Imagem: " + imagePath);
-        System.out.println("Saída: " + outputDir);
-        System.out.println("Comando: " + String.join(" ", command));
-        System.out.println("================================");
+        System.out.println("=== EXECUTING IPED CLI ===");
+        System.out.println("Command: " + String.join(" ", command));
 
         ProcessBuilder pb = new ProcessBuilder(command);
         pb.directory(cliDir);
@@ -63,17 +59,17 @@ public class IpedProcessor {
         }
 
         int exit = process.waitFor();
-        System.out.println("=== IPED CLI FINALIZOU ===");
+                        System.out.println("=== IPED CLI FINISHED ===");
         System.out.println("Exit code: " + exit);
 
         if (exit != 0) {
-            System.err.println("=== ERRO NO IPED CLI ===");
+                            System.err.println("=== IPED CLI ERROR ===");
             System.err.println("Output completo:");
             System.err.println(output.toString());
             throw new RuntimeException("IPED CLI exited with code " + exit + "\nOutput: " + output.toString());
         }
 
-        System.out.println("=== IPED CLI EXECUTADO COM SUCESSO ===");
+                        System.out.println("=== IPED CLI EXECUTED SUCCESSFULLY ===");
     }
 
     /**

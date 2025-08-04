@@ -37,7 +37,7 @@ public class ImageProcessingTest {
      */
     @Test
     public void test01_ForensicAnalysis() throws Exception {
-        System.out.println("=== INICIANDO ANÁLISE FORENSE ===");
+                    System.out.println("=== STARTING FORENSIC ANALYSIS ===");
 
         IpedProcessor.process(
             IMAGE_PATH.toAbsolutePath().toString(),
@@ -48,7 +48,7 @@ public class ImageProcessingTest {
         waitForAnalysisCompletion();
 
         analysisCompleted = true;
-        System.out.println("=== ANÁLISE FORENSE CONCLUÍDA ===");
+                        System.out.println("=== FORENSIC ANALYSIS COMPLETED ===");
     }
 
     /**
@@ -86,7 +86,7 @@ public class ImageProcessingTest {
         long allocatedCount = countLinesInCsv(csvFile);
         assertTrue("Should have allocated files", allocatedCount > 0);
 
-        System.out.println("Número de arquivos alocados: " + allocatedCount);
+                        System.out.println("Allocated files: " + allocatedCount);
     }
 
     /**
@@ -102,7 +102,7 @@ public class ImageProcessingTest {
         long deletedCount = countLinesInCsv(csvFile);
         assertTrue("Should have deleted files", deletedCount >= 0);
 
-        System.out.println("Número de arquivos deletados: " + deletedCount);
+                        System.out.println("Deleted files: " + deletedCount);
     }
 
     /**
@@ -118,7 +118,7 @@ public class ImageProcessingTest {
         boolean hasValidPaths = validateFilePathsInCsv(csvFile);
         assertTrue("Should have valid file paths", hasValidPaths);
 
-        System.out.println("Caminhos de arquivos validados com sucesso");
+                        System.out.println("File paths validated successfully");
     }
 
     /**
@@ -134,7 +134,7 @@ public class ImageProcessingTest {
         boolean hasValidTimestamps = validateMACBTimestampsInCsv(csvFile);
         assertTrue("Should have valid MACB timestamps", hasValidTimestamps);
 
-        System.out.println("Horários MACB validados com sucesso");
+                        System.out.println("MACB timestamps validated successfully");
     }
 
         /**
@@ -151,9 +151,9 @@ public class ImageProcessingTest {
 
         // No perfil triage, hashes podem não ser gerados, então é opcional
         if (hasValidHashes) {
-            System.out.println("Hashes de arquivos validados com sucesso");
-        } else {
-            System.out.println("Hashes não encontrados (normal no perfil triage)");
+                            System.out.println("File hashes validated successfully");
+            } else {
+                System.out.println("Hashes not found (normal in triage profile)");
         }
 
         // Teste sempre passa, pois hashes são opcionais no perfil triage
@@ -173,23 +173,23 @@ public class ImageProcessingTest {
      * Aguarda a conclusão da análise verificando arquivos de resultado
      */
     private void waitForAnalysisCompletion() throws InterruptedException {
-        System.out.println("Aguardando conclusão da análise...");
+                        System.out.println("Waiting for analysis completion...");
 
         int maxWaitTime = 300; // 5 minutos
         int waitTime = 0;
 
         while (waitTime < maxWaitTime) {
             if (hasAnalysisCompleted()) {
-                System.out.println("Análise detectada como concluída após " + waitTime + " segundos");
+                                        System.out.println("Analysis completed after " + waitTime + " seconds");
                 return;
             }
 
             Thread.sleep(5000); // Aguarda 5 segundos
             waitTime += 5;
-            System.out.println("Aguardando... (" + waitTime + "s/" + maxWaitTime + "s)");
+                                System.out.println("Waiting... (" + waitTime + "s/" + maxWaitTime + "s)");
         }
 
-        System.out.println("Timeout aguardando conclusão da análise");
+                        System.out.println("Timeout waiting for analysis completion");
     }
 
     /**

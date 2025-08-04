@@ -35,13 +35,13 @@ public class ForensicResultsTest {
      */
     @Test
     public void test01_ResultDirectoryStructure() {
-        System.out.println("=== VERIFICANDO ESTRUTURA DE DIRETÓRIOS ===");
+        System.out.println("=== DIRECTORY STRUCTURE ===");
 
         assertTrue("Result directory should exist", Files.exists(RESULT_DIR));
         assertTrue("IPED directory should exist", Files.exists(IPED_DIR));
         assertTrue("Data directory should exist", Files.exists(DATA_DIR));
 
-        System.out.println("✓ Estrutura de diretórios válida");
+        System.out.println("✓ Directory structure valid");
     }
 
     /**
@@ -49,7 +49,7 @@ public class ForensicResultsTest {
      */
     @Test
     public void test02_MainResultFiles() throws IOException {
-        System.out.println("=== VERIFICANDO ARQUIVOS PRINCIPAIS ===");
+        System.out.println("=== MAIN FILES ===");
 
         // Verifica arquivos principais
         Path fileListCsv = RESULT_DIR.resolve("FileList.csv");
@@ -60,7 +60,7 @@ public class ForensicResultsTest {
         assertTrue("sleuth.db should exist", Files.exists(sleuthDb));
         assertTrue("IPED-SearchApp.exe should exist", Files.exists(searchApp));
 
-        System.out.println("✓ Arquivos principais encontrados:");
+        System.out.println("✓ Main files found:");
         System.out.println("  - FileList.csv");
         System.out.println("  - sleuth.db");
         System.out.println("  - IPED-SearchApp.exe");
@@ -71,14 +71,14 @@ public class ForensicResultsTest {
      */
     @Test
     public void test03_CsvContentValidation() throws IOException {
-        System.out.println("=== VERIFICANDO CONTEÚDO DO CSV ===");
+        System.out.println("=== CSV CONTENT ===");
 
         Path csvFile = RESULT_DIR.resolve("FileList.csv");
         assertTrue("FileList.csv should exist", Files.exists(csvFile));
 
         validateCsvFile(csvFile);
 
-        System.out.println("✓ Conteúdo do CSV válido");
+        System.out.println("✓ CSV content valid");
     }
 
     /**
@@ -86,7 +86,7 @@ public class ForensicResultsTest {
      */
     @Test
     public void test04_HtmlReportFiles() throws IOException {
-        System.out.println("=== VERIFICANDO RELATÓRIOS HTML ===");
+        System.out.println("=== HTML REPORTS ===");
 
         if (Files.exists(HTML_DIR)) {
             List<Path> htmlFiles = Files.list(HTML_DIR)
@@ -99,7 +99,7 @@ public class ForensicResultsTest {
             }
         }
 
-        System.out.println("✓ Relatórios HTML verificados");
+        System.out.println("✓ HTML reports verified");
     }
 
     /**
@@ -107,7 +107,7 @@ public class ForensicResultsTest {
      */
     @Test
     public void test05_DataFiles() throws IOException {
-        System.out.println("=== VERIFICANDO ARQUIVOS DE DADOS ===");
+        System.out.println("=== DATA FILES ===");
 
         assertTrue("Data directory should exist", Files.exists(DATA_DIR));
 
@@ -120,7 +120,7 @@ public class ForensicResultsTest {
         assertTrue("carvedIgnoredMap.dat should exist", Files.exists(carvedFile));
         assertTrue("evidences_processing_status should exist", Files.exists(statusFile));
 
-        System.out.println("✓ Arquivos de dados válidos");
+        System.out.println("✓ Data files valid");
     }
 
     /**
@@ -128,16 +128,16 @@ public class ForensicResultsTest {
      */
     @Test
     public void test06_GeneralStatistics() throws IOException {
-        System.out.println("=== VERIFICANDO ESTATÍSTICAS GERAIS ===");
+        System.out.println("=== GENERAL STATISTICS ===");
 
         Path csvFile = RESULT_DIR.resolve("FileList.csv");
         if (csvFile != null && Files.exists(csvFile)) {
             long fileCount = countLinesInCsv(csvFile);
-            System.out.println("Total de arquivos processados: " + fileCount);
+            System.out.println("Total files processed: " + fileCount);
             assertTrue("Should have processed files", fileCount > 0);
         }
 
-        System.out.println("✓ Estatísticas gerais válidas");
+        System.out.println("✓ General statistics valid");
     }
 
     /**
@@ -145,14 +145,14 @@ public class ForensicResultsTest {
      */
     @Test
     public void test07_DataIntegrity() throws IOException {
-        System.out.println("=== VERIFICANDO INTEGRIDADE DOS DADOS ===");
+        System.out.println("=== DATA INTEGRITY ===");
 
         Path csvFile = RESULT_DIR.resolve("FileList.csv");
         if (csvFile != null && Files.exists(csvFile)) {
             validateDataIntegrity(csvFile);
         }
 
-        System.out.println("✓ Integridade dos dados válida");
+        System.out.println("✓ Data integrity valid");
     }
 
     /**

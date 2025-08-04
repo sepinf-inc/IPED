@@ -44,14 +44,14 @@ public class ForensicAnalysisTest {
      */
     @Test
     public void test01_MimeTypeRecognition() {
-        System.out.println("=== VERIFICANDO RECONHECIMENTO DE MIME-TYPES ===");
+        System.out.println("=== MIME-TYPE RECOGNITION ===");
 
         assertNotNull("CSV data should be loaded", csvData);
         assertFalse("Should have CSV data", csvData.isEmpty());
 
-        System.out.println("Distribuição por MIME-type/Extension:");
+        System.out.println("MIME-type distribution:");
         mimeTypeCount.forEach((mime, count) -> {
-            System.out.println("  " + mime + ": " + count + " arquivos");
+            System.out.println("  " + mime + ": " + count + " files");
         });
 
         // Verifica se temos pelo menos alguns tipos conhecidos
@@ -63,7 +63,7 @@ public class ForensicAnalysisTest {
 
         assertTrue("Should have files with known extensions", hasKnownExtensions);
 
-        System.out.println("✓ Reconhecimento de MIME-types válido");
+        System.out.println("✓ MIME-type recognition valid");
     }
 
     /**
@@ -71,14 +71,14 @@ public class ForensicAnalysisTest {
      */
     @Test
     public void test02_CategoryAnalysis() {
-        System.out.println("=== VERIFICANDO ANÁLISE DE CATEGORIAS ===");
+        System.out.println("=== CATEGORY ANALYSIS ===");
 
         assertNotNull("Category data should be loaded", categoryCount);
         assertFalse("Should have category data", categoryCount.isEmpty());
 
-        System.out.println("Distribuição por Categoria:");
+        System.out.println("Category distribution:");
         categoryCount.forEach((category, count) -> {
-            System.out.println("  " + category + ": " + count + " arquivos");
+            System.out.println("  " + category + ": " + count + " files");
         });
 
         // Verifica se temos categorias válidas
@@ -95,7 +95,7 @@ public class ForensicAnalysisTest {
 
         assertTrue("Should have known categories", hasKnownCategories);
 
-        System.out.println("✓ Análise de categorias válida");
+        System.out.println("✓ Category analysis valid");
     }
 
     /**
@@ -103,7 +103,7 @@ public class ForensicAnalysisTest {
      */
     @Test
     public void test03_CarvedFilesByMime() {
-        System.out.println("=== VERIFICANDO ARQUIVOS ESCULPIDOS POR MIME ===");
+        System.out.println("=== CARVED FILES BY MIME ===");
 
         assertNotNull("Carved files data should be loaded", carvedFiles);
 
@@ -114,9 +114,9 @@ public class ForensicAnalysisTest {
                 Collectors.counting()
             ));
 
-        System.out.println("Arquivos esculpidos por MIME-type:");
+        System.out.println("Carved files by MIME-type:");
         carvedByMime.forEach((mime, count) -> {
-            System.out.println("  " + mime + ": " + count + " arquivos");
+            System.out.println("  " + mime + ": " + count + " files");
         });
 
         // No perfil triage, arquivos esculpidos podem não ser encontrados
@@ -129,9 +129,9 @@ public class ForensicAnalysisTest {
                 });
 
             assertTrue("Carved files should have valid extensions", hasValidExtensions);
-            System.out.println("✓ Análise de arquivos esculpidos válida");
+            System.out.println("✓ Carved files analysis valid");
         } else {
-            System.out.println("✓ Nenhum arquivo esculpido encontrado (normal no perfil triage)");
+            System.out.println("✓ No carved files found (normal in triage profile)");
         }
 
         // Teste sempre passa, pois arquivos esculpidos são opcionais no perfil triage
@@ -143,7 +143,7 @@ public class ForensicAnalysisTest {
      */
     @Test
     public void test04_CarvedFilesHashes() {
-        System.out.println("=== VALIDANDO HASHES DOS ARQUIVOS ESCULPIDOS ===");
+        System.out.println("=== CARVED FILES HASHES ===");
 
         assertNotNull("Carved files data should be loaded", carvedFiles);
 
@@ -152,23 +152,19 @@ public class ForensicAnalysisTest {
             .filter(row -> hasValidHash(row))
             .collect(Collectors.toList());
 
-        System.out.println("Arquivos esculpidos com hashes válidos: " + filesWithHashes.size());
+        System.out.println("Carved files with valid hashes: " + filesWithHashes.size());
 
-        // Mostra alguns exemplos de hashes
-        filesWithHashes.stream()
-            .limit(5)
-            .forEach(row -> {
-                String name = getColumnValue(row, "Name");
-                String md5 = getColumnValue(row, "MD5");
-                String sha1 = getColumnValue(row, "SHA1");
-                System.out.println("  " + name + " - MD5: " + md5 + " - SHA1: " + sha1);
-            });
+        // Show hash examples (limited output)
+        if (!filesWithHashes.isEmpty()) {
+            String exampleName = getColumnValue(filesWithHashes.get(0), "Name");
+            System.out.println("  Example: " + exampleName + " (with valid hashes)");
+        }
 
         // No perfil triage, hashes podem não ser gerados, então é opcional
         if (!filesWithHashes.isEmpty()) {
-            System.out.println("✓ Hashes dos arquivos esculpidos válidos");
+            System.out.println("✓ Carved files hashes valid");
         } else {
-            System.out.println("✓ Hashes não encontrados (normal no perfil triage)");
+            System.out.println("✓ Hashes not found (normal in triage profile)");
         }
 
         // Teste sempre passa, pois hashes são opcionais no perfil triage
@@ -180,7 +176,7 @@ public class ForensicAnalysisTest {
      */
     @Test
     public void test05_CompleteStatisticalAnalysis() {
-        System.out.println("=== ANÁLISE ESTATÍSTICA COMPLETA ===");
+        System.out.println("=== COMPLETE STATISTICAL ANALYSIS ===");
 
         // Estatísticas gerais
         int totalFiles = csvData.size();
@@ -188,11 +184,11 @@ public class ForensicAnalysisTest {
         int deletedFilesCount = countDeletedFiles();
         int emptyFilesCount = countEmptyFiles();
 
-        System.out.println("Estatísticas Gerais:");
-        System.out.println("  Total de arquivos: " + totalFiles);
-        System.out.println("  Arquivos esculpidos: " + carvedFilesCount);
-        System.out.println("  Arquivos deletados: " + deletedFilesCount);
-        System.out.println("  Arquivos vazios: " + emptyFilesCount);
+        System.out.println("General Statistics:");
+        System.out.println("  Total files: " + totalFiles);
+        System.out.println("  Carved files: " + carvedFilesCount);
+        System.out.println("  Deleted files: " + deletedFilesCount);
+        System.out.println("  Empty files: " + emptyFilesCount);
 
         // Verifica se temos dados válidos
         assertTrue("Should have files to analyze", totalFiles > 0);
@@ -203,11 +199,11 @@ public class ForensicAnalysisTest {
         double carvedPercentage = totalFiles > 0 ? (double) carvedFilesCount / totalFiles * 100 : 0;
         double deletedPercentage = totalFiles > 0 ? (double) deletedFilesCount / totalFiles * 100 : 0;
 
-        System.out.println("Porcentagens:");
-        System.out.println("  Arquivos esculpidos: " + String.format("%.2f", carvedPercentage) + "%");
-        System.out.println("  Arquivos deletados: " + String.format("%.2f", deletedPercentage) + "%");
+        System.out.println("Percentages:");
+        System.out.println("  Carved files: " + String.format("%.2f", carvedPercentage) + "%");
+        System.out.println("  Deleted files: " + String.format("%.2f", deletedPercentage) + "%");
 
-        System.out.println("✓ Análise estatística completa válida");
+        System.out.println("✓ Complete statistical analysis valid");
     }
 
     /**
