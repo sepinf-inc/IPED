@@ -4,7 +4,10 @@ import org.junit.FixMethodOrder;
 import org.junit.runners.MethodSorters;
 
 import java.io.*;
+import java.net.URL;
+import java.net.URLConnection;
 import java.nio.file.*;
+import java.util.concurrent.TimeUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -17,25 +20,44 @@ import static org.junit.Assert.*;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ContainerMetadataTest {
 
+    private static final String IMAGE_URL =
+        "https://digitalcorpora.s3.amazonaws.com/corpora/drives/nps-2009-ntfs1/ntfs1-gen1.E01";
+    private static final Path CACHE_DIR = Paths.get("./target/test-images");
     private static final Path RESULT_DIR = Paths.get("./target/iped-result");
+    private static final String IMAGE_NAME = "ntfs1-gen1.E01";
+    private static final Path IMAGE_PATH = CACHE_DIR.resolve(IMAGE_NAME);
     private static final Path CSV_FILE = RESULT_DIR.resolve("FileList.csv");
 
+    // Dados analisados
     private static List<String[]> csvData;
-    private static Map<String, List<String[]>> containerItems;
+    private static Map<String, List<String[]>> containerItems = new HashMap<>();
     private static Map<String, Integer> metadataTypes;
-    private static List<String[]> filesWithMetadata;
+    private static List<String[]> filesWithMetadata = new ArrayList<>();
+    private static List<String[]> filesWithInternalMetadata = new ArrayList<>();
 
     @BeforeClass
-    public static void setup() throws IOException {
-        // Verifica se a análise foi executada
+    public static void setup() throws Exception {
+        // Se o FileList.csv não existir, executa a análise
         if (!Files.exists(CSV_FILE)) {
-            throw new IllegalStateException("FileList.csv não encontrado. Execute ImageProcessingTest primeiro.");
+            System.out.println("=== SETUP: RUNNING FORENSIC ANALYSIS ===");
+            createDirectories(CACHE_DIR, RESULT_DIR);
+            downloadImageIfNeeded(IMAGE_URL, IMAGE_PATH);
+            
+            IpedProcessor.process(
+                IMAGE_PATH.toAbsolutePath().toString(),
+                RESULT_DIR.toAbsolutePath().toString()
+            );
+            
+            // Aguarda a conclusão da análise
+            waitForAnalysisCompletion();
+            System.out.println("=== SETUP: FORENSIC ANALYSIS COMPLETED ===");
         }
-
-        // Carrega dados do CSV
+        
+        if (!Files.exists(CSV_FILE)) {
+            throw new IllegalStateException("FileList.csv not found after analysis attempt.");
+        }
+        
         loadCsvData();
-
-        // Analisa dados
         analyzeData();
     }
 
@@ -261,6 +283,8 @@ public class ContainerMetadataTest {
 
         System.out.println("✓ Container and metadata statistics valid");
     }
+
+
 
     /**
      * Carrega dados do CSV
@@ -493,5 +517,55 @@ public class ContainerMetadataTest {
             return row[index];
         }
         return "";
+    }
+
+    // Métodos auxiliares
+    private static void createDirectories(Path... paths) throws IOException {
+        for (Path path : paths) {
+            Files.createDirectories(path);
+        }
+    }
+
+    private static void downloadImageIfNeeded(String url, Path targetPath) throws IOException {
+        if (Files.exists(targetPath)) {
+            return;
+        }
+
+        System.out.println("Downloading test image from: " + url);
+        
+        try (InputStream in = new URL(url).openStream()) {
+            Files.copy(in, targetPath, StandardCopyOption.REPLACE_EXISTING);
+        }
+    }
+
+    private static void waitForAnalysisCompletion() throws InterruptedException {
+        System.out.println("Waiting for analysis completion...");
+        
+        int maxWaitTime = 300; // 5 minutos
+        int waitTime = 0;
+        
+        while (waitTime < maxWaitTime) {
+            if (hasAnalysisCompleted()) {
+                System.out.println("Analysis completed after " + waitTime + " seconds");
+                return;
+            }
+            
+            TimeUnit.SECONDS.sleep(1);
+            waitTime++;
+            
+            if (waitTime % 10 == 0) {
+                System.out.println("Waiting... (" + waitTime + "s/" + maxWaitTime + "s)");
+            }
+        }
+        
+        System.out.println("Timeout waiting for analysis completion");
+    }
+
+    private static boolean hasAnalysisCompleted() {
+        try {
+            return Files.exists(CSV_FILE) && Files.size(CSV_FILE) > 0;
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

@@ -4,8 +4,11 @@ import org.junit.FixMethodOrder;
 import org.junit.runners.MethodSorters;
 
 import java.io.*;
+import java.net.URL;
+import java.net.URLConnection;
 import java.nio.file.*;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
@@ -17,16 +20,34 @@ import static org.junit.Assert.*;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ForensicResultsTest {
 
+    private static final String IMAGE_URL =
+        "https://digitalcorpora.s3.amazonaws.com/corpora/drives/nps-2009-ntfs1/ntfs1-gen1.E01";
+    private static final Path CACHE_DIR = Paths.get("./target/test-images");
     private static final Path RESULT_DIR = Paths.get("./target/iped-result");
-    private static final Path IPED_DIR = RESULT_DIR.resolve("iped");
-    private static final Path DATA_DIR = IPED_DIR.resolve("data");
-    private static final Path HTML_DIR = IPED_DIR.resolve("htmlreport");
+    private static final String IMAGE_NAME = "ntfs1-gen1.E01";
+    private static final Path IMAGE_PATH = CACHE_DIR.resolve(IMAGE_NAME);
+    private static final Path CSV_FILE = RESULT_DIR.resolve("FileList.csv");
 
     @BeforeClass
-    public static void setup() {
-        // Verifica se a análise foi executada
+    public static void setup() throws Exception {
+        // Se o diretório de resultados não existir, executa a análise
         if (!Files.exists(RESULT_DIR)) {
-            throw new IllegalStateException("Diretório de resultados não encontrado. Execute ImageProcessingTest primeiro.");
+            System.out.println("=== SETUP: RUNNING FORENSIC ANALYSIS ===");
+            createDirectories(CACHE_DIR, RESULT_DIR);
+            downloadImageIfNeeded(IMAGE_URL, IMAGE_PATH);
+
+            IpedProcessor.process(
+                IMAGE_PATH.toAbsolutePath().toString(),
+                RESULT_DIR.toAbsolutePath().toString()
+            );
+
+            // Aguarda a conclusão da análise
+            waitForAnalysisCompletion();
+            System.out.println("=== SETUP: FORENSIC ANALYSIS COMPLETED ===");
+        }
+
+        if (!Files.exists(RESULT_DIR)) {
+            throw new IllegalStateException("Result directory not found after analysis attempt.");
         }
     }
 
@@ -38,8 +59,8 @@ public class ForensicResultsTest {
         System.out.println("=== DIRECTORY STRUCTURE ===");
 
         assertTrue("Result directory should exist", Files.exists(RESULT_DIR));
-        assertTrue("IPED directory should exist", Files.exists(IPED_DIR));
-        assertTrue("Data directory should exist", Files.exists(DATA_DIR));
+        assertTrue("IPED directory should exist", Files.exists(RESULT_DIR.resolve("iped")));
+        assertTrue("Data directory should exist", Files.exists(RESULT_DIR.resolve("iped").resolve("data")));
 
         System.out.println("✓ Directory structure valid");
     }
@@ -88,8 +109,8 @@ public class ForensicResultsTest {
     public void test04_HtmlReportFiles() throws IOException {
         System.out.println("=== HTML REPORTS ===");
 
-        if (Files.exists(HTML_DIR)) {
-            List<Path> htmlFiles = Files.list(HTML_DIR)
+        if (Files.exists(RESULT_DIR.resolve("iped").resolve("htmlreport"))) {
+            List<Path> htmlFiles = Files.list(RESULT_DIR.resolve("iped").resolve("htmlreport"))
                 .filter(path -> path.toString().endsWith(".html"))
                 .collect(Collectors.toList());
 
@@ -109,12 +130,12 @@ public class ForensicResultsTest {
     public void test05_DataFiles() throws IOException {
         System.out.println("=== DATA FILES ===");
 
-        assertTrue("Data directory should exist", Files.exists(DATA_DIR));
+        assertTrue("Data directory should exist", Files.exists(RESULT_DIR.resolve("iped").resolve("data")));
 
         // Verifica arquivos de dados importantes
-        Path commitFile = DATA_DIR.resolve("FileListCSV.commit");
-        Path carvedFile = DATA_DIR.resolve("carvedIgnoredMap.dat");
-        Path statusFile = DATA_DIR.resolve("evidences_processing_status");
+        Path commitFile = RESULT_DIR.resolve("iped").resolve("data").resolve("FileListCSV.commit");
+        Path carvedFile = RESULT_DIR.resolve("iped").resolve("data").resolve("carvedIgnoredMap.dat");
+        Path statusFile = RESULT_DIR.resolve("iped").resolve("data").resolve("evidences_processing_status");
 
         assertTrue("FileListCSV.commit should exist", Files.exists(commitFile));
         assertTrue("carvedIgnoredMap.dat should exist", Files.exists(carvedFile));
@@ -154,6 +175,8 @@ public class ForensicResultsTest {
 
         System.out.println("✓ Data integrity valid");
     }
+
+
 
     /**
      * Valida um arquivo CSV específico
@@ -220,6 +243,56 @@ public class ForensicResultsTest {
     private long countLinesInCsv(Path csvFile) throws IOException {
         try (var lines = Files.lines(csvFile)) {
             return lines.count() - 1; // Subtrai o cabeçalho
+        }
+    }
+
+    // Métodos auxiliares
+    private static void createDirectories(Path... paths) throws IOException {
+        for (Path path : paths) {
+            Files.createDirectories(path);
+        }
+    }
+
+    private static void downloadImageIfNeeded(String url, Path targetPath) throws IOException {
+        if (Files.exists(targetPath)) {
+            return;
+        }
+
+        System.out.println("Downloading test image from: " + url);
+
+        try (InputStream in = new URL(url).openStream()) {
+            Files.copy(in, targetPath, StandardCopyOption.REPLACE_EXISTING);
+        }
+    }
+
+    private static void waitForAnalysisCompletion() throws InterruptedException {
+        System.out.println("Waiting for analysis completion...");
+
+        int maxWaitTime = 300; // 5 minutos
+        int waitTime = 0;
+
+        while (waitTime < maxWaitTime) {
+            if (hasAnalysisCompleted()) {
+                System.out.println("Analysis completed after " + waitTime + " seconds");
+                return;
+            }
+
+            TimeUnit.SECONDS.sleep(1);
+            waitTime++;
+
+            if (waitTime % 10 == 0) {
+                System.out.println("Waiting... (" + waitTime + "s/" + maxWaitTime + "s)");
+            }
+        }
+
+        System.out.println("Timeout waiting for analysis completion");
+    }
+
+    private static boolean hasAnalysisCompleted() {
+        try {
+            return Files.exists(CSV_FILE) && Files.size(CSV_FILE) > 0;
+        } catch (Exception e) {
+            return false;
         }
     }
 }
