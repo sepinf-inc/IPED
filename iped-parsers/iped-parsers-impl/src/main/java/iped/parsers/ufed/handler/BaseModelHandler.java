@@ -38,6 +38,9 @@ public class BaseModelHandler<T extends BaseModel> {
     protected final T model;
     protected final IItemReader item;
 
+    // if set to true, the item will be linked on addLinkedItems even if the item id is already set in jumpTargets
+    private boolean skipJumpTargetsCheckOnAddLinkedItems = false;
+
     private static final HashSet<String> ignoreAttrs = new HashSet<>(Arrays.asList( //
             "type", //
             "path", //
@@ -67,6 +70,9 @@ public class BaseModelHandler<T extends BaseModel> {
         this(model, null);
     }
 
+    public void setSkipJumpTargetsCheckOnAddLinkedItems(boolean skipJumpTargetsCheckOnAddLinkedItems) {
+        this.skipJumpTargetsCheckOnAddLinkedItems = skipJumpTargetsCheckOnAddLinkedItems;
+    }
 
     protected void fillMetadata(String prefix, Metadata metadata) {
         fillCommonMetadata(metadata);
@@ -157,7 +163,8 @@ public class BaseModelHandler<T extends BaseModel> {
         String referencedUfedId = referencedItem.getMetadata().get(ExtraProperties.UFED_ID);
 
         // add linked items (if referencedUfedId not present in jumpTargets)
-        if (StringUtils.isNotBlank(referencedUfedId) && !model.getJumpTargets().stream().anyMatch(j -> referencedUfedId.equals(j.getId()))) {
+        if (StringUtils.isNotBlank(referencedUfedId)
+                && (skipJumpTargetsCheckOnAddLinkedItems || !model.getJumpTargets().stream().anyMatch(j -> referencedUfedId.equals(j.getId())))) {
             String linkedItemQuery = searcher.escapeQuery(ExtraProperties.UFED_ID) + ":\"" + referencedUfedId + "\"";
             linkedItems.add(linkedItemQuery);
         }

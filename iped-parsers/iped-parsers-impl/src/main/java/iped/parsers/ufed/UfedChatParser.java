@@ -4,10 +4,10 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
@@ -209,12 +209,14 @@ public class UfedChatParser extends AbstractParser {
 
     private void storeLinkedHashes(List<InstantMessage> messages, Metadata chatMetadata, IItemSearcher searcher) {
 
-        HashSet<String> newLinkedItems = new HashSet<>();
-        HashSet<String> newSharedHashes = new HashSet<>();
+        Set<String> newLinkedItems = ConcurrentHashMap.newKeySet();
+        Set<String> newSharedHashes = ConcurrentHashMap.newKeySet();
 
-        for (InstantMessage m : messages) {
-            new InstantMessageHandler(m, null).addLinkedItemsAndSharedHashes(newLinkedItems, newSharedHashes, searcher);
-        }
+        messages.parallelStream().forEach(message -> {
+            InstantMessageHandler messageHandler = new InstantMessageHandler(message, null);
+            messageHandler.setSkipJumpTargetsCheckOnAddLinkedItems(true);
+            messageHandler.addLinkedItemsAndSharedHashes(newLinkedItems, newSharedHashes, searcher);
+        });
 
         BaseModelHandler.updateLinkedItemsAndSharedHashes(chatMetadata, newLinkedItems, newSharedHashes);
     }
