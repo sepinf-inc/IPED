@@ -82,7 +82,7 @@ public class UfedModelHandler extends DefaultHandler {
                 // Use a special field name for related models to distinguish them
                 String fieldName = inRelatedModels ? "RelatedModels" : fieldNameStack.peek();
                 addChildModel(modelStack.peek(), newModel, fieldName);
-            } else {
+            } else if (modelStack.isEmpty()) {
                 listener.onModelStarted(newModel, attributes);
             }
             modelStack.push(newModel);
