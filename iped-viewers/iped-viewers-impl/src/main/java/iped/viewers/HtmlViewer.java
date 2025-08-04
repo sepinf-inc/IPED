@@ -20,7 +20,6 @@ import org.w3c.dom.Node;
 import iped.data.IItem;
 import iped.io.IStreamSource;
 import iped.parsers.util.Util;
-import iped.properties.MediaTypes;
 import iped.utils.IOUtil;
 import iped.utils.UiUtil;
 import iped.viewers.api.AbstractViewer;
@@ -83,8 +82,8 @@ public class HtmlViewer extends AbstractViewer {
         return contentType.equals("text/html") //$NON-NLS-1$
                 || contentType.equals("application/xhtml+xml") //$NON-NLS-1$
                 || contentType.equals("text/asp") //$NON-NLS-1$
-                || contentType.equals("text/aspdotnet") //$NON-NLS-1$
-                || contentType.equals(MediaTypes.UFED_MESSAGE_MIME.toString()); // UFED message is child of "message/x-chat-message", not "text/html"
+                || contentType.equals("text/aspdotnet"); //$NON-NLS-1$
+
     }
 
     public HtmlViewer() {
