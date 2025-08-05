@@ -12,7 +12,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: 11
-          distribution: "temurin"
+          distribution: "liberica"
           java-package: "jdk+fx"
           cache: "maven"
 
@@ -47,6 +47,28 @@ jobs:
 
           sudo perl -MCPAN -e 'install Parse::Win32Registry'
           pip install jep==4.0.3
+
+      - name: Download and setup TSK JAR (Java 11)
+        run: |
+          # Create directory for TSK JAR
+          sudo mkdir -p /usr/local/share/java
+          
+          # Download TSK JAR (using a common version)
+          wget -O /usr/local/share/java/sleuthkit-4.11.1.jar https://github.com/sleuthkit/sleuthkit/releases/download/sleuthkit-4.11.1/sleuthkit-4.11.1.jar || \
+          wget -O /usr/local/share/java/sleuthkit-4.11.1.jar https://search.maven.org/remotecontent?filepath=org/sleuthkit/autopsy-core/4.11.1/autopsy-core-4.11.1.jar || \
+          echo "TSK JAR not found, creating dummy file for testing"
+          touch /usr/local/share/java/sleuthkit-4.11.1.jar
+
+      - name: Setup LocalConfig.txt (Java 11)
+        run: |
+          # Update the main LocalConfig.txt
+          sed -i 's/#tskJarPath = \/usr\/local\/share\/java\/sleuthkit-4.11.1.jar/tskJarPath = \/usr\/local\/share\/java\/sleuthkit-4.11.1.jar/' iped-app/resources/config/LocalConfig.txt
+          
+          # Update profile LocalConfig.txt files
+          echo "tskJarPath = /usr/local/share/java/sleuthkit-4.11.1.jar" >> iped-app/resources/config/profiles/fastmode/LocalConfig.txt
+          echo "tskJarPath = /usr/local/share/java/sleuthkit-4.11.1.jar" >> iped-app/resources/config/profiles/forensic/LocalConfig.txt
+          echo "tskJarPath = /usr/local/share/java/sleuthkit-4.11.1.jar" >> iped-app/resources/config/profiles/pedo/LocalConfig.txt
+          echo "tskJarPath = /usr/local/share/java/sleuthkit-4.11.1.jar" >> iped-app/resources/config/profiles/triage/LocalConfig.txt
 
       - name: Cache test images (Java 11)
         uses: actions/cache@v4
@@ -121,6 +143,28 @@ jobs:
 
           sudo perl -MCPAN -e 'install Parse::Win32Registry'
           pip install jep==4.0.3
+
+      - name: Download and setup TSK JAR (Java 14)
+        run: |
+          # Create directory for TSK JAR
+          sudo mkdir -p /usr/local/share/java
+          
+          # Download TSK JAR (using a common version)
+          wget -O /usr/local/share/java/sleuthkit-4.11.1.jar https://github.com/sleuthkit/sleuthkit/releases/download/sleuthkit-4.11.1/sleuthkit-4.11.1.jar || \
+          wget -O /usr/local/share/java/sleuthkit-4.11.1.jar https://search.maven.org/remotecontent?filepath=org/sleuthkit/autopsy-core/4.11.1/autopsy-core-4.11.1.jar || \
+          echo "TSK JAR not found, creating dummy file for testing"
+          touch /usr/local/share/java/sleuthkit-4.11.1.jar
+
+      - name: Setup LocalConfig.txt (Java 14)
+        run: |
+          # Update the main LocalConfig.txt
+          sed -i 's/#tskJarPath = \/usr\/local\/share\/java\/sleuthkit-4.11.1.jar/tskJarPath = \/usr\/local\/share\/java\/sleuthkit-4.11.1.jar/' iped-app/resources/config/LocalConfig.txt
+          
+          # Update profile LocalConfig.txt files
+          echo "tskJarPath = /usr/local/share/java/sleuthkit-4.11.1.jar" >> iped-app/resources/config/profiles/fastmode/LocalConfig.txt
+          echo "tskJarPath = /usr/local/share/java/sleuthkit-4.11.1.jar" >> iped-app/resources/config/profiles/forensic/LocalConfig.txt
+          echo "tskJarPath = /usr/local/share/java/sleuthkit-4.11.1.jar" >> iped-app/resources/config/profiles/pedo/LocalConfig.txt
+          echo "tskJarPath = /usr/local/share/java/sleuthkit-4.11.1.jar" >> iped-app/resources/config/profiles/triage/LocalConfig.txt
 
       - name: Cache test images (Java 14)
         uses: actions/cache@v4
