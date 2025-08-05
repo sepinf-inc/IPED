@@ -53,22 +53,61 @@ jobs:
           # Create directory for TSK JAR in user-writable location
           mkdir -p $HOME/tsk
           
-          # Download TSK JAR (using a common version)
-          wget -O $HOME/tsk/sleuthkit-4.11.1.jar https://github.com/sleuthkit/sleuthkit/releases/download/sleuthkit-4.11.1/sleuthkit-4.11.1.jar || \
-          wget -O $HOME/tsk/sleuthkit-4.11.1.jar https://search.maven.org/remotecontent?filepath=org/sleuthkit/autopsy-core/4.11.1/autopsy-core-4.11.1.jar || \
-          echo "TSK JAR not found, creating dummy file for testing"
-          touch $HOME/tsk/sleuthkit-4.11.1.jar
+          # Try to download TSK JAR from multiple sources
+          echo "Attempting to download TSK JAR..."
+          
+          # Try GitHub releases first
+          if wget -O $HOME/tsk/sleuthkit-4.11.1.jar https://github.com/sleuthkit/sleuthkit/releases/download/sleuthkit-4.11.1/sleuthkit-4.11.1.jar; then
+            echo "Successfully downloaded from GitHub releases"
+          # Try Maven Central as fallback
+          elif wget -O $HOME/tsk/sleuthkit-4.11.1.jar "https://search.maven.org/remotecontent?filepath=org/sleuthkit/autopsy-core/4.11.1/autopsy-core-4.11.1.jar"; then
+            echo "Successfully downloaded from Maven Central"
+          # Try alternative TSK JAR sources
+          elif wget -O $HOME/tsk/sleuthkit-4.11.1.jar "https://repo1.maven.org/maven2/org/sleuthkit/autopsy-core/4.11.1/autopsy-core-4.11.1.jar"; then
+            echo "Successfully downloaded from Maven repo"
+          else
+            echo "All download attempts failed, creating dummy file for testing"
+            # Create a dummy JAR file with basic structure
+            echo "PK" > $HOME/tsk/sleuthkit-4.11.1.jar
+            echo "Dummy TSK JAR created for testing purposes" >> $HOME/tsk/sleuthkit-4.11.1.jar
+          fi
+          
+          # Verify file exists
+          if [ -f "$HOME/tsk/sleuthkit-4.11.1.jar" ]; then
+            echo "TSK JAR file exists at: $HOME/tsk/sleuthkit-4.11.1.jar"
+            ls -la $HOME/tsk/
+          else
+            echo "ERROR: TSK JAR file was not created!"
+            exit 1
+          fi
 
       - name: Setup LocalConfig.txt (Java 11)
         run: |
-          # Update the main LocalConfig.txt
-          sed -i 's/#tskJarPath = \/usr\/local\/share\/java\/sleuthkit-4.11.1.jar/tskJarPath = $HOME\/tsk\/sleuthkit-4.11.1.jar/' iped-app/resources/config/LocalConfig.txt
+          # Get absolute path to TSK JAR
+          TSK_JAR_PATH="$HOME/tsk/sleuthkit-4.11.1.jar"
+          echo "Setting tskJarPath to: $TSK_JAR_PATH"
+          
+          # Update the main LocalConfig.txt - uncomment and set the path
+          sed -i "s|#tskJarPath = /usr/local/share/java/sleuthkit-4.11.1.jar|tskJarPath = $TSK_JAR_PATH|" iped-app/resources/config/LocalConfig.txt
+          
+          # Also try to replace if the line is already uncommented
+          sed -i "s|tskJarPath = /usr/local/share/java/sleuthkit-4.11.1.jar|tskJarPath = $TSK_JAR_PATH|" iped-app/resources/config/LocalConfig.txt
           
           # Update profile LocalConfig.txt files
-          echo "tskJarPath = $HOME/tsk/sleuthkit-4.11.1.jar" >> iped-app/resources/config/profiles/fastmode/LocalConfig.txt
-          echo "tskJarPath = $HOME/tsk/sleuthkit-4.11.1.jar" >> iped-app/resources/config/profiles/forensic/LocalConfig.txt
-          echo "tskJarPath = $HOME/tsk/sleuthkit-4.11.1.jar" >> iped-app/resources/config/profiles/pedo/LocalConfig.txt
-          echo "tskJarPath = $HOME/tsk/sleuthkit-4.11.1.jar" >> iped-app/resources/config/profiles/triage/LocalConfig.txt
+          echo "tskJarPath = $TSK_JAR_PATH" >> iped-app/resources/config/profiles/fastmode/LocalConfig.txt
+          echo "tskJarPath = $TSK_JAR_PATH" >> iped-app/resources/config/profiles/forensic/LocalConfig.txt
+          echo "tskJarPath = $TSK_JAR_PATH" >> iped-app/resources/config/profiles/pedo/LocalConfig.txt
+          echo "tskJarPath = $TSK_JAR_PATH" >> iped-app/resources/config/profiles/triage/LocalConfig.txt
+          
+          # Verify configuration
+          echo "=== Main LocalConfig.txt ==="
+          grep -n "tskJarPath" iped-app/resources/config/LocalConfig.txt || echo "tskJarPath not found in main config"
+          
+          echo "=== Profile configs ==="
+          for profile in fastmode forensic pedo triage; do
+            echo "--- $profile ---"
+            grep -n "tskJarPath" iped-app/resources/config/profiles/$profile/LocalConfig.txt || echo "tskJarPath not found in $profile config"
+          done
 
       - name: Cache test images (Java 11)
         uses: actions/cache@v4
@@ -81,6 +120,34 @@ jobs:
           mvn -B clean install -DskipTests
           mkdir -p target/release/iped-4.2.0
           cp -r iped-parent/target/release/iped-4.2.0/* target/release/iped-4.2.0/ || true
+
+      - name: Verify TSK JAR before tests (Java 11)
+        run: |
+          echo "=== Pre-test TSK JAR verification ==="
+          echo "Current working directory: $(pwd)"
+          echo "HOME directory: $HOME"
+          echo "TSK JAR path: $HOME/tsk/sleuthkit-4.11.1.jar"
+          
+          if [ -f "$HOME/tsk/sleuthkit-4.11.1.jar" ]; then
+            echo "✅ TSK JAR file exists"
+            ls -la "$HOME/tsk/sleuthkit-4.11.1.jar"
+            file "$HOME/tsk/sleuthkit-4.11.1.jar"
+          else
+            echo "❌ TSK JAR file does not exist!"
+            echo "Contents of $HOME/tsk/:"
+            ls -la "$HOME/tsk/" || echo "Directory does not exist"
+            exit 1
+          fi
+          
+          echo "=== Configuration verification ==="
+          echo "Main config tskJarPath:"
+          grep "tskJarPath" iped-app/resources/config/LocalConfig.txt || echo "Not found in main config"
+          
+          echo "Profile configs tskJarPath:"
+          for profile in fastmode forensic pedo triage; do
+            echo "$profile:"
+            grep "tskJarPath" iped-app/resources/config/profiles/$profile/LocalConfig.txt || echo "Not found in $profile config"
+          done
 
       - name: Run Regression Tests (Java 11)
         run: mvn -B test --projects iped-tests
@@ -149,22 +216,61 @@ jobs:
           # Create directory for TSK JAR in user-writable location
           mkdir -p $HOME/tsk
           
-          # Download TSK JAR (using a common version)
-          wget -O $HOME/tsk/sleuthkit-4.11.1.jar https://github.com/sleuthkit/sleuthkit/releases/download/sleuthkit-4.11.1/sleuthkit-4.11.1.jar || \
-          wget -O $HOME/tsk/sleuthkit-4.11.1.jar https://search.maven.org/remotecontent?filepath=org/sleuthkit/autopsy-core/4.11.1/autopsy-core-4.11.1.jar || \
-          echo "TSK JAR not found, creating dummy file for testing"
-          touch $HOME/tsk/sleuthkit-4.11.1.jar
+          # Try to download TSK JAR from multiple sources
+          echo "Attempting to download TSK JAR..."
+          
+          # Try GitHub releases first
+          if wget -O $HOME/tsk/sleuthkit-4.11.1.jar https://github.com/sleuthkit/sleuthkit/releases/download/sleuthkit-4.11.1/sleuthkit-4.11.1.jar; then
+            echo "Successfully downloaded from GitHub releases"
+          # Try Maven Central as fallback
+          elif wget -O $HOME/tsk/sleuthkit-4.11.1.jar "https://search.maven.org/remotecontent?filepath=org/sleuthkit/autopsy-core/4.11.1/autopsy-core-4.11.1.jar"; then
+            echo "Successfully downloaded from Maven Central"
+          # Try alternative TSK JAR sources
+          elif wget -O $HOME/tsk/sleuthkit-4.11.1.jar "https://repo1.maven.org/maven2/org/sleuthkit/autopsy-core/4.11.1/autopsy-core-4.11.1.jar"; then
+            echo "Successfully downloaded from Maven repo"
+          else
+            echo "All download attempts failed, creating dummy file for testing"
+            # Create a dummy JAR file with basic structure
+            echo "PK" > $HOME/tsk/sleuthkit-4.11.1.jar
+            echo "Dummy TSK JAR created for testing purposes" >> $HOME/tsk/sleuthkit-4.11.1.jar
+          fi
+          
+          # Verify file exists
+          if [ -f "$HOME/tsk/sleuthkit-4.11.1.jar" ]; then
+            echo "TSK JAR file exists at: $HOME/tsk/sleuthkit-4.11.1.jar"
+            ls -la $HOME/tsk/
+          else
+            echo "ERROR: TSK JAR file was not created!"
+            exit 1
+          fi
 
       - name: Setup LocalConfig.txt (Java 14)
         run: |
-          # Update the main LocalConfig.txt
-          sed -i 's/#tskJarPath = \/usr\/local\/share\/java\/sleuthkit-4.11.1.jar/tskJarPath = $HOME\/tsk\/sleuthkit-4.11.1.jar/' iped-app/resources/config/LocalConfig.txt
+          # Get absolute path to TSK JAR
+          TSK_JAR_PATH="$HOME/tsk/sleuthkit-4.11.1.jar"
+          echo "Setting tskJarPath to: $TSK_JAR_PATH"
+          
+          # Update the main LocalConfig.txt - uncomment and set the path
+          sed -i "s|#tskJarPath = /usr/local/share/java/sleuthkit-4.11.1.jar|tskJarPath = $TSK_JAR_PATH|" iped-app/resources/config/LocalConfig.txt
+          
+          # Also try to replace if the line is already uncommented
+          sed -i "s|tskJarPath = /usr/local/share/java/sleuthkit-4.11.1.jar|tskJarPath = $TSK_JAR_PATH|" iped-app/resources/config/LocalConfig.txt
           
           # Update profile LocalConfig.txt files
-          echo "tskJarPath = $HOME/tsk/sleuthkit-4.11.1.jar" >> iped-app/resources/config/profiles/fastmode/LocalConfig.txt
-          echo "tskJarPath = $HOME/tsk/sleuthkit-4.11.1.jar" >> iped-app/resources/config/profiles/forensic/LocalConfig.txt
-          echo "tskJarPath = $HOME/tsk/sleuthkit-4.11.1.jar" >> iped-app/resources/config/profiles/pedo/LocalConfig.txt
-          echo "tskJarPath = $HOME/tsk/sleuthkit-4.11.1.jar" >> iped-app/resources/config/profiles/triage/LocalConfig.txt
+          echo "tskJarPath = $TSK_JAR_PATH" >> iped-app/resources/config/profiles/fastmode/LocalConfig.txt
+          echo "tskJarPath = $TSK_JAR_PATH" >> iped-app/resources/config/profiles/forensic/LocalConfig.txt
+          echo "tskJarPath = $TSK_JAR_PATH" >> iped-app/resources/config/profiles/pedo/LocalConfig.txt
+          echo "tskJarPath = $TSK_JAR_PATH" >> iped-app/resources/config/profiles/triage/LocalConfig.txt
+          
+          # Verify configuration
+          echo "=== Main LocalConfig.txt ==="
+          grep -n "tskJarPath" iped-app/resources/config/LocalConfig.txt || echo "tskJarPath not found in main config"
+          
+          echo "=== Profile configs ==="
+          for profile in fastmode forensic pedo triage; do
+            echo "--- $profile ---"
+            grep -n "tskJarPath" iped-app/resources/config/profiles/$profile/LocalConfig.txt || echo "tskJarPath not found in $profile config"
+          done
 
       - name: Cache test images (Java 14)
         uses: actions/cache@v4
@@ -177,6 +283,34 @@ jobs:
           mvn -B clean install
           mkdir -p target/release/iped-4.2.0
           cp -r iped-parent/target/release/iped-4.2.0/* target/release/iped-4.2.0/ || true
+
+      - name: Verify TSK JAR before tests (Java 14)
+        run: |
+          echo "=== Pre-test TSK JAR verification ==="
+          echo "Current working directory: $(pwd)"
+          echo "HOME directory: $HOME"
+          echo "TSK JAR path: $HOME/tsk/sleuthkit-4.11.1.jar"
+          
+          if [ -f "$HOME/tsk/sleuthkit-4.11.1.jar" ]; then
+            echo "✅ TSK JAR file exists"
+            ls -la "$HOME/tsk/sleuthkit-4.11.1.jar"
+            file "$HOME/tsk/sleuthkit-4.11.1.jar"
+          else
+            echo "❌ TSK JAR file does not exist!"
+            echo "Contents of $HOME/tsk/:"
+            ls -la "$HOME/tsk/" || echo "Directory does not exist"
+            exit 1
+          fi
+          
+          echo "=== Configuration verification ==="
+          echo "Main config tskJarPath:"
+          grep "tskJarPath" iped-app/resources/config/LocalConfig.txt || echo "Not found in main config"
+          
+          echo "Profile configs tskJarPath:"
+          for profile in fastmode forensic pedo triage; do
+            echo "$profile:"
+            grep "tskJarPath" iped-app/resources/config/profiles/$profile/LocalConfig.txt || echo "Not found in $profile config"
+          done
 
       - name: Run Regression Tests (Java 14)
         run: mvn -B test --projects iped-tests
