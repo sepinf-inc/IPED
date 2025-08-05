@@ -120,6 +120,7 @@ jobs:
           mvn -B clean install -DskipTests
           mkdir -p target/release/iped-4.2.0
           cp -r iped-parent/target/release/iped-4.2.0/* target/release/iped-4.2.0/ || true
+        
       - name: Verify TSK JAR before tests (Java 11)
         run: |
           echo "=== Pre-test TSK JAR verification ==="
@@ -199,6 +200,8 @@ jobs:
       - name: Create proper TSK JAR (Java 11)
         run: |
           echo "=== Creating proper TSK JAR ==="
+          echo "Current OS: $(uname -a)"
+          echo "Java home: $JAVA_HOME"
           cd $HOME/tsk
           
           # Remove any existing corrupted JAR
@@ -381,7 +384,6 @@ jobs:
           mvn -B clean install
           mkdir -p target/release/iped-4.2.0
           cp -r iped-parent/target/release/iped-4.2.0/* target/release/iped-4.2.0/ || true
-
       - name: Verify TSK JAR before tests (Java 14)
         run: |
           echo "=== Pre-test TSK JAR verification ==="
@@ -461,6 +463,8 @@ jobs:
       - name: Create proper TSK JAR (Java 14)
         run: |
           echo "=== Creating proper TSK JAR ==="
+          echo "Current OS: $(uname -a)"
+          echo "Java home: $JAVA_HOME"
           cd $HOME/tsk
           
           # Remove any existing corrupted JAR
