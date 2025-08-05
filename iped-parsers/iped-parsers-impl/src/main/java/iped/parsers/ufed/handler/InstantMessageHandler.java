@@ -8,6 +8,7 @@ import static iped.properties.ExtraProperties.PARENT_VIEW_POSITION;
 import static iped.properties.ExtraProperties.UFED_COORDINATE_ID;
 import static iped.properties.ExtraProperties.UFED_ID;
 import static iped.properties.ExtraProperties.UFED_META_PREFIX;
+import static iped.properties.ExtraProperties.UFED_SOURCE_MODELS;
 
 import java.util.HashMap;
 import java.util.List;
@@ -29,6 +30,7 @@ import iped.parsers.ufed.model.Contact;
 import iped.parsers.ufed.model.InstantMessage;
 import iped.parsers.ufed.model.JumpTarget;
 import iped.parsers.ufed.model.Party;
+import iped.parsers.ufed.model.QuotedMessageData;
 import iped.parsers.ufed.model.ReplyMessageData;
 import iped.parsers.util.ConversationConstants;
 import iped.properties.BasicProps;
@@ -192,6 +194,8 @@ public class InstantMessageHandler extends BaseModelHandler<InstantMessage> {
         });
 
         loadLocationReference(searcher);
+
+        loadFileReferenceInSourceModels(searcher);
     }
 
     @Override
@@ -270,5 +274,28 @@ public class InstantMessageHandler extends BaseModelHandler<InstantMessage> {
         }
 
         logger.debug("Location reference was not found: {}", model);
+    }
+
+    private void loadFileReferenceInSourceModels(IItemSearcher searcher) {
+
+        String referenceId;
+        if (model.isForwardedMessage()
+                && model.getAttachments().isEmpty()
+                && (referenceId = model.getExtraData().getQuotedMessage().map(QuotedMessageData::getReferenceId).orElse(null)) != null
+                && model.findForwardedMessage(model.getChat()) == null) {
+
+            String query = searcher.escapeQuery(UFED_SOURCE_MODELS) + ":\"" + referenceId + "\"";
+            for (IItemReader result : searcher.searchIterable(query)) {
+
+                // add a "fake" attachment related to file with referenceId
+                Attachment attachment = new Attachment();
+                attachment.setAttribute("file_id", referenceId);
+                attachment.setField("comment", "Added by IPED from source models");
+                attachment.setField("ContentType", result.getMediaType().toString());
+                attachment.setField("Filename", result.getName());
+                attachment.setReferencedFile(result);
+                model.getAttachments().add(attachment);
+            }
+        }
     }
 }

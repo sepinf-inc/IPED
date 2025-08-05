@@ -122,6 +122,8 @@ public class ExtraProperties {
 
     public static final String UFED_JUMP_TARGETS = UFED_META_PREFIX + "jumpTargets";
 
+    public static final String UFED_SOURCE_MODELS = UFED_META_PREFIX + "sourceModels";
+
     public static final String P2P_META_PREFIX = "p2p:"; //$NON-NLS-1$
 
     public static final String ITEM_VIRTUAL_ID = "itemVirtualIdentifier"; //$NON-NLS-1$
