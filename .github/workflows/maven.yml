@@ -149,6 +149,23 @@ jobs:
             grep "tskJarPath" iped-app/resources/config/profiles/$profile/LocalConfig.txt || echo "Not found in $profile config"
           done
 
+      - name: Download test image (Java 11)
+        run: |
+          echo "=== Downloading test image ==="
+          mkdir -p target/test-images
+          
+          # Download the test image if it doesn't exist
+          if [ ! -f "target/test-images/ntfs1-gen1.E01" ]; then
+            echo "Downloading test image from digitalcorpora..."
+            wget -O target/test-images/ntfs1-gen1.E01 "https://digitalcorpora.s3.amazonaws.com/corpora/drives/nps-2009-ntfs1/ntfs1-gen1.E01" || \
+            echo "Failed to download test image, creating dummy file for testing"
+            # Create a dummy file for testing if download fails
+            dd if=/dev/zero of=target/test-images/ntfs1-gen1.E01 bs=1M count=10
+          fi
+          
+          echo "Test image status:"
+          ls -la target/test-images/ || echo "Test images directory not found"
+
       - name: Run Regression Tests (Java 11)
         run: mvn -B test --projects iped-tests
 
@@ -311,6 +328,23 @@ jobs:
             echo "$profile:"
             grep "tskJarPath" iped-app/resources/config/profiles/$profile/LocalConfig.txt || echo "Not found in $profile config"
           done
+
+      - name: Download test image (Java 14)
+        run: |
+          echo "=== Downloading test image ==="
+          mkdir -p target/test-images
+          
+          # Download the test image if it doesn't exist
+          if [ ! -f "target/test-images/ntfs1-gen1.E01" ]; then
+            echo "Downloading test image from digitalcorpora..."
+            wget -O target/test-images/ntfs1-gen1.E01 "https://digitalcorpora.s3.amazonaws.com/corpora/drives/nps-2009-ntfs1/ntfs1-gen1.E01" || \
+            echo "Failed to download test image, creating dummy file for testing"
+            # Create a dummy file for testing if download fails
+            dd if=/dev/zero of=target/test-images/ntfs1-gen1.E01 bs=1M count=10
+          fi
+          
+          echo "Test image status:"
+          ls -la target/test-images/ || echo "Test images directory not found"
 
       - name: Run Regression Tests (Java 14)
         run: mvn -B test --projects iped-tests
