@@ -282,6 +282,7 @@ public class InstantMessageHandler extends BaseModelHandler<InstantMessage> {
         if (model.isForwardedMessage()
                 && model.getAttachments().isEmpty()
                 && (referenceId = model.getExtraData().getQuotedMessage().map(QuotedMessageData::getReferenceId).orElse(null)) != null
+                && StringUtils.isNotBlank(referenceId)
                 && model.findForwardedMessage(model.getChat()) == null) {
 
             String query = searcher.escapeQuery(UFED_SOURCE_MODELS) + ":\"" + referenceId + "\"";
