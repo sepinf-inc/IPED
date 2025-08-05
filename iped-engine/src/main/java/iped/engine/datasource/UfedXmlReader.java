@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
+import java.util.Stack;
 import java.util.TimeZone;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -70,6 +71,8 @@ import iped.engine.core.Manager;
 import iped.engine.data.CaseData;
 import iped.engine.data.DataSource;
 import iped.engine.data.Item;
+import iped.engine.datasource.ufed.UfedModelHandler;
+import iped.engine.datasource.ufed.UfedModelHandler.UfedModelListener;
 import iped.engine.io.MetadataInputStreamFactory;
 import iped.engine.io.UFDRInputStreamFactory;
 import iped.engine.io.UFEDXMLWrapper;
@@ -81,7 +84,9 @@ import iped.engine.task.die.DIETask;
 import iped.engine.task.index.IndexItem;
 import iped.engine.util.Util;
 import iped.parsers.telegram.TelegramParser;
-import iped.parsers.ufed.UFEDChatParser;
+import iped.parsers.ufed.UfedChatParser;
+import iped.parsers.ufed.model.BaseModel;
+import iped.parsers.ufed.model.Chat;
 import iped.parsers.util.MetadataUtil;
 import iped.parsers.util.PhoneParsingConfig;
 import iped.parsers.whatsapp.WhatsAppParser;
@@ -120,6 +125,12 @@ public class UfedXmlReader extends DataSourceReader {
 
     private static final String FILE_ID_ATTR = ExtraProperties.UFED_META_PREFIX + "file_id"; //$NON-NLS-1$
     private static final String LOCAL_PATH_META = ExtraProperties.UFED_META_PREFIX + "local_path"; //$NON-NLS-1$
+
+    public static final String META_PHONE_OWNER = ExtraProperties.UFED_META_PREFIX + "phoneOwner";
+    public static final String META_FROM_OWNER = ExtraProperties.UFED_META_PREFIX + "fromOwner";
+    public static final String CHILD_MSG_IDS = ExtraProperties.UFED_META_PREFIX + "msgChildIds";
+
+    public static final String ATTACHED_MEDIA_MSG = "ATTACHED_MEDIA: ";
 
     private Set<String> supportedApps = new HashSet<String>(Arrays.asList(WhatsAppParser.WHATSAPP,
             TelegramParser.TELEGRAM, WhatsAppParser.WHATSAPP + " Business", WhatsAppParser.WHATSAPP + " (Dual App)"));
@@ -174,7 +185,6 @@ public class UfedXmlReader extends DataSourceReader {
                 for (String str : HEADER_STRINGS)
                     if (!header.contains(str))
                         return null;
-
                 return new FileInputStream(file);
 
             } catch (IOException e) {
@@ -196,6 +206,14 @@ public class UfedXmlReader extends DataSourceReader {
         return null;
     }
 
+    private boolean entryExists(String entryPath) {
+        if (ufdrFile != null) {
+            return getUISF().entryExists(entryPath);
+        } else {
+            return Files.exists(root.toPath().resolve(entryPath));
+        }
+    }
+
     private UFDRInputStreamFactory getUISF() {
         if (uisf == null) {
             synchronized (uisfMap) {
@@ -207,6 +225,18 @@ public class UfedXmlReader extends DataSourceReader {
             }
         }
         return uisf;
+    }
+
+    private FileInputStreamFactory getFISF() {
+        if (fisf == null) {
+            synchronized (root) {
+                if (fisf == null) {
+                    rootFolder = root.isDirectory() ? root : root.getParentFile();
+                    fisf = new FileInputStreamFactory(rootFolder.toPath());
+                }
+            }
+        }
+        return fisf;
     }
 
     private InputStream lookUpXmlReportInputStream(File root) {
@@ -246,7 +276,7 @@ public class UfedXmlReader extends DataSourceReader {
             spf.setNamespaceAware(true);
             SAXParser saxParser = spf.newSAXParser();
             XMLReader xmlReader = saxParser.getXMLReader();
-            xmlReader.setContentHandler(new XMLContentHandler());
+            xmlReader.setContentHandler(new XMLContentHandler(xmlReader));
             xmlReader.setErrorHandler(new XMLErrorHandler());
             xmlReader.parse(new InputSource(new UFEDXMLWrapper(xmlStream)));
         } finally {
@@ -275,7 +305,7 @@ public class UfedXmlReader extends DataSourceReader {
         }
 
         if (parsingConfig.getPhoneParsersToUse().equalsIgnoreCase("internal")) { //$NON-NLS-1$
-            UFEDChatParser.setSupportedTypes(Collections.singleton(UFEDChatParser.UFED_CHAT_MIME));
+            UfedChatParser.setSupportedTypes(Collections.singleton(UfedChatParser.UFED_CHAT_MIME));
             ignoreSupportedChats = true;
 
         } else if (parsingConfig.getPhoneParsersToUse().equalsIgnoreCase("external")) { //$NON-NLS-1$
@@ -357,11 +387,11 @@ public class UfedXmlReader extends DataSourceReader {
         }
     }
 
-    private class XMLContentHandler implements ContentHandler {
+    private class XMLContentHandler implements ContentHandler, UfedModelListener {
 
         private static final String LAST_USE_PREFIX = "last known use:";
 
-        StringBuilder chars = new StringBuilder();
+        private final StringBuilder chars = new StringBuilder();
 
         HashMap<String, String> extractionInfoMap = new HashMap<String, String>();
 
@@ -378,8 +408,8 @@ public class UfedXmlReader extends DataSourceReader {
 
         private final DecimalFormat currencyFormat = LocalizedFormat.getDecimalInstance("#,##0.00");
 
-        ArrayList<XmlNode> nodeSeq = new ArrayList<>();
-        ArrayList<Item> itemSeq = new ArrayList<>();
+        Stack<XmlNode> nodeSeq = new Stack<>();
+        Stack<Item> itemSeq = new Stack<>();
 
         HashSet<String> elements = new HashSet<>();
 
@@ -396,6 +426,8 @@ public class UfedXmlReader extends DataSourceReader {
         boolean inChat = false;
         int numAttachments = 0;
         String prevUfedId = null;
+
+        private XMLReader xmlReader;
 
         private class XmlNode {
             String element;
@@ -423,7 +455,8 @@ public class UfedXmlReader extends DataSourceReader {
                 "CoreFileSystemFileSystemNodeCreationTime", //$NON-NLS-1$
                 "CoreFileSystemFileSystemNodeModifyTime", //$NON-NLS-1$
                 "CoreFileSystemFileSystemNodeLastAccessTime", //$NON-NLS-1$
-                "UserMapping" //$NON-NLS-1$
+                "UserMapping",
+                "source"
         ));
 
         HashSet<String> mergeInParentNode = new HashSet<>(Arrays.asList("Party", //$NON-NLS-1$
@@ -445,6 +478,10 @@ public class UfedXmlReader extends DataSourceReader {
                 "Price",
                 "QuotedMessageData"
         ));
+
+        public XMLContentHandler(XMLReader xmlReader) {
+            this.xmlReader = xmlReader;
+        }
 
         @Override
         public void setDocumentLocator(Locator locator) {
@@ -529,8 +566,18 @@ public class UfedXmlReader extends DataSourceReader {
         @Override
         public void startElement(String uri, String localName, String qName, Attributes atts) throws SAXException {
 
+            chars.setLength(0);
+
+            // if started <modelType type="Chat">, <modelType type="InstantMessage"> and so on...
+            // then delegates the parsing to UfedModelHandler
+            if (qName.equals("modelType") && StringUtils.equalsAny(atts.getValue("type"),
+                    "Chat", "InstantMessage", "Contact", "UserAccount", "Email")) {
+                xmlReader.setContentHandler(UfedModelHandler.create(xmlReader, this, this, listOnly));
+                return;
+            }
+
             XmlNode node = new XmlNode(qName, atts);
-            nodeSeq.add(node);
+            nodeSeq.push(node);
 
             if (!listOnly)
                 elements.add(qName);
@@ -571,7 +618,7 @@ public class UfedXmlReader extends DataSourceReader {
                 item.setDeleted(deleted);
 
                 fillCommonMeta(item, atts);
-                itemSeq.add(item);
+                itemSeq.push(item);
 
             } else if (qName.equals("model")) { //$NON-NLS-1$
                 XmlNode prevNode = nodeSeq.get(nodeSeq.size() - 2);
@@ -581,28 +628,8 @@ public class UfedXmlReader extends DataSourceReader {
                         return;
                     }
 
-                    Item item = new Item();
-                    item.setExtraAttribute(ExtraProperties.DATASOURCE_READER, UfedXmlReader.class.getSimpleName());
-                    String type = atts.getValue("type"); //$NON-NLS-1$
-                    if (type.equals("Chat"))
-                        inChat = true;
-                    String name = type + "_" + atts.getValue("id"); //$NON-NLS-1$ //$NON-NLS-2$
-                    item.setName(name);
-                    String path = decodedFolder.getPath() + "/" + type + "/" + name; //$NON-NLS-1$ //$NON-NLS-2$
-                    item.setPath(path);
-                    item.setParent(getParent(path));
-                    item.setMediaType(MediaType.application(UFED_MIME_PREFIX + type));
-                    if (caseData.containsReport()) {
-                        // export metadata as content only if generating blind report
-                        item.setInputStreamFactory(new MetadataInputStreamFactory(item.getMetadata()));
-                    }
-                    item.setHash(""); //$NON-NLS-1$
-
-                    boolean deleted = "deleted".equalsIgnoreCase(atts.getValue("deleted_state")); //$NON-NLS-1$ //$NON-NLS-2$
-                    item.setDeleted(deleted);
-
-                    fillCommonMeta(item, atts);
-                    itemSeq.add(item);
+                    Item item = createModelItem(atts);
+                    itemSeq.push(item);
 
                     String ufedId = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "id");
                     if (ignoreItemTree == null && addedImUfedIds.contains(ufedId)) {
@@ -641,16 +668,39 @@ public class UfedXmlReader extends DataSourceReader {
                     item.setDeleted(deleted);
 
                     fillCommonMeta(item, atts);
-                    itemSeq.add(item);
+                    itemSeq.push(item);
 
                     if ("InstantMessage".equals(type)) {
                         this.numAttachments = 0;
                     }
                 }
             }
+        }
 
-            chars = new StringBuilder();
+        private Item createModelItem(Attributes atts) throws SAXException {
+            Item item = new Item();
+            item.setExtraAttribute(ExtraProperties.DATASOURCE_READER, UfedXmlReader.class.getSimpleName());
+            String type = atts.getValue("type");
+            if (type.equals("Chat")) {
+                inChat = true;
+            }
+            String name = type + "_" + atts.getValue("id");
+            item.setName(name);
+            String path = decodedFolder.getPath() + "/" + type + "/" + name;
+            item.setPath(path);
+            item.setParent(getParent(path));
+            item.setMediaType(MediaType.application(UFED_MIME_PREFIX + type));
+            if (caseData.containsReport()) {
+                // export metadata as content only if generating blind report
+                item.setInputStreamFactory(new MetadataInputStreamFactory(item.getMetadata()));
+            }
+            item.setHash("");
 
+            boolean deleted = "deleted".equalsIgnoreCase(atts.getValue("deleted_state"));
+            item.setDeleted(deleted);
+
+            fillCommonMeta(item, atts);
+            return item;
         }
 
         private void fillCommonMeta(IItem item, Attributes atts) {
@@ -663,6 +713,9 @@ public class UfedXmlReader extends DataSourceReader {
                 String attName = atts.getQName(i);
                 if (!ignoreAttrs.contains(attName)) {
                     String value = atts.getValue(i);
+                    if ("name".equals(attName)) {
+                        attName = StringUtils.capitalize(attName);
+                    }
                     item.getMetadata().add(ExtraProperties.UFED_META_PREFIX + attName, value);
                 }
             }
@@ -676,7 +729,7 @@ public class UfedXmlReader extends DataSourceReader {
         @Override
         public void endElement(String uri, String localName, String qName) throws SAXException {
 
-            XmlNode currentNode = nodeSeq.remove(nodeSeq.size() - 1);
+            XmlNode currentNode = nodeSeq.pop();
 
             for (XmlNode node : nodeSeq) {
                 if (node.element.equals("entityBookmarks")) { //$NON-NLS-1$
@@ -690,12 +743,12 @@ public class UfedXmlReader extends DataSourceReader {
 
             String nameAttr = currentNode.atts.get("name"); //$NON-NLS-1$
             Item item = null;
-            if (itemSeq.size() > 0)
-                item = itemSeq.get(itemSeq.size() - 1);
+            if (!itemSeq.empty())
+                item = itemSeq.peek();
 
             XmlNode parentNode = null;
-            if (nodeSeq.size() > 0)
-                parentNode = nodeSeq.get(nodeSeq.size() - 1);
+            if (!nodeSeq.empty())
+                parentNode = nodeSeq.peek();
 
             String metadataSection = parentNode != null ? parentNode.atts.get("section") : null;
             if ("Extraction Data".equals(metadataSection) || "Device Info".equals(metadataSection)) {
@@ -806,13 +859,16 @@ public class UfedXmlReader extends DataSourceReader {
                     }
                 }
             } else if (qName.equals("targetid") && parentNode.element.equals("jumptargets")) { //$NON-NLS-1$ //$NON-NLS-2$
-                item.getMetadata().add(ExtraProperties.UFED_META_PREFIX + parentNode.element, chars.toString().trim());
+                item.getMetadata().add(ExtraProperties.UFED_JUMP_TARGETS, chars.toString().trim());
+
+            } else if (qName.equals("ownerid") && parentNode.element.equals("sourcemodels")) {
+                item.getMetadata().add(ExtraProperties.UFED_SOURCE_MODELS, chars.toString().trim());
 
             } else if (qName.equals("taggedFiles")) { //$NON-NLS-1$
                 md5ToLocalPath.clear();
 
             } else if (qName.equals("file")) { //$NON-NLS-1$
-                itemSeq.remove(itemSeq.size() - 1);
+                itemSeq.pop();
 
                 // See https://github.com/sepinf-inc/IPED/issues/2299
                 String md5 = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "MD5");
@@ -829,7 +885,7 @@ public class UfedXmlReader extends DataSourceReader {
                 // See https://github.com/sepinf-inc/IPED/issues/1685
                 boolean merged = false;
                 if (!itemSeq.isEmpty()) {
-                    IItem parentItem = itemSeq.get(itemSeq.size() - 1);
+                    IItem parentItem = itemSeq.peek();
                     if (parentItem.getMediaType() != null && UFED_CONTACTPHOTO_MIME.equals(parentItem.getMediaType().getSubtype())) {
                         String[] split = item.getIdInDataSource().split(UFDRInputStreamFactory.UFDR_PATH_PREFIX);
                         String exportPath = split[split.length - 1];
@@ -854,12 +910,12 @@ public class UfedXmlReader extends DataSourceReader {
                 }
 
             } else if (qName.equals("model") && ( //$NON-NLS-1$
-            parentNode.element.equals("modelType") || //$NON-NLS-1$
+                    parentNode.element.equals("modelType") || //$NON-NLS-1$
                     parentNode.element.equals("modelField") || //$NON-NLS-1$
                     parentNode.element.equals("multiModelField"))) { //$NON-NLS-1$
 
                 boolean seenAttachment = false;
-                itemSeq.remove(itemSeq.size() - 1);
+                itemSeq.pop();
                 String type = currentNode.atts.get("type"); //$NON-NLS-1$
                 if ("Contact".equals(type) || "UserAccount".equals(type)) { //$NON-NLS-1$ //$NON-NLS-2$
                     createContactPreview(item);
@@ -869,7 +925,7 @@ public class UfedXmlReader extends DataSourceReader {
 
                 } else if ("Attachment".equals(type)) { //$NON-NLS-1$
                     prevUfedId = handleAttachment(item);
-                    IItem parentItem = itemSeq.get(itemSeq.size() - 1);
+                    IItem parentItem = itemSeq.peek();
                     if (parentItem.getMediaType().equals(MediaTypes.UFED_EMAIL_MIME)) // $NON-NLS-1$
                         parentItem.getMetadata().add(EMAIL_ATTACH_KEY, item.getName());
                     else if (parentItem.getMediaType().equals(MediaTypes.UFED_MESSAGE_MIME)) {
@@ -889,9 +945,9 @@ public class UfedXmlReader extends DataSourceReader {
                 } else if ("Chat".equals(type)) { //$NON-NLS-1$
                     String source = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source"); //$NON-NLS-1$
                     if (WhatsAppParser.WHATSAPP.equalsIgnoreCase(source)) // $NON-NLS-1$
-                        item.setMediaType(UFEDChatParser.UFED_CHAT_WA_MIME);
+                        item.setMediaType(UfedChatParser.UFED_CHAT_WA_MIME);
                     if (TelegramParser.TELEGRAM.equalsIgnoreCase(source)) // $NON-NLS-1$
-                        item.setMediaType(UFEDChatParser.UFED_CHAT_TELEGRAM);
+                        item.setMediaType(UfedChatParser.UFED_CHAT_TELEGRAM);
 
                     item.setExtraAttribute(IndexItem.TREENODE, "true"); //$NON-NLS-1$
                 }
@@ -918,21 +974,21 @@ public class UfedXmlReader extends DataSourceReader {
                 if ("InstantMessage".equals(type)) {
                     numInstantMsgAttachs = this.numAttachments;
                     if (numInstantMsgAttachs > 0) {
-                        item.setMediaType(MediaTypes.UFED_MESSAGE_ATTACH_MIME);
+                        item.setMediaType(MediaTypes.UFED_ATTACHMENT_MIME);
                         item.getMetadata().add(ExtraProperties.MESSAGE_BODY,
-                                UFEDChatParser.ATTACHED_MEDIA_MSG + numInstantMsgAttachs);
+                                ATTACHED_MEDIA_MSG + numInstantMsgAttachs);
                     }
                     this.numAttachments = 0;
                     if (!itemSeq.isEmpty()) {
-                        IItem parentItem = itemSeq.get(itemSeq.size() - 1);
+                        IItem parentItem = itemSeq.peek();
                         // See https://github.com/sepinf-inc/IPED/issues/2264#issuecomment-2254192462
                         if (parentItem.getName().startsWith("ReplyMessageData_")) {
                             ignoreItemLocal = true;
                         }
                     }
                 }
-                if (mergeInParentNode.contains(type) && itemSeq.size() > 0) {
-                    IItem parentItem = itemSeq.get(itemSeq.size() - 1);
+                if (mergeInParentNode.contains(type) && !itemSeq.empty()) {
+                    IItem parentItem = itemSeq.peek();
                     if ("Party".equals(type)) { //$NON-NLS-1$
                         String role = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Role"); //$NON-NLS-1$
                         String parentNameAttr = parentNode.atts.get("name"); //$NON-NLS-1$
@@ -964,10 +1020,10 @@ public class UfedXmlReader extends DataSourceReader {
                         if (value != null && isOwner) { // $NON-NLS-1$
                             ownerParties.add(value);
                             if (parentItem.getMediaType().toString().contains("chat"))
-                                parentItem.getMetadata().add(UFEDChatParser.META_PHONE_OWNER, value);
+                                parentItem.getMetadata().add(META_PHONE_OWNER, value);
                         }
                         if (isOwner && "From".equals(role)) //$NON-NLS-1$
-                            parentItem.getMetadata().add(UFEDChatParser.META_FROM_OWNER, Boolean.TRUE.toString());
+                            parentItem.getMetadata().add(META_FROM_OWNER, Boolean.TRUE.toString());
 
                     } else if ("PhoneNumber".equals(type) || "EmailAddress".equals(type)) { //$NON-NLS-1$ //$NON-NLS-2$
                         String category = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Category"); //$NON-NLS-1$
@@ -983,6 +1039,7 @@ public class UfedXmlReader extends DataSourceReader {
                         String lon = ExtraProperties.UFED_META_PREFIX + "Longitude"; //$NON-NLS-1$
                         parentItem.getMetadata().set(lat, item.getMetadata().get(lat));
                         parentItem.getMetadata().set(lon, item.getMetadata().get(lon));
+                        parentItem.getMetadata().set(ExtraProperties.UFED_COORDINATE_ID, item.getMetadata().get(ExtraProperties.UFED_ID));
 
                     } else if ("Organization".equals(type)) { //$NON-NLS-1$
                         String value = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name"); //$NON-NLS-1$
@@ -1146,7 +1203,7 @@ public class UfedXmlReader extends DataSourceReader {
                         // item skipped, decrement counter
                         caseData.incDiscoveredEvidences(-1);
                     }
-                    if (MediaTypes.isInstanceOf(item.getMediaType(), UFEDChatParser.UFED_CHAT_MIME)) {
+                    if (MediaTypes.isInstanceOf(item.getMediaType(), UfedChatParser.UFED_CHAT_MIME)) {
                         inChat = false;
                         ignoreItems = false;
                     }
@@ -1183,7 +1240,6 @@ public class UfedXmlReader extends DataSourceReader {
                 }
             }
 
-            chars = new StringBuilder();
             nameAttr = null;
 
         }
@@ -1209,9 +1265,9 @@ public class UfedXmlReader extends DataSourceReader {
                 if (item.getMediaType() != null
                         && MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.UFED_MESSAGE_MIME)) {
                     // we have seen ufed messages without parent chat
-                    if (itemSeq.size() == 0)
+                    if (itemSeq.empty())
                         return;
-                    IItem parentChat = itemSeq.get(itemSeq.size() - 1);
+                    IItem parentChat = itemSeq.peek();
                     List<String> toList = new ArrayList<>();
                     if (to != null && to.length > 0) {
                         toList = Arrays.asList(to);
@@ -1306,15 +1362,9 @@ public class UfedXmlReader extends DataSourceReader {
                 ufdrPathToUfedId.put(path, ufedId);
             }
             if (ufdrFile == null) {
-                if (rootFolder == null) {
-                    rootFolder = root.isDirectory() ? root : root.getParentFile();
-                }
-                if (fisf == null) {
-                    fisf = new FileInputStreamFactory(rootFolder.toPath());
-                }
                 File file = new File(rootFolder, path);
                 if (file.exists()) {
-                    item.setInputStreamFactory(fisf);
+                    item.setInputStreamFactory(getFISF());
                     item.setIdInDataSource(path);
                     item.setLength(file.length());
                 }
@@ -1439,7 +1489,7 @@ public class UfedXmlReader extends DataSourceReader {
                 ufedId = ufdrPathToUfedId.get(extracted_path);
 
                 // If extracted path doesn't exist, replace non-existent extracted path by attached file's local path
-                if (!getUISF().entryExists(extracted_path)) {
+                if (!entryExists(extracted_path)) {
                     // Replace extracted path by attached file's local path
                     extracted_path = ufedFileIdToLocalPath.get(item.getMetadata().get(FILE_ID_ATTR));
                 }
@@ -1515,6 +1565,7 @@ public class UfedXmlReader extends DataSourceReader {
                     }
                 }
                 email.getMetadata().set(ExtraProperties.MESSAGE_ATTACHMENT_COUNT, attachNames.length);
+                email.setHasChildren(attachNames.length > 0);
 
                 bw.write("<hr>"); //$NON-NLS-1$
 
@@ -1697,6 +1748,61 @@ public class UfedXmlReader extends DataSourceReader {
 
         }
 
+        @Override
+        public void onModelStarted(BaseModel model, Attributes attr) {
+            if (listOnly) {
+                return;
+            }
+
+            try {
+                Item item = createModelItem(attr);
+                item.setSumVolume(false);
+                itemSeq.push(item);
+            } catch (SAXException e) {
+                LOGGER.error("Error creating model Item", e);
+            }
+        }
+
+        @Override
+        public void onModelCompleted(BaseModel model) {
+
+            boolean ignoreChat = model instanceof Chat
+                    && ignoreSupportedChats
+                    && supportedApps.contains(((Chat) model).getSource());
+
+            if (listOnly) {
+                if (!ignoreChat) {
+                    caseData.incDiscoveredEvidences(1);
+                }
+                return;
+            }
+
+            Item item = itemSeq.pop();
+            if (ignoreChat) {
+                return;
+            }
+
+            if (model instanceof Chat) {
+                Chat chat = (Chat) model;
+
+                // fix chat media type
+                String source = chat.getSource();
+                if (StringUtils.containsIgnoreCase(source, Chat.SOURCE_WHATSAPP)) {
+                    item.setMediaType(UfedChatParser.UFED_CHAT_WA_MIME);
+                } else if (Chat.SOURCE_TELEGRAM.equalsIgnoreCase(source)) {
+                    item.setMediaType(UfedChatParser.UFED_CHAT_TELEGRAM);
+                }
+                item.setExtraAttribute(IndexItem.TREENODE, Boolean.toString(true));
+            }
+
+            item.setOpenContainer(model);
+
+            try {
+                processItem(item);
+            } catch (SAXException e) {
+                LOGGER.error("Error on sending model to process", e);
+            }
+        }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

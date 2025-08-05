@@ -25,9 +25,12 @@ import javax.swing.ListSelectionModel;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.IntPoint;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
 
 import iped.data.IItem;
 import iped.engine.search.QueryBuilder;
@@ -95,12 +98,27 @@ public class ReferencedByTableModel extends BaseTableModel {
         }
 
         // id
-        String idQuery = QueryBuilder.escape(BasicProps.ID + ":" + doc.get(BasicProps.ID));
+        String idQuery = BasicProps.ID + ":" + doc.get(BasicProps.ID);
         try {
             queryBuilder.add(b.getQuery(ExtraProperties.LINKED_ITEMS + ":\"" + idQuery + "\""), Occur.SHOULD);
         } catch (ParseException | QueryNodeException e) {
             e.printStackTrace();
         }
+
+        // ufed:id
+        String ufedId = doc.get(ExtraProperties.UFED_ID);
+        if (StringUtils.isNotBlank(ufedId)) {
+            queryBuilder.add(new TermQuery(new Term(ExtraProperties.UFED_JUMP_TARGETS, ufedId)), Occur.SHOULD);
+            queryBuilder.add(new TermQuery(new Term(ExtraProperties.UFED_FILE_ID, ufedId)), Occur.SHOULD);
+            try {
+                queryBuilder.add(b.getQuery(ExtraProperties.LINKED_ITEMS + ":\"" + ufedId + "\""), Occur.SHOULD);
+            } catch (ParseException | QueryNodeException e) {
+                e.printStackTrace();
+            }
+        }
+
+        // don't be referenced by itself
+        queryBuilder.add(IntPoint.newExactQuery(BasicProps.ID, Integer.parseInt(doc.get(BasicProps.ID))), Occur.MUST_NOT);
 
         return queryBuilder.build();
     }

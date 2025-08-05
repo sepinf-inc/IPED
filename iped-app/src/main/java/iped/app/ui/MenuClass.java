@@ -276,6 +276,7 @@ public class MenuClass extends JPopupMenu {
         boolean enableGoToChat = false;
         if (item != null) {
             enableGoToChat = MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.CHAT_MESSAGE_MIME)
+                    || MediaTypes.UFED_MESSAGE_MIME.equals(item.getMediaType())
                     || (VCardParser.VCARD_MIME.equals(item.getMediaType()) && item.getMetadata().get(ExtraProperties.COMMUNICATION_FROM) != null && item.getMetadata().get(ExtraProperties.COMMUNICATION_TO) != null);
         }
         navigateToParentChat.setEnabled(enableGoToChat);
