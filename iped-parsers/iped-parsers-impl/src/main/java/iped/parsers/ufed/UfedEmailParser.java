@@ -29,8 +29,10 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.html.HtmlMapper;
 import org.apache.tika.parser.html.HtmlParser;
 import org.apache.tika.parser.html.IdentityHtmlMapper;
-import org.apache.tika.sax.BodyContentHandler;
 import org.apache.tika.sax.XHTMLContentHandler;
+import org.apache.tika.sax.xpath.Matcher;
+import org.apache.tika.sax.xpath.MatchingContentHandler;
+import org.apache.tika.sax.xpath.XPathParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
@@ -244,7 +246,9 @@ public class UfedEmailParser extends AbstractParser {
          * that reference an attachment. When a match is found, it replaces the 'src' attribute's value
          * with a Base64-encoded data URI of the attachment's content.
          */
-        BodyContentHandler bodyHandler = new BodyContentHandler(xhtml) {
+        Matcher MATCHER =
+                new XPathParser("xhtml", XHTMLContentHandler.XHTML).parse("/xhtml:html/xhtml:body/xhtml:body/descendant::node()");
+        MatchingContentHandler bodyHandler = new MatchingContentHandler(xhtml, MATCHER) {
 
             /**
              * Intercepts the start of an XML element to check for 'src' attributes that can be replaced
