@@ -7,8 +7,10 @@ import java.nio.charset.StandardCharsets;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -64,6 +66,9 @@ public class UfedEmailParser extends AbstractParser {
     private static final Logger logger = LoggerFactory.getLogger(UfedEmailParser.class);
 
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaTypes.UFED_EMAIL_MIME);
+
+    private static final Set<String> formattingTags = new HashSet<>(Arrays
+            .asList("b", "strong", "i", "em", "u", "mark", "s", "del", "ins", "code", "kbd", "samp", "var", "sub", "sup", "small"));
 
     private static final String COLON = ":";
     private static final String SRC_ATTR = "src";
@@ -302,7 +307,13 @@ public class UfedEmailParser extends AbstractParser {
                         atts = newAtts;
                     }
                 }
+
                 super.startElement(uri, localName, name, atts);
+
+                // Prevents self-closing of formatting tags
+                if (formattingTags.contains(localName)) {
+                    xhtml.characters(new char[0], 0, 0);
+                }
             }
         };
 
