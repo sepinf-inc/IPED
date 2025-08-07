@@ -35,7 +35,7 @@ public class ContainerMetadataTest {
     private static List<String[]> filesWithMetadata = new ArrayList<>();
     private static List<String[]> filesWithInternalMetadata = new ArrayList<>();
 
-    @BeforeClass
+        @BeforeClass
     public static void setup() throws Exception {
         // Se o FileList.csv não existir, executa a análise
         if (!Files.exists(CSV_FILE)) {
@@ -212,7 +212,7 @@ public class ContainerMetadataTest {
             "office", "pdf", "exif", "email", "video", "audio", "image"
         );
 
-        boolean hasExpectedTypes = metadataTypes.keySet().stream()
+                boolean hasExpectedTypes = metadataTypes.keySet().stream()
             .anyMatch(type -> expectedMetadataTypes.stream()
                 .anyMatch(expected -> type.toLowerCase().contains(expected.toLowerCase())));
 

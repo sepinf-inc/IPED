@@ -34,7 +34,7 @@ public class ForensicAnalysisTest {
     private static Map<String, Integer> categoryCount;
     private static List<String[]> carvedFiles;
 
-    @BeforeClass
+        @BeforeClass
     public static void setup() throws Exception {
         // Se o FileList.csv não existir, executa a análise
         if (!Files.exists(CSV_FILE)) {
