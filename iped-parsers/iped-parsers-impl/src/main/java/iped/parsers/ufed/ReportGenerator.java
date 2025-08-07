@@ -576,7 +576,7 @@ public class ReportGenerator {
 
         String title = attachment.getTitle();
         if (isNotBlank(title) && !StringUtils.contains(body, title)) {
-            sb.append("<br/>").append(format(title)).append("<br/>");
+            sb.append("<p>").append(format(title)).append("</p>");
         }
 
         // when contentType is "URL", fileName may contain relevant information
@@ -584,10 +584,7 @@ public class ReportGenerator {
         String fileName = attachment.getFilename();
         if ("URL".equalsIgnoreCase(contentType) && isNotBlank(fileName) 
                 && !StringUtils.contains(body, fileName) && !StringUtils.contains(title, fileName)) {
-            if (sb.length() == 0) {
-                sb.append("<br/>");
-            }
-            sb.append(format(fileName)).append("<br/>");
+            sb.append("<p>").append(format(fileName)).append("</p>");
         }
 
         String url = attachment.getURL();
