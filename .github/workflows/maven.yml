@@ -5,36 +5,32 @@ on: [push]
 jobs:
   build-java11:
     runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
 
-      - name: Set up JDK 11 with JavaFX
-        uses: actions/setup-java@v4
+    steps:
+      - uses: actions/checkout@v1
+      - name: Set up JDK 11
+        uses: actions/setup-java@v1
         with:
           java-version: 11
-          distribution: "liberica"
-          java-package: "jdk+fx"
-          cache: "maven"
+          java-package: jdk+fx
 
-      - name: Load libagdb from cache (Java 11)
-        id: libagdb_java11
+      - name: Load libagdb from cache
+        id: libagdb
         uses: actions/cache@v4
         with:
           path: libagdb
-          key: libagdb-java11-${{ hashFiles('**/pom.xml') }}
+          key: libagdb
 
-      - name: Compile libagdb (Java 11)
-        if: steps.libagdb_java11.outputs.cache-hit != 'true'
+      - name: Compile libagdb
+        if: steps.libagdb.outputs.cache-hit != 'true'
         run: |
-          sudo apt update && sudo apt install -y git autoconf automake autopoint libtool pkg-config
+          sudo apt install git autoconf automake autopoint libtool pkg-config
           git clone https://github.com/libyal/libagdb.git && cd libagdb/ && git checkout 667a782
           sudo ./synclibs.sh && sudo ./autogen.sh && sudo ./configure
-          sudo make install
-          sudo ldconfig /usr/local/lib
 
-      - name: Install External Tools (Java 11)
+      - name: Install External Tools
         run: |
-          sudo apt-get update && sudo apt-get install -y \
+          sudo apt-get update && sudo apt-get install \
           libscca-utils rifiuti2 libevtx-utils libevt-utils \
           libmsiecf-utils=20181227-2build1 \
           pff-tools=20180714-3build1 \
@@ -42,248 +38,23 @@ jobs:
           tesseract-ocr \
           tesseract-ocr-por \
           imagemagick \
-          python3-pip \
-          gsfonts
-
+          python3-pip
           sudo perl -MCPAN -e 'install Parse::Win32Registry'
           pip install jep==4.0.3
 
-      - name: Download and setup TSK JAR (Java 11)
-        run: |
-          # Create directory for TSK JAR in user-writable location
-          mkdir -p $HOME/tsk
-          
-          # Try to download TSK JAR from multiple sources
-          echo "Attempting to download TSK JAR..."
-          
-          # Try GitHub releases first
-          if wget -O $HOME/tsk/sleuthkit-4.11.1.jar https://github.com/sleuthkit/sleuthkit/releases/download/sleuthkit-4.11.1/sleuthkit-4.11.1.jar; then
-            echo "Successfully downloaded from GitHub releases"
-          # Try Maven Central as fallback
-          elif wget -O $HOME/tsk/sleuthkit-4.11.1.jar "https://search.maven.org/remotecontent?filepath=org/sleuthkit/autopsy-core/4.11.1/autopsy-core-4.11.1.jar"; then
-            echo "Successfully downloaded from Maven Central"
-          # Try alternative TSK JAR sources
-          elif wget -O $HOME/tsk/sleuthkit-4.11.1.jar "https://repo1.maven.org/maven2/org/sleuthkit/autopsy-core/4.11.1/autopsy-core-4.11.1.jar"; then
-            echo "Successfully downloaded from Maven repo"
-          else
-            echo "All download attempts failed, creating dummy file for testing"
-            # Create a dummy JAR file with basic structure
-            echo "PK" > $HOME/tsk/sleuthkit-4.11.1.jar
-            echo "Dummy TSK JAR created for testing purposes" >> $HOME/tsk/sleuthkit-4.11.1.jar
-          fi
-          
-          # Verify file exists
-          if [ -f "$HOME/tsk/sleuthkit-4.11.1.jar" ]; then
-            echo "TSK JAR file exists at: $HOME/tsk/sleuthkit-4.11.1.jar"
-            ls -la $HOME/tsk/
-          else
-            echo "ERROR: TSK JAR file was not created!"
-            exit 1
-          fi
+          cd libagdb/ && sudo make install
+          sudo ldconfig /usr/local/lib
+          cd ..
+          sudo apt-get install gsfonts
 
-      - name: Setup LocalConfig.txt (Java 11)
-        run: |
-          # Get absolute path to TSK JAR
-          TSK_JAR_PATH="$HOME/tsk/sleuthkit-4.11.1.jar"
-          echo "Setting tskJarPath to: $TSK_JAR_PATH"
-          
-          # Update the main LocalConfig.txt - uncomment and set the path
-          sed -i "s|#tskJarPath = /usr/local/share/java/sleuthkit-4.11.1.jar|tskJarPath = $TSK_JAR_PATH|" iped-app/resources/config/LocalConfig.txt
-          
-          # Also try to replace if the line is already uncommented
-          sed -i "s|tskJarPath = /usr/local/share/java/sleuthkit-4.11.1.jar|tskJarPath = $TSK_JAR_PATH|" iped-app/resources/config/LocalConfig.txt
-          
-          # Update profile LocalConfig.txt files
-          echo "tskJarPath = $TSK_JAR_PATH" >> iped-app/resources/config/profiles/fastmode/LocalConfig.txt
-          echo "tskJarPath = $TSK_JAR_PATH" >> iped-app/resources/config/profiles/forensic/LocalConfig.txt
-          echo "tskJarPath = $TSK_JAR_PATH" >> iped-app/resources/config/profiles/pedo/LocalConfig.txt
-          echo "tskJarPath = $TSK_JAR_PATH" >> iped-app/resources/config/profiles/triage/LocalConfig.txt
-          
-          # Verify configuration
-          echo "=== Main LocalConfig.txt ==="
-          grep -n "tskJarPath" iped-app/resources/config/LocalConfig.txt || echo "tskJarPath not found in main config"
-          
-          echo "=== Profile configs ==="
-          for profile in fastmode forensic pedo triage; do
-            echo "--- $profile ---"
-            grep -n "tskJarPath" iped-app/resources/config/profiles/$profile/LocalConfig.txt || echo "tskJarPath not found in $profile config"
-          done
+      - name: Build with Maven
+        run: mvn -B package --file pom.xml
 
-      - name: Cache test images (Java 11)
-        uses: actions/cache@v4
-        with:
-          path: target/test-images
-          key: ${{ runner.os }}-test-images-${{ hashFiles('iped-tests/src/test/java/br/com/iped/tests/ImageProcessingTest.java') }}
-
-      - name: Build IPED and prepare CLI for tests (Java 11)
-        run: |
-          echo "=== BUILD DEBUG INFO (Java 11) ==="
-          echo "Current directory: $(pwd)"
-          echo "Java version: $(java -version 2>&1)"
-          echo "Maven version: $(mvn -version)"
-          echo "Available memory: $(free -h)"
-          echo "Disk space: $(df -h)"
-          
-          echo "=== CLEANING AND BUILDING (Java 11) ==="
-          mvn -B clean install -DskipTests
-          
-          echo "=== BUILD RESULTS (Java 11) ==="
-          echo "Target directory contents:"
-          ls -la target/ || echo "Target directory not found"
-          
-          echo "IPED parent target contents:"
-          ls -la iped-parent/target/ || echo "IPED parent target not found"
-          
-          echo "Release directory contents:"
-          ls -la iped-parent/target/release/ || echo "Release directory not found"
-          
-          mkdir -p target/release/iped-4.2.0
-          cp -r iped-parent/target/release/iped-4.2.0/* target/release/iped-4.2.0/ || true
-          
-          echo "=== FINAL RELEASE CONTENTS (Java 11) ==="
-          ls -la target/release/iped-4.2.0/ || echo "Final release directory not found"
-        
-      - name: Verify TSK JAR before tests (Java 11)
-        run: |
-          echo "=== Pre-test TSK JAR verification ==="
-          echo "Current working directory: $(pwd)"
-          echo "HOME directory: $HOME"
-          echo "TSK JAR path: $HOME/tsk/sleuthkit-4.11.1.jar"
-          
-          if [ -f "$HOME/tsk/sleuthkit-4.11.1.jar" ]; then
-            echo "✅ TSK JAR file exists"
-            ls -la "$HOME/tsk/sleuthkit-4.11.1.jar"
-            file "$HOME/tsk/sleuthkit-4.11.1.jar"
-          else
-            echo "❌ TSK JAR file does not exist!"
-            echo "Contents of $HOME/tsk/:"
-            ls -la "$HOME/tsk/" || echo "Directory does not exist"
-            exit 1
-          fi
-          
-          echo "=== Configuration verification ==="
-          echo "Main config tskJarPath:"
-          grep "tskJarPath" iped-app/resources/config/LocalConfig.txt || echo "Not found in main config"
-          
-          echo "Profile configs tskJarPath:"
-          for profile in fastmode forensic pedo triage; do
-            echo "$profile:"
-            grep "tskJarPath" iped-app/resources/config/profiles/$profile/LocalConfig.txt || echo "Not found in $profile config"
-          done
-
-      - name: Download test image (Java 11)
-        run: |
-          echo "=== Downloading test image ==="
-          mkdir -p target/test-images
-          
-          # For CI testing, create a smaller test image instead of downloading the large one
-          echo "Creating small test image for CI testing..."
-          dd if=/dev/zero of=target/test-images/ntfs1-gen1.E01 bs=1M count=50
-          
-          # Add some basic file structure to make it look like a valid image
-          echo "E01" > target/test-images/ntfs1-gen1.E01
-          
-          # Fix TSK JAR - create a proper JAR file instead of corrupted one
-          echo "Creating proper TSK JAR file..."
-          cd $HOME/tsk
-          if [ ! -d "META-INF" ]; then
-            mkdir -p META-INF
-            echo "Manifest-Version: 1.0" > META-INF/MANIFEST.MF
-            echo "Created-By: IPED CI" >> META-INF/MANIFEST.MF
-          fi
-          jar cf sleuthkit-4.11.1.jar META-INF/
-          cd -
-          
-          echo "Test image status:"
-          ls -la target/test-images/ || echo "Test images directory not found"
-          echo "Test image size: $(ls -lh target/test-images/ntfs1-gen1.E01)"
-
-      - name: Test CLI manually (Java 11)
-        run: |
-          echo "=== Testing CLI manually ==="
-          echo "Current directory: $(pwd)"
-          echo "Java version: $(java -version 2>&1)"
-          echo "Test image exists: $(test -f target/test-images/ntfs1-gen1.E01 && echo "YES" || echo "NO")"
-          echo "Test image size: $(ls -lh target/test-images/ntfs1-gen1.E01 2>/dev/null || echo "File not found")"
-          echo "TSK JAR exists: $(test -f $HOME/tsk/sleuthkit-4.11.1.jar && echo "YES" || echo "NO")"
-          
-          # Test CLI version command
-          echo "=== Testing CLI version ==="
-          java -jar target/release/iped-4.2.0/iped.jar -version || echo "Version command failed"
-          
-          # Test CLI help command
-          echo "=== Testing CLI help ==="
-          java -jar target/release/iped-4.2.0/iped.jar -h | head -10 || echo "Help command failed"
-          
-          # Test CLI with minimal parameters
-          echo "=== Testing CLI with minimal parameters ==="
-          timeout 30s java -jar target/release/iped-4.2.0/iped.jar -d target/test-images/ntfs1-gen1.E01 -o target/test-output -profile triage || echo "CLI test failed (expected for large files)"
-
-      - name: Create proper TSK JAR (Java 11)
-        run: |
-          echo "=== Creating proper TSK JAR ==="
-          echo "Current OS: $(uname -a)"
-          echo "Java home: $JAVA_HOME"
-          cd $HOME/tsk
-          
-          # Remove any existing corrupted JAR
-          rm -f sleuthkit-4.11.1.jar
-          
-          # Create a proper JAR structure
-          mkdir -p META-INF
-          echo "Manifest-Version: 1.0" > META-INF/MANIFEST.MF
-          echo "Created-By: IPED CI" >> META-INF/MANIFEST.MF
-          echo "Main-Class: org.sleuthkit.autopsy.coreutils.Version" >> META-INF/MANIFEST.MF
-          
-          # Create a dummy class file to make it a valid JAR
-          mkdir -p org/sleuthkit/autopsy/coreutils
-          echo "package org.sleuthkit.autopsy.coreutils;" > org/sleuthkit/autopsy/coreutils/Version.java
-          echo "public class Version { public static String getVersion() { return \"4.11.1\"; } }" >> org/sleuthkit/autopsy/coreutils/Version.java
-          
-          # Create the JAR with proper structure
-          jar cf sleuthkit-4.11.1.jar META-INF/ org/
-          
-          # Verify the JAR is valid
-          echo "JAR file size: $(ls -lh sleuthkit-4.11.1.jar)"
-          jar tf sleuthkit-4.11.1.jar || echo "JAR validation failed"
-          
-          cd -
-
-      # Regression tests temporarily disabled
-      # - name: Run Regression Tests (Java 11)
-      #   run: mvn -B test --projects iped-tests
-
-      - name: Capture CLI logs on failure (Java 11)
-        if: failure()
-        run: |
-          echo "=== CLI LOG FILES ==="
-          find target/release/iped-4.2.0/log/ -name "*.log" -type f | head -5 | while read logfile; do
-            echo "=== $logfile ==="
-            if [ -f "$logfile" ]; then
-              cat "$logfile"
-            else
-              echo "Log file not found: $logfile"
-            fi
-            echo ""
-          done
-          
-          echo "=== TEST IMAGE STATUS ==="
-          ls -la target/test-images/ || echo "Test images directory not found"
-          
-          echo "=== TSK JAR STATUS ==="
-          ls -la $HOME/tsk/ || echo "TSK directory not found"
-          
-          echo "=== CONFIG FILES ==="
-          grep -r "tskJarPath" iped-app/resources/config/ || echo "No tskJarPath found in configs"
-
-      - name: Create and upload snapshot archive (Java 11)
-        shell: bash
-        run: |
-          mkdir -p target/release
-          mv target/release target/iped-snapshot-${{ github.sha }}
-          tar -zcvf iped-snapshot.tar.gz target/iped-snapshot-${{ github.sha }}
-
-      - name: Upload snapshot (Java 11)
+      - name: IPED Tests (Java 11)
+        run: mvn -pl iped-tests -B test -Dtest=IpedCliTest
+      - shell: bash
+        run: cd target && mv release iped-snapshot-$GITHUB_SHA && tar -zcvf ../iped-snapshot.tar.gz iped-snapshot-$GITHUB_SHA
+      - name: Upload snapshot
         uses: actions/upload-artifact@v4
         with:
           name: iped-snapshot-${{ github.sha }}
@@ -291,37 +62,33 @@ jobs:
 
   build-java14:
     runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
 
-      - name: Set up JDK 14 with JavaFX
-        uses: actions/setup-java@v4
+    steps:
+      - uses: actions/checkout@v1
+      - run: curl -O "https://download.bell-sw.com/java/14.0.2+13/bellsoft-jdk14.0.2+13-linux-amd64-full.tar.gz"
+      - name: Set up JDK 14
+        uses: actions/setup-java@v1
         with:
           java-version: 14
-          distribution: "liberica"
-          java-package: "jdk+fx"
-          cache: "maven"
+          jdkFile: ./bellsoft-jdk14.0.2+13-linux-amd64-full.tar.gz
 
-      - name: Load libagdb from cache (Java 14)
-        id: libagdb_java14
+      - name: Load libagdb from cache
+        id: libagdb
         uses: actions/cache@v4
         with:
           path: libagdb
-          key: libagdb-java14-${{ hashFiles('**/pom.xml') }}
+          key: libagdb
 
-      - name: Compile libagdb (Java 14)
-        if: steps.libagdb_java14.outputs.cache-hit != 'true'
+      - name: Compile libagdb
+        if: steps.libagdb.outputs.cache-hit != 'true'
         run: |
-          sudo apt update && sudo apt install -y git autoconf automake autopoint libtool pkg-config
+          sudo apt install git autoconf automake autopoint libtool pkg-config
           git clone https://github.com/libyal/libagdb.git && cd libagdb/ && git checkout 667a782
           sudo ./synclibs.sh && sudo ./autogen.sh && sudo ./configure
-          sudo make install
-          sudo ldconfig /usr/local/lib
 
-      - name: Install External Tools (Java 14)
+      - name: Install External Tools
         run: |
-          sudo add-apt-repository ppa:alex-p/tesseract-ocr-devel -y
-          sudo apt-get update && sudo apt-get install -y \
+          sudo add-apt-repository ppa:alex-p/tesseract-ocr-devel && sudo apt-get update && sudo apt-get install \
           libscca-utils rifiuti2 libevtx-utils libevt-utils \
           libmsiecf-utils=20181227-2build1 \
           pff-tools=20180714-3build1 \
@@ -329,249 +96,17 @@ jobs:
           tesseract-ocr \
           tesseract-ocr-por \
           imagemagick \
-          python3-pip \
-          gsfonts
-
+          python3-pip
           sudo perl -MCPAN -e 'install Parse::Win32Registry'
           pip install jep==4.0.3
 
-      - name: Download and setup TSK JAR (Java 14)
-        run: |
-          # Create directory for TSK JAR in user-writable location
-          mkdir -p $HOME/tsk
-          
-          # Try to download TSK JAR from multiple sources
-          echo "Attempting to download TSK JAR..."
-          
-          # Try GitHub releases first
-          if wget -O $HOME/tsk/sleuthkit-4.11.1.jar https://github.com/sleuthkit/sleuthkit/releases/download/sleuthkit-4.11.1/sleuthkit-4.11.1.jar; then
-            echo "Successfully downloaded from GitHub releases"
-          # Try Maven Central as fallback
-          elif wget -O $HOME/tsk/sleuthkit-4.11.1.jar "https://search.maven.org/remotecontent?filepath=org/sleuthkit/autopsy-core/4.11.1/autopsy-core-4.11.1.jar"; then
-            echo "Successfully downloaded from Maven Central"
-          # Try alternative TSK JAR sources
-          elif wget -O $HOME/tsk/sleuthkit-4.11.1.jar "https://repo1.maven.org/maven2/org/sleuthkit/autopsy-core/4.11.1/autopsy-core-4.11.1.jar"; then
-            echo "Successfully downloaded from Maven repo"
-          else
-            echo "All download attempts failed, creating dummy file for testing"
-            # Create a dummy JAR file with basic structure
-            echo "PK" > $HOME/tsk/sleuthkit-4.11.1.jar
-            echo "Dummy TSK JAR created for testing purposes" >> $HOME/tsk/sleuthkit-4.11.1.jar
-          fi
-          
-          # Verify file exists
-          if [ -f "$HOME/tsk/sleuthkit-4.11.1.jar" ]; then
-            echo "TSK JAR file exists at: $HOME/tsk/sleuthkit-4.11.1.jar"
-            ls -la $HOME/tsk/
-          else
-            echo "ERROR: TSK JAR file was not created!"
-            exit 1
-          fi
+          cd libagdb/ && sudo make install
+          sudo ldconfig /usr/local/lib
+          cd ..
+          sudo apt-get install gsfonts
 
-      - name: Setup LocalConfig.txt (Java 14)
-        run: |
-          # Get absolute path to TSK JAR
-          TSK_JAR_PATH="$HOME/tsk/sleuthkit-4.11.1.jar"
-          echo "Setting tskJarPath to: $TSK_JAR_PATH"
-          
-          # Update the main LocalConfig.txt - uncomment and set the path
-          sed -i "s|#tskJarPath = /usr/local/share/java/sleuthkit-4.11.1.jar|tskJarPath = $TSK_JAR_PATH|" iped-app/resources/config/LocalConfig.txt
-          
-          # Also try to replace if the line is already uncommented
-          sed -i "s|tskJarPath = /usr/local/share/java/sleuthkit-4.11.1.jar|tskJarPath = $TSK_JAR_PATH|" iped-app/resources/config/LocalConfig.txt
-          
-          # Update profile LocalConfig.txt files
-          echo "tskJarPath = $TSK_JAR_PATH" >> iped-app/resources/config/profiles/fastmode/LocalConfig.txt
-          echo "tskJarPath = $TSK_JAR_PATH" >> iped-app/resources/config/profiles/forensic/LocalConfig.txt
-          echo "tskJarPath = $TSK_JAR_PATH" >> iped-app/resources/config/profiles/pedo/LocalConfig.txt
-          echo "tskJarPath = $TSK_JAR_PATH" >> iped-app/resources/config/profiles/triage/LocalConfig.txt
-          
-          # Verify configuration
-          echo "=== Main LocalConfig.txt ==="
-          grep -n "tskJarPath" iped-app/resources/config/LocalConfig.txt || echo "tskJarPath not found in main config"
-          
-          echo "=== Profile configs ==="
-          for profile in fastmode forensic pedo triage; do
-            echo "--- $profile ---"
-            grep -n "tskJarPath" iped-app/resources/config/profiles/$profile/LocalConfig.txt || echo "tskJarPath not found in $profile config"
-          done
+      - name: Build with Maven
+        run: mvn -B package --file pom.xml
 
-      - name: Cache test images (Java 14)
-        uses: actions/cache@v4
-        with:
-          path: target/test-images
-          key: ${{ runner.os }}-test-images-${{ hashFiles('iped-tests/src/test/java/br/com/iped/tests/ImageProcessingTest.java') }}
-
-      - name: Build IPED and prepare CLI for tests (Java 14)
-        run: |
-          echo "=== BUILD DEBUG INFO ==="
-          echo "Current directory: $(pwd)"
-          echo "Java version: $(java -version 2>&1)"
-          echo "Maven version: $(mvn -version)"
-          echo "Available memory: $(free -h)"
-          echo "Disk space: $(df -h)"
-          
-          echo "=== CLEANING AND BUILDING ==="
-          mvn -B clean install
-          
-          echo "=== BUILD RESULTS ==="
-          echo "Target directory contents:"
-          ls -la target/ || echo "Target directory not found"
-          
-          echo "IPED parent target contents:"
-          ls -la iped-parent/target/ || echo "IPED parent target not found"
-          
-          echo "Release directory contents:"
-          ls -la iped-parent/target/release/ || echo "Release directory not found"
-          
-          mkdir -p target/release/iped-4.2.0
-          cp -r iped-parent/target/release/iped-4.2.0/* target/release/iped-4.2.0/ || true
-          
-          echo "=== FINAL RELEASE CONTENTS ==="
-          ls -la target/release/iped-4.2.0/ || echo "Final release directory not found"
-      - name: Verify TSK JAR before tests (Java 14)
-        run: |
-          echo "=== Pre-test TSK JAR verification ==="
-          echo "Current working directory: $(pwd)"
-          echo "HOME directory: $HOME"
-          echo "TSK JAR path: $HOME/tsk/sleuthkit-4.11.1.jar"
-          
-          if [ -f "$HOME/tsk/sleuthkit-4.11.1.jar" ]; then
-            echo "✅ TSK JAR file exists"
-            ls -la "$HOME/tsk/sleuthkit-4.11.1.jar"
-            file "$HOME/tsk/sleuthkit-4.11.1.jar"
-          else
-            echo "❌ TSK JAR file does not exist!"
-            echo "Contents of $HOME/tsk/:"
-            ls -la "$HOME/tsk/" || echo "Directory does not exist"
-            exit 1
-          fi
-          
-          echo "=== Configuration verification ==="
-          echo "Main config tskJarPath:"
-          grep "tskJarPath" iped-app/resources/config/LocalConfig.txt || echo "Not found in main config"
-          
-          echo "Profile configs tskJarPath:"
-          for profile in fastmode forensic pedo triage; do
-            echo "$profile:"
-            grep "tskJarPath" iped-app/resources/config/profiles/$profile/LocalConfig.txt || echo "Not found in $profile config"
-          done
-
-      - name: Download test image (Java 14)
-        run: |
-          echo "=== Downloading test image ==="
-          mkdir -p target/test-images
-          
-          # For CI testing, create a smaller test image instead of downloading the large one
-          echo "Creating small test image for CI testing..."
-          dd if=/dev/zero of=target/test-images/ntfs1-gen1.E01 bs=1M count=50
-          
-          # Add some basic file structure to make it look like a valid image
-          echo "E01" > target/test-images/ntfs1-gen1.E01
-          
-          # Fix TSK JAR - create a proper JAR file instead of corrupted one (Java 14)
-          echo "Creating proper TSK JAR file for Java 14..."
-          cd $HOME/tsk
-          # Remove any existing corrupted JAR
-          rm -f sleuthkit-4.11.1.jar
-          
-          # Create a proper JAR structure
-          mkdir -p META-INF
-          echo "Manifest-Version: 1.0" > META-INF/MANIFEST.MF
-          echo "Created-By: IPED CI" >> META-INF/MANIFEST.MF
-          echo "Main-Class: org.sleuthkit.autopsy.coreutils.Version" >> META-INF/MANIFEST.MF
-          
-          # Create a dummy class file to make it a valid JAR
-          mkdir -p org/sleuthkit/autopsy/coreutils
-          echo "package org.sleuthkit.autopsy.coreutils;" > org/sleuthkit/autopsy/coreutils/Version.java
-          echo "public class Version { public static String getVersion() { return \"4.11.1\"; } }" >> org/sleuthkit/autopsy/coreutils/Version.java
-          
-          # Create the JAR with proper structure
-          jar cf sleuthkit-4.11.1.jar META-INF/ org/
-          
-          # Verify the JAR is valid
-          echo "JAR file size: $(ls -lh sleuthkit-4.11.1.jar)"
-          jar tf sleuthkit-4.11.1.jar || echo "JAR validation failed"
-          cd -
-          
-          echo "Test image status:"
-          ls -la target/test-images/ || echo "Test images directory not found"
-          echo "Test image size: $(ls -lh target/test-images/ntfs1-gen1.E01)"
-
-      - name: Test CLI manually (Java 14)
-        run: |
-          echo "=== Testing CLI manually ==="
-          echo "Current directory: $(pwd)"
-          echo "Java version: $(java -version 2>&1)"
-          echo "Test image exists: $(test -f target/test-images/ntfs1-gen1.E01 && echo "YES" || echo "NO")"
-          echo "Test image size: $(ls -lh target/test-images/ntfs1-gen1.E01 2>/dev/null || echo "File not found")"
-          echo "TSK JAR exists: $(test -f $HOME/tsk/sleuthkit-4.11.1.jar && echo "YES" || echo "NO")"
-          
-          # Test CLI version command
-          echo "=== Testing CLI version ==="
-          java -jar target/release/iped-4.2.0/iped.jar -version || echo "Version command failed"
-          
-          # Test CLI help command
-          echo "=== Testing CLI help ==="
-          java -jar target/release/iped-4.2.0/iped.jar -h | head -10 || echo "Help command failed"
-          
-          # Test CLI with minimal parameters
-          echo "=== Testing CLI with minimal parameters ==="
-          timeout 30s java -jar target/release/iped-4.2.0/iped.jar -d target/test-images/ntfs1-gen1.E01 -o target/test-output -profile triage || echo "CLI test failed (expected for large files)"
-
-      - name: Create proper TSK JAR (Java 14)
-        run: |
-          echo "=== Creating proper TSK JAR ==="
-          echo "Current OS: $(uname -a)"
-          echo "Java home: $JAVA_HOME"
-          cd $HOME/tsk
-          
-          # Remove any existing corrupted JAR
-          rm -f sleuthkit-4.11.1.jar
-          
-          # Create a proper JAR structure
-          mkdir -p META-INF
-          echo "Manifest-Version: 1.0" > META-INF/MANIFEST.MF
-          echo "Created-By: IPED CI" >> META-INF/MANIFEST.MF
-          echo "Main-Class: org.sleuthkit.autopsy.coreutils.Version" >> META-INF/MANIFEST.MF
-          
-          # Create a dummy class file to make it a valid JAR
-          mkdir -p org/sleuthkit/autopsy/coreutils
-          echo "package org.sleuthkit.autopsy.coreutils;" > org/sleuthkit/autopsy/coreutils/Version.java
-          echo "public class Version { public static String getVersion() { return \"4.11.1\"; } }" >> org/sleuthkit/autopsy/coreutils/Version.java
-          
-          # Create the JAR with proper structure
-          jar cf sleuthkit-4.11.1.jar META-INF/ org/
-          
-          # Verify the JAR is valid
-          echo "JAR file size: $(ls -lh sleuthkit-4.11.1.jar)"
-          jar tf sleuthkit-4.11.1.jar || echo "JAR validation failed"
-          
-          cd -
-
-      # Regression tests temporarily disabled
-      # - name: Run Regression Tests (Java 14)
-      #   run: mvn -B test --projects iped-tests
-
-      - name: Capture CLI logs on failure (Java 14)
-        if: failure()
-        run: |
-          echo "=== CLI LOG FILES ==="
-          find target/release/iped-4.2.0/log/ -name "*.log" -type f | head -5 | while read logfile; do
-            echo "=== $logfile ==="
-            if [ -f "$logfile" ]; then
-              cat "$logfile"
-            else
-              echo "Log file not found: $logfile"
-            fi
-            echo ""
-          done
-          
-          echo "=== TEST IMAGE STATUS ==="
-          ls -la target/test-images/ || echo "Test images directory not found"
-          
-          echo "=== TSK JAR STATUS ==="
-          ls -la $HOME/tsk/ || echo "TSK directory not found"
-          
-          echo "=== CONFIG FILES ==="
-          grep -r "tskJarPath" iped-app/resources/config/ || echo "No tskJarPath found in configs"
+      - name: IPED Tests (Java 14)
+        run: mvn -pl iped-tests -B test -Dtest=IpedCliTest
