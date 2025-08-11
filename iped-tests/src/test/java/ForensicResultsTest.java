@@ -198,26 +198,24 @@ public class ForensicResultsTest {
         String fileName = csvFile.getFileName().toString();
         System.out.println("Validando: " + fileName);
 
-        try (var lines = Files.lines(csvFile)) {
-            List<String> lineList = lines.collect(Collectors.toList());
+        List<String> lineList = Files.readAllLines(csvFile);
 
-            // Verifica se tem cabeçalho
-            assertFalse("CSV should have content", lineList.isEmpty());
+        // Verifica se tem cabeçalho
+        assertFalse("CSV should have content", lineList.isEmpty());
 
-            // Verifica se tem dados (mais que apenas cabeçalho)
-            if (lineList.size() > 1) {
-                String header = lineList.get(0);
-                String firstDataLine = lineList.get(1);
+        // Verifica se tem dados (mais que apenas cabeçalho)
+        if (lineList.size() > 1) {
+            String header = lineList.get(0);
+            String firstDataLine = lineList.get(1);
 
-                // Verifica se o cabeçalho tem colunas
-                String[] headerColumns = header.split(",");
-                assertTrue("Header should have columns", headerColumns.length > 0);
+            // Verifica se o cabeçalho tem colunas
+            String[] headerColumns = header.split(",");
+            assertTrue("Header should have columns", headerColumns.length > 0);
 
-                // Verifica se a primeira linha de dados tem o mesmo número de colunas
-                String[] dataColumns = firstDataLine.split(",");
-                assertEquals("Data should have same number of columns as header",
-                           headerColumns.length, dataColumns.length);
-            }
+            // Verifica se a primeira linha de dados tem o mesmo número de colunas
+            String[] dataColumns = firstDataLine.split(",");
+            assertEquals("Data should have same number of columns as header",
+                       headerColumns.length, dataColumns.length);
         }
     }
 
@@ -225,28 +223,26 @@ public class ForensicResultsTest {
      * Valida integridade dos dados
      */
     private void validateDataIntegrity(Path csvFile) throws IOException {
-        try (var lines = Files.lines(csvFile)) {
-            List<String> lineList = lines.collect(Collectors.toList());
+        List<String> lineList = Files.readAllLines(csvFile);
 
-            if (lineList.size() <= 1) {
-                return; // Apenas cabeçalho, não há dados para validar
-            }
+        if (lineList.size() <= 1) {
+            return; // Apenas cabeçalho, não há dados para validar
+        }
 
-            String header = lineList.get(0);
-            String[] headerColumns = header.split(",");
+        String header = lineList.get(0);
+        String[] headerColumns = header.split(",");
 
-            // Valida cada linha de dados
-            for (int i = 1; i < lineList.size(); i++) {
-                String line = lineList.get(i);
-                String[] columns = line.split(",");
+        // Valida cada linha de dados
+        for (int i = 1; i < lineList.size(); i++) {
+            String line = lineList.get(i);
+            String[] columns = line.split(",");
 
-                // Verifica se tem o número correto de colunas
-                assertEquals("Line " + i + " should have same number of columns as header",
-                           headerColumns.length, columns.length);
+            // Verifica se tem o número correto de colunas
+            assertEquals("Line " + i + " should have same number of columns as header",
+                       headerColumns.length, columns.length);
 
-                // Verifica se não há linhas vazias
-                assertFalse("Line " + i + " should not be empty", line.trim().isEmpty());
-            }
+            // Verifica se não há linhas vazias
+            assertFalse("Line " + i + " should not be empty", line.trim().isEmpty());
         }
     }
 
@@ -254,9 +250,7 @@ public class ForensicResultsTest {
      * Conta linhas em arquivo CSV (excluindo cabeçalho)
      */
     private long countLinesInCsv(Path csvFile) throws IOException {
-        try (var lines = Files.lines(csvFile)) {
-            return lines.count() - 1; // Subtrai o cabeçalho
-        }
+        return Files.lines(csvFile).count() - 1; // Subtrai o cabeçalho
     }
 
     // Métodos auxiliares

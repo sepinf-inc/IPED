@@ -586,19 +586,17 @@ public class ComparativeReportsTest {
     private static List<String[]> loadCsvData(Path csvFile) throws IOException {
         List<String[]> data = new ArrayList<>();
 
-        try (var lines = Files.lines(csvFile)) {
-            List<String> allLines = lines.collect(Collectors.toList());
+        List<String> allLines = Files.readAllLines(csvFile);
 
-            if (allLines.size() <= 1) {
-                return data;
-            }
+        if (allLines.size() <= 1) {
+            return data;
+        }
 
-            // Pula o cabeçalho e processa as linhas de dados
-            for (int i = 1; i < allLines.size(); i++) {
-                String line = allLines.get(i);
-                String[] columns = parseCsvLine(line);
-                data.add(columns);
-            }
+        // Pula o cabeçalho e processa as linhas de dados
+        for (int i = 1; i < allLines.size(); i++) {
+            String line = allLines.get(i);
+            String[] columns = parseCsvLine(line);
+            data.add(columns);
         }
 
         return data;

@@ -9,6 +9,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
 
@@ -249,7 +250,7 @@ public class ImageProcessingTest {
         // Se não encontrar, procura em subdiretórios
         Path ipedDir = RESULT_DIR.resolve("iped");
         if (Files.exists(ipedDir)) {
-            try (var stream = Files.walk(ipedDir)) {
+            try (Stream<Path> stream = Files.walk(ipedDir)) {
                 return stream
                     .filter(path -> path.toString().contains(type) && path.toString().endsWith(".csv"))
                     .findFirst()
@@ -264,60 +265,52 @@ public class ImageProcessingTest {
      * Conta linhas em arquivo CSV (excluindo cabeçalho)
      */
     private long countLinesInCsv(Path csvFile) throws IOException {
-        try (var lines = Files.lines(csvFile)) {
-            return lines.count() - 1; // Subtrai o cabeçalho
-        }
+        return Files.lines(csvFile).count() - 1; // Subtrai o cabeçalho
     }
 
     /**
      * Valida caminhos de arquivos no CSV
      */
     private boolean validateFilePathsInCsv(Path csvFile) throws IOException {
-        try (var lines = Files.lines(csvFile)) {
-            return lines
-                .skip(1) // Pula cabeçalho
-                .anyMatch(line -> {
-                    String[] parts = line.split(",");
-                    return parts.length > 0 && !parts[0].trim().isEmpty();
-                });
-        }
+        return Files.lines(csvFile)
+            .skip(1) // Pula cabeçalho
+            .anyMatch(line -> {
+                String[] parts = line.split(",");
+                return parts.length > 0 && !parts[0].trim().isEmpty();
+            });
     }
 
     /**
      * Valida timestamps MACB no CSV
      */
     private boolean validateMACBTimestampsInCsv(Path csvFile) throws IOException {
-        try (var lines = Files.lines(csvFile)) {
-            return lines
-                .skip(1) // Pula cabeçalho
-                .anyMatch(line -> {
-                    String[] parts = line.split(",");
-                    // Verifica se tem pelo menos 4 colunas para MACB
-                    return parts.length >= 4;
-                });
-        }
+        return Files.lines(csvFile)
+            .skip(1) // Pula cabeçalho
+            .anyMatch(line -> {
+                String[] parts = line.split(",");
+                // Verifica se tem pelo menos 4 colunas para MACB
+                return parts.length >= 4;
+            });
     }
 
     /**
      * Valida hashes de arquivos no CSV
      */
     private boolean validateFileHashesInCsv(Path csvFile) throws IOException {
-        try (var lines = Files.lines(csvFile)) {
-            return lines
-                .skip(1) // Pula cabeçalho
-                .anyMatch(line -> {
-                    String[] parts = line.split(",");
-                    // Procura por coluna de hash (MD5 ou SHA1)
-                    for (String part : parts) {
-                        String trimmed = part.trim();
-                        // Verifica se tem hash válido (32 caracteres para MD5, 40 para SHA1)
-                        if (trimmed.matches("[a-fA-F0-9]{32,40}")) {
-                            return true; // Hash encontrado
-                        }
+        return Files.lines(csvFile)
+            .skip(1) // Pula cabeçalho
+            .anyMatch(line -> {
+                String[] parts = line.split(",");
+                // Procura por coluna de hash (MD5 ou SHA1)
+                for (String part : parts) {
+                    String trimmed = part.trim();
+                    // Verifica se tem hash válido (32 caracteres para MD5, 40 para SHA1)
+                    if (trimmed.matches("[a-fA-F0-9]{32,40}")) {
+                        return true; // Hash encontrado
                     }
-                    return false;
-                });
-        }
+                }
+                return false;
+            });
     }
 
     private static void createDirectories(Path... paths) throws IOException {

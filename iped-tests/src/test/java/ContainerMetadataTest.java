@@ -308,19 +308,17 @@ public class ContainerMetadataTest {
     private static void loadCsvData() throws IOException {
         csvData = new ArrayList<>();
 
-        try (var lines = Files.lines(CSV_FILE)) {
-            List<String> allLines = lines.collect(Collectors.toList());
+        List<String> allLines = Files.readAllLines(CSV_FILE);
 
-            if (allLines.size() <= 1) {
-                throw new IllegalStateException("CSV file has no data rows");
-            }
+        if (allLines.size() <= 1) {
+            throw new IllegalStateException("CSV file has no data rows");
+        }
 
-            // Pula o cabeçalho e processa as linhas de dados
-            for (int i = 1; i < allLines.size(); i++) {
-                String line = allLines.get(i);
-                String[] columns = parseCsvLine(line);
-                csvData.add(columns);
-            }
+        // Pula o cabeçalho e processa as linhas de dados
+        for (int i = 1; i < allLines.size(); i++) {
+            String line = allLines.get(i);
+            String[] columns = parseCsvLine(line);
+            csvData.add(columns);
         }
     }
 
