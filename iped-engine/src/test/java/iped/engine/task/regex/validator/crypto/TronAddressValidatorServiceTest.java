@@ -1,15 +1,15 @@
 package iped.engine.task.regex.validator.crypto;
 
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
-import dk.brics.automaton.RegExp;
-import dk.brics.automaton.DatatypesAutomatonProvider;
-import dk.brics.automaton.RunAutomaton;
-import dk.brics.automaton.RunAutomaton;
-import dk.brics.automaton.Automaton;
-import dk.brics.automaton.AutomatonMatcher;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
+
+import dk.brics.automaton.Automaton;
+import dk.brics.automaton.AutomatonMatcher;
+import dk.brics.automaton.DatatypesAutomatonProvider;
+import dk.brics.automaton.RegExp;
+import dk.brics.automaton.RunAutomaton;
 
 public class TronAddressValidatorServiceTest {
 
@@ -17,7 +17,7 @@ public class TronAddressValidatorServiceTest {
 
     @Test
     public void testMatchDefaultRegex() {
-        RegExp regex = new RegExp("\bT[a-km-zA-HJ-NP-Z1-9]{33}\b");
+        RegExp regex = new RegExp("T[a-km-zA-HJ-NP-Z1-9]{33}");
         Automaton automaton = regex.toAutomaton(new DatatypesAutomatonProvider());
         RunAutomaton pattern = new RunAutomaton(automaton);
         AutomatonMatcher fullMatcher = pattern.newMatcher("TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t");
