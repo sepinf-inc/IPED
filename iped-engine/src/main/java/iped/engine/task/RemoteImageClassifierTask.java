@@ -35,6 +35,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.conn.HttpHostConnectException;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
@@ -76,7 +77,8 @@ public class RemoteImageClassifierTask extends AbstractTask {
     private RemoteImageClassifierConfig config;
 
     // Configuration parameters
-    private String url;
+    private String urlZip;
+    private String urlVersion;
     private int batchSize;
     private int skipSize;
     private int skipDimension;
@@ -219,13 +221,45 @@ public class RemoteImageClassifierTask extends AbstractTask {
         config = configurationManager.findObject(RemoteImageClassifierConfig.class);
         activeInstances.incrementAndGet();
 
-        url = "https://" + config.getUrl(); // enforces secure communication (required for sensitive data transfer)
+        urlZip = "https://" + config.getUrl() + "/zip"; // enforces secure communication (required for sensitive data
+                                                        // transfer)
+        urlVersion = "https://" + config.getUrl() + "/version";
         batchSize = config.getBatchSize();
         skipSize = config.getSkipSize();
         skipDimension = config.getSkipDimension();
         skipHashDBFiles = config.isSkipHashDBFiles();
         validateSSL = config.isValidateSSL();
         
+        try (CloseableHttpClient client = getClient()) {
+            HttpGet get = new HttpGet(urlVersion);
+
+            client.execute(get, response -> {
+                int statusCode = response.getStatusLine().getStatusCode();
+                if (statusCode == HttpStatus.SC_OK) {
+                    try (InputStream responseStream = response.getEntity().getContent()) {
+                        ObjectMapper objectMapper = new ObjectMapper();
+                        JsonNode jsonResponse = objectMapper.readTree(responseStream);
+                        String protocol_version = jsonResponse.get("protocol_version").asText();
+                        String model_version = jsonResponse.get("model_version").asText();
+                        logger.info(
+                                "RemoteImageClassifierTask: Connected to remote image classifier at '{}' - protocol_version: {} model_version: {}",
+                                urlVersion, protocol_version, model_version);
+                        if (!protocol_version.startsWith("v1")) {
+                            throw new RuntimeException("Incompatible protocol version: " + protocol_version);
+                        }
+                        if (!model_version.startsWith("v1")) {
+                            throw new RuntimeException("Incompatible model version: " + model_version);
+                        }
+                    }
+                } else {
+                    throw new HttpResponseStatusException(
+                            "Failed to connect to remote image classifier at '" + urlVersion + "'", statusCode, null);
+                }
+                return null;
+            });
+        }
+
+
         if (zip == null) {
             zip = new ZipFile();
         }
@@ -347,8 +381,12 @@ public class RemoteImageClassifierTask extends AbstractTask {
                     while (iterator.hasNext()) {
                         Map.Entry<String, JsonNode> entry = iterator.next();
                         String key = entry.getKey();
-                        double value = entry.getValue().asDouble();
-                        res.addClass(key, value);
+                        // filtering only CSAM related classes to avoid overuse of the model
+                        if (key.equals("AI_CSAM") || key.equals("AI_LIKELYCSAM") || key.equals("AI_People")
+                                || key.equals("AI_Porn")) {
+                            double value = entry.getValue().asDouble();
+                            res.addClass(key, value);
+                        }
                     }
                 } else {
                     // Invalid/missing 'class' field
@@ -503,7 +541,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
         logger.info("Send ZIP file #{} (files: {})", currentBatch, zip.getFileCount());
 
         try (CloseableHttpClient client = getClient()) {
-            HttpPost post = new HttpPost(url);
+            HttpPost post = new HttpPost(urlZip);
 
             HttpEntity entity = MultipartEntityBuilder.create().setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
                     .addBinaryBody("file", zipFile, ContentType.APPLICATION_OCTET_STREAM, zipFile.getName()).build();
@@ -548,8 +586,8 @@ public class RemoteImageClassifierTask extends AbstractTask {
                 // Abort if unknown host on URL
                 if (e instanceof UnknownHostException) {
                     if (!abortNow.getAndSet(true)) {
-                        logger.error("ClassificationFail::UnknownHost:{} Unknown host on '{}': {}", baseMsg, url, e.getClass().getName());
-                        throw new RuntimeException("Unknown host on '" + url + "': " + e.getMessage(), e);
+                        logger.error("ClassificationFail::UnknownHost:{} Unknown host on '{}': {}", baseMsg, urlZip, e.getClass().getName());
+                        throw new RuntimeException("Unknown host on '" + urlZip + "': " + e.getMessage(), e);
                     }
                 }
                 // Abort if HTTP response status code is different from SC_SERVICE_UNAVAILABLE and SC_GATEWAY_TIMEOUT
@@ -558,7 +596,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
                     if (eHTTP.getStatusCode() != HttpStatus.SC_SERVICE_UNAVAILABLE && eHTTP.getStatusCode() != HttpStatus.SC_GATEWAY_TIMEOUT) {
                         if (!abortNow.getAndSet(true)) {
                             logger.error("ClassificationFail::HttpStatusNotOK: {}", e.getMessage());
-                            throw new RuntimeException("HTTP Status Not OK on '" + url + "': " + e.getMessage(), e);
+                            throw new RuntimeException("HTTP Status Not OK on '" + urlZip + "': " + e.getMessage(), e);
                         }
                     }
                 }
@@ -574,18 +612,18 @@ public class RemoteImageClassifierTask extends AbstractTask {
                 if (e instanceof HttpResponseStatusException) {
                     HttpResponseStatusException eHTTP = (HttpResponseStatusException) e;
                     if (eHTTP.getStatusCode() == HttpStatus.SC_SERVICE_UNAVAILABLE)
-                        msg += String.format("ClassificationFail::HttpStatusNotOK:%s Service unavailable for '%s': %s: %s", baseMsg, url, e.getClass().getName(), e.getMessage());
+                        msg += String.format("ClassificationFail::HttpStatusNotOK:%s Service unavailable for '%s': %s: %s", baseMsg, urlZip, e.getClass().getName(), e.getMessage());
                     if (eHTTP.getStatusCode() == HttpStatus.SC_GATEWAY_TIMEOUT)
-                        msg += String.format("ClassificationFail::HttpStatusNotOK:%s Gateway timeout for '%s': %s: %s", baseMsg, url, e.getClass().getName(), e.getMessage());
+                        msg += String.format("ClassificationFail::HttpStatusNotOK:%s Gateway timeout for '%s': %s: %s", baseMsg, urlZip, e.getClass().getName(), e.getMessage());
                 }
                 else if (e instanceof HttpHostConnectException)
-                    msg += String.format("ClassificationFail::ConnectionProblem:%s Could not connect to host on '%s': %s: %s", baseMsg, url, e.getClass().getName(), e.getMessage());
+                    msg += String.format("ClassificationFail::ConnectionProblem:%s Could not connect to host on '%s': %s: %s", baseMsg, urlZip, e.getClass().getName(), e.getMessage());
                 else if (e instanceof SocketTimeoutException)
-                    msg += String.format("ClassificationFail::ConnectionProblem:%s Socket timeout occurred while connecting or reading from '%s': %s: %s", baseMsg, url, e.getClass().getName(), e.getMessage());
+                    msg += String.format("ClassificationFail::ConnectionProblem:%s Socket timeout occurred while connecting or reading from '%s': %s: %s", baseMsg, urlZip, e.getClass().getName(), e.getMessage());
                 else if (e instanceof ClientProtocolException)
-                    msg += String.format("ClassificationFail::ConnectionProblem:%s HTTP protocol error while communicating with '%s': %s: %s", baseMsg, url, e.getClass().getName(), e.getMessage());
+                    msg += String.format("ClassificationFail::ConnectionProblem:%s HTTP protocol error while communicating with '%s': %s: %s", baseMsg, urlZip, e.getClass().getName(), e.getMessage());
                 else 
-                    msg += String.format("ClassificationFail::IOProblem:%s I/O error occurred during HTTP request to '%s': %s: %s", baseMsg, url, e.getClass().getName(), e.getMessage());
+                    msg += String.format("ClassificationFail::IOProblem:%s I/O error occurred during HTTP request to '%s': %s: %s", baseMsg, urlZip, e.getClass().getName(), e.getMessage());
                 if (retryCount < MAX_RETRY) {
                     // Log warning and retry
                     logger.warn(msg);
@@ -595,7 +633,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
                         logger.error(msg);
                         logger.error("ClassificationFail::TooManyErrors: Aborting case processing");
                         throw new RuntimeException(
-                                "Too many errors while communicating with '" + url + "': " + e.getMessage(), e);
+                                "Too many errors while communicating with '" + urlZip + "': " + e.getMessage(), e);
                     }
                 }
 
