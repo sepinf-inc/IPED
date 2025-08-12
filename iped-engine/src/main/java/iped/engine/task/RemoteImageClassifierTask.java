@@ -383,7 +383,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
                         String key = entry.getKey();
                         // filtering only CSAM related classes to avoid overuse of the model
                         if (key.equals("AI_CSAM") || key.equals("AI_LIKELYCSAM") || key.equals("AI_People")
-                                || key.equals("AI_Porn")) {
+                                || key.equals("AI_Porn") || key.startsWith("AI_Drawing")) {
                             double value = entry.getValue().asDouble();
                             res.addClass(key, value);
                         }
