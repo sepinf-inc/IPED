@@ -326,6 +326,7 @@
                 <param name="minChatSplitSize" type="int">6000000</param>
                 <param name="extractMessages" type="bool">false</param>
                 <param name="ignoreEmptyChats" type="bool">true</param>
+                <param name="extractActivityLogs" type="bool">false</param>
             </params>
         </parser>
         <parser class="iped.parsers.ufed.UfedMessageParser">

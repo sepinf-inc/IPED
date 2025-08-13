@@ -27,9 +27,11 @@ import org.xml.sax.SAXException;
 import iped.data.IItemReader;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.ufed.handler.BaseModelHandler;
+import iped.parsers.ufed.handler.ChatActivityHandler;
 import iped.parsers.ufed.handler.ChatHandler;
 import iped.parsers.ufed.handler.InstantMessageHandler;
 import iped.parsers.ufed.model.Chat;
+import iped.parsers.ufed.model.ChatActivity;
 import iped.parsers.ufed.model.InstantMessage;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
@@ -56,6 +58,7 @@ public class UfedChatParser extends AbstractParser {
                     "instagram", MediaType.application("x-ufed-chat-preview-instagram"));
 
     private boolean extractMessages = true;
+    private boolean extractActivityLogs = true;
     private boolean ignoreEmptyChats = false;
     private int minChatSplitSize = 6000000;
 
@@ -81,6 +84,11 @@ public class UfedChatParser extends AbstractParser {
     @Field
     public void setExtractMessages(boolean extractMessages) {
         this.extractMessages = extractMessages;
+    }
+
+    @Field
+    public void setExtractActivityLogs(boolean extractActivityLogs) {
+        this.extractActivityLogs = extractActivityLogs;
     }
 
     @Field
@@ -178,6 +186,9 @@ public class UfedChatParser extends AbstractParser {
                         if (extractMessages) {
                             extractMessages(subList, virtualId, handler, extractor, chat);
                         }
+                        if (extractActivityLogs) {
+                            extractActivityLog(chat, handler, extractor);
+                        }
                     }
                 }
             }
@@ -204,6 +215,22 @@ public class UfedChatParser extends AbstractParser {
             TikaInputStream messageInput = TikaInputStream.get(new EmptyInputStream());
             messageInput.setOpenContainer(message);
             extractor.parseEmbedded(messageInput, handler, messageMeta, false);
+        }
+    }
+
+    private void extractActivityLog(Chat chat, ContentHandler handler, EmbeddedDocumentExtractor extractor)
+            throws SAXException, IOException {
+
+        for (ChatActivity activity : chat.getActivityLog()) {
+
+            ChatActivityHandler activityHandler = new ChatActivityHandler(activity, chat.getSource());
+
+            Metadata activityMeta = activityHandler.createMetadata();
+            activityMeta.set(TikaCoreProperties.TITLE, activityHandler.getTitle());
+            activityMeta.set(StandardParser.INDEXER_CONTENT_TYPE, activity.getMediaType().toString());
+            activityMeta.set(BasicProps.LENGTH, "");
+
+            extractor.parseEmbedded(new EmptyInputStream(), handler, activityMeta, false);
         }
     }
 

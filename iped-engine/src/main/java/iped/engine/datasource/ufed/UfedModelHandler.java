@@ -255,6 +255,8 @@ public class UfedModelHandler extends DefaultHandler {
                 chat.getMessages().add((InstantMessage) child);
             } else if ("Photos".equals(fieldName) && child instanceof ContactPhoto) {
                 chat.getPhotos().add((ContactPhoto) child);
+            } else if ("ActivityLog".equals(fieldName) && child instanceof ChatActivity) {
+                chat.getActivityLog().add((ChatActivity) child);
             } else {
                 addOtherModelField(parent, fieldName, child);
             }

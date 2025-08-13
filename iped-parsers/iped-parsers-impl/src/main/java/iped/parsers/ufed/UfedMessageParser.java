@@ -194,7 +194,7 @@ public class UfedMessageParser extends AbstractParser {
         ChatActivity activity = message.getActivityLog();
         if (activity != null) {
 
-            ChatActivityHandler activityHandler = new ChatActivityHandler(activity);
+            ChatActivityHandler activityHandler = new ChatActivityHandler(activity, message.getSource());
 
             Metadata activityMeta = activityHandler.createMetadata();
             activityMeta.set(TikaCoreProperties.TITLE, activityHandler.getTitle());

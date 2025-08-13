@@ -36,6 +36,8 @@ public class Chat extends BaseModel {
     private transient final ConcurrentHashMap<String, InstantMessage> messagesByIdentifier = new ConcurrentHashMap<>();
     private transient final ConcurrentHashMap<String, InstantMessage> messagesByUfedId = new ConcurrentHashMap<>();
 
+    private List<ChatActivity> activityLog = new ArrayList<>();
+
     private transient Optional<ReferencedAccountable> referencedAccount = Optional.empty();
 
     public Chat() {
@@ -71,6 +73,10 @@ public class Chat extends BaseModel {
 
     public List<InstantMessage> getMessages() {
         return messages;
+    }
+
+    public List<ChatActivity> getActivityLog() {
+        return activityLog;
     }
 
     public void indexMessages() {
