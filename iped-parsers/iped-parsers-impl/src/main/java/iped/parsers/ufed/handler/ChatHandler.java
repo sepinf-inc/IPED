@@ -179,10 +179,6 @@ public class ChatHandler extends BaseModelHandler<Chat> {
                     sb.append(' ');
                     break;
 
-                case Chat.TYPE_UNKNOWN:
-                    sb.append(Messages.getString("UfedChatParser.Unknown")).append(' ');
-                    break;
-
                 default:
                     sb.append(chatType).append(' ');
                     break;
