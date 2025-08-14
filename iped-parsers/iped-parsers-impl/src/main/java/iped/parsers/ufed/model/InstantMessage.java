@@ -270,7 +270,7 @@ public class InstantMessage extends BaseModel implements Comparable<InstantMessa
         int ret = 0;
 
         Date thisTime = getTimeStamp();
-        Date otherTime = getTimeStamp();
+        Date otherTime = o.getTimeStamp();
         if (thisTime != null && otherTime != null) {
             ret = thisTime.compareTo(otherTime);
         }
