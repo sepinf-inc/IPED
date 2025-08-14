@@ -156,7 +156,12 @@ public class ChatHandler extends BaseModelHandler<Chat> {
 
         StringBuilder sb = new StringBuilder();
         if (outputPrefix) {
-            sb.append(source).append(' ');
+            if (StringUtils.isNotBlank(source))
+                sb.append(source).append(' ');
+            else if (StringUtils.isNotBlank(model.getServiceIdentifier()))
+                sb.append(model.getServiceIdentifier()).append(' ');
+            else
+                sb.append("App:" + Messages.getString("UfedChatParser.Unknown")).append(' ');
 
             if (StringUtils.isNotBlank(chatType)) {
                 switch (chatType) {
