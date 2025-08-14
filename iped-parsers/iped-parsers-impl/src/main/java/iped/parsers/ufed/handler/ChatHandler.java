@@ -158,30 +158,33 @@ public class ChatHandler extends BaseModelHandler<Chat> {
         if (outputPrefix) {
             sb.append(source).append(' ');
 
-            if (chatType != null) {
+            if (StringUtils.isNotBlank(chatType)) {
                 switch (chatType) {
-                case Chat.TYPE_ONEONONE:
-                    sb.append("Chat").append(' ');
-                    break;
+                    case Chat.TYPE_ONEONONE:
+                        sb.append("Chat").append(' ');
+                        break;
 
-                case Chat.TYPE_GROUP:
-                    sb.append(Messages.getString("UfedChatParser.Group")).append(' ');
-                    break;
+                    case Chat.TYPE_GROUP:
+                        sb.append(Messages.getString("UfedChatParser.Group")).append(' ');
+                        break;
 
-                case Chat.TYPE_BROADCAST:
-                    if (model.getParticipants().size() == 1 && StringUtils.containsAnyIgnoreCase(source, Chat.SOURCE_TELEGRAM, Chat.SOURCE_WHATSAPP)) {
-                        sb.append(Messages.getString("UfedChatParser.Status"));
-                    } else if (Chat.SOURCE_TELEGRAM.equalsIgnoreCase(source)) {
-                        sb.append(Messages.getString("UfedChatParser.Channel"));
-                    } else {
-                        sb.append(Messages.getString("UfedChatParser.Broadcast"));
-                    }
-                    sb.append(' ');
-                    break;
+                    case Chat.TYPE_BROADCAST:
+                        if (model.getParticipants().size() == 1 && StringUtils.containsAnyIgnoreCase(source, Chat.SOURCE_TELEGRAM, Chat.SOURCE_WHATSAPP)) {
+                            sb.append(Messages.getString("UfedChatParser.Status"));
+                        } else if (Chat.SOURCE_TELEGRAM.equalsIgnoreCase(source)) {
+                            sb.append(Messages.getString("UfedChatParser.Channel"));
+                        } else {
+                            sb.append(Messages.getString("UfedChatParser.Broadcast"));
+                        }
+                        sb.append(' ');
+                        break;
 
-                default:
-                    sb.append(chatType).append(' ');
-                    break;
+                    case Chat.TYPE_UNKNOWN:
+                        break;
+
+                    default:
+                        sb.append(chatType).append(' ');
+                        break;
                 }
             }
             sb.append("- ");
