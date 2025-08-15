@@ -1,6 +1,7 @@
 package iped.parsers.ufed.model;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -267,22 +268,9 @@ public class InstantMessage extends BaseModel implements Comparable<InstantMessa
     @Override
     public int compareTo(InstantMessage o) {
 
-        int ret = 0;
+        return Comparator.comparing(InstantMessage::getTimeStamp, Comparator.nullsLast(Date::compareTo))
+                         .thenComparing(InstantMessage::getSourceIndex)
+                         .compare(this, o);
 
-        Date thisTime = getTimeStamp();
-        Date otherTime = o.getTimeStamp();
-        if (thisTime != null && otherTime != null) {
-            ret = thisTime.compareTo(otherTime);
-        }
-
-        if (ret == 0) {
-            int thisIndex = getSourceIndex();
-            int otherIndex = o.getSourceIndex();
-            if (thisIndex >= 0 && otherIndex >= 0) {
-                ret = Integer.compare(thisIndex, otherIndex);
-            }
-        }
-
-        return ret;
     }
 }
