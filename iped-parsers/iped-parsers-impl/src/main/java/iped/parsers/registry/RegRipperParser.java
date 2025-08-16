@@ -1,10 +1,12 @@
 package iped.parsers.registry;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
@@ -13,16 +15,22 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import org.apache.commons.lang.StringUtils;
+import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
+import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
@@ -34,17 +42,20 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import com.google.common.io.LineReader;
+
 import iped.data.ICaseData;
 import iped.parsers.registry.model.RegistryFileException;
 import iped.parsers.standard.RawStringParser;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.ItemInfo;
+import iped.parsers.util.MetadataUtil;
 import iped.properties.ExtraProperties;
+import iped.utils.DateUtil;
 import iped.utils.IOUtil;
 import iped.utils.SimpleHTMLEncoder;
 
 public class RegRipperParser extends AbstractParser {
-
     /**
      * 
      */
@@ -66,7 +77,16 @@ public class RegRipperParser extends AbstractParser {
     private RawStringParser rawParser = new RawStringParser();
 
     public static final String TOOL_PATH_PROP = TOOL_NAME + ".path"; //$NON-NLS-1$
+
+    private static final String WINREG_PREFIX = "WinReg:";
+
     private String TOOL_PATH = System.getProperty(TOOL_PATH_PROP, ""); //$NON-NLS-1$
+
+    private boolean extractTimestampViaTLNPlugins = false;
+    
+    ArrayList<String> fileListPlugins = new ArrayList<String>(Arrays.asList("arpcache", "bam", "appcompatcache", "shimcache", "jumplistdata", "appcompatflags"));
+
+    private boolean extractTimestamps = true;
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -113,6 +133,11 @@ public class RegRipperParser extends AbstractParser {
         return SUPPORTED_TYPES;
     }
 
+    @Field
+    public void setExtractTimestamps(boolean extractTimestamps) {
+        this.extractTimestamps = extractTimestamps;
+    }
+
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
@@ -142,6 +167,12 @@ public class RegRipperParser extends AbstractParser {
             command.addAll(Arrays.asList("-a", "-r", tempFile.getAbsolutePath()));
             String reportName = filename + FULL_REPORT_SUFFIX;
             runCmdAndCreateReport(command, reportName, xhtml, extractor, tmp, metadata, context);
+
+            if(extractTimestampViaTLNPlugins && extractTimestamps) {
+                command = new ArrayList<>(Arrays.asList(cmd));
+                command.addAll(Arrays.asList("-aT", "-r", tempFile.getAbsolutePath()));
+                runCmdAndExtractTimeline(command, reportName, xhtml, extractor, tmp, metadata, context);
+            }
 
             // run specific profiles for each hive
             String regType = detectHive(tempFile);
@@ -206,22 +237,23 @@ public class RegRipperParser extends AbstractParser {
         }
     }
 
-    private void runCmdAndCreateReport(List<String> command, String reportName, ContentHandler handler, EmbeddedDocumentExtractor extractor, TemporaryResources tmp, Metadata metadata, ParseContext context) throws IOException, TikaException, SAXException {
+
+    private File runCmd(List<String> command, String reportName, ContentHandler handler,
+            EmbeddedDocumentExtractor extractor, TemporaryResources tmp, Metadata metadata, ParseContext context) throws IOException, TikaException {
         ProcessBuilder pb = new ProcessBuilder(command);
         if (!TOOL_PATH.isEmpty()) {
             pb.directory(new File(TOOL_PATH));
         }
         Process p = pb.start();
 
-        readStream(p.getErrorStream(), null, null);
+        readStream(p.getErrorStream(), null, null, null, null, null);
 
         File outFile = tmp.createTemporaryFile();
         OutputStream os = new FileOutputStream(outFile);
         try {
             ContainerVolatile msg = new ContainerVolatile();
-            Thread thread = readStream(p.getInputStream(), os, msg);
+            Thread thread = readStream(p.getInputStream(), os, msg, metadata, handler, extractor, !extractTimestampViaTLNPlugins && !command.contains("-f"));
             waitFor(p, handler, msg);
-            // p.waitFor();
             thread.join();
 
         } catch (InterruptedException e) {
@@ -231,34 +263,71 @@ public class RegRipperParser extends AbstractParser {
         } finally {
             os.close();
         }
+        
+        return outFile;
+    }
 
+    private void runCmdAndExtractTimeline(ArrayList<String> command, String reportName, XHTMLContentHandler handler,
+            EmbeddedDocumentExtractor extractor, TemporaryResources tmp, Metadata metadata, ParseContext context) throws IOException, TikaException {
+        ProcessBuilder pb = new ProcessBuilder(command);
+        if (!TOOL_PATH.isEmpty()) {
+            pb.directory(new File(TOOL_PATH));
+        }
+        Process p = pb.start();
+
+        try {
+            ContainerVolatile msg = new ContainerVolatile();
+            Thread thread = extractTimestampsFromStream(p.getInputStream(), handler, extractor, msg, metadata);
+            waitFor(p, handler, msg);
+            thread.join();
+
+        } catch (InterruptedException e) {
+            p.destroyForcibly();
+            throw new TikaException(this.getClass().getSimpleName() + " interrupted", e); //$NON-NLS-1$
+
+        } 
+    }
+
+    private void runCmdAndCreateReport(List<String> command, String reportName, ContentHandler handler, EmbeddedDocumentExtractor extractor, TemporaryResources tmp, Metadata metadata, ParseContext context) throws IOException, TikaException, SAXException {
+        File outFile = runCmd(command, reportName, handler, extractor, tmp, metadata, context);
+        
+        Metadata reportMetadata = new Metadata();
+        File htmlFile = createReport(reportName, outFile, tmp, handler, context, extractor, reportMetadata);
+        
+        if(htmlFile!=null) {
+            if (reportName.contains("SYSTEM_OS")) {
+                String nome = metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY).toUpperCase();
+                ItemInfo itemInfo = context.get(ItemInfo.class);
+                String caminho = itemInfo.getPath().toLowerCase().replace("\\", "/");
+                try {
+                    extractCaseTimezone(nome, caminho, htmlFile, context);
+                } catch (RegistryFileException | IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        
+        
+
+    }
+
+    private File createReport(String reportName, File outFile, TemporaryResources tmp, ContentHandler handler, ParseContext context, EmbeddedDocumentExtractor extractor, Metadata reportMetadata) throws IOException, SAXException {
         File htmlFile = getHtml(outFile, tmp);
         if (htmlFile == null) {
             // ignores empty reports
-            return;
+            return null;
         }
-        
-        Metadata reportMetadata = new Metadata();
+
         reportMetadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, reportName);
         reportMetadata.set(StandardParser.INDEXER_CONTENT_TYPE, "application/x-windows-registry-report"); //$NON-NLS-1$
         reportMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
-
-        if (reportName.contains("SYSTEM_OS")) {
-            String nome = metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY).toUpperCase();
-            ItemInfo itemInfo = context.get(ItemInfo.class);
-            String caminho = itemInfo.getPath().toLowerCase().replace("\\", "/");
-            try {
-                extractCaseTimezone(nome, caminho, htmlFile, context);
-            } catch (RegistryFileException | IOException e) {
-                e.printStackTrace();
-            }
-        }
 
         if (extractor.shouldParseEmbedded(reportMetadata)) {
             try (InputStream is = new FileInputStream(htmlFile)) {
                 extractor.parseEmbedded(is, handler, reportMetadata, true);
             }
         }
+        return htmlFile;
     }
 
     private String detectHive(File file) throws IOException {
@@ -295,17 +364,315 @@ public class RegRipperParser extends AbstractParser {
 
         return html;
     }
+    
+    class Plugin{
+        StringBuffer name = new StringBuffer();
+        StringBuffer description = new StringBuffer();
+    }
+    
+    
+    public String extractTimeMetadata(Metadata metadata, byte[] out, String remain, ContentHandler handler, EmbeddedDocumentExtractor extractor, Plugin lastPlugin) {
+        try {
+            int virtualid=100000;
+            Pattern p = DateUtil.getDateStrPattern();
+            String outStr = remain + new String(out, StandardCharsets.ISO_8859_1);
+            String[] buff = outStr.split("\n");
+            String value = null;
+            int i = 0;
+            int lastMatch=-1;
+            for (; i < buff.length - 1; i++) {
+                value = buff[i];
+                int len = value.trim().length();
+                if(len>0 && value.trim().equals("-".repeat(len))) {
+                    lastPlugin.name.replace(0, lastPlugin.name.length(), "");
+                    lastPlugin.description.replace(0, lastPlugin.description.length(), "");
+                    
+                    continue;
+                }
+                if(lastPlugin.name.length()==0) {
+                    int si=value.indexOf(" ");
+                    if(si==-1) {
+                        lastPlugin.name.append(value);
+                    }else {
+                        int start=0;
+                        if(value.startsWith("Launching")) {
+                            start = si+1;
+                            si=value.indexOf(" ", start);
+                        }
+                        lastPlugin.name.append(value.substring(start,si));
+                    }
+                    if(lastPlugin.name.toString().startsWith("xplorer_cu")) {
+                        System.out.println();
+                    }
+                    continue;
+                }
+                if(lastPlugin.description.length()==0) {
+                    if(value.equals("")) {
+                        lastPlugin.description.append(" ");
+                    }else {
+                        lastPlugin.description.append(value);
+                    }
+                    continue;
+                }
+                String msofficeapp = isMSOfficePlugin(value, lastPlugin);
+                if(msofficeapp!=null) {
+                    lastPlugin.name.replace(0, lastPlugin.name.length(), "");
+                    lastPlugin.description.replace(0, lastPlugin.description.length(), "");
+                    int ind = value.indexOf("-");
+                    if(ind != -1) {
+                        lastPlugin.name.append("msoffice"+msofficeapp+value.substring(ind+1).trim());
+                        lastPlugin.description.append(value);
+                    }
+                }
+                Matcher m = p.matcher(value);
+                lastMatch=-1;
+                while(m.find()) {
+                    String dateStr = value.substring(m.start(), m.end());
+                    if(Character.isAlphabetic(dateStr.charAt(0))) {
+                        dateStr = toIso(dateStr);
+                    }
+                    if(dateStr.length()<=19) {//if there is no timezone info considers UTC
+                        dateStr+="Z";
+                    }
+                    if(!dateStr.startsWith("1970")){//if year is 1970, probably the date value contains only a time duration, not a timestamp
+                        lastMatch=m.end();
 
-    private Thread readStream(final InputStream stream, final OutputStream os, final ContainerVolatile msg) {
+                        String fieldName = extractFieldName(lastPlugin, m, value);
+                        String content=lastPlugin.description.toString()+"\n"+value;
+                        if(fileListPlugins.contains(lastPlugin.name.toString())) {
+                            virtualid = tlnParser(i, WINREG_PREFIX+lastPlugin.name.toString(), dateStr, content, handler, metadata, extractor, virtualid);
+                        }else {
+                            fieldName = fieldName.replaceAll(" ", "");
+
+                            virtualid = tlnParser(i, WINREG_PREFIX+lastPlugin.name.toString()+":"+fieldName, dateStr, content, handler, metadata, extractor, virtualid);
+                        }
+                    }
+                }
+            }
+            if(buff.length>0) {
+                value = buff[buff.length-1];
+                if(outStr.endsWith("\n")) {
+                    value+="\n";
+                }
+            }
+            return value;
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+        return "";
+    }
+
+    private String isMSOfficePlugin(String value, Plugin lastPlugin) {
+        String name = lastPlugin.name.toString();
+        if(!name.startsWith("msoffice")) {
+            return null;
+        }
+        if(value.startsWith("Word")) {
+            return "Word";
+        }
+        if(value.startsWith("Excel")) {
+            return "Excel";
+        }
+        if(value.startsWith("PowerPoint")) {
+            return "PowerPoint";
+        }
+        if(value.startsWith("Access")) {
+            return "Access";
+        }
+        return null;
+    }
+
+    static String[] shellBagsFieldNames = {"Modified","Accessed","Created"};
+
+    private String extractFieldName(Plugin lastPlugin, Matcher m, String value) {
+        String fieldName="";
+
+        if(lastPlugin.name.toString().startsWith("msoffice")) {
+            return "EntryModified";
+        }else if(lastPlugin.name.toString().equals("cached")) {
+            return "ShellExtensionFirstLoad";
+        }else if(lastPlugin.name.toString().equals("typedurlstime")) {
+            return "UrlTyped";
+        }if(lastPlugin.name.toString().equals("teamviewer")) {
+            return "LastUpdateCheck";
+        }else if(lastPlugin.name.toString().startsWith("shellbags") || lastPlugin.name.toString().equals("itempos")) {
+            int count = StringUtils.countMatches(value.substring(0,m.start()), "|")-1;
+            if(count>=shellBagsFieldNames.length) {
+                return "unknown";
+            }
+            return shellBagsFieldNames[count];
+        }else {
+            String[] fieldNames = value.substring(0,m.start()).split(":");
+
+            if(fieldNames[fieldNames.length-1].trim().equals("")) {//if the last subitem of split by ':' is blank
+                if(fieldNames.length>=2) {
+                    fieldName=fieldNames[fieldNames.length-2];//gets the second last
+                }
+            }else {
+                fieldName=fieldNames[fieldNames.length-1];
+            }
+            fieldName=fieldName.trim();
+            if(fieldName.length()==0) {
+                //tries to extract field name from end of line
+                if(value.length()>m.end()+3) {
+                    fieldNames = value.substring(m.end()+1).split(":");
+                    if(fieldNames.length>0) {
+                        fieldName = fieldNames[0];
+                    }
+                }
+            }
+        }
+
+        return fieldName;
+    }
+
+    private String toIso(String dateStr) {
+        String month = dateStr.substring(4,7);
+        String monthN=null;
+        if(month.charAt(0)=='J') {
+            if(month.charAt(1)=='a') {
+                monthN="01";            
+            }
+            if(month.charAt(2)=='n') {
+                monthN="06";            
+            }
+            if(month.charAt(2)=='l') {
+                monthN="07";            
+            }
+        }
+        if(month.charAt(0)=='F') {
+            monthN="02";            
+        }
+        if(month.charAt(0)=='M') {
+            if(month.charAt(2)=='r') {
+                monthN="03";            
+            }
+            if(month.charAt(2)=='y') {
+                monthN="05";            
+            }
+        }
+        if(month.charAt(0)=='A') {
+            if(month.charAt(2)=='g') {
+                monthN="06";
+            }
+            if(month.charAt(1)=='p') {
+                monthN="04";
+            }
+        }
+        if(month.charAt(0)=='S') {
+            monthN="09";            
+        }
+        if(month.charAt(0)=='O') {
+            monthN="10";            
+        }
+        if(month.charAt(0)=='N') {
+            monthN="11";            
+        }
+        if(month.charAt(0)=='D') {
+            monthN="12";            
+        }
+        String day = dateStr.substring(7,10).trim();
+        if(day.length()==1) {
+            day = "0"+day;
+        }
+        String hour = dateStr.substring(11,19);
+        String year = dateStr.substring(20,24);
+        return year+"-"+monthN+"-"+day+" "+hour;
+    }
+
+    private int tlnParser(int parentId, String fieldName, String dateStr, String lineContent, ContentHandler handler, Metadata metadata, EmbeddedDocumentExtractor extractor, int virtualId) throws TikaException {
+        if (extractor.shouldParseEmbedded(metadata)) {
+            try {
+                String titletimeEvent = fieldName.trim();
+                if(titletimeEvent.endsWith("=")) {
+                    titletimeEvent = titletimeEvent.substring(0,titletimeEvent.length()-1);
+                }
+                String fieldTimeEvent = removesUnwantedChars(fieldName);
+                
+                ByteArrayInputStream featureStream = new ByteArrayInputStream(lineContent.getBytes());
+
+                Metadata kmeta = new Metadata();
+                kmeta.set(HttpHeaders.CONTENT_TYPE, "text/plain");
+                kmeta.set(TikaCoreProperties.TITLE, titletimeEvent);
+                MetadataUtil.setMetadataType(fieldTimeEvent, Date.class);
+                kmeta.set(fieldTimeEvent, dateStr);
+                int id = ++virtualId;
+                kmeta.set(ExtraProperties.ITEM_VIRTUAL_ID, Integer.toString(id));
+                kmeta.set(ExtraProperties.PARENT_VIRTUAL_ID, Integer.toString(parentId));
+                kmeta.set(StandardParser.INDEXER_CONTENT_TYPE, "application/x-windows-registry-report-timestamp"); //$NON-NLS-1$
+                
+                extractor.parseEmbedded(featureStream, handler, kmeta, false);
+
+                return id;
+
+            } catch (Exception e) {
+                throw new TikaException(e.getMessage(), e);
+            }
+        }
+        return -1;
+    }
+    
+    private String removesUnwantedChars(String fieldName) {
+        return  fieldName.trim().replace(" ", "").replace(".", "").replace("(", "_").replace(")", "").replace("=", "");
+    }
+
+    private int tlnParser(int parentId, String tlnLine, ContentHandler handler, Metadata metadata, EmbeddedDocumentExtractor extractor, int virtualId) throws TikaException {
+        if (extractor.shouldParseEmbedded(metadata)) {
+            try {
+                String[] fields = tlnLine.split("\\|");
+                String dateStr = fields[0];
+                dateStr = DateUtil.dateToString(new Date(Long.parseLong(dateStr)*1000));
+                String titletimeEvent = fields[fields.length-1].split("-")[0];
+                String fieldTimeEvent = WINREG_PREFIX+removesUnwantedChars(titletimeEvent);
+
+                ByteArrayInputStream featureStream = new ByteArrayInputStream(tlnLine.getBytes());
+
+                Metadata kmeta = new Metadata();
+                kmeta.set(HttpHeaders.CONTENT_TYPE, "text/plain");
+                kmeta.set(TikaCoreProperties.TITLE, titletimeEvent);
+                kmeta.set(fieldTimeEvent, dateStr);
+                int id = ++virtualId;
+                kmeta.set(ExtraProperties.ITEM_VIRTUAL_ID, Integer.toString(id));
+                kmeta.set(ExtraProperties.PARENT_VIRTUAL_ID, Integer.toString(parentId));
+                kmeta.set(StandardParser.INDEXER_CONTENT_TYPE, "application/x-windows-registry-report-timestamp"); //$NON-NLS-1$
+
+                extractor.parseEmbedded(featureStream, handler, kmeta, false);
+
+                return id;
+
+            } catch (Exception e) {
+                throw new TikaException(e.getMessage(), e);
+            }
+        }
+        return -1;
+    }
+    
+
+    private Thread readStream(final InputStream stream, final OutputStream os, final ContainerVolatile msg, Metadata metadata,ContentHandler handler, EmbeddedDocumentExtractor extractor) {
+        return readStream(stream, os, msg, metadata, handler, extractor, !extractTimestampViaTLNPlugins );
+    }
+
+    private Thread readStream(final InputStream stream, final OutputStream os, final ContainerVolatile msg, Metadata metadata,ContentHandler handler, EmbeddedDocumentExtractor extractor, boolean extractTimestampParam) {
+        final boolean extractTimestamp = extractTimestampParam && extractTimestamps;
         Thread t = new Thread() {
             @Override
             public void run() {
                 byte[] out = new byte[1024];
+                Plugin lastPlugin = new Plugin();
                 int read = 0;
+                String remain="";
                 try {
                     while (read != -1) {
-                        if (os != null)
+                        if (os != null) {
                             os.write(out, 0, read);
+                            if(extractTimestamp && read>0) {
+                                if(read==1024) {
+                                    remain = extractTimeMetadata(metadata, out, remain, handler, extractor,lastPlugin);
+                                }else {
+                                    remain = extractTimeMetadata(metadata, Arrays.copyOfRange(out, 0, read-1), remain, handler, extractor,lastPlugin);
+                                }
+                            }
+                        }
                         if (msg != null)
                             msg.progress = true;
                         read = stream.read(out);
@@ -313,6 +680,48 @@ public class RegRipperParser extends AbstractParser {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+                if(extractTimestamp && !remain.equals("\n")) {//last line processing
+                    remain+="\n\n";
+                    out = new byte[0];
+                    remain = extractTimeMetadata(metadata, out, remain, handler, extractor,lastPlugin);
+                }
+           }
+        };
+        t.start();
+
+        return t;
+    }
+
+    private Thread extractTimestampsFromStream(final InputStream stream, ContentHandler handler, EmbeddedDocumentExtractor extractor, final ContainerVolatile msg, Metadata metadata) {
+        Thread t = new Thread() {
+            @Override
+            public void run() {
+                LineReader lr = new LineReader(new InputStreamReader(stream));
+                String line;
+                int virtualId=0;
+                try {
+                    line = lr.readLine();
+                    LINELOOP:while(line!=null) {
+                        int i=0;
+                        if(line.length()<8) {
+                            line = lr.readLine();
+                            continue;
+                        }
+                        for(i=0; i<8 && i<line.length(); i++) {
+                            if(!Character.isDigit(line.charAt(i))){
+                                line = lr.readLine();
+                                continue LINELOOP;
+                            }
+                        }
+                        virtualId=tlnParser(-1, line, handler, metadata, extractor, virtualId);
+
+                        line = lr.readLine();
+                    }
+                } catch (Exception e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+                System.out.println("timeEvent");
             }
         };
         t.start();
@@ -321,7 +730,6 @@ public class RegRipperParser extends AbstractParser {
     }
 
     private void waitFor(Process p, ContentHandler handler, ContainerVolatile msg) throws InterruptedException {
-
         while (true) {
             try {
                 p.exitValue();
@@ -346,5 +754,4 @@ public class RegRipperParser extends AbstractParser {
     class ContainerVolatile {
         volatile boolean progress = false;
     }
-
 }
