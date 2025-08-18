@@ -439,8 +439,9 @@ public class ReportGenerator {
             out.println(formatTitleAndUrl(attachment, body));
         }
 
-        if (isNotBlank(body) || isNotBlank(message.getSubject())) {
-            boolean hasSubject = isNotBlank(message.getSubject());
+        boolean hasSubject = isNotBlank(message.getSubject());
+        
+        if (isNotBlank(body) || hasSubject) {
             if (hasSubject)
                 out.print(format(message.getSubject()));
             if (isNotBlank(body)) {
