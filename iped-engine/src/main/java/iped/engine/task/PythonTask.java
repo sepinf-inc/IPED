@@ -279,7 +279,7 @@ public class PythonTask extends AbstractTask {
             return;
         }
         try {
-            getJep().invoke(getInstanceMethod("sendToNextTask"), item); //$NON-NLS-1$
+            getJep().invoke(getInstanceMethod("sendToNextTask"), item, this); //$NON-NLS-1$
             
         }catch(JepException e) {
             if (e.toString().contains(" has no attribute 'sendToNextTask'")) {
@@ -312,7 +312,22 @@ public class PythonTask extends AbstractTask {
     public void process(IItem item) throws Exception {
 
         try {
-            getJep().invoke(getInstanceMethod("process"), item); //$NON-NLS-1$
+
+                getJep().invoke(getInstanceMethod("process"), item, this); //$NON-NLS-1$
+
+            }catch(JepException e) {
+                // process function without passing task object
+                // assume that is not using sendToNextTask
+                if (e.toString().contains(" process() takes 2 positional arguments but 3 were given")) {
+                    sendToNextTaskExists = false;
+                } else {
+                    throw e;
+                }
+        }
+        try {
+            
+            if(!sendToNextTaskExists)
+                getJep().invoke(getInstanceMethod("process"), item); //$NON-NLS-1$
 
         } catch (JepException e) {
             LOGGER.warn("Exception from " + getName() + " on " + item.getPath() + ": " + e.toString(), e);
