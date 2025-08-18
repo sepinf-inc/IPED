@@ -10,7 +10,7 @@ import java.util.Arrays;
 public class ImageSimilarity {
     public static final int maxDim = 256;
 
-    public static final int numFeatures = 1044;
+    public static int numFeatures = 1044;
     private static final int maxPixels = maxDim * maxDim;
     private static final int trimTolerance = 16;
     private static final short[] sqrt = new short[1 << 20];
@@ -36,6 +36,10 @@ public class ImageSimilarity {
                 sqrt[i10 | j] = (short) Math.sqrt((i * i + j * j) / 4);
             }
         }
+    }
+
+    public static void setNumFeatures(int num) {
+        numFeatures = num;
     }
 
     public byte[] extractFeatures(BufferedImage img) {
@@ -295,7 +299,7 @@ public class ImageSimilarity {
 
     public static int distance(byte[] a, byte[] b) {
         int distance = 0;
-        for (int i = 4; i < a.length; i++) {
+        for (int i = 0; i < a.length; i++) {
             int d = a[i] - b[i];
             distance += d * d;
         }
@@ -304,7 +308,7 @@ public class ImageSimilarity {
 
     public static int distance(byte[] a, byte[] b, int cut) {
         int distance = 0;
-        for (int i = 4; i < a.length && distance < cut;) {
+        for (int i = 0; i < a.length && distance < cut;) {
             int d = a[i] - b[i++];
             distance += d * d + (d = a[i] - b[i++]) * d + (d = a[i] - b[i++]) * d + (d = a[i] - b[i++]) * d;
         }

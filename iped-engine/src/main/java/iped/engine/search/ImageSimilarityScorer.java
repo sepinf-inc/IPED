@@ -83,7 +83,7 @@ public class ImageSimilarityScorer {
         LeafReader leafReader = ipedCase.getLeafReader();
         int numThreads = Runtime.getRuntime().availableProcessors();
         Thread[] threads = new Thread[numThreads];
-        int evalCut = (int) (100 * refSimilarityFeatures.length / distToScoreMult);
+        int evalCut = Integer.MAX_VALUE;// (int) (100 * refSimilarityFeatures.length / distToScoreMult);
         int itemsPerThread = (len + numThreads - 1) / numThreads;
         for (int k = 0; k < numThreads; k++) {
             int threadIdx = k;
@@ -109,6 +109,7 @@ public class ImageSimilarityScorer {
                             byte[] currSimilarityFeatures = bytesRef.bytes;
                             int distance = ImageSimilarity.distance(refSimilarityFeatures, currSimilarityFeatures,
                                     evalCut);
+                            System.out.println("distance = " + distance);
                             float score = Math.max(0, 100 - distance * distToScoreMult / refSimilarityFeatures.length);
                             if (distance == 0) {
                                 String refHash = refItem.getHash();

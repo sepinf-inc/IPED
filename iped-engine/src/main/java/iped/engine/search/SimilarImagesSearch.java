@@ -17,7 +17,7 @@ public class SimilarImagesSearch {
      * other hand, lower values may discard images that later would be considered
      * good (i.e. close to reference image).
      */
-    private static final int range = 64;
+    private static final int range = 255;
 
     public Query getQueryForSimilarImages(IItem item) {
         byte[] similarityFeatures = (byte[]) item.getExtraAttribute(ImageSimilarityTask.IMAGE_FEATURES);

@@ -20,6 +20,7 @@ import iped.engine.config.EnableTaskProperty;
 import iped.engine.task.AbstractTask;
 import iped.engine.task.HashTask;
 import iped.engine.task.ImageThumbTask;
+import jep.NDArray;
 
 /**
  * Image Similarity task.
@@ -94,6 +95,10 @@ public class ImageSimilarityTask extends AbstractTask {
         }
     }
 
+    private static int maximum = 0;
+    private static int minimum = 0;
+    private static Object lock = new Object();
+
     protected void process(IItem evidence) throws Exception {
         if (!taskEnabled || !isImageType(evidence.getMediaType()) || !evidence.isToAddToCase()
                 || evidence.getHash() == null) {
@@ -105,6 +110,45 @@ public class ImageSimilarityTask extends AbstractTask {
             return;
         }
 
+        Object o = evidence.getExtraAttribute("imageToVector");
+        if (o != null && o instanceof NDArray) {
+            NDArray imgToVec = (NDArray) o;
+            System.out.print("New vector dimension: ");
+            for (int d : imgToVec.getDimensions()) {
+                System.out.print(d + ", ");
+            }
+            System.out.println();
+            
+            byte[] bytes = new byte[((float[]) imgToVec.getData()).length];
+            System.out.print("img2vec features: ");
+            int i = 0;
+            int min = 0, max = 0;
+            for (float f : (float[]) imgToVec.getData()) {
+                bytes[i++] = (byte) Math.round(Math.max(-128, Math.min(f * 15 - 64, 127)));
+                System.out.print(bytes[i - 1] + " ");
+                
+                // Feature range tracking
+                if (bytes[i - 1] < min)
+                    min = bytes[i - 1];
+                if (bytes[i - 1] > max)
+                    max = bytes[i - 1];
+            }
+            System.out.println();
+            synchronized (lock) {
+                if (min < minimum) {
+                    minimum = min;
+                }
+                if (max > maximum) {
+                    maximum = max;
+                }
+            }
+            logger.error("Features Value Range: Min = " + minimum + " Max = " + maximum);
+
+            imageSimilarity.numFeatures = bytes.length;
+            evidence.setExtraAttribute(IMAGE_FEATURES, bytes);
+            evidence.setExtraAttribute("imageToVector", 1);
+        }
+
         try {
             byte[] thumb = evidence.getThumb();
             if (thumb == null) {
@@ -114,7 +158,12 @@ public class ImageSimilarityTask extends AbstractTask {
             BufferedImage img = ImageIO.read(new ByteArrayInputStream(thumb));
             byte[] features = imageSimilarity.extractFeatures(img);
             if (features != null) {
-                evidence.setExtraAttribute(IMAGE_FEATURES, features);
+                // evidence.setExtraAttribute(IMAGE_FEATURES, features);
+                System.out.print("original features: ");
+                for (byte b : features) {
+                    System.out.print(b + " ");
+                }
+                System.out.println();
                 totalProcessed.incrementAndGet();
             } else {
                 totalFailed.incrementAndGet();
