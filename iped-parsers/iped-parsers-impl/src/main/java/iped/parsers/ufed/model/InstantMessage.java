@@ -66,6 +66,7 @@ public class InstantMessage extends BaseModel implements Comparable<InstantMessa
     public String getLabel() { return (String) getField("Label"); }
     public String getSourceApplication() { return (String) getField("SourceApplication"); }
     public boolean isLocationSharing() { return BooleanUtils.toBoolean((Boolean) getField("IsLocationSharing")); }
+    public String getSubject() { return (String) getField("Subject"); }
 
     public MessageStatus getStatus() {
         return MessageStatus.parse((String) getField("Status"));

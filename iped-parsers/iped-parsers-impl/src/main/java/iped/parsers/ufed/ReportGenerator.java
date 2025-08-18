@@ -439,8 +439,15 @@ public class ReportGenerator {
             out.println(formatTitleAndUrl(attachment, body));
         }
 
-        if (isNotBlank(body)) {
-            out.print(format(body));
+        if (isNotBlank(body) || isNotBlank(message.getSubject())) {
+            boolean hasSubject = isNotBlank(message.getSubject());
+            if (hasSubject)
+                out.print(format(message.getSubject()));
+            if (isNotBlank(body)) {
+                if (hasSubject)
+                    out.print("<br/>");
+                out.print(format(body));
+            }
             if (!message.isSystemMessage()) {
                 out.print("<br/>");
             }
