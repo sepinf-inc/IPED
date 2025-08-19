@@ -50,12 +50,18 @@ public class UfedChatParser extends AbstractParser {
 
     public static final MediaType UFED_CHAT_PREVIEW_MIME = MediaType.application("x-ufed-chat-preview");
 
-    public static final Map<String, MediaType> appToMime = Map.of( //
-                    "whatsapp", MediaType.application("x-ufed-chat-preview-whatsapp"), //
-                    "telegram", MediaType.application("x-ufed-chat-preview-telegram"), //
-                    "skype", MediaType.application("x-ufed-chat-preview-skype"), //
-                    "facebook", MediaType.application("x-ufed-chat-preview-facebook"), //
-                    "instagram", MediaType.application("x-ufed-chat-preview-instagram"));
+    public static final Map<String, MediaType> appToMime = Map.ofEntries( //
+                    Map.entry("whatsapp", MediaType.application("x-ufed-chat-preview-whatsapp")), //
+                    Map.entry("telegram", MediaType.application("x-ufed-chat-preview-telegram")), //
+                    Map.entry("skype", MediaType.application("x-ufed-chat-preview-skype")), //
+                    Map.entry("facebook", MediaType.application("x-ufed-chat-preview-facebook")), //
+                    Map.entry("signal", MediaType.application("x-ufed-chat-preview-signal")), //
+                    Map.entry("snapchat", MediaType.application("x-ufed-chat-preview-snapchat")), //
+                    Map.entry("threema", MediaType.application("x-ufed-chat-preview-threema")), //
+                    Map.entry("tiktok", MediaType.application("x-ufed-chat-preview-tiktok")), //
+                    Map.entry("viber", MediaType.application("x-ufed-chat-preview-viber")), //
+                    Map.entry("discord", MediaType.application("x-ufed-chat-preview-discord")), //
+                    Map.entry("instagram", MediaType.application("x-ufed-chat-preview-instagram")));
 
     private boolean extractMessages = true;
     private boolean extractActivityLogs = true;

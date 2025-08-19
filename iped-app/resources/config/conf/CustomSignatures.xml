@@ -1297,6 +1297,30 @@
     	<sub-class-of type="application/x-ufed-chat-preview"/>
     </mime-type>
 
+    <mime-type type="application/x-ufed-chat-preview-snapchat">
+    	<sub-class-of type="application/x-ufed-chat-preview"/>
+    </mime-type>
+
+    <mime-type type="application/x-ufed-chat-preview-threema">
+    	<sub-class-of type="application/x-ufed-chat-preview"/>
+    </mime-type>
+
+    <mime-type type="application/x-ufed-chat-preview-discord">
+    	<sub-class-of type="application/x-ufed-chat-preview"/>
+    </mime-type>
+
+    <mime-type type="application/x-ufed-chat-preview-signal">
+    	<sub-class-of type="application/x-ufed-chat-preview"/>
+    </mime-type>
+
+    <mime-type type="application/x-ufed-chat-preview-tiktok">
+    	<sub-class-of type="application/x-ufed-chat-preview"/>
+    </mime-type>
+
+    <mime-type type="application/x-ufed-chat-preview-viber">
+    	<sub-class-of type="application/x-ufed-chat-preview"/>
+    </mime-type>
+
     <mime-type type="application/x-ufed-chat-preview-instagram">
     	<sub-class-of type="application/x-ufed-chat-preview"/>
     </mime-type>

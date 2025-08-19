@@ -236,11 +236,32 @@ public class IconManager {
             mimeIconMap.put("application/x-threema-chat", icon);
             mimeIconMap.put("application/x-threema-user-plist", icon);
             mimeIconMap.put("application/x-threema-chatstorage", icon);
+            mimeIconMap.put("application/x-ufed-chat-preview-threema", icon);
         }
 
         icon = availableIconsMap.get("facebook");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-chat-preview-facebook", icon);
+        }
+
+        icon = availableIconsMap.get("signal");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-chat-preview-signal", icon);
+        }
+
+        icon = availableIconsMap.get("snapchat");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-chat-preview-snapchat", icon);
+        }
+
+        icon = availableIconsMap.get("tiktok");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-chat-preview-tiktok", icon);
+        }
+
+        icon = availableIconsMap.get("viber");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-chat-preview-viber", icon);
         }
 
         icon = availableIconsMap.get("instagram");
@@ -588,6 +609,7 @@ public class IconManager {
         if (icon != null) {
             mimeIconMap.put("application/x-discord-index", icon);
             mimeIconMap.put("application/x-discord-chat", icon);
+            mimeIconMap.put("application/x-ufed-chat-preview-discord", icon);
         }
 
         icon = availableIconsMap.get("discord-attachment");
