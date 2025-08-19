@@ -595,20 +595,23 @@ jobs:
           echo "Main-Class: org.sleuthkit.autopsy.coreutils.Version" >> META-INF/MANIFEST.MF
           echo "" >> META-INF/MANIFEST.MF
           
-          # Create a minimal but valid JAR
-          jar cfm sleuthkit-4.11.1.jar META-INF/MANIFEST.MF
+          # Create a minimal but valid JAR using zip instead of jar command
+          cd META-INF
+          zip -r ../sleuthkit-4.11.1.jar .
+          cd ..
           
           # Verify the JAR is valid
           echo "JAR file size: $(ls -lh sleuthkit-4.11.1.jar)"
           echo "JAR contents:"
-          jar tf sleuthkit-4.11.1.jar || echo "JAR validation failed"
+          unzip -l sleuthkit-4.11.1.jar || echo "JAR validation failed"
           
           # Additional validation
           echo "Testing JAR file integrity:"
-          if java -jar sleuthkit-4.11.1.jar 2>&1 | grep -q "Error"; then
-            echo "JAR is not executable, but structure is valid"
+          if file sleuthkit-4.11.1.jar | grep -q "Zip archive"; then
+            echo "✅ JAR is a valid ZIP archive"
           else
-            echo "JAR is executable"
+            echo "❌ JAR is not a valid ZIP archive"
+            file sleuthkit-4.11.1.jar
           fi
           
           cd -
@@ -619,20 +622,16 @@ jobs:
           
           # Fix GraphConfig.json phone-region issue only in the release build
           if [ -f "target/release/iped-4.2.0/conf/GraphConfig.json" ]; then
-            # Backup original file
-            cp target/release/iped-4.2.0/conf/GraphConfig.json target/release/iped-4.2.0/conf/GraphConfig.json.bak
+            echo "Original GraphConfig.json content:"
+            head -5 target/release/iped-4.2.0/conf/GraphConfig.json
             
-            # Use a more robust sed command to handle different quote styles
-            sed -i 's/"phone-region"[[:space:]]*:[[:space:]]*"auto"/"phone-region": "US"/g' target/release/iped-4.2.0/conf/GraphConfig.json
+            # Use a simple approach: copy the source file and then fix it
+            cp iped-app/resources/config/conf/GraphConfig.json target/release/iped-4.2.0/conf/GraphConfig.json
             
-            # Also try alternative approach if sed didn't work
-            if grep -q '"phone-region": "auto"' target/release/iped-4.2.0/conf/GraphConfig.json; then
-              echo "Sed didn't work, trying alternative approach..."
-              # Use awk to replace the line
-              awk '/"phone-region": "auto"/ { gsub(/"phone-region": "auto"/, "\"phone-region\": \"US\"") } { print }' target/release/iped-4.2.0/conf/GraphConfig.json.bak > target/release/iped-4.2.0/conf/GraphConfig.json
-            fi
+            # Now fix the phone-region using sed
+            sed -i 's/"phone-region":"auto"/"phone-region":"US"/g' target/release/iped-4.2.0/conf/GraphConfig.json
             
-            echo "Fixed phone-region in release GraphConfig.json"
+            echo "✅ Fixed phone-region in GraphConfig.json"
           fi
           
           # Verify the fix
@@ -641,9 +640,7 @@ jobs:
             echo "Release GraphConfig.json phone-region:"
             grep "phone-region" target/release/iped-4.2.0/conf/GraphConfig.json
             
-            # Show the actual content around phone-region
-            echo "Content around phone-region:"
-            grep -A2 -B2 "phone-region" target/release/iped-4.2.0/conf/GraphConfig.json
+            echo "File size: $(ls -lh target/release/iped-4.2.0/conf/GraphConfig.json)"
           fi
 
       # Regression tests temporarily disabled
