@@ -123,7 +123,7 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
             }
 
             zip = ZipFile.builder().setFile(file).setSeekableByteChannel(sbc).setCharset(StandardCharsets.UTF_8)
-                    .setUseUnicodeExtraFields(true).setIgnoreLocalFileHeader(true).get();
+                    .setUseUnicodeExtraFields(true).setIgnoreLocalFileHeader(true).setBufferSize(UFDR_BUF_SIZE).get();
         }
     }
 
