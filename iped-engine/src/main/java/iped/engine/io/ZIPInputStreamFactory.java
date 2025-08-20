@@ -39,7 +39,7 @@ import iped.utils.SeekableInputStreamFactory;
 
 public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements Closeable {
 
-    private static Logger logger = LogManager.getLogger(ZIPInputStreamFactory.class);
+    private static final Logger logger = LogManager.getLogger(ZIPInputStreamFactory.class);
 
     private static final int MAX_BYTES_CACHED = 1 << 27;
 
