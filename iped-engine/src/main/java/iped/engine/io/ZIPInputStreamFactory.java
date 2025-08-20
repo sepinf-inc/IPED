@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SeekableByteChannel;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -120,7 +121,9 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
             } else {
                 sbc = ZipSplitReadOnlySeekableByteChannel.forOrderedSeekableByteChannels(channels.toArray(new SeekableByteChannel[0]));
             }
-            zip = new ZipFile(sbc, file.getAbsolutePath(), "UTF-8", true, true);
+
+            zip = ZipFile.builder().setFile(file).setSeekableByteChannel(sbc).setCharset(StandardCharsets.UTF_8)
+                    .setUseUnicodeExtraFields(true).setIgnoreLocalFileHeader(true).get();
         }
     }
 
