@@ -183,9 +183,9 @@ public class BufferedRandomAccessFile extends RandomAccessFile {
      */
     @Override
     public void seek(long pos) throws IOException {
-        int n = (int) (realpos - pos);
+        long n = realpos - pos;
         if (n >= 0 && n <= bufend) {
-            bufpos = bufend - n;
+            bufpos = bufend - (int) n;
         } else {
             super.seek(pos);
             invalidate();

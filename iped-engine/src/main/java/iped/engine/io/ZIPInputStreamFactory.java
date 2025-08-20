@@ -28,7 +28,6 @@ import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.compress.archivers.zip.ZipSplitReadOnlySeekableByteChannel;
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.fontbox.ttf.BufferedRandomAccessFile;
 
 import iped.io.SeekableInputStream;
 import iped.utils.ReadOnlyRAFSeekableByteChannel;
