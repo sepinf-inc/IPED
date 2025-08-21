@@ -53,9 +53,9 @@ class StackAndSendToNextTaskScript:
         for item in item_list:
             item.setExtraAttribute(str("csam_score"), str("50"))
 
-    def process(self, item, oPythonTask):
+    def process(self, item):
 
-        worker_id = oPythonTask.getWorkerId()
+        worker_key = javaTask.get()
 
         if not item.isQueueEnd() and not supported(item):
             return
@@ -63,10 +63,10 @@ class StackAndSendToNextTaskScript:
         batch_to_process = None
 
         with BATCH_LOCK:
-            if worker_id not in THREAD_BATCHES:
-                THREAD_BATCHES[worker_id] = {'items': [], 'item_ids': set()}
+            if worker_key not in THREAD_BATCHES:
+                THREAD_BATCHES[worker_key] = {'items': [], 'item_ids': set()}
 
-            my_batch_data = THREAD_BATCHES[worker_id]
+            my_batch_data = THREAD_BATCHES[worker_key]
 
             if not item.isQueueEnd():
                 my_batch_data['items'].append(item)
@@ -78,37 +78,37 @@ class StackAndSendToNextTaskScript:
             if is_batch_ready_to_process:
                 # Once the batch is ready, it is removed from the accumulation phase
                 # and sent for processing.
-                batch_to_process = THREAD_BATCHES.pop(worker_id)
+                batch_to_process = THREAD_BATCHES.pop(worker_key)
 
         if batch_to_process:
             # Processing occurs outside the lock and passes the worker_id
-            logger.debug(f"Worker {worker_id}: Processing batch of {len(batch_to_process['items'])} items.")
+            logger.debug(f"Worker {worker_key}: Processing batch of {len(batch_to_process['items'])} items.")
             self._apply_processing_to_batch(batch_to_process['items'])
 
             # 2. After processing, the batch is added to the send queue.
             # This operation needs to be protected by a lock.
             with BATCH_LOCK:
-                if worker_id not in PROCESSED_ITEMS:
-                    PROCESSED_ITEMS[worker_id] = []
-                PROCESSED_ITEMS[worker_id].extend(batch_to_process['items'])
+                if worker_key not in PROCESSED_ITEMS:
+                    PROCESSED_ITEMS[worker_key] = []
+                PROCESSED_ITEMS[worker_key].extend(batch_to_process['items'])
 
-    def sendToNextTask(self, item, oPythonTask):
+    def sendToNextTask(self, item):
 
-        worker_id = oPythonTask.getWorkerId()
+        worker_key = javaTask.get()
 
         items_to_send = None
 
         with BATCH_LOCK:
             # Removes the items to be sent from the global list with a lock
             # and only then sends them, to avoid blocking threads
-            if worker_id in PROCESSED_ITEMS and len(PROCESSED_ITEMS[worker_id]) > 0:
-                items_to_send = PROCESSED_ITEMS.pop(worker_id)
+            if worker_key in PROCESSED_ITEMS and len(PROCESSED_ITEMS[worker_key]) > 0:
+                items_to_send = PROCESSED_ITEMS.pop(worker_key)
 
         if items_to_send:
             # Sends a batch of already processed items to the next task.
             isItemOnBatch = False
             for item_send in items_to_send:
-                oPythonTask.sendToNextTaskSuper(item_send)
+                javaTask.get().sendToNextTaskSuper(item_send)
                 if (item_send.getId() == item.getId()):
                     isItemOnBatch = True
 
@@ -119,12 +119,12 @@ class StackAndSendToNextTaskScript:
 
         with BATCH_LOCK:
             # The current item is in the list of pending items and will therefore be held back
-            if worker_id in THREAD_BATCHES and item.getId() in THREAD_BATCHES[worker_id]['item_ids']:
+            if worker_key in THREAD_BATCHES and item.getId() in THREAD_BATCHES[worker_key]['item_ids']:
                 return
 
         # If it is not in the list of pending items and not in the list of
         # recently sent items, it is sent to the next task
-        oPythonTask.sendToNextTaskSuper(item)
+        javaTask.get().sendToNextTaskSuper(item)
 
     def finish(self):
         return True

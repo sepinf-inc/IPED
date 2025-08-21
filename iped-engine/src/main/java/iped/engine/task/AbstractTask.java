@@ -72,10 +72,6 @@ public abstract class AbstractTask {
         return taskTime;
     }
 
-    public long getWorkerId() {
-        return worker.id;
-    }    
-
     public void addSubitemProcessingTime(long time) {
         Long prevTime = subitemProcessingTime.get(worker.evidence.getId());
         if (prevTime == null) {
