@@ -55,8 +55,8 @@ class StackAndSendToNextTaskScript:
 
     def process(self, item):
 
-        worker_key = javaTask.get()
-
+        worker_key = self.worker.id
+        
         if not item.isQueueEnd() and not supported(item):
             return
 
@@ -92,9 +92,9 @@ class StackAndSendToNextTaskScript:
                     PROCESSED_ITEMS[worker_key] = []
                 PROCESSED_ITEMS[worker_key].extend(batch_to_process['items'])
 
-    def sendToNextTask(self, item):
+    def sendToNextTask(self, item, oPythonTask):
 
-        worker_key = javaTask.get()
+        worker_key = self.worker.id
 
         items_to_send = None
 
@@ -108,7 +108,7 @@ class StackAndSendToNextTaskScript:
             # Sends a batch of already processed items to the next task.
             isItemOnBatch = False
             for item_send in items_to_send:
-                javaTask.get().sendToNextTaskSuper(item_send)
+                oPythonTask.sendToNextTaskSuper(item_send)
                 if (item_send.getId() == item.getId()):
                     isItemOnBatch = True
 
@@ -124,7 +124,7 @@ class StackAndSendToNextTaskScript:
 
         # If it is not in the list of pending items and not in the list of
         # recently sent items, it is sent to the next task
-        javaTask.get().sendToNextTaskSuper(item)
+        oPythonTask.sendToNextTaskSuper(item)
 
     def finish(self):
         return True
