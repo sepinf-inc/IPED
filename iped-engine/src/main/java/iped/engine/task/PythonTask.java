@@ -284,7 +284,8 @@ public class PythonTask extends AbstractTask {
             return;
         }
         try {
-            getJep().invoke(getInstanceMethod("sendToNextTask"), item); //$NON-NLS-1$
+            // Pass itself as a parameter to call the sendToNextTaskSuper in the correct instance (see issue #2598)
+            getJep().invoke(getInstanceMethod("sendToNextTask"), item, this); //$NON-NLS-1$
             
         }catch(JepException e) {
             if (e.toString().contains(" has no attribute 'sendToNextTask'")) {
