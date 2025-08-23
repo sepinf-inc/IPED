@@ -14,7 +14,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import javax.imageio.ImageIO;
 
-import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +26,6 @@ import iped.engine.config.ImageThumbTaskConfig;
 import iped.engine.task.AbstractTask;
 import iped.engine.task.HashTask;
 import iped.engine.task.ImageThumbTask;
-import iped.engine.task.video.VideoThumbTask;
 import iped.exception.IPEDException;
 import iped.parsers.util.MetadataUtil;
 import iped.utils.ExternalImageConverter;
