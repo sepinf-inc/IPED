@@ -15,6 +15,7 @@ import iped.configuration.Configurable;
 import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.PhotoDNAConfig;
+import iped.parsers.util.MetadataUtil;
 
 public class PhotoDNATask extends AbstractTask {
 
@@ -74,7 +75,7 @@ public class PhotoDNATask extends AbstractTask {
             return;
 
         byte[] thumb = evidence.getThumb(); 
-        if (thumb == null || !evidence.getMediaType().getType().equals("image"))
+        if (thumb == null || !MetadataUtil.isImageType(evidence.getMediaType()))
             return;
 
         if (evidence.getLength() != null && evidence.getLength() < pdnaConfig.getMinFileSize())
