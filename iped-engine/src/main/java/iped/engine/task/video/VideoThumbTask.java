@@ -45,7 +45,6 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.metadata.XMP;
 import org.apache.tika.metadata.XMPDM;
-import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -175,12 +174,6 @@ public class VideoThumbTask extends ThumbTask {
      * pra nome definitivo.
      */
     private String tempSuffix;
-
-    /**
-     * Property to be set if the evidence is a animated image (i.e. contain multiple
-     * frames). Only set if the number of frames is greater than one.
-     */
-    public static final String ANIMATION_FRAMES_PROP = ExtraProperties.IMAGE_META_PREFIX + "AnimationFrames";
     
     private ISO6709Converter iso6709Converter = new ISO6709Converter();
 
@@ -345,7 +338,7 @@ public class VideoThumbTask extends ThumbTask {
         }
 
         // Check if evidence type is handled (video or animated image) and has a hash value
-        if ((!isVideoType(evidence.getMediaType()) && !checkAnimatedImage(evidence)) || !evidence.isToAddToCase()
+        if ((!MetadataUtil.isVideoType(evidence.getMediaType()) && !checkAnimatedImage(evidence)) || !evidence.isToAddToCase()
                 || evidence.getHashValue() == null) {
             return;
         }
@@ -404,9 +397,9 @@ public class VideoThumbTask extends ThumbTask {
 
                 //Check if it is an animated image
                 int numFrames = 0;
-                boolean isAnimated = isImageSequence(evidence.getMediaType().toString());
+                boolean isAnimated = MetadataUtil.isImageSequence(evidence.getMediaType().toString());
                 if (!isAnimated) {
-                    String strFrames = evidence.getMetadata().get(ANIMATION_FRAMES_PROP);
+                    String strFrames = evidence.getMetadata().get(ExtraProperties.ANIMATION_FRAMES_PROP);
                     if (strFrames != null) {
                         numFrames = Integer.parseInt(strFrames);
                         if (numFrames > 0)
@@ -644,21 +637,6 @@ public class VideoThumbTask extends ThumbTask {
         return img;
     }
 
-    /**
-     * Verifica se é vídeo.
-     */
-    public static boolean isVideoType(MediaType mediaType) {
-        return MetadataUtil.isVideoType(mediaType);
-    }
-    
-
-    /**
-     * Check if the evidence's mediaType is an image sequence.
-     */
-    public static boolean isImageSequence(String mediaType) {
-        return mediaType.equals("image/heic-sequence") || mediaType.equals("image/heif-sequence");
-    }
-
     /** 
      * Checks if the evidence is an animated image, and update
      * its metadata if this is the case.
@@ -667,7 +645,7 @@ public class VideoThumbTask extends ThumbTask {
         int numImages = -1;
         String mediaType = evidence.getMediaType().toString();
 
-        if (isImageSequence(mediaType)) {
+        if (MetadataUtil.isImageSequence(mediaType)) {
             return true;
 
         } else if (mediaType.equals("image/gif")) {
@@ -698,7 +676,7 @@ public class VideoThumbTask extends ThumbTask {
         
         if (numImages > 1) {
             // Set only for images with multiple animated frames
-            evidence.getMetadata().set(ANIMATION_FRAMES_PROP, String.valueOf(numImages));
+            evidence.getMetadata().set(ExtraProperties.ANIMATION_FRAMES_PROP, String.valueOf(numImages));
             return true;
         }
         return false;
