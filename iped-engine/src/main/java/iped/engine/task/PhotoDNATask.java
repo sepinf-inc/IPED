@@ -70,38 +70,46 @@ public class PhotoDNATask extends AbstractTask {
 
     @Override
     protected void process(IItem evidence) throws Exception {
-
         if (!evidence.isToAddToCase())
-            return;
-
-        byte[] thumb = evidence.getThumb(); 
-        if (thumb == null || !MetadataUtil.isImageType(evidence.getMediaType()))
-            return;
-
-        if (evidence.getLength() != null && evidence.getLength() < pdnaConfig.getMinFileSize())
-            return;
-
-        if (pdnaConfig.isUseThumbnail() && thumb.length == 0)
             return;
 
         if (pdnaConfig.isSkipHashDBFiles() && evidence.getExtraAttribute(HashDBLookupTask.STATUS_ATTRIBUTE) != null)
             return;
 
-        byte[] hash;
+        if (evidence.getLength() != null && evidence.getLength() < pdnaConfig.getMinFileSize())
+            return;
+
+        if (MetadataUtil.isImageType(evidence.getMediaType())) {
+            processImage(evidence);
+        } else if (MetadataUtil.isVideoType(evidence.getMediaType())) {
+            processVideo(evidence);
+        }
+    }
+
+    private void processImage(IItem evidence) throws Exception {
+        byte[] thumb = evidence.getThumb();
+        if (thumb == null)
+            return;
+
+        if (pdnaConfig.isUseThumbnail() && thumb.length == 0)
+            return;
+
         try (InputStream is = pdnaConfig.isUseThumbnail() ? new ByteArrayInputStream(thumb)
                 : evidence.getBufferedInputStream()) {
 
             photodna.reset();
-            hash = photodna.computePhotoDNA(is);
+            byte[] hash = photodna.computePhotoDNA(is);
             String hashStr = new String(Hex.encodeHex(hash, false));
             evidence.setExtraAttribute(PHOTO_DNA, hashStr);
 
         } catch (Throwable e) {
-            LOGGER.info("Error computing photoDNA for " + evidence.getPath(), e);
+            LOGGER.info("Error computing photoDNA for image " + evidence.getPath(), e);
             evidence.setExtraAttribute("photodna_exception", e.toString());
             return;
         }
-
     }
 
+    private void processVideo(IItem evidence) throws Exception {
+        // TODO:: Implement
+    }
 }
