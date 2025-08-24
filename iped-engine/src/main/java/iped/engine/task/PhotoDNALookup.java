@@ -9,6 +9,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -181,44 +182,103 @@ public class PhotoDNALookup extends AbstractTask {
     @Override
     protected void process(IItem evidence) throws Exception {
 
+        PhotoDnaHit hit = new PhotoDnaHit();
         String hashStr = (String) evidence.getExtraAttribute(PhotoDNATask.PHOTO_DNA);
-        if (hashStr == null) return;
+        if (hashStr != null) {
+            // Single value
+            lookup(hashStr, hit);
 
+        } else {
+            @SuppressWarnings("unchecked")
+            List<String> l = (List<String>) evidence.getExtraAttribute(PhotoDNATask.PHOTO_DNA_FRAMES);
+            if (l != null) {
+                // Multiple values
+                List<PhotoDnaHit> hits = new ArrayList<>();
+                for (String hash : l) {
+                    PhotoDnaHit frameHit = new PhotoDnaHit();
+                    lookup(hash, frameHit);
+                    if (frameHit.nearest != null) {
+                        hits.add(frameHit);
+                    }
+                }
+                if (!hits.isEmpty()) {
+                    combineHits(hits, hit, l.size());
+                }
+            }
+        }
+        if (hit.nearest != null) {
+            evidence.setExtraAttribute(PHOTO_DNA_HIT, "true");
+            evidence.setExtraAttribute(PHOTO_DNA_DIST, hit.minDist);
+            evidence.setExtraAttribute(PHOTO_DNA_NEAREAST_HASH, hit.nearest.toString());
+
+            String md5 = hashDBDataSource.getMD5(hit.nearest.getHashId());
+            if (md5 != null) {
+                evidence.setExtraAttribute(PHOTO_DNA_HIT_PREFIX + "md5", md5);
+            }
+            Map<String, List<String>> properties = hashDBDataSource.getProperties(hit.nearest.getHashId());
+            for (String name : properties.keySet()) {
+                if (!name.equalsIgnoreCase("photoDna")) {
+                    List<String> value = properties.get(name);
+                    evidence.setExtraAttribute(PHOTO_DNA_HIT_PREFIX + name, value);
+                }
+            }
+        }
+    }
+
+    private void combineHits(List<PhotoDnaHit> hits, PhotoDnaHit hit, int len) {
+        int maxHits = 0;
+        int minDist = Integer.MAX_VALUE;
+        List<Integer> dists = new ArrayList<Integer>();
+        for (int i = 0; i < hits.size(); i++) {
+            PhotoDnaHit a = hits.get(i);
+            dists.add(a.minDist);
+            int currHits = 1;
+            int currDist = a.minDist;
+            for (int j = i + 1; j < hits.size(); j++) {
+                PhotoDnaHit b = hits.get(j);
+                if (a.nearest.equals(b.nearest)) {
+                    currHits++;
+                    currDist = Math.min(currDist, b.minDist);
+                }
+            }
+            if (currHits > maxHits || (currHits == maxHits && currDist < minDist)) {
+                minDist = currDist;
+                maxHits = currHits;
+                hit.nearest = a.nearest;
+            }
+        }
+        Collections.sort(dists);
+        int missDist = pdnaLookupConfig.getMaxDistance() * 2;
+        while (dists.size() < len) {
+            dists.add(missDist);
+        }
+        double sum = 0;
+        double weight = 1;
+        double div = 0;
+        for (int d : dists) {
+            sum += d * weight;
+            div += weight;
+            weight *= 0.5;
+        }
+        hit.minDist = (int) Math.round(sum / div);
+    }
+
+    private void lookup(String hashStr, PhotoDnaHit hit) {
         HashValue photodna = new HashValue(hashStr);
-
         int rot = 0;
         boolean flip = false;
         while (rot == 0 || (pdnaLookupConfig.isRotateAndFlip() && rot < 4)) {
             int degree = 90 * rot++;
             PhotoDnaItem photoDnaItemRot = new PhotoDnaItem(-1, transforms.rot(photodna.getBytes(), degree, flip));
-            List<PhotoDnaItem> neighbors = vptree.getAllWithinDistance(photoDnaItemRot, pdnaLookupConfig.getMaxDistance());
+            List<PhotoDnaItem> neighbors = vptree.getAllWithinDistance(photoDnaItemRot,
+                    pdnaLookupConfig.getMaxDistance());
 
-            PhotoDnaItem nearest = null;
-            int minDist = Integer.MAX_VALUE;
             for (PhotoDnaItem neighbor : neighbors) {
                 int dist = (int) photoDNADistance.getDistance(neighbor, photoDnaItemRot);
-                if (dist < minDist) {
-                    minDist = dist;
-                    nearest = neighbor;
+                if (dist < hit.minDist) {
+                    hit.minDist = dist;
+                    hit.nearest = neighbor;
                 }
-            }
-            if (nearest != null) {
-                evidence.setExtraAttribute(PHOTO_DNA_HIT, "true");
-                evidence.setExtraAttribute(PHOTO_DNA_DIST, minDist);
-                evidence.setExtraAttribute(PHOTO_DNA_NEAREAST_HASH, nearest.toString());
-
-                String md5 = hashDBDataSource.getMD5(nearest.getHashId());
-                if (md5 != null) {
-                    evidence.setExtraAttribute(PHOTO_DNA_HIT_PREFIX + "md5", md5);
-                }
-                Map<String, List<String>> properties = hashDBDataSource.getProperties(nearest.getHashId());
-                for (String name : properties.keySet()) {
-                    if (!name.equalsIgnoreCase("photoDna")) {
-                        List<String> value = properties.get(name);
-                        evidence.setExtraAttribute(PHOTO_DNA_HIT_PREFIX + name, value);
-                    }
-                }
-                break;
             }
             if (rot == 4 && !flip) {
                 rot = 0;
@@ -305,5 +365,10 @@ public class PhotoDNALookup extends AbstractTask {
             }
         }
         return ret ? photoDNAHashSet : null;
+    }
+
+    private class PhotoDnaHit {
+        PhotoDnaItem nearest;
+        int minDist = Integer.MAX_VALUE;
     }
 }
