@@ -59,6 +59,7 @@ import iped.engine.data.Item;
 import iped.engine.task.ExportFileTask;
 import iped.engine.task.HashTask;
 import iped.engine.task.ImageThumbTask;
+import iped.engine.task.PhotoDNATask;
 import iped.engine.task.ThumbTask;
 import iped.engine.task.die.DIETask;
 import iped.engine.util.Util;
@@ -567,6 +568,7 @@ public class VideoThumbTask extends ThumbTask {
         item.setHasChildren(true);
 
         List<Double> framesNudityScore = new ArrayList<>();
+        List<String> framesPhotoDNA = new ArrayList<>();
 
         int compression = videoConfig.getCompression();
         for (int i = 0; i < frames.size(); i++) {
@@ -617,12 +619,20 @@ public class VideoThumbTask extends ThumbTask {
                 framesNudityScore.add(nudityScore);
             }
 
+            String photoDNA = (String)newItem.getExtraAttribute(PhotoDNATask.PHOTO_DNA);
+            if (photoDNA != null) {
+                framesPhotoDNA.add(photoDNA);
+            }
+            
         }
 
         if (!framesNudityScore.isEmpty()) {
             item.setTempAttribute(DIETask.DIE_RAW_SCORE, framesNudityScore);
         }
 
+        if (!framesPhotoDNA.isEmpty()) {
+            item.setTempAttribute(PhotoDNATask.PHOTO_DNA_FRAMES_TEMP, framesPhotoDNA);
+        }
     }
 
     private BufferedImage adjustFrameDimension(BufferedImage original, int wFinal, int hFinal) {
