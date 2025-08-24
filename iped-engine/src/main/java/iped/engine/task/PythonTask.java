@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -151,7 +152,11 @@ public class PythonTask extends AbstractTask {
         this.instanceName.put(threadId, instanceName);
 
         for (String global : globals.toArray(new String[0])) {
-            jep.eval(moduleName + "." + global + " = " + global);
+            if (StringUtils.equals(global, "worker")) { // worker have to be defined in python module instance (see issue #2598)
+                jep.eval(instanceName + "." + global + " = " + global);
+            } else {
+                jep.eval(moduleName + "." + global + " = " + global);
+            }
         }
 
         String taskInstancePerThread = moduleName + "_javaTaskPerThread";
@@ -279,7 +284,8 @@ public class PythonTask extends AbstractTask {
             return;
         }
         try {
-            getJep().invoke(getInstanceMethod("sendToNextTask"), item); //$NON-NLS-1$
+            // Pass itself as a parameter to call the sendToNextTaskSuper in the correct instance (see issue #2598)
+            getJep().invoke(getInstanceMethod("sendToNextTask"), item, this); //$NON-NLS-1$
             
         }catch(JepException e) {
             if (e.toString().contains(" has no attribute 'sendToNextTask'")) {
