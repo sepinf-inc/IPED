@@ -1,10 +1,18 @@
 package iped.engine.task;
 
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import javax.imageio.ImageIO;
 
 import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
@@ -16,6 +24,8 @@ import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.PhotoDNAConfig;
 import iped.parsers.util.MetadataUtil;
+import iped.utils.IOUtil;
+import iped.utils.ImageUtil;
 
 public class PhotoDNATask extends AbstractTask {
 
@@ -26,6 +36,8 @@ public class PhotoDNATask extends AbstractTask {
     public static final int HASH_SIZE = 144;
 
     public static final String PHOTO_DNA = "photoDNA";
+    public static final String PHOTO_DNA_FRAMES = "photoDNAFrames";
+    public static final String PHOTO_DNA_FRAMES_TEMP = "photoDNAFramesTemp";
 
     private static AtomicBoolean warned = new AtomicBoolean();
 
@@ -55,7 +67,6 @@ public class PhotoDNATask extends AbstractTask {
                 LOGGER.error(PDNA_NOT_FOUND_MSG);
             }
         }
-
     }
 
     @Override
@@ -65,7 +76,6 @@ public class PhotoDNATask extends AbstractTask {
 
     @Override
     public void finish() throws Exception {
-
     }
 
     @Override
@@ -81,12 +91,16 @@ public class PhotoDNATask extends AbstractTask {
 
         if (MetadataUtil.isImageType(evidence.getMediaType())) {
             processImage(evidence);
+
         } else if (MetadataUtil.isVideoType(evidence.getMediaType())) {
             processVideo(evidence);
         }
     }
 
     private void processImage(IItem evidence) throws Exception {
+        if (evidence.getExtraAttribute(PHOTO_DNA) != null)
+            return;
+        
         byte[] thumb = evidence.getThumb();
         if (thumb == null)
             return;
@@ -105,11 +119,69 @@ public class PhotoDNATask extends AbstractTask {
         } catch (Throwable e) {
             LOGGER.info("Error computing photoDNA for image " + evidence.getPath(), e);
             evidence.setExtraAttribute("photodna_exception", e.toString());
-            return;
         }
     }
 
     private void processVideo(IItem evidence) throws Exception {
-        // TODO:: Implement
+        if (evidence.getExtraAttribute(PHOTO_DNA_FRAMES) != null)
+            return;
+
+        // For videos, compute the PhotoDNA of each extracted frame image
+        // (VideoThumbsTask must be enabled)
+        File viewFile = evidence.getViewFile();
+        if (viewFile != null && viewFile.exists()) {
+            @SuppressWarnings("unchecked")
+            List<String> hashes = (List<String>) evidence.getTempAttribute(PHOTO_DNA_FRAMES_TEMP);
+            Set<String> seen = new HashSet<String>();
+            if (hashes == null) {
+                hashes = new ArrayList<String>();
+                List<BufferedImage> frames = ImageUtil.getFrames(viewFile);
+                if (frames != null) {
+                    for (BufferedImage frame : frames) {
+                        ByteArrayOutputStream os = null;
+                        ByteArrayInputStream is = null;
+                        try {
+                            os = new ByteArrayOutputStream();
+                            ImageIO.write(frame, "png", os);
+                            is = new ByteArrayInputStream(os.toByteArray());
+                            photodna.reset();
+                            byte[] hash = photodna.computePhotoDNA(is);
+                            String hashStr = new String(Hex.encodeHex(hash, false));
+                            if (seen.add(hashStr) && hasMinEntropy(hashStr)) {
+                                hashes.add(hashStr);
+                            }
+                        } catch (Throwable e) {
+                            LOGGER.info("Error computing photoDNA for video frame " + evidence.getPath(), e);
+                            evidence.setExtraAttribute("photodna_exception", e.toString());
+                        } finally {
+                            IOUtil.closeQuietly(is);
+                            IOUtil.closeQuietly(os);
+                        }
+                    }
+                }
+            } else {
+                for (String hashStr : hashes) {
+                    if (seen.add(hashStr) && hasMinEntropy(hashStr)) {
+                        hashes.add(hashStr);
+                    }
+                }
+            }
+            if (!hashes.isEmpty()) {
+                evidence.setExtraAttribute(PHOTO_DNA_FRAMES, hashes);
+            }
+        }
+    }
+
+    private boolean hasMinEntropy(String hash) {
+        int n = 0;
+        String a = hash.substring(0, 2);
+        for (int i = 2; i < hash.length(); i += 2) {
+            String b = hash.substring(i, i + 2);
+            if (!a.equals(b)) {
+                n++;
+            }
+            a = b;
+        }
+        return n >= 128;
     }
 }
