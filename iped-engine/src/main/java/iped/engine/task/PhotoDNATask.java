@@ -172,6 +172,11 @@ public class PhotoDNATask extends AbstractTask {
         }
     }
 
+    /**
+     * Verify if a photoDNA has enough entropy. It counts repeated sequential bytes.
+     * @param hash Hex representation of a photoDNA hash.
+     * @return true if the number of non-repeated values is above a threshold.
+     */
     private boolean hasMinEntropy(String hash) {
         int n = 0;
         String a = hash.substring(0, 2);
@@ -182,6 +187,6 @@ public class PhotoDNATask extends AbstractTask {
             }
             a = b;
         }
-        return n >= 128;
+        return n >= 72;
     }
 }
