@@ -49,6 +49,7 @@ import iped.parsers.util.BeanMetadataExtraction;
 import iped.parsers.util.ChildPornHashLookup;
 import iped.parsers.util.Messages;
 import iped.parsers.util.P2PUtil;
+import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
 import iped.utils.LocalizedFormat;
@@ -114,6 +115,7 @@ public class KnownMetParser extends AbstractParser {
             bme.registerPropertyNameMapping(KnownMetEntry.class, "hash", "ed2k");
             bme.registerTransformationMapping(KnownMetEntry.class, ExtraProperties.LINKED_ITEMS, "edonkey:${hash}");
             bme.registerTransformationMapping(KnownMetEntry.class, ExtraProperties.SHARED_HASHES, "${hash}");
+            bme.registerTransformationMapping(KnownMetEntry.class, BasicProps.NAME, "Known-Entry-[${name}].met");
         }
 
         List<KnownMetEntry> l = iped.parsers.emule.KnownMetDecoder.parseToList(stream);
@@ -200,10 +202,12 @@ public class KnownMetParser extends AbstractParser {
                 item = P2PUtil.searchItemInCase(searcher, EDONKEY, e.getHash());
                 if(item != null) {
                     hashSets = ChildPornHashLookup.lookupHashAndMerge(EDONKEY, hash, hashSets);
+                    e.setFoundInCase(true);
                 }
                 if (hashSets != null && !hashSets.isEmpty()) {
                     hashDBHits++;
                     trClass = "rr"; //$NON-NLS-1$
+                    e.setFoundInHashDB(hashSets.toString());
                 }
                 cells.add(hash.substring(0, hash.length() / 2) + " " + hash.substring(hash.length() / 2)); //$NON-NLS-1$
                 cells.add(e.getLastModified() == null ? " " : df.format(e.getLastModified())); //$NON-NLS-1$

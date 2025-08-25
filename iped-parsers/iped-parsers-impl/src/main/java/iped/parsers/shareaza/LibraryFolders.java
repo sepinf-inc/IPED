@@ -20,9 +20,11 @@ package iped.parsers.shareaza;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.SAXException;
@@ -84,6 +86,10 @@ public class LibraryFolders extends ShareazaEntity {
 
     public Map<Integer, LibraryFile> getIndexToFile() {
         return indexToFile;
+    }
+
+    public Collection<LibraryFile> getOrphanFiles() {
+        return indexToFile.values().stream().filter(f -> f.getParentFolder() == null).collect(Collectors.toList());
     }
 
     public String getName() {
