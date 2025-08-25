@@ -1,0 +1,31 @@
+# -----------------------------------------------------------------------------
+# ALEAPP Integration Settings
+# -----------------------------------------------------------------------------
+
+# Path to the main ALEAPP installation directory.
+# If this property is commented out or left empty, IPED will search for ALEAPP
+# in the default directory: <IPED_installation_folder>/tools/aleapp
+# Example for Windows: aleapFolder=C:\Forensic Tools\aleapp
+# Example for Linux: aleapFolder=/home/user/aleapp
+# aleapFolder=
+
+# -----------------------------------------------------------------------------
+
+# Comma-separated list of specific ALEAPP plugins to run.
+# Use this to create an inclusion list, forcing IPED to run ONLY the specified plugins.
+# If left empty (default behavior), IPED will run all available ALEAPP plugins
+# except for those defined in the 'excludePlugins' property below.
+# Example: includePlugins=firefox,teams,googleCalendar
+includePlugins=
+
+# -----------------------------------------------------------------------------
+
+# Comma-separated list of ALEAPP plugins to specifically exclude from processing.
+# This is useful for disabling plugins that are redundant with native IPED parsers,
+# are irrelevant to the case, or produce undesired output.
+#
+# The default exclusions are listed below with justifications:
+# - walStrings: Excluded because IPED natively parses strings from unparsed files.
+# - appicons: Excluded because it does not generate artifacts in the TSV format required by IPED.
+# - WhatsApp: Excluded because IPED uses its own robust, internal parser for WhatsApp artifacts.
+excludePlugins=walStrings,appicons,WhatsApp

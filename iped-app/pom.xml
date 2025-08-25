@@ -86,6 +86,30 @@
 				</configuration>
 			</plugin>
             <plugin>
+                <groupId>com.googlecode.maven-download-plugin</groupId>
+                <artifactId>download-maven-plugin</artifactId>
+                <version>1.6.8</version>
+                <executions>
+                    <execution>
+                        <id>download-aleapp</id>
+                        <goals>
+                            <goal>wget</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <url>https://github.com/abrignoni/ALEAPP/archive/refs/tags/v3.4.0.zip</url>
+                    <unpack>true</unpack>
+                    <fileMappers>
+                      <org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                        <pattern>ALEAPP[^/]+/</pattern>
+                        <replacement>./</replacement>
+                      </org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                    </fileMappers>
+                    <outputDirectory>${tools.dir}/aleapp</outputDirectory>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <version>2.10</version>
