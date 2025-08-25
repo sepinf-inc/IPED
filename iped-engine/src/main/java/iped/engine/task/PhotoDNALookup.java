@@ -125,6 +125,7 @@ public class PhotoDNALookup extends AbstractTask {
                                     LOGGER.info("{} PhotoDNA hashes loaded in {} ms.", photoDNAHashSet.size(), System.currentTimeMillis() - t);
                                     t = System.currentTimeMillis();
                                     vpTree = new VPTree<PhotoDnaItem, PhotoDnaItem>(photoDNADistance);
+                                    vpTree.addAll(photoDNAHashSet);
                                     LOGGER.info("Data structure built in {} ms.", System.currentTimeMillis() - t);
                                     taskEnabled = true;
                                     t = System.currentTimeMillis();
