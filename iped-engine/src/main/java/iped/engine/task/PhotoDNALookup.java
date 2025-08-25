@@ -2,11 +2,11 @@ package iped.engine.task;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -52,15 +52,18 @@ public class PhotoDNALookup extends AbstractTask {
 
     private static final AtomicBoolean finished = new AtomicBoolean(false);
 
-    private static VPDistance photoDNADistance = new VPDistance();
+    private static final VPDistance photoDNADistance = new VPDistance();
 
-    private static VPTree<PhotoDnaItem, PhotoDnaItem> vptree = new VPTree<PhotoDnaItem, PhotoDnaItem>(photoDNADistance);
+    private static VPTree<PhotoDnaItem, PhotoDnaItem> vpTree;
 
     private static boolean taskEnabled;
 
     private static PhotoDNATransforms transforms;
 
     private static HashDBDataSource hashDBDataSource;
+    
+    // Magic number used as the first bytes of cache file
+    private static final int magic = 0x20250825;
 
     private PhotoDNALookupConfig pdnaLookupConfig;
 
@@ -100,10 +103,9 @@ public class PhotoDNALookup extends AbstractTask {
                         } else {
                             long t = System.currentTimeMillis();
                             hashDBDataSource = new HashDBDataSource(hashDBFile);
-                            ArrayList<PhotoDnaItem> photoDNAHashSet = readCache(hashDBFile,
-                                    pdnaLookupConfig.getStatusHashDBFilter());
-                            if (photoDNAHashSet != null) {
-                                LOGGER.info("Load from cache file {}.", cachePath);
+                            readCache(hashDBFile, pdnaLookupConfig.getStatusHashDBFilter());
+                            if (vpTree != null) {
+                                LOGGER.info("Load from cache file {} in {} ms.", cachePath, System.currentTimeMillis() - t);
                             } else {
                                 Set<String> statusFilter = null;
                                 if (!pdnaLookupConfig.getStatusHashDBFilter().isEmpty()) {
@@ -116,20 +118,20 @@ public class PhotoDNALookup extends AbstractTask {
                                         }
                                     }
                                 }
-                                photoDNAHashSet = hashDBDataSource.readPhotoDNA(statusFilter);
+                                ArrayList<PhotoDnaItem> photoDNAHashSet = hashDBDataSource.readPhotoDNA(statusFilter);
                                 if (photoDNAHashSet == null || photoDNAHashSet.isEmpty()) {
                                     LOGGER.error("PhotoDNA hashes must be loaded into IPED hashes database to enable PhotoDNALookup.");
-                                } else if (writeCache(hashDBFile, photoDNAHashSet,
-                                        pdnaLookupConfig.getStatusHashDBFilter())) {
-                                    LOGGER.info("Cache file {} was created.", cachePath);
+                                } else {
+                                    LOGGER.info("{} PhotoDNA hashes loaded in {} ms.", photoDNAHashSet.size(), System.currentTimeMillis() - t);
+                                    t = System.currentTimeMillis();
+                                    vpTree = new VPTree<PhotoDnaItem, PhotoDnaItem>(photoDNADistance);
+                                    LOGGER.info("Data structure built in {} ms.", System.currentTimeMillis() - t);
+                                    taskEnabled = true;
+                                    t = System.currentTimeMillis();
+                                    if (writeCache(hashDBFile, pdnaLookupConfig.getStatusHashDBFilter())) {
+                                        LOGGER.info("Cache file {} was created in {} ms.", cachePath, System.currentTimeMillis() - t);
+                                    }
                                 }
-                            }
-                            if (photoDNAHashSet != null && !photoDNAHashSet.isEmpty()) { 
-                                LOGGER.info("{} PhotoDNA Hashes loaded in {} ms.", photoDNAHashSet.size(), System.currentTimeMillis() - t);
-                                t = System.currentTimeMillis();
-                                vptree.addAll(photoDNAHashSet);
-                                LOGGER.info("Data structure built in {} ms.", System.currentTimeMillis() - t);
-                                taskEnabled = true;
                             }
                         }
                     }
@@ -170,9 +172,9 @@ public class PhotoDNALookup extends AbstractTask {
                 if (hashDBDataSource != null) {
                     hashDBDataSource.close();
                 }
-                if (vptree != null) {
-                    vptree.clear();
-                    vptree = null;
+                if (vpTree != null) {
+                    vpTree.clear();
+                    vpTree = null;
                 }
                 finished.set(true);
             }
@@ -270,7 +272,7 @@ public class PhotoDNALookup extends AbstractTask {
         while (rot == 0 || (pdnaLookupConfig.isRotateAndFlip() && rot < 4)) {
             int degree = 90 * rot++;
             PhotoDnaItem photoDnaItemRot = new PhotoDnaItem(-1, transforms.rot(photodna.getBytes(), degree, flip));
-            List<PhotoDnaItem> neighbors = vptree.getAllWithinDistance(photoDnaItemRot,
+            List<PhotoDnaItem> neighbors = vpTree.getAllWithinDistance(photoDnaItemRot,
                     pdnaLookupConfig.getMaxDistance());
 
             for (PhotoDnaItem neighbor : neighbors) {
@@ -287,25 +289,21 @@ public class PhotoDNALookup extends AbstractTask {
         }
     }
 
-    private boolean writeCache(File hashDBFile, ArrayList<PhotoDnaItem> photoDNAHashSet, String filter) {
+    private static boolean writeCache(File hashDBFile, String filter) {
         File cacheFile = new File(cachePath);
         boolean ret = false;
-        DataOutputStream os = null;
+        ObjectOutputStream os = null;
         try {
             if (cacheFile.getParentFile() != null && !cacheFile.getParentFile().exists()) {
                 cacheFile.getParentFile().mkdirs();
             }
-            os = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(cacheFile)));
+            os = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(cacheFile), 1 << 20));
+            os.writeInt(magic);
             os.writeLong(hashDBFile.length());
             os.writeLong(hashDBFile.lastModified());
             os.writeInt(filter.length());
             os.writeChars(filter);
-            os.writeInt(photoDNAHashSet.size());
-            for (PhotoDnaItem v : photoDNAHashSet) {
-                os.writeInt(v.getHashId());
-                byte[] b = v.getBytes();
-                os.write(b);
-            }
+            os.writeObject(vpTree);
             ret = true;
         } catch (Exception e) {
             LOGGER.warn("Error writing cache file " + cacheFile.getPath(), e);
@@ -315,56 +313,61 @@ public class PhotoDNALookup extends AbstractTask {
             if (!ret) {
                 try {
                     cacheFile.delete();
-                } catch (Exception e) {}
+                } catch (Exception e) {
+                }
             }
         }
         return ret;
     }
 
-    private ArrayList<PhotoDnaItem> readCache(File hashDBFile, String filter) {
+    @SuppressWarnings("unchecked")
+    private static void readCache(File hashDBFile, String filter) {
+        /*
+         Cache file content:
+             magic (int)
+             DB length (long)
+             DB last modified (long)
+             Status filter length (int)
+             Status chars (char * length)
+             VPTree (object)
+         */
+        vpTree = null;
         File cacheFile = new File(cachePath);
-        if (!cacheFile.exists()) return null;
-        DataInputStream is = null;
-        boolean ret = false;
-        ArrayList<PhotoDnaItem> photoDNAHashSet = null;
+        if (!cacheFile.exists())
+            return;
+        ObjectInputStream is = null;
         try {
-            is = new DataInputStream(new BufferedInputStream(new FileInputStream(cacheFile), 1 << 20));
-            long fileLen = is.readLong();
-            if (fileLen == hashDBFile.length()) {
-                long fileLastModified = is.readLong();
-                if (fileLastModified == hashDBFile.lastModified()) {
-                    int filterLen = is.readInt();
-                    if (filterLen == filter.length()) {
-                        char[] c = new char[filterLen];
-                        for (int i = 0; i < filterLen; i++) {
-                            c[i] = is.readChar();
-                        }
-                        if (filter.equals(new String(c))) {
-                            int len = is.readInt();
-                            photoDNAHashSet = new ArrayList<PhotoDnaItem>(len);
-                            for (int i = 0; i < len; i++) {
-                                int hashId = is.readInt();
-                                byte[] b = new byte[PhotoDNATask.HASH_SIZE];
-                                is.read(b);
-                                photoDNAHashSet.add(new PhotoDnaItem(hashId, b));
+            is = new ObjectInputStream(new BufferedInputStream(new FileInputStream(cacheFile), 1 << 20));
+            int m = is.readInt();
+            if (m == magic) {
+                long fileLen = is.readLong();
+                if (fileLen == hashDBFile.length()) {
+                    long fileLastModified = is.readLong();
+                    if (fileLastModified == hashDBFile.lastModified()) {
+                        int filterLen = is.readInt();
+                        if (filterLen == filter.length()) {
+                            char[] c = new char[filterLen];
+                            for (int i = 0; i < filterLen; i++) {
+                                c[i] = is.readChar();
                             }
-                            ret = true;
+                            if (filter.equals(new String(c))) {
+                                vpTree = (VPTree<PhotoDnaItem, PhotoDnaItem>) is.readObject();
+                            }
                         }
                     }
                 }
             }
         } catch (Exception e) {
             LOGGER.warn("Error reading cache file " + cacheFile.getPath(), e);
-            return null;
         } finally {
             IOUtil.closeQuietly(is);
-            if (!ret) {
+            if (vpTree == null) {
                 try {
                     cacheFile.delete();
-                } catch (Exception e) {}
+                } catch (Exception e) {
+                }
             }
         }
-        return ret ? photoDNAHashSet : null;
     }
 
     private class PhotoDnaHit {
