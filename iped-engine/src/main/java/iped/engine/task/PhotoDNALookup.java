@@ -30,6 +30,7 @@ import iped.engine.config.ConfigurationManager;
 import iped.engine.config.LocalConfig;
 import iped.engine.config.PhotoDNALookupConfig;
 import iped.engine.hashdb.HashDBDataSource;
+import iped.engine.hashdb.PhotoDnaHit;
 import iped.engine.hashdb.PhotoDnaItem;
 import iped.utils.HashValue;
 import iped.utils.IOUtil;
@@ -185,11 +186,11 @@ public class PhotoDNALookup extends AbstractTask {
     @Override
     protected void process(IItem evidence) throws Exception {
 
-        PhotoDnaHit hit = new PhotoDnaHit();
+        PhotoDnaHit hit = null;
         String hashStr = (String) evidence.getExtraAttribute(PhotoDNATask.PHOTO_DNA);
         if (hashStr != null) {
             // Single value
-            lookup(hashStr, hit);
+            hit = lookup(hashStr);
 
         } else {
             @SuppressWarnings("unchecked")
@@ -198,20 +199,22 @@ public class PhotoDNALookup extends AbstractTask {
                 // Multiple values
                 List<PhotoDnaHit> hits = new ArrayList<>();
                 for (String hash : l) {
-                    PhotoDnaHit frameHit = new PhotoDnaHit();
-                    lookup(hash, frameHit);
-                    if (frameHit.nearest != null) {
+                    PhotoDnaHit frameHit = lookup(hash);
+                    if (frameHit != null) {
                         hits.add(frameHit);
                     }
                 }
                 if (!hits.isEmpty()) {
-                    combineHits(hits, hit, l.size());
+                    hit = combineHits(hits, l.size());
+                    if (hit.sqDist > pdnaLookupConfig.getMaxDistance()) {
+                        hit = null;
+                    }
                 }
             }
         }
-        if (hit.nearest != null) {
+        if (hit != null) {
             evidence.setExtraAttribute(PHOTO_DNA_HIT, "true");
-            evidence.setExtraAttribute(PHOTO_DNA_DIST, hit.minDist);
+            evidence.setExtraAttribute(PHOTO_DNA_DIST, hit.sqDist);
             evidence.setExtraAttribute(PHOTO_DNA_NEAREAST_HASH, hit.nearest.toString());
 
             String md5 = hashDBDataSource.getMD5(hit.nearest.getHashId());
@@ -228,20 +231,21 @@ public class PhotoDNALookup extends AbstractTask {
         }
     }
 
-    private void combineHits(List<PhotoDnaHit> hits, PhotoDnaHit hit, int len) {
+    private PhotoDnaHit combineHits(List<PhotoDnaHit> hits, int len) {
         int maxHits = 0;
         int minDist = Integer.MAX_VALUE;
         List<Integer> dists = new ArrayList<Integer>();
+        PhotoDnaHit hit = new PhotoDnaHit();
         for (int i = 0; i < hits.size(); i++) {
             PhotoDnaHit a = hits.get(i);
-            dists.add(a.minDist);
+            dists.add(a.sqDist);
             int currHits = 1;
-            int currDist = a.minDist;
+            int currDist = a.sqDist;
             for (int j = i + 1; j < hits.size(); j++) {
                 PhotoDnaHit b = hits.get(j);
                 if (a.nearest.equals(b.nearest)) {
                     currHits++;
-                    currDist = Math.min(currDist, b.minDist);
+                    currDist = Math.min(currDist, b.sqDist);
                 }
             }
             if (currHits > maxHits || (currHits == maxHits && currDist < minDist)) {
@@ -263,13 +267,16 @@ public class PhotoDNALookup extends AbstractTask {
             div += weight;
             weight *= 0.5;
         }
-        hit.minDist = (int) Math.round(sum / div);
+        hit.sqDist = (int) Math.round(sum / div);
+        return hit;
     }
 
-    private void lookup(String hashStr, PhotoDnaHit hit) {
+    private PhotoDnaHit lookup(String hashStr) {
         HashValue photodna = new HashValue(hashStr);
         int rot = 0;
         boolean flip = false;
+        PhotoDnaHit hit = new PhotoDnaHit();
+        hit.sqDist = pdnaLookupConfig.getMaxDistance() + 1;
         while (rot == 0 || (pdnaLookupConfig.isRotateAndFlip() && rot < 4)) {
             int degree = 90 * rot++;
             PhotoDnaItem photoDnaItemRot = new PhotoDnaItem(-1, transforms.rot(photodna.getBytes(), degree, flip));
@@ -278,16 +285,17 @@ public class PhotoDNALookup extends AbstractTask {
 
             for (PhotoDnaItem neighbor : neighbors) {
                 int dist = (int) photoDNADistance.getDistance(neighbor, photoDnaItemRot);
-                if (dist < hit.minDist) {
-                    hit.minDist = dist;
+                if (dist < hit.sqDist) {
+                    hit.sqDist = dist;
                     hit.nearest = neighbor;
                 }
-            }
+            }            
             if (rot == 4 && !flip) {
                 rot = 0;
                 flip = true;
             }
         }
+        return hit.nearest == null ? null : hit;
     }
 
     private static boolean writeCache(File hashDBFile, String filter) {
@@ -330,7 +338,7 @@ public class PhotoDNALookup extends AbstractTask {
              DB last modified (long)
              Status filter length (int)
              Status chars (char * length)
-             VPTree (object)
+             PhotoDnaTree (object)
          */
         vpTree = null;
         File cacheFile = new File(cachePath);
@@ -369,10 +377,5 @@ public class PhotoDNALookup extends AbstractTask {
                 }
             }
         }
-    }
-
-    private class PhotoDnaHit {
-        PhotoDnaItem nearest;
-        int minDist = Integer.MAX_VALUE;
     }
 }
