@@ -89,10 +89,11 @@ public class PhotoDNATask extends AbstractTask {
         if (evidence.getLength() != null && evidence.getLength() < pdnaConfig.getMinFileSize())
             return;
 
-        if (MetadataUtil.isImageType(evidence.getMediaType())) {
+        boolean isAnimationImage = MetadataUtil.isAnimationImage(evidence);
+        if (MetadataUtil.isImageType(evidence.getMediaType()) && !isAnimationImage) {
             processImage(evidence);
 
-        } else if (MetadataUtil.isVideoType(evidence.getMediaType())) {
+        } else if (MetadataUtil.isVideoType(evidence.getMediaType()) || isAnimationImage) {
             processVideo(evidence);
         }
     }
