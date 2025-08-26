@@ -107,6 +107,7 @@ public class PhotoDNALookup extends AbstractTask {
                             readCache(hashDBFile, pdnaLookupConfig.getStatusHashDBFilter());
                             if (vpTree != null) {
                                 LOGGER.info("Load from cache file {} in {} ms.", cachePath, System.currentTimeMillis() - t);
+                                taskEnabled = true;
                             } else {
                                 Set<String> statusFilter = null;
                                 if (!pdnaLookupConfig.getStatusHashDBFilter().isEmpty()) {
