@@ -148,7 +148,7 @@ public class PhotoDNATask extends AbstractTask {
                             photodna.reset();
                             byte[] hash = photodna.computePhotoDNA(is);
                             String hashStr = new String(Hex.encodeHex(hash, false));
-                            if (seen.add(hashStr) && hasMinEntropy(hashStr)) {
+                            if (seen.add(hashStr)) {
                                 hashes.add(hashStr);
                             }
                         } catch (Throwable e) {
@@ -162,7 +162,7 @@ public class PhotoDNATask extends AbstractTask {
                 }
             } else {
                 for (String hashStr : hashes) {
-                    if (seen.add(hashStr) && hasMinEntropy(hashStr)) {
+                    if (seen.add(hashStr)) {
                         hashes.add(hashStr);
                     }
                 }
@@ -171,23 +171,5 @@ public class PhotoDNATask extends AbstractTask {
                 evidence.setExtraAttribute(PHOTO_DNA_FRAMES, hashes);
             }
         }
-    }
-
-    /**
-     * Verify if a photoDNA has enough entropy. It counts repeated sequential bytes.
-     * @param hash Hex representation of a photoDNA hash.
-     * @return true if the number of non-repeated values is above a threshold.
-     */
-    private boolean hasMinEntropy(String hash) {
-        int n = 0;
-        String a = hash.substring(0, 2);
-        for (int i = 2; i < hash.length(); i += 2) {
-            String b = hash.substring(i, i + 2);
-            if (!a.equals(b)) {
-                n++;
-            }
-            a = b;
-        }
-        return n >= 72;
     }
 }

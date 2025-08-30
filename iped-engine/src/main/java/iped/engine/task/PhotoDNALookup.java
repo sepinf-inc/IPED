@@ -255,9 +255,12 @@ public class PhotoDNALookup extends AbstractTask {
         while (rot == 0 || (pdnaLookupConfig.isRotateAndFlip() && rot < 4)) {
             int degree = 90 * rot++;
             byte[] refBytes = transforms.rot(photodna.getBytes(), degree, flip);
-            PhotoDnaHit a = pdnaTree.search(refBytes, hit.sqDist);
-            if (a != null && a.sqDist < hit.sqDist) {
-                hit = a;
+            if (entropy(refBytes) > 0.7) {
+                // Only search if photoDNA has high entropy, to minimize false positives
+                PhotoDnaHit a = pdnaTree.search(refBytes, hit.sqDist);
+                if (a != null && a.sqDist < hit.sqDist) {
+                    hit = a;
+                }
             }
             if (rot == 4 && !flip) {
                 rot = 0;
@@ -265,6 +268,22 @@ public class PhotoDNALookup extends AbstractTask {
             }
         }
         return hit.nearest == null ? null : hit;
+    }
+
+    /**
+     * Estimate photoDNA entropy, counting non-repeated sequential bytes.
+     */
+    private static double entropy(byte[] bytes) {
+        int n = 0;
+        byte a = bytes[0];
+        for (int i = 1; i < bytes.length; i++) {
+            byte b = bytes[i];
+            if (a != b) {
+                n++;
+                a = b;
+            }
+        }
+        return n / (double) (bytes.length - 1);
     }
 
     private static boolean writeCache(File hashDBFile, String filter) {
