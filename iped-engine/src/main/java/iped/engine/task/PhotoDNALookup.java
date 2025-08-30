@@ -255,7 +255,7 @@ public class PhotoDNALookup extends AbstractTask {
         while (rot == 0 || (pdnaLookupConfig.isRotateAndFlip() && rot < 4)) {
             int degree = 90 * rot++;
             byte[] refBytes = transforms.rot(photodna.getBytes(), degree, flip);
-            if (entropy(refBytes) > 0.7) {
+            if (entropy(refBytes) > pdnaLookupConfig.getMinEntropy()) {
                 // Only search if photoDNA has high entropy, to minimize false positives
                 PhotoDnaHit a = pdnaTree.search(refBytes, hit.sqDist);
                 if (a != null && a.sqDist < hit.sqDist) {

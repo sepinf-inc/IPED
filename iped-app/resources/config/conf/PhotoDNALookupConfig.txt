@@ -16,3 +16,7 @@ maxSimilarityDistance = 50000
 
 # Search for photoDNA of rotated (90, 180 and 270 degrees) and flipped images in photoDNA database.
 searchRotatedAndFlipped = true
+
+# PhotoDNA minimum entropy (between 0 and 1). Images below this threshold (low information) are not matched, 
+# to avoid false positives. 0 would match all images.
+minEntropy = 0.7
