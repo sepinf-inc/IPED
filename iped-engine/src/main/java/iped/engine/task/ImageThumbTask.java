@@ -20,7 +20,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.imageio.ImageIO;
 
-import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +29,7 @@ import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.ImageThumbTaskConfig;
 import iped.engine.util.Util;
+import iped.parsers.util.MetadataUtil;
 import iped.properties.MediaTypes;
 import iped.utils.ExternalImageConverter;
 import iped.utils.ImageUtil;
@@ -237,7 +237,7 @@ public class ImageThumbTask extends ThumbTask {
     @Override
     protected void process(IItem evidence) throws Exception {
 
-        if (!isEnabled() || !isImageType(evidence.getMediaType()) || !evidence.isToAddToCase()
+        if (!isEnabled() || !MetadataUtil.isImageType(evidence.getMediaType()) || !evidence.isToAddToCase()
                 || evidence.getHashValue() == null || evidence.getThumb() != null) {
             return;
         }
@@ -263,15 +263,6 @@ public class ImageThumbTask extends ThumbTask {
             logger.warn("Timeout creating thumb: " + evidence); //$NON-NLS-1$
         }
 
-    }
-
-    /**
-     * Verifica se é imagem.
-     */
-    public static boolean isImageType(MediaType mediaType) {
-        return mediaType.getType().equals("image") || //$NON-NLS-1$
-                mediaType.toString().equals("application/coreldraw") || //$NON-NLS-1$
-                mediaType.toString().equals("application/x-vnd.corel.zcf.draw.document+zip"); //$NON-NLS-1$
     }
 
     private class ThumbCreator implements Runnable {

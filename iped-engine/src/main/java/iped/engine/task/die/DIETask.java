@@ -14,7 +14,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import javax.imageio.ImageIO;
 
-import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +26,6 @@ import iped.engine.config.ImageThumbTaskConfig;
 import iped.engine.task.AbstractTask;
 import iped.engine.task.HashTask;
 import iped.engine.task.ImageThumbTask;
-import iped.engine.task.video.VideoThumbTask;
 import iped.exception.IPEDException;
 import iped.parsers.util.MetadataUtil;
 import iped.utils.ExternalImageConverter;
@@ -198,15 +196,19 @@ public class DIETask extends AbstractTask {
      */
     @Override
     protected void process(IItem evidence) throws Exception {
-        if (!taskEnabled  || !evidence.isToAddToCase() || evidence.getHash() == null 
-                || !(isImageType(evidence.getMediaType()) || isVideoType(evidence.getMediaType()))) {
+        if (!taskEnabled  || !evidence.isToAddToCase() || evidence.getHash() == null) {
+            return;
+        }
+        boolean isImage = MetadataUtil.isImageType(evidence.getMediaType());
+        boolean isVideo = MetadataUtil.isVideoType(evidence.getMediaType());
+        if (!isImage && !isVideo) {
             return;
         }
 
         try {
             long t = System.currentTimeMillis();
-            boolean isAnimationImage = isAnimationImage(evidence);
-            if (isImageType(evidence.getMediaType()) && !isAnimationImage) {
+            boolean isAnimationImage = MetadataUtil.isAnimationImage(evidence);
+            if (isImage && !isAnimationImage) {
                 if (evidence.getExtraAttribute(ImageThumbTask.THUMB_TIMEOUT) != null) return;
 
                 //For images call the detection method passing the thumb image
@@ -229,7 +231,7 @@ public class DIETask extends AbstractTask {
                 t = System.currentTimeMillis() - t;
                 totalImagesTime.addAndGet(t);
 
-            } else if (isVideoType(evidence.getMediaType()) || isAnimationImage) {
+            } else if (isVideo || isAnimationImage) {
                 Short prevResult = null;
                 synchronized (videoResults) {
                     prevResult = videoResults.get(evidence.getHash());
@@ -242,6 +244,7 @@ public class DIETask extends AbstractTask {
                 File viewFile = evidence.getViewFile();
                 if (viewFile != null && viewFile.exists()) {
                     double prediction = -1;
+                    @SuppressWarnings("unchecked")
                     List<Double> subitemsRawScore = (List<Double>) evidence.getTempAttribute(DIE_RAW_SCORE);
                     if (subitemsRawScore != null && !subitemsRawScore.isEmpty()) {
                         prediction = videoScore(subitemsRawScore);
@@ -318,31 +321,6 @@ public class DIETask extends AbstractTask {
         evidence.setTempAttribute(DIE_RAW_SCORE, prediction);
     }
     
-    /**
-     * Check if the evidence is an image.
-     */
-    public static boolean isImageType(MediaType mediaType) {
-        return mediaType.getType().equals("image"); //$NON-NLS-1$
-    }
-    
-    /**
-     * Check if the item is a multiple frame image. Just works after VideoTahumbTask
-     * is executed.
-     */
-
-    private static boolean isAnimationImage(IItem item) {
-        return VideoThumbTask.isImageSequence(item.getMediaType().toString()) ||
-                item.getMetadata().get(VideoThumbTask.ANIMATION_FRAMES_PROP) != null;
-    }
-
-    /**
-     * Check if the evidence is a video.
-     */
-    public static boolean isVideoType(MediaType mediaType) {
-        return MetadataUtil.isVideoType(mediaType);
-    }
-    
-
     /**
      * Get an image from the evidence, possibly reusing its thumb.
      */
