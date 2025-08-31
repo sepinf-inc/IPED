@@ -219,6 +219,10 @@ public class RemoteImageClassifierTask extends AbstractTask {
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
         config = configurationManager.findObject(RemoteImageClassifierConfig.class);
+
+        if (!isEnabled()) {
+            return;
+        }
         activeInstances.incrementAndGet();
 
         urlZip = "https://" + config.getUrl() + "/zip"; // enforces secure communication (required for sensitive data
