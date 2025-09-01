@@ -430,6 +430,8 @@ public class QueryBuilder {
             }
             if(allNegative) {
                 builder.add(new MatchAllDocsQuery(), Occur.SHOULD);
+            } else {
+                builder.setMinimumNumberShouldMatch(((BooleanQuery) q).getMinimumNumberShouldMatch());
             }
             return builder.build();
         }
