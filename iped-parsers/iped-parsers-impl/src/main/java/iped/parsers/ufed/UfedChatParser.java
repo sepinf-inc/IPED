@@ -193,7 +193,7 @@ public class UfedChatParser extends AbstractParser {
                             extractMessages(subList, virtualId, handler, extractor, chat);
                         }
                         if (extractActivityLogs) {
-                            extractActivityLog(chat, handler, extractor);
+                            extractActivityLog(chat, virtualId, handler, extractor);
                         }
                     }
                 }
@@ -224,7 +224,7 @@ public class UfedChatParser extends AbstractParser {
         }
     }
 
-    private void extractActivityLog(Chat chat, ContentHandler handler, EmbeddedDocumentExtractor extractor)
+    private void extractActivityLog(Chat chat, String chatVirtualId, ContentHandler handler, EmbeddedDocumentExtractor extractor)
             throws SAXException, IOException {
 
         for (ChatActivity activity : chat.getActivityLog()) {
@@ -234,6 +234,7 @@ public class UfedChatParser extends AbstractParser {
             Metadata activityMeta = activityHandler.createMetadata();
             activityMeta.set(TikaCoreProperties.TITLE, activityHandler.getTitle());
             activityMeta.set(StandardParser.INDEXER_CONTENT_TYPE, activity.getMediaType().toString());
+            activityMeta.set(ExtraProperties.PARENT_VIRTUAL_ID, chatVirtualId);
             activityMeta.set(BasicProps.LENGTH, "");
 
             extractor.parseEmbedded(new EmptyInputStream(), handler, activityMeta, false);
