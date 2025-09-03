@@ -49,17 +49,19 @@ public class ReportGenerator {
 
     private static final int MIN_MESSAGES_TO_SHOW_MODAL = 500;
 
-    private int minChatSplitSize;
+    private final int minChatSplitSize;
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
     private boolean firstHtml = true;
-    private Chat chat;
+    private final Chat chat;
+    private final boolean isWhatsApp;
     private int currentMsg = 0;
 
 
     public ReportGenerator(Chat chat, int minChatSplitSize) {
         this.chat = chat;
+        this.isWhatsApp = StringUtils.containsIgnoreCase(chat.getSource(), Chat.SOURCE_WHATSAPP);
         this.minChatSplitSize = minChatSplitSize;
     }
 
@@ -480,7 +482,12 @@ public class ReportGenerator {
             if (isNotBlank(body)) {
                 if (hasSubject)
                     out.print("<br/>");
-                out.print(format(body));
+
+                String formattedBody = format(body);
+                if (isWhatsApp) {
+                    formattedBody = iped.parsers.whatsapp.ReportGenerator.convertWhatsAppTagsToHTML(formattedBody);
+                }
+                out.print(formattedBody);
             }
             if (!message.isSystemMessage()) {
                 out.print("<br/>");
