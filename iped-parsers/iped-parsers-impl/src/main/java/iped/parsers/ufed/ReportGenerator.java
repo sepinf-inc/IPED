@@ -588,7 +588,11 @@ public class ReportGenerator {
             if (msgStr.length() > 0) {
                 msgStr.append("<br/>");
             }
-            msgStr.append(body);
+            String formattedBody = format(body);
+            if (isWhatsApp) {
+                formattedBody = iped.parsers.whatsapp.ReportGenerator.convertWhatsAppTagsToHTML(formattedBody);
+            }
+            msgStr.append(formattedBody);
         }
 
         String quoteEnd = "";
