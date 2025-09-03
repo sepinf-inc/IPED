@@ -49,19 +49,14 @@ function addCategories(e, listcategories, default_cat) {
 function process(e) {
 
 	var listcategories= {
-		"AI_CSAM":"AI Label: Child Sexual Abuse",
-		"AI_LIKELYCSAM":"AI Label: Likely Child Sexual Abuse",
-		"AI_Drawing":{"name":"AI Label: Drawing","subCategories":{
-			"AI_Drawing_CSAM":"AI Label: Child Sexual Abuse Drawing",
-			"AI_Drawing_Porn":"AI Label: Explicit Drawing"}
+		"AI_CSAM":"AI Label - Child Sexual Abuse",
+		"AI_LIKELYCSAM":"AI Label - Likely Child Sexual Abuse",
+		"AI_Drawing":{"name":"AI Label - Drawing","subCategories":{
+			"AI_Drawing_CSAM":"AI Label - Child Sexual Abuse Drawing",
+			"AI_Drawing_Porn":"AI Label - Explicit Drawing"}
 		},
-		"AI_Other":{"name":"AI Label: Other","subCategories":{
-			"AI_Other_Banknotes":"AI Label: Banknotes",
-			"AI_Other_Digitalization":"AI Label: Digitalization",
-			"AI_Other_Documents":"AI Label: Documents"}
-		},
-		"AI_People":"AI Label: People",
-		"AI_Porn":"AI Label: Pornography"
+		"AI_People":"AI Label - People",
+		"AI_Porn":"AI Label - Pornography"
 		}
 		
 	addCategories(e, listcategories);
