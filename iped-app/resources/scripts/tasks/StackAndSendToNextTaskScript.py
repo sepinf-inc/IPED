@@ -22,7 +22,7 @@ def supported(item):
 
 '''
 Main class corrected to be thread-safe, with improved separation of concerns
-and streamlined logic.
+and robust error handling to prevent item loss.
 '''
 class StackAndSendToNextTaskScript:
     
@@ -53,38 +53,46 @@ class StackAndSendToNextTaskScript:
             try:
                 item.setExtraAttribute(str("csam_score"), str("50"))
             except Exception as e:
-                System.err.println("Failed to process item attribute: " + str(e))
+                logger.error("Failed to process item attribute: " + str(e))
         
     def process(self, item):
         """
         Acts as a dispatcher: decides if an item should be batched or
-        sent directly. All items destined for the next task are placed
-        in the itemsToSend queue.
+        sent directly. Includes error handling to prevent item loss.
         """
-        with self.BATCH_LOCK:
-            # Step 1: Classify the incoming item.
-            # If supported, add to the batch list. Otherwise, add directly to the send queue.
-            if supported(item):
-                self.itemList.append(item)
-            else:
-                self.itemsToSend.append(item)
+        try:
+            with self.BATCH_LOCK:
+                # Step 1: Classify the incoming item.
+                # If supported, add to the batch list. Otherwise, add directly to the send queue.
+                if supported(item):
+                    self.itemList.append(item)
+                else:
+                    self.itemsToSend.append(item)
 
-            # Step 2: Check if the batch needs to be flushed.
-            # This happens if the batch is full, or if the end of the queue is signaled.
-            if (len(self.itemList) >= batchSize or item.isQueueEnd()) and self.itemList:
-                # The batch is ready, process it before sending.
-                self._process_batch(self.itemList)
+                # Step 2: Check if the batch needs to be flushed.
+                # This happens if the batch is full, or if the end of the queue is signaled.
+                if (len(self.itemList) >= batchSize or item.isQueueEnd()) and self.itemList:
+                    # The batch is ready, process it before sending.
+                    self._process_batch(self.itemList)
+                    
+                    # Move the now-processed items to the sending queue.
+                    self.itemsToSend.extend(self.itemList)
+                    self.itemList.clear()
+                    
+        except Exception as e:
+            # SAFETY NET: If any unexpected error occurs, log it and queue the
+            # original item to be sent to the next task, ensuring it is not lost.
+            logger.error("An unexpected error occurred in process(). Queuing item to be sent as-is. Error: " + str(e))
+            with self.BATCH_LOCK:
+                self.itemsToSend.append(item)
                 
-                # Move the now-processed items to the sending queue.
-                self.itemsToSend.extend(self.itemList)
-                self.itemList.clear()
+            # Re-throw the exception to notify the calling framework of the failure.
+            raise
 
     def sendToNextTask(self, item):
         """
         Acts as a simple sender. It drains the itemsToSend queue and sends
-        everything that the process() method has prepared. The 'item'
-
-        parameter is no longer needed for the logic itself.
+        everything that the process() method has prepared.
         """
         items_to_send_now = deque()
 
