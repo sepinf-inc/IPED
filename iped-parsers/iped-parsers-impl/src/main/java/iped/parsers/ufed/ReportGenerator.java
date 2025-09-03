@@ -10,6 +10,7 @@ import static j2html.TagCreator.table;
 import static j2html.TagCreator.td;
 import static j2html.TagCreator.tr;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStreamWriter;
@@ -38,6 +39,7 @@ import iped.parsers.ufed.reference.ReferencedFile;
 import iped.parsers.ufed.reference.ReferencedLocation;
 import iped.parsers.util.Messages;
 import iped.parsers.whatsapp.Util;
+import iped.properties.BasicProps;
 import iped.utils.EmojiUtil;
 import iped.utils.SimpleHTMLEncoder;
 import j2html.tags.specialized.DivTag;
@@ -244,7 +246,7 @@ public class ReportGenerator {
         out.println("<div id=\"" + message.getAnchorId() + "\" class=\"linha\">");
         String name = null;
         if (message.isSystemMessage()) {
-            out.println("<div class=\"systemmessage\">");
+            out.println("<div class=\"systemmessage\"><div>");
         } else {
             if (isOutgoing) {
                 out.println("<div class=\"bbr\"><div class=\"outgoing to\">");
@@ -290,6 +292,9 @@ public class ReportGenerator {
 
         printMessageContent(out, message);
 
+        if (message.isSystemMessage()) {
+            out.print("</div>");
+        }
         out.println("<span class=\"time\">");
         if (message.isEdited()) {
             out.print(Messages.getString("UfedChatParser.Edited") + " ");
@@ -359,23 +364,24 @@ public class ReportGenerator {
 
         for (Attachment attachment : message.getAttachments()) {
 
-            byte[] thumb = null;
             boolean startedLink = false;
+            byte[] thumb = null;
+            String exportPath = null;
+            String source = null;
+            Float duration = null;
 
             if (attachment.getReferencedFile() != null) {
                 thumb = attachment.getReferencedFile().getThumb();
+                exportPath = iped.parsers.util.Util.getExportPath(attachment.getReferencedFile().getItem());
+                source = iped.parsers.util.Util.getSourceFileIfExists(attachment.getReferencedFile().getItem()).orElse("");
+                duration = attachment.getReferencedFile().getDuration();
 
                 String fileHash = attachment.getReferencedFile().getHash();
                 if (fileHash != null) {
-                    out.println("<input class=\"check\" type=\"checkbox\" onclick=app.check(\"hash:" + fileHash + "\",this.checked) name=\""
-                            + fileHash + "\" />");
-                    out.println("<a onclick=app.open(\"hash:" + fileHash + "\") ");
-                    String ext = attachment.getReferencedFile().getTrueExt();
-                    String exportPath = iped.parsers.util.Util.getExportPath(fileHash, ext); // $NON-NLS-1$
-                    if (!exportPath.isEmpty()) {
-                        out.println("href=\"" + format(exportPath) + "\"");
-                    }
-                    out.println(">");
+                    String query = BasicProps.HASH + ":" + fileHash;
+                    String href = iped.parsers.util.Util.getReportHref(attachment.getReferencedFile().getItem());
+                    out.println("<input class=\"check\" type=\"checkbox\" onclick=\"app.check('" + query + "',this.checked)\" name=\"" + fileHash + "\" />");
+                    out.println("<a onclick=\"app.open('" + query + "')\" href=\"" + format(href) + "\" >");
                     startedLink = true;
                 }
             }
@@ -385,34 +391,60 @@ public class ReportGenerator {
                 contentType = contentType.toLowerCase();
             }
 
-            if (thumb != null) {
-                if (contentType != null && contentType.startsWith("video")) {
-                    out.println(Messages.getString("WhatsAppReport.Video") + ":<br/>");
+            if (contentType != null) {
+                if (contentType.startsWith("audio")) {
+                    out.println(Messages.getString("UfedChatParser.AudioMessageTitle") + "<br>");
+                    out.println("<div class=\"audioImg iped-audio\" title=\"Audio\" "
+                                + "data-src1=\"" + format(exportPath) + "\" "
+                                + "data-src2=\"" + format(source) + "\" >");
+                    if (duration != null && duration > 0) {
+                        out.print("<span class=\"duration\"> " + formatDuration(duration) + "</span>");
+                    }
+                    out.print("</div>");
+
+                } else if (contentType.startsWith("video")) {
+                    out.println(Messages.getString("UfedChatParser.VideoMessageTitle") + "<br>"); //$NON-NLS-1$
+                    if (thumb != null) {
+                        out.print("<img class=\"thumb iped-video\" src=\"data:image/jpg;base64,");
+                        out.print(Base64.encodeBase64String(thumb));
+                        out.println("\"");
+                        out.print(" data-src1=\"" + format(exportPath) + "\"");
+                        out.print(" data-src2=\"" + format(source) + "\"");
+                        out.print(" />");
+                    } else {
+                        out.println("<div class=\"videoImg iped-video\" title=\"Video\"");
+                        out.print(" data-src1=\"" + format(exportPath) + "\"");
+                        out.print(" data-src2=\"" + format(source) + "\"");
+                        out.print("></div>");
+                    }
+                } else if (thumb != null) {
+                    out.print("<img class=\"thumb\" src=\"data:image/jpg;base64,");
+                    out.print(Base64.encodeBase64String(thumb));
+                    out.println("\" /><br/>");
+                } else {
+                    if (contentType.startsWith("image") || contentType.startsWith("photo")) {
+                        out.println("<div class=\"imageImg\" title=\"Image\"></div>");
+                    } else if (contentType.contains("contact")) {
+                        out.println("<div class=\"contactImg\" title=\"Contact\"></div>");
+                    } else if (contentType.equalsIgnoreCase("URL")) {
+                        // nothing
+                    } else {
+                        out.println("Attachment:<br/><div class=\"attachImg\" title=\"Doc\"></div>");
+                    }
                 }
+            } else if (thumb != null) {
                 out.print("<img class=\"thumb\" src=\"data:image/jpg;base64,");
                 out.print(Base64.encodeBase64String(thumb));
                 out.println("\" /><br/>");
-
-            } else if (contentType != null) {
-                if (contentType.startsWith("audio")) {
-                    out.println("<div class=\"audioImg\" title=\"Audio\"></div>");
-                } else if (contentType.startsWith("video")) {
-                    out.println("<div class=\"videoImg\" title=\"Video\"></div>");
-                } else if (contentType.startsWith("image") || contentType.startsWith("photo")) {
-                    out.println("<div class=\"imageImg\" title=\"Image\"></div>");
-                } else if (contentType.contains("contact")) {
-                    out.println("<div class=\"contactImg\" title=\"Contact\"></div>");
-                } else if (contentType.equalsIgnoreCase("URL")) {
-                    // nothing
-                } else {
-                    out.println("Attachment:<br/><div class=\"attachImg\" title=\"Doc\"></div>");
-                }
             }
+
             if (startedLink) {
                 out.println("</a>");
             }
 
             if (attachment.getReferencedFile() != null) {
+
+                // render audio transcription
                 String transcription = attachment.getReferencedFile().getTranscription();
                 if (transcription == null) {
                     transcription = attachment.getTranscript();
@@ -430,6 +462,7 @@ public class ReportGenerator {
                     out.println("</i><br/>");
                 }
 
+                // render child porn sets
                 if (!attachment.getReferencedFile().getChildPornSets().isEmpty()) {
                     out.print("<p><i>" + Messages.getString("WhatsAppReport.FoundInPedoHashDB") + " "
                             + format(attachment.getReferencedFile().getChildPornSets().toString()) + "</i></p>");
@@ -471,12 +504,12 @@ public class ReportGenerator {
 
         String body = quotedMessage.getBody();
         String quoteClick = "onclick=\"goToAnchorId('" + quotedMessage.getAnchorId() + "');\"";
-        String quoteIcon = "";
-        String quoteUser;
+        String quoteUser = null;
         if (quotedMessage.getFrom().isPresent()) {
             quoteUser = new PartyHandler(quotedMessage.getFrom().get(), message.getSource()).getTitle();
-        } else {
-            if (message.isFromPhoneOwner()) {
+        }
+        if (isBlank(quoteUser)) {
+            if (quotedMessage.isFromPhoneOwner()) {
                 quoteUser = Messages.getString("WhatsAppReport.Owner");
             } else {
                 quoteUser = Messages.getString("ReportGenerator.Unknown");
@@ -488,16 +521,10 @@ public class ReportGenerator {
 
         for (Attachment attach : quotedMessage.getAttachments()) {
 
-            boolean hasThumb = false;
+            byte[] quoteThumb = null;
             String quoteDuration = "";
             if (attach.getReferencedFile() != null) {
-                byte[] quoteThumb = attach.getReferencedFile().getThumb();
-                if (quoteThumb != null) {
-                    attachStr.append("<div><img class=\"quoteImg\" src=\"data:image/jpg;base64,")
-                        .append(Base64.encodeBase64String(quoteThumb))
-                        .append("\"/></div>");
-                    hasThumb = true;
-                }
+                quoteThumb = attach.getReferencedFile().getThumb();
                 Float duration = attach.getReferencedFile().getDuration();
                 if (duration != null && duration > 0) {
                     quoteDuration = formatDuration(duration);
@@ -507,34 +534,41 @@ public class ReportGenerator {
             String attachContentType = attach.getContentType();
             if (attachContentType != null) {
                 attachContentType = attachContentType.toLowerCase();
-            }
 
-            if (attachContentType != null) {
                 if (attachContentType.startsWith("audio")) {
-                    quoteIcon = "\uD83C\uDFA7";
+                    String quoteIcon = "\uD83C\uDFA7";
                     msgStr.append(quoteIcon + " " + quoteDuration);
 
-                    } else if (attachContentType.startsWith("video")) {
-                    quoteIcon = "\uD83D\uDCF9";
+                } else if (attachContentType.startsWith("video")) {
+                    String quoteIcon = "\uD83D\uDCF9";
                     msgStr.append(quoteIcon + " " + quoteDuration);
-                    if (!hasThumb) {
+                    if (quoteThumb != null) {
+                        attachStr.append("<div><img class=\"quoteImg\" src=\"data:image/jpg;base64,")
+                                .append(Base64.encodeBase64String(quoteThumb))
+                                .append("\"/></div>");
+                    } else {
                         attachStr.append("<div class=\"videoImg quoteImg\" title=\"Video\"></div>");
                     }
 
-                } else if (attachContentType.startsWith("image") || attachContentType.startsWith("photo")) {
-                    quoteIcon = "\uD83D\uDDBC";
-                    out.print(quoteIcon);
-                    if (!hasThumb) {
-                        attachStr.append("<div class=\"imageImg quoteImg\" title=\"Image\"></div>");
-                    }
-
+                } else if (quoteThumb != null) {
+                    attachStr.append("<div><img class=\"quoteImg\" src=\"data:image/jpg;base64,")
+                            .append(Base64.encodeBase64String(quoteThumb))
+                            .append("\"/></div>");
                 } else {
-                    quoteIcon = "\uD83D\uDCC4";
-                    out.print(quoteIcon);
-                    if (!hasThumb) {
+                    if (attachContentType.startsWith("image") || attachContentType.startsWith("photo")) {
+                        attachStr.append("<div class=\"imageImg quoteImg\" title=\"Image\"></div>");
+                    } else if (attachContentType.contains("contact")) {
+                        attachStr.append("<div class=\"contactImg quoteImg\" title=\"Contact\"></div>");
+                    } else if (attachContentType.equalsIgnoreCase("URL")) {
+                        // nothing
+                    } else {
                         attachStr.append("<div class=\"attachImg quoteImg\" title=\"Doc\"></div>");
                     }
                 }
+            } else if (quoteThumb != null) {
+                attachStr.append("<div><img class=\"quoteImg\" src=\"data:image/jpg;base64,")
+                        .append(Base64.encodeBase64String(quoteThumb))
+                        .append("\"/></div>");
             }
 
             msgStr.append(formatTitleAndUrl(attach, body));
@@ -558,8 +592,13 @@ public class ReportGenerator {
 
         out.println("<div class=\"" + quoteClass + "\" " + quoteClick + ">"
                     + "<div class=\"quoteTop\">"
-                        + "<span class=\"quoteUser\">" + format(quoteUser) + "</span><br/>"
-                        + "<span class=\"quoteMsg\">");
+                        + "<span class=\"quoteUser\">" + format(quoteUser) + "</span>");
+
+        if (quotedMessage.isForwardedMessage()) {
+            out.println(" <img class=\"fwd\">");
+        }
+
+        out.println("<br/><span class=\"quoteMsg\">");
         out.println(msgStr);
         out.println("</span></div>");
         out.println(quoteEnd);

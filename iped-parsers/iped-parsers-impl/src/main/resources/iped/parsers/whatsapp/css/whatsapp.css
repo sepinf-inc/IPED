@@ -11,11 +11,14 @@ body {
 video {
 	max-width:400px;
 	max-height:400px;
+    margin-top: 6px;
 }
 
 audio {
 	max-width:100%;
 	width:550px;
+    margin-top: 8px;
+    margin-bottom: 5px;
 }
 
 div.audioImg {
@@ -328,6 +331,7 @@ div:target {
 .quoteUser {
     font-size: 90%;
     color: #01A280;
+    margin-right: 4px;
 }
 
 .quoteMsg {
@@ -336,15 +340,21 @@ div:target {
 }
 
 .quoteImg {
-    max-width: 100px;
+    max-width: 120px;
     max-height: 100px;
     display: table-cell;
+    float: right;
 }
 
 .quoteTop {
     display: table-cell;
     vertical-align: top;
     border-right: 10px solid transparent;
+    width: 100%;
+}
+
+.check {
+    margin-top: 0;
 }
 
 @keyframes div-animate {
@@ -813,7 +823,7 @@ img.location {
 img.fwd {
     width: 16px;
     height: 16px;
-    margin-right: 1px;
+    margin-right: 4px;
     margin-left: 1px;
     vertical-align: top;
     content: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAAB3RJTUUH5wQcEQoc29Cy/wAAAAlwSFlzAAALEgAACxIB0t1+/AAAAwBQTFRFAAAAgAAAAIAAgIAAAACAgACAAICAwMDAwNzApsrwmZmZsrKyzMzM5eXl////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//vwoKCkgICA/wAAAP8A//8AAAD//wD/AP//////MM9RMgAAAP90Uk5T//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////8AZvyKWQAAAItJREFUeNrF00EOgzAMRFHWM/b9b1s1NMGZuDhVV3jJfyJIMcfrxxzPAAK+BYCICoQowSVqMEQGbgRUrMCwjCdA5HEFjpvxCYjbCVD0AFXnAHXvwOvewaZ/gB5AM9N+gjjAXO+CcVn9BZw7ov0EKY8Hc2FM9+cC0Rtg7u2jTJf2q6/Tjtj2p/6s/8Abjsu6LmqY2PUAAAAASUVORK5CYII=");

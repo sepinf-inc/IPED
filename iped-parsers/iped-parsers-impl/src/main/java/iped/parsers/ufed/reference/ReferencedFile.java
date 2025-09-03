@@ -3,6 +3,7 @@ package iped.parsers.ufed.reference;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.metadata.XMPDM;
 
 import iped.data.IItemReader;
@@ -56,7 +57,9 @@ public class ReferencedFile extends AbstractReferencedItem {
     }
 
     public Float getDuration() {
-        String duration = item.getMetadata().get(XMPDM.DURATION);
+        String duration = StringUtils.firstNonBlank(
+                item.getMetadata().get(ExtraProperties.AUDIO_META_PREFIX + XMPDM.DURATION.getName()),
+                item.getMetadata().get(ExtraProperties.VIDEO_META_PREFIX + XMPDM.DURATION.getName()));
         if (duration != null) {
             try {
                 return Float.parseFloat(duration);
