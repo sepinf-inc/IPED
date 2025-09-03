@@ -161,7 +161,10 @@ public class PhotoDNATask extends AbstractTask {
                     }
                 }
             } else {
-                for (String hashStr : hashes) {
+                // Reuse PhotoDNAs calculated for video frames (extracted as subitems)
+                List<String> reuse = new ArrayList<String>(hashes);
+                hashes.clear();
+                for (String hashStr : reuse) {
                     if (seen.add(hashStr)) {
                         hashes.add(hashStr);
                     }
