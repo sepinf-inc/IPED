@@ -318,7 +318,7 @@ public class GDriveCloudGraphParser extends SQLite3DBParser {
         xHandler.characters("Parent Doc ID");
         xHandler.endElement("th");
         xHandler.startElement("th");
-        xHandler.characters("Found in Child Porn Alert Hashset");
+        xHandler.characters("Found in CSAM Alert Hash Set");
         xHandler.endElement("th");
 
         xHandler.endElement("tr");
