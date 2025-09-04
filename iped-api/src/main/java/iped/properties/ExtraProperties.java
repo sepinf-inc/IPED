@@ -151,6 +151,12 @@ public class ExtraProperties {
 
     public static final String FACE_ENCODINGS = "face_encodings";
 
+    /**
+     * Property to be set if the evidence is a animated image (i.e. contain multiple
+     * frames). Only set if the number of frames is greater than one.
+     */
+    public static final String ANIMATION_FRAMES_PROP = IMAGE_META_PREFIX + "AnimationFrames";
+
     public static final List<String> COMMUNICATION_BASIC_PROPS = Arrays.asList(MESSAGE_SUBJECT, MESSAGE_BODY,
             Message.MESSAGE_CC, Message.MESSAGE_BCC, Message.MESSAGE_RECIPIENT_ADDRESS, MESSAGE_IS_ATTACHMENT,
             MESSAGE_ATTACHMENT_COUNT.getName());
