@@ -1,41 +1,45 @@
-﻿from java.lang import System
+﻿import traceback
+import io
+import os
+import time
+import sys
+from java.lang import System
+from java.lang import Thread
 import threading
-from collections import deque
 
 enabled = True
 # Number of images or video frames to be processed at the same time
 batchSize = 64
 
+  
 def isImage(item):
-    """Checks if the item is an image."""
     return item.getMediaType() is not None and item.getMediaType().toString().startswith('image')
        
+    
 def supported(item):
-    """Checks if the item has the necessary attributes for batch processing."""
-    return (
+    supported = (
         item.getLength() is not None and
         item.getLength() > 0 and
         isImage(item) and
         item.getExtraAttribute('hasThumb') and
         item.getHash() is not None
     )
+    return supported 
+  
 
 '''
-Main class corrected to be thread-safe, with improved separation of concerns
-and robust error handling to prevent item loss.
+Main class
 '''
 class StackAndSendToNextTaskScript:
     
     def __init__(self):
-        # List to accumulate items until a batch is formed
         self.itemList = []
-        # Queue for ALL items (single or batched) ready to be sent
-        self.itemsToSend = deque()
         self.BATCH_LOCK = threading.Lock()
 
     def isEnabled(self):
         return True
         
+    # Returns an optional list of configurable objects that can load/save parameters from/to config files. 
     def getConfigurables(self):
         return []        
 
@@ -44,71 +48,46 @@ class StackAndSendToNextTaskScript:
            
     def init(self, configuration):
         return
-
-    def _process_batch(self, batch_items):
-        """
-        Processes each item in a given batch by setting the required attributes.
-        """
-        for item in batch_items:
-            try:
-                item.setExtraAttribute(str("csam_score"), str("50"))
-            except Exception as e:
-                logger.error("Failed to process item attribute: " + str(e))
         
     def process(self, item):
-        """
-        Acts as a dispatcher: decides if an item should be batched or
-        sent directly. Includes error handling to prevent item loss.
-        """
-        try:
-            with self.BATCH_LOCK:
-                # Step 1: Classify the incoming item.
-                # If supported, add to the batch list. Otherwise, add directly to the send queue.
-                if supported(item):
-                    self.itemList.append(item)
-                else:
-                    self.itemsToSend.append(item)
 
-                # Step 2: Check if the batch needs to be flushed.
-                # This happens if the batch is full, or if the end of the queue is signaled.
-                if (len(self.itemList) >= batchSize or item.isQueueEnd()) and self.itemList:
-                    # The batch is ready, process it before sending.
-                    self._process_batch(self.itemList)
-                    
-                    # Move the now-processed items to the sending queue.
-                    self.itemsToSend.extend(self.itemList)
-                    self.itemList.clear()
-                    
-        except Exception as e:
-            # SAFETY NET: If any unexpected error occurs, log it and queue the
-            # original item to be sent to the next task, ensuring it is not lost.
-            logger.error("An unexpected error occurred in process(). Queuing item to be sent as-is. Error: " + str(e))
-            with self.BATCH_LOCK:
-                self.itemsToSend.append(item)
-                
-            # Re-throw the exception to notify the calling framework of the failure.
-            raise
+        if not item.isQueueEnd() and not supported(item):
+            return
+
+        # Uses a local lock to change local item list to avoid concurrency issues
+        with self.BATCH_LOCK:
+            if(not item.isQueueEnd()):
+                self.itemList.append(item)         
+            
+            if self.isToProcessBatch(item):
+                for i in range(len(self.itemList)):
+                    self.itemList[i].setExtraAttribute(str("csam_score"), str("50"))
+
 
     def sendToNextTask(self, item):
-        """
-        Acts as a simple sender. It drains the itemsToSend queue and sends
-        everything that the process() method has prepared.
-        """
-        items_to_send_now = deque()
-
+        
+        isItemOnList = False
+        
+        # Uses a local lock to change local item list to avoid concurrency issues
         with self.BATCH_LOCK:
-            # Drains the output queue to a local variable for sending.
-            while self.itemsToSend:
-                items_to_send_now.append(self.itemsToSend.popleft())
+            # Checks if the item is in the list to be processed (e.g., not an image or queueend)
+            if item in self.itemList:
+                isItemOnList = True
+        
+            # Now we check if we just processed a batch, to clear the list and send everything to the next task
+            if self.isToProcessBatch(item):                 
+                for i in self.itemList:
+                    self.javaTask.sendToNextTaskSuper(i)
+                self.itemList.clear()
+            
+        # If the item is not on the list, send it to the next task.
+        if(not isItemOnList):
+            self.javaTask.sendToNextTaskSuper(item) 
 
-        # Sends all items that were ready.
-        # This is done outside the lock.
-        while items_to_send_now:
-            self.javaTask.sendToNextTaskSuper(items_to_send_now.popleft())
+
+    def isToProcessBatch(self, item):
+        size = len(self.itemList)
+        return size >= batchSize or (size > 0 and item.isQueueEnd())
         
     def finish(self):
-        """
-        This method is not used to flush remaining items.
-        The end of the item stream is signaled by an isQueueEnd() item.
-        """
-        return True
+        return True 
