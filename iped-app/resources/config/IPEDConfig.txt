@@ -145,3 +145,7 @@ enableDocThumbs = false
 # Enables HTML report generation on automatic extractions or from selected items.
 # Generation settings can be modified in file "conf/HTMLReportConfig.txt"
 enableHTMLReport = true
+
+# Enables ALEAPP integration.
+# You can configure a custom path to the ALEAPP installation folder in conf/ALeappConfig.txt.
+enableAleapp = true
