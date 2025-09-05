@@ -412,7 +412,7 @@ public class ReportGenerator {
                         out.println("\"");
                         out.print(" data-src1=\"" + format(exportPath) + "\"");
                         out.print(" data-src2=\"" + format(source) + "\"");
-                        out.print(" />");
+                        out.print(" /><br/>");
                     } else {
                         out.println("<div class=\"videoImg iped-video\" title=\"Video\"");
                         out.print(" data-src1=\"" + format(exportPath) + "\"");
@@ -597,8 +597,8 @@ public class ReportGenerator {
 
         String quoteEnd = "";
         if (quotedMessage.isDeleted()) {
-            quoteEnd = "<br/><span style=\"float:none\" class=\"recovered\"><div class=\"deletedIcon\"></div>"
-                    + "<i>" + Messages.getString("UfedChatParser.MessageDeletedRecovered") + "</i>";
+            quoteEnd = "<br/><span style=\"display:table-cell\" class=\"recovered\"><div class=\"deletedIcon\"></div>"
+                    + "<i>" + Messages.getString("UfedChatParser.MessageDeletedRecovered") + "</i></span>";
         }
 
         out.println("<div class=\"" + quoteClass + "\" " + quoteClick + ">"
@@ -609,12 +609,11 @@ public class ReportGenerator {
             out.println(" <img class=\"fwd\">");
         }
 
-        out.println("<br/><span class=\"quoteMsg\">");
-        out.println(msgStr);
-        out.println("</span></div>");
-        out.println(quoteEnd);
+        out.println("<br/>");
         out.println(attachStr);
-        out.println("</div>");
+        out.println("<span class=\"quoteMsg\">" + msgStr + "</span>");
+        out.println(quoteEnd);
+        out.println("</div></div>");
     }
 
     private static String formatDuration(float duration) {
