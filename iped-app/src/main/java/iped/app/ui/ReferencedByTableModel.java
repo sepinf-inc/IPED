@@ -77,6 +77,7 @@ public class ReferencedByTableModel extends BaseTableModel {
     @Override
     public Query createQuery(Document doc) {
         BooleanQuery.Builder queryBuilder = new BooleanQuery.Builder();
+        QueryBuilder b = new QueryBuilder(App.get().appCase);
 
         // hashes
         String md5 = doc.get(HashTask.HASH.MD5.toString());
@@ -85,13 +86,20 @@ public class ReferencedByTableModel extends BaseTableModel {
         String edonkey = doc.get(HashTask.HASH.EDONKEY.toString());
         String hashes = Arrays.asList(md5, sha1, sha256, edonkey).stream().filter(StringUtils::isNotBlank).collect(Collectors.joining(" "));
         if (!hashes.isEmpty()) {
-            QueryBuilder b = new QueryBuilder(App.get().appCase);
             try {
                 queryBuilder.add(b.getQuery(ExtraProperties.LINKED_ITEMS + ":(" + hashes + ") "), Occur.SHOULD);
                 queryBuilder.add(b.getQuery(ExtraProperties.SHARED_HASHES + ":(" + hashes + ")"), Occur.SHOULD);
             } catch (ParseException | QueryNodeException e) {
                 e.printStackTrace();
             }
+        }
+
+        // id
+        String idQuery = QueryBuilder.escape(BasicProps.ID + ":" + doc.get(BasicProps.ID));
+        try {
+            queryBuilder.add(b.getQuery(ExtraProperties.LINKED_ITEMS + ":\"" + idQuery + "\""), Occur.SHOULD);
+        } catch (ParseException | QueryNodeException e) {
+            e.printStackTrace();
         }
 
         return queryBuilder.build();

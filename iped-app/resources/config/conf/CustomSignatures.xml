@@ -471,6 +471,13 @@
 		<glob pattern="*.torrent"/>
 	</mime-type>
 
+	<mime-type type="application/x-transmission-resume">
+		<sub-class-of type="application/x-p2p"/>
+		<magic priority="50">
+    		<match value="d13:activity-date" type="string" offset="0"/>
+		</magic>
+	</mime-type>
+
     <mime-type type="message/outlook-pst">
         <magic priority="70">
             <match value="!--PST Email Message Indexer Preview--" type="string" offset="7"/>
@@ -1650,6 +1657,15 @@
             <match value="&lt;OFC&gt;" type="string" offset="0"/>
         </magic>
         <glob pattern="*.ofc"/>
+    </mime-type>
+
+    <mime-type type="application/x-emule-collection">
+        <glob pattern="*.emulecollection"/>
+    </mime-type>
+    
+    <mime-type type="application/x-emule-collection">
+        <sub-class-of type="text/plain"/>
+        <glob pattern="*.emulecollection"/>
     </mime-type>
     
     <mime-type type="application/x-vlc-ini">
