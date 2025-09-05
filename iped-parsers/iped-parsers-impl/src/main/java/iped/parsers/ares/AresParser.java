@@ -53,7 +53,7 @@ import iped.search.IItemSearcher;
 import iped.utils.LocalizedFormat;
 
 /**
- * Parser para arquivos ShareL.dat e ShareL.dat do Ares Galaxy.
+ * Parser for Ares Galaxy ShareH.dat e ShareL.dat files.
  * 
  * @author Wladimir
  */
@@ -103,7 +103,8 @@ public class AresParser extends AbstractParser {
             bme.registerPropertyNameMapping(AresEntry.class, "title", "name");
             bme.registerPropertyNameMapping(AresEntry.class, "hash", "sha1");
             bme.registerTransformationMapping(AresEntry.class, ExtraProperties.LINKED_ITEMS, "sha-1:${hash}");
-            bme.registerTransformationMapping(AresEntry.class, ExtraProperties.SHARED_HASHES, "${hash}");
+            bme.registerTransformationMapping(AresEntry.class, ExtraProperties.SHARED_HASHES, "${shared ? hash : null}");
+            bme.registerTransformationMapping(AresEntry.class, "title", "Share-Entry-[${title}].dat");
             bme.setLocalTime(true);
         }
 
@@ -209,6 +210,7 @@ public class AresParser extends AbstractParser {
                 if (!hashSets.isEmpty()) {
                     hashAlertHits++;
                     trClass = "rr"; //$NON-NLS-1$
+                    e.setFoundInHashDB(hashSets.toString());
                 }
                 cells.add(hash.substring(0, hash.length() / 2) + " " + hash.substring(hash.length() / 2)); //$NON-NLS-1$
                 cells.add(e.getDate() == null ? "-" : df.format(e.getDate())); //$NON-NLS-1$
@@ -253,6 +255,7 @@ public class AresParser extends AbstractParser {
                         if (item != null) {
                             P2PUtil.printNameWithLink(xhtml, item, s);
                             cells.set(cells.size() - 1, strYes);
+                            e.setFoundInCase(true);
                         } else {
                             xhtml.characters(s);
                         }
