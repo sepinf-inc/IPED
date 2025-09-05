@@ -87,15 +87,19 @@ public class LibraryFile extends ShareazaEntity {
     }
 
     public String getShared() {
-        String resp = shared;
-        if (Util.TRI_STATE_UNKNOWN.equals(resp) && parentFolder != null) {
-            resp = parentFolder.getShared();
+        if (Util.TRI_STATE_UNKNOWN.equals(shared)) {
+            if (uploadsTotal > 0) {
+                return Util.TRI_STATE_TRUE;
+            }
+            if (parentFolder != null) {
+                return parentFolder.getShared();
+            }
         }
-        return resp;
+        return shared;
     }
 
     public boolean isSharedTrue() {
-        return Util.TRI_STATE_TRUE.equals(getShared()); //$NON-NLS-1$
+        return Util.TRI_STATE_TRUE.equals(getShared());
     }
 
     public String getFoundInHashDB() {
