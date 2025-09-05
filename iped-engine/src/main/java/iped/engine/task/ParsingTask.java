@@ -67,9 +67,9 @@ import iped.engine.config.ParsersConfig;
 import iped.engine.config.ParsingTaskConfig;
 import iped.engine.config.PluginConfig;
 import iped.engine.config.SplitLargeBinaryConfig;
+import iped.engine.core.Manager;
 import iped.engine.core.Statistics;
 import iped.engine.core.Worker;
-import iped.engine.core.Worker.ProcessTime;
 import iped.engine.data.CaseData;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.Item;
@@ -690,10 +690,10 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             if (reader.setTimeoutPaused(true)) {
                 long start = System.nanoTime() / 1000;
                 try {
-
-                    ProcessTime time = ProcessTime.AUTO;
-
-                    worker.processNewItem(subItem, time);
+                    // Add subitems to queue and blocks if queue is full. It shouldn't deadlock
+                    // because we have at least 2 workers and a maximum of workers/2 expanding
+                    // containers, so at least 1 worker is consuming items from the queue.
+                    Manager.getInstance().getProcessingQueues().addItem(subItem);
                     Statistics.get().incSubitemsDiscovered();
                     numSubitems++;
 
@@ -822,7 +822,11 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             ForkParser.setServerMaxHeap(parsingConfig.getExternalParsingMaxMem());
         } else {
             LocalConfig localConfig = configurationManager.findObject(LocalConfig.class);
-            max_expanding_containers = Math.max(localConfig.getNumThreads() / 2, 1);
+            if (localConfig.getNumThreads() < 2) {
+                // Just 1 worker can cause a deadlock if a big container is being expanded due to max queue size
+                throw new IPEDException("You should have at least 2 processing workers! Please adjust '" + LocalConfig.NUM_THREADS + "' option.");
+            }
+            max_expanding_containers = localConfig.getNumThreads() / 2;
         }
 
         String appRoot = Configuration.getInstance().appRoot;
