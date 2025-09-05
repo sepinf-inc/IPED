@@ -1362,6 +1362,9 @@ public class UfedXmlReader extends DataSourceReader {
                 ufdrPathToUfedId.put(path, ufedId);
             }
             if (ufdrFile == null) {
+                if (rootFolder == null) {
+                    rootFolder = root.isDirectory() ? root : root.getParentFile();
+                }
                 File file = new File(rootFolder, path);
                 if (file.exists()) {
                     item.setInputStreamFactory(getFISF());
