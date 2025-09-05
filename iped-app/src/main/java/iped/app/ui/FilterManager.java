@@ -43,6 +43,7 @@ import iped.engine.search.MultiSearchResult;
 import iped.engine.search.QueryBuilder;
 import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
+import iped.localization.LocaleResolver;
 import iped.search.IMultiSearchResult;
 import iped.utils.UTF8Properties;
 import iped.viewers.api.IFilter;
@@ -89,7 +90,7 @@ public class FilterManager implements ActionListener, ListSelectionListener {
 
     private static final File getGlobalFilterFile() {
         String name = "ipedFilters"; //$NON-NLS-1$
-        String locale = System.getProperty(iped.localization.Messages.LOCALE_SYS_PROP); // $NON-NLS-1$
+        String locale = LocaleResolver.getLocaleString();
         if (locale != null && !locale.equals("pt-BR")) //$NON-NLS-1$
             name += "-" + locale; //$NON-NLS-1$
         name += ".txt"; //$NON-NLS-1$

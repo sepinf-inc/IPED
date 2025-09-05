@@ -8,6 +8,7 @@ supportedMimes = application/x-msaccess; application/x-lnk; application/x-firefo
 supportedMimes = application/x-sqlite3; application/sqlite-skype; application/x-win10-timeline; application/x-gdrive-cloud-graph; application/x-gdrive-snapshot
 supportedMimes = application/x-whatsapp-db; application/x-whatsapp-db-f; application/x-whatsapp-chatstorage; application/x-whatsapp-chatstorage-f; application/x-threema-chatstorage; application/x-shareaza-searches-dat; application/x-msie-cache
 supportedMimes = application/x-prefetch; text/x-vcard; application/x-emule-preferences-dat; application/vnd.android.package-archive; application/x-bittorrent-settings-dat
+supportedMimes = application/x-ufed-useraccount; application/x-ufed-contact; application/x-ufed-instantmessage; application/x-ufed-email
 
 # List of mimetypes which parsers insert links to other case items into preview
 supportedMimesWithLinks = application/x-emule; application/x-emule-collection; application/x-emule-part-met; application/x-ares-galaxy; application/x-shareaza-library-dat; application/x-shareaza-download; application/x-bittorrent-resume-dat; application/x-bittorrent-resume-dat-entry; application/x-bittorrent; application/x-transmission-resume

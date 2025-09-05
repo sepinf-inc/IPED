@@ -1,6 +1,7 @@
 package iped.engine.task;
 
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -9,6 +10,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.io.TikaInputStream;
@@ -91,8 +93,7 @@ public class MakePreviewTask extends AbstractTask {
     protected void process(IItem evidence) throws Exception {
 
         String mediaType = evidence.getMediaType().toString();
-        if (evidence.getLength() == Long.valueOf(0) || evidence.getHash() == null || evidence.getHash().isEmpty()
-                || !isSupportedType(mediaType) || !evidence.isToAddToCase()) {
+        if (evidence.getLength() == Long.valueOf(0) || !isSupportedType(mediaType) || !evidence.isToAddToCase()) {
             return;
         }
 
@@ -101,21 +102,32 @@ public class MakePreviewTask extends AbstractTask {
             ext = "csv"; //$NON-NLS-1$
         }
 
-        File viewFile = Util.getFileFromHash(new File(output, viewFolder), evidence.getHash(), ext);
-
-        if (viewFile.exists()) {
-            evidence.setViewFile(viewFile);
-            return;
-        }
-
-        if (!viewFile.getParentFile().exists()) {
-            viewFile.getParentFile().mkdirs();
-        }
-
         try {
-            LOGGER.debug("Generating preview of {} ({} bytes)", evidence.getPath(), evidence.getLength());
-            makeHtmlPreview(evidence, viewFile, mediaType);
-            evidence.setViewFile(viewFile);
+            if (StringUtils.isBlank(evidence.getHash())) {
+
+                LOGGER.debug("Generating preview of {} ({} bytes)", evidence.getPath(), evidence.getLength());
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                makeHtmlPreview(evidence, baos, mediaType);
+                if (baos.size() > 0) {
+                    ExportFileTask.getLastInstance().insertIntoStorage(evidence, baos.toByteArray(), baos.size());
+                }
+
+            } else {
+
+                File viewFile = Util.getFileFromHash(new File(output, viewFolder), evidence.getHash(), ext);
+                if (viewFile.exists()) {
+                    evidence.setViewFile(viewFile);
+                    return;
+                }
+
+                if (!viewFile.getParentFile().exists()) {
+                    viewFile.getParentFile().mkdirs();
+                }
+
+                LOGGER.debug("Generating preview of {} ({} bytes)", evidence.getPath(), evidence.getLength());
+                makeHtmlPreview(evidence, new BufferedOutputStream(new FileOutputStream(viewFile)), mediaType);
+                evidence.setViewFile(viewFile);
+            }
 
         } catch (Throwable e) {
             LOGGER.warn("Error generating preview of {} ({} bytes) {}", evidence.getPath(), evidence.getLength(), //$NON-NLS-1$
@@ -125,8 +137,7 @@ public class MakePreviewTask extends AbstractTask {
 
     }
 
-    private void makeHtmlPreview(IItem evidence, File outFile, String mediaType) throws Throwable {
-        BufferedOutputStream outStream = null;
+    private void makeHtmlPreview(IItem evidence, OutputStream outStream, String mediaType) throws Throwable {
         try {
             final Metadata metadata = new Metadata();
             ParsingTask.fillMetadata(evidence, metadata);
@@ -154,8 +165,6 @@ public class MakePreviewTask extends AbstractTask {
             // certos arquivos
             // Ex: Como renderizar no preview html um PDF embutido num banco de dados?
             // context.set(Parser.class, parser);
-
-            outStream = new BufferedOutputStream(new FileOutputStream(outFile));
 
             ContentHandler handler;
             if (!isSupportedTypeCSV(evidence.getMediaType().toString())) {
