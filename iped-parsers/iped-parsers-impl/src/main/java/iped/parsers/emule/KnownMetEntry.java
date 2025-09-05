@@ -2,6 +2,8 @@ package iped.parsers.emule;
 
 import java.util.Date;
 
+import org.apache.commons.lang3.BooleanUtils;
+
 public class KnownMetEntry {
     private String hash, name, fileType, partName;
     private Date lastModified, lastPublishedKad, lastShared;
@@ -112,6 +114,20 @@ public class KnownMetEntry {
 
     public void setAcceptedRequests(int acceptedRequests) {
         this.acceptedRequests = acceptedRequests;
+    }
+
+    public Boolean getShared() {
+        return (lastPublishedKad != null && lastPublishedKad.getTime() > 0) //
+                || (lastShared != null && lastShared.getTime() > 0) //
+                || (bytesTransfered > 0) ? true : null;
+    }
+
+    public boolean isSharedTrue() {
+        return BooleanUtils.isTrue(getSent());
+    }
+
+    public Boolean getSent() {
+        return bytesTransfered > 0 ? true : null;
     }
 
     public String toString() {
