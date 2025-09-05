@@ -103,7 +103,7 @@ public class AresParser extends AbstractParser {
             bme.registerPropertyNameMapping(AresEntry.class, "title", "name");
             bme.registerPropertyNameMapping(AresEntry.class, "hash", "sha1");
             bme.registerTransformationMapping(AresEntry.class, ExtraProperties.LINKED_ITEMS, "sha-1:${hash}");
-            bme.registerTransformationMapping(AresEntry.class, ExtraProperties.SHARED_HASHES, "${hash}");
+            bme.registerTransformationMapping(AresEntry.class, ExtraProperties.SHARED_HASHES, "${shared ? hash : null}");
             bme.registerTransformationMapping(AresEntry.class, "title", "Share-Entry-[${title}].dat");
             bme.setLocalTime(true);
         }
