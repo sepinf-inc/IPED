@@ -49,23 +49,22 @@ public class LibraryFolder extends ShareazaEntity {
         this.indexToFile = indexToFile;
     }
 
-    public String getInheritedShared() {
+    public String getParentFolderShared() {
         if (parentFolder != null) {
             return parentFolder.getShared();
         }
         return Util.TRI_STATE_UNKNOWN;
     }
 
-    public String getExplicitShared() {
+    public String getSharedFlag() {
         return shared;
     }
 
     public String getShared() {
-        String resp = shared;
-        if (Util.TRI_STATE_UNKNOWN.equals(resp) && parentFolder != null) {
-            resp = parentFolder.getShared();
+        if (Util.TRI_STATE_UNKNOWN.equals(shared) && parentFolder != null) {
+            return parentFolder.getShared();
         }
-        return resp;
+        return shared;
     }
 
     @Override

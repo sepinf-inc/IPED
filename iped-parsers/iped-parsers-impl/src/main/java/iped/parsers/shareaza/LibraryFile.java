@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
@@ -75,31 +76,31 @@ public class LibraryFile extends ShareazaEntity {
         this.parentFolder = parentFolder;
     }
 
-    public String getInheritedShared() {
+    public String getParentFolderShared() {
         if (parentFolder != null) {
             return parentFolder.getShared();
         }
         return Util.TRI_STATE_UNKNOWN;
     }
 
-    public String getExplicitShared() {
+    public String getSharedFlag() {
         return shared;
     }
 
-    public String getShared() {
+    public Boolean getShared() {
         if (Util.TRI_STATE_UNKNOWN.equals(shared)) {
             if (uploadsTotal > 0) {
-                return Util.TRI_STATE_TRUE;
+                return true;
             }
             if (parentFolder != null) {
-                return parentFolder.getShared();
+                return Util.TRI_STATE_TRUE.equals(parentFolder.getShared()) ? true : null;
             }
         }
-        return shared;
+        return Util.TRI_STATE_TRUE.equals(shared) ? true : null;
     }
 
     public boolean isSharedTrue() {
-        return Util.TRI_STATE_TRUE.equals(getShared());
+        return BooleanUtils.isTrue(getShared());
     }
 
     public String getFoundInHashDB() {
