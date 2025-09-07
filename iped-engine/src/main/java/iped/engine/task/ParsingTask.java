@@ -694,6 +694,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
                     // because we have at least 2 workers and a maximum of workers/2 expanding
                     // containers, so at least 1 worker is consuming items from the queue.
                     Manager.getInstance().getProcessingQueues().addItem(subItem);
+                    caseData.incDiscoveredEvidences(1);
                     Statistics.get().incSubitemsDiscovered();
                     numSubitems++;
 
