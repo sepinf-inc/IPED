@@ -8,16 +8,27 @@
 enableProp = 'enableAgeEstimation'
 configFile = 'AgeEstimationConfig.txt'
 
-# Number of images to be processed at the same time
-batchSize = 15
+# Maximum number of items per classification run
+batchSize = 50
+batchSizeProp = 'batchSize'
+
+# Threshold used to decide if a face is labeled in one category
+categorizationThreshold = 0.6
+categorizationThresholdProp = 'categorizationThreshold'
+
+# Skip classification of faces within images with hits on IPED hashesDB database (if 'hashesDB' is not configured in 'LocalConfig.txt' or 'false', do not skip)
+skipHashDBFiles = True
+skipHashDBFilesProp = 'skipHashDBFiles'
 
 # Max number of threads allowed to enter code between semaphore.acquire() and semaphore.release()
 # This can be set if your GPU does not have enough memory to use all threads with configured 'batchSize'
 maxThreads = None
+maxThreadsProp = 'maxThreads'
 
 import io, os, time, sys
 from java.lang import System
 
+predictCount = 0
 predictTime = 0
 enabled = False
 semaphore = None
@@ -152,6 +163,33 @@ class AgeEstimationTask:
 
         # load configuration properties
         extraProps = taskConfig.getConfiguration()
+        global batchSize, categorizationThreshold, skipHashDBFiles, maxThreads
+        if extraProps.getProperty(batchSizeProp) is not None:
+            try:
+                batchSize = int(extraProps.getProperty(batchSizeProp))
+            except ValueError:
+                logger.warn("AgeEstimationTask: Invalid value for property 'batchSize': " + extraProps.getProperty(batchSizeProp))
+                logger.warn("AgeEstimationTask: Using default value for property 'batchSize': " + str(batchSize))
+        if extraProps.getProperty(categorizationThresholdProp) is not None:
+            try:
+                categorizationThreshold = float(extraProps.getProperty(categorizationThresholdProp))
+            except ValueError:
+                logger.warn("AgeEstimationTask: Invalid value for property 'categorizationThreshold': " + extraProps.getProperty(categorizationThresholdProp))
+                logger.warn("AgeEstimationTask: Using default value for property 'categorizationThreshold': " + str(categorizationThreshold))
+        if extraProps.getProperty(skipHashDBFilesProp) is not None:
+            if extraProps.getProperty(skipHashDBFilesProp) in ('true', 'True'):
+                skipHashDBFiles = True
+            elif extraProps.getProperty(skipHashDBFilesProp) in ('false', 'False'):
+                skipHashDBFiles = False
+            else:
+                logger.warn("AgeEstimationTask: Invalid value for property 'skipHashDBFiles': " + extraProps.getProperty(skipHashDBFilesProp))
+                logger.warn("AgeEstimationTask: Using default value for property 'skipHashDBFiles': " + str(skipHashDBFiles))
+        if extraProps.getProperty(maxThreadsProp) is not None:
+            try:
+                maxThreads = int(extraProps.getProperty(maxThreadsProp))
+            except ValueError:
+                logger.warn("AgeEstimationTask: Invalid value for property 'maxThreads': " + extraProps.getProperty(maxThreadsProp))
+                logger.warn("AgeEstimationTask: Using default value for property 'maxThreads': " + str(maxThreads))
 
         loadModelAndProcessor()
         createSemaphore()
@@ -171,7 +209,9 @@ class AgeEstimationTask:
         caseData.putCaseObject('age_estimation_time', age_estimation_time)
         
         if num_finishes == numThreads:
-            logger.info('AgeEstimationTask: Time(s) to perform age estimation for faces: ' + str(age_estimation_time))
+            logger.info('AgeEstimationTask: Total time to perform age estimation for faces (s): ' + str(round(age_estimation_time, 2)))
+            logger.info('AgeEstimationTask: Count of faces with age estimation performed: ' + str(predictCount))
+            logger.info('AgeEstimationTask: Average time to perform age estimation for faces (faces/s): ' + str(round(predictCount / age_estimation_time, 2)))
     
 
     def sendToNextTask(self, item):        
@@ -297,7 +337,7 @@ def processImages(itemList, imageList):
 def makePrediction(imageList):
     logger.debug('AgeEstimationTask: Making predictions for batch of ' + str(len(imageList)) + ' faces.')
 
-    global predictTime 
+    global predictCount, predictTime 
     t = time.time()
     [model, processor] = loadModelAndProcessor()
     inputs = processor(images=imageList, return_tensors="pt")
@@ -308,6 +348,7 @@ def makePrediction(imageList):
             outputs = model(**inputs)
             logits = outputs.logits
             preds = torch.nn.functional.softmax(logits, dim=1).tolist()
+            predictCount += len(imageList)
         predictTime += time.time() - t
     finally:
         if semaphore is not None:
