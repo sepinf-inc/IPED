@@ -30,6 +30,8 @@ public class DuplicateTask extends AbstractTask {
 
     private static final String ENABLE_PARAM = "ignoreDuplicates"; //$NON-NLS-1$
 
+    private static final String TASK_EXECUTED = DuplicateTask.class.getName() + "_EXECUTED";
+
     private HashMap<IHashValue, IHashValue> hashMap;
 
     private static boolean ignoreDuplicates = false;
@@ -44,6 +46,10 @@ public class DuplicateTask extends AbstractTask {
     }
 
     public void process(IItem evidence) {
+
+        if (Boolean.valueOf((String) evidence.getTempAttribute(TASK_EXECUTED))) {
+            return;
+        }
 
         // Verificação de duplicados
         boolean isDuplicate = false;
@@ -64,6 +70,7 @@ public class DuplicateTask extends AbstractTask {
             evidence.setToIgnore(true);
         }
 
+        evidence.setTempAttribute(TASK_EXECUTED, Boolean.TRUE.toString());
     }
 
     @Override

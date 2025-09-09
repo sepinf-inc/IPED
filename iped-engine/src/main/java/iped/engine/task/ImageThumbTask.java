@@ -125,6 +125,10 @@ public class ImageThumbTask extends ThumbTask {
 
         // Set ImageIO plugins priority order.
         ImageUtil.updateImageIOPluginsPriority();
+
+        if (isEnabled()) {
+            checkDependency(HashTask.class);
+        }
     }
 
     private static void startTmpDirCleaner(File tmpDir) {
@@ -319,6 +323,8 @@ public class ImageThumbTask extends ThumbTask {
                 performanceStats[img == null ? 6 : 4]++;
                 performanceStats[img == null ? 7 : 5] += System.currentTimeMillis() - t;
             }
+            
+            boolean isView = false;
             if (img == null) {
                 // External Conversion
                 long t = System.currentTimeMillis();
@@ -342,6 +348,7 @@ public class ImageThumbTask extends ThumbTask {
                         File viewFile = getViewFile(evidence, "jpg");
                         viewTmpFile.renameTo(viewFile);
                         evidence.setViewFile(viewFile);
+                        isView = true;
                     }
                 }
 
@@ -375,14 +382,16 @@ public class ImageThumbTask extends ThumbTask {
                 performanceStats[14]++;
                 performanceStats[15] += System.currentTimeMillis() - t;
 
-                // Ajusta rotacao da miniatura a partir do metadado orientacao
-                try (BufferedInputStream stream = evidence.getBufferedInputStream()) {
-                    int orientation = ImageMetadataUtil.getOrientation(stream);
-                    if (orientation > 0) {
-                        t = System.currentTimeMillis();
-                        img = ImageUtil.applyOrientation(img, orientation);
-                        performanceStats[16]++;
-                        performanceStats[17] += System.currentTimeMillis() - t;
+                if (!isView) {
+                    // Adjust thumb orientation based on "tiff:orientation" metadata.
+                    try (BufferedInputStream stream = evidence.getBufferedInputStream()) {
+                        int orientation = ImageMetadataUtil.getOrientation(stream);
+                        if (orientation > 0) {
+                            t = System.currentTimeMillis();
+                            img = ImageUtil.applyOrientation(img, orientation);
+                            performanceStats[16]++;
+                            performanceStats[17] += System.currentTimeMillis() - t;
+                        }
                     }
                 }
 

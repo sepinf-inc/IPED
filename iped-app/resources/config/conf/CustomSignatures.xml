@@ -1659,6 +1659,15 @@
         <glob pattern="*.ofc"/>
     </mime-type>
 
+    <mime-type type="application/x-emule-collection">
+        <glob pattern="*.emulecollection"/>
+    </mime-type>
+
+    <mime-type type="application/x-emule-collection">
+        <sub-class-of type="text/plain"/>
+        <glob pattern="*.emulecollection"/>
+    </mime-type>
+
     <mime-type type="application/x-vlc-ini">
         <sub-class-of type="text/x-ini"/>
         <glob pattern="vlc-qt-interface.ini"/>
