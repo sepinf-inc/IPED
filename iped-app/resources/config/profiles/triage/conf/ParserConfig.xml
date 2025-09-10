@@ -23,13 +23,15 @@
         <!--parser class="iped.parsers.external.CompositeExternalParser"></parser-->
         
         <parser class="org.apache.tika.parser.apple.AppleSingleFileParser"></parser>
-        <parser class="org.apache.tika.parser.apple.PListParser"></parser>
+        <parser class="iped.parsers.plist.PListParser"></parser>
+        <parser class="iped.parsers.plist.NSKeyedArchiverParser"></parser>
         <!--parser class="org.apache.tika.parser.asm.ClassParser"></parser>
         <parser class="org.apache.tika.parser.audio.AudioParser"></parser>
         <parser class="org.apache.tika.parser.audio.MidiParser"></parser-->
         <!--throws exception on most files
         <parser class="org.apache.tika.parser.crypto.Pkcs7Parser"></parser-->
         <!--parser class="org.apache.tika.parser.crypto.TSDParser"></parser-->
+        <parser class="iped.parsers.emule.EmuleCollectionParser"></parser>
         <parser class="org.apache.tika.parser.csv.TextAndCSVParser"></parser>
         <!--parser class="org.apache.tika.parser.dwg.DWGParser"></parser>
         <parser class="org.apache.tika.parser.epub.EpubParser"></parser-->
