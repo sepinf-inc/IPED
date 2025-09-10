@@ -5,10 +5,10 @@
 # Maximum number of items per classification run
 batchSize = 50
 
-# Threshold used to decide if a face is labeled in one category
-categorizationThreshold = 0.6
+# Threshold used to decide if a face is labeled in one category (values range: 0-100; '0' means the category with the highest score)
+categorizationThreshold = 0
 
-# Skip classification of faces within images with hits on IPED hashesDB database (if 'hashesDB' is not configured in 'LocalConfig.txt' or 'false', do not skip)
+# Skip age estimation for faces within images with hits on IPED hashesDB database (if 'hashesDB' is not configured in 'LocalConfig.txt' or 'false', do not skip)
 skipHashDBFiles = true
 
 # Max number of threads allowed to enter code between semaphore.acquire() and semaphore.release()
