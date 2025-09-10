@@ -3,6 +3,8 @@
 # AgeEstimationTask.py - by Marcos Moura
 # Requirements: See https://github.com/sepinf-inc/IPED/wiki/User-Manual#AgeEstimation
 '''
+import io, os, time, sys
+from java.lang import System
 
 # configuration properties
 enableProp = 'enableAgeEstimation'
@@ -25,87 +27,22 @@ skipHashDBFilesProp = 'skipHashDBFiles'
 maxThreads = None
 maxThreadsProp = 'maxThreads'
 
-import io, os, time, sys
-from java.lang import System
-
+# variables related to statistics
+classificationSuccess = 0
+classificationFail = 0
+imageNoFacesCount = 0
+skipHashDBFilesCount = 0
+skipDuplicatesCount = 0
 predictCount = 0
 predictTime = 0
-enabled = False
+
+# semaphore for concurrency control
 semaphore = None
 
 '''
-Load model and processor which perform age estimation for faces
-'''
-def loadModelAndProcessor():
-    logger.debug('AgeEstimationTask: Loading Open Age Detection model')
-
-    model = caseData.getCaseObject('open-age-detection_model')
-    processor = caseData.getCaseObject('open-age-detection_processor')
-    
-    if model is None or processor is None:
-        # Load model and processor
-        model_name = "prithivMLmods/open-age-detection"
-        model_path = System.getProperty('iped.root') + '/models/age_estimation'
-        model_filename = 'model.safetensors'
-        processor_filename = 'preprocessor_config.json'
-
-        if not os.path.exists(model_path + '/' + model_filename) or not os.path.exists(model_path + '/' + processor_filename):
-            # Create model files
-            model = SiglipForImageClassification.from_pretrained(model_name)
-            processor = AutoImageProcessor.from_pretrained(model_name)
-            
-            # Create the model path if it doesn't exist
-            os.makedirs(model_path, exist_ok=True)
-            
-            # Save the model and processor to files
-            logger.debug('AgeEstimationTask: Saving model to ' + model_path)
-            model.save_pretrained(model_path)
-            processor.save_pretrained(model_path)
-        else:
-            # Load model files
-            logger.debug('AgeEstimationTask: Loading model from ' + model_path)
-            model = SiglipForImageClassification.from_pretrained(model_path)
-            processor = AutoImageProcessor.from_pretrained(model_path)
-        
-        # Store model in memory
-        caseData.putCaseObject('open-age-detection_model', model)
-        caseData.putCaseObject('open-age-detection_processor', processor)
-        logger.debug('AgeEstimationTask: Open Age Detection model loaded')
-        
-        # Set up cache
-        from java.util.concurrent import ConcurrentHashMap
-        cache = ConcurrentHashMap()
-        caseData.putCaseObject('age_estimation_cache', cache)    
-        logger.debug('AgeEstimationTask: Cache ready')
-
-    return [model, processor]
-
-'''
-Create semaphore for concurrency control
-'''
-def createSemaphore():
-    if maxThreads is None:
-        return
-    global semaphore
-    semaphore = caseData.getCaseObject('age_estimation_semaphore')
-    
-    if (semaphore is None):
-        from java.util.concurrent import Semaphore
-        semaphore = Semaphore(maxThreads)
-        caseData.putCaseObject('age_estimation_semaphore', semaphore)
-    return semaphore
-   
-def isImage(item):
-    return item.getMediaType() is not None and item.getMediaType().toString().startswith('image')
-       
-def supported(item):
-    return isImage(item) and item.getLength() is not None and item.getLength() > 0
-
-'''
-Main class
+Main class: AgeEstimationTask
 '''
 class AgeEstimationTask:
-
     enabled = None
 
     def __init__(self):
@@ -168,6 +105,8 @@ class AgeEstimationTask:
 
         # load configuration properties
         extraProps = taskConfig.getConfiguration()
+        global batchSize, categorizationThreshold, skipHashDBFiles, maxThreads
+
         if extraProps.getProperty(batchSizeProp) is not None:
             try:
                 batchSize = int(extraProps.getProperty(batchSizeProp))
@@ -209,23 +148,42 @@ class AgeEstimationTask:
     
 
     def finish(self):
-        num_finishes = caseData.getCaseObject('num_finishes')
+        num_finishes = caseData.getCaseObject('age_estimation_num_finishes')
         if num_finishes is None:
             num_finishes = 0
         num_finishes += 1
-        caseData.putCaseObject('num_finishes', num_finishes)
-        
-        age_estimation_time = caseData.getCaseObject('age_estimation_time')
-        if age_estimation_time is None:
-            age_estimation_time = 0
-        age_estimation_time += predictTime / numThreads
-        caseData.putCaseObject('age_estimation_time', age_estimation_time)
+        caseData.putCaseObject('age_estimation_num_finishes', num_finishes)
         
         if num_finishes == numThreads:
-            logger.info('AgeEstimationTask: Total time to perform age estimation for faces (s): ' + str(round(age_estimation_time, 2)))
-            logger.info('AgeEstimationTask: Count of faces with age estimation performed: ' + str(predictCount))
-            logger.info('AgeEstimationTask: Average time to perform age estimation for faces (faces/s): ' + str(round(predictCount / age_estimation_time, 2)))
-    
+            # total time to perform age estimation for faces
+            age_estimation_time = predictTime / numThreads
+            caseData.putCaseObject('age_estimation_time', age_estimation_time)
+
+            # summary statistics
+            totClassifications = classificationSuccess + classificationFail
+            totSkipCount = skipHashDBFilesCount + skipDuplicatesCount
+            logger.info('AgeEstimationTask: Total count of files processed: ' + str(totClassifications + totSkipCount - skipDuplicatesCount + imageNoFacesCount))
+
+            # statistics for files for age estimation
+            if totClassifications > 0:
+                logger.info('AgeEstimationTask:  Files for age estimation: ' + str(totClassifications))
+                logger.info('AgeEstimationTask:   Successful age estimation: ' + str(classificationSuccess))
+                logger.info('AgeEstimationTask:   Failed age estimation: ' + str(classificationFail))
+                if predictCount > 0:
+                    logger.info('AgeEstimationTask:   Total time to perform age estimation for faces (s): ' + str(round(age_estimation_time, 3)))
+                    logger.info('AgeEstimationTask:   Faces with age estimation performed: ' + str(predictCount))
+                    logger.info('AgeEstimationTask:   Average age estimation time (ms/face): ' + str(round(age_estimation_time * 1000 / predictCount, 3)))
+                    logger.info('AgeEstimationTask:   Average age estimation throughput (faces/s): ' + str(round(predictCount / age_estimation_time)))
+
+            # statistics for files with skipped age estimation
+            if totSkipCount > 0:
+                logger.info("AgeEstimationTask:  Files with skipped age estimation: {}", totSkipCount)
+                logger.info("AgeEstimationTask:   Skipped age estimation by hashDBFiles: {}", skipHashDBFilesCount)
+                logger.info("AgeEstimationTask:   Skipped age estimation by duplicates: {}", skipDuplicatesCount)
+
+            # statistics for files not for age estimation
+            logger.info('AgeEstimationTask:  Files not for age estimation (no faces found): ' + str(imageNoFacesCount))
+
 
     def sendToNextTask(self, item):        
         if not item.isQueueEnd() and not self.queued:
@@ -253,14 +211,16 @@ class AgeEstimationTask:
     
         if (not item.isQueueEnd() and not supported(item)) or (not item.isToAddToCase()):
             return
-            
+
+        global classificationSuccess, classificationFail, imageNoFacesCount, skipHashDBFilesCount, skipDuplicatesCount
+        
         try:
             # skip age estimation for faces within images with hits on IPED hashesDB database (see 'skipHashDBFiles' config property)
-            global skipHashDBFiles
             from iped.engine.task import HashDBLookupTask
             if (skipHashDBFiles and item.getExtraAttribute(HashDBLookupTask.STATUS_ATTRIBUTE) is not None):
                 # add skip age estimation info
                 item.setExtraAttribute('faceAgeEstimationSkip', 'hashDB')
+                skipHashDBFilesCount += 1
                 return
 
             # skip age estimation for faces within images duplicates if age estimation data exists in cache
@@ -272,33 +232,51 @@ class AgeEstimationTask:
                     if age_estimation_data is not None:
                         # age estimation data exists in cache
                         # add age estimation scores and labels
-                        item.setExtraAttribute('faceAgeClassScores', age_estimation_data['faceAgeClassScores'])
-                        item.setExtraAttribute('faceAgeClassLabels', age_estimation_data['faceAgeClassLabels'])
-                        # add label for each type of face found in image ('Child', 'Teenager', 'Adult')
-                        for face_of in age_estimation_data['faceOf']:
-                            item.setExtraAttribute('faceOf' + face_of, True)
+                        item.setExtraAttribute('faceAgeScores', age_estimation_data['faceAgeScores'])
+                        item.setExtraAttribute('faceAgeLabels', age_estimation_data['faceAgeLabels'])                        
+                        # add face labels count
+                        for label in age_estimation_data['faceAgeLabelsCount']:
+                            count = age_estimation_data['faceAgeLabelsCount'][label]
+                            if count > 0:
+                                item.setExtraAttribute('faceAgeIs' + label.capitalize(), count)
                         # add age estimation status
                         item.setExtraAttribute('faceAgeEstimationStatus', 'success')
                         # add skip age estimation info
-                        item.setExtraAttribute('faceAgeEstimationSkip', 'duplicate')
+                        item.setExtraAttribute('faceAgeEstimationSkip', 'duplicate')                
+                        classificationSuccess += 1
+                        skipDuplicatesCount += 1
                         return
             
-            img = None            
-            if isImage(item) and item.getTempFile() is not None:
+            img = None
+            # flags if item contains face
+            item_with_face = False
+            if isImage(item):
                 # check if item has faces
                 from iped.properties import ExtraProperties
                 face_count = item.getExtraAttribute(ExtraProperties.FACE_COUNT)
                 if face_count is not None and face_count > 0:
-                    logger.debug('AgeEstimationTask: Processing ' + item.getPath())
+                    # item has at least one face
+                    item_with_face = True
+                    
+                    logger.debug('AgeEstimationTask: Processing item: ' + item.getPath())
                     logger.debug('AgeEstimationTask: face_count: ' + str(face_count))
 
-                    # save image (for test purposes only; to be removed before feature release)
-                    img_save_path = System.getProperty('iped.root') + '/models/age_estimation/img_save'
-                    os.makedirs(img_save_path, exist_ok=True)
-                    img_path = item.getTempFile().getAbsolutePath()
+                    ######################################
+                    ## TEST CODE -> REMOVE BEFORE RELEASE
+                    #
+                    # # save image (for test purposes only; to be removed before feature release)
+                    # img_save_path = System.getProperty('iped.root') + '/models/age_estimation/img_save'
+                    # os.makedirs(img_save_path, exist_ok=True)
+                    if item.getViewFile() is not None and os.path.exists(item.getViewFile().getAbsolutePath()):
+                        img_path = item.getViewFile().getAbsolutePath()
+                    else:
+                        img_path = item.getTempFile().getAbsolutePath()
                     img = PilImage.open(img_path)
-                    img = img.convert("RGB")                    
-                    img.save(img_save_path + '/' + os.path.basename(img_path))
+                    img = img.convert("RGB")
+                    # img.save(img_save_path + '/' + os.path.basename(img_path))
+                    #
+                    ##
+                    ######################################
                     
                     # get face_locations
                     face_locations = item.getExtraAttribute(ExtraProperties.FACE_LOCATIONS)
@@ -309,13 +287,18 @@ class AgeEstimationTask:
                             logger.debug('AgeEstimationTask: face_location: ' + str(face_location))
 
                             # extract the portion of the image corresponding to the face
-                            y1, x2, y2, x1 = face_location                            
-                            face_pos = str(x1) + str(y1) + str(x2) + str(y2)
-                            face_img = img.crop((x1, y1, x2, y2))
+                            top, right, bottom, left = face_location                            
+                            face_img = img.crop((left, top, right, bottom))
 
-                            # save face image (for test purposes only; to be removed before feature release)
-                            face_img_path = os.path.splitext(os.path.basename(img_path))[0] + '_face_' + str(i) + '.' + os.path.splitext(os.path.basename(img_path))[1]
-                            face_img.save(img_save_path + '/' + os.path.basename(face_img_path))
+                            ######################################
+                            ## TEST CODE -> REMOVE BEFORE RELEASE
+                            #
+                            # # save face image (for test purposes only; to be removed before feature release)
+                            # face_img_path = os.path.splitext(os.path.basename(img_path))[0] + '_face_' + str(i) + '.' + os.path.splitext(os.path.basename(img_path))[1]
+                            # face_img.save(img_save_path + '/' + os.path.basename(face_img_path))
+                            #
+                            ##
+                            ######################################
                             
                             # add face item and face image to the corresponding list
                             self.faceItems.append(item)
@@ -323,9 +306,15 @@ class AgeEstimationTask:
                             i += 1
                 
             if not item.isQueueEnd():
-                if img is None:    
-                    # add age estimation status
-                    item.setExtraAttribute('faceAgeEstimationStatus', 'fail:NoImage')
+                if img is None:
+                    if item_with_face:
+                        # add age estimation status
+                        item.setExtraAttribute('faceAgeEstimationStatus', 'fail:NoImage')
+                        classificationFail += 1
+                    else:
+                        # add skip age estimation info
+                        item.setExtraAttribute('faceAgeEstimationSkip', 'noFace')
+                        imageNoFacesCount += 1
                     return
                 self.itemList.append(item)
                 self.queued = True
@@ -333,12 +322,85 @@ class AgeEstimationTask:
         except Exception as e:
             # add age estimation status
             item.setExtraAttribute('faceAgeEstimationStatus', 'fail:Exception')
+            classificationFail += 1
             raise e
         
         # process faces for age estimation
         if self.isToProcessBatch(item):
             processImages(self.faceItems, self.faceImages)
     
+'''
+Checks if item is an image
+'''
+def isImage(item):
+    return item.getMediaType() is not None and item.getMediaType().toString().startswith('image')
+       
+'''
+Checks if item is supported
+'''
+def supported(item):
+    return isImage(item) and item.getLength() is not None and item.getLength() > 0
+
+'''
+Load model and processor which perform age estimation for faces
+'''
+def loadModelAndProcessor():
+    logger.debug('AgeEstimationTask: Loading Open Age Detection model')
+
+    model = caseData.getCaseObject('open-age-detection_model')
+    processor = caseData.getCaseObject('open-age-detection_processor')
+    
+    if model is None or processor is None:
+        # Load model and processor
+        model_name = "prithivMLmods/open-age-detection"
+        model_path = System.getProperty('iped.root') + '/models/age_estimation'
+        model_filename = 'model.safetensors'
+        processor_filename = 'preprocessor_config.json'
+
+        if not os.path.exists(model_path + '/' + model_filename) or not os.path.exists(model_path + '/' + processor_filename):
+            # Create model files
+            model = SiglipForImageClassification.from_pretrained(model_name)
+            processor = AutoImageProcessor.from_pretrained(model_name)
+            
+            # Create the model path if it doesn't exist
+            os.makedirs(model_path, exist_ok=True)
+            
+            # Save the model and processor to files
+            logger.debug('AgeEstimationTask: Saving model to ' + model_path)
+            model.save_pretrained(model_path)
+            processor.save_pretrained(model_path)
+        else:
+            # Load model files
+            logger.debug('AgeEstimationTask: Loading model from ' + model_path)
+            model = SiglipForImageClassification.from_pretrained(model_path)
+            processor = AutoImageProcessor.from_pretrained(model_path)
+        
+        # Store model in memory
+        caseData.putCaseObject('open-age-detection_model', model)
+        caseData.putCaseObject('open-age-detection_processor', processor)
+        logger.debug('AgeEstimationTask: Open Age Detection model loaded')
+        
+        # Set up cache
+        from java.util.concurrent import ConcurrentHashMap
+        cache = ConcurrentHashMap()
+        caseData.putCaseObject('age_estimation_cache', cache)    
+        logger.debug('AgeEstimationTask: Cache ready')
+
+    return [model, processor]
+
+'''
+Create semaphore for concurrency control
+'''
+def createSemaphore():
+    if maxThreads is None:
+        return
+    global semaphore
+    semaphore = caseData.getCaseObject('age_estimation_semaphore')    
+    if semaphore is None:
+        from java.util.concurrent import Semaphore
+        semaphore = Semaphore(maxThreads)
+        caseData.putCaseObject('age_estimation_semaphore', semaphore)
+   
 '''
 Process faces for age estimation
 '''
@@ -348,69 +410,78 @@ def processImages(itemList, imageList):
     # perform age estimation for faces
     preds = makePrediction(imageList)
     
-    # store faces count and labels
+    # store counts for faces and labels
     item_faces_count = 0
-    item_faces_labels = set()
+    item_faces_labels_count = {'child': 0, 'teenager': 0, 'adult': 0}
 
     for i in range(len(itemList)):
-        # add age estimation scores and labels: class '0' (child: 0-12); class '1' (teenager: 13-20); class '2+' (adult: 21+)
+        item_faces_count += 1
+
+        # get age estimation scores and labels: class '0' (child: 0-12); class '1' (teenager: 13-20); class '2+' (adult: 21+)
         labels = {0: 'child', 1: 'teenager', 2: 'adult'}
         prob_class0 = round(preds[i][0] * 100)
         prob_class1 = round(preds[i][1] * 100)
         prob_class2Plus = 100 - (prob_class0 + prob_class1)
         scores = [prob_class0, prob_class1, prob_class2Plus]
+
+        # set face label ('child', 'teenager', or 'adult'), according to the 'categorizationThreshold' ('nolabel' is set if scores are below the threshold)
         max_val = max(scores)
-        # set the label of the face, according to the 'categorizationThreshold'
-        label = None
         if max_val >= categorizationThreshold:
             max_val_idx = scores.index(max_val)
             label = [labels[max_val_idx]]
-        scores = [scores]
-        age_class_scores = itemList[i].getExtraAttribute('faceAgeClassScores')
-        age_class_labels = itemList[i].getExtraAttribute('faceAgeClassLabels')
-        if age_class_scores is None:
-            itemList[i].setExtraAttribute('faceAgeClassScores', scores)
-            itemList[i].setExtraAttribute('faceAgeClassLabels', label)
+            item_faces_labels_count[labels[max_val_idx]] += 1
         else:
-            itemList[i].setExtraAttribute('faceAgeClassScores', age_class_scores + scores)
-            itemList[i].setExtraAttribute('faceAgeClassLabels', age_class_labels + label)
+            label = ['nolabel']
 
-        # add label for each type of face found in image ('Child', 'Teenager', 'Adult'), according to the 'categorizationThreshold'
-        if label is not None:
-            itemList[i].setExtraAttribute('faceOf' + labels[max_val_idx].capitalize(), True)
+        # set face scores
+        scores = [scores]
+        age_class_scores = itemList[i].getExtraAttribute('faceAgeScores')
+        age_class_labels = itemList[i].getExtraAttribute('faceAgeLabels')
+        if age_class_scores is None:
+            itemList[i].setExtraAttribute('faceAgeScores', scores)
+            itemList[i].setExtraAttribute('faceAgeLabels', label)
+        else:
+            itemList[i].setExtraAttribute('faceAgeScores', age_class_scores + scores)
+            itemList[i].setExtraAttribute('faceAgeLabels', age_class_labels + label)
         
-        logger.debug('AgeEstimationTask: Age estimation scores for face: ' + str(scores))
-        
+        logger.debug('AgeEstimationTask: Age estimation for face - scores:' + str(scores) + '; label:' + str(label))
+
         # add age estimation status
         itemList[i].setExtraAttribute('faceAgeEstimationStatus', 'success')
         # add skip age estimation info
         itemList[i].setExtraAttribute('faceAgeEstimationSkip', 'no')
 
-        # update faces count and labels
-        item_faces_count += 1
-        item_faces_labels.add(labels[max_val_idx].capitalize())
-
-        # cache age estimation data for faces within the image
+        # check if this is the last face
         if (i+1) == len(itemList) or itemList[i].getHash() != itemList[i+1].getHash():
+            # add face labels count
+            for label, count in item_faces_labels_count.items():
+                if count > 0:
+                    itemList[i].setExtraAttribute('faceAgeIs' + label.capitalize(), count)
+
+            global classificationSuccess
+            classificationSuccess += 1
+
+            # store age estimation data in cache
             cache = caseData.getCaseObject('age_estimation_cache')
-            age_estimation_data = {'faceAgeClassScores': itemList[i].getExtraAttribute('faceAgeClassScores'),
-                                   'faceAgeClassLabels': itemList[i].getExtraAttribute('faceAgeClassLabels'),
-                                   'faceOf': item_faces_labels }
+            age_estimation_data = {'faceAgeScores': itemList[i].getExtraAttribute('faceAgeScores'),
+                                   'faceAgeLabels': itemList[i].getExtraAttribute('faceAgeLabels'),
+                                   'faceAgeLabelsCount': item_faces_labels_count }
             cache.put(itemList[i].getHash(), age_estimation_data)
             caseData.putCaseObject('age_estimation_cache', cache)
             logger.info("AgeEstimationTask: Cache store for item with hash '" + itemList[i].getHash() + 
                         "': faces_count: " + str(item_faces_count) + "; faces_age_data: " + str(cache.get(itemList[i].getHash())))
-            # reset faces count and labels
+            
+            # reset counts for faces and labels
             item_faces_count = 0
-            item_faces_labels = set()
+            item_faces_labels_count = {'child': 0, 'teenager': 0, 'adult': 0}
 
 '''
 Perform age estimation for faces
 '''
 def makePrediction(imageList):
     logger.debug('AgeEstimationTask: Making predictions for batch of ' + str(len(imageList)) + ' faces.')
-
-    global predictCount, predictTime 
+    
+    global predictCount, predictTime
     t = time.time()
     # load model and processor
     [model, processor] = loadModelAndProcessor()
@@ -422,7 +493,7 @@ def makePrediction(imageList):
             # run the classification model
             outputs = model(**inputs)
             logits = outputs.logits
-            # store probabilities associated to each age class for the face
+            # store probabilities associated with each age class for the face
             preds = torch.nn.functional.softmax(logits, dim=1).tolist()
             predictCount += len(imageList)
         predictTime += time.time() - t
