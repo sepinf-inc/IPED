@@ -1128,6 +1128,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                     }
                 });
                 viewerDock.addAction(searchInViewer);
+                viewerDock.putAction("searchInViewer", searchInViewer);
 
                 CButton copyViewerImage = new CButton(Messages.getString("MenuClass.CopyViewerImage"),
                         IconUtil.getToolbarIcon("copy", resPath));
