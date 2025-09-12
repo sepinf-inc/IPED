@@ -13,6 +13,7 @@ import org.apache.commons.codec.binary.Hex;
 
 public class HashDB {
     public static final String[] hashTypes = new String[] { "MD5", "SHA1", "SHA256", "SHA512", "EDONKEY" };
+    public static final int md5Index = 0;
     public static final int[] hashBytesLen = new int[] { 16, 20, 32, 64, 16 };
     public static final byte[][] zeroLengthHash = new byte[hashTypes.length][];
     static {
