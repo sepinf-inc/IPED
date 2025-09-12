@@ -1325,14 +1325,6 @@
     	<sub-class-of type="application/x-ufed-chat-preview"/>
     </mime-type>
 
-    <mime-type type="application/x-ufed-chat-whatsapp">
-    	<sub-class-of type="application/x-ufed-chat"/>
-    </mime-type>
-
-    <mime-type type="application/x-ufed-chat-telegram">
-    	<sub-class-of type="application/x-ufed-chat"/>
-    </mime-type>
-
     <mime-type type="application/x-win10-timeline">
         <sub-class-of type="application/x-sqlite3"/>
         <glob pattern="ActivitiesCache.db"/>

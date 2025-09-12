@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped.data.IItem;
 import iped.data.IItemReader;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.ufed.handler.BaseModelHandler;
@@ -45,8 +46,6 @@ public class UfedChatParser extends AbstractParser {
     private static final Logger logger = LoggerFactory.getLogger(UfedChatParser.class);
 
     public static final MediaType UFED_CHAT_MIME = MediaType.application("x-ufed-chat");
-    public static final MediaType UFED_CHAT_WA_MIME = MediaType.application("x-ufed-chat-whatsapp");
-    public static final MediaType UFED_CHAT_TELEGRAM = MediaType.application("x-ufed-chat-telegram");
 
     public static final MediaType UFED_CHAT_PREVIEW_MIME = MediaType.application("x-ufed-chat-preview");
 
@@ -68,10 +67,7 @@ public class UfedChatParser extends AbstractParser {
     private boolean ignoreEmptyChats = false;
     private int minChatSplitSize = 6000000;
 
-    private static Set<MediaType> SUPPORTED_TYPES = MediaType.set( //
-            UFED_CHAT_MIME, //
-            UFED_CHAT_WA_MIME, //
-            UFED_CHAT_TELEGRAM);
+    private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(UFED_CHAT_MIME);
 
     public static void setSupportedTypes(Set<MediaType> supportedTypes) {
         SUPPORTED_TYPES = supportedTypes;
@@ -124,6 +120,10 @@ public class UfedChatParser extends AbstractParser {
 
             if (item == null || searcher == null) {
                 return;
+            }
+
+            if (item instanceof IItem) {
+                ((IItem) item).setExtraAttribute(BasicProps.TREENODE, Boolean.toString(true));
             }
 
             Chat chat = null;

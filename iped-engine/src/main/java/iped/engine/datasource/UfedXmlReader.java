@@ -1505,19 +1505,6 @@ public class UfedXmlReader extends DataSourceReader {
                 return;
             }
 
-            if (model instanceof Chat) {
-                Chat chat = (Chat) model;
-
-                // fix chat media type
-                String source = chat.getSource();
-                if (StringUtils.containsIgnoreCase(source, Chat.SOURCE_WHATSAPP)) {
-                    item.setMediaType(UfedChatParser.UFED_CHAT_WA_MIME);
-                } else if (Chat.SOURCE_TELEGRAM.equalsIgnoreCase(source)) {
-                    item.setMediaType(UfedChatParser.UFED_CHAT_TELEGRAM);
-                }
-                item.setExtraAttribute(IndexItem.TREENODE, Boolean.toString(true));
-            }
-
             item.setOpenContainer(model);
 
             try {

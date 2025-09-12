@@ -227,7 +227,6 @@ public class IconManager {
             mimeIconMap.put("application/x-whatsapp-db-f", icon);
             mimeIconMap.put("application/x-whatsapp-chatstorage", icon);
             mimeIconMap.put("application/x-whatsapp-chat", icon);
-            mimeIconMap.put("application/x-ufed-chat-whatsapp", icon);
             mimeIconMap.put("application/x-ufed-chat-preview-whatsapp", icon);
         }
 
@@ -281,7 +280,6 @@ public class IconManager {
         if (icon != null) {
             mimeIconMap.put("application/x-telegram-chat", icon);
             mimeIconMap.put("application/x-telegram-db", icon);
-            mimeIconMap.put("application/x-ufed-chat-telegram", icon);
             mimeIconMap.put("application/x-ufed-chat-preview-telegram", icon);
         }
 
