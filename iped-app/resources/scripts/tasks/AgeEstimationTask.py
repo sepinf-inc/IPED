@@ -375,13 +375,7 @@ class AgeEstimationTask:
             processImages(self.faceItems, self.faceImages)
     
 '''
-Checks if item is an image
-'''
-def isImage(item):
-    return item.getMediaType() is not None and item.getMediaType().toString().startswith('image')
-       
-'''
-Checks if item is supported
+Check if item is supported
 '''
 def supported(item):
     return item.getHashValue() is not None and item.getExtraAttribute('hasThumb')
