@@ -221,6 +221,8 @@ public class UfedChatParser extends AbstractParser {
             TikaInputStream messageInput = TikaInputStream.get(new EmptyInputStream());
             messageInput.setOpenContainer(message);
             extractor.parseEmbedded(messageInput, handler, messageMeta, false);
+
+            UfedMessageParser.addChatMessageUfedId(message.getId());
         }
     }
 

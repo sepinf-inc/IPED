@@ -104,7 +104,7 @@ public class QueuesProcessingOrder {
 
         // required to load Attachments, Coordinates, Contacts and ContactPhotos
         mediaTypes.put(UfedChatParser.UFED_CHAT_MIME, 3);
-        mediaTypes.put(MediaTypes.UFED_MESSAGE_MIME, 3);
+        mediaTypes.put(MediaTypes.UFED_MESSAGE_MIME, 4);
 
         // avoid NPE when the parser gets the item from parseContext when external
         // parsing is on

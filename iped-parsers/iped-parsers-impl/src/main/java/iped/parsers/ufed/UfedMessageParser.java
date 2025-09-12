@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -58,6 +59,8 @@ public class UfedMessageParser extends AbstractParser {
 
     private static final String JSON_TEMP_ATTR = "message:json";
 
+    private static final Set<String> chatMessageUfedIds = ConcurrentHashMap.newKeySet();
+
     private Gson gson = new GsonBuilder() //
             .registerTypeAdapterFactory(new OmitEmptyArraysTypeAdapterFactory()) //
             .addSerializationExclusionStrategy(new ExclusionStrategy() {
@@ -99,6 +102,10 @@ public class UfedMessageParser extends AbstractParser {
         this.extractSharedContacts = extractSharedContacts;
     }
 
+    public static void addChatMessageUfedId(String ufedId) {
+        chatMessageUfedIds.add(ufedId);
+    }
+
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
@@ -120,6 +127,12 @@ public class UfedMessageParser extends AbstractParser {
                 // view is already generated — proceed to parse with HtmlParser
                 HtmlParser parser = new HtmlParser();
                 parser.parse(stream, handler, metadata, context);
+                return;
+            }
+
+            if (!item.isSubItem() && item instanceof IItem && chatMessageUfedIds.contains(message.getId())) {
+                // ignore orphan messages (not related to chats) whose IDs were from messages already extracted from chats
+                ((IItem) item).setToIgnore(true);
                 return;
             }
 
