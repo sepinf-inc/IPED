@@ -41,7 +41,10 @@ from java.util.concurrent import ConcurrentHashMap
 cache = ConcurrentHashMap()
 
 # temporary path to save faces
-faces_temp_path = os.path.join(System.getProperty("java.io.tmpdir"), 'iped-temp-age_estimation_faces')
+from datetime import datetime
+current_datetime = datetime.now()
+formatted_datetime = current_datetime.strftime("%Y-%m-%d-%H-%M-%S")
+faces_temp_path = os.path.join(System.getProperty("java.io.tmpdir"), 'iped-temp-age_estimation_faces-' + formatted_datetime)
 
 # variables related to statistics
 classificationSuccess = 0
@@ -58,7 +61,9 @@ semaphore = None
 Main class: AgeEstimationTask
 '''
 class AgeEstimationTask:
+
     enabled = None
+    videoSubitems = False
 
     def __init__(self):
         self.itemList = []
@@ -118,7 +123,12 @@ class AgeEstimationTask:
             AgeEstimationTask.enabled = False
             return
 
-        # load configuration properties
+        # load 'VideoThumbsSubitems' configuration property from 'VideoThumbsConfig'
+        from iped.engine.config import VideoThumbsConfig
+        videoConfig = configuration.findObject(VideoThumbsConfig)
+        AgeEstimationTask.videoSubitems = videoConfig.getVideoThumbsSubitems()
+
+        # load task configuration properties
         extraProps = taskConfig.getConfiguration()
         global batchSize, categorizationThreshold, skipHashDBFiles, maxThreads
 
@@ -245,8 +255,9 @@ class AgeEstimationTask:
             if face_count is None or face_count == 0:
                 return
 
+            img = None
             global classificationSuccess, classificationFail, skipHashDBFilesCount, skipDuplicatesCount
-        
+
             try:
                 # skip age estimation for faces within images with hits on IPED hashesDB database (see 'skipHashDBFiles' config property)
                 from iped.engine.task import HashDBLookupTask
@@ -258,44 +269,61 @@ class AgeEstimationTask:
 
                 # skip age estimation for faces within images duplicates if age estimation data exists in cache
                 # retrieve age estimation data from cache
-                if item.getHashValue() is not None:
-                    age_estimation_data = cache.get(item.getHashValue())
-                    if age_estimation_data is not None:
-                        # age estimation data exists in cache
-                        # add age estimation scores and labels
-                        item.setExtraAttribute('faceAgeScores', age_estimation_data['faceAgeScores'])
-                        item.setExtraAttribute('faceAgeLabels', age_estimation_data['faceAgeLabels'])                        
-                        # add face labels count
-                        for label in age_estimation_data['faceAgeLabelsCount']:
-                            count = age_estimation_data['faceAgeLabelsCount'][label]
-                            if count > 0:
-                                item.setExtraAttribute('faceAgeOf' + label.capitalize(), count)
-                        # add age estimation status
-                        item.setExtraAttribute('faceAgeEstimationStatus', 'success')
-                        # add skip age estimation info
-                        item.setExtraAttribute('faceAgeEstimationSkip', 'duplicate')                
-                        classificationSuccess += 1
-                        skipDuplicatesCount += 1
-                        return
+                age_estimation_data = cache.get(item.getHashValue())
+                if age_estimation_data is not None:
+                    # age estimation data exists in cache
+                    # add age estimation scores and labels
+                    item.setExtraAttribute('faceAgeScores', age_estimation_data['faceAgeScores'])
+                    item.setExtraAttribute('faceAgeLabels', age_estimation_data['faceAgeLabels'])                        
+                    # add face labels count
+                    for label in age_estimation_data['faceAgeLabelsCount']:
+                        count = age_estimation_data['faceAgeLabelsCount'][label]
+                        if count > 0:
+                            item.setExtraAttribute('faceAgeOf' + label.capitalize(), count)
+                    # add age estimation status
+                    item.setExtraAttribute('faceAgeEstimationStatus', 'success')
+                    # add skip age estimation info
+                    item.setExtraAttribute('faceAgeEstimationSkip', 'duplicate')                
+                    classificationSuccess += 1
+                    skipDuplicatesCount += 1
+                    return
                 
                 logger.debug('AgeEstimationTask: Processing item: ' + item.getPath())
                 logger.debug('AgeEstimationTask: face_count: ' + str(face_count))
 
-                # load image from file
-                img = None
-                if item.getViewFile() is not None and os.path.exists(item.getViewFile().getAbsolutePath()):
+                # handle tiff:Orientation attribute
+                try:
+                    # get tiff:Orientation attribute
+                    tiff_orient = int(item.getMetadata().get("image:tiff:Orientation"))
+                except:
+                    # if item has no tiff:Orientation attribute
+                    tiff_orient = 1
+
+                # get absolute path for image or video or quit processing if another media type
+                mediaType = item.getMediaType().toString()
+                if mediaType.startswith('image'):
+                    if item.getViewFile() is not None and os.path.exists(item.getViewFile().getAbsolutePath()):
+                        img_path = item.getViewFile().getAbsolutePath()
+                        tiff_orient = 1
+                    else:
+                        img_path = item.getTempFile().getAbsolutePath()
+                elif mediaType.startswith('video') and not AgeEstimationTask.videoSubitems:
                     img_path = item.getViewFile().getAbsolutePath()
                 else:
-                    img_path = item.getTempFile().getAbsolutePath()
-                img = PilImage.open(img_path)
-                img = img.convert("RGB")
-                # problem while loading image
-                if img is None:
-                    # add age estimation status
-                    item.setExtraAttribute('faceAgeEstimationStatus', 'fail:preProcessNoImage')
-                    classificationFail += 1
                     return
+
+                # allows usage of functions defined in 'FaceRecognitionProcess'
+                import FaceRecognitionProcess
+
+                # load image
+                img = PilImage.open(img_path)
+                img = FaceRecognitionProcess.convertToRGB(img)
                 
+                # image rotation, when necessary
+                img = np.array(img)
+                img = FaceRecognitionProcess.rotateImg(img, tiff_orient)
+                img = PilImage.fromarray(img)
+
                 # get face_locations
                 face_locations = item.getExtraAttribute(ExtraProperties.FACE_LOCATIONS)
                 if face_locations is not None and len(face_locations) > 0:
@@ -329,9 +357,17 @@ class AgeEstimationTask:
                 self.queued = True
                 
             except Exception as e:
-                # add age estimation status
-                item.setExtraAttribute('faceAgeEstimationStatus', 'fail:preProcessException')
                 classificationFail += 1
+                if img is None:
+                    # load image problem
+                    # add age estimation status
+                    item.setExtraAttribute('faceAgeEstimationStatus', 'fail:preProcessImageNoneError')
+                    logger.warn("AgeEstimationTask: 'faceAgeEstimationStatus -> fail:preProcessImageNoneError' for item: " + item.getPath())
+                else:
+                    # other problem
+                    # add age estimation status
+                    item.setExtraAttribute('faceAgeEstimationStatus', 'fail:preProcessError')
+                    logger.warn("AgeEstimationTask: 'faceAgeEstimationStatus -> fail:preProcessError' for item: " + item.getPath())
                 raise e
         
         # process faces for age estimation
@@ -348,7 +384,7 @@ def isImage(item):
 Checks if item is supported
 '''
 def supported(item):
-    return isImage(item) and item.getLength() is not None and item.getLength() > 0
+    return item.getHashValue() is not None and item.getExtraAttribute('hasThumb')
 
 '''
 Load model and processor which perform age estimation for faces

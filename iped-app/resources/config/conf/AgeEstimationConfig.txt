@@ -3,7 +3,7 @@
 ###################################
 
 # Maximum number of items per classification run
-batchSize = 1
+batchSize = 50
 
 # Threshold used to decide if a face is labeled in one category (values range: 0-100; '0' means the category with the highest score)
 categorizationThreshold = 60
