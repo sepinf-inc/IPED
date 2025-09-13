@@ -337,7 +337,7 @@ class AgeEstimationTask:
                         face_img = img.crop((left, top, right, bottom))
                         
                         # save temporary face file
-                        face_img_path = os.path.splitext(os.path.basename(img_path))[0] + '_face_' + str(i) + os.path.splitext(os.path.basename(img_path))[1]
+                        face_img_path = os.path.basename(img_path) + '_face_' + str(i) + '.png'
                         face_img_full_path = os.path.join(faces_temp_path, os.path.basename(face_img_path))
                         face_img.save(face_img_full_path)
 
