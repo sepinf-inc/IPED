@@ -40,12 +40,6 @@ maxThreadsProp = 'maxThreads'
 from java.util.concurrent import ConcurrentHashMap
 cache = ConcurrentHashMap()
 
-# temporary path to save faces
-from datetime import datetime
-current_datetime = datetime.now()
-formatted_datetime = current_datetime.strftime("%Y-%m-%d-%H-%M-%S")
-faces_temp_path = os.path.join(System.getProperty("java.io.tmpdir"), 'iped-temp-age_estimation_faces-' + formatted_datetime)
-
 # variables related to statistics
 classificationSuccess = 0
 classificationFail = 0
@@ -171,9 +165,6 @@ class AgeEstimationTask:
         # create semaphore
         createSemaphore()
 
-        # create temporary path to save faces
-        os.makedirs(faces_temp_path, exist_ok=True)
-
 
     def finish(self):
         num_finishes = caseData.getCaseObject('age_estimation_num_finishes')
@@ -210,14 +201,6 @@ class AgeEstimationTask:
                 logger.info('AgeEstimationTask:  Files with skipped age estimation: ' + str(totSkipCount))
                 logger.info('AgeEstimationTask:   Skipped age estimation by hashDBFiles: ' + str(skipHashDBFilesCount))
                 logger.info('AgeEstimationTask:   Skipped age estimation by duplicates: ' + str(skipDuplicatesCount))
-
-            # delete temporary images and faces
-            import shutil
-            try:
-                shutil.rmtree(faces_temp_path)
-                logger.debug("AgeEstimationTask: Temporary directory '" + faces_temp_path + "' and its contents have been successfully removed.")
-            except OSError as e:
-                logger.warn("AgeEstimationTask: Error removing temporary directory '" + faces_temp_path + "': " + e.strerror)
             
 
     def sendToNextTask(self, item):        
@@ -328,7 +311,6 @@ class AgeEstimationTask:
                 face_locations = item.getExtraAttribute(ExtraProperties.FACE_LOCATIONS)
                 if face_locations is not None and len(face_locations) > 0:
                     # iterate through face_locations
-                    i = 1 
                     for face_location in face_locations:
                         logger.debug('AgeEstimationTask: face_location: ' + str(face_location))
 
@@ -336,22 +318,9 @@ class AgeEstimationTask:
                         top, right, bottom, left = face_location                            
                         face_img = img.crop((left, top, right, bottom))
                         
-                        # save temporary face file
-                        face_img_path = os.path.basename(img_path) + '_face_' + str(i) + '.png'
-                        face_img_full_path = os.path.join(faces_temp_path, os.path.basename(face_img_path))
-                        face_img.save(face_img_full_path)
-
-                        # load temporary face file
-                        face_img = PilImage.open(face_img_full_path)
-                        face_img = face_img.convert("RGB")
-
-                        # delete temporary face file
-                        os.remove(face_img_full_path)
-
                         # add face item and face image to the corresponding lists
                         self.faceItems.append(item)
                         self.faceImages.append(face_img)
-                        i += 1 
                 
                 self.itemList.append(item)
                 self.queued = True
