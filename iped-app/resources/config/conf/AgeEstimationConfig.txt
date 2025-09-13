@@ -6,7 +6,7 @@
 batchSize = 50
 
 # Threshold used to decide if a face is labeled in one category (values range: 0-100; '0' means the category with the highest score)
-categorizationThreshold = 60
+categorizationThreshold = 0
 
 # Skip age estimation for faces within images with hits on IPED hashesDB database (if 'hashesDB' is not configured in 'LocalConfig.txt' or 'false', do not skip)
 skipHashDBFiles = true
