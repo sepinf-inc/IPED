@@ -9,8 +9,9 @@
 #    + 'faceAgeScores' stores age estimation scores (values order is the same as 'face_locations')
 #      - scores (range: 0-100)
 #    + 'faceAgeLabels' stores age estimation labels (values order is the same as 'face_locations')
-#      - labels (child: 0-12; teenager: 13-20; adult: 21+; nolabel: none of the scores is >= 'categorizationThreshold' config property)
-#    + 'faceAgeOf<Label>' stores the count of faces with the corresponding label
+#      - labels (Child: 0-12; Teenager: 13-20; Adult: 21-44; MiddleAge: 45-64; Aged: 65+; Unlabeled: all scores are below 'categorizationThreshold' config property)
+#    + 'faceAgeCount<Label>' stores the count of faces with the corresponding label
+#    + 'faceAgeMaxScore<Label>' stores the highest score for the corresponding label across faces
  '''
 import io, os, time, sys
 from java.lang import System
@@ -257,16 +258,17 @@ class AgeEstimationTask:
                     # age estimation data exists in cache
                     # add age estimation scores and labels
                     item.setExtraAttribute('faceAgeScores', age_estimation_data['faceAgeScores'])
-                    item.setExtraAttribute('faceAgeLabels', age_estimation_data['faceAgeLabels'])                        
-                    # add face labels count
-                    for label in age_estimation_data['faceAgeLabelsCount']:
-                        count = age_estimation_data['faceAgeLabelsCount'][label]
-                        if count > 0:
-                            item.setExtraAttribute('faceAgeOf' + label.capitalize(), count)
+                    item.setExtraAttribute('faceAgeLabels', age_estimation_data['faceAgeLabels'])
+                    # add face labels counts ('faceAgeCount<Label>')
+                    for label in age_estimation_data['faceAgeLabelsCounts']:
+                        item.setExtraAttribute('faceAgeCount' + label, age_estimation_data['faceAgeLabelsCounts'][label])
+                    # add the highest score for each label across faces ('faceAgeMaxScore<Label>')
+                    for label in age_estimation_data['faceAgeLabelsScores']:
+                        item.setExtraAttribute('faceAgeMaxScore' + label, age_estimation_data['faceAgeLabelsScores'][label])
                     # add age estimation status
                     item.setExtraAttribute('faceAgeEstimationStatus', 'success')
                     # add skip age estimation info
-                    item.setExtraAttribute('faceAgeEstimationSkip', 'duplicate')                
+                    item.setExtraAttribute('faceAgeEstimationSkip', 'duplicate')
                     classificationSuccess += 1
                     skipDuplicatesCount += 1
                     return
@@ -412,28 +414,35 @@ def processImages(itemList, imageList):
     # perform age estimation for faces
     preds = makePrediction(imageList)
     
-    # store counts for faces and labels
+    # store counts for faces, count of faces for each label, and highest score for each label across faces
     item_faces_count = 0
-    item_faces_labels_count = {'child': 0, 'teenager': 0, 'adult': 0}
+    item_faces_labels_counts = {'Child': 0, 'Teenager': 0, 'Adult': 0, 'MiddleAge': 0, 'Aged': 0}
+    item_faces_labels_max_scores = [0.0, 0.0, 0.0, 0.0, 0.0]
 
     for i in range(len(itemList)):
         item_faces_count += 1
 
-        # get age estimation scores (range: 0-100) and labels (class '0' (child: 0-12); class '1' (teenager: 13-20); class '2+' (adult: 21+))
-        labels = {0: 'child', 1: 'teenager', 2: 'adult'}
-        prob_class0 = round(preds[i][0] * 100)
-        prob_class1 = round(preds[i][1] * 100)
-        prob_class2Plus = 100 - (prob_class0 + prob_class1)
-        scores = [prob_class0, prob_class1, prob_class2Plus]
+        # get age estimation scores (range: 0-100) and labels for classes
+        # class -> label: '0' (Child: 0-12); '1' (Teenager: 13-20); '2' (Adult: 21-44); '3' (MiddleAge: 45-64); class '4' (Aged: 65+)
+        labels = {0: 'Child', 1: 'Teenager', 2: 'Adult', 3: 'MiddleAge', 4: 'Aged'}
+        prob_class0 = round(preds[i][0] * 100, 1)
+        prob_class1 = round(preds[i][1] * 100, 1)
+        prob_class2 = round(preds[i][2] * 100, 1)
+        prob_class3 = round(preds[i][3] * 100, 1)
+        prob_class4 = abs(round(100 - (prob_class0 + prob_class1 + prob_class2 + prob_class3), 1))
+        scores = [prob_class0, prob_class1, prob_class2, prob_class3, prob_class4]
 
-        # set face label ('child', 'teenager', or 'adult'), according to the 'categorizationThreshold' ('nolabel' is set if scores are below the threshold)
+        # set face label according to the 'categorizationThreshold' ('Unlabeled' if all scores are below the threshold)
         max_val = max(scores)
         if max_val >= categorizationThreshold:
             max_val_idx = scores.index(max_val)
             label = [labels[max_val_idx]]
-            item_faces_labels_count[labels[max_val_idx]] += 1
+            item_faces_labels_counts[labels[max_val_idx]] += 1
         else:
-            label = ['nolabel']
+            label = ['Unlabeled']
+
+        # update the highest score for each label across faces
+        item_faces_labels_max_scores = [max(a, b) for a, b in zip(item_faces_labels_max_scores, scores)]
 
         # set face scores
         scores = [scores]
@@ -455,10 +464,14 @@ def processImages(itemList, imageList):
 
         # check if this is the last face
         if (i+1) == len(itemList) or itemList[i].getHashValue() != itemList[i+1].getHashValue():
-            # add face labels count
-            for label, count in item_faces_labels_count.items():
-                if count > 0:
-                    itemList[i].setExtraAttribute('faceAgeOf' + label.capitalize(), count)
+            # add face labels counts ('faceAgeCount<Label>')
+            for label in item_faces_labels_counts:
+                itemList[i].setExtraAttribute('faceAgeCount' + label, item_faces_labels_counts[label])
+
+            # add the highest score for each label across faces ('faceAgeMaxScore<Label>')
+            item_faces_labels_max_scores_dict = dict(zip(list(labels.values()), item_faces_labels_max_scores))
+            for label in item_faces_labels_max_scores_dict:
+                itemList[i].setExtraAttribute('faceAgeMaxScore' + label, item_faces_labels_max_scores_dict[label])
 
             global classificationSuccess
             classificationSuccess += 1
@@ -466,14 +479,16 @@ def processImages(itemList, imageList):
             # store age estimation data in cache
             age_estimation_data = {'faceAgeScores': itemList[i].getExtraAttribute('faceAgeScores'),
                                    'faceAgeLabels': itemList[i].getExtraAttribute('faceAgeLabels'),
-                                   'faceAgeLabelsCount': item_faces_labels_count }
+                                   'faceAgeLabelsCounts': item_faces_labels_counts,
+                                   'faceAgeLabelsScores': item_faces_labels_max_scores_dict }
             cache.put(itemList[i].getHashValue(), age_estimation_data)
             logger.debug("AgeEstimationTask: Cache store for item with hash '" + itemList[i].getHashValue().toString() + 
                          "': faces_count: " + str(item_faces_count) + "; faces_age_data: " + str(cache.get(itemList[i].getHashValue())))
             
-            # reset counts for faces and labels
+            # reset counts for faces, count of faces for each label, and highest score for each label across faces
             item_faces_count = 0
-            item_faces_labels_count = {'child': 0, 'teenager': 0, 'adult': 0}
+            item_faces_labels_counts = {'Child': 0, 'Teenager': 0, 'Adult': 0, 'MiddleAge': 0, 'Aged': 0}
+            item_faces_labels_max_scores = [0.0, 0.0, 0.0, 0.0, 0.0]
 
 '''
 Perform age estimation for faces
