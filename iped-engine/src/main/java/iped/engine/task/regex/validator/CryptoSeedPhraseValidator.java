@@ -21,6 +21,12 @@ import javax.crypto.spec.SecretKeySpec;
 
 import iped.engine.task.regex.RegexValidatorService;
 
+/**
+ * Validator for BIP-39 and Electrum seed phrases.
+ *
+ * @author Rui Sant'Ana Junior
+ */
+
 public class CryptoSeedPhraseValidator implements RegexValidatorService {
 
     private static final String REGEX_NAME = "CRYPTO_POSSIBLE_SEED_PHRASE_EN";
@@ -43,7 +49,7 @@ public class CryptoSeedPhraseValidator implements RegexValidatorService {
             while ((line = reader.readLine()) != null) {
                 if (line.startsWith(REGEX_NAME)) {
                     fullRegexLine.append(line.substring(line.indexOf('=') + 1).trim());
-                    break; // Found it, exit this loop
+                    break;
                 }
             }
 
@@ -93,7 +99,7 @@ public class CryptoSeedPhraseValidator implements RegexValidatorService {
             return false;
         }
 
-        String[] words = hit.trim().toLowerCase().split("[ \\t]+");
+        String[] words = hit.trim().toLowerCase().split("\\s+");
 
         if (validateBIP39(words)) {
             return true;
@@ -103,10 +109,12 @@ public class CryptoSeedPhraseValidator implements RegexValidatorService {
     }
 
     private boolean validateBIP39(String[] words) {
+	// Check if the number of words is valid according to the BIP39 standard
         if (!BIP39_VALID_WORD_COUNTS.contains(words.length)) {
             return false;
         }
 
+	// Convert each word into its 11-bit binary index and concatenate into a bit string
         StringBuilder bits = new StringBuilder();
         for (String word : words) {
             Integer index = wordMap.get(word);
@@ -116,6 +124,7 @@ public class CryptoSeedPhraseValidator implements RegexValidatorService {
             bits.append(String.format("%11s", Integer.toBinaryString(index)).replace(' ', '0'));
         }
 
+	// The mnemonic bit string contains both entropy and checksum
         String bitsStr = bits.toString();
         int ent = (bitsStr.length() * 32) / 33;
         int cs = bitsStr.length() - ent;
@@ -123,6 +132,7 @@ public class CryptoSeedPhraseValidator implements RegexValidatorService {
         String entropyBits = bitsStr.substring(0, ent);
         String checksumBits = bitsStr.substring(ent);
 
+	// Convert entropy bits back into bytes
         byte[] entropy;
         try {
             int len = entropyBits.length() / 8;
@@ -136,9 +146,11 @@ public class CryptoSeedPhraseValidator implements RegexValidatorService {
         }
 
         try {
+		// Compute SHA-256 hash of the entropy
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest(entropy);
 
+		// Convert hash to a binary string
             StringBuilder hashBits = new StringBuilder();
             for (byte b : hash) {
                 hashBits.append(String.format("%8s", Integer.toBinaryString(b & 0xFF)).replace(' ', '0'));
@@ -156,19 +168,19 @@ public class CryptoSeedPhraseValidator implements RegexValidatorService {
 
     private boolean validateElectrum(String[] words) {
         try {
-            // Electrum seeds are typically 12 words, but can have other lengths.
-            // A simple check is that the number of words is a multiple of 3.
+            // Electrum seeds must have a word count multiple of 3
             if (words.length == 0 || words.length % 3 != 0) {
                 return false;
             }
 
+            // Check if all words are in the Electrum wordlist
             for (String w : words) {
                 if (!this.wordList.contains(w)) {
                     return false;
                 }
             }
 
-            // Normalize the mnemonic string for HMAC
+            // Normalize mnemonic for HMAC
             String normalizedMnemonic = String.join(" ", words);
 
             // HMAC-SHA512 with a constant key "Seed version"
@@ -177,16 +189,25 @@ public class CryptoSeedPhraseValidator implements RegexValidatorService {
             hmac.init(key);
             byte[] hash = hmac.doFinal(normalizedMnemonic.getBytes(StandardCharsets.UTF_8));
 
-            // Check the version prefix from the hash
-            int versionPrefix = hash[0] & 0xFF;
+            // --- Extract version prefix according to Electrum rules ---
+            int firstByte = hash[0] & 0xFF;
+            int secondByte = hash[1] & 0xFF;
+            int prefix16 = (firstByte << 8) | secondByte;
 
-            // Standard Electrum seeds starts with 0x01. We check for a common range.
-            // This is a simplified check; a full check is much more complex.
+            // Top 12 bits (Electrum uses variable-length prefixes, multiples of 4 bits)
+            int top12 = prefix16 >>> 4;
 
-            return versionPrefix > 0;
+            // --- Compare against reserved values ---
+            // -> Some Standard values identified in documentation and tests
+
+            if (firstByte == 0x01 || top12 == 0x100 || top12 == 0x101 || top12 == 0x102 || top12 == 0x201) {
+                return true;
+            }
+
+            return false;
 
         } catch (Exception e) {
-            // Any exception during crypto operations means it's not a valid Electrum seed.
+            // Any exception during crypto operations means it's not a valid Electrum seed
             return false;
         }
     }
