@@ -189,18 +189,22 @@ public class CryptoSeedPhraseValidator implements RegexValidatorService {
             hmac.init(key);
             byte[] hash = hmac.doFinal(normalizedMnemonic.getBytes(StandardCharsets.UTF_8));
 
-            // --- Extract version prefix according to Electrum rules ---
-            int firstByte = hash[0] & 0xFF;
-            int secondByte = hash[1] & 0xFF;
-            int prefix16 = (firstByte << 8) | secondByte;
+             // Convert hash to hex string
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hash) {
+                sb.append(String.format("%02x", b & 0xFF));
+            }
+            String hexHash = sb.toString();
 
-            // Top 12 bits (Electrum uses variable-length prefixes, multiples of 4 bits)
-            int top12 = prefix16 >>> 4;
+            // Determine prefix length based on first nibble (Python: int(s[0], 16) + 2)
+            int length = Character.digit(hexHash.charAt(0), 16) + 2;
 
-            // --- Compare against reserved values ---
-            // -> Some Standard values identified in documentation and tests
+            // Extract prefix
+            String prefixHex = hexHash.substring(0, length);
+            int version = Integer.parseInt(prefixHex, 16);
 
-            if (firstByte == 0x01 || top12 == 0x100 || top12 == 0x101 || top12 == 0x102 || top12 == 0x201) {
+            // Compare against known Electrum reserved values
+            if (version == 0x01 || version == 0x100 || version == 0x101 || version == 0x102 || version == 0x201) {
                 return true;
             }
 
