@@ -82,6 +82,11 @@ class AgeEstimationTask:
         if AgeEstimationTask.enabled is None:
             AgeEstimationTask.enabled = taskConfig.isEnabled()
         
+        faceRecognitionTaskEnabled = configuration.getEnableTaskProperty('enableFaceRecognition')
+        if AgeEstimationTask.enabled and not faceRecognitionTaskEnabled:
+            logger.error('To use the AgeEstimation task, you must enable the FaceRecognition task by setting enableFaceRecognition = true. AgeEstimation has been disabled.')
+            AgeEstimationTask.enabled = False
+
         # Check if required age estimation modules are properly installed
         try:
             if not AgeEstimationTask.enabled:
