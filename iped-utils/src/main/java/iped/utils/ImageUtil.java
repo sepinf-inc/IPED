@@ -9,7 +9,9 @@ import java.awt.RenderingHints;
 import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorConvertOp;
+import java.awt.image.ColorModel;
 import java.awt.image.DataBufferByte;
+import java.awt.image.WritableRaster;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -819,5 +821,17 @@ public class ImageUtil {
             }
         }
         pluginsPriorityUpdated = true;
+    }
+
+    public static BufferedImage cloneImage(BufferedImage source) {
+        if (source == null) {
+            return null;
+        }
+
+        ColorModel cm = source.getColorModel();
+        boolean isAlphaPremultiplied = cm.isAlphaPremultiplied();
+        WritableRaster raster = source.copyData(null);
+
+        return new BufferedImage(cm, raster, isAlphaPremultiplied, null);
     }
 }
