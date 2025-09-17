@@ -7,28 +7,38 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Insets;
 import java.awt.RenderingHints;
 import java.awt.Stroke;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.Icon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JSlider;
 import javax.swing.JToolBar;
 import javax.swing.SwingConstants;
@@ -67,6 +77,14 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
 
     public static final String HIGHLIGHT_LOCATION = ImageViewer.class.getName() + "HighlightLocation:";
 
+    private static final String ACTION_COMMAND_SELECT_AGE_PREFIX = "selectAge:";
+
+    private static final String AGE_OPTION_CHILD = "Child";
+    private static final String AGE_OPTION_TEENAGER = "Teenager";
+    private static final String AGE_OPTION_ADULT = "Adult";
+    private static final String AGE_OPTION_MIDDLE_AGE = "MiddleAge";
+    private static final String AGE_OPTION_AGED = "Aged";
+
     private static final String actionRotLeft = "rotate-left";
     private static final String actionRotRight = "rotate-right";
     private static final String actionZoomIn = "zoom-in";
@@ -77,6 +95,7 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
     private static final String actionBlur = "blur-image";
     private static final String actionHighlightFaces = "highlight-faces";
 
+
     private static final int maxDim = 2400;
     private static final int maxBlurDim = 512;
     private static final double blurIntensity = 0.02f;
@@ -85,16 +104,28 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
     private static final Color rectColorMainFacesOthers = new Color(0,255,0,200); // green
     private static final Color rectColorBack = new Color(255,255,255,50);
 
+    private static final String[] ageOptions = { AGE_OPTION_CHILD, AGE_OPTION_TEENAGER, AGE_OPTION_ADULT, AGE_OPTION_MIDDLE_AGE, AGE_OPTION_AGED };
+    private static final Set<String> selectedAges = new HashSet<>();
+    private static final Map<String, Color> ageRectangleColors = new HashMap<>();
+    static {
+        ageRectangleColors.put(AGE_OPTION_CHILD, new Color(255, 153, 204)); // Rose Pink
+        ageRectangleColors.put(AGE_OPTION_TEENAGER, new Color(255, 165, 0, 200)); // Orange
+        ageRectangleColors.put(AGE_OPTION_ADULT, new Color(0, 0, 255, 200)); // Blue
+        ageRectangleColors.put(AGE_OPTION_MIDDLE_AGE, new Color(0, 255, 255, 200)); // Cyan
+        ageRectangleColors.put(AGE_OPTION_AGED, new Color(255, 255, 0, 200)); // Yellow
+    }
+
     volatile protected BufferedImage image;
     volatile protected BufferedImage originalImage;
     volatile protected int rotation;
     volatile protected boolean applyBlurFilter = false;
     volatile protected boolean applyGrayScale = false;
     volatile protected boolean applyHighlightFaces = false;
-    volatile protected Set<String> facesLocations;
+    volatile protected List<String> facesLocations;
+    volatile protected List<String> faceAgeLabels;
     volatile protected Dimension originalDimension;
 
-    private JButton blurButton, grayButton, highlightFacesButton;
+    private JButton blurButton, grayButton, highlightFacesButton, ageSelectionButton;
 
     private String videoComment;
 
@@ -125,6 +156,7 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
         image = null;
         originalImage = null;
         facesLocations = null;
+        faceAgeLabels = null;
         originalDimension = null;
         sliderBrightness.setValue(0);
         if (cleanRotation) {
@@ -132,6 +164,7 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void loadFile(IStreamSource content, Set<String> highlightTerms) {
         cleanState(true);
@@ -150,12 +183,16 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
                         facesLocations = ((List<?>) faceLocationsAttr)
                                 .stream()
                                 .map(location -> HIGHLIGHT_LOCATION + location)
-                                .collect(Collectors.toSet());
+                                .collect(Collectors.toList());
                     } else if (faceLocationsAttr instanceof String) {
-                        facesLocations =  new HashSet<>(Collections.singleton(HIGHLIGHT_LOCATION + faceLocationsAttr));
+                        facesLocations =  Collections.singletonList(HIGHLIGHT_LOCATION + faceLocationsAttr);
                     }
-                    if (facesLocations != null && !highlightTerms.isEmpty()) {
-                        facesLocations.removeAll(highlightTerms); // to not override the highlightTerms rectangles
+
+                    Object faceAgeLabelsAttr = item.getExtraAttribute(ExtraProperties.FACE_AGE_LABELS);
+                    if (faceAgeLabelsAttr instanceof List) {
+                        faceAgeLabels = (List<String>) faceAgeLabelsAttr;
+                    } else if (faceAgeLabelsAttr instanceof String) {
+                        faceAgeLabels =  Collections.singletonList((String) faceAgeLabelsAttr);
                     }
                 }
                 if (image == null) {
@@ -182,7 +219,7 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
                         image = ImageUtil.applyOrientation(image, orientation);
                     }
 
-                    drawRectangles(image, highlightTerms, rectColorMainFacesInTerms);
+                    drawRectangles(image, highlightTerms, rectColorMainFacesInTerms, true);
                     originalImage = ImageUtil.cloneImage(image);
 
                     videoComment = ImageUtil.readJpegMetaDataComment(content.getSeekableInputStream());
@@ -234,7 +271,7 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
         return displayedMaxDimension / (double) originalMaxDimension;
     }
 
-    private void drawRectangles(BufferedImage img, Set<String> highlights, Color rectColorMain)  {
+    private void drawRectangles(BufferedImage img, Collection<String> highlights, Color rectColorMain, boolean expanded)  {
 
         if (highlights == null || highlights.isEmpty()) {
             return;
@@ -249,7 +286,7 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         // 0.5% of image's smallest dimension
-        int strokeWidth = Math.max(2, Math.min(img.getHeight(), img.getWidth()) / 200);
+        final int strokeWidth = Math.max(2, Math.min(img.getHeight(), img.getWidth()) / 200);
 
         Stroke mainStroke = new BasicStroke(strokeWidth);
         Stroke backStroke = new BasicStroke(strokeWidth * 2);
@@ -262,6 +299,19 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
                 double right = Integer.parseInt(vals[1]) * zoom;
                 double bottom = Integer.parseInt(vals[2]) * zoom;
                 double left = Integer.parseInt(vals[3]) * zoom;
+
+                if (expanded) {
+                    top -= strokeWidth;
+                    left -= strokeWidth;
+                    right += strokeWidth;
+                    bottom += strokeWidth;
+                    if (top < 0) {
+                        top = 0;
+                    }
+                    if (left < 0) {
+                        left = 0;
+                    }
+                }
 
                 RoundRectangle2D rc = new RoundRectangle2D.Double(left, top, right - left, bottom - top, arc, arc);
 
@@ -393,6 +443,8 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
 
         highlightFacesButton = createToolBarButton(actionHighlightFaces, true);
         highlightFacesButton.setToolTipText(Messages.getString("ImageViewer.HighlightFaces"));
+
+        ageSelectionButton = createAgeSelectionToolBarButton();
     }
 
     protected JButton createToolBarButton(String action) {
@@ -414,19 +466,57 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
         return but;
     }
 
-    protected JButton createToolSelection(String action, boolean select) {
-        JButton but = new JButton(IconUtil.getIcon(action, resPath, 24));
-        but.setActionCommand(action);
-        but.setOpaque(false);
-        toolBar.add(but);
-        but.setFocusPainted(false);
-        but.setFocusable(false);
-        if (select) {
-            but.setBorder(BorderFactory.createSoftBevelBorder(BevelBorder.LOWERED));
-            but.setBorderPainted(false);
+    protected JButton createAgeSelectionToolBarButton() {
+
+        JPanel popupPanel = new JPanel();
+        popupPanel.setLayout(new BoxLayout(popupPanel, BoxLayout.Y_AXIS));
+
+        for (String ageOption : ageOptions) {
+            JCheckBox checkBox = new JCheckBox(Messages.getString("ImageViewer.AgeSelectionOption." + ageOption));
+            checkBox.setActionCommand(ACTION_COMMAND_SELECT_AGE_PREFIX + ageOption);
+            checkBox.addActionListener(this);
+
+            // pre-select all age options
+            selectedAges.add(ageOption);
+            checkBox.setSelected(true);
+
+            // Create the color swatch
+            JPanel colorIndicator = new JPanel();
+            colorIndicator.setBackground(ageRectangleColors.get(ageOption));
+            colorIndicator.setPreferredSize(new Dimension(15, 15)); // 15x15 pixel square
+            colorIndicator.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+
+            // Create the main row panel that holds the swatch and checkbox
+            JPanel rowPanel = new JPanel(new BorderLayout(5, 0)); // 5px horizontal gap
+            rowPanel.setOpaque(false);
+            rowPanel.setBorder(BorderFactory.createEmptyBorder(3, 4, 3, 10)); // Add a little padding
+            rowPanel.add(colorIndicator, BorderLayout.LINE_START);
+            rowPanel.add(checkBox, BorderLayout.CENTER);
+
+            popupPanel.add(rowPanel);
         }
-        but.addActionListener(this);
-        return but;
+
+        JPopupMenu popupMenu = new JPopupMenu();
+        popupMenu.add(popupPanel);
+
+        JButton ageButton = new JButton(Messages.getString("ImageViewer.AgeSelectionOptionTitle") + " ▾");
+        ageButton.setVisible(applyHighlightFaces);
+        ageButton.setMargin(new Insets(3, 10, 3, 10));
+        ageButton.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (!ageButton.isEnabled()) {
+                    return;
+                }
+                if (popupMenu.isVisible()) {
+                    popupMenu.setVisible(false);
+                } else {
+                    popupMenu.show(ageButton, 0, ageButton.getHeight());
+                }
+            }
+        });
+        toolBar.add(ageButton);
+        return ageButton;
     }
 
     @Override
@@ -460,6 +550,14 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
             setBlurFilter(!applyBlurFilter);
         } else if (cmd.equals(actionHighlightFaces)) {
             setHightlightFaces(!applyHighlightFaces);
+        } else if (cmd.startsWith(ACTION_COMMAND_SELECT_AGE_PREFIX)) {
+            String ageOption = StringUtils.substringAfter(cmd, ACTION_COMMAND_SELECT_AGE_PREFIX);
+            if (((JCheckBox) e.getSource()).isSelected()) {
+                selectedAges.add(ageOption);
+            } else {
+                selectedAges.remove(ageOption);
+            }
+            update = true;
         }
         if (update) {
             update();
@@ -499,9 +597,25 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
         if (restoreImageBeforeHighlight) {
             image = ImageUtil.cloneImage(originalImage);
         }
+
         if (applyHighlightFaces) {
-            drawRectangles(image, facesLocations, rectColorMainFacesOthers);
+            if (faceAgeLabels != null && facesLocations != null && faceAgeLabels.size() == facesLocations.size()) {
+                for (String ageOption : ageOptions) {
+                    if (selectedAges.contains(ageOption)) {
+                        List<String> ageLocations = new ArrayList<>();
+                        for (int i = 0; i < faceAgeLabels.size(); i++) {
+                            if (ageOption.equals(faceAgeLabels.get(i))) {
+                                ageLocations.add(facesLocations.get(i));
+                            }
+                        }
+                        drawRectangles(image, ageLocations, ageRectangleColors.get(ageOption), false);
+                    }
+                }
+            } else {
+                drawRectangles(image, facesLocations, rectColorMainFacesOthers, false);
+            }
         }
+
         if (videoComment != null) {
             image = ImageUtil.getBestFramesFit(image, videoComment, imagePanel.getWidth(), imagePanel.getHeight());
         }
@@ -521,6 +635,7 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
 
     public void setHightlightFaces(boolean enableHightlightFaces) {
         applyHighlightFaces = enableHightlightFaces;
+        ageSelectionButton.setVisible(applyHighlightFaces);
         setButtonSelected(highlightFacesButton, applyHighlightFaces);
         update();
     }
