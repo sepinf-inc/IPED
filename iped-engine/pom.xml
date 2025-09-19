@@ -66,11 +66,6 @@
     	    <version>1.0</version>
 	    </dependency>
     	<dependency>
-    		<groupId>com.eatthepath</groupId>
-    		<artifactId>jvptree</artifactId>
-    		<version>0.2</version>
-		</dependency>
-    	<dependency>
             <groupId>iped</groupId>
             <artifactId>iped-ahocorasick</artifactId>
             <version>1.1</version>
