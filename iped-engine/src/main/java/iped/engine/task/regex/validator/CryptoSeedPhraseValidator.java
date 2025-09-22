@@ -173,13 +173,6 @@ public class CryptoSeedPhraseValidator implements RegexValidatorService {
                 return false;
             }
 
-            // Check if all words are in the Electrum wordlist
-            for (String w : words) {
-                if (!this.wordList.contains(w)) {
-                    return false;
-                }
-            }
-
             // Normalize mnemonic for HMAC
             String normalizedMnemonic = String.join(" ", words);
 
