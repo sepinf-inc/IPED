@@ -47,7 +47,7 @@ public class PreviewRepositoryManager {
 
         // Create new data source
         File db = new File(baseFolder, DB_NAME);
-        String dbUrl = "jdbc:h2:" + db.getAbsolutePath();
+        String dbUrl = "jdbc:h2:" + db.getAbsolutePath() + ";AUTO_SERVER=TRUE";
 
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(dbUrl);
