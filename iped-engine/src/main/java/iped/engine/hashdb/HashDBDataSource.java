@@ -189,6 +189,7 @@ public class HashDBDataSource {
                 if (!setHashIds.contains(item.getHashId())) {
                     Collections.swap(photoDNAHashSet, i, photoDNAHashSet.size() - 1);
                     photoDNAHashSet.remove(photoDNAHashSet.size() - 1);
+                    i--;
                 }
             }
         }
