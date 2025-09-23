@@ -1226,8 +1226,8 @@ public class Item implements IItem {
     }
 
     @Override
-    public void setHasPreview(boolean b) {
-        this.hasPreview = true;
+    public void setHasPreview(boolean value) {
+        this.hasPreview = value;
     }
 
     @Override
