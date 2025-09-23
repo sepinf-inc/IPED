@@ -619,6 +619,10 @@ public class IPEDReader extends DataSourceReader {
 
             evidence.setTimeOut(Boolean.parseBoolean(doc.get(IndexItem.TIMEOUT)));
 
+            evidence.setHasPreview(Boolean.parseBoolean(doc.get(IndexItem.HAS_PREVIEW)));
+            evidence.setPreviewExt(doc.get(IndexItem.PREVIEW_EXT));
+            evidence.setPreviewBaseFolder(indexDir.getParentFile());
+
             value = doc.get(IndexItem.HASH);
             if (value != null && !treeNode) {
                 value = value.toUpperCase();
