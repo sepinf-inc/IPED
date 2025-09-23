@@ -84,6 +84,8 @@ import iped.engine.config.HtmlReportTaskConfig;
 import iped.engine.data.Category;
 import iped.engine.data.IPEDSource;
 import iped.engine.localization.Messages;
+import iped.engine.preview.PreviewRepository;
+import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.task.index.IndexItem;
 import iped.engine.util.UIPropertyListenerProvider;
 import iped.engine.util.Util;
@@ -390,6 +392,20 @@ public class ExportFileTask extends AbstractTask {
             try {
                 IOUtil.copyFile(viewFile, destFile);
             } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else if (evidence.hasPreview()) {
+            try {
+                PreviewRepository srcRepo = PreviewRepositoryManager.get(evidence.getPreviewBaseFolder());
+                PreviewRepository destRepo = PreviewRepositoryManager.get(output);
+                srcRepo.consumePreview(evidence, false, inputStream -> {
+                    try {
+                        destRepo.storePreview(evidence, inputStream);
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                });
+            } catch (SQLException | IOException e) {
                 e.printStackTrace();
             }
         }

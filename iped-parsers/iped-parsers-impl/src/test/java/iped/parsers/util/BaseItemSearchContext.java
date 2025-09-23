@@ -102,6 +102,21 @@ public abstract class BaseItemSearchContext extends TestCase {
             }
 
             @Override
+            public boolean hasPreview() {
+                return false;
+            }
+
+            @Override
+            public File getPreviewBaseFolder() {
+                return null;
+            }
+
+            @Override
+            public String getPreviewExt() {
+                return null;
+            }
+
+            @Override
             public String getType() {
                 return this.getExt();
             }
@@ -215,7 +230,14 @@ public abstract class BaseItemSearchContext extends TestCase {
             @Override
             public void setViewFile(File viewFile) {
                 // TODO Auto-generated method stub
+            }
 
+            @Override
+            public void setHasPreview(boolean b) {
+            }
+
+            @Override
+            public void setPreviewExt(String viewExt) {
             }
 
             @Override

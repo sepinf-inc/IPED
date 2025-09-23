@@ -40,6 +40,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.BinaryDocValuesField;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.DoubleDocValuesField;
@@ -77,6 +78,8 @@ import iped.engine.data.DataSource;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.Item;
 import iped.engine.lucene.analysis.FastASCIIFoldingFilter;
+import iped.engine.preview.PreviewInputStreamFactory;
+import iped.engine.preview.PreviewRepository;
 import iped.engine.sleuthkit.SleuthkitInputStreamFactory;
 import iped.engine.task.ImageThumbTask;
 import iped.engine.task.MinIOTask.MinIOInputInputStreamFactory;
@@ -111,6 +114,9 @@ public class IndexItem extends BasicProps {
     public static final String ID_IN_SOURCE = "idInDataSource"; //$NON-NLS-1$
     public static final String SOURCE_PATH = "dataSourcePath"; //$NON-NLS-1$
     public static final String SOURCE_DECODER = "dataSourceDecoder"; //$NON-NLS-1$
+
+    public static final String HAS_PREVIEW = "hasPreview";
+    public static final String PREVIEW_EXT = "previewExt";
 
     public static final String attrTypesFilename = "metadataTypes.txt"; //$NON-NLS-1$
 
@@ -416,6 +422,14 @@ public class IndexItem extends BasicProps {
 
         if (evidence.getThumb() != null)
             doc.add(new StoredField(THUMB, evidence.getThumb()));
+
+        if (evidence.hasPreview()) {
+            doc.add(new StringField(HAS_PREVIEW, Boolean.TRUE.toString(), Field.Store.YES));
+        }
+
+        if (evidence.getPreviewExt() != null) {
+            doc.add(new StringField(PREVIEW_EXT, evidence.getPreviewExt(), Field.Store.YES));
+        }
 
         byte[] similarityFeatures = (byte[]) evidence.getExtraAttribute(ImageSimilarityTask.IMAGE_FEATURES);
         // clear extra property to don't add it again later when iterating over extra props
@@ -848,13 +862,25 @@ public class IndexItem extends BasicProps {
                 evidence.setTimeOut(Boolean.parseBoolean(value));
             }
 
+            value = doc.get(HAS_PREVIEW);
+            if (Boolean.parseBoolean(value)) {
+                evidence.setHasPreview(true);
+                evidence.setPreviewBaseFolder(outputBase);
+            }
+
+            value = doc.get(PREVIEW_EXT);
+            if (value != null) {
+                evidence.setPreviewExt(value);
+            }
+
             value = doc.get(IndexItem.HASH);
             if (value != null) {
                 value = value.toUpperCase();
                 evidence.setHash(value);
             }
 
-            if (evidence.getHash() != null && !evidence.getHash().isEmpty()) {
+            File viewFile = null;
+            if (StringUtils.isNotBlank(evidence.getHash())) {
 
                 if (Boolean.valueOf(doc.get(ImageThumbTask.HAS_THUMB))) {
                     String mimePrefix = evidence.getMediaType().getType();
@@ -879,22 +905,9 @@ public class IndexItem extends BasicProps {
                     evidence.setExtraAttribute(ImageSimilarityTask.IMAGE_FEATURES, bytesRef.bytes);
                 }
 
-                File viewFile = Util.findFileFromHash(new File(outputBase, "view"), evidence.getHash()); //$NON-NLS-1$
-                /*
-                 * if (viewFile == null && !hasFile && evidence.getSleuthId() == null) {
-                 * viewFile = Util.findFileFromHash(new File(outputBase,
-                 * ImageThumbTask.thumbsFolder), value); }
-                 */
+                viewFile = Util.findFileFromHash(new File(outputBase, "view"), evidence.getHash()); //$NON-NLS-1$
                 if (viewFile != null) {
                     evidence.setViewFile(viewFile);
-
-                    if (viewItem || (!IOUtil.hasFile(evidence) && evidence.getIdInDataSource() == null)) {
-                        evidence.setIdInDataSource("");
-                        evidence.setInputStreamFactory(new FileInputStreamFactory(viewFile.toPath()));
-                        evidence.setTempFile(viewFile);
-                        // Do not reset media type (see issue #1409)
-                        // evidence.setMediaType(null);
-                    }
                 }
             }
 
@@ -960,6 +973,21 @@ public class IndexItem extends BasicProps {
                             evidence.getMetadata().add(f.name(), casted.toString());
                         }
                     }
+                }
+            }
+
+            if (viewItem || (!IOUtil.hasFile(evidence) && evidence.getIdInDataSource() == null)) {
+
+                if (viewFile != null) {
+                    evidence.setIdInDataSource("");
+                    evidence.setInputStreamFactory(new FileInputStreamFactory(viewFile.toPath()));
+                    evidence.setTempFile(viewFile);
+                    // Do not reset media type (see issue #1409)
+                    // evidence.setMediaType(null);
+
+                } else if (evidence.hasPreview()) {
+                    evidence.setIdInDataSource(PreviewInputStreamFactory.getIdentifierForPreview(evidence));
+                    evidence.setInputStreamFactory(new PreviewInputStreamFactory(outputBase.toURI()));
                 }
             }
 
