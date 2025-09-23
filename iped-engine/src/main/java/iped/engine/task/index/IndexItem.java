@@ -79,7 +79,6 @@ import iped.engine.data.IPEDSource;
 import iped.engine.data.Item;
 import iped.engine.lucene.analysis.FastASCIIFoldingFilter;
 import iped.engine.preview.PreviewInputStreamFactory;
-import iped.engine.preview.PreviewRepository;
 import iped.engine.sleuthkit.SleuthkitInputStreamFactory;
 import iped.engine.task.ImageThumbTask;
 import iped.engine.task.MinIOTask.MinIOInputInputStreamFactory;
@@ -424,11 +423,11 @@ public class IndexItem extends BasicProps {
             doc.add(new StoredField(THUMB, evidence.getThumb()));
 
         if (evidence.hasPreview()) {
-            doc.add(new StringField(HAS_PREVIEW, Boolean.TRUE.toString(), Field.Store.YES));
+            doc.add(new StoredField(HAS_PREVIEW, Boolean.TRUE.toString()));
         }
 
         if (evidence.getPreviewExt() != null) {
-            doc.add(new StringField(PREVIEW_EXT, evidence.getPreviewExt(), Field.Store.YES));
+            doc.add(new StoredField(PREVIEW_EXT, evidence.getPreviewExt()));
         }
 
         byte[] similarityFeatures = (byte[]) evidence.getExtraAttribute(ImageSimilarityTask.IMAGE_FEATURES);
