@@ -76,6 +76,9 @@ public class RemoteImageClassifierTask extends AbstractTask {
 
     private RemoteImageClassifierConfig config;
 
+    // Task enabled status
+    private static boolean enabled = true;
+
     // Configuration parameters
     private String urlZip;
     private String urlVersion;
@@ -213,7 +216,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
     }
 
     public boolean isEnabled() {
-        return config.isEnabled();
+        return config.isEnabled() && enabled;
     }
 
     @Override
@@ -262,7 +265,11 @@ public class RemoteImageClassifierTask extends AbstractTask {
                 return null;
             });
         }
-
+        catch (UnknownHostException | HttpHostConnectException e) {
+            // Disable task in case of failure to connect to remote image classifier 
+            enabled = false;
+            logger.error("Task disabled. Failed to connect to remote image classifier at '" + urlVersion + "': " + e.getMessage());
+        }
 
         if (zip == null) {
             zip = new ZipFile();
