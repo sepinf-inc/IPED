@@ -400,7 +400,7 @@ public class ExportFileTask extends AbstractTask {
                 PreviewRepository destRepo = PreviewRepositoryManager.get(output);
                 srcRepo.consumePreview(evidence, false, inputStream -> {
                     try {
-                        destRepo.storePreview(evidence, inputStream);
+                        destRepo.storeCompressedPreview(evidence, inputStream);
                     } catch (SQLException e) {
                         e.printStackTrace();
                     }

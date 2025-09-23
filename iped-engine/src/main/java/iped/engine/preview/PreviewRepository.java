@@ -8,8 +8,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
-import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
+import java.util.zip.Deflater;
+import java.util.zip.DeflaterInputStream;
+import java.util.zip.InflaterInputStream;
 
 import com.zaxxer.hikari.HikariDataSource;
 
@@ -19,13 +20,14 @@ import iped.engine.task.HashTask;
 import iped.utils.HashValue;
 
 /**
- * Handles storage and retrieval of gzipped item previews in an H2 database.
+ * Handles storage and retrieval of item previews in an H2 database.
  * Instances of this class are managed by {@link PreviewRepositoryManager}.
  */
 public class PreviewRepository implements Closeable {
 
     private static final String INSERT_DATA_SQL = "MERGE INTO previews (id, data) KEY(id) VALUES (?, ?)";
     private static final String SELECT_DATA_SQL = "SELECT data FROM previews WHERE id=?";
+    private static final String CHECK_EXISTS_SQL = "SELECT 1 FROM previews WHERE id=?";
 
     private final HikariDataSource dataSource;
 
@@ -48,19 +50,77 @@ public class PreviewRepository implements Closeable {
     }
 
     /**
-     * Stores a preview for an item. The provided stream is expected to be Gzipped.
+     * Checks if a preview exists for the given item.
      *
-     * @param evidence The item to store the preview for.
-     * @param gzippedValueStream An InputStream containing the *Gzipped* preview data.
+     * @param evidence The item to check.
+     * @return true if a preview exists, false otherwise.
      * @throws SQLException if a database error occurs.
      */
-    public void storePreview(IItem evidence, InputStream gzippedValueStream) throws SQLException {
+    public boolean previewExists(IItem evidence) throws SQLException {
+        byte[] key = getItemKey(evidence);
+        return previewExists(key);
+    }
+
+    /**
+     * Checks if a preview exists for the given key.
+     *
+     * @param key The binary key to check.
+     * @return true if a preview exists, false otherwise.
+     * @throws SQLException if a database error occurs.
+     */
+    public boolean previewExists(byte[] key) throws SQLException {
+        try (Connection conn = dataSource.getConnection(); PreparedStatement pstmt = conn.prepareStatement(CHECK_EXISTS_SQL)) {
+            pstmt.setBytes(1, key);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next(); // True if a row was found
+            }
+        }
+    }
+
+    /**
+     * Stores a preview for an item from a stream that is *already compressed* with DEFLATE.
+     * This method is suitable for high-performance streaming when the caller produces a compressed stream directly.
+     *
+     * @param evidence The item to store the preview for.
+     * @param compressedValueStream An InputStream containing the *DEFLATE compressed* preview data.
+     * @throws SQLException if a database error occurs.
+     */
+    public void storeCompressedPreview(IItem evidence, InputStream compressedValueStream) throws SQLException {
         byte[] key = getItemKey(evidence);
 
         try (Connection conn = dataSource.getConnection(); PreparedStatement pstmt = conn.prepareStatement(INSERT_DATA_SQL)) {
             pstmt.setBytes(1, key);
-            pstmt.setBinaryStream(2, gzippedValueStream);
+            pstmt.setBinaryStream(2, compressedValueStream);
             pstmt.executeUpdate();
+        }
+    }
+
+    /**
+     * Stores a preview for an item from a *raw, uncompressed* stream.
+     * This method compresses the content on-the-fly using DEFLATE in a
+     * fully streaming, thread-less, constant-memory way.
+     *
+     * @param evidence The item to store the preview for.
+     * @param rawValueStream An InputStream containing the *raw, uncompressed* preview data.
+     * @throws SQLException if a database error occurs.
+     * @throws IOException if an I/O error occurs during compression.
+     */
+    public void storeRawPreview(IItem evidence, InputStream rawValueStream) throws SQLException, IOException {
+        byte[] key = getItemKey(evidence);
+
+        Deflater deflater = new Deflater(Deflater.BEST_SPEED);
+        try (Connection conn = dataSource.getConnection();
+                PreparedStatement pstmt = conn.prepareStatement(INSERT_DATA_SQL);
+                InputStream streamToStore = new DeflaterInputStream(rawValueStream, deflater)) {
+
+            pstmt.setBytes(1, key);
+            pstmt.setBinaryStream(2, streamToStore);
+
+            // executeUpdate() triggers the entire pull-based stream chain
+            pstmt.executeUpdate();
+
+        } finally {
+            deflater.end();
         }
     }
 
@@ -86,7 +146,7 @@ public class PreviewRepository implements Closeable {
      * Consumes a preview for a given item, with an option to disable decompression.
      *
      * @param evidence The item whose preview is to be consumed.
-     * @param decompress If true, the stream is decompressed (Gzip); if false, the raw stored stream is provided.
+     * @param decompress If true, the stream will be decompressed (DEFLATE); if false, the raw stored stream is provided.
      * @param consumer The consumer to process the stream.
      * @return true if the preview was found and consumed, false otherwise.
      * @throws SQLException if a database error occurs.
@@ -98,37 +158,37 @@ public class PreviewRepository implements Closeable {
     }
 
     /**
-     * Consumes a preview for a given key, with an option to disable decompression.
-     *
-     * @param key The binary key of the preview.
-     * @param consumer The consumer to process the stream.
-     * @param decompress If true, the stream is decompressed (Gzip); if false, the raw stored stream is provided.
-     * @return true if the preview was found and consumed, false otherwise.
-     * @throws SQLException if a database error occurs.
-     * @throws IOException if an I/O error occurs during streaming.
-     */
-    public boolean consumePreview(byte[] key, boolean decompress, InputStreamConsumer consumer) throws SQLException, IOException {
-        try (Connection conn = dataSource.getConnection(); PreparedStatement pstmt = conn.prepareStatement(SELECT_DATA_SQL)) {
-            pstmt.setBytes(1, key);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    try (InputStream dbInputStream = rs.getBinaryStream(1)) {
-                        if (decompress) {
-                            // Decompress the data stream from the DB
-                            try (InputStream decompressedStream = new GzipCompressorInputStream(dbInputStream)) {
-                                consumer.consume(decompressedStream);
-                            }
-                        } else {
-                            // Pass the raw (gzipped) stream directly to the consumer
-                            consumer.consume(dbInputStream);
-                        }
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
+    * Consumes a preview for a given key, with an option to disable decompression.
+    *
+    * @param key The binary key of the preview.
+    * @param consumer The consumer to process the stream.
+    * @param decompress If true, the stream will be decompressed (DEFLATE); if false, the raw stored stream is provided.
+    * @return true if the preview was found and consumed, false otherwise.
+    * @throws SQLException if a database error occurs.
+    * @throws IOException if an I/O error occurs during streaming.
+    */
+   public boolean consumePreview(byte[] key, boolean decompress, InputStreamConsumer consumer) throws SQLException, IOException {
+       try (Connection conn = dataSource.getConnection(); PreparedStatement pstmt = conn.prepareStatement(SELECT_DATA_SQL)) {
+           pstmt.setBytes(1, key);
+           try (ResultSet rs = pstmt.executeQuery()) {
+               if (rs.next()) {
+                   try (InputStream dbInputStream = rs.getBinaryStream(1)) {
+                       if (decompress) {
+                           // Decompress the data stream from the DB using DEFLATE
+                           try (InputStream decompressedStream = new InflaterInputStream(dbInputStream)) {
+                               consumer.consume(decompressedStream);
+                           }
+                       } else {
+                           // Pass the raw (compressed) stream directly to the consumer
+                           consumer.consume(dbInputStream);
+                       }
+                       return true;
+                   }
+               }
+           }
+       }
+       return false;
+   }
 
     /**
      * Generates the primary key for storing/retrieving an item's preview.

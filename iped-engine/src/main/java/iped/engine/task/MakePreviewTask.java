@@ -10,10 +10,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.zip.Deflater;
+import java.util.concurrent.atomic.AtomicReference;
 
-import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
-import org.apache.commons.compress.compressors.gzip.GzipParameters;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.io.TikaInputStream;
@@ -55,8 +53,7 @@ public class MakePreviewTask extends AbstractTask {
 
     private StandardParser parser;
 
-    private volatile Throwable exception;
-
+    @Override
     public List<Configurable<?>> getConfigurables() {
         return Arrays.asList(new MakePreviewConfig());
     }
@@ -118,16 +115,10 @@ public class MakePreviewTask extends AbstractTask {
 
     }
 
-    private GzipParameters getGzipParams() {
-        GzipParameters compression = new GzipParameters();
-        compression.setCompressionLevel(Deflater.BEST_SPEED);
-        return compression;
-    }
-
     private void makeHtmlPreviewAndStore(IItem evidence, String mediaType, String viewExt) throws Throwable {
 
         PipedInputStream inputStream = new PipedInputStream(8192);
-        OutputStream outputStream = new GzipCompressorOutputStream(new PipedOutputStream(inputStream), getGzipParams());
+        PipedOutputStream outputStream = new PipedOutputStream(inputStream);
 
         final Metadata metadata = new Metadata();
         ParsingTask.fillMetadata(evidence, metadata);
@@ -159,8 +150,9 @@ public class MakePreviewTask extends AbstractTask {
             ContentHandler handler;
             if (!isSupportedTypeCSV(evidence.getMediaType().toString())) {
                 String comment = null;
-                if (mayContainLinks(mediaType))
+                if (mayContainLinks(mediaType)) {
                     comment = HtmlLinkViewer.PREVIEW_WITH_LINKS_HEADER;
+                }
                 handler = new ToXMLContentHandlerWithComment(outputStream, "UTF-8", comment); //$NON-NLS-1$
         } else {
             handler = new ToCSVContentHandler(outputStream, "UTF-8"); //$NON-NLS-1$
@@ -169,11 +161,12 @@ public class MakePreviewTask extends AbstractTask {
 
         if (QueuesProcessingOrder.getProcessingQueue(evidence.getMediaType()) == 0) {
             parser.setCanUseForkParser(true);
-        } else
+        } else {
             parser.setCanUseForkParser(false);
+        }
 
         final CountDownLatch latch = new CountDownLatch(2); // latch for 2 threads
-        exception = null;
+        final AtomicReference<Throwable> exception = new AtomicReference<>();
         Thread producerThread = new Thread(Thread.currentThread().getName() + "-MakePreviewThread-Producer") {
             @Override
             public void run() {
@@ -181,11 +174,7 @@ public class MakePreviewTask extends AbstractTask {
                     parser.parse(tis, pch, metadata, context);
 
                 } catch (IOException | SAXException | TikaException | OutOfMemoryError e) {
-                    synchronized(MakePreviewTask.this) {
-                        if (exception == null) {
-                            exception = e;
-                        }
-                    }
+                    exception.compareAndSet(null, e);
                 } finally {
                     latch.countDown();
                     IOUtil.closeQuietly(outputStream);
@@ -197,15 +186,11 @@ public class MakePreviewTask extends AbstractTask {
             @Override
             public void run() {
                 try {
-                    PreviewRepositoryManager.get(output).storePreview(evidence, inputStream);
+                    PreviewRepositoryManager.get(output).storeRawPreview(evidence, inputStream);
                     evidence.setHasPreview(true);
                     evidence.setPreviewExt(viewExt);
-                } catch (SQLException e) {
-                    synchronized(MakePreviewTask.this) {
-                        if (exception == null) {
-                            exception = e;
-                        }
-                    }
+                } catch (SQLException | IOException e) {
+                    exception.compareAndSet(null, e);
                 } finally {
                     latch.countDown();
                     IOUtil.closeQuietly(inputStream);
@@ -218,8 +203,9 @@ public class MakePreviewTask extends AbstractTask {
 
         long start = System.currentTimeMillis();
         while (latch.getCount() > 0) {
-            if (pch.getProgress())
+            if (pch.getProgress()) {
                 start = System.currentTimeMillis();
+            }
 
             if ((System.currentTimeMillis() - start) / 1000 >= parsingConfig.getTimeOut()) {
                 producerThread.interrupt();
@@ -228,8 +214,9 @@ public class MakePreviewTask extends AbstractTask {
                 throw new TimeoutException();
             }
             latch.await(1000, TimeUnit.MILLISECONDS);
-            if (exception != null)
-                throw exception;
+            if (exception.get() != null) {
+                throw exception.get();
+            }
         }
     }
 
@@ -246,8 +233,9 @@ public class MakePreviewTask extends AbstractTask {
         @Override
         public void startDocument() throws SAXException {
             super.startDocument();
-            if (comment != null)
+            if (comment != null) {
                 this.write(comment + "\n"); //$NON-NLS-1$
+            }
         }
     }
 
