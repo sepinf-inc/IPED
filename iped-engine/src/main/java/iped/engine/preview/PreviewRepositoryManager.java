@@ -27,6 +27,9 @@ public class PreviewRepositoryManager {
     private static final String DB_NAME = "previews";
     private static final String DB_USER = "sa";
     private static final String DB_PASSWORD = "";
+
+    private static final int H2_CACHE_SIZE = 32 * 1024; // in KB
+
     private static final String CREATE_TABLE_SQL = "CREATE TABLE IF NOT EXISTS previews (id VARBINARY(16) PRIMARY KEY, data BLOB)";
 
     // Map to track different storages/connections in multicases
@@ -47,7 +50,7 @@ public class PreviewRepositoryManager {
 
         // Create new data source
         File db = new File(baseFolder, DB_NAME);
-        String dbUrl = "jdbc:h2:" + db.getAbsolutePath() + ";AUTO_SERVER=TRUE";
+        String dbUrl = "jdbc:h2:" + db.getAbsolutePath() + ";AUTO_SERVER=TRUE;CACHE_SIZE=" + H2_CACHE_SIZE;
 
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(dbUrl);
