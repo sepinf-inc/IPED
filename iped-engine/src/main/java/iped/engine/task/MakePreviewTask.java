@@ -47,8 +47,6 @@ public class MakePreviewTask extends AbstractTask {
 
     private static Logger LOGGER = LoggerFactory.getLogger(MakePreviewTask.class);
 
-    public static final String viewFolder = "view"; //$NON-NLS-1$
-
     private MakePreviewConfig previewConfig;
 
     private StandardParser parser;
