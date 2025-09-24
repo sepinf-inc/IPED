@@ -286,6 +286,10 @@ class FaceRecognitionTask:
             if item.getViewFile() is not None and os.path.exists(item.getViewFile().getAbsolutePath()):
                 img_path = item.getViewFile().getAbsolutePath()
                 tiff_orient = 1
+            elif item.hasPreview():
+                from iped.engine.preview import PreviewRepositoryManager
+                img_path = PreviewRepositoryManager.get(moduleDir).readPreview(item, True).getFile().getAbsolutePath()
+                tiff_orient = 1
             else:
                 img_path = item.getTempFile().getAbsolutePath()
         elif mediaType.startswith('video') and not FaceRecognitionTask.videoSubitems:

@@ -22,11 +22,13 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
@@ -44,6 +46,8 @@ import javax.swing.SwingConstants;
 import org.apache.tika.mime.MediaType;
 
 import iped.data.IItem;
+import iped.engine.preview.PreviewRepository;
+import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.search.SimilarFacesSearch;
 import iped.utils.ImageUtil;
 
@@ -121,14 +125,22 @@ public class SimilarFacesOptionsDialog extends JDialog {
         JPanel bottom = new JPanel();
 
         MediaType mime = item.getMediaType();
-        String mimeStr = null;
-        if (mime != null) {
-            mimeStr = mime.toString();
-        }
+        String mimeStr = (mime != null) ? mime.toString() : null;
         if (img == null) {
             File view = item.getViewFile();
             if (view != null && view.exists()) {
                 img = ImageUtil.getSubSampledImage(view, 1024, mimeStr);
+            } else if (item.hasPreview()) {
+                try {
+                    PreviewRepository previewRepo = PreviewRepositoryManager.get(item.getPreviewBaseFolder());
+                    AtomicReference<BufferedImage> reference = new AtomicReference<>();
+                    previewRepo.consumePreview(item, inputStream -> {
+                        reference.set(ImageUtil.getSubSampledImage(inputStream, 1024, mimeStr));
+                    });
+                    img = reference.get();
+                } catch (SQLException | IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
         if (img == null) {
@@ -359,6 +371,17 @@ public class SimilarFacesOptionsDialog extends JDialog {
         File view = item.getViewFile();
         if (view != null && view.exists()) {
             d = ImageUtil.getImageFileDimension(view);
+        } else if (item.hasPreview()) {
+            try {
+                PreviewRepository previewRepo = PreviewRepositoryManager.get(item.getPreviewBaseFolder());
+                AtomicReference<Dimension> reference = new AtomicReference<>();
+                previewRepo.consumePreview(item, inputStream -> {
+                    reference.set(ImageUtil.getImageFileDimension(inputStream));
+                });
+                d = reference.get();
+            } catch (SQLException | IOException e) {
+                e.printStackTrace();
+            }
         }
         if (d == null) {
             try (InputStream is = item.getSeekableInputStream()) {
