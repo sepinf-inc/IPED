@@ -37,7 +37,7 @@ function addCategories(e, listcategories, default_cat) {
 
   for (var cat in listcategories) {
     var val = Number(e.getExtraAttribute(cat));
-    if (!Number.isNaN(val) && val > bestVal) {
+    if (!isNaN(val) && val > bestVal) {
       bestVal = val;
       bestKey = cat;
     }
