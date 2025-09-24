@@ -18,12 +18,15 @@ import iped.data.IItem;
 import iped.data.IItemReader;
 import iped.engine.task.HashTask;
 import iped.utils.HashValue;
+import iped.utils.SeekableFileInputStream;
 
 /**
  * Handles storage and retrieval of item previews in an H2 database.
  * Instances of this class are managed by {@link PreviewRepositoryManager}.
  */
 public class PreviewRepository implements Closeable {
+
+    public static final String LEGACY_VIEW_FOLDER = "view";
 
     private static final String INSERT_DATA_SQL = "MERGE INTO previews (id, data) KEY(id) VALUES (?, ?)";
     private static final String SELECT_DATA_SQL = "SELECT data FROM previews WHERE id=?";
@@ -143,6 +146,19 @@ public class PreviewRepository implements Closeable {
     }
 
     /**
+     * Consumes a preview for a given item, decompressing it by default.
+     *
+     * @param evidence The item whose preview is to be consumed.
+     * @param consumer The consumer to process the decompressed stream.
+     * @return true if the preview was found and consumed, false otherwise.
+     * @throws SQLException if a database error occurs.
+     * @throws IOException if an I/O error occurs during streaming.
+     */
+    public boolean consumePreview(IItem evidence, InputStreamConsumer consumer) throws SQLException, IOException {
+        return consumePreview(evidence, true, consumer); // Default to decompress
+    }
+
+    /**
      * Consumes a preview for a given item, with an option to disable decompression.
      *
      * @param evidence The item whose preview is to be consumed.
@@ -189,6 +205,20 @@ public class PreviewRepository implements Closeable {
        }
        return false;
    }
+
+   /**
+    * Consumes a preview for an IItem from the repository and converts it to a SeekableInputStream.
+    *
+    * @param item The item whose preview is to be consumed.
+    * @param forceFile If true, always use a temp file instead of memory.
+    * @return A SeekableFileInputStream, or null if the preview is not found.
+    * @throws SQLException
+    * @throws IOException
+    */
+    public SeekableFileInputStream readPreview(IItem item, boolean forceFile) throws SQLException, IOException {
+        byte[] key = PreviewRepository.getItemKey(item);
+        return PreviewInputStreamFactory.consumePreviewToSeekableInputStream(this, key, item.getPreviewExt(), forceFile);
+    }
 
     /**
      * Generates the primary key for storing/retrieving an item's preview.

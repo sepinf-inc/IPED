@@ -28,12 +28,14 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
 
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.util.BytesRef;
@@ -44,6 +46,7 @@ import org.slf4j.LoggerFactory;
 import iped.app.ui.controls.ErrorIcon;
 import iped.data.IItemId;
 import iped.engine.config.ConfigurationManager;
+import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.task.HTMLReportTask;
 import iped.engine.task.ImageThumbTask;
 import iped.engine.task.index.IndexItem;
@@ -359,6 +362,20 @@ public class GalleryModel extends AbstractTableModel {
             }
 
         } else {
+            try {
+                byte[] key = Hex.decodeHex(hash);
+                AtomicReference<BufferedImage> result = new AtomicReference<>();
+                PreviewRepositoryManager.get(baseFolder.getParentFile()).consumePreview(key, inputStream -> {
+                    BufferedImage image = ImageIO.read(inputStream);
+                    if (image == null) {
+                        image = errorImg;
+                    }
+                    result.set(image);
+                });
+                return result.get();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             return null;
         }
     }

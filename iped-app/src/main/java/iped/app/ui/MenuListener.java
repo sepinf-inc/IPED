@@ -439,8 +439,7 @@ public class MenuListener implements ActionListener {
             } else if (item.hasPreview()) {
                 File baseFolder = App.get().appCase.getAtomicSourceBySourceId(itemId.getSourceId()).getModuleDir();
                 try {
-                    PreviewRepository previewRepo = PreviewRepositoryManager.get(baseFolder);
-                    SeekableFileInputStream stream = PreviewInputStreamFactory.consumePreviewToSeekableInputStream(previewRepo, item, true);
+                    SeekableFileInputStream stream = PreviewRepositoryManager.get(baseFolder).readPreview(item, true);
                     ExternalFileOpen.open(stream.getFile());
                 } catch (SQLException | IOException e1) {
                     e1.printStackTrace();

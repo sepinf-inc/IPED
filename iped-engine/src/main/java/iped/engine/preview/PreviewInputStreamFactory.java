@@ -75,24 +75,6 @@ public class PreviewInputStreamFactory extends SeekableInputStreamFactory {
     }
 
     /**
-     * Consumes a preview for an IItem from the repository and converts it to a SeekableInputStream.
-     *
-     * @param repo The PreviewRepository instance to use.
-     * @param item The item whose preview is to be consumed.
-     * @param forceFile If true, always use a temp file instead of memory.
-     * @return A SeekableFileInputStream, or null if the preview is not found.
-     * @throws SQLException
-     * @throws IOException
-     */
-    public static SeekableFileInputStream consumePreviewToSeekableInputStream(PreviewRepository repo, IItem item, boolean forceFile)
-            throws SQLException, IOException {
-
-        // Use the static utility method from PreviewRepository
-        byte[] key = PreviewRepository.getItemKey(item);
-        return consumePreviewToSeekableInputStream(repo, key, item.getPreviewExt(), forceFile);
-    }
-
-    /**
      * Consumes a preview from the repository and converts it to a SeekableInputStream.
      *
      * @param repo The PreviewRepository instance to use.
@@ -103,7 +85,7 @@ public class PreviewInputStreamFactory extends SeekableInputStreamFactory {
      * @throws SQLException
      * @throws IOException
      */
-    private static SeekableFileInputStream consumePreviewToSeekableInputStream(PreviewRepository repo, byte[] key, String ext, boolean forceFile)
+    static SeekableFileInputStream consumePreviewToSeekableInputStream(PreviewRepository repo, byte[] key, String ext, boolean forceFile)
             throws SQLException, IOException {
 
         AtomicReference<SeekableFileInputStream> reference = new AtomicReference<>();
