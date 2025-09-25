@@ -25,6 +25,7 @@
     <task class="iped.engine.task.ParsingTask"></task>
     
     <task class="iped.engine.task.QRCodeTask"></task>
+    <task script="AISummarizationTask.py"></task>
     <task class="iped.engine.task.regex.RegexTask"></task>
     <task class="iped.engine.task.LanguageDetectTask"></task>
     <task class="iped.engine.task.NamedEntityTask"></task>
