@@ -78,11 +78,14 @@ import iped.engine.data.DataSource;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.Item;
 import iped.engine.lucene.analysis.FastASCIIFoldingFilter;
+import iped.engine.preview.PreviewConstants;
 import iped.engine.preview.PreviewInputStreamFactory;
 import iped.engine.sleuthkit.SleuthkitInputStreamFactory;
 import iped.engine.task.ImageThumbTask;
 import iped.engine.task.MinIOTask.MinIOInputInputStreamFactory;
+import iped.engine.task.ThumbTask;
 import iped.engine.task.similarity.ImageSimilarityTask;
+import iped.engine.task.video.VideoThumbTask;
 import iped.engine.util.Util;
 import iped.parsers.ocr.OCRParser;
 import iped.parsers.standard.StandardParser;
@@ -881,20 +884,24 @@ public class IndexItem extends BasicProps {
             File viewFile = null;
             if (StringUtils.isNotBlank(evidence.getHash())) {
 
-                if (Boolean.valueOf(doc.get(ImageThumbTask.HAS_THUMB))) {
-                    String mimePrefix = evidence.getMediaType().getType();
-                    if (doc.getBinaryValue(THUMB) != null) {
-                        evidence.setThumb(doc.getBinaryValue(THUMB).bytes);
-
-                    } else if (mimePrefix.equals("image") || mimePrefix.equals("video")) { //$NON-NLS-1$ //$NON-NLS-2$
-                        String thumbFolder = mimePrefix.equals("image") ? ImageThumbTask.thumbsFolder : "view"; //$NON-NLS-1$ //$NON-NLS-2$
-                        File thumbFile = Util.getFileFromHash(new File(outputBase, thumbFolder), evidence.getHash(),
-                                "jpg"); //$NON-NLS-1$
-                        try {
-                            if (thumbFile.exists())
-                                evidence.setThumb(Files.readAllBytes(thumbFile.toPath()));
-                        } catch (IOException e) {
-                            e.printStackTrace();
+                if (Boolean.parseBoolean(doc.get(ThumbTask.HAS_THUMB))) {
+                    BytesRef thumb = doc.getBinaryValue(THUMB);
+                    if (thumb != null) {
+                        evidence.setThumb(thumb.bytes);
+                    } else {
+                        String mimePrefix = evidence.getMediaType().getType();
+                        boolean isImage = mimePrefix.equals("image");
+                        boolean isVideo = mimePrefix.equals("video");
+                        if (isImage || isVideo) {
+                            String thumbFolder = isImage ? ImageThumbTask.THUMBS_FOLDER_NAME : PreviewConstants.LEGACY_VIEW_FOLDER_NAME;
+                            File thumbFile = Util.getFileFromHash(new File(outputBase, thumbFolder), evidence.getHash(), VideoThumbTask.PREVIEW_EXT);
+                            try {
+                                if (thumbFile.exists()) {
+                                    evidence.setThumb(Files.readAllBytes(thumbFile.toPath()));
+                                }
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
                         }
                     }
                 }
@@ -904,7 +911,7 @@ public class IndexItem extends BasicProps {
                     evidence.setExtraAttribute(ImageSimilarityTask.IMAGE_FEATURES, bytesRef.bytes);
                 }
 
-                viewFile = Util.findFileFromHash(new File(outputBase, "view"), evidence.getHash()); //$NON-NLS-1$
+                viewFile = Util.findFileFromHash(new File(outputBase, PreviewConstants.LEGACY_VIEW_FOLDER_NAME), evidence.getHash());
                 if (viewFile != null) {
                     evidence.setViewFile(viewFile);
                 }

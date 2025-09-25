@@ -75,7 +75,9 @@ import iped.utils.ImageUtil;
  * @author Wladimir Leite
  */
 public class VideoThumbTask extends ThumbTask {
-    
+
+    public static final String PREVIEW_EXT = "jpg";
+
     /**
      * Indica se a tarefa está habilitada ou não.
      */

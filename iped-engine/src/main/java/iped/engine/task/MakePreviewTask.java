@@ -49,7 +49,7 @@ import iped.viewers.HtmlLinkViewer;
 
 public class MakePreviewTask extends AbstractTask {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(MakePreviewTask.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MakePreviewTask.class);
 
     private MakePreviewConfig previewConfig;
 

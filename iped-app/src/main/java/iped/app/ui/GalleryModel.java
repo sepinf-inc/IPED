@@ -45,10 +45,11 @@ import org.slf4j.LoggerFactory;
 import iped.app.ui.controls.ErrorIcon;
 import iped.data.IItemId;
 import iped.engine.config.ConfigurationManager;
+import iped.engine.preview.PreviewConstants;
 import iped.engine.preview.PreviewKey;
 import iped.engine.preview.PreviewRepositoryManager;
-import iped.engine.task.HTMLReportTask;
 import iped.engine.task.ImageThumbTask;
+import iped.engine.task.ThumbTask;
 import iped.engine.task.index.IndexItem;
 import iped.engine.task.video.VideoThumbTask;
 import iped.engine.util.Util;
@@ -348,12 +349,12 @@ public class GalleryModel extends AbstractTableModel {
     private BufferedImage getViewImage(int docID, String hash, boolean isVideo) throws IOException {
         File baseFolder = App.get().appCase.getAtomicSource(docID).getModuleDir();
         if (isVideo) {
-            baseFolder = new File(baseFolder, HTMLReportTask.viewFolder);
+            baseFolder = new File(baseFolder, PreviewConstants.LEGACY_VIEW_FOLDER_NAME);
         } else {
-            baseFolder = new File(baseFolder, ImageThumbTask.thumbsFolder);
+            baseFolder = new File(baseFolder, ImageThumbTask.THUMBS_FOLDER_NAME);
         }
 
-        File hashFile = Util.getFileFromHash(baseFolder, hash, "jpg"); //$NON-NLS-1$
+        File hashFile = Util.getFileFromHash(baseFolder, hash, ThumbTask.THUMB_EXT);
         if (hashFile.exists()) {
             BufferedImage image = ImageIO.read(hashFile);
             if (image == null) {

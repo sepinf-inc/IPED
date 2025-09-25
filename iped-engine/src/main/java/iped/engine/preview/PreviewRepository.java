@@ -22,8 +22,6 @@ import iped.utils.SeekableFileInputStream;
  */
 public class PreviewRepository implements Closeable {
 
-    public static final String LEGACY_VIEW_FOLDER = "view";
-
     private static final String INSERT_DATA_SQL = "INSERT INTO previews (id, data) VALUES (?, ?)";
     private static final String SELECT_DATA_SQL = "SELECT data FROM previews WHERE id=?";
     private static final String CHECK_EXISTS_SQL = "SELECT 1 FROM previews WHERE id=?";
