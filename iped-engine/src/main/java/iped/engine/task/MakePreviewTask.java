@@ -5,7 +5,6 @@ import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.UnsupportedEncodingException;
-import java.nio.ByteBuffer;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
@@ -33,6 +32,7 @@ import iped.engine.config.MakePreviewConfig;
 import iped.engine.config.ParsingTaskConfig;
 import iped.engine.core.QueuesProcessingOrder;
 import iped.engine.io.TimeoutException;
+import iped.engine.preview.PreviewKey;
 import iped.engine.preview.PreviewRepository;
 import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.tika.EmptyEmbeddedDocumentExtractor;
@@ -55,7 +55,7 @@ public class MakePreviewTask extends AbstractTask {
 
     private StandardParser parser;
 
-    private static volatile LockManager<ByteBuffer> lockManager;
+    private static volatile LockManager<PreviewKey> lockManager;
 
     @Override
     public List<Configurable<?>> getConfigurables() {
@@ -119,7 +119,7 @@ public class MakePreviewTask extends AbstractTask {
             ext = "csv"; //$NON-NLS-1$
         }
 
-        ByteBuffer key = PreviewRepository.getItemKey(evidence);
+        PreviewKey key = PreviewKey.create(evidence);
         ReentrantLock lock = lockManager.getLock(key);
         lock.lock();
         try {

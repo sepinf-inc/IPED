@@ -49,7 +49,7 @@ public class PreviewInputStreamFactory extends SeekableInputStreamFactory {
             return new EmptyInputStream();
         }
 
-        ByteBuffer key = ByteBuffer.wrap(Base64.decodeBase64(identifierParts[0]));
+        PreviewKey key = new PreviewKey(Base64.decodeBase64(identifierParts[0]));
         String ext = identifierParts[1];
 
         File databaseFolder = Paths.get(getDataSourceURI()).toFile();
@@ -70,22 +70,22 @@ public class PreviewInputStreamFactory extends SeekableInputStreamFactory {
      * @return A string in the format "Base64(key).extension".
      */
     public static String getIdentifierForPreview(IItem item) {
-        ByteBuffer key = PreviewRepository.getItemKey(item);
-        return Base64.encodeBase64String(key.array()) + IDENTIFIER_SEPARATOR + item.getPreviewExt();
+        PreviewKey key = PreviewKey.create(item);
+        return Base64.encodeBase64String(key.getBytes()) + IDENTIFIER_SEPARATOR + item.getPreviewExt();
     }
 
     /**
      * Consumes a preview from the repository and converts it to a SeekableInputStream.
      *
      * @param repo The PreviewRepository instance to use.
-     * @param key The binary key of the preview.
+     * @param key The key of the preview.
      * @param ext The file extension for the temporary file, if created.
      * @param forceFile If true, always use a temp file instead of memory.
      * @return A SeekableFileInputStream, or null if the preview is not found.
      * @throws SQLException
      * @throws IOException
      */
-    static SeekableFileInputStream consumePreviewToSeekableInputStream(PreviewRepository repo, ByteBuffer key, String ext, boolean forceFile)
+    static SeekableFileInputStream consumePreviewToSeekableInputStream(PreviewRepository repo, PreviewKey key, String ext, boolean forceFile)
             throws SQLException, IOException {
 
         AtomicReference<SeekableFileInputStream> reference = new AtomicReference<>();

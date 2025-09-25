@@ -23,7 +23,6 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -36,7 +35,6 @@ import javax.swing.ImageIcon;
 import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
 
-import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.util.BytesRef;
@@ -47,6 +45,7 @@ import org.slf4j.LoggerFactory;
 import iped.app.ui.controls.ErrorIcon;
 import iped.data.IItemId;
 import iped.engine.config.ConfigurationManager;
+import iped.engine.preview.PreviewKey;
 import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.task.HTMLReportTask;
 import iped.engine.task.ImageThumbTask;
@@ -365,7 +364,7 @@ public class GalleryModel extends AbstractTableModel {
 
         } else {
             try {
-                ByteBuffer key = ByteBuffer.wrap(new HashValue(hash).getBytes());
+                PreviewKey key = new PreviewKey(new HashValue(hash).getBytes());
                 AtomicReference<BufferedImage> result = new AtomicReference<>();
                 PreviewRepositoryManager.get(baseFolder.getParentFile()).consumePreview(key, inputStream -> {
                     BufferedImage image = ImageIO.read(inputStream);

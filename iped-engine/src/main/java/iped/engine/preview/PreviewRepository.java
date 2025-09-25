@@ -3,7 +3,6 @@ package iped.engine.preview;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -15,9 +14,6 @@ import java.util.zip.InflaterInputStream;
 import com.zaxxer.hikari.HikariDataSource;
 
 import iped.data.IItem;
-import iped.data.IItemReader;
-import iped.engine.task.HashTask;
-import iped.utils.HashValue;
 import iped.utils.SeekableFileInputStream;
 
 /**
@@ -60,20 +56,20 @@ public class PreviewRepository implements Closeable {
      * @throws SQLException if a database error occurs.
      */
     public boolean previewExists(IItem evidence) throws SQLException {
-        ByteBuffer key = getItemKey(evidence);
+        PreviewKey key = PreviewKey.create(evidence);
         return previewExists(key);
     }
 
     /**
      * Checks if a preview exists for the given key.
      *
-     * @param key The binary key to check.
+     * @param key The key to check.
      * @return true if a preview exists, false otherwise.
      * @throws SQLException if a database error occurs.
      */
-    public boolean previewExists(ByteBuffer key) throws SQLException {
+    public boolean previewExists(PreviewKey key) throws SQLException {
         try (Connection conn = dataSource.getConnection(); PreparedStatement pstmt = conn.prepareStatement(CHECK_EXISTS_SQL)) {
-            pstmt.setBytes(1, key.array());
+            pstmt.setBytes(1, key.getBytes());
             try (ResultSet rs = pstmt.executeQuery()) {
                 return rs.next(); // True if a row was found
             }
@@ -90,10 +86,10 @@ public class PreviewRepository implements Closeable {
      * @throws IOException
      */
     public void storeCompressedPreview(IItem evidence, InputStream compressedValueStream) throws SQLException, IOException {
-        ByteBuffer key = getItemKey(evidence);
+        PreviewKey key = PreviewKey.create(evidence);
 
         try (Connection conn = dataSource.getConnection(); PreparedStatement pstmt = conn.prepareStatement(INSERT_DATA_SQL)) {
-            pstmt.setBytes(1, key.array());
+            pstmt.setBytes(1, key.getBytes());
             pstmt.setBinaryStream(2, compressedValueStream);
             pstmt.executeUpdate();
         }
@@ -110,14 +106,14 @@ public class PreviewRepository implements Closeable {
      * @throws IOException if an I/O error occurs during compression.
      */
     public void storeRawPreview(IItem evidence, InputStream rawValueStream) throws SQLException, IOException {
-        ByteBuffer key = getItemKey(evidence);
+        PreviewKey key = PreviewKey.create(evidence);
 
         Deflater deflater = new Deflater(Deflater.BEST_SPEED);
         try (Connection conn = dataSource.getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(INSERT_DATA_SQL);
                 InputStream streamToStore = new DeflaterInputStream(rawValueStream, deflater)) {
 
-            pstmt.setBytes(1, key.array());
+            pstmt.setBytes(1, key.getBytes());
             pstmt.setBinaryStream(2, streamToStore);
 
             // executeUpdate() triggers the entire pull-based stream chain
@@ -136,13 +132,13 @@ public class PreviewRepository implements Closeable {
     /**
      * Consumes a preview for a given key, decompressing it by default.
      *
-     * @param key The binary key of the preview.
+     * @param key The key of the preview.
      * @param consumer The consumer to process the decompressed stream.
      * @return true if the preview was found and consumed, false otherwise.
      * @throws SQLException if a database error occurs.
      * @throws IOException if an I/O error occurs during streaming.
      */
-    public boolean consumePreview(ByteBuffer key, InputStreamConsumer consumer) throws SQLException, IOException {
+    public boolean consumePreview(PreviewKey key, InputStreamConsumer consumer) throws SQLException, IOException {
         return consumePreview(key, true, consumer); // Default to decompress
     }
 
@@ -170,23 +166,23 @@ public class PreviewRepository implements Closeable {
      * @throws IOException if an I/O error occurs during streaming.
      */
     public boolean consumePreview(IItem evidence, boolean decompress, InputStreamConsumer consumer) throws SQLException, IOException {
-        ByteBuffer key = getItemKey(evidence);
+        PreviewKey key = PreviewKey.create(evidence);
         return consumePreview(key, decompress, consumer);
     }
 
     /**
     * Consumes a preview for a given key, with an option to disable decompression.
     *
-    * @param key The binary key of the preview.
+    * @param key The key of the preview.
     * @param consumer The consumer to process the stream.
     * @param decompress If true, the stream will be decompressed (DEFLATE); if false, the raw stored stream is provided.
     * @return true if the preview was found and consumed, false otherwise.
     * @throws SQLException if a database error occurs.
     * @throws IOException if an I/O error occurs during streaming.
     */
-   public boolean consumePreview(ByteBuffer key, boolean decompress, InputStreamConsumer consumer) throws SQLException, IOException {
+   public boolean consumePreview(PreviewKey key, boolean decompress, InputStreamConsumer consumer) throws SQLException, IOException {
        try (Connection conn = dataSource.getConnection(); PreparedStatement pstmt = conn.prepareStatement(SELECT_DATA_SQL)) {
-           pstmt.setBytes(1, key.array());
+           pstmt.setBytes(1, key.getBytes());
            try (ResultSet rs = pstmt.executeQuery()) {
                if (rs.next()) {
                    try (InputStream dbInputStream = rs.getBinaryStream(1)) {
@@ -217,25 +213,7 @@ public class PreviewRepository implements Closeable {
     * @throws IOException
     */
     public SeekableFileInputStream readPreview(IItem item, boolean forceFile) throws SQLException, IOException {
-        ByteBuffer key = PreviewRepository.getItemKey(item);
+        PreviewKey key = PreviewKey.create(item);
         return PreviewInputStreamFactory.consumePreviewToSeekableInputStream(this, key, item.getPreviewExt(), forceFile);
     }
-
-    /**
-     * Generates the primary key for storing/retrieving an item's preview.
-     * Prioritizes MD5 hash, falls back to item ID.
-     *
-     * @param evidence The item to generate a key for.
-     * @return A 16-byte key (if MD5) or 4-byte key (if ID).
-     */
-    public static ByteBuffer getItemKey(IItemReader evidence) {
-        String hashString = (String) evidence.getExtraAttribute(HashTask.HASH.MD5.toString());
-        if (hashString != null) {
-            return ByteBuffer.wrap(new HashValue(hashString).getBytes());
-        }
-
-        // Fallback to item ID
-        return ByteBuffer.allocate(Integer.BYTES).putInt(evidence.getId());
-    }
-
 }
