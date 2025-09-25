@@ -49,7 +49,7 @@ public class PreviewInputStreamFactory extends SeekableInputStreamFactory {
             return new EmptyInputStream();
         }
 
-        byte[] key = Base64.decodeBase64(identifierParts[0]);
+        ByteBuffer key = ByteBuffer.wrap(Base64.decodeBase64(identifierParts[0]));
         String ext = identifierParts[1];
 
         File databaseFolder = Paths.get(getDataSourceURI()).toFile();
@@ -70,8 +70,8 @@ public class PreviewInputStreamFactory extends SeekableInputStreamFactory {
      * @return A string in the format "Base64(key).extension".
      */
     public static String getIdentifierForPreview(IItem item) {
-        byte[] key = PreviewRepository.getItemKey(item);
-        return Base64.encodeBase64String(key) + IDENTIFIER_SEPARATOR + item.getPreviewExt();
+        ByteBuffer key = PreviewRepository.getItemKey(item);
+        return Base64.encodeBase64String(key.array()) + IDENTIFIER_SEPARATOR + item.getPreviewExt();
     }
 
     /**
@@ -85,7 +85,7 @@ public class PreviewInputStreamFactory extends SeekableInputStreamFactory {
      * @throws SQLException
      * @throws IOException
      */
-    static SeekableFileInputStream consumePreviewToSeekableInputStream(PreviewRepository repo, byte[] key, String ext, boolean forceFile)
+    static SeekableFileInputStream consumePreviewToSeekableInputStream(PreviewRepository repo, ByteBuffer key, String ext, boolean forceFile)
             throws SQLException, IOException {
 
         AtomicReference<SeekableFileInputStream> reference = new AtomicReference<>();

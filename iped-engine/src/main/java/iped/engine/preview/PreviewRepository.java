@@ -28,7 +28,7 @@ public class PreviewRepository implements Closeable {
 
     public static final String LEGACY_VIEW_FOLDER = "view";
 
-    private static final String INSERT_DATA_SQL = "MERGE INTO previews (id, data) KEY(id) VALUES (?, ?)";
+    private static final String INSERT_DATA_SQL = "INSERT INTO previews (id, data) VALUES (?, ?)";
     private static final String SELECT_DATA_SQL = "SELECT data FROM previews WHERE id=?";
     private static final String CHECK_EXISTS_SQL = "SELECT 1 FROM previews WHERE id=?";
 
@@ -60,7 +60,7 @@ public class PreviewRepository implements Closeable {
      * @throws SQLException if a database error occurs.
      */
     public boolean previewExists(IItem evidence) throws SQLException {
-        byte[] key = getItemKey(evidence);
+        ByteBuffer key = getItemKey(evidence);
         return previewExists(key);
     }
 
@@ -71,9 +71,9 @@ public class PreviewRepository implements Closeable {
      * @return true if a preview exists, false otherwise.
      * @throws SQLException if a database error occurs.
      */
-    public boolean previewExists(byte[] key) throws SQLException {
+    public boolean previewExists(ByteBuffer key) throws SQLException {
         try (Connection conn = dataSource.getConnection(); PreparedStatement pstmt = conn.prepareStatement(CHECK_EXISTS_SQL)) {
-            pstmt.setBytes(1, key);
+            pstmt.setBytes(1, key.array());
             try (ResultSet rs = pstmt.executeQuery()) {
                 return rs.next(); // True if a row was found
             }
@@ -87,12 +87,13 @@ public class PreviewRepository implements Closeable {
      * @param evidence The item to store the preview for.
      * @param compressedValueStream An InputStream containing the *DEFLATE compressed* preview data.
      * @throws SQLException if a database error occurs.
+     * @throws IOException
      */
-    public void storeCompressedPreview(IItem evidence, InputStream compressedValueStream) throws SQLException {
-        byte[] key = getItemKey(evidence);
+    public void storeCompressedPreview(IItem evidence, InputStream compressedValueStream) throws SQLException, IOException {
+        ByteBuffer key = getItemKey(evidence);
 
         try (Connection conn = dataSource.getConnection(); PreparedStatement pstmt = conn.prepareStatement(INSERT_DATA_SQL)) {
-            pstmt.setBytes(1, key);
+            pstmt.setBytes(1, key.array());
             pstmt.setBinaryStream(2, compressedValueStream);
             pstmt.executeUpdate();
         }
@@ -109,14 +110,14 @@ public class PreviewRepository implements Closeable {
      * @throws IOException if an I/O error occurs during compression.
      */
     public void storeRawPreview(IItem evidence, InputStream rawValueStream) throws SQLException, IOException {
-        byte[] key = getItemKey(evidence);
+        ByteBuffer key = getItemKey(evidence);
 
         Deflater deflater = new Deflater(Deflater.BEST_SPEED);
         try (Connection conn = dataSource.getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(INSERT_DATA_SQL);
                 InputStream streamToStore = new DeflaterInputStream(rawValueStream, deflater)) {
 
-            pstmt.setBytes(1, key);
+            pstmt.setBytes(1, key.array());
             pstmt.setBinaryStream(2, streamToStore);
 
             // executeUpdate() triggers the entire pull-based stream chain
@@ -141,7 +142,7 @@ public class PreviewRepository implements Closeable {
      * @throws SQLException if a database error occurs.
      * @throws IOException if an I/O error occurs during streaming.
      */
-    public boolean consumePreview(byte[] key, InputStreamConsumer consumer) throws SQLException, IOException {
+    public boolean consumePreview(ByteBuffer key, InputStreamConsumer consumer) throws SQLException, IOException {
         return consumePreview(key, true, consumer); // Default to decompress
     }
 
@@ -169,7 +170,7 @@ public class PreviewRepository implements Closeable {
      * @throws IOException if an I/O error occurs during streaming.
      */
     public boolean consumePreview(IItem evidence, boolean decompress, InputStreamConsumer consumer) throws SQLException, IOException {
-        byte[] key = getItemKey(evidence);
+        ByteBuffer key = getItemKey(evidence);
         return consumePreview(key, decompress, consumer);
     }
 
@@ -183,9 +184,9 @@ public class PreviewRepository implements Closeable {
     * @throws SQLException if a database error occurs.
     * @throws IOException if an I/O error occurs during streaming.
     */
-   public boolean consumePreview(byte[] key, boolean decompress, InputStreamConsumer consumer) throws SQLException, IOException {
+   public boolean consumePreview(ByteBuffer key, boolean decompress, InputStreamConsumer consumer) throws SQLException, IOException {
        try (Connection conn = dataSource.getConnection(); PreparedStatement pstmt = conn.prepareStatement(SELECT_DATA_SQL)) {
-           pstmt.setBytes(1, key);
+           pstmt.setBytes(1, key.array());
            try (ResultSet rs = pstmt.executeQuery()) {
                if (rs.next()) {
                    try (InputStream dbInputStream = rs.getBinaryStream(1)) {
@@ -216,7 +217,7 @@ public class PreviewRepository implements Closeable {
     * @throws IOException
     */
     public SeekableFileInputStream readPreview(IItem item, boolean forceFile) throws SQLException, IOException {
-        byte[] key = PreviewRepository.getItemKey(item);
+        ByteBuffer key = PreviewRepository.getItemKey(item);
         return PreviewInputStreamFactory.consumePreviewToSeekableInputStream(this, key, item.getPreviewExt(), forceFile);
     }
 
@@ -227,14 +228,14 @@ public class PreviewRepository implements Closeable {
      * @param evidence The item to generate a key for.
      * @return A 16-byte key (if MD5) or 4-byte key (if ID).
      */
-    static byte[] getItemKey(IItemReader evidence) {
+    public static ByteBuffer getItemKey(IItemReader evidence) {
         String hashString = (String) evidence.getExtraAttribute(HashTask.HASH.MD5.toString());
         if (hashString != null) {
-            return new HashValue(hashString).getBytes();
+            return ByteBuffer.wrap(new HashValue(hashString).getBytes());
         }
 
         // Fallback to item ID
-        return ByteBuffer.allocate(Integer.BYTES).putInt(evidence.getId()).array();
+        return ByteBuffer.allocate(Integer.BYTES).putInt(evidence.getId());
     }
 
 }

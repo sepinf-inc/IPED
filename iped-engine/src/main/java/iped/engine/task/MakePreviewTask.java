@@ -5,12 +5,14 @@ import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
@@ -31,6 +33,7 @@ import iped.engine.config.MakePreviewConfig;
 import iped.engine.config.ParsingTaskConfig;
 import iped.engine.core.QueuesProcessingOrder;
 import iped.engine.io.TimeoutException;
+import iped.engine.preview.PreviewRepository;
 import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.tika.EmptyEmbeddedDocumentExtractor;
 import iped.engine.util.ItemInfoFactory;
@@ -41,6 +44,7 @@ import iped.parsers.util.ToCSVContentHandler;
 import iped.parsers.util.ToXMLContentHandler;
 import iped.search.IItemSearcher;
 import iped.utils.IOUtil;
+import iped.utils.LockManager;
 import iped.viewers.HtmlLinkViewer;
 
 public class MakePreviewTask extends AbstractTask {
@@ -50,6 +54,8 @@ public class MakePreviewTask extends AbstractTask {
     private MakePreviewConfig previewConfig;
 
     private StandardParser parser;
+
+    private static volatile LockManager<ByteBuffer> lockManager;
 
     @Override
     public List<Configurable<?>> getConfigurables() {
@@ -63,6 +69,18 @@ public class MakePreviewTask extends AbstractTask {
         parser = new StandardParser();
         parser.setPrintMetadata(false);
         parser.setIgnoreStyle(false);
+
+        initLockManager();
+    }
+
+    private static synchronized void initLockManager() {
+        if (lockManager == null) {
+            synchronized (MakePreviewTask.class) {
+                if (lockManager == null) {
+                    lockManager = new LockManager<>();
+                }
+            }
+        }
     }
 
     @Override
@@ -101,6 +119,9 @@ public class MakePreviewTask extends AbstractTask {
             ext = "csv"; //$NON-NLS-1$
         }
 
+        ByteBuffer key = PreviewRepository.getItemKey(evidence);
+        ReentrantLock lock = lockManager.getLock(key);
+        lock.lock();
         try {
             LOGGER.debug("Generating preview of {} ({} bytes)", evidence.getPath(), evidence.getLength());
             makeHtmlPreviewAndStore(evidence, mediaType, ext);
@@ -109,11 +130,20 @@ public class MakePreviewTask extends AbstractTask {
             LOGGER.warn("Error generating preview of {} ({} bytes) {}", evidence.getPath(), evidence.getLength(), //$NON-NLS-1$
                     e.toString());
             LOGGER.debug("", e);
+        } finally {
+            lock.unlock();
         }
 
     }
 
     private void makeHtmlPreviewAndStore(IItem evidence, String mediaType, String viewExt) throws Throwable {
+
+        PreviewRepository previewRepo = PreviewRepositoryManager.get(output);
+        if (previewRepo.previewExists(evidence)) {
+            evidence.setHasPreview(true);
+            evidence.setPreviewExt(viewExt);
+            return;
+        }
 
         PipedInputStream inputStream = new PipedInputStream(8192);
         PipedOutputStream outputStream = new PipedOutputStream(inputStream);
@@ -145,13 +175,13 @@ public class MakePreviewTask extends AbstractTask {
         // Ex: Como renderizar no preview html um PDF embutido num banco de dados?
         // context.set(Parser.class, parser);
 
-            ContentHandler handler;
-            if (!isSupportedTypeCSV(evidence.getMediaType().toString())) {
-                String comment = null;
-                if (mayContainLinks(mediaType)) {
-                    comment = HtmlLinkViewer.PREVIEW_WITH_LINKS_HEADER;
-                }
-                handler = new ToXMLContentHandlerWithComment(outputStream, "UTF-8", comment); //$NON-NLS-1$
+        ContentHandler handler;
+        if (!isSupportedTypeCSV(evidence.getMediaType().toString())) {
+            String comment = null;
+            if (mayContainLinks(mediaType)) {
+                comment = HtmlLinkViewer.PREVIEW_WITH_LINKS_HEADER;
+            }
+            handler = new ToXMLContentHandlerWithComment(outputStream, "UTF-8", comment); //$NON-NLS-1$
         } else {
             handler = new ToCSVContentHandler(outputStream, "UTF-8"); //$NON-NLS-1$
         }
@@ -189,6 +219,8 @@ public class MakePreviewTask extends AbstractTask {
                     evidence.setPreviewExt(viewExt);
                 } catch (SQLException | IOException e) {
                     exception.compareAndSet(null, e);
+                    LOGGER.info("ERROR {} {}", evidence.getHash(), e.getMessage() );
+
                 } finally {
                     latch.countDown();
                     IOUtil.closeQuietly(inputStream);

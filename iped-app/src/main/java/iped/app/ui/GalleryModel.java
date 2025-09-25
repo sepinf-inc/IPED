@@ -23,6 +23,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -53,6 +54,7 @@ import iped.engine.task.index.IndexItem;
 import iped.engine.task.video.VideoThumbTask;
 import iped.engine.util.Util;
 import iped.utils.ExternalImageConverter;
+import iped.utils.HashValue;
 import iped.utils.ImageUtil;
 import iped.viewers.util.ImageMetadataUtil;
 
@@ -363,7 +365,7 @@ public class GalleryModel extends AbstractTableModel {
 
         } else {
             try {
-                byte[] key = Hex.decodeHex(hash);
+                ByteBuffer key = ByteBuffer.wrap(new HashValue(hash).getBytes());
                 AtomicReference<BufferedImage> result = new AtomicReference<>();
                 PreviewRepositoryManager.get(baseFolder.getParentFile()).consumePreview(key, inputStream -> {
                     BufferedImage image = ImageIO.read(inputStream);
