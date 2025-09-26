@@ -396,7 +396,7 @@ public class ImageUtil {
      *
      * @return Array com {BufferedImage, String}
      */
-    public static Object[] readJpegWithMetaData(File inFile) throws IOException {
+    public static Object[] readJpegWithMetaData(Object inFile) throws IOException {
         ImageReader reader = null;
         ImageInputStream iis = null;
         try {

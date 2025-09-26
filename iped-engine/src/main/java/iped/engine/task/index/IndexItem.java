@@ -165,6 +165,8 @@ public class IndexItem extends BasicProps {
         BasicProps.SET.add(ID_IN_SOURCE);
         BasicProps.SET.add(SOURCE_PATH);
         BasicProps.SET.add(SOURCE_DECODER);
+        BasicProps.SET.add(HAS_PREVIEW);
+        BasicProps.SET.add(PREVIEW_EXT);
     }
 
     public static boolean isByte(String field) {
@@ -426,11 +428,15 @@ public class IndexItem extends BasicProps {
             doc.add(new StoredField(THUMB, evidence.getThumb()));
 
         if (evidence.hasPreview()) {
-            doc.add(new StoredField(HAS_PREVIEW, Boolean.TRUE.toString()));
+            value = Boolean.TRUE.toString();
+            doc.add(new StringField(HAS_PREVIEW, value, Field.Store.YES));
+            doc.add(new SortedDocValuesField(HAS_PREVIEW, new BytesRef(Boolean.TRUE.toString())));
         }
 
-        if (evidence.getPreviewExt() != null) {
-            doc.add(new StoredField(PREVIEW_EXT, evidence.getPreviewExt()));
+        value = evidence.getPreviewExt();
+        if (value != null) {
+            doc.add(new StringField(PREVIEW_EXT, value, Field.Store.YES));
+            doc.add(new SortedDocValuesField(PREVIEW_EXT, new BytesRef(value)));
         }
 
         byte[] similarityFeatures = (byte[]) evidence.getExtraAttribute(ImageSimilarityTask.IMAGE_FEATURES);
