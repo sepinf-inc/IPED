@@ -11,14 +11,9 @@ import java.util.zip.Deflater;
 import java.util.zip.DeflaterInputStream;
 import java.util.zip.InflaterInputStream;
 
-import org.bouncycastle.util.encoders.Hex;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.zaxxer.hikari.HikariDataSource;
 
 import iped.data.IItem;
-import iped.engine.task.MakePreviewTask;
 import iped.utils.SeekableFileInputStream;
 
 /**
@@ -26,8 +21,6 @@ import iped.utils.SeekableFileInputStream;
  * Instances of this class are managed by {@link PreviewRepositoryManager}.
  */
 public class PreviewRepository implements Closeable {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(MakePreviewTask.class);
 
     private static final String INSERT_DATA_SQL = "INSERT INTO previews (id, data) VALUES (?, ?)";
     private static final String SELECT_DATA_SQL = "SELECT data FROM previews WHERE id=?";
@@ -112,8 +105,6 @@ public class PreviewRepository implements Closeable {
      */
     public void storeRawPreview(IItem evidence, InputStream rawValueStream) throws SQLException, IOException {
         PreviewKey key = PreviewKey.create(evidence);
-
-        LOGGER.error("storeRawPreview for {} -> {}", Hex.toHexString(key.getBytes()), evidence);
 
         Deflater deflater = new Deflater(Deflater.BEST_SPEED);
         try (Connection conn = dataSource.getConnection();
