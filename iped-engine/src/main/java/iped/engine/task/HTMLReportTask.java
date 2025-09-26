@@ -846,7 +846,7 @@ public class HTMLReportTask extends AbstractTask {
     }
 
     private File getVideoStripeFile(String hash) {
-        File file = Util.getFileFromHash(new File(reportSubFolder, ThumbTask.THUMBS_FOLDER_NAME), hash, ThumbTask.THUMB_EXT);
+        File file = Util.getFileFromHash(new File(output, ThumbTask.THUMBS_FOLDER_NAME), hash, ThumbTask.THUMB_EXT);
         if (!file.getParentFile().exists()) {
             file.getParentFile().mkdirs();
         }
@@ -862,7 +862,7 @@ public class HTMLReportTask extends AbstractTask {
     }
 
     private File getVideoThumbsFile(String hash) {
-        File file = Util.getFileFromHash(new File(this.output, PreviewConstants.LEGACY_VIEW_FOLDER_NAME), hash, ThumbTask.THUMB_EXT);
+        File file = Util.getFileFromHash(new File(this.output, PreviewConstants.LEGACY_VIEW_FOLDER_NAME), hash, VideoThumbTask.PREVIEW_EXT);
         if (!file.getParentFile().exists()) {
             file.getParentFile().mkdirs();
         }
