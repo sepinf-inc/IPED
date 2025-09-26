@@ -79,6 +79,7 @@ import iped.engine.task.index.IndexItem;
 import iped.engine.task.video.VideoThumbTask;
 import iped.engine.util.UIPropertyListenerProvider;
 import iped.engine.util.Util;
+import iped.parsers.util.MetadataUtil;
 import iped.properties.BasicProps;
 import iped.utils.ExternalImageConverter;
 import iped.utils.IOUtil;
@@ -378,8 +379,8 @@ public class HTMLReportTask extends AbstractTask {
                 reg.export = null;
             }
         }
-        reg.isImage = ImageThumbTask.isImageType(evidence.getMediaType());
-        reg.isVideo = VideoThumbTask.isVideoType(evidence.getMediaType());
+        reg.isImage = MetadataUtil.isImageType(evidence.getMediaType());
+        reg.isVideo = MetadataUtil.isVideoType(evidence.getMediaType());
         reg.length = evidence.getLength();
         reg.ext = evidence.getExt();
         reg.hash = evidence.getHash();

@@ -448,7 +448,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             int charCount = Integer.parseInt(value);
             evidence.setExtraAttribute(OCRParser.OCR_CHAR_COUNT, charCount);
             metadata.remove(OCRParser.OCR_CHAR_COUNT);
-            if (charCount >= 100 && evidence.getMediaType().getType().equals("image")) { //$NON-NLS-1$
+            if (charCount >= 100 && MetadataUtil.isImageType(evidence.getMediaType())) {
                 evidence.setCategory(SetCategoryTask.SCANNED_CATEGORY);
             }
         }

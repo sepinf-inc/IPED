@@ -38,7 +38,6 @@ import javax.swing.table.AbstractTableModel;
 import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.util.BytesRef;
-import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,8 +50,9 @@ import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.task.ImageThumbTask;
 import iped.engine.task.ThumbTask;
 import iped.engine.task.index.IndexItem;
-import iped.engine.task.video.VideoThumbTask;
 import iped.engine.util.Util;
+import iped.parsers.util.MetadataUtil;
+import iped.properties.ExtraProperties;
 import iped.utils.ExternalImageConverter;
 import iped.utils.HashValue;
 import iped.utils.ImageUtil;
@@ -141,15 +141,15 @@ public class GalleryModel extends AbstractTableModel {
     }
 
     private boolean isSupportedImage(String mediaType) {
-        return ImageThumbTask.isImageType(MediaType.parse(mediaType));
+        return MetadataUtil.isImageType(mediaType);
     }
 
     private boolean isAnimationImage(Document doc, String mediaType) {
-        return VideoThumbTask.isImageSequence(mediaType) || doc.get(VideoThumbTask.ANIMATION_FRAMES_PROP) != null;
+        return MetadataUtil.isImageSequence(mediaType) || doc.get(ExtraProperties.ANIMATION_FRAMES_PROP) != null;
     }
 
     private boolean isSupportedVideo(String mediaType) {
-        return VideoThumbTask.isVideoType(MediaType.parse(mediaType));
+        return MetadataUtil.isVideoType(mediaType);
     }
 
     @Override

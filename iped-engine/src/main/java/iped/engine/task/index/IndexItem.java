@@ -895,12 +895,12 @@ public class IndexItem extends BasicProps {
                     if (thumb != null) {
                         evidence.setThumb(thumb.bytes);
                     } else {
-                        String mimePrefix = evidence.getMediaType().getType();
-                        boolean isImage = mimePrefix.equals("image");
-                        boolean isVideo = mimePrefix.equals("video");
+                        boolean isImage = MetadataUtil.isImageType(evidence.getMediaType());
+                        boolean isVideo = MetadataUtil.isVideoType(evidence.getMediaType());
                         if (isImage || isVideo) {
                             String thumbFolder = isImage ? ThumbTask.THUMBS_FOLDER_NAME : PreviewConstants.LEGACY_VIEW_FOLDER_NAME;
-                            File thumbFile = Util.getFileFromHash(new File(outputBase, thumbFolder), evidence.getHash(), VideoThumbTask.PREVIEW_EXT);
+                            String thumbExt = isImage ? ThumbTask.THUMB_EXT : VideoThumbTask.PREVIEW_EXT;
+                            File thumbFile = Util.getFileFromHash(new File(outputBase, thumbFolder), evidence.getHash(), thumbExt);
                             try {
                                 if (thumbFile.exists()) {
                                     evidence.setThumb(Files.readAllBytes(thumbFile.toPath()));
