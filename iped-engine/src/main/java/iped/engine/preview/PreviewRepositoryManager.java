@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,20 +34,55 @@ public class PreviewRepositoryManager {
     private static final String CREATE_TABLE_SQL = "CREATE TABLE IF NOT EXISTS previews (id VARBINARY(16) PRIMARY KEY, data BLOB)";
 
     // Map to track different storages/connections in multicases
-    private static final HashMap<File, PreviewRepository> repositoryMap = new HashMap<>();
+    private static final ConcurrentHashMap<File, PreviewRepository> repositoryMap = new ConcurrentHashMap<>();
+
+    private static final HashMap<File, HikariConfig> repositoryConfigMap = new HashMap<>();
+
+    // Add a shutdown hook to ensure all repositories are closed gracefully
+    static {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            repositoryMap.keySet().forEach(PreviewRepositoryManager::close);
+        }));
+    }
 
     /**
-     * Gets or creates a singleton PreviewRepository instance for the given database folder.
+     * Prepares the configuration for a writable PreviewRepository instance for a given database folder.
+     * This configuration will be used when the get() method is called for the first time for this folder.
+     * The database will be locked for exclusive access by this process.
      *
      * @param baseFolder The folder where the "previews.mv.db" file is or will be located.
-     * @return The PreviewRepository instance.
-     * @throws SQLException if there is an error creating the database connection or table.
+     * @throws IllegalStateException if a configuration for this folder already exists.
      */
-    public static synchronized PreviewRepository get(File baseFolder) throws SQLException {
-        PreviewRepository repository = repositoryMap.get(baseFolder);
-        if (repository != null) {
-            return repository;
+    public static synchronized void configureWritable(File baseFolder){
+        configure(baseFolder, false);
+    }
+
+    /**
+     * Prepares the configuration for a read-only PreviewRepository instance for a given database folder.
+     * This configuration will be used when the get() method is called for the first time for this folder.
+     * The database can be accessed by multiple read-only processes simultaneously.
+     *
+     * @param baseFolder The folder where the "previews.mv.db" file is or will be located.
+     * @throws IllegalStateException if a configuration for this folder already exists.
+     */
+    public static synchronized void configureReadOnly(File baseFolder)  {
+        configure(baseFolder, true);
+    }
+
+    /**
+     * Creates a singleton PreviewRepository instance for the given database folder.
+     *
+     * @param baseFolder The folder where the "previews.mv.db" file is or will be located.
+     * @param readOnly A flag indicating whether the database should be opened in read-only mode.
+     * @throws IllegalStateException if a configuration for this folder already exists.
+     */
+    private static synchronized void configure(File baseFolder, boolean readOnly) {
+
+        if (repositoryConfigMap.containsKey(baseFolder)) {
+            throw new IllegalStateException("Repository already configured: " + baseFolder);
         }
+
+        logger.info("Configuring {} PreviewRepository for: {}", readOnly ? "read-only" : "writable", baseFolder);
 
         // Use the "async" mode to prevent FileChannel from being closed with
         // ClosedByInterruptException when the thread is interrupted.
@@ -56,8 +92,11 @@ public class PreviewRepositoryManager {
         //
         // AUTO_SERVER=TRUE allows the database to be opened from multiple processes,
         // for example when generating a report.
-        File db = new File(baseFolder, DB_NAME);
-        String dbUrl = "jdbc:h2:async:" + db.getAbsolutePath() + ";AUTO_SERVER=TRUE;CACHE_SIZE=" + H2_CACHE_SIZE;
+        File dbFile = new File(baseFolder, DB_NAME);
+        String dbUrl = "jdbc:h2:async:" + dbFile.getAbsolutePath() + ";CACHE_SIZE=" + H2_CACHE_SIZE;
+        if (readOnly) {
+            dbUrl += ";ACCESS_MODE_DATA=r";
+        }
 
         // maxPoolSize is numThreads when processing a case and DEFAULT_POOL_SIZE otherwise
         int maxPoolSize = Manager.getInstance() != null ? Optional
@@ -66,37 +105,72 @@ public class PreviewRepositoryManager {
                 .map(LocalConfig::getNumThreads)
                 .orElse(DEFAULT_POOL_SIZE) : DEFAULT_POOL_SIZE;
 
-        // Create new data source
+        // Create config
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(dbUrl);
         config.setMaximumPoolSize(maxPoolSize);
 
-        HikariDataSource dataSource = new HikariDataSource(config);
-
-        // Ensure table exists
-        try (Connection conn = dataSource.getConnection(); Statement stmt = conn.createStatement()) {
-            stmt.execute(CREATE_TABLE_SQL);
-        }
-
-        // Create and cache the repository instance
-        repository = new PreviewRepository(dataSource);
-        repositoryMap.put(baseFolder, repository);
-
-        logger.info("Created PreviewRepository for: {}", baseFolder.getAbsolutePath());
-        return repository;
+        repositoryConfigMap.put(baseFolder, config);
     }
 
     /**
-     * Closes and removes the PreviewRepository associated with the given database folder.
+     * Retrieves the singleton PreviewRepository instance for the given database folder.
+     * If the instance does not exist, it will be created using the previously set configuration.
+     * NOTE: This method is not re-entrant. After a repository is closed with close(), it cannot be retrieved again.
+     *
+     * @param baseFolder The folder of the desired repository.
+     * @return The singleton PreviewRepository instance.
+     * @throws SQLException if there is an error creating the database connection pool or initializing the table.
+     * @throws IllegalStateException if the repository has not been configured with configureWritable() or configureReadOnly() first.
+     */
+    public static PreviewRepository get(File baseFolder) throws SQLException {
+
+        PreviewRepository repository = repositoryMap.get(baseFolder);
+        if (repository != null) {
+            return repository;
+        }
+
+        synchronized (PreviewRepositoryManager.class) {
+
+            repository = repositoryMap.get(baseFolder);
+            if (repository != null) {
+                return repository;
+            }
+
+            HikariConfig config = repositoryConfigMap.get(baseFolder);
+            if (config == null) {
+                throw new IllegalStateException(
+                        "Repository not configured. Call configureWritable/ReadOnly() first for: " + baseFolder);
+            }
+
+            HikariDataSource dataSource = new HikariDataSource(config);
+
+            // Ensure table exists
+            try (Connection conn = dataSource.getConnection(); Statement stmt = conn.createStatement()) {
+                stmt.execute(CREATE_TABLE_SQL);
+            }
+
+            // Create and cache the repository instance
+            repository = new PreviewRepository(dataSource);
+            repositoryMap.put(baseFolder, repository);
+            repositoryConfigMap.put(baseFolder, null);
+            logger.info("Created and initialized PreviewRepository for: {}", baseFolder);
+
+            return repository;
+        }
+    }
+
+    /**
+     * Closes the connection pool and removes the PreviewRepository instance associated with the given folder.
      *
      * @param baseFolder The folder whose repository should be closed.
-     * @throws SQLException if there is an error closing the data source.
      */
-    public static synchronized void close(File baseFolder) throws SQLException {
+    public static synchronized void close(File baseFolder) {
+        repositoryConfigMap.remove(baseFolder);
         PreviewRepository repository = repositoryMap.remove(baseFolder);
         if (repository != null) {
             repository.close();
-            logger.info("Closed PreviewRepository for: {}", baseFolder.getAbsolutePath());
+            logger.info("Closed PreviewRepository for: {}", baseFolder);
         }
     }
 }

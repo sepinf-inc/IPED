@@ -893,7 +893,7 @@ public class IndexItem extends BasicProps {
                         boolean isImage = mimePrefix.equals("image");
                         boolean isVideo = mimePrefix.equals("video");
                         if (isImage || isVideo) {
-                            String thumbFolder = isImage ? ImageThumbTask.THUMBS_FOLDER_NAME : PreviewConstants.LEGACY_VIEW_FOLDER_NAME;
+                            String thumbFolder = isImage ? ThumbTask.THUMBS_FOLDER_NAME : PreviewConstants.LEGACY_VIEW_FOLDER_NAME;
                             File thumbFile = Util.getFileFromHash(new File(outputBase, thumbFolder), evidence.getHash(), VideoThumbTask.PREVIEW_EXT);
                             try {
                                 if (thumbFile.exists()) {

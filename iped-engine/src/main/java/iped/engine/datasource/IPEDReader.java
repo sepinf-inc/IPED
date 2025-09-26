@@ -64,6 +64,8 @@ import iped.engine.data.DataSource;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.Item;
 import iped.engine.io.MetadataInputStreamFactory;
+import iped.engine.preview.PreviewConstants;
+import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.LuceneSearchResult;
 import iped.engine.search.SimilarFacesSearch;
@@ -213,6 +215,10 @@ public class IPEDReader extends DataSourceReader {
         oldToNewIdMap = new int[ipedCase.getLastId() + 1];
         for (int i = 0; i < oldToNewIdMap.length; i++)
             oldToNewIdMap[i] = -1;
+
+        if (!listOnly) {
+            PreviewRepositoryManager.configureReadOnly(ipedCase.getModuleDir());
+        }
 
         IIPEDSearcher pesquisa = new IPEDSearcher(ipedCase, new MatchAllDocsQuery());
         SearchResult searchResult = state.filterInReport(pesquisa.search());
@@ -629,7 +635,7 @@ public class IPEDReader extends DataSourceReader {
                 evidence.setHash(value);
 
                 if (!value.isEmpty() && caseData.isIpedReport()) {
-                    File viewFile = Util.findFileFromHash(new File(indexDir.getParentFile(), "view"), value); //$NON-NLS-1$
+                    File viewFile = Util.findFileFromHash(new File(indexDir.getParentFile(), PreviewConstants.LEGACY_VIEW_FOLDER_NAME), value);
                     if (viewFile != null) {
                         evidence.setViewFile(viewFile);
                     }
