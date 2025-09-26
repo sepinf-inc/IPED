@@ -1,11 +1,10 @@
 package iped.engine.task;
 
-import java.io.IOException;
+import java.io.File;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.UnsupportedEncodingException;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -13,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.apache.tika.exception.TikaException;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
@@ -32,11 +31,13 @@ import iped.engine.config.MakePreviewConfig;
 import iped.engine.config.ParsingTaskConfig;
 import iped.engine.core.QueuesProcessingOrder;
 import iped.engine.io.TimeoutException;
+import iped.engine.preview.PreviewConstants;
 import iped.engine.preview.PreviewKey;
 import iped.engine.preview.PreviewRepository;
 import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.tika.EmptyEmbeddedDocumentExtractor;
 import iped.engine.util.ItemInfoFactory;
+import iped.engine.util.Util;
 import iped.parsers.fork.ParsingTimeout;
 import iped.parsers.standard.StandardParser;
 import iped.parsers.util.ItemInfo;
@@ -85,7 +86,6 @@ public class MakePreviewTask extends AbstractTask {
 
     @Override
     public void finish() throws Exception {
-        PreviewRepositoryManager.close(output);
     }
 
     public boolean isSupportedType(String contentType) {
@@ -123,6 +123,16 @@ public class MakePreviewTask extends AbstractTask {
         ReentrantLock lock = lockManager.getLock(key);
         lock.lock();
         try {
+
+            // skip if evidence already has preview
+            if (evidence.hasPreview() && PreviewRepositoryManager.get(output).previewExists(evidence) && ext.equals(evidence.getPreviewExt())) {
+                return;
+            }
+            if (evidence.getViewFile() != null && evidence.getViewFile().exists() && StringUtils.isNotBlank(evidence.getHash())
+                    && evidence.getViewFile().equals(Util.getFileFromHash(new File(output, PreviewConstants.LEGACY_VIEW_FOLDER_NAME), evidence.getHash(), ext))) {
+                return;
+            }
+
             LOGGER.debug("Generating preview of {} ({} bytes)", evidence.getPath(), evidence.getLength());
             makeHtmlPreviewAndStore(evidence, mediaType, ext);
 
@@ -201,7 +211,7 @@ public class MakePreviewTask extends AbstractTask {
                 try {
                     parser.parse(tis, pch, metadata, context);
 
-                } catch (IOException | SAXException | TikaException | OutOfMemoryError e) {
+                } catch (Throwable e) {
                     exception.compareAndSet(null, e);
                 } finally {
                     latch.countDown();
@@ -217,7 +227,7 @@ public class MakePreviewTask extends AbstractTask {
                     PreviewRepositoryManager.get(output).storeRawPreview(evidence, inputStream);
                     evidence.setHasPreview(true);
                     evidence.setPreviewExt(viewExt);
-                } catch (SQLException | IOException e) {
+                } catch (Throwable e) {
                     exception.compareAndSet(null, e);
                     LOGGER.info("ERROR {} {}", evidence.getHash(), e.getMessage() );
 
