@@ -123,9 +123,8 @@ public class PartMetParser extends AbstractParser {
             BeanMetadataExtraction bme = new BeanMetadataExtraction(ExtraProperties.P2P_META_PREFIX, PART_MET_ENTRY_MIME_TYPE, context);
             // normalization to use same property name of other p2p parsers
             bme.registerPropertyNameMapping(KnownMetEntry.class, "hash", "ed2k");
-            bme.addPropertyExclusion(KnownMetEntry.class, "sharedTrue");
             bme.registerTransformationMapping(KnownMetEntry.class, ExtraProperties.LINKED_ITEMS, "edonkey:${hash}");
-            bme.registerTransformationMapping(KnownMetEntry.class, ExtraProperties.SHARED_HASHES, "${sharedTrue ? hash : null}");
+            bme.registerTransformationMapping(KnownMetEntry.class, ExtraProperties.SHARED_HASHES, "${sent != null && sent ? hash : null}");
             bme.registerTransformationMapping(KnownMetEntry.class, BasicProps.NAME, "Part-Entry-[${name}].met");
             bme.extractEmbedded(0, context, metadata, handler, e);
         }

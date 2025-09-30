@@ -99,10 +99,6 @@ public class LibraryFile extends ShareazaEntity {
         return Util.TRI_STATE_TRUE.equals(shared) ? true : null;
     }
 
-    public boolean isSharedTrue() {
-        return BooleanUtils.isTrue(getShared());
-    }
-
     public String getFoundInHashDB() {
         return foundInHashDB;
     }

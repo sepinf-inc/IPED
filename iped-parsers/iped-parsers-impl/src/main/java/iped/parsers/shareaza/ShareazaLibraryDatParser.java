@@ -134,7 +134,6 @@ public class ShareazaLibraryDatParser extends AbstractParser {
             bme.addPropertyExclusion(LibraryFile.class, "hashDBHit");
             bme.addPropertyExclusion(LibraryFile.class, "hashSetHits");
             bme.addPropertyExclusion(LibraryFile.class, "sharedSources");
-            bme.addPropertyExclusion(LibraryFile.class, "sharedTrue");
             bme.addPropertyExclusion(LibraryFolder.class, "shared");
             bme.registerCollectionPropertyToMerge(LibraryFolder.class, "libraryFiles");
             bme.registerCollectionPropertyToMerge(LibraryFolder.class, "libraryFolders");
@@ -146,7 +145,7 @@ public class ShareazaLibraryDatParser extends AbstractParser {
             bme.registerTransformationMapping(LibraryFolders.class, ExtraProperties.EMBEDDED_FOLDER, Boolean.toString(true));
             bme.registerTransformationMapping(LibraryFolder.class, ExtraProperties.EMBEDDED_FOLDER, Boolean.toString(true));
             bme.registerTransformationMapping(LibraryFile.class, ExtraProperties.LINKED_ITEMS, "${sha1 != null ? \"sha-1:\" + sha1 : null}");
-            bme.registerTransformationMapping(LibraryFile.class, ExtraProperties.SHARED_HASHES, "${sharedTrue ? (md5 != null ? md5 : sha1) : null}");
+            bme.registerTransformationMapping(LibraryFile.class, ExtraProperties.SHARED_HASHES, "${shared != null && shared ? (md5 != null ? md5 : sha1) : null}");
             bme.registerTransformationMapping(LibraryFile.class, BasicProps.NAME, "Library-Entry-[${name}].dat");
 
             String albumLibraryFilesQuery = String.format(
@@ -190,13 +189,13 @@ public class ShareazaLibraryDatParser extends AbstractParser {
     }
 
     private void storeSharedHashes(LibraryFile file, Metadata metadata) {
-        if (file.isSharedTrue() && file.getMd5() != null && file.getMd5().length() == 32) {
+        if (file.getShared() && file.getMd5() != null && file.getMd5().length() == 32) {
             metadata.add(ExtraProperties.SHARED_HASHES, file.getMd5());
         }
-        if (file.isSharedTrue() && file.getSha1() != null && file.getSha1().length() == 40) {
+        if (file.getShared() && file.getSha1() != null && file.getSha1().length() == 40) {
             metadata.add(ExtraProperties.SHARED_HASHES, file.getSha1());
         }
-        if (file.isSharedTrue() && file.getEd2k() != null && file.getEd2k().length() == 32) {
+        if (file.getShared() && file.getEd2k() != null && file.getEd2k().length() == 32) {
             metadata.add(ExtraProperties.SHARED_HASHES, file.getEd2k());
         }
     }

@@ -122,10 +122,6 @@ public class KnownMetEntry {
                 || (bytesTransfered > 0) ? true : null;
     }
 
-    public boolean isSharedTrue() {
-        return BooleanUtils.isTrue(getSent());
-    }
-
     public Boolean getSent() {
         return bytesTransfered > 0 ? true : null;
     }
