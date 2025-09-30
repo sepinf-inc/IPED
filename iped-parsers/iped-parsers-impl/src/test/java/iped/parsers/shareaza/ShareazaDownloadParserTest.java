@@ -36,10 +36,10 @@ public class ShareazaDownloadParserTest extends BaseItemSearchContext {
             assertTrue(hts.contains("TIGER:                   CF9F77A8B2DB58844EE3CB6E3C68D832A333E22980D11EAC"));
             assertTrue(hts.contains("MD5:                     2A092D1BC6EC61272B2AF858B67FEAA0"));
             assertTrue(hts.contains("EDONKEY:                 46A856AC472CC0B238258AFCB9612A83"));
-            assertTrue(hts.contains("Expanded:                False"));
-            assertTrue(hts.contains("Paused:                  False"));
-            assertTrue(hts.contains("Boosted:                 False"));
-            assertTrue(hts.contains("Shared:                  True"));
+            assertTrue(hts.contains("Expanded:                false"));
+            assertTrue(hts.contains("Paused:                  false"));
+            assertTrue(hts.contains("Boosted:                 false"));
+            assertTrue(hts.contains("Shared:                  true"));
             assertTrue(hts.contains("Serial ID:               F599F476"));
 
             assertEquals(false, Boolean.parseBoolean(metadata.get("p2p:shared"))); // false because p2p:totalDownloaded == 0
