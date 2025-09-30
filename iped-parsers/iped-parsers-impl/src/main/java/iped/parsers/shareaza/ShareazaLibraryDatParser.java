@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.HttpHeaders;
@@ -189,14 +190,16 @@ public class ShareazaLibraryDatParser extends AbstractParser {
     }
 
     private void storeSharedHashes(LibraryFile file, Metadata metadata) {
-        if (file.getShared() && file.getMd5() != null && file.getMd5().length() == 32) {
-            metadata.add(ExtraProperties.SHARED_HASHES, file.getMd5());
-        }
-        if (file.getShared() && file.getSha1() != null && file.getSha1().length() == 40) {
-            metadata.add(ExtraProperties.SHARED_HASHES, file.getSha1());
-        }
-        if (file.getShared() && file.getEd2k() != null && file.getEd2k().length() == 32) {
-            metadata.add(ExtraProperties.SHARED_HASHES, file.getEd2k());
+        if (BooleanUtils.isTrue(file.getShared())) {
+            if (file.getMd5() != null && file.getMd5().length() == 32) {
+                metadata.add(ExtraProperties.SHARED_HASHES, file.getMd5());
+            }
+            if (file.getSha1() != null && file.getSha1().length() == 40) {
+                metadata.add(ExtraProperties.SHARED_HASHES, file.getSha1());
+            }
+            if (file.getEd2k() != null && file.getEd2k().length() == 32) {
+                metadata.add(ExtraProperties.SHARED_HASHES, file.getEd2k());
+            }
         }
     }
 
