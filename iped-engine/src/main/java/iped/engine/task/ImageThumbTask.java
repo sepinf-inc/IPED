@@ -20,7 +20,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.imageio.ImageIO;
 
-import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +29,7 @@ import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.ImageThumbTaskConfig;
 import iped.engine.util.Util;
+import iped.parsers.util.MetadataUtil;
 import iped.properties.MediaTypes;
 import iped.utils.ExternalImageConverter;
 import iped.utils.ImageUtil;
@@ -125,6 +125,10 @@ public class ImageThumbTask extends ThumbTask {
 
         // Set ImageIO plugins priority order.
         ImageUtil.updateImageIOPluginsPriority();
+
+        if (isEnabled()) {
+            checkDependency(HashTask.class);
+        }
     }
 
     private static void startTmpDirCleaner(File tmpDir) {
@@ -233,7 +237,7 @@ public class ImageThumbTask extends ThumbTask {
     @Override
     protected void process(IItem evidence) throws Exception {
 
-        if (!isEnabled() || !isImageType(evidence.getMediaType()) || !evidence.isToAddToCase()
+        if (!isEnabled() || !MetadataUtil.isImageType(evidence.getMediaType()) || !evidence.isToAddToCase()
                 || evidence.getHashValue() == null || evidence.getThumb() != null) {
             return;
         }
@@ -259,15 +263,6 @@ public class ImageThumbTask extends ThumbTask {
             logger.warn("Timeout creating thumb: " + evidence); //$NON-NLS-1$
         }
 
-    }
-
-    /**
-     * Verifica se é imagem.
-     */
-    public static boolean isImageType(MediaType mediaType) {
-        return mediaType.getType().equals("image") || //$NON-NLS-1$
-                mediaType.toString().equals("application/coreldraw") || //$NON-NLS-1$
-                mediaType.toString().equals("application/x-vnd.corel.zcf.draw.document+zip"); //$NON-NLS-1$
     }
 
     private class ThumbCreator implements Runnable {
@@ -319,6 +314,8 @@ public class ImageThumbTask extends ThumbTask {
                 performanceStats[img == null ? 6 : 4]++;
                 performanceStats[img == null ? 7 : 5] += System.currentTimeMillis() - t;
             }
+            
+            boolean isView = false;
             if (img == null) {
                 // External Conversion
                 long t = System.currentTimeMillis();
@@ -342,6 +339,7 @@ public class ImageThumbTask extends ThumbTask {
                         File viewFile = getViewFile(evidence, "jpg");
                         viewTmpFile.renameTo(viewFile);
                         evidence.setViewFile(viewFile);
+                        isView = true;
                     }
                 }
 
@@ -375,14 +373,16 @@ public class ImageThumbTask extends ThumbTask {
                 performanceStats[14]++;
                 performanceStats[15] += System.currentTimeMillis() - t;
 
-                // Ajusta rotacao da miniatura a partir do metadado orientacao
-                try (BufferedInputStream stream = evidence.getBufferedInputStream()) {
-                    int orientation = ImageMetadataUtil.getOrientation(stream);
-                    if (orientation > 0) {
-                        t = System.currentTimeMillis();
-                        img = ImageUtil.applyOrientation(img, orientation);
-                        performanceStats[16]++;
-                        performanceStats[17] += System.currentTimeMillis() - t;
+                if (!isView) {
+                    // Adjust thumb orientation based on "tiff:orientation" metadata.
+                    try (BufferedInputStream stream = evidence.getBufferedInputStream()) {
+                        int orientation = ImageMetadataUtil.getOrientation(stream);
+                        if (orientation > 0) {
+                            t = System.currentTimeMillis();
+                            img = ImageUtil.applyOrientation(img, orientation);
+                            performanceStats[16]++;
+                            performanceStats[17] += System.currentTimeMillis() - t;
+                        }
                     }
                 }
 

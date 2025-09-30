@@ -107,8 +107,10 @@ public class Worker extends Thread {
         TaskInstaller taskInstaller = new TaskInstaller();
         taskInstaller.installProcessingTasks(this);
         doTaskChaining();
-        initTasks();
+    }
 
+    public void init() throws Exception {
+        initTasks();
     }
 
     private void doTaskChaining() {

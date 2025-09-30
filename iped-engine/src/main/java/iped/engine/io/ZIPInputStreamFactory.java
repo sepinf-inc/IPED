@@ -6,8 +6,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.RandomAccessFile;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SeekableByteChannel;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -22,13 +24,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.zip.CRC32;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.compress.archivers.zip.ZipSplitReadOnlySeekableByteChannel;
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.fontbox.ttf.BufferedRandomAccessFile;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import iped.io.SeekableInputStream;
 import iped.utils.ReadOnlyRAFSeekableByteChannel;
@@ -36,6 +40,8 @@ import iped.utils.SeekableFileInputStream;
 import iped.utils.SeekableInputStreamFactory;
 
 public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements Closeable {
+
+    private static final Logger logger = LogManager.getLogger(ZIPInputStreamFactory.class);
 
     private static final int MAX_BYTES_CACHED = 1 << 27;
 
@@ -101,22 +107,24 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
             while (true) {
                 File segment = new File(file.getParentFile(), namePrefix + ".z" + String.format("%02d", ++num));
                 if (segment.exists()) {
-                    BufferedRandomAccessFile braf = new BufferedRandomAccessFile(segment, "r", UFDR_BUF_SIZE);
-                    channels.add(new ReadOnlyRAFSeekableByteChannel(braf));
+                    RandomAccessFile raf = new RandomAccessFile(segment, "r");
+                    channels.add(new ReadOnlyRAFSeekableByteChannel(raf));
                 } else {
                     break;
                 }
             }
             // main ufdr should be the last one
-            BufferedRandomAccessFile braf = new BufferedRandomAccessFile(file, "r", UFDR_BUF_SIZE);
-            channels.add(new ReadOnlyRAFSeekableByteChannel(braf));
+            RandomAccessFile raf = new RandomAccessFile(file, "r");
+            channels.add(new ReadOnlyRAFSeekableByteChannel(raf));
 
             if (channels.size() == 1) {
                 sbc = channels.get(0);
             } else {
                 sbc = ZipSplitReadOnlySeekableByteChannel.forOrderedSeekableByteChannels(channels.toArray(new SeekableByteChannel[0]));
             }
-            zip = new ZipFile(sbc, file.getAbsolutePath(), "UTF-8", true, true);
+
+            zip = ZipFile.builder().setFile(file).setSeekableByteChannel(sbc).setCharset(StandardCharsets.UTF_8)
+                    .setUseUnicodeExtraFields(true).setIgnoreLocalFileHeader(true).setBufferSize(UFDR_BUF_SIZE).get();
         }
     }
 
@@ -146,7 +154,6 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
         return -1;
     }
 
-    @SuppressWarnings("resource")
     @Override
     public SeekableInputStream getSeekableInputStream(String path) throws IOException {
         Path tmp = null;
@@ -197,15 +204,17 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
                     synchronized (sbc) {
                         is = zip.getInputStream(zae);
                     }
+                    byte[] buf = new byte[UFDR_BUF_SIZE];
+                    CRC32 crc32 = new CRC32();
                     if (zae.getSize() <= MAX_BYTES_CACHED) {
                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
                         int read;
-                        byte[] buf = new byte[UFDR_BUF_SIZE];
                         while ((read = is.read(buf, 0, buf.length)) >= 0) {
                             if (canceled.get()) {
                                 return null;
                             }
                             baos.write(buf, 0, read);
+                            crc32.update(buf, 0, read);
                         }
                         bytes = baos.toByteArray();
                         baos = null;
@@ -218,9 +227,9 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
                         tmp = Files.createTempFile("zip-stream", null);
                         try (OutputStream out = Files.newOutputStream(tmp)) {
                             int read;
-                            byte[] buf = new byte[UFDR_BUF_SIZE];
                             while (!canceled.get() && (read = is.read(buf, 0, buf.length)) >= 0) {
                                 out.write(buf, 0, read);
+                                crc32.update(buf, 0, read);
                             }
                         } finally {
                             if (canceled.get()) {
@@ -231,6 +240,12 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
                         synchronized (filesCache) {
                             filesCache.put(path, tmp);
                         }
+                    }
+                    long value = crc32.getValue();
+                    if (value != zae.getCrc()) {
+                        logger.error("CRC32 inconsistency! File: " + zae.getName() + ", Length: " + zae.getSize()
+                                + ", Original: " + Long.toHexString(zae.getCrc()) + " != Calulated: "
+                                + Long.toHexString(value));
                     }
                     return Pair.of(tmp, bytes);
 
