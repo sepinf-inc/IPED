@@ -33,9 +33,9 @@ class Util {
 
     private final static long WINDOWS_UNIX_EPOCH_DIFF_MILLISECONDS = 11644473600000L;
 
-    public static final String TRI_STATE_UNKNOWN = "Unknown";
-    public static final String TRI_STATE_TRUE = "True";
-    public static final String TRI_STATE_FALSE = "False";
+    public static final String TRI_STATE_UNKNOWN = "unknown";
+    public static final String TRI_STATE_TRUE = "true";
+    public static final String TRI_STATE_FALSE = "false";
 
     public static String encodeGUID(byte[] bytes) {
         long u1 = (long) (bytes[7]) << 56 | (long) (bytes[6] & 0xff) << 48 | (long) (bytes[5] & 0xff) << 40
