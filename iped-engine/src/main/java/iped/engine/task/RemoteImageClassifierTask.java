@@ -62,6 +62,7 @@ import iped.engine.config.RemoteImageClassifierConfig;
 import iped.engine.task.die.DIETask;
 import iped.engine.task.index.IndexItem;
 import iped.utils.ImageUtil;
+import iped.parsers.util.MetadataUtil;
 
 /**
  * Performs remote classification of image and video files.
@@ -755,7 +756,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
 
         // 'name' is a key to map to the evidence
         String name = evidence.getExtraAttribute(IndexItem.TRACK_ID).toString() + ".jpg";
-        if (DIETask.isVideoType(evidence.getMediaType()) || DIETask.isAnimationImage(evidence)) {
+        if (MetadataUtil.isVideoType(evidence.getMediaType()) || MetadataUtil.isAnimationImage(evidence)) {
             // For videos, call the detection method for each extracted frame image (VideoThumbsTask must be enabled)
             File viewFile = evidence.getViewFile();
             List<BufferedImage> frames;
