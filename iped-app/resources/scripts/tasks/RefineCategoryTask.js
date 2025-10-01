@@ -177,6 +177,20 @@ function process(e){
 		}
 	}
 
+	if (categorias.contains("Other files") && mime.startsWith("application/x-aleapp-")) {
+		if (mime.endsWith("call")) {
+			e.setCategory("Other Calls");
+		} else if (mime.endsWith("-chat") || mime.endsWith("-conversation")) {
+			e.setCategory("Others Chats");
+		} else if (mime.endsWith("-message")) {
+			e.setCategory("Instant Messages");
+		} else if (mime.endsWith("-contact")) {
+			e.setCategory("Contacts");
+		} else if (mime.endsWith("-autofill")) {
+			e.setCategory("Autofill");
+		}
+	}
+
 	// Usually, conditions that overwrite the category (using setCategory()) 
 	// should go before the ones that add other categories (using addCategory()).
 

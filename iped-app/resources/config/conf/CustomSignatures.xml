@@ -195,6 +195,10 @@
         <sub-class-of type="application/x-metadata-entry"/>
     </mime-type>
 
+    <mime-type type="application/x-leapp-devicedetails">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+    
     <mime-type type="application/x-firefox-history">
         <sub-class-of type="text/html"/>
     </mime-type>
@@ -1464,6 +1468,12 @@
         <sub-class-of type="message/x-chat-message"/>
     </mime-type>
 
+    <mime-type type="application/x-android-backup">
+       <magic priority="50">
+            <match value="ANDROID BACKUP\n" offset="0"/>
+       </magic>
+    </mime-type>
+
     <mime-type type="application/x-ios-backup-manifest-db">
         <sub-class-of type="application/x-sqlite3"/>
     </mime-type>
@@ -1671,6 +1681,10 @@
     <mime-type type="application/x-vlc-ini">
         <sub-class-of type="text/x-ini"/>
         <glob pattern="vlc-qt-interface.ini"/>
+    </mime-type>
+
+    <mime-type type="application/x-aleapp-deviceinfo">
+    	<sub-class-of type="text/html"/>
     </mime-type>
 
 </mime-info>
