@@ -9,7 +9,7 @@ url = 10.61.86.148:30603
 batchSize = 50
 
 # Threshold used to decide if an image is labeled in one category
-categorizationThreshold = 0.6
+categorizationThreshold = 0.5
 
 # Skip classification of images/videos smaller than a given file size (in bytes; '0' = do not skip)
 skipSize = 2048
