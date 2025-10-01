@@ -73,8 +73,16 @@ function process(e){
 	}
 	
 	if(mime.indexOf("x-ufed-") != -1 && categorias.indexOf("Other files") != -1){
-		var cat = mime.substring(mime.indexOf("x-ufed-") + 7);
-		cat = cat.substring(0, 1).toUpperCase() + cat.substring(1); 
+
+		var cat;
+		rawPathParts = rawPath.split('/');
+		anchorIndex = rawPathParts.indexOf("_DecodedData");
+		if (anchorIndex !== -1 && anchorIndex < rawPathParts.length - 1) {
+			cat = rawPathParts[anchorIndex + 1].replace(/([a-z])([A-Z])/g, '$1 $2'); // split modelType using camel case
+		} else {
+			cat = mime.substring(mime.indexOf("x-ufed-") + 7);
+			cat = cat.substring(0, 1).toUpperCase() + cat.substring(1);
+		}
 		e.setCategory(cat);
 	}
 
