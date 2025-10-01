@@ -1,0 +1,24 @@
+##################################
+# RemoteImageClassifier Task configuration
+#################################
+
+# URL of the service/central node used by the RemoteImageClassifier implementation
+url = 10.61.86.148:30603
+
+# Maximum number of thumbs to be included in the zip file to send to the server
+batchSize = 50
+
+# Threshold used to decide if an image is labeled in one category
+categorizationThreshold = 0.5
+
+# Skip classification of images/videos smaller than a given file size (in bytes; '0' = do not skip)
+skipSize = 2048
+
+# Skip classification of images/videos smaller than a given dimension, i.e. height or width (in pixels; '0' = do not skip)
+skipDimension = 48
+
+# Skip classification of images/videos with hits on IPED hashesDB database (if 'hashesDB' is not configured in 'LocalConfig.txt' or 'false', do not skip)
+skipHashDBFiles = true
+
+# Validate server SSL certificate
+validateSSL = false

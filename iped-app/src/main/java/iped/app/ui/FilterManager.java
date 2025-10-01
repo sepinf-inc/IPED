@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -113,6 +114,15 @@ public class FilterManager implements ActionListener, ListSelectionListener {
                 defaultFilter = new File(App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir(), "conf/DefaultFilters.txt"); //$NON-NLS-1$
             }
             filters.load(defaultFilter);
+
+            // Remove obsolete default filters
+            Iterator<Entry<Object, Object>> it = filters.entrySet().iterator();
+            while (it.hasNext()) {
+                Entry<Object, Object> entry = it.next();
+                if (entry.getValue().toString().trim().equalsIgnoreCase("OBSOLETE")) {
+                    it.remove();
+                }
+            }
 
             // fix filter values saved by old versions, see #1392
             for (Entry<Object, Object> entry : filters.entrySet()) {
