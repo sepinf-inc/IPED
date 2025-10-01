@@ -2,11 +2,31 @@ package iped.parsers.emule;
 
 import java.util.Date;
 
+import org.apache.commons.lang3.BooleanUtils;
+
 public class KnownMetEntry {
     private String hash, name, fileType, partName;
     private Date lastModified, lastPublishedKad, lastShared;
     private long fileSize = -1, bytesTransfered = -1;
     private int totalRequests = -1, acceptedRequests = -1;
+    private String foundInHashDB;
+    private boolean foundInCase;
+
+    public String getFoundInHashDB() {
+        return foundInHashDB;
+    }
+
+    public void setFoundInHashDB(String foundInHashDB) {
+        this.foundInHashDB = foundInHashDB;
+    }
+
+    public boolean getFoundInCase() {
+        return foundInCase;
+    }
+
+    public void setFoundInCase(boolean foundInCase) {
+        this.foundInCase = foundInCase;
+    }
 
     public String getPartName() {
         return partName;
@@ -94,6 +114,16 @@ public class KnownMetEntry {
 
     public void setAcceptedRequests(int acceptedRequests) {
         this.acceptedRequests = acceptedRequests;
+    }
+
+    public Boolean getShared() {
+        return (lastPublishedKad != null && lastPublishedKad.getTime() > 0) //
+                || (lastShared != null && lastShared.getTime() > 0) //
+                || (bytesTransfered > 0) ? true : null;
+    }
+
+    public Boolean getSent() {
+        return bytesTransfered > 0 ? true : null;
     }
 
     public String toString() {
