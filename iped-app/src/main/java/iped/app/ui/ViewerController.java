@@ -310,6 +310,11 @@ public class ViewerController {
                     butToolbar.setEnabled(toolbarSupport == 1);
                     butToolbar.setSelected(toolbarSupport == 1 && viewer.isToolbarVisible());
                 }
+
+                CButton butSearch = (CButton) dock.getAction("searchInViewer");
+                if (butSearch != null) {
+                    butSearch.setEnabled(viewer.isSearchSupported());
+                }
             }
         } else {
             if (clean) {
