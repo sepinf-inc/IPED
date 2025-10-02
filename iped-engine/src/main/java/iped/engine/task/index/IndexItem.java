@@ -898,7 +898,7 @@ public class IndexItem extends BasicProps {
                         boolean isImage = MetadataUtil.isImageType(evidence.getMediaType());
                         boolean isVideo = MetadataUtil.isVideoType(evidence.getMediaType());
                         if (isImage || isVideo) {
-                            String thumbFolder = isImage ? ThumbTask.THUMBS_FOLDER_NAME : PreviewConstants.LEGACY_VIEW_FOLDER_NAME;
+                            String thumbFolder = isImage ? ThumbTask.THUMBS_FOLDER_NAME : PreviewConstants.VIEW_FOLDER_NAME;
                             String thumbExt = isImage ? ThumbTask.THUMB_EXT : VideoThumbTask.PREVIEW_EXT;
                             File thumbFile = Util.getFileFromHash(new File(outputBase, thumbFolder), evidence.getHash(), thumbExt);
                             try {
@@ -917,7 +917,7 @@ public class IndexItem extends BasicProps {
                     evidence.setExtraAttribute(ImageSimilarityTask.IMAGE_FEATURES, bytesRef.bytes);
                 }
 
-                viewFile = Util.findFileFromHash(new File(outputBase, PreviewConstants.LEGACY_VIEW_FOLDER_NAME), evidence.getHash());
+                viewFile = Util.findFileFromHash(new File(outputBase, PreviewConstants.VIEW_FOLDER_NAME), evidence.getHash());
                 if (viewFile != null) {
                     evidence.setViewFile(viewFile);
                 }

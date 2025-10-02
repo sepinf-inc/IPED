@@ -635,7 +635,7 @@ public class IPEDReader extends DataSourceReader {
                 evidence.setHash(value);
 
                 if (!value.isEmpty() && caseData.isIpedReport()) {
-                    File viewFile = Util.findFileFromHash(new File(indexDir.getParentFile(), PreviewConstants.LEGACY_VIEW_FOLDER_NAME), value);
+                    File viewFile = Util.findFileFromHash(new File(indexDir.getParentFile(), PreviewConstants.VIEW_FOLDER_NAME), value);
                     if (viewFile != null) {
                         evidence.setViewFile(viewFile);
                     }

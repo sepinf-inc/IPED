@@ -129,7 +129,7 @@ public class MakePreviewTask extends AbstractTask {
                 return;
             }
             if (evidence.getViewFile() != null && evidence.getViewFile().exists() && StringUtils.isNotBlank(evidence.getHash())
-                    && evidence.getViewFile().equals(Util.getFileFromHash(new File(output, PreviewConstants.LEGACY_VIEW_FOLDER_NAME), evidence.getHash(), ext))) {
+                    && evidence.getViewFile().equals(Util.getFileFromHash(new File(output, PreviewConstants.VIEW_FOLDER_NAME), evidence.getHash(), ext))) {
                 return;
             }
 

@@ -22,16 +22,13 @@ public abstract class ThumbTask extends AbstractTask {
     private static final String INSERT_THUMB = "INSERT INTO thumbs(id, thumb) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET thumb=? WHERE thumb IS NULL;"; //$NON-NLS-1$
 
     protected File getThumbFile(IItem evidence) throws Exception {
-        File thumbFile = null;
-
-        HtmlReportTaskConfig htmlReportConfig = ConfigurationManager.get()
-                .findObject(HtmlReportTaskConfig.class);
-        boolean storeThumbsInDb = !caseData.containsReport() || !htmlReportConfig.isEnabled();
-        if (storeThumbsInDb) {
-            return null;
+        HtmlReportTaskConfig htmlReportConfig = ConfigurationManager.get().findObject(HtmlReportTaskConfig.class);
+        boolean storeThumbsInDisk = caseData.containsReport() && htmlReportConfig.isEnabled();
+        if (storeThumbsInDisk) {
+            File reportSubFolder = HTMLReportTask.getReportSubFolder();
+            return Util.getFileFromHash(new File(reportSubFolder, THUMBS_FOLDER_NAME), evidence.getHash(), THUMB_EXT);
         }
-        thumbFile = Util.getFileFromHash(new File(output, THUMBS_FOLDER_NAME), evidence.getHash(), THUMB_EXT);
-        return thumbFile;
+        return null; // it will be stored in DB
     }
 
     protected boolean hasThumb(IItem evidence, File thumbFile) throws Exception {
@@ -86,7 +83,7 @@ public abstract class ThumbTask extends AbstractTask {
                 if (!thumbFile.getParentFile().exists()) {
                     thumbFile.getParentFile().mkdirs();
                 }
-                tmp = File.createTempFile("iped", ".tmp", new File(output, THUMBS_FOLDER_NAME));
+                tmp = File.createTempFile("thumb", ".tmp", thumbFile.getParentFile());
                 Files.write(tmp.toPath(), evidence.getThumb());
             }
 

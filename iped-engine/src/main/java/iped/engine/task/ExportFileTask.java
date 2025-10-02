@@ -58,7 +58,6 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipParameters;
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -419,21 +418,30 @@ public class ExportFileTask extends AbstractTask {
                 // viewFile -> viewFile
                 String viewName = viewFile.getName();
                 Path destFile = Paths
-                        .get(output.getAbsolutePath(), PreviewConstants.LEGACY_VIEW_FOLDER_NAME, String.valueOf(viewName.charAt(0)),
+                        .get(output.getAbsolutePath(), PreviewConstants.VIEW_FOLDER_NAME, String.valueOf(viewName.charAt(0)),
                                 String.valueOf(viewName.charAt(1)), viewName);
                 if (viewFile.equals(destFile.toFile()) || Files.exists(destFile)) {
                     return;
                 }
+                Path tmpFile = null;
                 try {
                     Files.createDirectories(destFile.getParent());
-                    Path tmpFile = destFile.resolveSibling(RandomStringUtils.randomAlphanumeric(20));
-                    Files.copy(viewFile.toPath(), tmpFile);
+                    tmpFile =  Files.createTempFile(destFile.getParent(), "viewFile", ".tmp");
+                    Files.copy(viewFile.toPath(), tmpFile, StandardCopyOption.REPLACE_EXISTING);
                     Files.move(tmpFile, destFile, StandardCopyOption.REPLACE_EXISTING);
                     evidence.setHasPreview(false);
                     evidence.setViewFile(destFile.toFile());
                 } catch (IOException e) {
                     LOGGER.warn("Error copying viewFile -> viewFile: {}", evidence);
                     LOGGER.warn("", e);
+                } finally {
+                    if (tmpFile != null) {
+                        try {
+                            Files.deleteIfExists(tmpFile);
+                        } catch (IOException e) {
+                            LOGGER.warn("Error deleting tmpFile", e);
+                        }
+                    }
                 }
             } else {
 
@@ -459,7 +467,7 @@ public class ExportFileTask extends AbstractTask {
                 // previewRepository -> viewFile
                 try {
                     Path destFile = Util
-                            .getFileFromHash(new File(output, PreviewConstants.LEGACY_VIEW_FOLDER_NAME), evidence.getHash(), evidence.getPreviewExt())
+                            .getFileFromHash(new File(output, PreviewConstants.VIEW_FOLDER_NAME), evidence.getHash(), evidence.getPreviewExt())
                             .toPath();
                     if (Files.exists(destFile)) {
                         return;
@@ -467,11 +475,22 @@ public class ExportFileTask extends AbstractTask {
                     PreviewRepository srcRepo = PreviewRepositoryManager.get(evidence.getPreviewBaseFolder());
                     srcRepo.consumePreview(evidence, inputStream -> {
                         Files.createDirectories(destFile.getParent());
-                        Path tmpFile = destFile.resolveSibling(RandomStringUtils.randomAlphanumeric(20));
-                        Files.copy(inputStream, tmpFile);
-                        Files.move(tmpFile, destFile, StandardCopyOption.REPLACE_EXISTING);
-                        evidence.setHasPreview(false);
-                        evidence.setViewFile(destFile.toFile());
+                        Path tmpFile = null;
+                        try {
+                            tmpFile =  Files.createTempFile(destFile.getParent(), "viewFile", ".tmp");
+                            Files.copy(inputStream, tmpFile, StandardCopyOption.REPLACE_EXISTING);
+                            Files.move(tmpFile, destFile, StandardCopyOption.REPLACE_EXISTING);
+                            evidence.setHasPreview(false);
+                            evidence.setViewFile(destFile.toFile());
+                        } finally {
+                            if (tmpFile != null) {
+                                try {
+                                    Files.deleteIfExists(tmpFile);
+                                } catch (IOException e) {
+                                    LOGGER.warn("Error deleting tmpFile", e);
+                                }
+                            }
+                        }
                     });
                 } catch (IOException | SQLException e) {
                     LOGGER.warn("Error copying previewRepository -> viewFile: {}", evidence);

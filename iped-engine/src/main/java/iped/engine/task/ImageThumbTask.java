@@ -249,7 +249,7 @@ public class ImageThumbTask extends ThumbTask {
 
         File thumbFile = getThumbFile(evidence);
         if (hasThumb(evidence, thumbFile)) {
-            File viewFile = Util.getFileFromHash(new File(output, PreviewConstants.LEGACY_VIEW_FOLDER_NAME), evidence.getHash(), PREVIEW_EXT);
+            File viewFile = Util.getFileFromHash(new File(output, PreviewConstants.VIEW_FOLDER_NAME), evidence.getHash(), PREVIEW_EXT);
             if (viewFile.exists()) {
                 evidence.setViewFile(viewFile);
             } else if (PreviewRepositoryManager.get(output).previewExists(evidence)) {

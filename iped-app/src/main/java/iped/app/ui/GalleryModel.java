@@ -50,6 +50,7 @@ import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.task.ImageThumbTask;
 import iped.engine.task.ThumbTask;
 import iped.engine.task.index.IndexItem;
+import iped.engine.task.video.VideoThumbTask;
 import iped.engine.util.Util;
 import iped.parsers.util.MetadataUtil;
 import iped.properties.ExtraProperties;
@@ -347,14 +348,19 @@ public class GalleryModel extends AbstractTableModel {
     }
 
     private BufferedImage getViewImage(int docID, String hash, boolean isVideo) throws IOException {
-        File baseFolder = App.get().appCase.getAtomicSource(docID).getModuleDir();
+        File modulesDir = App.get().appCase.getAtomicSource(docID).getModuleDir();
+        File baseFolder;
+        String ext;
         if (isVideo) {
-            baseFolder = new File(baseFolder, PreviewConstants.LEGACY_VIEW_FOLDER_NAME);
+            baseFolder = new File(modulesDir, PreviewConstants.VIEW_FOLDER_NAME);
+            ext = VideoThumbTask.PREVIEW_EXT;
         } else {
-            baseFolder = new File(baseFolder, ImageThumbTask.THUMBS_FOLDER_NAME);
+            // for old cases, when image thumbs were not stored in index
+            baseFolder = new File(modulesDir, ImageThumbTask.THUMBS_FOLDER_NAME);
+            ext = ThumbTask.THUMB_EXT;
         }
 
-        File hashFile = Util.getFileFromHash(baseFolder, hash, ThumbTask.THUMB_EXT);
+        File hashFile = Util.getFileFromHash(baseFolder, hash, ext);
         if (hashFile.exists()) {
             BufferedImage image = ImageIO.read(hashFile);
             if (image == null) {
