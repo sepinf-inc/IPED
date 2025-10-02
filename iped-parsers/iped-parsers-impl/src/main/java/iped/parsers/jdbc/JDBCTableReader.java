@@ -52,6 +52,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
+import iped.content.TikaManager;
 import iped.utils.IOUtil;
 
 /**
@@ -318,7 +319,7 @@ public class JDBCTableReader {
 
     protected TikaConfig getTikaConfig() {
         if (tikaConfig == null) {
-            tikaConfig = TikaConfig.getDefaultConfig();
+            tikaConfig = TikaManager.getTikaConfig();
         }
         return tikaConfig;
     }
