@@ -18,6 +18,8 @@ import io
 import time
 import sys
 from java.lang import System
+import threading
+from collections import deque
 
 enableProp = 'enableYahooNSFWDetection'
 targetSize = (224, 224)
@@ -87,9 +89,12 @@ Main class
 class NSFWNudityDetectTask:
     
     def __init__(self):
+        # List to accumulate items until a batch is formed
         self.itemList = []
-        self.imageList = []
-        self.queued = False
+        self.imageBytes = []
+        # Queue for ALL items (single or batched) ready to be sent
+        self.itemsToSend = deque()
+        self.BATCH_LOCK = threading.Lock()
 
     def isEnabled(self):
         return enabled
@@ -137,75 +142,104 @@ class NSFWNudityDetectTask:
     
     
     def sendToNextTask(self, item):
-        
-        if not item.isQueueEnd() and not self.queued:
-            javaTask.get().sendToNextTaskSuper(item)
-            return
-        
-        if self.isToProcessBatch(item):
-        
-            for i in self.itemList:
-                javaTask.get().sendToNextTaskSuper(i)
-            
-            self.itemList.clear()
-            self.imageList.clear()
-            
-        if item.isQueueEnd():
-            javaTask.get().sendToNextTaskSuper(item)
-    
-    def isToProcessBatch(self, item):
-        size = len(self.itemList)
-        return size >= batchSize or (size > 0 and item.isQueueEnd())
+        """
+        Acts as a simple sender. It drains the itemsToSend queue and sends
+        everything that the process() method has prepared. The 'item'
+
+        parameter is no longer needed for the logic itself.
+        """
+        items_to_send_now = deque()
+
+        with self.BATCH_LOCK:
+            # Drains the output queue to a local variable for sending.
+            while self.itemsToSend:
+                items_to_send_now.append(self.itemsToSend.popleft())
+
+        # Sends all items that were ready.
+        # This is done outside the lock.
+        while items_to_send_now:
+            self.javaTask.sendToNextTaskSuper(items_to_send_now.popleft())
     
     
-    def process(self, item):
-        
-        self.queued = False
-    
-        if not item.isQueueEnd() and not supported(item):
-            return
-            
+    def process(self, item):                    
         try:
+            # Stores the logic to determine if this item should be added to processing batch
+            add_to_batch = True
+
+            # Pass non-supported items through immediately
+            if not item.isQueueEnd() and not supported(item):
+                add_to_batch = False
+            
+            if(item.isQueueEnd()):
+                add_to_batch = False
+        
+            # Check cache first
             if item.getHash() is not None:
                 cache = caseData.getCaseObject('nsfw_score_cache')
                 score = cache.get(item.getHash())
                 if score is not None:
                     item.setExtraAttribute('nsfw_nudity_score', score)
-                    return
+                    add_to_batch = False
             
-            #print('Processing ' + item.getPath())
-            img = None
-            
+            # Videos are processed individually, not batched with images
             if isSupportedVideo(item):
                 processVideoFrames(item)
-                return
+                add_to_batch = False
+
+            # --- Start of new batching logic for images ---
+            img_bytes = None
+
+            # Tries to load image bytes
+            if(add_to_batch):
+                from keras.preprocessing import image
+                img = None
+                if isImage(item) and not useImageThumbs and item.getTempFile() is not None:
+                    img_path = item.getTempFile().getAbsolutePath()
+                    img = image.load_img(img_path, target_size=targetSize)
                 
-            from keras.preprocessing import image
-                
-            if isImage(item) and not useImageThumbs and item.getTempFile() is not None:
-                img_path = item.getTempFile().getAbsolutePath()
-                img = image.load_img(img_path, target_size=targetSize)
-                
-            if isImage(item) and useImageThumbs and item.getExtraAttribute('hasThumb'):
-                input = convertJavaByteArray(item.getThumb())
-                img = loadRawImage(input)
-                
-            if not item.isQueueEnd():
-                if img is None:    
-                    item.setExtraAttribute('nsfw_error', 1)
-                    return
-                
-                x = image.img_to_array(img)
-                self.imageList.append(x)
-                self.itemList.append(item)
-                self.queued = True
-            
+                if isImage(item) and useImageThumbs and item.getExtraAttribute('hasThumb'):
+                    input = convertJavaByteArray(item.getThumb())
+                    img = loadRawImage(input)
+
+                if not item.isQueueEnd():
+                    if(img is not None):                        
+                        img_bytes = image.img_to_array(img)
+
+                    if img_bytes is None:    
+                        item.setExtraAttribute('nsfw_error', 1)
+                        add_to_batch = False                        
+
+            with self.BATCH_LOCK:
+                # Step 1: Classify the incoming item.
+                # If supported, add to the batch list. Otherwise, add directly to the send queue.
+                if add_to_batch:
+                    self.itemList.append(item)
+                    self.imageBytes.append(img_bytes)
+                else:
+                    self.itemsToSend.append(item)
+
+                # Check if the batch is ready for processing
+                size = len(self.itemList)
+                is_batch_ready = size >= batchSize or (size > 0 and item.isQueueEnd())
+
+                if is_batch_ready:
+                    processImages(self.imageBytes, self.itemList)
+
+                    # Move the now-processed items to the sending queue.
+                    self.itemsToSend.extend(self.itemList)
+                    self.itemList.clear()
+                    self.imageBytes.clear()
+
         except Exception as e:
+            # SAFETY NET: If any unexpected error occurs, log it and queue the
+            # original item to be sent to the next task, ensuring it is not lost.
+            with self.BATCH_LOCK:
+                self.itemsToSend.append(item)
+                        
             item.setExtraAttribute('nsfw_error', 2)
+            # Log the full traceback for better debugging
+            logger.warn(f"Error processing item {item.getPath()}: {traceback.format_exc()}")
             raise e
-            
-        if self.isToProcessBatch(item):
-            processImages(self.imageList, self.itemList)
     
     
 def processVideoFrames(item):
@@ -248,6 +282,8 @@ def videoScore(scores):
     return sum * 100
 
 def processImages(imageList, itemList):
+    if not imageList:
+        return
     logger.debug('Processing batch of ' + str(len(imageList)) + " images.")
     preds = makePrediction(imageList)
     cache = caseData.getCaseObject('nsfw_score_cache')
