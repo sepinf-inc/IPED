@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -43,6 +44,7 @@ import iped.engine.search.MultiSearchResult;
 import iped.engine.search.QueryBuilder;
 import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
+import iped.localization.LocaleResolver;
 import iped.search.IMultiSearchResult;
 import iped.utils.UTF8Properties;
 import iped.viewers.api.IFilter;
@@ -89,7 +91,7 @@ public class FilterManager implements ActionListener, ListSelectionListener {
 
     private static final File getGlobalFilterFile() {
         String name = "ipedFilters"; //$NON-NLS-1$
-        String locale = System.getProperty(iped.localization.Messages.LOCALE_SYS_PROP); // $NON-NLS-1$
+        String locale = LocaleResolver.getLocaleString();
         if (locale != null && !locale.equals("pt-BR")) //$NON-NLS-1$
             name += "-" + locale; //$NON-NLS-1$
         name += ".txt"; //$NON-NLS-1$
@@ -113,6 +115,15 @@ public class FilterManager implements ActionListener, ListSelectionListener {
                 defaultFilter = new File(App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir(), "conf/DefaultFilters.txt"); //$NON-NLS-1$
             }
             filters.load(defaultFilter);
+
+            // Remove obsolete default filters
+            Iterator<Entry<Object, Object>> it = filters.entrySet().iterator();
+            while (it.hasNext()) {
+                Entry<Object, Object> entry = it.next();
+                if (entry.getValue().toString().trim().equalsIgnoreCase("OBSOLETE")) {
+                    it.remove();
+                }
+            }
 
             // fix filter values saved by old versions, see #1392
             for (Entry<Object, Object> entry : filters.entrySet()) {

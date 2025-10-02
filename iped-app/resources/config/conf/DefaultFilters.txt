@@ -4,8 +4,8 @@
 
 Filter Known Hashes = *:* -hashDb\:status:known
 Hash Alert = hashDb\:status:alert
-Hash Alert (Child Porn) = hashDb\:status:pedo
-PhotoDNA Alert (Child Porn) = photoDnaDb\:status:pedo
+Hash Alert (CSAM) = hashDb\:status:pedo
+PhotoDNA Alert (CSAM) = photoDnaDb\:status:pedo
 Encrypted Files = encrypted:true
 Possibly encrypted (entropy) = compressRatioLZ4:[1,0039 TO *] && (parserException:true || X-Parsed-By:(RawStringParser EmptyParser) || contentType:video) && tamanho:[100000000 TO *]
 Parsing Error = parserException:true
@@ -19,3 +19,7 @@ Container Subitems = subitem:true
 Containers not Expanded = category:("Mailboxes" "Compressed Archives" "ISO disks" "Other disks" "Virtual disks") -hasSubitem:true -fileFragment:true -isRoot:true
 Explicit Images & Videos = nudityScore:[500 TO *]
 Files with Thumbnails = hasThumb:true
+
+# Obsolete filters (suppressed in UI)
+Hash Alert (Child Porn) = OBSOLETE
+PhotoDNA Alert (Child Porn) = OBSOLETE

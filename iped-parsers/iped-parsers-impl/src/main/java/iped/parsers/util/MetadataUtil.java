@@ -35,7 +35,6 @@ import iped.parsers.image.TiffPageParser;
 import iped.parsers.ocr.OCRParser;
 import iped.parsers.standard.RawStringParser;
 import iped.parsers.standard.StandardParser;
-import iped.parsers.ufed.UFEDChatParser;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
@@ -199,7 +198,6 @@ public class MetadataUtil {
         ignorePreviewMetas.add(Metadata.CONTENT_TYPE);
         ignorePreviewMetas.add(StandardParser.INDEXER_CONTENT_TYPE);
         ignorePreviewMetas.add(ExtraProperties.TIKA_PARSER_USED);
-        ignorePreviewMetas.add(UFEDChatParser.CHILD_MSG_IDS);
         return ignorePreviewMetas;
     }
 
@@ -256,6 +254,7 @@ public class MetadataUtil {
         generalKeys.add(ExtraProperties.CONFIDENCE_ATTR);
         generalKeys.add(OCRParser.OCR_CHAR_COUNT);
         generalKeys.add(RawStringParser.COMPRESS_RATIO);
+        generalKeys.add(ExtraProperties.PARENT_VIEW_POSITION);
 
         return generalKeys;
     }
@@ -639,6 +638,7 @@ public class MetadataUtil {
             if (generalKeys.contains(key) || key.toLowerCase().startsWith(prefix.toLowerCase())
                     || key.startsWith(ExtraProperties.UFED_META_PREFIX)
                     || key.startsWith(ExtraProperties.COMMON_META_PREFIX)
+                    || key.startsWith(ExtraProperties.CONVERSATION_PREFIX)
                     || key.startsWith(ExtraProperties.COMMUNICATION_PREFIX)
                     || key.startsWith(TikaCoreProperties.TIKA_META_PREFIX)) {
                 continue;
@@ -739,6 +739,8 @@ public class MetadataUtil {
 
         if (contentType.startsWith("message") || //$NON-NLS-1$
                 MediaTypes.OUTLOOK_MSG.toString().equals(contentType) ||
+                MediaTypes.UFED_EMAIL_MIME.toString().equals(contentType) ||
+                MediaTypes.UFED_MESSAGE_MIME.toString().equals(contentType) ||
                 BPListDetector.PLIST.toString().equals(contentType))
             return;
 

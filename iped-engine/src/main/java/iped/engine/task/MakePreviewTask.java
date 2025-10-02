@@ -123,7 +123,6 @@ public class MakePreviewTask extends AbstractTask {
         ReentrantLock lock = lockManager.getLock(key);
         lock.lock();
         try {
-
             // skip if evidence already has preview
             if (evidence.hasPreview() && PreviewRepositoryManager.get(output).previewExists(evidence) && ext.equals(evidence.getPreviewExt())) {
                 return;

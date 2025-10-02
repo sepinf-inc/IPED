@@ -1,7 +1,7 @@
 /*
  * Copyright 2012-2014, Luis Filipe da Cruz Nassif
  * 
- * This file is part of Indexador e Processador de EvidÃªncias Digitais (IPED).
+ * This file is part of Indexador e Processador de Evidências Digitais (IPED).
  *
  * IPED is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -164,6 +164,7 @@ import iped.search.IMultiSearchResult;
 import iped.utils.IconUtil;
 import iped.utils.UiUtil;
 import iped.viewers.ATextViewer;
+import iped.viewers.MultiViewer;
 import iped.viewers.api.AbstractViewer;
 import iped.viewers.api.ClearFilterListener;
 import iped.viewers.api.GUIProvider;
@@ -1117,6 +1118,18 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             });
 
             if (viewer == App.get().getViewerController().getMultiViewer()) {
+                CButton searchInViewer = new CButton(Messages.getString("MenuClass.SearchInViewer"),
+                        IconUtil.getToolbarIcon("search", resPath));
+                searchInViewer.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {
+                        ((CButton) viewerDock.getAction("prevHit")).setEnabled(false);
+                        ((CButton) viewerDock.getAction("nextHit")).setEnabled(false);
+                        ((MultiViewer)viewer).searchInViewer();
+                    }
+                });
+                viewerDock.addAction(searchInViewer);
+                viewerDock.putAction("searchInViewer", searchInViewer);
+
                 CButton copyViewerImage = new CButton(Messages.getString("MenuClass.CopyViewerImage"),
                         IconUtil.getToolbarIcon("copy", resPath));
                 copyViewerImage.addActionListener(new ActionListener() {

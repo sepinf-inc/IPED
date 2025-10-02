@@ -61,6 +61,7 @@ import iped.viewers.util.LibreOfficeFinder;
 public class ViewerController {
     private final List<AbstractViewer> viewers = new ArrayList<>();
     private final ATextViewer textViewer;
+    private final MetadataViewer metadataViewer;
     private final HtmlLinkViewer linkViewer;
     private final MultiViewer viewersRepository;
     private final Map<AbstractViewer, DefaultSingleCDockable> dockPerViewer = new HashMap<>();
@@ -82,7 +83,7 @@ public class ViewerController {
         // These viewers will have their own docking frame
         viewers.add(new HexViewerPlus(owner, new HexSearcherImpl()));
         viewers.add(textViewer = new TextViewer());
-        viewers.add(new MetadataViewer() {
+        viewers.add(metadataViewer = new MetadataViewer() {
             @Override
             public boolean isFixed() {
                 return isFixed;
@@ -106,7 +107,9 @@ public class ViewerController {
         viewersRepository.addViewer(new IcePDFViewer());
         viewersRepository.addViewer(new TiffViewer());
         viewersRepository.addViewer(new AudioViewer(new AttachmentSearcherImpl()));
-        viewersRepository.addViewer(new ReferencedFileViewer(viewersRepository, new AttachmentSearcherImpl()));
+        viewersRepository.addViewer(new ReferencedFileViewer(viewersRepository, new AttachmentSearcherImpl(), () -> {
+            changeToViewer(metadataViewer);
+        }));
 
         new Thread() {
             public void run() {
@@ -307,6 +310,11 @@ public class ViewerController {
                     CSelButton butToolbar = (CSelButton) dock.getAction("toolbar");
                     butToolbar.setEnabled(toolbarSupport == 1);
                     butToolbar.setSelected(toolbarSupport == 1 && viewer.isToolbarVisible());
+                }
+
+                CButton butSearch = (CButton) dock.getAction("searchInViewer");
+                if (butSearch != null) {
+                    butSearch.setEnabled(viewer.isSearchSupported());
                 }
             }
         } else {
