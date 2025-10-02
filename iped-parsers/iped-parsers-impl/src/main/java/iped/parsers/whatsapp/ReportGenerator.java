@@ -143,7 +143,7 @@ public class ReportGenerator {
     private static final String[] tagsWA = { "```", "*", "_", "~" };
     private static final String[] tagsHTML = { "tt", "b", "i", "s" };
 
-    private static final String convertWhatsAppTagsToHTML(String s) {
+    public static final String convertWhatsAppTagsToHTML(String s) {
         int start = 0;
         while (start < s.length()) {
             int min = s.length();
