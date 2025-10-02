@@ -2,8 +2,12 @@ package iped.engine.preview;
 
 import java.nio.ByteBuffer;
 
+import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.lang3.StringUtils;
+
 import iped.data.IItemReader;
 import iped.engine.task.HashTask;
+import iped.properties.ExtraProperties;
 import iped.utils.HashValue;
 
 /**
@@ -14,15 +18,11 @@ public class PreviewKey {
 
     private final ByteBuffer buffer;
 
-    public PreviewKey(ByteBuffer buffer) {
-        this.buffer = buffer;
-    }
-
     public PreviewKey(byte[] bytes) {
         this.buffer = ByteBuffer.wrap(bytes);
     }
 
-    public PreviewKey(int id) {
+    private PreviewKey(int id) {
         this.buffer = ByteBuffer.allocate(Integer.BYTES).putInt(id);
     }
 
@@ -31,6 +31,15 @@ public class PreviewKey {
         String hashString = (String) item.getExtraAttribute(HashTask.HASH.MD5.toString());
         if (hashString != null) {
             return new PreviewKey(new HashValue(hashString).getBytes());
+        }
+
+        // use ufed ID if it is a decoded data (without hash)
+        String ufedId = item.getMetadata().get(ExtraProperties.UFED_ID);
+        if (StringUtils.isNotBlank(ufedId)) {
+            try {
+                return new PreviewKey(Hex.decodeHex(ufedId.replace("-", "")));
+            } catch (Exception e) {
+            }
         }
 
         // Fallback to item ID
