@@ -30,7 +30,7 @@ imgConvTimeout = 20
 imgConvTimeoutPerMB = 2
 
 # Pixel size of generated thumbnails.
-imgThumbSize = 256
+imgThumbSize = 384
 
 # Compression level of the generated thumbnail image.
 # From 0 to 100, 0 - is very high compression and very low quality, 100 - higher quality and minimum compression.

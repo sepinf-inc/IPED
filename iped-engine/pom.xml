@@ -28,6 +28,11 @@
     </repositories>
     
     <dependencies>
+		<dependency>
+		    <groupId>org.apache.httpcomponents</groupId>
+		    <artifactId>httpmime</artifactId>
+		    <version>4.5.13</version>
+		</dependency>
         <dependency>
             <groupId>com.github.oshi</groupId>
             <artifactId>oshi-core-java11</artifactId>
@@ -65,11 +70,6 @@
     	    <artifactId>photodna-api</artifactId>
     	    <version>1.0</version>
 	    </dependency>
-    	<dependency>
-    		<groupId>com.eatthepath</groupId>
-    		<artifactId>jvptree</artifactId>
-    		<version>0.2</version>
-		</dependency>
     	<dependency>
             <groupId>iped</groupId>
             <artifactId>iped-ahocorasick</artifactId>
