@@ -736,6 +736,12 @@ public class IndexItem extends BasicProps {
 
             evidence.setName(doc.get(IndexItem.NAME));
 
+            // if evidence was stored with EXT, replace the generated in setName()
+            String ext = doc.get(IndexItem.EXT);
+            if (ext != null) {
+                evidence.setExtension(ext);
+            }
+
             String value = doc.get(IndexItem.LENGTH);
             Long len = null;
             if (value != null && !value.isEmpty()) {
@@ -857,12 +863,14 @@ public class IndexItem extends BasicProps {
             if (evidence.getHash() != null && !evidence.getHash().isEmpty()) {
 
                 if (Boolean.valueOf(doc.get(ImageThumbTask.HAS_THUMB))) {
-                    String mimePrefix = evidence.getMediaType().getType();
                     if (doc.getBinaryValue(THUMB) != null) {
                         evidence.setThumb(doc.getBinaryValue(THUMB).bytes);
 
-                    } else if (mimePrefix.equals("image") || mimePrefix.equals("video")) { //$NON-NLS-1$ //$NON-NLS-2$
-                        String thumbFolder = mimePrefix.equals("image") ? ImageThumbTask.thumbsFolder : "view"; //$NON-NLS-1$ //$NON-NLS-2$
+                    } else if (MetadataUtil.isImageType(evidence.getMediaType())
+                            || MetadataUtil.isVideoType(evidence.getMediaType())) {
+                        String thumbFolder = MetadataUtil.isImageType(evidence.getMediaType())
+                                ? ImageThumbTask.thumbsFolder
+                                : "view";
                         File thumbFile = Util.getFileFromHash(new File(outputBase, thumbFolder), evidence.getHash(),
                                 "jpg"); //$NON-NLS-1$
                         try {

@@ -30,11 +30,11 @@ import org.apache.tika.metadata.TIFF;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 
+import iped.data.IItem;
 import iped.parsers.image.TiffPageParser;
 import iped.parsers.ocr.OCRParser;
 import iped.parsers.standard.RawStringParser;
 import iped.parsers.standard.StandardParser;
-import iped.parsers.ufed.UFEDChatParser;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
@@ -198,7 +198,6 @@ public class MetadataUtil {
         ignorePreviewMetas.add(Metadata.CONTENT_TYPE);
         ignorePreviewMetas.add(StandardParser.INDEXER_CONTENT_TYPE);
         ignorePreviewMetas.add(ExtraProperties.TIKA_PARSER_USED);
-        ignorePreviewMetas.add(UFEDChatParser.CHILD_MSG_IDS);
         return ignorePreviewMetas;
     }
 
@@ -255,6 +254,7 @@ public class MetadataUtil {
         generalKeys.add(ExtraProperties.CONFIDENCE_ATTR);
         generalKeys.add(OCRParser.OCR_CHAR_COUNT);
         generalKeys.add(RawStringParser.COMPRESS_RATIO);
+        generalKeys.add(ExtraProperties.PARENT_VIEW_POSITION);
 
         return generalKeys;
     }
@@ -638,6 +638,7 @@ public class MetadataUtil {
             if (generalKeys.contains(key) || key.toLowerCase().startsWith(prefix.toLowerCase())
                     || key.startsWith(ExtraProperties.UFED_META_PREFIX)
                     || key.startsWith(ExtraProperties.COMMON_META_PREFIX)
+                    || key.startsWith(ExtraProperties.CONVERSATION_PREFIX)
                     || key.startsWith(ExtraProperties.COMMUNICATION_PREFIX)
                     || key.startsWith(TikaCoreProperties.TIKA_META_PREFIX)) {
                 continue;
@@ -675,21 +676,49 @@ public class MetadataUtil {
     }
 
     private static boolean prefixImageMetadata(Metadata metadata) {
-        if (metadata.get(Metadata.CONTENT_TYPE).startsWith("image")) {
+        if (isImageType(metadata.get(Metadata.CONTENT_TYPE))) {
             includePrefix(metadata, ExtraProperties.IMAGE_META_PREFIX);
             return true;
         }
         return false;
     }
 
+    public static boolean isImageSequence(String mediaType) {
+        return mediaType.equals("image/heic-sequence") || mediaType.equals("image/heif-sequence");
+    }
+
+    /**
+     * Check if the item is a multiple frame image. It works only after VideoThumbTask
+     * is executed.
+     */
+    public static boolean isAnimationImage(IItem item) {
+        return MetadataUtil.isImageSequence(item.getMediaType().toString()) ||
+                item.getMetadata().get(ExtraProperties.ANIMATION_FRAMES_PROP) != null;
+    }
+
+
+    public static boolean isImageType(MediaType mediaType) {
+        return mediaType == null ? false : isImageType(mediaType.toString());
+    }
+
+    public static boolean isImageType(String mediaType) {
+        return mediaType == null ? false
+                : mediaType.startsWith("image/") || mediaType.equals("application/coreldraw")
+                        || mediaType.equals("application/x-vnd.corel.zcf.draw.document+zip");
+    }
+
     public static boolean isVideoType(MediaType mediaType) {
-        return mediaType.getType().equals("video") //$NON-NLS-1$
-                || mediaType.getBaseType().toString().equals("application/vnd.rn-realmedia"); //$NON-NLS-1$
+        return mediaType == null ? false : isVideoType(mediaType.toString());
+    }
+
+    public static boolean isVideoType(String mediaType) {
+        return mediaType == null ? false
+                : mediaType.startsWith("video/") || mediaType.startsWith("application/vnd.rn-realmedia");
     }
 
     private static boolean prefixVideoMetadata(Metadata metadata) {
-        if (isVideoType(MediaType.parse(metadata.get(Metadata.CONTENT_TYPE)))
-                || isVideoType(MediaType.parse(metadata.get(StandardParser.INDEXER_CONTENT_TYPE)))) {
+        if (isVideoType(metadata.get(Metadata.CONTENT_TYPE))
+                || isVideoType(metadata.get(StandardParser.INDEXER_CONTENT_TYPE))) {
             includePrefix(metadata, ExtraProperties.VIDEO_META_PREFIX);
             return true;
         }
@@ -710,6 +739,8 @@ public class MetadataUtil {
 
         if (contentType.startsWith("message") || //$NON-NLS-1$
                 MediaTypes.OUTLOOK_MSG.toString().equals(contentType) ||
+                MediaTypes.UFED_EMAIL_MIME.toString().equals(contentType) ||
+                MediaTypes.UFED_MESSAGE_MIME.toString().equals(contentType) ||
                 BPListDetector.PLIST.toString().equals(contentType))
             return;
 

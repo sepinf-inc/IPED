@@ -81,7 +81,6 @@ import iped.engine.util.Util;
 import iped.parsers.mail.OutlookPSTParser;
 import iped.parsers.mail.win10.Win10MailParser;
 import iped.parsers.ocr.OCRParser;
-import iped.parsers.ufed.UFEDChatParser;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
@@ -704,14 +703,6 @@ public class IPEDReader extends DataSourceReader {
                         }
                     }
                 }
-            }
-
-            // translate old msg ids to new ones
-            String[] ufedMsgIds = evidence.getMetadata().getValues(UFEDChatParser.CHILD_MSG_IDS);
-            evidence.getMetadata().remove(UFEDChatParser.CHILD_MSG_IDS);
-            for (String msgId : ufedMsgIds) {
-                int newId = getId(msgId);
-                evidence.getMetadata().add(UFEDChatParser.CHILD_MSG_IDS, Integer.toString(newId));
             }
 
             // restore "face_encodings" to NDArray

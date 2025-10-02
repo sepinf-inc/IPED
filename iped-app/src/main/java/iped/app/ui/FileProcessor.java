@@ -43,6 +43,7 @@ import iped.engine.sleuthkit.SleuthkitInputStreamFactory;
 import iped.engine.task.index.IndexItem;
 import iped.engine.task.similarity.ImageSimilarityTask;
 import iped.io.ISeekableInputStreamFactory;
+import iped.localization.LocaleResolver;
 import iped.properties.ExtraProperties;
 import iped.utils.FileInputStreamFactory;
 import iped.viewers.ImageViewer;
@@ -100,7 +101,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
             doc.add(new StoredField(IndexItem.NAME, "Help")); //$NON-NLS-1$
             doc.add(new StoredField(IndexItem.CONTENTTYPE, MediaType.TEXT_HTML.toString()));
 
-            String locale = System.getProperty(iped.localization.Messages.LOCALE_SYS_PROP);
+            String locale = LocaleResolver.getLocaleString();
             String helpPath = IPEDSource.MODULE_DIR + "/help/Help_" + locale + ".htm"; // $NON-NLS-1$ // $NON-NLS-2$
             if (!new File(caseDir, helpPath).exists()) {
                 helpPath = IPEDSource.MODULE_DIR + "/help/Help.htm"; // $NON-NLS-1$

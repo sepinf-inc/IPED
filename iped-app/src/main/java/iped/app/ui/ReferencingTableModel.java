@@ -26,10 +26,13 @@ import javax.swing.ListSelectionModel;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.IntPoint;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermInSetQuery;
+import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.BytesRef;
 
 import iped.engine.search.QueryBuilder;
@@ -94,6 +97,21 @@ public class ReferencingTableModel extends BaseTableModel {
                     .map(h -> new BytesRef(h)).collect(Collectors.toSet());
             queryBuilder.add(new TermInSetQuery(field, hashes), Occur.SHOULD);
         }
+
+        // ufed:jumpTargets
+        String[] jumpTargets = doc.getValues(ExtraProperties.UFED_JUMP_TARGETS);
+        for (String jumpTarget : jumpTargets) {
+            queryBuilder.add(new TermQuery(new Term(ExtraProperties.UFED_ID, jumpTarget)), Occur.SHOULD);
+        }
+
+        // ufed:file_id
+        String fileId = doc.get(ExtraProperties.UFED_FILE_ID);
+        if (StringUtils.isNotBlank(fileId)) {
+            queryBuilder.add(new TermQuery(new Term(ExtraProperties.UFED_ID, fileId)), Occur.SHOULD);
+        }
+
+        // don't reference itself
+        queryBuilder.add(IntPoint.newExactQuery(BasicProps.ID, Integer.parseInt(doc.get(BasicProps.ID))), Occur.MUST_NOT);
 
         return queryBuilder.build();
     }

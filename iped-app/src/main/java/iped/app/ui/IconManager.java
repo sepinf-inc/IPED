@@ -179,9 +179,20 @@ public class IconManager {
             mimeIconMap.put("application/x-emule-preferences-dat", icon);
         }
 
+        icon = availableIconsMap.get("emule-entry");
+        if (icon != null) {
+            mimeIconMap.put("application/x-emule-known-met-entry", icon);
+            mimeIconMap.put("application/x-emule-part-met-entry", icon);
+        }
+
         icon = availableIconsMap.get("ares");
         if (icon != null) {
             mimeIconMap.put("application/x-ares-galaxy", icon);
+        }
+
+        icon = availableIconsMap.get("ares-entry");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ares-galaxy-entry", icon);
         }
 
         icon = availableIconsMap.get("shareaza");
@@ -189,6 +200,11 @@ public class IconManager {
             mimeIconMap.put("application/x-shareaza-searches-dat", icon);
             mimeIconMap.put("application/x-shareaza-library-dat", icon);
             mimeIconMap.put("application/x-shareaza-download", icon);
+        }
+
+        icon = availableIconsMap.get("shareaza-entry");
+        if (icon != null) {
+            mimeIconMap.put("application/x-shareaza-library-dat-entry", icon);
         }
 
         icon = availableIconsMap.get("torrent");
@@ -227,7 +243,6 @@ public class IconManager {
             mimeIconMap.put("application/x-whatsapp-db-f", icon);
             mimeIconMap.put("application/x-whatsapp-chatstorage", icon);
             mimeIconMap.put("application/x-whatsapp-chat", icon);
-            mimeIconMap.put("application/x-ufed-chat-whatsapp", icon);
             mimeIconMap.put("application/x-ufed-chat-preview-whatsapp", icon);
         }
 
@@ -236,11 +251,32 @@ public class IconManager {
             mimeIconMap.put("application/x-threema-chat", icon);
             mimeIconMap.put("application/x-threema-user-plist", icon);
             mimeIconMap.put("application/x-threema-chatstorage", icon);
+            mimeIconMap.put("application/x-ufed-chat-preview-threema", icon);
         }
 
         icon = availableIconsMap.get("facebook");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-chat-preview-facebook", icon);
+        }
+
+        icon = availableIconsMap.get("signal");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-chat-preview-signal", icon);
+        }
+
+        icon = availableIconsMap.get("snapchat");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-chat-preview-snapchat", icon);
+        }
+
+        icon = availableIconsMap.get("tiktok");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-chat-preview-tiktok", icon);
+        }
+
+        icon = availableIconsMap.get("viber");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-chat-preview-viber", icon);
         }
 
         icon = availableIconsMap.get("instagram");
@@ -260,7 +296,6 @@ public class IconManager {
         if (icon != null) {
             mimeIconMap.put("application/x-telegram-chat", icon);
             mimeIconMap.put("application/x-telegram-db", icon);
-            mimeIconMap.put("application/x-ufed-chat-telegram", icon);
             mimeIconMap.put("application/x-ufed-chat-preview-telegram", icon);
         }
 
@@ -280,6 +315,7 @@ public class IconManager {
         icon = availableIconsMap.get("deviceinfo");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-deviceinfo", icon);
+            mimeIconMap.put("application/x-ufed-deviceinfoentry", icon);
             mimeIconMap.put("application/x-ufed-simdata", icon);
             mimeIconMap.put("application/x-ufed-html-simdata", icon);
             mimeIconMap.put("application/x-ufed-html-summary", icon);
@@ -399,10 +435,14 @@ public class IconManager {
             mimeIconMap.put("application/x-ufed-deviceevent", icon);
         }
 
+        icon = availableIconsMap.get("attachment");
+        if (icon != null) {
+            mimeIconMap.put("application/x-ufed-attachment", icon);
+        }
+
         icon = availableIconsMap.get("message");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-instantmessage", icon);
-            mimeIconMap.put("message/x-ufed-attachment", icon);
             mimeIconMap.put("application/x-ufed-chat-preview", icon);
             mimeIconMap.put("message/x-chat-message", icon);
             mimeIconMap.put("message/x-discord-message", icon);
@@ -467,8 +507,8 @@ public class IconManager {
         icon = availableIconsMap.get("email");
         if (icon != null) {
             mimeIconMap.put("application/x-ufed-html-mails", icon);
+            mimeIconMap.put("application/x-ufed-email", icon);
             mimeIconMap.put("multipart/related", icon);
-            mimeIconMap.put("message/x-ufed-email", icon);
             mimeIconMap.put("message/outlook-pst", icon);
             mimeIconMap.put("message/x-emlx", icon);
             mimeIconMap.put("message/rfc822-partial", icon);
@@ -583,6 +623,7 @@ public class IconManager {
         if (icon != null) {
             mimeIconMap.put("application/x-discord-index", icon);
             mimeIconMap.put("application/x-discord-chat", icon);
+            mimeIconMap.put("application/x-ufed-chat-preview-discord", icon);
         }
 
         icon = availableIconsMap.get("discord-attachment");

@@ -1257,6 +1257,14 @@
     	<glob pattern="chat.*txt" isregex="true"/>
     </mime-type>
 
+    <mime-type type="application/x-ufed-instantmessage">
+    	<sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-ufed-deviceinfo">
+    	<sub-class-of type="text/html"/>
+    </mime-type>
+
     <mime-type type="application/x-ufed-contact">
     	<sub-class-of type="text/html"/>
     </mime-type>
@@ -1265,7 +1273,7 @@
     	<sub-class-of type="text/html"/>
     </mime-type>
 
-    <mime-type type="message/x-ufed-email">
+    <mime-type type="application/x-ufed-email">
     	<sub-class-of type="text/html"/>
     </mime-type>
 
@@ -1289,16 +1297,32 @@
     	<sub-class-of type="application/x-ufed-chat-preview"/>
     </mime-type>
 
-    <mime-type type="application/x-ufed-chat-preview-instagram">
+    <mime-type type="application/x-ufed-chat-preview-snapchat">
     	<sub-class-of type="application/x-ufed-chat-preview"/>
     </mime-type>
 
-    <mime-type type="application/x-ufed-chat-whatsapp">
-    	<sub-class-of type="application/x-ufed-chat"/>
+    <mime-type type="application/x-ufed-chat-preview-threema">
+    	<sub-class-of type="application/x-ufed-chat-preview"/>
     </mime-type>
 
-    <mime-type type="application/x-ufed-chat-telegram">
-    	<sub-class-of type="application/x-ufed-chat"/>
+    <mime-type type="application/x-ufed-chat-preview-discord">
+    	<sub-class-of type="application/x-ufed-chat-preview"/>
+    </mime-type>
+
+    <mime-type type="application/x-ufed-chat-preview-signal">
+    	<sub-class-of type="application/x-ufed-chat-preview"/>
+    </mime-type>
+
+    <mime-type type="application/x-ufed-chat-preview-tiktok">
+    	<sub-class-of type="application/x-ufed-chat-preview"/>
+    </mime-type>
+
+    <mime-type type="application/x-ufed-chat-preview-viber">
+    	<sub-class-of type="application/x-ufed-chat-preview"/>
+    </mime-type>
+
+    <mime-type type="application/x-ufed-chat-preview-instagram">
+    	<sub-class-of type="application/x-ufed-chat-preview"/>
     </mime-type>
 
     <mime-type type="application/x-win10-timeline">
@@ -1435,18 +1459,6 @@
     <mime-type type="application/x-threema-user-plist">
         <sub-class-of type="application/x-bplist"/>
         <glob pattern="group.ch.threema*.plist"/>
-    </mime-type>
-
-    <mime-type type="message/x-ufed-attachment">
-        <sub-class-of type="application/x-ufed-instantmessage"/>
-    </mime-type>
-
-    <mime-type type="application/x-ufed-instantmessage">
-        <sub-class-of type="message/x-chat-message"/>
-    </mime-type>
-
-    <mime-type type="application/x-ufed-deviceinfo">
-    	<sub-class-of type="text/html"/>
     </mime-type>
 
 	<mime-type type="application/x-database-table">
