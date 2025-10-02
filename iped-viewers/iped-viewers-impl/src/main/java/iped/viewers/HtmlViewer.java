@@ -534,6 +534,9 @@ public class HtmlViewer extends AbstractViewer {
 
     @Override
     public void scrollToNextHit(final boolean forward, final boolean wrap, final HitsUpdater hitsUpdater) {
+        if (totalHits <= 0) {
+            return;
+        }
 
         Platform.runLater(new Runnable() {
             @Override
