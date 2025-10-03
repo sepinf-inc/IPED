@@ -1,7 +1,7 @@
 package iped.viewers;
 
 import java.awt.CardLayout;
-import java.awt.GridLayout;
+import java.awt.Dimension;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Set;
@@ -12,21 +12,51 @@ import javax.swing.SwingUtilities;
 import iped.io.IStreamSource;
 import iped.viewers.api.AbstractViewer;
 import iped.viewers.localization.Messages;
+import iped.viewers.search.CenterTopLayoutManager;
+import iped.viewers.search.HitsUpdater;
+import iped.viewers.search.SearchEvent;
+import iped.viewers.search.SearchListener;
+import iped.viewers.search.SearchPanel;
 
 public class MultiViewer extends AbstractViewer {
 
     private JPanel cardViewer = new JPanel(new CardLayout());
     private ArrayList<AbstractViewer> viewerList = new ArrayList<AbstractViewer>();
     private AbstractViewer currentViewer;
+    private SearchPanel searchPanel;
 
     public MultiViewer() {
-        super(new GridLayout());
-        this.getPanel().add(cardViewer);
+        super(new CenterTopLayoutManager());
+        searchPanel = new SearchPanel();
+        searchPanel.setPreferredSize(new Dimension(240, 28));
+        searchPanel.setVisible(false);
+        getPanel().add(searchPanel, CenterTopLayoutManager.TOP);
+        getPanel().add(cardViewer, CenterTopLayoutManager.CENTER);
+        HitsUpdater hitsUpdater = new HitsUpdater() {
+            @Override
+            public void updateHits(int currHit, int totHits) {
+                searchPanel.setHits(currHit, totHits);
+            }
+        };
+        searchPanel.addSearchListener(new SearchListener() {
+            @Override
+            public void stateChanged(SearchEvent e) {
+                if (currentViewer != null) {
+                    if (e.getType() == SearchEvent.termChange) {
+                        currentViewer.searchInViewer(searchPanel.getText(), hitsUpdater);
+                    } else if (e.getType() == SearchEvent.nextHit) {
+                        currentViewer.scrollToNextHit(true, true, hitsUpdater);
+                    } else if (e.getType() == SearchEvent.prevHit) {
+                        currentViewer.scrollToNextHit(false, true, hitsUpdater);
+                    }
+                }
+            }
+        });
     }
 
     @Override
     public String getName() {
-        return Messages.getString("MultiViewer.TabName"); //$NON-NLS-1$
+        return Messages.getString("MultiViewer.TabName");
     }
 
     public void addViewer(final AbstractViewer viewer) {
@@ -91,6 +121,7 @@ public class MultiViewer extends AbstractViewer {
     @Override
     public void loadFile(IStreamSource content, String contentType, Set<String> highlightTerms) {
 
+        searchPanel.setVisible(false);
         if (content == null) {
             clear();
             return;
@@ -152,6 +183,14 @@ public class MultiViewer extends AbstractViewer {
     }
 
     @Override
+    public boolean isSearchSupported() {
+        if (currentViewer != null) {
+            return currentViewer.isSearchSupported();
+        }
+        return false;
+    }
+
+    @Override
     public void setToolbarVisible(boolean isVisible) {
         if (currentViewer != null) {
             currentViewer.setToolbarVisible(isVisible);
@@ -183,5 +222,9 @@ public class MultiViewer extends AbstractViewer {
                 ((ImageViewer) viewer).setGrayFilter(enableGray);
             }
         }
+    }
+
+    public void searchInViewer() {
+        searchPanel.setVisible(!searchPanel.isVisible());
     }
 }

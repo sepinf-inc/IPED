@@ -9,6 +9,7 @@ Compressed Archives
 Emails
 Databases
 Chats
+Instant Messages
 Contacts
 ISO disks
 Internet History
