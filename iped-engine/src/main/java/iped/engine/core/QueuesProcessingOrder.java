@@ -28,7 +28,7 @@ import iped.parsers.skype.SkypeParser;
 import iped.parsers.sqlite.SQLite3Parser;
 import iped.parsers.telegram.TelegramParser;
 import iped.parsers.threema.ThreemaParser;
-import iped.parsers.ufed.UFEDChatParser;
+import iped.parsers.ufed.UfedChatParser;
 import iped.parsers.usnjrnl.UsnJrnlParser;
 import iped.parsers.whatsapp.WhatsAppParser;
 import iped.properties.MediaTypes;
@@ -96,7 +96,15 @@ public class QueuesProcessingOrder {
         mediaTypes.put(WhatsAppParser.CHAT_STORAGE_2, 4);
         mediaTypes.put(ThreemaParser.CHAT_STORAGE, 3);
         mediaTypes.put(ThreemaParser.CHAT_STORAGE_F, 4);
-        mediaTypes.put(UFEDChatParser.UFED_CHAT_MIME, 2);
+
+        // required to load ContactPhotos and Attachments
+        mediaTypes.put(MediaTypes.UFED_CONTACT_MIME, 2);
+        mediaTypes.put(MediaTypes.UFED_USER_ACCOUNT_MIME, 2);
+        mediaTypes.put(MediaTypes.UFED_EMAIL_MIME, 2);
+
+        // required to load Attachments, Coordinates, Contacts and ContactPhotos
+        mediaTypes.put(UfedChatParser.UFED_CHAT_MIME, 3);
+        mediaTypes.put(MediaTypes.UFED_MESSAGE_MIME, 4);
 
         // avoid NPE when the parser gets the item from parseContext when external
         // parsing is on

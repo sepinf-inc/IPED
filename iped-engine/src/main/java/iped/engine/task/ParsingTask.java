@@ -34,6 +34,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.io.TemporaryResources;
@@ -314,9 +315,17 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
                 task = new ParsingTask(worker, autoParser);
                 task.parsingConfig = this.parsingConfig;
                 task.expandConfig = this.expandConfig;
-                task.safeProcess(evidence);
-
+                task.evidence = evidence;
+                task.getTikaContext();
+                if (task.extractEmbedded && containersBeingExpanded.incrementAndGet() > max_expanding_containers) {
+                    task.reEnqueueItem(evidence);
+                 } else {
+                    task.safeProcess();
+                 }
             } finally {
+                if (task != null && task.extractEmbedded) {
+                    containersBeingExpanded.decrementAndGet();
+                }
                 String parserName = getParserName(parser, evidence.getMetadata().get(Metadata.CONTENT_TYPE));
                 long st = task == null ? 0 : task.subitemsTime;
                 long diff = System.nanoTime() / 1000 - start;
@@ -328,9 +337,7 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
                     timesPerParser.merge(parserName, diff - st, Long::sum);
                 }
             }
-
         }
-
     }
 
     private String getParserName(Parser parser, String contentType) {
@@ -348,21 +355,12 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
         return autoParser.hasSpecificParser(evidence.getMetadata());
     }
 
-    private void safeProcess(IItem evidence) throws Exception {
-
-        this.evidence = evidence;
-
-        context = getTikaContext();
+    private void safeProcess() throws Exception {
 
         if (this.extractEmbedded) {
-            if (containersBeingExpanded.incrementAndGet() > max_expanding_containers) {
-                containersBeingExpanded.decrementAndGet();
-                super.reEnqueueItem(evidence);
-                return;
-            }
             // Don't expand subitem if its hash is equal to parent container hash, could lead to infinite recursion.
             // See https://github.com/sepinf-inc/IPED/issues/1814
-            if (evidence.isSubItem() && evidence.getHash() != null && evidence.getHash().equals(evidence.getTempAttribute(PARENT_CONTAINER_HASH))) {
+            if (evidence.isSubItem() && StringUtils.isNotEmpty(evidence.getHash()) && evidence.getHash().equals(evidence.getTempAttribute(PARENT_CONTAINER_HASH))) {
                 return;
             }
         }
@@ -373,9 +371,6 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
 
         } catch (IOException e) {
             LOGGER.warn("{} Error opening: {} {}", Thread.currentThread().getName(), evidence.getPath(), e.toString()); //$NON-NLS-1$
-            if (this.extractEmbedded) {
-                containersBeingExpanded.decrementAndGet();
-            }
             return;
         }
 
@@ -423,9 +418,6 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
 
         } finally {
             // IOUtil.closeQuietly(tis);
-            if (this.extractEmbedded) {
-                containersBeingExpanded.decrementAndGet();
-            }
             IOUtil.closeQuietly(reader);
             if (numSubitems > 0) {
                 evidence.setExtraAttribute(NUM_SUBITEMS, numSubitems);
@@ -488,11 +480,6 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             evidence.getMetadata().remove(EntropyTask.COMPRESS_RATIO);
             evidence.setExtraAttribute(EntropyTask.COMPRESS_RATIO, Double.valueOf(compressRatio));
         }
-        
-        if (MediaTypes.isInstanceOf(evidence.getMediaType(), MediaTypes.UFED_MESSAGE_MIME)) {
-            evidence.getMetadata().set(ExtraProperties.PARENT_VIEW_POSITION, String.valueOf(evidence.getId()));
-        }
-
     }
 
     @Override
@@ -677,6 +664,12 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
             }
 
             checkRecursiveZipBomb(subItem);
+
+            // set the subItem openContainer with the object passed in the inputStrem of the call parseEmbedded()
+            // it will be used in the parser of the the subitem
+            if (inputStream instanceof TikaInputStream) {
+                subItem.setOpenContainer(TikaInputStream.cast(inputStream).getOpenContainer());
+            }
 
             if ("".equals(metadata.get(BasicProps.LENGTH))) {
                 subItem.setLength(null);

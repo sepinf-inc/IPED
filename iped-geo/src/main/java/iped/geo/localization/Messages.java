@@ -8,6 +8,8 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import iped.localization.LocaleResolver;
+
 public class Messages {
 
     private static final String BUNDLE_NAME = "iped-geo-messages"; //$NON-NLS-1$
@@ -21,8 +23,7 @@ public class Messages {
 
     public static String getString(String key) {
         if (RESOURCE_BUNDLE == null) {
-            String localeProp = System.getProperty(iped.localization.Messages.LOCALE_SYS_PROP); // $NON-NLS-1$
-            Locale locale = localeProp != null ? Locale.forLanguageTag(localeProp) : Locale.getDefault();
+            Locale locale = LocaleResolver.getLocale();
             RESOURCE_BUNDLE = iped.localization.Messages.getExternalBundle(BUNDLE_NAME, locale);
             String finalLocale = RESOURCE_BUNDLE.getLocale().toLanguageTag();
 

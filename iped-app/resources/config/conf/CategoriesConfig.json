@@ -19,9 +19,10 @@
     ]},
     {"name": "Emails and Mailboxes", "categories":[
       {"name": "Mailboxes", "mimes": ["application/vnd.ms-outlook-pst", "application/outlook-dbx", "application/mbox", "application/x-incredimail", "application/vnd.lotus-notes", "application/x-win10-mail-db"]},
-      {"name": "Emails", "mimes": ["message/rfc822", "message/x-emlx", "application/vnd.ms-outlook", "message/outlook-pst", "application/x-ufed-html-mails", "message/x-ufed-email", "message/x-win10-mail-msg"]},
+      {"name": "Emails", "mimes": ["message/rfc822", "message/x-emlx", "application/vnd.ms-outlook", "message/outlook-pst", "application/x-ufed-html-mails", "application/x-ufed-email", "message/x-win10-mail-msg"]},
       {"name": "Appointments", "mimes": ["application/x-win10-mail-appointment"]},
-      {"name": "Win10 Mail Info", "mimes": ["application/x-win10-mail-store"]}
+      {"name": "Win10 Mail Info", "mimes": ["application/x-win10-mail-store"]},
+      {"name": "Email Attachments"}
     ]},
     {"name": "Multimedia", "categories":[
       {"name": "Audios", "mimes": ["audio"]},
@@ -80,16 +81,19 @@
     {"name": "Compressed Archives", "mimes": ["application/x-tika-ooxml", "application/zlib", "application/applefile", "application/vnd.ms-tnef", "application/zip", "application/x-rar-compressed", "application/x-tar", "application/gzip", "application/x-gzip", "application/x-xz", "application/x-bzip", "application/x-bzip2", "application/x-7z-compressed", "application/x-arj", "application/x-gtar", "application/x-archive", "application/x-cpio", "application/x-tika-unix-dump", "application/x-snappy-framed", "application/x-snappy", "application/x-snappy-raw", "application/x-compress", "application/x-java-pack200", "application/x-lzma", "application/x-lz4", "application/x-lz4-block", "application/x-brotli", "application/zstd", "application/deflate64", "image/x-emf-compressed", "application/x-lzfse"]},
     {"name": "Contacts", "mimes": ["text/x-vcard", "application/x-vcard-html", "application/windows-adress-book", "application/outlook-contact", "application/x-livecontacts", "application/x-livecontacts-table", "contact/x-skype-contact", "application/x-whatsapp-wadb", "application/x-whatsapp-contactsv2", "contact/x-whatsapp-contact", "application/x-ufed-html-contacts", "application/x-ufed-contact", "contact/x-telegram-contact", "application/x-ios-addressbook-db", "application/x-win10-mail-contact"]},
     {"name": "Chats", "categories":[
-        {"name": "WhatsApp", "mimes":["application/x-whatsapp-db", "application/x-whatsapp-chatstorage", "application/x-whatsapp-chat","application/x-ufed-chat-whatsapp","application/x-ufed-chat-preview-whatsapp"]},
-        {"name": "Threema", "mimes":["application/x-threema-chat", "application/x-threema-chatstorage"]},
+        {"name": "WhatsApp", "mimes":["application/x-whatsapp-db", "application/x-whatsapp-chatstorage", "application/x-whatsapp-chat","application/x-ufed-chat-preview-whatsapp"]},
+        {"name": "Threema", "mimes":["application/x-threema-chat", "application/x-threema-chatstorage", "application/x-ufed-chat-preview-threema"]},
         {"name": "Messenger", "mimes":["application/messenger-plus", "application/messenger-chat"]},
         {"name": "Skype", "mimes":["application/sqlite-skype", "application/skype",  "application/x-skype-conversation","application/x-ufed-chat-preview-skype"]},
-        {"name": "Telegram", "mimes":["application/x-telegram-chat","application/x-ufed-chat-telegram","application/x-ufed-chat-preview-telegram"]},
+        {"name": "Telegram", "mimes":["application/x-telegram-chat","application/x-ufed-chat-preview-telegram"]},
         {"name": "Jabber", "mimes":["application/x-jabber-chat"]},
         {"name": "Facebook", "mimes":["application/x-ufed-chat-preview-facebook"]},
         {"name": "Instagram", "mimes":["application/x-ufed-chat-preview-instagram"]},
-        {"name": "Discord", "mimes":["application/x-discord-chat"]},
-        {"name": "Chat Activities", "mimes": ["application/x-ufed-chatactivity"]},
+        {"name": "Signal", "mimes":["application/x-ufed-chat-preview-signal"]},
+        {"name": "Snapchat", "mimes":["application/x-ufed-chat-preview-snapchat"]},
+        {"name": "TikTok", "mimes":["application/x-ufed-chat-preview-tiktok"]},
+        {"name": "Viber", "mimes":["application/x-ufed-chat-preview-viber"]},
+        {"name": "Discord", "mimes":["application/x-discord-chat","application/x-ufed-chat-preview-discord"]},
         {"name": "Others Chats", "mimes":["application/x-ufed-html-chats", "application/x-ufed-chats-txt", "application/x-ufed-chat", "application/x-ufed-chat-preview"]}
     ]},
     {"name": "Open Financial Exchange", "mimes": ["application/x-ofx-v1","application/x-ofx-v2","application/x-ofc"]},
@@ -166,7 +170,12 @@
     ]},
     {"name": "SMS Messages", "mimes": ["application/x-ufed-html-sms", "application/x-ufed-sms", "application/x-ios-sms-db"]},
     {"name": "MMS Messages", "mimes": ["application/x-ufed-html-mms", "application/x-ufed-mms"]},
-    {"name": "Instant Messages", "mimes": ["message/x-chat-message", "message/x-threema-message", "application/x-ufed-instantmessage", "message/x-whatsapp-message", "message/x-skype-message", "message/x-skype-filetransfer", "message/x-telegram-message", "message/x-discord-message"]},
+    {"name": "Instant Messages Artifacts", "categories":[
+      {"name": "Instant Messages", "mimes": ["message/x-chat-message", "message/x-threema-message", "application/x-ufed-instantmessage", "message/x-whatsapp-message", "message/x-skype-message", "message/x-skype-filetransfer", "message/x-telegram-message", "message/x-discord-message"]},
+      {"name": "Chat Activities", "mimes": ["application/x-ufed-chatactivity"]},
+      {"name": "Message Attachments", "mimes": ["application/x-ufed-attachment"]},
+      {"name": "Shared Contacts"}
+    ]},
     {"name": "Bluetooth Devices", "mimes": ["application/x-ufed-html-bluetooth", "application/x-ufed-bluetoothdevice"]},
     {"name": "SIM Data", "mimes": ["application/x-ufed-html-simdata", "application/x-ufed-simdata"]},
     {"name": "Calendar", "mimes": ["application/x-ufed-html-calendar", "application/x-ufed-calendarentry", "application/x-ios-calendar-db"]},
@@ -188,7 +197,7 @@
     {"name": "Recordings", "mimes": ["application/x-ufed-html-recordings", "application/x-ufed-recording", "application/x-ios-voicemail-db"]},
     {"name": "Mobile Cards", "mimes": ["application/x-ufed-mobilecard"]},
     {"name": "Applications Usage", "mimes": ["application/x-ufed-appsusagelog", "application/x-ufed-applicationusage"]},
-    {"name": "Device Information", "mimes": ["application/x-ufed-deviceinfo"]},
+    {"name": "Device Information", "mimes": ["application/x-ufed-deviceinfo", "application/x-ufed-deviceinfoentry"]},
     {"name": "Activities Sensor", "mimes": ["application/x-ufed-activitysensordata", "application/x-ufed-activitysensordatameasurement", "application/x-ufed-activitysensordatasample"]},
     {"name": "Credit Cards", "mimes": ["application/x-ufed-creditcard"]},
     {"name": "Device Connectivity", "mimes": ["application/x-ufed-deviceconnectivity"]},

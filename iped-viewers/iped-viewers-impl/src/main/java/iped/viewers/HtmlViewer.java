@@ -9,6 +9,7 @@ import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -24,6 +25,7 @@ import iped.utils.IOUtil;
 import iped.utils.UiUtil;
 import iped.viewers.api.AbstractViewer;
 import iped.viewers.localization.Messages;
+import iped.viewers.search.HitsUpdater;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -42,8 +44,8 @@ public class HtmlViewer extends AbstractViewer {
     private JFXPanel jfxPanel;
     private static int MAX_SIZE = 10000000;
 
-    private static final String hitStyle = "color:black; background-color:yellow";
-    private static final String selStyle = "color:white; background-color:blue";
+    private static final String hitStyle = "color:#2F3603; background-color:#FDFE2D";
+    private static final String selStyle = "color:#2F0201; background-color:#F79131";
 
     private static String LARGE_FILE_MSG = "<html><body>" //$NON-NLS-1$
             + Messages.getString("HtmlViewer.TooBigToOpen") //$NON-NLS-1$
@@ -63,6 +65,14 @@ public class HtmlViewer extends AbstractViewer {
     private volatile String fileName;
     protected Set<String> highlightTerms;
     private volatile boolean scrollToPositionDone = false;
+
+    private volatile Document doc;
+    private volatile String[] queryTerms;
+    private volatile boolean isNavigableTree;
+    private volatile int currTerm = -1;
+    private volatile Object currExec;
+    private volatile boolean isRunning;
+    private final Object lock = new Object();
 
     // TODO change viewer api and move this to loadFile method
     public void setElementIDToScroll(String id) {
@@ -164,6 +174,11 @@ public class HtmlViewer extends AbstractViewer {
         }
     }
 
+    @Override
+    public boolean isSearchSupported() {
+        return true;
+    }
+
     public class FileHandler {
 
         public void openExternal() {
@@ -197,10 +212,6 @@ public class HtmlViewer extends AbstractViewer {
         }
     }
 
-    volatile Document doc;
-    volatile String[] queryTerms;
-    int currTerm = -1;
-
     protected void addHighlighter() {
         Platform.runLater(new Runnable() {
             @Override
@@ -218,33 +229,102 @@ public class HtmlViewer extends AbstractViewer {
                             if (tmpFile != null && !webEngine.getLocation().endsWith(tmpFile.getName()))
                                 return;
 
-                            doc = webEngine.getDocument();
-
-                            if (doc != null) {
-                                currentHit = -1;
-                                totalHits = 0;
-                                hits = new ArrayList<Object>();
-                                if (highlightTerms != null && highlightTerms.size() > 0) {
-                                    highlightNode(doc, false);
+                            try {
+                                Object exec = currExec = new Object();
+                                synchronized (lock) {
+                                    while (isRunning) {
+                                        lock.wait();
+                                    }
+                                    isRunning = true;
                                 }
-
-                            } else if (tmpFile != null) {
-                                LOGGER.info("Null DOM to highlight!"); //$NON-NLS-1$
-                                queryTerms = highlightTerms.toArray(new String[0]);
-                                currTerm = queryTerms.length > 0 ? 0 : -1;
-                                if (shouldScrollToHit()) {
-                                    scrollToNextHit(true);
+                                doc = webEngine.getDocument();
+                                isNavigableTree = false;
+                                if (doc != null) {
+                                    try {
+                                        Boolean nt = (Boolean) webEngine.executeScript("document.querySelector('details') != null");
+                                        isNavigableTree = nt.booleanValue();
+                                    } catch (Exception e) {
+                                    }
+    
+                                    currentHit = -1;
+                                    totalHits = 0;
+                                    hits = new ArrayList<Object>();
+                                    if (highlightTerms != null && highlightTerms.size() > 0) {
+                                        highlightNode(doc, false, exec);
+                                    }
+    
+                                } else if (tmpFile != null) {
+                                    LOGGER.info("Null DOM to highlight!");
+                                    queryTerms = highlightTerms.toArray(new String[0]);
+                                    currTerm = queryTerms.length > 0 ? 0 : -1;
+                                    if (shouldScrollToHit()) {
+                                        scrollToNextHit(true);
+                                    }
                                 }
-                            }
-                            if (doc != null) {
-                                scrollToPosition();
+                                if (doc != null) {
+                                    scrollToPosition();
+                                }
+                            } catch(Exception e) {
+                                e.printStackTrace();
+                            } finally{
+                                synchronized (lock) {
+                                    isRunning = false;
+                                    lock.notifyAll();
+                                }
                             }
                         }
                     }
                 });
             }
         });
+    }
 
+    @Override
+    public void searchInViewer(String term, HitsUpdater hitsUpdater) {
+        if (doc != null) {
+            Object exec = currExec = new Object();
+            Platform.runLater(new Runnable() {
+                @Override
+                public void run() {
+                    if (currExec != exec) {
+                        return;
+                    }
+                    try {
+                        synchronized (lock) {
+                            while (isRunning) {
+                                lock.wait();
+                            }
+                            if (currExec != exec) {
+                                return;
+                            }
+                            isRunning = true;
+                        }
+                        currentHit = -1;
+                        totalHits = 0;
+                        hits = new ArrayList<Object>();
+                        highlightTerms = new HashSet<String>();
+                        if (term != null && !term.isBlank()) {
+                            highlightTerms.add(term.toLowerCase());
+                        }
+                        clearNode(doc, exec);
+                        if (doc != null && !highlightTerms.isEmpty()) {
+                            highlightNode(doc, false, exec);
+                            scrollToPosition();
+                        }
+                        if (hitsUpdater != null) {                    
+                            hitsUpdater.updateHits(currentHit + 1, totalHits);
+                        }
+                    } catch(Exception e) {
+                        e.printStackTrace();
+                    } finally{
+                        synchronized (lock) {
+                            isRunning = false;
+                            lock.notifyAll();
+                        }
+                    }
+                }
+            });
+        }
     }
 
     protected void addJavascriptListener(WebEngine webEngine) {
@@ -326,16 +406,16 @@ public class HtmlViewer extends AbstractViewer {
 
     protected ArrayList<Object> hits;
 
-    protected void highlightNode(Node node, boolean parentVisible) {
-        if (node == null) {
+    protected void highlightNode(Node node, boolean parentVisible, Object exec) {
+        if (node == null || exec != currExec) {
             return;
         }
 
         if (node.getNodeType() == Node.ELEMENT_NODE) {
             String nodeName = node.getNodeName();
-            if (nodeName.equalsIgnoreCase("body")) { //$NON-NLS-1$
+            if (nodeName.equalsIgnoreCase("body")) {
                 parentVisible = true;
-            } else if (nodeName.equalsIgnoreCase("script") || nodeName.equalsIgnoreCase("style")) { //$NON-NLS-1$ //$NON-NLS-2$
+            } else if (nodeName.equalsIgnoreCase("script") || nodeName.equalsIgnoreCase("style")) {
                 parentVisible = false;
             }
         }
@@ -370,33 +450,27 @@ public class HtmlViewer extends AbstractViewer {
                             preNode.setNodeValue(value.substring(0, idx));
                             node.insertBefore(preNode, subnode);
 
-                            Element termNode = doc.createElement("b"); //$NON-NLS-1$
+                            Element termNode = doc.createElement("span");
                             termNode.setAttribute("style", hitStyle);
                             termNode.appendChild(doc.createTextNode(value.substring(idx, idx + term.length())));
-                            termNode.setAttribute("id", "indexerHit-" + totalHits); //$NON-NLS-1$ //$NON-NLS-2$
+                            termNode.setAttribute("id", "ipedHit-" + totalHits);
                             hits.add(termNode);
                             totalHits++;
                             node.insertBefore(termNode, subnode);
-
                             subnode.setNodeValue(value.substring(idx + term.length()));
+                            if (isNavigableTree) {
+                                // expands all parent elements of a hit
+                                try {
+                                    webEngine.executeScript("for (let el = document.getElementById('ipedHit-"
+                                            + (totalHits - 1)
+                                            + "'); el; el = el.parentElement) if (el.tagName === 'DETAILS') el.open = true;");
+                                } catch (Exception e) {
+                                }
+                            }
                             if (totalHits == 1) {
                                 termNode.setAttribute("style", selStyle);
                                 if (shouldScrollToHit()) {
-                                    webEngine.executeScript("x = document.getElementById(\"indexerHit-" + ++currentHit + "\"); " + scrollIntoView("x"));
-                                }
-                            }
-
-                            if (totalHits > 0) {
-                                // expands all parent elements of each hit
-                                try {
-                                    Boolean isNavigableTree = (Boolean) webEngine.executeScript("document.querySelector('details') != null");
-                                    if (isNavigableTree.booleanValue()) {
-                                        for (int i = 0; i < totalHits; i++) {
-                                            webEngine.executeScript("for (let el = document.getElementById('indexerHit-" + i + "'); el; el = el.parentElement) if (el.tagName === 'DETAILS') el.open = true;");
-                                        }
-                                    }
-                                } catch (ClassCastException e) {
-                                    // ignores as the value is not of required type
+                                    webEngine.executeScript("x = document.getElementById(\"ipedHit-" + ++currentHit + "\"); " + scrollIntoView("x"));
                                 }
                             }
                         }
@@ -404,9 +478,37 @@ public class HtmlViewer extends AbstractViewer {
 
                 }
 
-                highlightNode(subnode, parentVisible);
+                highlightNode(subnode, parentVisible, exec);
 
-            } while ((subnode = subnode.getNextSibling()) != null);
+            } while ((subnode = subnode.getNextSibling()) != null && exec == currExec);
+        }
+    }
+
+    protected void clearNode(Node node, Object exec) {
+        if (node == null || exec != currExec) {
+            return;
+        }
+        Node subnode = node.getFirstChild();
+        if (subnode != null) {
+            StringBuilder sb = new StringBuilder();
+            do {
+                if (subnode instanceof Element) {
+                    String attr = ((Element) subnode).getAttribute("id");
+                    if (attr != null && attr.startsWith("ipedHit")) {
+                        Node prevSubnode = subnode.getPreviousSibling();
+                        sb.setLength(0);
+                        sb.append(prevSubnode.getNodeValue());
+                        sb.append(subnode.getFirstChild().getNodeValue());
+                        Node nextSubnode = subnode.getNextSibling();
+                        node.removeChild(prevSubnode);
+                        node.removeChild(subnode);
+                        sb.append(nextSubnode.getNodeValue());
+                        nextSubnode.setNodeValue(sb.toString());
+                        subnode = nextSubnode;
+                    }
+                }
+                clearNode(subnode, exec);
+            } while ((subnode = subnode.getNextSibling()) != null && exec == currExec);
         }
     }
 
@@ -427,6 +529,14 @@ public class HtmlViewer extends AbstractViewer {
 
     @Override
     public void scrollToNextHit(final boolean forward) {
+        scrollToNextHit(forward, false, null);
+    }
+
+    @Override
+    public void scrollToNextHit(final boolean forward, final boolean wrap, final HitsUpdater hitsUpdater) {
+        if (totalHits <= 0) {
+            return;
+        }
 
         Platform.runLater(new Runnable() {
             @Override
@@ -434,14 +544,17 @@ public class HtmlViewer extends AbstractViewer {
 
                 if (forward) {
                     if (doc != null) {
-                        if (currentHit < totalHits - 1) {
+                        if (currentHit < totalHits - 1 || (currentHit == totalHits - 1 && wrap)) {
                             if (currentHit >= 0) {
                                 Element termNode = (Element) hits.get(currentHit);
                                 termNode.setAttribute("style", hitStyle);
                             }
-                            Element termNode = (Element) hits.get(++currentHit);
+                            if (++currentHit >= totalHits) {
+                                currentHit = 0;
+                            }
+                            Element termNode = (Element) hits.get(currentHit);
                             termNode.setAttribute("style", selStyle);
-                            webEngine.executeScript("x = document.getElementById(\"indexerHit-" + currentHit + "\"); " + scrollIntoView("x"));
+                            webEngine.executeScript("x = document.getElementById(\"ipedHit-" + currentHit + "\"); " + scrollIntoView("x"));
                         }
                     } else {
                         while (currTerm < queryTerms.length && queryTerms.length > 0) {
@@ -462,12 +575,15 @@ public class HtmlViewer extends AbstractViewer {
 
                 } else {
                     if (doc != null) {
-                        if (currentHit > 0) {
+                        if (currentHit > 0 || (currentHit == 0 && wrap)) {
                             Element termNode = (Element) hits.get(currentHit);
                             termNode.setAttribute("style", hitStyle);
-                            termNode = (Element) hits.get(--currentHit);
+                            if (--currentHit < 0) {
+                                currentHit = totalHits - 1;
+                            }
+                            termNode = (Element) hits.get(currentHit);
                             termNode.setAttribute("style", selStyle);
-                            webEngine.executeScript("x = document.getElementById(\"indexerHit-" + currentHit + "\"); " + scrollIntoView("x"));
+                            webEngine.executeScript("x = document.getElementById(\"ipedHit-" + currentHit + "\"); " + scrollIntoView("x"));
                         }
                     } else {
                         while (currTerm > -1) {
@@ -489,7 +605,9 @@ public class HtmlViewer extends AbstractViewer {
                         }
                     }
                 }
-
+                if (hitsUpdater != null) {
+                    hitsUpdater.updateHits(currentHit + 1, totalHits);
+                }
             }
         });
 

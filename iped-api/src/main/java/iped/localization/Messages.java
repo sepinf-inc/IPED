@@ -19,7 +19,6 @@ import iped.io.URLUtil;
 
 public class Messages {
 
-    public static final String LOCALE_SYS_PROP = "iped-locale";
     public static final String BUNDLES_FOLDER = "localization";
     public static final String BUNDLES_FOLDER_PREFIX = "iped-app/resources/";
 
