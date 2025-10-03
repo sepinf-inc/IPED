@@ -214,9 +214,30 @@ public class IconManager {
             mimeIconMap.put("application/x-bittorrent-settings-dat", icon);
             mimeIconMap.put("application/x-bittorrent", icon);
         }
+
         icon = availableIconsMap.get("transmission");
         if (icon != null) {
             mimeIconMap.put("application/x-transmission-resume", icon);
+        }
+
+        icon = availableIconsMap.get("auto-dest");
+        if (icon != null) {
+            mimeIconMap.put("application/x-automaticdestinations", icon);
+        }
+
+        icon = availableIconsMap.get("auto-dest-entry");
+        if (icon != null) {
+            mimeIconMap.put("application/x-automaticdestinations-entry", icon);
+        }
+
+        icon = availableIconsMap.get("custom-dest");
+        if (icon != null) {
+            mimeIconMap.put("application/x-customdestinations", icon);
+        }
+
+        icon = availableIconsMap.get("custom-dest-entry");
+        if (icon != null) {
+            mimeIconMap.put("application/x-customdestinations-entry", icon);
         }
 
         icon = availableIconsMap.get("registry");

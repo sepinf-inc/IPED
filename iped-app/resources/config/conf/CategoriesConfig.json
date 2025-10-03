@@ -36,6 +36,8 @@
       ]}
     ]},
     {"name": "Windows Artifacts", "categories":[
+        {"name": "Automatic Destinations", "mimes": ["application/x-automaticdestinations","application/x-automaticdestinations-entry"]},
+        {"name": "Custom Destinations", "mimes": ["application/x-customdestinations","application/x-customdestinations-entry"]},
         {"name": "Event Files", "mimes": ["application/x-elf-file", "application/x-elf-log"]},
         {"name": "Event Records", "mimes": ["application/x-elf-record"]},
         {"name": "Event Transcript", "mimes": ["application/x-event-transcript", "application/x-event-transcript-history", "application/x-event-transcript-inventory-app", "application/x-event-transcript-app-interactivity", "application/x-event-transcript-devices", "application/x-event-transcript-census", "application/x-event-transcript-networking"]},

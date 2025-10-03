@@ -1674,15 +1674,33 @@
     <mime-type type="application/x-emule-collection">
         <glob pattern="*.emulecollection"/>
     </mime-type>
-    
+
     <mime-type type="application/x-emule-collection">
         <sub-class-of type="text/plain"/>
         <glob pattern="*.emulecollection"/>
     </mime-type>
-    
+
     <mime-type type="application/x-vlc-ini">
         <sub-class-of type="text/x-ini"/>
         <glob pattern="vlc-qt-interface.ini"/>
+    </mime-type>
+
+    <!-- jump lists -->
+    <mime-type type="application/x-automaticdestinations">
+        <glob pattern="*.automaticDestinations-ms"/>
+        <sub-class-of type="application/x-tika-msoffice"/>
+    </mime-type>
+    <mime-type type="application/x-customdestinations">
+        <glob pattern="*.customDestinations-ms"/>
+        <sub-class-of type="application/x-tika-msoffice"/>
+    </mime-type>
+
+    <!-- jump lists entries -->
+    <mime-type type="application/x-automaticdestinations-entry">
+    	<sub-class-of type="application/x-lnk"/>
+    </mime-type>
+    <mime-type type="application/x-customdestinations-entry">
+    	<sub-class-of type="application/x-lnk"/>
     </mime-type>
 
 </mime-info>
