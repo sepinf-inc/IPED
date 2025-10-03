@@ -207,6 +207,7 @@ public class Configuration {
         configManager.addObject(new ProcessingPriorityConfig());
 
         configManager.addObject(new EnableTaskProperty(FaceRecognitionConfig.enableParam));
+        configManager.addObject(new EnableTaskProperty(AgeEstimationConfig.enableParam));
 
         TaskInstallerConfig taskConfig = new TaskInstallerConfig();
         configManager.addObject(taskConfig);

@@ -29,6 +29,7 @@ enableKnownMetCarving = false
 enableImageThumbs = false
 enableImageSimilarity = false
 enableFaceRecognition = false
+enableAgeEstimation = false
 enableSearchHardwareWallets = false
 enableVideoThumbs = false
 enableDocThumbs = false
