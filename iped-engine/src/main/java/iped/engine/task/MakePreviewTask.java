@@ -56,7 +56,7 @@ public class MakePreviewTask extends AbstractTask {
 
     private StandardParser parser;
 
-    private static volatile LockManager<PreviewKey> lockManager;
+    private static LockManager<PreviewKey> lockManager;
 
     @Override
     public List<Configurable<?>> getConfigurables() {
@@ -76,11 +76,7 @@ public class MakePreviewTask extends AbstractTask {
 
     private static synchronized void initLockManager() {
         if (lockManager == null) {
-            synchronized (MakePreviewTask.class) {
-                if (lockManager == null) {
-                    lockManager = new LockManager<>();
-                }
-            }
+            lockManager = new LockManager<>();
         }
     }
 

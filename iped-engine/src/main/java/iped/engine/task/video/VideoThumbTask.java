@@ -337,7 +337,7 @@ public class VideoThumbTask extends ThumbTask {
 
         if (caseData.isIpedReport() && (evidence.getViewFile() != null && evidence.getViewFile().length() > 0 || evidence.hasPreview())) {
             evidence.setExtraAttribute(HAS_THUMB, true);
-            // The viewFile/previewData will copied in ExportFileTask
+            // The viewFile/previewData will be copied in ExportFileTask
             return;
         }
 

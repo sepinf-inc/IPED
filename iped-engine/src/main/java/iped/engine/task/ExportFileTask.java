@@ -154,7 +154,7 @@ public class ExportFileTask extends AbstractTask {
     private static boolean computeHash = false;
     private static File extractDir;
     private static ExportFileTask lastInstance = null;
-    private static volatile LockManager<String> lockManager;
+    private static LockManager<String> lockManager;
 
     private HashMap<IHashValue, IHashValue> hashMap;
     private List<String> noContentLabels;
@@ -165,11 +165,7 @@ public class ExportFileTask extends AbstractTask {
 
     private static synchronized void initLockManager() {
         if (lockManager == null) {
-            synchronized (MakePreviewTask.class) {
-                if (lockManager == null) {
-                    lockManager = new LockManager<>();
-                }
-            }
+            lockManager = new LockManager<>();
         }
     }
 
@@ -326,7 +322,6 @@ public class ExportFileTask extends AbstractTask {
                     lock.lock();
                 }
                 try {
-
                     copyViewFile(evidence);
 
                 } finally {
