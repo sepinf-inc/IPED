@@ -449,6 +449,16 @@ public interface IItem extends IItemReader {
      */
     void setViewFile(File viewFile);
 
+    boolean hasPreview();
+
+    void setHasPreview(boolean b);
+
+    File getPreviewBaseFolder();
+
+    String getPreviewExt();
+
+    void setPreviewExt(String viewExt);
+
     void setInputStreamFactory(ISeekableInputStreamFactory inputStreamFactory);
 
     void setIdInDataSource(String string);

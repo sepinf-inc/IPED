@@ -28,6 +28,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
@@ -43,13 +44,18 @@ import org.slf4j.LoggerFactory;
 import iped.app.ui.controls.ErrorIcon;
 import iped.data.IItemId;
 import iped.engine.config.ConfigurationManager;
-import iped.engine.task.HTMLReportTask;
+import iped.engine.preview.PreviewConstants;
+import iped.engine.preview.PreviewKey;
+import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.task.ImageThumbTask;
+import iped.engine.task.ThumbTask;
 import iped.engine.task.index.IndexItem;
+import iped.engine.task.video.VideoThumbTask;
 import iped.engine.util.Util;
 import iped.parsers.util.MetadataUtil;
 import iped.properties.ExtraProperties;
 import iped.utils.ExternalImageConverter;
+import iped.utils.HashValue;
 import iped.utils.ImageUtil;
 import iped.viewers.util.ImageMetadataUtil;
 
@@ -342,14 +348,19 @@ public class GalleryModel extends AbstractTableModel {
     }
 
     private BufferedImage getViewImage(int docID, String hash, boolean isVideo) throws IOException {
-        File baseFolder = App.get().appCase.getAtomicSource(docID).getModuleDir();
+        File modulesDir = App.get().appCase.getAtomicSource(docID).getModuleDir();
+        File baseFolder;
+        String ext;
         if (isVideo) {
-            baseFolder = new File(baseFolder, HTMLReportTask.viewFolder);
+            baseFolder = new File(modulesDir, PreviewConstants.VIEW_FOLDER_NAME);
+            ext = VideoThumbTask.PREVIEW_EXT;
         } else {
-            baseFolder = new File(baseFolder, ImageThumbTask.thumbsFolder);
+            // for old cases, when image thumbs were not stored in index
+            baseFolder = new File(modulesDir, ImageThumbTask.THUMBS_FOLDER_NAME);
+            ext = ThumbTask.THUMB_EXT;
         }
 
-        File hashFile = Util.getFileFromHash(baseFolder, hash, "jpg"); //$NON-NLS-1$
+        File hashFile = Util.getFileFromHash(baseFolder, hash, ext);
         if (hashFile.exists()) {
             BufferedImage image = ImageIO.read(hashFile);
             if (image == null) {
@@ -359,6 +370,20 @@ public class GalleryModel extends AbstractTableModel {
             }
 
         } else {
+            try {
+                PreviewKey key = new PreviewKey(new HashValue(hash).getBytes());
+                AtomicReference<BufferedImage> result = new AtomicReference<>();
+                PreviewRepositoryManager.get(baseFolder.getParentFile()).consumePreview(key, inputStream -> {
+                    BufferedImage image = ImageIO.read(inputStream);
+                    if (image == null) {
+                        image = errorImg;
+                    }
+                    result.set(image);
+                });
+                return result.get();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             return null;
         }
     }

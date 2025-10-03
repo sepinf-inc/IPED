@@ -167,6 +167,12 @@ public class Item implements IItem {
      */
     private File viewFile;
 
+    private boolean hasPreview;
+
+    private File previewBaseFolder;
+
+    private String previewExt;
+
     private HashSet<String> categories = new HashSet<String>();
 
     private List<String> labels = new ArrayList<>();
@@ -783,6 +789,21 @@ public class Item implements IItem {
         return viewFile;
     }
 
+    @Override
+    public boolean hasPreview() {
+        return hasPreview;
+    }
+
+    @Override
+    public File getPreviewBaseFolder() {
+        return previewBaseFolder;
+    }
+
+    @Override
+    public String getPreviewExt() {
+        return previewExt;
+    }
+
     /**
      *
      * @return true se o item tem filhos, como subitens ou itens carveados
@@ -1218,6 +1239,20 @@ public class Item implements IItem {
      */
     public void setViewFile(File viewFile) {
         this.viewFile = viewFile;
+    }
+
+    @Override
+    public void setHasPreview(boolean value) {
+        this.hasPreview = value;
+    }
+
+    @Override
+    public void setPreviewExt(String previewExt) {
+        this.previewExt = previewExt;
+    }
+
+    public void setPreviewBaseFolder(File previewBaseFolder) {
+        this.previewBaseFolder = previewBaseFolder;
     }
 
     /**

@@ -315,8 +315,10 @@ public class VideoProcessResult implements Closeable {
     public void close() throws IOException {
         if (subTmp != null) {
             File[] files = subTmp.listFiles();
-            for (File file : files) {
-                file.delete();
+            if (files != null) {
+                for (File file : files) {
+                    file.delete();
+                }
             }
             subTmp.delete();
         }
