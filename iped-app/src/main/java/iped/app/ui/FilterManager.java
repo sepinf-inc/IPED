@@ -17,6 +17,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -39,6 +40,9 @@ import org.apache.lucene.search.Query;
 import org.roaringbitmap.RoaringBitmap;
 
 import iped.data.IItemId;
+import iped.engine.config.AgeEstimationConfig;
+import iped.engine.config.ConfigurationManager;
+import iped.engine.config.FaceRecognitionConfig;
 import iped.engine.data.IPEDMultiSource;
 import iped.engine.search.MultiSearchResult;
 import iped.engine.search.QueryBuilder;
@@ -146,9 +150,25 @@ public class FilterManager implements ActionListener, ListSelectionListener {
         comboFilter.addItem(App.FILTRO_TODOS);
         comboFilter.addItem(App.FILTRO_SELECTED);
 
+        boolean faceRecognitionEnabled = Optional.ofNullable(ConfigurationManager.get())
+                .map(cm -> cm.getEnableTaskConfigurable(FaceRecognitionConfig.enableParam))
+                .map(e -> e.isEnabled())
+                .orElse(true);
+        boolean ageEstimationEnabled = Optional.ofNullable(ConfigurationManager.get())
+                .map(cm -> cm.getEnableTaskConfigurable(AgeEstimationConfig.enableParam))
+                .map(e -> e.isEnabled())
+                .orElse(true);
+
         List<String> filternames = filters.keySet().stream().map(i -> (String) i).collect(Collectors.toList());
         Collections.sort(filternames, new FilterComparator());
         for (String filter : filternames) {
+
+            // skip filters that uses of non-enabled features
+            if (!faceRecognitionEnabled && "Files with Faces".equals(filter)
+                    || !ageEstimationEnabled && "Files with Child Faces".equals(filter)) {
+                continue;
+            }
+
             String localizedName = MessagesFilter.get(filter, filter);
             localizationMap.put(localizedName, filter);
             comboFilter.addItem(localizedName);
