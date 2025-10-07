@@ -16,6 +16,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
@@ -49,6 +50,7 @@ import iped.engine.search.QueryBuilder;
 import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
 import iped.localization.LocaleResolver;
+import iped.properties.ExtraProperties;
 import iped.search.IMultiSearchResult;
 import iped.utils.UTF8Properties;
 import iped.viewers.api.IFilter;
@@ -74,6 +76,7 @@ public class FilterManager implements ActionListener, ListSelectionListener {
     private HashMap<String, String> localizationMap = new HashMap<>();
     private volatile boolean updatingCombo = false;
     private JComboBox<String> comboFilter;
+    private Map<String, Boolean> skipComboFilterConditions = new HashMap<>();
 
     JDialog dialog;
 
@@ -136,10 +139,24 @@ public class FilterManager implements ActionListener, ListSelectionListener {
                 }
             }
 
+            // register filters to skip the exhibition in comboFilter
+            registerSkipComboFilterCondition("Files with Faces", FaceRecognitionConfig.enableParam, ExtraProperties.FACE_COUNT);
+            registerSkipComboFilterCondition("Files with Child Faces", AgeEstimationConfig.enableParam, ExtraProperties.FACE_AGE_LABELS);
+
         } catch (IOException e) {
             e.printStackTrace();
         }
         updateFilter();
+    }
+
+    private void registerSkipComboFilterCondition(String filterName, String enablePropertyName, String indexedFieldName) {
+        boolean propertyEnabled = Optional
+                .ofNullable(ConfigurationManager.get().getEnableTaskConfigurable(enablePropertyName))
+                .map(e -> e.isEnabled())
+                .orElse(false);
+        boolean hasFieldInCase = App.get().appCase.getLeafReader().getFieldInfos().fieldInfo(indexedFieldName) != null;
+
+        skipComboFilterConditions.put(filterName, !propertyEnabled && !hasFieldInCase);
     }
 
     private void updateFilter() {
@@ -150,22 +167,12 @@ public class FilterManager implements ActionListener, ListSelectionListener {
         comboFilter.addItem(App.FILTRO_TODOS);
         comboFilter.addItem(App.FILTRO_SELECTED);
 
-        boolean faceRecognitionEnabled = Optional.ofNullable(ConfigurationManager.get())
-                .map(cm -> cm.getEnableTaskConfigurable(FaceRecognitionConfig.enableParam))
-                .map(e -> e.isEnabled())
-                .orElse(true);
-        boolean ageEstimationEnabled = Optional.ofNullable(ConfigurationManager.get())
-                .map(cm -> cm.getEnableTaskConfigurable(AgeEstimationConfig.enableParam))
-                .map(e -> e.isEnabled())
-                .orElse(true);
-
         List<String> filternames = filters.keySet().stream().map(i -> (String) i).collect(Collectors.toList());
         Collections.sort(filternames, new FilterComparator());
         for (String filter : filternames) {
 
             // skip filters that uses of non-enabled features
-            if (!faceRecognitionEnabled && "Files with Faces".equals(filter)
-                    || !ageEstimationEnabled && "Files with Child Faces".equals(filter)) {
+            if (skipComboFilterConditions.containsKey(filter) && skipComboFilterConditions.get(filter)) {
                 continue;
             }
 
