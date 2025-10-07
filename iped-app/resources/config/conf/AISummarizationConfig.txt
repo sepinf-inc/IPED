@@ -9,3 +9,5 @@ remoteServiceAddress = 127.0.0.1:11111
 # When set to true, summaries will be generated for WhatsApp conversations parsed by IPED's internal parser.
 enableWhatsAppSummarization = false
 
+# Enables automatic summarization of UFED supported chats using AI models.
+enableUFEDChatSummarization = false
