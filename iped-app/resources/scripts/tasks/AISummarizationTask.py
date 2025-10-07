@@ -7,7 +7,8 @@ import json
 
 # configuration properties
 enableProp = 'enableAISummarization'
-enableWhatsAppSummarizationProp = 'enableWhatsAppSummarization'
+enableWhatsAppSummarizationProp = 'enableWhatsAppSummarization' # This is for IPED internal Parser
+enableUFEDChatSummarizationProp = 'enableUFEDChatSummarization' # This is for UFED Chat Parser - x-ufed-chat-preview
 configFile = 'AISummarizationConfig.txt'
 remoteServiceAddressProp = 'remoteServiceAddress'
 
@@ -59,6 +60,7 @@ class AISummarizationTask:
     enabled = False
     remoteServiceAddress = None
     enableWhatsAppSummarization = False
+    enableUFEDChatSummarization = False
     
     def isEnabled(self):
         return AISummarizationTask.enabled
@@ -94,15 +96,13 @@ class AISummarizationTask:
             return
 
         AISummarizationTask.enableWhatsAppSummarization = extraProps.getProperty(enableWhatsAppSummarizationProp)
+        AISummarizationTask.enableUFEDChatSummarization = extraProps.getProperty(enableUFEDChatSummarizationProp)
 
         return
 
 
-    
-    def processWhatsAppChat(self, item):
-        # Only process WhatsApp chats processed by internal IPED parser for now
-        if not "whatsapp-chat" in item.getMediaType().toString():
-            return
+    def processChat(self, item):
+        
         
         from iped.properties import ExtraProperties
 
@@ -140,9 +140,18 @@ class AISummarizationTask:
     # Process an Item object. This method is executed on all case items.
     # It can access any method of Item class and store results as a new extra attribute.
     def process(self, item):
-        
-        if AISummarizationTask.enableWhatsAppSummarization:
-            self.processWhatsAppChat(item)
+        if not AISummarizationTask.enabled:
+            return
+
+        # WhatsApp chats processed by internal IPED parser
+        if AISummarizationTask.enableWhatsAppSummarization and "whatsapp-chat" in item.getMediaType().toString():
+            self.processChat(item)
+            return
+        # Process UFED Chats 
+        if AISummarizationTask.enableUFEDChatSummarization and "x-ufed-chat-preview" in item.getMediaType().toString():
+            self.processChat(item)
+            return
+            
 
 
 
