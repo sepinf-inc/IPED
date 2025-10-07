@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.swing.JOptionPane;
@@ -28,6 +29,9 @@ import iped.app.ui.controls.CSelButton;
 import iped.app.ui.viewers.AttachmentSearcherImpl;
 import iped.app.ui.viewers.HexSearcherImpl;
 import iped.app.ui.viewers.TextViewer;
+import iped.engine.config.AgeEstimationConfig;
+import iped.engine.config.ConfigurationManager;
+import iped.engine.config.FaceRecognitionConfig;
 import iped.engine.task.index.IndexItem;
 import iped.io.IStreamSource;
 import iped.io.URLUtil;
@@ -95,8 +99,18 @@ public class ViewerController {
         });
         viewers.add(viewersRepository = new MultiViewer());
 
+        boolean faceRecognitionEnabled = Optional.ofNullable(ConfigurationManager.get())
+                .map(cm -> cm.getEnableTaskConfigurable(FaceRecognitionConfig.enableParam))
+                .map(e -> e.isEnabled())
+                .orElse(false);
+
+        boolean ageEstimationEnabled = Optional.ofNullable(ConfigurationManager.get())
+                .map(cm -> cm.getEnableTaskConfigurable(AgeEstimationConfig.enableParam))
+                .map(e -> e.isEnabled())
+                .orElse(false);
+
         // These are content-specific viewers (inside a single ViewersRepository)
-        viewersRepository.addViewer(new ImageViewer());
+        viewersRepository.addViewer(new ImageViewer(faceRecognitionEnabled, ageEstimationEnabled));
         viewersRepository.addViewer(new CADViewer());
         viewersRepository.addViewer(new HtmlViewer());
         viewersRepository.addViewer(new EmailViewer(new AttachmentSearcherImpl()));
@@ -104,7 +118,7 @@ public class ViewerController {
         linkViewer = new HtmlLinkViewer(new AttachmentSearcherImpl());
         viewersRepository.addViewer(linkViewer);
         viewersRepository.addViewer(new IcePDFViewer());
-        viewersRepository.addViewer(new TiffViewer());
+        viewersRepository.addViewer(new TiffViewer(faceRecognitionEnabled, ageEstimationEnabled));
         viewersRepository.addViewer(new AudioViewer(new AttachmentSearcherImpl()));
         viewersRepository.addViewer(new ReferencedFileViewer(viewersRepository, new AttachmentSearcherImpl(), () -> {
             changeToViewer(metadataViewer);

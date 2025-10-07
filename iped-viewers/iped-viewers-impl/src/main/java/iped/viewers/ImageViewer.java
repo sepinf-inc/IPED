@@ -129,12 +129,19 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
 
     private String videoComment;
 
-    public ImageViewer() {
-        this(0);
+    private boolean enableHighlightFacesButton;
+    private boolean enableAgeEstimationCombo;
+
+
+    public ImageViewer(boolean enableHighlightFacesButton, boolean enableAgeEstimationCombo) {
+        this(0, enableHighlightFacesButton, enableAgeEstimationCombo);
     }
 
-    public ImageViewer(int initialFitMode) {
+    public ImageViewer(int initialFitMode, boolean enableHighlightFacesButton, boolean enableAgeEstimationCombo) {
         super(new BorderLayout());
+        this.enableHighlightFacesButton = enableHighlightFacesButton;
+        this.enableAgeEstimationCombo = enableAgeEstimationCombo;
+
         isToolbarVisible = true;
         imagePanel = new ImageViewPanel(initialFitMode);
         createToolBar();
@@ -443,6 +450,7 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
 
         highlightFacesButton = createToolBarButton(actionHighlightFaces, true);
         highlightFacesButton.setToolTipText(Messages.getString("ImageViewer.HighlightFaces"));
+        highlightFacesButton.setVisible(enableHighlightFacesButton);
 
         ageSelectionButton = createAgeSelectionToolBarButton();
     }
@@ -635,7 +643,7 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
 
     public void setHightlightFaces(boolean enableHightlightFaces) {
         applyHighlightFaces = enableHightlightFaces;
-        ageSelectionButton.setVisible(applyHighlightFaces);
+        ageSelectionButton.setVisible(applyHighlightFaces && enableAgeEstimationCombo);
         setButtonSelected(highlightFacesButton, applyHighlightFaces);
         update();
     }
