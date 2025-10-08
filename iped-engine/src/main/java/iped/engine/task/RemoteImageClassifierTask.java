@@ -98,7 +98,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
     private static final String AI_CLASSIFICATION_FAIL_NO_CLASS = "fail:NoClass";
     private static final String AI_CLASSIFICATION_FAIL_NO_RESULTS = "fail:NoResults";
     private static final String AI_CLASSIFICATION_SKIP_ATTR = aiPrefix + "classificationSkip";
-    private static final String AI_CLASSIFICATION_SKIP_NO = "no";
+    private static final String AI_CLASSIFICATION_SKIP_FALSE = "false";
     private static final String AI_CLASSIFICATION_SKIP_SIZE = "size";
     private static final String AI_CLASSIFICATION_SKIP_DIMENSION = "dimension";
     private static final String AI_CLASSIFICATION_SKIP_HASHDB = "hashDB";
@@ -424,7 +424,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
                             // Add classification status
                             evidence.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_FAIL_NO_CLASS);
                             // Add skip classification info
-                            evidence.setExtraAttribute(AI_CLASSIFICATION_SKIP_ATTR, AI_CLASSIFICATION_SKIP_NO);
+                            evidence.setExtraAttribute(AI_CLASSIFICATION_SKIP_ATTR, AI_CLASSIFICATION_SKIP_FALSE);
                             logger.warn("ClassificationFail::EvidenceNoClass: Invalid/missing 'class' field for filename: {}", name);
                         }
                     }
@@ -459,7 +459,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
                     // Add classification status
                     evidence.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_SUCCESS);
                     // Add skip classification info
-                    evidence.setExtraAttribute(AI_CLASSIFICATION_SKIP_ATTR, AI_CLASSIFICATION_SKIP_NO);
+                    evidence.setExtraAttribute(AI_CLASSIFICATION_SKIP_ATTR, AI_CLASSIFICATION_SKIP_FALSE);
                     
                     // Classification classes as a String holding className=classProb pairs (used when retrieving cached classifications)
                     String className;
@@ -492,7 +492,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
                 // Add classification status
                 evidence.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_FAIL_NO_RESULTS);
                 // Add skip classification info
-                evidence.setExtraAttribute(AI_CLASSIFICATION_SKIP_ATTR, AI_CLASSIFICATION_SKIP_NO);
+                evidence.setExtraAttribute(AI_CLASSIFICATION_SKIP_ATTR, AI_CLASSIFICATION_SKIP_FALSE);
             }
             logger.error("ClassificationFail::NoResults: 'results' array is missing in JSON response. Classification fail for a batch of {} files", queue.size());
         }
