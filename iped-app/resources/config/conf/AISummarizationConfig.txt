@@ -11,3 +11,6 @@ enableWhatsAppSummarization = false
 
 # Enables automatic summarization of UFED supported chats using AI models.
 enableUFEDChatSummarization = false
+
+# Minimum item content length to perform summarization in characters
+minimumContentLength = 1000
