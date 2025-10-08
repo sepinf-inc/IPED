@@ -2,31 +2,34 @@ import requests
 #need to install requests lib: .\target\release\iped-4.3.0-snapshot\python\python.exe .\target\release\iped-4.3.0-snapshot\python\get-pip.py requests
 #also numpy for some reason: .\target\release\iped-4.3.0-snapshot\python\python.exe .\target\release\iped-4.3.0-snapshot\python\get-pip.py "numpy<2.0" 
 import json
-
-
+from bs4 import BeautifulSoup, NavigableString, Tag
+import re
+from datetime import datetime
 
 # configuration properties
 enableProp = 'enableAISummarization'
 enableWhatsAppSummarizationProp = 'enableWhatsAppSummarization' # This is for IPED internal Parser
 enableUFEDChatSummarizationProp = 'enableUFEDChatSummarization' # This is for UFED Chat Parser - x-ufed-chat-preview
-configFile = 'AISummarizationConfig.txt'
+minimumContentLengthProp = 'minimumContentLength' # Minimum item content length to perform summarization in characters
 remoteServiceAddressProp = 'remoteServiceAddress'
+configFile = 'AISummarizationConfig.txt'
 
 
-def create_summaries_request(chat_content: str, base_url: str = "127.0.0.1:1111"):
+
+def create_summaries_request(msgs: list[dict] , base_url: str = "127.0.0.1:1111"):
     """
-    Sends a POST request to the /api/create_summaries endpoint with chat content.
+    Sends a POST request to the /api/create_summaries_from_msgs endpoint with chat msgs.
 
     Args:
-        chat_content (str): The chat content to be summarized.
+        msgs (list[dict]): The chat msgs to be summarized, with content, direction, sender name etc.
         base_url (str): The base URL, defaults to "http://localhost:1111" for local development.
 
     Returns:
         dict: The JSON response from the API, or an error message.
     """
-    url = f"http://{base_url}/api/create_summaries"
+    url = f"http://{base_url}/api/create_summaries_from_msgs"
     headers = {"Content-Type": "application/json"}
-    payload = {"chat_content": chat_content}
+    payload = {"msgs": msgs}
 
     try:
         response = requests.post(url, headers=headers, data=json.dumps(payload))
@@ -51,6 +54,151 @@ def create_summaries_request(chat_content: str, base_url: str = "127.0.0.1:1111"
         return {"error": f"JSON decode error: {json_err} - {response.text}"}
 
 
+def _clean_timestamp(raw: str) -> str:
+    """
+    Normaliza carimbos como “2023-01-08 19:38:20-0300”
+    para ISO 8601 (“2023-01-08T19:38:20-03:00”).
+    Se não conseguir entender, devolve o texto original.
+    """
+    _TS_CLEAN = re.compile(r"\s+")
+
+    if "Editada em" in raw:
+        raw = raw.split("Editada em")[0].strip()
+    txt = _TS_CLEAN.sub(" ", raw).strip()
+    
+    try:
+        # 2023-01-08 19:38:20-0300
+        dt = datetime.strptime(txt, "%Y-%m-%d %H:%M:%S%z")
+        return dt.isoformat()
+    except ValueError:
+        pass
+    try:
+        # 2023-01-08 19:38:20-0300
+        dt = datetime.strptime(txt, "%Y-%m-%d %H:%M:%S %z")
+        return dt.isoformat()
+    except ValueError:
+        return txt
+
+def _extract_text_nodes(tag: Tag) -> str:
+    """
+    Concatena somente os nós-texto “soltos” dentro de *tag*.
+    Ignora <br>, <span>, etc.
+    """
+
+
+    parts = [t.strip() for t in tag.contents
+             if isinstance(t, NavigableString) and t.strip()]
+    return " ".join(parts)
+
+def getMessagesFromChatHTML(html_text: str) -> list[dict]:
+
+    html_text = html_text.replace('<br/>', '')
+    soup = BeautifulSoup(html_text, "html.parser")
+    msgs: list[dict] = []
+
+    len_mgs_content = 0
+
+    for block in soup.select("div.linha"):
+        msg_div = block.find("div", class_=["incoming", "outgoing"])
+
+        if msg_div is None:                 # linha de sistema / vazia
+            continue
+
+        if msg_div.find("div", class_=["systemmessage"]):
+            continue
+
+        msg_id = block.get('id')
+
+        direction = ("received"
+                     if "incoming" in msg_div["class"]
+                     else "sent")
+
+        forwarded = False
+        if msg_div.find("span", class_=["fwd"]):
+            forwarded = True
+
+        name = msg_div.find("span").get_text(" ", strip=True)
+        #print(msg_div.prettify())
+        timestamp_span = msg_div.find("span", class_="time")
+        if not timestamp_span:
+            print("No timestamp found")
+            timestamp = "N/A"
+        else:
+            timestamp_raw = timestamp_span.get_text(" ", strip=True)
+            timestamp = _clean_timestamp(timestamp_raw)
+
+        # -------------------------------------------------------------------#
+        # 1) transcrição de áudio (fica em <i> … </i>)
+        # -------------------------------------------------------------------#
+        content = ""
+        kind = ""
+        i_tag = msg_div.find("i")
+        if i_tag and msg_div.find("div", class_=["audioImg"]):
+            content = i_tag.get_text(" ", strip=True)
+            kind = "audio transcription"
+
+
+        # -------------------------------------------------------------------#
+        # 2) anexo (áudio / vídeo / outro)
+        # -------------------------------------------------------------------#
+        if not content:
+            #kind = "other"
+
+            # áudio ➜ ícone <div class="audioImg">
+            if msg_div.find("div", class_="audioImg"):
+                kind = "audio"
+                content = f" "
+            if msg_div.find("div", class_="imageImg"):
+                kind = "image"
+                content = f" "
+            if msg_div.find("div", class_="videoImg"):
+                kind = "video"
+                content = f" "
+            # vídeo ou imagem ➜ thumbnail <img class="thumb" … title="video|image">
+            else:
+                thumb = msg_div.find("img", class_="thumb")
+                if thumb and thumb.get("title"):
+                    title = thumb["title"].lower()
+                    if "video" in title:
+                        kind = "video"
+                        content = f" "
+                    elif "image" in title:
+                        kind = "image"
+                        content = f" "
+
+            #a_tag = msg_div.find("a", href=True)
+            #if a_tag:
+            #    content = f" "
+
+        # -------------------------------------------------------------------#
+        # 3) texto “puro”
+        # -------------------------------------------------------------------#
+
+        if not content:
+            content = _extract_text_nodes(msg_div)
+            kind = "text"        
+            
+        # ainda vazio? provavelmente só thumbs ou attachments sem link → pula
+        if not content:
+            continue
+        
+        len_mgs_content = len_mgs_content + len(content)
+
+        msgs.append(
+            {
+                "id":msg_id,
+                "direction": direction,
+                "name": name,
+                "timestamp": timestamp,
+                "content": content,
+                "kind": kind,
+                "forwarded": forwarded
+            }
+        )
+
+    return msgs, len_mgs_content
+
+
 
 
 # The main class name must be equal to the script file name without .py extension
@@ -61,6 +209,8 @@ class AISummarizationTask:
     remoteServiceAddress = None
     enableWhatsAppSummarization = False
     enableUFEDChatSummarization = False
+    minimumContentLength = None
+    
     
     def isEnabled(self):
         return AISummarizationTask.enabled
@@ -97,6 +247,7 @@ class AISummarizationTask:
 
         AISummarizationTask.enableWhatsAppSummarization = extraProps.getProperty(enableWhatsAppSummarizationProp)
         AISummarizationTask.enableUFEDChatSummarization = extraProps.getProperty(enableUFEDChatSummarizationProp)
+        AISummarizationTask.minimumContentLength = int(extraProps.getProperty(minimumContentLengthProp))
 
         return
 
@@ -118,8 +269,23 @@ class AISummarizationTask:
         chatHtml = valid_bytes.decode('utf-8', errors='replace')
 
         inputStream.close()
-        
-        result = create_summaries_request(chatHtml, AISummarizationTask.remoteServiceAddress)
+
+        msgs, len_mgs_content =  getMessagesFromChatHTML(chatHtml)
+
+        #print('------------------------------------------------------------------------------------------')
+        #print(msgs)
+        #print('------------------------------------------------------------------------------------------')
+
+        #print(f"Num of messages: {len(msgs)}  Size of contents: {len_mgs_content}")
+
+        if(len_mgs_content < AISummarizationTask.minimumContentLength):
+            #skip 
+            #print(f"Small chat - less than {AISummarizationTask.minimumContentLength} characters")
+            return
+
+        result = create_summaries_request(msgs, AISummarizationTask.remoteServiceAddress)
+        #result = create_summaries_request(chatHtml, AISummarizationTask.remoteServiceAddress)
+
         err = result.get('error')
         if err:
             print(f"[AISummarizationTask]: {item.getName()} - {err}")
