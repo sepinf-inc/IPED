@@ -30,7 +30,7 @@ public class RemoteImageClassifierConfig extends AbstractTaskPropertiesConfig {
     private int batchSize = 50;
 
     // Threshold used to decide if an image is labeled in one category
-    private double categorizationThreshold = 0.6;
+    private double categorizationThreshold = 60;
 
     // Skip classification of images/videos smaller than a given file size (in bytes; '0' = do not skip)
     private int skipSize = 0;
@@ -100,11 +100,11 @@ public class RemoteImageClassifierConfig extends AbstractTaskPropertiesConfig {
         value = properties.getProperty(CATEGORIZATION_THRESHOLD);
         if (value != null && !value.trim().isEmpty()) {
             categorizationThreshold = Double.parseDouble(value.trim());
-            // enforce range
+            // enforce range [0, 100]
             if (categorizationThreshold < 0) {
                 categorizationThreshold = 0;
-            } else if (categorizationThreshold > 1) {
-                categorizationThreshold = 1;
+            } else if (categorizationThreshold > 100) {
+                categorizationThreshold = 100;
             }
         }
 
