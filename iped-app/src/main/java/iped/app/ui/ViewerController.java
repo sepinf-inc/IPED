@@ -35,6 +35,7 @@ import iped.engine.config.FaceRecognitionConfig;
 import iped.engine.task.index.IndexItem;
 import iped.io.IStreamSource;
 import iped.io.URLUtil;
+import iped.properties.ExtraProperties;
 import iped.viewers.ATextViewer;
 import iped.viewers.AudioViewer;
 import iped.viewers.CADViewer;
@@ -99,18 +100,8 @@ public class ViewerController {
         });
         viewers.add(viewersRepository = new MultiViewer());
 
-        boolean faceRecognitionEnabled = Optional.ofNullable(ConfigurationManager.get())
-                .map(cm -> cm.getEnableTaskConfigurable(FaceRecognitionConfig.enableParam))
-                .map(e -> e.isEnabled())
-                .orElse(false);
-
-        boolean ageEstimationEnabled = Optional.ofNullable(ConfigurationManager.get())
-                .map(cm -> cm.getEnableTaskConfigurable(AgeEstimationConfig.enableParam))
-                .map(e -> e.isEnabled())
-                .orElse(false);
-
         // These are content-specific viewers (inside a single ViewersRepository)
-        viewersRepository.addViewer(new ImageViewer(faceRecognitionEnabled, ageEstimationEnabled));
+        viewersRepository.addViewer(new ImageViewer());
         viewersRepository.addViewer(new CADViewer());
         viewersRepository.addViewer(new HtmlViewer());
         viewersRepository.addViewer(new EmailViewer(new AttachmentSearcherImpl()));
@@ -118,7 +109,7 @@ public class ViewerController {
         linkViewer = new HtmlLinkViewer(new AttachmentSearcherImpl());
         viewersRepository.addViewer(linkViewer);
         viewersRepository.addViewer(new IcePDFViewer());
-        viewersRepository.addViewer(new TiffViewer(faceRecognitionEnabled, ageEstimationEnabled));
+        viewersRepository.addViewer(new TiffViewer());
         viewersRepository.addViewer(new AudioViewer(new AttachmentSearcherImpl()));
         viewersRepository.addViewer(new ReferencedFileViewer(viewersRepository, new AttachmentSearcherImpl(), () -> {
             changeToViewer(metadataViewer);
@@ -393,5 +384,34 @@ public class ViewerController {
             }
         }
         return result;
+    }
+
+    public void notifyAppLoaded() {
+
+        boolean faceRecognitionEnabled = Optional
+                .ofNullable(ConfigurationManager.get())
+                .map(cm -> cm.getEnableTaskConfigurable(FaceRecognitionConfig.enableParam))
+                .map(e -> e.isEnabled())
+                .orElse(false);
+        boolean hasFaceRecognitionInIndex = App.get().appCase.getLeafReader().getFieldInfos().fieldInfo(ExtraProperties.FACE_COUNT) != null;
+        boolean enableHighlightFacesButton = faceRecognitionEnabled || hasFaceRecognitionInIndex;
+
+        boolean ageEstimationEnabled = Optional
+                .ofNullable(ConfigurationManager.get())
+                .map(cm -> cm.getEnableTaskConfigurable(AgeEstimationConfig.enableParam))
+                .map(e -> e.isEnabled())
+                .orElse(false);
+        boolean hasAgeEstimationInIndex = App.get().appCase.getLeafReader().getFieldInfos().fieldInfo(ExtraProperties.FACE_AGE_LABELS) != null;
+        boolean enableAgeEstimationCombo = ageEstimationEnabled || hasAgeEstimationInIndex;
+
+        viewersRepository
+                .getViewerList()
+                .stream()
+                .filter(ImageViewer.class::isInstance)
+                .map(ImageViewer.class::cast)
+                .forEach(viewer -> {
+                    viewer.setEnableHighlightFacesButton(enableHighlightFacesButton);
+                    viewer.setEnableAgeEstimationCombo(enableAgeEstimationCombo);
+                });
     }
 }

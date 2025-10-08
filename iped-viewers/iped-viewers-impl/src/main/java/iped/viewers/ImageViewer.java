@@ -129,18 +129,15 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
 
     private String videoComment;
 
-    private boolean enableHighlightFacesButton;
     private boolean enableAgeEstimationCombo;
 
 
-    public ImageViewer(boolean enableHighlightFacesButton, boolean enableAgeEstimationCombo) {
-        this(0, enableHighlightFacesButton, enableAgeEstimationCombo);
+    public ImageViewer() {
+        this(0);
     }
 
-    public ImageViewer(int initialFitMode, boolean enableHighlightFacesButton, boolean enableAgeEstimationCombo) {
+    public ImageViewer(int initialFitMode) {
         super(new BorderLayout());
-        this.enableHighlightFacesButton = enableHighlightFacesButton;
-        this.enableAgeEstimationCombo = enableAgeEstimationCombo;
 
         isToolbarVisible = true;
         imagePanel = new ImageViewPanel(initialFitMode);
@@ -450,7 +447,7 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
 
         highlightFacesButton = createToolBarButton(actionHighlightFaces, true);
         highlightFacesButton.setToolTipText(Messages.getString("ImageViewer.HighlightFaces"));
-        highlightFacesButton.setVisible(enableHighlightFacesButton);
+        highlightFacesButton.setVisible(false);
 
         ageSelectionButton = createAgeSelectionToolBarButton();
     }
@@ -646,5 +643,13 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
         ageSelectionButton.setVisible(applyHighlightFaces && enableAgeEstimationCombo);
         setButtonSelected(highlightFacesButton, applyHighlightFaces);
         update();
+    }
+
+    public void setEnableAgeEstimationCombo(boolean enableAgeEstimationCombo) {
+        this.enableAgeEstimationCombo = enableAgeEstimationCombo;
+    }
+
+    public void setEnableHighlightFacesButton(boolean enableHighlightFacesButton) {
+        highlightFacesButton.setVisible(enableHighlightFacesButton);
     }
 }

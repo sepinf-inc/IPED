@@ -63,8 +63,8 @@ public class TiffViewer extends ImageViewer {
         return contentType.equals("image/tiff"); //$NON-NLS-1$
     }
 
-    public TiffViewer(boolean enableHighlightFacesButton, boolean enableAgeEstimationCombo) {
-        super(1, enableHighlightFacesButton, enableAgeEstimationCombo);
+    public TiffViewer() {
+        super(1);
 
         pageComponents.add(textCurrentPage);
         pageComponents.add(labelNumPages);
