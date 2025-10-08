@@ -399,6 +399,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
                         // filtering only CSAM related classes to avoid overuse of the model
                         if (key.equals("AI_CSAM") || key.equals("AI_LIKELYCSAM") || key.equals("AI_People")
                                 || key.equals("AI_Porn") || key.startsWith("AI_Drawing")) {
+                            key = normalize(key);
                             double value = entry.getValue().asDouble();
                             res.addClass(key, value);
                         }
@@ -789,4 +790,24 @@ public class RemoteImageClassifierTask extends AbstractTask {
         queue.put(name, evidence);
     }
 
+    /**
+     * Rename class attribute names to use "ai:" prefix and match commonly used
+     * naming standards.
+     */
+    private static final String normalize(String s) {
+        if (s.startsWith("AI_")) {
+            s = aiPrefix + s.substring(3);
+        }
+        s = s.toLowerCase();
+        for (int i = 3; i < s.length() - 1; i++) {
+            if (s.charAt(i) == '_') {
+                s = s.substring(0, i) + Character.toUpperCase(s.charAt(i + 1)) + s.substring(i + 2);
+            }
+        }
+        int i = s.indexOf("csam");
+        if (i > 3) {
+            s = s.substring(0, i) + Character.toUpperCase(s.charAt(i)) + s.substring(i + 1);
+        }
+        return s;
+    }
 }
