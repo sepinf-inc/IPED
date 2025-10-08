@@ -89,12 +89,15 @@ public class RemoteImageClassifierTask extends AbstractTask {
     private boolean skipHashDBFiles;   
     private boolean validateSSL;
 
+    // AI-related attributes prefix
+    private static final String aiPrefix = "ai:";
+    
     // AI classification extra attributes and values
-    private static final String AI_CLASSIFICATION_STATUS_ATTR = "AIClassificationStatus";
+    private static final String AI_CLASSIFICATION_STATUS_ATTR = aiPrefix + "classificationStatus";
     private static final String AI_CLASSIFICATION_SUCCESS = "success";
     private static final String AI_CLASSIFICATION_FAIL_NO_CLASS = "fail:NoClass";
     private static final String AI_CLASSIFICATION_FAIL_NO_RESULTS = "fail:NoResults";
-    private static final String AI_CLASSIFICATION_SKIP_ATTR = "AIClassificationSkip";
+    private static final String AI_CLASSIFICATION_SKIP_ATTR = aiPrefix + "classificationSkip";
     private static final String AI_CLASSIFICATION_SKIP_NO = "no";
     private static final String AI_CLASSIFICATION_SKIP_SIZE = "size";
     private static final String AI_CLASSIFICATION_SKIP_DIMENSION = "dimension";
