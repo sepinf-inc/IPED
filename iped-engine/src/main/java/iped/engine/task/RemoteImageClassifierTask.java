@@ -162,7 +162,11 @@ public class RemoteImageClassifierTask extends AbstractTask {
 
         // Get probability value for 'classname'.
         public double getClassProb(String classname) {
-            return DIETask.videoScore(classes.get(classname));
+            double value = DIETask.videoScore(classes.get(classname));
+
+            // Scale values from [0,1] to [0, 100] and
+            // limit them to 2 decimal digits.
+            return Math.round(value * 10000) / 100.0;
         }
     }
 
