@@ -5,7 +5,7 @@
 var RemoteImageClassifierConfig = Java.type("iped.engine.config.RemoteImageClassifierConfig");
 var Arrays = Java.type("java.util.Arrays");
 
-var aiClassProperty = "ai:class";
+var aiLabelProperty = "ai:label";
 
 /*
  * Name of processing task
@@ -27,16 +27,16 @@ function init(configurationManager) {
 function finish() {}
 
 /*
- * Label item class based on classifier results.
+ * Label item based on classifier results.
  */
-function addClasses(e, listClasses, defaultClass) {
-  defaultClass = (typeof defaultClass !== "undefined") ? defaultClass : null;
+function addLabel(e, listLabels, defaultLabel) {
+  defaultLabel = (typeof defaultLabel !== "undefined") ? defaultLabel : null;
 
   // Escolhe a chave com maior score neste nível
   var bestKey = null;
   var bestVal = -Infinity;
 
-  for (var key in listClasses) {
+  for (var key in listLabels) {
     var val = Number(e.getExtraAttribute(key));
     if (!isNaN(val) && val > bestVal) {
       bestVal = val;
@@ -46,30 +46,30 @@ function addClasses(e, listClasses, defaultClass) {
 
   // Se o melhor valor ultrapassa o threshold, desce só por esse caminho
   if (bestKey !== null && bestVal > categorizationThreshold) {
-    var entry = listClasses[bestKey];
+    var entry = listLabels[bestKey];
 
     if (typeof entry === 'string') {
-      e.setExtraAttribute(aiClassProperty, entry);
+      e.setExtraAttribute(aiLabelProperty, entry);
       return 1;
     }
 
     if (entry && typeof entry === 'object') {
       // Tenta escolher a melhor subclasse
       if (entry.subClasses && typeof entry.subClasses === 'object') {
-        var added = addClasses(e, entry.subClasses, entry.name);
+        var added = addLabel(e, entry.subClasses, entry.name);
         if (added) return 1; // alguma subclasse válida foi adicionada
       }
       // Nenhuma sub passou do threshold: adiciona a classe atual (pai)
       if (entry.name != null) {
-        e.setExtraAttribute(aiClassProperty, entry.name);
+        e.setExtraAttribute(aiLabelProperty, entry.name);
         return 1;
       }
     }
   }
 
   // Ninguém passou do threshold neste nível: usa default (se houver)
-  if (defaultClass !== null) {
-    e.setExtraAttribute(aiClassProperty, defaultClass);
+  if (defaultLabel !== null) {
+    e.setExtraAttribute(aiLabelProperty, defaultLabel);
     return 1;
   }
 
@@ -78,7 +78,7 @@ function addClasses(e, listClasses, defaultClass) {
 
 function process(e) {
 
-	var listClasses= {
+	var listLabels = {
 		"ai:csam":"Child Sexual Abuse",
 		"ai:likelyCsam":"Likely Child Sexual Abuse",
 		"ai:drawing":{"name":"Drawing","subClasses":{
@@ -89,5 +89,5 @@ function process(e) {
 		"ai:porn":"Pornography"
     }
 		
-	addClasses(e, listClasses);
+	addLabel(e, listLabels);
 }

@@ -67,6 +67,9 @@ public class AIFiltersTreeListener implements TreeSelectionListener, TreeExpansi
         } else {
             App.get().setAIFiltersDefaultColor(false);
 
+            aiFiltersList.clear();
+            query = null;            
+            /* TODO
             Builder builder = new Builder();
             aiFiltersList.clear();
             for (TreePath path : selection) {
@@ -74,6 +77,7 @@ public class AIFiltersTreeListener implements TreeSelectionListener, TreeExpansi
                 addAIFilterToQuery(aif, builder);
             }
             query = builder.build();
+            */
         }
 
         if (!clearing)

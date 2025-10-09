@@ -3,7 +3,7 @@
 "prefix": "Root",
 "children":[
 
-    {"name": "Classified by AI", "prefix": "Class", "property": "ai\\:status", "children":[
+    {"name": "Classified by AI", "prefix": "Classifier", "property": "ai\\:label", "children":[
         {"name": "Child Sexual Abuse"},
         {"name": "Likely Child Sexual Abuse"},
         {"name": "Pornography"},
@@ -14,7 +14,7 @@
         {"name": "People"}
     ]}, 
 
-    {"name": "Detected Faces", "prefix": "Faces", "property": "face\\_count", "children":[
+    {"name": "Detected Faces", "prefix": "Face", "property": "face\\_count", "children":[
         {"name": "1"},
         {"name": "2"},
         {"name": "3 or more", "value": "[3 TO *]"}
