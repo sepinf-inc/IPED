@@ -95,6 +95,7 @@ public class UICaseDataLoader extends SwingWorker<Void, Integer> {
 
             App.get().appCase.checkImagePaths();
             App.get().appCase.getMultiBookmarks().addSelectionListener(App.get().getViewerController().getHtmlLinkViewer());
+            App.get().getViewerController().notifyAppLoaded();
 
             App.get().appCase.getAtomicSources().forEach(ipedCase -> {
                 PreviewRepositoryManager.configureReadOnly(ipedCase.getModuleDir());
