@@ -94,6 +94,7 @@ public class UICaseDataLoader extends SwingWorker<Void, Integer> {
 
             App.get().appCase.checkImagePaths();
             App.get().appCase.getMultiBookmarks().addSelectionListener(App.get().getViewerController().getHtmlLinkViewer());
+            App.get().getViewerController().notifyAppLoaded();
 
             if (!updateItems) {
                 App.get().appGraphAnalytics.initGraphService();

@@ -131,6 +131,11 @@ enableImageSimilarity = false
 # If enabled, you can search for faces from the analysis interface, check the options menu.
 enableFaceRecognition = false
 
+# Enables age estimation feature.
+# You may install python and some dependencies, see https://github.com/sepinf-inc/IPED/wiki/User-Manual#AgeEstimation
+# Advanced configuration options can be found in conf/AgeEstimationConfig.txt.
+enableAgeEstimation = false
+
 # Enables searching for crypto hardware wallets.
 enableSearchHardwareWallets = true
 

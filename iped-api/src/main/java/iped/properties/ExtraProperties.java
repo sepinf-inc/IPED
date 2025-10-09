@@ -186,6 +186,8 @@ public class ExtraProperties {
 
     public static final String FACE_ENCODINGS = "face_encodings";
 
+    public static final String FACE_AGE_LABELS = "faceAge:labels";
+
     /**
      * Property to be set if the evidence is a animated image (i.e. contain multiple
      * frames). Only set if the number of frames is greater than one.
