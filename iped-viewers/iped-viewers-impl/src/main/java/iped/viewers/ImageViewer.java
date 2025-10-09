@@ -100,7 +100,7 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
     private static final int maxBlurDim = 512;
     private static final double blurIntensity = 0.02f;
 
-    private static final Color rectColorMainFacesInTerms = new Color(255,0,0,200); // red
+    protected static final Color rectColorMainFacesInTerms = new Color(255,0,0,200); // red
     private static final Color rectColorMainFacesOthers = new Color(0,255,0,200); // green
     private static final Color rectColorBack = new Color(255,255,255,50);
 
@@ -168,7 +168,6 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void loadFile(IStreamSource content, Set<String> highlightTerms) {
         cleanState(true);
@@ -182,22 +181,7 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
                     String mimeType = MediaTypes.getMimeTypeString(item);
                     image = ImageUtil.getSubSampledImage(item, maxDim, mimeType);
 
-                    Object faceLocationsAttr = item.getExtraAttribute(ExtraProperties.FACE_LOCATIONS);
-                    if (faceLocationsAttr instanceof List) {
-                        facesLocations = ((List<?>) faceLocationsAttr)
-                                .stream()
-                                .map(location -> HIGHLIGHT_LOCATION + location)
-                                .collect(Collectors.toList());
-                    } else if (faceLocationsAttr instanceof String) {
-                        facesLocations =  Collections.singletonList(HIGHLIGHT_LOCATION + faceLocationsAttr);
-                    }
-
-                    Object faceAgeLabelsAttr = item.getExtraAttribute(ExtraProperties.FACE_AGE_LABELS);
-                    if (faceAgeLabelsAttr instanceof List) {
-                        faceAgeLabels = (List<String>) faceAgeLabelsAttr;
-                    } else if (faceAgeLabelsAttr instanceof String) {
-                        faceAgeLabels =  Collections.singletonList((String) faceAgeLabelsAttr);
-                    }
+                    loadFacesAttributes(item);
                 }
                 if (image == null) {
                     in = new BufferedInputStream(content.getSeekableInputStream());
@@ -263,6 +247,26 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
         }
     }
 
+    @SuppressWarnings("unchecked")
+    protected void loadFacesAttributes(IItemReader item) {
+        Object faceLocationsAttr = item.getExtraAttribute(ExtraProperties.FACE_LOCATIONS);
+        if (faceLocationsAttr instanceof List) {
+            facesLocations = ((List<?>) faceLocationsAttr)
+                    .stream()
+                    .map(location -> HIGHLIGHT_LOCATION + location)
+                    .collect(Collectors.toList());
+        } else if (faceLocationsAttr instanceof String) {
+            facesLocations =  Collections.singletonList(HIGHLIGHT_LOCATION + faceLocationsAttr);
+        }
+
+        Object faceAgeLabelsAttr = item.getExtraAttribute(ExtraProperties.FACE_AGE_LABELS);
+        if (faceAgeLabelsAttr instanceof List) {
+            faceAgeLabels = (List<String>) faceAgeLabelsAttr;
+        } else if (faceAgeLabelsAttr instanceof String) {
+            faceAgeLabels =  Collections.singletonList((String) faceAgeLabelsAttr);
+        }
+    }
+
     private double getZoom(BufferedImage img) {
         if (originalDimension == null) {
             return 0;
@@ -275,7 +279,7 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
         return displayedMaxDimension / (double) originalMaxDimension;
     }
 
-    private void drawRectangles(BufferedImage img, Collection<String> highlights, Color rectColorMain, boolean expanded)  {
+    protected void drawRectangles(BufferedImage img, Collection<String> highlights, Color rectColorMain, boolean expanded)  {
 
         if (highlights == null || highlights.isEmpty()) {
             return;
@@ -598,7 +602,7 @@ public class ImageViewer extends AbstractViewer implements ActionListener {
         return ImageUtil.grayscale(image);
     }
 
-    private void applyHighlightFaces(boolean restoreImageBeforeHighlight) {
+    protected void applyHighlightFaces(boolean restoreImageBeforeHighlight) {
         if (restoreImageBeforeHighlight) {
             image = ImageUtil.cloneImage(originalImage);
         }
