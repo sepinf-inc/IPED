@@ -2,7 +2,6 @@ package iped.app.ui.ai;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 
 import javax.swing.event.TreeExpansionEvent;
@@ -19,7 +18,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
 import iped.app.ui.App;
-import iped.engine.data.Category;
+import iped.engine.data.FilterNode;
 import iped.engine.search.QueryBuilder;
 import iped.engine.task.index.IndexItem;
 import iped.exception.ParseException;
@@ -31,7 +30,7 @@ import iped.viewers.api.IQueryFilterer;
 public class AIFiltersTreeListener implements TreeSelectionListener, TreeExpansionListener, IQueryFilterer {
 
     private BooleanQuery query;
-    private LinkedHashSet<Category> categoryList = new LinkedHashSet<Category>();
+    private List<FilterNode> aiFiltersList = new ArrayList<FilterNode>();
     private HashSet<TreePath> selection = new HashSet<TreePath>();
     private TreePath root;
     private long collapsed = 0;
@@ -61,18 +60,18 @@ public class AIFiltersTreeListener implements TreeSelectionListener, TreeExpansi
         }
 
         if (selection.contains(root) || selection.isEmpty()) {
-            App.get().setCategoriesDefaultColor(true);
-            categoryList.clear();
+            App.get().setAIFiltersDefaultColor(true);
+            aiFiltersList.clear();
             query = null;
 
         } else {
-            App.get().setCategoriesDefaultColor(false);
+            App.get().setAIFiltersDefaultColor(false);
 
             Builder builder = new Builder();
-            categoryList.clear();
+            aiFiltersList.clear();
             for (TreePath path : selection) {
-                Category category = (Category) path.getLastPathComponent();
-                addCategoryToQuery(category, builder);
+                FilterNode aif = (FilterNode) path.getLastPathComponent();
+                addAIFilterToQuery(aif, builder);
             }
             query = builder.build();
         }
@@ -82,10 +81,9 @@ public class AIFiltersTreeListener implements TreeSelectionListener, TreeExpansi
 
     }
 
-    private void addCategoryToQuery(Category category, Builder builder) {
-        String name = IndexItem.normalize(category.getName(), true);
-        builder.add(new TermQuery(new Term(IndexItem.CATEGORY, name)), Occur.SHOULD);
-        categoryList.add(category);
+    private void addAIFilterToQuery(FilterNode aif, Builder builder) {
+        builder.add(new TermQuery(new Term(aif.getProperty(), aif.getValue())), Occur.SHOULD);
+        aiFiltersList.add(aif);
     }
 
     @Override
@@ -102,7 +100,7 @@ public class AIFiltersTreeListener implements TreeSelectionListener, TreeExpansi
     public void clearFilter() {
         clearing = true;
         App.get().aiFiltersTree.clearSelection();
-        categoryList.clear();
+        aiFiltersList.clear();
         clearing = false;
     }
 
@@ -113,14 +111,14 @@ public class AIFiltersTreeListener implements TreeSelectionListener, TreeExpansi
     @Override
     public List<IFilter> getDefinedFilters() {
         List<IFilter> result = new ArrayList<IFilter>();
-        for (Category category : categoryList) {
+        for (FilterNode aif : aiFiltersList) {
             result.add(new IQueryFilter() {
                 @Override
                 public Query getQuery() {
-                    String name = IndexItem.normalize(category.getName(), true);
                     StringBuffer queryStr = new StringBuffer();
-                    queryStr.append(" category:\"");
-                    queryStr.append(name);
+                    queryStr.append(aif.getProperty());
+                    queryStr.append(" :\"");
+                    queryStr.append(aif.getValue());
                     queryStr.append("\"");
 
                     Query query;
@@ -134,7 +132,7 @@ public class AIFiltersTreeListener implements TreeSelectionListener, TreeExpansi
                 }
 
                 public String toString() {
-                    return IndexItem.normalize(category.getName(), true);
+                    return IndexItem.normalize(aif.getName(), true);
                 }
             });
         }
@@ -152,6 +150,6 @@ public class AIFiltersTreeListener implements TreeSelectionListener, TreeExpansi
 
     @Override
     public boolean hasFilters() {
-        return categoryList.size() > 0;
+        return aiFiltersList.size() > 0;
     }
 }

@@ -45,7 +45,6 @@ import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
-import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.store.Directory;
@@ -60,6 +59,7 @@ import iped.data.IIPEDSource;
 import iped.data.IItem;
 import iped.data.IItemId;
 import iped.data.IMultiBookmarks;
+import iped.engine.config.AIFiltersConfig;
 import iped.engine.config.AnalysisConfig;
 import iped.engine.config.CategoryConfig;
 import iped.engine.config.Configuration;
@@ -113,6 +113,7 @@ public class IPEDSource implements IIPEDSource {
 
     protected ArrayList<String> leafCategories = new ArrayList<String>();
     protected Category categoryTree;
+    protected FilterNode aiFilterRoot;
     protected final Map<String, Set<String>> descendantsCategories = new HashMap<String, Set<String>>();
 
     private IBookmarks bookmarks;
@@ -163,6 +164,7 @@ public class IPEDSource implements IIPEDSource {
         this(casePath, iw, true);
     }
 
+    @SuppressWarnings("unchecked")
     public IPEDSource(File casePath, IndexWriter iw, boolean askImagePathIfNotFound) {
         this.askImagePathIfNotFound = askImagePathIfNotFound;
         this.casePath = casePath;
@@ -220,7 +222,7 @@ public class IPEDSource implements IIPEDSource {
 
             openIndex(index, iw);
 
-            BooleanQuery.setMaxClauseCount(Integer.MAX_VALUE);
+            IndexSearcher.setMaxClauseCount(Integer.MAX_VALUE);
             analyzer = AppAnalyzer.get();
 
             populateLuceneIdToIdMap();
@@ -230,6 +232,7 @@ public class IPEDSource implements IIPEDSource {
 
             SleuthkitReader.loadImagePasswords(moduleDir);
 
+            loadAIFiltersTree();
             loadLeafCategories();
             loadCategoryTree();
             buildDescendantsCategories(categoryTree);
@@ -366,6 +369,11 @@ public class IPEDSource implements IIPEDSource {
         }
     }
 
+    protected void loadAIFiltersTree() {
+        AIFiltersConfig config = ConfigurationManager.get().findObject(AIFiltersConfig.class);
+        aiFilterRoot = config.getRootAIFilter().clone();
+    }
+    
     protected void loadCategoryTree() {
         CategoryConfig config = ConfigurationManager.get().findObject(CategoryConfig.class);
         Category root = config.getRootCategory().clone();
@@ -744,6 +752,10 @@ public class IPEDSource implements IIPEDSource {
 
     public Set<String> getDescendantsCategories(String ancestral) {
         return descendantsCategories.get(ancestral);
+    }
+
+    public FilterNode getAIFilterRoot() {
+        return aiFilterRoot;
     }
 
     public Category getCategoryTree() {

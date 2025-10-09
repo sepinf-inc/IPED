@@ -658,7 +658,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         aiFiltersTree = new JTree(new Object[0]);
         aiFiltersTree.setCellRenderer(new AIFiltersTreeCellRenderer());
-        aiFiltersTree.setRootVisible(false);
+        aiFiltersTree.setRootVisible(true);
         aiFiltersTree.setExpandsSelectedPaths(false);
         aiFiltersListener = new AIFiltersTreeListener();
         aiFiltersTree.addTreeSelectionListener(aiFiltersListener);

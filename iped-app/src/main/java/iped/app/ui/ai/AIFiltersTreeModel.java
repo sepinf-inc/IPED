@@ -2,44 +2,41 @@ package iped.app.ui.ai;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 
-import javax.swing.SwingUtilities;
-import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
 import iped.app.ui.App;
-import iped.engine.data.Category;
+import iped.engine.data.FilterNode;
 
 public class AIFiltersTreeModel implements TreeModel {
 
-    public Category root;
+    private FilterNode root;
 
-    private List<TreeModelListener> listeners = new ArrayList<TreeModelListener>();
+    private final List<TreeModelListener> listeners = new ArrayList<TreeModelListener>();
 
     public static void install() {
-        if (App.get().aiFiltersTree.getModel() instanceof AIFiltersTreeModel)
-            ((AIFiltersTreeModel) App.get().aiFiltersTree.getModel()).updateCategories();
-        else {
+        if (App.get().aiFiltersTree.getModel() instanceof AIFiltersTreeModel) {
+            ((AIFiltersTreeModel) App.get().aiFiltersTree.getModel()).updateAIFilters();
+        } else {
             AIFiltersTreeModel model = new AIFiltersTreeModel();
             App.get().aiFiltersTree.setModel(model);
         }
     }
 
     private AIFiltersTreeModel() {
-        this.root = App.get().appCase.getCategoryTree();
+        this.root = App.get().appCase.getAIFilterRoot();
     }
 
-    private void updateCategories() {
-        Category newRoot = App.get().appCase.getCategoryTree();
+    private void updateAIFilters() {
+        FilterNode newRoot = App.get().appCase.getAIFilterRoot();
         updateChildren(this.root, newRoot);
     }
 
-    private void fireNodeChanged(final Category category) {
+    private void fireNodeChanged(final FilterNode node) {
+        /*
         if (category == root)
             return;
         SwingUtilities.invokeLater(new Runnable() {
@@ -56,9 +53,11 @@ public class AIFiltersTreeModel implements TreeModel {
                     l.treeNodesChanged(e);
             }
         });
+        */
     }
 
-    private void updateChildren(Category oldRoot, Category newRoot) {
+    private void updateChildren(FilterNode oldRoot, FilterNode newRoot) {
+        /*
         int idx = 0;
         oldRoot.setNumItems(newRoot.getNumItems());
         fireNodeChanged(oldRoot);
@@ -73,19 +72,23 @@ public class AIFiltersTreeModel implements TreeModel {
             }
             idx++;
         }
+        */
     }
 
-    private Category getFromCollection(Collection<Category> set, Category cat) {
+    private FilterNode getFromCollection(Collection<FilterNode> set, FilterNode node) {
+        /*
         Iterator<Category> it = set.iterator();
         while (it.hasNext()) {
             Category next = it.next();
             if (next.equals(cat))
                 return next;
         }
+        */
         return null;
     }
 
-    private void notifyNewNode(Category cat, int idx) {
+    private void notifyNewNode(FilterNode node, int idx) {
+        /*
         int[] idxs = { idx };
         Category[] cats = { cat };
         LinkedList<Category> path = new LinkedList<Category>();
@@ -94,6 +97,7 @@ public class AIFiltersTreeModel implements TreeModel {
         TreeModelEvent e = new TreeModelEvent(this, path.toArray(), idxs, cats);
         for (TreeModelListener l : listeners)
             l.treeNodesInserted(e);
+        */
     }
 
     @Override
@@ -103,17 +107,17 @@ public class AIFiltersTreeModel implements TreeModel {
 
     @Override
     public Object getChild(Object parent, int index) {
-        return ((Category) parent).getChildren().toArray()[index];
+        return ((FilterNode) parent).getChildren().get(index);
     }
 
     @Override
     public int getChildCount(Object parent) {
-        return ((Category) parent).getChildren().size();
+        return ((FilterNode) parent).getChildren().size();
     }
 
     @Override
     public boolean isLeaf(Object node) {
-        return ((Category) node).getChildren().size() == 0;
+        return ((FilterNode) node).getChildren().size() == 0;
     }
 
     @Override
@@ -124,19 +128,16 @@ public class AIFiltersTreeModel implements TreeModel {
     public int getIndexOfChild(Object parent, Object child) {
         if (parent == null || child == null)
             return -1;
-        return ((Category) parent).getIndexOfChild((Category) child);
+        return ((FilterNode) parent).getIndexOfChild((FilterNode) child);
     }
 
     @Override
     public void addTreeModelListener(TreeModelListener l) {
         listeners.add(l);
-
     }
 
     @Override
     public void removeTreeModelListener(TreeModelListener l) {
         listeners.remove(l);
-
     }
-
 }

@@ -1,0 +1,34 @@
+{
+"name": "AI Root",
+"prefix": "Root",
+"children":[
+
+    {"name": "Classified by AI", "prefix": "Class", "property": "ai\\:status", "children":[
+        {"name": "Child Sexual Abuse"},
+        {"name": "Likely Child Sexual Abuse"},
+        {"name": "Pornography"},
+        {"name": "Drawing", "children":[
+            {"name":"Child Sexual Abuse Drawing"},
+            {"name":"Explicit Drawing"}
+        ]},
+        {"name": "People"}
+    ]}, 
+
+    {"name": "Detected Faces", "prefix": "Faces", "property": "face\\_count", "children":[
+        {"name": "1"},
+        {"name": "2"},
+        {"name": "3 or more", "value": "[3 TO *]"}
+    ]},
+
+    {"name": "Audio Transcription", "prefix": "Transcript", "property": "transcription", "value": "*"},
+
+    {"name": "Nudity Score", "prefix": "Nudity", "property": "nudityScore", "children":[
+        {"name": "Very High", "value": "[900 TO *]"},
+        {"name": "High", "value": "[650 TO 899]"},
+        {"name": "Medium", "value": "[400 TO 649]"},
+        {"name": "Low", "value": "[150 TO 399]"},
+        {"name": "Very Low", "value": "[* TO 149]"}
+    ]}
+
+]
+}

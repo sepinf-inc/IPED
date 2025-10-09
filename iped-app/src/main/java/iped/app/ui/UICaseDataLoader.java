@@ -29,6 +29,7 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import iped.app.ui.ai.AIFiltersTreeModel;
 import iped.app.ui.columns.ColumnsManagerUI;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.core.EvidenceStatus;
@@ -189,6 +190,7 @@ public class UICaseDataLoader extends SwingWorker<Void, Integer> {
     public void done() {
         try {
             CategoryTreeModel.install();
+            AIFiltersTreeModel.install();
             App.get().filterManager.loadFilters();
             BookmarksController.get().updateUIandHistory();
 
