@@ -6,12 +6,12 @@
 #  - Images' faces are extracted using 'face_locations' extra attributes ('FaceRecognitionTask' must be enabled!).
 #  - Processes files in batches for improved performance (see 'batchSize' config property).
 #  - Stores age estimation results in items' extra attributes.
-#    + 'faceAgeScores' stores age estimation scores (values order is the same as 'face_locations')
+#    + 'faceAge:scores' stores age estimation scores (values order is the same as 'face_locations')
 #      - scores (range: 0-100)
-#    + 'faceAgeLabels' stores age estimation labels (values order is the same as 'face_locations')
+#    + 'faceAge:labels' stores age estimation labels (values order is the same as 'face_locations')
 #      - labels (Child: 0-12; Teenager: 13-20; Adult: 21-44; MiddleAge: 45-64; Aged: 65+; Unlabeled: all scores are below 'categorizationThreshold' config property)
-#    + 'faceAgeCount<Label>' stores the count of faces with the corresponding label
-#    + 'faceAgeMaxScore<Label>' stores the highest score for the corresponding label across faces
+#    + 'faceAge:count:<label>' stores the count of faces with the corresponding label
+#    + 'faceAge:maxScore:<label>' stores the highest score for the corresponding label across faces
  '''
 import io, os, time, sys
 from java.lang import System
@@ -252,7 +252,7 @@ class AgeEstimationTask:
                 from iped.engine.task import HashDBLookupTask
                 if (skipHashDBFiles and item.getExtraAttribute(HashDBLookupTask.STATUS_ATTRIBUTE) is not None):
                     # add skip age estimation info
-                    item.setExtraAttribute('faceAgeEstimationSkip', 'hashDB')
+                    item.setExtraAttribute('faceAge:estimationStatus', 'skipped_hashdb')
                     skipHashDBFilesCount += 1
                     return
 
@@ -262,18 +262,16 @@ class AgeEstimationTask:
                 if age_estimation_data is not None:
                     # age estimation data exists in cache
                     # add age estimation scores and labels
-                    item.setExtraAttribute('faceAgeScores', age_estimation_data['faceAgeScores'])
-                    item.setExtraAttribute('faceAgeLabels', age_estimation_data['faceAgeLabels'])
-                    # add face labels counts ('faceAgeCount<Label>')
+                    item.setExtraAttribute('faceAge:scores', age_estimation_data['faceAgeScores'])
+                    item.setExtraAttribute('faceAge:labels', age_estimation_data['faceAgeLabels'])
+                    # add face labels counts ('faceAge:count:<label>')
                     for label in age_estimation_data['faceAgeLabelsCounts']:
-                        item.setExtraAttribute('faceAgeCount' + label, age_estimation_data['faceAgeLabelsCounts'][label])
-                    # add the highest score for each label across faces ('faceAgeMaxScore<Label>')
+                        item.setExtraAttribute('faceAge:count:' + uncapitalize(label), age_estimation_data['faceAgeLabelsCounts'][label])
+                    # add the highest score for each label across faces ('faceAge:maxScore:<label>')
                     for label in age_estimation_data['faceAgeLabelsScores']:
-                        item.setExtraAttribute('faceAgeMaxScore' + label, age_estimation_data['faceAgeLabelsScores'][label])
+                        item.setExtraAttribute('faceAge:maxScore:' + uncapitalize(label), age_estimation_data['faceAgeLabelsScores'][label])
                     # add age estimation status
-                    item.setExtraAttribute('faceAgeEstimationStatus', 'success')
-                    # add skip age estimation info
-                    item.setExtraAttribute('faceAgeEstimationSkip', 'duplicate')
+                    item.setExtraAttribute('faceAge:estimationStatus', 'success')
                     classificationSuccess += 1
                     skipDuplicatesCount += 1
                     return
@@ -337,13 +335,13 @@ class AgeEstimationTask:
                 if img is None:
                     # load image problem
                     # add age estimation status
-                    item.setExtraAttribute('faceAgeEstimationStatus', 'fail:preProcessImageNoneError')
-                    logger.warn("AgeEstimationTask: 'faceAgeEstimationStatus -> fail:preProcessImageNoneError' for item: " + item.getPath())
+                    item.setExtraAttribute('faceAge:estimationStatus', 'failed_invalid_image')
+                    logger.warn("AgeEstimationTask: 'faceAge:estimationStatus -> failed_invalid_image' for item: " + item.getPath())
                 else:
                     # other problem
                     # add age estimation status
-                    item.setExtraAttribute('faceAgeEstimationStatus', 'fail:preProcessError')
-                    logger.warn("AgeEstimationTask: 'faceAgeEstimationStatus -> fail:preProcessError' for item: " + item.getPath())
+                    item.setExtraAttribute('faceAge:estimationStatus', 'failed_preprocessing')
+                    logger.warn("AgeEstimationTask: 'faceAge:estimationStatus -> failed_preprocessing' for item: " + item.getPath())
                 raise e
         
         # process faces for age estimation
@@ -451,39 +449,37 @@ def processImages(itemList, imageList):
 
         # set face scores
         scores = [scores]
-        age_class_scores = itemList[i].getExtraAttribute('faceAgeScores')
-        age_class_labels = itemList[i].getExtraAttribute('faceAgeLabels')
+        age_class_scores = itemList[i].getExtraAttribute('faceAge:scores')
+        age_class_labels = itemList[i].getExtraAttribute('faceAge:labels')
         if age_class_scores is None:
-            itemList[i].setExtraAttribute('faceAgeScores', scores)
-            itemList[i].setExtraAttribute('faceAgeLabels', label)
+            itemList[i].setExtraAttribute('faceAge:scores', scores)
+            itemList[i].setExtraAttribute('faceAge:labels', label)
         else:
-            itemList[i].setExtraAttribute('faceAgeScores', age_class_scores + scores)
-            itemList[i].setExtraAttribute('faceAgeLabels', age_class_labels + label)
+            itemList[i].setExtraAttribute('faceAge:scores', age_class_scores + scores)
+            itemList[i].setExtraAttribute('faceAge:labels', age_class_labels + label)
         
         logger.debug('AgeEstimationTask: Age estimation for face - scores:' + str(scores) + '; label:' + str(label))
 
         # add age estimation status
-        itemList[i].setExtraAttribute('faceAgeEstimationStatus', 'success')
-        # add skip age estimation info
-        itemList[i].setExtraAttribute('faceAgeEstimationSkip', 'no')
+        itemList[i].setExtraAttribute('faceAge:estimationStatus', 'success')
 
         # check if this is the last face
         if (i+1) == len(itemList) or itemList[i].getHashValue() != itemList[i+1].getHashValue():
-            # add face labels counts ('faceAgeCount<Label>')
+            # add face labels counts ('faceAge:count:<label>')
             for label in item_faces_labels_counts:
-                itemList[i].setExtraAttribute('faceAgeCount' + label, item_faces_labels_counts[label])
+                itemList[i].setExtraAttribute('faceAge:count:' + uncapitalize(label), item_faces_labels_counts[label])
 
-            # add the highest score for each label across faces ('faceAgeMaxScore<Label>')
+            # add the highest score for each label across faces ('faceAge:maxScore:<label>')
             item_faces_labels_max_scores_dict = dict(zip(list(labels.values()), item_faces_labels_max_scores))
             for label in item_faces_labels_max_scores_dict:
-                itemList[i].setExtraAttribute('faceAgeMaxScore' + label, item_faces_labels_max_scores_dict[label])
+                itemList[i].setExtraAttribute('faceAge:maxScore:' + uncapitalize(label), item_faces_labels_max_scores_dict[label])
 
             global classificationSuccess
             classificationSuccess += 1
 
             # store age estimation data in cache
-            age_estimation_data = {'faceAgeScores': itemList[i].getExtraAttribute('faceAgeScores'),
-                                   'faceAgeLabels': itemList[i].getExtraAttribute('faceAgeLabels'),
+            age_estimation_data = {'faceAgeScores': itemList[i].getExtraAttribute('faceAge:scores'),
+                                   'faceAgeLabels': itemList[i].getExtraAttribute('faceAge:labels'),
                                    'faceAgeLabelsCounts': item_faces_labels_counts,
                                    'faceAgeLabelsScores': item_faces_labels_max_scores_dict }
             cache.put(itemList[i].getHashValue(), age_estimation_data)
@@ -521,3 +517,6 @@ def makePrediction(imageList):
         if semaphore is not None:
             semaphore.release()
     return preds
+
+def uncapitalize(s: str) -> str:
+    return s[:1].lower() + s[1:]
