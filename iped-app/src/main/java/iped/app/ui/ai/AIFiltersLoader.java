@@ -15,9 +15,21 @@ public class AIFiltersLoader {
     public static void load() {
         AIFiltersConfig config = ConfigurationManager.get().findObject(AIFiltersConfig.class);
         SimpleFilterNode root = config.getRootAIFilter();
+
         updateAIFilterCount(App.get().appCase, root);
+        removeEmptyTopLevelNodes(root);
+
         AIFiltersTreeModel model = new AIFiltersTreeModel(root);
         App.get().aiFiltersTree.setModel(model);
+    }
+
+    private static void removeEmptyTopLevelNodes(SimpleFilterNode root) {
+        for (int i = 0; i < root.getChildren().size(); i++) {
+            SimpleFilterNode node = root.getChildren().get(i);
+            if (node.getNumItems() <= 0) {
+                root.getChildren().remove(i--);
+            }
+        }
     }
 
     private static void updateAIFilterCount(IPEDSource source, SimpleFilterNode node) {

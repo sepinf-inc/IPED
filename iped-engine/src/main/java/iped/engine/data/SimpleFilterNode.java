@@ -21,7 +21,7 @@ public class SimpleFilterNode implements Serializable {
 
     @JsonAlias("value")
     private String value;
-    
+
     @JsonAlias("addChildren")
     private boolean addChildren;
 
