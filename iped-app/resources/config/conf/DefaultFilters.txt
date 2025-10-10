@@ -19,6 +19,8 @@ Container Subitems = subitem:true
 Containers not Expanded = category:("Mailboxes" "Compressed Archives" "ISO disks" "Other disks" "Virtual disks") -hasSubitem:true -fileFragment:true -isRoot:true
 Explicit Images & Videos = nudityScore:[500 TO *]
 Files with Thumbnails = hasThumb:true
+Files with Faces = face\_count:[1 TO *]
+Files with Child Faces = faceAge\:labels:child
 
 # Obsolete filters (suppressed in UI)
 Hash Alert (Child Porn) = OBSOLETE

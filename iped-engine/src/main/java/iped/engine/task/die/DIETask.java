@@ -289,6 +289,9 @@ public class DIETask extends AbstractTask {
      * It uses a weighted average, with higher weights for higher scores.
      */
     public static double videoScore(List<Double> p) {
+        if (p.size() == 1) {
+            return p.get(0);
+        }
         Collections.sort(p);
         Collections.reverse(p);
         double weight = 1;
