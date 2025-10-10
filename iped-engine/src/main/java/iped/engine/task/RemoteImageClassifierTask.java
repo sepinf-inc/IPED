@@ -95,14 +95,11 @@ public class RemoteImageClassifierTask extends AbstractTask {
     // AI classification extra attributes and values
     private static final String AI_CLASSIFICATION_STATUS_ATTR = aiPrefix + "classificationStatus";
     private static final String AI_CLASSIFICATION_SUCCESS = "success";
-    private static final String AI_CLASSIFICATION_FAIL_NO_CLASS = "fail:NoClass";
-    private static final String AI_CLASSIFICATION_FAIL_NO_RESULTS = "fail:NoResults";
-    private static final String AI_CLASSIFICATION_SKIP_ATTR = aiPrefix + "classificationSkip";
-    private static final String AI_CLASSIFICATION_SKIP_FALSE = "false";
-    private static final String AI_CLASSIFICATION_SKIP_SIZE = "size";
-    private static final String AI_CLASSIFICATION_SKIP_DIMENSION = "dimension";
-    private static final String AI_CLASSIFICATION_SKIP_HASHDB = "hashDB";
-    private static final String AI_CLASSIFICATION_SKIP_DUPLICATE = "duplicate";
+    private static final String AI_CLASSIFICATION_FAIL_NO_CLASS = "failNoClass";
+    private static final String AI_CLASSIFICATION_FAIL_NO_RESULTS = "failNoResults";
+    private static final String AI_CLASSIFICATION_SKIP_SIZE = "skippedSize";
+    private static final String AI_CLASSIFICATION_SKIP_DIMENSION = "skippedDimension";
+    private static final String AI_CLASSIFICATION_SKIP_HASHDB = "skippedHashDB";
 
     // Classifications cache (avoids classification of duplicates)
     private static ConcurrentHashMap<IHashValue, String> classifications = new ConcurrentHashMap<>();
@@ -428,8 +425,6 @@ public class RemoteImageClassifierTask extends AbstractTask {
                             classificationFail.incrementAndGet();
                             // Add classification status
                             evidence.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_FAIL_NO_CLASS);
-                            // Add skip classification info
-                            evidence.setExtraAttribute(AI_CLASSIFICATION_SKIP_ATTR, AI_CLASSIFICATION_SKIP_FALSE);
                             logger.warn("ClassificationFail::EvidenceNoClass: Invalid/missing 'class' field for filename: {}", name);
                         }
                     }
@@ -463,8 +458,6 @@ public class RemoteImageClassifierTask extends AbstractTask {
                     classificationSuccess.incrementAndGet();
                     // Add classification status
                     evidence.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_SUCCESS);
-                    // Add skip classification info
-                    evidence.setExtraAttribute(AI_CLASSIFICATION_SKIP_ATTR, AI_CLASSIFICATION_SKIP_FALSE);
                     
                     // Classification classes as a String holding className=classProb pairs (used when retrieving cached classifications)
                     String className;
@@ -496,8 +489,6 @@ public class RemoteImageClassifierTask extends AbstractTask {
                 classificationFail.incrementAndGet();                
                 // Add classification status
                 evidence.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_FAIL_NO_RESULTS);
-                // Add skip classification info
-                evidence.setExtraAttribute(AI_CLASSIFICATION_SKIP_ATTR, AI_CLASSIFICATION_SKIP_FALSE);
             }
             logger.error("ClassificationFail::NoResults: 'results' array is missing in JSON response. Classification fail for a batch of {} files", queue.size());
         }
@@ -529,6 +520,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
 
     // Custom HttpResponseStatusException exception
     private static class HttpResponseStatusException extends IOException {
+        private static final long serialVersionUID = -7955212330143589634L;
         private final int statusCode;
         private final String responseBody;
 
@@ -540,10 +532,6 @@ public class RemoteImageClassifierTask extends AbstractTask {
 
         public int getStatusCode() {
             return statusCode;
-        }
-
-        public String getResponseBody() {
-            return responseBody;
         }
 
         @Override
@@ -692,7 +680,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
         // Skip classification of images/videos smaller than a given file size (see 'skipSize' config property)
         if (skipSize > 0 && skipSize > evidence.getLength()) {
             // Add skip classification info
-            evidence.setExtraAttribute(AI_CLASSIFICATION_SKIP_ATTR, AI_CLASSIFICATION_SKIP_SIZE);
+            evidence.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_SKIP_SIZE);
             skipSizeCount.incrementAndGet();
             return;
         }
@@ -726,7 +714,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
             }
             if ((skipDimension > width || skipDimension > height) && width > 0 && height > 0) {
                 // Add skip classification info
-                evidence.setExtraAttribute(AI_CLASSIFICATION_SKIP_ATTR, AI_CLASSIFICATION_SKIP_DIMENSION);
+                evidence.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_SKIP_DIMENSION);
                 skipDimensionCount.incrementAndGet();
                 return;
             }
@@ -735,7 +723,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
         // Skip classification of images/videos with hits on IPED hashesDB database (see 'skipHashDBFiles' config property)
         if (skipHashDBFiles && evidence.getExtraAttribute(HashDBLookupTask.STATUS_ATTRIBUTE) != null) {
             // Add skip classification info
-            evidence.setExtraAttribute(AI_CLASSIFICATION_SKIP_ATTR, AI_CLASSIFICATION_SKIP_HASHDB);
+            evidence.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_SKIP_HASHDB);
             skipHashDBFilesCount.incrementAndGet();
             return;
         }
@@ -747,8 +735,6 @@ public class RemoteImageClassifierTask extends AbstractTask {
             // Classification exists in classifications cache
             // Add classification status
             evidence.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_SUCCESS);
-            // Add skip classification info
-            evidence.setExtraAttribute(AI_CLASSIFICATION_SKIP_ATTR, AI_CLASSIFICATION_SKIP_DUPLICATE);
             // Add classification classes to the evidence 
             String[] classesArray = classes.split(";");
             String[] classParts;
