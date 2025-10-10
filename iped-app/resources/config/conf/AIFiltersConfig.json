@@ -27,7 +27,7 @@
         {"name": "Aged"}
     ]},
 
-    {"name": "Transcribed Audio", "prefix": "Transcript", "property": "transcription", "value": "*"},
+    {"name": "Transcribed Audio", "prefix": "Transcript", "property": "audio\\:transcription", "value": "*"},
 
     {"name": "Nudity Score", "prefix": "Nudity", "property": "nudityScore", "children":[
         {"name": "Very High", "value": "[900 TO *]"},
@@ -37,5 +37,4 @@
         {"name": "Very Low", "value": "[* TO 149]"}
     ]}
 
-]
-}
+]}
