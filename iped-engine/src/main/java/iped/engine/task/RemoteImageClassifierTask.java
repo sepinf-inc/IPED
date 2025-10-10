@@ -109,7 +109,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
 
     // Queue to store 'name' to 'evidence' mapping
     private Map<String, IItem> queue = new TreeMap<>();
-    private ArrayList<IItem> sendTonext = new ArrayList<>();
+    private ArrayList<IItem> sendToNext = new ArrayList<>();
 
     // Zip archive holding files to be sent for classification
     private ZipFile zip;
@@ -341,7 +341,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
     }
 
     private void sendItemsToNextTask() throws Exception {
-        sendTonext.addAll(queue.values());
+        sendToNext.addAll(queue.values());
         queue.clear();
     }
 
@@ -350,11 +350,11 @@ public class RemoteImageClassifierTask extends AbstractTask {
             super.sendToNextTask(item);
             return;
         }
-        if (!sendTonext.isEmpty()) {
-            for (IItem it : sendTonext) {
+        if (!sendToNext.isEmpty()) {
+            for (IItem it : sendToNext) {
                 super.sendToNextTask(it);
             }
-            sendTonext.clear();
+            sendToNext.clear();
         }
 
         if (!queue.containsValue(item) || item.isQueueEnd()) {
