@@ -4,6 +4,8 @@ import java.awt.CardLayout;
 import java.awt.Dimension;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import javax.swing.JPanel;
@@ -226,5 +228,9 @@ public class MultiViewer extends AbstractViewer {
 
     public void searchInViewer() {
         searchPanel.setVisible(!searchPanel.isVisible());
+    }
+
+    public List<AbstractViewer> getViewerList() {
+        return Collections.unmodifiableList(viewerList);
     }
 }

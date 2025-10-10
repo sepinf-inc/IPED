@@ -15,10 +15,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.geom.Area;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,10 +44,13 @@ import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.tika.mime.MediaType;
 
 import iped.data.IItem;
 import iped.engine.search.SimilarFacesSearch;
+import iped.io.SeekableInputStream;
+import iped.utils.ExternalImageConverter;
 import iped.utils.ImageUtil;
 
 public class SimilarFacesOptionsDialog extends JDialog {
@@ -56,6 +62,7 @@ public class SimilarFacesOptionsDialog extends JDialog {
     private boolean resOk;
     private int resMinScore;
     private int resMode;
+    private ExternalImageConverter externalImageConverter = new ExternalImageConverter();
 
     public SimilarFacesOptionsDialog(Window parent, IItem item, int minScore, int mode) {
         super(parent, ModalityType.APPLICATION_MODAL);
@@ -66,6 +73,13 @@ public class SimilarFacesOptionsDialog extends JDialog {
         content.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
         setContentPane(content);
         setMinimumSize(new Dimension(320, 240));
+
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+                IOUtils.closeQuietly(externalImageConverter);
+            }
+        });
 
         JRadioButton rb0 = new JRadioButton(Messages.getString("FaceSimilarity.ModeOR"));
         JRadioButton rb1 = new JRadioButton(Messages.getString("FaceSimilarity.ModeAND"));
@@ -142,6 +156,13 @@ public class SimilarFacesOptionsDialog extends JDialog {
                     }
                 } catch (Exception e) {
                 }
+            }
+        }
+        if (img == null) {
+            try (SeekableInputStream sis = item.getSeekableInputStream()) {
+                BufferedInputStream in = new BufferedInputStream(sis);
+                img = externalImageConverter.getImage(in, 1024, true, sis.size());
+            } catch (Exception e) {
             }
         }
         if (img != null) {
@@ -354,7 +375,7 @@ public class SimilarFacesOptionsDialog extends JDialog {
         return 0;
     }
 
-    private static Dimension getDimension(IItem item) throws IOException {
+    private Dimension getDimension(IItem item) throws IOException {
         Dimension d = null;
         File view = item.getViewFile();
         if (view != null && view.exists()) {
@@ -363,6 +384,11 @@ public class SimilarFacesOptionsDialog extends JDialog {
         if (d == null) {
             try (InputStream is = item.getSeekableInputStream()) {
                 d = ImageUtil.getImageFileDimension(is);
+            }
+        }
+        if (d == null) {
+            try (InputStream is = item.getSeekableInputStream()) {
+                d = externalImageConverter.getDimension(is);
             }
         }
         return d;
