@@ -79,11 +79,11 @@ function addLabel(e, listLabels, defaultLabel) {
 function process(e) {
 
 	var listLabels = {
-		"ai:csam":"Child Sexual Abuse",
-		"ai:likelyCsam":"Likely Child Sexual Abuse",
+		"ai:csam":"ChildSexualAbuse",
+		"ai:likelyCsam":"LikelyChildSexualAbuse",
 		"ai:drawing":{"name":"Drawing","subClasses":{
-			"ai:drawingCsam":"Child Sexual Abuse Drawing",
-			"ai:drawingPorn":"Explicit Drawing"}
+			"ai:drawingCsam":"ChildSexualAbuseDrawing",
+			"ai:drawingPorn":"ExplicitDrawing"}
 		},
 		"ai:people":"People",
 		"ai:porn":"Pornography"
