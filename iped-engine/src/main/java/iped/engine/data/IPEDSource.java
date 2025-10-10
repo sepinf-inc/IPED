@@ -113,7 +113,7 @@ public class IPEDSource implements IIPEDSource {
 
     protected ArrayList<String> leafCategories = new ArrayList<String>();
     protected Category categoryTree;
-    protected FilterNode aiFilterRoot;
+    protected SimpleFilterNode aiFilterRoot;
     protected final Map<String, Set<String>> descendantsCategories = new HashMap<String, Set<String>>();
 
     private IBookmarks bookmarks;
@@ -754,7 +754,7 @@ public class IPEDSource implements IIPEDSource {
         return descendantsCategories.get(ancestral);
     }
 
-    public FilterNode getAIFilterRoot() {
+    public SimpleFilterNode getAIFilterRoot() {
         return aiFilterRoot;
     }
 
