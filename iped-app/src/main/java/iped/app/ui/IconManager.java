@@ -52,6 +52,7 @@ public class IconManager {
 
     private static final Map<String, QualityIcon> catIconMap = loadIconsFromJar("cat", initialSizes[0]);
     private static final Map<String, QualityIcon> filterIconMap = loadIconsFromJar("filter", initialSizes[0]);
+    private static final Map<String, QualityIcon> filterDisabledIconMap = loadIconsFromJar("filter", initialSizes[0], false);
 
     private static final Map<String, QualityIcon> extIconMap = loadIconsFromJar("file", currentIconSize);
     private static final Map<String, QualityIcon> treeIconMap = loadIconsFromJar("tree", currentIconSize);
@@ -69,6 +70,10 @@ public class IconManager {
     private static final QualityIcon defaultCategoryIcon = catIconMap.get("blank");
 
     private static Map<String, QualityIcon> loadIconsFromJar(String iconPath, int size) {
+        return loadIconsFromJar(iconPath, size, true);
+    }
+
+    private static Map<String, QualityIcon> loadIconsFromJar(String iconPath, int size, boolean enabled) {
         Map<String, QualityIcon> map = new HashMap<>();
         try {
             String separator = "/";
@@ -86,7 +91,8 @@ public class IconManager {
                         String name = nameWithPath.replace(path, "");
                         if (nameWithPath.startsWith(path) && name.toLowerCase().endsWith(ICON_EXTENSION)) {
                             BufferedImage img = ImageIO.read(IconManager.class.getResource(iconPath + separator + name));
-                            map.put(name.replace(ICON_EXTENSION, "").toLowerCase(), new QualityIcon(img, size));
+                            QualityIcon icon = new QualityIcon(img, size, enabled);
+                            map.put(name.replace(ICON_EXTENSION, "").toLowerCase(), icon);
                         }
                     }
                 }
@@ -157,9 +163,10 @@ public class IconManager {
         return defaultCategoryIcon;
     }
 
-    public static Icon getFilterIcon(SimpleFilterNode node) {
+    public static Icon getFilterIcon(SimpleFilterNode node, boolean enabled) {
         if (node != null) {
-            return filterIconMap.getOrDefault(node.getFullName().toLowerCase(), defaultCategoryIcon);
+            return (enabled ? filterIconMap : filterDisabledIconMap).getOrDefault(node.getFullName().toLowerCase(),
+                    defaultCategoryIcon);
         }
         return defaultCategoryIcon;
     }
@@ -721,6 +728,7 @@ public class IconManager {
     public static void setCategoryIconSize(int size) {
         setMapIconSize(catIconMap, size);
         setMapIconSize(filterIconMap, size);
+        setMapIconSize(filterDisabledIconMap, size);
     }
 
     public static void setGalleryIconSize(int size) {
