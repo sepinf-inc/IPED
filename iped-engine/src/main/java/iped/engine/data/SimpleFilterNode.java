@@ -103,21 +103,6 @@ public class SimpleFilterNode implements Serializable {
         return -1;
     }
 
-    public String toString() {
-        // TODO
-        /*
-        if (this.parent == null)
-            return name;
-        String name = CategoryLocalization.getInstance().getLocalizedCategory(this.name);
-        if (numItems == -1) {
-            return name + " (...)"; //$NON-NLS-1$
-        } else {
-            return name + " (" + LocalizedFormat.format(numItems) + ")"; //$NON-NLS-1$ //$NON-NLS-2$
-        }
-        */
-        return name;
-    }
-
     @Override
     public SimpleFilterNode clone() {
         SimpleFilterNode clone = new SimpleFilterNode();
