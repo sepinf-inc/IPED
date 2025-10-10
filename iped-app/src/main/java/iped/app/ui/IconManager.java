@@ -30,6 +30,7 @@ import javax.imageio.ImageIO;
 import javax.swing.Icon;
 
 import iped.app.ui.utils.UiIconSize;
+import iped.engine.data.SimpleFilterNode;
 import iped.utils.QualityIcon;
 
 /**
@@ -50,6 +51,7 @@ public class IconManager {
     private static int currentIconSize = initialSizes[2];
 
     private static final Map<String, QualityIcon> catIconMap = loadIconsFromJar("cat", initialSizes[0]);
+    private static final Map<String, QualityIcon> filterIconMap = loadIconsFromJar("filter", initialSizes[0]);
 
     private static final Map<String, QualityIcon> extIconMap = loadIconsFromJar("file", currentIconSize);
     private static final Map<String, QualityIcon> treeIconMap = loadIconsFromJar("tree", currentIconSize);
@@ -151,6 +153,13 @@ public class IconManager {
     public static Icon getCategoryIcon(String category) {
         if (category != null && !category.isBlank()) {
             return catIconMap.getOrDefault(category.strip(), defaultCategoryIcon);
+        }
+        return defaultCategoryIcon;
+    }
+
+    public static Icon getFilterIcon(SimpleFilterNode node) {
+        if (node != null) {
+            return filterIconMap.getOrDefault(node.getFullName().toLowerCase(), defaultCategoryIcon);
         }
         return defaultCategoryIcon;
     }
@@ -711,6 +720,7 @@ public class IconManager {
 
     public static void setCategoryIconSize(int size) {
         setMapIconSize(catIconMap, size);
+        setMapIconSize(filterIconMap, size);
     }
 
     public static void setGalleryIconSize(int size) {

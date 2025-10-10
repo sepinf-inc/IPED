@@ -9,11 +9,11 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
 import iped.app.ui.App;
-import iped.engine.data.FilterNode;
+import iped.engine.data.SimpleFilterNode;
 
 public class AIFiltersTreeModel implements TreeModel {
 
-    private FilterNode root;
+    private SimpleFilterNode root;
 
     private final List<TreeModelListener> listeners = new ArrayList<TreeModelListener>();
 
@@ -31,11 +31,11 @@ public class AIFiltersTreeModel implements TreeModel {
     }
 
     private void updateAIFilters() {
-        FilterNode newRoot = App.get().appCase.getAIFilterRoot();
+        SimpleFilterNode newRoot = App.get().appCase.getAIFilterRoot();
         updateChildren(this.root, newRoot);
     }
 
-    private void fireNodeChanged(final FilterNode node) {
+    private void fireNodeChanged(final SimpleFilterNode node) {
         /*
         if (category == root)
             return;
@@ -56,7 +56,7 @@ public class AIFiltersTreeModel implements TreeModel {
         */
     }
 
-    private void updateChildren(FilterNode oldRoot, FilterNode newRoot) {
+    private void updateChildren(SimpleFilterNode oldRoot, SimpleFilterNode newRoot) {
         /*
         int idx = 0;
         oldRoot.setNumItems(newRoot.getNumItems());
@@ -75,7 +75,7 @@ public class AIFiltersTreeModel implements TreeModel {
         */
     }
 
-    private FilterNode getFromCollection(Collection<FilterNode> set, FilterNode node) {
+    private SimpleFilterNode getFromCollection(Collection<SimpleFilterNode> set, SimpleFilterNode node) {
         /*
         Iterator<Category> it = set.iterator();
         while (it.hasNext()) {
@@ -87,7 +87,7 @@ public class AIFiltersTreeModel implements TreeModel {
         return null;
     }
 
-    private void notifyNewNode(FilterNode node, int idx) {
+    private void notifyNewNode(SimpleFilterNode node, int idx) {
         /*
         int[] idxs = { idx };
         Category[] cats = { cat };
@@ -107,17 +107,17 @@ public class AIFiltersTreeModel implements TreeModel {
 
     @Override
     public Object getChild(Object parent, int index) {
-        return ((FilterNode) parent).getChildren().get(index);
+        return ((SimpleFilterNode) parent).getChildren().get(index);
     }
 
     @Override
     public int getChildCount(Object parent) {
-        return ((FilterNode) parent).getChildren().size();
+        return ((SimpleFilterNode) parent).getChildren().size();
     }
 
     @Override
     public boolean isLeaf(Object node) {
-        return ((FilterNode) node).getChildren().size() == 0;
+        return ((SimpleFilterNode) node).getChildren().size() == 0;
     }
 
     @Override
@@ -128,7 +128,7 @@ public class AIFiltersTreeModel implements TreeModel {
     public int getIndexOfChild(Object parent, Object child) {
         if (parent == null || child == null)
             return -1;
-        return ((FilterNode) parent).getIndexOfChild((FilterNode) child);
+        return ((SimpleFilterNode) parent).getIndexOfChild((SimpleFilterNode) child);
     }
 
     @Override

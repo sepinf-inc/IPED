@@ -9,7 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
-import iped.engine.data.FilterNode;
+import iped.engine.data.SimpleFilterNode;
 
 public class AIFiltersConfig extends AbstractTaskConfig<String> {
 
@@ -17,7 +17,7 @@ public class AIFiltersConfig extends AbstractTaskConfig<String> {
 
     private static final String CONFIG_FILE = "AIFiltersConfig.json";
 
-    private FilterNode root;
+    private SimpleFilterNode root;
 
     @Override
     public boolean isEnabled() {
@@ -27,7 +27,7 @@ public class AIFiltersConfig extends AbstractTaskConfig<String> {
     @Override
     public String getConfiguration() {
         ObjectMapper objectMapper = new ObjectMapper();
-        ObjectWriter writer = objectMapper.writerFor(FilterNode.class);
+        ObjectWriter writer = objectMapper.writerFor(SimpleFilterNode.class);
         try {
             return writer.writeValueAsString(root);
         } catch (JsonProcessingException e) {
@@ -38,7 +38,7 @@ public class AIFiltersConfig extends AbstractTaskConfig<String> {
     @Override
     public void setConfiguration(String config) {
         ObjectMapper objectMapper = new ObjectMapper();
-        ObjectReader reader = objectMapper.readerFor(FilterNode.class);
+        ObjectReader reader = objectMapper.readerFor(SimpleFilterNode.class);
         try {
             root = reader.readValue(config);
         } catch (JsonProcessingException e) {
@@ -47,7 +47,7 @@ public class AIFiltersConfig extends AbstractTaskConfig<String> {
         populateParents(root);
     }
 
-    public FilterNode getRootAIFilter() {
+    public SimpleFilterNode getRootAIFilter() {
         return root;
     }
 
@@ -66,8 +66,8 @@ public class AIFiltersConfig extends AbstractTaskConfig<String> {
         setConfiguration(Files.readString(resource));
     }
 
-    private void populateParents(FilterNode aiFilter) {
-        for (FilterNode child : aiFilter.getChildren()) {
+    private void populateParents(SimpleFilterNode aiFilter) {
+        for (SimpleFilterNode child : aiFilter.getChildren()) {
             child.setParent(aiFilter);
             populateParents(child);
         }

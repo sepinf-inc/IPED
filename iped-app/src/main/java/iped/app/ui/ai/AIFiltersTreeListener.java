@@ -18,7 +18,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
 import iped.app.ui.App;
-import iped.engine.data.FilterNode;
+import iped.engine.data.SimpleFilterNode;
 import iped.engine.search.QueryBuilder;
 import iped.engine.task.index.IndexItem;
 import iped.exception.ParseException;
@@ -30,7 +30,7 @@ import iped.viewers.api.IQueryFilterer;
 public class AIFiltersTreeListener implements TreeSelectionListener, TreeExpansionListener, IQueryFilterer {
 
     private BooleanQuery query;
-    private List<FilterNode> aiFiltersList = new ArrayList<FilterNode>();
+    private List<SimpleFilterNode> aiFiltersList = new ArrayList<SimpleFilterNode>();
     private HashSet<TreePath> selection = new HashSet<TreePath>();
     private TreePath root;
     private long collapsed = 0;
@@ -85,7 +85,7 @@ public class AIFiltersTreeListener implements TreeSelectionListener, TreeExpansi
 
     }
 
-    private void addAIFilterToQuery(FilterNode aif, Builder builder) {
+    private void addAIFilterToQuery(SimpleFilterNode aif, Builder builder) {
         builder.add(new TermQuery(new Term(aif.getProperty(), aif.getValue())), Occur.SHOULD);
         aiFiltersList.add(aif);
     }
@@ -115,7 +115,7 @@ public class AIFiltersTreeListener implements TreeSelectionListener, TreeExpansi
     @Override
     public List<IFilter> getDefinedFilters() {
         List<IFilter> result = new ArrayList<IFilter>();
-        for (FilterNode aif : aiFiltersList) {
+        for (SimpleFilterNode aif : aiFiltersList) {
             result.add(new IQueryFilter() {
                 @Override
                 public Query getQuery() {

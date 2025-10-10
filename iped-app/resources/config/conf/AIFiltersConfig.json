@@ -1,6 +1,5 @@
 {
 "name": "AI Root",
-"prefix": "Root",
 "children":[
 
     {"name": "Classified by AI", "prefix": "Classifier", "property": "ai\\:label", "children":[
@@ -20,7 +19,7 @@
         {"name": "3 or more", "value": "[3 TO *]"}
     ]},
 
-    {"name": "Audio Transcription", "prefix": "Transcript", "property": "transcription", "value": "*"},
+    {"name": "Transcribed Audio", "prefix": "Transcript", "property": "transcription", "value": "*"},
 
     {"name": "Nudity Score", "prefix": "Nudity", "property": "nudityScore", "children":[
         {"name": "Very High", "value": "[900 TO *]"},

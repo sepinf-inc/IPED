@@ -166,7 +166,7 @@ public class IPEDMultiSource extends IPEDSource {
     }
 
     @Override
-    public FilterNode getAIFilterRoot() {
+    public SimpleFilterNode getAIFilterRoot() {
         if (aiFilterRoot == null) {
             for (IPEDSource iCase : cases) {
                 if (iCase.getAIFilterRoot() != null) {
