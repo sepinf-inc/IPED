@@ -6,7 +6,7 @@
         {"name": "Child Sexual Abuse", "value": "ChildSexualAbuse"},
         {"name": "Likely Child Sexual Abuse", "value": "LikelyChildSexualAbuse"},
         {"name": "Pornography"},
-        {"name": "Drawing", "children":[
+        {"name": "Drawing", "addChildren": "true", "children":[
             {"name":"Child Sexual Abuse Drawing", "value": "ChildSexualAbuseDrawing"},
             {"name":"Explicit Drawing", "value": "ExplicitDrawing"}
         ]},

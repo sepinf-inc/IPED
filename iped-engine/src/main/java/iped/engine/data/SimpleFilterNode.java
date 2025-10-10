@@ -21,9 +21,12 @@ public class SimpleFilterNode implements Serializable {
 
     @JsonAlias("value")
     private String value;
+    
+    @JsonAlias("addChildren")
+    private boolean addChildren;
 
     @JsonAlias("children")
-    private List<SimpleFilterNode> children = new ArrayList<>();
+    private final List<SimpleFilterNode> children = new ArrayList<>();
 
     @JsonIgnore
     private SimpleFilterNode parent;
@@ -60,6 +63,10 @@ public class SimpleFilterNode implements Serializable {
         return value == null ? name : value;
     }
 
+    public boolean getAddChildren() {
+        return addChildren;
+    }
+
     public List<SimpleFilterNode> getChildren() {
         return children;
     }
@@ -86,6 +93,10 @@ public class SimpleFilterNode implements Serializable {
 
     public void setValue(String value) {
         this.value = value;
+    }
+
+    public void setAddChildren(boolean addChildren) {
+        this.addChildren = addChildren;
     }
 
     public void setNumItems(int num) {

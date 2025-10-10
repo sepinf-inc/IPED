@@ -165,10 +165,25 @@ public class AIFiltersTreeListener implements TreeSelectionListener, TreeExpansi
                 }
                 try {
                     query = new QueryBuilder(App.get().appCase).getQuery(queryStr.toString());
-                    queryFromNode.put(node, query);
                 } catch (ParseException | QueryNodeException e) {
                     e.printStackTrace();
                 }
+            }
+            if (node.getAddChildren()) {
+                Builder builder = new Builder();
+                if (query != null) {
+                    builder.add(query, Occur.SHOULD);                            
+                }
+                for (SimpleFilterNode child : node.getChildren()) {
+                    Query childQuery = getNodeQuery(child);
+                    if (childQuery != null) {
+                        builder.add(childQuery, Occur.SHOULD);
+                    }
+                }
+                query = builder.build();
+            }
+            if (query != null) {
+                queryFromNode.put(node, query);
             }
         }
         return query;
