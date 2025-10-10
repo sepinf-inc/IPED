@@ -371,7 +371,7 @@ public class IPEDSource implements IIPEDSource {
 
     protected void loadAIFiltersTree() {
         AIFiltersConfig config = ConfigurationManager.get().findObject(AIFiltersConfig.class);
-        aiFilterRoot = config.getRootAIFilter().clone();
+        aiFilterRoot = config.getRootAIFilter();
     }
     
     protected void loadCategoryTree() {

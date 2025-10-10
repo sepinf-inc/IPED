@@ -1,8 +1,11 @@
 package iped.app.ui.ai;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
@@ -10,17 +13,14 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
 
-import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.BooleanQuery.Builder;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TermQuery;
 
 import iped.app.ui.App;
 import iped.engine.data.SimpleFilterNode;
 import iped.engine.search.QueryBuilder;
-import iped.engine.task.index.IndexItem;
 import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
 import iped.viewers.api.IFilter;
@@ -29,15 +29,18 @@ import iped.viewers.api.IQueryFilterer;
 
 public class AIFiltersTreeListener implements TreeSelectionListener, TreeExpansionListener, IQueryFilterer {
 
-    private BooleanQuery query;
-    private List<SimpleFilterNode> aiFiltersList = new ArrayList<SimpleFilterNode>();
-    private HashSet<TreePath> selection = new HashSet<TreePath>();
+    private BooleanQuery filterQuery;
+    private final List<SimpleFilterNode> aiFiltersList = new ArrayList<SimpleFilterNode>();
+    private final HashSet<TreePath> selection = new HashSet<TreePath>();
     private TreePath root;
     private long collapsed = 0;
     private boolean clearing = false;
+    private final Map<SimpleFilterNode, Query> queryFromNode = Collections
+            .synchronizedMap(new HashMap<SimpleFilterNode, Query>());
 
+    @Override
     public Query getQuery() {
-        return query;
+        return filterQuery;
     }
 
     @Override
@@ -62,32 +65,30 @@ public class AIFiltersTreeListener implements TreeSelectionListener, TreeExpansi
         if (selection.contains(root) || selection.isEmpty()) {
             App.get().setAIFiltersDefaultColor(true);
             aiFiltersList.clear();
-            query = null;
+            filterQuery = null;
 
         } else {
             App.get().setAIFiltersDefaultColor(false);
 
             aiFiltersList.clear();
-            query = null;            
-            /* TODO
+            filterQuery = null;
             Builder builder = new Builder();
             aiFiltersList.clear();
             for (TreePath path : selection) {
-                FilterNode aif = (FilterNode) path.getLastPathComponent();
-                addAIFilterToQuery(aif, builder);
+                SimpleFilterNode node = (SimpleFilterNode) path.getLastPathComponent();
+                Query query = getNodeQuery(node);
+                if (query != null) {
+                    builder.add(query, Occur.SHOULD);
+                    aiFiltersList.add(node);
+                }
             }
-            query = builder.build();
-            */
+            if (!aiFiltersList.isEmpty()) {
+                filterQuery = builder.build();
+            }
         }
-
-        if (!clearing)
+        if (!clearing) {
             App.get().appletListener.updateFileListing();
-
-    }
-
-    private void addAIFilterToQuery(SimpleFilterNode aif, Builder builder) {
-        builder.add(new TermQuery(new Term(aif.getProperty(), aif.getValue())), Occur.SHOULD);
-        aiFiltersList.add(aif);
+        }
     }
 
     @Override
@@ -115,28 +116,16 @@ public class AIFiltersTreeListener implements TreeSelectionListener, TreeExpansi
     @Override
     public List<IFilter> getDefinedFilters() {
         List<IFilter> result = new ArrayList<IFilter>();
-        for (SimpleFilterNode aif : aiFiltersList) {
+        for (SimpleFilterNode node : aiFiltersList) {
             result.add(new IQueryFilter() {
                 @Override
                 public Query getQuery() {
-                    StringBuffer queryStr = new StringBuffer();
-                    queryStr.append(aif.getProperty());
-                    queryStr.append(" :\"");
-                    queryStr.append(aif.getValue());
-                    queryStr.append("\"");
-
-                    Query query;
-                    try {
-                        query = new QueryBuilder(App.get().appCase).getQuery(queryStr.toString());
-                        return query;
-                    } catch (ParseException | QueryNodeException e) {
-                        e.printStackTrace();
-                    }
-                    return null;
+                    return getNodeQuery(node);
                 }
 
                 public String toString() {
-                    return IndexItem.normalize(aif.getName(), true);
+                    // TODO IndexItem.normalize(node.getName(), true);
+                    return node.getName();
                 }
             });
         }
@@ -148,6 +137,7 @@ public class AIFiltersTreeListener implements TreeSelectionListener, TreeExpansi
         return false;
     }
 
+    @Override
     public String toString() {
         return "AI filters panel filterer";
     }
@@ -155,5 +145,33 @@ public class AIFiltersTreeListener implements TreeSelectionListener, TreeExpansi
     @Override
     public boolean hasFilters() {
         return aiFiltersList.size() > 0;
+    }
+
+    private Query getNodeQuery(SimpleFilterNode node) {
+        Query query = queryFromNode.get(node);
+        if (query == null) {
+            String value = node.getValue();
+            if (value != null) {
+                value = value.trim();
+                String property = node.getProperty().trim();
+                StringBuffer queryStr = new StringBuffer();
+                queryStr.append(property);
+                queryStr.append(":");
+                if (value.length() > 1 && !value.endsWith("]")) {
+                    queryStr.append('"');
+                    queryStr.append(value);
+                    queryStr.append('"');
+                } else {
+                    queryStr.append(value);
+                }
+                try {
+                    query = new QueryBuilder(App.get().appCase).getQuery(queryStr.toString());
+                    queryFromNode.put(node, query);
+                } catch (ParseException | QueryNodeException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return query;
     }
 }

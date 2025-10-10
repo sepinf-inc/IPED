@@ -49,11 +49,15 @@ public class SimpleFilterNode implements Serializable {
     }
 
     public String getProperty() {
-        return property;
+        String s = property;
+        if (s == null && parent != null) {
+            s = parent.getProperty();
+        }
+        return s;
     }
 
     public String getValue() {
-        return value;
+        return value == null ? name : value;
     }
 
     public List<SimpleFilterNode> getChildren() {
@@ -102,7 +106,7 @@ public class SimpleFilterNode implements Serializable {
         }
         return -1;
     }
-
+/*
     @Override
     public SimpleFilterNode clone() {
         SimpleFilterNode clone = new SimpleFilterNode();
@@ -118,4 +122,5 @@ public class SimpleFilterNode implements Serializable {
         }
         return clone;
     }
+    */
 }

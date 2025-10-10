@@ -2,7 +2,7 @@
 "name": "AI Root",
 "children":[
 
-    {"name": "Classified by AI", "prefix": "Classifier", "property": "ai\\:label", "children":[
+    {"name": "Classified by AI", "prefix": "Classifier", "property": "ai\\:label", "value": "*", "children":[
         {"name": "Child Sexual Abuse"},
         {"name": "Likely Child Sexual Abuse"},
         {"name": "Pornography"},
@@ -13,13 +13,13 @@
         {"name": "People"}
     ]}, 
 
-    {"name": "Detected Faces", "prefix": "Face", "property": "face\\_count", "children":[
+    {"name": "Detected Faces", "prefix": "Face", "property": "face\\_count", "value": "[1 TO *]", "children":[
         {"name": "1"},
         {"name": "2"},
         {"name": "3 or more", "value": "[3 TO *]"}
     ]},
 
-    {"name": "Estimated Age", "prefix": "Age", "property": "faceAge\\:labels", "children":[
+    {"name": "Estimated Age", "prefix": "Age", "property": "faceAge\\:labels", "value": "*", "children":[
         {"name": "Child"},
         {"name": "Teenager"},
         {"name": "Adult"},
@@ -29,7 +29,7 @@
 
     {"name": "Transcribed Audio", "prefix": "Transcript", "property": "audio\\:transcription", "value": "*"},
 
-    {"name": "Nudity Score", "prefix": "Nudity", "property": "nudityScore", "children":[
+    {"name": "Nudity Score", "prefix": "Nudity", "property": "nudityScore", "value": "[* TO *]", "children":[
         {"name": "Very High", "value": "[900 TO *]"},
         {"name": "High", "value": "[650 TO 899]"},
         {"name": "Medium", "value": "[400 TO 649]"},
