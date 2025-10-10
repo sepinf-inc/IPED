@@ -61,8 +61,8 @@ import iped.engine.config.ConfigurationManager;
 import iped.engine.config.RemoteImageClassifierConfig;
 import iped.engine.task.die.DIETask;
 import iped.engine.task.index.IndexItem;
-import iped.utils.ImageUtil;
 import iped.parsers.util.MetadataUtil;
+import iped.utils.ImageUtil;
 
 /**
  * Performs remote classification of image and video files.
@@ -106,6 +106,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
 
     // Queue to store 'name' to 'evidence' mapping
     private Map<String, IItem> queue = new TreeMap<>();
+    private ArrayList<IItem> sendToNext = new ArrayList<>();
 
     // Zip archive holding files to be sent for classification
     private ZipFile zip;
@@ -337,11 +338,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
     }
 
     private void sendItemsToNextTask() throws Exception {
-        for (IItem item : queue.values()) {
-            if (item != null) {
-                super.sendToNextTask(item);
-            }
-        }
+        sendToNext.addAll(queue.values());
         queue.clear();
     }
 
@@ -349,6 +346,12 @@ public class RemoteImageClassifierTask extends AbstractTask {
         if (!isEnabled()) {
             super.sendToNextTask(item);
             return;
+        }
+        if (!sendToNext.isEmpty()) {
+            for (IItem it : sendToNext) {
+                super.sendToNextTask(it);
+            }
+            sendToNext.clear();
         }
 
         if (!queue.containsValue(item) || item.isQueueEnd()) {
