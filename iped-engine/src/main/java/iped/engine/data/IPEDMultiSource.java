@@ -165,19 +165,6 @@ public class IPEDMultiSource extends IPEDSource {
         LOGGER.info("Loaded " + cases.size() + " cases."); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
-    @Override
-    public SimpleFilterNode getAIFilterRoot() {
-        if (aiFilterRoot == null) {
-            for (IPEDSource iCase : cases) {
-                if (iCase.getAIFilterRoot() != null) {
-                    aiFilterRoot = iCase.getAIFilterRoot();
-                    break;
-                }
-            }
-        }
-        return aiFilterRoot;
-    }
-
     private void loadCategories() {
         for (IPEDSource iCase : cases) {
             for (String category : iCase.leafCategories) {

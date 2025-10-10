@@ -7,6 +7,7 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 
 import iped.app.ui.IconManager;
 import iped.engine.data.SimpleFilterNode;
+import iped.utils.LocalizedFormat;
 
 public class AIFiltersTreeCellRenderer extends DefaultTreeCellRenderer {
 
@@ -18,8 +19,13 @@ public class AIFiltersTreeCellRenderer extends DefaultTreeCellRenderer {
         super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
         if (value instanceof SimpleFilterNode) {
             SimpleFilterNode node = (SimpleFilterNode) value;
+            int numItems = node.getNumItems();
             setIcon(IconManager.getFilterIcon(node));
-            setText(AIFiltersLocalization.get(node));
+            String text = AIFiltersLocalization.get(node);
+            if (numItems >= 0) {
+                text += " (" + LocalizedFormat.format(numItems) + ")";
+            }
+            setText(text);
         }
         return this;
     }

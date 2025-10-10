@@ -7,22 +7,14 @@ import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
-import iped.app.ui.App;
 import iped.engine.data.SimpleFilterNode;
 
 public class AIFiltersTreeModel implements TreeModel {
     private SimpleFilterNode root;
     private final List<TreeModelListener> listeners = new ArrayList<TreeModelListener>();
 
-    public static void install() {
-        if (!(App.get().aiFiltersTree.getModel() instanceof AIFiltersTreeModel)) {
-            AIFiltersTreeModel model = new AIFiltersTreeModel();
-            App.get().aiFiltersTree.setModel(model);
-        }
-    }
-
-    private AIFiltersTreeModel() {
-        this.root = App.get().appCase.getAIFilterRoot();
+    AIFiltersTreeModel(SimpleFilterNode root) {
+        this.root = root;
     }
 
     @Override
@@ -51,8 +43,9 @@ public class AIFiltersTreeModel implements TreeModel {
 
     @Override
     public int getIndexOfChild(Object parent, Object child) {
-        if (parent == null || child == null)
+        if (parent == null || child == null) {
             return -1;
+        }
         return ((SimpleFilterNode) parent).getIndexOfChild((SimpleFilterNode) child);
     }
 

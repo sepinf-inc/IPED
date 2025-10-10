@@ -76,7 +76,7 @@ public class SimpleFilterNode implements Serializable {
     }
 
     public int getNumItems() {
-        return this.numItems;
+        return numItems;
     }
 
     public void setName(String name) {
@@ -99,8 +99,8 @@ public class SimpleFilterNode implements Serializable {
         this.addChildren = addChildren;
     }
 
-    public void setNumItems(int num) {
-        this.numItems = num;
+    public void setNumItems(int numItems) {
+        this.numItems = numItems;
     }
 
     public void setParent(SimpleFilterNode parent) {

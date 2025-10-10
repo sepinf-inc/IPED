@@ -1,11 +1,8 @@
 package iped.app.ui.ai;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
@@ -20,9 +17,7 @@ import org.apache.lucene.search.Query;
 
 import iped.app.ui.App;
 import iped.engine.data.SimpleFilterNode;
-import iped.engine.search.QueryBuilder;
-import iped.exception.ParseException;
-import iped.exception.QueryNodeException;
+import iped.engine.search.SimpleNodeFilterSearch;
 import iped.viewers.api.IFilter;
 import iped.viewers.api.IQueryFilter;
 import iped.viewers.api.IQueryFilterer;
@@ -35,8 +30,6 @@ public class AIFiltersTreeListener implements TreeSelectionListener, TreeExpansi
     private TreePath root;
     private long collapsed = 0;
     private boolean clearing = false;
-    private final Map<SimpleFilterNode, Query> queryFromNode = Collections
-            .synchronizedMap(new HashMap<SimpleFilterNode, Query>());
 
     @Override
     public Query getQuery() {
@@ -147,45 +140,6 @@ public class AIFiltersTreeListener implements TreeSelectionListener, TreeExpansi
     }
 
     private Query getNodeQuery(SimpleFilterNode node) {
-        Query query = queryFromNode.get(node);
-        if (query == null) {
-            String value = node.getValue();
-            if (value != null) {
-                value = value.trim();
-                String property = node.getProperty().trim();
-                StringBuffer queryStr = new StringBuffer();
-                queryStr.append(property);
-                queryStr.append(":");
-                if (value.length() > 1 && !value.endsWith("]")) {
-                    queryStr.append('"');
-                    queryStr.append(value);
-                    queryStr.append('"');
-                } else {
-                    queryStr.append(value);
-                }
-                try {
-                    query = new QueryBuilder(App.get().appCase).getQuery(queryStr.toString());
-                } catch (ParseException | QueryNodeException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (node.getAddChildren()) {
-                Builder builder = new Builder();
-                if (query != null) {
-                    builder.add(query, Occur.SHOULD);                            
-                }
-                for (SimpleFilterNode child : node.getChildren()) {
-                    Query childQuery = getNodeQuery(child);
-                    if (childQuery != null) {
-                        builder.add(childQuery, Occur.SHOULD);
-                    }
-                }
-                query = builder.build();
-            }
-            if (query != null) {
-                queryFromNode.put(node, query);
-            }
-        }
-        return query;
+        return SimpleNodeFilterSearch.getNodeQuery(App.get().appCase, node);
     }
 }
