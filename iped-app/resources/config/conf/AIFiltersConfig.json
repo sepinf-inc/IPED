@@ -19,6 +19,14 @@
         {"name": "3 or more", "value": "[3 TO *]"}
     ]},
 
+    {"name": "Estimated Age", "prefix": "Age", "property": "faceAge\\:labels", "children":[
+        {"name": "Child"},
+        {"name": "Teenager"},
+        {"name": "Adult"},
+        {"name": "Middle Age", "value": "MiddleAge"},
+        {"name": "Aged"}
+    ]},
+
     {"name": "Transcribed Audio", "prefix": "Transcript", "property": "transcription", "value": "*"},
 
     {"name": "Nudity Score", "prefix": "Nudity", "property": "nudityScore", "children":[
