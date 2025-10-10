@@ -225,8 +225,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     JScrollPane categoriesPanel, aiFiltersPanel, bookmarksPanel;
     JPanel evidencePanel;
     TreeListener treeListener;
-    CategoryTreeListener categoryListener;
-    AIFiltersTreeListener aiFiltersListener;
+    private CategoryTreeListener categoryListener;
+    private AIFiltersTreeListener aiFiltersListener;
     BookmarksTreeListener bookmarksListener;
     TimelineListener timelineListener;
     public CControl dockingControl;
@@ -807,6 +807,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         filterManager.addQueryFilterer(new SearchFilterer());
         filterManager.addQueryFilterer(categoryListener);
+        filterManager.addQueryFilterer(aiFiltersListener);
         filterManager.addQueryFilterer(treeListener);
         filterManager.addQueryFilterer(similarImagesFilterer);
         filterManager.addQueryFilterer(similarDocumentFilterer);

@@ -106,21 +106,4 @@ public class SimpleFilterNode implements Serializable {
         }
         return -1;
     }
-/*
-    @Override
-    public SimpleFilterNode clone() {
-        SimpleFilterNode clone = new SimpleFilterNode();
-        clone.name = this.name;
-        clone.prefix = this.prefix;
-        clone.property = this.property;
-        clone.value = this.value;
-        clone.numItems = this.numItems;
-        for (SimpleFilterNode child : this.getChildren()) {
-            SimpleFilterNode newChild = child.clone();
-            newChild.parent = clone;
-            clone.children.add(newChild);
-        }
-        return clone;
-    }
-    */
 }

@@ -15,7 +15,7 @@ public class AIFiltersTreeModel implements TreeModel {
     private final List<TreeModelListener> listeners = new ArrayList<TreeModelListener>();
 
     public static void install() {
-        if (App.get().aiFiltersTree.getModel() == null) {
+        if (!(App.get().aiFiltersTree.getModel() instanceof AIFiltersTreeModel)) {
             AIFiltersTreeModel model = new AIFiltersTreeModel();
             App.get().aiFiltersTree.setModel(model);
         }

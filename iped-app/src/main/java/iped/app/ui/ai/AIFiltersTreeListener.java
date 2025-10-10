@@ -124,8 +124,7 @@ public class AIFiltersTreeListener implements TreeSelectionListener, TreeExpansi
                 }
 
                 public String toString() {
-                    // TODO IndexItem.normalize(node.getName(), true);
-                    return node.getName();
+                    return AIFiltersLocalization.get(node);
                 }
             });
         }
