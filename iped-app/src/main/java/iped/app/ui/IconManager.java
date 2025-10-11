@@ -52,6 +52,7 @@ public class IconManager {
 
     private static final Map<String, QualityIcon> catIconMap = loadIconsFromJar("cat", initialSizes[0]);
     private static final Map<String, QualityIcon> filterIconMap = loadIconsFromJar("filter", initialSizes[0]);
+    private static final Map<String, QualityIcon> filterSmallIconMap = loadIconsFromJar("filter", smallSize(initialSizes[0]));
     private static final Map<String, QualityIcon> filterDisabledIconMap = loadIconsFromJar("filter", initialSizes[0], false);
 
     private static final Map<String, QualityIcon> extIconMap = loadIconsFromJar("file", currentIconSize);
@@ -165,6 +166,10 @@ public class IconManager {
 
     public static Icon getFilterIcon(SimpleFilterNode node, boolean enabled) {
         if (node != null) {
+            if (node.isDynamicChild()) {
+                return filterSmallIconMap.getOrDefault(node.getPrefix().toLowerCase() + ".dynamicchild",
+                        defaultCategoryIcon);
+            }
             return (enabled ? filterIconMap : filterDisabledIconMap).getOrDefault(node.getFullName().toLowerCase(),
                     defaultCategoryIcon);
         }
@@ -728,6 +733,7 @@ public class IconManager {
     public static void setCategoryIconSize(int size) {
         setMapIconSize(catIconMap, size);
         setMapIconSize(filterIconMap, size);
+        setMapIconSize(filterSmallIconMap, smallSize(size));
         setMapIconSize(filterDisabledIconMap, size);
     }
 
@@ -746,5 +752,9 @@ public class IconManager {
 
     public static int getIconSize() {
         return currentIconSize;
+    }
+    
+    private static int smallSize(int size) {
+        return (size - 16) / 4 + 16;
     }
 }
