@@ -211,11 +211,11 @@ function process(e){
 	if (mime.equals("application/x-lnk")){
 		if (path.endsWith(".customdestinations-ms>>"+e.getName())){
 			e.setMediaTypeStr("application/x-customdestinations-entry");
-			e.addCategory("Custom Destinations");
+			e.setCategory("Custom Destinations");
 		}
 		if (path.endsWith(".automaticdestinations-ms>>"+e.getName())){
 			e.setMediaTypeStr("application/x-automaticdestinations-entry");
-			e.addCategory("Automatic Destinations");
+			e.setCategory("Automatic Destinations");
 		}
 	}
 
