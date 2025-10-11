@@ -82,6 +82,7 @@ import iped.parsers.telegram.TelegramParser;
 import iped.parsers.ufed.UfedChatParser;
 import iped.parsers.ufed.model.BaseModel;
 import iped.parsers.ufed.model.Chat;
+import iped.parsers.util.MetadataUtil;
 import iped.parsers.util.PhoneParsingConfig;
 import iped.parsers.whatsapp.WhatsAppParser;
 import iped.properties.ExtraProperties;
@@ -866,9 +867,12 @@ public class UfedXmlReader extends DataSourceReader {
                 if (sceneClassifications != null) {
                     item.getMetadata().remove(UFED_NATIVE_SCENE_CLASSIFICATION);
                     for (String sceneClass : sceneClassifications.split(",")) {
-                        item.getMetadata().add(UFED_NATIVE_SCENE_CLASSIFICATION, sceneClass.strip());
+                        sceneClass = MetadataUtil.normalizeTerm(sceneClass);
+                        if (!sceneClass.isEmpty()) {
+                            item.getMetadata().add(UFED_NATIVE_SCENE_CLASSIFICATION, sceneClass);
+                        }
                     }
-                }                            
+                }
 
                 if (!merged) {
                     setMediaResult(item);
@@ -1323,7 +1327,10 @@ public class UfedXmlReader extends DataSourceReader {
                         .filter(entry -> entry.getValue() >= MEDIA_CLASSES_THRESHOLD)
                         .map(entry -> entry.getKey())
                         .collect(Collectors.toList());
-                item.setExtraAttribute(MEDIA_CLASSES_PROPERTY, classes);
+                MetadataUtil.normalizeTerms(classes);
+                if (!classes.isEmpty()) {
+                    item.setExtraAttribute(MEDIA_CLASSES_PROPERTY, classes);
+                }
             }
         }
 

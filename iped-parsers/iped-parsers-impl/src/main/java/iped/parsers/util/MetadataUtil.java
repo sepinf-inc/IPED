@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -845,4 +846,34 @@ public class MetadataUtil {
         }
     }
 
+    public static void normalizeTerms(List<String> l) {
+        Set<String> set = new HashSet<>();
+        for (String term : l) {
+            String s = normalizeTerm(term);
+            if (!s.isEmpty()) {
+                set.add(s);
+            }
+        }
+        l.clear();
+        l.addAll(set);
+    }
+
+    public static String normalizeTerm(String s) {
+        char[] chars = s.toCharArray();
+        int pos = 0;
+        boolean upper = true;
+        for (int i = 0; i < chars.length; i++) {
+            Character c = chars[i];
+            if (Character.isLetterOrDigit(c)) {
+                if (upper) {
+                    c = Character.toUpperCase(c);
+                    upper = false;
+                }
+                chars[pos++] = c;
+            } else {
+                upper = true;
+            }
+        }
+        return new String(chars, 0, pos);
+    }
 }
