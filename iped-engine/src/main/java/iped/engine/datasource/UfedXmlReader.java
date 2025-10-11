@@ -29,7 +29,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Random;
 import java.util.Set;
 import java.util.Stack;
 import java.util.TimeZone;
@@ -79,7 +78,6 @@ import iped.engine.localization.Messages;
 import iped.engine.search.QueryBuilder;
 import iped.engine.task.ExportFileTask;
 import iped.engine.task.die.DIETask;
-import iped.engine.task.index.IndexItem;
 import iped.engine.util.Util;
 import iped.parsers.telegram.TelegramParser;
 import iped.parsers.ufed.UfedChatParser;
@@ -115,6 +113,7 @@ public class UfedXmlReader extends DataSourceReader {
     public static final String UFED_MIME_PREFIX = MediaTypes.UFED_MIME_PREFIX;
     public static final String UFED_EMAIL_MIME = MediaTypes.UFED_EMAIL_MIME.toString();
     public static final String UFED_CONTACTPHOTO_MIME = UFED_MIME_PREFIX + "contactphoto";
+    public static final String UFED_NATIVE_SCENE_CLASSIFICATION = ExtraProperties.UFED_META_PREFIX + "Native Scene Classification";
     public static final String MSISDN_PROP = "MSISDN";
 
     private static final String ESCAPED_UFED_ID = QueryBuilder.escape(UFED_ID);
@@ -131,8 +130,6 @@ public class UfedXmlReader extends DataSourceReader {
 
     private Set<String> supportedApps = new HashSet<String>(Arrays.asList(WhatsAppParser.WHATSAPP,
             TelegramParser.TELEGRAM, WhatsAppParser.WHATSAPP + " Business", WhatsAppParser.WHATSAPP + " (Dual App)"));
-
-    private static Random random = new Random();
 
     private static HashMap<File, UFDRInputStreamFactory> uisfMap = new HashMap<>();
 
@@ -867,6 +864,14 @@ public class UfedXmlReader extends DataSourceReader {
                         merged = true;
                     }
                 }
+
+                String sceneClassifications = item.getMetadata().get(UFED_NATIVE_SCENE_CLASSIFICATION);
+                if (sceneClassifications != null) {
+                    item.getMetadata().remove(UFED_NATIVE_SCENE_CLASSIFICATION);
+                    for (String sceneClass : sceneClassifications.split(",")) {
+                        item.getMetadata().add(UFED_NATIVE_SCENE_CLASSIFICATION, sceneClass.strip());
+                    }
+                }                            
 
                 if (!merged) {
                     setMediaResult(item);
