@@ -75,7 +75,6 @@ import iped.engine.io.MetadataInputStreamFactory;
 import iped.engine.io.UFDRInputStreamFactory;
 import iped.engine.io.UFEDXMLWrapper;
 import iped.engine.localization.Messages;
-import iped.engine.search.QueryBuilder;
 import iped.engine.task.ExportFileTask;
 import iped.engine.task.die.DIETask;
 import iped.engine.util.Util;
@@ -102,7 +101,6 @@ public class UfedXmlReader extends DataSourceReader {
 
     private static final String AVATAR_PATH_META = ExtraProperties.UFED_META_PREFIX + "contactphoto_extracted_path"; //$NON-NLS-1$
     private static final String ATTACH_PATH_META = ExtraProperties.UFED_META_PREFIX + "attachment_extracted_path"; //$NON-NLS-1$
-    private static final String EMAIL_ATTACH_KEY = ExtraProperties.UFED_META_PREFIX + "email_attach_names"; //$NON-NLS-1$
 
     private static final String MEDIA_CLASSES_PROPERTY = ExtraProperties.UFED_META_PREFIX + "mediaClasses"; //$NON-NLS-1$
     private static final String MEDIA_CLASSES_SCORE_PREFIX = ExtraProperties.UFED_META_PREFIX + "mediaClassScore:"; //$NON-NLS-1$
@@ -116,7 +114,6 @@ public class UfedXmlReader extends DataSourceReader {
     public static final String UFED_NATIVE_SCENE_CLASSIFICATION = ExtraProperties.UFED_META_PREFIX + "Native Scene Classification";
     public static final String MSISDN_PROP = "MSISDN";
 
-    private static final String ESCAPED_UFED_ID = QueryBuilder.escape(UFED_ID);
     private static final String EMPTY_EXTRACTION_STR = "-";
 
     private static final String FILE_ID_ATTR = ExtraProperties.UFED_META_PREFIX + "file_id"; //$NON-NLS-1$
