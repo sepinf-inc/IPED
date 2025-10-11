@@ -1319,7 +1319,7 @@ public class UfedXmlReader extends DataSourceReader {
 
                 // set scores
                 finalScorePerCat.entrySet().stream()
-                        .forEach(e -> item.setExtraAttribute(MEDIA_CLASSES_SCORE_PREFIX + e.getKey(), e.getValue()));
+                        .forEach(e -> item.setExtraAttribute(MEDIA_CLASSES_SCORE_PREFIX + e.getKey(), shorten(e.getValue())));
 
                 // set high scored classes
                 List<String> classes = finalScorePerCat.entrySet().stream()
@@ -1557,4 +1557,7 @@ public class UfedXmlReader extends DataSourceReader {
         IOUtil.closeQuietly(uisf);
     }
 
+    private static double shorten(double val) {
+        return Math.round(val * 100) / 100;
+    }
 }
