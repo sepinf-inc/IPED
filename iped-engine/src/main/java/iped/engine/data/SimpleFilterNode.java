@@ -22,6 +22,9 @@ public class SimpleFilterNode implements Serializable {
     @JsonAlias("value")
     private String value;
 
+    @JsonAlias("dynamic")
+    private boolean dynamic;
+
     @JsonAlias("addChildren")
     private boolean addChildren;
 
@@ -30,6 +33,9 @@ public class SimpleFilterNode implements Serializable {
 
     @JsonIgnore
     private SimpleFilterNode parent;
+
+    @JsonIgnore
+    private boolean dynamicChild;
 
     @JsonIgnore
     private int numItems = -1;
@@ -61,6 +67,14 @@ public class SimpleFilterNode implements Serializable {
 
     public String getValue() {
         return value == null ? name : value;
+    }
+
+    public boolean isDynamicChild() {
+        return dynamicChild;
+    }
+
+    public boolean getDynamic() {
+        return dynamic;
     }
 
     public boolean getAddChildren() {
@@ -95,8 +109,16 @@ public class SimpleFilterNode implements Serializable {
         this.value = value;
     }
 
+    public void setDynamic(boolean dynamic) {
+        this.dynamic = dynamic;
+    }
+
     public void setAddChildren(boolean addChildren) {
         this.addChildren = addChildren;
+    }
+
+    public void setDynamicChild(boolean dynamicChild) {
+        this.dynamicChild = dynamicChild;
     }
 
     public void setNumItems(int numItems) {

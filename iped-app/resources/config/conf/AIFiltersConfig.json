@@ -35,6 +35,10 @@
         {"name": "Medium", "value": "[400 TO 649]"},
         {"name": "Low", "value": "[150 TO 399]"},
         {"name": "Very Low", "value": "[* TO 149]"}
-    ]}
+    ]},
+
+    {"name": "UFED Media Classification", "prefix": "UfedClassifier", "property": "ufed\\:mediaClasses", "value": "*", "dynamic": "true"},
+
+    {"name": "UFED Native Scene Classification", "prefix": "UfedScene", "property": "ufed\\:Native\\ Scene\\ Classification", "value": "*", "dynamic": "true"}
 
 ]}
