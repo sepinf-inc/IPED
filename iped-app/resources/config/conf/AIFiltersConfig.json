@@ -36,7 +36,7 @@
     ]},
 
     {"name": "OCR Char Count", "prefix": "OCR", "property": "ocrCharCount", "value": "[1 TO *]", "children":[
-        {"name": "High", "value": "[1000 TO *]"},
+        {"name": "High", "value": "[1001 TO *]"},
         {"name": "Medium", "value": "[100 TO 1000]"},
         {"name": "Low", "value": "[1 TO 99]"}
     ]},
