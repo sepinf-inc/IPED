@@ -407,6 +407,7 @@ public class MetadataUtil {
         removeDuplicateValues(metadata);
         renameKeys(metadata);
         removeExtraValsFromSingleValueKeys(metadata);
+        fixImageDimensions(metadata);
         // add again removed empty/corrupted thumbnails
         if (thumb != null && thumb.isEmpty()) {
             metadata.set(ExtraProperties.THUMBNAIL_BASE64, "");
@@ -875,5 +876,24 @@ public class MetadataUtil {
             }
         }
         return new String(chars, 0, pos);
+    }
+
+    private static void fixImageDimensions(Metadata metadata) {
+        fixImageDimension(metadata, ExtraProperties.IMAGE_META_PREFIX + "Width");
+        fixImageDimension(metadata, ExtraProperties.IMAGE_META_PREFIX + "Height");
+    }
+
+    private static void fixImageDimension(Metadata metadata, String key) {
+        String value = metadata.get(key);
+        if (value != null) {
+            int pos = value.toLowerCase().indexOf("pixels");
+            if (pos > 0) {
+                value = value.substring(0, pos).strip();
+                if (!value.isEmpty()) {
+                    metadata.set(key, value);
+                }
+            }
+
+        }
     }
 }
