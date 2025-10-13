@@ -348,8 +348,10 @@ public class RemoteImageClassifierTask extends AbstractTask {
             super.sendToNextTask(item);
             return;
         }
-        while (!sendToNext.isEmpty()) {
-            IItem it = sendToNext.removeFirst();
+
+        LinkedList<IItem> localList = new LinkedList<IItem>(sendToNext);
+        sendToNext.clear();
+        for (IItem it : localList) {
             super.sendToNextTask(it);
         }
         if (!queue.containsValue(item) || item.isQueueEnd()) {

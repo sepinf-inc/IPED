@@ -142,13 +142,12 @@ class NSFWNudityDetectTask:
             javaTask.get().sendToNextTaskSuper(item)
             return
         
-        if self.isToProcessBatch(item):
-        
-            for i in self.itemList:
-                javaTask.get().sendToNextTaskSuper(i)
-            
+        if self.isToProcessBatch(item):        
+            localList = list(self.itemList)
             self.itemList.clear()
             self.imageList.clear()
+            for i in localList:
+                javaTask.get().sendToNextTaskSuper(i)
             
         if item.isQueueEnd():
             javaTask.get().sendToNextTaskSuper(item)
@@ -194,8 +193,8 @@ class NSFWNudityDetectTask:
                 if img is None:    
                     item.setExtraAttribute('nsfw_error', 1)
                     return
-                
-                x = image.img_to_array(img)
+                from tensorflow.keras import utils
+                x = utils.img_to_array(img)
                 self.imageList.append(x)
                 self.itemList.append(item)
                 self.queued = True
@@ -219,8 +218,8 @@ def processVideoFrames(item):
     for i in range(numFrames):
         input = convertJavaByteArray(frames.get(i))
         img = loadRawImage(input)
-        from keras.preprocessing import image
-        x = image.img_to_array(img)
+        from tensorflow.keras import utils
+        x = utils.img_to_array(img)
         list.append(x)
         if batchSize == 1 or (i > 0 and i % batchSize == 0) or i == (numFrames - 1):
             preds = makePrediction(list)
