@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -339,14 +340,15 @@ public class MinIOTask extends AbstractTask {
     }
 
     private void sendZipItemsToNextTask() throws Exception {
-        for (QueueItem i : queue.values()) {
+        Collection<QueueItem> values = queue.values();
+        queue.clear();
+        sendQueue = false;
+        for (QueueItem i : values) {
             if (i != null) {
                 updateDataSource(i.item, i.fullpath);
                 super.sendToNextTask(i.item);
             }
         }
-        queue.clear();
-        sendQueue = false;
     }
 
     private boolean checkIfExists(String bucket, String hash) throws Exception {
