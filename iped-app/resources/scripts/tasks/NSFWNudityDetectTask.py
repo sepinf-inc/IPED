@@ -142,13 +142,12 @@ class NSFWNudityDetectTask:
             javaTask.get().sendToNextTaskSuper(item)
             return
         
-        if self.isToProcessBatch(item):
-        
-            for i in self.itemList:
-                javaTask.get().sendToNextTaskSuper(i)
-            
+        if self.isToProcessBatch(item):        
+            localList = list(self.itemList)
             self.itemList.clear()
             self.imageList.clear()
+            for i in localList:
+                javaTask.get().sendToNextTaskSuper(i)
             
         if item.isQueueEnd():
             javaTask.get().sendToNextTaskSuper(item)
