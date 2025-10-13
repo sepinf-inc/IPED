@@ -13,6 +13,7 @@ import iped.engine.config.ConfigurationManager;
 import iped.engine.search.QueryBuilder;
 import iped.engine.task.AbstractTask;
 import iped.properties.ExtraProperties;
+import iped.properties.MediaTypes;
 
 public class JumpListTask extends AbstractTask {
 
@@ -27,6 +28,8 @@ public class JumpListTask extends AbstractTask {
 
     public static final String JUMPLIST_META_PREFIX = "jumpList:";
     public static final String JUMPLIST_PROGRAM_APP_IDS = JUMPLIST_META_PREFIX + "ids";
+
+    private static final MediaType EXE_MIME = MediaType.application("x-msdownload");
 
     private Configurable<ConcurrentMap<String, String>> jumpListAppIDsConfig;
 
@@ -82,7 +85,7 @@ public class JumpListTask extends AbstractTask {
 
     private void processExecutables(IItem evidence) {
 
-        if ("exe".equals(evidence.getExt()) && !evidence.isCarved() && !evidence.isDeleted() && !evidence.isSubItem()) {
+        if (MediaTypes.isInstanceOf(evidence.getMediaType(), EXE_MIME) && !evidence.isCarved() && !evidence.isDeleted() && !evidence.isSubItem()) {
 
             List<String> appIDs = AppIDCalculator.calculateAppIDs(evidence.getPath());
 
