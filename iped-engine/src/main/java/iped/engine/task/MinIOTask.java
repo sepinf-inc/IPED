@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -339,14 +340,15 @@ public class MinIOTask extends AbstractTask {
     }
 
     private void sendZipItemsToNextTask() throws Exception {
-        for (QueueItem i : queue.values()) {
+        ArrayList<QueueItem> values = new ArrayList<>(queue.values());
+        queue.clear();
+        sendQueue = false;
+        for (QueueItem i : values) {
             if (i != null) {
                 updateDataSource(i.item, i.fullpath);
                 super.sendToNextTask(i.item);
             }
         }
-        queue.clear();
-        sendQueue = false;
     }
 
     private boolean checkIfExists(String bucket, String hash) throws Exception {

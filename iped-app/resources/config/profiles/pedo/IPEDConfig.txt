@@ -12,4 +12,5 @@ enableLedCarving = true
 enableKnownMetCarving = true
 enableImageSimilarity = true
 enableFaceRecognition = true
+enableAgeEstimation = true
 enableRemoteImageClassifier = true

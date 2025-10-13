@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.swing.JOptionPane;
@@ -28,9 +29,13 @@ import iped.app.ui.controls.CSelButton;
 import iped.app.ui.viewers.AttachmentSearcherImpl;
 import iped.app.ui.viewers.HexSearcherImpl;
 import iped.app.ui.viewers.TextViewer;
+import iped.engine.config.AgeEstimationConfig;
+import iped.engine.config.ConfigurationManager;
+import iped.engine.config.FaceRecognitionConfig;
 import iped.engine.task.index.IndexItem;
 import iped.io.IStreamSource;
 import iped.io.URLUtil;
+import iped.properties.ExtraProperties;
 import iped.viewers.ATextViewer;
 import iped.viewers.AudioViewer;
 import iped.viewers.CADViewer;
@@ -379,5 +384,34 @@ public class ViewerController {
             }
         }
         return result;
+    }
+
+    public void notifyAppLoaded() {
+
+        boolean faceRecognitionEnabled = Optional
+                .ofNullable(ConfigurationManager.get())
+                .map(cm -> cm.getEnableTaskConfigurable(FaceRecognitionConfig.enableParam))
+                .map(e -> e.isEnabled())
+                .orElse(false);
+        boolean hasFaceRecognitionInIndex = App.get().appCase.getLeafReader().getFieldInfos().fieldInfo(ExtraProperties.FACE_COUNT) != null;
+        boolean enableHighlightFacesButton = faceRecognitionEnabled || hasFaceRecognitionInIndex;
+
+        boolean ageEstimationEnabled = Optional
+                .ofNullable(ConfigurationManager.get())
+                .map(cm -> cm.getEnableTaskConfigurable(AgeEstimationConfig.enableParam))
+                .map(e -> e.isEnabled())
+                .orElse(false);
+        boolean hasAgeEstimationInIndex = App.get().appCase.getLeafReader().getFieldInfos().fieldInfo(ExtraProperties.FACE_AGE_LABELS) != null;
+        boolean enableAgeEstimationCombo = ageEstimationEnabled || hasAgeEstimationInIndex;
+
+        viewersRepository
+                .getViewerList()
+                .stream()
+                .filter(ImageViewer.class::isInstance)
+                .map(ImageViewer.class::cast)
+                .forEach(viewer -> {
+                    viewer.setEnableHighlightFacesButton(enableHighlightFacesButton);
+                    viewer.setEnableAgeEstimationCombo(enableAgeEstimationCombo);
+                });
     }
 }

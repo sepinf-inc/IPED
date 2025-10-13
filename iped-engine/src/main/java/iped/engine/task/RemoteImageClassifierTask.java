@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -61,8 +62,8 @@ import iped.engine.config.ConfigurationManager;
 import iped.engine.config.RemoteImageClassifierConfig;
 import iped.engine.task.die.DIETask;
 import iped.engine.task.index.IndexItem;
-import iped.utils.ImageUtil;
 import iped.parsers.util.MetadataUtil;
+import iped.utils.ImageUtil;
 
 /**
  * Performs remote classification of image and video files.
@@ -89,13 +90,16 @@ public class RemoteImageClassifierTask extends AbstractTask {
     private boolean skipHashDBFiles;   
     private boolean validateSSL;
 
+    // AI-related attributes prefix
+    private static final String aiPrefix = "ai:";
+    
     // AI classification extra attributes and values
-    private static final String AI_CLASSIFICATION_STATUS_ATTR = "AIClassificationStatus";
+    private static final String AI_CLASSIFICATION_STATUS_ATTR = aiPrefix + "classificationStatus";
     private static final String AI_CLASSIFICATION_SUCCESS = "success";
     private static final String AI_CLASSIFICATION_FAIL_NO_CLASS = "fail:NoClass";
     private static final String AI_CLASSIFICATION_FAIL_NO_RESULTS = "fail:NoResults";
-    private static final String AI_CLASSIFICATION_SKIP_ATTR = "AIClassificationSkip";
-    private static final String AI_CLASSIFICATION_SKIP_NO = "no";
+    private static final String AI_CLASSIFICATION_SKIP_ATTR = aiPrefix + "classificationSkip";
+    private static final String AI_CLASSIFICATION_SKIP_FALSE = "false";
     private static final String AI_CLASSIFICATION_SKIP_SIZE = "size";
     private static final String AI_CLASSIFICATION_SKIP_DIMENSION = "dimension";
     private static final String AI_CLASSIFICATION_SKIP_HASHDB = "hashDB";
@@ -106,6 +110,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
 
     // Queue to store 'name' to 'evidence' mapping
     private Map<String, IItem> queue = new TreeMap<>();
+    private LinkedList<IItem> sendToNext = new LinkedList<>();
 
     // Zip archive holding files to be sent for classification
     private ZipFile zip;
@@ -159,7 +164,11 @@ public class RemoteImageClassifierTask extends AbstractTask {
 
         // Get probability value for 'classname'.
         public double getClassProb(String classname) {
-            return DIETask.videoScore(classes.get(classname));
+            double value = DIETask.videoScore(classes.get(classname));
+
+            // Scale values from [0,1] to [0, 100] and
+            // limit them to 2 decimal digits.
+            return Math.round(value * 10000) / 100.0;
         }
     }
 
@@ -333,11 +342,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
     }
 
     private void sendItemsToNextTask() throws Exception {
-        for (IItem item : queue.values()) {
-            if (item != null) {
-                super.sendToNextTask(item);
-            }
-        }
+        sendToNext.addAll(queue.values());
         queue.clear();
     }
 
@@ -347,6 +352,11 @@ public class RemoteImageClassifierTask extends AbstractTask {
             return;
         }
 
+        LinkedList<IItem> localList = new LinkedList<IItem>(sendToNext);
+        sendToNext.clear();
+        for (IItem it : localList) {
+            super.sendToNextTask(it);
+        }
         if (!queue.containsValue(item) || item.isQueueEnd()) {
             super.sendToNextTask(item);
         }
@@ -396,6 +406,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
                         // filtering only CSAM related classes to avoid overuse of the model
                         if (key.equals("AI_CSAM") || key.equals("AI_LIKELYCSAM") || key.equals("AI_People")
                                 || key.equals("AI_Porn") || key.startsWith("AI_Drawing")) {
+                            key = normalize(key);
                             double value = entry.getValue().asDouble();
                             res.addClass(key, value);
                         }
@@ -421,7 +432,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
                             // Add classification status
                             evidence.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_FAIL_NO_CLASS);
                             // Add skip classification info
-                            evidence.setExtraAttribute(AI_CLASSIFICATION_SKIP_ATTR, AI_CLASSIFICATION_SKIP_NO);
+                            evidence.setExtraAttribute(AI_CLASSIFICATION_SKIP_ATTR, AI_CLASSIFICATION_SKIP_FALSE);
                             logger.warn("ClassificationFail::EvidenceNoClass: Invalid/missing 'class' field for filename: {}", name);
                         }
                     }
@@ -456,7 +467,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
                     // Add classification status
                     evidence.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_SUCCESS);
                     // Add skip classification info
-                    evidence.setExtraAttribute(AI_CLASSIFICATION_SKIP_ATTR, AI_CLASSIFICATION_SKIP_NO);
+                    evidence.setExtraAttribute(AI_CLASSIFICATION_SKIP_ATTR, AI_CLASSIFICATION_SKIP_FALSE);
                     
                     // Classification classes as a String holding className=classProb pairs (used when retrieving cached classifications)
                     String className;
@@ -489,7 +500,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
                 // Add classification status
                 evidence.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_FAIL_NO_RESULTS);
                 // Add skip classification info
-                evidence.setExtraAttribute(AI_CLASSIFICATION_SKIP_ATTR, AI_CLASSIFICATION_SKIP_NO);
+                evidence.setExtraAttribute(AI_CLASSIFICATION_SKIP_ATTR, AI_CLASSIFICATION_SKIP_FALSE);
             }
             logger.error("ClassificationFail::NoResults: 'results' array is missing in JSON response. Classification fail for a batch of {} files", queue.size());
         }
@@ -786,4 +797,24 @@ public class RemoteImageClassifierTask extends AbstractTask {
         queue.put(name, evidence);
     }
 
+    /**
+     * Rename class attribute names to use "ai:" prefix and match commonly used
+     * naming standards.
+     */
+    private static final String normalize(String s) {
+        if (s.startsWith("AI_")) {
+            s = aiPrefix + s.substring(3);
+        }
+        s = s.toLowerCase();
+        for (int i = 3; i < s.length() - 1; i++) {
+            if (s.charAt(i) == '_') {
+                s = s.substring(0, i) + Character.toUpperCase(s.charAt(i + 1)) + s.substring(i + 2);
+            }
+        }
+        int i = s.indexOf("csam");
+        if (i > 3) {
+            s = s.substring(0, i) + Character.toUpperCase(s.charAt(i)) + s.substring(i + 1);
+        }
+        return s;
+    }
 }
