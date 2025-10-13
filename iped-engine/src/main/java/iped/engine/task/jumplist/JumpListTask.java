@@ -59,6 +59,10 @@ public class JumpListTask extends AbstractTask {
         if (evidence.getMediaType().equals(AUTOMATIC_DESTINATIONS_ENTRY_MIME)
                 || evidence.getMediaType().equals(CUSTOM_DESTINATIONS_ENTRY_MIME)) {
 
+            if (evidence.getMetadata().get(JUMPLIST_META_PREFIX + "appID") != null) {
+                return;
+            }
+
             String parentPath = StringUtils.removeEnd(evidence.getPath(), evidence.getName());
             parentPath = StringUtils.removeEnd(parentPath, "/");
             parentPath = StringUtils.removeEnd(parentPath, ">>");
@@ -89,13 +93,15 @@ public class JumpListTask extends AbstractTask {
 
             List<String> appIDs = AppIDCalculator.calculateAppIDs(evidence.getPath());
 
-            for (String appID : appIDs) {
+            if (evidence.getMetadata().get(JUMPLIST_PROGRAM_APP_IDS) == null) {
+                for (String appID : appIDs) {
 
-                // add appID
-                evidence.getMetadata().add(JUMPLIST_PROGRAM_APP_IDS, appID);
+                    // add appID
+                    evidence.getMetadata().add(JUMPLIST_PROGRAM_APP_IDS, appID);
 
-                // increment the known appIDs map
-                jumpListAppIDsConfig.getConfiguration().putIfAbsent(appID, evidence.getName());
+                    // increment the known appIDs map
+                    jumpListAppIDsConfig.getConfiguration().putIfAbsent(appID, evidence.getName());
+                }
             }
         }
     }
