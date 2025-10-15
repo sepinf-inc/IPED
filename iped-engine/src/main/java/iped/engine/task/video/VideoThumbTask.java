@@ -414,9 +414,12 @@ public class VideoThumbTask extends ThumbTask {
 
                 if (r.isSuccess()) {
                     try {
-                        previewRepo.storeRawPreview(evidence, Files.newInputStream(mainTmpFile));
+                        if (!previewExists) {
+                            previewRepo.storeRawPreview(evidence, Files.newInputStream(mainTmpFile));
+                        }
                         (isAnimated ? totalAnimatedImagesProcessed : totalVideosProcessed).incrementAndGet();
                     } catch (SQLException | IOException e) {
+                        logger.warn("Error storing videoThumb preview: " + evidence, e);
                         r.setSuccess(false);
                     }
                 }

@@ -30,6 +30,7 @@ import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.ImageThumbTaskConfig;
 import iped.engine.preview.PreviewConstants;
+import iped.engine.preview.PreviewRepository;
 import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.util.Util;
 import iped.parsers.util.MetadataUtil;
@@ -340,11 +341,13 @@ public class ImageThumbTask extends ThumbTask {
                         logger.warn("Timeout creating view: " + evidence);
                     }
                     if (img != null) {
-                        // Store view
-                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                        ImageIO.write(img, PREVIEW_EXT, baos);
-                        PreviewRepositoryManager.get(output)
-                            .storeRawPreview(evidence, new ByteArrayInputStream(baos.toByteArray()));
+                        PreviewRepository previewRepo = PreviewRepositoryManager.get(output);
+                        if (!previewRepo.previewExists(evidence)) {
+                            // Store view
+                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                            ImageIO.write(img, PREVIEW_EXT, baos);
+                            previewRepo.storeRawPreview(evidence, new ByteArrayInputStream(baos.toByteArray()));
+                        }
                         evidence.setHasPreview(true);
                         evidence.setPreviewExt(PREVIEW_EXT);
                         isView = true;
