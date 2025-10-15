@@ -24,7 +24,7 @@ import iped.engine.search.SimpleNodeFilterSearch;
 public class AIFiltersLoader {
     public static void load() {
         AIFiltersConfig config = ConfigurationManager.get().findObject(AIFiltersConfig.class);
-        SimpleFilterNode root = config.getRootAIFilter();
+        SimpleFilterNode root = (SimpleFilterNode) config.getRootAIFilter().clone();
 
         updateCount(App.get().appCase, root);
         removeEmptyTopLevel(root);

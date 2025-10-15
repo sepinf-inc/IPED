@@ -7,7 +7,7 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-public class SimpleFilterNode implements Serializable {
+public class SimpleFilterNode implements Serializable, Cloneable {
     private static final long serialVersionUID = 197209091220L;
 
     @JsonAlias("name")
@@ -138,5 +138,24 @@ public class SimpleFilterNode implements Serializable {
             idx++;
         }
         return -1;
+    }
+
+    @Override
+    public Object clone() {
+        SimpleFilterNode clonedNode = new SimpleFilterNode();
+        clonedNode.name = name;
+        clonedNode.prefix = prefix;
+        clonedNode.property = property;
+        clonedNode.value = value;
+        clonedNode.dynamic = dynamic;
+        clonedNode.addChildren = addChildren;
+        clonedNode.dynamicChild = dynamicChild;
+        for (int i = 0; i < children.size(); i++) {
+            SimpleFilterNode child = children.get(i);
+            SimpleFilterNode clonedChild = (SimpleFilterNode) child.clone();
+            clonedChild.parent = clonedNode;
+            clonedNode.children.add(clonedChild);
+        }
+        return clonedNode;
     }
 }
