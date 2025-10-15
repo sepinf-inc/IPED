@@ -35,6 +35,7 @@ import org.apache.lucene.search.TermQuery;
 import iped.data.IItem;
 import iped.engine.search.QueryBuilder;
 import iped.engine.task.HashTask;
+import iped.engine.task.index.IndexItem;
 import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
 import iped.parsers.ares.AresParser;
@@ -97,12 +98,15 @@ public class ReferencedByTableModel extends BaseTableModel {
             }
         }
 
-        // id
-        String idQuery = BasicProps.ID + ":" + doc.get(BasicProps.ID);
-        try {
-            queryBuilder.add(b.getQuery(ExtraProperties.LINKED_ITEMS + ":\"" + idQuery + "\""), Occur.SHOULD);
-        } catch (ParseException | QueryNodeException e) {
-            e.printStackTrace();
+        // trackId
+        String trackId = doc.get(IndexItem.TRACK_ID);
+        if (StringUtils.isNotBlank(trackId)) {
+            String trackIdQuery = QueryBuilder.escape(IndexItem.TRACK_ID + ":" + doc.get(IndexItem.TRACK_ID));
+            try {
+                queryBuilder.add(b.getQuery(ExtraProperties.LINKED_ITEMS + ":\"" + trackIdQuery + "\""), Occur.SHOULD);
+            } catch (ParseException | QueryNodeException e) {
+                e.printStackTrace();
+            }
         }
 
         // ufed:id
