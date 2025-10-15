@@ -38,13 +38,6 @@ public class PreviewRepositoryManager {
 
     private static final HashMap<File, HikariConfig> repositoryConfigMap = new HashMap<>();
 
-    // Add a shutdown hook to ensure all repositories are closed gracefully
-    static {
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            repositoryMap.keySet().forEach(PreviewRepositoryManager::close);
-        }));
-    }
-
     /**
      * Prepares the configuration for a writable PreviewRepository instance for a given database folder.
      * This configuration will be used when the get() method is called for the first time for this folder.
@@ -89,11 +82,8 @@ public class PreviewRepositoryManager {
         // This issue can occur in the UI when rapidly changing the selected item
         // (e.g., holding down the arrow key).
         // Reference: https://github.com/h2database/h2database/pull/228#issuecomment-186668500
-        //
-        // AUTO_SERVER=TRUE allows the database to be opened from multiple processes,
-        // for example when generating a report.
         File dbFile = new File(baseFolder, DB_NAME);
-        String dbUrl = "jdbc:h2:async:" + dbFile.getAbsolutePath() + ";CACHE_SIZE=" + H2_CACHE_SIZE;
+        String dbUrl = "jdbc:h2:async:" + dbFile.getAbsolutePath() + ";CACHE_SIZE=" + H2_CACHE_SIZE + ";DB_CLOSE_ON_EXIT=TRUE";
         if (readOnly) {
             dbUrl += ";ACCESS_MODE_DATA=r";
         }
