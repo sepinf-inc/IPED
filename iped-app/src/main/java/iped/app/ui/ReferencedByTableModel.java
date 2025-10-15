@@ -35,7 +35,6 @@ import org.apache.lucene.search.TermQuery;
 import iped.data.IItem;
 import iped.engine.search.QueryBuilder;
 import iped.engine.task.HashTask;
-import iped.engine.task.index.IndexItem;
 import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
 import iped.parsers.ares.AresParser;
@@ -99,9 +98,9 @@ public class ReferencedByTableModel extends BaseTableModel {
         }
 
         // trackId
-        String trackId = doc.get(IndexItem.TRACK_ID);
+        String trackId = doc.get(BasicProps.TRACK_ID);
         if (StringUtils.isNotBlank(trackId)) {
-            String trackIdQuery = QueryBuilder.escape(IndexItem.TRACK_ID + ":" + doc.get(IndexItem.TRACK_ID));
+            String trackIdQuery = QueryBuilder.escape(BasicProps.TRACK_ID + ":" + trackId);
             try {
                 queryBuilder.add(b.getQuery(ExtraProperties.LINKED_ITEMS + ":\"" + trackIdQuery + "\""), Occur.SHOULD);
             } catch (ParseException | QueryNodeException e) {
