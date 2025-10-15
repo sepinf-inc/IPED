@@ -27,7 +27,7 @@ public class PreviewRepository {
 
     private static final Logger logger = LoggerFactory.getLogger(PreviewRepository.class);
 
-    private static final String INSERT_DATA_SQL = "INSERT INTO previews (id, data) VALUES (?, ?)";
+    private static final String INSERT_DATA_SQL = "MERGE INTO previews (id, data) VALUES (?, ?)";
     private static final String SELECT_DATA_SQL = "SELECT data FROM previews WHERE id=?";
     private static final String CHECK_EXISTS_SQL = "SELECT 1 FROM previews WHERE id=?";
 
