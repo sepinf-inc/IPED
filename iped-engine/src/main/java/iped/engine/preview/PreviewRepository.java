@@ -1,15 +1,18 @@
 package iped.engine.preview;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.zip.Deflater;
 import java.util.zip.DeflaterInputStream;
 import java.util.zip.InflaterInputStream;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.zaxxer.hikari.HikariDataSource;
 
@@ -20,28 +23,44 @@ import iped.utils.SeekableFileInputStream;
  * Handles storage and retrieval of item previews in an H2 database.
  * Instances of this class are managed by {@link PreviewRepositoryManager}.
  */
-public class PreviewRepository implements Closeable {
+public class PreviewRepository {
+
+    private static final Logger logger = LoggerFactory.getLogger(PreviewRepository.class);
 
     private static final String INSERT_DATA_SQL = "INSERT INTO previews (id, data) VALUES (?, ?)";
     private static final String SELECT_DATA_SQL = "SELECT data FROM previews WHERE id=?";
     private static final String CHECK_EXISTS_SQL = "SELECT 1 FROM previews WHERE id=?";
 
     private final HikariDataSource dataSource;
+    private final boolean readOnly;
 
     /**
      * Package-private constructor. Instances should be obtained from {@link PreviewRepositoryManager}.
      * @param dataSource The configured data source for this repository.
      */
-    PreviewRepository(HikariDataSource dataSource) {
+    PreviewRepository(HikariDataSource dataSource, boolean readOnly) {
         this.dataSource = dataSource;
+        this.readOnly = readOnly;
     }
 
     /**
      * Closes the underlying data source for this repository.
      */
-    @Override
     public void close() {
         if (dataSource != null) {
+            if (!readOnly) {
+                try (Connection conn = dataSource.getConnection(); Statement stmt = conn.createStatement()) {
+                    stmt.execute("SHUTDOWN COMPACT");
+                } catch (SQLException e) {
+                    // After a shutdown command, H2 throws an exception because the connection is closed.
+                    // This is expected behavior. The error code for a successful shutdown is 90121.
+                    if ("90121".equals(e.getSQLState())) {
+                        logger.info("Database has been shut down and compacted successfully.");
+                    } else {
+                        logger.error("An error occurred during shutdown: " + e.getSQLState(), e);
+                    }
+                }
+            }
             dataSource.close();
         }
     }

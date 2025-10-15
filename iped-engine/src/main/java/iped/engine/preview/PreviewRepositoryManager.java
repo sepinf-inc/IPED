@@ -141,7 +141,7 @@ public class PreviewRepositoryManager {
             }
 
             // Create and cache the repository instance
-            repository = new PreviewRepository(dataSource);
+            repository = new PreviewRepository(dataSource, config.getJdbcUrl().contains("ACCESS_MODE_DATA=r"));
             repositoryMap.put(baseFolder, repository);
             repositoryConfigMap.put(baseFolder, null);
             logger.info("Created and initialized PreviewRepository for: {}", baseFolder);
