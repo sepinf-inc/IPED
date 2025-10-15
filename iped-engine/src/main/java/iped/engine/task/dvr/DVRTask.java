@@ -33,6 +33,7 @@ import iped.engine.config.DVRTaskConfig;
 
 import iped.engine.task.dvr.hikvision.*;
 import iped.engine.task.dvr.wfs.*;
+import iped.engine.task.dvr.dhfs.*;
 
 
 /**
@@ -334,6 +335,30 @@ public class DVRTask extends AbstractTask {
 
 
     protected void DHFSProcess(IItem evidence) throws Exception {
+
+        try {
+			
+			SeekableInputStream is = evidence.getSeekableInputStream();
+						
+			long t = System.currentTimeMillis();
+
+					
+			DHFSExtractor DHFSExtractor = new DHFSExtractor();			
+			
+			DHFSExtractor.init(is);	
+
+			DHFSExtractor.clear();			
+			DHFSExtractor = null;
+						
+            t = System.currentTimeMillis() - t;
+            totalTime.addAndGet(t);			
+			
+			
+        } catch (Exception e) {
+            logger.warn(evidence.toString(), e);
+        }
+
+
     }
 
     private static FSType getFsType(MediaType mediaType) {
