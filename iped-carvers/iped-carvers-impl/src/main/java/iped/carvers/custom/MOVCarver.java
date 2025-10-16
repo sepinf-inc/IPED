@@ -37,6 +37,7 @@ public class MOVCarver extends AbstractCarver {
         carverTypes[0].addHeader("????ftypFACE");
         carverTypes[0].addHeader("????ftypdash");
         carverTypes[0].addHeader("????ftypiso");
+        carverTypes[0].addHeader("????ftypmp4v");
         carverTypes[0].setMimeType(MediaType.parse("video/mp4"));
 
         carverTypes[1] = new CarverType();
