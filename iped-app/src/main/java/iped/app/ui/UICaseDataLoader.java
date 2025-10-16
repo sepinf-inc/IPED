@@ -97,9 +97,12 @@ public class UICaseDataLoader extends SwingWorker<Void, Integer> {
             App.get().appCase.getMultiBookmarks().addSelectionListener(App.get().getViewerController().getHtmlLinkViewer());
             App.get().getViewerController().notifyAppLoaded();
 
-            App.get().appCase.getAtomicSources().forEach(ipedCase -> {
-                PreviewRepositoryManager.configureReadOnly(ipedCase.getModuleDir());
-            });
+            // only configure PreviewRepository when opening in AppMain (case not being processed)
+            if (Manager.getInstance() == null) {
+                App.get().appCase.getAtomicSources().forEach(ipedCase -> {
+                    PreviewRepositoryManager.configureReadOnly(ipedCase.getModuleDir());
+                });
+            }
 
             if (!updateItems) {
                 App.get().appGraphAnalytics.initGraphService();
