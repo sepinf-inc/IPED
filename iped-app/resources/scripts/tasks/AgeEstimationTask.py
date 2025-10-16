@@ -464,7 +464,7 @@ def processImages(itemList, imageList):
         itemList[i].setExtraAttribute('faceAge:estimationStatus', 'success')
 
         # check if this is the last face
-        if (i+1) == len(itemList) or itemList[i].getHashValue() != itemList[i+1].getHashValue():
+        if (i+1) == len(itemList) or itemList[i].getId() != itemList[i+1].getId():
             # add face labels counts ('faceAge:count:<label>')
             for label in item_faces_labels_counts:
                 itemList[i].setExtraAttribute('faceAge:count:' + uncapitalize(label), item_faces_labels_counts[label])
