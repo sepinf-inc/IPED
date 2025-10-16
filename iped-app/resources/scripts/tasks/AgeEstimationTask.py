@@ -41,6 +41,11 @@ maxThreadsProp = 'maxThreads'
 from java.util.concurrent import ConcurrentHashMap
 cache = ConcurrentHashMap()
 
+# Margins proportions added to the face rectangle before submitting to the age estimation model.
+topMargin = 0.50
+bottomMargin = 0.20
+sidesMargin = 0.05
+
 # variables related to statistics
 classificationSuccess = 0
 classificationFail = 0
@@ -319,8 +324,22 @@ class AgeEstimationTask:
                     for face_location in face_locations:
                         logger.debug('AgeEstimationTask: face_location: ' + str(face_location))
 
-                        # extract the portion of the image corresponding to the face
-                        top, right, bottom, left = face_location                            
+                        # get face locaction and image dimensions
+                        top, right, bottom, left = face_location
+                        width, height = img.size
+
+                        # calculate margins, as proportions of the face rectangle
+                        mTop = int(topMargin * (bottom - top))
+                        mBottom = int(bottomMargin * (bottom - top))
+                        mSides = int(sidesMargin * (right - left))
+
+                        # add margins, trying to include the whole person's head
+                        top = max(0, top - mTop)
+                        bottom = min(img.height, bottom + mBottom)
+                        left = max(0, left - mSides)
+                        right = min(img.width, right + mSides)
+
+                        # extract the portion of the image corresponding to the face + border
                         face_img = img.crop((left, top, right, bottom))
                         
                         # add face item and face image to the corresponding lists
