@@ -430,6 +430,24 @@
             <mediaType>video/mpeg</mediaType>
             <carverClass>iped.carvers.standard.FromFarthestHeaderCarver</carverClass>
         </carverType>
+
+        <carverType>
+            <name>MPG2</name>
+            <signatures>
+                <headerSignature>\00\00\01\b3\0a\00</headerSignature>
+                <headerSignature>\00\00\01\b3\0b\00</headerSignature>
+                <headerSignature>\00\00\01\b3\0f\00</headerSignature>
+                <headerSignature>\00\00\01\b3\14\00</headerSignature>
+                <headerSignature>\00\00\01\b3\16\00</headerSignature>
+                <headerSignature>\00\00\01\b3\16\01</headerSignature>
+                <footerSignature>\00\00\01\b7</footerSignature>
+            </signatures>
+            <minLength>100000</minLength>
+            <maxLength>500000000</maxLength>
+            <mediaType>video/mpeg</mediaType>
+            <carverClass>iped.carvers.standard.FromFarthestHeaderCarver</carverClass>
+        </carverType>
+
 <!--
         <carverType>
             <name>TIF</name>
@@ -441,18 +459,8 @@
             <maxLength>1000000</maxLength>
             <mediaType>image/tiff</mediaType>
         </carverType>
-
-        <carverType>
-            <name>MPG2</name>
-            <signatures>
-                <headerSignature>\00\00\01\b3</headerSignature>
-                <footerSignature>\00\00\01\b7</footerSignature>
-            </signatures>
-            <minLength>100000</minLength>
-            <maxLength>300000000</maxLength>
-            <mediaType>video/mpeg</mediaType>
-        </carverType>
 -->
+
      </carverTypes>
 
 </carverconfig>
