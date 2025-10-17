@@ -30,6 +30,11 @@
             <groupId>iped</groupId>
             <artifactId>iped-api</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+            <version>3.2.2</version>
         </dependency>           
     </dependencies>
     

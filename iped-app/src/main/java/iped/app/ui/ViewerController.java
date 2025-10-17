@@ -20,6 +20,7 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 import org.apache.tika.Tika;
+import org.apache.tika.io.TikaInputStream;
 
 import bibliothek.extension.gui.dock.theme.eclipse.stack.EclipseTabPaneContent;
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
@@ -362,7 +363,9 @@ public class ViewerController {
                 if (tika == null) {
                     tika = new Tika();
                 }
-                viewType = tika.detect(viewFile.getTempFile());
+                try (TikaInputStream stream = TikaInputStream.get(viewFile.getSeekableInputStream())) {
+                    viewType = tika.detect(stream);
+                }
                 return;
             } catch (IOException e) {
                 e.printStackTrace();

@@ -166,7 +166,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
 
         IItem viewItem = item;
 
-        if (item.getViewFile() != null) {
+        if (item.getViewFile() != null || item.hasPreview()) {
             viewItem = IndexItem.getItem(doc, iCase, true);
         }
 

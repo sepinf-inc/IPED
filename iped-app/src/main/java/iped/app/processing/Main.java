@@ -19,6 +19,7 @@
 package iped.app.processing;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.net.URL;
@@ -31,12 +32,14 @@ import iped.app.bootstrap.Bootstrap;
 import iped.app.config.LogConfiguration;
 import iped.app.processing.ui.ProgressConsole;
 import iped.app.processing.ui.ProgressFrame;
+import iped.app.ui.App;
 import iped.app.ui.splash.StartUpControlClient;
 import iped.app.ui.utils.UiScale;
 import iped.engine.Version;
 import iped.engine.config.Configuration;
 import iped.engine.core.Manager;
 import iped.engine.localization.Messages;
+import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.util.UIPropertyListenerProvider;
 import iped.exception.IPEDException;
 import iped.io.URLUtil;
@@ -197,6 +200,15 @@ public class Main {
                 manager.setProcessingFinished(true);
             if (manager == null || !manager.isSearchAppOpen())
                 logConfiguration.closeConsoleLogFile();
+
+            // The case is still open after closing processing, so reconfigure PreviewRepository readOnly
+            if (App.get().appCase != null) {
+                try {
+                    PreviewRepositoryManager.configureReadOnly(output.getCanonicalFile());
+                } catch (IOException e) {
+                    LOGGER.error("PreviewRepository error. Close the case and open it again.", e);
+                }
+            }
         }
     }
 

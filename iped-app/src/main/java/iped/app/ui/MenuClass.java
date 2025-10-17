@@ -322,7 +322,7 @@ public class MenuClass extends JPopupMenu {
 
         openViewfile = new JMenuItem(Messages.getString("MenuClass.OpenViewFile")); //$NON-NLS-1$
         openViewfile.addActionListener(menuListener);
-        openViewfile.setEnabled(item != null && item.getViewFile() != null);
+        openViewfile.setEnabled(item != null && (item.getViewFile() != null || item.hasPreview()));
         this.add(openViewfile);
 
         this.addSeparator();

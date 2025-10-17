@@ -293,15 +293,22 @@ class AgeEstimationTask:
                     tiff_orient = 1
 
                 # get absolute path for image or video or quit processing if another media type
+                img_path = None
                 mediaType = item.getMediaType().toString()
+                if item.getViewFile() is not None and os.path.exists(item.getViewFile().getAbsolutePath()):
+                    img_path = item.getViewFile().getAbsolutePath()
+                elif item.hasPreview():
+                    from iped.engine.preview import PreviewRepositoryManager
+                    img_path = PreviewRepositoryManager.get(moduleDir).readPreview(item, True).getFile().getAbsolutePath()
+
                 if mediaType.startswith('image'):
-                    if item.getViewFile() is not None and os.path.exists(item.getViewFile().getAbsolutePath()):
-                        img_path = item.getViewFile().getAbsolutePath()
+                    if img_path is not None:
                         tiff_orient = 1
                     else:
                         img_path = item.getTempFile().getAbsolutePath()
                 elif mediaType.startswith('video') and not AgeEstimationTask.videoSubitems:
-                    img_path = item.getViewFile().getAbsolutePath()
+                    if img_path is None:
+                        return
                 else:
                     return
 

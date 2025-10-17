@@ -39,6 +39,7 @@ import iped.datasource.IDataSource;
 import iped.engine.core.Statistics;
 import iped.engine.io.ReferencedFile;
 import iped.engine.lucene.analysis.CategoryTokenizer;
+import iped.engine.preview.PreviewInputStreamFactory;
 import iped.engine.task.index.IndexItem;
 import iped.engine.tika.SyncMetadata;
 import iped.engine.util.ParentInfo;
@@ -166,6 +167,12 @@ public class Item implements IItem {
      * Nome e caminho relativo que o arquivo para visualização.
      */
     private File viewFile;
+
+    private boolean hasPreview;
+
+    private File previewBaseFolder;
+
+    private String previewExt;
 
     private HashSet<String> categories = new HashSet<String>();
 
@@ -621,7 +628,7 @@ public class Item implements IItem {
             stream = inputStreamFactory.getSeekableInputStream(idInDataSource);
         }
 
-        if (stream != null && startOffset != -1) {
+        if (stream != null && startOffset != -1 && !(inputStreamFactory instanceof PreviewInputStreamFactory)) {
             stream = new LimitedSeekableInputStream(stream, startOffset, length);
         }
 
@@ -781,6 +788,21 @@ public class Item implements IItem {
      */
     public File getViewFile() {
         return viewFile;
+    }
+
+    @Override
+    public boolean hasPreview() {
+        return hasPreview;
+    }
+
+    @Override
+    public File getPreviewBaseFolder() {
+        return previewBaseFolder;
+    }
+
+    @Override
+    public String getPreviewExt() {
+        return previewExt;
     }
 
     /**
@@ -1218,6 +1240,20 @@ public class Item implements IItem {
      */
     public void setViewFile(File viewFile) {
         this.viewFile = viewFile;
+    }
+
+    @Override
+    public void setHasPreview(boolean value) {
+        this.hasPreview = value;
+    }
+
+    @Override
+    public void setPreviewExt(String previewExt) {
+        this.previewExt = previewExt;
+    }
+
+    public void setPreviewBaseFolder(File previewBaseFolder) {
+        this.previewBaseFolder = previewBaseFolder;
     }
 
     /**

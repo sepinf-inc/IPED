@@ -131,6 +131,10 @@ public class ImageUtil {
         return doGetSubSampledImage(inputStream, size, null, null);
     }
 
+    public static BufferedImage getSubSampledImage(InputStream inputStream, int size, String mimeType) {
+        return doGetSubSampledImage(inputStream, size, null, mimeType);
+    }
+
     public static BufferedImage getSubSampledImage(File file, int size, String mimeType) {
         return doGetSubSampledImage(file, size, null, mimeType);
     }
@@ -394,7 +398,7 @@ public class ImageUtil {
      *
      * @return Array com {BufferedImage, String}
      */
-    public static Object[] readJpegWithMetaData(File inFile) throws IOException {
+    public static Object[] readJpegWithMetaData(Object inFile) throws IOException {
         ImageReader reader = null;
         ImageInputStream iis = null;
         try {
