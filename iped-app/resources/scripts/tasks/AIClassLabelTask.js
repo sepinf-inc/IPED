@@ -1,16 +1,17 @@
 ﻿/*
  * Script of AI Category Specialization based on item properties.
- * Uses javascript language to allow flexibility in definitions.
  */
 
 var RemoteImageClassifierConfig = Java.type("iped.engine.config.RemoteImageClassifierConfig");
 var Arrays = Java.type("java.util.Arrays");
 
+var aiLabelProperty = "ai:label";
+
 /*
  * Name of processing task
 */
 function getName() {
-	return "AIRefineCategoryTask";
+	return "AIClassLabelTask";
 }
 
 function getConfigurables() {
@@ -26,49 +27,49 @@ function init(configurationManager) {
 function finish() {}
 
 /*
- * Changes category of items based on their properties
+ * Label item based on classifier results.
  */
-function addCategories(e, listcategories, default_cat) {
-  default_cat = (typeof default_cat !== "undefined") ? default_cat : null;
+function addLabel(e, listLabels, defaultLabel) {
+  defaultLabel = (typeof defaultLabel !== "undefined") ? defaultLabel : null;
 
   // Escolhe a chave com maior score neste nível
   var bestKey = null;
   var bestVal = -Infinity;
 
-  for (var cat in listcategories) {
-    var val = Number(e.getExtraAttribute(cat));
+  for (var key in listLabels) {
+    var val = Number(e.getExtraAttribute(key));
     if (!isNaN(val) && val > bestVal) {
       bestVal = val;
-      bestKey = cat;
+      bestKey = key;
     }
   }
 
   // Se o melhor valor ultrapassa o threshold, desce só por esse caminho
   if (bestKey !== null && bestVal > categorizationThreshold) {
-    var entry = listcategories[bestKey];
+    var entry = listLabels[bestKey];
 
     if (typeof entry === 'string') {
-      e.addCategory(entry);
+      e.setExtraAttribute(aiLabelProperty, entry);
       return 1;
     }
 
     if (entry && typeof entry === 'object') {
-      // Tenta escolher a melhor subcategoria
-      if (entry.subCategories && typeof entry.subCategories === 'object') {
-        var added = addCategories(e, entry.subCategories, entry.name);
-        if (added) return 1; // alguma subcategoria válida foi adicionada
+      // Tenta escolher a melhor subclasse
+      if (entry.subClasses && typeof entry.subClasses === 'object') {
+        var added = addLabel(e, entry.subClasses, entry.name);
+        if (added) return 1; // alguma subclasse válida foi adicionada
       }
-      // Nenhuma sub passou do threshold: adiciona a categoria atual (pai)
+      // Nenhuma sub passou do threshold: adiciona a classe atual (pai)
       if (entry.name != null) {
-        e.addCategory(entry.name);
+        e.setExtraAttribute(aiLabelProperty, entry.name);
         return 1;
       }
     }
   }
 
   // Ninguém passou do threshold neste nível: usa default (se houver)
-  if (default_cat !== null) {
-    e.addCategory(default_cat);
+  if (defaultLabel !== null) {
+    e.setExtraAttribute(aiLabelProperty, defaultLabel);
     return 1;
   }
 
@@ -77,16 +78,16 @@ function addCategories(e, listcategories, default_cat) {
 
 function process(e) {
 
-	var listcategories= {
-		"ai:csam":"AI Label - Child Sexual Abuse",
-		"ai:likelyCsam":"AI Label - Likely Child Sexual Abuse",
-		"ai:drawing":{"name":"AI Label - Drawing","subCategories":{
-			"ai:drawingCsam":"AI Label - Child Sexual Abuse Drawing",
-			"ai:drawingPorn":"AI Label - Explicit Drawing"}
+	var listLabels = {
+		"ai:csam":"ChildSexualAbuse",
+		"ai:likelyCsam":"LikelyChildSexualAbuse",
+		"ai:drawing":{"name":"Drawing","subClasses":{
+			"ai:drawingCsam":"ChildSexualAbuseDrawing",
+			"ai:drawingPorn":"ExplicitDrawing"}
 		},
-		"ai:people":"AI Label - People",
-		"ai:porn":"AI Label - Pornography"
+		"ai:people":"People",
+		"ai:porn":"Pornography"
     }
 		
-	addCategories(e, listcategories);
+	addLabel(e, listLabels);
 }

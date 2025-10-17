@@ -136,7 +136,7 @@ public class IPEDSearcher implements IIPEDSearcher {
         return MultiSearchResult.get((IPEDMultiSource) ipedCase, luceneSearch());
     }
 
-    LuceneSearchResult luceneSearch() throws IOException {
+    public LuceneSearchResult luceneSearch() throws IOException {
         return searchAll();
     }
 

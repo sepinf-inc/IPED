@@ -4399,6 +4399,7 @@ ufed:Modification = java.util.Date
 ufed:NWConnectionType = java.lang.String
 ufed:Name = java.lang.String
 ufed:NameOnCard = java.lang.String
+ufed:Native Scene Classification = java.lang.String
 ufed:NetworkConnectionType = java.lang.String
 ufed:Notes = java.lang.String
 ufed:NumberOfBytesReceived = java.lang.Integer

@@ -29,7 +29,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Random;
 import java.util.Set;
 import java.util.Stack;
 import java.util.TimeZone;
@@ -76,15 +75,14 @@ import iped.engine.io.MetadataInputStreamFactory;
 import iped.engine.io.UFDRInputStreamFactory;
 import iped.engine.io.UFEDXMLWrapper;
 import iped.engine.localization.Messages;
-import iped.engine.search.QueryBuilder;
 import iped.engine.task.ExportFileTask;
 import iped.engine.task.die.DIETask;
-import iped.engine.task.index.IndexItem;
 import iped.engine.util.Util;
 import iped.parsers.telegram.TelegramParser;
 import iped.parsers.ufed.UfedChatParser;
 import iped.parsers.ufed.model.BaseModel;
 import iped.parsers.ufed.model.Chat;
+import iped.parsers.util.MetadataUtil;
 import iped.parsers.util.PhoneParsingConfig;
 import iped.parsers.whatsapp.WhatsAppParser;
 import iped.properties.ExtraProperties;
@@ -104,7 +102,6 @@ public class UfedXmlReader extends DataSourceReader {
 
     private static final String AVATAR_PATH_META = ExtraProperties.UFED_META_PREFIX + "contactphoto_extracted_path"; //$NON-NLS-1$
     private static final String ATTACH_PATH_META = ExtraProperties.UFED_META_PREFIX + "attachment_extracted_path"; //$NON-NLS-1$
-    private static final String EMAIL_ATTACH_KEY = ExtraProperties.UFED_META_PREFIX + "email_attach_names"; //$NON-NLS-1$
 
     private static final String MEDIA_CLASSES_PROPERTY = ExtraProperties.UFED_META_PREFIX + "mediaClasses"; //$NON-NLS-1$
     private static final String MEDIA_CLASSES_SCORE_PREFIX = ExtraProperties.UFED_META_PREFIX + "mediaClassScore:"; //$NON-NLS-1$
@@ -115,9 +112,9 @@ public class UfedXmlReader extends DataSourceReader {
     public static final String UFED_MIME_PREFIX = MediaTypes.UFED_MIME_PREFIX;
     public static final String UFED_EMAIL_MIME = MediaTypes.UFED_EMAIL_MIME.toString();
     public static final String UFED_CONTACTPHOTO_MIME = UFED_MIME_PREFIX + "contactphoto";
+    public static final String UFED_NATIVE_SCENE_CLASSIFICATION = ExtraProperties.UFED_META_PREFIX + "Native Scene Classification";
     public static final String MSISDN_PROP = "MSISDN";
 
-    private static final String ESCAPED_UFED_ID = QueryBuilder.escape(UFED_ID);
     private static final String EMPTY_EXTRACTION_STR = "-";
 
     private static final String FILE_ID_ATTR = ExtraProperties.UFED_META_PREFIX + "file_id"; //$NON-NLS-1$
@@ -131,8 +128,6 @@ public class UfedXmlReader extends DataSourceReader {
 
     private Set<String> supportedApps = new HashSet<String>(Arrays.asList(WhatsAppParser.WHATSAPP,
             TelegramParser.TELEGRAM, WhatsAppParser.WHATSAPP + " Business", WhatsAppParser.WHATSAPP + " (Dual App)"));
-
-    private static Random random = new Random();
 
     private static HashMap<File, UFDRInputStreamFactory> uisfMap = new HashMap<>();
 
@@ -868,6 +863,17 @@ public class UfedXmlReader extends DataSourceReader {
                     }
                 }
 
+                String sceneClassifications = item.getMetadata().get(UFED_NATIVE_SCENE_CLASSIFICATION);
+                if (sceneClassifications != null) {
+                    item.getMetadata().remove(UFED_NATIVE_SCENE_CLASSIFICATION);
+                    for (String sceneClass : sceneClassifications.split(",")) {
+                        sceneClass = MetadataUtil.normalizeTerm(sceneClass);
+                        if (!sceneClass.isEmpty()) {
+                            item.getMetadata().add(UFED_NATIVE_SCENE_CLASSIFICATION, sceneClass);
+                        }
+                    }
+                }
+
                 if (!merged) {
                     setMediaResult(item);
                     String trackId = Util.getTrackID(item);
@@ -1314,14 +1320,17 @@ public class UfedXmlReader extends DataSourceReader {
 
                 // set scores
                 finalScorePerCat.entrySet().stream()
-                        .forEach(e -> item.setExtraAttribute(MEDIA_CLASSES_SCORE_PREFIX + e.getKey(), e.getValue()));
+                        .forEach(e -> item.setExtraAttribute(MEDIA_CLASSES_SCORE_PREFIX + e.getKey(), shorten(e.getValue())));
 
                 // set high scored classes
                 List<String> classes = finalScorePerCat.entrySet().stream()
                         .filter(entry -> entry.getValue() >= MEDIA_CLASSES_THRESHOLD)
                         .map(entry -> entry.getKey())
                         .collect(Collectors.toList());
-                item.setExtraAttribute(MEDIA_CLASSES_PROPERTY, classes);
+                MetadataUtil.normalizeTerms(classes);
+                if (!classes.isEmpty()) {
+                    item.setExtraAttribute(MEDIA_CLASSES_PROPERTY, classes);
+                }
             }
         }
 
@@ -1552,4 +1561,7 @@ public class UfedXmlReader extends DataSourceReader {
         IOUtil.closeQuietly(uisf);
     }
 
+    private static double shorten(double val) {
+        return Math.round(val * 100) / 100;
+    }
 }
