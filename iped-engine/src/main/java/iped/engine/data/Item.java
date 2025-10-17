@@ -39,6 +39,7 @@ import iped.datasource.IDataSource;
 import iped.engine.core.Statistics;
 import iped.engine.io.ReferencedFile;
 import iped.engine.lucene.analysis.CategoryTokenizer;
+import iped.engine.preview.PreviewInputStreamFactory;
 import iped.engine.task.index.IndexItem;
 import iped.engine.tika.SyncMetadata;
 import iped.engine.util.ParentInfo;
@@ -627,7 +628,7 @@ public class Item implements IItem {
             stream = inputStreamFactory.getSeekableInputStream(idInDataSource);
         }
 
-        if (stream != null && startOffset != -1) {
+        if (stream != null && startOffset != -1 && !(inputStreamFactory instanceof PreviewInputStreamFactory)) {
             stream = new LimitedSeekableInputStream(stream, startOffset, length);
         }
 
