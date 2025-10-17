@@ -73,6 +73,16 @@
         </carverType>
 
         <carverType>
+            <name>OPUS</name>
+            <carverClass>iped.carvers.custom.OpusCarver</carverClass>
+            <signatures>
+                <headerSignature>OggS\00\02</headerSignature>
+            </signatures>
+            <minLength>1000</minLength>
+            <maxLength>10000000</maxLength>
+        </carverType>
+
+        <carverType>
             <name>7ZIP</name>
             <carverClass>iped.carvers.custom.SevenZipCarver</carverClass>
             <signatures>
