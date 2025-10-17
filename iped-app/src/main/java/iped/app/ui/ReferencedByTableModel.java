@@ -97,12 +97,15 @@ public class ReferencedByTableModel extends BaseTableModel {
             }
         }
 
-        // id
-        String idQuery = BasicProps.ID + ":" + doc.get(BasicProps.ID);
-        try {
-            queryBuilder.add(b.getQuery(ExtraProperties.LINKED_ITEMS + ":\"" + idQuery + "\""), Occur.SHOULD);
-        } catch (ParseException | QueryNodeException e) {
-            e.printStackTrace();
+        // trackId
+        String trackId = doc.get(BasicProps.TRACK_ID);
+        if (StringUtils.isNotBlank(trackId)) {
+            String trackIdQuery = QueryBuilder.escape(BasicProps.TRACK_ID + ":" + trackId);
+            try {
+                queryBuilder.add(b.getQuery(ExtraProperties.LINKED_ITEMS + ":\"" + trackIdQuery + "\""), Occur.SHOULD);
+            } catch (ParseException | QueryNodeException e) {
+                e.printStackTrace();
+            }
         }
 
         // ufed:id

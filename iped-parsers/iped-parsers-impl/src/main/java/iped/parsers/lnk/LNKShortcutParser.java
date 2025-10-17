@@ -65,6 +65,7 @@ import iped.utils.DateUtil;
  * @author Gabriel
  */
 public class LNKShortcutParser extends AbstractParser {
+
     private static final long serialVersionUID = -3156133141331973368L;
 
     private static Logger logger = LoggerFactory.getLogger(LNKShortcutParser.class);
@@ -388,7 +389,12 @@ public class LNKShortcutParser extends AbstractParser {
         }
 
         metadata.set(LNK_METADATA_TARGET_REFERENCED, Boolean.toString(true));
-        metadata.set(ExtraProperties.LINKED_ITEMS, BasicProps.ID + ":" + item.getId());
+        String trackId = (String) item.getExtraAttribute(BasicProps.TRACK_ID);
+        if (trackId != null) {
+            metadata.set(ExtraProperties.LINKED_ITEMS, BasicProps.TRACK_ID + ":" + trackId);
+        } else {
+            logger.warn("Referenced item has no trackId: {}", item);
+        }
 
         Date created = item.getCreationDate();
         if (created != null && lnkObj.getCreateDate() != null
