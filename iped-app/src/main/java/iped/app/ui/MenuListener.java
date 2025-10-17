@@ -489,6 +489,7 @@ public class MenuListener implements ActionListener {
                         if (idx == 0) {
                             IconManager.setCategoryIconSize(size);
                             App.get().categoryTree.updateUI();
+                            App.get().aiFiltersTree.updateUI();
                         } else if (idx == 1) {
                             IconManager.setGalleryIconSize(size);
                             App.get().gallery.updateUI();

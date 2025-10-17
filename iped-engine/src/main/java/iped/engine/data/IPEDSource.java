@@ -45,7 +45,6 @@ import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
-import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.store.Directory;
@@ -163,6 +162,7 @@ public class IPEDSource implements IIPEDSource {
         this(casePath, iw, true);
     }
 
+    @SuppressWarnings("unchecked")
     public IPEDSource(File casePath, IndexWriter iw, boolean askImagePathIfNotFound) {
         this.askImagePathIfNotFound = askImagePathIfNotFound;
         this.casePath = casePath;
@@ -220,7 +220,7 @@ public class IPEDSource implements IIPEDSource {
 
             openIndex(index, iw);
 
-            BooleanQuery.setMaxClauseCount(Integer.MAX_VALUE);
+            IndexSearcher.setMaxClauseCount(Integer.MAX_VALUE);
             analyzer = AppAnalyzer.get();
 
             populateLuceneIdToIdMap();
