@@ -55,13 +55,23 @@
             <maxLength>100000000</maxLength>
         </carverType>
         
-         <carverType>
+        <carverType>
             <name>MOV</name>
             <carverClass>iped.carvers.custom.MOVCarver</carverClass>
             <minLength>100000</minLength>
             <maxLength>500000000</maxLength>
         </carverType>
-        
+
+        <carverType>
+            <name>MATROSKA</name>
+            <carverClass>iped.carvers.custom.MatroskaCarver</carverClass>
+            <signatures>
+                <headerSignature>\1a\45\df\a3</headerSignature>
+            </signatures>
+            <minLength>40000</minLength>
+            <maxLength>1000000000</maxLength>
+        </carverType>
+
         <carverType>
             <name>7ZIP</name>
             <carverClass>iped.carvers.custom.SevenZipCarver</carverClass>
