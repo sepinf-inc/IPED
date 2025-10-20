@@ -17,7 +17,7 @@ public class RemoteImageClassifierConfig extends AbstractTaskPropertiesConfig {
      */
     private static final String URL = "url";
     private static final String BATCH_SIZE = "batchSize";
-    private static final String CATEGORIZATION_THRESHOLD = "categorizationThreshold";
+    private static final String LABELING_THRESHOLD = "labelingThreshold";
     private static final String SKIP_SIZE = "skipSize";
     private static final String SKIP_DIMENSION = "skipDimension";
     private static final String SKIP_HASH_DB_FILES = "skipHashDBFiles";
@@ -29,8 +29,8 @@ public class RemoteImageClassifierConfig extends AbstractTaskPropertiesConfig {
     // Maximum number of thumbs to be included in the zip file to send to the server
     private int batchSize = 50;
 
-    // Threshold used to decide if an image is labeled in one category
-    private double categorizationThreshold = 60;
+    // Threshold used to decide if an image is labeled with one class
+    private double labelingThreshold = 60;
 
     // Skip classification of images/videos smaller than a given file size (in bytes; '0' = do not skip)
     private int skipSize = 0;
@@ -62,8 +62,8 @@ public class RemoteImageClassifierConfig extends AbstractTaskPropertiesConfig {
         return batchSize;
     }
 
-    public double getCategorizationThreshold() {
-        return categorizationThreshold;
+    public double getLabelingThreshold() {
+        return labelingThreshold;
     }
 
     public int getSkipSize() {
@@ -97,14 +97,14 @@ public class RemoteImageClassifierConfig extends AbstractTaskPropertiesConfig {
                 batchSize = 1;
         }
 
-        value = properties.getProperty(CATEGORIZATION_THRESHOLD);
+        value = properties.getProperty(LABELING_THRESHOLD);
         if (value != null && !value.trim().isEmpty()) {
-            categorizationThreshold = Double.parseDouble(value.trim());
+            labelingThreshold = Double.parseDouble(value.trim());
             // enforce range [0, 100]
-            if (categorizationThreshold < 0) {
-                categorizationThreshold = 0;
-            } else if (categorizationThreshold > 100) {
-                categorizationThreshold = 100;
+            if (labelingThreshold < 0) {
+                labelingThreshold = 0;
+            } else if (labelingThreshold > 100) {
+                labelingThreshold = 100;
             }
         }
 
