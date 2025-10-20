@@ -35,6 +35,7 @@ import org.apache.lucene.search.TermQuery;
 import iped.data.IItem;
 import iped.engine.search.QueryBuilder;
 import iped.engine.task.HashTask;
+import iped.engine.task.jumplist.JumpListTask;
 import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
 import iped.parsers.ares.AresParser;
@@ -103,6 +104,17 @@ public class ReferencedByTableModel extends BaseTableModel {
             String trackIdQuery = QueryBuilder.escape(BasicProps.TRACK_ID + ":" + trackId);
             try {
                 queryBuilder.add(b.getQuery(ExtraProperties.LINKED_ITEMS + ":\"" + trackIdQuery + "\""), Occur.SHOULD);
+            } catch (ParseException | QueryNodeException e) {
+                e.printStackTrace();
+            }
+        }
+
+        // jumpList:ids
+        String[] appIds = doc.getValues(JumpListTask.JUMPLIST_PROGRAM_APP_IDS);
+        for (String appId: appIds) {
+            String appIdQuery = QueryBuilder.escape(JumpListTask.JUMPLIST_PROGRAM_APP_IDS) + ":" + appId;
+            try {
+                queryBuilder.add(b.getQuery(ExtraProperties.LINKED_ITEMS + ":\"" + appIdQuery + "\""), Occur.SHOULD);
             } catch (ParseException | QueryNodeException e) {
                 e.printStackTrace();
             }
