@@ -158,8 +158,8 @@ public class RemoteImageClassifierTask extends AbstractTask {
      * Represents the result of a classification.
      */
     private static class ResultItem {
-        public TreeMap<String, List<Double>> classes = new TreeMap<>();
-        public HashMap<String, Double> classesProb = new HashMap<>();
+        private final TreeMap<String, List<Double>> classes = new TreeMap<>();
+        private final HashMap<String, Double> classesProb = new HashMap<>();
 
         // Add classification value for 'classname'.
         // It stores classification for images and grouped classification data for video frames and animation image frames
@@ -171,7 +171,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
         }
 
         // Get probability value for 'classname'.
-        public double getClassProb(String classname) {
+        public Double getClassProb(String classname) {
             Double value = classesProb.get(classname);
             if (value == null) {
                 List<Double> probs = classes.get(classname);
