@@ -2,6 +2,7 @@ package iped.engine.task;
 
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.ArrayList;
@@ -28,6 +29,9 @@ import iped.data.IItem;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.ImageThumbTaskConfig;
+import iped.engine.preview.PreviewConstants;
+import iped.engine.preview.PreviewRepository;
+import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.util.Util;
 import iped.parsers.util.MetadataUtil;
 import iped.properties.MediaTypes;
@@ -37,6 +41,8 @@ import iped.utils.ImageUtil.BooleanWrapper;
 import iped.viewers.util.ImageMetadataUtil;
 
 public class ImageThumbTask extends ThumbTask {
+
+    private static final String PREVIEW_EXT = "jpg";
 
     public static final String THUMB_TIMEOUT = "thumbTimeout"; //$NON-NLS-1$
 
@@ -244,9 +250,12 @@ public class ImageThumbTask extends ThumbTask {
 
         File thumbFile = getThumbFile(evidence);
         if (hasThumb(evidence, thumbFile)) {
-            File viewFile = getViewFile(evidence, "jpg");
+            File viewFile = Util.getFileFromHash(new File(output, PreviewConstants.VIEW_FOLDER_NAME), evidence.getHash(), PREVIEW_EXT);
             if (viewFile.exists()) {
                 evidence.setViewFile(viewFile);
+            } else if (PreviewRepositoryManager.get(output).previewExists(evidence)) {
+                evidence.setHasPreview(true);
+                evidence.setPreviewExt(PREVIEW_EXT);
             }
             return;
         }
@@ -332,13 +341,15 @@ public class ImageThumbTask extends ThumbTask {
                         logger.warn("Timeout creating view: " + evidence);
                     }
                     if (img != null) {
-                        // Store view
-                        File viewTmpFile = getViewFile(evidence, "tmp");
-                        viewTmpFile.getParentFile().mkdirs();
-                        ImageIO.write(img, "jpg", viewTmpFile);
-                        File viewFile = getViewFile(evidence, "jpg");
-                        viewTmpFile.renameTo(viewFile);
-                        evidence.setViewFile(viewFile);
+                        PreviewRepository previewRepo = PreviewRepositoryManager.get(output);
+                        if (!previewRepo.previewExists(evidence)) {
+                            // Store view
+                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                            ImageIO.write(img, PREVIEW_EXT, baos);
+                            previewRepo.storeRawPreview(evidence, new ByteArrayInputStream(baos.toByteArray()));
+                        }
+                        evidence.setHasPreview(true);
+                        evidence.setPreviewExt(PREVIEW_EXT);
                         isView = true;
                     }
                 }
@@ -417,9 +428,5 @@ public class ImageThumbTask extends ThumbTask {
         } finally {
             updateHasThumb(evidence);
         }
-    }
-
-    private File getViewFile(IItem evidence, String ext) {
-        return Util.getFileFromHash(new File(output, MakePreviewTask.viewFolder), evidence.getHash(), ext);
     }
 }
