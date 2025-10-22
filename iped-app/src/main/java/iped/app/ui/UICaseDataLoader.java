@@ -36,6 +36,7 @@ import iped.engine.core.EvidenceStatus;
 import iped.engine.core.Manager;
 import iped.engine.data.IPEDMultiSource;
 import iped.engine.data.IPEDSource;
+import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.task.ParsingTask;
 import iped.engine.task.SignatureTask;
 import iped.parsers.standard.StandardParser;
@@ -96,6 +97,13 @@ public class UICaseDataLoader extends SwingWorker<Void, Integer> {
             App.get().appCase.checkImagePaths();
             App.get().appCase.getMultiBookmarks().addSelectionListener(App.get().getViewerController().getHtmlLinkViewer());
             App.get().getViewerController().notifyAppLoaded();
+
+            // only configure PreviewRepository when opening in AppMain (case not being processed)
+            if (Manager.getInstance() == null) {
+                App.get().appCase.getAtomicSources().forEach(ipedCase -> {
+                    PreviewRepositoryManager.configureReadOnly(ipedCase.getModuleDir());
+                });
+            }
 
             if (!updateItems) {
                 App.get().appGraphAnalytics.initGraphService();
