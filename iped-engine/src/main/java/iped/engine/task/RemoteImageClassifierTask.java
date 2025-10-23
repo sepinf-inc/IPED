@@ -60,6 +60,7 @@ import iped.data.IHashValue;
 import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.RemoteImageClassifierConfig;
+import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.task.die.DIETask;
 import iped.engine.task.index.IndexItem;
 import iped.parsers.util.MetadataUtil;
@@ -755,19 +756,18 @@ public class RemoteImageClassifierTask extends AbstractTask {
         String name = evidence.getExtraAttribute(IndexItem.TRACK_ID).toString() + ".jpg";
         if (MetadataUtil.isVideoType(evidence.getMediaType()) || MetadataUtil.isAnimationImage(evidence)) {
             // For videos, call the detection method for each extracted frame image (VideoThumbsTask must be enabled)
-            File viewFile = evidence.getViewFile();
-            List<BufferedImage> frames;
-            if (viewFile != null && viewFile.exists() && (frames = ImageUtil.getFrames(viewFile)) != null) {
-                int i = 0;
-                for (BufferedImage frame : frames) {
-                    String iName = (++i) + "_" + name;
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    ImageIO.write(frame, "jpeg", baos);
-                    zip.addFileToZip(iName, baos.toByteArray());
-                    sendVideoBytes.addAndGet(baos.toByteArray().length);
-                }
-                countVideoThumbs.addAndGet(i);
-            } else {
+            boolean processed = false;
+            if (evidence.getViewFile() != null && evidence.getViewFile().exists()) {
+                processed = processVideo(evidence, name, evidence.getViewFile());
+            } else if (evidence.hasPreview()) {
+                AtomicBoolean res = new AtomicBoolean();
+                PreviewRepositoryManager.get(output).consumePreview(evidence, inputStream -> {
+                    res.set(processVideo(evidence, name, inputStream));
+                });
+                processed = res.get();
+            }
+
+            if (!processed) {
                 countVideoThumbs.incrementAndGet();
                 sendVideoBytes.addAndGet(evidence.getThumb().length);
                 zip.addFileToZip(name, evidence.getThumb());
@@ -781,6 +781,23 @@ public class RemoteImageClassifierTask extends AbstractTask {
 
         // Add a new 'name' to 'evidence' mapping to the queue
         queue.put(name, evidence);
+    }
+
+    private boolean processVideo(IItem evidence, String name, Object inputVideo) throws IOException {
+        List<BufferedImage> frames = ImageUtil.getFrames(inputVideo);
+        if (frames == null) {
+            return false;
+        }
+        int i = 0;
+        for (BufferedImage frame : frames) {
+            String iName = (++i) + "_" + name;
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ImageIO.write(frame, "jpeg", baos);
+            zip.addFileToZip(iName, baos.toByteArray());
+            sendVideoBytes.addAndGet(baos.toByteArray().length);
+        }
+        countVideoThumbs.addAndGet(i);
+        return true;
     }
 
     /**
