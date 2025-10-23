@@ -61,6 +61,7 @@ import iped.data.IHashValue;
 import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.RemoteImageClassifierConfig;
+import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.task.die.DIETask;
 import iped.engine.task.index.IndexItem;
 import iped.parsers.util.MetadataUtil;
@@ -788,8 +789,15 @@ public class RemoteImageClassifierTask extends AbstractTask {
         if (MetadataUtil.isVideoType(evidence.getMediaType()) || MetadataUtil.isAnimationImage(evidence)) {
             // For videos, call the detection method for each extracted frame image (VideoThumbsTask must be enabled)
             File viewFile = evidence.getViewFile();
-            List<BufferedImage> frames;
-            if (viewFile != null && viewFile.exists() && (frames = ImageUtil.getFrames(viewFile)) != null) {
+            List<BufferedImage> frames = null;
+            if (viewFile != null && viewFile.exists()) {
+                frames = ImageUtil.getFrames(viewFile);
+            } else if (evidence.hasPreview()) {
+                try (InputStream is = PreviewRepositoryManager.get(output).readPreview(evidence, false)) {
+                    frames = ImageUtil.getFrames(is);
+                }
+            }
+            if (frames != null) {
                 int i = 0;
                 for (BufferedImage frame : frames) {
                     String iName = (++i) + "_" + name;
