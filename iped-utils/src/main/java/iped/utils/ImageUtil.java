@@ -541,7 +541,7 @@ public class ImageUtil {
         return result;
     }
 
-    public static List<BufferedImage> getFrames(File videoFramesFile) throws IOException {
+    public static List<BufferedImage> getFrames(Object videoFramesFile) throws IOException {
         Object[] read = ImageUtil.readJpegWithMetaData(videoFramesFile);
         if (read != null && read.length == 2) {
             String videoComment = (String) read[1];
