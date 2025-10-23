@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.http.HttpHost;
@@ -652,6 +653,10 @@ public class ElasticSearchIndexTask extends AbstractTask {
                     builder.array(key, locations.toArray());
                 } else {
                     builder.array(key.replaceAll("\\.", "_"), values);
+                    if (key.contains("image:exif:DateTimeOriginal")) {
+                        builder.field("image:exif:DateTimeUTCOffset", TimeZone.getDefault().getRawOffset() / (1000 * 60));
+                    }
+
                 }
             }
         }
