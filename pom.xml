@@ -44,7 +44,7 @@
         <java.dbx.version>1.1-p6</java.dbx.version>
         <xerial.sqlite.version>3.34.0</xerial.sqlite.version>
         <dockingframes.version>1.1.2</dockingframes.version>
-        <telegram.version>1.0.13</telegram.version>
+        <telegram.version>1.0.14</telegram.version>
         <twelvemonkeys.version>3.10.1</twelvemonkeys.version>
         <bencode.version>1.4.1</bencode.version>
     </properties>
