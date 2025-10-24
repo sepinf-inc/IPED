@@ -14,6 +14,7 @@ import java.security.cert.X509Certificate;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -60,6 +61,7 @@ import iped.data.IHashValue;
 import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.RemoteImageClassifierConfig;
+import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.task.die.DIETask;
 import iped.engine.task.index.IndexItem;
 import iped.parsers.util.MetadataUtil;
@@ -89,6 +91,14 @@ public class RemoteImageClassifierTask extends AbstractTask {
     private int skipDimension;
     private boolean skipHashDBFiles;   
     private boolean validateSSL;
+    private double labelingThreshold;
+
+    // Labeling classes name in priority order
+    private static final List<String> classesName = new ArrayList<>();
+    private static final Map<String, String> labelNames = new HashMap<>();
+    static {
+        initLabeling();
+    }
 
     // AI-related attributes prefix
     private static final String aiPrefix = "ai:";
@@ -101,6 +111,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
     private static final String AI_CLASSIFICATION_SKIP_SIZE = "skippedSize";
     private static final String AI_CLASSIFICATION_SKIP_DIMENSION = "skippedDimension";
     private static final String AI_CLASSIFICATION_SKIP_HASHDB = "skippedHashDB";
+    private static final String AI_CLASSIFICATION_LABEL_ATTR = aiPrefix + "label";
 
     // Classifications cache (avoids classification of duplicates)
     private static ConcurrentHashMap<IHashValue, String> classifications = new ConcurrentHashMap<>();
@@ -148,7 +159,8 @@ public class RemoteImageClassifierTask extends AbstractTask {
      * Represents the result of a classification.
      */
     private static class ResultItem {
-        public TreeMap<String, ArrayList<Double>> classes = new TreeMap<>();
+        private final TreeMap<String, List<Double>> classes = new TreeMap<>();
+        private final HashMap<String, Double> classesProb = new HashMap<>();
 
         // Add classification value for 'classname'.
         // It stores classification for images and grouped classification data for video frames and animation image frames
@@ -160,12 +172,21 @@ public class RemoteImageClassifierTask extends AbstractTask {
         }
 
         // Get probability value for 'classname'.
-        public double getClassProb(String classname) {
-            double value = DIETask.videoScore(classes.get(classname));
-
-            // Scale values from [0,1] to [0, 100] and
-            // limit them to 2 decimal digits.
-            return Math.round(value * 10000) / 100.0;
+        public Double getClassProb(String classname) {
+            Double value = classesProb.get(classname);
+            if (value == null) {
+                List<Double> probs = classes.get(classname);
+                if (probs != null) {
+                    value = DIETask.videoScore(probs);
+    
+                    // Scale values from [0,1] to [0, 100] and
+                    // limit them to 2 decimal digits.
+                    value = Math.round(value * 10000) / 100.0;
+    
+                    classesProb.put(classname, value);
+                }
+            }
+            return value;
         }
     }
 
@@ -243,6 +264,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
         skipDimension = config.getSkipDimension();
         skipHashDBFiles = config.isSkipHashDBFiles();
         validateSSL = config.isValidateSSL();
+        labelingThreshold = config.getLabelingThreshold();
         
         try (CloseableHttpClient client = getClient()) {
             HttpGet get = new HttpGet(urlVersion);
@@ -462,18 +484,25 @@ public class RemoteImageClassifierTask extends AbstractTask {
                     // Add classification status
                     evidence.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_SUCCESS);
                     
-                    // Classification classes as a String holding className=classProb pairs (used when retrieving cached classifications)
-                    String className;
-                    double classProb;
+                    // Classification classes as a String holding className=classProb pairs (used
+                    // when retrieving cached classifications)
                     StringBuilder classes = new StringBuilder();
                     while (iterator.hasNext()) {
-                        className = iterator.next();
-                        classProb = res.getClassProb(className);
-                        // Add classification class to the evidence 
+                        String className = iterator.next();
+                        double classProb = res.getClassProb(className);
+                        // Add classification class to the evidence
                         evidence.setExtraAttribute(className, classProb);
-                        classes.append(className + "=" + classProb);
-                        if (iterator.hasNext())
-                            classes.append(";");
+                        classes.append(className).append('=').append(classProb);
+                        if (iterator.hasNext()) {
+                            classes.append(';');
+                        }
+                    }
+
+                    // Get the label to be assigned based on classes probabilities
+                    String label = getLabel(res);
+                    if (label != null) {
+                        evidence.setExtraAttribute(AI_CLASSIFICATION_LABEL_ATTR, label);
+                        classes.append(';').append(AI_CLASSIFICATION_LABEL_ATTR).append('=').append(label);
                     }
 
                     // Store classification in classifications cache
@@ -740,12 +769,16 @@ public class RemoteImageClassifierTask extends AbstractTask {
             evidence.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_SUCCESS);
             // Add classification classes to the evidence 
             String[] classesArray = classes.split(";");
-            String[] classParts;
             for (int i = 0; i < classesArray.length; i++) {
                 // classParts[0] will hold className and classParts[1] will hold classProb
-                classParts = classesArray[i].split("="); 
-                // Add classification class to the evidence 
-                evidence.setExtraAttribute(classParts[0], Double.parseDouble(classParts[1]));
+                String[] classParts = classesArray[i].split("="); 
+                // Add classification class to the evidence
+                String key = classParts[0];
+                if (key.equals(AI_CLASSIFICATION_LABEL_ATTR)) {
+                    evidence.setExtraAttribute(key, classParts[1]);
+                } else {
+                    evidence.setExtraAttribute(key, Double.parseDouble(classParts[1]));
+                }
             }
             skipDuplicatesCount.incrementAndGet();
             return;
@@ -756,8 +789,15 @@ public class RemoteImageClassifierTask extends AbstractTask {
         if (MetadataUtil.isVideoType(evidence.getMediaType()) || MetadataUtil.isAnimationImage(evidence)) {
             // For videos, call the detection method for each extracted frame image (VideoThumbsTask must be enabled)
             File viewFile = evidence.getViewFile();
-            List<BufferedImage> frames;
-            if (viewFile != null && viewFile.exists() && (frames = ImageUtil.getFrames(viewFile)) != null) {
+            List<BufferedImage> frames = null;
+            if (viewFile != null && viewFile.exists()) {
+                frames = ImageUtil.getFrames(viewFile);
+            } else if (evidence.hasPreview()) {
+                try (InputStream is = PreviewRepositoryManager.get(output).readPreview(evidence, false)) {
+                    frames = ImageUtil.getFrames(is);
+                }
+            }
+            if (frames != null) {
                 int i = 0;
                 for (BufferedImage frame : frames) {
                     String iName = (++i) + "_" + name;
@@ -802,5 +842,36 @@ public class RemoteImageClassifierTask extends AbstractTask {
             s = s.substring(0, i) + Character.toUpperCase(s.charAt(i)) + s.substring(i + 1);
         }
         return s;
+    }
+
+    /**
+     * Return the label to be assigned base on probabilities of each class. Null if
+     * no label should be assigned, because no class probability reached the minimum
+     * threshold.
+     */
+    private String getLabel(ResultItem res) {
+        for (String className : classesName) {
+            Double prob = res.getClassProb(className);
+            if (prob != null && prob >= labelingThreshold) {
+                return labelNames.get(className);
+            }
+        }
+        return null;
+    }
+
+    private static void initLabeling() {
+        // Labeling classes names, in priority order
+        addLabel("ai:csam", "ChildSexualAbuse");
+        addLabel("ai:likelyCsam", "LikelyChildSexualAbuse");
+        addLabel("ai:porn", "Pornography");
+        addLabel("ai:drawingCsam", "ChildSexualAbuseDrawing");
+        addLabel("ai:drawingPorn", "ExplicitDrawing");
+        addLabel("ai:drawing", "Drawing");
+        addLabel("ai:people", "People");
+    }
+
+    private static void addLabel(String className, String label) {
+        classesName.add(className);
+        labelNames.put(className, label);
     }
 }

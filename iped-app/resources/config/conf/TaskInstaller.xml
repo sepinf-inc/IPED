@@ -40,7 +40,6 @@
     <task class="iped.engine.task.PhotoDNATask"></task>
     <task class="iped.engine.task.PhotoDNALookup"></task>
     <task class="iped.engine.task.RemoteImageClassifierTask"></task>
-    <task script="AIClassLabelTask.js"></task>
     <task script="NSFWNudityDetectTask.py"></task>
     <task script="FaceRecognitionTask.py"></task>
     <task script="AgeEstimationTask.py"></task>

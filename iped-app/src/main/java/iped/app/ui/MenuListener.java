@@ -25,6 +25,8 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -56,7 +58,9 @@ import iped.data.IItem;
 import iped.data.IItemId;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.ItemId;
+import iped.engine.preview.PreviewRepositoryManager;
 import iped.properties.ExtraProperties;
+import iped.utils.SeekableFileInputStream;
 import iped.utils.SpinnerDialog;
 import iped.viewers.api.AbstractViewer;
 
@@ -423,7 +427,18 @@ public class MenuListener implements ActionListener {
             IItemId itemId = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(selIdx));
             IItem item = App.get().appCase.getItemByItemId(itemId);
             LOGGER.info("Externally Opening preview of " + item.getPath()); //$NON-NLS-1$
-            ExternalFileOpen.open(item.getViewFile());
+            if (item.getViewFile() != null) {
+                ExternalFileOpen.open(item.getViewFile());
+            } else if (item.hasPreview()) {
+                File baseFolder = App.get().appCase.getAtomicSourceBySourceId(itemId.getSourceId()).getModuleDir();
+                try {
+                    SeekableFileInputStream stream = PreviewRepositoryManager.get(baseFolder).readPreview(item, true);
+                    ExternalFileOpen.open(stream.getFile());
+                } catch (SQLException | IOException e1) {
+                    e1.printStackTrace();
+                    JOptionPane.showMessageDialog(App.get(), e1.getMessage());
+                }
+            }
 
         } else if (e.getSource() == menu.createReport) {
             new ReportDialog().setVisible();
