@@ -389,9 +389,9 @@ public class ReportGenerator {
                     out.println("href=\"" + FormatUtil.format(exportPath) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
             }
             out.println(">" + SimpleHTMLEncoder.htmlEncode(query)); //$NON-NLS-1$
-            byte[] thumb = Util.getPreview(item);
+            byte[] thumb = item.getThumb();
             if (thumb != null)
-                out.println("<br><img height=\"300\" width=\"300\" src=\"data:image/jpg;charset=utf-8;base64," //$NON-NLS-1$
+                out.println("<br><img style=\"max-width:300px;max-height:300px\" src=\"data:image/jpg;charset=utf-8;base64," //$NON-NLS-1$
                         + Base64.getEncoder().encodeToString(thumb) + "\"/>"); //$NON-NLS-1$
             out.println("</a></p>"); //$NON-NLS-1$
 

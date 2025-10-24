@@ -7,7 +7,6 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -341,24 +340,6 @@ public class Util {
             return null;
         }
         return file.toPath().toAbsolutePath().normalize().toString();
-    }
-
-    public static byte[] getPreview(IItemReader item) {
-        byte[] thumb = null;
-        InputStream is = null;
-        try {
-            String mime = item.getMediaType().toString();
-            if (mime.startsWith("image")) //$NON-NLS-1$
-                thumb = IOUtil.loadInputStream(is = item.getBufferedInputStream());
-            else if (mime.startsWith("video") && item.getViewFile() != null) //$NON-NLS-1$
-                thumb = Files.readAllBytes(item.getViewFile().toPath());
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            IOUtil.closeQuietly(is);
-        }
-        return thumb;
     }
 
     public static String getThumbPath(IItemReader item) {
