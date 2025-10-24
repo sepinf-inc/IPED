@@ -8,8 +8,8 @@ url = 10.61.86.148:30603
 # Maximum number of thumbs to be included in the zip file to send to the server
 batchSize = 50
 
-# Threshold used to decide if an image/video is labeled in one class. Values are between 0 and 100.   
-categorizationThreshold = 50
+# Minimum confidence threshold for assigning a class label to an image/video. Values are between 0 and 100.   
+labelingThreshold = 50
 
 # Skip classification of images/videos smaller than a given file size (in bytes; '0' = do not skip)
 skipSize = 2048
