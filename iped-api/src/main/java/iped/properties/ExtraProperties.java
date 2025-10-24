@@ -39,7 +39,32 @@ public class ExtraProperties {
 
     public static final String MESSAGE_SUBJECT = MESSAGE_PREFIX + "Subject"; //$NON-NLS-1$
 
+    public static final String CONVERSATION_PREFIX = "Conversation:";
+
+    public static final String CONVERSATION_ID = CONVERSATION_PREFIX + "id";
+
+    public static final String CONVERSATION_ACCOUNT = CONVERSATION_PREFIX + "Account";
+
+    public static final String CONVERSATION_NAME = CONVERSATION_PREFIX + "Name";
+
+    public static final String CONVERSATION_TYPE = CONVERSATION_PREFIX + "Type";
+
+    public static final Property CONVERSATION_IS_OWNER_ADMIN = Property.internalBoolean(CONVERSATION_PREFIX + "isOwnerAdmin");
+
+    public static final String CONVERSATION_ADMINS = CONVERSATION_PREFIX + "Admins";
+
+    public static final String CONVERSATION_PARTICIPANTS = CONVERSATION_PREFIX + "Participants";
+
+    public static final Property CONVERSATION_MESSAGES_COUNT = Property.internalInteger(CONVERSATION_PREFIX + "messagesCount");
+
+    public static final String CONVERSATION_SUFFIX_ID = ":id";
+    public static final String CONVERSATION_SUFFIX_NAME = ":name";
+    public static final String CONVERSATION_SUFFIX_PHONE = ":phoneNumber";
+    public static final String CONVERSATION_SUFFIX_USERNAME = ":username";
+
     public static final String COMMUNICATION_PREFIX = "Communication:";
+
+    public static final String COMMUNICATION_DIRECTION = COMMUNICATION_PREFIX + "Direction";
 
     public static final String COMMUNICATION_FROM = COMMUNICATION_PREFIX + "From";
 
@@ -88,6 +113,16 @@ public class ExtraProperties {
     public static final String OFFICE_META_PREFIX = "office:"; //$NON-NLS-1$
 
     public static final String UFED_META_PREFIX = "ufed:"; //$NON-NLS-1$
+
+    public static final String UFED_ID = UFED_META_PREFIX + "id";
+
+    public static final String UFED_FILE_ID = UFED_META_PREFIX + "file_id";
+
+    public static final String UFED_COORDINATE_ID = UFED_META_PREFIX + "coordinate_id";
+
+    public static final String UFED_JUMP_TARGETS = UFED_META_PREFIX + "jumpTargets";
+
+    public static final String UFED_SOURCE_MODELS = UFED_META_PREFIX + "sourceModels";
 
     public static final String P2P_META_PREFIX = "p2p:"; //$NON-NLS-1$
 
@@ -150,6 +185,14 @@ public class ExtraProperties {
     public static final String FACE_LOCATIONS = "face_locations";
 
     public static final String FACE_ENCODINGS = "face_encodings";
+
+    public static final String FACE_AGE_LABELS = "faceAge:labels";
+
+    /**
+     * Property to be set if the evidence is a animated image (i.e. contain multiple
+     * frames). Only set if the number of frames is greater than one.
+     */
+    public static final String ANIMATION_FRAMES_PROP = IMAGE_META_PREFIX + "AnimationFrames";
 
     public static final List<String> COMMUNICATION_BASIC_PROPS = Arrays.asList(MESSAGE_SUBJECT, MESSAGE_BODY,
             Message.MESSAGE_CC, Message.MESSAGE_BCC, Message.MESSAGE_RECIPIENT_ADDRESS, MESSAGE_IS_ATTACHMENT,

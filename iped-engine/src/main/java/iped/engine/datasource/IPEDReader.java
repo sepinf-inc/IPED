@@ -64,6 +64,8 @@ import iped.engine.data.DataSource;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.Item;
 import iped.engine.io.MetadataInputStreamFactory;
+import iped.engine.preview.PreviewConstants;
+import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.LuceneSearchResult;
 import iped.engine.search.SimilarFacesSearch;
@@ -82,7 +84,6 @@ import iped.engine.util.Util;
 import iped.parsers.mail.OutlookPSTParser;
 import iped.parsers.mail.win10.Win10MailParser;
 import iped.parsers.ocr.OCRParser;
-import iped.parsers.ufed.UFEDChatParser;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
@@ -213,6 +214,10 @@ public class IPEDReader extends DataSourceReader {
         oldToNewIdMap = new int[ipedCase.getLastId() + 1];
         for (int i = 0; i < oldToNewIdMap.length; i++)
             oldToNewIdMap[i] = -1;
+
+        if (!listOnly) {
+            PreviewRepositoryManager.configureReadOnly(ipedCase.getModuleDir());
+        }
 
         IIPEDSearcher pesquisa = new IPEDSearcher(ipedCase, new MatchAllDocsQuery());
         SearchResult searchResult = state.filterInReport(pesquisa.search());
@@ -620,13 +625,17 @@ public class IPEDReader extends DataSourceReader {
 
             evidence.setTimeOut(Boolean.parseBoolean(doc.get(IndexItem.TIMEOUT)));
 
+            evidence.setHasPreview(Boolean.parseBoolean(doc.get(IndexItem.HAS_PREVIEW)));
+            evidence.setPreviewExt(doc.get(IndexItem.PREVIEW_EXT));
+            evidence.setPreviewBaseFolder(indexDir.getParentFile());
+
             value = doc.get(IndexItem.HASH);
             if (value != null && !treeNode) {
                 value = value.toUpperCase();
                 evidence.setHash(value);
 
                 if (!value.isEmpty() && caseData.isIpedReport()) {
-                    File viewFile = Util.findFileFromHash(new File(indexDir.getParentFile(), "view"), value); //$NON-NLS-1$
+                    File viewFile = Util.findFileFromHash(new File(indexDir.getParentFile(), PreviewConstants.VIEW_FOLDER_NAME), value);
                     if (viewFile != null) {
                         evidence.setViewFile(viewFile);
                     }
@@ -705,14 +714,6 @@ public class IPEDReader extends DataSourceReader {
                         }
                     }
                 }
-            }
-
-            // translate old msg ids to new ones
-            String[] ufedMsgIds = evidence.getMetadata().getValues(UFEDChatParser.CHILD_MSG_IDS);
-            evidence.getMetadata().remove(UFEDChatParser.CHILD_MSG_IDS);
-            for (String msgId : ufedMsgIds) {
-                int newId = getId(msgId);
-                evidence.getMetadata().add(UFEDChatParser.CHILD_MSG_IDS, Integer.toString(newId));
             }
 
             // restore "face_encodings" to KnnVector
