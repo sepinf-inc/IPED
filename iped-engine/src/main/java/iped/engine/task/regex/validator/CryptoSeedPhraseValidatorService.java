@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
-import iped.engine.task.regex.RegexValidatorService;
+import iped.engine.task.regex.BasicAbstractRegexValidatorService;
 
 /**
  * Validator for BIP-39 and Electrum seed phrases.
@@ -27,7 +27,7 @@ import iped.engine.task.regex.RegexValidatorService;
  * @author Rui Sant'Ana Junior
  */
 
-public class CryptoSeedPhraseValidator implements RegexValidatorService {
+public class CryptoSeedPhraseValidatorService extends BasicAbstractRegexValidatorService {
 
     private static final String REGEX_NAME = "CRYPTO_POSSIBLE_SEED_PHRASE_EN";
     private static final List<Integer> BIP39_VALID_WORD_COUNTS = Arrays.asList(12, 15, 18, 21, 24);
@@ -89,12 +89,12 @@ public class CryptoSeedPhraseValidator implements RegexValidatorService {
     }
 
     @Override
-    public String format(String regexName, String hit) {
+    public String format(String hit) {
         return hit;
     }
 
     @Override
-    public boolean validate(String regexName, String hit) {
+    protected boolean validate(String hit) {
         if (wordList == null || wordList.isEmpty()) {
             return false;
         }
@@ -203,8 +203,12 @@ public class CryptoSeedPhraseValidator implements RegexValidatorService {
 
             return false;
 
+        } catch (NoSuchAlgorithmException e) {
+            // This should not happen, as HmacSHA512 is a standard algorithm
+            e.printStackTrace();
+            return false;
         } catch (Exception e) {
-            // Any exception during crypto operations means it's not a valid Electrum seed
+            // Any other exception during crypto operations means it's not a valid Electrum seed
             return false;
         }
     }
