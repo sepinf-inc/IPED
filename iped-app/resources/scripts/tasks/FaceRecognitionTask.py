@@ -376,10 +376,11 @@ class FaceRecognitionTask:
             processQueue.put(proc, block=True)
         
         face_locations = self.convertTuplesToList(face_locations)
+        face_encodings = list(map(javaConverter.toKnnVector, face_encodings))
         face_count = len(face_locations)
 
         item.setExtraAttribute(ExtraProperties.FACE_LOCATIONS, face_locations)
-        item.setExtraAttribute(ExtraProperties.FACE_ENCODINGS, list(map(javaConverter.toKnnVector, face_encodings)))
+        item.setExtraAttribute(ExtraProperties.FACE_ENCODINGS, face_encodings)
         item.setExtraAttribute(ExtraProperties.FACE_COUNT, face_count)
         
         self.cacheResults(hash, face_locations, face_encodings, face_count)
