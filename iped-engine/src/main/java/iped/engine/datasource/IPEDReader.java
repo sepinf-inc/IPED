@@ -79,6 +79,7 @@ import iped.engine.task.carver.CarverTask;
 import iped.engine.task.carver.LedCarveTask;
 import iped.engine.task.die.DIETask;
 import iped.engine.task.index.IndexItem;
+import iped.engine.task.index.IndexItem.KnnVector;
 import iped.engine.util.Util;
 import iped.parsers.mail.OutlookPSTParser;
 import iped.parsers.mail.win10.Win10MailParser;
@@ -91,7 +92,6 @@ import iped.search.SearchResult;
 import iped.utils.DateUtil;
 import iped.utils.HashValue;
 import iped.utils.SeekableInputStreamFactory;
-import jep.NDArray;
 
 /*
  * Enfileira para processamento os arquivos selecionados via interface de pesquisa de uma indexação anterior.
@@ -593,13 +593,14 @@ public class IPEDReader extends DataSourceReader {
                     synchronized (inputStreamFactories) {
                         SeekableInputStreamFactory sisf = inputStreamFactories.get(sourcePath);
                         if (sisf == null) {
-                            Class<?> clazz = Class.forName(className);
+                            @SuppressWarnings("unchecked")
+                            Class<SeekableInputStreamFactory> clazz = (Class<SeekableInputStreamFactory>) Class.forName(className);
                             try {
-                                Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
+                                Constructor<SeekableInputStreamFactory> c = clazz.getConstructor(Path.class);
                                 sisf = c.newInstance(Path.of(sourcePath));
 
                             } catch (NoSuchMethodException e) {
-                                Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(URI.class);
+                                Constructor<SeekableInputStreamFactory> c = clazz.getConstructor(URI.class);
                                 sisf = c.newInstance(URI.create(sourcePath));
                             }
                             if (!ipedCase.isReport() && sisf.checkIfDataSourceExists()) {
@@ -715,13 +716,14 @@ public class IPEDReader extends DataSourceReader {
                 }
             }
 
-            // restore "face_encodings" to NDArray
+            // restore "face_encodings" to KnnVector
+            @SuppressWarnings("unchecked")
             List<byte[]> features = (List<byte[]>) evidence.getExtraAttribute(SimilarFacesSearch.FACE_FEATURES);
             if (features != null) {
-                List<NDArray<double[]>> featuresList = new ArrayList<>();
+                List<KnnVector> featuresList = new ArrayList<>();
                 for (byte[] featureBytes : features) {
                     float[] featureFloats = convByteArrayToFloatArray(featureBytes);
-                    featuresList.add(convFloatArrayToNDArray(featureFloats));
+                    featuresList.add(new KnnVector(convFloatToDoubleArray(featureFloats)));
                 }
                 evidence.setExtraAttribute(SimilarFacesSearch.FACE_FEATURES, featuresList);
             }
@@ -738,10 +740,6 @@ public class IPEDReader extends DataSourceReader {
             result[i] = bb.getFloat();
         }
         return result;
-    }
-
-    public static final NDArray<double[]> convFloatArrayToNDArray(float[] array) {
-        return new NDArray<double[]>(convFloatToDoubleArray(array));
     }
 
     public static final double[] convFloatToDoubleArray(float[] array) {

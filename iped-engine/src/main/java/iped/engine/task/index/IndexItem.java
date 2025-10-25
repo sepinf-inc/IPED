@@ -28,6 +28,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -98,7 +99,6 @@ import iped.utils.IOUtil;
 import iped.utils.SeekableInputStreamFactory;
 import iped.utils.SelectImagePathWithDialog;
 import iped.utils.UTF8Properties;
-import jep.NDArray;
 
 /**
  * Cria um org.apache.lucene.document.Document a partir das propriedades do
@@ -165,6 +165,24 @@ public class IndexItem extends BasicProps {
         BasicProps.SET.add(PREVIEW_EXT);
     }
 
+    public static class KnnVector {
+
+        private final double[] array;
+
+        public KnnVector(double[] array) {
+            this.array = array;
+        }
+
+        public double[] getArray() {
+            return array;
+        }
+
+        @Override
+        public String toString() {
+            return Arrays.toString(array);
+        }
+    }
+
     public static boolean isByte(String field) {
         return Byte.class.equals(typesMap.get(field));
     }
@@ -202,16 +220,19 @@ public class IndexItem extends BasicProps {
         return isFloat(field) || isDouble(field);
     }
 
-    public static Map<String, Class> getMetadataTypes() {
+    public static Map<String, Class<?>> getMetadataTypes() {
         return Collections.unmodifiableMap(typesMap);
     }
 
+    @SuppressWarnings("unchecked")
     public static void saveMetadataTypes(File confDir) throws IOException {
         File metadataTypesFile = new File(confDir, attrTypesFilename);
         UTF8Properties props = new UTF8Properties();
-        for (Object o : typesMap.entrySet().toArray()) {
-            Entry<String, Class<?>> e = (Entry<String, Class<?>>) o;
-            props.setProperty(e.getKey(), e.getValue().getCanonicalName());
+        for (Entry<String, Class<?>> e : typesMap.entrySet().toArray(new Entry[0])) {
+            if (ExtraProperties.FACE_ENCODINGS.equals(e.getKey())) {
+                continue;
+            }
+            props.setProperty(e.getKey(), e.getValue().getName());
         }
         props.store(metadataTypesFile);
         IOUtils.fsync(metadataTypesFile.toPath(), false);
@@ -629,8 +650,8 @@ public class IndexItem extends BasicProps {
             else
                 doc.add(new SortedNumericDocValuesField(key, NumericUtils.doubleToSortableLong((Double) oValue)));
 
-        } else if (oValue instanceof NDArray) {
-            float[] floatArray = convNDArrayToFloatArray((NDArray) oValue);
+        } else if (oValue instanceof KnnVector) {
+            float[] floatArray = convDoubleToFloatArray(((KnnVector) oValue).getArray());
             byte[] byteArray = convFloatArrayToByteArray(floatArray);
             int suffix = 0;
             // KnnVectorField is not multivalued, must use other key if it exists
@@ -663,10 +684,6 @@ public class IndexItem extends BasicProps {
             buffer.putFloat(value);
         }
         return buffer.array();
-    }
-
-    public static final float[] convNDArrayToFloatArray(NDArray nd) {
-        return convDoubleToFloatArray((double[]) nd.getData());
     }
 
     public static final float[] convDoubleToFloatArray(double[] array) {
@@ -849,13 +866,14 @@ public class IndexItem extends BasicProps {
                 synchronized (inputStreamFactories) {
                     SeekableInputStreamFactory sisf = inputStreamFactories.get(sourcePath);
                     if (sisf == null) {
-                        Class<?> clazz = Class.forName(className);
+                        @SuppressWarnings("unchecked")
+                        Class<SeekableInputStreamFactory> clazz = (Class<SeekableInputStreamFactory>) Class.forName(className);
                         try {
-                            Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
+                            Constructor<SeekableInputStreamFactory> c =  clazz.getConstructor(Path.class);
                             sisf = c.newInstance(Path.of(sourcePath));
 
                         } catch (NoSuchMethodException e) {
-                            Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(URI.class);
+                            Constructor<SeekableInputStreamFactory> c = clazz.getConstructor(URI.class);
                             sisf = c.newInstance(URI.create(sourcePath));
                         }
                         if (!iCase.isReport() && sisf.checkIfDataSourceExists()) {
