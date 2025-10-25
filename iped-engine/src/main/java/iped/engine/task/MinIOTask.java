@@ -46,6 +46,7 @@ import iped.data.IItem;
 import iped.engine.CmdLineArgs;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.MinIOConfig;
+import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.task.index.ElasticSearchIndexTask;
 import iped.io.SeekableInputStream;
 import iped.utils.SeekableFileInputStream;
@@ -379,7 +380,9 @@ public class MinIOTask extends AbstractTask {
                 ex = e;
             }
         }
-        throw ex;
+        if (ex != null) {
+            throw ex;
+        }
     }
 
     private void insertItem(String hash, SeekableInputStream is, String mediatype, String bucket, String bucketPath)
@@ -451,13 +454,22 @@ public class MinIOTask extends AbstractTask {
             insertWithZip(item, hash, is, item.getMediaType().toString(), false);
 
         } catch (Exception e) {
-            // TODO: handle exception
             logger.error(e.getMessage() + "File " + item.getPath() + " (" + item.getLength() + " bytes)", e);
             throw e;
         }
-        if (item.getViewFile() != null && item.getViewFile().length() > 0) {
-            try (SeekableFileInputStream is = new SeekableFileInputStream(item.getViewFile())) {
-                String mime = getMimeType(item.getViewFile().getName());
+
+        SeekableFileInputStream is = null;
+        String mime = null;
+        try {
+            if (item.getViewFile() != null && item.getViewFile().length() > 0) {
+                is = new SeekableFileInputStream(item.getViewFile());
+                mime = getMimeType(item.getViewFile().getName());
+            } else if (item.hasPreview()) {
+                is = PreviewRepositoryManager.get(output).readPreview(item, false);
+                mime = getMimeType("file." + item.getPreviewExt());
+            }
+
+            if (is != null) {
                 String fullPath = insertWithZip(item, hash, is, mime, true);
                 if (fullPath != null) {
                     item.getMetadata().add(ElasticSearchIndexTask.PREVIEW_IN_DATASOURCE,
@@ -465,13 +477,14 @@ public class MinIOTask extends AbstractTask {
                     item.getMetadata().add(ElasticSearchIndexTask.PREVIEW_IN_DATASOURCE,
                             "type" + ElasticSearchIndexTask.KEY_VAL_SEPARATOR + mime);
                 }
-            } catch (Exception e) {
-                // TODO: handle exception
-                logger.error(e.getMessage() + "Preview " + item.getViewFile().getPath() + " ("
-                        + item.getViewFile().length() + " bytes)", e);
-                throw e;
             }
+        } catch (Exception e) {
+            logger.error(e.getMessage() + "Preview " + item, e);
+            throw e;
+        } finally {
+            IOUtils.closeQuietly(is);
         }
+
         String bucket = getBucket(item);
         ZipRequest zp = zipRequests.get(bucket);
 

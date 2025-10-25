@@ -4,6 +4,7 @@ import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -17,12 +18,15 @@ import javax.imageio.ImageIO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.util.concurrent.AtomicDouble;
+
 import iped.configuration.Configurable;
 import iped.data.IItem;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.EnableTaskProperty;
 import iped.engine.config.ImageThumbTaskConfig;
+import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.task.AbstractTask;
 import iped.engine.task.HashTask;
 import iped.engine.task.ImageThumbTask;
@@ -241,47 +245,58 @@ public class DIETask extends AbstractTask {
                     return;
                 }
                 //For videos call the detection method for each extracted frame image (VideoThumbsTask must be enabled)
-                File viewFile = evidence.getViewFile();
-                if (viewFile != null && viewFile.exists()) {
-                    double prediction = -1;
-                    @SuppressWarnings("unchecked")
-                    List<Double> subitemsRawScore = (List<Double>) evidence.getTempAttribute(DIE_RAW_SCORE);
-                    if (subitemsRawScore != null && !subitemsRawScore.isEmpty()) {
-                        prediction = videoScore(subitemsRawScore);
-                    } else {
-                        List<BufferedImage> frames = ImageUtil.getFrames(viewFile);
-                        List<Double> pvideo = new ArrayList<Double>();
-                        if (frames != null) {
-                            for (BufferedImage frame : frames) {
-                                List<Float> features = Die.extractFeatures(frame);
-                                if (features != null) {
-                                    double p = predictor.predict(features);
-                                    pvideo.add(p);
-                                }
-                            }
-                        }
-                        if (!pvideo.isEmpty()) {
-                            prediction = videoScore(pvideo);
-                        }
+                double prediction = -1;
+                @SuppressWarnings("unchecked")
+                List<Double> subitemsRawScore = (List<Double>) evidence.getTempAttribute(DIE_RAW_SCORE);
+                if (subitemsRawScore != null && !subitemsRawScore.isEmpty()) {
+                    prediction = videoScore(subitemsRawScore);
+                } else {
+                    File viewFile = evidence.getViewFile();
+                    if (viewFile != null && viewFile.exists()) {
+                        prediction = processVideo(evidence, viewFile);
+                    } else if (evidence.hasPreview()) {
+                        AtomicDouble res = new AtomicDouble();
+                        PreviewRepositoryManager.get(output).consumePreview(evidence, inputStream -> {
+                            res.set(processVideo(evidence, inputStream));
+                        });
+                        prediction = res.get();
                     }
-
-                    if (prediction != -1) {
-                        int score = predictionToScore(prediction);
-                        update(evidence, score, null);
-                        totalVideosProcessed.incrementAndGet();
-                        synchronized (videoResults) {
-                            videoResults.put(evidence.getHash(), (short) score);
-                        }
-                    } else {
-                        totalVideosFailed.incrementAndGet();
-                    }
-                    t = System.currentTimeMillis() - t;
-                    totalVideosTime.addAndGet(t);
                 }
+                if (prediction != -1) {
+                    int score = predictionToScore(prediction);
+                    update(evidence, score, null);
+                    totalVideosProcessed.incrementAndGet();
+                    synchronized (videoResults) {
+                        videoResults.put(evidence.getHash(), (short) score);
+                    }
+                } else {
+                    totalVideosFailed.incrementAndGet();
+                }
+                t = System.currentTimeMillis() - t;
+                totalVideosTime.addAndGet(t);
             }
         } catch (Exception e) {
             logger.warn(evidence.toString(), e);
         }
+    }
+
+    private double processVideo(IItem evidence, Object inputVideo) throws IOException {
+
+        List<BufferedImage> frames = ImageUtil.getFrames(inputVideo);
+        List<Double> pvideo = new ArrayList<Double>();
+        if (frames != null) {
+            for (BufferedImage frame : frames) {
+                List<Float> features = Die.extractFeatures(frame);
+                if (features != null) {
+                    double p = predictor.predict(features);
+                    pvideo.add(p);
+                }
+            }
+        }
+        if (!pvideo.isEmpty()) {
+            return videoScore(pvideo);
+        }
+        return -1;
     }
 
     /**
@@ -317,7 +332,7 @@ public class DIETask extends AbstractTask {
     /**
      * Update DIE attributes of a evidence.
      */
-    private void update(IItem evidence, int score, Double prediction) throws Exception {
+    private void update(IItem evidence, int score, Double prediction) {
         evidence.setExtraAttribute(DIE_SCORE, score);
         int classe = Math.min(5, Math.max(1, score / 200 + 1));
         evidence.setExtraAttribute(DIE_CLASS, classe);

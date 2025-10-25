@@ -635,9 +635,6 @@ public class ElasticSearchIndexTask extends AbstractTask {
                         previewInDataSource.put(prevIt[0], prevIt[1]);
                     }
                 }
-                if (item.getViewFile() != null) {
-                    previewInDataSource.put("size", Long.toString(item.getViewFile().length()));
-                }
                 builder.field(key, previewInDataSource);
 
             } else if (key != null) {
