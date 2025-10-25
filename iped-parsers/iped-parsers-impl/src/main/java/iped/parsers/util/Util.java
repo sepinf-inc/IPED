@@ -342,21 +342,6 @@ public class Util {
         return file.toPath().toAbsolutePath().normalize().toString();
     }
 
-    public static String getThumbPath(IItemReader item) {
-        String thumbPath = null;
-        String mime = item.getMediaType().toString();
-        String hash = item.getHash();
-        if (hash != null && hash.length() > 1) {
-            if (mime.startsWith("image")) //$NON-NLS-1$
-                thumbPath = imageThumbsDir;
-            else if (mime.startsWith("video") && item.getViewFile() != null) //$NON-NLS-1$
-                thumbPath = videoThumbsDir;
-            if (thumbPath != null)
-                thumbPath += hash.charAt(0) + "/" + hash.charAt(1) + "/" + hash + ".jpg"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        }
-        return thumbPath;
-    }
-
     public static String getParentPath(String path) {
         int i = path.lastIndexOf("\\"); //$NON-NLS-1$
         if (i == -1)
