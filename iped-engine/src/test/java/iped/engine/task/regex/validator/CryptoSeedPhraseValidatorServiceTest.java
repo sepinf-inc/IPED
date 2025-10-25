@@ -9,13 +9,13 @@ import java.io.File;
 import org.junit.Before;
 import org.junit.Test;
 
-public class CryptoSeedPhraseValidatorTest {
+public class CryptoSeedPhraseValidatorServiceTest {
 
-    private CryptoSeedPhraseValidator service;
+    private CryptoSeedPhraseValidatorService service;
 
     @Before
     public void setUp() {
-        service = new CryptoSeedPhraseValidator();
+        service = new CryptoSeedPhraseValidatorService();
         // To make the test environment-independent, we locate the project root dynamically.
         // The test is typically run from the 'iped-engine' module directory.
         String userDir = System.getProperty("user.dir");
