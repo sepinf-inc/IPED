@@ -220,11 +220,12 @@ class AgeEstimationTask:
             return
         
         if self.isToProcessBatch(item):        
-            for i in self.itemList:
-                javaTask.get().sendToNextTaskSuper(i)            
+            localList = list(self.itemList)
             self.itemList.clear()
             self.faceItems.clear()
-            self.faceImages.clear()           
+            self.faceImages.clear()
+            for i in localList:
+                javaTask.get().sendToNextTaskSuper(i)
             
         if item.isQueueEnd():
             javaTask.get().sendToNextTaskSuper(item)
