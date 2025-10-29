@@ -9,6 +9,7 @@ import java.net.URISyntaxException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
+import java.sql.SQLException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -113,6 +114,11 @@ public abstract class BaseItemSearchContext extends TestCase {
 
             @Override
             public String getPreviewExt() {
+                return null;
+            }
+
+            @Override
+            public SeekableInputStream getPreviewSeekeableInputStream() throws SQLException, IOException {
                 return null;
             }
 
