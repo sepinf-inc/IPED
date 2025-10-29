@@ -131,6 +131,12 @@ public interface IItemReader extends IStreamSource {
      */
     public File getViewFile();
 
+    boolean hasPreview();
+
+    File getPreviewBaseFolder();
+
+    String getPreviewExt();
+
     public byte[] getThumb();
 
     public BufferedInputStream getBufferedInputStream() throws IOException;
