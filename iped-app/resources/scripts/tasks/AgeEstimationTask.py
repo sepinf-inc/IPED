@@ -69,7 +69,6 @@ class AgeEstimationTask:
         self.itemList = []
         self.faceItems = []
         self.faceImages = []
-        self.queued = False
 
     def isEnabled(self):
         return False if AgeEstimationTask.enabled is None else AgeEstimationTask.enabled
@@ -215,7 +214,7 @@ class AgeEstimationTask:
             
 
     def sendToNextTask(self, item):        
-        if not item.isQueueEnd() and not self.queued:
+        if not item.isQueueEnd() and item not in self.itemList:
             javaTask.get().sendToNextTaskSuper(item)
             return
         
@@ -237,7 +236,6 @@ class AgeEstimationTask:
     
     
     def process(self, item):        
-        self.queued = False
     
         # does not process item if any condition is met
         if (not item.isQueueEnd() and not supported(item)) or (not item.isToAddToCase()):
@@ -355,7 +353,6 @@ class AgeEstimationTask:
                         self.faceImages.append(face_img)
                 
                 self.itemList.append(item)
-                self.queued = True
                 
             except Exception as e:
                 classificationFail += 1
