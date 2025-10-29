@@ -465,12 +465,17 @@ public class MinIOTask extends AbstractTask {
         if (caseData.isIpedReport() || !item.isToAddToCase())
             return;
         
-        String hash = item.getHash();
+
 
         if (item.getViewFile() != null && item.getViewFile().length() > 0) {
             try (SeekableFileInputStream is = new SeekableFileInputStream(item.getViewFile())) {
                 String mime = getMimeType(item.getViewFile().getName());
-                String fullPath = insertWithZip(item, hash, is, mime, true);
+                String preview_hash = DigestUtils.md5Hex(is);
+                logger.error("Inserting preview for " + item.getViewFile().getName() + " ("
+                        + item.getViewFile().length()
+                        + " bytes) mime=" + mime + " hash=" + preview_hash + " item=" + item.getId());
+                is.seek(0);
+                String fullPath = insertWithZip(item, preview_hash, is, mime, true);
                 if (fullPath != null) {
                     item.getMetadata().add(ElasticSearchIndexTask.PREVIEW_IN_DATASOURCE,
                             "idInDataSource" + ElasticSearchIndexTask.KEY_VAL_SEPARATOR + fullPath);
@@ -484,8 +489,9 @@ public class MinIOTask extends AbstractTask {
                 throw e;
             }
         }
-
         
+        String hash = item.getHash();
+
         if (hash == null || hash.isEmpty() || item.getLength() == null)
             return;
 
