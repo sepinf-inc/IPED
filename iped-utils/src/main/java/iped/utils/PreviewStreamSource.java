@@ -44,6 +44,7 @@ public class PreviewStreamSource implements IStreamSource {
                     Path tmp = Files.createTempFile("preview-", item.getPreviewExt());
                     Files.copy(input, tmp);
                     tempFile = tmp.toFile();
+                    tempFile.deleteOnExit();
                 }
             } catch (SQLException e) {
                 throw new IOException(e);
