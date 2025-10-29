@@ -11,6 +11,7 @@ import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -40,6 +41,7 @@ import iped.engine.core.Statistics;
 import iped.engine.io.ReferencedFile;
 import iped.engine.lucene.analysis.CategoryTokenizer;
 import iped.engine.preview.PreviewInputStreamFactory;
+import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.task.index.IndexItem;
 import iped.engine.tika.SyncMetadata;
 import iped.engine.util.ParentInfo;
@@ -803,6 +805,11 @@ public class Item implements IItem {
     @Override
     public String getPreviewExt() {
         return previewExt;
+    }
+
+    @Override
+    public SeekableInputStream getPreviewSeekeableInputStream() throws SQLException, IOException {
+        return PreviewRepositoryManager.get(previewBaseFolder).readPreview(this, false);
     }
 
     /**

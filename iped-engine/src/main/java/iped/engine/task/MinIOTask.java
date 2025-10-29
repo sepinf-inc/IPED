@@ -46,6 +46,7 @@ import iped.engine.CmdLineArgs;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.MinIOConfig;
 import iped.engine.io.UFDRInputStreamFactory;
+import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.task.index.ElasticSearchIndexTask;
 import iped.io.SeekableInputStream;
 import iped.utils.SeekableFileInputStream;
@@ -467,29 +468,38 @@ public class MinIOTask extends AbstractTask {
         
 
 
-        if (item.getViewFile() != null && item.getViewFile().length() > 0) {
-            try (SeekableFileInputStream is = new SeekableFileInputStream(item.getViewFile())) {
-                String mime = getMimeType(item.getViewFile().getName());
-                String preview_hash = DigestUtils.md5Hex(is);
-                logger.error("Inserting preview for " + item.getViewFile().getName() + " ("
-                        + item.getViewFile().length()
-                        + " bytes) mime=" + mime + " hash=" + preview_hash + " item=" + item.getId());
-                is.seek(0);
-                String fullPath = insertWithZip(item, preview_hash, is, mime, true);
+        SeekableFileInputStream preview_is = null;
+        String mime = null;
+        try {
+            if (item.getViewFile() != null && item.getViewFile().length() > 0) {
+                preview_is = new SeekableFileInputStream(item.getViewFile());
+                mime = getMimeType(item.getViewFile().getName());
+            } else if (item.hasPreview()) {
+                preview_is = PreviewRepositoryManager.get(output).readPreview(item, false);
+                mime = getMimeType("file." + item.getPreviewExt());
+            }
+
+            if (preview_is != null) {
+                String preview_hash = DigestUtils.md5Hex(preview_is);
+                logger.error(
+                        "Inserting preview for " + item.getViewFile().getName() + " (" + item.getViewFile().length()
+                                + " bytes) mime=" + mime + " hash=" + preview_hash + " item=" + item.getId());
+                preview_is.seek(0);
+                String fullPath = insertWithZip(item, preview_hash, preview_is, mime, true);
                 if (fullPath != null) {
                     item.getMetadata().add(ElasticSearchIndexTask.PREVIEW_IN_DATASOURCE,
                             "idInDataSource" + ElasticSearchIndexTask.KEY_VAL_SEPARATOR + fullPath);
                     item.getMetadata().add(ElasticSearchIndexTask.PREVIEW_IN_DATASOURCE,
                             "type" + ElasticSearchIndexTask.KEY_VAL_SEPARATOR + mime);
                 }
-            } catch (Exception e) {
-                // TODO: handle exception
-                logger.error(e.getMessage() + "Preview " + item.getViewFile().getPath() + " ("
-                        + item.getViewFile().length() + " bytes)", e);
-                throw e;
             }
+        } catch (Exception e) {
+            logger.error(e.getMessage() + "Preview " + item, e);
+            throw e;
+        } finally {
+            IOUtils.closeQuietly(preview_is);
         }
-        
+
         String hash = item.getHash();
 
         if (hash == null || hash.isEmpty() || item.getLength() == null)

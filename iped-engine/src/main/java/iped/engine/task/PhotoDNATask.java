@@ -4,13 +4,15 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.imageio.ImageIO;
 
@@ -23,6 +25,7 @@ import iped.configuration.Configurable;
 import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.PhotoDNAConfig;
+import iped.engine.preview.PreviewRepositoryManager;
 import iped.parsers.util.MetadataUtil;
 import iped.utils.IOUtil;
 import iped.utils.ImageUtil;
@@ -129,50 +132,59 @@ public class PhotoDNATask extends AbstractTask {
 
         // For videos, compute the PhotoDNA of each extracted frame image
         // (VideoThumbsTask must be enabled)
-        File viewFile = evidence.getViewFile();
-        if (viewFile != null && viewFile.exists()) {
-            @SuppressWarnings("unchecked")
-            List<String> hashes = (List<String>) evidence.getTempAttribute(PHOTO_DNA_FRAMES_TEMP);
-            Set<String> seen = new HashSet<String>();
-            if (hashes == null) {
-                hashes = new ArrayList<String>();
-                List<BufferedImage> frames = ImageUtil.getFrames(viewFile);
-                if (frames != null) {
-                    for (BufferedImage frame : frames) {
-                        ByteArrayOutputStream os = null;
-                        ByteArrayInputStream is = null;
-                        try {
-                            os = new ByteArrayOutputStream();
-                            ImageIO.write(frame, "png", os);
-                            is = new ByteArrayInputStream(os.toByteArray());
-                            photodna.reset();
-                            byte[] hash = photodna.computePhotoDNA(is);
-                            String hashStr = new String(Hex.encodeHex(hash, false));
-                            if (seen.add(hashStr)) {
-                                hashes.add(hashStr);
-                            }
-                        } catch (Throwable e) {
-                            LOGGER.info("Error computing photoDNA for video frame " + evidence.getPath(), e);
-                            evidence.setExtraAttribute("photodna_exception", e.toString());
-                        } finally {
-                            IOUtil.closeQuietly(is);
-                            IOUtil.closeQuietly(os);
-                        }
-                    }
-                }
-            } else {
-                // Reuse PhotoDNAs calculated for video frames (extracted as subitems)
-                List<String> reuse = new ArrayList<String>(hashes);
-                hashes.clear();
-                for (String hashStr : reuse) {
-                    if (seen.add(hashStr)) {
-                        hashes.add(hashStr);
-                    }
-                }
-            }
-            if (!hashes.isEmpty()) {
-                evidence.setExtraAttribute(PHOTO_DNA_FRAMES, hashes);
+        @SuppressWarnings("unchecked")
+        List<String> hashes = (List<String>) evidence.getTempAttribute(PHOTO_DNA_FRAMES_TEMP);
+        if (hashes != null) {
+            // Reuse PhotoDNAs calculated for video frames (extracted as subitems)
+
+            // Create a LinkedHashSet to remove duplicates while preserving order
+            Set<String> uniqueHashes = new LinkedHashSet<>(hashes);
+
+            // Clear the original list and add the unique elements back
+            hashes.clear();
+            hashes.addAll(uniqueHashes);
+        } else {
+            File viewFile = evidence.getViewFile();
+            if (viewFile != null && viewFile.exists()) {
+                hashes = processVideo(evidence, viewFile);
+            } else if (evidence.hasPreview()) {
+                AtomicReference<List<String>> res = new AtomicReference<>();
+                PreviewRepositoryManager.get(output).consumePreview(evidence, inputStream -> {
+                    res.set(processVideo(evidence, inputStream));
+                });
+                hashes = res.get();
             }
         }
+        if (hashes != null && !hashes.isEmpty()) {
+            evidence.setExtraAttribute(PHOTO_DNA_FRAMES, hashes);
+        }
+    }
+
+    private List<String> processVideo(IItem evidence, Object inputVideo) throws IOException {
+
+        LinkedHashSet<String> hashes = new LinkedHashSet<>();
+        List<BufferedImage> frames = ImageUtil.getFrames(inputVideo);
+        if (frames != null) {
+            for (BufferedImage frame : frames) {
+                ByteArrayOutputStream os = null;
+                ByteArrayInputStream is = null;
+                try {
+                    os = new ByteArrayOutputStream();
+                    ImageIO.write(frame, "png", os);
+                    is = new ByteArrayInputStream(os.toByteArray());
+                    photodna.reset();
+                    byte[] hash = photodna.computePhotoDNA(is);
+                    String hashStr = new String(Hex.encodeHex(hash, false));
+                    hashes.add(hashStr);
+                } catch (Throwable e) {
+                    LOGGER.info("Error computing photoDNA for video frame " + evidence.getPath(), e);
+                    evidence.setExtraAttribute("photodna_exception", e.toString());
+                } finally {
+                    IOUtil.closeQuietly(is);
+                    IOUtil.closeQuietly(os);
+                }
+            }
+        }
+        return new ArrayList<>(hashes);
     }
 }
