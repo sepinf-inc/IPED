@@ -89,7 +89,6 @@ class NSFWNudityDetectTask:
     def __init__(self):
         self.itemList = []
         self.imageList = []
-        self.queued = False
 
     def isEnabled(self):
         return enabled
@@ -138,7 +137,7 @@ class NSFWNudityDetectTask:
     
     def sendToNextTask(self, item):
         
-        if not item.isQueueEnd() and not self.queued:
+        if not item.isQueueEnd() and item not in self.itemList:
             javaTask.get().sendToNextTaskSuper(item)
             return
         
@@ -158,8 +157,6 @@ class NSFWNudityDetectTask:
     
     
     def process(self, item):
-        
-        self.queued = False
     
         if not item.isQueueEnd() and not supported(item):
             return
@@ -197,7 +194,6 @@ class NSFWNudityDetectTask:
                 x = utils.img_to_array(img)
                 self.imageList.append(x)
                 self.itemList.append(item)
-                self.queued = True
             
         except Exception as e:
             item.setExtraAttribute('nsfw_error', 2)
