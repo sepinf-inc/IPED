@@ -481,9 +481,6 @@ public class MinIOTask extends AbstractTask {
 
             if (preview_is != null) {
                 String preview_hash = DigestUtils.md5Hex(preview_is);
-                logger.error(
-                        "Inserting preview for " + item.getViewFile().getName() + " (" + item.getViewFile().length()
-                                + " bytes) mime=" + mime + " hash=" + preview_hash + " item=" + item.getId());
                 preview_is.seek(0);
                 String fullPath = insertWithZip(item, preview_hash, preview_is, mime, true);
                 if (fullPath != null) {
@@ -502,8 +499,10 @@ public class MinIOTask extends AbstractTask {
 
         String hash = item.getHash();
 
-        if (hash == null || hash.isEmpty() || item.getLength() == null)
+        if (hash == null || hash.isEmpty() || item.getLength() == null) {
+            updateDataSource(item, null);// may have preview, so must change the data ref to use minio
             return;
+        }
 
         // if ufdr is sent, only update the path if it is not a subitem, carved or
         // deleted
@@ -565,7 +564,7 @@ public class MinIOTask extends AbstractTask {
     }
 
     private void updateDataSource(IItem item, String id) {
-        if (id == null || item == null) {
+        if (item == null) {
             return;
         }
         MinIODataRef minIORef = new MinIODataRef(inputStreamFactory, id);
@@ -573,8 +572,13 @@ public class MinIOTask extends AbstractTask {
 
         if (minIOConfig.isToUpdateRefsToMinIO()) {
             item.setInputStreamFactory(inputStreamFactory);
-            item.setIdInDataSource(id);
-            item.setFileOffset(-1);
+            if (id == null) {
+                item.setIdInDataSource("");
+            } else {
+                item.setIdInDataSource(id);
+                item.setFileOffset(-1);
+            }
+
         }
     }
 
