@@ -78,7 +78,9 @@ public class ExtraProperties {
 
     public static final String GROUP_ID = "GroupID";
 
-    public static final String IS_GROUP_MESSAGE = "isGroupMessage";
+    public static final String IS_GROUP_MESSAGE = COMMUNICATION_PREFIX + "isGroupMessage";
+    public static final Property COMMUNICATION_SYSTEM_MESSAGE = Property.internalBoolean(COMMUNICATION_PREFIX + "isSystemMessage");
+
 
     public static final String MESSAGE_BODY = MESSAGE_PREFIX + "Body"; //$NON-NLS-1$
 
