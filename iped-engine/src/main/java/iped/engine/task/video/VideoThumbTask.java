@@ -64,6 +64,7 @@ import iped.engine.data.Item;
 import iped.engine.preview.PreviewRepository;
 import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.task.ExportFileTask;
+import iped.engine.task.HashDBLookupTask;
 import iped.engine.task.HashTask;
 import iped.engine.task.ImageThumbTask;
 import iped.engine.task.PhotoDNATask;
@@ -83,6 +84,8 @@ import iped.utils.ImageUtil;
 public class VideoThumbTask extends ThumbTask {
 
     public static final String PREVIEW_EXT = "jpg";
+
+    public static final String PARENT_HASHBD_STATUS_ATTRIBUTE = "parent:" + HashDBLookupTask.STATUS_ATTRIBUTE;
 
     /**
      * Indica se a tarefa está habilitada ou não.
@@ -595,6 +598,10 @@ public class VideoThumbTask extends ThumbTask {
             newItem.setModificationDate(item.getModDate());
             newItem.setCreationDate(item.getCreationDate());
             newItem.setChangeDate(item.getChangeDate());
+
+            // set temporary attribute to store parent's 'hashDb:status' for eventual use by tasks during thumbs processing
+            if (item.getExtraAttribute(HashDBLookupTask.STATUS_ATTRIBUTE) != null)
+                newItem.setTempAttribute(PARENT_HASHBD_STATUS_ATTRIBUTE, item.getExtraAttribute(HashDBLookupTask.STATUS_ATTRIBUTE));
 
             ExportFileTask extractor = new ExportFileTask();
             extractor.setWorker(worker);

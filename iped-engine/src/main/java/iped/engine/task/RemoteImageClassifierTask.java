@@ -61,9 +61,11 @@ import iped.data.IHashValue;
 import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.RemoteImageClassifierConfig;
+import iped.engine.data.Item;
 import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.task.die.DIETask;
 import iped.engine.task.index.IndexItem;
+import iped.engine.task.video.VideoThumbTask;
 import iped.parsers.util.MetadataUtil;
 import iped.utils.ImageUtil;
 
@@ -753,11 +755,15 @@ public class RemoteImageClassifierTask extends AbstractTask {
         }
 
         // Skip classification of images/videos with hits on IPED hashesDB database (see 'skipHashDBFiles' config property)
-        if (skipHashDBFiles && evidence.getExtraAttribute(HashDBLookupTask.STATUS_ATTRIBUTE) != null) {
-            // Add skip classification info
-            evidence.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_SKIP_HASHDB);
-            skipHashDBFilesCount.incrementAndGet();
-            return;
+        if (skipHashDBFiles) {
+            Item evidenceItem = (Item) evidence;
+            if ((evidence.getExtraAttribute(HashDBLookupTask.STATUS_ATTRIBUTE) != null) ||
+                (evidenceItem.getTempAttribute(VideoThumbTask.PARENT_HASHBD_STATUS_ATTRIBUTE) != null)) {
+                // Add skip classification info
+                evidence.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_SKIP_HASHDB);
+                skipHashDBFilesCount.incrementAndGet();
+                return;
+            }
         }
 
         // Skip classification of images/videos duplicates if classification exists in classifications cache
