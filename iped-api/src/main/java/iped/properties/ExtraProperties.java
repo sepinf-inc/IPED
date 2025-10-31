@@ -57,6 +57,8 @@ public class ExtraProperties {
 
     public static final Property CONVERSATION_MESSAGES_COUNT = Property.internalInteger(CONVERSATION_PREFIX + "messagesCount");
 
+    public static final Property CONVERSATION_IS_EMPTY = Property.internalBoolean(CONVERSATION_PREFIX + "isEmpty");
+
     public static final String CONVERSATION_SUFFIX_ID = ":id";
     public static final String CONVERSATION_SUFFIX_NAME = ":name";
     public static final String CONVERSATION_SUFFIX_PHONE = ":phoneNumber";
