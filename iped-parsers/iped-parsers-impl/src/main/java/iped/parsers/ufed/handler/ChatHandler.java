@@ -81,9 +81,6 @@ public class ChatHandler extends BaseModelHandler<Chat> {
         model.getParticipants().forEach(p -> {
             new PartyHandler(p, model.getSource()).fillMetadata(CONVERSATION_PARTICIPANTS, metadata);
         });
-        if (!model.getParticipants().isEmpty()) {
-            metadata.add(CONVERSATION_PARTICIPANTS + ":count", Integer.toString(model.getParticipants().size()));
-        }
 
         // Chat Owner Participant
         model.getPhoneOwnerParticipant().ifPresent(p -> {
@@ -94,10 +91,6 @@ public class ChatHandler extends BaseModelHandler<Chat> {
         model.getParticipants().stream().filter(Party::isGroupAdmin).forEach(p -> {
             new PartyHandler(p, model.getSource()).fillMetadata(CONVERSATION_ADMINS, metadata);
         });
-        long groupAdminsCount = model.getParticipants().stream().filter(Party::isGroupAdmin).count();
-        if (groupAdminsCount > 0) {
-            metadata.set(CONVERSATION_ADMINS + ":count", Long.toString(groupAdminsCount));
-        }
 
         // Chat Owner is Group Admin
         if (model.getParticipants().stream().filter(Party::isGroupAdmin).filter(Party::isPhoneOwner).findAny().isPresent()) {
