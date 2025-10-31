@@ -118,21 +118,11 @@ class NSFWNudityDetectTask:
         num_finishes += 1
         caseData.putCaseObject('num_finishes', num_finishes)
         
-        times = caseData.getCaseObject('nsfw_times')
-        if times is None:
-            times = [0, 0, 0, 0]
-            
-        times[0] += videoFramesTime / numThreads
-        times[1] += arrayConvTime / numThreads
-        times[2] += predictTime / numThreads
-        times[3] += loadImgTime / numThreads
-        caseData.putCaseObject('nsfw_times', times)
-        
         if num_finishes == numThreads:
-            logger.info('Time(s) to get video frames: ' + str(times[0]))
-            logger.info('Time(s) to convert java arrays: ' + str(times[1]))
-            logger.info('Time(s) to NSFW prediction: ' + str(times[2]))
-            logger.info('Time(s) to load images: ' + str(times[3]))
+            logger.info('Time(s) to get video frames: ' + str(videoFramesTime / numThreads))
+            logger.info('Time(s) to convert java arrays: ' + str(arrayConvTime / numThreads))
+            logger.info('Time(s) to NSFW prediction: ' + str(predictTime / numThreads))
+            logger.info('Time(s) to load images: ' + str(loadImgTime / numThreads))
     
     
     def sendToNextTask(self, item):
