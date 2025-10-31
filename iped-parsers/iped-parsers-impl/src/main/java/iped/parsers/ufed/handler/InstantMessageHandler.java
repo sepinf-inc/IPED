@@ -34,6 +34,7 @@ import iped.parsers.ufed.model.QuotedMessageData;
 import iped.parsers.ufed.model.ReplyMessageData;
 import iped.parsers.util.ConversationConstants;
 import iped.properties.BasicProps;
+import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
 
 /**
@@ -64,62 +65,68 @@ public class InstantMessageHandler extends BaseModelHandler<InstantMessage> {
         }
 
         if (!model.getAttachments().isEmpty()) {
-            metadata.set(MESSAGE_ATTACHMENT_COUNT, Integer.toString(model.getAttachments().size()));
+            metadata.set(MESSAGE_ATTACHMENT_COUNT, model.getAttachments().size());
         }
 
-        // Message -> Direction
-        model.getFrom().ifPresentOrElse(from -> {
-            if (from.isPhoneOwner()) {
-                metadata.set(COMMUNICATION_DIRECTION, ConversationConstants.DIRECTION_OUTGOING);
-            } else {
-                metadata.set(COMMUNICATION_DIRECTION, ConversationConstants.DIRECTION_INCOMING);
-            }
-        }, () -> {
-            if (model.getTo().stream().filter(Party::isPhoneOwner).findAny().isPresent()) {
-                metadata.set(COMMUNICATION_DIRECTION, ConversationConstants.DIRECTION_INCOMING);
-            }
-        });
+        if (model.isSystemMessage()) {
+            metadata.set(ExtraProperties.COMMUNICATION_SYSTEM_MESSAGE, true);
 
-        // Message -> From
-        model.getFrom().ifPresent(from ->  {
-            new PartyHandler(from, model.getSource()).fillMetadata(COMMUNICATION_FROM, metadata);
-        });
+        } else {
 
-        // Message -> To
-        if (model.getTo().size() == 1) {
-            new PartyHandler(model.getTo().get(0), model.getSource()).fillMetadata(COMMUNICATION_TO, metadata);
+            // Message -> Direction
+            model.getFrom().ifPresentOrElse(from -> {
+                if (from.isPhoneOwner()) {
+                    metadata.set(COMMUNICATION_DIRECTION, ConversationConstants.DIRECTION_OUTGOING);
+                } else {
+                    metadata.set(COMMUNICATION_DIRECTION, ConversationConstants.DIRECTION_INCOMING);
+                }
+            }, () -> {
+                if (model.getTo().stream().filter(Party::isPhoneOwner).findAny().isPresent()) {
+                    metadata.set(COMMUNICATION_DIRECTION, ConversationConstants.DIRECTION_INCOMING);
+                }
+            });
 
-        } else if (model.getChat() != null) {
+            // Message -> From
+            model.getFrom().ifPresent(from ->  {
+                new PartyHandler(from, model.getSource()).fillMetadata(COMMUNICATION_FROM, metadata);
+            });
 
-            // in case "To" is NOT set in InstantMessage, try to...
-            List<Party> otherParticipants;
-            if (model.getFrom().isPresent()) {
+            // Message -> To
+            if (model.getTo().size() == 1) {
+                new PartyHandler(model.getTo().get(0), model.getSource()).fillMetadata(COMMUNICATION_TO, metadata);
 
-                // ...get other participants (without "from")
-                otherParticipants = model.getChat().getParticipants().stream() //
-                        .filter(p -> !p.equals(model.getFrom().get())) //
-                        .collect(Collectors.toList()); //
-            } else {
-                // ...get other participants
-                otherParticipants = model.getChat().getParticipants();
-            }
+            } else if (model.getChat() != null) {
 
-            if (otherParticipants.size() == 1) {
-                new PartyHandler(otherParticipants.get(0), model.getSource()).fillMetadata(COMMUNICATION_TO, metadata);
+                // in case "To" is NOT set in InstantMessage, try to...
+                List<Party> otherParticipants;
+                if (model.getFrom().isPresent()) {
 
-            } else if (otherParticipants.size() > 2) {
-
-                // there is more than one "To", so use chat information
-                metadata.add(COMMUNICATION_TO, new ChatHandler(model.getChat()).getTitle(false, false));
-
-                String chatId = model.getChat().getFieldId();
-                if (StringUtils.isNotBlank(chatId)) {
-                    metadata.add(COMMUNICATION_TO  + ":id", chatId);
+                    // ...get other participants (without "from")
+                    otherParticipants = model.getChat().getParticipants().stream() //
+                            .filter(p -> !p.equals(model.getFrom().get())) //
+                            .collect(Collectors.toList()); //
+                } else {
+                    // ...get other participants
+                    otherParticipants = model.getChat().getParticipants();
                 }
 
-                String chatName = model.getChat().getName();
-                if (StringUtils.isNotBlank(chatName)) {
-                    metadata.add(COMMUNICATION_TO + ":name", chatName);
+                if (otherParticipants.size() == 1) {
+                    new PartyHandler(otherParticipants.get(0), model.getSource()).fillMetadata(COMMUNICATION_TO, metadata);
+
+                } else if (otherParticipants.size() > 2) {
+
+                    // there is more than one "To", so use chat information
+                    metadata.add(COMMUNICATION_TO, new ChatHandler(model.getChat()).getTitle(false, false));
+
+                    String chatId = model.getChat().getFieldId();
+                    if (StringUtils.isNotBlank(chatId)) {
+                        metadata.add(COMMUNICATION_TO  + ":id", chatId);
+                    }
+
+                    String chatName = model.getChat().getName();
+                    if (StringUtils.isNotBlank(chatName)) {
+                        metadata.add(COMMUNICATION_TO + ":name", chatName);
+                    }
                 }
             }
         }
@@ -161,7 +168,7 @@ public class InstantMessageHandler extends BaseModelHandler<InstantMessage> {
         });
 
         if (model.isSystemMessage()) {
-            metadata.set(UFED_META_PREFIX + "isSystemMessage", Boolean.toString(true));
+
         }
 
         if (model.getPosition() != null) {
