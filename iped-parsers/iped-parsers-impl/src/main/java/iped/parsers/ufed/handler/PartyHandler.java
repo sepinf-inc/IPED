@@ -18,7 +18,9 @@ import org.slf4j.LoggerFactory;
 
 import iped.data.IItemReader;
 import iped.parsers.chat.PartyStringBuilderFactory;
+import iped.parsers.ufed.model.Chat;
 import iped.parsers.ufed.model.Party;
+import iped.parsers.whatsapp.WAContact;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
 import iped.search.IItemSearcher;
@@ -46,9 +48,13 @@ public class PartyHandler extends BaseModelHandler<Party> {
         metadata.add(prefix, getTitle());
 
         model.getReferencedContact().ifPresentOrElse(ref -> {
-            metadata.add(prefix + CONVERSATION_SUFFIX_ID, StringUtils.firstNonBlank(model.getIdentifier(), ref.getUserID()));
+            String id = StringUtils.firstNonBlank(model.getIdentifier(), ref.getUserID());
+            String phoneNumber = StringUtils.containsIgnoreCase(source, Chat.SOURCE_WHATSAPP)
+                    ? StringUtils.substringBeforeLast(id, WAContact.waSuffix)
+                    : ref.getPhoneNumber();
+            metadata.add(prefix + CONVERSATION_SUFFIX_ID, id);
             metadata.add(prefix + CONVERSATION_SUFFIX_NAME, StringUtils.firstNonBlank(model.getName(), ref.getName()));
-            metadata.add(prefix + CONVERSATION_SUFFIX_PHONE, ref.getPhoneNumber());
+            metadata.add(prefix + CONVERSATION_SUFFIX_PHONE, phoneNumber);
             metadata.add(prefix + CONVERSATION_SUFFIX_USERNAME, ref.getUsername());
         }, () -> {
             metadata.add(prefix + CONVERSATION_SUFFIX_ID, model.getIdentifier());
