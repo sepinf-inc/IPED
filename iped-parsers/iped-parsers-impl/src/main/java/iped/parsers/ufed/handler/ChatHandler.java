@@ -29,6 +29,7 @@ import iped.data.IItemReader;
 import iped.parsers.ufed.model.Chat;
 import iped.parsers.ufed.model.ContactPhoto;
 import iped.parsers.ufed.model.Party;
+import iped.parsers.util.ConversationConstants;
 import iped.parsers.util.Messages;
 import iped.parsers.whatsapp.WAContact;
 import iped.properties.MediaTypes;
@@ -158,15 +159,15 @@ public class ChatHandler extends BaseModelHandler<Chat> {
 
             if (StringUtils.isNotBlank(chatType)) {
                 switch (chatType) {
-                    case Chat.TYPE_ONEONONE:
+                    case ConversationConstants.TYPE_ONEONONE:
                         sb.append("Chat").append(' ');
                         break;
 
-                    case Chat.TYPE_GROUP:
+                    case ConversationConstants.TYPE_GROUP:
                         sb.append(Messages.getString("UfedChatParser.Group")).append(' ');
                         break;
 
-                    case Chat.TYPE_BROADCAST:
+                    case ConversationConstants.TYPE_BROADCAST:
                         if (model.getParticipants().size() == 1 && StringUtils.containsAnyIgnoreCase(source, Chat.SOURCE_TELEGRAM, Chat.SOURCE_WHATSAPP)) {
                             sb.append(Messages.getString("UfedChatParser.Status"));
                         } else if (Chat.SOURCE_TELEGRAM.equalsIgnoreCase(source)) {
@@ -177,7 +178,7 @@ public class ChatHandler extends BaseModelHandler<Chat> {
                         sb.append(' ');
                         break;
 
-                    case Chat.TYPE_UNKNOWN:
+                    case ConversationConstants.TYPE_UNKNOWN:
                         break;
 
                     default:
