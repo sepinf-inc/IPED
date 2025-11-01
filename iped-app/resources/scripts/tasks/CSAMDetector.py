@@ -1,7 +1,7 @@
 """
 IPED task to detect Child Sexual Abuse Material (CSAM) using a TensorFlow or PyTorch based AI model.
 
-The script must be enabled in IPED, and related PIP packages must be installed (tensorflow or torch, torchvision, timm, pillow).
+The script must be enabled in IPED, and related PIP packages must be installed (tensorflow, onnx or pytorch and pillow).
 
 On Linux, you need to install jep (pip install jep) and include jep.so in LD_LIBRARY_PATH.
 see https://github.com/sepinf-inc/IPED/wiki/User-Manual#python-modules
@@ -9,7 +9,7 @@ see https://github.com/sepinf-inc/IPED/wiki/User-Manual#python-modules
 
 __author__ = "Guilherme Dalpian"
 __email__ = "gmdalpian@gmail.com"
-__version__ = "0.8" # suporte ONNX
+__version__ = "0.9"
 
 import traceback
 import io
@@ -19,7 +19,14 @@ import sys
 from java.lang import System
 from iped.engine.task import HashDBLookupTask
 from java.awt import Color
+from java.io import InputStream
+from javax.imageio import ImageIO
+from java.io import ByteArrayOutputStream
+from iped.parsers.util import MetadataUtil
+from iped.utils import ImageUtil
+from iped.engine.preview import PreviewRepositoryManager
 import numpy as np
+import hashlib
 
 # --- Placeholders for Late Loading ---
 tf = None
@@ -35,10 +42,10 @@ ort = None
 # --- Global Configurations ---
 PLUGIN_ENABLE_PROP = 'enableCSAMDetector'
 CSAM_CONFIG_FILE = 'CSAMDetectorConfig.txt'
-CSAM_SCORE = 'csamdetector:csam_score'
-PORN_SCORE = 'csamdetector:porn_score'
-OTHER_SCORE = 'csamdetector:other_score'
-CSAMDETECTOR_CATEGORY = 'csamdetector:category'
+CSAM_SCORE = 'ai:csamDetector:csam'
+PORN_SCORE = 'ai:csamDetector:porn'
+OTHER_SCORE = 'ai:csamDetector:other'
+CSAMDETECTOR_CATEGORY = 'ai:csamDetector:label'
 MODEL_SEMAPHORE = None
 CSAM_IMG_SIZE = 224
 
@@ -57,7 +64,7 @@ ONNX_MODEL_TYPE = None
 
 # Configurable parameters defaults
 PLUGIN_ENABLED = False
-CSAM_MODELFILE = 'tensorflow_b0_v1.keras'
+CSAM_MODELFILE = 'tensorflow_B0_v3_1.keras'
 CSAM_BATCH_SIZE = 64
 CSAM_MINIMUM_IMAGE_SIZE = 0  # in bytes
 CSAM_SKIP_DIMENSION = 0  # in pixels
@@ -72,11 +79,13 @@ CSAM_SKIP_HASHDB_FILES_PROPERTY = 'CSAMSkipHashDBFiles'
 CSAM_CREATE_BOOKMARKS_PROPERTY = 'CSAMCreateBookmarks'
 
 # AI constants
-AI_CLASSIFICATION_SKIP_ATTR = "AIClassificationSkip"
-AI_CLASSIFICATION_SKIP_NO = "no"
-AI_CLASSIFICATION_SKIP_SIZE = "size"
-AI_CLASSIFICATION_SKIP_DIMENSION = "dimension"
-AI_CLASSIFICATION_SKIP_HASHDB = "hashDB"
+AI_CLASSIFICATION_STATUS_ATTR  = "ai:csamDetector:status"
+AI_CLASSIFICATION_SUCCESS = "success";
+AI_CLASSIFICATION_FAIL_NO_CLASS = "failNoClass";
+AI_CLASSIFICATION_FAIL_NO_RESULTS = "failNoResults";
+AI_CLASSIFICATION_SKIP_SIZE = "skippedSize";
+AI_CLASSIFICATION_SKIP_DIMENSION = "skippedDimension";
+AI_CLASSIFICATION_SKIP_HASHDB = "skippedHashDB";
 AI_CLASSIFICATION_SKIP_DUPLICATE = "duplicate"
 
 # =============================================================================
@@ -226,82 +235,82 @@ def carregar_e_configurar_modelo():
         
     return MODELO_CARREGADO
 
+# Processa as imagens como um array de objetos do tipo BufferedImage
+def processFrameTensors(frames_from_video):
+    tensors = []
+    # converte os tensores em arrays de bytes
+    for frame in frames_from_video:
+        baos = ByteArrayOutputStream()
+        ImageIO.write(frame, "jpeg", baos);
+        frame_bytes = convertJavaByteArray(baos.toByteArray())
+        tensor = get_tensor_from_path_or_bytes(None, frame_bytes)
+        tensors.append(tensor)
+        
+    return tensors
+
 def processar_imagem(item):
     """Loads and preprocesses the image to the correct format (tensor)."""
     global CSAM_IMG_SIZE, ONNX_MODEL_TYPE
-    try:
-        file_path = None
-        if item.getViewFile() is not None and os.path.exists(item.getViewFile().getAbsolutePath()):
-            file_path = item.getViewFile().getAbsolutePath()
-        else:
-            file_path = item.getTempFile().getAbsolutePath()  
-            item.getTempFile().getAbsolutePath()
 
-        if not os.path.exists(file_path):
-            raise IOError("Temporary file not found")
+    file_path = None
+    
+    try:  
 
-        if MOTOR_IA == 'tensorflow' or MOTOR_IA == 'tflite':
-            img = tf.io.read_file(file_path)
-            img = tf.io.decode_image(img, channels=3, expand_animations=False)
-            return tf.image.resize(img, [CSAM_IMG_SIZE, CSAM_IMG_SIZE])
+        file_path = item.getTempFile().getAbsolutePath()
 
-        elif MOTOR_IA == 'pytorch':
-            image = Image.open(file_path).convert('RGB')
-            transform = transforms.Compose([
-                transforms.Resize((CSAM_IMG_SIZE, CSAM_IMG_SIZE)), transforms.ToTensor(),
-                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
-            return transform(image)  
-
-        elif MOTOR_IA == 'onnx':
-            # ONNX usa PIL e Numpy para evitar dependência do torchvision
-            image = Image.open(file_path).convert('RGB').resize((CSAM_IMG_SIZE, CSAM_IMG_SIZE))
+        return get_tensor_from_path_or_bytes(file_path, None)       
             
-            # Pré-processamento estilo PyTorch (Channels-First, CHW)
-            if ONNX_MODEL_TYPE == 'pytorch':
-                img_array = np.array(image, dtype=np.float32) / 255.0
-                img_array = (img_array - IMG_MEAN_PYTORCH) / IMG_STD_PYTORCH
-                img_array = img_array.transpose(2, 0, 1) # HWC -> CHW
-                return img_array.astype(np.float32) # Retorna np.ndarray (C, H, W)
-            
-            # Pré-processamento estilo TensorFlow (Channels-Last, HWC)
-            elif ONNX_MODEL_TYPE == 'tensorflow':
-                # Apenas converte para float32, normalização [0, 255] é embutida no modelo
-                img_array = np.array(image, dtype=np.float32)
-                return img_array # Retorna np.ndarray (H, W, C)           
-            
-    except Exception as e:
+    except Exception as e:           
         logger.warn(f"Error processing image {item.getPath()}, trying thumbnail... {e}")
+        
         try:
-            image_bytes = bytes(b % 256 for b in item.getThumb())
+            image_bytes = convertJavaByteArray(item.getThumb())
             
-            if MOTOR_IA == 'tensorflow' or MOTOR_IA == 'tflite':
-                img = tf.io.decode_image(image_bytes, channels=3, expand_animations=False)
-                return tf.image.resize(img, [CSAM_IMG_SIZE, CSAM_IMG_SIZE])
-                
-            elif MOTOR_IA == 'pytorch':
-                image = Image.open(io.BytesIO(image_bytes)).convert('RGB')
-                transform = transforms.Compose([
-                    transforms.Resize((CSAM_IMG_SIZE, CSAM_IMG_SIZE)), transforms.ToTensor(),
-                    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
-                return transform(image)
-                
-            elif MOTOR_IA == 'onnx':
-                # Fallback para thumbnail com ONNX (PIL/Numpy)
-                image = Image.open(io.BytesIO(image_bytes)).convert('RGB').resize((CSAM_IMG_SIZE, CSAM_IMG_SIZE))
-                
-                if ONNX_MODEL_TYPE == 'pytorch':
-                    img_array = np.array(image, dtype=np.float32) / 255.0
-                    img_array = (img_array - IMG_MEAN_PYTORCH) / IMG_STD_PYTORCH
-                    img_array = img_array.transpose(2, 0, 1)
-                    return img_array.astype(np.float32) 
-                
-                elif ONNX_MODEL_TYPE == 'tensorflow':
-                    img_array = np.array(image, dtype=np.float32)
-                    return img_array              
+            return get_tensor_from_path_or_bytes(None, image_bytes)                 
                 
         except Exception as thumb_e:
             logger.error(f"Failed to process thumbnail for {item.getPath()}: {thumb_e}")
             return None
+
+# Processa as imagens a partir de um caminho ou array de bytes e retorna o tensor pronto
+def get_tensor_from_path_or_bytes(file_path, file_bytes=None):
+    """Loads and preprocesses the image to the correct format (tensor)."""
+    global CSAM_IMG_SIZE, ONNX_MODEL_TYPE
+
+    if(file_path is None):
+        file_path = io.BytesIO(file_bytes)
+
+    if MOTOR_IA == 'tensorflow' or MOTOR_IA == 'tflite':
+        if(file_bytes is None):
+            img = tf.io.read_file(file_path)
+        else:
+            img = file_bytes
+        img = tf.io.decode_image(img, channels=3, expand_animations=False)
+        return tf.image.resize(img, [CSAM_IMG_SIZE, CSAM_IMG_SIZE])
+
+    elif MOTOR_IA == 'pytorch':
+        image = Image.open(file_path).convert('RGB')
+        transform = transforms.Compose([
+            transforms.Resize((CSAM_IMG_SIZE, CSAM_IMG_SIZE)), transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
+        return transform(image)  
+
+    elif MOTOR_IA == 'onnx':
+        # ONNX usa PIL e Numpy para evitar dependência do torchvision
+        image = Image.open(file_path).convert('RGB').resize((CSAM_IMG_SIZE, CSAM_IMG_SIZE))
+        
+        # Pré-processamento estilo PyTorch (Channels-First, CHW)
+        if ONNX_MODEL_TYPE == 'pytorch':
+            img_array = np.array(image, dtype=np.float32) / 255.0
+            img_array = (img_array - IMG_MEAN_PYTORCH) / IMG_STD_PYTORCH
+            img_array = img_array.transpose(2, 0, 1) # HWC -> CHW
+            return img_array.astype(np.float32) # Retorna np.ndarray (C, H, W)
+        
+        # Pré-processamento estilo TensorFlow (Channels-Last, HWC)
+        elif ONNX_MODEL_TYPE == 'tensorflow':
+            # Apenas converte para float32, normalização [0, 255] é embutida no modelo
+            img_array = np.array(image, dtype=np.float32)
+            return img_array # Retorna np.ndarray (H, W, C)
 
 def createSemaphore():
     global MODEL_SEMAPHORE
@@ -324,17 +333,50 @@ def softmax(x, axis=-1):
     """Calcula softmax de forma estável (necessário para ONNX e TFLite)."""
     e_x = np.exp(x - np.max(x, axis=axis, keepdims=True))
     return e_x / e_x.sum(axis=axis, keepdims=True)
+    
+def convertJavaByteArray(byteArray):
+    return bytes(b % 256 for b in byteArray)    
 
 def supported(item):
     supported = (
         item.getLength() is not None and
         item.getLength() > 0 and
-        isImage(item) and
+        (MetadataUtil.isImageType(item.getMediaType()) or MetadataUtil.isVideoType(item.getMediaType())) and
         item.getExtraAttribute('hasThumb') and
         item.getHash() is not None
     )
     return supported
+
+def get_scores_from_prediction(scores):
+    global CLASS_NAMES
+
+    csam_idx = CLASS_NAMES.index('csam')
+    porn_idx = CLASS_NAMES.index('porn')
+    other_idx = CLASS_NAMES.index('other')
     
+    csam_score_formatado = int(scores[csam_idx]*100)
+    porn_score_formatado = int(scores[porn_idx]*100)
+    other_score_formatado = int(scores[other_idx]*100)
+    
+    category_index = np.argmax(scores)
+    csam_category = CLASS_NAMES[category_index]
+
+
+    results =  { 
+        'csam_score_formatado' : csam_score_formatado,
+        'porn_score_formatado' : porn_score_formatado,
+        'other_score_formatado': other_score_formatado,
+        'csam_category': csam_category 
+    }
+    
+    return results
+
+def md5_bytes_para_hex_maiusculo(bytes_data: bytes) -> str:
+    hash_md5_objeto = hashlib.md5(bytes_data)  
+    hash_md5_hex = hash_md5_objeto.hexdigest()   
+    hash_md5_hex_maiusculo = hash_md5_hex.upper()
+    return hash_md5_hex_maiusculo
+
 '''
 Main class
 '''
@@ -525,62 +567,119 @@ class CSAMDetector:
         if not item.isQueueEnd() and not supported(item):
             return
 
-        # don't process it again (in the report generation for example)
-        csamscore = item.getExtraAttribute(CSAM_SCORE)
-        if csamscore is not None:
-            return                      
-        
-        # Skip very small images in bytes
-        if item.getLength() is not None and item.getLength() < CSAM_MINIMUM_IMAGE_SIZE:                
-            logger.debug(f"CSAMDetector: skipping very small image {item.getName()} {item.getLength()} bytes")
-            item.setExtraAttribute(AI_CLASSIFICATION_SKIP_ATTR, AI_CLASSIFICATION_SKIP_SIZE)                
-            return
+        try:
+            # don't process it again (in the report generation for example)
+            csamscore = item.getExtraAttribute(CSAM_SCORE)
+            if csamscore is not None:
+                return                      
+            
+            isAnimationImage = MetadataUtil.isAnimationImage(item)
+            isImage = MetadataUtil.isImageType(item.getMediaType())
+            isVideo = MetadataUtil.isVideoType(item.getMediaType())
+            
+            # Skip very small images in bytes
+            if item.getLength() is not None and item.getLength() < CSAM_MINIMUM_IMAGE_SIZE:                
+                logger.debug(f"CSAMDetector: skipping very small image {item.getName()} {item.getLength()} bytes")
+                item.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_SKIP_SIZE)                
+                return
 
-        # Skip very small dimensions
-        if(CSAM_SKIP_DIMENSION>0):
-            if(isImage(item)):
-                width_meta = item.getMetadata().get("image:Width")
-                height_meta = item.getMetadata().get("image:Height")
-                width = int(width_meta) if width_meta is not None else None
-                height = int(height_meta) if height_meta is not None else None
+            # Skip very small dimensions
+            if(CSAM_SKIP_DIMENSION>0):
+                width = None
+                height = None
+                if(isImage):
+                    width_meta = item.getMetadata().get("image:Width")
+                    height_meta = item.getMetadata().get("image:Height")
+                    width = int(width_meta) if width_meta is not None else None
+                    height = int(height_meta) if height_meta is not None else None
+                elif(isVideo):
+                    width_meta = item.getMetadata().get("video:Width")
+                    height_meta = item.getMetadata().get("video:Height")
+                    width = int(width_meta) if width_meta is not None else None
+                    height = int(height_meta) if height_meta is not None else None
+                
                 if(width is not None and height is not None and (width<CSAM_SKIP_DIMENSION or height<CSAM_SKIP_DIMENSION)):
                     logger.debug(f"CSAMDetector: skipping very small image {item.getName()} {width}x{height}")
-                    item.setExtraAttribute(AI_CLASSIFICATION_SKIP_ATTR, AI_CLASSIFICATION_SKIP_DIMENSION)
+                    item.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_SKIP_DIMENSION)
                     return
 
-        # Skip classification of images/videos with hits on IPED hashesDB database (see 'skipHashDBFiles' config property)
-        if (CSAM_SKIP_HASHDB_FILES and item.getExtraAttribute(HashDBLookupTask.STATUS_ATTRIBUTE) is not None):
-            logger.debug(f"CSAMDetector: skipping item with HashDB hit {item.getName()}")
-            item.setExtraAttribute(AI_CLASSIFICATION_SKIP_ATTR, AI_CLASSIFICATION_SKIP_HASHDB)
-            return
-        
-        if item.getHash():
-            cache = caseData.getCaseObject('csam_cache_unificado')
-            scores = cache.get(item.getHash())
-            if scores is not None:
-                try:
-                    csam_score, porn_score, other_score, csam_category = scores
-                    logger.debug(f"CSAMDetector: Found cached scores for {item.getName()}: csam={csam_score}, porn={porn_score}")
-                    item.setExtraAttribute(CSAM_SCORE, csam_score)
-                    item.setExtraAttribute(PORN_SCORE, porn_score)
-                    item.setExtraAttribute(OTHER_SCORE, other_score)
-                    item.setExtraAttribute(CSAMDETECTOR_CATEGORY, csam_category)
-                    item.setExtraAttribute(AI_CLASSIFICATION_SKIP_ATTR, AI_CLASSIFICATION_SKIP_DUPLICATE)
-                    return
-                except (TypeError, ValueError):
-                     logger.warn(f"CSAMDetector: Outdated cache format for hash {item.getHash()}. Reprocessing.")
-
-        img_tensor = None
-        
-        if(not item.isQueueEnd()):
-            img_tensor = processar_imagem(item)            
-            if img_tensor is None:    
-                item.setExtraAttribute('csam_error', 1)
-                logger.error(f"CSAMDetector: error processing image: {item.getName()}, id {item.getId()}")
+            # Skip classification of images/videos with hits on IPED hashesDB database (see 'skipHashDBFiles' config property)
+            if (CSAM_SKIP_HASHDB_FILES and item.getExtraAttribute(HashDBLookupTask.STATUS_ATTRIBUTE) is not None):
+                logger.debug(f"CSAMDetector: skipping item with HashDB hit {item.getName()}")
+                item.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_SKIP_HASHDB)
                 return
             
-            self.itemList.append(item)
-            self.imageBytes.append(img_tensor)
+            if item.getHash():
+                cache = caseData.getCaseObject('csam_cache_unificado')
+                scores = cache.get(item.getHash())
+                if scores is not None:
+                    try:
+                        csam_score, porn_score, other_score, csam_category = scores
+                        logger.debug(f"CSAMDetector: Found cached scores for {item.getName()}: csam={csam_score}, porn={porn_score}")
+                        item.setExtraAttribute(CSAM_SCORE, csam_score)
+                        item.setExtraAttribute(PORN_SCORE, porn_score)
+                        item.setExtraAttribute(OTHER_SCORE, other_score)
+                        item.setExtraAttribute(CSAMDETECTOR_CATEGORY, csam_category)
+                        item.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_SUCCESS)
+                        return
+                    except (TypeError, ValueError):
+                        logger.warn(f"CSAMDetector: Outdated cache format for hash {item.getHash()}. Reprocessing.")
+
+            img_tensor = None
+            
+            if(not item.isQueueEnd()):
+                # Process the images normally, adding to batch
+                if(isImage and not isAnimationImage):
+                    img_tensor = processar_imagem(item)            
+                    if img_tensor is None:    
+                        item.setExtraAttribute('csam_error', 1)
+                        logger.error(f"CSAMDetector: error processing image: {item.getName()}, id {item.getId()}")
+                        return
+                    
+                    self.itemList.append(item)
+                    self.imageBytes.append(img_tensor)
+                    
+                elif(isVideo or isAnimationImage):
+                    # Processes videos and animated images frames immediately                
+                    frames = None
+
+                    viewFile = item.getViewFile()
+                    if (viewFile is not None and viewFile.exists()):
+                        frames = ImageUtil.getFrames(viewFile)
+                    elif item.hasPreview():
+                        logger.debug(f"CSAMDetector: no view file for video/animation {item.getPath()}")
+                        stream = PreviewRepositoryManager.get(moduleDir).readPreview(item, False)
+                        frames = ImageUtil.getFrames(stream)
+
+                    if(frames is None):
+                        logger.warn(f"CSAMDetector: no frames extracted for video/animation {item.getPath()}")
+                    else:                
+                        logger.debug(f"Processing {len(frames)} frames from video file {item.getPath()}")
+
+                        predictions_array = []
+                        # Processes the frames respecting batch size
+                        for i in range(0, len(frames), CSAM_BATCH_SIZE):
+                            current_batch = frames[i : i + CSAM_BATCH_SIZE]
+                            tensores = processFrameTensors(current_batch)
+                            predictions = self.fazer_predicao(tensores)
+                            predictions_array.extend(predictions)
+                        
+                        video_prediction = self.classify_video_with_full_scores(predictions_array)
+                        
+                        results = get_scores_from_prediction(video_prediction)
+                            
+                        item.setExtraAttribute(CSAM_SCORE, results['csam_score_formatado'])
+                        item.setExtraAttribute(PORN_SCORE, results['porn_score_formatado'])
+                        item.setExtraAttribute(OTHER_SCORE, results['other_score_formatado'])
+                        item.setExtraAttribute(CSAMDETECTOR_CATEGORY, results['csam_category'])
+                        item.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_SUCCESS)
+                        
+                        cache.put(item.getHash(), (results['csam_score_formatado'], results['porn_score_formatado'], results['other_score_formatado'], results['csam_category']))                        
+
+        except Exception as e:
+            logger.error(f"CSAMDetector: exception processing item {item.getPath()} id {item.getId()}: {e}")
+            item.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_FAIL_NO_RESULTS)
+            return
 
         # Check if the batch needs to be flushed.
         # This happens if the batch is full, or if the end of the queue is signaled.
@@ -615,7 +714,7 @@ class CSAMDetector:
 
 
     def finish(self):              
-        global CSAM_CREATE_BOOKMARKS
+        global CSAM_CREATE_BOOKMARKS, CSAM_SCORE, CSAMDETECTOR_CATEGORY
         
         logger.debug("CSAMDetector: CSAM analysis finished.")                
         
@@ -624,27 +723,30 @@ class CSAMDetector:
 
         CSAM_CREATE_BOOKMARKS = False
         
+        csam_score_query = CSAM_SCORE.replace(":", r"\:")
+        category = CSAMDETECTOR_CATEGORY.replace(":", r"\:")
+        
         bookmarks_to_create = [
             {
-                "query": "csamdetector\:csam_score:[85 TO *]",
+                "query": f"{csam_score_query}:[85 TO *]",
                 "name": "Possible CSAM IA - 1 - Higher Confidence",
                 "comment": "Possible CSAM files, high confidence",
                 "color": [220, 20, 60]
             },
             {
-                "query": "csamdetector\:csam_score:[60 TO 84]",
+                "query": f"{csam_score_query}:[60 TO 84]",
                 "name": "Possible CSAM IA - 2 - Medium Confidence",
                 "comment": "Possible CSAM files, medium confidence",
                 "color": [255, 165, 0]
             },
             {
-                "query": "csamdetector\:csam_score:[40 TO 59]",
+                "query": f"{csam_score_query}:[40 TO 59]",
                 "name": "Possible CSAM IA - 3 - Low Confidence",
                 "comment": "Possible CSAM files, low confidence",
                 "color": [255, 255, 0]
             },
             {
-                "query": "csamdetector\:category=porn",
+                "query": f"{category}=porn",
                 "name": "Probable Adult Porn (IA)",
                 "comment": "Probable Porn files, for manual review",
                 "color": [255, 105, 180]
@@ -771,7 +873,7 @@ class CSAMDetector:
                     MODEL_SEMAPHORE.release()
 
     def processar_lote_de_imagens(self, items, tensores):
-        global CLASS_NAMES, CSAM_SCORE, PORN_SCORE, OTHER_SCORE, AI_CLASSIFICATION_SKIP_ATTR, AI_CLASSIFICATION_SKIP_NO, CSAMDETECTOR_CATEGORY
+        global CLASS_NAMES, CSAM_SCORE, PORN_SCORE, OTHER_SCORE, AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_SUCCESS, CSAMDETECTOR_CATEGORY
         
         """Processa um lote e atribui os scores de csam e porn, salvando ambos no cache."""
         predicoes_lote = self.fazer_predicao(tensores)
@@ -779,31 +881,120 @@ class CSAMDetector:
         # Para TFLite/ONNX, predicoes_lote pode ser (1, 3). Para TF/PyTorch, (N, 3)
         # O código abaixo lida com ambos os casos
         
-        csam_idx = CLASS_NAMES.index('csam')
-        porn_idx = CLASS_NAMES.index('porn')
-        other_idx = CLASS_NAMES.index('other')
         cache = caseData.getCaseObject('csam_cache_unificado')
-        indices = np.argmax(predicoes_lote, axis=1)
 
         for i, item in enumerate(items):            
             predicoes_item = predicoes_lote[i]
-            pred_index = indices[i]
             
-            csam_score_float = predicoes_item[csam_idx]
-            porn_score_float = predicoes_item[porn_idx]
-            other_score_float = predicoes_item[other_idx]
+            results = get_scores_from_prediction(predicoes_item)
+                        
+            item.setExtraAttribute(CSAM_SCORE, results['csam_score_formatado'])
+            item.setExtraAttribute(PORN_SCORE, results['porn_score_formatado'])
+            item.setExtraAttribute(OTHER_SCORE, results['other_score_formatado'])
+            item.setExtraAttribute(CSAMDETECTOR_CATEGORY, results['csam_category'])
+            item.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_SUCCESS)
             
-            csam_score_formatado = int(csam_score_float*100)
-            porn_score_formatado = int(porn_score_float*100)
-            other_score_formatado = int(other_score_float*100)
+            cache.put(item.getHash(), (results['csam_score_formatado'], results['porn_score_formatado'], results['other_score_formatado'], results['csam_category']))  
+                    
+    def classify_video_with_full_scores(self, frame_predictions):
+        """
+        Classifica um vídeo com base em uma lista de previsões de frames,
+        usando uma lógica hierárquica (csam > porn > other).
+
+        Retorna a categoria final E o vetor de confiança completo do frame
+        que determinou essa classificação.
+
+        Argumento:
+        frame_predictions (list): Uma lista de listas/tuplas, onde cada item
+                                  contém as confianças para um frame na ordem
+                                  [csam, porn, other].
+                                  Ex: [[0.1, 0.2, 0.7], [0.8, 0.1, 0.1]]
+        Retorna:
+        (str, list): Uma tupla (categoria_final, [conf_csam, conf_porn, conf_other])
+        """
+        global CLASS_NAMES
+        
+        csam_idx = CLASS_NAMES.index('csam')
+        porn_idx = CLASS_NAMES.index('porn')
+        other_idx = CLASS_NAMES.index('other')
+
+        # Um "frame" padrão para o caso de a lista ser vazia
+        DEFAULT_OTHER_FRAME = [0.0, 0.0, 1.0]
+
+        if not frame_predictions:
+            # Caso de vídeo sem frames
+            return (CLASS_NAMES[other_idx], DEFAULT_OTHER_FRAME)
+
+        # --- Variáveis de Rastreamento ---
+        
+        # Rastreia se a classe foi a 'vencedora' (argmax) em algum frame
+        is_csam_found = False
+        is_porn_found = False
+        is_other_found = False # Se algum frame foi classificado como 'other'
+
+        # Rastreia a melhor pontuação *para essa classe*
+        max_csam_score = -1.0
+        max_porn_score = -1.0
+        min_other_score = 1.0 # Para 'other', buscamos o "elo mais fraco"
+
+        # Rastreia o VETOR COMPLETO do frame correspondente
+        best_csam_frame = None
+        best_porn_frame = None
+        worst_other_frame = None # O frame com a menor confiança 'other'
+
+        for pred_frame in frame_predictions:
+            # 'pred_frame' é uma lista como [0.1, 0.2, 0.7]
+                           
+            # 1. Encontra o índice da classe com maior pontuação (argmax)
+            winning_index = -1
+            winning_confidence = -1.0
+            for i, confidence in enumerate(pred_frame):
+                if confidence > winning_confidence:
+                    winning_confidence = confidence
+                    winning_index = i
             
-            csam_category = CLASS_NAMES[pred_index]
+            # 2. Atualiza os rastreadores com base no índice vencedor
+            if winning_index == csam_idx:
+                is_csam_found = True
+                # Se esta é a maior confiança CSAM que já vimos...
+                if winning_confidence > max_csam_score:
+                    max_csam_score = winning_confidence
+                    best_csam_frame = pred_frame # Salva o frame inteiro
+                
+            elif winning_index == porn_idx:
+                is_porn_found = True
+                # Se esta é a maior confiança PORN que já vimos...
+                if winning_confidence > max_porn_score:
+                    max_porn_score = winning_confidence
+                    best_porn_frame = pred_frame # Salva o frame inteiro
+                
+            elif winning_index == other_idx:
+                is_other_found = True
+                # Se esta é a *menor* confiança OTHER que já vimos...
+                if winning_confidence < min_other_score:
+                    min_other_score = winning_confidence
+                    worst_other_frame = pred_frame # Salva o frame inteiro
+
+        # 3. Aplica a lógica hierárquica
+        if is_csam_found:
+            # PRIORIDADE 1: CSAM
+            # Retorna o frame que teve a maior pontuação 'csam'
+            return best_csam_frame
             
-            item.setExtraAttribute(CSAM_SCORE, csam_score_formatado)
-            item.setExtraAttribute(PORN_SCORE, porn_score_formatado)
-            item.setExtraAttribute(OTHER_SCORE, other_score_formatado)
-            item.setExtraAttribute(CSAMDETECTOR_CATEGORY, csam_category)
-            item.setExtraAttribute(AI_CLASSIFICATION_SKIP_ATTR, AI_CLASSIFICATION_SKIP_NO)
+        elif is_porn_found:
+            # PRIORIDADE 2: PORN (sem csam)
+            # Retorna o frame que teve a maior pontuação 'porn'
+            return best_porn_frame
             
-            cache.put(item.getHash(), (csam_score_formatado, porn_score_formatado, other_score_formatado, csam_category))
+        elif is_other_found:
+            # PRIORIDADE 3: OTHER (sem csam e sem porn)
+            # Retorna o frame que teve a *menor* pontuação 'other'
+            return worst_other_frame
+        
+        else:
+            # Caso de fallback: a lista não estava vazia, mas
+            # nenhum frame válido foi encontrado (ex: [[], []])
+            # ou (improvável) todos os frames eram CSAM/PORN,
+            # mas as flags 'is_found' falharam.
+            return DEFAULT_OTHER_FRAME
 
