@@ -167,10 +167,6 @@ public class InstantMessageHandler extends BaseModelHandler<InstantMessage> {
             });
         });
 
-        if (model.isSystemMessage()) {
-
-        }
-
         if (model.getPosition() != null) {
             metadata.set(Geographic.LATITUDE, model.getPosition().getLatitude());
             metadata.set(Geographic.LONGITUDE, model.getPosition().getLongitude());
