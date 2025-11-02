@@ -35,6 +35,7 @@ import java.util.Map;
 
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -182,7 +183,8 @@ public class Extractor {
 
                     searchAvatarFileName(cont, androidDecoder.getPhotoData());
 
-                    ChatGroup group = new ChatGroup(chatId, cont, chatName);
+                    String chatNameToUse = StringUtils.firstNonBlank((String) androidDecoder.getAlltMetadata().get("title"), chatName);
+                    ChatGroup group = new ChatGroup(chatId, cont, chatNameToUse);
 
                     Map<String, Object> m = androidDecoder.getAlltMetadata();
                     if ("true".equals(m.get("broadcast"))) {
