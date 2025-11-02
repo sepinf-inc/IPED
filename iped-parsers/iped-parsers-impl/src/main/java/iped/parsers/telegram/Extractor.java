@@ -269,7 +269,7 @@ public class Extractor {
                     }
                     setFrom(message, chat);
 
-                    if (cg != null && message.getFrom().getId() != 0) {
+                    if (cg != null && message.getFrom().getId() != 0 && message.getFrom().getId() != cg.getId()) {
                         cg.addMember(message.getFrom().getId());
                     }
 
@@ -376,7 +376,7 @@ public class Extractor {
                             }
                         }
     
-                        if (cg != null && message.getFrom().getId() != 0) {
+                        if (cg != null && message.getFrom().getId() != 0 && message.getFrom().getId() != cg.getId()) {
                             cg.addMember(message.getFrom().getId());
                         }
     
