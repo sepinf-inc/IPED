@@ -15,9 +15,6 @@ public class WhatsAppPartyStringBuilder extends PartyStringBuilder {
         String phoneFromUserID = null;
         if (StringUtils.endsWithAny(userId, WAContact.waSuffix, WAContact.waStatusSuffix)) {
             phoneFromUserID = StringUtils.substringBeforeLast(userId, "@");
-            if (StringUtils.isNotBlank(phoneFromUserID)) {
-                phoneFromUserID = StringUtils.prependIfMissing(phoneFromUserID, PHONE_PREFIX);
-            }
         }
 
         String phoneStr = StringUtils.firstNonBlank(phoneFromUserID, phoneNumber);
