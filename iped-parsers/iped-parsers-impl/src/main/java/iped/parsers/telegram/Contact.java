@@ -23,6 +23,7 @@ import java.util.List;
 import dpf.ap.gpinf.interfacetelegram.ContactInterface;
 import dpf.ap.gpinf.interfacetelegram.DecoderTelegramInterface;
 import dpf.ap.gpinf.interfacetelegram.PhotoData;
+import iped.parsers.chat.TelegramPartyStringBuilder;
 
 public class Contact implements ContactInterface {
     private long id;
@@ -171,27 +172,16 @@ public class Contact implements ContactInterface {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        String name = getFullname();
-        if (name != null) {
-            sb.append(name.trim());
+        String str = new TelegramPartyStringBuilder()
+                .withName(getFullname())
+                .withUserId(Long.toString(getId()))
+                .withPhoneNumber(getPhone())
+                .withUsername(getUsername())
+                .build();
+        if (str.isEmpty()) {
+            str = "[unknown]";
         }
-        String number = getPhone();
-        if (number != null && number.length() > 0) {
-            if (sb.length() > 0) {
-                sb.append(' ');
-            }
-            sb.append("(phone: ").append(number).append(')');
-        } else if (getId() > 0) {
-            if (sb.length() > 0) {
-                sb.append(' ');
-            }
-            sb.append("(ID:").append(getId()).append(')');
-        }
-        if (sb.length() == 0) {
-            sb.append("[unknown]");
-        }
-        return sb.toString();
+        return str;
     }
 
 }
