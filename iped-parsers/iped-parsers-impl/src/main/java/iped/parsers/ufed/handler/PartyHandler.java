@@ -49,8 +49,8 @@ public class PartyHandler extends BaseModelHandler<Party> {
 
         model.getReferencedContact().ifPresentOrElse(ref -> {
             String id = StringUtils.firstNonBlank(model.getIdentifier(), ref.getUserID());
-            String phoneNumber = StringUtils.containsIgnoreCase(source, Chat.SOURCE_WHATSAPP)
-                    ? StringUtils.substringBeforeLast(id, WAContact.waSuffix)
+            String phoneNumber = StringUtils.containsIgnoreCase(source, Chat.SOURCE_WHATSAPP) && StringUtils.endsWith(id, WAContact.waSuffix)
+                    ? StringUtils.removeEnd(id, WAContact.waSuffix)
                     : ref.getPhoneNumber();
             metadata.add(prefix + CONVERSATION_SUFFIX_ID, id);
             metadata.add(prefix + CONVERSATION_SUFFIX_NAME, StringUtils.firstNonBlank(model.getName(), ref.getName()));
