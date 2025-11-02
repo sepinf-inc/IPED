@@ -54,6 +54,7 @@ import dpf.ap.gpinf.interfacetelegram.DecoderTelegramInterface;
 import iped.data.IItemReader;
 import iped.parsers.sqlite.SQLite3DBParser;
 import iped.parsers.standard.StandardParser;
+import iped.parsers.util.HashUtils;
 import iped.parsers.util.ItemInfo;
 import iped.parsers.util.PhoneParsingConfig;
 import iped.properties.BasicProps;
@@ -118,7 +119,7 @@ public class TelegramParser extends SQLite3DBParser {
 
     private void storeLinkedHashes(List<Message> messages, Metadata metadata) {
         for (Message m : messages) {
-            if (Util.isValidHash(m.getMediaHash())) {
+            if (HashUtils.isValidHash(m.getMediaHash())) {
                 metadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + m.getMediaHash()); //$NON-NLS-1$
                 if (m.isFromMe())
                     metadata.add(ExtraProperties.SHARED_HASHES, m.getMediaHash());
@@ -291,7 +292,7 @@ public class TelegramParser extends SQLite3DBParser {
             if (m.getMediaSize() != 0) {
                 meta.set("mediaSize", Long.toString(m.getMediaSize()));
             }
-            if (Util.isValidHash(m.getMediaHash())) {
+            if (HashUtils.isValidHash(m.getMediaHash())) {
                 meta.set(StandardParser.INDEXER_CONTENT_TYPE, TELEGRAM_ATTACHMENT.toString());
                 meta.set(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + m.getMediaHash()); //$NON-NLS-1$
                 if (!m.getChildPornSets().isEmpty()) {
