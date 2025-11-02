@@ -504,6 +504,10 @@ public class Extractor {
                                 e.printStackTrace();
                             }
                         }
+
+                        if (Boolean.parseBoolean((String) androidDecoder.getAlltMetadata().get("self"))) {
+                            userAccount = c;
+                        }
                     }
                 }
             }
