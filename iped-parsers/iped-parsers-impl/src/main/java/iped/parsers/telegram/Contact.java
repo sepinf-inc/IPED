@@ -173,8 +173,8 @@ public class Contact implements ContactInterface {
     @Override
     public String toString() {
         String str = new TelegramPartyStringBuilder()
-                .withName(getFullname())
                 .withUserId(Long.toString(getId()))
+                .withName(getFullname())
                 .withPhoneNumber(getPhone())
                 .withUsername(getUsername())
                 .build();
