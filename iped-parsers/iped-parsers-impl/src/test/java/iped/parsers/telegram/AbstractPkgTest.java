@@ -111,12 +111,12 @@ public abstract class AbstractPkgTest extends TestCase {
                 } else {
                     privateParticipants.add(metadata.get(ExtraProperties.CONVERSATION_PARTICIPANTS));
                 }
-            if (metadata.get(org.apache.tika.metadata.Message.MESSAGE_FROM) != null)
-                messagefrom.add(metadata.get(org.apache.tika.metadata.Message.MESSAGE_FROM));
+            if (metadata.get(ExtraProperties.COMMUNICATION_FROM) != null)
+                messagefrom.add(metadata.get(ExtraProperties.COMMUNICATION_FROM));
             if (metadata.get(ExtraProperties.MESSAGE_BODY) != null)
                 messagebody.add(metadata.get(ExtraProperties.MESSAGE_BODY));
-            if (metadata.get(org.apache.tika.metadata.Message.MESSAGE_TO) != null)
-                messageto.add(metadata.get(org.apache.tika.metadata.Message.MESSAGE_TO));
+            if (metadata.get(ExtraProperties.COMMUNICATION_TO) != null)
+                messageto.add(metadata.get(ExtraProperties.COMMUNICATION_TO));
             if (metadata.get(ExtraProperties.MESSAGE_DATE) != null)
                 messagedate.add(metadata.get(ExtraProperties.MESSAGE_DATE));
         }
