@@ -217,7 +217,6 @@ class AgeEstimationTask:
     def sendToNextTask(self, item):        
         if not item.isQueueEnd() and item not in self.itemList and item not in self.nextTaskList:
             javaTask.get().sendToNextTaskSuper(item)
-            return
         
         if len(self.nextTaskList) > 0:
             localList = list(self.nextTaskList)
