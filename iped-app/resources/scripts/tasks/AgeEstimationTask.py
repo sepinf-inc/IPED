@@ -67,6 +67,7 @@ class AgeEstimationTask:
 
     def __init__(self):
         self.itemList = []
+        self.nextTaskList = []
         self.faceItems = []
         self.faceImages = []
 
@@ -214,15 +215,13 @@ class AgeEstimationTask:
             
 
     def sendToNextTask(self, item):        
-        if not item.isQueueEnd() and item not in self.itemList:
+        if not item.isQueueEnd() and item not in self.itemList and item not in self.nextTaskList:
             javaTask.get().sendToNextTaskSuper(item)
             return
         
-        if self.isToProcessBatch(item):        
-            localList = list(self.itemList)
-            self.itemList.clear()
-            self.faceItems.clear()
-            self.faceImages.clear()
+        if len(self.nextTaskList) > 0:
+            localList = list(self.nextTaskList)
+            self.nextTaskList.clear()
             for i in localList:
                 javaTask.get().sendToNextTaskSuper(i)
             
@@ -371,6 +370,10 @@ class AgeEstimationTask:
         # process faces for age estimation
         if self.isToProcessBatch(item):
             processImages(self.faceItems, self.faceImages)
+            self.nextTaskList.extend(self.itemList)
+            self.itemList.clear()
+            self.faceItems.clear()
+            self.faceImages.clear()
     
 '''
 Check if item is supported
