@@ -4,19 +4,19 @@
 #
 # Availabel models, with stats for csam class in test dataset:
 #   TENSORFLOW MODELS (for GPU)
-#    	- tensorflow_B0_v3_1.keras    - EfficientNetV2-B0 using tensorflow, image size 224x224 (precision 0.85, recall 0.93)
+#    	- tensorflow_B0_v3_1.keras    - EfficientNetV2-B0 using tensorflow, image size 224x224 (precision 0.91, recall 0.96)
 #
 #	TFLITE MODELS (for CPU - requires tensorflow installation)
-#		- model_B0_fp32_v3_1.tflite 	- Fastest model - converted from tensorflow B0 to tflite with 32-bit floating-point (FP32)  (precision 0.85, recall 0.93)
+#		- tflite_B0_v3_1.tflite 	- Fastest model - converted from tensorflow B0 to tflite with 32-bit floating-point (FP32)  (precision 0.89, recall 0.95)
 #
 #   PYTORCH MODELS (for GPU)
 #   	- pytorch_B0_v3.pth         - based on efficientnetv2_b0.in1k, image size 224x224
 #    	- pytorch_S_v3.pth      	- based on tf_efficientnetv2_s.in21k_ft_in1k, image size 384x384 (recommended the use of GPU)  (precision 0.94, recall 0.96)
 #
 #	ONNX MODELS (for CPU, requires only onnxruntime installation  - less then 20MB)
-#		- tensorflow_B0_v3_1.onnx		- converted from tensorflow B0 to ONNX FP32 (precision 0.85, recall 0.93)
+#		- onnx_B0_tensorflow_v3_1.onnx		- converted from tensorflow B0 to ONNX FP32 (precision 0.89, recall 0.95)
 #
-CSAMModelFile = tensorflow_B0_v3_1.onnx
+CSAMModelFile = onnx_B0_tensorflow_v3_1.onnx
 
 # Batch size to be used. When using the large models this value should  be reduced to avoid GPU memory exaustion
 # For example, recommended size for 12 GB GPU on large models is 16

@@ -1,7 +1,7 @@
 """
 IPED task to detect Child Sexual Abuse Material (CSAM) using a TensorFlow or PyTorch based AI model.
 
-The script must be enabled in IPED, and related PIP packages must be installed (tensorflow, onnx or pytorch and pillow).
+The script must be enabled in IPED, and related PIP packages must be installed (tensorflow or torch, torchvision, timm, pillow).
 
 On Linux, you need to install jep (pip install jep) and include jep.so in LD_LIBRARY_PATH.
 see https://github.com/sepinf-inc/IPED/wiki/User-Manual#python-modules
@@ -9,7 +9,7 @@ see https://github.com/sepinf-inc/IPED/wiki/User-Manual#python-modules
 
 __author__ = "Guilherme Dalpian"
 __email__ = "gmdalpian@gmail.com"
-__version__ = "0.9"
+__version__ = "0.9" # video classification
 
 import traceback
 import io
@@ -19,14 +19,11 @@ import sys
 from java.lang import System
 from iped.engine.task import HashDBLookupTask
 from java.awt import Color
-from java.io import InputStream
 from javax.imageio import ImageIO
 from java.io import ByteArrayOutputStream
-from iped.parsers.util import MetadataUtil
 from iped.utils import ImageUtil
-from iped.engine.preview import PreviewRepositoryManager
+from iped.parsers.util import MetadataUtil
 import numpy as np
-import hashlib
 
 # --- Placeholders for Late Loading ---
 tf = None
@@ -61,6 +58,7 @@ CACHE = None
 CLASS_NAMES = ['csam', 'porn', 'other']
 NUM_CLASSES = len(CLASS_NAMES)
 ONNX_MODEL_TYPE = None
+IS_IPED_422 = False
 
 # Configurable parameters defaults
 PLUGIN_ENABLED = False
@@ -128,7 +126,7 @@ def carregar_e_configurar_modelo():
                 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
                 
                 # 1. Carregar o checkpoint (dicionário) primeiro
-                checkpoint = torch.load(caminho_modelo, map_location=DEVICE)
+                checkpoint = torch.load(caminho_modelo, map_location=DEVICE, weights_only=False)
                 
                 # 2. Obter metadados de dentro do checkpoint
                 # Usamos .get() para segurança, caso uma chave não exista
@@ -243,6 +241,7 @@ def processFrameTensors(frames_from_video):
         baos = ByteArrayOutputStream()
         ImageIO.write(frame, "jpeg", baos);
         frame_bytes = convertJavaByteArray(baos.toByteArray())
+        logger.debug(f"Frame size in bytes: {len(frame_bytes)}")
         tensor = get_tensor_from_path_or_bytes(None, frame_bytes)
         tensors.append(tensor)
         
@@ -326,8 +325,35 @@ def extrair_e_formatar_dois_digitos(score):
   if numero >= 100: return "99"      
   return f'{int(numero):02d}' 
 
-def isImage(item):
-    return item.getMediaType() is not None and item.getMediaType().toString().startswith('image')
+def isItemImage(item):
+    global IS_IPED_422
+    try:
+        if(not IS_IPED_422):
+            return MetadataUtil.isImageType(item.getMediaType()) 
+    except AttributeError:
+        IS_IPED_422 = True        
+    # Compatible with IPED 4.2.2
+    return item.getMediaType() is not None and item.getMediaType().toString().startswith('image') 
+    
+def isItemVideo(item):
+    global IS_IPED_422
+    try:
+        if(not IS_IPED_422):            
+            return MetadataUtil.isVideoType(item.getMediaType())
+    except AttributeError:
+        IS_IPED_422 = True 
+    # Compatible with IPED 4.2.2
+    return item.getMediaType() is not None and item.getMediaType().toString().startswith('video')  
+
+def isItemAnimatedImage(item):
+    global IS_IPED_422
+    try:
+        if(not IS_IPED_422):
+            return MetadataUtil.isAnimationImage(item)
+    except AttributeError:
+        IS_IPED_422 = True 
+    # Compatible with IPED 4.2.2
+    return item.getMediaType() is not None and (item.getMediaType().equals("image/heic-sequence") or item.getMediaType().equals("image/heif-sequence"))   
 
 def softmax(x, axis=-1):
     """Calcula softmax de forma estável (necessário para ONNX e TFLite)."""
@@ -341,7 +367,7 @@ def supported(item):
     supported = (
         item.getLength() is not None and
         item.getLength() > 0 and
-        (MetadataUtil.isImageType(item.getMediaType()) or MetadataUtil.isVideoType(item.getMediaType())) and
+        (isItemImage(item) or isItemVideo(item)) and
         item.getExtraAttribute('hasThumb') and
         item.getHash() is not None
     )
@@ -573,10 +599,10 @@ class CSAMDetector:
             if csamscore is not None:
                 return                      
             
-            isAnimationImage = MetadataUtil.isAnimationImage(item)
-            isImage = MetadataUtil.isImageType(item.getMediaType())
-            isVideo = MetadataUtil.isVideoType(item.getMediaType())
-            
+            isAnimationImage = isItemAnimatedImage(item)
+            isImage = isItemImage(item)
+            isVideo = isItemVideo(item)
+        
             # Skip very small images in bytes
             if item.getLength() is not None and item.getLength() < CSAM_MINIMUM_IMAGE_SIZE:                
                 logger.debug(f"CSAMDetector: skipping very small image {item.getName()} {item.getLength()} bytes")
@@ -648,6 +674,7 @@ class CSAMDetector:
                         frames = ImageUtil.getFrames(viewFile)
                     elif item.hasPreview():
                         logger.debug(f"CSAMDetector: no view file for video/animation {item.getPath()}")
+                        from iped.engine.preview import PreviewRepositoryManager
                         stream = PreviewRepositoryManager.get(moduleDir).readPreview(item, False)
                         frames = ImageUtil.getFrames(stream)
 
