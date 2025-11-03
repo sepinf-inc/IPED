@@ -99,7 +99,7 @@ def carregar_e_configurar_modelo():
     if MODELO_CARREGADO is None:
         caminho_modelo = System.getProperty('iped.root') + '/models/' + CSAM_MODELFILE
         if not os.path.exists(caminho_modelo):
-            logger.warn(f"FATAL ERROR: Model file not found: {caminho_modelo}")
+            logger.warn(f"CSAMDetector: FATAL ERROR: Model file not found: {caminho_modelo}")
             return None
 
         nome_modelo_lower = CSAM_MODELFILE.lower()
@@ -109,20 +109,20 @@ def carregar_e_configurar_modelo():
             CSAM_IMG_SIZE = 480
         else: # Default for B0
             CSAM_IMG_SIZE = 224
-        logger.info(f"Image size set to {CSAM_IMG_SIZE}x{CSAM_IMG_SIZE} based on model name.")
+        logger.info(f"CSAMDetector: Image size set to {CSAM_IMG_SIZE}x{CSAM_IMG_SIZE} based on model name.")
 
         if MOTOR_IA == 'tensorflow':
             try:
-                logger.info(f"Loading TensorFlow model from: {caminho_modelo}")
+                logger.info(f"CSAMDetector: Loading TensorFlow model from: {caminho_modelo}")
                 MODELO_CARREGADO = keras.models.load_model(caminho_modelo)
                 logger.info("TensorFlow model loaded successfully.")
             except Exception as e:
-                logger.warn(f"FATAL ERROR loading TensorFlow model: {e}")
+                logger.warn(f"CSAMDetector: FATAL ERROR loading TensorFlow model: {e}")
                 return None
         
         elif MOTOR_IA == 'pytorch':
             try:
-                logger.info(f"Loading PyTorch model from: {caminho_modelo}")
+                logger.info(f"CSAMDetector: Loading PyTorch model from: {caminho_modelo}")
                 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
                 
                 # 1. Carregar o checkpoint (dicionário) primeiro
@@ -137,7 +137,7 @@ def carregar_e_configurar_modelo():
                 # 3. Usar os metadados salvos para configurar o modelo
                 if img_size_saved:
                     CSAM_IMG_SIZE = img_size_saved # Sobrepõe o valor baseado no nome do arquivo
-                    logger.info(f"Image size set to {CSAM_IMG_SIZE}x{CSAM_IMG_SIZE} from model checkpoint.")
+                    logger.info(f"CSAMDetector: Image size set to {CSAM_IMG_SIZE}x{CSAM_IMG_SIZE} from model checkpoint.")
                 
                 # Constrói o nome do modelo 'timm' com base na chave 'model_name'
                 model_map = {
@@ -148,7 +148,7 @@ def carregar_e_configurar_modelo():
                 }
                 # Se o nome não estiver no mapa, usa o B0 como padrão
                 modelo_timm = model_map.get(model_name_key, 'tf_efficientnetv2_b0.in1k')
-                logger.info(f"Building model architecture: {modelo_timm}")
+                logger.info(f"CSAMDetector: Building model architecture: {modelo_timm}")
 
                 # 4. Criar o modelo com a arquitetura correta
                 MODELO_CARREGADO = timm.create_model(modelo_timm, pretrained=False, num_classes=num_classes_saved)
@@ -163,17 +163,17 @@ def carregar_e_configurar_modelo():
                 MODELO_CARREGADO.to(DEVICE)
                 MODELO_CARREGADO.eval()
                 
-                logger.info(f"PyTorch model ({model_name_key}, {CSAM_IMG_SIZE}x{CSAM_IMG_SIZE}) loaded on {DEVICE}.")
+                logger.info(f"CSAMDetector: PyTorch model ({model_name_key}, {CSAM_IMG_SIZE}x{CSAM_IMG_SIZE}) loaded on {DEVICE}.")
             
             except Exception as e:
-                logger.warn(f"FATAL ERROR loading PyTorch model: {e}")
+                logger.warn(f"CSAMDetector: FATAL ERROR loading PyTorch model: {e}")
                 # Imprime o traceback completo no log do IPED para facilitar a depuração
                 logger.warn(traceback.format_exc()) 
                 return None
                 
         elif MOTOR_IA == 'tflite': 
             try:
-                logger.info(f"Loading TFLite model from: {caminho_modelo}")                
+                logger.info(f"CSAMDetector: Loading TFLite model from: {caminho_modelo}")                
                 MODELO_CARREGADO = tflite.Interpreter(model_path=caminho_modelo)
                 input_details = MODELO_CARREGADO.get_input_details()[0]
                 output_details = MODELO_CARREGADO.get_output_details()[0]
@@ -183,19 +183,19 @@ def carregar_e_configurar_modelo():
                 input_dtype = input_details['dtype']
                 is_quantized = input_dtype == np.int8
 
-                logger.info(f"Modelo espera imagens de tamanho: {CSAM_IMG_SIZE}x{CSAM_IMG_SIZE}")
+                logger.info(f"CSAMDetector: Modelo espera imagens de tamanho: {CSAM_IMG_SIZE}x{CSAM_IMG_SIZE}")
                 
                 if is_quantized:
-                    logger.info("Modelo quantizado (INT8) detectado.")                
-                logger.info("TFLite model loaded successfully.")
+                    logger.info("CSAMDetector: Modelo quantizado (INT8) detectado.")                
+                logger.info("CSAMDetector: TFLite model loaded successfully.")
                 
             except Exception as e:
-                logger.warn(f"FATAL ERROR loading TFLite model: {e}")
+                logger.warn(f"CSAMDetector: FATAL ERROR loading TFLite model: {e}")
                 return None            
         
         elif MOTOR_IA == 'onnx':
             try:
-                logger.info(f"Reading ONNX metadata from: {caminho_modelo}")
+                logger.info(f"CSAMDetector: Reading ONNX metadata from: {caminho_modelo}")
                 session_options = ort.SessionOptions()
                 session_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_BASIC 
                 
@@ -212,19 +212,19 @@ def carregar_e_configurar_modelo():
                 if input_shape[1] == 3 and isinstance(input_shape[2], int) and isinstance(input_shape[3], int):
                     CSAM_IMG_SIZE = input_shape[2] 
                     ONNX_MODEL_TYPE = 'pytorch' # Define o tipo global
-                    logger.info(f"ONNX (PyTorch-style, Channels-First) detected. Image size: {CSAM_IMG_SIZE}x{CSAM_IMG_SIZE}")
+                    logger.info(f"CSAMDetector: ONNX (PyTorch-style, Channels-First) detected. Image size: {CSAM_IMG_SIZE}x{CSAM_IMG_SIZE}")
                 
                 # TensorFlow: [batch, height, width, 3]
                 elif input_shape[3] == 3 and isinstance(input_shape[1], int) and isinstance(input_shape[2], int):
                     CSAM_IMG_SIZE = input_shape[1]
                     ONNX_MODEL_TYPE = 'tensorflow' # Define o tipo global
-                    logger.info(f"ONNX (TensorFlow-style, Channels-Last) detected. Image size: {CSAM_IMG_SIZE}x{CSAM_IMG_SIZE}")
+                    logger.info(f"CSAMDetector: ONNX (TensorFlow-style, Channels-Last) detected. Image size: {CSAM_IMG_SIZE}x{CSAM_IMG_SIZE}")
                 
                 else:
                     raise ValueError(f"Formato de entrada ONNX não reconhecido: {input_shape}")
                                 
             except Exception as e:
-                logger.warn(f"FATAL ERROR reading ONNX metadata: {e}")
+                logger.warn(f"CSAMDetector: FATAL ERROR reading ONNX metadata: {e}")
                 logger.warn(traceback.format_exc())
                 return None                
         
@@ -241,7 +241,7 @@ def processFrameTensors(frames_from_video):
         baos = ByteArrayOutputStream()
         ImageIO.write(frame, "jpeg", baos);
         frame_bytes = convertJavaByteArray(baos.toByteArray())
-        logger.debug(f"Frame size in bytes: {len(frame_bytes)}")
+        logger.debug(f"CSAMDetector: Frame size in bytes: {len(frame_bytes)}")
         tensor = get_tensor_from_path_or_bytes(None, frame_bytes)
         tensors.append(tensor)
         
@@ -260,7 +260,7 @@ def processar_imagem(item):
         return get_tensor_from_path_or_bytes(file_path, None)       
             
     except Exception as e:           
-        logger.warn(f"Error processing image {item.getPath()}, trying thumbnail... {e}")
+        logger.warn(f"CSAMDetector: Error processing image {item.getPath()}, trying thumbnail... {e}")
         
         try:
             image_bytes = convertJavaByteArray(item.getThumb())
@@ -268,7 +268,7 @@ def processar_imagem(item):
             return get_tensor_from_path_or_bytes(None, image_bytes)                 
                 
         except Exception as thumb_e:
-            logger.error(f"Failed to process thumbnail for {item.getPath()}: {thumb_e}")
+            logger.error(f"CSAMDetector: Failed to process thumbnail for {item.getPath()}: {thumb_e}")
             return None
 
 # Processa as imagens a partir de um caminho ou array de bytes e retorna o tensor pronto
@@ -449,7 +449,7 @@ class CSAMDetector:
             CSAM_CREATE_BOOKMARKS = True if createbookmarks.lower() == 'true' else False
             
         
-        logger.debug(f"CSAM configurations: {CSAM_MODELFILE} {CSAM_BATCH_SIZE} {CSAM_MINIMUM_IMAGE_SIZE} {CSAM_SKIP_DIMENSION} {CSAM_SKIP_HASHDB_FILES}")
+        logger.debug(f"CSAMDetector: CSAM configurations {CSAM_MODELFILE} {CSAM_BATCH_SIZE} {CSAM_MINIMUM_IMAGE_SIZE} {CSAM_SKIP_DIMENSION} {CSAM_SKIP_HASHDB_FILES}")
         
         from iped.engine.config import HashTaskConfig
         from iped.engine.config import ImageThumbTaskConfig 
@@ -467,7 +467,7 @@ class CSAMDetector:
 
         if not requiredTasks:
             logger.warn(
-                "To use CSAMDetector the following functions must also be enabled: "
+                "CSAMDetector: To use CSAMDetector the following functions must also be enabled: "
                 "enableHash enableImageThumbs enableVideoThumbs"
             )
             PLUGIN_ENABLED = False
@@ -477,18 +477,18 @@ class CSAMDetector:
         if model_name_lower.endswith('.keras'):
             MOTOR_IA = 'tensorflow'
             if tf is None:
-                logger.info("TensorFlow engine detected. Loading libraries...")
+                logger.info("CSAMDetector: TensorFlow engine detected. Loading libraries...")
                 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
                 import tensorflow as tf_module
                 from tensorflow import keras as keras_module
                 tf = tf_module
                 keras = keras_module
-                logger.info("TensorFlow libraries loaded.")
+                logger.info("CSAMDetector: TensorFlow libraries loaded.")
         
         elif model_name_lower.endswith('.pth'):
             MOTOR_IA = 'pytorch'
             if torch is None:
-                logger.info("PyTorch engine detected. Loading libraries...")
+                logger.info("CSAMDetector: PyTorch engine detected. Loading libraries...")
                 import torch as torch_module
                 import torch.nn as nn_module
                 from torchvision import transforms as transforms_module
@@ -499,33 +499,33 @@ class CSAMDetector:
                 timm = timm_module
                 transforms = transforms_module
                 Image = Image_module
-                logger.info("PyTorch libraries loaded.")
+                logger.info("CSAMDetector: PyTorch libraries loaded.")
                 
         elif model_name_lower.endswith('.tflite'):      
             MOTOR_IA = 'tflite'
             if tflite is None:
-                logger.info("TFLite engine detected. Loading libraries...")
+                logger.info("CSAMDetector: TFLite engine detected. Loading libraries...")
                 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
                 # Tenta importar o interpretador leve primeiro, se falhar, usa o do TF completo
                 import tensorflow as tf_module
                 tf = tf_module
                 tflite = tf.lite
-                logger.info("Using TFLite from full TensorFlow package.")
+                logger.info("CSAMDetector: Using TFLite from full TensorFlow package.")
                 
         elif model_name_lower.endswith('.onnx'):
             MOTOR_IA = 'onnx'
             if ort is None:
-                logger.info("ONNX engine detected. Loading libraries...")
+                logger.info("CSAMDetector: ONNX engine detected. Loading libraries...")
                 import onnxruntime as ort_module
                 ort = ort_module
                 # ONNX preprocessing usa PIL (mas não torchvision)
                 if Image is None:
                     from PIL import Image as Image_module
                     Image = Image_module
-                logger.info("ONNX Runtime and PIL libraries loaded.")    
+                logger.info("CSAMDetector: ONNX Runtime and PIL libraries loaded.")    
                 
         else:
-            logger.warn(f"ERROR: Could not determine AI engine from model name: {CSAM_MODELFILE}")
+            logger.error(f"CSAMDetector: Could not determine AI engine from model name: {CSAM_MODELFILE}")
             PLUGIN_ENABLED = False
             return
 
@@ -549,10 +549,10 @@ class CSAMDetector:
             self.modelo_tflite.allocate_tensors()
             # O CSAM_IMG_SIZE já foi definido na verificação inicial
             CSAM_BATCH_SIZE = 1 # TFLite é processado 1 a 1
-            logger.debug(f"TFLite interpreter created for thread. Image size: {CSAM_IMG_SIZE}x{CSAM_IMG_SIZE}")
+            logger.debug(f"CSAMDetector: TFLite interpreter created for thread. Image size: {CSAM_IMG_SIZE}x{CSAM_IMG_SIZE}")
             
         elif MOTOR_IA == 'onnx':
-            logger.debug("Creating thread-local ONNX session for CPU...")
+            logger.debug("CSAMDetector: Creating thread-local ONNX session for CPU...")
             caminho_modelo = System.getProperty('iped.root') + '/models/' + CSAM_MODELFILE
             session_options = ort.SessionOptions()
             session_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
@@ -574,11 +574,11 @@ class CSAMDetector:
                 img_size_check = input_details.shape[1]
                 
             if img_size_check != CSAM_IMG_SIZE:
-                logger.warn(f"ONNX image size mismatch! Meta: {CSAM_IMG_SIZE}, Thread: {img_size_check}")
+                logger.warn(f"CSAMDetector: ONNX image size mismatch! Meta: {CSAM_IMG_SIZE}, Thread: {img_size_check}")
                 CSAM_IMG_SIZE = img_size_check # Usa o tamanho da sessão da thread
             
             CSAM_BATCH_SIZE = 1 # Processa um por um
-            logger.debug(f"ONNX session created for CPU ({ONNX_MODEL_TYPE}-style). Image size: {CSAM_IMG_SIZE}x{CSAM_IMG_SIZE}")
+            logger.debug(f"CSAMDetector: ONNX session created for CPU ({ONNX_MODEL_TYPE}-style). Image size: {CSAM_IMG_SIZE}x{CSAM_IMG_SIZE}")
             
         else:
             # semaphore is only used when processing in batches, tflite is multithreaded
@@ -589,12 +589,14 @@ class CSAMDetector:
         logger.debug(f"CSAMDetector: called process for item {item.getPath()} {item.getId()}")
         
         if not item.isQueueEnd() and not supported(item):
+            logger.debug(f"CSAMDetector: Item not supported: {item.getPath()} {item.getId()}")
             return
 
         try:
             # don't process it again (in the report generation for example)
             csamscore = item.getExtraAttribute(CSAM_SCORE)
             if csamscore is not None:
+                logger.debug(f"CSAMDetector: Item has already csam score: {item.getPath()} {item.getId()}")
                 return                      
             
             isAnimationImage = False
@@ -661,7 +663,7 @@ class CSAMDetector:
                 if(isImage and not isAnimationImage):
                     img_tensor = processar_imagem(item)            
                     if img_tensor is None:    
-                        item.setExtraAttribute('csam_error', 1)
+                        item.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_FAIL_NO_RESULTS)
                         logger.error(f"CSAMDetector: error processing image: {item.getName()}, id {item.getId()}")
                         return
                     
@@ -684,7 +686,7 @@ class CSAMDetector:
                     if(frames is None):
                         logger.warn(f"CSAMDetector: no frames extracted for video/animation {item.getPath()}")
                     else:                
-                        logger.debug(f"Processing {len(frames)} frames from video file {item.getPath()}")
+                        logger.debug(f"CSAMDetector: Processing {len(frames)} frames from video file {item.getPath()}")
 
                         predictions_array = []
                         # Processes the frames respecting batch size
@@ -907,10 +909,7 @@ class CSAMDetector:
         
         """Processa um lote e atribui os scores de csam e porn, salvando ambos no cache."""
         predicoes_lote = self.fazer_predicao(tensores)
-        
-        # Para TFLite/ONNX, predicoes_lote pode ser (1, 3). Para TF/PyTorch, (N, 3)
-        # O código abaixo lida com ambos os casos
-        
+               
         cache = caseData.getCaseObject('csam_cache_unificado')
 
         for i, item in enumerate(items):            
