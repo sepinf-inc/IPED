@@ -88,6 +88,7 @@ class NSFWNudityDetectTask:
     
     def __init__(self):
         self.itemList = []
+        self.nextTaskList = []
         self.imageList = []
 
     def isEnabled(self):
@@ -126,15 +127,13 @@ class NSFWNudityDetectTask:
     
     
     def sendToNextTask(self, item):
-        
-        if not item.isQueueEnd() and item not in self.itemList:
+        if not item.isQueueEnd() and item not in self.itemList and item not in self.nextTaskList:
             javaTask.get().sendToNextTaskSuper(item)
             return
         
-        if self.isToProcessBatch(item):        
-            localList = list(self.itemList)
-            self.itemList.clear()
-            self.imageList.clear()
+        if len(self.nextTaskList) > 0:
+            localList = list(self.nextTaskList)
+            self.nextTaskList.clear()
             for i in localList:
                 javaTask.get().sendToNextTaskSuper(i)
             
@@ -191,6 +190,9 @@ class NSFWNudityDetectTask:
             
         if self.isToProcessBatch(item):
             processImages(self.imageList, self.itemList)
+            self.nextTaskList.extend(self.itemList)
+            self.itemList.clear()
+            self.imageList.clear()
     
     
 def processVideoFrames(item):
