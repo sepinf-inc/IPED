@@ -599,9 +599,11 @@ public class VideoThumbTask extends ThumbTask {
             newItem.setCreationDate(item.getCreationDate());
             newItem.setChangeDate(item.getChangeDate());
 
-            // set temporary attribute to store parent's 'hashDb:status' for eventual use by tasks during thumbs processing
-            if (item.getExtraAttribute(HashDBLookupTask.STATUS_ATTRIBUTE) != null)
-                newItem.setTempAttribute(PARENT_HASHBD_STATUS_ATTRIBUTE, item.getExtraAttribute(HashDBLookupTask.STATUS_ATTRIBUTE));
+            // replicate 'hashDb:*' item's extra attributes to subitem
+            Map<String, Object> hashDbAttrs = ((Item) item).getExtraAttributesStartWith(HashDBLookupTask.ATTRIBUTES_PREFIX);
+            for (String key : hashDbAttrs.keySet()) {
+                newItem.setExtraAttribute(key, hashDbAttrs.get(key));
+            }
 
             ExportFileTask extractor = new ExportFileTask();
             extractor.setWorker(worker);
