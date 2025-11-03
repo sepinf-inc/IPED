@@ -458,19 +458,17 @@ class CSAMDetector:
         hashConfig = configuration.findObject(HashTaskConfig).isEnabled()
         imageThumbsConfig = configuration.findObject(ImageThumbTaskConfig).isEnabled()
         videoThumbsConfig = configuration.findObject(VideoThumbsConfig).isEnabled()
-        videoThumbsSubitems = configuration.findObject(VideoThumbsConfig).getVideoThumbsSubitems()
         
         requiredTasks = (
             hashConfig and
             imageThumbsConfig and
-            videoThumbsConfig and
-            videoThumbsSubitems
+            videoThumbsConfig
         )
 
         if not requiredTasks:
             logger.warn(
                 "To use CSAMDetector the following functions must also be enabled: "
-                "enableHash enableImageThumbs enableVideoThumbs enableVideoThumbsSubitems"
+                "enableHash enableImageThumbs enableVideoThumbs"
             )
             PLUGIN_ENABLED = False
             return  
@@ -599,9 +597,14 @@ class CSAMDetector:
             if csamscore is not None:
                 return                      
             
-            isAnimationImage = isItemAnimatedImage(item)
-            isImage = isItemImage(item)
-            isVideo = isItemVideo(item)
+            isAnimationImage = False
+            isImage = False
+            isVideo = False
+            
+            if(not item.isQueueEnd()):
+                isAnimationImage = isItemAnimatedImage(item)
+                isImage = isItemImage(item)
+                isVideo = isItemVideo(item)
         
             # Skip very small images in bytes
             if item.getLength() is not None and item.getLength() < CSAM_MINIMUM_IMAGE_SIZE:                
