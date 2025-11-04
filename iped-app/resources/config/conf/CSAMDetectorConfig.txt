@@ -10,8 +10,8 @@
 #		- tflite_B0_v3_1.tflite 	- Fastest model - converted from tensorflow B0 to tflite with 32-bit floating-point (FP32)  (precision 0.89, recall 0.95)
 #
 #   PYTORCH MODELS (for GPU)
-#   	- pytorch_B0_v3.pth         - based on efficientnetv2_b0.in1k, image size 224x224
-#    	- pytorch_S_v3.pth      	- based on tf_efficientnetv2_s.in21k_ft_in1k, image size 384x384 (recommended the use of GPU)  (precision 0.94, recall 0.96)
+#   	- pytorch_B0_v3_1.pth         - based on efficientnetv2_b0.in1k, image size 224x224 (precision 0.90, recall 0.93)
+#    	- pytorch_S_v3_1.pth      	- based on tf_efficientnetv2_s.in21k_ft_in1k, image size 384x384 (recommended the use of GPU)  (precision 0.96, recall 0.97)
 #
 #	ONNX MODELS (for CPU, requires only onnxruntime installation  - less then 20MB)
 #		- onnx_B0_tensorflow_v3_1.onnx		- converted from tensorflow B0 to ONNX FP32 (precision 0.89, recall 0.95)
