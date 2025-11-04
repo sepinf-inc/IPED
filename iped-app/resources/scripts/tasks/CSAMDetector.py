@@ -241,7 +241,6 @@ def processFrameTensors(frames_from_video):
         baos = ByteArrayOutputStream()
         ImageIO.write(frame, "jpeg", baos);
         frame_bytes = convertJavaByteArray(baos.toByteArray())
-        logger.debug(f"CSAMDetector: Frame size in bytes: {len(frame_bytes)}")
         tensor = get_tensor_from_path_or_bytes(None, frame_bytes)
         tensors.append(tensor)
         
@@ -711,7 +710,7 @@ class CSAMDetector:
         except Exception as e:
             logger.error(f"CSAMDetector: exception processing item {item.getPath()} id {item.getId()}: {e}")
             item.setExtraAttribute(AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_FAIL_NO_RESULTS)
-            return
+            raise e
 
         # Check if the batch needs to be flushed.
         # This happens if the batch is full, or if the end of the queue is signaled.
@@ -930,8 +929,8 @@ class CSAMDetector:
         Classifica um vídeo com base em uma lista de previsões de frames,
         usando uma lógica hierárquica (csam > porn > other).
 
-        Retorna a categoria final E o vetor de confiança completo do frame
-        que determinou essa classificação.
+        Retorna o vetor de confiança completo do frame que determinou
+        a classificação final.
 
         Argumento:
         frame_predictions (list): Uma lista de listas/tuplas, onde cada item
@@ -939,7 +938,8 @@ class CSAMDetector:
                                   [csam, porn, other].
                                   Ex: [[0.1, 0.2, 0.7], [0.8, 0.1, 0.1]]
         Retorna:
-        (str, list): Uma tupla (categoria_final, [conf_csam, conf_porn, conf_other])
+        list (ou tuple): O vetor de scores do frame determinante.
+                         Ex: [0.8, 0.1, 0.1] ou [0.0, 0.0, 1.0]
         """
         global CLASS_NAMES
         
@@ -948,33 +948,26 @@ class CSAMDetector:
         other_idx = CLASS_NAMES.index('other')
 
         # Um "frame" padrão para o caso de a lista ser vazia
+        # (Mantido como lista, já que os frames de entrada são listas)
         DEFAULT_OTHER_FRAME = [0.0, 0.0, 1.0]
 
         if not frame_predictions:
             # Caso de vídeo sem frames
-            return (CLASS_NAMES[other_idx], DEFAULT_OTHER_FRAME)
+            # --- CORREÇÃO DE RETORNO ---
+            return DEFAULT_OTHER_FRAME
 
         # --- Variáveis de Rastreamento ---
-        
-        # Rastreia se a classe foi a 'vencedora' (argmax) em algum frame
         is_csam_found = False
         is_porn_found = False
-        is_other_found = False # Se algum frame foi classificado como 'other'
-
-        # Rastreia a melhor pontuação *para essa classe*
+        is_other_found = False 
         max_csam_score = -1.0
         max_porn_score = -1.0
-        min_other_score = 1.0 # Para 'other', buscamos o "elo mais fraco"
-
-        # Rastreia o VETOR COMPLETO do frame correspondente
+        min_other_score = 1.0 
         best_csam_frame = None
         best_porn_frame = None
-        worst_other_frame = None # O frame com a menor confiança 'other'
+        worst_other_frame = None 
 
         for pred_frame in frame_predictions:
-            # 'pred_frame' é uma lista como [0.1, 0.2, 0.7]
-                           
-            # 1. Encontra o índice da classe com maior pontuação (argmax)
             winning_index = -1
             winning_confidence = -1.0
             for i, confidence in enumerate(pred_frame):
@@ -982,48 +975,44 @@ class CSAMDetector:
                     winning_confidence = confidence
                     winning_index = i
             
-            # 2. Atualiza os rastreadores com base no índice vencedor
             if winning_index == csam_idx:
                 is_csam_found = True
-                # Se esta é a maior confiança CSAM que já vimos...
                 if winning_confidence > max_csam_score:
                     max_csam_score = winning_confidence
-                    best_csam_frame = pred_frame # Salva o frame inteiro
+                    best_csam_frame = pred_frame 
                 
             elif winning_index == porn_idx:
                 is_porn_found = True
-                # Se esta é a maior confiança PORN que já vimos...
                 if winning_confidence > max_porn_score:
                     max_porn_score = winning_confidence
-                    best_porn_frame = pred_frame # Salva o frame inteiro
+                    best_porn_frame = pred_frame 
                 
             elif winning_index == other_idx:
                 is_other_found = True
-                # Se esta é a *menor* confiança OTHER que já vimos...
-                if winning_confidence < min_other_score:
+                
+                # --- LÓGICA DO 'NONE' CORRIGIDA (Mantida) ---
+                # Garante que o primeiro 'other' ou o 'other' de menor
+                # score seja salvo.
+                if worst_other_frame is None or winning_confidence < min_other_score:
                     min_other_score = winning_confidence
-                    worst_other_frame = pred_frame # Salva o frame inteiro
+                    worst_other_frame = pred_frame
 
         # 3. Aplica a lógica hierárquica
+        
+        # --- CORREÇÃO DE RETORNO (em todos os 'return') ---
         if is_csam_found:
             # PRIORIDADE 1: CSAM
-            # Retorna o frame que teve a maior pontuação 'csam'
             return best_csam_frame
             
         elif is_porn_found:
             # PRIORIDADE 2: PORN (sem csam)
-            # Retorna o frame que teve a maior pontuação 'porn'
             return best_porn_frame
             
         elif is_other_found:
             # PRIORIDADE 3: OTHER (sem csam e sem porn)
-            # Retorna o frame que teve a *menor* pontuação 'other'
             return worst_other_frame
         
         else:
-            # Caso de fallback: a lista não estava vazia, mas
-            # nenhum frame válido foi encontrado (ex: [[], []])
-            # ou (improvável) todos os frames eram CSAM/PORN,
-            # mas as flags 'is_found' falharam.
+            # Caso de fallback
             return DEFAULT_OTHER_FRAME
 
