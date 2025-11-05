@@ -36,6 +36,8 @@
       ]}
     ]},
     {"name": "Windows Artifacts", "categories":[
+        {"name": "Automatic Destinations", "mimes": ["application/x-automaticdestinations","application/x-automaticdestinations-entry"]},
+        {"name": "Custom Destinations", "mimes": ["application/x-customdestinations","application/x-customdestinations-entry"]},
         {"name": "Event Files", "mimes": ["application/x-elf-file", "application/x-elf-log"]},
         {"name": "Event Records", "mimes": ["application/x-elf-record"]},
         {"name": "Event Transcript", "mimes": ["application/x-event-transcript", "application/x-event-transcript-history", "application/x-event-transcript-inventory-app", "application/x-event-transcript-app-interactivity", "application/x-event-transcript-devices", "application/x-event-transcript-census", "application/x-event-transcript-networking"]},
@@ -210,16 +212,6 @@
     {"name": "Journeys", "mimes": ["application/x-ufed-journey"]},
     {"name": "Networks Usage", "mimes": ["application/x-ufed-networkusage"]},
     {"name": "Recognized Devices", "mimes": ["application/x-ufed-recognizeddevice"]},
-    {"name": "Social Media Activities", "mimes": ["application/x-ufed-socialmediaactivity"]},
-	  {"name": "Classified by AI", "categories":[
-      {"name": "AI Label - Child Sexual Abuse"},
-      {"name": "AI Label - Likely Child Sexual Abuse"},
-      {"name": "AI Label - Drawing", "categories":[
-      	{"name":"AI Label - Child Sexual Abuse Drawing"},
-      	{"name":"AI Label - Explicit Drawing"}
-      ]},
-      {"name": "AI Label - People"},
-      {"name": "AI Label - Pornography"}
-    ]}
+    {"name": "Social Media Activities", "mimes": ["application/x-ufed-socialmediaactivity"]}
   ]
 }

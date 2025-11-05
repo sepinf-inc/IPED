@@ -41,6 +41,11 @@ maxThreadsProp = 'maxThreads'
 from java.util.concurrent import ConcurrentHashMap
 cache = ConcurrentHashMap()
 
+# Margins proportions added to the face rectangle before submitting to the age estimation model.
+topMargin = 0.50
+bottomMargin = 0.20
+sidesMargin = 0.05
+
 # variables related to statistics
 classificationSuccess = 0
 classificationFail = 0
@@ -62,9 +67,9 @@ class AgeEstimationTask:
 
     def __init__(self):
         self.itemList = []
+        self.nextTaskList = []
         self.faceItems = []
         self.faceImages = []
-        self.queued = False
 
     def isEnabled(self):
         return False if AgeEstimationTask.enabled is None else AgeEstimationTask.enabled
@@ -210,16 +215,14 @@ class AgeEstimationTask:
             
 
     def sendToNextTask(self, item):        
-        if not item.isQueueEnd() and not self.queued:
+        if not item.isQueueEnd() and item not in self.itemList and item not in self.nextTaskList:
             javaTask.get().sendToNextTaskSuper(item)
-            return
         
-        if self.isToProcessBatch(item):        
-            for i in self.itemList:
-                javaTask.get().sendToNextTaskSuper(i)            
-            self.itemList.clear()
-            self.faceItems.clear()
-            self.faceImages.clear()           
+        if len(self.nextTaskList) > 0:
+            localList = list(self.nextTaskList)
+            self.nextTaskList.clear()
+            for i in localList:
+                javaTask.get().sendToNextTaskSuper(i)
             
         if item.isQueueEnd():
             javaTask.get().sendToNextTaskSuper(item)
@@ -231,7 +234,6 @@ class AgeEstimationTask:
     
     
     def process(self, item):        
-        self.queued = False
     
         # does not process item if any condition is met
         if (not item.isQueueEnd() and not supported(item)) or (not item.isToAddToCase()):
@@ -288,15 +290,22 @@ class AgeEstimationTask:
                     tiff_orient = 1
 
                 # get absolute path for image or video or quit processing if another media type
+                img_path = None
                 mediaType = item.getMediaType().toString()
+                if item.getViewFile() is not None and os.path.exists(item.getViewFile().getAbsolutePath()):
+                    img_path = item.getViewFile().getAbsolutePath()
+                elif item.hasPreview():
+                    from iped.engine.preview import PreviewRepositoryManager
+                    img_path = PreviewRepositoryManager.get(moduleDir).readPreview(item, True).getFile().getAbsolutePath()
+
                 if mediaType.startswith('image'):
-                    if item.getViewFile() is not None and os.path.exists(item.getViewFile().getAbsolutePath()):
-                        img_path = item.getViewFile().getAbsolutePath()
+                    if img_path is not None:
                         tiff_orient = 1
                     else:
                         img_path = item.getTempFile().getAbsolutePath()
                 elif mediaType.startswith('video') and not AgeEstimationTask.videoSubitems:
-                    img_path = item.getViewFile().getAbsolutePath()
+                    if img_path is None:
+                        return
                 else:
                     return
 
@@ -319,8 +328,22 @@ class AgeEstimationTask:
                     for face_location in face_locations:
                         logger.debug('AgeEstimationTask: face_location: ' + str(face_location))
 
-                        # extract the portion of the image corresponding to the face
-                        top, right, bottom, left = face_location                            
+                        # get face locaction and image dimensions
+                        top, right, bottom, left = face_location
+                        width, height = img.size
+
+                        # calculate margins, as proportions of the face rectangle
+                        mTop = int(topMargin * (bottom - top))
+                        mBottom = int(bottomMargin * (bottom - top))
+                        mSides = int(sidesMargin * (right - left))
+
+                        # add margins, trying to include the whole person's head
+                        top = max(0, top - mTop)
+                        bottom = min(img.height, bottom + mBottom)
+                        left = max(0, left - mSides)
+                        right = min(img.width, right + mSides)
+
+                        # extract the portion of the image corresponding to the face + border
                         face_img = img.crop((left, top, right, bottom))
                         
                         # add face item and face image to the corresponding lists
@@ -328,7 +351,6 @@ class AgeEstimationTask:
                         self.faceImages.append(face_img)
                 
                 self.itemList.append(item)
-                self.queued = True
                 
             except Exception as e:
                 classificationFail += 1
@@ -347,6 +369,10 @@ class AgeEstimationTask:
         # process faces for age estimation
         if self.isToProcessBatch(item):
             processImages(self.faceItems, self.faceImages)
+            self.nextTaskList.extend(self.itemList)
+            self.itemList.clear()
+            self.faceItems.clear()
+            self.faceImages.clear()
     
 '''
 Check if item is supported
@@ -464,7 +490,7 @@ def processImages(itemList, imageList):
         itemList[i].setExtraAttribute('faceAge:estimationStatus', 'success')
 
         # check if this is the last face
-        if (i+1) == len(itemList) or itemList[i].getHashValue() != itemList[i+1].getHashValue():
+        if (i+1) == len(itemList) or itemList[i].getId() != itemList[i+1].getId():
             # add face labels counts ('faceAge:count:<label>')
             for label in item_faces_labels_counts:
                 itemList[i].setExtraAttribute('faceAge:count:' + uncapitalize(label), item_faces_labels_counts[label])

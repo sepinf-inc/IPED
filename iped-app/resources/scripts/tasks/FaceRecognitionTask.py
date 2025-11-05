@@ -280,16 +280,23 @@ class FaceRecognitionTask:
             tiff_orient = 1
 
         # Load absolute path
-        isVideo = False
+        img_path = None
         mediaType = item.getMediaType().toString()
+        if item.getViewFile() is not None and os.path.exists(item.getViewFile().getAbsolutePath()):
+            img_path = item.getViewFile().getAbsolutePath()
+        elif item.hasPreview():
+            from iped.engine.preview import PreviewRepositoryManager
+            img_path = PreviewRepositoryManager.get(moduleDir).readPreview(item, True).getFile().getAbsolutePath()
+
+        isVideo = False
         if mediaType.startswith('image'):
-            if item.getViewFile() is not None and os.path.exists(item.getViewFile().getAbsolutePath()):
-                img_path = item.getViewFile().getAbsolutePath()
+            if img_path is not None:
                 tiff_orient = 1
             else:
                 img_path = item.getTempFile().getAbsolutePath()
         elif mediaType.startswith('video') and not FaceRecognitionTask.videoSubitems:
-            img_path = item.getViewFile().getAbsolutePath()
+            if img_path is None:
+                return
             isVideo = True
         else:
             return
@@ -353,11 +360,11 @@ class FaceRecognitionTask:
             
             face_encodings = []
             for i in range(num_faces):
-                list = []
+                encodings_list = []
                 for j in range(128):
                     line = proc.stdout.readline()
-                    list.append(float(line))
-                np_array = np.array(list)
+                    encodings_list.append(float(line))
+                np_array = np.array(encodings_list)
                 face_encodings.append(np_array)
             
             t3 = time.time()
@@ -369,6 +376,7 @@ class FaceRecognitionTask:
             processQueue.put(proc, block=True)
         
         face_locations = self.convertTuplesToList(face_locations)
+        face_encodings = list(map(javaConverter.toKnnVector, face_encodings))
         face_count = len(face_locations)
 
         item.setExtraAttribute(ExtraProperties.FACE_LOCATIONS, face_locations)

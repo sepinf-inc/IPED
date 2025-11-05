@@ -64,6 +64,8 @@ import iped.engine.data.DataSource;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.Item;
 import iped.engine.io.MetadataInputStreamFactory;
+import iped.engine.preview.PreviewConstants;
+import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.LuceneSearchResult;
 import iped.engine.search.SimilarFacesSearch;
@@ -77,6 +79,7 @@ import iped.engine.task.carver.CarverTask;
 import iped.engine.task.carver.LedCarveTask;
 import iped.engine.task.die.DIETask;
 import iped.engine.task.index.IndexItem;
+import iped.engine.task.index.IndexItem.KnnVector;
 import iped.engine.util.Util;
 import iped.parsers.mail.OutlookPSTParser;
 import iped.parsers.mail.win10.Win10MailParser;
@@ -89,7 +92,6 @@ import iped.search.SearchResult;
 import iped.utils.DateUtil;
 import iped.utils.HashValue;
 import iped.utils.SeekableInputStreamFactory;
-import jep.NDArray;
 
 /*
  * Enfileira para processamento os arquivos selecionados via interface de pesquisa de uma indexação anterior.
@@ -212,6 +214,10 @@ public class IPEDReader extends DataSourceReader {
         oldToNewIdMap = new int[ipedCase.getLastId() + 1];
         for (int i = 0; i < oldToNewIdMap.length; i++)
             oldToNewIdMap[i] = -1;
+
+        if (!listOnly) {
+            PreviewRepositoryManager.configureReadOnly(ipedCase.getModuleDir());
+        }
 
         IIPEDSearcher pesquisa = new IPEDSearcher(ipedCase, new MatchAllDocsQuery());
         SearchResult searchResult = state.filterInReport(pesquisa.search());
@@ -587,13 +593,14 @@ public class IPEDReader extends DataSourceReader {
                     synchronized (inputStreamFactories) {
                         SeekableInputStreamFactory sisf = inputStreamFactories.get(sourcePath);
                         if (sisf == null) {
-                            Class<?> clazz = Class.forName(className);
+                            @SuppressWarnings("unchecked")
+                            Class<SeekableInputStreamFactory> clazz = (Class<SeekableInputStreamFactory>) Class.forName(className);
                             try {
-                                Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
+                                Constructor<SeekableInputStreamFactory> c = clazz.getConstructor(Path.class);
                                 sisf = c.newInstance(Path.of(sourcePath));
 
                             } catch (NoSuchMethodException e) {
-                                Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(URI.class);
+                                Constructor<SeekableInputStreamFactory> c = clazz.getConstructor(URI.class);
                                 sisf = c.newInstance(URI.create(sourcePath));
                             }
                             if (!ipedCase.isReport() && sisf.checkIfDataSourceExists()) {
@@ -618,13 +625,17 @@ public class IPEDReader extends DataSourceReader {
 
             evidence.setTimeOut(Boolean.parseBoolean(doc.get(IndexItem.TIMEOUT)));
 
+            evidence.setHasPreview(Boolean.parseBoolean(doc.get(IndexItem.HAS_PREVIEW)));
+            evidence.setPreviewExt(doc.get(IndexItem.PREVIEW_EXT));
+            evidence.setPreviewBaseFolder(indexDir.getParentFile());
+
             value = doc.get(IndexItem.HASH);
             if (value != null && !treeNode) {
                 value = value.toUpperCase();
                 evidence.setHash(value);
 
                 if (!value.isEmpty() && caseData.isIpedReport()) {
-                    File viewFile = Util.findFileFromHash(new File(indexDir.getParentFile(), "view"), value); //$NON-NLS-1$
+                    File viewFile = Util.findFileFromHash(new File(indexDir.getParentFile(), PreviewConstants.VIEW_FOLDER_NAME), value);
                     if (viewFile != null) {
                         evidence.setViewFile(viewFile);
                     }
@@ -705,13 +716,14 @@ public class IPEDReader extends DataSourceReader {
                 }
             }
 
-            // restore "face_encodings" to NDArray
+            // restore "face_encodings" to KnnVector
+            @SuppressWarnings("unchecked")
             List<byte[]> features = (List<byte[]>) evidence.getExtraAttribute(SimilarFacesSearch.FACE_FEATURES);
             if (features != null) {
-                List<NDArray<double[]>> featuresList = new ArrayList<>();
+                List<KnnVector> featuresList = new ArrayList<>();
                 for (byte[] featureBytes : features) {
                     float[] featureFloats = convByteArrayToFloatArray(featureBytes);
-                    featuresList.add(convFloatArrayToNDArray(featureFloats));
+                    featuresList.add(new KnnVector(convFloatToDoubleArray(featureFloats)));
                 }
                 evidence.setExtraAttribute(SimilarFacesSearch.FACE_FEATURES, featuresList);
             }
@@ -728,10 +740,6 @@ public class IPEDReader extends DataSourceReader {
             result[i] = bb.getFloat();
         }
         return result;
-    }
-
-    public static final NDArray<double[]> convFloatArrayToNDArray(float[] array) {
-        return new NDArray<double[]>(convFloatToDoubleArray(array));
     }
 
     public static final double[] convFloatToDoubleArray(float[] array) {
