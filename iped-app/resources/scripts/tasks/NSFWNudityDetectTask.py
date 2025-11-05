@@ -60,7 +60,7 @@ def isImage(item):
     return item.getMediaType() is not None and item.getMediaType().toString().startswith('image')
        
 def isSupportedVideo(item):
-    return item.getMediaType() is not None and item.getMediaType().toString().startswith('video') and item.getViewFile() is not None
+    return item.getMediaType() is not None and item.getMediaType().toString().startswith('video') and (item.getViewFile() is not None or item.hasPreview())
     
 def supported(item):
     return item.getLength() is not None and item.getLength() > 0 and (isImage(item) or isSupportedVideo(item))
@@ -197,7 +197,13 @@ class NSFWNudityDetectTask:
 def processVideoFrames(item):
     global videoFramesTime
     t = time.time()
-    frames = ImageUtil.getBmpFrames(item.getViewFile())
+    imgFile = None
+    if item.getViewFile() is not None and os.path.exists(item.getViewFile().getAbsolutePath()):
+        imgFile = item.getViewFile()
+    elif item.hasPreview():
+        from iped.engine.preview import PreviewRepositoryManager
+        imgFile = PreviewRepositoryManager.get(moduleDir).readPreview(item, True).getFile()
+    frames = ImageUtil.getBmpFrames(imgFile)
     videoFramesTime += time.time() - t 
     list = []
     scores = []
