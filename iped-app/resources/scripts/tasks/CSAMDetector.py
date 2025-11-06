@@ -9,7 +9,7 @@ see https://github.com/sepinf-inc/IPED/wiki/User-Manual#python-modules
 
 __author__ = "Guilherme Dalpian"
 __email__ = "gmdalpian@gmail.com"
-__version__ = "0.9" # video classification
+__version__ = "1.0" # ONNX otimizations
 
 import traceback
 import io
@@ -57,8 +57,12 @@ DEVICE = None
 CACHE = None
 CLASS_NAMES = ['csam', 'porn', 'other']
 NUM_CLASSES = len(CLASS_NAMES)
-ONNX_MODEL_TYPE = None
 IS_IPED_422 = False
+
+# --- ONNX Global Metadata ---
+ONNX_MODEL_TYPE = None
+ONNX_INPUT_NAME = None
+ONNX_OUTPUT_NAME = None
 
 # Configurable parameters defaults
 PLUGIN_ENABLED = False
@@ -92,7 +96,7 @@ AI_CLASSIFICATION_SKIP_DUPLICATE = "duplicate"
 
 def carregar_e_configurar_modelo():
     """Central function that loads the correct model (TF, PyTorch) or checks metadata (TFLite, ONNX)."""
-    global MODELO_CARREGADO, DEVICE, CACHE, CSAM_IMG_SIZE, ONNX_MODEL_TYPE
+    global MODELO_CARREGADO, DEVICE, CACHE, CSAM_IMG_SIZE, ONNX_MODEL_TYPE, ONNX_INPUT_NAME, ONNX_OUTPUT_NAME
     
     MODELO_CARREGADO = caseData.getCaseObject('csam_model_unificado')
     
@@ -195,17 +199,29 @@ def carregar_e_configurar_modelo():
         
         elif MOTOR_IA == 'onnx':
             try:
-                logger.info(f"CSAMDetector: Reading ONNX metadata from: {caminho_modelo}")
+                # --- MODIFICADO: Carrega a SESSÃO GLOBAL OTIMIZADA ---
+                logger.info(f"CSAMDetector: Loading GLOBAL ONNX session from: {caminho_modelo}")
                 session_options = ort.SessionOptions()
-                session_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_BASIC 
+                
+                # Configurações de otimização para CPU (concorrência externa)
+                session_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+                session_options.intra_op_num_threads = 1
+                session_options.inter_op_num_threads = 1
+                session_options.execution_mode = ort.ExecutionMode.ORT_SEQUENTIAL
                 
                 MODELO_CARREGADO = ort.InferenceSession(
                     caminho_modelo, 
                     sess_options=session_options, 
-                    providers=['CPUExecutionProvider'] 
+                    providers=['CPUExecutionProvider'] # Força CPU
                 )
                 
                 input_details = MODELO_CARREGADO.get_inputs()[0]
+                output_details = MODELO_CARREGADO.get_outputs()[0]
+                
+                # Armazena nomes de entrada/saída globalmente
+                ONNX_INPUT_NAME = input_details.name
+                ONNX_OUTPUT_NAME = output_details.name
+                
                 input_shape = input_details.shape
                 
                 # PyTorch: [batch, 3, height, width]
@@ -409,12 +425,7 @@ class CSAMDetector:
     def __init__(self):
         self.itemList = []
         self.imageBytes = []
-        modelo_tflite = None
-        
-        # Variáveis de instância para o modelo ONNX (uma por thread)
-        self.onnx_thread_session = None
-        self.onnx_input_name = None
-        self.onnx_output_name = None        
+        modelo_tflite = None               
 
     def isEnabled(self):
         return PLUGIN_ENABLED
@@ -539,9 +550,7 @@ class CSAMDetector:
             CACHE = ConcurrentHashMap()
             caseData.putCaseObject('csam_cache_unificado', CACHE)             
     
-        # Em caso de TFLite ou ONNX, cada thread deve ter seu próprio interpretador/sessão
-        # A verificação de metadados já foi feita em carregar_e_configurar_modelo
-        # Aqui nós carregamos a instância real da thread
+        # Em caso de TFLite, cada thread deve ter seu próprio interpretador
         if MOTOR_IA == 'tflite':
             caminho_modelo = System.getProperty('iped.root') + '/models/' + CSAM_MODELFILE
             self.modelo_tflite = tf.lite.Interpreter(model_path=caminho_modelo)
@@ -550,38 +559,13 @@ class CSAMDetector:
             CSAM_BATCH_SIZE = 1 # TFLite é processado 1 a 1
             logger.debug(f"CSAMDetector: TFLite interpreter created for thread. Image size: {CSAM_IMG_SIZE}x{CSAM_IMG_SIZE}")
             
-        elif MOTOR_IA == 'onnx':
-            logger.debug("CSAMDetector: Creating thread-local ONNX session for CPU...")
-            caminho_modelo = System.getProperty('iped.root') + '/models/' + CSAM_MODELFILE
-            session_options = ort.SessionOptions()
-            session_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
-            
-            self.onnx_thread_session = ort.InferenceSession(
-                caminho_modelo, 
-                sess_options=session_options, 
-                providers=['CPUExecutionProvider'] # Força CPU
-            )
-            
-            input_details = self.onnx_thread_session.get_inputs()[0]
-            self.onnx_input_name = input_details.name
-            self.onnx_output_name = self.onnx_thread_session.get_outputs()[0].name
-            
-            # Apenas verifica se o tamanho da imagem da thread bate com o global
-            if ONNX_MODEL_TYPE == 'pytorch':
-                img_size_check = input_details.shape[2]
-            else: # tensorflow
-                img_size_check = input_details.shape[1]
-                
-            if img_size_check != CSAM_IMG_SIZE:
-                logger.warn(f"CSAMDetector: ONNX image size mismatch! Meta: {CSAM_IMG_SIZE}, Thread: {img_size_check}")
-                CSAM_IMG_SIZE = img_size_check # Usa o tamanho da sessão da thread
-            
+        elif MOTOR_IA == 'onnx':            
             CSAM_BATCH_SIZE = 1 # Processa um por um
-            logger.debug(f"CSAMDetector: ONNX session created for CPU ({ONNX_MODEL_TYPE}-style). Image size: {CSAM_IMG_SIZE}x{CSAM_IMG_SIZE}")
-            
-        else:
-            # semaphore is only used when processing in batches, tflite is multithreaded
+
+        else:            
+            # semaphore is only used when processing in batches, tflite and onnx are multithreaded
             createSemaphore()
+        
 
     def process(self, item):
         
@@ -833,12 +817,11 @@ class CSAMDetector:
        
     def fazer_predicao(self, tensores):
         """Runs batch prediction, returning the full probability array."""
-        global MODEL_SEMAPHORE, MOTOR_IA, DEVICE, MODELO_CARREGADO
+        global MODEL_SEMAPHORE, MOTOR_IA, DEVICE, MODELO_CARREGADO,  ONNX_INPUT_NAME, ONNX_OUTPUT_NAME
         
         try:
-            if MOTOR_IA == 'tensorflow' or MOTOR_IA == 'pytorch':
-                if MODEL_SEMAPHORE is not None:
-                    MODEL_SEMAPHORE.acquire()
+            if MODEL_SEMAPHORE is not None:
+                MODEL_SEMAPHORE.acquire()
             
             if MOTOR_IA == 'tensorflow':
                 return MODELO_CARREGADO.predict(tf.stack(tensores), verbose=0)
@@ -880,17 +863,16 @@ class CSAMDetector:
                 return np.array(predictions)
                 
             elif MOTOR_IA == 'onnx':
-                session = self.onnx_thread_session
-                input_name = self.onnx_input_name
-                output_name = self.onnx_output_name
+                # --- MODIFICADO: USA SESSÃO GLOBAL E BATCH ---
+                session = MODELO_CARREGADO # Sessão global
+                input_name = ONNX_INPUT_NAME  # Nome global
+                output_name = ONNX_OUTPUT_NAME # Nome global
                 
-                outputs_list = []
-                for tensor in tensores: # Lote sempre será 1
-                    input_tensor = np.expand_dims(tensor, axis=0) 
-                    output = session.run([output_name], {input_name: input_tensor})[0]
-                    outputs_list.append(output[0])
+                # Empilha os tensores (list de np.ndarray) em um único lote
+                input_tensor = np.stack(tensores, axis=0)
                 
-                stacked_outputs = np.array(outputs_list)
+                # Executa a inferência no lote inteiro de uma vez
+                stacked_outputs = session.run([output_name], {input_name: input_tensor})[0]
                 
                 # Usa a variável global para decidir o pós-processamento
                 if ONNX_MODEL_TYPE == 'pytorch':
@@ -899,9 +881,8 @@ class CSAMDetector:
                     return stacked_outputs # Retorna probabilidades diretas
 
         finally:
-            if MOTOR_IA == 'tensorflow' or MOTOR_IA == 'pytorch':
-                if MODEL_SEMAPHORE is not None:
-                    MODEL_SEMAPHORE.release()
+            if MODEL_SEMAPHORE is not None:
+                MODEL_SEMAPHORE.release()
 
     def processar_lote_de_imagens(self, items, tensores):
         global CLASS_NAMES, CSAM_SCORE, PORN_SCORE, OTHER_SCORE, AI_CLASSIFICATION_STATUS_ATTR, AI_CLASSIFICATION_SUCCESS, CSAMDETECTOR_CATEGORY
