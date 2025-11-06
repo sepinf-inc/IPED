@@ -424,6 +424,7 @@ Main class
 class CSAMDetector:
     def __init__(self):
         self.itemList = []
+        self.nextTaskList = []
         self.imageBytes = []
         modelo_tflite = None               
 
@@ -701,26 +702,23 @@ class CSAMDetector:
         if (self.isToProcessBatch(item)):
             logger.debug(f"CSAMDetector: processing batch of {len(self.itemList)} items.")
             self.processar_lote_de_imagens(self.itemList, self.imageBytes)
-
-
-    def sendToNextTask(self, item):       
-       
-        isItemOnList = False
-        
-        # Checks if the item is in the list to be processed (e.g., not an image or queueend)
-        if item in self.itemList:
-            isItemOnList = True
-    
-        # Now we check if we just processed a batch, to clear the list and send everything to the next task
-        if self.isToProcessBatch(item):                 
-            for i in self.itemList:
-                javaTask.get().sendToNextTaskSuper(i) 
+            self.nextTaskList.extend(self.itemList)
             self.itemList.clear()
             self.imageBytes.clear()
+
+
+    def sendToNextTask(self, item):
+        if not item.isQueueEnd() and item not in self.itemList and item not in self.nextTaskList:
+            javaTask.get().sendToNextTaskSuper(item)
+        
+        if len(self.nextTaskList) > 0:
+            localList = list(self.nextTaskList)
+            self.nextTaskList.clear()
+            for i in localList:
+                javaTask.get().sendToNextTaskSuper(i)
             
-        # If the item is not on the list, send it to the next task.
-        if(not isItemOnList):
-            javaTask.get().sendToNextTaskSuper(item) 
+        if item.isQueueEnd():
+            javaTask.get().sendToNextTaskSuper(item)
 
 
     def isToProcessBatch(self, item):
