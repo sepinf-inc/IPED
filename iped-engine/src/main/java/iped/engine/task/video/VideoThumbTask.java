@@ -85,8 +85,6 @@ public class VideoThumbTask extends ThumbTask {
 
     public static final String PREVIEW_EXT = "jpg";
 
-    public static final String PARENT_HASHBD_STATUS_ATTRIBUTE = "parent:" + HashDBLookupTask.STATUS_ATTRIBUTE;
-
     /**
      * Indica se a tarefa está habilitada ou não.
      */
