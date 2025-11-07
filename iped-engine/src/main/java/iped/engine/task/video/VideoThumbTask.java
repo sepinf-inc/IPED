@@ -64,6 +64,7 @@ import iped.engine.data.Item;
 import iped.engine.preview.PreviewRepository;
 import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.task.ExportFileTask;
+import iped.engine.task.HashDBLookupTask;
 import iped.engine.task.HashTask;
 import iped.engine.task.ImageThumbTask;
 import iped.engine.task.PhotoDNATask;
@@ -595,6 +596,13 @@ public class VideoThumbTask extends ThumbTask {
             newItem.setModificationDate(item.getModDate());
             newItem.setCreationDate(item.getCreationDate());
             newItem.setChangeDate(item.getChangeDate());
+
+            // replicate 'hashDb:*' item's extra attributes to subitem
+            Map<String, Object> hashDbAttrs = ((Item) item).getExtraAttributesStartWith(HashDBLookupTask.ATTRIBUTES_PREFIX);
+            for (String key : hashDbAttrs.keySet()) {
+                newItem.setExtraAttribute(key, hashDbAttrs.get(key));
+            }
+            newItem.setExtraAttribute("hashDB:infoFromParent", true);
 
             ExportFileTask extractor = new ExportFileTask();
             extractor.setWorker(worker);
