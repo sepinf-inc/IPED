@@ -420,11 +420,10 @@ public class Item implements IItem {
      */
     public Map<String, Object> getExtraAttributesStartWith(String prefix) {
         Map<String, Object> attrs = new HashMap<String, Object>();
-        synchronized (extraAttributes) {
-            for (String key : extraAttributes.keySet()) {
-                if (key.startsWith(prefix))
-                    attrs.put(key, extraAttributes.get(key));
-            }
+        // toArray avoids possible ConcurrentModificationException
+        for (String key : extraAttributes.keySet().toArray(new String[0])) {
+            if (key.startsWith(prefix))
+                attrs.put(key, extraAttributes.get(key));
         }
         return attrs;
     }
