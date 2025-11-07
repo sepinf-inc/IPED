@@ -602,6 +602,7 @@ public class VideoThumbTask extends ThumbTask {
             for (String key : hashDbAttrs.keySet()) {
                 newItem.setExtraAttribute(key, hashDbAttrs.get(key));
             }
+            newItem.setExtraAttribute("hashDB:infoFromParent", true);
 
             ExportFileTask extractor = new ExportFileTask();
             extractor.setWorker(worker);
