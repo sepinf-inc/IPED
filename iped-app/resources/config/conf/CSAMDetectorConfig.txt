@@ -3,7 +3,7 @@
 # To enable the module, set "enableCSAMDetector=true" property in IPEDConfig.txt file
 #
 # Availabel models, with stats for csam class in test dataset:
-#   TENSORFLOW MODELS (for GPU)
+#   TENSORFLOW MODELS (for GPU) - requires TensorFlow 2.20
 #    	- tensorflow_B0_v3_1.keras    - EfficientNetV2-B0 using tensorflow, image size 224x224 (precision 0.91, recall 0.96)
 #
 #	TFLITE MODELS (for CPU - requires tensorflow installation)
