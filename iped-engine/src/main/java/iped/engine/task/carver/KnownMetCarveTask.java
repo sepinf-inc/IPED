@@ -1,6 +1,6 @@
 /*
  * Copyright 2012-2016, Wladimir Leite
- * 
+ *
  * This file is part of Indexador e Processador de Evidências Digitais (IPED).
  *
  * IPED is free software: you can redistribute it and/or modify
@@ -38,7 +38,7 @@ import iped.parsers.emule.KnownMetEntry;
 import iped.utils.IOUtil;
 
 /**
- * Tarefa específica para carving de arquivos known.met do e-Mule.
+ * Tarefa específica para carving de arquivos known.met, part.met e preferences.dat do e-Mule.
  *
  * @author Wladimir Leite
  */
@@ -65,9 +65,19 @@ public class KnownMetCarveTask extends BaseCarveTask {
     private static final AtomicBoolean finished = new AtomicBoolean(false);
 
     /**
-     * Contador de arquivos recuperados.
+     * Contador de arquivos known.met recuperados.
      */
-    private static final AtomicInteger numCarvedItems = new AtomicInteger();
+    private static final AtomicInteger numKnownMetItems = new AtomicInteger();
+
+    /**
+     * Contador de arquivos part.met recuperados.
+     */
+    private static final AtomicInteger numPartMetItems = new AtomicInteger();
+
+    /**
+     * Contador de arquivos preferences.dat recuperados.
+     */
+    private static final AtomicInteger numPreferencesDatItems = new AtomicInteger();
 
     /**
      * Media type dos arquivos recuperados.
@@ -81,10 +91,21 @@ public class KnownMetCarveTask extends BaseCarveTask {
 
     private static final MediaType eMulePartMetMediaType = MediaType.application("x-emule-part-met"); //$NON-NLS-1$
 
+
+    /**
+     * Media type dos arquivos preferences.dat recuperados.
+     */
+    private static final MediaType eMulePreferencesDatMediaType = MediaType.application("x-emule-preferences-dat"); //$NON-NLS-1$
+
     /**
      * Passo para verificação do início do arquivo.
      */
     private final int step = 512;
+
+    /**
+     * Tamanho da assinatura do arquivo preferences.dat.
+     */
+    private static final int PREFERENCES_DAT_SIGNATURE_LENGTH = 61;
 
     /**
      * Heurística de data mínima utilizada para filtrar arquivos plausíveis.
@@ -134,7 +155,11 @@ public class KnownMetCarveTask extends BaseCarveTask {
         synchronized (finished) {
             if (taskEnabled && !finished.get()) {
                 finished.set(true);
-                logger.info("Carved Items: " + numCarvedItems.get()); //$NON-NLS-1$
+                logger.info("Known Met Carved Items: " + numKnownMetItems.get()); //$NON-NLS-1$
+                logger.info("Part Met Carved Items: " + numPartMetItems.get()); //$NON-NLS-1$
+                logger.info("Preferences Dat Carved Items: " + numPreferencesDatItems.get()); //$NON-NLS-1$
+                logger.info("Total carved eMule artifacts: " + //$NON-NLS-1$
+                    (numKnownMetItems.get() + numPartMetItems.get() + numPreferencesDatItems.get()));
             }
         }
     }
@@ -154,86 +179,24 @@ public class KnownMetCarveTask extends BaseCarveTask {
             is = evidence.getBufferedInputStream();
             while (is.read(bb) > 0) {
                 byte read = bb[0];
-                if (read == 14 || read == 15) {
-                    is.readNBytes(buf, 0, buf.length);
-                    int numFiles = toInt(buf, 0);
-                    if (numFiles > 0 && numFiles < 65536) {
-                        int pos = 4;
-                        long date = toInt(buf, pos) * 1000L;
-                        if (date > dateMin && date < dateMax) {
-                            pos += 4;
-                            pos += 16;
-                            int numParts = toSmall(buf, pos);
-                            pos += 2;
-                            pos += 16 * numParts;
-                            if (pos < 500) {
-                                int numTags = toInt(buf, pos);
-                                if (numTags > 2 && numTags < 100) {
-                                    int len = 512 * numFiles;
-                                    SeekableInputStream inParse = null;
-                                    try {
-                                        inParse = evidence.getSeekableInputStream();
-                                        inParse.seek(offset);
-                                        List<KnownMetEntry> l = KnownMetDecoder.parseToList(inParse, len, true);
-                                        if (!l.isEmpty()) {
-                                            // Check if at least one entry has a defined name and file size (#2116)
-                                            boolean valid = false;
-                                            for(KnownMetEntry entry : l) {
-                                                if (entry.getName() != null && entry.getFileSize() > 0) {
-                                                    valid = true;
-                                                    break;
-                                                }
-                                            }
-                                            if (valid) {
-                                                addCarvedFile(evidence, offset, len, "Carved-" + offset + "-known.met",
-                                                        eMuleMediaType);
-                                                numCarvedItems.incrementAndGet();
-                                            }
-                                        }
-                                    } catch (Exception e) {
-                                        e.printStackTrace();
-                                    } finally {
-                                        IOUtil.closeQuietly(inParse);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } else if (read == -32 || read == -30) {
-                    is.readNBytes(buf, 0, buf.length);
-                    long date = toInt(buf, 0) * 1000L;
-                    if (date > dateMin && date < dateMax) {
-                        int pos = 20;
-                        int numParts = toSmall(buf, pos);
-                        int numTags = 2;
-                        pos += 2;
-                        pos += 16 * numParts;
-                        if (pos < 500) {
-                            numTags = toInt(buf, pos);
-                        }
-                        if (numTags >= 2 && numTags <= 1024 && numParts <= 4096 && numParts >= 0) {
-                            SeekableInputStream inParse = null;
-                            try {
-                                inParse = evidence.getSeekableInputStream();
-                                inParse.seek(offset);
-                                int bytesRead = inParse.readNBytes(buf2, 0, buf2.length);
-                                if (bytesRead > 25) {
-                                    KnownMetEntry entry = new KnownMetEntry();
-                                    int len = KnownMetDecoder.parseEntry(entry, 1, buf2, true);
-                                    if (len > 0) {
-                                        addCarvedFile(evidence, offset, len + 1, "Carved-" + offset + "-part.met", //$NON-NLS-1$ //$NON-NLS-2$
-                                                eMulePartMetMediaType);
-                                        numCarvedItems.incrementAndGet();
-                                    }
-                                }
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            } finally {
-                                IOUtil.closeQuietly(inParse);
-                            }
-                        }
-                    }
-                } else {
+                boolean patternFound = false;
+
+                // Verifica se foi encontrado o padrão do arquivo known.met (0x0E or 0x0F)
+                if ((read & 0xFF) == 0x0E || (read & 0xFF) == 0x0F) {
+                    patternFound = checkKnownMet(is, evidence, offset, buf);
+                }
+                // Verifica se foi encontrado o padrão do arquivo part.met (0xE0 or 0xE2)
+                else if ((read & 0xFF) == 0xE0 || (read & 0xFF) == 0xE2) {
+                    patternFound = checkPartMet(is, evidence, offset, buf, buf2);
+                }
+                // Verifica se foi encontrado o padrão do arquivo preferences.dat (0x14)
+                else if ((read & 0xFF) == 0x14) {
+                    patternFound = checkPreferencesDat(is, evidence, offset, buf);
+                }
+
+
+                // avança para o próximo passo se nenhum padrão foi encontrado
+                if (!patternFound) {
                     long skip = 0;
                     do {
                         long i = is.skip(step - 1 - skip);
@@ -256,6 +219,184 @@ public class KnownMetCarveTask extends BaseCarveTask {
             IOUtil.closeQuietly(is);
         }
     }
+
+    /**
+     * Verifica se foi encontrado o padrão do arquivo known.met (0x0E or 0x0F)
+     */
+    private boolean checkKnownMet(BufferedInputStream is, IItem evidence, long offset,
+                                   byte[] buf) throws Exception {
+        is.readNBytes(buf, 0, buf.length);
+        int numFiles = toInt(buf, 0);
+        if (numFiles > 0 && numFiles < 65536) {
+            int pos = 4;
+            long date = toInt(buf, pos) * 1000L;
+            if (date > dateMin && date < dateMax) {
+                pos += 4;
+                pos += 16;
+                int numParts = toSmall(buf, pos);
+                pos += 2;
+                pos += 16 * numParts;
+                if (pos < 500) {
+                    int numTags = toInt(buf, pos);
+                    if (numTags > 2 && numTags < 100) {
+                        int len = 512 * numFiles;
+                        SeekableInputStream inParse = null;
+                        try {
+                            inParse = evidence.getSeekableInputStream();
+                            inParse.seek(offset);
+                            List<KnownMetEntry> l = KnownMetDecoder.parseToList(inParse, len, true);
+                            if (!l.isEmpty()) {
+                                // Check if at least one entry has a defined name and file size (#2116)
+                                boolean valid = false;
+                                for (KnownMetEntry entry : l) {
+                                    if (entry.getName() != null && entry.getFileSize() > 0) {
+                                        valid = true;
+                                        break;
+                                    }
+                                }
+                                if (valid) {
+                                    addCarvedFile(evidence, offset, len, "Carved-" + offset + "-known.met",
+                                            eMuleMediaType);
+                                    numKnownMetItems.incrementAndGet();
+                                    return true;
+                                }
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        } finally {
+                            IOUtil.closeQuietly(inParse);
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Checks for part.met file pattern and carves if valid.
+     */
+    private boolean checkPartMet(BufferedInputStream is, IItem evidence, long offset,
+                                  byte[] buf, byte[] buf2) throws Exception {
+        is.readNBytes(buf, 0, buf.length);
+        long date = toInt(buf, 0) * 1000L;
+        if (date > dateMin && date < dateMax) {
+            int pos = 20;
+            int numParts = toSmall(buf, pos);
+            int numTags = 2;
+            pos += 2;
+            pos += 16 * numParts;
+            if (pos < 500) {
+                numTags = toInt(buf, pos);
+            }
+            if (numTags >= 2 && numTags <= 1024 && numParts <= 4096 && numParts >= 0) {
+                SeekableInputStream inParse = null;
+                try {
+                    inParse = evidence.getSeekableInputStream();
+                    inParse.seek(offset);
+                    int bytesRead = inParse.readNBytes(buf2, 0, buf2.length);
+                    if (bytesRead > 25) {
+                        KnownMetEntry entry = new KnownMetEntry();
+                        int len = KnownMetDecoder.parseEntry(entry, 1, buf2, true);
+                        if (len > 0) {
+                            addCarvedFile(evidence, offset, len + 1, "Carved-" + offset + "-part.met", //$NON-NLS-1$ //$NON-NLS-2$
+                                    eMulePartMetMediaType);
+                            numPartMetItems.incrementAndGet();
+                            return true;
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    IOUtil.closeQuietly(inParse);
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Verifica se foi encontrado o padrão do arquivo preferences.dat (0x14)
+     */
+    private boolean checkPreferencesDat(BufferedInputStream is, IItem evidence, long offset, byte[] buf) throws Exception {
+        is.readNBytes(buf, 0, buf.length);
+        if (matchesPreferencesDatSignature(buf)) {
+            addCarvedFile(evidence, offset, PREFERENCES_DAT_SIGNATURE_LENGTH,
+                    "Carved-" + offset + "-preferences.dat", //$NON-NLS-1$ //$NON-NLS-2$
+                    eMulePreferencesDatMediaType);
+            numPreferencesDatItems.incrementAndGet();
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Checks if the bytes read match the preferences.dat signature.
+     * Pattern: \14?????\0E????????\6F?\2C\00\00\00?\00\00\00?\00\00\00??????????????????\00\00??\00\00??\00\00??\00\00
+     */
+    private boolean matchesPreferencesDatSignature(byte[] buf) {
+        // First byte already verified (0x14)
+        // buf[0-4] = ????? (5 bytes - any value)
+
+        // buf[5] = 0x0E (position 6 of the signature)
+        if ((buf[5] & 0xFF) != 0x0E)
+            return false;
+
+        // buf[6-13] = ???????? (8 bytes - any value)
+
+        // buf[14] = 0x6F (position 15 of the signature)
+        if ((buf[14] & 0xFF) != 0x6F)
+            return false;
+
+        // buf[15] = ? (1 byte - any value)
+
+        // buf[16] = 0x2C (position 17 of the signature)
+        if ((buf[16] & 0xFF) != 0x2C)
+            return false;
+
+        // buf[17-19] = 0x00, 0x00, 0x00 (positions 18-20)
+        if ((buf[17] & 0xFF) != 0x00 || (buf[18] & 0xFF) != 0x00 || (buf[19] & 0xFF) != 0x00)
+            return false;
+
+        // buf[20] = ? (1 byte - any value)
+
+        // buf[21-23] = 0x00, 0x00, 0x00 (positions 22-24)
+        if ((buf[21] & 0xFF) != 0x00 || (buf[22] & 0xFF) != 0x00 || (buf[23] & 0xFF) != 0x00)
+            return false;
+
+        // buf[24] = ? (1 byte - any value)
+
+        // buf[25-27] = 0x00, 0x00, 0x00 (positions 26-28)
+        if ((buf[25] & 0xFF) != 0x00 || (buf[26] & 0xFF) != 0x00 || (buf[27] & 0xFF) != 0x00)
+            return false;
+
+        // buf[28-45] = ?????????????????? (18 bytes - any value)
+
+        // buf[46-47] = 0x00, 0x00 (positions 47-48)
+        if ((buf[46] & 0xFF) != 0x00 || (buf[47] & 0xFF) != 0x00)
+            return false;
+
+        // buf[48-49] = ?? (2 bytes - any value)
+
+        // buf[50-51] = 0x00, 0x00 (positions 51-52)
+        if ((buf[50] & 0xFF) != 0x00 || (buf[51] & 0xFF) != 0x00)
+            return false;
+
+        // buf[52-53] = ?? (2 bytes - any value)
+
+        // buf[54-55] = 0x00, 0x00 (positions 55-56)
+        if ((buf[54] & 0xFF) != 0x00 || (buf[55] & 0xFF) != 0x00)
+            return false;
+
+        // buf[56-57] = ?? (2 bytes - any value)
+
+        // buf[58-59] = 0x00, 0x00 (positions 59-60)
+        if ((buf[58] & 0xFF) != 0x00 || (buf[59] & 0xFF) != 0x00)
+            return false;
+
+        return true;
+    }
+
 
     private static final int toInt(byte[] b, int offset) {
         return (b[offset] & 0XFF) | ((b[offset + 1] & 0XFF) << 8) | ((b[offset + 2] & 0XFF) << 16)
