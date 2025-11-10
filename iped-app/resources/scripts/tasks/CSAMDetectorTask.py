@@ -9,7 +9,7 @@ see https://github.com/sepinf-inc/IPED/wiki/User-Manual#python-modules
 
 __author__ = "Guilherme Dalpian"
 __email__ = "gmdalpian@gmail.com"
-__version__ = "1.1" # Change name to CSAMDetectorTask
+__version__ = "1.1" # Changed name to CSAMDetectorTask
 
 import traceback
 import io
@@ -439,7 +439,8 @@ class CSAMDetectorTask:
         return [DefaultTaskPropertiesConfig(PLUGIN_ENABLE_PROP, CSAM_CONFIG_FILE)]        
 
     def init(self, configuration):
-        global PLUGIN_ENABLED, MOTOR_IA, CSAM_MODELFILE, CACHE, CSAM_BATCH_SIZE, CSAM_MINIMUM_IMAGE_SIZE, CSAM_SKIP_DIMENSION, CSAM_SKIP_HASHDB_FILES, tf, keras, torch, nn, timm, transforms, Image, tflite, ort, CSAM_IMG_SIZE, ONNX_MODEL_TYPE
+        global PLUGIN_ENABLED, MOTOR_IA, CSAM_MODELFILE, CACHE, CSAM_BATCH_SIZE, CSAM_MINIMUM_IMAGE_SIZE, CSAM_SKIP_DIMENSION, CSAM_SKIP_HASHDB_FILES 
+        global tf, keras, torch, nn, timm, transforms, Image, tflite, ort, CSAM_IMG_SIZE, ONNX_MODEL_TYPE, CSAM_CREATE_BOOKMARKS, CSAM_SKIP_HASHDB_FILES_PROPERTY
         
         taskConfig = configuration.getTaskConfigurable(CSAM_CONFIG_FILE)
         PLUGIN_ENABLED = taskConfig.isEnabled()
@@ -450,17 +451,17 @@ class CSAMDetectorTask:
         extraProps = taskConfig.getConfiguration()
         
         if(extraProps):
-            CSAM_MODELFILE = extraProps.getProperty(CSAM_MODELFILE_PROPERTY) if extraProps.getProperty(CSAM_MODELFILE_PROPERTY) is not None else CSAM_MODELFILE
-            CSAM_BATCH_SIZE = int(extraProps.getProperty(CSAM_BATCH_SIZE_PROPERTY)) if extraProps.getProperty(CSAM_BATCH_SIZE_PROPERTY) is not None else CSAM_BATCH_SIZE
-            CSAM_MINIMUM_IMAGE_SIZE = int(extraProps.getProperty(CSAM_MINIMUM_IMAGE_SIZE_PROPERTY)) if extraProps.getProperty(CSAM_MINIMUM_IMAGE_SIZE_PROPERTY) is not None else CSAM_MINIMUM_IMAGE_SIZE
-            CSAM_SKIP_DIMENSION = int(extraProps.getProperty(CSAM_SKIP_DIMENSION_PROPERTY)) if extraProps.getProperty(CSAM_SKIP_DIMENSION_PROPERTY) is not None else CSAM_SKIP_DIMENSION
-            skipDBFiles = extraProps.getProperty(CSAM_SKIP_HASHDB_FILES_PROPERTY) if extraProps.getProperty(CSAM_SKIP_HASHDB_FILES_PROPERTY) is not None else CSAM_SKIP_HASHDB_FILES
+            CSAM_MODELFILE = extraProps.getProperty(CSAM_MODELFILE_PROPERTY, str(CSAM_MODELFILE))
+            CSAM_BATCH_SIZE = int(extraProps.getProperty(CSAM_BATCH_SIZE_PROPERTY, str(CSAM_BATCH_SIZE)))
+            CSAM_MINIMUM_IMAGE_SIZE = int(extraProps.getProperty(CSAM_MINIMUM_IMAGE_SIZE_PROPERTY, str(CSAM_MINIMUM_IMAGE_SIZE)))
+            CSAM_SKIP_DIMENSION = int(extraProps.getProperty(CSAM_SKIP_DIMENSION_PROPERTY, str(CSAM_SKIP_DIMENSION)))
+            skipDBFiles = extraProps.getProperty(CSAM_SKIP_HASHDB_FILES_PROPERTY, str(CSAM_SKIP_HASHDB_FILES))
             CSAM_SKIP_HASHDB_FILES = True if skipDBFiles.lower() == 'true' else False
-            createbookmarks = extraProps.getProperty(CSAM_CREATE_BOOKMARKS_PROPERTY) if extraProps.getProperty(CSAM_CREATE_BOOKMARKS_PROPERTY) is not None else CSAM_CREATE_BOOKMARKS
+            createbookmarks = extraProps.getProperty(CSAM_CREATE_BOOKMARKS_PROPERTY, str(CSAM_CREATE_BOOKMARKS))
             CSAM_CREATE_BOOKMARKS = True if createbookmarks.lower() == 'true' else False
             
         
-        logger.debug(f"CSAMDetector: CSAM configurations {CSAM_MODELFILE} {CSAM_BATCH_SIZE} {CSAM_MINIMUM_IMAGE_SIZE} {CSAM_SKIP_DIMENSION} {CSAM_SKIP_HASHDB_FILES}")
+        logger.debug(f"CSAMDetector: CSAM configurations {CSAM_MODELFILE=} {CSAM_BATCH_SIZE=} {CSAM_MINIMUM_IMAGE_SIZE=} {CSAM_SKIP_DIMENSION=} {CSAM_SKIP_HASHDB_FILES=} {CSAM_CREATE_BOOKMARKS=}")
         
         from iped.engine.config import HashTaskConfig
         from iped.engine.config import ImageThumbTaskConfig 
