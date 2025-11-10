@@ -9,7 +9,7 @@ see https://github.com/sepinf-inc/IPED/wiki/User-Manual#python-modules
 
 __author__ = "Guilherme Dalpian"
 __email__ = "gmdalpian@gmail.com"
-__version__ = "1.0" # ONNX otimizations
+__version__ = "1.1" # Change name to CSAMDetectorTask
 
 import traceback
 import io
@@ -421,7 +421,7 @@ def md5_bytes_para_hex_maiusculo(bytes_data: bytes) -> str:
 '''
 Main class
 '''
-class CSAMDetector:
+class CSAMDetectorTask:
     def __init__(self):
         self.itemList = []
         self.nextTaskList = []
