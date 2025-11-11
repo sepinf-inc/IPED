@@ -21,4 +21,3 @@ iped.engine.task.regex.validator.crypto.DogeCoinAddressValidatorService
 iped.engine.task.regex.validator.crypto.DashAddressValidatorService
 iped.engine.task.regex.validator.crypto.LiteCoinAddressValidatorService
 iped.engine.task.regex.validator.CryptoSeedPhraseValidatorService
-iped.engine.task.regex.validator.CryptoPTSeedPhraseValidatorService
