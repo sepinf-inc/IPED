@@ -9,7 +9,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,102 +18,103 @@ import java.util.regex.Pattern;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
-import iped.engine.task.regex.BasicAbstractRegexValidatorService;
+import iped.engine.task.regex.RegexValidatorService;
 
 /**
- * Validator for BIP-39 and Electrum seed phrases.
+ * Dynamically validates BIP-39 and Electrum seed phrases for any language
+ * defined in the configuration.
  *
  * @author Rui Sant'Ana Junior
  */
+public class CryptoSeedPhraseValidatorService implements RegexValidatorService {
 
-public class CryptoSeedPhraseValidatorService extends BasicAbstractRegexValidatorService {
-
-    private static final String REGEX_NAME = "CRYPTO_POSSIBLE_SEED_PHRASE_EN";
+    private static final String REGEX_PREFIX = "CRYPTO_POSSIBLE_SEED_PHRASE_";
     private static final List<Integer> BIP39_VALID_WORD_COUNTS = Arrays.asList(12, 15, 18, 21, 24);
 
-    private List<String> wordList;
-    private Map<String, Integer> wordMap;
+    // This list will be populated dynamically from the config file.
+    private List<String> discoveredRegexNames = new ArrayList<>();
+    private Map<String, Map<String, Integer>> wordMaps = new HashMap<>();
 
     @Override
     public void init(File confDir) {
-        wordList = new ArrayList<>();
-        wordMap = new HashMap<>();
         File regexConf = new File(confDir.getParentFile(), "conf/RegexConfig.txt");
-
         try (BufferedReader reader = new BufferedReader(new FileReader(regexConf, StandardCharsets.UTF_8))) {
-            StringBuilder fullRegexLine = new StringBuilder();
             String line;
-
-            // First, find the line where our regex starts
             while ((line = reader.readLine()) != null) {
-                if (line.startsWith(REGEX_NAME)) {
+                // Discover regexes dynamically by looking for the prefix.
+                if (line.startsWith(REGEX_PREFIX)) {
+                    String regexName = line.substring(0, line.indexOf('=')).trim();
+                    discoveredRegexNames.add(regexName);
+
+                    Map<String, Integer> currentWordMap = new HashMap<>();
+                    StringBuilder fullRegexLine = new StringBuilder();
                     fullRegexLine.append(line.substring(line.indexOf('=') + 1).trim());
-                    break;
-                }
-            }
 
-            // Now, append subsequent lines that are part of the same regex definition
-            while ((line = reader.readLine()) != null) {
-                // Stop if we hit a blank line or a new regex definition
-                if (line.trim().isEmpty() || line.contains("=")) {
-                    break;
-                }
-                fullRegexLine.append(line.trim());
-            }
-
-            if (fullRegexLine.length() > 0) {
-                String combinedLine = fullRegexLine.toString();
-                // Use a non-greedy regex to find the content of the first parenthesis group
-                Pattern p = Pattern.compile("\\((.*?)\\)");
-                Matcher m = p.matcher(combinedLine);
-                if (m.find()) {
-                    String[] words = m.group(1).split("\\|");
-                    this.wordList = new ArrayList<>(Arrays.asList(words));
-                    for (int i = 0; i < this.wordList.size(); i++) {
-                        this.wordMap.put(this.wordList.get(i), i);
+                    String nextLine = line;
+                    BufferedReader lookaheadReader = reader;
+                    while ((nextLine = lookaheadReader.readLine()) != null) {
+                        if (nextLine.trim().isEmpty() || nextLine.contains("=")) {
+                            break;
+                        }
+                        fullRegexLine.append(nextLine.trim());
                     }
+
+                    if (fullRegexLine.length() > 0) {
+                        Pattern p = Pattern.compile("\\((.*?)\\)");
+                        Matcher m = p.matcher(fullRegexLine.toString());
+                        if (m.find()) {
+                            String[] words = m.group(1).split("\\|");
+                            for (int i = 0; i < words.length; i++) {
+                                currentWordMap.put(words[i], i);
+                            }
+                        }
+                    }
+                    wordMaps.put(regexName, currentWordMap);
                 }
             }
-
         } catch (IOException e) {
             e.printStackTrace();
-            this.wordList = Collections.emptyList();
-            this.wordMap = Collections.emptyMap();
+            wordMaps.clear();
+            discoveredRegexNames.clear();
         }
     }
 
     @Override
     public List<String> getRegexNames() {
-        return Collections.singletonList(REGEX_NAME);
+        return discoveredRegexNames;
     }
 
     @Override
-    public String format(String hit) {
+    public String format(String regexName, String hit) {
         return hit;
     }
 
     @Override
-    protected boolean validate(String hit) {
-        if (wordList == null || wordList.isEmpty()) {
+    public boolean validate(String regexName, String hit) {
+        Map<String, Integer> currentWordMap = wordMaps.get(regexName);
+        if (currentWordMap == null || currentWordMap.isEmpty()) {
             return false;
         }
 
         String[] words = hit.trim().toLowerCase().split("\\s+");
 
-        if (validateBIP39(words)) {
+        if (validateBIP39(words, currentWordMap)) {
             return true;
         }
 
-        return validateElectrum(words);
+        // Generic rule: Only perform Electrum validation for English.
+        if (regexName.endsWith("_EN")) {
+            return validateElectrum(words, currentWordMap);
+        }
+
+        return false;
     }
 
-    private boolean validateBIP39(String[] words) {
-	// Check if the number of words is valid according to the BIP39 standard
+    private boolean validateBIP39(String[] words, Map<String, Integer> wordMap) {
         if (!BIP39_VALID_WORD_COUNTS.contains(words.length)) {
             return false;
         }
 
-	// Convert each word into its 11-bit binary index and concatenate into a bit string
         StringBuilder bits = new StringBuilder();
         for (String word : words) {
             Integer index = wordMap.get(word);
@@ -124,7 +124,6 @@ public class CryptoSeedPhraseValidatorService extends BasicAbstractRegexValidato
             bits.append(String.format("%11s", Integer.toBinaryString(index)).replace(' ', '0'));
         }
 
-	// The mnemonic bit string contains both entropy and checksum
         String bitsStr = bits.toString();
         int ent = (bitsStr.length() * 32) / 33;
         int cs = bitsStr.length() - ent;
@@ -132,7 +131,6 @@ public class CryptoSeedPhraseValidatorService extends BasicAbstractRegexValidato
         String entropyBits = bitsStr.substring(0, ent);
         String checksumBits = bitsStr.substring(ent);
 
-	// Convert entropy bits back into bytes
         byte[] entropy;
         try {
             int len = entropyBits.length() / 8;
@@ -146,69 +144,54 @@ public class CryptoSeedPhraseValidatorService extends BasicAbstractRegexValidato
         }
 
         try {
-		// Compute SHA-256 hash of the entropy
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest(entropy);
 
-		// Convert hash to a binary string
             StringBuilder hashBits = new StringBuilder();
             for (byte b : hash) {
                 hashBits.append(String.format("%8s", Integer.toBinaryString(b & 0xFF)).replace(' ', '0'));
             }
 
             String expectedChecksum = hashBits.substring(0, cs);
-
             return checksumBits.equals(expectedChecksum);
-
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
             return false;
         }
     }
 
-    private boolean validateElectrum(String[] words) {
+    private boolean validateElectrum(String[] words, Map<String, Integer> wordMap) {
         try {
-            // Electrum seeds must have a word count multiple of 3
             if (words.length == 0 || words.length % 3 != 0) {
                 return false;
             }
 
-            // Normalize mnemonic for HMAC
             String normalizedMnemonic = String.join(" ", words);
 
-            // HMAC-SHA512 with a constant key "Seed version"
             Mac hmac = Mac.getInstance("HmacSHA512");
             SecretKeySpec key = new SecretKeySpec("Seed version".getBytes(StandardCharsets.UTF_8), "HmacSHA512");
             hmac.init(key);
             byte[] hash = hmac.doFinal(normalizedMnemonic.getBytes(StandardCharsets.UTF_8));
 
-             // Convert hash to hex string
             StringBuilder sb = new StringBuilder();
             for (byte b : hash) {
                 sb.append(String.format("%02x", b & 0xFF));
             }
             String hexHash = sb.toString();
 
-            // Determine prefix length based on first nibble (Python: int(s[0], 16) + 2)
             int length = Character.digit(hexHash.charAt(0), 16) + 2;
+            if (hexHash.length() < length)
+                return false;
 
-            // Extract prefix
             String prefixHex = hexHash.substring(0, length);
             int version = Integer.parseInt(prefixHex, 16);
 
-            // Compare against known Electrum reserved values
-            if (version == 0x01 || version == 0x100 || version == 0x101 || version == 0x102 || version == 0x201) {
-                return true;
-            }
-
-            return false;
+            return version == 0x01 || version == 0x100 || version == 0x101 || version == 0x102 || version == 0x201;
 
         } catch (NoSuchAlgorithmException e) {
-            // This should not happen, as HmacSHA512 is a standard algorithm
             e.printStackTrace();
             return false;
         } catch (Exception e) {
-            // Any other exception during crypto operations means it's not a valid Electrum seed
             return false;
         }
     }
