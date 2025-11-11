@@ -32,6 +32,11 @@ categorizationThresholdProp = 'categorizationThreshold'
 skipHashDBFiles = True
 skipHashDBFilesProp = 'skipHashDBFiles'
 
+# Max number of threads allowed to enter code between semaphore.acquire() and semaphore.release()
+# This can be set if your GPU does not have enough memory to use all threads with configured 'batchSize'
+maxThreads = None
+maxThreadsProp = 'maxThreads'
+
 # age estimation cache (avoids age estimation of duplicates)
 from java.util.concurrent import ConcurrentHashMap
 cache = ConcurrentHashMap()
