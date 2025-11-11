@@ -1,10 +1,9 @@
 package iped.engine.task.regex.validator;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -18,6 +17,9 @@ import java.util.regex.Pattern;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import iped.engine.task.regex.RegexValidatorService;
 
 /**
@@ -28,52 +30,55 @@ import iped.engine.task.regex.RegexValidatorService;
  */
 public class CryptoSeedPhraseValidatorService implements RegexValidatorService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(CryptoSeedPhraseValidatorService.class);
     private static final String REGEX_PREFIX = "CRYPTO_POSSIBLE_SEED_PHRASE_";
     private static final List<Integer> BIP39_VALID_WORD_COUNTS = Arrays.asList(12, 15, 18, 21, 24);
 
-    // This list will be populated dynamically from the config file.
-    private List<String> discoveredRegexNames = new ArrayList<>();
-    private Map<String, Map<String, Integer>> wordMaps = new HashMap<>();
+    private final List<String> discoveredRegexNames = new ArrayList<>();
+    private final Map<String, Map<String, Integer>> wordMaps = new HashMap<>();
 
     @Override
     public void init(File confDir) {
         File regexConf = new File(confDir.getParentFile(), "conf/RegexConfig.txt");
-        try (BufferedReader reader = new BufferedReader(new FileReader(regexConf, StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                // Discover regexes dynamically by looking for the prefix.
+        if (!regexConf.exists()) {
+            return;
+        }
+
+        try {
+            List<String> lines = Files.readAllLines(regexConf.toPath(), StandardCharsets.UTF_8);
+            for (int i = 0; i < lines.size(); i++) {
+                String line = lines.get(i);
                 if (line.startsWith(REGEX_PREFIX)) {
                     String regexName = line.substring(0, line.indexOf('=')).trim();
                     discoveredRegexNames.add(regexName);
 
-                    Map<String, Integer> currentWordMap = new HashMap<>();
                     StringBuilder fullRegexLine = new StringBuilder();
                     fullRegexLine.append(line.substring(line.indexOf('=') + 1).trim());
 
-                    String nextLine = line;
-                    BufferedReader lookaheadReader = reader;
-                    while ((nextLine = lookaheadReader.readLine()) != null) {
-                        if (nextLine.trim().isEmpty() || nextLine.contains("=")) {
-                            break;
-                        }
-                        fullRegexLine.append(nextLine.trim());
+                    // Look ahead for multi-line definitions
+                    int j = i + 1;
+                    while (j < lines.size() && !lines.get(j).trim().isEmpty() && !lines.get(j).contains("=")) {
+                        fullRegexLine.append(lines.get(j).trim());
+                        j++;
                     }
+                    i = j - 1; // Move the outer loop index forward
 
                     if (fullRegexLine.length() > 0) {
+                        Map<String, Integer> currentWordMap = new HashMap<>();
                         Pattern p = Pattern.compile("\\((.*?)\\)");
                         Matcher m = p.matcher(fullRegexLine.toString());
                         if (m.find()) {
                             String[] words = m.group(1).split("\\|");
-                            for (int i = 0; i < words.length; i++) {
-                                currentWordMap.put(words[i], i);
+                            for (int k = 0; k < words.length; k++) {
+                                currentWordMap.put(words[k], k);
                             }
                         }
+                        wordMaps.put(regexName, currentWordMap);
                     }
-                    wordMaps.put(regexName, currentWordMap);
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Failed to read or parse RegexConfig.txt", e);
             wordMaps.clear();
             discoveredRegexNames.clear();
         }
@@ -102,9 +107,8 @@ public class CryptoSeedPhraseValidatorService implements RegexValidatorService {
             return true;
         }
 
-        // Generic rule: Only perform Electrum validation for English.
         if (regexName.endsWith("_EN")) {
-            return validateElectrum(words, currentWordMap);
+            return validateElectrum(words);
         }
 
         return false;
@@ -155,12 +159,12 @@ public class CryptoSeedPhraseValidatorService implements RegexValidatorService {
             String expectedChecksum = hashBits.substring(0, cs);
             return checksumBits.equals(expectedChecksum);
         } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
+            LOGGER.error("SHA-256 algorithm not found", e);
             return false;
         }
     }
 
-    private boolean validateElectrum(String[] words, Map<String, Integer> wordMap) {
+    private boolean validateElectrum(String[] words) {
         try {
             if (words.length == 0 || words.length % 3 != 0) {
                 return false;
@@ -189,9 +193,10 @@ public class CryptoSeedPhraseValidatorService implements RegexValidatorService {
             return version == 0x01 || version == 0x100 || version == 0x101 || version == 0x102 || version == 0x201;
 
         } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
+            LOGGER.error("HmacSHA512 algorithm not found", e);
             return false;
         } catch (Exception e) {
+            // Catches other potential crypto exceptions like InvalidKeyException
             return false;
         }
     }
