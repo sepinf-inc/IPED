@@ -179,24 +179,27 @@ public class KnownMetCarveTask extends BaseCarveTask {
             is = evidence.getBufferedInputStream();
             while (is.read(bb) > 0) {
                 byte read = bb[0];
-                boolean patternFound = false;
+                boolean firstByteMatched = false;
 
                 // Verifica se foi encontrado o padrão do arquivo known.met (0x0E or 0x0F)
                 if ((read & 0xFF) == 0x0E || (read & 0xFF) == 0x0F) {
-                    patternFound = checkKnownMet(is, evidence, offset, buf);
+                    firstByteMatched = true;
+                    checkKnownMet(is, evidence, offset, buf);
                 }
                 // Verifica se foi encontrado o padrão do arquivo part.met (0xE0 or 0xE2)
                 else if ((read & 0xFF) == 0xE0 || (read & 0xFF) == 0xE2) {
-                    patternFound = checkPartMet(is, evidence, offset, buf, buf2);
+                    firstByteMatched = true;
+                    checkPartMet(is, evidence, offset, buf, buf2);
                 }
                 // Verifica se foi encontrado o padrão do arquivo preferences.dat (0x14)
                 else if ((read & 0xFF) == 0x14) {
-                    patternFound = checkPreferencesDat(is, evidence, offset, buf);
+                    firstByteMatched = true;
+                    checkPreferencesDat(is, evidence, offset, buf);
                 }
 
-
-                // avança para o próximo passo se nenhum padrão foi encontrado
-                if (!patternFound) {
+                // consome os restante do bloco se o primeiro byte não deu match
+                // se deu match no primeiro byte, já consumimos 512 bytes (1 + 511)
+                if (!firstByteMatched) {
                     long skip = 0;
                     do {
                         long i = is.skip(step - 1 - skip);
