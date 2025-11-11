@@ -43,6 +43,7 @@ CSAM_SCORE = 'ai:csamDetector:csam'
 PORN_SCORE = 'ai:csamDetector:porn'
 OTHER_SCORE = 'ai:csamDetector:other'
 CSAMDETECTOR_CATEGORY = 'ai:csamDetector:label'
+IPED_GPU_GLOBAL_SEMAPHORE_STRING = 'IPED_GPU_GLOBAL_SEMAPHORE'
 MODEL_SEMAPHORE = None
 CSAM_IMG_SIZE = 224
 
@@ -310,8 +311,12 @@ def get_tensor_from_path_or_bytes(file_path, file_bytes=None):
         return transform(image)  
 
     elif MOTOR_IA == 'onnx':
+        image_resample = Image.BILINEAR
+        if ONNX_MODEL_TYPE == 'tensorflow':
+            image_resample = Image.NEAREST
+            
         # ONNX usa PIL e Numpy para evitar dependência do torchvision
-        image = Image.open(file_path).convert('RGB').resize((CSAM_IMG_SIZE, CSAM_IMG_SIZE))
+        image = Image.open(file_path).convert('RGB').resize((CSAM_IMG_SIZE, CSAM_IMG_SIZE), image_resample)
         
         # Pré-processamento estilo PyTorch (Channels-First, CHW)
         if ONNX_MODEL_TYPE == 'pytorch':
@@ -327,12 +332,12 @@ def get_tensor_from_path_or_bytes(file_path, file_bytes=None):
             return img_array # Retorna np.ndarray (H, W, C)
 
 def createSemaphore():
-    global MODEL_SEMAPHORE
-    MODEL_SEMAPHORE = caseData.getCaseObject('CSAM_SEMAPHORE')
+    global MODEL_SEMAPHORE, IPED_GPU_GLOBAL_SEMAPHORE_STRING
+    MODEL_SEMAPHORE = caseData.getCaseObject(IPED_GPU_GLOBAL_SEMAPHORE_STRING)
     if(MODEL_SEMAPHORE is None):
         from java.util.concurrent import Semaphore
         MODEL_SEMAPHORE = Semaphore(1)
-        caseData.putCaseObject('CSAM_SEMAPHORE', MODEL_SEMAPHORE)
+        caseData.putCaseObject(IPED_GPU_GLOBAL_SEMAPHORE_STRING, MODEL_SEMAPHORE)
     return MODEL_SEMAPHORE
     
 def extrair_e_formatar_dois_digitos(score):

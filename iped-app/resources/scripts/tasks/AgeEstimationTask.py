@@ -32,14 +32,11 @@ categorizationThresholdProp = 'categorizationThreshold'
 skipHashDBFiles = True
 skipHashDBFilesProp = 'skipHashDBFiles'
 
-# Max number of threads allowed to enter code between semaphore.acquire() and semaphore.release()
-# This can be set if your GPU does not have enough memory to use all threads with configured 'batchSize'
-maxThreads = None
-maxThreadsProp = 'maxThreads'
-
 # age estimation cache (avoids age estimation of duplicates)
 from java.util.concurrent import ConcurrentHashMap
 cache = ConcurrentHashMap()
+
+IPED_GPU_GLOBAL_SEMAPHORE_STRING = 'IPED_GPU_GLOBAL_SEMAPHORE'
 
 # Margins proportions added to the face rectangle before submitting to the age estimation model.
 topMargin = 0.50
@@ -56,6 +53,9 @@ predictTime = 0
 
 # semaphore for concurrency control
 semaphore = None
+
+# device to use for classification run (GPU or CPU)
+device = None
 
 '''
 Main class: AgeEstimationTask
@@ -173,8 +173,9 @@ class AgeEstimationTask:
         # load model and processor
         loadModelAndProcessor()
         
-        # create semaphore
-        createSemaphore()
+        # create semaphore only if GPU available
+        if(torch.cuda.is_available()):
+            createSemaphore()
 
 
     def finish(self):
@@ -386,6 +387,11 @@ Load model and processor which perform age estimation for faces
 def loadModelAndProcessor():
     logger.debug('AgeEstimationTask: Loading Open Age Detection model')
 
+    # Device to use for classification run (GPU or CPU)
+    global device
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    logger.debug(f"AgeEstimationTask: Device to use for classification is '{device}'")
+
     model = caseData.getCaseObject('open-age-detection_model')
     processor = caseData.getCaseObject('open-age-detection_processor')
     
@@ -399,7 +405,7 @@ def loadModelAndProcessor():
         if not os.path.exists(model_path + '/' + model_filename) or not os.path.exists(model_path + '/' + processor_filename):
             # Create model files
             model = SiglipForImageClassification.from_pretrained(model_name)
-            processor = AutoImageProcessor.from_pretrained(model_name)
+            processor = AutoImageProcessor.from_pretrained(model_name, use_fast=True)
             
             # Create the model path if it doesn't exist
             os.makedirs(model_path, exist_ok=True)
@@ -412,8 +418,11 @@ def loadModelAndProcessor():
             # Load model files
             logger.debug('AgeEstimationTask: Loading model from ' + model_path)
             model = SiglipForImageClassification.from_pretrained(model_path)
-            processor = AutoImageProcessor.from_pretrained(model_path)
+            processor = AutoImageProcessor.from_pretrained(model_path, use_fast=True)
         
+        # move model weights to the selected device (GPU or CPU)
+        model.to(device)
+
         # Store model in memory
         caseData.putCaseObject('open-age-detection_model', model)
         caseData.putCaseObject('open-age-detection_processor', processor)
@@ -425,14 +434,12 @@ def loadModelAndProcessor():
 Create semaphore for concurrency control
 '''
 def createSemaphore():
-    if maxThreads is None:
-        return
-    global semaphore
-    semaphore = caseData.getCaseObject('age_estimation_semaphore')    
+    global semaphore, IPED_GPU_GLOBAL_SEMAPHORE_STRING
+    semaphore = caseData.getCaseObject(IPED_GPU_GLOBAL_SEMAPHORE_STRING)    
     if semaphore is None:
         from java.util.concurrent import Semaphore
-        semaphore = Semaphore(maxThreads)
-        caseData.putCaseObject('age_estimation_semaphore', semaphore)
+        semaphore = Semaphore(1)
+        caseData.putCaseObject(IPED_GPU_GLOBAL_SEMAPHORE_STRING, semaphore)
    
 '''
 Process faces for age estimation
@@ -528,6 +535,8 @@ def makePrediction(imageList):
     # load model and processor
     [model, processor] = loadModelAndProcessor()
     inputs = processor(images=imageList, return_tensors="pt")
+    # ensure all input tensors (including image data) are on the same device as the model
+    inputs = {name: tensor.to(device) for name, tensor in inputs.items()}
     try:
         if semaphore is not None:
             semaphore.acquire()
