@@ -149,8 +149,14 @@ def carregar_e_configurar_modelo():
                     'B0': 'tf_efficientnetv2_b0.in1k',
                     'S': 'tf_efficientnetv2_s.in21k_ft_in1k',
                     'M': 'tf_efficientnetv2_m.in21k_ft_in1k',
-                    'L': 'tf_efficientnetv2_l.in21k_ft_in1k'
+                    'L': 'tf_efficientnetv2_l.in21k_ft_in1k',
+                                       
+                    # TinyViT - Tiny Vision Transformer
+                    'TinyViT-5M': 'tiny_vit_5m_224.dist_in22k',
+                    'TinyViT-11M': 'tiny_vit_11m_224.dist_in22k',
+                    'TinyViT-21M': 'tiny_vit_21m_224.dist_in22k'
                 }
+                
                 # Se o nome não estiver no mapa, usa o B0 como padrão
                 modelo_timm = model_map.get(model_name_key, 'tf_efficientnetv2_b0.in1k')
                 logger.info(f"CSAMDetector: Building model architecture: {modelo_timm}")
