@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import com.zaxxer.hikari.HikariDataSource;
 
-import iped.data.IItem;
+import iped.data.IItemReader;
 import iped.utils.SeekableFileInputStream;
 
 /**
@@ -72,7 +72,7 @@ public class PreviewRepository {
      * @return true if a preview exists, false otherwise.
      * @throws SQLException if a database error occurs.
      */
-    public boolean previewExists(IItem evidence) throws SQLException {
+    public boolean previewExists(IItemReader evidence) throws SQLException {
         PreviewKey key = PreviewKey.create(evidence);
         return previewExists(key);
     }
@@ -102,7 +102,7 @@ public class PreviewRepository {
      * @throws SQLException if a database error occurs.
      * @throws IOException
      */
-    public void storeCompressedPreview(IItem evidence, InputStream compressedValueStream) throws SQLException, IOException {
+    public void storeCompressedPreview(IItemReader evidence, InputStream compressedValueStream) throws SQLException, IOException {
         PreviewKey key = PreviewKey.create(evidence);
 
         try (Connection conn = dataSource.getConnection(); PreparedStatement pstmt = conn.prepareStatement(INSERT_DATA_SQL)) {
@@ -122,7 +122,7 @@ public class PreviewRepository {
      * @throws SQLException if a database error occurs.
      * @throws IOException if an I/O error occurs during compression.
      */
-    public void storeRawPreview(IItem evidence, InputStream rawValueStream) throws SQLException, IOException {
+    public void storeRawPreview(IItemReader evidence, InputStream rawValueStream) throws SQLException, IOException {
         PreviewKey key = PreviewKey.create(evidence);
 
         Deflater deflater = new Deflater(Deflater.BEST_SPEED);
@@ -168,7 +168,7 @@ public class PreviewRepository {
      * @throws SQLException if a database error occurs.
      * @throws IOException if an I/O error occurs during streaming.
      */
-    public boolean consumePreview(IItem evidence, InputStreamConsumer consumer) throws SQLException, IOException {
+    public boolean consumePreview(IItemReader evidence, InputStreamConsumer consumer) throws SQLException, IOException {
         return consumePreview(evidence, true, consumer); // Default to decompress
     }
 
@@ -182,7 +182,7 @@ public class PreviewRepository {
      * @throws SQLException if a database error occurs.
      * @throws IOException if an I/O error occurs during streaming.
      */
-    public boolean consumePreview(IItem evidence, boolean decompress, InputStreamConsumer consumer) throws SQLException, IOException {
+    public boolean consumePreview(IItemReader evidence, boolean decompress, InputStreamConsumer consumer) throws SQLException, IOException {
         PreviewKey key = PreviewKey.create(evidence);
         return consumePreview(key, decompress, consumer);
     }
@@ -221,7 +221,7 @@ public class PreviewRepository {
    }
 
    /**
-    * Consumes a preview for an IItem from the repository and converts it to a SeekableInputStream.
+    * Consumes a preview for an IItemReader from the repository and converts it to a SeekableInputStream.
     *
     * @param item The item whose preview is to be consumed.
     * @param forceFile If true, always use a temp file instead of memory.
@@ -229,7 +229,7 @@ public class PreviewRepository {
     * @throws SQLException
     * @throws IOException
     */
-    public SeekableFileInputStream readPreview(IItem item, boolean forceFile) throws SQLException, IOException {
+    public SeekableFileInputStream readPreview(IItemReader item, boolean forceFile) throws SQLException, IOException {
         PreviewKey key = PreviewKey.create(item);
         return PreviewInputStreamFactory.consumePreviewToSeekableInputStream(this, key, item.getPreviewExt(), forceFile);
     }

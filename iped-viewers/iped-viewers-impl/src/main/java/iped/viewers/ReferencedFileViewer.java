@@ -24,6 +24,7 @@ import iped.parsers.whatsapp.WhatsAppParser;
 import iped.properties.ExtraProperties;
 import iped.properties.MediaTypes;
 import iped.utils.FileContentSource;
+import iped.utils.PreviewStreamSource;
 import iped.viewers.api.AbstractViewer;
 import iped.viewers.api.AttachmentSearcher;
 import iped.viewers.localization.Messages;
@@ -111,6 +112,10 @@ public class ReferencedFileViewer extends AbstractViewer {
                 FileContentSource viewContent = new FileContentSource(lastItem.getViewFile());
                 String mediaType = detectType(lastItem.getViewFile());
                 load(viewContent, mediaType, highlightTerms);
+            } else if (lastItem.hasPreview()) {
+                PreviewStreamSource viewContent = new PreviewStreamSource(lastItem);
+                String mediaType = detectTypeByExtension(lastItem.getPreviewExt());
+                load(viewContent, mediaType, highlightTerms);
             } else
                 load(lastItem, lastItem.getMediaType().toString(), highlightTerms);
         }
@@ -148,6 +153,12 @@ public class ReferencedFileViewer extends AbstractViewer {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private String detectTypeByExtension(String fileExtension) {
+        if (tika == null)
+            tika = new Tika();
+        return tika.detect("file." + fileExtension);
     }
 
     @Override

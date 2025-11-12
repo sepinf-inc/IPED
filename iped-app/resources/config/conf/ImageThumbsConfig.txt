@@ -36,9 +36,9 @@ imgThumbSize = 384
 # From 0 to 100, 0 - is very high compression and very low quality, 100 - higher quality and minimum compression.
 compression = 50
 
-# Extract embedded thumbs from exif, faster than generating them again.
-# Eventually these thumbs may have lower quality or be different of the original image.
-extractThumb = true
+# Extract embedded thumbs from EXIF metadata. Although this method is faster than regenerating them,
+# embedded thumbs usually have lower quality and may differ from the original (full size) image.
+extractThumb = false
 
 # Number of threads for on demand thumbnail creation in gallery. "default" uses the number of CPU cores
 # Decrease the value if you have high memory usage problems.

@@ -5,8 +5,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
-import java.nio.ByteBuffer;
-import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -16,6 +14,7 @@ import java.sql.SQLException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 
 import iped.data.IItem;
 import iped.io.SeekableInputStream;
@@ -116,7 +115,8 @@ public class PreviewInputStreamFactory extends SeekableInputStreamFactory {
 
         if (buffer.length <= MEMORY_THRESHOLD) {
             // Small input → keep in memory
-            return new SeekableFileInputStream(new InMemorySeekableByteChannel(buffer));
+            return new SeekableFileInputStream(new SeekableInMemoryByteChannel(buffer));
+
         } else {
             // Large input → spill to temp file
             Path tempFile = Files.createTempFile(PREVIEW_FILENAME_PREFIX, "." + ext);
@@ -131,85 +131,6 @@ public class PreviewInputStreamFactory extends SeekableInputStreamFactory {
             }
 
             return new SeekableFileInputStream(tempFile);
-        }
-    }
-
-    /**
-     * An in-memory SeekableByteChannel backed by a direct ByteBuffer.
-     */
-    private static class InMemorySeekableByteChannel implements SeekableByteChannel {
-        private final ByteBuffer buf;
-        private boolean open = true;
-
-        public InMemorySeekableByteChannel(byte[] data) {
-            // allocate in off-heap (direct memory)
-            buf = ByteBuffer.allocateDirect(data.length);
-            buf.put(data);
-            buf.flip();
-        }
-
-        @Override
-        public int read(ByteBuffer dst) throws IOException {
-            ensureOpen();
-            if (!buf.hasRemaining()) {
-                return -1;
-            }
-            int n = Math.min(dst.remaining(), buf.remaining());
-            // transfer directly
-            int limit = buf.limit();
-            buf.limit(buf.position() + n);
-            dst.put(buf);
-            buf.limit(limit);
-            return n;
-        }
-
-        @Override
-        public int write(ByteBuffer src) throws IOException {
-            ensureOpen();
-            int n = Math.min(src.remaining(), buf.remaining());
-            int limit = src.limit();
-            src.limit(src.position() + n);
-            buf.put(src);
-            src.limit(limit);
-            return n;
-        }
-
-        @Override
-        public long position() {
-            return buf.position();
-        }
-
-        @Override
-        public SeekableByteChannel position(long newPos) {
-            buf.position((int) newPos);
-            return this;
-        }
-
-        @Override
-        public long size() {
-            return buf.limit();
-        }
-
-        @Override
-        public SeekableByteChannel truncate(long size) {
-            buf.limit((int) size);
-            return this;
-        }
-
-        @Override
-        public boolean isOpen() {
-            return open;
-        }
-
-        @Override
-        public void close() {
-            open = false;
-        }
-
-        private void ensureOpen() throws IOException {
-            if (!open) {
-                throw new IOException("Channel closed");
-            }
         }
     }
 }
