@@ -60,6 +60,7 @@ import iped.configuration.Configurable;
 import iped.data.IHashValue;
 import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
+import iped.engine.config.ImageThumbTaskConfig;
 import iped.engine.config.RemoteImageClassifierConfig;
 import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.task.die.DIETask;
@@ -142,6 +143,11 @@ public class RemoteImageClassifierTask extends AbstractTask {
     private static final AtomicInteger skipDimensionCount = new AtomicInteger();
     private static final AtomicInteger skipHashDBFilesCount = new AtomicInteger();
     private static final AtomicInteger activeInstances = new AtomicInteger(0);
+    
+    private static final int MODEL_1_0_INPUT_SIZE = 384;
+    private static final int MODEL_1_1_INPUT_SIZE = 448;
+
+    private String model_version;
 
     // Number of the current batch of files being processed
     private int currentBatch;
@@ -281,7 +287,7 @@ public class RemoteImageClassifierTask extends AbstractTask {
                         ObjectMapper objectMapper = new ObjectMapper();
                         JsonNode jsonResponse = objectMapper.readTree(responseStream);
                         String protocol_version = jsonResponse.get("protocol_version").asText();
-                        String model_version = jsonResponse.get("model_version").asText();
+                        model_version = jsonResponse.get("model_version").asText();
                         logger.info(
                                 "RemoteImageClassifierTask: Connected to remote image classifier at '{}' - protocol_version: {} model_version: {}",
                                 urlVersion, protocol_version, model_version);
@@ -303,6 +309,15 @@ public class RemoteImageClassifierTask extends AbstractTask {
             // Disable task in case of failure to connect to remote image classifier 
             enabled = false;
             logger.error("Task disabled. Failed to connect to remote image classifier at '" + urlVersion + "': " + e.getMessage());
+        }
+
+        if (isEnabled()) {
+            ImageThumbTaskConfig imgThumbConfig = configurationManager.findObject(ImageThumbTaskConfig.class);
+            if ("v1.0".equals(model_version)) {
+                imgThumbConfig.setThumbSize(MODEL_1_0_INPUT_SIZE);
+            } else if ("v1.1".equals(model_version)) {
+                imgThumbConfig.setThumbSize(MODEL_1_1_INPUT_SIZE);
+            }
         }
 
         if (zip == null) {
