@@ -62,6 +62,7 @@ import iped.data.IItem;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.ImageThumbTaskConfig;
 import iped.engine.config.RemoteImageClassifierConfig;
+import iped.engine.config.VideoThumbsConfig;
 import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.task.die.DIETask;
 import iped.engine.task.index.IndexItem;
@@ -313,10 +314,13 @@ public class RemoteImageClassifierTask extends AbstractTask {
 
         if (isEnabled()) {
             ImageThumbTaskConfig imgThumbConfig = configurationManager.findObject(ImageThumbTaskConfig.class);
+            VideoThumbsConfig videoConfig = configurationManager.findObject(VideoThumbsConfig.class);
             if ("v1.0".equals(model_version)) {
                 imgThumbConfig.setThumbSize(MODEL_1_0_INPUT_SIZE);
+                videoConfig.setSize(MODEL_1_0_INPUT_SIZE);
             } else if ("v1.1".equals(model_version)) {
                 imgThumbConfig.setThumbSize(MODEL_1_1_INPUT_SIZE);
+                videoConfig.setSize(MODEL_1_1_INPUT_SIZE);
             }
         }
 

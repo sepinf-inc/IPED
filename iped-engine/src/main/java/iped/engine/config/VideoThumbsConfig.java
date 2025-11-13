@@ -102,6 +102,10 @@ public class VideoThumbsConfig extends AbstractTaskPropertiesConfig {
         return size;
     }
 
+    public void setSize(int value) {
+        size = value;
+    }
+
     public int getColumns() {
         return columns;
     }
